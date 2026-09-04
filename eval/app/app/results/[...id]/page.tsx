@@ -1172,13 +1172,32 @@ export default function RunLogDetailPage({
   params: Promise<{ id: string[] }>;
 }) {
   const { id } = use(params);
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments; decoding again turns
+  // `%252e%252e` into `..` after normalisation has run. The four route handlers
+  // were fixed; this fifth site was missed.
+  const runLogId = id.join('/');
   const qc = useQueryClient();
 
   const query = useQuery<Detail>({
     queryKey: ['runlog', runLogId],
     queryFn: async () => {
       const res = await fetch(`/api/runlogs/${runLogId}`);
+      if (res.status === 422) {
+        // The annotation file is corrupt (e.g. a temp-name collision spliced
+        // two saves together, or an off-schema file). There is no in-product
+        // repair — explain and give the recovery line, per the
+        // corrupt-annotation guard in eval-crud-ui-spec.md. No delete button:
+        // an unrecoverable destructive action on the annotator's written
+        // comments does not belong on the page where they are already
+        // confused. The route hands us the file path directly.
+        const body = await res.json().catch(() => ({}));
+        const msg: string = body.message ?? 'Annotation file is corrupt.';
+        const filePath: string | undefined = body.filePath;
+        const recovery = filePath
+          ? `\n\nTo recover, delete the corrupt file and re-annotate from the start:\n\n    rm ${filePath}\n\n(Copy it somewhere first if you want to keep the partial content.)`
+          : '';
+        throw new Error(msg + recovery);
+      }
       if (!res.ok) throw new Error(`GET /api/runlogs/${runLogId} → ${res.status}`);
       return res.json();
     },
@@ -1361,7 +1380,11 @@ export default function RunLogDetailPage({
     return <Loader />;
   }
   if (query.isError || !query.data) {
-    return <Alert color="red">{(query.error as Error)?.message ?? 'failed to load'}</Alert>;
+    return (
+      <Alert color="red" style={{ whiteSpace: 'pre-wrap' }}>
+        {(query.error as Error)?.message ?? 'failed to load'}
+      </Alert>
+    );
   }
 
   const log = query.data.runLog;

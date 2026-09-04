@@ -38,6 +38,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
+import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -2068,14 +2069,45 @@ async function prepareOps(
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
         if (results) {
+          // Only record_search stages GedcomX personas; its results key on
+          // `recordId`. fulltext_search / external_links_search stage transcript
+          // text and links keyed on `id`, with no persona document — matching
+          // them on `recordId` (a field they never carry) matched nothing every
+          // time, which either rejected a persona-linked write with an empty
+          // "expected one of:" list or silently skipped canonicalizing the id
+          // (#2038). Pick the id field by producer.
+          const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
+          const resultId = (r: any): string | undefined => {
+            const v = personaBearing ? r?.recordId : r?.id;
+            return typeof v === "string" ? v : undefined;
+          };
           const key = arkToBareId(String(entry.record_id ?? ""));
           const matches = results.filter(
-            (r) => r && typeof r === "object" && typeof r.recordId === "string" && arkToBareId(r.recordId) === key,
+            (r) => r && typeof r === "object" && resultId(r) !== undefined && arkToBareId(resultId(r)!) === key,
           );
+
+          // A non-persona producer carries no GedcomX persona, so
+          // record_persona_id must be null. Reject a supplied one with a message
+          // that says why — never the empty "expected one of:" list the old
+          // recordId-only match produced for these sidecars.
+          if (!personaBearing && entry.record_persona_id != null) {
+            errors.push(
+              fmt(
+                i,
+                `record_persona_id must be null — log entry '${logId}' is ${logEntry.tool}-sourced, ` +
+                  "and full-text / external-link results carry transcript text, names and places " +
+                  "but no GedcomX personas",
+              ),
+            );
+            continue;
+          }
+
           if (matches.length === 0) {
             // A record_id outside the sidecar is legal when no persona is
             // claimed (e.g. a negative assertion naming the collection
-            // searched); with a persona it is a contradiction.
+            // searched); with a persona it is a contradiction. Only reachable
+            // for a persona-bearing producer — the non-persona persona case is
+            // rejected above.
             if (entry.record_persona_id != null) {
               const known = results
                 .map((r) => (r && typeof r.recordId === "string" ? r.recordId : null))
@@ -2093,50 +2125,54 @@ async function prepareOps(
             }
           } else {
             matchedRecord = matches[0];
-            // Canonicalize record_id to the sidecar's stored form.
-            if (entry.record_id !== matchedRecord.recordId) {
-              entry.record_id = matchedRecord.recordId;
+            // Canonicalize record_id to the sidecar's stored form (`recordId`
+            // for record_search, `id` for the persona-less producers).
+            const canonical = resultId(matchedRecord);
+            if (typeof canonical === "string" && entry.record_id !== canonical) {
+              entry.record_id = canonical;
             }
-            const personaIds: string[] = (
-              Array.isArray(matchedRecord.gedcomx?.persons) ? matchedRecord.gedcomx.persons : []
-            )
-              .map((p: any) => (p && typeof p.id === "string" ? p.id : null))
-              .filter(Boolean);
-            if (entry.record_persona_id != null) {
-              if (!personaIds.includes(entry.record_persona_id)) {
-                const primary =
-                  typeof matchedRecord.primaryId === "string"
-                    ? ` (primary persona: ${matchedRecord.primaryId})`
-                    : "";
-                errors.push(
-                  fmt(
-                    i,
-                    `record_persona_id '${entry.record_persona_id}' does not resolve to a person in ` +
-                      `record '${matchedRecord.recordId}' — expected one of: ${personaIds.join(", ")}${primary}`,
-                  ),
-                );
-                continue;
-              }
-            } else if (
-              matches.length === 1 &&
-              typeof matchedRecord.primaryId === "string" &&
-              personaIds.includes(matchedRecord.primaryId)
-            ) {
-              if (personaIds.length === 1 || autoFillScopeOk) {
-                // Auto-fill the unambiguous case — never silently null. Safe
-                // because the record holds a single persona, or the batch is a
-                // single-record single-role extraction (see scoping note above).
-                entry.record_persona_id = matchedRecord.primaryId;
-              } else {
-                errors.push(
-                  fmt(
-                    i,
-                    `record_persona_id omitted — multiple personas in this record (${personaIds.join(", ")}) ` +
-                      "and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; " +
-                      `supply record_persona_id per assertion (the searched persona is '${matchedRecord.primaryId}')`,
-                  ),
-                );
-                continue;
+            if (personaBearing) {
+              const personaIds: string[] = (
+                Array.isArray(matchedRecord.gedcomx?.persons) ? matchedRecord.gedcomx.persons : []
+              )
+                .map((p: any) => (p && typeof p.id === "string" ? p.id : null))
+                .filter(Boolean);
+              if (entry.record_persona_id != null) {
+                if (!personaIds.includes(entry.record_persona_id)) {
+                  const primary =
+                    typeof matchedRecord.primaryId === "string"
+                      ? ` (primary persona: ${matchedRecord.primaryId})`
+                      : "";
+                  errors.push(
+                    fmt(
+                      i,
+                      `record_persona_id '${entry.record_persona_id}' does not resolve to a person in ` +
+                        `record '${matchedRecord.recordId}' — expected one of: ${personaIds.join(", ")}${primary}`,
+                    ),
+                  );
+                  continue;
+                }
+              } else if (
+                matches.length === 1 &&
+                typeof matchedRecord.primaryId === "string" &&
+                personaIds.includes(matchedRecord.primaryId)
+              ) {
+                if (personaIds.length === 1 || autoFillScopeOk) {
+                  // Auto-fill the unambiguous case — never silently null. Safe
+                  // because the record holds a single persona, or the batch is a
+                  // single-record single-role extraction (see scoping note above).
+                  entry.record_persona_id = matchedRecord.primaryId;
+                } else {
+                  errors.push(
+                    fmt(
+                      i,
+                      `record_persona_id omitted — multiple personas in this record (${personaIds.join(", ")}) ` +
+                        "and the batch spans multiple record_roles/record_ids, so the omission is ambiguous; " +
+                        `supply record_persona_id per assertion (the searched persona is '${matchedRecord.primaryId}')`,
+                    ),
+                  );
+                  continue;
+                }
               }
             }
           }

@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -74,6 +75,42 @@ describe('tests — listTests', () => {
     const { tests } = await listTests();
     expect(tests[0].blocked).toEqual({ kind: 'missing-scenario', scenario: 'does-not-exist' });
     await handle2.cleanup();
+  });
+
+  it('reports a TRAVERSING scenario as missing rather than probing for it', async () => {
+    // `computeBlockedReason` calls fs.access on a caller-supplied name, so an
+    // uncontained value is an existence oracle for any path on the machine.
+    //
+    // The traversal must reach something that EXISTS or the test cannot fail:
+    // uncontained, fs.access succeeds and `blocked` is null; contained, the path
+    // is refused and reported missing. My first version aimed at a path that did
+    // not exist and stayed green with the guard removed.
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'oracle-scenario-'));
+    const handle2 = await makeFixtureTree({
+      tests: [
+        { skill: 'locality-guide', filename: 'trav.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide', input: { user_message: 'x', scenario: '../'.repeat(12) + outside.replace(/^\//, '') } }) },
+      ],
+    });
+    process.env.EVAL_DIR = handle2.root;
+    const { tests } = await listTests();
+    expect(tests[0].blocked?.kind).toBe('missing-scenario');
+    await handle2.cleanup();
+    await fs.rm(outside, { recursive: true, force: true });
+  });
+
+  it('reports a TRAVERSING fixture as missing rather than probing for it', async () => {
+    const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'oracle-fixture-'));
+    await fs.writeFile(path.join(outside, 'real.json'), '{}', 'utf8');
+    const handle2 = await makeFixtureTree({
+      tests: [
+        { skill: 'locality-guide', filename: 'trav2.json', body: makeTest({ id: 'ut_locality_guide_001', skill: 'locality-guide', mcp_fixtures: ['../'.repeat(12) + path.join(outside, 'real').replace(/^\//, '')] }) },
+      ],
+    });
+    process.env.EVAL_DIR = handle2.root;
+    const { tests } = await listTests();
+    expect(tests[0].blocked?.kind).toBe('missing-fixture');
+    await handle2.cleanup();
+    await fs.rm(outside, { recursive: true, force: true });
   });
 
   it('flags blocked when fixture is missing', async () => {
