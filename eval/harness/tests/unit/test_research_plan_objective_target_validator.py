@@ -173,6 +173,27 @@ def test_an_item_naming_both_places_cannot_be_the_target():
         check_target_leads({}, only_both, TAGGED)
 
 
+def test_a_leading_item_in_a_bare_jurisdiction_is_still_ahead_of_the_target():
+    """A country name must not defeat the guard.
+
+    The ahead-of-target set was once keyed on `_INDIRECT_JURISDICTION`, so it
+    only counted a leading item whose `jurisdiction` contained "Trysil". The
+    field is free text and the skill routinely writes a bare county or country:
+    `v1_2026-09-02_16-26-24` writes the literal "Norway" among its 21 distinct
+    jurisdictions. Such an item is neither the target nor recognisably indirect,
+    so it preceded the target unchallenged. The rule is that the target LEADS —
+    what precedes it is not the point. Found by @T-FEH in review of #2033;
+    without this test, reverting that widening keeps the whole suite green.
+    """
+    after = _state([
+        _item(1, "vital_record", "Norway",
+              rationale="National burial extract, searched first."),
+        _item(2, "church", "Kongsberg, Buskerud, Norway"),
+    ])
+    with pytest.raises(AssertionError, match="sequenced\\s+ahead of it"):
+        check_target_leads({}, after, TAGGED)
+
+
 def test_kongsberg_census_does_not_satisfy_the_target():
     """The target is the requested RECORD TYPE in the named place, not merely
     something in the named place — a Kongsberg census must not count as the
