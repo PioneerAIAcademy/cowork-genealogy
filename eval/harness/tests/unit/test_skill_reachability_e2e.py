@@ -112,16 +112,23 @@ def test_the_corpus_is_actually_readable():
 
 
 def test_no_new_skill_has_gone_dark():
-    """The ratchet. A skill outside the recorded set with zero invocations means
-    something stopped reaching it since 2026-09-01."""
+    """The ratchet. A shipped skill with zero invocations that is not in the
+    recorded set is either a regression or a skill added since 2026-09-01 — the
+    failure message separates them, because the right response is opposite."""
     counts = invocation_counts()
     newly_dark = sorted(
         s for s in shipped_skills() if counts.get(s, 0) == 0 and s not in DARK_SKILLS_2026_09_01
     )
     assert not newly_dark, (
-        f"skill(s) with zero e2e invocations that were reachable before: {newly_dark}. "
-        "Either the change that made them unreachable should be reconsidered, or — if "
-        "this is deliberate — add them to DARK_SKILLS_2026_09_01 with a reason."
+        f"shipped skill(s) with zero e2e invocations, not in the recorded set: "
+        f"{newly_dark}. Two causes, needing opposite responses:\n"
+        "  * It used to be invoked -> something stopped reaching it. Reconsider that "
+        "change. Do NOT add the skill to DARK_SKILLS_2026_09_01: that set only "
+        "shrinks, and adding an entry is how a regression becomes the new baseline.\n"
+        "  * It is newer than 2026-09-01 -> nothing regressed; it was never in the "
+        "population this set records. Give it e2e coverage, or re-baseline the set "
+        "deliberately and say why in the comment above it — the set holds bare names "
+        "and cannot carry a per-entry reason, so the reason belongs in that comment."
     )
 
 
