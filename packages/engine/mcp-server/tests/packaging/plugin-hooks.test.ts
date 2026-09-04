@@ -167,7 +167,10 @@ describe("plugin hooks are packaged and wired", () => {
         // ${CLAUDE_PLUGIN_ROOT} is the only portable way to reference a
         // bundled script; a relative path resolves against the session's cwd.
         expect(hook.command).toContain("${CLAUDE_PLUGIN_ROOT}");
-        const rel = hook.command!.split("${CLAUDE_PLUGIN_ROOT}/")[1]?.trim();
+        // `.split(/\s+/)[0]`: the command may carry arguments after the script
+        // path, and `.trim()` alone folds them into the path so `existsSync`
+        // fails on a command that is in fact correct.
+        const rel = hook.command!.split("${CLAUDE_PLUGIN_ROOT}/")[1]?.trim().split(/\s+/)[0];
         expect(existsSync(join(PLUGIN_DIR, rel))).toBe(true);
       }
     }
