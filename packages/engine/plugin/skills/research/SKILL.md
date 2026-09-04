@@ -184,8 +184,8 @@ time, regardless of how directly the request named the destination.
    `research-exhaustiveness` and `proof-conclusion` are `Skill` tool calls,
    never inline writes from this context — the same rule as
    record-extraction and person-evidence above, and for the same reason:
-   each of those skills carries analysis this context does not (the 5
-   threshold questions and 7-point stop criteria for exhaustiveness; the
+   each of those skills carries analysis this context does not (the
+   7-point stop criteria for exhaustiveness; the
    citation and tier checks for proof-conclusion), and a hand-authored
    `research_append` reproducing their expected output fields skips that
    analysis while still passing schema validation. Concretely: never write
@@ -225,8 +225,9 @@ time, regardless of how directly the request named the destination.
    drain.** Consult `research-exhaustiveness` as soon as analyzed
    evidence plausibly answers the active question — do not reflexively
    execute the remaining `planned` items first. Exhaustiveness is the
-   stop gate: it weighs the question against the 5 threshold questions
-   and 7-point stop criteria and either declares the search reasonably
+   stop gate: it weighs the question against the 7-point stop criteria,
+   assessed in order and stopping at the first that fails, and either
+   declares the search reasonably
    exhaustive (→ proof) or routes you back to `research-plan` /
    `question-selection` for the gaps. That round-trip is what lets a
    simple-recall question stop early **without** weakening a

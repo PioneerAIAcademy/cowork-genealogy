@@ -596,6 +596,7 @@ A test with empty `judge_context` is still graded on the base dimensions (3: Cor
 
 Guidelines for writing `judge_context` notes:
 
+- **A note may not relax a bar its rubric sets.** If a rubric bar is wrong for a class of run, move the bar in `rubric.md`; do not write a per-test note excusing that run from it. A note reading "addressing the unmet criterion in prose is sufficient for a pass" against a rubric whose `fail` bar is "two or more unaddressed" puts two graders in one suite, and which one the judge follows moves between runs. The rubric applies to every test for the skill, so the rubric is the one that has to be right. A note narrows the rubric to this scenario; it never overrides it.
 - **Focus on what's unique to this scenario.** Don't restate what the skill rubric already covers. If the rubric says "extraction completeness," don't add "should extract all facts." Instead note *this specific record's* unusual characteristics.
 - **Be specific.** "Should extract assertions" is too vague. "Should extract assertions for at least 3 persons (head of household, wife, and Patrick)" is testable.
 - **Include reasoning.** "Should classify the relationship as indirect evidence with indeterminate information quality — the 1860 census does not state relationships explicitly (that column was introduced in 1880)" tells the judge *why* the classification is correct.
