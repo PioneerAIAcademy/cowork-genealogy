@@ -186,7 +186,7 @@ export async function imageTranscribeTool(
 
   // Resolve credentials/config BEFORE fetching the image: a missing key
   // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
-  // throws the LLM-actionable "call configure_openrouter" error when absent.
+  // throws an LLM-actionable error naming config.json when absent.
   const apiKey = await getOpenRouterApiKey();
   const model = await getOpenRouterModel();
 
@@ -254,7 +254,7 @@ export async function imageTranscribeTool(
     }
   }
 
-  // Auth failures are LLM-actionable — the key needs re-entering. Transient
+  // Auth failures are LLM-actionable — the key needs replacing in config.json. Transient
   // failures (429/5xx) are not; they surface as retryable, not a re-prompt.
   if (response.status === 401) {
     throw new Error(
