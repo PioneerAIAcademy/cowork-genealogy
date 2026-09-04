@@ -154,7 +154,18 @@ describe('the control is actually wired', () => {
       for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, e.name)
         if (e.isDirectory()) walk(full)
-        else if (/^(page|layout|template|default)\.[jt]sx?$/.test(e.name)) pages.push(full)
+        // Not a filename allow-list. Next renders more on the server than
+        // page/layout/template/default — `not-found.tsx` and `loading.tsx` both
+        // work in this app today, and each was shown leaking the operator's git
+        // email to an attacker `Host` with this suite green. `forbidden.tsx` and
+        // `unauthorized.tsx` sit behind `experimental.authInterrupts`, which
+        // next.config.mjs does not set, so they are inert — covered anyway,
+        // because inert today is not inert after a config edit.
+        //
+        // Every `route.*` belongs to the walk above, so everything else under
+        // app/ is a render surface. Same reasoning as the Server Action walk:
+        // a new filename is not a new bypass to discover.
+        else if (/\.[jt]sx?$/.test(e.name) && !/^route\.[jt]sx?$/.test(e.name)) pages.push(full)
       }
     }
     walk(appDir)
