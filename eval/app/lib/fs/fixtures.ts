@@ -5,6 +5,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { resolveWithin, PathEscapeError } from './safe-path';
 import { fixturesDir, testsUnitDir } from '../paths';
 import type { McpFixtureFile, UnitTestFile } from '../types';
 
@@ -49,7 +50,19 @@ export async function listFixtures(): Promise<{ fixtures: FixtureListEntry[]; co
 }
 
 export async function readFixture(name: string): Promise<McpFixtureFile | null> {
-  const filePath = path.join(fixturesDir(), `${name}.json`);
+  // `name` is a URL segment and reaches `fs.readFile`, whose parsed contents are
+  // returned to the caller. Contained rather than pattern-matched so the check
+  // is the same one every other sink in this app uses.
+  let filePath: string;
+  try {
+    filePath = resolveWithin(fixturesDir(), `${name}.json`);
+  } catch (e) {
+    // Narrowed: an untyped catch here also swallows an `evalDir()`
+    // misconfiguration, turning a broken environment into a silent "not found".
+    // Only a refused path is expected; anything else stays loud.
+    if (!(e instanceof PathEscapeError)) throw e;
+    return null;
+  }
   try {
     const raw = await fs.readFile(filePath, 'utf8');
     return JSON.parse(raw) as McpFixtureFile;

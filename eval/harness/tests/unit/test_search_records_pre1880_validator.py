@@ -74,6 +74,69 @@ COMPLIANT_QUOTED_ROLE = (
     "indexing error."
 )
 
+# ut_search_records_010, run v1_2026-08-24_16-32-45. Present-tense "infers" --
+# single r -- which the old "inferr" (double-r only) pattern missed and
+# false-failed. Pins the regression (issue #1642).
+COMPLIANT_PRESENT_TENSE_INFERS = (
+    "Top match (MXHY-TP4, matchScore 0.9481) is Patrick Flynn b. 1845 "
+    "Ireland in household of Thomas Flynn + Mary Flynn, Branch Township, "
+    "Schuylkill, PA -- already attached to subject I1 -- indexer infers "
+    "ParentChild relationships."
+)
+
+# ut_search_records_010, run v1_2026-08-28_15-20-05. "relationships indexed"
+# with no inference/infer/presum word at all -- the old markers missed this
+# entirely, false-failing a note that already says the record's own
+# relationship edges came from indexing. Pins the "index near a role word"
+# marker (issue #1642).
+COMPLIANT_RELATIONSHIPS_INDEXED = (
+    "Rank-1 match (MXHY-TP4, matchScore 0.948) is Patrick Flynn b. 1845 "
+    "Ireland, residing Branch Township, Schuylkill, PA 1850, in household "
+    "of Thomas Flynn and Mary Flynn -- ParentChild relationships indexed; "
+    "already attached to subject I1 (src_001)."
+)
+
+# ut_search_records_014, run v1_2026-08-28_15-20-05. "Indexed as Head of
+# Household" -- functionally the same claim as "the indexer's inference",
+# just without the word "infer". Pins the same marker from the other word
+# order (index-word before the role word, rather than after).
+COMPLIANT_INDEXED_AS_HEAD = (
+    "One result: Patrick Flynn, born 1845, Ireland, residing Branch "
+    "Township, Schuylkill, PA, 1850. Indexed as Head of Household -- "
+    "NEEDS-REVIEW: a birth year of 1845 makes the subject 5 years old in "
+    "1850, incompatible with Head role."
+)
+
+# ut_search_records_027, run v1_2026-08-28_15-20-05. "co-residents indexed".
+COMPLIANT_CORESIDENTS_INDEXED = (
+    "One result: George Ackerman, Bucks Co., PA, born ~1818 PA. Household "
+    "co-residents indexed: Henry Ackerman (~1851) and Margaret Ackerman "
+    "(~1854). Spouse Catherine is absent from the index entry."
+)
+
+# ut_search_records_017, run v1_2026-08-24_12-28-26. "presumably her mother"
+# -- the old "presumed" (exact word only) pattern missed the adverb form.
+COMPLIANT_PRESUMABLY_HER_MOTHER = (
+    "Found Sarah A. Mullen (b. 1852, Wisconsin) in household of William "
+    "Mullen, Dodge County, Wisconsin. Household also includes Margaret "
+    "Mullen (b. 1830, Ireland), presumably her mother."
+)
+
+# ut_search_records_013, run v1_2026-08-28_15-20-05. Contains "indexed" --
+# but only about the surname SPELLING and the birth YEAR, never near the
+# role/relationship word it asserts flat ("Household head matches I2"). The
+# "index near a role word" marker must NOT accept this: the note never says
+# the household relationship itself is an inference, only that unrelated
+# fields were indexed. Pins the false-accept boundary the scoped marker
+# exists to draw (issue #1642).
+OFFENDER_INDEXED_SPELLING_FLAT_HEAD = (
+    "Found 1 result: Patrick Flyn (indexed spelling) in household of Thomas "
+    "Flyn, Branch Township, Schuylkill, PA, 1850 census. Birth year indexed "
+    "as 1842 vs. subject's approximate ~1845 -- 3-year discrepancy warrants "
+    "needs-review. Household head matches I2 (Thomas Flynn) already in "
+    "tree. Record already extracted as src_003."
+)
+
 
 # --- Notes the rule rejects (from runs that carried no marker) --------
 
@@ -195,6 +258,11 @@ COMPLIANT_PLURAL_REJECTING_A_CLAIM_IS_NOT_A_CLAIM = (
         COMPLIANT_HEDGED,
         COMPLIANT_INFERRED,
         COMPLIANT_QUOTED_ROLE,
+        COMPLIANT_PRESENT_TENSE_INFERS,
+        COMPLIANT_RELATIONSHIPS_INDEXED,
+        COMPLIANT_INDEXED_AS_HEAD,
+        COMPLIANT_CORESIDENTS_INDEXED,
+        COMPLIANT_PRESUMABLY_HER_MOTHER,
         COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER,
         COMPLIANT_POSSESSIVE_KINSHIP_HEDGED,
         COMPLIANT_LOWERCASE_POSSESSIVE_IS_NOT_A_CLAIM,
@@ -205,6 +273,11 @@ COMPLIANT_PLURAL_REJECTING_A_CLAIM_IS_NOT_A_CLAIM = (
         "inferences-not-stated",
         "inferred-no-column",
         "quoted-role",
+        "present-tense-infers",
+        "relationships-indexed",
+        "indexed-as-head",
+        "coresidents-indexed",
+        "presumably-her-mother",
         "possessive-kinship-local-marker",
         "possessive-kinship-hedged-later-sentence",
         "lowercase-possessive-not-a-claim",
@@ -214,6 +287,47 @@ COMPLIANT_PLURAL_REJECTING_A_CLAIM_IS_NOT_A_CLAIM = (
 )
 def test_a_hedged_household_passes(notes):
     check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
+
+
+def test_indexed_spelling_alone_does_not_excuse_a_flat_role_assertion():
+    """The scoped 'index near a role word' marker must not accept an
+    unrelated 'indexed spelling'/'indexed as <year>' mention while the note
+    still asserts the household role flat elsewhere."""
+    with pytest.raises(AssertionError) as e:
+        check(EMPTY_BEFORE, after(entry(OFFENDER_INDEXED_SPELLING_FLAT_HEAD)), TAGGED)
+    assert "log_005" in str(e.value)
+
+
+# chesworthrm review (issue #1642): the original 50-char/period-only window
+# reached across a semicolon from an indexed NAME or DATE to a flat role
+# assertion in the next clause -- exactly the shape the comment on the
+# pattern already said it rejected. Both offenders below satisfied the
+# marker before the window was narrowed to 20 chars stopping at ./;/, --
+# and the fix was verified against all 299 log notes in the run logs this
+# PR shipped: nothing that passed kept passing, nothing that failed kept
+# failing, and these two start failing correctly.
+OFFENDER_INDEXED_NAME_THEN_FLAT_ROLE_ACROSS_SEMICOLON = (
+    "1860 census, Yell Co. Arkansas: surname indexed as Flyn; household "
+    "head Thomas Flynn, wife Mary, son John."
+)
+OFFENDER_INDEXED_DATE_THEN_FLAT_ROLE_ACROSS_SEMICOLON = (
+    "Match on Thomas Flynn. Birth year indexed as 1822; head of household "
+    "Thomas, plus sons John and Amos."
+)
+
+
+@pytest.mark.parametrize(
+    "notes",
+    [
+        OFFENDER_INDEXED_NAME_THEN_FLAT_ROLE_ACROSS_SEMICOLON,
+        OFFENDER_INDEXED_DATE_THEN_FLAT_ROLE_ACROSS_SEMICOLON,
+    ],
+    ids=["indexed-name-then-flat-role", "indexed-date-then-flat-role"],
+)
+def test_indexed_marker_does_not_reach_across_a_semicolon(notes):
+    with pytest.raises(AssertionError) as e:
+        check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
+    assert "log_005" in str(e.value)
 
 
 @pytest.mark.parametrize(

@@ -30,8 +30,9 @@ is what lets the `PreToolUse` hook route a section's writes to exactly one calle
 
 **Monolithic skill.** Reads state, does the work, writes its own section. Most skills.
 
-**Leaf agent.** Called by a skill, calls nothing (agents cannot nest agents), returns
-text. `image-reader`, `gps-mentor`.
+**Leaf agent.** Called by a skill, calls nothing, returns text. `image-reader`,
+`gps-mentor`. They call nothing because no agent here grants `Agent`/`Task`, not
+because the runtime forbids it — a subagent may spawn subagents three layers deep.
 
 ---
 
@@ -256,10 +257,12 @@ touch either side.
    manifest makes it the owner and sole writer of the `evaluations` section, through
    `research_append`. The manifest is right — the section holds a pointer record and the
    file holds the verdict. — issue #1335, where this one needs no ruling
-4. **`proof-conclusion` advertises a mentor call it does not make.** Its `description`
-   says it handles proof review and "invokes the gps-mentor critique", and `gps-mentor`'s
-   own description agrees. Its body has no such step, and the only file that delegates to
-   the mentor is the orchestrator. — issue #1861
+4. **`proof-conclusion` credited its proof review to a mentor call it does not make.**
+   — **RESOLVED in PR #2162 (closing #1861):** its `description` claimed the review
+   "invokes the gps-mentor critique", and `gps-mentor`'s own description agreed, while
+   the only file that delegates to the mentor is the orchestrator. The review itself is
+   real: the `proof-conclusion` agent performs it in review mode and two tests grade it,
+   so only the attribution was wrong. Both descriptions now name no delegation.
 5. **Who closes a plan item.** `search-records` refuses to set `completed`, deferring to
    `record-extraction`. `record-extraction` never mentions plan items and holds no
    `research_append`. `search-external-sites` sets `completed` itself. The manifest lists

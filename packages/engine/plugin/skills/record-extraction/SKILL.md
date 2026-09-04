@@ -110,9 +110,9 @@ Record data arrives in one of four ways:
    reading, and never try a browser, "Claude in Chrome", or `web_fetch`
    — unavailable here; they only waste turns.
 
-   To find images without a URL, use `volume_search` by `standardPlace`
-   + year range to discover digitized volumes, then invoke
-   `@plugin:image-reader` once per specific image you land on. Reserve
+   To find an image you do not already have, route to search-images —
+   landing on a specific page needs `image_search`, which this skill does
+   not hold. `volume_search` here only confirms a volume exists. Reserve
    image transcription for facts that exist *only* on the image; when
    even that is blocked, log the gap and continue via indexes.
 
@@ -121,10 +121,10 @@ Record data arrives in one of four ways:
    patronymic, a surname, a father's name on a baptism — looks like a
    likely mistranscription (an out-of-place patronymic, a spelling no
    other record corroborates), treat the indexed value as a lead: route
-   to the original register image (`volume_search` +
-   `@plugin:image-reader`) to confirm the spelling before it is recorded
-   as established (the original scan usually settles a suspect index
-   reading). If the image is unreachable, tell the extractor to
+   to search-images for the original register image to confirm the
+   spelling before it is recorded as established (the original scan
+   usually settles a suspect index reading). If the image is
+   unreachable, tell the extractor to
    record the name **tentative** — `[?]` in `value`, the doubt in the
    bias notes, original-image confirmation named as the outstanding
    step. (This is how an index OCR slip — "Aadnesen" read as "Nadnesen"
@@ -133,8 +133,9 @@ Record data arrives in one of four ways:
 ## Log entry — router-side, before delegating
 
 **Only when no search skill already logged this search.** If
-search-records or search-external-sites produced the record, reference
-their existing `logId` — never create a second entry.
+search-records, search-external-sites, search-full-text or search-images
+produced the record, reference their existing `logId` — never create a
+second entry.
 
 For a user-provided record (pasted text, PDF, image), call
 `research_log_append` with `tool: "user_provided"`. For a record you
@@ -165,7 +166,8 @@ a delegation message carrying:
 - open research question ids this record bears on
 - flags when applicable: "user asked to check FamilySearch matches",
   "the <element> is a suspect transcription — record it tentative
-  pending image confirmation"
+  pending image confirmation", "the date is Old Style — <the reading
+  convert-dates returned>; record it with that qualification"
 
 Frame delegations neutrally — describe the record and the project state;
 NEVER frame the task as "fix" or "correct" the existing tree (corrective
@@ -192,6 +194,34 @@ to check FamilySearch matches, relay it as the flag above — never call
 `record_person_matches` / `record_record_matches` yourself (they are
 not in this skill's allowed-tools, and the persona `id` they key on
 lives with the agent's extraction).
+
+**Check the calendar before delegating, not after.** When a record's
+date may fall before its jurisdiction adopted the Gregorian calendar,
+invoke `convert-dates` on that date **before** you delegate, and carry
+its reading in the flag above. Never decide from memory which
+jurisdiction changed when — `convert-dates` owns the country cutoffs,
+and a half-remembered one is how a date gets "corrected" that needed
+nothing. If the date is early enough that the question arises, ask.
+
+You hold the record content and the place at this point; the agent does
+not, and cannot get it — `record-extractor` grants neither `Skill` nor
+`Task`, and agents cannot nest — so a calendar question you do not
+resolve here is recorded as written and never revisited.
+
+What this prevents is a wrong **year**, not a wrong day. A January,
+February or March date in an English colony before 1752 sits inside the
+Old Style year-start window, so a register's "18 March 1750" is 1751 by
+modern reckoning — an error that shifts an event across a year boundary
+and survives into every conclusion built on it.
+
+**Do not do the arithmetic yourself.** `convert-dates` also owns the
+Quaker numbered months and double-dated years ("1749/50"). Where the
+record leaves the jurisdiction undetermined — a transition-era Dutch
+record naming no province — hand it over rather than picking a province.
+
+**Skip it** when that jurisdiction had already adopted the Gregorian
+calendar by the record's date, or when the record gives a year only — a
+year-only date carries no day or month for a correction to act on.
 
 **Classification refinement requests route the same way.** "Reclassify
 these evidence types", "is this informant primary or secondary?" — find

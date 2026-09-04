@@ -1,18 +1,20 @@
 ---
 name: search-external-sites
-description: Generates search URLs for external genealogy sites (Ancestry,
-  MyHeritage, FindMyPast, FindAGrave, Newspapers.com) and walks the user
-  through the click-capture-analyze workflow. Logs each search to research.json (including nil results) and
-  triages results from captured PDFs before passing records to record-extraction. GPS Step 1 — Reasonably
+description: Generates search URLs for external genealogy sites and free
+  newspaper archives, and walks the user
+  through the click-capture-analyze workflow. Logs every search to research.json and triages
+  captured PDFs before handing records to record-extraction. GPS Step 1 — Reasonably
   Exhaustive Research (external site execution). Use when the user says
   "search Ancestry", "search MyHeritage", "search FindMyPast", "search
-  FindAGrave", "search Newspapers.com", when a plan item targets a
-  non-FamilySearch repository, or when the user uploads a PDF capture from
-  an external genealogy site. Do NOT use when the target is
+  FindAGrave", "search Newspapers.com", "search Chronicling America", "find
+  newspaper articles", when the user reports an external search
+  they ran themselves (including a nil result), when a plan item targets a
+  non-FamilySearch repository, or when the user uploads a PDF
+  capture from an external genealogy site. Do NOT use when the target is
   FamilySearch (use search-records); when the user is still choosing what or
   where to search — e.g. "what should I search next?" — which is planning,
-  not execution (use research-plan); or when the user wants to analyze a
-  single record already in context (use record-extraction).
+  not execution (use research-plan); or to analyze a single record
+  already in context (use record-extraction).
 allowed-tools:
   - place_search
   - collections_search
@@ -27,12 +29,20 @@ allowed-tools:
 
 **Places:** When resolving or writing places, follow `references/places-guidance.md` — resolve with `place_search` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
-Ancestry, MyHeritage, FindMyPast, FindAGrave, and Newspapers.com have no
-public APIs and prohibit automated access. So this skill never loads a
-page itself — it builds a pre-filled search URL, the user clicks it in
-their own authenticated browser, captures the page as a PDF, and uploads
-it back. The agent supplies the genealogical expertise; the user's
+This skill never loads a page itself — it builds a pre-filled search URL,
+the user clicks it in their own browser, captures the page as a PDF, and
+uploads it back. The agent supplies the genealogical expertise; the user's
 browser supplies the access.
+
+Two different reasons a site is handled this way, and they are not
+interchangeable:
+- **Paywalled** (Ancestry, MyHeritage, FindMyPast, Newspapers.com) — no public
+  API, automated access prohibited, and the user needs a subscription.
+- **Free but bot-protected** (Chronicling America, Utah Digital Newspapers and
+  other state/regional archives) — free to search, no subscription needed, but
+  behind bot protection that blocks automated fetch. Never tell the user these
+  are unavailable or need a subscription: generate the URL, and they can open
+  it. A blocked fetch is not a negative result — it is a capture-required one.
 
 Getting the search **parameters** right is the core of the task: a URL
 with the wrong name encoding, a missing date window, or the wrong
@@ -86,8 +96,13 @@ Instead, for each capture-required external-site plan item:
    and `notes` stating the search was **deferred — requires an interactive
    user capture and is not obtainable in an autonomous run**, with the
    generated URL recorded so a later interactive session can capture it.
-4. Mark the plan item `skipped` (step 7) — terminal, and honest that
-   nothing was searched.
+4. **If — and only if — the search came from an existing plan item**, mark
+   that item `skipped` (step 7): terminal, and honest that nothing was
+   searched. For an ad-hoc search with no plan item, stop at the log entry.
+   **Never create a plan item in order to have one to mark.** `research-plan`
+   owns item structure; an executing skill may only update the `status` of an
+   item that already exists, and inventing one to close puts a search in the
+   plan that was never planned.
 5. **Return to the orchestrator and keep going** — do not wait.
 
 This keeps the audit trail honest — the external avenue is logged as a
@@ -97,6 +112,15 @@ provided documents). It does not lower the bar: in an interactive session
 the same search would be captured normally.
 
 ## Before you search
+
+**Newspapers: try the free archive first.** For any `record_type: newspaper`
+item, generate the free-archive URL (Chronicling America, and the state/regional
+archive for the place) *before or alongside* a Newspapers.com URL — never
+instead of it if the user named Newspapers.com. The archives hold *different
+papers*: a title digitised only by a state archive is absent from Newspapers.com
+whatever the subscription, so a paid-only search can return a confident nil on a
+paper that was never there to find. `locality-guide` output for the place often
+already names the right regional archive; read it before guessing.
 
 **Check access.** Read `researcher_profile.subscriptions` in
 `research.json` — the researcher's access, whether by paid subscription,
@@ -111,13 +135,16 @@ account. Use it as a tie-breaker, never as a gate.
 | FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
 | Newspapers.com | `Newspapers.com` |
 | any of the above | `FamilySearch-Partner`, `LibraryAccess` — may cover it |
+| Chronicling America | free — no subscription, and no access route needed |
+| Utah Digital Newspapers and other state/regional archives | free — no subscription, and no access route needed |
 
 `FamilySearch-Partner` and `LibraryAccess` are access *routes*, not
 sites: which sites each unlocks varies by institution and changes. Treat
 neither as access to a named site, and neither as `none`. Generate the
 URL and note the route instead of flagging a paywall the researcher may
 not hit — "a family history centre often carries [SITE]; worth checking
-before you pay."
+before you pay." The two free archives are outside all of this: they need
+no subscription and no route, so never raise access for them at all.
 
 - If a plan item is repository-agnostic, prefer a site the researcher
   has access to — that search is immediately actionable.
@@ -144,6 +171,8 @@ titles mislead about scope and completeness.
 | FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
 | FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
 | Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
+| Chronicling America | `loc.gov/collections/chronicling-america/?dl=page&params` | US digitised newspaper pages 1798–1963, Library of Congress. **Free.** Bot-protected — capture required |
+| State/regional digital newspaper archives | varies — see below | e.g. Utah Digital Newspapers, California Digital Newspaper Collection. **Free.** Bot-protected — capture required |
 
 ## Steps
 
@@ -280,6 +309,38 @@ https://www.findagrave.com/memorial/search?firstname={first}&lastname={last}&bir
 https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place={place}
 ```
 
+#### Chronicling America (free)
+```
+https://www.loc.gov/collections/chronicling-america/?qs={first}+{last}&dl=page&start_date={start_yyyy}-01-01&end_date={end_yyyy}-12-31&location_state={state}
+```
+- `dl=page` — **required.** Without it the search returns newspaper *titles*
+  from the U.S. Newspaper Directory, not digitised pages, and a title-level nil
+  says nothing about whether the event was reported.
+- `qs` — the search words
+- `start_date`/`end_date` — full `YYYY-MM-DD`, spanning the plan item's whole
+  window. A `date_range` of `1870-1890` is `start_date=1870-01-01` and
+  `end_date=1890-12-31` — never collapse a multi-year window to one year.
+- `location_state` — lowercase state name (`utah`, `new york`)
+- Digitised page coverage runs **1798–1963**, title-by-title and complete for no
+  state — a nil result never means no newspaper covered the event.
+- Target date outside 1798–1963: do not build this URL. Say the page corpus does
+  not reach that period, and route to the state/regional archive for the place
+  (coverage differs) or to a paid site instead.
+- Do **not** use `chroniclingamerica.loc.gov/search/pages/results/` with
+  `andtext`/`date1`/`date2`/`state` — those parameters are ignored, the search
+  runs unscoped, and any nil logged from it is meaningless.
+
+#### State/regional digital newspaper archives (free)
+Utah Digital Newspapers:
+```
+https://newspapers.lib.utah.edu/search?q={first}+{last}
+```
+Use the archive's plain keyword search and put the discriminating terms in `q`.
+**Do not invent facet or date parameters for these archives** — an unrecognized
+parameter is silently ignored or errors the page, and the user lands on a dead
+end believing the search was scoped. Narrow with terms, then say in one line
+which date range they should set in the site's own UI.
+
 **Parameter strategy** (full guidance in
 `references/search-strategy-external.md`):
 - **Match the parameters to the plan item's event.** A marriage search needs
@@ -352,7 +413,7 @@ research_log_append({
   resultsExamined: 0,
   notes: "URL generated; awaiting user capture.",
   externalSite: {
-    site: "<ancestry|myheritage|findmypast|findagrave|newspapers>",
+    site: "<ancestry|myheritage|findmypast|findagrave|newspapers|chronicling_america|digital_newspaper_archive>",
     urlGenerated: "<the exact URL you present below>",
     captureReceived: false,
     captureFilename: null
