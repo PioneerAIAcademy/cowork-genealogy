@@ -347,7 +347,7 @@ reads from it:
   researcher gets concise reporting. Internally the level maps to a
   `narration_guidance` string that the skill reads and follows
   verbatim — one place defines the mapping (`init-project`), one place
-  stores it (`research.json`), every skill reads it.
+  stores it (`research.json`), every skill but one reads it.
 - **Access** guides `search-external-sites` URL prioritization. Sites
   you can reach land first; the rest are still searchable but flagged.
 
