@@ -212,6 +212,21 @@ describe("imageTranscribeTool — key / auth errors", () => {
     ).rejects.toThrow(/rejected \(401\)/);
   });
 
+  it("sends the 401 to the config file, never to the chat", async () => {
+    mockOpenRouterStatus(401);
+    const message = await imageTranscribeTool({
+      imageId: "004884748_02613",
+    }).then(
+      () => "",
+      (e: unknown) => (e instanceof Error ? e.message : String(e))
+    );
+    // The rejected key is replaced in config.json, so the instruction must
+    // name that file and must not route a fresh key through a tool call.
+    expect(message).toContain("~/.familysearch-mcp/config.json");
+    expect(message).not.toMatch(/configure_openrouter/i);
+    expect(message).not.toMatch(/\b(?:ask|paste|send|share|enter)\b/i);
+  });
+
   it("maps a 402 to an out-of-credits message", async () => {
     mockOpenRouterStatus(402);
     await expect(
