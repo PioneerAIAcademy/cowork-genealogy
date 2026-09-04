@@ -287,7 +287,7 @@
         "unit",
         "hook"
       ],
-      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. The unit plane cannot see that, because it grades a single skill's own run. Enforced at the hook plane since 2026-08-19: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the proof-conclusion AGENT. `callers` stays skill-only and `writerTools` stays research_append on purpose -- the unit plane keys on the calling skill's frontmatter name and cannot see an agent, so naming an agent there raises OwnershipManifestError. The agent caller lives in `hookCallers`, which is the per-plane field a later phase should read.",
+      "notes": "The highest measured bypass rate of any artifact: 47 of 133 committed e2e runs wrote a proof summary without ever launching the skill that owns it. test_ownership_table cannot see that, because it grades a single skill's own run; test_no_out_of_lane_section_writes has recorded the hook's agent-keyed verdict on this plane since 2026-09-02. Enforced at the hook plane since 2026-08-19: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the proof-conclusion AGENT. `callers` stays skill-only and `writerTools` stays research_append on purpose -- the unit plane keys on the calling skill's frontmatter name and cannot see an agent, so naming an agent there raises OwnershipManifestError. The agent caller lives in `hookCallers`, which is the per-plane field a later phase should read.",
       "requires": "Only proof-conclusion writes a conclusion, and never more than one summary per `question_id`.",
       "failure": "A summary written outside the skill skips the tier decision rules and the conflict preconditions, and the tree is then encoded from it.",
       "remedy": "Conclude through proof-conclusion.",
@@ -307,7 +307,7 @@
         "research_append"
       ],
       "enforceableAt": [],
-      "notes": "The owner is an agent, and the unit ownership check keys on the calling skill's SKILL.md frontmatter name \u2014 it cannot express an agent owner, which is why this row is unenforceable on that plane rather than merely unenforced. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
+      "notes": "The owner is an agent, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it cannot express an agent owner. Since 2026-09-02 test_no_out_of_lane_section_writes does see the agent caller, and because evaluations is outside proof-conclusion's lane a write there from that agent IS denied on the unit plane \u2014 incidentally, via the lane rule, not as a declared owner check for this row. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
       "requires": "Only the gps-mentor agent appends an evaluation. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
       "failure": "A skill appending its own evaluation grades its own work, and the mandatory proof critique becomes self-issued.",
       "remedy": "Invoke gps-mentor and let it write the entry.",

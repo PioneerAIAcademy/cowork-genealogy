@@ -1045,7 +1045,8 @@ def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
         f"the hook ({len(blocked_owned_section_writes)} call(s)): "
         f"{'; '.join(offending)}. Route the write through the owning skill, or "
         f"stay inside this agent's declared lane "
-        f"(docs/specs/schemas/ownership.json)."
+        f"(docs/specs/schemas/ownership.json). The deny is per CALL, not per op: "
+        f"every other op in the same research_append batch was refused with it."
     )
 
 

@@ -209,14 +209,17 @@ def test_every_denial_arm_produces_a_reason_the_validator_can_report():
 # --- the wiring ---------------------------------------------------------------
 
 def test_pretool_hook_calls_the_predicate_before_the_call_counter():
-    """Pins the wiring itself, which no behavioural test in this suite reaches.
+    """A cheap source-level backstop for the wiring, behind the behavioural
+    tests that actually pin it.
 
-    Nothing under `tests/` exercises `pretool_hook` — it is a closure inside
-    `run_skill` — so deleting the deny arm leaves the whole harness suite green.
-    That is precisely how this plane came to have no arm at all, and the same
-    shape as `test_orchestrator.py:1172`, which parses rather than indexes: the
-    property is
-    pinned on the SOURCE because no test reaches the runtime path.
+    The real guards are `test_an_out_of_lane_append_is_denied_and_recorded` and
+    `test_a_denied_call_does_not_consume_the_max_tool_calls_budget` in
+    `tests/unit/test_skill_runner.py`, which drive the real `pretool_hook`
+    closure. Deleting the arm reds all three of these, and this one is the
+    weakest of them: it indexes raw source to EOF rather than parsing, so it
+    cannot see whether the refusal is recorded, only that both calls appear in
+    order. Keep it for the ordering signal in the failure message; do not treat
+    it as the thing that pins the arm.
 
     Ordering is asserted, not just presence. A denied call never executes, so it
     must not consume the `max_tool_calls` budget — the same rationale the two
