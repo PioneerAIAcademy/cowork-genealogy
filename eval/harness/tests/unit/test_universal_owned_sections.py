@@ -21,8 +21,9 @@ Two things are covered, and they fail for different reasons:
    for by name, because `owner_denied` reads the caller from the PreToolUse
    payload and a payload without `agent_type` resolves `caller == ""` — under
    which the routed arm denies EVERY `proof_summaries` write in
-   proof-conclusion's own suite (81 ops across 17 tests, measured 2026-09-03 --
-   the corpus rotates, so re-derive rather than quote).
+   proof-conclusion's own suite (84 ops across 17 tests, measured 2026-09-03 --
+   the corpus rotates, so re-derive rather than quote, walking BOTH op forms:
+   3 of the 84 carry `section` at the top level, not under `ops[]`).
    That is ADR-0011's "the identifier is not what you expect" trap, and a
    silently-never-firing shape guard is exactly how this plane came to have no
    arm.
@@ -117,7 +118,7 @@ def test_the_observed_payload_resolves_a_bare_caller():
 
 def test_the_owner_is_not_denied_its_own_section():
     """The polarity half. With `caller == ''` the routed arm denies every
-    `proof_summaries` write in this skill's own suite — 81 ops across 17 tests as
+    `proof_summaries` write in this skill's own suite — 84 ops across 17 tests as
     of 2026-09-03 —
     which reads as a skill collapse rather than a guard. The owner must pass."""
     assert (
@@ -238,8 +239,9 @@ def test_pretool_hook_calls_the_predicate_before_the_call_counter():
         "grading out-of-lane writes as clean (issue #2022)"
     )
     assert "owned_section_denial(" in body, (
-        "the deny payload is no longer returned; the predicate's verdict is "
-        "computed and dropped"
+        "pretool_hook no longer mentions owned_section_denial. Whether the "
+        "verdict is actually RETURNED is pinned by "
+        "test_an_out_of_lane_append_is_denied_and_recorded, not here."
     )
 
     deny_at = body.index("owner_denied(")
