@@ -1,0 +1,20 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "false",
+    "f4": "false",
+    "f5": "false",
+    "f6": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Contradicted, not merely absent. The tree carries a Christening fact of 15 Oct 1682 at Fulltofta, Frosta harad, plus a BirthName \"Eline\" — a different parish in a different harad from Henckelstorp/Vastra Karaby. Neither Henckelstorp nor Vastra Karaby appears anywhere in the final research document.",
+    "f2": "Wrong father asserted and written to the tree: a ParentChild from \"Assmen Nielsson\" to Elena, sourced to two indexed entries. The expected father is Asmund Torsson of Henckestorp. Graded false rather than partial: the only correct element is the given name, which is free from Elena's own patronymic and required no research.",
+    "f3": "Wrong mother asserted and written to the tree: a ParentChild from \"Bentte Jeppisdr\", from the 1678 Fulltofta marriage of the wrong couple. Note this is a harder miss than run 1, which recovered no mother at all rather than a wrong one. Pernilla appears zero times in the research document.",
+    "f4": "The Couple relationship between Jons Jonsson and Elena exists in the starting tree but carries no marriage fact, date or place. The 29 December 1712 Vastra Karaby entry was never reached; the parish was never searched.",
+    "f5": "Absent, and the tree implies the opposite line: the asserted father is a Nielsson, which makes the paternal grandfather Nils rather than Tor Andersson.",
+    "f6": "Absent. No burial or death assertion for any Asmund Torsson, and no Vastra Karaby record was accessed at any point."
+  },
+  "findings_hash": "05f4c5fb6c8b0043934780844711212f847ea46a12a4b0531c0cee55234e9e93"
+}
