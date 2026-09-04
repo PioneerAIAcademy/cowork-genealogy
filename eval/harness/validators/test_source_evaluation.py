@@ -41,8 +41,22 @@ _DETACH_TERMS = ("detach", "detaching", "detached", "unlink", "unlinking", "unli
 # Phrases that recommend going back to the original image. "re-read",
 # "reread" and "read the original" are all live in the skill body and in
 # a genealogist's own vocabulary.
-_REREAD_PATTERN = re.compile(
-    r"re-?read|read the original|check the original|against the original (image|record|page)",
+# The rule is "send the researcher back to what the index was made from", not
+# the literal word "re-read". The corpus's index error sits on the Minnesota
+# Death Index — "database, FamilySearch", index-only, no scan — so a correct
+# report must NOT say "re-read the image" there, and SKILL.md now says so
+# (review of PR #2165, finding 4b). A pattern that only matched re-read
+# phrasings would have failed the very behaviour that change introduced.
+_GO_TO_SOURCE_PATTERN = re.compile(
+    r"re-?read"
+    r"|read the original"
+    r"|check the original"
+    r"|against the original (image|record|page)"
+    r"|go(ing)? back to"
+    r"|derive[sd]? from"
+    r"|was made from"
+    r"|correction path"
+    r"|correct the index",
     re.IGNORECASE,
 )
 
@@ -65,7 +79,7 @@ def test_index_discrepancy_recommends_reread(text_response, test):
     index, and kept the source attached.
     """
     _requires_index_discrepancy(test)
-    assert _REREAD_PATTERN.search(text_response), (
+    assert _GO_TO_SOURCE_PATTERN.search(text_response), (
         "source-evaluation reported on an index discrepancy without "
         "recommending a re-read of the original record. Doctrine point 1 "
         "of issue #1606: for a fact conflict that looks like a "
