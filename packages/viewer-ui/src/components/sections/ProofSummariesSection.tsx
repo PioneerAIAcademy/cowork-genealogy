@@ -15,7 +15,10 @@ export default function ProofSummariesSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Proof Summaries</h2>
-        <p className={styles.empty}>No proof summaries recorded.</p>
+        <p className={styles.empty}>
+          No proof summaries recorded. The written argument that ties the
+          evidence to a conclusion is composed during the proof-conclusion step.
+        </p>
       </div>
     )
   }

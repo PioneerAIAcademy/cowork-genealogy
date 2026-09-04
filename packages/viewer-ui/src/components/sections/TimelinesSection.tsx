@@ -14,7 +14,10 @@ export default function TimelinesSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Timelines</h2>
-        <p className={styles.empty}>No timelines recorded.</p>
+        <p className={styles.empty}>
+          No timelines recorded. A chronology of a person's life events, drawn
+          from the evidence, is assembled during the timeline step.
+        </p>
       </div>
     )
   }

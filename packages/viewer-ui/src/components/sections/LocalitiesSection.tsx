@@ -51,7 +51,11 @@ export default function LocalitiesSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Localities</h2>
-        <p className={styles.empty}>No locality guides saved yet.</p>
+        <p className={styles.empty}>
+          No locality guides saved yet. Guides to the places under research —
+          their jurisdictions, record sets, and repositories — are added during
+          the locality-guide step.
+        </p>
       </div>
     )
   }

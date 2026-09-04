@@ -49,7 +49,8 @@ describe('ConflictsSection', () => {
   it('shows the empty state when there are no conflicts', () => {
     mockResearch({ conflicts: [] })
     render(<ConflictsSection />)
-    expect(screen.getByText('No conflicts recorded.')).toBeInTheDocument()
+    expect(screen.getByText(/No conflicts recorded\./)).toBeInTheDocument()
+    expect(screen.getByText(/conflict-resolution step/)).toBeInTheDocument()
   })
 
   // A conflict missing its array fields must not throw (issue #1317: a

@@ -181,7 +181,11 @@ export default function SourcesSection(): React.JSX.Element {
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Sources</h2>
       {sources.length === 0 ? (
-        <p className={styles.empty}>No sources captured yet.</p>
+        <p className={styles.empty}>
+          No sources captured yet. Sources are the records examined during
+          research — each is captured and cited during the record-extraction
+          step.
+        </p>
       ) : (
         sources.map((s) => <SourceCard key={s.id} source={s} />)
       )}
