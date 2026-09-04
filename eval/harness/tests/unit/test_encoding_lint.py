@@ -369,3 +369,110 @@ def test_pep695_file_is_parsed_and_scanned(tmp_path):
     assert not unparseable, f"PEP 695 file was not parsed: {unparseable}"
     assert len(offenders) == 1
     assert "open()" in offenders[0]
+
+
+# ---------------------------------------------------------------------------
+# The output half of the same failure class: stdout encoding.
+#
+# The rules above cover DECODING what we read. This one covers ENCODING what we
+# print. A Windows console defaults to cp1252, so `print()`-ing a character
+# outside that codepage raises UnicodeEncodeError and kills the process
+# mid-report -- the same "green on macOS/Linux, broken for the Windows
+# genealogist team" shape, one direction over.
+#
+# Found 2026-08-31: `make e2e-agent-tools` died at
+# `agent_tool_usage_report.py`'s `print(format_report(...))` on the U+2192 in
+# its own `Limits` footer, which prints unconditionally. Eleven runnable modules
+# had the defect; `eval/harness/run_tests.py`, `skill_gate.py`,
+# `e2e/author.py` and `e2e/guardrail_shadow_report.py` already carried the fix,
+# under two different spellings -- which is why this matches `reconfigure` as a
+# name rather than one exact idiom.
+#
+# Scope: a module is in scope only if it is RUNNABLE (`__main__`) and contains a
+# character cp1252 cannot encode. A library module cannot be the process that
+# dies, and a runnable module with pure-ASCII output has nothing to fail on. The
+# check is deliberately an over-approximation in one direction: the offending
+# character may sit in a comment or docstring rather than a printed string, and
+# proving reachability to `print` statically is not worth it when the fix is
+# three lines and harmless. It is repo-wide (same SKIP set as above) rather than
+# harness-only, so no tree is excluded from its own lint.
+
+
+def _cp1252_unencodable(source: str) -> set[str]:
+    """Characters in *source* that a cp1252 console cannot encode."""
+    out: set[str] = set()
+    for ch in set(source):
+        if ord(ch) < 128:
+            continue
+        try:
+            ch.encode("cp1252")
+        except UnicodeEncodeError:
+            out.add(ch)
+    return out
+
+
+def _needs_stdout_guard(source: str) -> set[str]:
+    """The offending characters when *source* is a runnable module that prints
+    them without reconfiguring stdout; empty set when it is fine or out of scope."""
+    if "__main__" not in source:
+        return set()
+    if "reconfigure" in source:  # any spelling of the guard
+        return set()
+    return _cp1252_unencodable(source)
+
+
+def test_runnable_modules_that_print_non_cp1252_reconfigure_stdout():
+    assert REPO_ROOT.joinpath("CLAUDE.md").is_file(), (
+        f"repo-root detection is wrong: {REPO_ROOT} has no CLAUDE.md; "
+        "the lint would scan the wrong tree (a false green)."
+    )
+
+    offenders: list[str] = []
+    for path in _iter_python_files(REPO_ROOT):
+        try:
+            source = path.read_text(encoding="utf-8")
+        except (ValueError, UnicodeDecodeError):
+            continue
+        bad = _needs_stdout_guard(source)
+        if bad:
+            offenders.append(
+                f"{path.relative_to(REPO_ROOT).as_posix()}: prints "
+                f"{''.join(sorted(bad))!r} with no stdout reconfigure"
+            )
+
+    assert not offenders, (
+        "runnable module(s) print characters a cp1252 console cannot encode and "
+        "do not reconfigure stdout, so they die with UnicodeEncodeError on "
+        "Windows. Add the house pattern as the first statement of main():\n"
+        '    if hasattr(sys.stdout, "reconfigure"):\n'
+        '        sys.stdout.reconfigure(encoding="utf-8")\n'
+        '        sys.stderr.reconfigure(encoding="utf-8")\n'
+        "offenders:\n  " + "\n  ".join(sorted(offenders))
+    )
+
+
+def test_stdout_guard_rule_catches_and_clears_the_real_shapes():
+    """Unit-level proof the rule fires and can be satisfied -- the repo-wide test
+    above is green once the tree is clean, so on its own it cannot show that."""
+    runnable_bad = 'if __name__ == "__main__":\n    print("a → b")\n'
+    assert _needs_stdout_guard(runnable_bad) == {"→"}
+
+    # The two guard spellings that exist in this repo both clear it.
+    house = (
+        'if hasattr(sys.stdout, "reconfigure"):\n'
+        '    sys.stdout.reconfigure(encoding="utf-8")\n'
+    )
+    loop = (
+        "for _s in (sys.stdout, sys.stderr):\n"
+        '    if hasattr(_s, "reconfigure"):\n'
+        '        _s.reconfigure(encoding="utf-8")\n'
+    )
+    assert _needs_stdout_guard(house + runnable_bad) == set()
+    assert _needs_stdout_guard(loop + runnable_bad) == set()
+
+    # A library module is out of scope: it is never the process that dies.
+    assert _needs_stdout_guard('print("a → b")\n') == set()
+    # A runnable module with cp1252-safe output has nothing to fail on. The
+    # em-dash and smart quotes ARE encodable in cp1252 -- only the arrows, box
+    # glyphs and mathematical symbols are not.
+    assert _needs_stdout_guard('if __name__ == "__main__":\n    print("a — b")\n') == set()
