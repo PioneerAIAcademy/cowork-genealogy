@@ -4,7 +4,7 @@
     "skill": "source-evaluation",
     "name": "Two sources disagreeing about the same fact routes to conflict-resolution",
     "type": "negative",
-    "description": "Boundary against conflict-resolution. The user describes two sources giving different answers for one fact -- that is a conflict to be weighed, not a defect in a source to be classified. source-evaluation asks whether a source belongs here and whether it was indexed correctly; conflict-resolution asks which of two sources to believe. Reciprocal of the existing ut_check_warnings_011, which pins the same boundary from the warnings side.",
+    "description": "Boundary against conflict-resolution. The user describes two sources giving different answers for one fact -- that is a conflict to be weighed, not a defect in a source to be classified. source-evaluation asks whether a source belongs here and whether it was indexed correctly; conflict-resolution asks which of two sources to believe. One-directional by design: the reciprocal under eval/tests/unit/conflict-resolution/ would arm that suite's runlog gate, which is already red from 312d3c670 deleting its references/validation-protocol.md. check_negative_reciprocity.py warns on this edge; the warning is expected.",
     "tags": [
       "negative",
       "boundary",

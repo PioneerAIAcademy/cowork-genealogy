@@ -77,30 +77,38 @@ def test_index_discrepancy_recommends_reread(text_response, test):
 def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
     """The other half of doctrine point 1, and the one that actually failed.
 
-    Detaching is reserved for a source genuinely about a different
-    person. Recommending it for a mis-transcribed field discards good
-    evidence and leaves the bad field in the index for the next
-    researcher.
+    Detaching is reserved for a source genuinely about a different person.
+    Recommending it for a mis-transcribed field discards good evidence and
+    leaves the bad field in the index for the next researcher.
 
-    The fixture corpus deliberately also contains a genuinely
-    misattributed source, for which a detach IS correct — so this
-    assertion allows the word to appear, and fails only when it appears
-    without the misattribution finding that licenses it.
+    Scoped to the ONE source the test declares as the index error, via
+    `index_error_source`. An earlier version asked only whether the reply
+    mentioned a misattribution anywhere before allowing the word "detach"
+    anywhere — and since this corpus always contains a genuinely
+    misattributed source (HOLE-003), a correct report always granted that
+    licence, so the assertion could never fail. Review of PR #2165 proved it
+    with a reply that hedged "re-read the original and correct the index, or
+    detach the source if you prefer" on the index error and still passed,
+    which rubric.md grades `partial`. The fix keeps the module's contract —
+    the test declares the situation, the validator asserts the rule.
     """
     _requires_index_discrepancy(test)
-    lowered = text_response.lower()
-    detach_used = any(term in lowered for term in _DETACH_TERMS)
-    if not detach_used:
-        return
-    licensed = "misattribut" in lowered or "different person" in lowered or (
-        "belongs to" in lowered
-    )
-    assert licensed, (
-        "source-evaluation recommended detaching or unlinking a source "
-        "without identifying any source as misattributed to a different "
-        "person. Doctrine point 1 of issue #1606 reserves detaching for "
-        "genuinely misattributed sources; an indexing error is fixed by "
-        "re-reading the original and correcting the index."
+    protected = test.get("index_error_source")
+    if not protected:
+        pytest.skip("test declares no index_error_source to protect")
+    hits = [
+        block
+        for block in re.split(r"\n\s*\n", text_response)
+        if protected.lower() in block.lower()
+        and any(term in block.lower() for term in _DETACH_TERMS)
+    ]
+    assert not hits, (
+        f"source-evaluation recommended detaching or unlinking in the same "
+        f"passage as {protected!r}, which this test declares to be an "
+        f"indexing error. Doctrine point 1 of issue #1606 reserves detaching "
+        f"for genuinely misattributed sources; an index error is fixed by "
+        f"going back to what the index was made from and correcting it. "
+        f"Offending passage: {hits[0][:300] if hits else ''!r}"
     )
 
 

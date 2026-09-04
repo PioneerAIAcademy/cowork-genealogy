@@ -30,5 +30,6 @@
     "Must NOT recommend detaching, unlinking, removing or flagging the death index -- the record is about the right man and detaching would discard good evidence over one transposed digit",
     "Should say what makes it an index error rather than a wrong source: the day, month, county and name all match, and only the year digit differs",
     "The 1900 census indexes the birth year as 1877 against the profile's 1875. Explaining that two-year gap as ordinary census age variance is CORRECT and must not be penalised; census ages were estimated. What would be wrong is classifying it as an indexing error or recommending a correction for it. Saying nothing about it is also acceptable."
-  ]
+  ],
+  "index_error_source": "Minnesota Death Index"
 }

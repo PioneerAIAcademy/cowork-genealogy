@@ -62,7 +62,9 @@ Three kinds, and the recommendation follows the kind:
 
 **(a) Indexing or transcription error — the usual case.** The source is about the right person, but a value was mis-transcribed when the record was indexed: a misread date, a garbled surname, a place keyed to the wrong jurisdiction. Cues: the rest of the record fits the person; the disputed value is the kind that is hard to read in a handwritten register; the disagreement is one field, not the whole record.
 
-**Recommend re-reading the original image and correcting the index. Never recommend detaching for this kind.** The source is good evidence with one bad field, and detaching it loses the evidence while leaving the bad field in the index for the next researcher.
+**Recommend going back to what the index was made from, and correcting the index. Never recommend detaching for this kind.** The source is good evidence with one bad field, and detaching it loses the evidence while leaving the bad field in the index for the next researcher.
+
+**Say which "original" you mean — do not assume a scan exists.** Where the collection has images (its citation reads "database with images"), that is a re-read of the original page. Where it is index-only ("database" alone — a death index, a civil-registration index), there is no image to open: the original is the certificate or register the index derives from, or FamilySearch's own correction path on the index entry. Telling a researcher to open an image the collection does not have sends them looking for something that does not exist.
 
 **Not every disagreement is an error.** A census age or birth year within a couple of years of the profile is ordinary variance — ages were estimated, reported by whoever answered the door, and rounded. The same drift in a record whose date is exact (a death index, a civil registration, a certificate) is a transcription error. Judge by the record type, and do not report tolerable drift as a finding: a list padded with non-findings is the same failure as a list padded with backend metadata.
 
@@ -72,26 +74,20 @@ Three kinds, and the recommendation follows the kind:
 
 **Report the disagreement; do not narrate a mechanism you cannot see.** That a year is "a transposed digit", that a `5` was "misread as a 7", that a clerk "misheard the name" — these are guesses about a page you have not opened. State the two values and what kind of record each came from, and let the re-read settle how the error happened. An explanation offered with the confidence of a finding is the same defect as a backend artifact offered as a to-do.
 
-**(c) FamilySearch backend metadata — not a to-do.** Artifacts of how FamilySearch stores the data rather than defects a researcher can fix: repeated internal fact or conclusion ids across persons, `SD_`-prefixed identifiers, resource-type markers, contributor bookkeeping.
+**(c) FamilySearch backend metadata — not a to-do.** Artifacts of how FamilySearch stores the data rather than defects a researcher can fix: repeated internal fact or conclusion ids across persons, resource-type markers, contributor bookkeeping.
 
 **These are not findings. Do not list them as problems, do not number them among the errors, and do not recommend an action for them.** Mention one only if it explains something the user can see, and then as context in a closing note — never in the findings list. A user who is handed backend metadata alongside real errors has to triage the list you were supposed to triage for them.
 
 **When the kind is ambiguous between (a) and (b)** — the usual honest outcome on a single disputed field — report it as (a), say what would settle it, and recommend re-reading the original first. Re-reading is recoverable and detaching is not: a wrongly detached source is evidence the next researcher has to rediscover.
 
-### 5. Re-read an original image only through the image-reader subagent
-
-**You do not have `image_read` or `image_transcribe`.** When a finding turns on what the original scan actually says, delegate the page to the **`image-reader` subagent** (`@plugin:image-reader`), one page per delegation, passing only the `imageId` and optionally a short pointer to who or what to locate. It reads the scan in an isolated context and returns a transcription; the raw image never enters yours. Reading scans in this session's own context accumulates inline base64 until the transport buffer overflows and the run crashes.
-
-Never fabricate what a page says. If the subagent returns `NOT READ`, record that the re-read was not possible and leave the finding at the classification step 4 reached without it.
-
-### 6. Report
+### 5. Report
 
 Open with the count of **user-actionable** findings — backend metadata is not in that count. Then, per finding:
 
 - Which source, named by its title and citation, not by its internal id
 - What disagrees with what: the indexed value beside the recorded fact
 - The classification and the cue that decided it
-- The recommended action, in the doctrine of step 4 — re-read and correct the index for (a), detach with a reason for (b)
+- The recommended action, in the doctrine of step 4 — for (a), go back to what the index was made from and correct it, naming whether that is the original page or (for an index-only collection) the record it derives from; for (b), detach, with the reason
 
 Close with the sources you could not check and why. If any backend metadata came up, one closing sentence of context — not a list, not a to-do.
 
@@ -128,7 +124,7 @@ from you.)
 
 - **Re-read before detach.** For a fact conflict that looks like a transcription or indexing error, the first-line recommendation is always to re-read the original and correct the index. Detaching is reserved for a source genuinely about a different person.
 - **Never present backend metadata as a to-do.** It is context at most, and usually nothing.
-- **No image reading in this context — `@plugin:image-reader` only.**
+- **You do not read images.** You hold no image tool, and none of your three tools returns an image id, so there is no scan you could open. Report what the index says and name what the researcher should go back to.
 - **Write nothing.** No `research_append`, no `tree_edit`. If the audit turns up a genuine source-vs-source conflict worth recording, say so in the report and let the user take it to the conflict workflow; do not record it yourself.
 - **Never assert what a source says without having read it.** A source you could not read is reported as unchecked, not as clean.
 

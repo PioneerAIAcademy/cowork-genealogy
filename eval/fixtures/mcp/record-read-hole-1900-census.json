@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "The 1900 US Census record attached to Christian P. Hole (KD96-TV2) as SD-HOLE-A. Everything in it fits the profile — the township, the ED, the wife Inger, the son Ole — except the indexed birth year, which reads 1877 against the profile's 1875. That single-field disagreement is the source-evaluation skill's canonical indexing error: the remedy is to re-read the original page and correct the index, and detaching would throw away good evidence over one misread digit.",
+  "description": "The 1900 US Census attached to Christian P. Hole (KD96-TV2) as SD-HOLE-A. It indexes his birth year as 1877 against the profile's 1875. That two-year gap is ordinary census variance — ages were estimated and reported by whoever answered the door — and the corpus uses it as the deliberate NON-finding that the death index's exact-date error is graded against. Classifying it as an indexing error, or recommending a correction for it, is the over-reporting this record exists to catch. Everything else fits: the township, the ED, the wife Inger, the son Ole C.",
   "args": {
     "recordId": "~HOLE-001"
   },

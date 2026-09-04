@@ -31,5 +31,6 @@
     "The stated count of findings must exclude backend metadata",
     "The 1900 census birth year is two years off the profile. It must not be counted among the numbered findings, but noting it and explaining it as ordinary census variance is correct and must not be penalised.",
     "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean"
-  ]
+  ],
+  "index_error_source": "Minnesota Death Index"
 }
