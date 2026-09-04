@@ -2122,9 +2122,9 @@ def test_v8_skips_when_not_activated():
     assert "skipped" in (result.error or "").lower()
 
 
-def test_v8_passes_on_routing_short_circuit():
-    """V8: a negative-test routing short-circuit (skills_invoked intersects
-    correct_skill) is an intentional stop, not a dead run — pass."""
+def test_v8_fires_on_routing_short_circuit():
+    """V8: a negative-test routing short-circuit still fails V8 — zero
+    telemetry and a short response is a dead run regardless of routing."""
     state = _empty_research_state()
     results = run_validators(
         skill="search-familysearch-wiki",
@@ -2138,11 +2138,11 @@ def test_v8_passes_on_routing_short_circuit():
         text_response="Short routing announcement.",
         aborted_reason=None,
         skills_invoked=["citation"],
-        test={"type": "negative", "negative": {"correct_skill": ["citation"]}},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
-    assert result.passed is True, f"unexpected failure: {result.error}"
+    assert result.passed is False
+    assert "no meaningful output" in (result.error or "")
 
 
 # --- Anti-bias constraint (issue #1749) -----------------------------------
