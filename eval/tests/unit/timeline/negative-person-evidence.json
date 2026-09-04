@@ -4,19 +4,19 @@
     "skill": "timeline",
     "name": "Record-to-person attribution should not trigger timeline",
     "type": "negative",
-    "description": "User asks which person a record should be attributed to (the death certificate — Patrick of Ireland, or the other Patrick in Schuylkill). That's person-evidence (linking assertions to the right person in the tree), not timeline. Timeline arranges events chronologically; it does not decide record-to-person attribution.",
+    "description": "User asks whether an unlinked 1850 census record (src_001, a clean match on every identifier) is the same person as the subject. That's person-evidence (scoring the match and creating the person_evidence link), not timeline. Timeline arranges events chronologically; it does not decide record-to-person attribution. Uses flynn-record-matching, where person_evidence is empty and no conflict/hypothesis is already logged for this record, so the attribution decision is still genuinely open (mid-research-flynn's death certificate is unsuitable here — its person_evidence link, pe_005, is already made). src_001 (the clean match) is used rather than src_003 (the 'Flinn' surname-variant record) because the variant's genuine matching uncertainty pulls routing toward conflict-resolution's identity-conflict machinery instead — a real, separate boundary question, not this test's target.",
     "tags": ["near-miss", "timeline-vs-person-evidence", "boundary"]
   },
   "input": {
-    "user_message": "Does this death certificate belong to Patrick Flynn born in Ireland in 1845, or to the other Patrick Flynn in Schuylkill?",
-    "scenario": "mid-research-flynn"
+    "user_message": "The 1850 census (src_001) lists a Patrick Flynn, age 5, in Thomas Flynn's household — matching my Patrick Flynn on every identifier. Is this the same person? Evaluate the match and link it.",
+    "scenario": "flynn-record-matching"
   },
   "negative": {
     "correct_skill": ["person-evidence"],
-    "explanation": "The user is asking how to attribute a record to a person — which of two same-name candidates a death certificate belongs to. That is person-evidence's job (creating/weighing person_evidence links). Timeline can reveal that records don't cohere, but it does not perform the record-to-person attribution decision the user is requesting."
+    "explanation": "The user is asking whether an unlinked record's persona is the same individual as the subject — a record-to-person attribution decision. That is person-evidence's job (scoring the match, creating/weighing person_evidence links). Timeline can reveal that records don't cohere, but it does not perform this attribution decision."
   },
   "judge_context": [
-    "Should route to person-evidence (record-to-person attribution), not build or regenerate a timeline"
+    "Should route to person-evidence (record-to-person attribution and linking), not build or regenerate a timeline"
   ],
   "execution": {
     "max_wall_clock_seconds": 600

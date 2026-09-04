@@ -1,0 +1,29 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all -- every Trysil candidate.",
+  "args": {
+    "placeName": "~Trysil"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Trysil, Innlandet, Norway",
+        "type": "Municipality",
+        "dateRange": "+2020/",
+        "latitude": 61.31,
+        "longitude": 12.315,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Trysil&focusedId=12117966",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Trysil"
+      },
+      {
+        "standardPlace": "Trysil, Hedmark, Norway",
+        "type": "Municipality",
+        "dateRange": "+1781/+2019",
+        "latitude": 61.31,
+        "longitude": 12.315,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Trysil&focusedId=551666",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Trysil"
+      }
+    ]
+  }
+}
