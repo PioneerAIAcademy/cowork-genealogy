@@ -83,11 +83,15 @@ def test_untagged_profile_test_is_skipped():
         check_profile(_research(), UNTAGGED)
 
 
-def test_both_defaults_present_passes():
-    check_profile(
-        _research({"experience_level": "intermediate", "subscriptions": ["none"]}),
-        PROFILE_TAGGED,
-    )
+def test_experience_default_present_passes():
+    check_profile(_research({"experience_level": "intermediate"}), PROFILE_TAGGED)
+
+
+def test_absent_subscriptions_passes():
+    """The site-access question was dropped on 2026-08-31, so the field is left
+    absent rather than defaulted. This is the shape the validator must accept —
+    it is the whole point of the ruling, not an omission."""
+    check_profile(_research({"experience_level": "intermediate"}), PROFILE_TAGGED)
 
 
 def test_absent_profile_fails():
@@ -98,16 +102,37 @@ def test_absent_profile_fails():
 def test_wrong_experience_level_fails():
     with pytest.raises(AssertionError, match="experience_level"):
         check_profile(
-            _research({"experience_level": "novice", "subscriptions": ["none"]}),
+            _research({"experience_level": "novice"}),
             PROFILE_TAGGED,
         )
 
 
-def test_wrong_subscriptions_fails():
+def test_volunteered_subscriptions_do_not_fail():
+    """A researcher can still volunteer access and it can still be recorded — the
+    ruling dropped the question, not the field. The validator must not reject a
+    profile that carries one."""
+    check_profile(
+        _research({"experience_level": "intermediate", "subscriptions": ["Ancestry"]}),
+        PROFILE_TAGGED,
+    )
+
+
+def test_defaulted_none_subscriptions_fails():
+    """The regression guard. `["none"]` is the pre-2026-08-31 default: it asserts
+    the researcher told us they have nothing, the opposite of what the ruling now
+    assumes. Nothing else catches a reintroduction — the value is schema-valid,
+    so `validate_research_schema` passes it happily."""
     with pytest.raises(AssertionError, match="subscriptions"):
         check_profile(
-            _research(
-                {"experience_level": "intermediate", "subscriptions": ["ancestry"]}
-            ),
+            _research({"experience_level": "intermediate", "subscriptions": ["none"]}),
+            PROFILE_TAGGED,
+        )
+
+
+def test_defaulted_empty_subscriptions_fails():
+    """The same defect wearing a different shape, and equally schema-valid."""
+    with pytest.raises(AssertionError, match="subscriptions"):
+        check_profile(
+            _research({"experience_level": "intermediate", "subscriptions": []}),
             PROFILE_TAGGED,
         )
