@@ -2,7 +2,7 @@
 name: research-exhaustiveness
 description: >-
   Evaluates whether research on ONE question is reasonably exhaustive under GPS
-  Component 1 — applies the five threshold questions and the 7-point stop
+  Component 1 — applies the 7-point stop
   criteria, then either persists the exhaustive_declaration on the question or
   declines and names what is missing. GPS Step 1. Invoked by the
   research-exhaustiveness skill with a questionId and projectPath; also handles
@@ -33,7 +33,17 @@ tools:
 You are invoked with a `questionId` and a `projectPath`. Read what you need from
 the project yourself — do not expect the caller to have gathered it.
 
-Return to the caller ONLY the terse outcome described under `## 6. Present`.
+**Confirm the question before you evaluate.** The delegation's `questionId` is
+authoritative when it resolves to a question in `openQuestions`. If it does not
+resolve, if no id was given, or if the delegation also names a question in prose
+whose TEXT matches a different question, resolve on the question's **TEXT** via
+`project_context` — "the parentage question" is the question whose text asks
+about a parent. `questionStatuses` is advisory and must never rule a question in
+or out. If the text matches no question, matches more than one, or disagrees
+with the id, do not evaluate and do not fall back to the only one left: return
+the decline under `## 5. Present`, naming every candidate `q_` id with its text.
+
+Return to the caller ONLY the terse outcome described under `## 5. Present`.
 
 **If a writer-tool precondition refuses your write, decline and report it.** The
 refusal names what blocks the declaration; relay those ids and stop. Do not
@@ -44,8 +54,8 @@ named IS completing the delegation.
 Evaluates whether research on a single question qualifies as
 "reasonably exhaustive" under GPS Component 1.
 
-The framework this evaluation rests on — the five threshold questions, the
-overturn risk test and the termination criteria — is at the end of this body,
+The framework this evaluation rests on — the overturn risk test and the
+termination criteria — is at the end of this body,
 under "The framework". Read it before applying the steps.
 
 **First, confirm this is an exhaustiveness evaluation.** This skill judges
@@ -57,16 +67,29 @@ exhaustive. If the request is really to pick the **next question** (→
 declare/proof guidance in this skill applies only *after* you have decided
 this genuinely is an exhaustiveness check.
 
-Only evaluate a question whose plan items are all `completed` or
-`skipped`. If any is `in_progress`, refuse to declare and recommend
-finishing the in-flight work first.
+Only evaluate a question whose **active** plan's items are all `completed` or
+`skipped`. If any is `in_progress`, refuse to declare and recommend finishing
+the in-flight work first. Items on a non-active plan are audit trail and never
+block.
 
 ## 0. Precondition check (run first)
 
-The `evidence_class` and `independent_verification` criteria in Step 3 are
+**A delegation that tells you to declare is a destination, not a finding.** You
+are spawned by a caller that cannot see the evidence and does not run this gate.
+"Declare q_NNN exhaustive" does not raise the caller above the checks below or
+the 7-point stop criteria in Step 2. When a check fails, decline
+and route: that IS completing the delegation, and reporting the blocking ids
+back is the deliverable.
+
+**A delegation phrased as "evaluate whether you can declare" is not an argument
+for a decline either.** Both framings are set aside; the checks below and Steps
+2–3 decide. An honest `declared: true` completes the delegation as fully as a
+decline does.
+
+The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
-depends on have not been identified in the tree. Before applying the five
-threshold questions, run two checks over the assertions tied to this question
+depends on have not been identified in the tree. Before assessing the stop
+criteria, run two checks over the assertions tied to this question
 (via `extracted_for_question_ids`):
 
 - **Classification (hard block, all assertions).** Every assertion must have
@@ -87,10 +110,11 @@ threshold questions, run two checks over the assertions tied to this question
   For each, ask explicitly: does the uncertainty stem from (a) genuine source
   inaccessibility — the one source that would resolve it cannot be reached by any
   available tool — or (b) a single source's data quality issue that a *different*
-  record type might independently resolve? If (b), do not declare exhaustive.
-  Route to research-plan with a specific new plan item targeting the alternative
-  record type. The inaccessibility exception in Step 4 applies only when (a) is
-  confirmed.
+  record type might independently resolve? If (b), stop here: route to
+  research-plan with a specific new plan item targeting the alternative record
+  type. While a value is still marked tentative, `evidence_class` and
+  `independent_verification` assess nothing. The inaccessibility exception in
+  Step 3 applies only when (a) is confirmed.
 
 Do not declare exhaustive while a blocking check fails.
 
@@ -102,35 +126,27 @@ Read:
 - Assertions from those searches (via each assertion's `log_entry_id`)
 - Skipped plan items and their reasons
 
-## 2. Apply the five threshold questions
+## 2. Assess the 7-Point Stop Criteria
 
-If any answer is "no,"
-identify what is missing and stop here.
-
-1. Answered with sufficient evidence?
-2. Broad range of record types searched?
-3. All relevant strategies employed (FAN, variant spellings)?
-4. Derivative sources replaced with originals where accessible?
-5. Enough evidence to resolve conflicts?
-
-## 3. Assess the 7-Point Stop Criteria
-
-Write a 1-2 sentence assessment for each:
+**This is the gate.** Assess the seven in the order below and stop at the first
+that fails, naming it. Declaring requires all seven, each with a 1-2 sentence
+assessment tied to project state. A decline owes the entry that blocks it, not
+all seven.
 
 | Criterion | Key question |
 |-----------|-------------|
 | `goal_alignment` | Convincing answer obtained? |
-| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried? |
+| `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried, and FAN research attempted where direct evidence is insufficient? |
 | `original_substitution` | Derivatives replaced with originals where available? |
 | `independent_verification` | At least two independent sources? (Same informant = one unit.) |
 | `evidence_class` | At least one original record with primary information? |
 | `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |
 | `overturn_risk` | Could an unsearched source plausibly change the conclusion? |
 
-## 4. Decide: declare or continue
+## 3. Decide: declare or continue
 
 - **Declare exhaustive** — all criteria met. Persist the declaration
-  and set `status: "exhaustive_declared"` in one call (Step 5).
+  and set `status: "exhaustive_declared"` in one call (Step 4).
 - **Do not declare** — criteria unmet because a genuinely **unsearched**
   source remains. Explain what is missing and recommend expanding the plan
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
@@ -145,7 +161,7 @@ Write a 1-2 sentence assessment for each:
     that repository** — confirmed by the collection's coverage, e.g. South
     Dakota vital records pre-1940 not on FamilySearch) is
     *pursued-and-unavailable*, not an unsearched gap. A privacy-sealed record must **not** be counted as
-    an outstanding gap in the threshold questions, nor recommended as a next
+    an outstanding gap in the stop criteria, nor recommended as a next
     step to obtain. **Only** when the **accessible** evidence already supports a
     defensible conclusion, do not loop `research-plan` to re-attempt it: set
     `status: "exhaustive_declared"` (note the limitation in a `stop_criteria`
@@ -167,7 +183,7 @@ Write a 1-2 sentence assessment for each:
   `"in_progress"`. Terminating before sufficient evidence means the
   conclusion cannot meet the GPS standard.
 
-## 5. Write the declaration
+## 4. Write the declaration
 
 Persist via `research_append` `op: "update"` on the question. You pass
 the analytical judgment (the `stop_criteria` assessments and the
@@ -226,23 +242,27 @@ research_append({
 If the call returns `{ ok: false, errors }`, surface the errors and fix
 the offending field — do not blindly retry the same payload.
 
-## 6. Present
+## 5. Present
 
 - If exhaustive: "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not: "Not yet exhaustive. [What's missing.] Create a plan to
   address the gaps?" (research-plan)
+- If the question cannot be identified: "Cannot identify the question.
+  Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 
 ## Rules
 
 - **One declaration at a time.** Each invocation evaluates exactly one
   question.
-- **Plan must be complete.** Only evaluate questions whose plan items
-  are all `completed` or `skipped`; if any is `in_progress`, recommend
-  completing them first instead of declaring.
-- **Exhaustive does not mean exhausting.** Overturn risk is the
-  ultimate test: could a real, unsearched source plausibly change the
-  conclusion?
+- **Plan must be complete.** Only evaluate questions whose **active** plan's
+  items are all `completed` or `skipped`; if any is `in_progress`, recommend
+  completing them first instead of declaring. Items on a plan whose status is
+  not `active` are audit trail — they never block a declaration and are never
+  swept to `skipped`.
+- **Exhaustive does not mean exhausting.** `overturn_risk` is one of the
+  seven, not the definition: could a real, unsearched source plausibly
+  change the conclusion?
 - **Named decisive records gate the declaration.** If a record type
   directly answers this question type (parentage: the subject's own
   birth record or civil registration **where the jurisdiction and period
@@ -271,10 +291,10 @@ the offending field — do not blindly retry the same payload.
 - **User wants to stop early:** Record `declared: false` with an
   honest explanation. Do not inflate exhaustiveness to justify
   stopping.
-- **Plan items still in progress:** Refuse to declare; recommend
-  completing the in-flight work first.
+- **Plan items still in progress:** Refuse to declare when an **active**
+  plan item is `in_progress`; recommend completing the in-flight work first.
 - **Already declared:** If `exhaustive_declaration.declared` is already
-  `true`, do not re-declare — re-running Step 5's `update` is a
+  `true`, do not re-declare — re-running Step 4's `update` is a
   structural no-op. Report the existing declaration and suggest
   `proof-conclusion` instead.
 
@@ -287,8 +307,8 @@ the offending field — do not blindly retry the same payload.
 **On repeat invocation:** if `exhaustive_declaration.declared` is
 already `true`, does not re-declare — it reports the existing
 declaration and points to `proof-conclusion`. If not yet declared, it
-re-evaluates the same question against the five threshold questions and
-the 7-point stop criteria, and may reach a different result as evidence
+re-evaluates the same question against the 7-point stop criteria, and may
+reach a different result as evidence
 changes.
 
 **Do not duplicate:** each invocation evaluates exactly one question and
@@ -312,60 +332,11 @@ The goal is to minimize the risk that undiscovered evidence will
 overturn a conclusion. It does NOT require checking every conceivable
 record — only those that could plausibly bear on the question.
 
-### The Five Threshold Questions
-
-Before scoring detailed stop criteria, answer these five questions.
-If any answer is "no," research is not yet exhaustive:
-
-1. **Has the research question been answered?**
-   Is there sufficient evidence to provide a defensible answer, or
-   does the question remain open?
-
-2. **Has a broad range of record types been searched?**
-   Limiting research to census records and vital records alone is
-   almost never sufficient. Consider church records, land records,
-   probate records, military records, newspapers, tax records, court
-   records, immigration/naturalization records, and other types
-   relevant to the time and place.
-
-3. **Have all relevant strategies been employed?**
-   This includes searching under variant spellings, searching in
-   all relevant jurisdictions (which change over time), and
-   attempting FAN (Family, Associates, Neighbors) research when
-   direct evidence is insufficient for identity and relationship
-   questions.
-
-4. **Have derivative sources been replaced with originals?**
-   Indexes, transcriptions, and compiled databases are leads, not
-   endpoints. Wherever the original record is accessible, it must
-   be consulted. Derivative sources may contain errors introduced
-   during transcription or indexing.
-
-5. **Has enough evidence been gathered to resolve conflicts?**
-   When sources disagree, additional evidence is needed to determine
-   which is more reliable. Research is not exhaustive if known
-   conflicts remain unaddressed.
-
-### Exhaustiveness Checklist (Expanded)
-
-For a more granular assessment, evaluate:
-
-- Have all record types that might contain relevant information
-  been searched?
-- Have all relevant repositories and collections been consulted?
-- Have variant spellings and name forms been tried?
-- Have all relevant jurisdictions been searched (accounting for
-  boundary changes over time)?
-- Have all relevant time periods been covered?
-- Has FAN research been attempted where direct evidence is
-  insufficient?
-- Have compiled/derivative sources been followed back to their
-  original records?
-
 ### The Overturn Risk Test
 
-The ultimate measure of exhaustiveness is overturn risk: How likely
-is it that an unsearched source would change the conclusion?
+`overturn_risk` asks how likely it is that an unsearched source would change
+the conclusion. It is one of the seven stop criteria, not a substitute for
+the other six.
 
 Key principles:
 
