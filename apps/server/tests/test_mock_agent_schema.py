@@ -75,11 +75,11 @@ async def _turn(agent: MockAgent, text: str) -> None:
 async def test_mock_agent_documents_validate(tmp_path: Path) -> None:
     agent = MockAgent(tmp_path)
 
-    # Drive the scripted interview: greet → experience → subscriptions →
-    # objective, which is the turn that writes research.json.
+    # Drive the scripted interview: greet → experience → objective, which is the
+    # turn that writes research.json. There is deliberately no access turn — the
+    # real interview stopped asking, and this mock stands in for production.
     await _turn(agent, "hello")
     await _turn(agent, "intermediate")
-    await _turn(agent, "Ancestry")
     await _turn(agent, "Identify the parents of Patrick Flynn")
 
     research = tmp_path / "research.json"
@@ -87,6 +87,17 @@ async def test_mock_agent_documents_validate(tmp_path: Path) -> None:
 
     init_doc = json.loads(research.read_text(encoding="utf-8"))
     assert _errors(init_doc) == [], "init document is invalid"
+
+    # Schema-validity alone cannot catch a regression here: absent, `[]` and
+    # `["none"]` are all valid, so the guard has to be on absence specifically.
+    # `["none"]` asserts the researcher told us they have nothing, the opposite
+    # of the current assumption that access is available.
+    profile = init_doc["researcher_profile"]
+    assert "subscriptions" not in profile, (
+        "researcher_profile.subscriptions must be ABSENT — site access is no "
+        "longer asked, so nothing may default it. Got: "
+        f"{profile.get('subscriptions')!r}"
+    )
 
     tree = tmp_path / "tree.gedcomx.json"
     assert tree.exists(), "the objective turn wrote no tree.gedcomx.json"

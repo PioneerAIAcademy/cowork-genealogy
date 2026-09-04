@@ -1,0 +1,1030 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search -- Digitalarkivet and other off-FamilySearch Trysil links.",
+  "args": {
+    "standardPlace": "~Trysil"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Trysil, Hedmark, Norway",
+      "startYear": 1780,
+      "endYear": 1880
+    },
+    "totalForPlace": 625,
+    "returned": 253,
+    "results": [
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+births+and+baptisms&sid=103&country=norway",
+        "linkText": "British Armed Forces and Overseas Births and Baptisms"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-20236/norway-1875-sailors-seamen-census",
+        "linkText": "Norway, 1875 Sailors and Seamen Census"
+      },
+      {
+        "url": "https://library.harvard.edu/services-tools/hollis",
+        "linkText": "Harvard Library Catalog"
+      },
+      {
+        "url": "https://www.statueofliberty.org/discover/passenger-ship-search/",
+        "linkText": "The Statue of Liberty-Ellis Island Foundation, Inc."
+      },
+      {
+        "url": "http://www.ellisisland.org/",
+        "linkText": "The Statue of Liberty — Ellis Island Foundation"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/source/43711",
+        "linkText": "Trondheim Emigrant Protocol, 1871-1872"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/",
+        "linkText": "Most searches can be performed from the main page Digital Archives"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0431",
+        "linkText": "Civil Marriage Index, 1862-1918"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60604/",
+        "linkText": "The census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/content/109/church-books",
+        "linkText": "Church Books - The Digital Archive"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1345",
+        "linkText": "Norway Births and Christenings, 1648-1903"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=UTVA",
+        "linkText": "DigitalArkivet has additional emigration lists"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=1622",
+        "linkText": "civil marriage, image and index, 1879-1905"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0917",
+        "linkText": "Civil Marriage Records, 1879-1912"
+      },
+      {
+        "url": "https://www.rhd.uit.no/indexeng.html",
+        "linkText": "Norway Parish Record Search"
+      },
+      {
+        "url": "http://www.norwayheritage.com/queryyear.asp",
+        "linkText": "Ship Departure Index 1825-1925"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-11013/norway-emigration-registers-1867-1973",
+        "linkText": "Norway Emigration Registers, 1867-1959"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/79",
+        "linkText": "Search in Funeral Service and Burials"
+      },
+      {
+        "url": "https://apps.library.und.edu/bygdebok/history-and-acknowledgements",
+        "linkText": "Arne G. Brekke Bygdebok Collection"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0529",
+        "linkText": "Civil Marriage Index, 1863-1920"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-20236/norway-1875-sailors-seamen-census",
+        "linkText": "Norway, 1875 Sailors and Seamen Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=PALI",
+        "linkText": "DigitalArkivet has additional ship passenger lists"
+      },
+      {
+        "url": "http://www.cyndislist.com/",
+        "linkText": "Cyndi's List of Genealogy Sites on the Internet"
+      },
+      {
+        "url": "https://adressesok.posten.no/",
+        "linkText": "Post- og frakttjenester i Norge og utlandet"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61757/",
+        "linkText": "Norway Emigration Records, 1867-1960"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-11030/norway-newspapers-from-oldnewscom",
+        "linkText": "Norway Newspapers"
+      },
+      {
+        "url": "https://slcl.libguides.com/SLCL_genealogy/Norway",
+        "linkText": "History & Genealogy Department at St. Louis County Library"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=SKIK",
+        "linkText": "Finn kilde - Digitalarkivet"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30233/finland-baptisms-1657-1890",
+        "linkText": "Finland Baptisms, 1657-1890"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30032/norway-burials-1666-1927",
+        "linkText": "Norway Burials, 1666-1927"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10807/1865-norway-census?utm_source=organic_blog&utm_medium=blog&utm_campaign=supersearch&tr_funnel=supersearch&tr_country=US&tr_creative=nov19historicalrecords&utm_content=nov19historicalrecords",
+        "linkText": "1865 Norway Census"
+      },
+      {
+        "url": "http://www.sofn.com/home/index.jsp",
+        "linkText": "Sons of Norway Records"
+      },
+      {
+        "url": "http://www.rhd.uit.no/indexeng.html",
+        "linkText": "Norwegian Historical Data Centre, University of Tromsø, Norway"
+      },
+      {
+        "url": "http://www.startsiden.no/",
+        "linkText": "Topp"
+      },
+      {
+        "url": "https://nettgrav.no/finn-en-grav",
+        "linkText": "Finn grav i Norge – søk etter gravsted og gravlund"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61753/",
+        "linkText": "1865 Norway Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Find source - The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/source/43712",
+        "linkText": "Trondheim Emigrant Protocol, 1872-1878"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/3/100016",
+        "linkText": "Emigrants from Ålesund, 1878-1930"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0426",
+        "linkText": "Civil Marriage Index, 1864"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=Korskirken&from=&to=&format=all&archive_key=&lt%5B%5D=bv&m%5B%5D=1301",
+        "linkText": "civil marriage, image and index, 1871-1886"
+      },
+      {
+        "url": "https://martinroe.com/blog/bygdeboker-available-online/",
+        "linkText": "Bygdebøker Available Online (Outside the National Library)"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60093",
+        "linkText": "Norway Select Burials, 1666-1927"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60604/",
+        "linkText": "The census"
+      },
+      {
+        "url": "http://www.cord.edu/",
+        "linkText": "Concordia College, Moorhead, Minnesota"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0528",
+        "linkText": "Civil Marriage Index, 1863-1920"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=nykirken&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=1301",
+        "linkText": "Civil Registration Records, 1874-1885"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1900",
+        "linkText": "The Digital Archives - 1900 Census"
+      },
+      {
+        "url": "https://www.norwegianamerican.org/Research-Links",
+        "linkText": "Norwegian-American Genealogical Association Research Links"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/87/folketellinger-og-manntall",
+        "linkText": "Folketellinger og manntall - Digitalarkivet"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Digitalarkivet - Search for church books"
+      },
+      {
+        "url": "https://vareminnesider.no/index.php?sign=39cb4f8d032fe87e47bc628d237134e1",
+        "linkText": "Dødsannonser, dødsfall og minnesider for hele Norge"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/8/100398",
+        "linkText": "Passport protocols for Ålesund, 1850-1890"
+      },
+      {
+        "url": "http://www.emigrationcenter.com/",
+        "linkText": "Emigration Center"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30233/finland-baptisms-1657-1890",
+        "linkText": "Finland Baptisms, 1657-1890"
+      },
+      {
+        "url": "https://www.rhd.uit.no/nhdc/census.html#BM1801",
+        "linkText": "Documenting the Norwegian Censuses, 1801"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Search for church books"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://digitalarkivet.no/",
+        "linkText": "Norway Church Records"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/db/browse?start_year=&end_year=&text=%3A+Lassens+samlinger",
+        "linkText": "Søk etter skanna arkiver - Nasjonalarkivet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0537",
+        "linkText": "Civil Marriage Index, 1856-1919"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+deaths+and+burials&sid=103&country=norway",
+        "linkText": "British Armed Forces and Overseas Deaths and Burials"
+      },
+      {
+        "url": "https://www.nagcnl.org/databases/#immigration",
+        "linkText": "Norwegian Immigrants 1825 and later"
+      },
+      {
+        "url": "https://aulis.org/Calendar/Ecclesiastical_dates.html",
+        "linkText": "Ecclesiastical Calendar"
+      },
+      {
+        "url": "http://www.ancestry.com/default.aspx",
+        "linkText": "Genealogy and Family History Records"
+      },
+      {
+        "url": "https://www.dokpro.uio.no/rygh_ng/rygh_form.html",
+        "linkText": "Oluf Rygh: Norwegian Farm Names"
+      },
+      {
+        "url": "https://www.rhd.uit.no/indexeng.html",
+        "linkText": "Norway Parish Record Search"
+      },
+      {
+        "url": "https://www.nagcnl.org/",
+        "linkText": "Norwegian American Genealogical Center & Naeseth Library"
+      },
+      {
+        "url": "http://www.findagrave.com/cgi-bin/fg.cgi",
+        "linkText": "Norway Cemetery Records"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60095",
+        "linkText": "Norway, Select Marriages, 1660-1927"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1900",
+        "linkText": "1900 Folketelling"
+      },
+      {
+        "url": "http://vesterheim.org/index.php",
+        "linkText": "Vesterheim Norwegian-American Museum"
+      },
+      {
+        "url": "http://www.rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources",
+        "linkText": "Finn Kilde"
+      },
+      {
+        "url": "https://www.norwegianamerican.org/",
+        "linkText": "Norwegian-American Genealogical Association"
+      },
+      {
+        "url": "http://www.rhd.uit.no/kirkebok/kirkebok_sok_e.aspx",
+        "linkText": "Parish Register Search, 1700s-1900s"
+      },
+      {
+        "url": "http://www.norwayheritage.com/ships/hull.htm",
+        "linkText": "Migration from Northern Europe to America via the Port of Hull, 1848-1888"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0426",
+        "linkText": "Civil Marriage Index, 1864"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30032/norway-burials-1666-1927",
+        "linkText": "Norway Burials, 1666-1927"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Find source - The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0418",
+        "linkText": "Civil Marriage Index, 1863-1919"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60095",
+        "linkText": "Norway Select Marriages, 1660-1926"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-20236/norway-1875-sailors-seamen-census",
+        "linkText": "Norway, 1875 Sailors and Seamen Census"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og Skjemaer til Folketellinga 1910"
+      },
+      {
+        "url": "https://www.rhd.uit.no/nhdc/census.html#BM1801",
+        "linkText": "Documenting the Norwegian Censuses, 1801"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Digitalarkivet - Search for church books"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/source/43712",
+        "linkText": "Trondheim Emigrant Protocol, 1872-1878"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=Domkirken&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=1301",
+        "linkText": "Civil Marriage Records, 1877-1921"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10807/1865-norway-census?utm_source=organic_blog&utm_medium=blog&utm_campaign=supersearch&tr_funnel=supersearch&tr_country=US&tr_creative=nov19historicalrecords&utm_content=nov19historicalrecords",
+        "linkText": "1865 Norway Census"
+      },
+      {
+        "url": "https://www.lib.umn.edu/spaces/wilson",
+        "linkText": "Wilson Library, University of Minnesota Libraries"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61757/",
+        "linkText": "Norway, Emigration Records, 1874-1960"
+      },
+      {
+        "url": "https://billiongraves.com/site-map?country=Norway",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/115/rettergangsmateriale",
+        "linkText": "Rettergangsmateriale - Digitalarkivet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=1601",
+        "linkText": "Civil Marriage Records, 1880-1917"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10926/norway-church-records-1815-1938",
+        "linkText": "Norway Church Records, 1815-1938"
+      },
+      {
+        "url": "http://www.slekt.org/utvandring/utvandring.html",
+        "linkText": "Emigration from Gjerpen to America"
+      },
+      {
+        "url": "https://www.rhd.uit.no/indexeng.html",
+        "linkText": "Norway Parish Record Search"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/99",
+        "linkText": "Civil Wedding Banns and Marriage Records"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/",
+        "linkText": "Most searches can be performed from the main page Digital Archives"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=em",
+        "linkText": "Norwegian Emigration Records, 1825-2000"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0539",
+        "linkText": "Civil Marriage Index, 1856-1919"
+      },
+      {
+        "url": "https://apps.library.und.edu/bygdebok/",
+        "linkText": "Arne G. Brekke Bygdebok Collection"
+      },
+      {
+        "url": "http://www.rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1875",
+        "linkText": "Search for persons in the 1875 Census"
+      },
+      {
+        "url": "https://aulis.org/Calendar/Ecclesiastical_dates.html",
+        "linkText": "Ecclesiastical Calendar"
+      },
+      {
+        "url": "http://slektsbiblioteket.com/sbib/div/div3.htm#069",
+        "linkText": "Tidsbanken hjemmeside"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/source/43713",
+        "linkText": "Trondheim Emigrant Protocol, 1878-1880"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0527",
+        "linkText": "Civil Marriage Index, 1863-1920"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30031/norway-marriages-1660-1926",
+        "linkText": "Norway Marriages, 1660-1926"
+      },
+      {
+        "url": "http://www.sofn.com/home/index.jsp",
+        "linkText": "Sons of Norway Records"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1875",
+        "linkText": "Search for persons in the 1875 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=em&m%5B%5D=1001",
+        "linkText": "Passport and emigration for Kristiansand, 1820-1974"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0917",
+        "linkText": "Civil Marriage Records, 1879-1912"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60094",
+        "linkText": "Norway Select Census, 1875"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61753/",
+        "linkText": "1865 Norway Census"
+      },
+      {
+        "url": "https://slcl.libguides.com/SLCL_genealogy/Norway",
+        "linkText": "History & Genealogy Department at St. Louis County Library"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0431",
+        "linkText": "Civil Marriage Index, 1862-1918"
+      },
+      {
+        "url": "https://www.arkivverket.no/opplysninger-om-eiendom",
+        "linkText": "Opplysninger om eiendom"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1910",
+        "linkText": "The Digital Archives - 1910 Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61753/",
+        "linkText": "1865 Norway Census"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=SKIK",
+        "linkText": "Finn kilde - Digitalarkivet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0539",
+        "linkText": "Civil Marriage Index, 1856-1919"
+      },
+      {
+        "url": "https://www.rhd.uit.no/indexeng.html",
+        "linkText": "Norway Parish Record Search"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0431",
+        "linkText": "Civil Marriage Index, 1862-1918"
+      },
+      {
+        "url": "http://www.borgos.nndata.no/bygdeen.htm",
+        "linkText": "About 'bygdeboks'"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/8/100398",
+        "linkText": "Passport protocols for Ålesund, 1850-1890"
+      },
+      {
+        "url": "https://www.nagcnl.org/",
+        "linkText": "Norwegian American Genealogical Center & Naeseth Library"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/view/32857/1",
+        "linkText": "Oversiktsplan over den norske hærs organisasjon fra 1628 til 1940"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0528",
+        "linkText": "Civil Marriage Index, 1863-1920"
+      },
+      {
+        "url": "https://www.norskedalen.org/",
+        "linkText": "Norskedalen"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1900",
+        "linkText": "The Digital Archives - 1900 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1875",
+        "linkText": "Search for persons in the 1875 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?page=1&s=&from=&to=&format=all&archive_key=&st%5B0%5D=PASS",
+        "linkText": "DigitalArkivet has additional passport records"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30032/norway-burials-1666-1927",
+        "linkText": "Norway Burials, 1666-1927"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=rs",
+        "linkText": "Regnskap og skattemateriale"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60092",
+        "linkText": "Norway Select Baptisms, 1634-1927"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0604",
+        "linkText": "Civil Marriage Records, 1878-1883"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0115",
+        "linkText": "Civil Marriages, 1863-1867"
+      },
+      {
+        "url": "http://user.xmission.com/~jsvare/genealogy/documents/probate_index_card.html",
+        "linkText": "Skifteprotokoll Kort Register - Probate Card Indexes"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60093",
+        "linkText": "Norway Select Burials, 1666-1927"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1346",
+        "linkText": "Norway Marriages, 1600s-1800s"
+      },
+      {
+        "url": "http://www.cord.edu/",
+        "linkText": "Concordia College, Moorhead, Minnesota"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0917",
+        "linkText": "Civil Marriage Records, 1879-1912"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=PALI",
+        "linkText": "DigitalArkivet has additional ship passenger lists"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1870",
+        "linkText": "The Digital Archives - 1870 Census"
+      },
+      {
+        "url": "http://www.infobel.com/it/belgium/worldteldir.aspx?page=/eng/euro/no",
+        "linkText": "Telephone Directories"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/norway-marriage-index-1660-1926",
+        "linkText": "Norway Marriage Index, 1660-1926"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0527",
+        "linkText": "Civil Marriage Index, 1863-1920"
+      },
+      {
+        "url": "http://www.disnorge.no/eng/index.html",
+        "linkText": "Genealogy Society of Norway-DIS"
+      },
+      {
+        "url": "http://www.rhd.uit.no/kirkebok/kirkebok_sok_e.aspx",
+        "linkText": "Norwegian Historical Data Centre"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=em&m%5B%5D=1601",
+        "linkText": "Trondheim Emigrant Protocol, 1867-1975"
+      },
+      {
+        "url": "https://www.lib.umn.edu/spaces/wilson",
+        "linkText": "Wilson Library, University of Minnesota Libraries"
+      },
+      {
+        "url": "https://catalog.loc.gov/",
+        "linkText": "Library of Congress Catalog"
+      },
+      {
+        "url": "http://www.home.no/anna-bendixen/",
+        "linkText": "Utvandring - Pioneers in America"
+      },
+      {
+        "url": "http://www.nagcnl.org/",
+        "linkText": "Norwegian American Genealogical Center & Naeseth Library"
+      },
+      {
+        "url": "http://www.norwayheritage.com/ships/index.asp",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "https://slekt1.com/index.php/bygdeboker",
+        "linkText": "Norway's Bibliography of Published Village Books"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0102",
+        "linkText": "Civil Marriages, 1870-1876"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30233/finland-baptisms-1657-1890",
+        "linkText": "Finland Baptisms, 1657-1890"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.rhd.uit.no/kirkebok/kirkebok_sok_e.aspx",
+        "linkText": "Norwegian Historical Data Centre"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Digital Archives"
+      },
+      {
+        "url": "https://www.skatteetaten.no/en/person/national-registry/certificates-and-information/order-certificates/",
+        "linkText": "Order Certificates, Norwegian Tax Administration"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61757/",
+        "linkText": "Norway, Emigration Records, 1874-1960"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Digitalarkivet - Finn kilde"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1875",
+        "linkText": "Search for persons in the 1875 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0134",
+        "linkText": "Civil Marriages, 1865-1879"
+      },
+      {
+        "url": "http://www.bklyn-genealogy-info.com/",
+        "linkText": "Brooklyn Genealogy Information Page Index"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0528",
+        "linkText": "Civil Marriage Index, 1863-1920"
+      },
+      {
+        "url": "https://library.und.edu/",
+        "linkText": "Chester Fritz Library, University of North Dakota"
+      },
+      {
+        "url": "https://digitalarkivet.no/",
+        "linkText": "Norway Church Records"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/content/109/church-books",
+        "linkText": "Church Books - The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archives of Norway"
+      },
+      {
+        "url": "http://surnamearchive.com/document/trinity5.htm",
+        "linkText": "Church Directory September 1, 1917"
+      },
+      {
+        "url": "http://www.slekt.org/utvandring/utvandring.html",
+        "linkText": "Emigration from Gjerpen to America"
+      },
+      {
+        "url": "https://www.nagcnl.org/databases/#immigration",
+        "linkText": "Norwegian Immigrants 1825 and later"
+      },
+      {
+        "url": "http://www.norwayheritage.com/queryyear.asp",
+        "linkText": "Ship Departure Index 1825-1925"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0604",
+        "linkText": "Civil Marriage Records, 1878-1883"
+      },
+      {
+        "url": "https://rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0533",
+        "linkText": "Civil Marriage Index, 1856-1919"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0426",
+        "linkText": "Civil Marriage Index, 1864"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/115/rettergangsmateriale",
+        "linkText": "Rettergangsmateriale - Digitalarkivet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/111/eiendom-og-tinglysing",
+        "linkText": "Eiendom og tinglysing"
+      },
+      {
+        "url": "http://user.xmission.com/~jsvare/genealogy/documents/probate_index_card.html",
+        "linkText": "Skifteprotokoll Kort Register - Probate Card Indexes"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://www.rhd.uit.no/nhdc/census.html#BM1801",
+        "linkText": "Documenting the Norwegian Censuses, 1801"
+      },
+      {
+        "url": "https://histreg.no/index.php/home",
+        "linkText": "HBR - Forside"
+      },
+      {
+        "url": "http://www.slekt.org/utvandring/utvandring.html",
+        "linkText": "Emigration from Gjerpen to America"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=rs",
+        "linkText": "Regnskap og skattemateriale"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0225",
+        "linkText": "civil marriage, index and image, 1834-1918"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0532",
+        "linkText": "Civil Marriage Index, 1856-1919"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "http://www.findagrave.com/cgi-bin/fg.cgi",
+        "linkText": "Norway Cemetery Records"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-20236/norway-1875-sailors-seamen-census",
+        "linkText": "Norway, Sailors and Seamen Census, 1875"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=EMIP",
+        "linkText": "DigitalArkivet has additional emigration protocols"
+      },
+      {
+        "url": "https://apps.library.und.edu/bygdebok/",
+        "linkText": "Arne G. Brekke Bygdebok Collection"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.naha.stolaf.edu/",
+        "linkText": "Norwegian-American Historical Association Records"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=em&m%5B%5D=1001",
+        "linkText": "Passport and emigration for Kristiansand, 1820-1974"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive, early - 1900s"
+      },
+      {
+        "url": "https://adressesok.posten.no/",
+        "linkText": "Post- og frakttjenester i Norge og utlandet"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/kb/browse",
+        "linkText": "Søk etter kirkebøke"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10814/1801-norway-census",
+        "linkText": "1801 Norway Census"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "http://www.rhd.uit.no/indexeng.html",
+        "linkText": "Norwegian Historical Data Centre, University of Tromsø, Norway"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.home.no/anna-bendixen/",
+        "linkText": "Utvandring - Pioneers in America"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=tab_ftr&sc%5B%5D=sk",
+        "linkText": "Finn kilde - Digitalarkivet"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources",
+        "linkText": "Finn kilde"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/source/43710",
+        "linkText": "Trondheim Emigrant Protocol, 1867-1870"
+      },
+      {
+        "url": "http://www.norwayheritage.com/arrivals.asp",
+        "linkText": "Ship Arrivals, 1870-1894"
+      },
+      {
+        "url": "https://rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/79",
+        "linkText": "Search in Funeral Service and Burials"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/kb/browse",
+        "linkText": "Søk etter kirkebøker"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Digitalarkivet - Search for church books"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=SKIK",
+        "linkText": "Finn kilde - Digitalarkivet"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+banns+and+marriages&sid=103&country=norway",
+        "linkText": "British Armed Forces and Overseas Banns and Marriages"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Find source - The Digital Archive"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=0418",
+        "linkText": "Civil Marriage Index, 1863-1919"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1891",
+        "linkText": "1891 Census (Incomplete)"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30032/norway-burials-1666-1927",
+        "linkText": "Norway Burials, 1666-1927"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources?s=&from=&to=&format=all&archive_key=&lt%5B%5D=bv&lt%5B%5D=bl&m%5B%5D=1729",
+        "linkText": "civil marriage, image and index, 1878-1911"
+      },
+      {
+        "url": "https://www.skatteetaten.no/en/person/national-registry/certificates-and-information/order-certificates/",
+        "linkText": "Order Certificates, Norwegian Tax Administration"
+      },
+      {
+        "url": "http://user.xmission.com/~jsvare/genealogy/documents/probate_index_card.html",
+        "linkText": "Skifteprotokoll Kort Register - Probate Card Indexes"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Søk etter kirkebøker"
+      },
+      {
+        "url": "http://www.norwayheritage.com/ships/index.asp",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "http://www.riksarkivet.no/",
+        "linkText": "Nasjonalarkivet Hjemmeside"
+      },
+      {
+        "url": "https://www.rhd.uit.no/indexeng.html",
+        "linkText": "Norway Parish Record Search"
+      },
+      {
+        "url": "https://www.norskedalen.org/get-involved/",
+        "linkText": "Get Involved - Norskedalen"
+      },
+      {
+        "url": "http://www.rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/87/folketellinger-og-manntall",
+        "linkText": "Folketellinger og manntall - Digitalarkivet"
+      },
+      {
+        "url": "https://www.arkivverket.no/opplysninger-om-eiendom",
+        "linkText": "Opplysninger om eiendom"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-20236/norway-1875-sailors-seamen-census",
+        "linkText": "Norway, Sailors and Seamen Census, 1875"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources",
+        "linkText": "Finn kilde"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Digitalarkivet - Finn kilde"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1910",
+        "linkText": "1910 Folketelling"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30032/norway-burials-1666-1927",
+        "linkText": "Norway Burials, 1666-1927"
+      },
+      {
+        "url": "https://histreg.no/index.php/home",
+        "linkText": "HBR - Forside"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30233/finland-baptisms-1657-1890",
+        "linkText": "Finland Baptisms, 1657-1890"
+      }
+    ]
+  }
+}

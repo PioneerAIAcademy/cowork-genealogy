@@ -21,6 +21,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Iterable
@@ -229,8 +230,15 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
     for rel, expected in snapshot.items():
         if rel.startswith(_MCP_SRC_PREFIX):
             continue
-        abs_path = repo_root / rel
-        if not abs_path.is_file():
+        # `rel` is a snapshot KEY — an arbitrary string per the schema, arriving
+        # from a run log another contributor committed. Contained before the read,
+        # and skipped rather than raised so one bad key cannot discard the rest of
+        # the comparison. The TypeScript twin does exactly this; without it the
+        # two disagreed on a traversing key (it returned "missing-on-disk", this
+        # read the outside file and returned "content-differs") and no vector on
+        # either side had one.
+        abs_path = _contained_abs_path(repo_root, rel)
+        if abs_path is None or not abs_path.is_file():
             out[rel] = "missing-on-disk"
             continue
         actual = normalize(rel, abs_path.read_bytes())
@@ -242,6 +250,29 @@ def diff_snapshot_vs_disk(snapshot: dict[str, str], repo_root: Path) -> dict[str
 
 
 # ---- internal helpers ----------------------------------------------------
+
+
+def _contained_abs_path(repo_root: Path, rel: str) -> Path | None:
+    """`rel` resolved under `repo_root`, or None if it escapes.
+
+    Mirrors `resolveWithin` in eval/app/lib/fs/safe-path.ts, which the twin of
+    this module has to agree with.
+
+    Deliberately LEXICAL. `os.path.abspath` normalizes `..` without following
+    symlinks, which is what `path.resolve` does on the TypeScript side.
+    `Path.resolve()` would follow them, so a symlink inside the base pointing
+    out would be refused here and allowed there — trading the traversal
+    divergence for a symlink one, in exactly the case the TypeScript helper
+    documents as its accepted gap. Both sides share that gap; closing it means
+    realpath at every sink on both, and is not this change.
+    """
+    if not rel or "\0" in rel:
+        return None
+    base = os.path.abspath(repo_root)
+    abs_path = os.path.abspath(os.path.join(base, rel))
+    if abs_path != base and not abs_path.startswith(base + os.sep):
+        return None
+    return Path(abs_path)
 
 
 def _ext_of(path: str) -> str:
