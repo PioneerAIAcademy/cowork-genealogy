@@ -277,9 +277,10 @@ def test_check_warnings_fires_when_links_were_written():
             _state(_LINKED_BEFORE, _tree("I1", "I2")),
             _state(_LINKED_AFTER, _tree("I1", "I2")),
             ["person-evidence"],
+            [],
             _CW_TAGGED,
         )
-    assert "never invoked check-warnings" in str(exc.value)
+    assert "ran no impossibility check" in str(exc.value)
     assert "1 new pe_ entr" in str(exc.value)
 
 
@@ -292,6 +293,7 @@ def test_check_warnings_fires_when_a_person_was_minted_without_links():
             _state(same, _tree("I1")),
             _state(same, _tree("I1", "I4")),
             ["person-evidence"],
+            [],
             _CW_TAGGED,
         )
     assert "minted ['I4']" in str(exc.value)
@@ -302,6 +304,7 @@ def test_check_warnings_passes_when_invoked():
         _state(_LINKED_BEFORE, _tree("I1", "I2")),
         _state(_LINKED_AFTER, _tree("I1", "I2")),
         ["person-evidence", "check-warnings"],
+        [],
         _CW_TAGGED,
     )
 
@@ -315,6 +318,7 @@ def test_check_warnings_stands_down_on_a_read_only_run():
             _state(same, _tree("I1")),
             _state(same, _tree("I1")),
             ["person-evidence"],
+            [],
             _CW_TAGGED,
         )
 
@@ -322,7 +326,7 @@ def test_check_warnings_stands_down_on_a_read_only_run():
 def test_check_warnings_stands_down_on_a_negative_test():
     """A declined routing test has no research.json diff to read."""
     with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(_state(None), _state(None), [], _CW_TAGGED)
+        check_warnings_after_write(_state(None), _state(None), [], [], _CW_TAGGED)
 
 
 def test_check_warnings_stands_down_without_the_tag():
@@ -333,7 +337,41 @@ def test_check_warnings_stands_down_without_the_tag():
             _state(_LINKED_BEFORE, _tree("I1", "I2")),
             _state(_LINKED_AFTER, _tree("I1", "I2")),
             ["person-evidence"],
+            [],
             {"tags": []},
+        )
+
+
+def test_check_warnings_passes_when_the_agent_calls_the_tool_itself():
+    """The route the paired agent actually takes. Since 2026-09-02 the agent
+    calls `person_warnings` directly rather than the router invoking
+    `check-warnings`, because `/research` may spawn a paired agent straight and
+    nothing guarantees the router runs. Keyed on `skills_invoked` alone this
+    assertion would fail every compliant agent run."""
+    check_warnings_after_write(
+        _state(_LINKED_BEFORE, _tree("I1", "I2")),
+        _state(_LINKED_AFTER, _tree("I1", "I2")),
+        ["person-evidence"],
+        [{"tool": "mcp__genealogy__person_warnings"}],
+        _CW_TAGGED,
+    )
+
+
+def test_check_warnings_accepts_the_tool_under_any_server_spelling():
+    """The prefix is chosen by whoever registers the server, so a bare-name
+    match on the qualified tool is the only form that works in all three."""
+    for spelling in (
+        "person_warnings",
+        "mcp__genealogy__person_warnings",
+        "mcp__remote-devices__Genealogy_Research__person_warnings",
+        "mcp__Genealogy_Research__person_warnings",
+    ):
+        check_warnings_after_write(
+            _state(_LINKED_BEFORE, _tree("I1", "I2")),
+            _state(_LINKED_AFTER, _tree("I1", "I2")),
+            ["person-evidence"],
+            [{"tool": spelling}],
+            _CW_TAGGED,
         )
 
 

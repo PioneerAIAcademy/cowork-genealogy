@@ -806,7 +806,9 @@ def test_matched_persona_is_materialized_onto_its_person(
     )
 
 
-def test_check_warnings_runs_after_a_write(before_state, after_state, skills_invoked, test):
+def test_check_warnings_runs_after_a_write(
+    before_state, after_state, skills_invoked, tool_calls, test
+):
     """SKILL.md §8: "After creating links and any stub persons, invoke
     `check-warnings` on the affected persons to catch genealogical
     impossibilities (married before 12, died after 120, child born after a
@@ -851,16 +853,28 @@ def test_check_warnings_runs_after_a_write(before_state, after_state, skills_inv
     148s/13.2 vs 209s/19.1), so they finished early without the step rather
     than running out of room. Widen the tag once compliance is consistent.
 
-    **What this does NOT assert.** That the impossibility check actually ran.
-    No test in either directory declares a `person-warnings-*` mcp_fixture (13
-    exist under `eval/fixtures/mcp/`), so `check-warnings` reaches
-    `person_warnings`, finds no fixture, and reports the tool unavailable —
-    which is what `ut_person_evidence_027` did on `v1_2026-08-24_18-17-08`
-    ("the offline impossibility check cannot run"). This assertion therefore
-    covers the delegation, not its result. #1657's docstring states the
-    fixture gap was "now fixed alongside this validator"; it was not, on
-    either side. Referencing a fixture from a test is what would close it,
-    and that edit flips the run-log snapshot.
+    **Either route satisfies it, and that is the point.** Since 2026-09-02 the
+    person-evidence AGENT calls `person_warnings` itself rather than the routing
+    skill invoking `check-warnings`: `/research` may spawn a paired agent
+    directly (ADR-0011, the route is free), so a step parked in the router is
+    guaranteed by nothing. An assertion keyed on `skills_invoked` alone would
+    therefore fail every compliant agent run. It accepts the skill invocation
+    too, because that is what the monolithic skill did and what the other
+    tree-writing skill still does.
+
+    **What this does NOT assert.** That the impossibility check actually
+    RESOLVED. No test in either directory declares a `person-warnings-*`
+    mcp_fixture (13 exist under `eval/fixtures/mcp/`), so the call finds no
+    fixture and reports the tool unavailable — which is what
+    `ut_person_evidence_027` did on `v1_2026-08-24_18-17-08` ("the offline
+    impossibility check cannot run"). This covers that the check was
+    ATTEMPTED, not its result. #1657's docstring states the fixture gap was
+    "now fixed alongside this validator"; it was not, on either side.
+    Referencing a fixture from a test is what would close it, and that edit
+    flips the run-log snapshot — so the cheapest moment to do it is a PR that
+    is already re-running the suite for another reason. This PR is one; it was
+    left undone deliberately rather than bundled, because it changes what four
+    tests exercise and deserves its own justification.
     """
     if "check-warnings-required" not in test.get("tags", []):
         pytest.skip("not tagged check-warnings-required")
@@ -883,9 +897,16 @@ def test_check_warnings_runs_after_a_write(before_state, after_state, skills_inv
         what.append(f"{len(_new_person_evidence(before, after))} new pe_ entr(ies)")
     if minted:
         what.append(f"minted {sorted(minted)}")
-    assert "check-warnings" in (skills_invoked or []), (
-        f"wrote to the project ({'; '.join(what)}) but never invoked "
-        f"check-warnings — SKILL.md §8 requires it after creating links and "
-        f"any stub persons, to catch impossibilities the writer tools do not "
-        f"check. skills_invoked={list(skills_invoked or [])}"
+    called_tool = any(
+        str(c.get("tool") or "").split("__")[-1] == "person_warnings"
+        for c in (tool_calls or [])
+    )
+    invoked_skill = "check-warnings" in (skills_invoked or [])
+    assert called_tool or invoked_skill, (
+        f"wrote to the project ({'; '.join(what)}) but ran no impossibility "
+        f"check — §8 requires one after creating links and any stub persons, to "
+        f"catch what the writer tools do not. Either route satisfies this: a "
+        f"`person_warnings` call (what the AGENT does) or a `check-warnings` "
+        f"invocation (what the monolithic skill did). "
+        f"skills_invoked={list(skills_invoked or [])}"
     )

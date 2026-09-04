@@ -5,7 +5,7 @@
     "unit": "eval/harness/validators/test_universal.py \u2014 diffs before/after project state against the calling skill's SKILL.md frontmatter name. Cannot see an agent caller, and runs only inside a paid per-skill eval run.",
     "e2e": "eval/harness/e2e \u2014 whole-run detectors. Eval-only; never reaches production.",
     "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic \u2014 it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19) and by questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23). Nothing reads this manifest at runtime \u2014 the hook runs in the VM with no repo access \u2014 so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), by questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) and by person_evidence (section-scoped, 2026-09-01). Nothing reads this manifest at runtime \u2014 the hook runs in the VM with no repo access \u2014 so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "rows": [
     {
@@ -210,12 +210,17 @@
         "research_append"
       ],
       "enforceableAt": [
-        "unit"
+        "unit",
+        "hook"
       ],
+      "notes": "Enforced at the hook plane since 2026-09-01, section-scoped: the plugin PreToolUse hook denies a research_append op on this section unless the caller is the person-evidence AGENT. The section has one owner and `extraction_append` does not accept it, so a section rule fits and the field-scoped treatment `exhaustive_declaration` needed does not apply here — nothing on this section is required on every question. `callers` stays skill-only and `writerTools` stays research_append on purpose: the unit plane keys on the calling skill's frontmatter name and cannot see an agent, so naming an agent there raises OwnershipManifestError. The agent caller lives in `hookCallers`. Known limit, stated rather than implied: `owner_denied` only inspects research_append, so `materialize_facts` with no `personId` mints a brand-new tree person and reaches this lane's work without passing the section check.",
       "requires": "Only person-evidence links a persona to a tree person. The record-extraction lane is held off this section by tool identity: `extraction_append` does not accept it.",
       "failure": "A skill writing an identity link asserts a `match_score` no tool computed \u2014 the exact failure that produced the narrower extraction tool.",
       "remedy": "Route the identity link through person-evidence.",
-      "override": "none"
+      "override": "none",
+      "hookCallers": [
+        "agent:person-evidence"
+      ]
     },
     {
       "artifact": "research.json",

@@ -89,6 +89,15 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
+    # Purely local: `person-warnings.ts` holds zero `getValidToken` calls and
+    # computes every tag from the workspace tree, so a live handler is both
+    # possible and more faithful than a canned answer. Live since 2026-09-03
+    # (lead ruling on PR #2151): it was fixture-backed, no person-evidence test
+    # declared a `person-warnings-*` fixture, so every call in every committed
+    # person-evidence run log since August reported the tool missing -- the
+    # skill launched, the check never ran. `person_quality` is NOT here and must
+    # not be: it calls FamilySearch.
+    "person_warnings",
     "project_context",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
@@ -712,9 +721,19 @@ def create_mock_server(
         tools.append(decorated)
 
     # --- Live tools ---------------------------------------------------------
-    # Registered unconditionally regardless of fixture_names. Each live tool
-    # calls the real implementation rather than matching a fixture predicate.
-    for live_tool_name in sorted(LIVE_TOOLS):
+    # Each live tool calls the real implementation rather than matching a
+    # fixture predicate.
+    #
+    # A tool the TEST declared a fixture for keeps its canned response and is
+    # skipped here. Registering both would define the same tool name twice and
+    # the second would shadow the first. Only `person_warnings` is in both sets
+    # today: the check-warnings suite drives it from tuned fixtures covering
+    # specific tag combinations, while every other suite wants the real
+    # computation over its own workspace tree. Ordering matters and is the
+    # reason this is a skip rather than a precedence rule -- fixtures are
+    # registered above, so the test's own declaration wins.
+    fixture_backed = set(manifest.keys())
+    for live_tool_name in sorted(LIVE_TOOLS - fixture_backed):
         live_handler = _make_live_handler(live_tool_name, workspace, call_log)
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
@@ -765,6 +784,10 @@ def _make_live_handler(
     if tool_name == "merge_warnings":
         return _make_compiled_tool_handler(
             "merge_warnings", "merge-warnings.js", "mergeWarnings", workspace, call_log
+        )
+    if tool_name == "person_warnings":
+        return _make_compiled_tool_handler(
+            "person_warnings", "person-warnings.js", "personWarningsTool", workspace, call_log
         )
     if tool_name == "project_context":
         return _make_compiled_tool_handler(

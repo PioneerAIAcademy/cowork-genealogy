@@ -223,6 +223,45 @@ describe("plugin hooks are packaged and wired", () => {
     }
   });
 
+  it("gives every hook-routed agent a lane row", () => {
+    // The gap that shipped with the person-evidence pair and was caught only by
+    // breaking the guard by hand. `owner_denied` gates its out-of-lane arm on
+    // `writable is not None`, so an agent the manifest routes to but the lane
+    // map omits skips that check ENTIRELY — it could write any section
+    // unchecked, which is the 2026-08-19 proof-conclusion incident. Every other
+    // test in this file stayed green with the row deleted.
+    //
+    // Per-agent behavioural tests catch it one agent at a time and are easy to
+    // forget on the next conversion; this catches the CLASS, so a future pair
+    // that adds a hookCallers row without a lane reddens here.
+    const src = readFileSync(GUARD, "utf-8");
+    const laneKeys = [
+      ...(src.match(/^AGENT_WRITABLE_SECTIONS\s*=\s*\{([\s\S]*?)^\}/m)?.[1] ?? "").matchAll(
+        /^\s+["']([^"']+)["']\s*:\s*frozenset/gm,
+      ),
+    ].map((m) => m[1]);
+    expect(laneKeys.length).toBeGreaterThan(0);
+
+    const manifest = JSON.parse(
+      readFileSync(join(REPO_ROOT, "docs", "specs", "schemas", "ownership.json"), "utf-8"),
+    );
+    const routed = new Set<string>();
+    for (const row of manifest.rows) {
+      if (!(row.enforceableAt ?? []).includes("hook")) continue;
+      for (const c of row.hookCallers ?? []) {
+        if (typeof c === "string" && c.startsWith("agent:")) routed.add(c.slice("agent:".length));
+      }
+    }
+    expect(routed.size).toBeGreaterThan(0);
+    for (const agent of routed) {
+      expect(
+        laneKeys,
+        `agent \`${agent}\` is routed a section by ownership.json but has no ` +
+          `AGENT_WRITABLE_SECTIONS row — the out-of-lane check is skipped for it entirely`,
+      ).toContain(agent);
+    }
+  });
+
   it("matches every tool the guard script itself denies", () => {
     // A matcher that omits a tool the script would have caught is a hole the
     // script can never close — the hook is not invoked at all.
@@ -400,6 +439,61 @@ describe("the guard script's decisions", () => {
       agent_type: OWNER,
     });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  // ── caller-routed sections: research_append + person_evidence (issue #1853) ──
+  //
+  // Same section-scoped shape as proof_summaries above. Mirrored rather than
+  // folded into the same it.each because the two arms fail differently: this
+  // section's owner holds the BROAD research_append and the lane check below is
+  // the only thing keeping it to one section.
+  const PE_OWNER = "genealogy-research:person-evidence";
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "person_evidence", op: "append", entry: {} }, {}],
+    ["update in place, no agent_id", { section: "person_evidence", op: "update", entryId: "pe_001", fields: {} }, {}],
+    ["agent_type present but agent_id absent", { section: "person_evidence", op: "append" }, { agent_type: PE_OWNER }],
+    ["a different agent", { section: "person_evidence", op: "append" }, { agent_id: "a1", agent_type: "record-extractor" }],
+  ])("denies research_append on person_evidence — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:person-evidence");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", PE_OWNER],
+    ["bare agent_type", "person-evidence"],
+  ])("permits the person-evidence agent — %s", (_label, agent_type) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "person_evidence", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type,
+    });
+    expect(out).toEqual({});
+  });
+
+  it("denies the person-evidence agent a section outside its own lane", () => {
+    // Without its AGENT_WRITABLE_SECTIONS row this agent's `writable` is None
+    // and the out-of-lane arm is skipped ENTIRELY — it could write any section
+    // unchecked. That is the 2026-08-19 proof-conclusion failure with a
+    // different actor, and nothing else in this suite would notice: removing
+    // the row leaves every other test green. This is that row's only guard.
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { status: "resolved" },
+      },
+      agent_id: "agent-1",
+      agent_type: PE_OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("person_evidence");
   });
 
   it("permits the owning agent's real shape — summary + resolve in ONE batch", () => {

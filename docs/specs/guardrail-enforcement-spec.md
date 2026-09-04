@@ -1367,6 +1367,23 @@ this section before reopening one.
   reference-reading regression survives either way. Re-measure before quoting
   any of these figures.
 
+  **`person-evidence` followed, 2026-09-01, and it is the first of the four
+  converted as an experiment rather than to stop a bypass.** A 72-line routing
+  skill plus `agents/person-evidence.md` at 53,158 bytes / 1,036 lines, against
+  `record-extractor`'s 57,229 / 963 on the day — **the largest agent body so far
+  on lines but not on bytes**, which the paragraph above says decides nothing
+  either way, and the lead accepted the line-count figure on 2026-08-25.
+  Unlike the first two, **no rule moved into the writer tool first**: the
+  candidate precondition — that a link cite a computed `same_person` score — is satisfiable by 437 of 6,550 reachable links — 6.7%
+  — so it ships as a warning on the `opWarnings` channel
+  `personEvidenceScoreWarnings` already rides, and the conversion guide's step 3
+  covers that case explicitly rather than inventing a gate to satisfy the shape.
+  Its bypass case is also the weakest of the four: 10% of the runs that write the
+  section never invoke the skill, against `conflict-resolution`'s 84%. What it
+  buys is therefore caller attribution plus a per-step `model:` lever, and
+  whether it buys grading or cost is the measured question the conversion was run
+  as an experiment to answer, and is not settled by the fold landing.
+
   **This is the only route that reopens §7.** An agent is the one form a
   guardrail skill can take that emits a completion signal (`SubagentStop`) and
   carries an `agent_id`, which is what §7's success gate has never had. Weigh
