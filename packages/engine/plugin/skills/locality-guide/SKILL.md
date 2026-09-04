@@ -4,17 +4,17 @@ description: >-
   Produces a locality research guide for a place and time period — what
   genealogical records exist, where they're held, jurisdictional history, and
   boundary changes. Use when the user says "what records exist for [place]?",
-  "research guide for [jurisdiction]", "what can I find in
-  [county/state/country]?", "where are the records for [place]?", "what records
-  help trace families affected by a disaster in [place]?", or "what records
-  survive for [place] after [an event]?", or when the orchestrator needs
-  jurisdiction context. Do NOT use when the user wants to search records or
-  execute a specific search plan (use search-records or search-external-sites),
-  or asks a generic "how do I find/research [record type]" how-to question (use
+  "what can I find in [county/state/country]?", "what records help trace
+  families affected by a disaster in [place]?", or "what records survive for
+  [place] after [an event]?", or when the orchestrator needs jurisdiction
+  context. Do NOT use when the user wants to search records or execute a
+  specific search plan (use search-records or search-external-sites), or asks
+  a generic "how do I find/research [record type]" how-to question (use
   search-familysearch-wiki); but a records-availability survey for a place
   belongs here even when it names a record type or community (e.g. Quaker
   records in Pennsylvania). Also do not use for narrative historical context
-  like migration or why an event happened (use historical-context).
+  like migration or why an event happened (use historical-context), or a
+  general Wikipedia summary of the place (use search-wikipedia).
 allowed-tools:
   - wiki_search
   - wiki_read

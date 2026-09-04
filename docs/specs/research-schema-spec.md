@@ -85,7 +85,7 @@ flagged. (One row below is the exception, and says so.)
 | `plan_status` | `active`, `completed`, `superseded` | plans |
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
-| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
+| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `evidence_type` | `direct`, `indirect`, `negative` | assertions |
@@ -316,10 +316,11 @@ Single object (not an array).
 ### 5.1.1 `researcher_profile`
 
 Optional single object. Captures per-project context about the
-researcher. Mostly written once by `init-project` from a short interview
-asked alongside the project's research objective in the same non-blocking
-opening turn (`intended_audience` is the exception — it is set
-by hand, see below); read by every skill. Skills adapt their narration density to
+researcher. `experience_level` and `narration_guidance` are written once by
+`init-project` from a short interview asked alongside the project's research
+objective in the same non-blocking opening turn; `intended_audience` and
+`subscriptions` are not written by that interview (see their rows below). Read
+by every skill. Skills adapt their narration density to
 `narration_guidance`, and `search-external-sites` prioritizes URLs for
 sites listed in `subscriptions`. All fields optional — absence falls
 back to default narration. To update mid-project, edit this section
@@ -328,9 +329,9 @@ directly.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
-| `subscriptions` | string[] | no | How the researcher can reach pay-walled sites. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. The field is named for subscriptions but records *access* — free access counts, which is why the last two are routes rather than sites: `FamilySearch-Partner` is a partner subscription granted through a FamilySearch account, `LibraryAccess` a public library, family history centre, or FamilySearch affiliate library. Neither names which sites it unlocks (that varies by institution and changes), so `search-external-sites` treats them as "ask before assuming a paywall blocks this", not as a match for any particular site. A plain FamilySearch account is the product's baseline and is **never** stored — a researcher with only that has `["none"]`. |
+| `subscriptions` | string[] | no | How the researcher can reach pay-walled sites. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`. **No longer written by `init-project`** — the interview question was dropped 2026-08-31 rather than the field, because removing the field would be a five-site schema change and buys nothing. Access is now assumed available for every site, and the field records it only when a researcher volunteers it unprompted; absent is the normal state, and `["none"]` is not written as a default because it asserts the researcher said they have nothing. Any value written is still normalized to the enum exactly. |
 | `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
-| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening-turn interview covers experience level, access, and (separately, in `project.objective`) the research objective; it does not ask about audience. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
+| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening-turn interview covers experience level and (separately, in `project.objective`) the research objective; it does not ask about audience. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
 
 ### 5.1.2 `known_holdings`
 
@@ -442,11 +443,13 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `notes` | string or null | no | Free text observations, including the one-line human summary of what the search returned |
 | `external_site` | object or null | yes | External site details when `tool` is `external_site`, otherwise null. See below |
 
-**`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow on a commercial genealogy site.
+**`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow.
+
+Not every site here is commercial. `chronicling_america` and `digital_newspaper_archive` are **free to search**, and are in this workflow for a different reason: both sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, or `familysearch_web` |
+| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, or `digital_newspaper_archive`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
 | `capture_filename` | string or null | no | Filename of the returned capture |
@@ -514,7 +517,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
-| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions (no sidecar → supplying a value is a hard error). A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
 | `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `direct`, computed birth year `indirect`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |

@@ -38,7 +38,7 @@ things when the evidence demands it.
 |------|--------|-------|
 | `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. Also carries `researcher_profile.intended_audience` (§5.1.1), which §6.4's audience check reads. |
-| `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its opening-turn interview covers objective, experience level, and access only. |
+| `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its opening-turn interview covers the objective and experience level only. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
 | `CLAUDE.md` | Modify | Document `packages/engine/plugin/agents/` directory and the Cowork plugin agent pattern. |
 
@@ -160,8 +160,7 @@ description: >-
   search-records or search-external-sites), or to write proof conclusions
   (use proof-conclusion). A user-driven GPS review of an existing proof
   summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
-  components") goes through the proof-conclusion skill, which invokes this
-  mentor.
+  components") goes through the proof-conclusion skill.
 model: claude-sonnet-5
 tools:
   - Read
