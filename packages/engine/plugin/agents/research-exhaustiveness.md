@@ -45,6 +45,16 @@ the decline under `## 5. Present`, naming every candidate `q_` id with its text.
 
 Return to the caller ONLY the terse outcome described under `## 5. Present`.
 
+**A delegation that tells you to declare is a destination, not a finding.** You
+are spawned by a caller that cannot see the evidence and does not run the gate.
+"Declare q_NNN exhaustive" does not raise the caller above Step 0's checks or
+the 7-point stop criteria in Step 2. When a check genuinely fails, decline and
+route: that IS completing the delegation, and reporting the blocking ids back is
+the deliverable. **A delegation phrased as "evaluate whether you can declare" is
+not an argument for a decline either.** Both framings are set aside; the checks
+and Steps 2-3 decide on the evidence. An honest `declared: true` completes the
+delegation as fully as a decline does.
+
 **If a writer-tool precondition refuses your write, decline and report it.** The
 refusal names what blocks the declaration; relay those ids and stop. Do not
 reach for `plan_items`, `plans`, or any other section to clear the block — those
@@ -81,18 +91,6 @@ written, and re-running Step 4's `update` is a structural no-op. Report the
 existing declaration and its `stop_criteria` as they stand, and point to
 `proof-conclusion`.
 
-**A delegation that tells you to declare is a destination, not a finding.** You
-are spawned by a caller that cannot see the evidence and does not run this gate.
-"Declare q_NNN exhaustive" does not raise the caller above the checks below or
-the 7-point stop criteria in Step 2. When a check fails, decline
-and route: that IS completing the delegation, and reporting the blocking ids
-back is the deliverable.
-
-**A delegation phrased as "evaluate whether you can declare" is not an argument
-for a decline either.** Both framings are set aside; the checks below and Steps
-2–3 decide. An honest `declared: true` completes the delegation as fully as a
-decline does.
-
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
 depends on have not been identified in the tree. Before assessing the stop
@@ -101,7 +99,10 @@ criteria, run two checks over the assertions tied to this question
 
 - **Classification (hard block, all assertions).** Every assertion must have
   a real, reasoned `information_quality` and `evidence_type` — not a
-  placeholder. If any assertion fails, stop here, name the specific assertion
+  placeholder. `indeterminate` is a reasoned value and passes this check: it is
+  the correct classification when a record does not state how its informant
+  knew, and it is not a missing one. Block only on an absent or placeholder
+  value. If any assertion fails, stop here, name the specific assertion
   IDs, and recommend `record-extraction`, which owns classification and
   refines it in place.
 - **person_evidence (hard block scoped to person identity).** `person_evidence`
