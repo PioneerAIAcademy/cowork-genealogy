@@ -6,6 +6,7 @@ two implementations are forced to agree byte-for-byte.
 """
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -332,6 +333,60 @@ def test_diff_ignores_legacy_mcp_server_source(tmp_path: Path):
     (tmp_path / "skill.md").write_text("body\n", encoding="utf-8")
     # The src/ file is absent on disk AND would differ — yet neither is flagged.
     assert diff_snapshot_vs_disk(snapshot, tmp_path) == {}
+
+
+def test_diff_refuses_a_traversing_key(tmp_path: Path):
+    """A snapshot key is an arbitrary string from a committed run log.
+
+    Parity vector with `diffSnapshotVsDisk` in eval/app/lib/snapshot.ts. Before
+    containment the two disagreed on exactly this input: TypeScript refused it
+    and reported "missing-on-disk", Python read the outside file and reported
+    "content-differs". Neither side had a traversing vector, which is why the
+    divergence survived.
+    """
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("SECRET\n", encoding="utf-8")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    rel = "../outside/secret.txt"
+    # The snapshot claims content the outside file really has, so an uncontained
+    # read returns {} and a contained one reports it missing. Asserting the
+    # SECRET value keeps this from passing for the wrong reason.
+    assert diff_snapshot_vs_disk({rel: "SECRET\n"}, repo) == {rel: "missing-on-disk"}
+
+
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason=(
+        "Creating a symlink on Windows needs SeCreateSymbolicLink (admin or "
+        "Developer Mode), so the behaviour cannot be exercised here and "
+        "asserting on it would encode the platform's limitation as a failure."
+    ),
+)
+def test_diff_follows_a_symlink_inside_the_base(tmp_path: Path):
+    """Containment is LEXICAL on both sides, so a symlink out is still read.
+
+    This is the second half of the parity contract, and the reason this module
+    uses `os.path.abspath` rather than `Path.resolve()`: `resolve()` follows
+    symlinks and `path.resolve` on the TypeScript side does not. Refusing here
+    would trade the traversal divergence for a symlink one. Both sides share
+    this gap deliberately — safe-path.ts documents it — and closing it means
+    realpath at every sink on both. Pinned so a future change to either side
+    cannot quietly break the parity in this direction either.
+    """
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("SECRET\n", encoding="utf-8")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "link.txt").symlink_to(outside / "secret.txt")
+
+    assert diff_snapshot_vs_disk({"link.txt": "SECRET\n"}, repo) == {}
+    assert diff_snapshot_vs_disk({"link.txt": "other\n"}, repo) == {
+        "link.txt": "content-differs"
+    }
 
 
 # ---- hash_snapshot -------------------------------------------------------
