@@ -1,0 +1,117 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search -- Trysil holdings 1780-1880, including the indexed Norway Burials extract.",
+  "args": {
+    "standardPlace": "~Trysil"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Trysil, Hedmark, Norway",
+      "startYear": 1780,
+      "endYear": 1880
+    },
+    "scope": "Norway",
+    "totalForPlace": 15,
+    "results": [
+      {
+        "id": "1467014",
+        "title": "Norway, Baptisms, 1634-1927",
+        "dateRange": "1634-1927",
+        "recordCount": 5277294,
+        "personCount": 15082744,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1467014"
+      },
+      {
+        "id": "1468081",
+        "title": "Norway, Burials, 1666-1927",
+        "dateRange": "1666-1927",
+        "recordCount": 719685,
+        "personCount": 1671901,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1468081"
+      },
+      {
+        "id": "3733603",
+        "title": "Norway, Census, 1801",
+        "dateRange": "1801-1801",
+        "recordCount": 878979,
+        "personCount": 878979,
+        "imageCount": 13261,
+        "url": "https://www.familysearch.org/search/collection/3733603"
+      },
+      {
+        "id": "3756102",
+        "title": "Norway, Census, 1865",
+        "dateRange": "1865-1865",
+        "recordCount": 1688075,
+        "personCount": 1688075,
+        "imageCount": 69028,
+        "url": "https://www.familysearch.org/search/collection/3756102"
+      },
+      {
+        "id": "4135961",
+        "title": "Norway, Census, 1870",
+        "dateRange": "1870-1870",
+        "recordCount": 267848,
+        "personCount": 267848,
+        "imageCount": 36179,
+        "url": "https://www.familysearch.org/search/collection/4135961"
+      },
+      {
+        "id": "1529106",
+        "title": "Norway, Census, 1875",
+        "dateRange": "1875-1875",
+        "recordCount": 333541,
+        "personCount": 333541,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1529106"
+      },
+      {
+        "id": "4237104",
+        "title": "Norway, Church Books, 1797-1958",
+        "dateRange": "1797-1958",
+        "recordCount": 14398439,
+        "personCount": 46445308,
+        "imageCount": 1288153,
+        "url": "https://www.familysearch.org/search/collection/4237104"
+      },
+      {
+        "id": "4376734",
+        "title": "Norway, Hedmark, Hamar District Prison records, 1877-1896",
+        "dateRange": "1877-1896",
+        "recordCount": 2481,
+        "personCount": 2481,
+        "imageCount": 83,
+        "url": "https://www.familysearch.org/search/collection/4376734"
+      },
+      {
+        "id": "1468080",
+        "title": "Norway, Marriages, 1660-1926",
+        "dateRange": "1660-1926",
+        "recordCount": 1330979,
+        "personCount": 3519558,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1468080"
+      },
+      {
+        "id": "3335353",
+        "title": "Norway, Oslo, Akershus Prison Records, 1844-1885",
+        "dateRange": "1844-1885",
+        "recordCount": 820,
+        "personCount": 820,
+        "imageCount": 278,
+        "url": "https://www.familysearch.org/search/collection/3335353"
+      },
+      {
+        "id": "1661306",
+        "title": "Norway, Probate Index Cards, 1640-1903",
+        "dateRange": "1640-1903",
+        "recordCount": 1058029,
+        "personCount": 1065155,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1661306"
+      }
+    ]
+  }
+}

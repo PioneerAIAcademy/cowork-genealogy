@@ -1,0 +1,3208 @@
+{
+  "schema_version": 3,
+  "skill": "translation",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-09-02_19-30-17",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "9451d1056f0a38276f790171aeff7b43590dfcaaf709fff8a6c75c056aaa7ec6",
+  "snapshot": {
+    "packages/engine/plugin/skills/translation/references/gps-translation-standards.md": "bf1125d0d2d6fa40143e16e45bf4531e2d2bb5c1a164b1a617c0535681a6c8e4",
+    "packages/engine/plugin/skills/translation/references/vocabulary-and-record-structures.md": "26818a96db1600c68e338ad4558da0b3f7734abf6805c4674d424d557b385e17",
+    "packages/engine/plugin/skills/translation/SKILL.md": "aa5e1c1373ee4eaa739be8ae4e50ce29e751fde80859a395c456cfe54ba65354",
+    "eval/tests/unit/translation/damaged-kurrent-uncertainty.json": "30eb9dec732cd4a1b9dd3e2572be3f50f92028c9449699dd7c7e8bdbf946b1e9",
+    "eval/tests/unit/translation/dutch-reformed-baptism-patronymics.json": "1d5a6e8e29fda9ca53fd5c3f859471155e865a7743dbcf42a4ed8e5f6ab52296",
+    "eval/tests/unit/translation/french-civil-birth.json": "631ded236378cf18755191c28cec9e624630cbfe591b1c1a4298b59fa09dd91a",
+    "eval/tests/unit/translation/german-kurrent-baptism.json": "b9e21d3bee6c391587ecc07da63a198cb5f507ec99805a020a0d97710a6d5f4e",
+    "eval/tests/unit/translation/italian-mixed-latin-burial.json": "d37675590879bd98e0974ef916ca7bdbf1fa633544f2ec7e2bc8af5bd3ba42f6",
+    "eval/tests/unit/translation/latin-marriage-record.json": "bf76a4f709f1e9f27a1adca04456b9fe38e10d3be564cd68e36c986132d266a6",
+    "eval/tests/unit/translation/latin-will-ambiguous-nepos.json": "9d645c20c16eee2a485d801297a43b483c646a46b5a2c194ee99ae5565cdd4ac",
+    "eval/tests/unit/translation/negative-find-more-records.json": "2b76d631641d6a9305191aa0cf76e06fe2339eb9b25205cf69befe488cb4f575",
+    "eval/tests/unit/translation/negative-search-wikipedia.json": "bbd7be45385467fbb9d7d4b6d773aebe0eaceb184e9d5d1418a407063f75c422",
+    "eval/tests/unit/translation/portuguese-brazilian-marriage.json": "1ca60ceb1def69bfab9e63c890f5296ef6119811054f9eaf61e728c69906ce55",
+    "eval/tests/unit/translation/rubric.md": "d806eef3e5697b0f3bf200b7462e2a58d1d4cea70b927596b174f2049fc3431c",
+    "eval/tests/unit/translation/single-term-lookup.json": "a52400b9b859fffbb08e5527fdffe67f97b8aa61f19d97bfe13dbe1cf32db13d",
+    "eval/tests/unit/translation/spanish-colonial-baptism.json": "e1ab01711fcecf21116be263390fb05b733f80c01fcfdbdb8a031c91a54095fd",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "8ec8f1927ff467c125a40c1e40ad66f452739526f4121b346f29626f192f4c9d",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/wikipedia-search-kirchenbuch.json": "6f1d9829c8a352c32b977062820485b07d4104b20c1aaca1d4dbd718695fedeb"
+  },
+  "tests": [
+    {
+      "test_id": "ut_translation_006",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate and faithful to the German original. All genealogically significant terms are correctly translated: 'ehelicher Sohn' as 'legitimate son,' 'Tagel\u00f6hner' as 'day laborer,' 'Pathe' as 'godfather,' and 'B\u00fcrger allhier' as 'citizen of this place.' The date 1812-03-03 is correctly formatted in ISO 8601. No fabricated material or unsupported claims appear. The response accurately reflects the uncertain readings in the original transcription."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: translated the legible structure of the baptism entry, explicitly flagged uncertain readings (M\u00e4rz, Sch[n?]eider, illegible godfather surname), kept names in original German form, explained genealogically significant terms with their research implications, and noted the m/n Kurrent confusion as a known paleographic hazard. The corrected transcription and full translation were provided, along with detailed genealogical context for each key element."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation and paleographic analysis task without invoking any tools, which is appropriate for this stateless test scenario."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Ehelicher Sohn' is correctly rendered as 'legitimate son' (not just 'son'), 'Tagel\u00f6hner' as 'day laborer' (capturing the specific occupational and social status), 'Pathe' as 'godfather' (the male sponsor role), and 'B\u00fcrger allhier' as 'citizen of this place' (preserving the civic status distinction). Names and places remain in their original German form as required."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The skill explicitly flagged all ambiguous readings: [M..]rz is marked as 'almost certainly M\u00e4rz' with reasoning provided; Sch[m/n]ider is flagged as 'probable' with explanation of the m/n confusion pair in Kurrent; the godfather's surname is marked [illegible] without invention. The corrected transcription uses [n?] to indicate the uncertain letter. The paleography note explicitly warns that the surname reading is provisional and should be confirmed against the original image."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "The skill identified and explained all genealogically significant terms with their research implications: 'ehelicher Sohn' is explained as a legal status declaration confirming marriage; 'Tagel\u00f6hner' is contextualized as the lowest tier of free laborer and a social/economic marker; 'Pathe' is identified as the godfather (male sponsor) and the shared name 'Georg' is flagged as a kinship/friendship naming convention worth investigating; 'B\u00fcrger allhier' is explained as formal civic rights status, distinguished from the father's lower standing. The skill also notes that birth and baptism dates may conflate and recommends checking for a separate birth date."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "The date 3 March 1812 appears in the translation with the ISO 8601 format (1812-03-03) in parentheses immediately following the prose form. The date is correctly formatted as a complete date (year-month-day) since the record provides all three components. Germany had adopted the Gregorian calendar well before 1812, so no Old Style carve-out applies. The formatting is consistent and correct throughout the response."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 61224.11560000182,
+        "duration_api_ms": 57480.0,
+        "judge_duration_ms": 10718.129499997303,
+        "wall_clock_ms": 72421.64254188538,
+        "num_turns": 3,
+        "input_tokens": 464,
+        "cached_input_tokens": 21195,
+        "cache_creation_input_tokens": 9003,
+        "output_tokens": 2915,
+        "judge_input_tokens": 7574,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1062,
+        "skill_cost_usd": 0.08415075,
+        "judge_cost_usd": 0.012884,
+        "total_cost_usd": 0.09703475
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_006_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 61224.11560000182,
+          "duration_api_ms": 57480.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 464,
+          "cached_input_tokens": 21195,
+          "cache_creation_input_tokens": 9003,
+          "output_tokens": 2915,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 458,
+              "outputTokens": 17,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0005430000000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 2898,
+              "cacheReadInputTokens": 21195,
+              "cacheCreationInputTokens": 9003,
+              "webSearchRequests": 0,
+              "costUSD": 0.08360775000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.08415075,
+          "output": {
+            "text_response": "**Step 1 \u2014 Language and record type**\n\nGerman, Kurrentschrift \u2014 Lutheran or Catholic baptism register, 1812. Germany had adopted the Gregorian calendar well before this date, so no Old Style concern.\n\n---\n\n**Step 2 \u2014 Transcription review**\n\nYour transcription is solid. Here are my readings of the uncertain spots:\n\n| Your flag | Reading | Reasoning |\n|-----------|---------|-----------|\n| `[M..]rz` | **M\u00e4rz** | The faded characters are almost certainly *\u00e4* (or the older digraph *ae* \u2192 *aer*), giving *M\u00e4rz* (March). Two character positions before *rz* fits *ae* in the *Maerz* spelling common in period registers. |\n| `Sch[m/n]ider` | **Sch[n]eider** \u2014 probable | In Kurrent, *m* (three minims) and *n* (two minims) are the single most common confusion pair. *Schneider* (tailor) is one of the most frequent German surnames; *Schmider* is rare. I flag this as probable, not certain \u2014 the original ink is the authority. |\n| `[unleserlich]` (godfather surname) | **[illegible]** | Your note stands; I cannot recover it without the image. |\n\n---\n\n**Corrected transcription (faithful to original):**\n\n> Den 3ten M\u00e4rz 1812 ist getauft worden Johann Georg, ehelicher Sohn des Joh. Sch[n?]eider, Tagel\u00f6hner, und seiner Ehefrau Anna Maria. Pathe war Georg [illegible], B\u00fcrger allhier.\n\n---\n\n**Step 3 \u2014 Translation** *(derivative \u2014 the original governs)*\n\n> On the 3rd of March 1812 (1812-03-03), Johann Georg was baptized, legitimate son of Joh[ann] Sch[n?]eider, day laborer, and his wife Anna Maria. Godfather was Georg [illegible surname], citizen of this place.\n\n---\n\n**Step 4 \u2014 Genealogically relevant information**\n\n- **Johann Georg** \u2014 baptismal subject; male child.\n- **1812-03-03** \u2014 baptism date. German registers of this era often conflate birth and baptism in the same entry; check whether a birth date appears elsewhere in the register column or margin.\n- **ehelicher Sohn** (*legitimate son*) \u2014 confirms the parents were legally married at the time of the birth. This is a legal status declaration, not just a descriptive note.\n- **Joh. Sch[n?]eider** \u2014 father; *Joh.* is a standard abbreviation for *Johann*. Surname flagged uncertain \u2014 if the register has other entries for this family, compare the letterform there.\n- **Anna Maria** \u2014 mother; no maiden name given here (common for this period; look for the marriage record).\n- **Tagel\u00f6hner** (*day laborer*) \u2014 paid daily for agricultural or manual work; the lowest tier of free laborer. A social/economic marker that helps distinguish this family from others of the same surname.\n- **Pathe war Georg [illegible]** \u2014 *Pathe* is the godfather (male sponsor), not a parent. The child shares the name *Georg* with the godfather \u2014 a strong kinship or friendship naming convention worth investigating. *Pathe* here is singular masculine.\n- **B\u00fcrger allhier** \u2014 *B\u00fcrger* in an early 19th-century German register typically means a man holding formal civic rights (*B\u00fcrgerrecht*) in the community \u2014 a status above *Tagel\u00f6hner*. *Allhier* means \"here / in this place,\" i.e., the same parish or town as the register. The godfather's higher civic standing relative to the father is worth noting.\n\n---\n\n**Paleography note on the surname**\n\nIf you can share an image of the entry, I can work character-by-character through the godfather's surname and give you a firmer reading on *Sch[m/n]eider* as well. The formulaic structure of the entry is now confirmed, so any remaining uncertain letters can be constrained by what the word must be.\n\n---\n\n- \"Extract assertions from this record?\" (record-extraction)\n- \"Link Johann Georg to the tree?\" (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "German Kurrent baptism entry: 'Den 3ten [M..]rz 1812 ist getauft worden Johann Georg, ehelicher Sohn des Joh. Sch[m/n]ider, Tagel\u00f6hner, und seiner Ehefrau Anna Maria. Pathe war Georg [unleserlich], B\u00fc"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": "skipped: no English prose dates in response; ISO check not applicable"
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate and faithful to the German original. All genealogically significant terms are correctly translated: 'ehelicher Sohn' as 'legitimate son,' 'Tagel\u00f6hner' as 'day laborer,' 'Pathe' as 'godfather,' and 'B\u00fcrger allhier' as 'citizen of this place.' The date 1812-03-03 is correctly formatted in ISO 8601. No fabricated material or unsupported claims appear. The response accurately reflects the uncertain readings in the original transcription."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: translated the legible structure of the baptism entry, explicitly flagged uncertain readings (M\u00e4rz, Sch[n?]eider, illegible godfather surname), kept names in original German form, explained genealogically significant terms with their research implications, and noted the m/n Kurrent confusion as a known paleographic hazard. The corrected transcription and full translation were provided, along with detailed genealogical context for each key element."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation and paleographic analysis task without invoking any tools, which is appropriate for this stateless test scenario."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Ehelicher Sohn' is correctly rendered as 'legitimate son' (not just 'son'), 'Tagel\u00f6hner' as 'day laborer' (capturing the specific occupational and social status), 'Pathe' as 'godfather' (the male sponsor role), and 'B\u00fcrger allhier' as 'citizen of this place' (preserving the civic status distinction). Names and places remain in their original German form as required."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The skill explicitly flagged all ambiguous readings: [M..]rz is marked as 'almost certainly M\u00e4rz' with reasoning provided; Sch[m/n]ider is flagged as 'probable' with explanation of the m/n confusion pair in Kurrent; the godfather's surname is marked [illegible] without invention. The corrected transcription uses [n?] to indicate the uncertain letter. The paleography note explicitly warns that the surname reading is provisional and should be confirmed against the original image."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "The skill identified and explained all genealogically significant terms with their research implications: 'ehelicher Sohn' is explained as a legal status declaration confirming marriage; 'Tagel\u00f6hner' is contextualized as the lowest tier of free laborer and a social/economic marker; 'Pathe' is identified as the godfather (male sponsor) and the shared name 'Georg' is flagged as a kinship/friendship naming convention worth investigating; 'B\u00fcrger allhier' is explained as formal civic rights status, distinguished from the father's lower standing. The skill also notes that birth and baptism dates may conflate and recommends checking for a separate birth date."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "The date 3 March 1812 appears in the translation with the ISO 8601 format (1812-03-03) in parentheses immediately following the prose form. The date is correctly formatted as a complete date (year-month-day) since the record provides all three components. Germany had adopted the Gregorian calendar well before 1812, so no Old Style carve-out applies. The formatting is consistent and correct throughout the response."
+              }
+            ],
+            "judge_cost_usd": 0.012884,
+            "duration_ms": 10718.129499997303,
+            "error": null,
+            "input_tokens": 7574,
+            "cached_input_tokens": 0,
+            "output_tokens": 1062
+          },
+          "started_at": 1788378401.328723,
+          "ended_at": 1788378473.7503655
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_011",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate and faithful to the original Dutch. All genealogical terms are correctly rendered: 'soon van' as 'son of', 'gedoopt' as 'baptized', 'Getuigen' as 'witnesses'. The patronymic explanations are correct (Hendricksz = son of Hendrick, Willems = daughter of Willem, Jans = daughter/son of Jan). Names are preserved in original Dutch form (Pieter, Jan, Maria, Cornelis, Aaltje). The calendar note correctly identifies the indeterminate status and appropriately withholds the ISO date pending province identification. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses all required elements: translates the full record structure (baptism date, subject, parents, witnesses), explains patronymics and their genealogical significance, identifies 'getuigen' as witnesses/baptismal sponsors, clarifies 'soon van' as 'son of', preserves original Dutch names, and provides genealogically relevant context (FAN-cluster research value, naming patterns, baptism vs. birth distinction). The per-test requirements are all met."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "Translation is faithful and precise. Genealogical terms preserve their exact meaning: patronymics are correctly identified and explained (Hendricksz, Willems, Jans all explained as patronymic forms), 'soon van' correctly rendered as 'son of', 'getuigen' correctly identified as witnesses. The distinction between baptism and birth is noted. No genealogical terms are flattened or mischaracterized."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "Ambiguity is explicitly flagged and handled correctly. The calendar uncertainty is clearly marked with a \u26a0\ufe0f warning, explaining that the province is unknown and the record falls within the 1582\u20131701 indeterminate window. The skill explicitly states it cannot assign an ISO 8601 date without risking a 10-day calendar error and directs the user to convert-dates. The archaic spelling 'soon' is noted as period-standard orthography. Ambiguities are not silently resolved."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "Genealogically significant terms are explained with full context. Patronymics are identified and their research significance is explicitly noted (e.g., 'Pieter himself may later appear in records as Pieter Jansz rather than carrying Hendricksz forward'). Witnesses are identified as FAN-cluster figures worth researching. The distinction between baptism date and birth date is flagged. The record type (Dutch Reformed) is identified. Legal and cultural context (patronymic naming patterns, 17th-century Dutch orthography) is provided."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "Date handling is correct per the carve-out rule. The date '5 March 1698' appears in prose form in the translation and is flagged as 'Old Style / Gregorian status indeterminate pending province' in the structured table. No ISO 8601 form is provided, which is the correct behavior: the record names no province, falls within the 1582\u20131701 indeterminate window, and the skill appropriately withholds the ISO form and directs the user to convert-dates. This is a pass, not a miss."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 38541.689300000144,
+        "duration_api_ms": 35187.0,
+        "judge_duration_ms": 12987.659899998107,
+        "wall_clock_ms": 51954.31423187256,
+        "num_turns": 3,
+        "input_tokens": 409,
+        "cached_input_tokens": 21138,
+        "cache_creation_input_tokens": 8824,
+        "output_tokens": 2007,
+        "judge_input_tokens": 7181,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1045,
+        "skill_cost_usd": 0.06980739999999999,
+        "judge_cost_usd": 0.012406,
+        "total_cost_usd": 0.08221339999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_011_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 38541.689300000144,
+          "duration_api_ms": 35187.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 409,
+          "cached_input_tokens": 21138,
+          "cache_creation_input_tokens": 8824,
+          "output_tokens": 2007,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 403,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000478,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 1992,
+              "cacheReadInputTokens": 21138,
+              "cacheCreationInputTokens": 8824,
+              "webSearchRequests": 0,
+              "costUSD": 0.06932939999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.06980739999999999,
+          "output": {
+            "text_response": "Here is the full translation and analysis of this Dutch Reformed baptism record.\n\n---\n\n## Original (as written)\n\n> Den 5 Maart 1698 is gedoopt Pieter, soon van Jan Hendricksz en Maria Willems. Getuigen waren Cornelis de Vries en Aaltje Jans.\n\n---\n\n## Translation *(derivative \u2014 the original governs)*\n\nOn 5 March 1698, Pieter was baptized, son of Jan Hendricksz and Maria Willems. The witnesses were Cornelis de Vries and Aaltje Jans.\n\n---\n\n## Notes on the text\n\n- **soon** \u2014 period spelling of *zoon* (son); standard 17th-century Dutch orthography, not an error.\n- **Hendricksz** \u2014 abbreviation of *Hendrickszoon*, meaning \"son of Hendrick.\" This is a **patronymic**, not a hereditary surname. Jan's father was named Hendrick.\n- **Willems** \u2014 similarly a patronymic; Maria was the daughter of a man named Willem.\n- **Aaltje Jans** \u2014 *Jans* is a patronymic suffix meaning \"daughter/son of Jan,\" a common naming pattern in this period.\n- **Getuigen** \u2014 *witnesses*, the Dutch Reformed term for the two sponsors/witnesses at a baptism. These are FAN-cluster figures worth researching \u2014 they are often relatives or close neighbors.\n\n---\n\n## \u26a0\ufe0f Calendar note \u2014 date is indeterminate\n\nThe record gives **5 March 1698**, but no province is named. The Netherlands adopted the Gregorian calendar at different times by province \u2014 Holland from 1583, but Gelderland, Utrecht, Overijssel, Friesland, Groningen, and Drenthe had not yet switched by this date. Because the province is unknown and the record falls within the 1582\u20131701 indeterminate window, I cannot assign an ISO 8601 date without risking a 10-day calendar error. Use **convert-dates** to resolve this once the province is identified.\n\n---\n\n## What matters genealogically\n\n| Element | Detail |\n|---|---|\n| **Subject** | Pieter (male child) |\n| **Father** | Jan Hendricksz (son of Hendrick) |\n| **Mother** | Maria Willems (daughter of Willem) |\n| **Witnesses** | Cornelis de Vries \u00b7 Aaltje Jans (daughter of Jan) |\n| **Event** | Baptism \u2014 **not** birth date; birth likely occurred days earlier |\n| **Record type** | Dutch Reformed (*Nederduits Gereformeerd*) baptismal register |\n| **Date** | 5 March 1698 \u2014 Old Style / Gregorian status indeterminate pending province |\n\n> **Naming tip:** Because patronymics were in active use, Pieter himself may later appear in records as *Pieter Jansz* (son of Jan) rather than carrying \"Hendricksz\" forward. Search for him under that form.\n\n---\n\n**Next steps:**\n- \"Extract assertions from this record?\" (record-extraction)\n- \"Link Pieter to the tree?\" (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "'Den 5 Maart 1698 is gedoopt Pieter, soon van Jan Hendricksz en Maria Willems. Getuigen waren Cornelis de Vries en Aaltje Jans.'"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": "skipped: response invokes SKILL.md's pre-Gregorian carve-out (Old Style / indeterminate calendar); withholding the ISO form is required there, so the ISO floor does not apply"
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate and faithful to the original Dutch. All genealogical terms are correctly rendered: 'soon van' as 'son of', 'gedoopt' as 'baptized', 'Getuigen' as 'witnesses'. The patronymic explanations are correct (Hendricksz = son of Hendrick, Willems = daughter of Willem, Jans = daughter/son of Jan). Names are preserved in original Dutch form (Pieter, Jan, Maria, Cornelis, Aaltje). The calendar note correctly identifies the indeterminate status and appropriately withholds the ISO date pending province identification. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response addresses all required elements: translates the full record structure (baptism date, subject, parents, witnesses), explains patronymics and their genealogical significance, identifies 'getuigen' as witnesses/baptismal sponsors, clarifies 'soon van' as 'son of', preserves original Dutch names, and provides genealogically relevant context (FAN-cluster research value, naming patterns, baptism vs. birth distinction). The per-test requirements are all met."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "Translation is faithful and precise. Genealogical terms preserve their exact meaning: patronymics are correctly identified and explained (Hendricksz, Willems, Jans all explained as patronymic forms), 'soon van' correctly rendered as 'son of', 'getuigen' correctly identified as witnesses. The distinction between baptism and birth is noted. No genealogical terms are flattened or mischaracterized."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "Ambiguity is explicitly flagged and handled correctly. The calendar uncertainty is clearly marked with a \u26a0\ufe0f warning, explaining that the province is unknown and the record falls within the 1582\u20131701 indeterminate window. The skill explicitly states it cannot assign an ISO 8601 date without risking a 10-day calendar error and directs the user to convert-dates. The archaic spelling 'soon' is noted as period-standard orthography. Ambiguities are not silently resolved."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "Genealogically significant terms are explained with full context. Patronymics are identified and their research significance is explicitly noted (e.g., 'Pieter himself may later appear in records as Pieter Jansz rather than carrying Hendricksz forward'). Witnesses are identified as FAN-cluster figures worth researching. The distinction between baptism date and birth date is flagged. The record type (Dutch Reformed) is identified. Legal and cultural context (patronymic naming patterns, 17th-century Dutch orthography) is provided."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "Date handling is correct per the carve-out rule. The date '5 March 1698' appears in prose form in the translation and is flagged as 'Old Style / Gregorian status indeterminate pending province' in the structured table. No ISO 8601 form is provided, which is the correct behavior: the record names no province, falls within the 1582\u20131701 indeterminate window, and the skill appropriately withholds the ISO form and directs the user to convert-dates. This is a pass, not a miss."
+              }
+            ],
+            "judge_cost_usd": 0.012406,
+            "duration_ms": 12987.659899998107,
+            "error": null,
+            "input_tokens": 7181,
+            "cached_input_tokens": 0,
+            "output_tokens": 1045
+          },
+          "started_at": 1788378531.7747698,
+          "ended_at": 1788378583.729084
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_004",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 21914.32220000206,
+        "duration_api_ms": 17236.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 22756.555557250977,
+        "num_turns": 1,
+        "input_tokens": 472,
+        "cached_input_tokens": 7564,
+        "cache_creation_input_tokens": 6077,
+        "output_tokens": 1000,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.04039595,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.04039595
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_004_2026-09-02_19-30-17_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 21914.32220000206,
+          "duration_api_ms": 17236.0,
+          "num_turns": 1,
+          "skill_attempts": 1,
+          "input_tokens": 472,
+          "cached_input_tokens": 7564,
+          "cache_creation_input_tokens": 6077,
+          "output_tokens": 1000,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 469,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000539,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 3,
+              "outputTokens": 986,
+              "cacheReadInputTokens": 7564,
+              "cacheCreationInputTokens": 6077,
+              "webSearchRequests": 0,
+              "costUSD": 0.03985695,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.04039595,
+          "output": {
+            "text_response": "## Translation\n\n> \"In the year one thousand eight hundred and forty-three, the fifteenth of March, before us, mayor and civil registrar of the commune of Saint-Malo, appeared Jean Baptiste Lef\u00e8vre, farmer, aged thirty years, who presented to us a male child, born yesterday at six o'clock in the morning, of himself, the declarant, and of Marie Anne Dubois, his wife, and to whom he declared he wished to give the given name of Guillaume.\"\n\n---\n\n## Key Genealogical Facts Extracted\n\n| Field | Detail |\n|---|---|\n| **Record date** | 15 March 1843 |\n| **Birth date** | 14 March 1843 (*n\u00e9 hier* = \"born yesterday\") |\n| **Birth time** | 6:00 a.m. |\n| **Child's name** | Guillaume Lef\u00e8vre |\n| **Child's sex** | Male |\n| **Place** | Saint-Malo (commune) |\n| **Father** | Jean Baptiste Lef\u00e8vre |\n| **Father's occupation** | *Cultivateur* (farmer / agricultural worker) |\n| **Father's age** | 30 years |\n| **Mother** | Marie Anne Dubois (wife of Jean Baptiste Lef\u00e8vre) |\n\n---\n\n## Record Context\n\nThis is a standard **French civil birth registration** (*acte de naissance*) in the Napoleonic *\u00e9tat civil* format, which was used throughout France and its territories from 1792 onward. A few things to note:\n\n- **The declarant is the father**, Jean Baptiste Lef\u00e8vre, who appeared before the mayor the day after the birth \u2014 a common practice, as registrations were typically made within 3 days of birth under French law.\n- **The mother is not present**; she is simply identified as the father's wife. Mothers rarely appeared in person at these registrations.\n- **\"Cultivateur\"** indicates he worked the land, likely as a tenant farmer or smallholder \u2014 a common occupation in rural and coastal Brittany.\n- Saint-Malo is in **Brittany (Bretagne)**, present-day Ille-et-Vilaine department. Records from this period are typically held at the **Archives d\u00e9partementales d'Ille-et-Vilaine** in Rennes, and many are available online via FamilySearch or the departmental archives portal.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": false,
+                "error": "response contains 2 prose date(s) (['15 March 1843', '14 March 1843']) but no ISO 8601 dates (YYYY-MM-DD). SKILL.md requires the ISO form alongside every prose date."
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": false,
+                "error": "translation response missing required next-step offer: 'Extract assertions from this record?' (record-extraction)"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1788378589.8221893,
+          "ended_at": 1788378612.578745
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate. All genealogical terms are correctly rendered: 'ehelicher Sohn' as 'legitimate son,' 'Bergmann' as 'miner,' 'geb.' as 'n\u00e9e,' and 'Taufpaten' as 'godparents.' Names are preserved in original form. The date is correctly formatted with ISO 8601. The explanation of genealogical significance is accurate and well-supported by the source text."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses all required elements: the structural shape of the entry (date, baptized child, parents with maiden name, godparents), all genealogically significant terms are identified and explained, the cultural mismatch (Irish names in German record) is flagged, and proper names are preserved in original form. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a translation task without invoking external tools, so this dimension is N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "The translation is faithful and precise. Genealogical terms preserve their exact meaning: 'ehelicher Sohn' correctly conveys legitimate status (distinct from illegitimate), 'Bergmann' accurately identifies the occupation, 'geb.' properly indicates maiden name, and 'Taufpaten' correctly translates as godparents. No genealogical terms are flattened or lose precision."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The response explicitly flags ambiguities and period-specific terminology. It notes that 'Johann Friedrich is the German-register form' and the family may have used anglicized equivalents. It distinguishes between baptism date (stated) and birth date (unknown). The abbreviation 'geb.' is explained with its full form 'geborene.' Ambiguous or archaic terms are not silently translated."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "The response thoroughly explains genealogically significant terms and their research implications. It notes that 'ehelicher Sohn' confirms parental marriage status with legal implications, identifies godparents as FAN figures worth researching, explains the occupational evidence of 'Bergmann,' and flags the cultural context of Irish names in a German record as evidence of an immigrant community in a mining district. The research narrative value is clearly articulated."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "The date is correctly formatted in both prose and ISO 8601 forms: '15 March 1845 (1845-03-15)' appears in the translation. The response also correctly distinguishes between the baptism date (stated) and the birth date (unknown), and notes that the record provides only the baptism date. No carve-out applies, and the ISO form is properly included."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 35423.81430000023,
+        "duration_api_ms": 31976.0,
+        "judge_duration_ms": 10390.433000000485,
+        "wall_clock_ms": 46381.447315216064,
+        "num_turns": 3,
+        "input_tokens": 416,
+        "cached_input_tokens": 21146,
+        "cache_creation_input_tokens": 9140,
+        "output_tokens": 1754,
+        "judge_input_tokens": 7062,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 873,
+        "skill_cost_usd": 0.0671768,
+        "judge_cost_usd": 0.011427,
+        "total_cost_usd": 0.0786038
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_001_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 35423.81430000023,
+          "duration_api_ms": 31976.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 416,
+          "cached_input_tokens": 21146,
+          "cache_creation_input_tokens": 9140,
+          "output_tokens": 1754,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 410,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0005,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 1736,
+              "cacheReadInputTokens": 21146,
+              "cacheCreationInputTokens": 9140,
+              "webSearchRequests": 0,
+              "costUSD": 0.0666768,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.0671768,
+          "output": {
+            "text_response": "**Original (as written):**\n*Den 15. M\u00e4rz 1845 wurde Johann Friedrich, ehelicher Sohn des Thomas Flynn, Bergmann, und seiner Ehefrau Maria geb. Kelly, getauft. Taufpaten: Patrick O'Brien und Bridget Mahoney.*\n\n---\n\n**Translation** *(derivative \u2014 the original governs):*\n\nOn 15 March 1845 (1845-03-15), Johann Friedrich, the legitimate son of Thomas Flynn, miner, and his wife Maria n\u00e9e Kelly, was baptized. Godparents: Patrick O'Brien and Bridget Mahoney.\n\n---\n\n**What matters genealogically:**\n\n- **Baptism date, not birth date.** The record gives the baptism on 15 March 1845 (1845-03-15). The birth almost certainly preceded it \u2014 often by days \u2014 but this record does not state the birth date. Record both separately; treat the birth date as unknown unless another source gives it.\n- **ehelicher Sohn** \u2014 *legitimate son*: confirms the parents Thomas Flynn and Maria n\u00e9e Kelly were married at the time of the birth. This is a legal status declaration, not merely descriptive.\n- **geb.** \u2014 abbreviation for *geborene* (n\u00e9e): Maria's maiden name was **Kelly**, her married name **Flynn**. Keep both for research.\n- **Bergmann** \u2014 *miner*; occupational term, not a surname. Indicates Thomas Flynn's trade at the time of the baptism.\n- **Taufpaten** \u2014 *godparents* (plural); both Patrick O'Brien and Bridget Mahoney served in this role. These are FAN (Friends, Associates, Neighbors) figures \u2014 the shared Irish surnames (Flynn, Kelly, O'Brien, Mahoney) in a German-language record strongly suggest an Irish immigrant community, likely drawn to a mining district. The godparents are worth researching as possible kin or community connections.\n- **Child's name:** Johann Friedrich is the German-register form. The family may have used an anglicized equivalent (e.g., John Frederick) in other records.\n\n---\n\n**A note on this record's context:** All personal names \u2014 Flynn, Kelly, O'Brien, Mahoney \u2014 are distinctly Irish in a German-language register. This points to an Irish immigrant family settled in a German-speaking mining region (possibly the Ruhr, Saarland, or a Central European mining district). That community context may help locate related records: Irish Catholic parishes, immigration records, or naturalization papers.\n\n---\n\n- \"Extract assertions from this record?\" (record-extraction)\n- \"Link Johann Friedrich to the tree?\" (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "Translate this German baptism record: 'Den 15. M\u00e4rz 1845 wurde Johann Friedrich, ehelicher Sohn des Thomas Flynn, Bergmann, und seiner Ehefrau Maria geb. Kelly, getauft. Taufpaten: Patrick O'Brien und"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate. All genealogical terms are correctly rendered: 'ehelicher Sohn' as 'legitimate son,' 'Bergmann' as 'miner,' 'geb.' as 'n\u00e9e,' and 'Taufpaten' as 'godparents.' Names are preserved in original form. The date is correctly formatted with ISO 8601. The explanation of genealogical significance is accurate and well-supported by the source text."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response addresses all required elements: the structural shape of the entry (date, baptized child, parents with maiden name, godparents), all genealogically significant terms are identified and explained, the cultural mismatch (Irish names in German record) is flagged, and proper names are preserved in original form. No required elements were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a translation task without invoking external tools, so this dimension is N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "The translation is faithful and precise. Genealogical terms preserve their exact meaning: 'ehelicher Sohn' correctly conveys legitimate status (distinct from illegitimate), 'Bergmann' accurately identifies the occupation, 'geb.' properly indicates maiden name, and 'Taufpaten' correctly translates as godparents. No genealogical terms are flattened or lose precision."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The response explicitly flags ambiguities and period-specific terminology. It notes that 'Johann Friedrich is the German-register form' and the family may have used anglicized equivalents. It distinguishes between baptism date (stated) and birth date (unknown). The abbreviation 'geb.' is explained with its full form 'geborene.' Ambiguous or archaic terms are not silently translated."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "The response thoroughly explains genealogically significant terms and their research implications. It notes that 'ehelicher Sohn' confirms parental marriage status with legal implications, identifies godparents as FAN figures worth researching, explains the occupational evidence of 'Bergmann,' and flags the cultural context of Irish names in a German record as evidence of an immigrant community in a mining district. The research narrative value is clearly articulated."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "The date is correctly formatted in both prose and ISO 8601 forms: '15 March 1845 (1845-03-15)' appears in the translation. The response also correctly distinguishes between the baptism date (stated) and the birth date (unknown), and notes that the record provides only the baptism date. No carve-out applies, and the ISO form is properly included."
+              }
+            ],
+            "judge_cost_usd": 0.011427,
+            "duration_ms": 10390.433000000485,
+            "error": null,
+            "input_tokens": 7062,
+            "cached_input_tokens": 0,
+            "output_tokens": 873
+          },
+          "started_at": 1788378562.6813936,
+          "ended_at": 1788378609.062841
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_007",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate and faithful to the original Italian text. All genealogical terms are correctly rendered: 'figlio del fu Antonio' properly translated as 'son of the late Antonio,' 'munito de' Santissimi Sacramenti' as 'provided with the Most Holy Sacraments,' and the Latin closing 'Anima eius requiescat in pace' correctly translated as 'May his soul rest in peace.' The date is correctly formatted as 14 March 1748 (1748-03-14). No fabricated material or unsupported claims are present."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: translated the full record structure (death date, subject name, father's name with 'fu' notation, age, sacraments, burial location, closing formula), recognized and translated both Italian and Latin layers, explained genealogically significant terms (fu, d'et\u00e0 d'anni sessanta in circa, munito de' Santissimi Sacramenti), preserved Italian names in original form, and provided estimated birth year (~1688) with appropriate caveats about the 'in circa' qualifier."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools, which is appropriate for this stateless translation request. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "Translation is faithful and preserves precise meaning of all genealogical terms. 'Figlio del fu Antonio' correctly conveys the father-son relationship with the critical 'fu' (deceased) marker. 'D'et\u00e0 d'anni sessanta in circa' accurately renders the age qualifier. 'Munito de' Santissimi Sacramenti' properly conveys the sacramental context. Place name 'San Lorenzo' and personal names remain in original Italian form. No genealogical terms are flattened or mischaracterized."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The skill explicitly flags ambiguous and uncertain elements: notes that 'Ad\u00ec' is archaic and explains its meaning; flags 'in circa' as signaling an estimated age rather than a confirmed one; provides a caveat that the implied birth year of ~1688 should be treated as a search window, not a confirmed date; recommends searching baptism records in the range 1683\u20131693. Ambiguities are surfaced with alternatives rather than silently resolved."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "Genealogically significant terms are explained with research implications: 'fu' is identified as 'the single most important genealogical word' and its meaning (father deceased before burial) is explained with its research significance; 'munito de' Santissimi Sacramenti' is explained as indicating last rites and a deathbed rather than sudden death; 'rese l'anima a Dio' is identified as a stock Catholic formula confirming the death date; the age qualifier is connected to an estimated birth year for baptism record searches. Cultural and legal context is provided throughout."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "The date 14 March 1748 appears in the translation with ISO 8601 format: '14 March 1748 (1748-03-14)'. The record is from 1748 Italy, well after Gregorian calendar adoption, so no carve-out applies. The ISO form is correctly provided alongside the prose form. The estimated birth year is given as 'circa 1688' without ISO format, which is appropriate for an approximate date derived from age estimation rather than a stated date in the record."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 36345.827299999655,
+        "duration_api_ms": 32949.0,
+        "judge_duration_ms": 11164.138900003309,
+        "wall_clock_ms": 48063.11249732971,
+        "num_turns": 3,
+        "input_tokens": 446,
+        "cached_input_tokens": 21175,
+        "cache_creation_input_tokens": 8921,
+        "output_tokens": 1745,
+        "judge_input_tokens": 7350,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1057,
+        "skill_cost_usd": 0.06626925,
+        "judge_cost_usd": 0.012635,
+        "total_cost_usd": 0.07890425000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_007_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 36345.827299999655,
+          "duration_api_ms": 32949.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 446,
+          "cached_input_tokens": 21175,
+          "cache_creation_input_tokens": 8921,
+          "output_tokens": 1745,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 440,
+              "outputTokens": 17,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0005250000000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 1728,
+              "cacheReadInputTokens": 21175,
+              "cacheCreationInputTokens": 8921,
+              "webSearchRequests": 0,
+              "costUSD": 0.06574424999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.06626925,
+          "output": {
+            "text_response": "## Translation \u2014 Italian Burial Record, 1748\n\n---\n\n### Original (as written)\n\n> Ad\u00ec 14 Marzo 1748. Giovanni Battista Rossi, figlio del fu Antonio, d'et\u00e0 d'anni sessanta in circa, munito de' Santissimi Sacramenti, rese l'anima a Dio, ed il suo corpo fu sepolto nella chiesa parrocchiale di San Lorenzo. Anima eius requiescat in pace.\n\n---\n\n### Translation *(derivative \u2014 the original governs)*\n\nOn 14 March 1748 (1748-03-14). Giovanni Battista Rossi, son of the late Antonio, aged approximately sixty years, having been provided with the Most Holy Sacraments, gave up his soul to God, and his body was buried in the parish church of San Lorenzo. May his soul rest in peace.\n\n---\n\n### Annotations\n\n| Term | Original | Explanation |\n|---|---|---|\n| *Ad\u00ec* | *Ad\u00ec* | Archaic Italian for \"on the day of\" (from *a d\u00ec*). Standard dating formula in 18th-century Italian registers. |\n| **Late** | *del fu Antonio* | ***Fu*** is the single most important genealogical word in this record. From Latin *fuit* (\"he was\"), it confirms that Antonio Rossi was **already deceased** at the time of this burial \u2014 ruling out any contemporary records linking them as living contemporaries. |\n| Sacraments | *munito de' Santissimi Sacramenti* | Literally \"fortified with the Most Holy Sacraments.\" Indicates he received last rites \u2014 Viaticum (final Communion) and Extreme Unction \u2014 meaning he had a deathbed, not a sudden death. |\n| Gave up his soul | *rese l'anima a Dio* | Stock Catholic formula for death. The **death** occurred on this date; burial presumably followed within a day or two, as was standard. |\n| Closing | *Anima eius requiescat in pace* | Latin. Standard closing formula: \"May his soul rest in peace.\" The scribe switches to Latin only for this phrase \u2014 typical of mid-18th-century Italian parish practice. |\n\n---\n\n### Genealogically relevant facts\n\n- **Subject:** Giovanni Battista Rossi\n- **Death date:** 14 March 1748 (1748-03-14)\n- **Burial place:** Parish church of San Lorenzo *(church name as written; town/diocese not stated in this entry \u2014 check the register header)*\n- **Father:** Antonio Rossi \u2014 **deceased before 1748-03-14** (*fu* confirms this)\n- **Age at death:** Approximately 60 years (*sessanta in circa*) \u2192 estimated birth year **circa 1688** (1748 \u2212 60)\n- **Manner of death:** Not sudden \u2014 received last rites, implying some period of illness\n- **Legitimacy / marital status:** Not stated in this entry\n- **Mother:** Not named \u2014 typical of 18th-century Italian burial entries, which usually name only the father\n\n> \u26a0\ufe0f **Age caveat:** *In circa* (\"approximately\") signals the age was estimated \u2014 possibly by a family member reporting to the priest, or by the priest himself. The implied birth year of ~1688 should be treated as a search window, not a confirmed date. Search baptism records for Giovanni Battista Rossi in roughly 1683\u20131693.\n\n---\n\nWould you like to:\n- **Extract assertions from this record?** (record-extraction)\n- **Link Giovanni Battista Rossi to the tree?** (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "Ad\u00ec 14 Marzo 1748. Giovanni Battista Rossi, figlio del fu Antonio, d'et\u00e0 d'anni sessanta in circa, munito de' Santissimi Sacramenti, rese l'anima a Dio, ed il suo corpo fu sepolto nella chiesa parrocc"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate and faithful to the original Italian text. All genealogical terms are correctly rendered: 'figlio del fu Antonio' properly translated as 'son of the late Antonio,' 'munito de' Santissimi Sacramenti' as 'provided with the Most Holy Sacraments,' and the Latin closing 'Anima eius requiescat in pace' correctly translated as 'May his soul rest in peace.' The date is correctly formatted as 14 March 1748 (1748-03-14). No fabricated material or unsupported claims are present."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: translated the full record structure (death date, subject name, father's name with 'fu' notation, age, sacraments, burial location, closing formula), recognized and translated both Italian and Latin layers, explained genealogically significant terms (fu, d'et\u00e0 d'anni sessanta in circa, munito de' Santissimi Sacramenti), preserved Italian names in original form, and provided estimated birth year (~1688) with appropriate caveats about the 'in circa' qualifier."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools, which is appropriate for this stateless translation request. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "Translation is faithful and preserves precise meaning of all genealogical terms. 'Figlio del fu Antonio' correctly conveys the father-son relationship with the critical 'fu' (deceased) marker. 'D'et\u00e0 d'anni sessanta in circa' accurately renders the age qualifier. 'Munito de' Santissimi Sacramenti' properly conveys the sacramental context. Place name 'San Lorenzo' and personal names remain in original Italian form. No genealogical terms are flattened or mischaracterized."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The skill explicitly flags ambiguous and uncertain elements: notes that 'Ad\u00ec' is archaic and explains its meaning; flags 'in circa' as signaling an estimated age rather than a confirmed one; provides a caveat that the implied birth year of ~1688 should be treated as a search window, not a confirmed date; recommends searching baptism records in the range 1683\u20131693. Ambiguities are surfaced with alternatives rather than silently resolved."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "Genealogically significant terms are explained with research implications: 'fu' is identified as 'the single most important genealogical word' and its meaning (father deceased before burial) is explained with its research significance; 'munito de' Santissimi Sacramenti' is explained as indicating last rites and a deathbed rather than sudden death; 'rese l'anima a Dio' is identified as a stock Catholic formula confirming the death date; the age qualifier is connected to an estimated birth year for baptism record searches. Cultural and legal context is provided throughout."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "The date 14 March 1748 appears in the translation with ISO 8601 format: '14 March 1748 (1748-03-14)'. The record is from 1748 Italy, well after Gregorian calendar adoption, so no carve-out applies. The ISO form is correctly provided alongside the prose form. The estimated birth year is given as 'circa 1688' without ISO format, which is appropriate for an approximate date derived from age estimation rather than a stated date in the record."
+              }
+            ],
+            "judge_cost_usd": 0.012635,
+            "duration_ms": 11164.138900003309,
+            "error": null,
+            "input_tokens": 7350,
+            "cached_input_tokens": 0,
+            "output_tokens": 1057
+          },
+          "started_at": 1788378540.5831556,
+          "ended_at": 1788378588.6462681
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate. The Latin is correctly parsed (ablative of time, genitive case endings, standard Catholic marriage formula). Names are properly Latinized forms (Joannes=John, Patricius=Patrick, Brigitta=Bridget). The structural translation matches the per-test expectation. The ISO 8601 date (1845-05-12) is correctly formatted and justified (Gregorian calendar applies to 1845 Ireland). No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses all required elements: structural translation of the marriage record, explanation of genealogically significant terms (matrimonium iniverunt, filius/filia, praesentibus testibus, parochus), flagging of Latinized names with their English equivalents, and emphasis on the value of named parents for parentage research. All per-test requirements are met. The genealogically relevant facts table and research notes provide comprehensive context."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools. N/A applies."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "The translation preserves genealogical meaning precisely. Relationship terms (filius/filia) are correctly rendered as 'son of'/'daughter of' with both parents named, which is the genealogically critical structure. Occupational/clerical term 'parochus' is correctly identified as parish priest. Place name 'S. Patricii' is correctly expanded to 'Saint Patrick.' No genealogical terms are flattened or lose precision."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "Ambiguities are explicitly flagged. The response notes that 'Rev. J. Murphy' has only an initial 'J.' and states 'likely Joannes (John) but cannot be confirmed from this record alone.' The abbreviation 'S.' is expanded with full explanation. Maiden names are flagged as unknown. The skill does not silently guess; it marks what is uncertain and what is confirmed."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "Genealogically significant terms are explained with research context. 'Matrimonium iniverunt' is identified as the standard Catholic marriage formula. 'Filius/filia' is explained as the parent-naming convention that makes Catholic Latin records valuable for parentage research. 'Praesentibus testibus' is explained as the formula introducing required witnesses. The research notes explain that witnesses are likely FAN figures and that naming both parents is crucial for two-generation research. Cultural and legal context is provided."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "Every date in the response carries both prose and ISO 8601 format. The main date appears as 'On the 12th day of May 1845 (1845-05-12)' in the translation and is repeated in the genealogically relevant facts table as '12 May 1845 (1845-05-12).' A calendar note explicitly justifies the ISO form: '1845 is well within the Gregorian calendar era for Ireland, so the ISO 8601 date (1845-05-12) is direct \u2014 no Old Style conversion is needed.' The carve-out rule is correctly applied and explained."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 42876.438499999495,
+        "duration_api_ms": 39267.0,
+        "judge_duration_ms": 12357.193100000586,
+        "wall_clock_ms": 56037.227153778076,
+        "num_turns": 3,
+        "input_tokens": 445,
+        "cached_input_tokens": 21176,
+        "cache_creation_input_tokens": 8943,
+        "output_tokens": 2366,
+        "judge_input_tokens": 7655,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 986,
+        "skill_cost_usd": 0.07569605,
+        "judge_cost_usd": 0.012585,
+        "total_cost_usd": 0.08828105
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_002_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 42876.438499999495,
+          "duration_api_ms": 39267.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 445,
+          "cached_input_tokens": 21176,
+          "cache_creation_input_tokens": 8943,
+          "output_tokens": 2366,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 439,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000509,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 2352,
+              "cacheReadInputTokens": 21176,
+              "cacheCreationInputTokens": 8943,
+              "webSearchRequests": 0,
+              "costUSD": 0.07518705,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.07569605,
+          "output": {
+            "text_response": "## Translation: Latin Catholic Marriage Record, 1845\n\n---\n\n### Original (as written)\n\n> Die 12 Maii 1845, in ecclesia parochiali S. Patricii, matrimonium iniverunt Thomas Flynn, filius Joannis et Mariae, et Maria Kelly, filia Patricii et Brigittae, praesentibus testibus Patricio O'Brien et Brigitta Mahoney. Parochus: Rev. J. Murphy.\n\n---\n\n### Translation *(derivative \u2014 the original Latin governs)*\n\nOn the 12th day of May 1845 (1845-05-12), in the parish church of Saint Patrick, Thomas Flynn, son of Joannes and Maria, and Maria Kelly, daughter of Patricius and Brigitta, entered into marriage, in the presence of the witnesses Patricius O'Brien and Brigitta Mahoney. Parish Priest: Rev. J. Murphy.\n\n---\n\n### Annotations\n\n| Latin term / phrase | Notes |\n|---|---|\n| *Die 12 Maii* | Ablative of time: \"on the 12th day of May.\" *Maii* = genitive of *Maius*. |\n| *S. Patricii* | *S.* is an abbreviation for *Sancti* (genitive of *Sanctus*), meaning \"of Saint.\" *Patricii* is the genitive of *Patricius* (Patrick). Full expansion: *Sancti Patricii*. |\n| *matrimonium iniverunt* | Literally \"they entered into marriage\" \u2014 the standard Latin formula for a valid Catholic marriage. The plural verb confirms both parties acted. |\n| *filius / filia* | *Filius* = son (Thomas Flynn's relationship to his parents); *filia* = daughter (Maria Kelly's relationship to hers). Both confirm legitimate birth by naming both parents. |\n| *Joannis, Patricii, Brigittae* | Genitive case endings \u2014 \"of Joannes,\" \"of Patricius,\" \"of Brigitta.\" Nominative forms: **Joannes** (anglicized: John), **Patricius** (Patrick), **Brigitta** (Bridget / Brigid). These are names as the scribe wrote them; not anglicized here. |\n| *praesentibus testibus* | Ablative absolute: \"with witnesses being present.\" The standard formula introducing the two required marriage witnesses. |\n| *Parochus* | Parish priest \u2014 the officiating clergyman, not a bishop or curate. |\n| *Rev. J. Murphy* | *Rev.* abbreviates *Reverendus* (Reverend). The first name initial only \u2014 \"J.\" \u2014 is not expanded; likely Joannes (John) but cannot be confirmed from this record alone. |\n\n---\n\n### Genealogically relevant facts\n\n| Element | Detail |\n|---|---|\n| **Event** | Marriage |\n| **Date** | 12 May 1845 (1845-05-12) |\n| **Place** | Parish church of Saint Patrick [jurisdiction not named in this entry] |\n| **Groom** | Thomas Flynn |\n| **Groom's father** | Joannes [Flynn] |\n| **Groom's mother** | Maria [Flynn, maiden name unknown from this record] |\n| **Bride** | Maria Kelly |\n| **Bride's father** | Patricius Kelly |\n| **Bride's mother** | Brigitta Kelly [maiden name unknown from this record] |\n| **Witness 1** | Patricius O'Brien |\n| **Witness 2** | Brigitta Mahoney |\n| **Officiant** | Rev. J. Murphy, *Parochus* (parish priest) |\n\n> **Research note \u2014 witnesses:** Patricius O'Brien and Brigitta Mahoney are likely FAN (family, associates, and neighbors) figures. Irish Catholic marriage witnesses were frequently siblings, cousins, or close family friends of one of the parties. Researching them may open collateral lines or confirm family relationships.\n\n> **Research note \u2014 parents' surnames:** The record names the groom's parents as *Joannis et Mariae* and the bride's parents as *Patricii et Brigittae*, but does not repeat the surnames Flynn and Kelly. By convention, the parents share the surname of their respective child, but no maiden name is given for either mother.\n\n> **Calendar note:** 1845 is well within the Gregorian calendar era for Ireland, so the ISO 8601 date (1845-05-12) is direct \u2014 no Old Style conversion is needed.\n\n---\n\n**Extract assertions from this record?** (record-extraction)\n**Link Thomas Flynn to the tree?** \u00b7 **Link Maria Kelly to the tree?** (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "Translate this Latin Catholic marriage record: 'Die 12 Maii 1845, in ecclesia parochiali S. Patricii, matrimonium iniverunt Thomas Flynn, filius Joannis et Mariae, et Maria Kelly, filia Patricii et Br"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate. The Latin is correctly parsed (ablative of time, genitive case endings, standard Catholic marriage formula). Names are properly Latinized forms (Joannes=John, Patricius=Patrick, Brigitta=Bridget). The structural translation matches the per-test expectation. The ISO 8601 date (1845-05-12) is correctly formatted and justified (Gregorian calendar applies to 1845 Ireland). No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response addresses all required elements: structural translation of the marriage record, explanation of genealogically significant terms (matrimonium iniverunt, filius/filia, praesentibus testibus, parochus), flagging of Latinized names with their English equivalents, and emphasis on the value of named parents for parentage research. All per-test requirements are met. The genealogically relevant facts table and research notes provide comprehensive context."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools. N/A applies."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "The translation preserves genealogical meaning precisely. Relationship terms (filius/filia) are correctly rendered as 'son of'/'daughter of' with both parents named, which is the genealogically critical structure. Occupational/clerical term 'parochus' is correctly identified as parish priest. Place name 'S. Patricii' is correctly expanded to 'Saint Patrick.' No genealogical terms are flattened or lose precision."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "Ambiguities are explicitly flagged. The response notes that 'Rev. J. Murphy' has only an initial 'J.' and states 'likely Joannes (John) but cannot be confirmed from this record alone.' The abbreviation 'S.' is expanded with full explanation. Maiden names are flagged as unknown. The skill does not silently guess; it marks what is uncertain and what is confirmed."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "Genealogically significant terms are explained with research context. 'Matrimonium iniverunt' is identified as the standard Catholic marriage formula. 'Filius/filia' is explained as the parent-naming convention that makes Catholic Latin records valuable for parentage research. 'Praesentibus testibus' is explained as the formula introducing required witnesses. The research notes explain that witnesses are likely FAN figures and that naming both parents is crucial for two-generation research. Cultural and legal context is provided."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "Every date in the response carries both prose and ISO 8601 format. The main date appears as 'On the 12th day of May 1845 (1845-05-12)' in the translation and is repeated in the genealogically relevant facts table as '12 May 1845 (1845-05-12).' A calendar note explicitly justifies the ISO form: '1845 is well within the Gregorian calendar era for Ireland, so the ISO 8601 date (1845-05-12) is direct \u2014 no Old Style conversion is needed.' The carve-out rule is correctly applied and explained."
+              }
+            ],
+            "judge_cost_usd": 0.012585,
+            "duration_ms": 12357.193100000586,
+            "error": null,
+            "input_tokens": 7655,
+            "cached_input_tokens": 0,
+            "output_tokens": 986
+          },
+          "started_at": 1788378583.939165,
+          "ended_at": 1788378639.9763923
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_010",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate. The Latin is correctly rendered into English with proper understanding of genealogical terminology. The Roman numeral MDCXLII is correctly decoded as 1642. The feast day identification (16 October 1642) is correct. Names are preserved in their original Latin forms as required. The phrase 'quondam fratris mei Petri' is correctly translated as 'late brother Peter,' surfacing that Petrus was deceased. All key genealogical facts are accurately conveyed."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses all required elements: the full translation is provided, the ambiguity of 'nepos' is explicitly flagged with both interpretations (nephew vs. grandson) and its genealogical significance explained, the feast-day date is resolved to a calendar date with ISO format, the deceased status of Petrus is clearly marked, names are kept in Latin, and the overall sense of the will is conveyed. No required element was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking any external tools. N/A applies."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Senex et infirmus corpore, sanus tamen mente' is accurately rendered as 'old and infirm in body, yet sound in mind.' The legal formula 'bonis mobilibus et immobilibus' is correctly explained as personal and real property. Relationship terms, occupations (implied by context), and place references are all faithfully translated without distortion."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The response explicitly flags the ambiguity of 'nepos' with both possible interpretations ('nephew OR grandson') and explains why this matters genealogically. The response notes that context does not resolve which reading applies and suggests that Joannes's relationship to Catharina may help narrow it down. This is exactly the required flagging of ambiguous terms with alternatives spelled out for the genealogist to evaluate."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "The response identifies and explains genealogically significant terms throughout. 'Flandrensis' is explained as an origin epithet. 'Quondam' is translated as 'late' and its significance (Petrus was deceased) is flagged. The legal formula 'bonis mobilibus et immobilibus' is explained in genealogical context. The response notes that Catharina's smaller cash legacy vs. Joannes's house inheritance may reflect kinship structure. Follow-on research suggestions (parish registers, probate records, immigrant community records) demonstrate understanding of how the document opens genealogical research paths."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "The feast-day date is correctly resolved to 16 October 1642 with ISO 8601 format provided: '16 October 1642 (1642-10-16)'. The response correctly notes that this is a Catholic document with Gregorian calendar in force since 1582, so no Old Style conversion is needed. The date appears in both prose and ISO format as required. The Roman numeral year is correctly decoded and formatted."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 50343.33200000037,
+        "duration_api_ms": 46759.0,
+        "judge_duration_ms": 11579.917499999283,
+        "wall_clock_ms": 62403.90467643738,
+        "num_turns": 3,
+        "input_tokens": 469,
+        "cached_input_tokens": 21198,
+        "cache_creation_input_tokens": 9008,
+        "output_tokens": 2453,
+        "judge_input_tokens": 7734,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 960,
+        "skill_cost_usd": 0.07727540000000001,
+        "judge_cost_usd": 0.012534,
+        "total_cost_usd": 0.08980940000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_010_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 50343.33200000037,
+          "duration_api_ms": 46759.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 469,
+          "cached_input_tokens": 21198,
+          "cache_creation_input_tokens": 9008,
+          "output_tokens": 2453,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 463,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0005329999999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 2439,
+              "cacheReadInputTokens": 21198,
+              "cacheCreationInputTokens": 9008,
+              "webSearchRequests": 0,
+              "costUSD": 0.0767424,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.07727540000000001,
+          "output": {
+            "text_response": "## Latin Will Translation\n\n---\n\n### Original (as written)\n\n*In nomine Dei, amen. Ego Bartholomaeus Flandrensis, senex et infirmus corpore, sanus tamen mente, lego et relinquo Joanni nepoti meo domum meam cum omnibus bonis mobilibus et immobilibus. Item lego Catharinae, filiae quondam fratris mei Petri, viginti florenos. Actum in festo Sancti Galli, anno Domini MDCXLII.*\n\n---\n\n### Translation *(derivative \u2014 the original governs)*\n\nIn the name of God, amen. I, Bartholomaeus the Fleming [or: of Flanders], old and infirm in body, yet sound in mind, bequeath and leave to Joannes, my nephew [or grandson], my house together with all movable and immovable goods. Likewise, I bequeath to Catharina, daughter of my late brother Petrus, twenty florins. Enacted on the feast of Saint Gall, in the year of the Lord 1642.\n\n> **Date resolved:** *In festo Sancti Galli* = the Feast of Saint Gall = **16 October 1642 (1642-10-16).** This is a Catholic document (Gregorian calendar in force since 1582) so no Old Style conversion is needed.\n\n---\n\n### Genealogically relevant information\n\n| Element | Original form | Notes |\n|---|---|---|\n| Testator | **Bartholomaeus Flandrensis** | *Flandrensis* = \"of Flanders\" or \"the Fleming\" \u2014 likely an origin epithet, not a hereditary surname. Described as *senex* (old) and *infirmus corpore* (infirm in body). |\n| Primary heir | **Joannes**, *nepos* | *Nepos* means **nephew OR grandson** in period Latin \u2014 context does not resolve which. His relationship to Catharina may help narrow this down (see below). |\n| Secondary heir | **Catharina**, *filia quondam fratris mei Petri* | Daughter of the testator's late brother **Petrus**. *Quondam* confirms Petrus was **already deceased** at the time the will was made. Catharina receives 20 florins \u2014 a cash legacy rather than the house. |\n| Document date | 16 October 1642 (1642-10-16) | Feast day dating is common in Catholic notarial and ecclesiastical records of this period. |\n\n**Key term flags:**\n\n- ***nepos*** \u2014 Do not automatically translate as \"nephew.\" If Joannes is the son of the deceased brother Petrus, he would be Bartholomaeus's nephew **and** Catharina's brother \u2014 which would explain why Catharina receives a smaller cash legacy rather than a share of the house. If *nepos* means grandson, Catharina is a collateral heir in a different generation. This ambiguity is genealogically significant and should be flagged in any proof work.\n- ***quondam fratris mei Petri*** \u2014 \"of my late brother Petrus\" \u2014 this is a **firm statement** that Petrus predeceased the testator. Do not record Petrus as living in 1642.\n- ***bonis mobilibus et immobilibus*** \u2014 standard legal formula for personal property (*mobilia*) plus real property (*immobilia*), equivalent to \"goods and chattels and real estate.\" The house (*domus*) is called out separately before this phrase, suggesting it is the main real asset.\n- ***viginti florenos*** \u2014 twenty florins; the florin varied in value by region and date. Note the currency for any future research into estate inventories.\n\n---\n\n### What this record opens up\n\nThe will names **three people across two generations** and implies a fourth (Petrus, deceased). Productive follow-on searches:\n\n- Parish registers in the locality where the will was recorded \u2014 look for a **baptism or marriage** for Catharina *filia Petri* and for Joannes to determine whether he is Petrus's son (making him Catharina's brother and Bartholomaeus's nephew) or a grandson from another line.\n- Probate records or estate inventories associated with this will \u2014 they may name an executor and give further family structure.\n- The epithet *Flandrensis* suggests migration from Flanders; if the will was recorded outside Flanders, look for immigrant community records.\n\n---\n\n**Extract assertions from this record?** (record-extraction)\n**Link Bartholomaeus to the tree?** (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "Translate this Latin will excerpt: 'In nomine Dei, amen. Ego Bartholomaeus Flandrensis, senex et infirmus corpore, sanus tamen mente, lego et relinquo Joanni nepoti meo domum meam cum omnibus bonis mo"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate. The Latin is correctly rendered into English with proper understanding of genealogical terminology. The Roman numeral MDCXLII is correctly decoded as 1642. The feast day identification (16 October 1642) is correct. Names are preserved in their original Latin forms as required. The phrase 'quondam fratris mei Petri' is correctly translated as 'late brother Peter,' surfacing that Petrus was deceased. All key genealogical facts are accurately conveyed."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response addresses all required elements: the full translation is provided, the ambiguity of 'nepos' is explicitly flagged with both interpretations (nephew vs. grandson) and its genealogical significance explained, the feast-day date is resolved to a calendar date with ISO format, the deceased status of Petrus is clearly marked, names are kept in Latin, and the overall sense of the will is conveyed. No required element was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking any external tools. N/A applies."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Senex et infirmus corpore, sanus tamen mente' is accurately rendered as 'old and infirm in body, yet sound in mind.' The legal formula 'bonis mobilibus et immobilibus' is correctly explained as personal and real property. Relationship terms, occupations (implied by context), and place references are all faithfully translated without distortion."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The response explicitly flags the ambiguity of 'nepos' with both possible interpretations ('nephew OR grandson') and explains why this matters genealogically. The response notes that context does not resolve which reading applies and suggests that Joannes's relationship to Catharina may help narrow it down. This is exactly the required flagging of ambiguous terms with alternatives spelled out for the genealogist to evaluate."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "The response identifies and explains genealogically significant terms throughout. 'Flandrensis' is explained as an origin epithet. 'Quondam' is translated as 'late' and its significance (Petrus was deceased) is flagged. The legal formula 'bonis mobilibus et immobilibus' is explained in genealogical context. The response notes that Catharina's smaller cash legacy vs. Joannes's house inheritance may reflect kinship structure. Follow-on research suggestions (parish registers, probate records, immigrant community records) demonstrate understanding of how the document opens genealogical research paths."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "The feast-day date is correctly resolved to 16 October 1642 with ISO 8601 format provided: '16 October 1642 (1642-10-16)'. The response correctly notes that this is a Catholic document with Gregorian calendar in force since 1582, so no Old Style conversion is needed. The date appears in both prose and ISO format as required. The Roman numeral year is correctly decoded and formatted."
+              }
+            ],
+            "judge_cost_usd": 0.012534,
+            "duration_ms": 11579.917499999283,
+            "error": null,
+            "input_tokens": 7734,
+            "cached_input_tokens": 0,
+            "output_tokens": 960
+          },
+          "started_at": 1788378473.982893,
+          "ended_at": 1788378536.3867977
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_005",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform translation and instead routed the user to search-records, which is the appropriate skill for finding FamilySearch records for Patrick Flynn. No substantive translation output was produced, which is the correct behavior."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill correctly identified that the user request (find more FamilySearch records for Patrick Flynn) is not a translation task and should be routed to search-records. The routing decision is complete and accurate. Not performing translation's task is the correct outcome here."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test. The skill correctly declined to invoke tools itself and routed to search-records instead. N/A per the base rule that Tool Arguments may be null only when no MCP tool calls happened."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 12810.237000001507,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4223.222500000702,
+        "wall_clock_ms": 18191.88928604126,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 10358,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 310,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.011907999999999998,
+        "total_cost_usd": 0.011907999999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_005_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 12810.237000001507,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "search-records"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-records",
+                  "args": "Search for Patrick Flynn on FamilySearch"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": "skipped: negative tests are graded by routing, not response content"
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": "skipped: negative tests are graded by routing, not response content"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": "skipped: negative tests are graded by routing, not tool use"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly declined to perform translation and instead routed the user to search-records, which is the appropriate skill for finding FamilySearch records for Patrick Flynn. No substantive translation output was produced, which is the correct behavior."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill correctly identified that the user request (find more FamilySearch records for Patrick Flynn) is not a translation task and should be routed to search-records. The routing decision is complete and accurate. Not performing translation's task is the correct outcome here."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test. The skill correctly declined to invoke tools itself and routed to search-records instead. N/A per the base rule that Tool Arguments may be null only when no MCP tool calls happened."
+              }
+            ],
+            "judge_cost_usd": 0.011907999999999998,
+            "duration_ms": 4223.222500000702,
+            "error": null,
+            "input_tokens": 10358,
+            "cached_input_tokens": 0,
+            "output_tokens": 310
+          },
+          "started_at": 1788378613.0329614,
+          "ended_at": 1788378631.2248507
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_translation_003",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-kirchenbuch"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the skill should decline and route to search-wikipedia rather than performing its own task (translation). The skill correctly invoked search-wikipedia and produced no output of its own, which is the correct behavior for this scenario."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill correctly completed the required action for this negative test: it declined to perform translation and routed the user to search-wikipedia as instructed. Not performing translation's task is the correct and complete outcome here."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test (translation). The search-wikipedia skill was invoked instead via routing, which is outside the scope of grading this skill's tool arguments. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 7517.817500000092,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3731.8449999984296,
+        "wall_clock_ms": 12068.216562271118,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 5576,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 288,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0070160000000000005,
+        "total_cost_usd": 0.0070160000000000005
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_003_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 7517.817500000092,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "Kirchenbuch"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": "skipped: negative tests are graded by routing, not response content"
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": "skipped: negative tests are graded by routing, not response content"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": "skipped: negative tests are graded by routing, not tool use"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where the skill should decline and route to search-wikipedia rather than performing its own task (translation). The skill correctly invoked search-wikipedia and produced no output of its own, which is the correct behavior for this scenario."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill correctly completed the required action for this negative test: it declined to perform translation and routed the user to search-wikipedia as instructed. Not performing translation's task is the correct and complete outcome here."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test (translation). The search-wikipedia skill was invoked instead via routing, which is outside the scope of grading this skill's tool arguments. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.0070160000000000005,
+            "duration_ms": 3731.8449999984296,
+            "error": null,
+            "input_tokens": 5576,
+            "cached_input_tokens": 0,
+            "output_tokens": 288
+          },
+          "started_at": 1788378594.1780565,
+          "ended_at": 1788378606.246273
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_translation_012",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate and faithful to the original Portuguese text. All key terms are correctly rendered: 'igreja matriz' as 'mother church,' 'recebi em matrim\u00f4nio' as 'I received in matrimony,' 'parda forra' as 'freed mixed-race woman,' 'filha natural' as 'natural daughter,' and 'escrava' as 'slave.' The date is correctly translated and formatted as 1780-06-20. No fabricated material or unsupported claims are present. The genealogical context table accurately explains period-specific meanings."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: the full translation of the marriage record structure (date, place, parties, witnesses), explanation of genealogically significant colonial status terms (parda forra, filha natural, escrava de Ant\u00f4nio Gomes), identification of research leads (In\u00eas's enslaved status and enslaver's name, Joana's freed status), proper rendering of place names and personal names in Portuguese, and clarification that 'natural de Lisboa' indicates Manuel's origin. All per-test context requirements were met."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking any tools, which is appropriate for this request. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Parda forra' is correctly rendered as 'freed mixed-race woman' with both components explained. 'Filha natural' is accurately translated as 'natural daughter' (illegitimate). 'Igreja matriz' is correctly identified as 'mother church' (principal parish church). 'Recebi em matrim\u00f4nio' correctly places the priest as celebrant. 'Natural de Lisboa' accurately signals Manuel's Portuguese origin. No genealogical terms are flattened or lose precision."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The skill appropriately flags ambiguous or period-specific terms. The vocabulary table explicitly notes that 'period meanings differ from modern usage' and explains the genealogical significance of terms like 'parda' (colonial casta system), 'forra' (manumission status), and 'filha natural' (legitimacy status). The note on 'parda forra' in Brazilian colonial records further clarifies the ambiguity and research implications. No ambiguous terms are silently translated without explanation."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "The skill thoroughly explains genealogically significant terms and their research implications. The vocabulary table provides genealogical meaning for each key term. The 'What matters genealogically' section identifies research leads: In\u00eas's enslaved status and Ant\u00f4nio Gomes as a research anchor, Joana Maria's freed status indicating prior manumission, Manuel's Portuguese origin, and the witnesses as potential FAN cluster members. The note on 'parda forra' explains the colonial casta system and cross-references to manumission records. All cultural and legal context is provided."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "The date is correctly formatted in both prose and ISO 8601 forms. The translation includes '20 June 1780 (1780-06-20)' in the main translation text. The 'What matters genealogically' section also references '20 June 1780 (1780-06-20).' The date is complete (year, month, day) and no carve-out applies. Both the human-readable and ISO 8601 forms are consistently provided throughout the response."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 46257.7887999978,
+        "duration_api_ms": 42609.0,
+        "judge_duration_ms": 12300.370699998894,
+        "wall_clock_ms": 59009.628772735596,
+        "num_turns": 3,
+        "input_tokens": 449,
+        "cached_input_tokens": 21179,
+        "cache_creation_input_tokens": 8940,
+        "output_tokens": 2301,
+        "judge_input_tokens": 7676,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1053,
+        "skill_cost_usd": 0.0747147,
+        "judge_cost_usd": 0.012941,
+        "total_cost_usd": 0.08765569999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_012_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 46257.7887999978,
+          "duration_api_ms": 42609.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 449,
+          "cached_input_tokens": 21179,
+          "cache_creation_input_tokens": 8940,
+          "output_tokens": 2301,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 443,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000513,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 2287,
+              "cacheReadInputTokens": 21179,
+              "cacheCreationInputTokens": 8940,
+              "webSearchRequests": 0,
+              "costUSD": 0.07420170000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.0747147,
+          "output": {
+            "text_response": "## Brazilian Portuguese Marriage Record \u2014 20 June 1780\n\n---\n\n### Original (as provided \u2014 governs over the translation)\n\n> \"Aos vinte dias do m\u00eas de junho de mil setecentos e oitenta, na igreja matriz de Nossa Senhora do Ros\u00e1rio, recebi em matrim\u00f4nio a Manuel Ferreira, natural de Lisboa, com Joana Maria, parda forra, filha natural de In\u00eas, escrava de Ant\u00f4nio Gomes. Testemunhas: Jo\u00e3o da Costa e Sebasti\u00e3o Dias.\"\n\n---\n\n### Translation *(derivative \u2014 the original governs)*\n\n> \"On the twentieth day of the month of June of one thousand seven hundred and eighty (1780-06-20), in the mother church of Our Lady of the Rosary, I received in matrimony Manuel Ferreira, a native of Lisbon, with Joana Maria, a freed mixed-race woman, natural daughter of In\u00eas, a slave of Ant\u00f4nio Gomes. Witnesses: Jo\u00e3o da Costa and Sebasti\u00e3o Dias.\"\n\n---\n\n### Key vocabulary \u2014 period meanings differ from modern usage\n\n| Original term | Literal form | Genealogical meaning |\n|---|---|---|\n| *igreja matriz* | mother church | The principal parish church \u2014 the seat of the parish; not a chapel or filial church |\n| *recebi em matrim\u00f4nio* | I received in matrimony | The officiating priest speaks in first person \u2014 this phrase places him as the celebrant |\n| *natural de Lisboa* | native of Lisbon | Born in Lisbon, Portugal \u2014 signals the groom was an immigrant to Brazil |\n| *parda* | brown / tawny | Colonial Brazilian racial classification: a person of mixed African and European (or Indigenous) ancestry |\n| *forra* | freed | Legal status: formerly enslaved, now legally free by *manumiss\u00e3o* (manumission) \u2014 distinct from free-born |\n| *parda forra* | freed mixed-race woman | Together, the two terms fully define Joana Maria's social and legal position in colonial society |\n| *filha natural* | natural daughter | Born outside of marriage \u2014 illegitimate; her mother is named, but no father is recorded |\n| *escrava* | slave | In\u00eas (the bride's mother) was legally enslaved at the time of this record, held by Ant\u00f4nio Gomes |\n| *testemunhas* | witnesses | Required by the Council of Trent for a valid Catholic marriage \u2014 typically two |\n\n---\n\n### What matters genealogically\n\n- **Event date & place:** Marriage on 20 June 1780 (1780-06-20) at the Igreja Matriz de Nossa Senhora do Ros\u00e1rio \u2014 this names the specific parish and its patron saint, which can anchor the record to a particular Brazilian town.\n\n- **Manuel Ferreira** \u2014 groom; *natural de Lisboa* (born in Lisbon, Portugal). No parentage is given for him here, which is unusual; some records omit it for immigrants. Portuguese origin is stated explicitly.\n\n- **Joana Maria** \u2014 bride; *parda forra*, meaning she had been enslaved and was subsequently freed before this marriage. Her freedom (*forra*) was likely documented in a separate manumission letter (*carta de alforria*), which would be a valuable companion record.\n\n- **In\u00eas** \u2014 Joana Maria's mother; recorded as *escrava de Ant\u00f4nio Gomes* (slave of Ant\u00f4nio Gomes). In\u00eas is enslaved at the date of this record. She is named as the sole parent \u2014 no father recorded for Joana Maria (*filha natural*).\n\n- **Ant\u00f4nio Gomes** \u2014 the enslaver of In\u00eas; not a party to the marriage, but genealogically significant as the person whose household records (inventories, wills, property registers) may contain further information about In\u00eas and Joana Maria.\n\n- **Witnesses:** Jo\u00e3o da Costa and Sebasti\u00e3o Dias \u2014 standard witnesses; potential members of the couple's social network or FAN (Family, Associates, Neighbors) cluster worth tracking in other records.\n\n---\n\n### A note on *parda forra* in Brazilian colonial records\n\nThis phrase is genealogically dense. *Parda* places Joana Maria within the colonial *sistema de castas* (estate system); *forra* means she obtained freedom \u2014 either self-purchased, purchased by a relative, or granted by her enslaver. Because her mother In\u00eas was still enslaved at the time of this marriage, Joana Maria's own freedom likely came through manumission rather than birth. Igreja Matriz records for Afro-Brazilian freedwomen sometimes cross-reference baptismal registers and *livros de termos* (notarial books) where manumission acts were recorded.\n\n---\n\n**Extract assertions from this record?** (record-extraction)\n**Link Manuel Ferreira or Joana Maria to the tree?** (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "'Aos vinte dias do m\u00eas de junho de mil setecentos e oitenta, na igreja matriz de Nossa Senhora do Ros\u00e1rio, recebi em matrim\u00f4nio a Manuel Ferreira, natural de Lisboa, com Joana Maria, parda forra, filh"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate and faithful to the original Portuguese text. All key terms are correctly rendered: 'igreja matriz' as 'mother church,' 'recebi em matrim\u00f4nio' as 'I received in matrimony,' 'parda forra' as 'freed mixed-race woman,' 'filha natural' as 'natural daughter,' and 'escrava' as 'slave.' The date is correctly translated and formatted as 1780-06-20. No fabricated material or unsupported claims are present. The genealogical context table accurately explains period-specific meanings."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: the full translation of the marriage record structure (date, place, parties, witnesses), explanation of genealogically significant colonial status terms (parda forra, filha natural, escrava de Ant\u00f4nio Gomes), identification of research leads (In\u00eas's enslaved status and enslaver's name, Joana's freed status), proper rendering of place names and personal names in Portuguese, and clarification that 'natural de Lisboa' indicates Manuel's origin. All per-test context requirements were met."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking any tools, which is appropriate for this request. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Parda forra' is correctly rendered as 'freed mixed-race woman' with both components explained. 'Filha natural' is accurately translated as 'natural daughter' (illegitimate). 'Igreja matriz' is correctly identified as 'mother church' (principal parish church). 'Recebi em matrim\u00f4nio' correctly places the priest as celebrant. 'Natural de Lisboa' accurately signals Manuel's Portuguese origin. No genealogical terms are flattened or lose precision."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The skill appropriately flags ambiguous or period-specific terms. The vocabulary table explicitly notes that 'period meanings differ from modern usage' and explains the genealogical significance of terms like 'parda' (colonial casta system), 'forra' (manumission status), and 'filha natural' (legitimacy status). The note on 'parda forra' in Brazilian colonial records further clarifies the ambiguity and research implications. No ambiguous terms are silently translated without explanation."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "The skill thoroughly explains genealogically significant terms and their research implications. The vocabulary table provides genealogical meaning for each key term. The 'What matters genealogically' section identifies research leads: In\u00eas's enslaved status and Ant\u00f4nio Gomes as a research anchor, Joana Maria's freed status indicating prior manumission, Manuel's Portuguese origin, and the witnesses as potential FAN cluster members. The note on 'parda forra' explains the colonial casta system and cross-references to manumission records. All cultural and legal context is provided."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "The date is correctly formatted in both prose and ISO 8601 forms. The translation includes '20 June 1780 (1780-06-20)' in the main translation text. The 'What matters genealogically' section also references '20 June 1780 (1780-06-20).' The date is complete (year, month, day) and no carve-out applies. Both the human-readable and ISO 8601 forms are consistently provided throughout the response."
+              }
+            ],
+            "judge_cost_usd": 0.012941,
+            "duration_ms": 12300.370699998894,
+            "error": null,
+            "input_tokens": 7676,
+            "cached_input_tokens": 0,
+            "output_tokens": 1053
+          },
+          "started_at": 1788378481.3024275,
+          "ended_at": 1788378540.3120563
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_008",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 19223.143100000016,
+        "duration_api_ms": 14891.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 19709.596633911133,
+        "num_turns": 1,
+        "input_tokens": 398,
+        "cached_input_tokens": 7564,
+        "cache_creation_input_tokens": 6002,
+        "output_tokens": 744,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.036200699999999995,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.036200699999999995
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_008_2026-09-02_19-30-17_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "duration_ms": 19223.143100000016,
+          "duration_api_ms": 14891.0,
+          "num_turns": 1,
+          "skill_attempts": 1,
+          "input_tokens": 398,
+          "cached_input_tokens": 7564,
+          "cache_creation_input_tokens": 6002,
+          "output_tokens": 744,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 395,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000465,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 3,
+              "outputTokens": 730,
+              "cacheReadInputTokens": 7564,
+              "cacheCreationInputTokens": 6002,
+              "webSearchRequests": 0,
+              "costUSD": 0.035735699999999995,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.036200699999999995,
+          "output": {
+            "text_response": "## Translation\n\n**\"On the 3rd of April 1748, Maria, widow of Johann Hofer, was buried.\"**\n\n---\n\n## Breaking it down word by word\n\n| Latin | Meaning |\n|---|---|\n| **Die 3 Aprilis 1748** | On the 3rd day of April 1748 |\n| **sepulta est** | was buried (feminine passive, from *sepelio*) |\n| **Maria** | Maria (the deceased) |\n| **relicta** | widow \u2014 see below |\n| **Joannis Hofer** | of Johann Hofer (genitive case = \"belonging to / of\") |\n\n---\n\n## The word you asked about: *relicta*\n\n*Relicta* literally means **\"the one left behind,\"** from the verb *relinquo* (to leave behind). In parish registers it is the standard Latin term for **widow** \u2014 a woman whose husband has predeceased her.\n\n- **Relicta** = widow (feminine \u2014 she was left behind by her husband)\n- **Relictus** = widower (masculine \u2014 less common, but you'll see it)\n\nThis tells you two important genealogical facts:\n1. **Johann Hofer had already died** before 3 April 1748.\n2. **Maria and Johann were married** \u2014 she is identified by his name in the genitive (*Joannis Hofer*).\n\nIt's one of the most useful words in Catholic burial registers, because it points you toward a husband whose death record you should now search for.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": false,
+                "error": "response contains 1 prose date(s) (['3 April 1748']) but no ISO 8601 dates (YYYY-MM-DD). SKILL.md requires the ISO form alongside every prose date."
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": false,
+                "error": "translation response missing required next-step offer: 'Extract assertions from this record?' (record-extraction)"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1788378588.8949845,
+          "ended_at": 1788378608.604581
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_translation_009",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is factually accurate and faithful to the original Spanish. All genealogically significant terms are correctly translated: 'hija leg\u00edtima' as 'legitimate daughter,' 'padrinos' as 'godparents,' 'parentesco espiritual' as 'spiritual kinship,' and 'espa\u00f1ola' as a caste designation. The date is correctly rendered as 1750-01-15 in ISO format. Names are preserved in original Spanish form. The priest's role and the canonical significance of the spiritual kinship are accurately conveyed. No fabricated material or unsupported claims appear."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses all required elements: the full translation structure (location, date, priest, child, parents, godparents, obligation and spiritual kinship), explanation of genealogically significant terms (hija leg\u00edtima, padrinos, parentesco espiritual, Don/Do\u00f1a), treatment of 'espa\u00f1ola' as a caste designation with colonial significance, preservation of names in Spanish form, and identification of godparents as research leads. The genealogical context table and FAN research note provide additional relevant detail."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools, which is appropriate for this request. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Hija leg\u00edtima' is correctly rendered as 'legitimate daughter' with the distinction from natural or foundling daughters explained. 'Padrinos' is accurately translated as 'godparents' with the paired formula noted. 'Parentesco espiritual' is faithfully rendered as 'spiritual kinship' with its canonical significance explained. 'Espa\u00f1ola' is correctly identified as a caste classification, not a simple nationality marker. All relationship words, occupations (priest/curate), and place names are accurate."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The response explicitly flags the critical ambiguity: the baptism date versus birth date. The warning box clearly states 'The record gives only the baptism date' and notes that birth typically followed within 1\u20133 days but is not recorded here, advising against treating 1750-01-15 as a birth date without corroboration. This is precisely the kind of period-specific genealogical uncertainty that requires flagging, and it is done clearly."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "The response goes beyond literal translation to explain genealogically significant context. It identifies 'hija leg\u00edtima' as affecting inheritance and social standing; explains 'parentesco espiritual' as a canonical bond creating matrimonial impediments; notes that 'Don/Do\u00f1a' titles signal the *gente decente* class; explains 'espa\u00f1ola' within the *sistema de castas* framework; and provides a FAN research note about tracking godparent recurrence to reveal kinship networks. The officiant annotation notes that the priest's name typically appears elsewhere in the record, not in the entry body."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "The date is correctly formatted in both prose and ISO 8601 forms: 'fifteenth of January of one thousand seven hundred and fifty (1750-01-15)' in the translation, and '15 January 1750 (1750-01-15)' in the genealogical summary table. The date is complete (year, month, day) and the record supports all three components. No carve-out applies (the record is from 1750 Mexico City, well after Gregorian adoption). Both instances carry the required dual format."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 45766.95639999889,
+        "duration_api_ms": 42187.0,
+        "judge_duration_ms": 11084.098799998173,
+        "wall_clock_ms": 57279.57892417908,
+        "num_turns": 3,
+        "input_tokens": 458,
+        "cached_input_tokens": 21189,
+        "cache_creation_input_tokens": 8985,
+        "output_tokens": 2321,
+        "judge_input_tokens": 7623,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1065,
+        "skill_cost_usd": 0.07518544999999999,
+        "judge_cost_usd": 0.012948,
+        "total_cost_usd": 0.08813344999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_009_2026-09-02_19-30-17_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 45766.95639999889,
+          "duration_api_ms": 42187.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 458,
+          "cached_input_tokens": 21189,
+          "cache_creation_input_tokens": 8985,
+          "output_tokens": 2321,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 452,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000527,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 2306,
+              "cacheReadInputTokens": 21189,
+              "cacheCreationInputTokens": 8985,
+              "webSearchRequests": 0,
+              "costUSD": 0.07465844999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.07518544999999999,
+          "output": {
+            "text_response": "## Translation: Spanish Colonial Baptism Record \u2014 Ciudad de M\u00e9xico, 1750\n\n---\n\n### Original (as provided)\n\n> En la Ciudad de M\u00e9xico, a quince de enero de mil setecientos cincuenta, yo, el infrascrito cura, bautic\u00e9 solemnemente a Josefa Mar\u00eda, espa\u00f1ola, hija leg\u00edtima de Don Juan de Aguilar y de Do\u00f1a Mar\u00eda Ram\u00edrez. Fueron sus padrinos Don Pedro G\u00f3mez y Do\u00f1a Ana L\u00f3pez, a quienes advert\u00ed su obligaci\u00f3n y parentesco espiritual.\n\n---\n\n### Translation *(derivative \u2014 the original governs)*\n\n\"In the City of Mexico, on the fifteenth of January of one thousand seven hundred and fifty (1750-01-15), I, the undersigned priest, solemnly baptized Josefa Mar\u00eda, *espa\u00f1ola*, legitimate daughter of Don Juan de Aguilar and Do\u00f1a Mar\u00eda Ram\u00edrez. Her godparents were Don Pedro G\u00f3mez and Do\u00f1a Ana L\u00f3pez, whom I advised of their obligation and spiritual kinship.\"\n\n---\n\n### Annotations on key terms\n\n| Term | Meaning |\n|------|---------|\n| *el infrascrito cura* | \"The undersigned priest/curate\" \u2014 the officiant; his name typically appears in a parish column header or a signature block rather than in the entry body. Note that no birth date is given \u2014 this is the **baptism** date only. |\n| *espa\u00f1ola* | A **caste/racial classification** in colonial New Spain (*sistema de castas*), not simply a nationality. It means Josefa Mar\u00eda was registered as being of full Spanish descent \u2014 a legally and socially significant designation. This is distinct from *mestiza*, *india*, *mulata*, etc. |\n| *hija leg\u00edtima* | **Legitimate daughter** \u2014 born of a canonically valid marriage. Colonial records distinguished this sharply from *hija natural* (born outside marriage) or *hija exp\u00f3sita* (foundling). Legitimacy affected inheritance and social standing. |\n| *Don* / *Do\u00f1a* | Honorific titles denoting elevated social rank (*hidalgu\u00eda* or higher). All four named adults carry these titles, signaling that both families were of the colonial *gente decente* class. |\n| *padrinos* | Godparents collectively (godfather *padrino* + godmother *madrina*). The paired formula (*Don Pedro G\u00f3mez y Do\u00f1a Ana L\u00f3pez*) is standard \u2014 the two are named together, not separately. They may be a married couple, but the record does not state this. |\n| *parentesco espiritual* | **Spiritual kinship** (*compadrazgo*) \u2014 a canonical bond created between godparents and the child's biological parents. Under Church law, this constituted a matrimonial impediment between those parties. The priest's formal warning (*advert\u00ed su obligaci\u00f3n*) was a required liturgical step. |\n\n---\n\n### What matters genealogically\n\n| Field | Detail |\n|-------|--------|\n| **Subject** | Josefa Mar\u00eda |\n| **Event / Date** | Baptism, 15 January 1750 (1750-01-15) \u2014 birth date not recorded |\n| **Place** | Ciudad de M\u00e9xico (Mexico City), Viceroyalty of New Spain |\n| **Father** | Don Juan de Aguilar |\n| **Mother** | Do\u00f1a Mar\u00eda Ram\u00edrez |\n| **Godfather** | Don Pedro G\u00f3mez |\n| **Godmother** | Do\u00f1a Ana L\u00f3pez |\n| **Officiant** | *El infrascrito cura* (name not given in this excerpt) |\n| **Caste** | *Espa\u00f1ola* (full Spanish descent under *sistema de castas*) |\n| **Legitimacy** | *Hija leg\u00edtima* (born in wedlock) |\n\n> \u26a0\ufe0f **Birth date vs. baptism date:** The record gives only the baptism date. In 18th-century colonial Mexico, baptism typically followed birth within a few days (often 1\u20133 days), but the birth date itself is not recorded here. Do not treat 1750-01-15 as a birth date without corroborating evidence.\n\n> \ud83d\udca1 **FAN research note:** The godparents (Don Pedro G\u00f3mez and Do\u00f1a Ana L\u00f3pez) were likely drawn from the family's social circle \u2014 neighbors, friends, or kin. Their *Don/Do\u00f1a* titles match the parents', suggesting peer social standing. Tracking godparent recurrence across the Aguilar\u2013Ram\u00edrez children's baptisms could reveal kinship networks.\n\n---\n\n- **Extract assertions from this record?** (record-extraction)\n- **Link Josefa Mar\u00eda to the tree?** (person-evidence)",
+            "activated": true,
+            "skills_invoked": [
+              "translation"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "translation",
+                  "args": "Translate this Spanish colonial baptism record: 'En la Ciudad de M\u00e9xico, a quince de enero de mil setecientos cincuenta, yo, el infrascrito cura, bautic\u00e9 solemnemente a Josefa Mar\u00eda, espa\u00f1ola, hija le"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_iso_date_formatting",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_next_step_offers",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is factually accurate and faithful to the original Spanish. All genealogically significant terms are correctly translated: 'hija leg\u00edtima' as 'legitimate daughter,' 'padrinos' as 'godparents,' 'parentesco espiritual' as 'spiritual kinship,' and 'espa\u00f1ola' as a caste designation. The date is correctly rendered as 1750-01-15 in ISO format. Names are preserved in original Spanish form. The priest's role and the canonical significance of the spiritual kinship are accurately conveyed. No fabricated material or unsupported claims appear."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response addresses all required elements: the full translation structure (location, date, priest, child, parents, godparents, obligation and spiritual kinship), explanation of genealogically significant terms (hija leg\u00edtima, padrinos, parentesco espiritual, Don/Do\u00f1a), treatment of 'espa\u00f1ola' as a caste designation with colonial significance, preservation of names in Spanish form, and identification of godparents as research leads. The genealogical context table and FAN research note provide additional relevant detail."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill performed a pure translation task without invoking external tools, which is appropriate for this request. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "The translation preserves the precise meaning of all genealogical terms. 'Hija leg\u00edtima' is correctly rendered as 'legitimate daughter' with the distinction from natural or foundling daughters explained. 'Padrinos' is accurately translated as 'godparents' with the paired formula noted. 'Parentesco espiritual' is faithfully rendered as 'spiritual kinship' with its canonical significance explained. 'Espa\u00f1ola' is correctly identified as a caste classification, not a simple nationality marker. All relationship words, occupations (priest/curate), and place names are accurate."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The response explicitly flags the critical ambiguity: the baptism date versus birth date. The warning box clearly states 'The record gives only the baptism date' and notes that birth typically followed within 1\u20133 days but is not recorded here, advising against treating 1750-01-15 as a birth date without corroboration. This is precisely the kind of period-specific genealogical uncertainty that requires flagging, and it is done clearly."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "The response goes beyond literal translation to explain genealogically significant context. It identifies 'hija leg\u00edtima' as affecting inheritance and social standing; explains 'parentesco espiritual' as a canonical bond creating matrimonial impediments; notes that 'Don/Do\u00f1a' titles signal the *gente decente* class; explains 'espa\u00f1ola' within the *sistema de castas* framework; and provides a FAN research note about tracking godparent recurrence to reveal kinship networks. The officiant annotation notes that the priest's name typically appears elsewhere in the record, not in the entry body."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "The date is correctly formatted in both prose and ISO 8601 forms: 'fifteenth of January of one thousand seven hundred and fifty (1750-01-15)' in the translation, and '15 January 1750 (1750-01-15)' in the genealogical summary table. The date is complete (year, month, day) and the record supports all three components. No carve-out applies (the record is from 1750 Mexico City, well after Gregorian adoption). Both instances carry the required dual format."
+              }
+            ],
+            "judge_cost_usd": 0.012948,
+            "duration_ms": 11084.098799998173,
+            "error": null,
+            "input_tokens": 7623,
+            "cached_input_tokens": 0,
+            "output_tokens": 1065
+          },
+          "started_at": 1788378536.5958014,
+          "ended_at": 1788378593.8753803
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 418245.48200000206,
+    "duration_api_ms": 360541.0,
+    "judge_duration_ms": 100537.00889999527,
+    "num_turns": 26,
+    "input_tokens": 4426,
+    "cached_input_tokens": 184524,
+    "cache_creation_input_tokens": 83843,
+    "output_tokens": 19606,
+    "judge_input_tokens": 75789,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 8699,
+    "skill_cost_usd": 0.66687245,
+    "judge_cost_usd": 0.11928399999999999,
+    "total_cost_usd": 0.78615645,
+    "wall_clock_ms": 238647.66931533813
+  },
+  "review_sample": {
+    "tests": [
+      "ut_translation_001",
+      "ut_translation_002",
+      "ut_translation_006",
+      "ut_translation_009",
+      "ut_translation_010"
+    ],
+    "cursor": [
+      "ut_translation_001",
+      "ut_translation_002",
+      "ut_translation_006",
+      "ut_translation_009",
+      "ut_translation_010"
+    ],
+    "seed": 2188
+  }
+}

@@ -31,7 +31,7 @@ you cannot name them, and you cannot establish that any of them is a specific
 person. A pre-1850 census supports "a household headed by X contained a
 female aged 10–15" and nothing more.
 
-1840 additionally names and ages Revolutionary War pensioners.
+1840 additionally lists names and ages of Revolutionary War pensioners.
 
 ### 1850 — first census naming every free person
 
@@ -176,6 +176,11 @@ rather than an enumerator's transcription.
   their own schedules and often carry fields the federal census of that decade
   lacks — check the collection description rather than assuming the federal
   pattern.
+- **A year-of-immigration mismatch across censuses is not automatically a
+  conflict.** Some immigrants made multiple trips back to their origin
+  country; a later census may record the year of a return trip rather than
+  the original emigration. Flag a mismatch for investigation rather than
+  treating it as a contradiction to resolve immediately.
 
 ### Phrasing a pre-1880 household
 

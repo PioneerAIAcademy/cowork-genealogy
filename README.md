@@ -319,22 +319,19 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks three
+When you start a new project with `init-project`, the skill asks two
 short questions in one opening turn:
 
 1. **Research objective** — what you are trying to find out.
 2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
-3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts,
-   and is now recorded as such rather than collapsing to "other": a
-   partner subscription through your FamilySearch account stores as
-   `FamilySearch-Partner`, and a public library, family history centre
-   or affiliate library as `LibraryAccess`. A plain FamilySearch
-   account is the baseline everyone here has, so it isn't recorded —
-   that alone is "none".
 
-None of the three blocks. Answer what you like; anything you skip takes
+You are no longer asked which subscription sites you have. Access is
+assumed available, so nothing is recorded unless you mention it
+yourself — a project that says nothing about access is not a project
+that said it has none.
+
+Neither question blocks. Answer what you like; anything you skip takes
 a documented default, and the summary at the end names what was
 defaulted so you can correct it.
 
@@ -512,9 +509,9 @@ What's shipped:
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
   the only caller that may declare one exhaustive) and `image-reader` (page OCR).
-- **Researcher profile.** `init-project` asks the research objective,
-  experience level, and site access together in one non-blocking opening
-  turn; every skill adapts narration density to the answer.
+- **Researcher profile.** `init-project` asks the research objective and
+  experience level together in one non-blocking opening turn; every skill
+  adapts narration density to the answer. Site access is not asked.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs
