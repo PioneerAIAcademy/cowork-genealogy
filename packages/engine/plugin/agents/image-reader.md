@@ -104,8 +104,9 @@ Return, verbatim:
   (`record_read` / `record_search` / `search-full-text`) or a related person's
   indexed record, which usually carries the same facts.
 - If `image_transcribe` reported **no OpenRouter key** (or a rejected key), say
-  so plainly — the caller can fix it by asking the user for a key and calling
-  `configure_openrouter`.
+  so plainly and tell the user to set the key in their config file
+  (`~/.familysearch-mcp/config.json`, field `openRouterApiKey`). Do not ask the
+  user to paste the key into the chat — it would land in the session transcript.
 
 Do **not** retry with a browser, `web_fetch`, or "Claude in Chrome" — those
 are unavailable and waste turns. Never invent, infer, or guess the page

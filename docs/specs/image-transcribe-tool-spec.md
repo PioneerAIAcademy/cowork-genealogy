@@ -424,7 +424,7 @@ list the caller can turn into assertions.
 | No `imageId`/`ark` | `image_transcribe requires either imageId or ark.` |
 | Both provided | `Provide either imageId or ark, not both.` |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
-| No OpenRouter key configured | LLM-instruction error telling Claude to ask the user for a key and call `configure_openrouter` (§6.3) |
+| No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |
 | FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused) |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
 | OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present) |
@@ -688,20 +688,15 @@ flow. Storage follows the existing per-user config convention exactly:
   `0o600` (already enforced by `saveConfig`).
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
   round-trip the tool drives itself; an API key is a static paste the tool
-  cannot obtain on its own. So provide a minimal write path:
+  cannot obtain on its own. The key is set by the user directly in
+  `~/.familysearch-mcp/config.json` as the `openRouterApiKey` field. It
+  never passes through a tool-call argument, so it never appears in the
+  session transcript.
 
-  **New tool `configure_openrouter({ apiKey, model? })`** → validates the key
-  is **non-empty** (no format/prefix check — OpenRouter's key format is not a
-  stable contract, and a wrong key is caught cleanly at the first
-  `image_transcribe` call via the 401→re-configure path) and calls
-  `saveConfig({ openRouterApiKey, openRouterModel })`. Returns a masked
-  confirmation (`sk-or-…abcd`), never echoes the full key. Flow: `image_transcribe` errors "no key" → Claude asks
-  the user → user pastes → Claude calls `configure_openrouter` → retry.
-
-  **Caveat to document:** the key passes through the tool-call arguments and
-  therefore appears in the session transcript. Acceptable for a user's own
-  key in their own transcript, but note it, mask it in all tool output, and
-  do not log it server-side.
+  **Tool `configure_openrouter({ model? })`** accepts only an optional model
+  slug. It calls `saveConfig({ openRouterModel })`. Flow: `image_transcribe`
+  errors "no key" → Claude tells the user to set `openRouterApiKey` in
+  `config.json` directly → user edits the file → retry.
 
 ### 6.5 Key provisioning across runtimes
 
@@ -714,7 +709,7 @@ own mechanism; the env var (where one exists) is read at the
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
-| **Cowork desktop** | host (`.mcpb`) | the user pastes it → `configure_openrouter` → `saveConfig` |
+| **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly (the `configure_openrouter` tool sets only `openRouterModel`, not the key) |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
 
@@ -840,9 +835,10 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   skill's prose contract barely changes — it still receives a text
   transcription + extracted-facts list and keeps the NOT-READ→pivot-to-indexes
   behavior. Thread `projectPath` through so the subagent's `image_transcribe`
-  call can stage the JPEG (§8.5). For desktop setup, `configure_openrouter` is
-  available so Claude can prompt for a key when `image_transcribe` errors "no
-  key." Preserve the "reserve image transcription for facts that exist only on
+  call can stage the JPEG (§8.5). For desktop setup, when `image_transcribe`
+  errors "no key" the error directs the user to set `openRouterApiKey` in
+  `~/.familysearch-mcp/config.json` directly; `configure_openrouter` saves
+  only a model slug override. Preserve the "reserve image transcription for facts that exist only on
   the image" guidance. (A Sonnet-5 second-opinion escalation was considered and
   **dropped** — the viewer lets a human verify a cite-worthy read against the
   scan; a user-invoked Opus transcription is parked in §15.9.)
@@ -929,8 +925,9 @@ module to test.
 
 ### 13.4 `configure_openrouter` unit tests
 
-Saves to config via `saveConfig` (mock it); rejects empty/implausible keys;
-return value is **masked** (never contains the full key).
+Saves model to config via `saveConfig` (mock it); schema has no `apiKey`
+property; `OPENROUTER_API_KEY_MISSING_MESSAGE` names the config file path
+and field, and does not instruct Claude to receive the key via the tool.
 
 ### 13.5 e2e validation gate (the real T13 proof)
 
