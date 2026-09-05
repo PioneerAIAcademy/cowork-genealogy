@@ -337,14 +337,14 @@ defaulted so you can correct it.
 
 The answers are written to a `researcher_profile` section of
 `research.json` alongside the rest of your project state. Every skill
-reads from it:
+but one reads from it:
 
 - **Experience level** drives narration density. A novice gets
   step-by-step "why I'm doing this" narration; an experienced
   researcher gets concise reporting. Internally the level maps to a
   `narration_guidance` string that the skill reads and follows
   verbatim — one place defines the mapping (`init-project`), one place
-  stores it (`research.json`), every skill reads it.
+  stores it (`research.json`), every skill but one reads it.
 - **Access** guides `search-external-sites` URL prioritization. Sites
   you can reach land first; the rest are still searchable but flagged.
 
