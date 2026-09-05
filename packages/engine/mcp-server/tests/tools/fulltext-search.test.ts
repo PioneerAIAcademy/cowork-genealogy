@@ -95,6 +95,9 @@ function flynnEntry(): FSFulltextEntry {
         { type: "DATE", value: "1849" },
         { type: "OTHER", value: "ignored" }, // not NAME/PLACE/DATE -> dropped
       ],
+      // Bare matched terms, not marked-up snippets -- confirmed against a
+      // live upstream response; the old "<em>"-wrapped assumption here
+      // never matched what production actually sends.
       highlightTexts: ["Patrick", "Flynn", "Flynn Patrick"],
     },
   };
