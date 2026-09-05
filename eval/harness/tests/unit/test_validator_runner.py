@@ -1656,6 +1656,98 @@ def test_creator_not_in_custody_fails_when_author_in_parenthetical():
     assert "County Recorder of Deeds" in (result.error or "")
 
 
+# --- V6: unknown markers must name framework elements only ---------------
+
+def _v6_states(marker_text, field):
+    """State pair for V6 tests.  Places *marker_text* in the given
+    citation_detail *field* of a single source."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "", "where": "FamilySearch.org"},
+    }
+    cd_after = dict(src_before["citation_detail"])
+    cd_after[field] = marker_text
+    src_after = {**src_before, "citation_detail": cd_after}
+
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    return before, after
+
+
+def test_v6_fires_on_any_marker_in_where():
+    """V6: a marker in citation_detail.where fails on position alone.
+
+    The marker text must NOT contain a custody keyword, or the content rule
+    catches it and the position rule is never exercised: with
+    "[PHYSICAL REPOSITORY NOT RECORDED]" the whole `where` branch can be
+    deleted and this test still passes.
+    """
+    before, after = _v6_states(
+        "FamilySearch.org ([CREATOR NOT RECORDED])", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    # "sanctioned" appears only in the position-rule message; the custody
+    # message would also contain "where", since it embeds the field name.
+    assert "sanctioned" in (result.error or "").lower()
+
+
+def test_v6_fires_on_custody_marker_in_other_field():
+    """V6: [ARCHIVE NOT RECORDED] in citation_detail.who fails — custody
+    keyword, regardless of field position."""
+    before, after = _v6_states("[ARCHIVE NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "custody" in (result.error or "").lower()
+
+
+def test_v6_passes_on_framework_marker():
+    """V6: [CREATOR NOT RECORDED] in citation_detail.who is a legitimate
+    framework marker and passes."""
+    before, after = _v6_states("[CREATOR NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
 # --- V10: informant not in who ------------------------------------------
 
 def _v10_states(informant_in_who):
@@ -1942,7 +2034,13 @@ def test_report_and_test_coexist(tmp_path):
 # --- V8: Activated run must produce a response ---------------------------
 
 def test_v8_fires_on_dead_activated_run():
-    """V8: activated=True, num_turns=0, output_tokens=0, short response → fail."""
+    """V8: activated=True, num_turns=0, output_tokens=0, short response → fail.
+
+    Uses skills_invoked=["search-familysearch-wiki"] — the state the
+    orchestrator actually produces when a skill activates (derive_activated
+    requires skill in skills_invoked).  No correct_skill overlap, so the
+    routing short-circuit skip does not fire.
+    """
     state = _empty_research_state()
     results = run_validators(
         skill="search-familysearch-wiki",
@@ -1955,7 +2053,7 @@ def test_v8_fires_on_dead_activated_run():
         output_tokens=0,
         text_response="Short.",
         aborted_reason=None,
-        skills_invoked=[],
+        skills_invoked=["search-familysearch-wiki"],
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None, "test_activated_run_produces_response did not run"
@@ -2024,9 +2122,9 @@ def test_v8_skips_when_not_activated():
     assert "skipped" in (result.error or "").lower()
 
 
-def test_v8_passes_when_skills_invoked():
-    """V8: a run that invoked a sub-skill is not a dead run, even with zero
-    telemetry — skills_invoked is the direct signal."""
+def test_v8_fires_on_routing_short_circuit():
+    """V8: a negative-test routing short-circuit still fails V8 — zero
+    telemetry and a short response is a dead run regardless of routing."""
     state = _empty_research_state()
     results = run_validators(
         skill="search-familysearch-wiki",
@@ -2043,7 +2141,8 @@ def test_v8_passes_when_skills_invoked():
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
-    assert result.passed is True, f"unexpected failure: {result.error}"
+    assert result.passed is False
+    assert "no meaningful output" in (result.error or "")
 
 
 # --- Anti-bias constraint (issue #1749) -----------------------------------

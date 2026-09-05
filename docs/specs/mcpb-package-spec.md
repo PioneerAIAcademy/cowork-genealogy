@@ -104,6 +104,7 @@ The packed `.mcpb` MUST contain:
 | `package.json` | Node entry-point resolution |
 | `build/` | Compiled JS (`tsc` output); `build/index.js` is the entry point |
 | `config/familysearch.json` | Bundled OAuth clientId — without it every authenticated tool breaks (guarded by `tests/auth/bundled-client-config.test.ts`) |
+| `config/given-name-variants.json` | Bundled given-name variant table for diminutive expansion in `fulltext_search` and `image_transcribe` |
 | `node_modules/` | **Production dependencies only** |
 
 The packed `.mcpb` MUST NOT contain:

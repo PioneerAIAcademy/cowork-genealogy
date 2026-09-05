@@ -78,7 +78,9 @@ range) or a known `imageGroupNumber` — never a borrowed `collectionId`.
 - **No phonetic/Soundex matching.** "Stephen Jarman" ≠ "Steven
   Jarmon". Search both explicitly.
 - **No abbreviation expansion.** `Wm`≠`William`, `Jno`≠`John`,
-  `Jas`≠`James`, `Thos`≠`Thomas`. Run separate queries.
+  `Jas`≠`James`, `Thos`≠`Thomas`. Run separate queries. The `name`
+  field auto-expands recognized English given names with historical
+  diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza).
 - **Case insensitive** — confirmed.
 - **Diacritic insensitivity** — partial; generally works for
   Spanish/Portuguese but coverage is uneven.

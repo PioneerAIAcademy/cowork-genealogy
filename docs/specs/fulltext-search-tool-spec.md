@@ -41,7 +41,7 @@ descriptions distinct so Claude picks the right one.
     },
     "name": {
       "type": "string",
-      "description": "Search within name fields only. Same operator syntax as keywords. Use when searching for a person by name without matching body text."
+      "description": "Search within name fields only. Same operator syntax as keywords. Recognized English given names are automatically expanded with historical diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza). The response includes a nameExpansion field showing what was expanded and which variants matched."
     },
     "place": {
       "type": "string",
@@ -201,6 +201,15 @@ interface FulltextSearchResponse {
    *  non-zero. What distinguishes this tool from external_links_search is only
    *  that no host filter narrows the inline copy — the mapping path is shared. */
   nilSearchNeedsLog?: string;
+  /** Present when the name input contained a recognized given name and was
+   *  expanded with historical diminutives/variants. Precedes `results` so
+   *  it survives a size-bound trim. */
+  nameExpansion?: {
+    original: string;
+    expanded: string;
+    expansions: Record<string, string[]>;
+    variantsInResults: string[];
+  };
   results: FulltextResult[];
   facets?: FulltextFacet[];
   /** Present only when `projectPath` was supplied. `null` if staging failed. */
@@ -209,6 +218,73 @@ interface FulltextSearchResponse {
   stagingError?: string;
 }
 ```
+
+## Given-name diminutive expansion
+
+When the `name` parameter contains a recognized English given name (formal
+or variant), the tool automatically expands it with historical diminutives
+from the bundled variant table (`config/given-name-variants.json`). This
+addresses the hard exclusion caused by `m.queryRequireDefault=on`: without
+expansion, a search for "Elizabeth Martin" cannot match a page transcribed
+as "Betty Martin" because every term is required.
+
+### Mechanism
+
+Each recognized given name token generates a set of quoted full-name
+phrases, one per variant:
+
+- Input: `name: "Elizabeth Martin"`
+- Sent to API: `q.fullName="Elizabeth Martin" "Betty Martin" "Bess Martin" ...`
+
+`m.queryRequireDefault=on` stays on: it requires at least one of the
+listed phrases to appear in the document, giving the desired OR
+behaviour (any variant matching satisfies the name field).
+
+### Bidirectional
+
+Expansion is bidirectional: searching for a variant form (e.g. "Betty")
+also expands to include the formal name and all other variants. The
+variant table is keyed by formal name but lookup works from any member.
+
+### Excluded from expansion
+
+- Tokens starting with `+`, `-`, or containing `"` / `*` (explicit
+  operator syntax — do not interfere).
+- Period-containing scribal abbreviations (e.g. `Eliz.`, `Thos.`) are
+  excluded from the fulltext phrases because periods risk Lucene
+  parse errors. They are included in `image_transcribe`'s VLM prompt
+  expansion, where the context is natural language.
+- Only the first recognized given-name token is expanded — expanding
+  surname-position tokens dissolves the discriminating half of the
+  query.
+
+### Response field
+
+When expansion occurs, the response includes `nameExpansion`:
+
+```typescript
+nameExpansion?: {
+  original: string;            // the caller's input.name
+  expanded: string;            // the query actually sent (quoted-phrase variants)
+  expansions: Record<string, string[]>;  // original token → variant forms added
+  variantsInResults: string[]; // variant forms found in result names/highlights
+};
+```
+
+The `query` echo always reflects the **original** input.name — the
+expansion metadata lives separately in `nameExpansion`.
+
+### Scope
+
+English only. The variant table covers 21 formal names with diminutives
+and scribal abbreviations, seeded from
+`search-records/references/name-search-mechanics.md` and
+`search-full-text/references/search-strategies.md`. Three pairs are
+attested by measurement (Betty→Elizabeth, Peggy→Margaret, Polly→Mary);
+the rest are present because they appear in the cited seed tables.
+
+`keywords` and `place` are not expanded — only `name` (which maps to
+`q.fullName`, a name-field query).
 
 ## Result staging
 
