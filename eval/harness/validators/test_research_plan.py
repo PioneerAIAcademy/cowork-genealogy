@@ -764,3 +764,174 @@ def test_research_plan_availability_claim_matches_counts(
         "availability claim contradicts returned personCount:\n  - "
         + "\n  - ".join(errors)
     )
+
+
+# --- Tag-gated: already-attached FAN-cluster facts must reach the response ---
+
+_YEAR_RE = re.compile(r"\b(1[0-9]{3}|20[0-4][0-9])\b")
+
+
+def _extract_year(date_str: str | None) -> str | None:
+    """Pull a 4-digit year out of any date representation -- a bare year,
+    `~yyyy`, ISO `yyyy-mm-dd`/`yyyy-mm`, or a `standard_date` sidecar like
+    "Abt 1850". None when no such pattern is found."""
+    if not date_str:
+        return None
+    m = _YEAR_RE.search(date_str)
+    return m.group(1) if m else None
+
+
+def _word_grams(text: str, n: int) -> set[str]:
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return {" ".join(words[i : i + n]) for i in range(len(words) - n + 1)}
+
+
+def test_survey_surfaces_already_attached_fan_facts(before_state, text_response, test):
+    """Tag-gated (issue #1948): when a non-subject person already has a
+    sourced fact in `tree.gedcomx.json`, the response must actually mention
+    it -- not just plan around it silently.
+
+    Live alpha-feedback report: a first plan for a "why did the family move"
+    question never surfaced a sibling's already-sourced 1875 land purchase in
+    the destination county, seven years before the subject's own documented
+    arrival. Three SKILL.md wording attempts (see the mined test
+    `ut_research_plan_bpx`) moved the failure rate from "every sample" to
+    roughly half -- expected, since the skill runs without `temperature=0`,
+    so no wording can pin any behavior at exactly 100%. Measured directly,
+    per EdmondOware's PR #2004 review ask: 6 valid re-runs of `ut_research_plan_bpx`
+    against the final wording (2 more runs were discarded as environment
+    aborts -- a connection failure and an `sdk_stream_silence` stall, neither
+    a skill behavior) came back 3 pass / 3 fail, exactly 50%. Not marked
+    `expected_outcome: xfail` despite that rate: xfail's semantics are
+    "known-failing", and a clean 50/50 split doesn't fit it -- half of
+    future runs would come back as an unexpected `xpass` needing
+    investigation just as often as an `xfail` would need dismissing.
+    Instead: a solo red result on this test is expected roughly half the
+    time and should be checked against this measured rate before being
+    treated as a regression, the same way `eval/CLAUDE.md` already asks for
+    any test's non-pass history across committed run logs.
+
+    Deliberately gated on the `already-attached` tag rather than running on
+    every research-plan test: several existing scenarios (e.g. `fixtures`)
+    have non-subject persons with sourced facts that are incidental to their
+    test's actual point, and checking every one of those for content the test
+    was never designed to require would be a false-positive trap, not a
+    guard.
+
+    Check: for each non-subject person with a sourced fact, require in the
+    SAME paragraph of the response (case-insensitive) -- their given name
+    (word-boundary match, not a bare substring test: "Ann" must not match
+    inside "planning") AND the fact's *content*: a date token (`date`,
+    `standard_date`, or a bare year extracted from either, so `~1845`,
+    `1908-03-12` and "Abt 1850" are all recognized, not just a literal bare
+    year) AND, when the fact carries a `value`, at least one two-word gram
+    from that value. A fact with no `value` degrades to name+date; a fact
+    with no date at all degrades to name+value -- either signal alone still
+    gates on *some* fact-specific content, never on the name alone. A fact
+    with neither a date nor a value has nothing fact-specific to check
+    against and is out of scope, the same as a person with no sourced facts
+    at all (there is no content to confirm was read, so nothing is asked of
+    the response) -- this closes a real false negative found during review
+    (clack391): `date` is optional in the schema, so a sourced fact that
+    only carries a place, say, previously failed unconditionally regardless
+    of what the response said.
+
+    This design replaced an earlier name+date-only check found to have two
+    real gaps during PR #2004's review (clack391): (1) matching `date`
+    verbatim missed every non-bare-year format -- of 113 sourced facts with
+    a date across the scenario corpus, only 9 are bare years; 53 are
+    `~yyyy`, 47 are ISO `yyyy-mm-dd`, the rest free text -- so `"~1845" in
+    "...about 1845..."` was false and the check failed a correct response.
+    (2) A committed run (`v1_2026-08-27_16-18-15.json`) exposed the deeper
+    problem the value-gram requirement exists for: its response mentions
+    Patrick seven times and a FAN plan item's own search-window header
+    happens to read "Schuylkill County, PA -- 1875-1905" -- the *same*
+    paragraph as his name, satisfying a bare name+date check, while the
+    response's own text is entirely conditional ("if Patrick preceded
+    Michael...") and proposes searching to *discover* what the tree already
+    states. Name and date proximity cannot tell "citing a known fact" apart
+    from "proposing a new search that happens to start near the same year";
+    a content fragment from the fact's own `value` can. Paragraphs are
+    split on blank lines (`\\n\\s*\\n`) rather than sentences to avoid a
+    naive sentence-split's false negative on a period inside a citation
+    ("S1, Deed Book 42 p. 118").
+
+    Does not grade whether the response's *reasoning* about the fact is
+    sound once it clears this bar -- that stays the judge's job
+    (Completeness/Correctness already grade reasoning quality on this test).
+    """
+    if "already-attached" not in test.get("tags", []):
+        pytest.skip("not an already-attached-fan-facts scenario")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    if not text_response:
+        pytest.skip("no text_response captured")
+
+    subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
+    response_lower = text_response.lower()
+    paragraphs = re.split(r"\n\s*\n", response_lower)
+
+    missed: list[str] = []
+    for person in tree.get("persons", []) or []:
+        pid = person.get("id")
+        if not pid or pid in subject_ids:
+            continue
+        given = (person.get("names") or [{}])[0].get("given", "")
+        if not given:
+            continue
+        sourced_facts = [f for f in (person.get("facts") or []) if f.get("sources")]
+        if not sourced_facts:
+            continue  # nothing already attached for this person -- not in scope for this check
+
+        name_pattern = rf"\b{re.escape(given.lower())}\b"
+        name_present = bool(re.search(name_pattern, response_lower))
+
+        surfaced = False
+        any_checkable = False
+        for fact in sourced_facts:
+            date_tokens = {
+                t.lower() for t in (fact.get("date"), fact.get("standard_date")) if t
+            }
+            date_tokens |= {
+                y
+                for y in (_extract_year(fact.get("date")), _extract_year(fact.get("standard_date")))
+                if y
+            }
+            value_grams = _word_grams(fact["value"], 2) if fact.get("value") else set()
+            if not date_tokens and not value_grams:
+                continue  # nothing fact-specific to check for this one
+            any_checkable = True
+
+            for para in paragraphs:
+                if not re.search(name_pattern, para):
+                    continue
+                date_ok = not date_tokens or any(
+                    re.search(rf"\b{re.escape(tok)}\b", para) for tok in date_tokens
+                )
+                value_ok = not value_grams or bool(value_grams & _word_grams(para, 2))
+                if date_ok and value_ok:
+                    surfaced = True
+                    break
+            if surfaced:
+                break
+
+        if not any_checkable:
+            continue  # no sourced fact on this person has a date or value -- nothing to check
+
+        if surfaced:
+            continue
+
+        if not name_present:
+            reason = "the person's given name never appears in the response"
+        else:
+            reason = (
+                "the person's given name appears, but no sourced fact's distinguishing "
+                "content (date or description) appears alongside it in the same paragraph"
+            )
+        missed.append(f"{pid} ({given}): has a sourced fact but {reason}")
+    assert not missed, (
+        "already-attached FAN-cluster fact(s) never surfaced in the "
+        "response:\n  - " + "\n  - ".join(missed)
+    )
