@@ -234,8 +234,26 @@ def direct_project_file_write(tool_name: str, tool_input: dict | None) -> str | 
     return name if name in PROTECTED_PROJECT_FILES else None
 
 
+_SECRETS_MARKERS = (
+    "session.json",
+    ".familysearch-mcp",
+    "ANTHROPIC_API_KEY",
+    "sk-ant-",
+)
+_NETWORK_TOOLS = ("curl", "wget", "nc ", "ncat ", "socat ", "python3 -c", "python -c")
+
+
+def _bash_secrets_exfil(command: str) -> bool:
+    """True when a Bash command references credentials AND a network egress tool."""
+    lower = command.lower()
+    has_secret = any(m.lower() in lower for m in _SECRETS_MARKERS)
+    has_net = any(t in lower for t in _NETWORK_TOOLS)
+    return has_secret and has_net
+
+
 async def _pretool_hook(input_data, _tool_use_id, _ctx):
-    """PreToolUse: deny raw writes to the two project files.
+    """PreToolUse: deny raw writes to the two project files, and block Bash
+    commands that combine credential access with network egress.
 
     A hook binds under `bypassPermissions` — the unit harness has run exactly
     this combination since the per-context policy landed
@@ -248,24 +266,40 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     the e2e tree-read block behaves.
     """
     tool_name = input_data.get("tool_name", "")
-    protected = direct_project_file_write(tool_name, input_data.get("tool_input"))
-    if not protected:
-        return {}
-    _log(f"[agent] denied raw {tool_name} on {protected}")
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                f"{tool_name} on {protected} is disabled — all writes to "
-                "research.json/tree.gedcomx.json must go through the writer tools. "
-                "To CREATE a new project use project_create, which writes both files "
-                "together; to add to an existing one use research_append, "
-                "research_log_append, tree_edit or tree_correct. These validate "
-                "before persisting. Direct file writes never validate."
-            ),
-        },
-    }
+    tool_input = input_data.get("tool_input") or {}
+
+    protected = direct_project_file_write(tool_name, tool_input)
+    if protected:
+        _log(f"[agent] denied raw {tool_name} on {protected}")
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    f"{tool_name} on {protected} is disabled — all writes to "
+                    "research.json/tree.gedcomx.json must go through the writer tools. "
+                    "To CREATE a new project use project_create, which writes both files "
+                    "together; to add to an existing one use research_append, "
+                    "research_log_append, tree_edit or tree_correct. These validate "
+                    "before persisting. Direct file writes never validate."
+                ),
+            },
+        }
+
+    if tool_name == "Bash" and _bash_secrets_exfil(str(tool_input.get("command", ""))):
+        _log("[agent] denied Bash: credential access combined with network egress")
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    "Bash commands that access session credentials and send data "
+                    "over the network are not permitted."
+                ),
+            },
+        }
+
+    return {}
 
 
 def current_api_key() -> str:
@@ -324,7 +358,8 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         },
         # The only restraint on this session. permission_mode is
         # bypassPermissions with no allowlist, so the hook is what keeps raw
-        # Write/Edit off research.json and tree.gedcomx.json (see
+        # Write/Edit off research.json and tree.gedcomx.json AND blocks Bash
+        # commands that combine credential access with network egress (see
         # _pretool_hook). matcher=None fires it for every tool.
         hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[_pretool_hook])]},
         # Stream partial assistant content. Without it a block reaches the UI only

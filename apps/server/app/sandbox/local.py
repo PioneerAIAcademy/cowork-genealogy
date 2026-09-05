@@ -227,8 +227,6 @@ class LocalProvider(SandboxProvider):
             # the path is real inside the microVM.
             "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
         }
-        if settings.anthropic_api_key:
-            env["ANTHROPIC_API_KEY"] = settings.anthropic_api_key
         log = open(self._root(sandbox_id) / "ws.log", "ab")
         proc = subprocess.Popen(
             [sys.executable, "-m", "app.sandbox_server"],

@@ -196,10 +196,7 @@ class E2BProvider(SandboxProvider):
 
     def _agent_env(self, model: str) -> dict[str, str]:
         s = get_settings()
-        env = {"AGENT_MODE": s.agent_mode, "MODEL": model}
-        if s.anthropic_api_key:
-            env["ANTHROPIC_API_KEY"] = s.anthropic_api_key
-        return env
+        return {"AGENT_MODE": s.agent_mode, "MODEL": model}
 
     async def create(self, spec: SandboxSpec) -> Sandbox:
         agent_env = self._agent_env(spec.model)
@@ -207,6 +204,10 @@ class E2BProvider(SandboxProvider):
             template=spec.template or self._template,
             metadata={**spec.labels, "model": spec.model},
             envs={**spec.env, **agent_env},
+            # Required: MCP tools call FamilySearch, wiki-query-api, and
+            # OpenRouter. E2B exposes only a boolean, not a domain allowlist,
+            # so all outbound traffic is permitted. An egress proxy restricting
+            # traffic to the known API hosts is the planned mitigation (#1018).
             allow_internet_access=True,
             timeout=_RUNNING_TIMEOUT_S,
             lifecycle={"on_timeout": "pause", "auto_resume": True},
@@ -218,7 +219,7 @@ class E2BProvider(SandboxProvider):
         # it spawns agent_runner itself on first browser connection. The per-sandbox
         # WS_TOKEN_SECRET is derived so a leaked sandbox can't forge other sessions.
         ws_env = {
-            **agent_env,  # AGENT_MODE, MODEL, ANTHROPIC_API_KEY
+            **agent_env,  # AGENT_MODE, MODEL
             "WS_TOKEN_SECRET": sandbox_secret(sb.sandbox_id),
             "WS_PORT": str(SANDBOX_WS_PORT),
             # commands.run does NOT inherit the image ENV → pass the baked paths
