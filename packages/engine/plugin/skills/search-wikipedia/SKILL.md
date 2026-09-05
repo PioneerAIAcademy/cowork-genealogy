@@ -29,6 +29,9 @@ specific topic, person, place, or historical event.
 
 ## What to do
 
+Do not announce a step before doing it. No "Now I'll …", no "I'm going to …" — the
+only message to the user is step 5's one sentence, after the file exists.
+
 1. Call the `wikipedia_search` MCP tool with the topic as the
    `query` parameter.
 2. Read the template at `templates/wiki-summary.md` (relative to
@@ -56,7 +59,9 @@ specific topic, person, place, or historical event.
    - `"O'Brien (surname)"` → `o-brien-surname`
    - `"Württemberg"` → `wurttemberg`
    - `"Preußen"` → `preussen`
-5. Tell the user the file was created. One sentence only — for example:
+5. Tell the user the file was created. One sentence only, and it is the only
+   thing you say in this invocation — no preamble before the search, the
+   fill, or the write. For example:
    "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`."
    Do not restate, summarize, or paraphrase the article content.
 

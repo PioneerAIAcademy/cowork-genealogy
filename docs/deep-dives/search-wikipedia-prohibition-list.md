@@ -87,6 +87,20 @@ rebuilding it.**
     write the filled template…"), and no restating, summarizing or paraphrasing
     of the article content. The article content goes in the file, not the chat.
 
+    The no-narration half of this rule is now **explicit in the body**, in two
+    places rather than inferred from "One sentence only": a standalone line at
+    the top of `## What to do` ("Do not announce a step before doing it") and a
+    clause in step 5 ("it is the only thing you say in this invocation — no
+    preamble before the search, the fill, or the write"). It sits in both
+    because every observed violation is a `Now I'll …` preamble emitted while
+    executing steps 3–4, i.e. before the model reaches step 5.
+
+    `test_reply_does_not_narrate_pending_step`
+    (`eval/harness/validators/test_search_wikipedia.py`) is the instrument for
+    this rule; the `Reply economy` rubric dimension grades it as well, not
+    instead. The validator concatenates every assistant text block, so a
+    mid-workflow preamble fails it even when the closing sentence is clean.
+
 ## F. State
 
 19. This skill writes no project state. No `research.json` write, no
