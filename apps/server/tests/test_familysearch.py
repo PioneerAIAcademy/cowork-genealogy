@@ -112,13 +112,13 @@ def _patch_identity(monkeypatch, *, email: str, fs_id: str) -> None:
 
 def test_callback_allowlisted_creates_user_and_token(monkeypatch):
     email = "callback-ok@example.com"
-    with Session(get_engine()) as s:
-        if s.get(AllowedEmail, email) is None:
-            s.add(AllowedEmail(email=email))
-            s.commit()
     _patch_identity(monkeypatch, email=email, fs_id="cis.user.CBOK")
 
     with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, email) is None:
+                s.add(AllowedEmail(email=email))
+                s.commit()
         r = client.get(
             "/callback?code=abc&state=st-ok", headers=_state_header("st-ok"),
             follow_redirects=False,
@@ -178,13 +178,13 @@ def _state_header_with_next(state: str, next_val: str) -> dict:
 
 def test_callback_honours_safe_next(monkeypatch):
     email = "callback-next@example.com"
-    with Session(get_engine()) as s:
-        if s.get(AllowedEmail, email) is None:
-            s.add(AllowedEmail(email=email))
-            s.commit()
     _patch_identity(monkeypatch, email=email, fs_id="cis.user.NEXT")
 
     with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, email) is None:
+                s.add(AllowedEmail(email=email))
+                s.commit()
         r = client.get(
             "/callback?code=abc&state=st-next",
             headers=_state_header_with_next("st-next", "#/s/prj_abc123"),
@@ -198,13 +198,13 @@ def test_callback_rejects_unsafe_next(monkeypatch):
     """A tampered `next` (absolute URL → open redirect) is dropped; the user just
     lands on the app origin."""
     email = "callback-badnext@example.com"
-    with Session(get_engine()) as s:
-        if s.get(AllowedEmail, email) is None:
-            s.add(AllowedEmail(email=email))
-            s.commit()
     _patch_identity(monkeypatch, email=email, fs_id="cis.user.BADNEXT")
 
     with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, email) is None:
+                s.add(AllowedEmail(email=email))
+                s.commit()
         r = client.get(
             "/callback?code=abc&state=st-bad",
             headers=_state_header_with_next("st-bad", "https://evil.example.com/phish"),
@@ -326,3 +326,54 @@ async def test_sync_fs_token_none_without_row():
     with Session(get_engine()) as s:
         assert await sync_fs_token(s, user, sandbox) == "none"
     assert sandbox.writes == {}
+
+
+# ── Allowlist revocation (security audit #1018 Task 6) ─────────
+
+def test_init_db_removes_stale_allowlist_entries():
+    """Entries in the DB but not in ALLOWED_EMAILS are removed on init, so
+    revoking access by editing the env actually takes effect."""
+    from app.db import init_db
+
+    with Session(get_engine()) as s:
+        if s.get(AllowedEmail, "stale-user@example.com") is None:
+            s.add(AllowedEmail(email="stale-user@example.com"))
+            s.commit()
+        assert s.get(AllowedEmail, "stale-user@example.com") is not None
+
+    init_db()
+
+    with Session(get_engine()) as s:
+        assert s.get(AllowedEmail, "stale-user@example.com") is None, \
+            "stale allowlist entry should be removed on init_db()"
+
+
+def test_get_current_user_rejects_removed_allowlist_email(monkeypatch):
+    """A user with a valid session cookie is rejected if their email is no
+    longer on the allowlist — revocation is per-request, not login-only.
+
+    The per-request check fires only when FamilySearch OAuth is the login gate
+    (production); dev-login has no allowlist, so the check would be wrong there.
+    We log in via dev-login first (FS unconfigured), then flip the flag so the
+    per-request check activates."""
+    with TestClient(app) as client:
+        with Session(get_engine()) as s:
+            if s.get(AllowedEmail, "soon-revoked@example.com") is None:
+                s.add(AllowedEmail(email="soon-revoked@example.com"))
+                s.commit()
+        login = client.post("/auth/dev-login", json={"email": "soon-revoked@example.com"})
+        assert login.status_code == 200
+
+        assert client.get("/auth/me").status_code == 200
+
+        monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
+
+        with Session(get_engine()) as s:
+            row = s.get(AllowedEmail, "soon-revoked@example.com")
+            if row is not None:
+                s.delete(row)
+                s.commit()
+
+        r = client.get("/auth/me")
+        assert r.status_code == 403, \
+            "a user removed from the allowlist must be rejected immediately"

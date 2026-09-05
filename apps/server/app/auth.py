@@ -181,6 +181,8 @@ def get_current_user(
     user = session.get(User, data.get("uid"))
     if user is None:
         raise HTTPException(status_code=401, detail="Unknown user")
+    if get_settings().familysearch_configured and not _is_allowed(session, user.email):
+        raise HTTPException(status_code=403, detail="Account removed from allowlist")
     return user
 
 
