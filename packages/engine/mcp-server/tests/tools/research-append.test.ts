@@ -22,6 +22,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
+import { validateProject } from "../../src/validation/validator.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
@@ -497,12 +498,16 @@ const validQuestion = (id: string) => ({
   resolution_assertion_ids: [],
   exhaustive_declaration: { declared: false, log_entry_ids: [] },
 });
-const validPlan = (id: string, questionId: string, status = "active") => ({
+/** `items` defaults to EMPTY, which is only legal while something else in the
+ *  same call fills it (a `plan_items` op) — the validator refuses a plan that
+ *  ends a call with no items. Pass `[seededPlanItem(...)]` for a plan that has
+ *  to stand on its own. */
+const validPlan = (id: string, questionId: string, status = "active", items: any[] = []) => ({
   id,
   question_id: questionId,
   status,
   created: "2026-01-01",
-  items: [],
+  items,
 });
 const validPlanItem = () => ({
   sequence: 1,
@@ -514,6 +519,9 @@ const validPlanItem = () => ({
   fallback_for: null,
   status: "planned",
 });
+/** A plan item as it appears INSIDE a plan (carrying its own id), as opposed to
+ *  `validPlanItem()`, which is an append payload the tool assigns an id to. */
+const seededPlanItem = (id = "pli_001") => ({ id, ...validPlanItem() });
 const validConflict = () => ({
   conflict_type: "fact",
   description: "Two different birth years",
@@ -591,11 +599,13 @@ describe("research_append (Phase 2)", () => {
 
   it("appends a plan, then rejects a second active plan for the same question", async () => {
     await writeProject();
-    const { id: _o, ...plan } = validPlan("x", "q_001", "active");
+    // Inline items, because a single-op plan append has no item ops to fill
+    // them and an itemless plan is refused. `research-plan` batches instead.
+    const { id: _o, ...plan } = validPlan("x", "q_001", "active", [seededPlanItem()]);
     const first = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan });
     expect(first.ok && singleOk(first).entryId).toBe("pl_001");
 
-    const { id: _o2, ...plan2 } = validPlan("y", "q_001", "active");
+    const { id: _o2, ...plan2 } = validPlan("y", "q_001", "active", [seededPlanItem("pli_002")]);
     const second = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
     expect(second.ok).toBe(false);
     if (second.ok) return;
@@ -2169,6 +2179,458 @@ describe("research_append (batch ops)", () => {
     expect(out.plans[0].items.map((i: any) => i.id)).toEqual(["pli_001", "pli_002"]);
   });
 
+  it("(d2-misroute) names the wrong planId when the created plan ends empty — writes nothing", async () => {
+    // The observed corruption: nine plan_items ops carrying a hard-coded
+    // `planId: "pl_001"` appended themselves to a pre-existing COMPLETED plan
+    // for another question, and the plan the same batch created ended with no
+    // items. "missing required field 'items'" named the symptom, and the retry
+    // answered it with `"items": []` — which used to validate.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // wrong plan
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // Read the ERROR, not the joined list: the worked example is appended to it
+    // and legitimately contains the id-prediction rule, so a negative
+    // assertion over the join would be satisfied by the hint.
+    const msg = r.errors[0];
+    // The distinctive half is the CAUSE. "is empty" alone is what sent the
+    // model round the loop, so a refusal that only says that fails this test.
+    expect(msg).toMatch(/plan 'pl_002' was created for question 'q_001' and ends this call with no items/);
+    expect(msg).toMatch(/the items went to a plan this call did not create/);
+    expect(msg).toMatch(/'pl_001' \(completed plan for q_002\)/);
+    expect(msg).toMatch(/which is 'pl_002' for this one/);
+    expect(msg).toMatch(/Never a hard-coded 'pl_001'/);
+    // Blamed on the plans append op, and the hint teaches the batched shape.
+    expect(msg).toMatch(/^ops\[0\]:/);
+    expect(r.errors.join(" ")).toContain("worked example for 'plans'");
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d2-misroute) stays silent when the batch fills the plan it created AND an existing one", async () => {
+    // The narrowing that keeps this from being a new deny on a legitimate
+    // shape: a batch may add an item to another plan, so long as the plan it
+    // created is not left empty.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" }, // the new plan
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // an existing one
+      ],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans.find((pl: any) => pl.id === "pl_002").items).toHaveLength(1);
+    expect(out.plans.find((pl: any) => pl.id === "pl_001").items).toHaveLength(2);
+  });
+
+  it("(d2-misroute) falls through to the document validator when the batch names no other plan", async () => {
+    // No plan_items op at all: there is no misroute to name, so the refusal is
+    // the document-level one. This is the boundary between the two messages.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active", [])) }],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    expect(joined).toMatch(/is empty — a plan carries at least one plan item/);
+    // Anchored on a substring the CAUSE message actually contains. The first
+    // draft asserted /the items went to a different plan/, which round 2's
+    // rewrite had already replaced — the string existed nowhere in src, so this
+    // half of the boundary could not fail.
+    expect(joined).not.toMatch(/ends this call with no items/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d2-misroute) a call creating TWO plans and feeding one names the sibling, not a misroute", async () => {
+    // Two plans in one call, item ops naming only the second. The items did NOT
+    // go to "a different plan" in the hard-coded-pl_001 sense — they went to a
+    // plan this same call created. Prescribing the misroute fix here ("put
+    // pl_002 on every item op") would empty the sibling and reproduce the loop
+    // with the two plans swapped.
+    //
+    // Provenance, stated exactly: TWO-PLANS-IN-ONE-CALL is a corpus shape
+    // (laurie-scotland-parents run-2026-07-15_14-44-20 issues two such calls),
+    // but those carry inline non-empty `items` and no `plan_items` ops, so they
+    // return early here. This exact combination — two created plans, one left
+    // empty, items supplied by op — has ZERO corpus instances. It is guarded
+    // because the message was wrong for it, not because it has been observed.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_001, left empty
+        { section: "plans", op: "append", entry: noId(validPlan("y", "q_002", "active")) }, // → pl_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors[0]; // not the join — the worked example rides along
+    expect(msg).toMatch(/plan 'pl_001' was created for question 'q_001' and ends this call with no items/);
+    expect(msg).toMatch(/named only 'pl_002', which this same call also created/);
+    expect(msg).toMatch(/which is 'pl_001' for this one/);
+    // The wrong prescription, and the id arithmetic that is wrong for a second plan.
+    expect(msg).not.toMatch(/the items went to a plan this call did not create/);
+    expect(msg).not.toMatch(/highest existing pl_/);
+    expect(msg).toMatch(/^ops\[0\]:/); // blamed on the empty plan's own op
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d2-misroute) ignores a plan_items UPDATE op — it is not a misdirected item", async () => {
+    // An update targets an item that already lives in the plan it names, so it
+    // is not an item that went astray, and "re-issue with planId pl_002" would
+    // fail on a missing entryId. Only appends can misroute.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "active", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active", [])) }, // → pl_002, empty
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "searched" } },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    // Falls through to the document check, which is the honest verdict here.
+    expect(joined).toMatch(/is empty — a plan carries at least one plan item/);
+    expect(joined).not.toMatch(/ends this call with no items/);
+  });
+
+  it("repairs a legacy empty plan: appending an item to it is allowed and clears the error", async () => {
+    // The escape hatch the refusal prescribes, on a project that already holds
+    // an empty plan — the state issue #2051 says production persisted. The
+    // pre-existing error is demoted, so the repair write is not blocked by the
+    // very rule it satisfies. Without this the rule would be a trap: the
+    // document reports invalid and no write can fix it.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [{ ...validPlan("pl_001", "q_001", "active", []) }] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "plan_items",
+      op: "append",
+      planId: "pl_001",
+      entry: validPlanItem(),
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[0].items).toHaveLength(1);
+    // And the document is clean afterwards, not merely written.
+    const check = await validateProject(dir);
+    expect(check.errors.filter((e: any) => e.path.includes("plans[0]/items"))).toEqual([]);
+  });
+
+  it("(d2-misroute) two created plans BOTH left empty get a per-plan prescription, not two contradictory ones", async () => {
+    // Each plan's own message used to say "put MY id on every item op", so
+    // following either emptied the other and reproduced the loop with the two
+    // plans swapped. With more than one created plan ending empty there is no
+    // single id to add, and the message must say that instead of naming one.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002, empty
+        { section: "plans", op: "append", entry: { ...noId(validPlan("y", "q_002", "active")), question_id: "q_002" } as any }, // → pl_003, empty
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    expect(joined).toMatch(/2 of the plans this call created \(pl_002, pl_003\) end it with no items/);
+    expect(joined).toMatch(/give each plan_items op the id of the plan ITS item belongs to/);
+    // The contradiction: neither message may prescribe a single id.
+    expect(joined).not.toMatch(/which is 'pl_002' for this one/);
+    expect(joined).not.toMatch(/which is 'pl_003' for this one/);
+  });
+
+  it("(d2-misroute) does not blame pl_001 when the caller never wrote it", async () => {
+    // The tail clauses were unconditional: a caller who wrote 'pl_007' was told
+    // never to hard-code 'pl_001', a string absent from its own call.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_002", "q_002", "completed", [seededPlanItem("pli_002")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_003
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors[0];
+    expect(msg).toMatch(/wrote into 'pl_002' \(completed plan for q_002\)/);
+    expect(msg).not.toMatch(/pl_001/); // never named a plan the caller did not write
+    expect(msg).toMatch(/belongs to a different question/);
+  });
+
+  it("(d2-misroute) does not call a SAME-question plan another question's", async () => {
+    // The other unconditional clause: a superseded plan for the same question
+    // was described as "another question's plan" in the same sentence that
+    // correctly printed its question id.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_001", "superseded", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors[0];
+    expect(msg).toMatch(/wrote into 'pl_001' \(superseded plan for q_001\)/);
+    expect(msg).not.toMatch(/different question/);
+    expect(msg).not.toMatch(/another question/);
+  });
+
+  it("(d2-misroute) reports the EMPTY count, not the created count", async () => {
+    // The first draft rendered emptyCreated.length as "This call created N
+    // plans", so three created plans with two left empty read "created 2".
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002"), validQuestion("q_003")];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("a", "q_001", "active")) }, // → pl_001, empty
+        { section: "plans", op: "append", entry: { ...noId(validPlan("b", "q_002", "active")), question_id: "q_002" } as any }, // → pl_002, empty
+        { section: "plans", op: "append", entry: { ...noId(validPlan("c", "q_003", "active")), question_id: "q_003" } as any }, // → pl_003, filled
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_003" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    expect(joined).toMatch(/2 of the plans this call created \(pl_001, pl_002\) end it with no items/);
+    expect(joined).not.toMatch(/created 2 plans/); // the miscount
+  });
+
+  it("(d2-misroute) does not call a MIXED target list all-different-question", async () => {
+    // One same-question and one different-question target. A `.some()` gate
+    // printed a singular "it belongs to a different question" over both.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+      { ...validPlan("pl_002", "q_001", "superseded", [seededPlanItem("pli_002")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_003 for q_001
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" }, // q_002
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_002" }, // q_001, SAME question
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors[0];
+    expect(msg).toMatch(/wrote into 'pl_001' \(completed plan for q_002\), 'pl_002' \(superseded plan for q_001\)/);
+    expect(msg).not.toMatch(/different question/); // not all of them are
+    expect(msg).not.toMatch(/None of them belongs to this question/);
+  });
+
+  it("(d2-misroute) reports the cause AND every other document error in the batch", async () => {
+    // The limitation a reviewer asked me to file: the early return meant a
+    // batch carrying a misroute plus an unrelated document error reported only
+    // the misroute, so the caller needed a second round trip to see the rest.
+    // Fixed rather than filed, because the misroute set is a strict subset of
+    // the validation-failing set, so merging the lists needs no reordering.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active")) }, // → pl_002, left empty
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },  // misroute
+        // An unrelated document-level error, in the same batch.
+        {
+          section: "hypotheses",
+          op: "append",
+          entry: {
+            claim: "Same man",
+            status: "NOT_A_STATUS",
+            supporting_assertion_ids: [],
+            contradicting_assertion_ids: [],
+            ruled_out: false,
+            ruled_out_reason: null,
+            notes: null,
+            related_question_ids: [],
+          },
+        } as any,
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    // BOTH, not one: the cause first, the document error still present.
+    expect(joined).toMatch(/ends this call with no items/);
+    expect(joined).toMatch(/hypothesis_status|NOT_A_STATUS/);
+    // And the cause still leads, because it names what to change.
+    expect(r.errors[0]).toMatch(/ends this call with no items/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d2-misroute) leaves a NON-ARRAY items to its own type error", async () => {
+    // The misroute diagnosis says the plan "ends this call with no items". For
+    // `items: "none"` that describes the document wrongly — it ends the call
+    // with a string, which has its own error. Added when the fix for the
+    // two-plan case was reviewed: the fix is a code change and can shift a
+    // boundary of its own.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: { ...noId(validPlan("x", "q_001", "active")), items: "none" } as any },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const joined = r.errors.join(" ");
+    expect(joined).toMatch(/must be an array of plan items — got string/);
+    expect(joined).not.toMatch(/ends this call with no items/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("(d2-misroute) still names the cause when items is NULL", async () => {
+    // `items: null` genuinely does end the call with no items, so the cause
+    // diagnosis is right there — the boundary above is the non-array case only.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001"), validQuestion("q_002")];
+    research.plans = [
+      { ...validPlan("pl_001", "q_002", "completed", [seededPlanItem("pli_001")]) },
+    ] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: { ...noId(validPlan("x", "q_001", "active")), items: null } as any },
+        { section: "plan_items", op: "append", entry: validPlanItem(), planId: "pl_001" },
+      ],
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/ends this call with no items/);
+    expect(r.errors[0]).toMatch(/the items went to a plan this call did not create/);
+  });
+
+  it("does not CRASH on a legacy plans: [null] neighbour", async () => {
+    // The writer half of the crash the validator arm fixes. `plans: [null]`
+    // made planActiveInvariants throw `Cannot read properties of null`, so
+    // research_append died on exactly the shape validate_research_schema now
+    // reports cleanly. The stray element is pre-existing drift, so the write
+    // itself must go through.
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [null] as any;
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plans", op: "append", entry: noId(validPlan("x", "q_001", "active", [seededPlanItem()])) },
+      ],
+    });
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+    const out = await readResearch();
+    expect(out.plans[1].id).toBe("pl_001");
+  });
+
   it("(b) rolls back the whole batch on a mid-batch validation failure — writes nothing", async () => {
     await writeProject();
     const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -3647,7 +4109,27 @@ describe("research_append — worked examples are themselves valid", () => {
         exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
       },
     ];
-    r.plans = [{ id: "pl_001", question_id: "q_002", status: "active", created: "2026-07-18", items: [] }];
+    r.plans = [
+      {
+        id: "pl_001",
+        question_id: "q_002",
+        status: "active",
+        created: "2026-07-18",
+        items: [
+          {
+            id: "pli_001",
+            sequence: 1,
+            record_type: "census",
+            jurisdiction: "Schuylkill County, Pennsylvania",
+            date_range: "1850-1860",
+            repository: "FamilySearch",
+            rationale: "Seed item — a plan carries at least one.",
+            fallback_for: null,
+            status: "planned",
+          },
+        ],
+      },
+    ];
     r.conflicts = [
       {
         id: "c_001",
@@ -3711,6 +4193,34 @@ describe("research_append — worked examples are themselves valid", () => {
     // `plans` already has an active plan for q_002 in the fixture (the
     // one-active-plan invariant); point the example at a fresh question.
     if (section === "plans") entry.question_id = "q_003";
+
+    // `plans` is the one section whose example is not a standalone append: the
+    // shell omits `items`, so the `plan_items` op that fills it belongs in the
+    // SAME call. Round-trip the batched call `exampleFor("plans")` actually
+    // renders, not a single-op append the tool would refuse — otherwise the
+    // shape the model is shown for `plans` loses its only validity check. The
+    // fixture holds pl_001, so the shell is assigned pl_002.
+    if (section === "plans") {
+      const batched = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "plans", op: "append", entry },
+          {
+            section: "plan_items",
+            op: "append",
+            planId: "pl_002",
+            entry: JSON.parse(__testing.EXAMPLES.plan_items),
+          },
+        ],
+      } as any);
+      expect(errorsOf(batched) ?? []).toEqual([]);
+      expect(batched.ok).toBe(true);
+      const written = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      expect(written.plans[1].id).toBe("pl_002");
+      expect(written.plans[1].items).toHaveLength(1);
+      return;
+    }
+
     const r = await researchAppend({
       projectPath: dir,
       section,

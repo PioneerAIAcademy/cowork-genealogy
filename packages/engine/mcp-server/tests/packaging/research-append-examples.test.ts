@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { __testing } from "../../src/tools/research-append-examples.js";
+import { __testing, exampleFor } from "../../src/tools/research-append-examples.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
 
 /**
@@ -123,6 +123,92 @@ const TOOL_ASSIGNED: Record<string, string[]> = {
   sources: ["gedcomx_source_description_id"],
 };
 
+/**
+ * Required keys the examples omit because ANOTHER OP IN THE SAME CALL supplies
+ * them — distinct from `TOOL_ASSIGNED`, where the tool fills the field itself.
+ *
+ * A `plans` shell omits `items` and the `plan_items` ops in the same batched
+ * call create them, which is what `research-plan/SKILL.md` prescribes and what
+ * `exampleFor("plans")` now renders. Naming this separately matters: calling it
+ * tool-assigned would be false, and the false version is what makes a reader
+ * think a standalone `plans` append is legal — the belief that put `"items":
+ * []` in this example in the first place.
+ */
+const BATCH_SUPPLIED: Record<string, string[]> = {
+  plans: ["items"],
+};
+
+/**
+ * Every array in `entry` shorter than its subschema's `minItems`.
+ *
+ * A `minItems` violation is the failure that shipped: `plans` taught
+ * `"items": []`, the field-name and enum checks both passed it, and the model
+ * copied it into a document `research.schema.json` rejects.
+ *
+ * Conditional subschemas are EVALUATED, not skipped. All four `minItems` in
+ * this schema but one live inside `allOf[].if/then` (`log_entry_ids` when
+ * `declared: true`, `competing_assertion_ids` by `conflict_type`), so a walk
+ * that ignored them would — now that `plans` legitimately omits `items` — check
+ * zero constraints across all 13 examples while still reading as coverage.
+ * Applying a `then` WITHOUT its `if` is the other wrong answer: it would
+ * false-flag the `questions` example, which correctly shows `log_entry_ids: []`
+ * on an undeclared question. So the `if` is tested first, and only the
+ * `const`/`enum`-on-a-property form this schema actually uses is supported —
+ * an `if` shaped any other way is skipped rather than guessed at.
+ */
+function conditionApplies(cond: any, value: any): boolean {
+  if (!cond || typeof cond !== "object" || !cond.properties) return false;
+  for (const [k, want] of Object.entries<any>(cond.properties)) {
+    const actual = (value ?? {})[k];
+    if ("const" in want) {
+      if (actual !== want.const) return false;
+    } else if (Array.isArray(want.enum)) {
+      if (!want.enum.includes(actual)) return false;
+    } else {
+      return false; // an unsupported `if` shape: skip rather than guess
+    }
+  }
+  return true;
+}
+
+function minItemsViolations(value: unknown, sub: any, path: string, out: string[]): void {
+  sub = resolveRef(sub);
+  if (!sub || typeof sub !== "object") return;
+  if (Array.isArray(value)) {
+    if (typeof sub.minItems === "number") {
+      minItemsChecked += 1;
+      if (value.length < sub.minItems) {
+        out.push(`${path} has ${value.length} item(s), schema requires minItems ${sub.minItems}`);
+      }
+    }
+    value.forEach((v, i) => minItemsViolations(v, sub.items, `${path}[${i}]`, out));
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const branch of Array.isArray(sub.allOf) ? sub.allOf : []) {
+      if (branch?.then && conditionApplies(branch.if, value)) {
+        minItemsViolations(value, branch.then, path, out);
+      }
+    }
+    if (sub.properties) {
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        minItemsViolations(v, sub.properties[k], path ? `${path}.${k}` : k, out);
+      }
+    }
+  }
+}
+
+/** How many `minItems` constraints the walk actually EVALUATED, counted BY the
+ *  walk itself rather than by a second traversal. A parallel counter cannot
+ *  witness the real walk going vacuous: the first draft of this guard kept its
+ *  own copy of the conditional descent, so deleting the descent from
+ *  `minItemsViolations` left the count untouched and every test still green. */
+let minItemsChecked = 0;
+/** How many per-section example tests actually executed. The vacuity assertion
+ *  below is meaningless when a name filter skipped them all, and asserting
+ *  anyway made `vitest -t "<other name>"` fail on a healthy tree. */
+let sectionsWalked = 0;
+
 const EXAMPLES = __testing.EXAMPLES as Record<string, string>;
 
 describe("research_append worked examples conform to the schema", () => {
@@ -160,7 +246,11 @@ describe("research_append worked examples conform to the schema", () => {
       expect(def, `no $defs.${DEF_FOR[section]}`).toBeDefined();
 
       const allowed = new Set(Object.keys(def.properties ?? {}));
-      const skip = new Set([...(TOOL_ASSIGNED["*"] ?? []), ...(TOOL_ASSIGNED[section] ?? [])]);
+      const skip = new Set([
+        ...(TOOL_ASSIGNED["*"] ?? []),
+        ...(TOOL_ASSIGNED[section] ?? []),
+        ...(BATCH_SUPPLIED[section] ?? []),
+      ]);
 
       const unknown = Object.keys(entry!).filter((k) => !allowed.has(k));
       const missing = ((def.required ?? []) as string[]).filter(
@@ -174,6 +264,16 @@ describe("research_append worked examples conform to the schema", () => {
           `are required and not tool-assigned`,
       ).toEqual({ unknown: [], missing: [] });
 
+      sectionsWalked += 1;
+      const short: string[] = [];
+      minItemsViolations(entry!, def, "", short);
+      expect(
+        short,
+        `${section} example carries an array the schema's minItems rejects — it ` +
+          `looks structurally correct and validates in neither schema, so a caller ` +
+          `shown it on a rejection copies it and is refused again`,
+      ).toEqual([]);
+
       const badValues: string[] = [];
       enumViolations(entry!, def, "", badValues);
       expect(
@@ -184,4 +284,71 @@ describe("research_append worked examples conform to the schema", () => {
       ).toEqual([]);
     });
   }
+});
+
+describe("the minItems walk is not vacuous", () => {
+  it("evaluated at least one minItems constraint across the examples", () => {
+    // Ordering: vitest collects every `it` before running any, and this suite is
+    // declared after the per-section loop, so the counter is populated by the
+    // time this assertion runs.
+    if (sectionsWalked === 0) return; // a name filter skipped the per-section tests
+    expect(
+      minItemsChecked,
+      "the minItems walk reached no constraint at all — it passes for the wrong " +
+        "reason and reads as coverage. Check that conditional subschemas are " +
+        "still being evaluated (conditionApplies).",
+    ).toBeGreaterThan(0);
+  });
+});
+
+describe("the rendered plan examples teach a call the tool accepts", () => {
+  /**
+   * The registry entries above are checked against the schema; these two check
+   * what a caller is actually SHOWN, which is `exampleFor`'s output. Both
+   * failures being guarded here were in that output and in nothing else: the
+   * `plans` example rendered a standalone append the tool refuses, and the
+   * `plan_items` example hard-coded the one plan id `research-plan/SKILL.md`
+   * says never to hard-code.
+   */
+  /** The rendered call with its `//` commentary removed. A guard on the call
+   *  must read the call: matched against the raw text, the first draft of the
+   *  empty-array assertion below failed on the comment that warns against it. */
+  const callOnly = (text: string) =>
+    text
+      .split("\n")
+      // Whole-line AND trailing comments. Stripping only whole-line ones left a
+      // trap: a trailing `// never write "items": []` would be read as part of
+      // the call and false-flag the guard, which is the same confusion between
+      // prose and code that the first draft of this assertion made.
+      .map((line) => line.replace(/^\s*\/\/.*$/, "").replace(/\s*\/\/.*$/, ""))
+      .join("\n");
+
+  it("`plans` renders the batched call, not a standalone append", () => {
+    const ex = exampleFor("plans", "append") ?? "";
+    expect(ex).toContain("ops: [");
+    expect(ex).toContain('section: "plan_items"');
+    // The shape that persisted a schema-invalid document.
+    expect(callOnly(ex)).not.toMatch(/"items"\s*:\s*\[\s*\]/);
+  });
+
+  it("`plan_items` does not hard-code pl_001 as the parent plan", () => {
+    // A hard-coded pl_001 attaches the items to whatever plan happens to be
+    // first in an ongoing project — another question's, in the observed case.
+    expect(callOnly(exampleFor("plan_items", "append") ?? "")).not.toContain('planId: "pl_001"');
+    expect(callOnly(exampleFor("plan_items", "update") ?? "")).not.toContain('planId: "pl_001"');
+    // and it says how to work the id out
+    expect(exampleFor("plan_items", "append") ?? "").toMatch(/highest existing pl_/);
+  });
+
+  it("every rendered append example is the call shape its section requires", () => {
+    // A one-way guard against the reverse mistake: a section whose example
+    // needs the batch form silently reverting to the single-op form. `plans` is
+    // the only such section today; naming it here is what makes a future
+    // change to `exampleFor` visible.
+    const BATCH_ONLY = new Set(["plans"]);
+    for (const section of Object.keys(EXAMPLES)) {
+      const ex = exampleFor(section, "append") ?? "";
+      expect(ex.includes("ops: ["), `${section} append example`).toBe(BATCH_ONLY.has(section));
+    }
+  });
 });

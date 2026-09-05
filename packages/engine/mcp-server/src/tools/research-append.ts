@@ -173,8 +173,13 @@ function conflictInvariants(entry: any): string[] {
 
 function planActiveInvariants(entry: any, research: any): string[] {
   if (entry.status !== "active") return [];
+  // `p &&`: a legacy `plans: [null]` made this throw
+  // `Cannot read properties of null`, so the writer crashed on the very shape
+  // the document validator now reports. A malformed neighbour is not this
+  // entry's problem — the validator reports it, and this call is not refused
+  // for it (the introduced-error diff demotes pre-existing drift).
   const conflicting = (research.plans ?? []).filter(
-    (p: any) => p !== entry && p.question_id === entry.question_id && p.status === "active",
+    (p: any) => p && p !== entry && p.question_id === entry.question_id && p.status === "active",
   );
   if (conflicting.length > 0) {
     return [
@@ -981,6 +986,135 @@ interface AppliedOp {
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
   warnings?: string[];
+}
+
+/**
+ * A plan this call CREATED that ends the call with no items, while the same
+ * call's `plan_items` ops wrote into a different plan — the misroute that
+ * persisted a schema-invalid `research.json`.
+ *
+ * Nine `plan_items` ops carrying a hard-coded `planId: "pl_001"` appended
+ * themselves to a pre-existing `completed` plan for another question, and the
+ * plan the same batch had just created ended with no `items` key. The document
+ * validator refused that with "missing required field 'items'", which names the
+ * symptom; the model's next call added `"items": []` to the shell, kept the
+ * wrong `planId`, and was accepted. The error string is what drives the next
+ * move, so it has to name the cause.
+ *
+ * This refuses nothing that was not already refused: a created plan with no
+ * items fails `checkRequired` when `items` is absent and the non-empty check
+ * when it is `[]`, both introduced by this call and neither demotable. What it
+ * changes is which sentence the model reads.
+ *
+ * Silent unless the created plan is EMPTY, so a batch that legitimately adds an
+ * item to an existing plan alongside a populated new one is untouched.
+ */
+function emptyCreatedPlanErrors(
+  ops: ResearchAppendOp[],
+  research: any,
+  applied: AppliedOp[],
+): Array<{ index: number; message: string }> {
+  const createdIds = applied
+    .filter((a) => a.section === "plans" && a.op === "append" && typeof a.entryId === "string")
+    .map((a) => a.entryId);
+  if (createdIds.length === 0) return [];
+  // APPENDS only. A `plan_items` update targets an item that already exists in
+  // the plan it names, so it is not a misdirected item and the prescription
+  // below ("re-issue with planId X") would make it fail on a missing entryId.
+  const itemPlanIds = ops
+    .filter((o) => o.section === "plan_items" && o.op === "append" && typeof o.planId === "string")
+    .map((o) => o.planId as string);
+  if (itemPlanIds.length === 0) return [];
+
+  // The k-th `plans` append op produced the k-th created plan id, in op order.
+  const planOpIndexes = ops
+    .map((o, i) => ({ o, i }))
+    .filter(({ o }) => o.section === "plans" && o.op === "append")
+    .map(({ i }) => i);
+  const plans = Array.isArray(research.plans) ? research.plans : [];
+  const byId = new Map<string, any>(
+    plans.filter((pl: any) => pl && typeof pl.id === "string").map((pl: any) => [pl.id, pl]),
+  );
+  const createdSet = new Set(createdIds);
+
+  const describe = (id: string): string => {
+    const other = byId.get(id);
+    const status = other && typeof other.status === "string" ? other.status : "unknown-status";
+    const q = other && typeof other.question_id === "string" ? other.question_id : "an unknown question";
+    return `'${id}' (${status} plan for ${q})`;
+  };
+
+  // Which created plans end EMPTY. When more than one does, "put this id on
+  // every item op" is wrong for both of them: following either empties the
+  // other. That case gets a per-plan prescription instead.
+  const emptyCreated = createdIds.filter((id) => {
+    const pl = byId.get(id);
+    return pl && !(Array.isArray(pl.items) && pl.items.length > 0) &&
+      !("items" in pl && pl.items !== null && !Array.isArray(pl.items));
+  });
+
+  const out: Array<{ index: number; message: string }> = [];
+  for (let k = 0; k < createdIds.length; k++) {
+    const newId = createdIds[k];
+    const pl = byId.get(newId);
+    if (!pl) continue;
+    if (Array.isArray(pl.items) && pl.items.length > 0) continue; // the items landed here
+    // A present-but-non-array `items` gets its own type error from the document
+    // validator; calling that "ends this call with no items" would describe the
+    // document wrongly.
+    if ("items" in pl && pl.items !== null && !Array.isArray(pl.items)) continue;
+    const elsewhere = [...new Set(itemPlanIds.filter((id) => id !== newId))];
+    if (elsewhere.length === 0) continue;
+    const preExisting = elsewhere.filter((id) => !createdSet.has(id));
+    const alsoCreated = elsewhere.filter((id) => createdSet.has(id));
+    const forQuestion =
+      typeof pl.question_id === "string" ? ` for question '${pl.question_id}'` : "";
+
+    // Every clause below is conditional on the state that makes it TRUE. The
+    // first draft asserted all of them unconditionally, so it told a caller who
+    // wrote `pl_007` never to hard-code `pl_001`, and called a superseded plan
+    // for the SAME question "another question's plan".
+    const prescription =
+      emptyCreated.length > 1
+        ? `${emptyCreated.length} of the plans this call created (${emptyCreated.join(", ")}) end it with no items, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.`
+        : `A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '${newId}' for this one.`;
+
+    let cause: string;
+    if (preExisting.length > 0) {
+      const named = preExisting.map(describe).join(", ");
+      // EVERY named plan, not `.some()`: with one same-question and one
+      // different-question target, a `.some()` gate printed a singular "it
+      // belongs to a different question" over a list where one of them does not.
+      const otherQuestion = preExisting.every((id) => {
+        const o = byId.get(id);
+        return o && typeof o.question_id === "string" && o.question_id !== pl.question_id;
+      });
+      const hardCoded = preExisting.includes("pl_001") && newId !== "pl_001";
+      const tail = hardCoded
+        ? " Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours."
+        : otherQuestion
+          ? (preExisting.length === 1
+              ? " It belongs to a different question, so its audit trail is not yours to append to."
+              : " None of them belongs to this question, so their audit trails are not yours to append to.")
+          : "";
+      cause =
+        `this call's plan_items ops wrote into ${named} instead — the items went to a plan this ` +
+        `call did not create. ${prescription}${tail}`;
+    } else {
+      cause =
+        `this call's plan_items ops named only ${alsoCreated.map((id) => `'${id}'`).join(", ")}, ` +
+        `which this same call also created. ${prescription}`;
+    }
+
+    out.push({
+      index: planOpIndexes[k] ?? 0,
+      message:
+        `plan '${newId}' was created${forQuestion} and ends this call with no items, which cannot be ` +
+        `persisted. ${cause} Do not add "items": [] to the plan shell instead; that is what makes the ` +
+        "document schema-invalid.",
+    });
+  }
+  return out;
 }
 
 /** Apply ONE mutation to the in-memory research document. Mutates `research` in
@@ -2432,6 +2566,22 @@ export async function researchAppend(
       }
     }
 
+    // A plan this call created that ends with no items, while the call's
+    // plan_items ops wrote elsewhere. Checked on POST-APPLY state (that is what
+    // "ends the call with no items" means) and before any write, so nothing is
+    // persisted. The `plans` hint teaches the batched shape that satisfies it.
+    // Computed here, on post-apply state, but NOT returned on: an early return
+    // suppressed every other document-level error in the same batch, so a
+    // caller with a misroute AND a bad enum elsewhere was told about one of
+    // them and had to make a second call to discover the other. Reordering is
+    // not needed to fix that: a created plan ending with no items always
+    // produces a validation error (`items` absent fails the required check,
+    // `[]` fails the non-empty check, and the non-array case is excluded from
+    // the misroute set), so the misroute set is a strict SUBSET of the
+    // validation-failing set. Carrying the messages down to the validation
+    // failure and merging them there loses nothing and reports everything.
+    const misrouted = emptyCreatedPlanErrors(ops, research, applied);
+
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     const anyMutation = applied.some((a) => !a.noop) || prep.treeMutated;
 
@@ -2458,16 +2608,21 @@ export async function researchAppend(
         // Shape errors surface here (the document validator, not applyOne), so
         // this is the site the evaluations/known_holdings rejections land on.
         const mapped = mapValidationErrors(formatIssues(validation.errors), applied, isBatch);
+        // The cause-naming messages lead, because they name what to change;
+        // the document errors follow so nothing in the batch is hidden.
+        const misrouteMsgs = misrouted.map((m) => fmt(m.index, m.message));
         // Only hint the sections the errors actually name — in a wide batch,
         // examples for ops that validated fine would be noise pointing away
         // from the real problem.
         const blamed = ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
         return fail(
-          mapped,
-          (blamed.length > 0 ? blamed : ops).map((o) => ({
-            section: String(o.section),
-            op: o.op === "update" ? "update" : "append",
-          })),
+          [...misrouteMsgs, ...mapped],
+          misrouteMsgs.length > 0
+            ? [{ section: "plans", op: "append" as const }]
+            : (blamed.length > 0 ? blamed : ops).map((o) => ({
+                section: String(o.section),
+                op: o.op === "update" ? ("update" as const) : ("append" as const),
+              })),
         );
       }
       validationWarnings = formatIssues(validation.warnings);

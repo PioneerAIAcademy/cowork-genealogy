@@ -409,7 +409,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `question_id` | string | yes | The question this plan addresses (`q_` reference) |
 | `status` | `plan_status` | yes | Current status |
 | `created` | string | yes | ISO 8601 date |
-| `items` | object[] | yes | At least one plan item (see below) |
+| `items` | object[] | yes | At least one plan item (see below). Enforced by the validator, so a plan cannot be created empty and filled later: the item writes belong in the same `research_append` call as the shell. `packages/schema`'s TypeScript mirror types this as a non-empty tuple for the same reason |
 
 **Plan items:**
 
