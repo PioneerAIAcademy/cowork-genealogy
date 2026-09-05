@@ -346,7 +346,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+19 of the 28 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1307,7 +1307,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-26 of the 27 skills carry a `**Narration:**` line — 22 of them as the first line
+26 of the 28 skills carry a `**Narration:**` line — 22 of them as the first line
 of the body, the other four further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1715,10 +1715,10 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **433** committed
+  run logs, and negative routing tests across 27 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
-  totals **433 rows, 379 passing (88%)**. Those two numbers count different things
+  `eval/tests/unit/` — and across the 27 live suites the latest run log per suite
+  totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
   about the snapshots — not an identity, so re-derive rather than quoting them.
@@ -1908,7 +1908,7 @@ re-run until it comes back green (`docs/skill-lifecycle.md` carries the
 symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
 construction, catching one is on you: re-run a suspect test with
 `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
-94 of the 433 definitions are **negative** tests that exist to prove
+97 of the 446 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is

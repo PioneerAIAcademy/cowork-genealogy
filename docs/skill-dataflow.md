@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 27 skills and 5 agents. Besides the `research` orchestrator itself, its routing
+There are 28 skills and 5 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 14 fire only when the user asks — see
+name. The remaining 15 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -175,6 +175,7 @@ sibling skill.
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one** | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both. Never fixes anything | `person_warnings` (offline, deterministic), `person_quality` (live FamilySearch); the tree only to resolve a name to an id | Nothing |
+| **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do). Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`; `@plugin:image-reader` for a scan re-read — it holds no image tool itself | Nothing |
 | **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
 | **`translation`** | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image already in the conversation. **No MCP tool at all** | Nothing |
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
@@ -298,7 +299,7 @@ No routing-table row names these, so an autonomous `/research` run never enters 
 `search-full-text` · `timeline` · `citation` · `check-warnings` · `translation` ·
 `historical-context` · `convert-dates` · `tree-edit` · `validate-schema` ·
 `forget-and-rederive` · `project-status` · `search-familysearch-wiki` ·
-`search-wikipedia` · `init-project` (named in prose, not in the table)
+`search-wikipedia` · `source-evaluation` · `init-project` (named in prose, not in the table)
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

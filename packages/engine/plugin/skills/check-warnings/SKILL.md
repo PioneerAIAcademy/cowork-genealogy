@@ -9,7 +9,9 @@ description: Genealogical data integrity guardrail — catches contradictions
   consistency before closing research, or get a sanity check on any person's
   dates and family relationships. Route source conflicts (two records
   disagreeing about the same fact) to conflict-resolution; route schema
-  validation (malformed data, bad ids, broken references) to validate-schema.
+  validation (malformed data, bad ids, broken references) to validate-schema;
+  route an audit of the sources attached to a profile — whether each belongs
+  there, whether anything was mis-indexed — to source-evaluation.
 allowed-tools:
   - person_warnings
   - person_quality
@@ -45,6 +47,8 @@ Full tag catalog: `references/warning-checks.md`.
 - **Invoke the `conflict-resolution` skill right away** (the Skill tool) as your first and only action, and let *it* produce the response for the user.
 - **Write no reply of your own** — no preamble, no explanation, no summary. The handoff runs behind the scenes; conflict-resolution owns the answer the user sees.
 - Do **not** call `person_warnings` or `person_quality`, do **not** read the tree, and do **not** analyze the discrepancy. Any tool call, analysis, or write-up of your own means you wrongly took on conflict-resolution's job.
+
+**The same silent handoff applies to an audit of the attached sources** ("are the sources on this profile right?", "is anything mis-indexed?"). That asks whether each attached record belongs to this person and whether what was indexed from it is correct — which needs the sources read, and neither of your tools reads one. **Invoke the `source-evaluation` skill right away as your first and only action, write no reply of your own, and do not call `person_warnings` or `person_quality`.**
 
 Warnings are about a *single person's own data* violating physical/biological/temporal limits (death before birth, impossible ages, burial before death). Only run the steps below when the request is genuinely that.
 
