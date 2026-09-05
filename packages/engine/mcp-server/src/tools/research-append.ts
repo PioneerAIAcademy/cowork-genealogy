@@ -2231,8 +2231,10 @@ async function prepareOps(
       }
       if (verdict === "unverifiable" && geocoded) {
         warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the place text ` +
-            "names no country, so the resolution could not be cross-checked; verify it is the right place",
+          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
+            "could not be cross-checked (either the place text names no country, or the standard place " +
+            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+            "right place",
         );
       }
     }

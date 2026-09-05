@@ -72,7 +72,13 @@ still carries IDs for in-server use).
 
 Steps:
 
-1. **Search** — `GET /platform/places/search?q=name:{placeName}` (Places_Search_resource).
+1. **Search** — `GET /platform/places/search?q=name:"{placeName}"` (Places_Search_resource),
+   with `Accept-Language: en`. The value is **phrase-quoted** and **sanitized**
+   first: `&` becomes the word `and`, and `?` `*` `#` `~` are dropped. An
+   optional ` +date:+{year}` qualifier follows the quoted name. Full rationale
+   and the measured evidence for each character are in
+   [FamilySearch API Reference](#places_search_resource) below; a `placeName`
+   that sanitizes to the empty string returns `[]` without a call.
 2. **Filter by context** — determine an effective context: the explicit
    `contextName` if given, otherwise one **derived** from a comma-qualified
    `placeName` — the leaf's immediate parent locality (segment index 1), e.g.
@@ -96,7 +102,9 @@ Steps:
    [Wikipedia link source](#wikipedia-link-source)). Graceful: a non-OK status,
    network error, or absent attribute yields no `wikipediaUrl`, not an error.
 5. **Cache** — memoize the `PlaceResult[]` in a module-level `Map` keyed by the
-   normalized `(placeName, contextName)` pair (trimmed + lowercased). No TTL;
+   normalized `(placeName, contextName)` pair (trimmed + lowercased). The
+   resolver's own memo in `place-resolver.ts` additionally keys on the year, so
+   a dated and an undated search of one place do not share an entry. No TTL;
    lives for the MCP server process. A cache hit returns immediately without
    re-fetching.
 
@@ -120,7 +128,7 @@ Steps:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeName` | string | Yes | Place name to search for. |
+| `placeName` | string | Yes | Place name to search for. **Sanitized before it is sent** — `&` becomes the word `and`, and `?` `*` `#` `~` are dropped (see [step 1](#behavior) and the [API reference](#places_search_resource)). The caller's string is not echoed back; results reflect the sanitized query. A `placeName` that sanitizes to empty returns `[]`. |
 | `contextName` | string | No | Higher-level place to disambiguate by; matched as a case-insensitive substring of each candidate's full name. If nothing matches, unfiltered results are returned. |
 
 ```json
@@ -208,9 +216,58 @@ None. The FamilySearch places endpoints and the Wikipedia API are all public.
 ### Places_Search_resource
 
 ```
-GET https://api.familysearch.org/platform/places/search?q=name:{query}
+GET https://api.familysearch.org/platform/places/search?q=name:"{query}"[ +date:+{year}]
 Accept: application/x-gedcomx-atom+json
+Accept-Language: en
 ```
+
+`{query}` is **phrase-quoted** (an unquoted multi-word value is parsed as an OR
+of its tokens) and **sanitized** before quoting. `?` and `*` are documented
+wildcards on this endpoint and `~` a documented fuzzy suffix, so a place
+transcribed with those characters is read as syntax nobody meant; `&` and `#`
+are not wildcards but still move the answer.
+
+| character | treatment | measured effect of leaving it |
+|---|---|---|
+| `&` | → the word `and` | `"…7 & 9 Ogden city Ward 2, Weber, Utah"` → *Denver, **Colorado*** |
+| `?` `*` | dropped | `"Marshall Sal*, Missouri"` → *Saline County Poor Farm **Cemetery*** |
+| `#` | dropped | `"Alverson Cemetery #1, …, Indiana"` → *Alverson Cemetery, **North Carolina*** |
+| `~` | dropped | would silently enable fuzzy matching on recorded text |
+
+**`&` maps rather than drops**, and that is load-bearing: the index treats the
+conjunction as a word, so dropping it deletes a token and a shorter parent name
+wins. `"Manila American Cemetery & Memorial, …, Philippines"` returns the
+cemetery at 88 with the word but only the **city** of Manila at 72 with the `&`
+removed. Dropping is right for `#` specifically — the index normalises it, so
+the Alverson query still matches FamilySearch's own place named `#1` at 95.
+
+Escaping is documented but does not work: `\\?` and `\\*` return HTTP 400, and
+`\\&` / `\\#` behave as the bare character because they were never wildcards.
+`!`, `^` and `|` are **not** sanitized — no probe covers them and they are not
+documented operators. `:` `(` `)` `[` `]` `/` `-` and doubled commas are left
+alone as a deliberate non-intervention rather than a measured result. Evidence:
+`dev/probe-place-special-chars.ts`.
+
+`+date:+{year}` is optional and restricts scoring to the place representations
+that existed that year — jurisdictions move, so an undated query returns the
+modern one (`"Rochdale, England"` → Greater Manchester, a county created in
+1974, rather than Lancashire). It is a **hard filter** rather than a
+preference, and what it drops is not simply "reps that do not cover the year":
+`Manger, Hordaland, Norway` has a rep whose `temporalDescription.formal` is
+`/+1963` — which covers 1801 — and both `+date:+1801` and `+date:+1900` return
+204. Reps whose temporal description has an **open or absent start** appear to
+be dropped regardless of coverage, which implies a larger and more systematic
+blank population than coverage alone would predict. **This is characterised, not
+fully explained**, and the resolver therefore falls back to the undated query
+whenever the dated one returns nothing. Evidence:
+`dev/probe-place-date-disagreement.ts`, which reports the raw blank-rate of the
+dated query separately from the resolver's post-fallback result.
+
+`Accept-Language` selects the language the answer is **rendered** in, not what
+matches — matching is language-agnostic (`"Bayern, Deutschland"` scores 100
+under every locale). Pinned to `en` so the persisted `standard_place` spelling
+cannot drift with a server default, and to agree with the read tools, which
+already send it.
 
 Response: `entries[]`, each with `id` (rep ID), `score`, and
 `content.gedcomx.places[0]` carrying `display.{name,fullName,type}`,

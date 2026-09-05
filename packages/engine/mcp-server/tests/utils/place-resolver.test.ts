@@ -352,3 +352,200 @@ describe("mapWithConcurrency", () => {
     expect(await mapWithConcurrency([], 8, async (x) => x)).toEqual([]);
   });
 });
+
+// The three guards around the `+date:` qualifier. Each fails on main, and each
+// fails if its own guard is removed while the rest of the change stays — the
+// suite was previously green with place-resolver.ts reverted wholesale.
+describe("resolveStandardPlace date qualifier and its guards", () => {
+  const rochdale = (score: number, fullName: string) =>
+    entry({ placeRepId: "r", fullName, score });
+
+  it("passes the fact's year to searchPlace as a date option", async () => {
+    mockSearchPlace.mockResolvedValue([
+      rochdale(95, "Rochdale, Lancashire, England, United Kingdom"),
+    ]);
+    await resolveStandardPlace("Rochdale, England", { date: "12 May 1880" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: 1880 });
+  });
+
+  it("sends no date when the caller supplies none", async () => {
+    mockSearchPlace.mockResolvedValue([rochdale(95, "Rochdale, Greater Manchester, England, United Kingdom")]);
+    await resolveStandardPlace("Rochdale, England");
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: undefined });
+  });
+
+  it("does not date-qualify a single-segment input", async () => {
+    // "Germany" at 1827 resolves to a village in the Russian Empire when the
+    // year is applied: with no parent segment there is nothing to anchor it.
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "g", fullName: "Germany", score: 99 })]);
+    await resolveStandardPlace("Germany", { date: "about 1827" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Germany", { date: undefined });
+  });
+
+  it("ignores a date it cannot parse instead of guessing", async () => {
+    mockSearchPlace.mockResolvedValue([rochdale(95, "Rochdale, Lancashire, England, United Kingdom")]);
+    await resolveStandardPlace("Rochdale, England", { date: "sometime in the war" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rochdale, England", { date: undefined });
+  });
+
+  it("falls back to an undated query when the dated one returns nothing", async () => {
+    // `+date:` is a hard filter: where no representation records coverage for
+    // the year FamilySearch returns nothing at all, and a measured share of
+    // corpus places went blank before this guard existed. The rate is quoted
+    // once, in `getSearchEntries` (src/utils/place-resolver.ts) beside the
+    // probe that emits it — restating it here is how the two drifted apart,
+    // and nothing checks either copy.
+    mockSearchPlace
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([entry({ placeRepId: "m", fullName: "Manger, Hordaland, Norway", score: 90 })]);
+    expect(await resolveStandardPlace("Manger, Hordaland, Norge", { date: "1801" }))
+      .toBe("Manger, Hordaland, Norway");
+    expect(mockSearchPlace).toHaveBeenNthCalledWith(1, "Manger, Hordaland, Norge", { date: 1801 });
+    expect(mockSearchPlace).toHaveBeenNthCalledWith(2, "Manger, Hordaland, Norge");
+  });
+
+  it("falls back to the undated answer when the dated one contradicts the recorded country", async () => {
+    // A dated answer can legitimately name a different sovereign, but
+    // research_append turns a countryConsistency contradiction into a hard
+    // error that rejects the whole append. Prefer the writable answer.
+    mockSearchPlace
+      .mockResolvedValueOnce([entry({ placeRepId: "b1", fullName: "Bavaria", score: 99 })])
+      .mockResolvedValueOnce([entry({ placeRepId: "b2", fullName: "Bavaria, Germany", score: 95 })]);
+    expect(await resolveStandardPlace("Bavaria, Germany", { date: "1843" }))
+      .toBe("Bavaria, Germany");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a dated answer the guard does not object to", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "f", fullName: "Forfarshire, Scotland, United Kingdom", score: 97 }),
+    ]);
+    expect(await resolveStandardPlace("Forfarshire, Scotland", { date: "1865" }))
+      .toBe("Forfarshire, Scotland, United Kingdom");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(1);
+  });
+
+  it("keys the cache by year, so two dates on one place do not collide", async () => {
+    mockSearchPlace
+      .mockResolvedValueOnce([entry({ placeRepId: "1", fullName: "Rochdale, Lancashire, England, United Kingdom", score: 95 })])
+      .mockResolvedValueOnce([entry({ placeRepId: "2", fullName: "Rochdale, Greater Manchester, England, United Kingdom", score: 95 })]);
+    expect(await resolveStandardPlace("Rochdale, England", { date: "1880" }))
+      .toBe("Rochdale, Lancashire, England, United Kingdom");
+    expect(await resolveStandardPlace("Rochdale, England", { date: "1990" }))
+      .toBe("Rochdale, Greater Manchester, England, United Kingdom");
+    expect(mockSearchPlace).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("countryConsistency — diacritics and endonyms", () => {
+  it("folds diacritics so an accented country name is still recognised", () => {
+    // Before folding, "Guerrero, México" returned "unverifiable" while the
+    // unaccented "Guerrero, Mexico" returned "ok" — the same place, the same
+    // correct answer, and the guard silently switching itself off on an accent.
+    expect(countryConsistency("Guerrero, México", "Guerrero, Mexico")).toBe("ok");
+    expect(countryConsistency("Peñas de San Pedro, Albacete, España", "Peñas de San Pedro, Albacete, Spain")).toBe("ok");
+    expect(countryConsistency("Wien, Österreich", "Vienna, Austria")).toBe("ok");
+  });
+
+  it("reads endonyms on the recorded side against English on the standard side", () => {
+    expect(countryConsistency("Manger, Hordaland, Norge", "Manger, Hordaland, Norway")).toBe("ok");
+    expect(countryConsistency("Bayern, Deutschland", "Bavaria, Germany")).toBe("ok");
+    expect(countryConsistency("Hurup, Refs, Thisted, Danmark", "Hurup, Refs, Thisted, Denmark")).toBe("ok");
+    expect(countryConsistency("Paks, Tolna, Magyarország", "Paks, Tolna, Hungary")).toBe("ok");
+    expect(countryConsistency("Wanroij, Noord-Brabant, Nederland", "Wanroij, North Brabant, Netherlands")).toBe("ok");
+    expect(countryConsistency("Faenza, Ravenna, Italia", "Faenza, Ravenna, Emilia-Romagna, Italy")).toBe("ok");
+  });
+
+  it("now CATCHES a wrong resolution under an endonym that used to pass", () => {
+    // These are the cases the English-only map waved through: the recorded place
+    // names a country, the standard place is on another continent, and the
+    // verdict was "unverifiable" purely because the country was not in English.
+    expect(countryConsistency("Bayern, Deutschland", "Bavaria, Minnesota, United States")).toBe("contradiction");
+    expect(countryConsistency("Manger, Hordaland, Norge", "Manger, Bavaria, Germany")).toBe("contradiction");
+  });
+
+  it("still declines to judge a place that names no country at all", () => {
+    // The bulk of "unverifiable" is this, not language: a trailing US state or
+    // English county names no country, so there is nothing to compare.
+    expect(countryConsistency("Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States")).toBe("unverifiable");
+    expect(countryConsistency("Sheffield, Staffordshire", "Sheffield, Staffordshire, England")).toBe("unverifiable");
+  });
+
+  it("declines to judge when the STANDARD place names no country it recognises", () => {
+    // The endonyms lit up the recorded side and exposed an asymmetry on the
+    // standard side: "…, Rakousko" (Czech for Austria) is now readable, and a
+    // Bohemian or Moravian place standardises to "…, Bohemia" / "…, Moravia",
+    // which the alias table does not carry. Falling through to "contradiction"
+    // reported "plainly lacks" when it meant "cannot read", and research_append
+    // rejects the ENTIRE append on a contradiction. These four resolutions are
+    // correct — "Křičeň, Bezirk Pardubitz, Bohemia" scores 100 live.
+    expect(countryConsistency("Křičeň, Pardubice, Čechy, Rakousko", "Křičeň, Bezirk Pardubitz, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Bystré 30, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Stašov, Polička, Čechy, Rakousko", "Dittersbach, Polička, Bohemia")).toBe("unverifiable");
+    expect(countryConsistency("Svitavy, Moravská Třebová, Morava, Rakousko", "Svitavy, Moravská Třebová, Moravia, Czechoslovakia")).toBe("unverifiable");
+  });
+
+  it("keeps catching garbage that hides BEHIND a historical polity", () => {
+    // The rail on the fix above. An earlier attempt returned early whenever any
+    // standard segment named a polity, which reads these as unjudgeable too —
+    // and they are exactly what the guard exists for. Both strings are real, in
+    // eval/tests/e2e/anna-findejsova-daughter/starting-tree.gedcomx.json: the
+    // polity is genuine and the garbage is appended AFTER it.
+    expect(countryConsistency(
+      "Svitavy, Moravská Třebová, Morava, Rakousko",
+      "Zwittau, Mährisch Trübau, Moravia, Changgŭm-ni, SHIN-WON-GUN, South Hwanghae, North Korea",
+    )).toBe("contradiction");
+    expect(countryConsistency(
+      "Křičeň, Pardubice, Čechy, Rakousko",
+      "Křičeň, Bezirk Pardubitz, Bohemia, Manchester, Lancashire, England, United Kingdom",
+    )).toBe("contradiction");
+  });
+
+  it("keeps the ok verdicts a polity-blind fix would have inverted", () => {
+    // Six corpus pairs the guard already gets right, because the standard side
+    // names BOTH the polity and a country the table carries. Nothing else
+    // covers them, so a regression here would ship green.
+    expect(countryConsistency("Bystré 41, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia, Austria")).toBe("ok");
+    expect(countryConsistency("Svitavy, Moravská Třebová, Morava, Rakousko", "Zwittau, Mährisch Trübau, Moravia, Austria")).toBe("ok");
+    expect(countryConsistency(", Pommerania, Preussen, Germany", "Pomerania, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Höchst, Hessen-Nassau, Preußen, Deutschland", "Höchst, Hesse-Nassau, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Sindlingen, Kreis Höchst, Hessen-Nassau, Preußen, Deutschland", "Sindlingen, Höchst, Hesse-Nassau, Prussia, Germany")).toBe("ok");
+    expect(countryConsistency("Prussia, Germany", "Prussia, Germany")).toBe("ok");
+  });
+
+  it("declares a contradiction against a country carried only for that purpose", () => {
+    // cameroon / north korea / south korea are in COUNTRY_ALIASES for no other
+    // reason than this: the guard cannot contradict a country it cannot read,
+    // and these are where the corpus's mis-resolutions actually land. Deleting
+    // any of the three silently disarms the catch.
+    expect(countryConsistency("West Bromwich, England", "Bamenda, Mezam, Northwest Region, Cameroon")).toBe("contradiction");
+    expect(countryConsistency("Bayern, Deutschland", "Changgŭm-ni, South Hwanghae, North Korea")).toBe("contradiction");
+  });
+});
+
+describe("resolveStandardPlace — FamilySearch year bounds", () => {
+  // FamilySearch accepts +date: 1000..9999 and 400s outside it. A 400 throws
+  // inside searchPlace, burns all three withRetry attempts, and returns null
+  // UNCACHED, so every later call for that place burns them again. The
+  // empty-result fallback does not catch a throw, so the year is dropped before
+  // it is ever sent. Reachable through earliestYear's own fudge offsets.
+  it.each([
+    ["abt 1000", "a year below the floor (1000 - 1 for `abt`)"],
+    ["44 BC", "a negative year"],
+    ["est 1005", "an estimate that lands below the floor (-10)"],
+  ])("drops %s — %s", async (date) => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "x", fullName: "Rome, Lazio, Italy", score: 90 }),
+    ]);
+    await resolveStandardPlace("Rome, Italy", { date });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rome, Italy", { date: undefined });
+  });
+
+  it("still sends a year inside the accepted range", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "x", fullName: "Rome, Lazio, Italy", score: 90 }),
+    ]);
+    await resolveStandardPlace("Rome, Italy", { date: "1010" });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Rome, Italy", { date: 1010 });
+  });
+});
