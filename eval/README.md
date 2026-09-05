@@ -117,7 +117,7 @@ npm install
 npm run dev
 ```
 
-Then open <http://localhost:3000>. The CRUD UI reads + writes the same `eval/` tree the harness writes to — keep them on the same filesystem checkout.
+Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` tree the harness writes to — keep them on the same filesystem checkout.
 
 ### Useful harness flags
 
