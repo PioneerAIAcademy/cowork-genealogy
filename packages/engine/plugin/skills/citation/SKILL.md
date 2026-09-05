@@ -43,6 +43,8 @@ Do NOT read any files. Do NOT collect record details. Do NOT offer to "do it in 
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
+**If you write to `research.json`, call `validate_research_schema` before you present. Mandatory, every time.** `research_append` returning `ok` is not a substitute and does not discharge this. Never report a citation as validated, saved clean, or schema-checked without that call in the ledger.
+
 Refines source citations in `research.json` to meet Evidence Explained
 standards. record-extraction creates source entries with best-effort
 working citations; this skill upgrades them to GPS-compliant citations
@@ -236,7 +238,9 @@ beats a complete-looking citation with invented detail:
    covers record data (locators, family numbers, places), not custody
    chains. Mention the inferred repository in `notes` or flag it
    needs-verification; never write it into the citation as
-   established fact.
+   established fact. The creator never doubles as the custodian: a
+   name in `who` — including a `tree.gedcomx.json` `author` — must
+   never be repeated in the custody parenthetical of `where`.
 
 ### Review path is read-only
 
@@ -283,14 +287,19 @@ FamilySearch.org, accessed 1 May 2026.
 #### Vital records (death certificate)
 ```
 [STATE] Department of Health, death certificate no. [NUMBER]
-([YEAR]), [PERSON NAME]; [ARCHIVES], [CITY]; digital image,
-[REPOSITORY], accessed [DATE].
+([YEAR]), [PERSON NAME], died [DATE OF DEATH], [PLACE OF DEATH];
+[ARCHIVES], [CITY]; digital image, [REPOSITORY], accessed [DATE].
 ```
+Take the death date and place from the assertion or tree fact for
+that record, never from `when_created` — that is the filing date.
+Mark either with an unknown-marker when the project documents do
+not carry it.
 Example:
 ```
 Pennsylvania Department of Health, death certificate no. 4521
-(1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg;
-digital image, FamilySearch.org, accessed 3 May 2026.
+(1908), Patrick Flynn, died 12 March 1908, Schuylkill County,
+Pennsylvania; Pennsylvania State Archives, Harrisburg; digital
+image, FamilySearch.org, accessed 3 May 2026.
 ```
 
 #### Vital records (birth certificate)
@@ -324,7 +333,7 @@ Courthouse, Reading.
 ```
 For Pennsylvania probate, match the authority to the document. A
 will is received, probated and recorded by the county **Register of
-Wills**, who holds the will books — that office is the creator of a
+Wills** — that office is the creator of a
 will, a probate record, or a letters-testamentary entry. The county
 **Orphans' Court** adjudicates estate distribution, accounts,
 partition and guardianship — name it for those records. Either way,
@@ -423,11 +432,13 @@ nothing more.
 **Scope rule — use the `query` field, not notes context:** The
 log's `query` field (surname, given name, birth year, birth place)
 defines the actual search parameters. Use these for `where_within`.
-Notes may describe outcomes ("site may not have this collection
-indexed") or verbatim scope phrases ("broadened to all Pennsylvania —
-still no match") and may be included when they directly state the
-search scope. However: a note saying "no results for [NAME] in
-[COUNTY]" means the researcher found nothing matching that profile —
+Notes may describe outcomes or carry a scope phrase, and may be
+included when they directly state the search scope. Quote such a
+phrase only by copying it character-for-character out of the note
+you just read; never reword it, and never reproduce a phrase printed
+in this file — the examples here are shapes, not data, and a
+near-miss presented as the log's wording is a fabricated quotation.
+However: a note saying "no results for [NAME] in [COUNTY]" means the researcher found nothing matching that profile —
 it does NOT mean [COUNTY] was the search scope. Do not infer a
 multi-step or narrower search from geographic context in the notes;
 the query field is the authoritative source for search parameters.
@@ -528,10 +539,13 @@ provenance concerns not previously noted.
 
 If you wrote any changes to `research.json`, call
 `validate_research_schema({ projectPath: "<absolute-path-to-project-directory>" })`
-to verify both research.json and tree.gedcomx.json are valid. If validation
-fails, fix the errors before presenting. If the review concluded with
-no changes (citation already compliant, or refinement blocked pending
-user input), skip validation — there is nothing to validate. See
+to verify both research.json and tree.gedcomx.json are valid. This is
+mandatory whenever anything was written — a successful `research_append`
+does not discharge it, and Step 7's output economy does not apply here.
+If validation fails, fix the errors before presenting. The only case
+that skips this step is one where `research.json` was never written
+(the citation was already compliant, refinement is blocked pending user
+input, or the request was routed elsewhere). See
 `references/validation-protocol.md` for the full protocol, including
 the genealogical-impossibility warnings the tool also returns.
 
