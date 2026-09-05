@@ -120,7 +120,13 @@ Cowork's orchestrator decides whether to invoke a skill from its
 - **Open with the Narration line.** Every skill starts with:
   `**Narration:** Read research.json's researcher_profile.narration_guidance
   and apply it as your narration style for this invocation.` Copy it
-  verbatim from an existing skill.
+  verbatim from an existing skill. **One exception, and it is
+  load-bearing:** `search-wikipedia` carries no Narration line, because the
+  fallback that line defines ("a one-line preamble per action") is the
+  behaviour its `test_reply_does_not_narrate_pending_step` validator fails
+  it for. Do not "fix" it.
+  `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` is the
+  current exception list.
 - **End with `## Re-invocation behavior`.** State what the skill
   **Writes**, what happens **On repeat invocation**, and a **Do not
   duplicate** rule.
