@@ -81,6 +81,22 @@ function recordBrowseAndCheckBudget(
 // see docs/architecture.md "Other environment differences that bite".
 const OCR_TIMEOUT_MS = 180_000;
 
+// Explicit output-token budget. Setting it makes the cap OURS and the
+// truncation case reproducible. Note the DIRECTION: for the current default
+// google/gemini-3.7-flash (config.ts) OpenRouter reports a 65536 max-completion
+// ceiling and we previously sent no `max_tokens`, so 16000 LOWERS the effective
+// cap rather than raising it. It is still comfortably above a page's content:
+// the largest full transcription in the committed corpus is ~6.4k chars (~1.6k
+// output tokens), and both `google/gemini-3.7-flash` and the prior Qwen default
+// have been run at 16000 in dev/try-ocr-compare.ts without a content-driven cap.
+// Two caveats keep this a "bound it, don't trust it blindly" number: that char
+// count is content only, and reasoning tokens draw on the SAME budget (this
+// model is reasoning-capable and reasoning is not disabled), so a
+// reasoning-heavy read could reach 16000 before the page is done. A cap that
+// does bind surfaces as `truncated` (detection reads finish_reason AND
+// native_finish_reason, case-insensitively), so it is visible, never silent.
+export const OCR_MAX_TOKENS = 16000;
+
 // One retry, transport failures only. Measured over the committed e2e corpus,
 // 24 of 175 classifiable calls (14%) died at the transport with no socket code
 // and 6 timed out; on one run two consecutive losses led the agent to declare
@@ -213,6 +229,7 @@ export async function imageTranscribeTool(
           body: JSON.stringify({
             model,
             temperature: 0,
+            max_tokens: OCR_MAX_TOKENS,
             // Privacy: FamilySearch scans are PII — do not let the provider
             // retain prompts for training. See spec §11.
             provider: { data_collection: "deny" },
@@ -282,13 +299,50 @@ export async function imageTranscribeTool(
   }
 
   const data = (await response.json()) as OpenRouterChatResponse;
-  const transcription = data.choices?.[0]?.message?.content?.trim() ?? "";
+  const choice = data.choices?.[0];
+  const transcription = choice?.message?.content?.trim() ?? "";
+
+  // Output-token-cap truncation, computed BEFORE the empty-content guard: a cap
+  // can bind while the model is still emitting reasoning tokens, leaving content
+  // empty, so reading finish_reason only after a non-empty check would discard
+  // the very signal this exists to surface (the empty read would misfile as an
+  // unreadable scan). A cap is marked by finish_reason OR native_finish_reason —
+  // OpenAI-normalized "length" or a provider's native "MAX_TOKENS" — matched
+  // case-insensitively so a lowercase/odd-cased spelling (some models via
+  // OpenRouter emit "max_tokens") is still caught, regardless of which field it
+  // lands in. Out of scope: a model that stops early on its own ("stop", page
+  // unfinished) and a transport cut (already thrown by fetchWithTimeout) — #1974.
+  const marksCap = (reason?: string | null): boolean => {
+    const v = reason?.trim().toUpperCase();
+    return v === "LENGTH" || v === "MAX_TOKENS";
+  };
+  const truncated =
+    marksCap(choice?.finish_reason) || marksCap(choice?.native_finish_reason);
+
   if (transcription.length === 0) {
+    // Throw either way — a zero-content read has nothing to return — but name
+    // WHICH failure it was, so the invariant "truncated:true never ships beside
+    // an empty transcription" holds while the caller still learns a cap bound.
     throw new Error(
-      "OpenRouter returned an empty transcription. Do not fabricate a read — " +
-        "pivot to the indexed record for this image (record_read / record_search).",
+      truncated
+        ? "OpenRouter hit its output-token limit before returning any " +
+            "transcription (the budget was likely spent on reasoning). The page " +
+            "was not read — do not fabricate; a retry at this cap is unlikely to " +
+            "help, so pivot to the indexed record (record_read / record_search)."
+        : "OpenRouter returned an empty transcription. Do not fabricate a read — " +
+            "pivot to the indexed record for this image (record_read / record_search).",
     );
   }
+
+  // A capped read with content is non-empty, so it would otherwise pass as an
+  // ordinary success. The transcription stays verbatim — the signal rides the
+  // sibling fields below (spec §6.2).
+  const truncationNotice = truncated
+    ? "This transcription is INCOMPLETE — the OCR hit its output-token limit and " +
+      "stopped partway down the page. The transcription above is what was read; the " +
+      "rest of the page is UNREAD, not blank. Do not treat any target as absent from " +
+      "this partial read."
+    : undefined;
 
   // Persist the scan for a retained source (§8.5, design B) — best-effort: the
   // transcription is the primary payload, so a save failure (e.g. a bad
@@ -312,10 +366,14 @@ export async function imageTranscribeTool(
     input.projectPath,
   );
 
+  // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
+  // line the model never reached, and a target may sit below the cut — a
+  // half-read page must never yield a clean NOT FOUND negative (#1974).
   const key = input.lookingFor?.trim();
   return {
     transcription,
-    ...(key ? { found: parseFound(transcription) } : {}),
+    ...(truncated ? { truncated: true as const, truncationNotice } : {}),
+    ...(key && !truncated ? { found: parseFound(transcription) } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(browseBudget ? { browseBudget } : {}),
     metadata: {
@@ -361,9 +419,12 @@ export const imageTranscribeToolSchema = {
       lookingFor: {
         type: "string",
         description:
-          "Optional: who or what to locate on the page. A search key only — " +
-          "it sets a FOUND/NOT FOUND pointer and never shortens or slants the " +
-          "full transcription.",
+          "Optional: who or what to locate on the page. A search key only — on a " +
+          "complete read it sets a FOUND/NOT FOUND pointer, but it never shortens " +
+          "or slants the full transcription. The pointer is withheld on a " +
+          "truncated read (`truncated: true`): a half-read page cannot support a " +
+          "clean NOT FOUND, so `found` is absent there — judge from the returned " +
+          "lines and treat the rest of the page as unread.",
       },
       projectPath: {
         type: "string",

@@ -14,16 +14,28 @@ export interface ImageTranscribeInput {
 }
 
 export interface ImageTranscribeResult {
-  /** Faithful full-page OCR — the primary payload. */
+  /** Faithful full-page OCR — the primary payload. Never doctored: a
+   *  truncation is signalled by the sibling `truncated`/`truncationNotice`
+   *  fields, not by splicing prose into this text. */
   transcription: string;
-  /** Present only when `lookingFor` was provided. */
+  /** True only when the OCR hit its output-token cap (finish_reason or
+   *  native_finish_reason marks it — see §6.2 for the exact match): the
+   *  transcription above is PARTIAL and the rest of the page is unread, not
+   *  empty. Absent on a complete read. */
+  truncated?: true;
+  /** Tool-voiced, human-readable companion to `truncated` — a plain sentence
+   *  the caller can surface without improvising. Present iff `truncated`. */
+  truncationNotice?: string;
+  /** Present only when `lookingFor` was provided. Suppressed on a truncated
+   *  read — a half-read page must never surface a clean NOT FOUND. */
   found?: "FOUND" | "NOT FOUND";
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
   /** Present only from the (N+1)th distinct image in one image group in one
-   *  project onward. Advisory only — the transcription above is complete and
-   *  unaffected. See spec §5.8. */
+   *  project onward. Advisory only, and independent of `truncated` — the two can
+   *  co-occur (a browse-budget read can also be output-cap truncated). See spec
+   *  §5.8. */
   browseBudget?: {
     /** The image-group prefix, e.g. "004261111". */
     imageGroup: string;
@@ -44,6 +56,18 @@ export interface ImageTranscribeResult {
 
 /** The subset of OpenRouter's chat-completions response we read. */
 export interface OpenRouterChatResponse {
-  choices?: Array<{ message?: { content?: string | null } }>;
+  choices?: Array<{
+    message?: { content?: string | null };
+    /** OpenAI-compatible stop reason. "length" marks an output-token-cap
+     *  truncation; "stop" a complete read. (Probe: dev/probe-ocr-finish-reason.ts.) */
+    finish_reason?: string | null;
+    /** The provider's own un-normalized stop reason. The shipped default
+     *  (Gemini) DOES normalize — it reports `finish_reason: "length"` and
+     *  `native_finish_reason: "MAX_TOKENS"` together (probe:
+     *  dev/probe-ocr-finish-reason.ts). We read this field as insurance for a
+     *  model (reachable via the openRouterModel override) that does not
+     *  normalize, or spells the cap differently. */
+    native_finish_reason?: string | null;
+  }>;
   error?: { message?: string; code?: number };
 }

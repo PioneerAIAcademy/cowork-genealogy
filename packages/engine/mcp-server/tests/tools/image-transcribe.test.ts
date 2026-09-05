@@ -30,12 +30,42 @@ vi.stubGlobal("fetch", mockFetch);
 
 const MODEL = "google/gemini-3.7-flash";
 
-function mockOpenRouterOk(content: string) {
+// `finishReason` is the OpenAI-normalized top-level field; pass
+// `nativeFinishReason` to also stub the provider's un-normalized field (the
+// case a provider like Gemini surfaces, or a model that only sets the native
+// one). Omit it to leave native_finish_reason absent.
+function mockOpenRouterOk(
+  content: string | null,
+  finishReason: string | null = "stop",
+  nativeFinishReason?: string | null
+) {
   mockFetch.mockResolvedValueOnce({
     ok: true,
     status: 200,
     statusText: "OK",
-    json: async () => ({ choices: [{ message: { content } }] }),
+    json: async () => ({
+      choices: [
+        {
+          message: { content },
+          finish_reason: finishReason,
+          ...(nativeFinishReason !== undefined
+            ? { native_finish_reason: nativeFinishReason }
+            : {}),
+        },
+      ],
+    }),
+    text: async () => "",
+  });
+}
+
+// Stub a raw OpenRouter body (e.g. an empty `choices` array) for edge cases the
+// content/finish_reason helper cannot express.
+function mockOpenRouterRaw(body: unknown) {
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => body,
     text: async () => "",
   });
 }
@@ -188,6 +218,134 @@ describe("imageTranscribeTool — lookingFor", () => {
       lookingFor: "Schreck",
     });
     expect(result.found).toBeUndefined();
+  });
+});
+
+describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", () => {
+  it("flags a finish_reason=length read as truncated with a tool-voiced notice", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBe(true);
+    expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
+    // The transcription stays verbatim — the notice is a sibling field, never
+    // spliced into the OCR text (would re-create the #1975 prose/OCR blend).
+    expect(result.transcription).toBe("Row 1: Anna\nRow 2: partway down the pag");
+    expect(result.transcription).not.toMatch(/INCOMPLETE/i);
+  });
+
+  it("does not flag a finish_reason=stop read as truncated", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBeUndefined();
+    expect(result.truncationNotice).toBeUndefined();
+  });
+
+  it("suppresses found on a truncated read — a half-read page is never a clean NOT FOUND", async () => {
+    mockOpenRouterOk("Row 1: Weber\nRow 2: Braun\nNOT FOUND", "length");
+    const result = await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Schreck",
+    });
+    expect(result.truncated).toBe(true);
+    expect(result.found).toBeUndefined();
+  });
+
+  it("sends an explicit max_tokens so the cap is ours and reproducible", async () => {
+    mockOpenRouterOk("Row 1: Anna");
+    await imageTranscribeTool({ imageId: "004884748_02613" });
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
+    expect(body.max_tokens).toBe(16000);
+  });
+
+  it("catches a cap that a provider surfaces only under native_finish_reason (MAX_TOKENS)", async () => {
+    // Top-level finish_reason is "stop"; the cap shows up as the provider's
+    // native "MAX_TOKENS". Detection must still flag it.
+    mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "stop", "MAX_TOKENS");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBe(true);
+    expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
+  });
+
+  it("catches a native_finish_reason=length even when top-level is stop", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "stop", "length");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBe(true);
+  });
+
+  it("matches cap markers case-insensitively across both fields (lowercase max_tokens, top-level MAX_TOKENS)", async () => {
+    // A model reachable via the openRouterModel override may spell the marker
+    // differently or set it on the top-level field. Both must still be caught.
+    mockOpenRouterOk("Row 1: Anna\nRow 2: cut", "stop", "max_tokens");
+    const lower = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(lower.truncated).toBe(true);
+
+    mockOpenRouterOk("Row 1: Anna\nRow 2: cut", "MAX_TOKENS");
+    const topCap = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(topCap.truncated).toBe(true);
+  });
+
+  it("does not flag when neither field marks a cap, even with a native stop reason present", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family", "stop", "STOP");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBeUndefined();
+  });
+
+  it("does not flag a finish_reason=null read as truncated (@yinkid28)", async () => {
+    // The type allows string | null; OpenRouter can send null. null !== any
+    // marker, so this must read as a complete, non-truncated success.
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family", null);
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    expect(result.truncated).toBeUndefined();
+    expect(result.found).toBeUndefined();
+  });
+
+  it("suppresses a would-be FOUND on a truncated read, not only NOT FOUND (@yinkid28)", async () => {
+    // The NOT-FOUND suppression is the harm case, but FOUND must be suppressed
+    // too: on a half-read page even a positive marker is untrustworthy.
+    mockOpenRouterOk("Row 1: Schreck family\nFOUND", "length");
+    const result = await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Schreck",
+    });
+    expect(result.truncated).toBe(true);
+    expect(result.found).toBeUndefined();
+  });
+
+  it("throws an empty-cap-aware error when a cap binds with no content, never shipping truncated beside empty text (spec §5.6/§6.2)", async () => {
+    // A reasoning-capable model can spend the whole budget before emitting
+    // content: finish_reason "length" with empty content. This must throw (a
+    // zero-content read has nothing to return) but name the cap so the caller
+    // learns a budget bound, not an unreadable scan.
+    mockOpenRouterOk("", "length", "MAX_TOKENS");
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/output-token limit/i);
+  });
+
+  it("still throws the plain empty error when content is empty and no cap fired", async () => {
+    mockOpenRouterOk("", "stop");
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/empty transcription/i);
+  });
+
+  it("throws the empty error on an empty choices array (@yinkid28)", async () => {
+    mockOpenRouterRaw({ choices: [] });
+    await expect(
+      imageTranscribeTool({ imageId: "004884748_02613" })
+    ).rejects.toThrow(/empty transcription/i);
+  });
+
+  it("truncationNotice pins the safety meaning: remainder UNREAD/not-blank and no absence inference (not just the keyword)", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "length");
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const notice = result.truncationNotice ?? "";
+    // Guard the load-bearing claims, so replacing the notice with a same-keyword
+    // sentence that licenses an absence inference fails this test.
+    expect(notice).toMatch(/unread/i);
+    expect(notice).toMatch(/not\s+blank/i);
+    expect(notice).toMatch(/not\s+treat\s+any\s+target\s+as\s+absent/i);
   });
 });
 
@@ -393,6 +551,23 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it("truncation and browseBudget co-occur independently on one read (@yinkid28)", async () => {
+    // browseBudget (:359) and truncated (:317) are computed independently; a
+    // future refactor must not make them mutually exclusive. Queue 20 complete
+    // reads, then a 21st that BOTH trips the budget AND is truncated (FIFO
+    // mockResolvedValueOnce, so the length response lands on call 21).
+    for (let i = 1; i <= 20; i++) mockOpenRouterOk("page text", "stop");
+    mockOpenRouterOk("page 21, cut off", "length");
+    for (let i = 1; i <= 20; i++) {
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+    }
+    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" });
+    expect(result.truncated).toBe(true);
+    expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
+    expect(result.browseBudget?.distinctImagesRead).toBe(21);
+    expect(result.browseBudget?.imageGroup).toBe(GROUP);
   });
 
   it("does not carry the budget to a different image group in the same process", async () => {
