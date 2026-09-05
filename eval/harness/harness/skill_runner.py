@@ -42,6 +42,8 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    owned_section_denial,
+    owner_denied,
     protected_file_denial,
     subagent_only_denial,
     subagent_only_violation,
@@ -291,6 +293,28 @@ class SkillRunResult:
     # attempt is visible, and the universal validator asserts it stays empty
     # (issue #1493).
     blocked_protected_writes: list[dict[str, Any]] = field(default_factory=list)
+    # `research_append` ops the SHIPPED ownership rule refuses — a section routed
+    # to an owning agent reached by someone else, a routed claim, or a known agent
+    # reaching outside its own lane — as {"tool", "args", "section", "rule",
+    # "caller"} (see harness.context_policy.owner_denied). Empty is the healthy
+    # case, and the universal validator asserts that.
+    #
+    # Until issue #2022 this plane called the predicate NOWHERE, while the e2e
+    # orchestrator, Cowork and the hosted path all bound it.
+    #
+    # What that absence cost is PREVENTION, not detection -- the earlier claim
+    # here, that runs graded clean while writing `conflicts`, is refuted by the
+    # run logs: the passing runs never wrote the section, and both runs that did
+    # failed on the existing universal `test_ownership_table` (@chesworthrm).
+    # What that check cannot do is stop the write landing. Once `conflicts` is
+    # cleared, `research_append`'s own `conflictedSourceInvariants` correctly
+    # sees nothing unresolved and correctly allows a tier, so the chain completes
+    # before any validator runs.
+    #
+    # It also reaches two cases the manifest check cannot: it keys on the calling
+    # AGENT rather than the skill's frontmatter name (test_universal.py:475), and
+    # it runs on negative tests, which test_universal.py:464 skips.
+    blocked_owned_section_writes: list[dict[str, Any]] = field(default_factory=list)
     # One entry per Skill call whose input carried the skill name under no key
     # this harness reads, holding that input's actual keys. Non-empty means the
     # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
@@ -379,6 +403,7 @@ async def run_skill(
     blocked_context_calls: list[dict[str, Any]] = []
     # Raw writes to a protected project file, denied by the hook below.
     blocked_protected_writes: list[dict[str, Any]] = []
+    blocked_owned_section_writes: list[dict[str, Any]] = []
     # Skill calls whose name we couldn't read (see read_skill_tool_input).
     unread_skill_calls: list[list[str]] = []
     # Every built-in (non-MCP) tool call, for telemetry only — see
@@ -461,6 +486,44 @@ async def run_skill(
                 }
             )
             return protected_denial
+        # Section-ownership lockdown: deny a `research_append` op the SHIPPED
+        # ownership rule refuses — reached through `context_policy`'s re-export of
+        # the hook's own predicate, never a second copy of the maps (a copy of
+        # this rule drifted once already; see
+        # test_no_unregistered_copy_of_the_lockdown_exists).
+        #
+        # This plane called the predicate nowhere until issue #2022, while the e2e
+        # orchestrator, Cowork and the hosted path all bound it — so the one plane
+        # that GRADES could not see an out-of-lane write. Checked BEFORE the
+        # max_tool_calls counter for the same reason as the two blocks above: a
+        # denied call never executes, so it must not consume the budget.
+        #
+        # The decision (which arm, and the caller identity) lives in the
+        # unit-tested predicate; the payload text comes from
+        # `owned_section_denial`, which branches on `rule` rather than on the
+        # shape of the section string — a `declaration` denial carries a dotted
+        # `section.field` that keys neither owner map.
+        # isinstance-guarded for consistency with the two neighbours: the shipped
+        # hook checks this before calling owner_denied, and protected_file_denial
+        # above guards it internally. A truthy non-dict raises inside the
+        # predicate. Not shown to be reachable — the SDK catches the exception
+        # rather than killing the run — so this is consistency, not a bug fix.
+        raw_input = input_data.get("tool_input")
+        denied = owner_denied(
+            tool_name, raw_input if isinstance(raw_input, dict) else {}, input_data
+        )
+        if denied is not None:
+            section, rule, caller = denied
+            blocked_owned_section_writes.append(
+                {
+                    "tool": tool_name,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "section": section,
+                    "rule": rule,
+                    "caller": caller,
+                }
+            )
+            return owned_section_denial(denied)
         # Count MCP tool calls toward max_tool_calls. Block over-limit calls
         # with a permission deny so the SDK doesn't actually execute them; the
         # outer loop reads tool_call_count after the iteration ends and sets
@@ -684,6 +747,7 @@ async def run_skill(
         error=error,
         attempted_mcp_calls=attempted_mcp_calls,
         blocked_context_calls=blocked_context_calls,
+        blocked_owned_section_writes=blocked_owned_section_writes,
         blocked_protected_writes=blocked_protected_writes,
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,

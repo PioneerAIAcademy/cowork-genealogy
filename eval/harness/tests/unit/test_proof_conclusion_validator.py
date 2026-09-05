@@ -31,11 +31,16 @@ TAGGED = {"type": "positive", "tags": ["conflict-blocks-proved"]}
 UNTAGGED = {"type": "positive", "tags": ["proof"]}
 
 
-def _after(summaries, question=None):
+def _after(summaries, question=None, conflicts=None):
+    """`conflicts` is optional so a test can exercise the message's READ of
+    c_001's status. Without it every state renders `c_state == "absent"`, which
+    is why reverting that read to the old hardcoded "is open" left the whole
+    suite green (issue #2022 review)."""
     return {
         "research_json": {
             "proof_summaries": summaries,
             "questions": [question or {"id": "q_001", "status": "open"}],
+            **({"conflicts": conflicts} if conflicts is not None else {}),
         }
     }
 
@@ -147,3 +152,32 @@ def test_bounded_check_skips_when_untagged():
     with pytest.raises(BaseException) as exc:
         bounded(_state("not_proved", None), {"type": "positive", "tags": []})
     assert "not a bounded-conclusion scenario" in str(exc.value)
+
+
+# --- the message reads c_001's status rather than asserting it ---------------
+
+
+def test_message_reports_the_conflict_as_open_when_it_is_open():
+    """The branch that matches the old hardcoded sentence."""
+    with pytest.raises(AssertionError) as e:
+        check(
+            _after([_ps("probable")], conflicts=[{"id": "c_001", "status": "unresolved"}]),
+            TAGGED,
+        )
+    msg = str(e.value)
+    assert "identifying attribute" in msg
+    assert "'unresolved'" in msg, msg
+
+
+def test_message_reports_the_conflict_as_resolved_and_points_at_the_ownership_check():
+    """The branch the old hardcoded sentence got WRONG: a run that settled the
+    conflict first got a message asserting it was open. Settling it itself is an
+    out-of-lane write, so the message now says where that is asserted."""
+    with pytest.raises(AssertionError) as e:
+        check(
+            _after([_ps("probable")], conflicts=[{"id": "c_001", "status": "resolved"}]),
+            TAGGED,
+        )
+    msg = str(e.value)
+    assert "'resolved'" in msg, msg
+    assert "test_no_out_of_lane_section_writes" in msg, msg

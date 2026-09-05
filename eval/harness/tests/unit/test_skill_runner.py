@@ -143,12 +143,16 @@ class _HookDrivingStream:
     """An async message stream that first drives the registered PreToolUse hook
     with scripted inputs, then yields its messages so run_skill completes."""
 
-    def __init__(self, hook, hook_inputs, messages):
+    def __init__(self, hook, hook_inputs, messages, returns=None):
         self._hook = hook
         self._hook_inputs = hook_inputs
         self._messages = messages
         self._started = False
         self._i = 0
+        # Optional sink for what the hook RETURNED per input. A deny is only
+        # visible in the return value, so a test asserting on the deny needs
+        # this; widened rather than copied (issue #2022 review).
+        self._returns = returns
 
     def __aiter__(self):
         return self
@@ -157,7 +161,9 @@ class _HookDrivingStream:
         if not self._started:
             self._started = True
             for inp in self._hook_inputs:
-                await self._hook(inp, "tool-use-id", None)
+                out = await self._hook(inp, "tool-use-id", None)
+                if self._returns is not None:
+                    self._returns.append(out)
         if self._i >= len(self._messages):
             raise StopAsyncIteration
         msg = self._messages[self._i]
@@ -419,3 +425,127 @@ def test_timeout_records_the_turns_a_slow_run_did_produce(monkeypatch, tmp_path)
     result = _run_until_timeout(monkeypatch, tmp_path, turns=4)
     assert result.aborted_reason == "max_wall_clock_seconds"
     assert result.usage.get("num_turns") == 4
+
+
+# --- the ownership deny, driven through the real hook (issue #2022) ----------
+#
+# These replace a source-grep guard that was green under two mutations its own
+# message named: `body.index()` searched to EOF, so deleting the arm and leaving
+# a comment that mentioned both calls satisfied it, and so did keeping the call
+# while dropping the `return`. The guard's stated reason was also false --
+# `_HookDrivingStream` above drives this exact closure, and has since it was
+# written (@chesworthrm).
+
+
+def _ownership_payload(section):
+    """A `research_append` op from the proof-conclusion agent. `conflicts` is
+    outside its lane ({proof_summaries, questions, project})."""
+    return {
+        "tool_name": "mcp__genealogy__research_append",
+        "tool_input": {"ops": [{"op": "append", "section": section, "entry": {"x": 1}}]},
+        "agent_id": "agent-proof-conclusion",
+        "agent_type": "proof-conclusion",
+    }
+
+
+def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None):
+    """Run run_skill with the given PreToolUse inputs; return (result, returns)."""
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    returns = []
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            hook_inputs,
+            [
+                ResultMessage(
+                    subtype="result",
+                    duration_ms=1,
+                    duration_api_ms=1,
+                    is_error=False,
+                    num_turns=1,
+                    session_id="S1",
+                )
+            ],
+            returns=returns,
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    kwargs = dict(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    if max_tool_calls is not None:
+        kwargs["max_tool_calls"] = max_tool_calls
+    return asyncio.run(sr.run_skill(**kwargs)), returns
+
+
+def test_an_out_of_lane_append_is_denied_and_recorded(tmp_path, monkeypatch):
+    """The deny must both RETURN a deny payload and land on the result.
+
+    Deleting the arm, or keeping the call and dropping the `return`, fails this
+    -- neither of which the source-grep guard caught.
+    """
+    result, returns = _drive_hook(tmp_path, monkeypatch, [_ownership_payload("conflicts")])
+
+    assert returns and returns[0] is not None, "the hook allowed an out-of-lane append"
+    decision = returns[0]["hookSpecificOutput"]["permissionDecision"]
+    assert decision == "deny", f"expected a deny, got {decision!r}"
+
+    assert len(result.blocked_owned_section_writes) == 1, (
+        "the denied attempt was not recorded on SkillRunResult, so the gating "
+        "validator sees nothing and the run grades clean"
+    )
+    recorded = result.blocked_owned_section_writes[0]
+    assert recorded["section"] == "conflicts"
+    assert recorded["caller"] == "proof-conclusion"
+
+
+def test_an_in_lane_append_is_not_denied(tmp_path, monkeypatch):
+    """The polarity control. proof_summaries is the agent's OWN section, and a
+    deny there would fail every test in that skill's suite."""
+    result, returns = _drive_hook(
+        tmp_path, monkeypatch, [_ownership_payload("proof_summaries")]
+    )
+    assert returns[0] is None or returns[0].get("hookSpecificOutput", {}).get(
+        "permissionDecision"
+    ) != "deny", "the owner's own section was denied"
+    assert result.blocked_owned_section_writes == []
+
+
+def test_a_denied_call_does_not_consume_the_max_tool_calls_budget(
+    tmp_path, monkeypatch
+):
+    """Pins the ORDERING behaviourally rather than by source position.
+
+    A denied call never executes, so it must not spend budget. With
+    max_tool_calls=1, a denied append followed by one real call must not abort:
+    if the ownership deny sits after the counter, the denied call consumes the
+    single slot and the second call trips the cap.
+    """
+    result, _ = _drive_hook(
+        tmp_path,
+        monkeypatch,
+        [
+            _ownership_payload("conflicts"),
+            {
+                "tool_name": "mcp__genealogy__research_query",
+                "tool_input": {"section": "questions"},
+            },
+        ],
+        max_tool_calls=1,
+    )
+    assert result.aborted_reason is None, (
+        "a denied call consumed the max_tool_calls budget: the ownership deny "
+        f"is being checked after the counter (aborted_reason={result.aborted_reason!r})"
+    )

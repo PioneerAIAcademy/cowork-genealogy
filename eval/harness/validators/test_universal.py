@@ -1000,6 +1000,56 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
     )
 
 
+def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
+    """No `research_append` op reached a section its caller does not own.
+
+    Two rules, both from the SHIPPED hook: `routed` — a section reserved to an
+    owning agent, reached by someone else; `out_of_lane` — a known agent reaching
+    outside the sections its own skill is a declared caller for. Plus
+    `declaration`, a routed claim.
+
+    This is the unit tier's half of a rule that already binds in Cowork, the
+    hosted path and the e2e harness. Until issue #2022 this plane called the
+    predicate NOWHERE, and `docs/specs/guardrail-enforcement-spec.md` said so
+    outright.
+
+    What that absence cost is PREVENTION, not detection. The universal
+    `test_ownership_table` already catches an out-of-lane write after the fact —
+    both committed runs that wrote `conflicts` failed on it. What it cannot do is
+    stop the write landing: once the conflict is cleared, `research_append`'s own
+    preconditions correctly see nothing unresolved and correctly allow a tier, so
+    the chain completes before any validator runs.
+
+    This check also reaches two cases the manifest one cannot: it keys on the
+    calling AGENT rather than the skill's frontmatter name, and it runs on
+    negative tests, which the manifest check skips.
+
+    Deterministic, like `test_no_main_thread_subagent_only_calls` and
+    `test_no_raw_writes_to_protected_files`, and failing for the same reason:
+    a run that recovers after a deny must not grade clean, or the gap is
+    invisible again. The hook blocks the call, so it never reaches `tool_calls`
+    — this list is the only place the attempt is visible. Empty is healthy.
+    """
+    if not blocked_owned_section_writes:
+        return
+
+    offending = sorted(
+        {
+            f"{c.get('caller') or '<main thread>'} → {c.get('section', '?')} "
+            f"[{c.get('rule', '?')}]"
+            for c in blocked_owned_section_writes
+        }
+    )
+    raise AssertionError(
+        f"research_append op(s) to a section the caller does not own, denied by "
+        f"the hook ({len(blocked_owned_section_writes)} call(s)): "
+        f"{'; '.join(offending)}. Route the write through the owning skill, or "
+        f"stay inside this agent's declared lane "
+        f"(docs/specs/schemas/ownership.json). The deny is per CALL, not per op: "
+        f"every other op in the same research_append batch was refused with it."
+    )
+
+
 # --- Parent-child age plausibility (write-time gate) ------------------
 #
 # Bounds reused verbatim from packages/engine/mcp-server/src/tools/
