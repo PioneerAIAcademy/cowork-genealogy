@@ -49,6 +49,15 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     `notes`, describing that fixture's provenance — its starting tree was
 #     pre-stripped to mirror a real forget-and-rederive bug (#1473) — rather than
 #     asking the agent to invoke the skill.
+#   - `source-evaluation` (added 2026-09-05, newer than the population this set
+#     records, so nothing regressed) is dark by ruling, not by accident. The
+#     2026-09-02 follow-up ruling on #1606 settled that it ships WITHOUT a routing
+#     row: it is report-only, and `/research`'s table is keyed on `research.json`
+#     state, so no predicate could ever stop matching after it runs. Checked, not
+#     assumed: it appears zero times in `research/SKILL.md`, and every e2e run is
+#     launched as `/research --autonomous` (`e2e/orchestrator.py:884`), so no
+#     fixture can reach it. Its coverage is the unit suite
+#     (`eval/tests/unit/source-evaluation/`), which is where the ruling put it.
 # They are listed rather than exempted so the count stays honest.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
@@ -60,6 +69,7 @@ DARK_SKILLS_2026_09_01 = frozenset(
         "project-status",
         "search-familysearch-wiki",
         "search-wikipedia",
+        "source-evaluation",
         "timeline",
         "translation",
         "tree-edit",
