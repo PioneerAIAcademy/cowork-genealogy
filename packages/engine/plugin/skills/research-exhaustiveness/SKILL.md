@@ -1,8 +1,8 @@
 ---
 name: research-exhaustiveness
 description: Evaluates whether research on a question is reasonably
-  exhaustive — applies the five threshold questions and the 7-point
-  stop criteria, then either writes the exhaustive_declaration on the
+  exhaustive — applies the 7-point stop criteria, then either writes
+  the exhaustive_declaration on the
   question or explains what's missing. GPS Step 1 — Reasonably
   Exhaustive Research. Use when the user says "is this research
   exhaustive?", "are we done?", "have we searched enough?", "can we
@@ -35,7 +35,7 @@ Invoke `@plugin:research-exhaustiveness` with a delegation message carrying `que
 
 **Do not ask it to "declare the question exhaustive."** An instruction to declare overrides the agent's own preconditions, and it will write past a block it would otherwise have stopped on. Equally, do not ask it merely to "evaluate whether you can declare" — that invites a decline on evidence that in fact supports a declaration. Ask for the assessment and let the body decide.
 
-The agent owns every step from there: the preconditions, the five threshold questions, the 7-point stop criteria, the tier of the outcome, and the `exhaustive_declaration` write.
+The agent owns every step from there: the preconditions, the 7-point stop criteria assessed as a gate, the tier of the outcome, and the `exhaustive_declaration` write.
 
 **Do not write `exhaustive_declaration` yourself.** Declaring a question exhaustive is routed to the agent and a direct `research_append` setting `declared: true` is denied. If the delegation fails, report the failure and stop — do not write the declaration inline.
 
@@ -43,7 +43,7 @@ One invocation per question.
 
 ## 3. Relay
 
-Relay the agent's returned outcome as-is. Do not re-run the threshold questions, re-state the stop criteria, or re-argue the judgment.
+Relay the agent's returned outcome as-is. Do not re-run the stop criteria, re-state them, or re-argue the judgment.
 
 Then recommend the next step: declared exhaustive → proof-conclusion; not declared because a gap remains → research-plan; not declared because a precondition blocked it → the skill the agent named.
 
