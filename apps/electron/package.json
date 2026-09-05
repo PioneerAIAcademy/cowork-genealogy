@@ -11,7 +11,7 @@
     "lint": "eslint --cache . --max-warnings 0",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
-    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "typecheck": "pnpm run typecheck:node && pnpm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "pnpm --filter @genealogy/schema generate && electron-vite dev",
     "test": "vitest run",

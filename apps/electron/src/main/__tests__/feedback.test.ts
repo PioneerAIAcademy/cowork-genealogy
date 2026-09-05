@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, writeFile, rm, utimes } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, isAbsolute } from 'node:path'
 import JSZip from 'jszip'
@@ -10,6 +10,9 @@ import {
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
   NOT_PROVIDED,
+  PARENT_LOG_ENTRY,
+  readSessionLog,
+  renderFeedbackMarkdown,
   type FeedbackOptions
 } from '../feedback'
 
@@ -18,6 +21,45 @@ async function readFeedbackJson(zipBase64: string): Promise<Record<string, unkno
   const file = zip.file('_feedback/feedback.json')
   if (!file) throw new Error('feedback.json missing from zip')
   return JSON.parse(await file.async('string'))
+}
+
+/** One `assistant` conversation entry — what `conversationEntries` keeps. */
+function turn(text: string): string {
+  return `{"type":"assistant","message":{"role":"assistant","content":${JSON.stringify(text)}}}\n`
+}
+
+/** A subagent meta file. `toolUseId` is the parent `Agent` call the consumer
+ *  splices at, which is why the pair only makes sense shipped together. */
+const META =
+  '{"agentType":"proof-conclusion","description":"conclude q_001",' +
+  '"toolUseId":"toolu_01","spawnDepth":1}\n'
+
+/**
+ * Run `body` with HOME/USERPROFILE pointed at a throwaway home, and hand it the
+ * `~/.claude/projects/<hash>` directory `readSessionLog` will look in. Claude
+ * Code replaces EVERY non-alphanumeric char with '-', so the hash is derived
+ * here the same way rather than assumed.
+ */
+async function withPlantedHome(
+  folder: string,
+  body: (projectDir: string) => Promise<void>
+): Promise<void> {
+  const homeSaved = process.env.HOME
+  const profileSaved = process.env.USERPROFILE
+  const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
+  try {
+    const projectDir = join(fakeHome, '.claude', 'projects', folder.replace(/[^a-zA-Z0-9-]/g, '-'))
+    await mkdir(projectDir, { recursive: true })
+    process.env.HOME = fakeHome
+    process.env.USERPROFILE = fakeHome
+    await body(projectDir)
+  } finally {
+    if (homeSaved === undefined) delete process.env.HOME
+    else process.env.HOME = homeSaved
+    if (profileSaved === undefined) delete process.env.USERPROFILE
+    else process.env.USERPROFILE = profileSaved
+    await rm(fakeHome, { recursive: true, force: true })
+  }
 }
 
 function makeOptions(
@@ -78,6 +120,16 @@ describe('buildFeedbackZip — feedback.json', () => {
       expect(payload, `missing field: ${key}`).toHaveProperty(key)
     }
     expect(payload.notes).toBe('')
+  })
+
+  // Issue #1880. The consumer reads `dropped_transcripts` from feedback.json,
+  // not the prose list in FEEDBACK.md, and holds every guardrail owner arm at
+  // "unknown" when it is non-empty. Present-and-empty is what lets a consumer
+  // tell "nothing was dropped" from "this producer never wrote the field".
+  it('always writes dropped_transcripts, empty when nothing was left out', async () => {
+    const payload = await readFeedbackJson((await buildFeedbackZip(makeOptions(folder))).zipBase64)
+    expect(payload).toHaveProperty('dropped_transcripts')
+    expect(payload.dropped_transcripts).toEqual([])
   })
 
   it('stores worked_as_expected as the boolean from the report', async () => {
@@ -527,5 +579,215 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       else process.env.USERPROFILE = profileSaved
       await rm(fakeHome, { recursive: true, force: true })
     }
+  })
+
+  // Issue #1880. Two guardrail owner arms do their protected write from inside a
+  // subagent, whose transcript is a separate file one level down. While the
+  // bundle carried only the main session's log, those writes were invisible and
+  // the arms returned 0 for any post-split bundle by construction.
+  it('bundles subagent transcripts, their meta, and counts their bytes', async () => {
+    const homeSaved = process.env.HOME
+    const profileSaved = process.env.USERPROFILE
+    const fakeHome = await mkdtemp(join(tmpdir(), 'feedback-home-'))
+    try {
+      const projectHash = folder.replace(/[^a-zA-Z0-9-]/g, '-')
+      const projectDir = join(fakeHome, '.claude', 'projects', projectHash)
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(
+        join(projectDir, 'session.jsonl'),
+        '{"type":"assistant","message":{"role":"assistant","content":"PARENT"}}\n',
+        'utf8'
+      )
+      // cwd is a SUBFOLDER of the project. An equality test drops every line,
+      // the file filters to empty, and the transcript vanishes unnamed.
+      await writeFile(
+        join(subagents, 'agent-abc.jsonl'),
+        `{"type":"assistant","cwd":${JSON.stringify(join(folder, 'results'))},` +
+          '"message":{"role":"assistant","content":"CHILD"}}\n',
+        'utf8'
+      )
+      await writeFile(
+        join(subagents, 'agent-abc.meta.json'),
+        '{"agentType":"proof-conclusion","description":"conclude q_001",' +
+          '"toolUseId":"toolu_01","spawnDepth":1}\n',
+        'utf8'
+      )
+      process.env.HOME = fakeHome
+      process.env.USERPROFILE = fakeHome
+
+      const log = await readSessionLog(folder)
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
+
+      const child = zip.file('_feedback/subagents/agent-abc.jsonl')
+      expect(child).not.toBeNull()
+      expect(await child!.async('string')).toContain('CHILD')
+      // The meta names the parent Agent call that spawned this child — the
+      // anchor the consumer splices at, so appending cannot be mistaken for it.
+      const meta = zip.file('_feedback/subagents/agent-abc.meta.json')
+      expect(meta).not.toBeNull()
+      expect(JSON.parse(await meta!.async('string')).toolUseId).toBe('toolu_01')
+
+      // The reporter is shown this number next to the toggle. Ship bytes it does
+      // not count and they consent to one figure while a larger bundle leaves.
+      let written = 0
+      for (const name of Object.keys(zip.files)) {
+        if (zip.files[name].dir) continue
+        if (
+          name === '_feedback/session-log.jsonl' ||
+          name.startsWith('_feedback/subagents/') ||
+          name.startsWith('_feedback/sessions/')
+        ) {
+          written += Buffer.byteLength(await zip.file(name)!.async('string'))
+        }
+      }
+      expect(log.sizeBytes).toBe(written)
+    } finally {
+      if (homeSaved === undefined) delete process.env.HOME
+      else process.env.HOME = homeSaved
+      if (profileSaved === undefined) delete process.env.USERPROFILE
+      else process.env.USERPROFILE = profileSaved
+      await rm(fakeHome, { recursive: true, force: true })
+    }
+  })
+
+  it('tells the triager where the subagent transcripts are, not just that they shipped', async () => {
+    await withPlantedHome(folder, async (projectDir) => {
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(join(projectDir, 'session.jsonl'), turn('PARENT'), 'utf8')
+      await writeFile(join(subagents, 'agent-abc.jsonl'), turn('CHILD'), 'utf8')
+      await writeFile(join(subagents, 'agent-abc.meta.json'), META, 'utf8')
+
+      const md = await feedbackMarkdown({ ...makeOptions(folder), includeSessionLog: true })
+      expect(md).toContain('See `_feedback/session-log.jsonl`')
+      expect(md).toContain('`_feedback/subagents/`')
+      expect(md).toContain('.meta.json')
+    })
+  })
+
+  // The status flag means "the set is non-empty", which does not imply the file
+  // the 'included' wording names is in the bundle: the newest session can filter
+  // to nothing while an older one's group ships. Naming it anyway sends the
+  // triager hunting for a missing file — the #1481 confusion by another door.
+  it('names the grouped path, not a missing session-log.jsonl, when the newest session is empty', async () => {
+    await withPlantedHome(folder, async (projectDir) => {
+      await mkdir(join(projectDir, 'old', 'subagents'), { recursive: true })
+      await writeFile(join(projectDir, 'old.jsonl'), turn('OLD-PARENT'), 'utf8')
+      await writeFile(join(projectDir, 'old', 'subagents', 'agent-x.jsonl'), turn('CHILD'), 'utf8')
+      await writeFile(join(projectDir, 'old', 'subagents', 'agent-x.meta.json'), META, 'utf8')
+      // Filters to nothing (neither `user` nor `assistant`), but it is the
+      // newest .jsonl, so it is the active session.
+      await writeFile(join(projectDir, 'new.jsonl'), '{"type":"summary","summary":"x"}\n', 'utf8')
+      await utimes(join(projectDir, 'old.jsonl'), new Date(1000), new Date(1000))
+      await utimes(join(projectDir, 'new.jsonl'), new Date(9000), new Date(9000))
+
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
+      expect(zip.file('_feedback/session-log.jsonl')).toBeNull()
+      expect(zip.file('_feedback/sessions/old/session-log.jsonl')).not.toBeNull()
+
+      const md = await zip.file('FEEDBACK.md')!.async('string')
+      expect(md).toContain('## Session log')
+      expect(md).not.toContain('See `_feedback/session-log.jsonl`')
+      expect(md).toContain('`_feedback/sessions/<session-id>/`')
+      // Still a log-bearing bundle: the "we found nothing" wording would be wrong.
+      expect(md).not.toContain('requested but none was found')
+
+      // This cause records NO drop, so "## Skipped files" is not rendered
+      // (`skipped.length > 0` guards it). Pointing the triager at it to learn
+      // which cause applied is the same missing-file hunt this branch prevents,
+      // so the message must state the cause outright. Both halves asserted: the
+      // failure mode is a message and a section disagreeing.
+      expect(md).toContain('had no conversation entries for this project')
+      expect(md).not.toContain('Skipped files')
+      expect(md).not.toContain('transcript size budget')
+    })
+  })
+
+  // Issue #1880. The drop names also go into FEEDBACK.md's "Skipped files", but
+  // that is prose no consumer opens. `dropped_transcripts` is the field the
+  // guardrail report reads to hold every owner arm at "unknown" rather than
+  // reporting a 0 that means "we could not see".
+  it('names a dropped transcript in feedback.json, not only in FEEDBACK.md', async () => {
+    await withPlantedHome(folder, async (projectDir) => {
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(join(projectDir, 'session.jsonl'), turn('PARENT'), 'utf8')
+      // Conversation-free: the producer cannot ship it, and an unnamed drop
+      // reads downstream as "we looked and found nothing".
+      await writeFile(
+        join(subagents, 'agent-empty.jsonl'),
+        '{"type":"summary","summary":"no turns"}\n',
+        'utf8'
+      )
+      await writeFile(join(subagents, 'agent-empty.meta.json'), META, 'utf8')
+
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const result = await buildFeedbackZip(opts)
+      const payload = await readFeedbackJson(result.zipBase64)
+      const dropped = payload.dropped_transcripts as string[]
+      expect(dropped).toHaveLength(1)
+      expect(dropped[0]).toContain('agent-empty')
+
+      const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+      const md = await zip.file('FEEDBACK.md')!.async('string')
+      expect(md).toContain('agent-empty')
+    })
+  })
+})
+
+// The grouped-only branch has TWO causes and names whichever applied. The
+// empty-parent cause is covered end-to-end above ('names the grouped path,
+// not a missing session-log.jsonl…'); the over-budget cause cannot be reached
+// that way without a >20 MB transcript, and a test sized against
+// SESSION_LOG_CAP_BYTES silently stops exercising the branch the moment anyone
+// raises the cap. So this pair drives the renderer directly, mirroring
+// `_session_log_markdown` in apps/server/tests/test_feedback.py.
+describe('renderFeedbackMarkdown — the grouped-only branch names its cause', () => {
+  const groupedOnlyMarkdown = (skipped: string[]): string =>
+    renderFeedbackMarkdown({
+      fields: {
+        email: 't@example.com',
+        userPrompt: 'q',
+        agentDid: 'd',
+        agentShouldHave: '',
+        correctAnswer: '',
+        notes: ''
+      },
+      workedAsExpected: false,
+      timestamp: '2026-09-01T00:00:00Z',
+      projectFolder: '/tmp/a-project',
+      viewerVersion: 'test 2026-09-01 (abc123)',
+      sessionLogStatus: 'included-grouped-only',
+      hasSubagentTranscripts: true,
+      skipped
+    })
+
+  it('names the size budget, and the list it points at is rendered', () => {
+    // This cause DOES record a drop, so naming the "Skipped files" list is
+    // correct here — and the list really is there. Both halves asserted,
+    // because the failure mode is a message and a section disagreeing.
+    const md = groupedOnlyMarkdown([`${PARENT_LOG_ENTRY} (over the transcript size budget)`])
+
+    expect(md).toContain('did not fit the transcript size budget')
+    expect(md).toContain('## Skipped files')
+    expect(md).not.toContain('had no conversation entries')
+  })
+
+  it('names the empty parent, and points at no list, when no drop was recorded', () => {
+    // The commoner cause records nothing, so `skipped.length > 0` leaves the
+    // section unrendered. Sending the triager there to learn which cause
+    // applied is the #1481 missing-file hunt this message exists to prevent.
+    const md = groupedOnlyMarkdown([])
+
+    expect(md).toContain('had no conversation entries for this project')
+    expect(md).not.toContain('Skipped files')
+    expect(md).not.toContain('transcript size budget')
   })
 })

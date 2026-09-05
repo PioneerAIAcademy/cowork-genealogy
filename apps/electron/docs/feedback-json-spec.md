@@ -46,6 +46,12 @@ readable form. The viewer must produce both; the workflow reads
   _feedback/
     feedback.json            ← THIS SPEC
     session-log.jsonl        ← optional; see §6
+    subagents/               ← optional; see §6
+      agent-<id>.jsonl       ← one transcript per subagent
+      agent-<id>.meta.json   ← names the parent Agent call that spawned it
+    sessions/<session-id>/   ← optional; any session other than the newest,
+      session-log.jsonl        shipped with its own subagents/ beneath it
+      subagents/…
 ```
 
 The `_feedback/` directory exists to keep feedback-specific files
@@ -96,6 +102,7 @@ identical.
 | `project_folder_path` | string | yes | Absolute path of the project folder the user was working in when they submitted. Lets devs disambiguate when one user has multiple projects open and helps correlate with the user's filesystem layout. Mild PII; included because the diagnostic value outweighs the leak (the same path is already in `FEEDBACK.md` today). Empty string if the viewer cannot determine it. |
 | `correct_answer` | string | yes | The user's free-text description of the right answer *and the evidence for it*, for when the agent reached a **wrong conclusion** rather than an unproven one. Read by `/mine-unit-test` as attested ground truth when non-empty. Always present; empty string when the user left the field blank — and blank is the correct answer when the defect is the reasoning rather than the result, so consumers must not treat empty as a malformed submission. |
 | `platform` | string | yes | Which runtime produced the bundle. Electron sends `process.platform` (e.g. `"darwin"`, `"linux"`, `"win32"`); the hosted web workbench sends the literal `"web"`. Empty string if unknown. This is the field that tells a triager which product the report came from. |
+| `dropped_transcripts` | array of strings | yes | Transcripts the producer could not include, each a zip-relative path with the reason in parentheses (over the transcript size budget; no conversation entries; its session's parent transcript is missing). Written by **both** producers, `[]` when nothing was left out, so a consumer can tell "nothing was dropped" from "we could not see". `FEEDBACK.md` names the same drops in prose, but this is the field a program reads: the guardrail report holds every agent-owned arm at `unknown` while it is non-empty (`docs/specs/guardrail-enforcement-spec.md`). **Absent from bundles produced before 2026-09-01**, which consumers must go on tolerating. Added in schema_version 1 without a bump (§5: new fields old consumers ignore don't bump). |
 | `build_date` | string | web only | Build date of the hosted server that produced the bundle. Absent from Electron submissions — the viewer's `viewer_version` is its whole build identity. |
 | `git_sha` | string | web only | Commit sha of the hosted server that produced the bundle, so a triager can pin the exact checkout. Absent from Electron submissions. |
 
@@ -236,6 +243,48 @@ consuming skills can rely on it:
   `claude-opus-4-7`). `feedback.json` does not duplicate this
   field — the model can vary per turn within a session, so a
   single top-level value would be misleading.
+
+### Subagent transcripts (separate files, not merged)
+
+Work the agent delegates to a subagent is written by Claude Code to its **own**
+transcript, one level down at `<session-id>/subagents/agent-*.jsonl`, with a
+four-key `agent-*.meta.json` (`agentType`, `description`, `toolUseId`,
+`spawnDepth`) beside each. The viewer includes them under
+`_feedback/subagents/`, and any session other than the newest under
+`_feedback/sessions/<session-id>/` with its own parent log, since a subagent
+transcript is only usable beside the parent holding the `Agent` call that
+spawned it — `toolUseId` is that call's id.
+
+Three decisions worth recording, because the obvious alternatives are all
+wrong:
+
+- **They are separate optional files, and `schema_version` does not move.**
+  §5 bumps on a removed, renamed or re-meaning `feedback.json` field, and a
+  bump is a paired change across two repos.
+- **Merging the sidechain entries into `session-log.jsonl` was rejected.** It
+  breaks that file's shape contract above (entries limited to `user` and
+  `assistant`, filtered to the submitting project's `cwd`) and would therefore
+  force the bump. It is also wrong on the merits: a consumer must splice a
+  subagent's calls in at the index of the `Agent` call that spawned them, not
+  concatenate them, or a protected write lands hundreds of calls from its own
+  skill invocation and reads as a violation that never happened.
+- **No `agentType` filter.** Every subagent transcript ships, including
+  general-purpose stand-ins. The failure this evidence is most needed for is
+  the model silently falling back to a general-purpose subagent that binds
+  none of the declared agent's tools (issue #939) — an allow-list of known
+  agent names drops exactly that transcript.
+
+A transcript the viewer leaves out (size budget, or it filtered to no
+conversation entries) is named in `FEEDBACK.md` **and** in `feedback.json`'s
+`dropped_transcripts` array, so a consumer counting findings can tell
+"nothing happened" from "we could not see". Both producers write that array
+on every bundle, `[]` when nothing was left out — a field only written when
+non-empty cannot be told from a producer that never writes it at all.
+
+`_feedback/session-log.jsonl` itself is not guaranteed even when the bundle
+carries transcripts: the active session can filter to nothing while an older
+session's group ships. `FEEDBACK.md` says which case it is rather than naming
+a file that is not there.
 
 ### Omission policy
 

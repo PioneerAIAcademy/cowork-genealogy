@@ -79,7 +79,7 @@ export class IpcResearchTransport implements ResearchTransport {
     return {
       files,
       sessionLogSize: sessionLog.sizeBytes,
-      hasSessionLog: sessionLog.entries.length > 0
+      hasSessionLog: sessionLog.hasSessionLog
     }
   }
 

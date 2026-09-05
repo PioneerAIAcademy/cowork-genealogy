@@ -16,7 +16,7 @@ export interface AppAPI {
   onFolderNotice: (callback: (message: string) => void) => void
   onSidecarUpdated: (callback: (event: { logId: string; mtime: number }) => void) => void
   removeAllWatchListeners: () => void
-  getSessionLog: () => Promise<{ entries: unknown[]; sizeBytes: number }>
+  getSessionLog: () => Promise<{ hasSessionLog: boolean; sizeBytes: number }>
   selectFolder: () => Promise<string | null>
   getState: () => Promise<{
     folderPath: string | null
