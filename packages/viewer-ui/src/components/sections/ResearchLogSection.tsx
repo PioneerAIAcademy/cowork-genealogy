@@ -77,7 +77,10 @@ export default function ResearchLogSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Research Log</h2>
-        <p className={styles.empty}>No log entries yet.</p>
+        <p className={styles.empty}>
+          No log entries yet. Each search — of records, images, full text, and
+          external sites — appends an entry here as research proceeds.
+        </p>
       </div>
     )
   }

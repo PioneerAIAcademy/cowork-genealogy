@@ -91,7 +91,10 @@ export default function QuestionsSection(): React.JSX.Element {
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Questions</h2>
       {questions.length === 0 ? (
-        <p className={styles.empty}>No questions defined yet.</p>
+        <p className={styles.empty}>
+          No questions defined yet. The research questions that drive the
+          project are chosen during the question-selection step.
+        </p>
       ) : (
         questions.map((q) => <QuestionCard key={q.id} question={q} />)
       )}

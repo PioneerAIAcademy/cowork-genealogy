@@ -14,7 +14,10 @@ export default function ConflictsSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Conflicts</h2>
-        <p className={styles.empty}>No conflicts recorded.</p>
+        <p className={styles.empty}>
+          No conflicts recorded. Contradictions between sources — and how they
+          were resolved — are recorded during the conflict-resolution step.
+        </p>
       </div>
     )
   }

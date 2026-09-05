@@ -23,7 +23,7 @@ import SidecarPanel from './components/shared/SidecarPanel'
 import ErrorBoundary from './components/ErrorBoundary'
 import styles from './App.module.css'
 
-const sectionComponents: Record<string, React.ComponentType> = {
+export const sectionComponents: Record<string, React.ComponentType> = {
   project_overview: ProjectOverview,
   known_holdings: KnownInformationSection,
   questions: QuestionsSection,

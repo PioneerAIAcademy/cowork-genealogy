@@ -28,7 +28,11 @@ export default function PlansSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Plans</h2>
-        <p className={styles.empty}>No plans defined yet.</p>
+        <p className={styles.empty}>
+          No plans defined yet. A research plan — the questions to pursue and
+          the sources to search for each — is drawn up during the research-plan
+          step.
+        </p>
       </div>
     )
   }
