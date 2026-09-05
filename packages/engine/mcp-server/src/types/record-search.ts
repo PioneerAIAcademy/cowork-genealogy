@@ -257,6 +257,11 @@ export interface RecordSearchResult {
   recordTitle?: string;
   // The source record/image ARK (the 1:2: entry), e.g.
   // "ark:/61903/1:2:HSJG-CLNF". Canonical ARK form.
+  //
+  // NOT accepted by record_read, which takes the 1:1: persona ARK in
+  // `recordId`. The two id suffixes are unrelated — passing this one used to
+  // return a different, unrelated record as a success (#2061) and is now
+  // refused at the tool boundary.
   recordArk?: string;
   treeMatches: TreeMatch[];
   // Simplified-GedcomX document for this entry, derived from the raw
