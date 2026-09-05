@@ -88,6 +88,7 @@ class Settings(BaseSettings):
         "https://script.google.com/macros/s/"
         "AKfycbxcMvfhpCqLzSa5sZBrssr48QfqrpFhW9DMRkxG8RYQfGGJIXoCEzbyPHrpT1XWZzcs/exec"
     )
+    feedback_token: str = ""
     # Comma-separated email allowlist (app access gate). Matched against the
     # **FamilySearch-account** email returned by /users/current at login — which
     # may differ from a person's Google/contact email. Dallan only for now;

@@ -496,12 +496,14 @@ async def submit_feedback(
             zf.writestr("_feedback/session-log.jsonl", session_log)
 
     filename = f"feedback-{submitted_at.replace(':', '-').replace('.', '-')}.zip"
-    envelope = {
+    envelope: dict[str, str] = {
         "timestamp": submitted_at,
         "email": fields["email"],
         "filename": filename,
         "zipBase64": base64.b64encode(buf.getvalue()).decode("ascii"),
     }
+    if settings.feedback_token:
+        envelope["feedbackToken"] = settings.feedback_token
 
     url = settings.feedback_url
     try:

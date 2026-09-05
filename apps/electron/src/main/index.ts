@@ -153,7 +153,8 @@ function setupIPC(): void {
         timestamp: new Date().toISOString(),
         email: payload.email,
         filename: built.filename,
-        zipBase64: built.zipBase64
+        zipBase64: built.zipBase64,
+        ...(process.env.FEEDBACK_TOKEN ? { feedbackToken: process.env.FEEDBACK_TOKEN } : {})
       })
 
       // Production: Apps Script endpoint. Override with FEEDBACK_URL env var for local dev.
