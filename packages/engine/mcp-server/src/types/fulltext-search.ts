@@ -88,6 +88,17 @@ export interface FulltextFacet {
   items: { name: string; count: number; filterParam: string }[];
 }
 
+export interface NameExpansionInfo {
+  /** The caller's original name input. */
+  original: string;
+  /** The query actually sent (quoted-phrase variants). */
+  expanded: string;
+  /** Which formal names were expanded and to which variant forms. */
+  expansions: Record<string, string[]>;
+  /** Variant forms that appear in result names or highlight terms. */
+  variantsInResults: string[];
+}
+
 export interface FulltextSearchResponse {
   query: Record<string, string | number | boolean>;
   totalResults: number;
@@ -102,6 +113,9 @@ export interface FulltextSearchResponse {
   // an empty `results`, which is the post-`mapEntry` set. A nil search stages no
   // file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
+  /** Present when the name input contained a recognized given name and was
+   *  expanded with historical diminutives/variants. */
+  nameExpansion?: NameExpansionInfo;
   results: FulltextResult[];
   facets?: FulltextFacet[];
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.
