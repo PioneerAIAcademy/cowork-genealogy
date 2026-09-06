@@ -1,0 +1,4321 @@
+{
+  "schema_version": 3,
+  "skill": "search-wikipedia",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-09-03_11-36-25",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "9451d1056f0a38276f790171aeff7b43590dfcaaf709fff8a6c75c056aaa7ec6",
+  "snapshot": {
+    "packages/engine/plugin/skills/search-wikipedia/SKILL.md": "fbc8ff3418051c96c690c20e5bd627ee2422c418b74c6cfffb53a07e8baea1d7",
+    "packages/engine/plugin/skills/search-wikipedia/templates/wiki-summary.md": "c25dbf2897baa19037c00bbd84fc7aad1f6daf0a72735ab9fef9a4fbf127a924",
+    "eval/tests/unit/search-wikipedia/general-topic-us-census.json": "37d488dca1f78f0220c7a82a9dfbac3d481b20874cbeaa73c2ccd19f013f5025",
+    "eval/tests/unit/search-wikipedia/historical-event-great-famine.json": "8d2003784ef545cb9520aaf6202981e67014646d8054ea57f5154aad26a3bde0",
+    "eval/tests/unit/search-wikipedia/negative-historical-context-boundary.json": "8eb69b995285c99f6738091bc24b1ccac7a524e647a5a19d16e2c6d2e62c77ff",
+    "eval/tests/unit/search-wikipedia/negative-locality-guide-boundary.json": "b5a887646c0a2b865a4d62907ceaea08b98e8528195014b485aaa86b614460e4",
+    "eval/tests/unit/search-wikipedia/negative-out-of-scope.json": "028636ec506e9e2176d10d500dcd6fb4037755ffae1ba31eafee579d0df68394",
+    "eval/tests/unit/search-wikipedia/person-lookup-einstein.json": "2d88a3c316773d6a71715cb1a1ffd6d06ff65bec11d5bed4f1b9252ca42dd3b2",
+    "eval/tests/unit/search-wikipedia/rubric.md": "b659c88f45a4d23fc2d15b2fb2d76e710ba362323ca74942aa57085f3f3e892c",
+    "eval/tests/unit/search-wikipedia/simple-topic-lookup.json": "e1cd653a01b5a440946d959d9324d076e8ebb71c416fec15e4c729a72455a02c",
+    "eval/tests/unit/search-wikipedia/single-word-kirchenbuch.json": "f9feaeb5fe34b9182969f742a5050cd60bc0ef44d4aeaef068ae2c86cfed3706",
+    "eval/tests/unit/search-wikipedia/slug-accented-title-wurttemberg.json": "4f20775b9fba46af8ac6bc11746ee6f33c4543d68e449934d384e7a9627227ae",
+    "eval/tests/unit/search-wikipedia/slug-normalization-obrien.json": "424a0ccc7c4bd9946bfbc019b207307316e330716c6079b79d77aa76587a74d6",
+    "eval/tests/unit/search-wikipedia/slug-title-not-query-potato-famine.json": "0e763c7033425cf7f8bfef0bdf52aabdca7110ae492d88cde90babf3ea8c08fd",
+    "eval/tests/unit/search-wikipedia/title-with-numbers-naturalization.json": "f4aba1d29f6c73b6df3b15440121a627a5a14e3c361d5e754b6ef61f00f4af62",
+    "eval/fixtures/mcp/wikipedia-search-albert-einstein.json": "1f00a927fde0e5f9a3fd3bb01d9031f95561f3bed26b20f9983ad059ea501f13",
+    "eval/fixtures/mcp/wikipedia-search-any.json": "0db632fbffdf32d982b5b1b01183313a9ce0570561811a9c913a556da8619198",
+    "eval/fixtures/mcp/wikipedia-search-great-famine-ireland.json": "a1d8381b1e6917f62dac2a71353d35731b7048fb4b1052a38e9c8abee6312bca",
+    "eval/fixtures/mcp/wikipedia-search-kirchenbuch.json": "6f1d9829c8a352c32b977062820485b07d4104b20c1aaca1d4dbd718695fedeb",
+    "eval/fixtures/mcp/wikipedia-search-naturalization-act-1906.json": "852598cb5461a3ba63ebce94a3664e6c7037abb7b7789ac6dc857629baf50a16",
+    "eval/fixtures/mcp/wikipedia-search-obrien-surname.json": "fea9057fa9a66cae808fdb1a984802eb24188c15dec0be09ce5ff06bcd07cbc8",
+    "eval/fixtures/mcp/wikipedia-search-potato-famine.json": "5779cda3228ecdaff4a884546cef6ed49f9e0d6a31a2b064f1b9bfe53b2a1fa8",
+    "eval/fixtures/mcp/wikipedia-search-schuylkill-county.json": "2e8fca52cb2ddb7ad8faa0f821e78f2edf89aa2995e7a1c20c60748c495fbff0",
+    "eval/fixtures/mcp/wikipedia-search-us-federal-census.json": "9d452946185fe08852b3cf546c3ab9dc812f74c332c14d1c5844ac26efae12a6",
+    "eval/fixtures/mcp/wikipedia-search-wurttemberg.json": "c5f6f9efda6b7baa88ba938e825593d7c821e0ad8e188bd5b54a8c77fc7193d6"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_wikipedia_005",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-us-federal-census"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with the query 'United States census', received a valid response with title, extract, and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to save a Wikipedia summary about the United States census. The skill called wikipedia_search, received the response, and confirmed the file was saved. All required actions were completed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with query 'United States census', which matches the expected_args pattern '~census' and directly targets the topic the user requested. The argument is semantically correct and well-aimed."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with a brief statement. The response does not assert facts absent from the tool response and follows the expected pattern of confirming file creation."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'United States census' directly targets the article the user named. The returned title 'United States census' matches the query, and the skill accepted the response at face value without re-querying or remarking on any discrepancy."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `united-states-census.md`.' It names the saved file and contains no restatement, summarization, paraphrase, or characterization of the article content, meeting the skill's instruction precisely."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 19360.5749999997,
+        "duration_api_ms": 14236.0,
+        "judge_duration_ms": 6805.8817000001,
+        "wall_clock_ms": 26721.69041633606,
+        "num_turns": 7,
+        "input_tokens": 358,
+        "cached_input_tokens": 64617,
+        "cache_creation_input_tokens": 7841,
+        "output_tokens": 836,
+        "judge_input_tokens": 2438,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 567,
+        "skill_cost_usd": 0.06156885,
+        "judge_cost_usd": 0.005686999999999999,
+        "total_cost_usd": 0.06725585
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_005_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 19360.5749999997,
+          "duration_api_ms": 14236.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 358,
+          "cached_input_tokens": 64617,
+          "cache_creation_input_tokens": 7841,
+          "output_tokens": 836,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 347,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00041699999999999994,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 822,
+              "cacheReadInputTokens": 64617,
+              "cacheCreationInputTokens": 7841,
+              "webSearchRequests": 0,
+              "costUSD": 0.06115185,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.06156885,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `united-states-census.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "United States census"
+                },
+                "expected_args": {
+                  "query": "~census"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-us-federal-census"
+              }
+            ],
+            "files_created": [
+              "united-states-census.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "United States census"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_005-0-0-n4_g0w5b\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_005-0-0-n4_g0w5b\\united-states-census.md",
+                  "content": "# United States census\n\nThe United States census is a decennial census mandated by Article I, Section 2 of the United States Constitution, which states: 'Representatives and direct Taxes shall be appo"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with the query 'United States census', received a valid response with title, extract, and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to save a Wikipedia summary about the United States census. The skill called wikipedia_search, received the response, and confirmed the file was saved. All required actions were completed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with query 'United States census', which matches the expected_args pattern '~census' and directly targets the topic the user requested. The argument is semantically correct and well-aimed."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with a brief statement. The response does not assert facts absent from the tool response and follows the expected pattern of confirming file creation."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'United States census' directly targets the article the user named. The returned title 'United States census' matches the query, and the skill accepted the response at face value without re-querying or remarking on any discrepancy."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `united-states-census.md`.' It names the saved file and contains no restatement, summarization, paraphrase, or characterization of the article content, meeting the skill's instruction precisely."
+              }
+            ],
+            "judge_cost_usd": 0.005686999999999999,
+            "duration_ms": 6805.8817000001,
+            "error": null,
+            "input_tokens": 2438,
+            "cached_input_tokens": 4140,
+            "output_tokens": 567
+          },
+          "started_at": 1788435474.272837,
+          "ended_at": 1788435500.9945273
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-great-famine-ireland"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with the query 'Great Famine Ireland', received the article 'Great Famine (Ireland)' with extract and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked for a Wikipedia lookup of the Great Famine in Ireland. The skill performed the requested search, received the article, and confirmed saving it. All required work was completed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed query='Great Famine Ireland', which matches the expected_args pattern '~Great Famine' semantically. The query targets the correct article and the tool returned the expected result with matched.kind='predicate', indicating successful argument matching."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file to 'great-famine-ireland.md'. The response contains no facts absent from the tool response and does not assert anything unsupported by the Wikipedia extract."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'Great Famine Ireland' targets the article the user named. The returned title 'Great Famine (Ireland)' is a formal redirect from the query and is correctly accepted at face value. The skill proceeded without remarking on the query-versus-title difference as a problem."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, adhering precisely to the skill instruction."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 22021.863499999654,
+        "duration_api_ms": 16840.0,
+        "judge_duration_ms": 7756.047200000012,
+        "wall_clock_ms": 30232.940673828125,
+        "num_turns": 7,
+        "input_tokens": 378,
+        "cached_input_tokens": 64816,
+        "cache_creation_input_tokens": 8073,
+        "output_tokens": 1040,
+        "judge_input_tokens": 2436,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 605,
+        "skill_cost_usd": 0.06557855,
+        "judge_cost_usd": 0.005875,
+        "total_cost_usd": 0.07145355
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_003_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 22021.863499999654,
+          "duration_api_ms": 16840.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 378,
+          "cached_input_tokens": 64816,
+          "cache_creation_input_tokens": 8073,
+          "output_tokens": 1040,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 367,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000437,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 1026,
+              "cacheReadInputTokens": 64816,
+              "cacheCreationInputTokens": 8073,
+              "webSearchRequests": 0,
+              "costUSD": 0.06514155,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.06557855,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `great-famine-ireland.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Great Famine Ireland"
+                },
+                "expected_args": {
+                  "query": "~Great Famine"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-great-famine-ireland"
+              }
+            ],
+            "files_created": [
+              "great-famine-ireland.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "Great Famine Ireland"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_003-0-0-rz3lgiw2\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_003-0-0-rz3lgiw2\\great-famine-ireland.md",
+                  "content": "# Great Famine (Ireland)\n\nThe Great Famine, also known as the Great Hunger, the Famine, or the Irish Potato Famine, was a period of mass starvation and disease in Ireland between 1845 and 1852. The mo"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with the query 'Great Famine Ireland', received the article 'Great Famine (Ireland)' with extract and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked for a Wikipedia lookup of the Great Famine in Ireland. The skill performed the requested search, received the article, and confirmed saving it. All required work was completed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed query='Great Famine Ireland', which matches the expected_args pattern '~Great Famine' semantically. The query targets the correct article and the tool returned the expected result with matched.kind='predicate', indicating successful argument matching."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file to 'great-famine-ireland.md'. The response contains no facts absent from the tool response and does not assert anything unsupported by the Wikipedia extract."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'Great Famine Ireland' targets the article the user named. The returned title 'Great Famine (Ireland)' is a formal redirect from the query and is correctly accepted at face value. The skill proceeded without remarking on the query-versus-title difference as a problem."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, adhering precisely to the skill instruction."
+              }
+            ],
+            "judge_cost_usd": 0.005875,
+            "duration_ms": 7756.047200000012,
+            "error": null,
+            "input_tokens": 2436,
+            "cached_input_tokens": 4140,
+            "output_tokens": 605
+          },
+          "started_at": 1788435469.2316813,
+          "ended_at": 1788435499.464622
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_007",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-any"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the correct behavior is for search-wikipedia to decline and route to historical-context. The skill produced no text response and made no MCP tool calls, which is the correct outcome. The user's question about Irish emigration patterns, settlement locations, ports, and chain migration is genealogical historical narrative\u2014territory for historical-context, not Wikipedia article lookup. The skill correctly did not execute its own task."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "On a negative test, completeness is graded on the quality of the decline/routing decision. The skill produced no output and made no tool calls, which is the complete and correct response. The absence of a Wikipedia search and the absence of a saved summary file satisfy the grade_on_invariant validator requirements. Not performing the search-wikipedia task is the complete correct outcome here."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The test made zero tool calls, so this dimension is N/A per the base rubric guidance that Tool Arguments may be null only when a test made zero MCP tool calls."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 9005.944900000031,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4365.822499999922,
+        "wall_clock_ms": 14000.376224517822,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 5918,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 362,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.007728,
+        "total_cost_usd": 0.007728
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_007_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 9005.944900000031,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "historical-context"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "historical-context",
+                  "args": "Irish emigration to America during the 1840s and 1850s \u2014 settlement patterns, ports used, and chain migration"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": "skipped: step narration is graded on positive runs"
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": "skipped: only positive tests save a file"
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": "skipped: only positive tests save a file"
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": "skipped: only positive tests write files"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where the correct behavior is for search-wikipedia to decline and route to historical-context. The skill produced no text response and made no MCP tool calls, which is the correct outcome. The user's question about Irish emigration patterns, settlement locations, ports, and chain migration is genealogical historical narrative\u2014territory for historical-context, not Wikipedia article lookup. The skill correctly did not execute its own task."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "On a negative test, completeness is graded on the quality of the decline/routing decision. The skill produced no output and made no tool calls, which is the complete and correct response. The absence of a Wikipedia search and the absence of a saved summary file satisfy the grade_on_invariant validator requirements. Not performing the search-wikipedia task is the complete correct outcome here."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The test made zero tool calls, so this dimension is N/A per the base rubric guidance that Tool Arguments may be null only when a test made zero MCP tool calls."
+              }
+            ],
+            "judge_cost_usd": 0.007728,
+            "duration_ms": 4365.822499999922,
+            "error": null,
+            "input_tokens": 5918,
+            "cached_input_tokens": 0,
+            "output_tokens": 362
+          },
+          "started_at": 1788435501.1603768,
+          "ended_at": 1788435515.160753
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_search_wikipedia_k7v",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-any"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly declined to perform search-wikipedia's task. No Wikipedia search was executed, no summary file was saved. The skill routed the user to locality-guide, which is the appropriate skill for answering questions about genealogy records available in a specific county. The decline was accurate and appropriate."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed the correct behavior for this negative test: it declined to perform its own task and routed to the appropriate skill (locality-guide). The routing decision was complete and addressed the user's actual need\u2014finding genealogy records for Schuylkill County, Pennsylvania\u2014by directing them to the skill designed to answer that question."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke wikipedia_search, which is the expected behavior for this negative test. N/A applies because zero tool calls were made."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 6054.8156999998355,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4030.257299999903,
+        "wall_clock_ms": 11881.831884384155,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 5868,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 320,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.007468,
+        "total_cost_usd": 0.007468
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_k7v_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 6054.8156999998355,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "locality-guide"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "locality-guide",
+                  "args": "Schuylkill County, Pennsylvania"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": "skipped: step narration is graded on positive runs"
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": "skipped: only positive tests save a file"
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": "skipped: only positive tests save a file"
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": "skipped: only positive tests write files"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly declined to perform search-wikipedia's task. No Wikipedia search was executed, no summary file was saved. The skill routed the user to locality-guide, which is the appropriate skill for answering questions about genealogy records available in a specific county. The decline was accurate and appropriate."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed the correct behavior for this negative test: it declined to perform its own task and routed to the appropriate skill (locality-guide). The routing decision was complete and addressed the user's actual need\u2014finding genealogy records for Schuylkill County, Pennsylvania\u2014by directing them to the skill designed to answer that question."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly declined to invoke wikipedia_search, which is the expected behavior for this negative test. N/A applies because zero tool calls were made."
+              }
+            ],
+            "judge_cost_usd": 0.007468,
+            "duration_ms": 4030.257299999903,
+            "error": null,
+            "input_tokens": 5868,
+            "cached_input_tokens": 0,
+            "output_tokens": 320
+          },
+          "started_at": 1788435499.5787215,
+          "ended_at": 1788435511.4605534
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_search_wikipedia_008",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-any"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified that the user's request for help writing a Python CSV parsing function is outside the scope of genealogy research. The decline is accurate and appropriate \u2014 Cowork Genealogy is a genealogy research assistant, not a general programming tool. The response contains no factual errors or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill fully addressed what was required: a clear, accurate decline of an out-of-scope request. The per-test context specifies that correct behavior is to decline without invoking any skill, and the response does exactly that. The decline is complete and requires no additional elements."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined the request without attempting to invoke any tools. N/A applies because zero tool calls were made."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 7054.8978000001625,
+        "duration_api_ms": 2796.0,
+        "judge_duration_ms": 3721.1162999997214,
+        "wall_clock_ms": 11345.2627658844,
+        "num_turns": 1,
+        "input_tokens": 353,
+        "cached_input_tokens": 7564,
+        "cache_creation_input_tokens": 5587,
+        "output_tokens": 45,
+        "judge_input_tokens": 5687,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 305,
+        "skill_cost_usd": 0.02412445,
+        "judge_cost_usd": 0.0072120000000000005,
+        "total_cost_usd": 0.03133645
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_008_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 7054.8978000001625,
+          "duration_api_ms": 2796.0,
+          "num_turns": 1,
+          "skill_attempts": 1,
+          "input_tokens": 353,
+          "cached_input_tokens": 7564,
+          "cache_creation_input_tokens": 5587,
+          "output_tokens": 45,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 350,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000415,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 3,
+              "outputTokens": 32,
+              "cacheReadInputTokens": 7564,
+              "cacheCreationInputTokens": 5587,
+              "webSearchRequests": 0,
+              "costUSD": 0.02370945,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.02412445,
+          "output": {
+            "text_response": "I'm sorry, I can only help with genealogy research tasks. I'm not able to assist with general programming questions like parsing CSV files.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": "skipped: step narration is graded on positive runs"
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": "skipped: only positive tests save a file"
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": "skipped: only positive tests save a file"
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": "skipped: activation rules handle negative tests"
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": "skipped: only positive tests write files"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified that the user's request for help writing a Python CSV parsing function is outside the scope of genealogy research. The decline is accurate and appropriate \u2014 Cowork Genealogy is a genealogy research assistant, not a general programming tool. The response contains no factual errors or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill fully addressed what was required: a clear, accurate decline of an out-of-scope request. The per-test context specifies that correct behavior is to decline without invoking any skill, and the response does exactly that. The decline is complete and requires no additional elements."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly declined the request without attempting to invoke any tools. N/A applies because zero tool calls were made."
+              }
+            ],
+            "judge_cost_usd": 0.0072120000000000005,
+            "duration_ms": 3721.1162999997214,
+            "error": null,
+            "input_tokens": 5687,
+            "cached_input_tokens": 0,
+            "output_tokens": 305
+          },
+          "started_at": 1788435510.1095417,
+          "ended_at": 1788435521.4548044
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-albert-einstein"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with query 'Albert Einstein', received the correct article summary, and confirmed saving the file. The response contains no fabricated material and accurately reflects what the tool returned."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to look up Albert Einstein on Wikipedia. The skill performed the lookup, received the article summary, and saved it to a file. All required work was completed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed query='Albert Einstein' which matches the expected_args pattern ~Einstein. The query targets the correct subject and the tool matched successfully with kind='predicate'."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response states only that the file was saved, without asserting facts beyond what the tool returned."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'Albert Einstein' directly targets the article the user named. The returned title 'Albert Einstein' matches the query exactly, and the skill accepted it at face value without remarking on any discrepancy."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `albert-einstein.md`.' It names the saved file and contains no restatement, summary, or paraphrase of the article content."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 42744.7016000001,
+        "duration_api_ms": 19057.0,
+        "judge_duration_ms": 6543.380300000081,
+        "wall_clock_ms": 52531.885862350464,
+        "num_turns": 7,
+        "input_tokens": 355,
+        "cached_input_tokens": 64550,
+        "cache_creation_input_tokens": 7884,
+        "output_tokens": 955,
+        "judge_input_tokens": 2458,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 520,
+        "skill_cost_usd": 0.063492,
+        "judge_cost_usd": 0.0054719999999999994,
+        "total_cost_usd": 0.06896400000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_002_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 42744.7016000001,
+          "duration_api_ms": 19057.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 355,
+          "cached_input_tokens": 64550,
+          "cache_creation_input_tokens": 7884,
+          "output_tokens": 955,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 344,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000414,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 941,
+              "cacheReadInputTokens": 64550,
+              "cacheCreationInputTokens": 7884,
+              "webSearchRequests": 0,
+              "costUSD": 0.063078,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.063492,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `albert-einstein.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Albert Einstein"
+                },
+                "expected_args": {
+                  "query": "~Einstein"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-albert-einstein"
+              }
+            ],
+            "files_created": [
+              "albert-einstein.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "Albert Einstein"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_002-0-0-skgmxhjg\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_002-0-0-skgmxhjg\\albert-einstein.md",
+                  "content": "# Albert Einstein\n\nAlbert Einstein (14 March 1879 \u2013 18 April 1955) was a German-born theoretical physicist who is widely held to be one of the greatest and most influential scientists of all time. Bes"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with query 'Albert Einstein', received the correct article summary, and confirmed saving the file. The response contains no fabricated material and accurately reflects what the tool returned."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to look up Albert Einstein on Wikipedia. The skill performed the lookup, received the article summary, and saved it to a file. All required work was completed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed query='Albert Einstein' which matches the expected_args pattern ~Einstein. The query targets the correct subject and the tool matched successfully with kind='predicate'."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response states only that the file was saved, without asserting facts beyond what the tool returned."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'Albert Einstein' directly targets the article the user named. The returned title 'Albert Einstein' matches the query exactly, and the skill accepted it at face value without remarking on any discrepancy."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `albert-einstein.md`.' It names the saved file and contains no restatement, summary, or paraphrase of the article content."
+              }
+            ],
+            "judge_cost_usd": 0.0054719999999999994,
+            "duration_ms": 6543.380300000081,
+            "error": null,
+            "input_tokens": 2458,
+            "cached_input_tokens": 4140,
+            "output_tokens": 520
+          },
+          "started_at": 1788435385.7803113,
+          "ended_at": 1788435438.3121972
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-schuylkill-county"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with a query targeting Schuylkill County, Pennsylvania, received the correct article, and confirmed saving the file. The response contains no fabricated material and accurately reflects what the tool returned."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to look up Schuylkill County, Pennsylvania on Wikipedia. The skill performed the lookup, received the article summary, and confirmed saving it to a file. All required work was completed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed query='Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article the user requested. The argument is well-formed and semantically correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response states only that the file was saved, without asserting facts beyond what the tool returned. No fabricated content is present."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'Schuylkill County, Pennsylvania' directly targets the article the user named. The returned title matches the query exactly, and the skill accepted it at face value without remarking on any discrepancy or re-querying."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, meeting the skill's instruction precisely."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 21425.44850000013,
+        "duration_api_ms": 14684.0,
+        "judge_duration_ms": 6963.226999999733,
+        "wall_clock_ms": 30390.265941619873,
+        "num_turns": 7,
+        "input_tokens": 362,
+        "cached_input_tokens": 64692,
+        "cache_creation_input_tokens": 7836,
+        "output_tokens": 899,
+        "judge_input_tokens": 2445,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 580,
+        "skill_cost_usd": 0.0624816,
+        "judge_cost_usd": 0.005759,
+        "total_cost_usd": 0.0682406
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_001_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 21425.44850000013,
+          "duration_api_ms": 14684.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 362,
+          "cached_input_tokens": 64692,
+          "cache_creation_input_tokens": 7836,
+          "output_tokens": 899,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 351,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00044100000000000004,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 881,
+              "cacheReadInputTokens": 64692,
+              "cacheCreationInputTokens": 7836,
+              "webSearchRequests": 0,
+              "costUSD": 0.0620406,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.0624816,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Schuylkill County, Pennsylvania"
+                },
+                "expected_args": {
+                  "query": "~Schuylkill"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-schuylkill-county"
+              }
+            ],
+            "files_created": [
+              "schuylkill-county-pennsylvania.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "Schuylkill County, Pennsylvania"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_001-0-0-33zulove\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_001-0-0-33zulove\\schuylkill-county-pennsylvania.md",
+                  "content": "# Schuylkill County, Pennsylvania\n\nSchuylkill County is a county in the U.S. state of Pennsylvania. It was a major center of anthracite coal mining during the 19th and early 20th centuries, earning th"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with a query targeting Schuylkill County, Pennsylvania, received the correct article, and confirmed saving the file. The response contains no fabricated material and accurately reflects what the tool returned."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to look up Schuylkill County, Pennsylvania on Wikipedia. The skill performed the lookup, received the article summary, and confirmed saving it to a file. All required work was completed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed query='Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article the user requested. The argument is well-formed and semantically correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response states only that the file was saved, without asserting facts beyond what the tool returned. No fabricated content is present."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'Schuylkill County, Pennsylvania' directly targets the article the user named. The returned title matches the query exactly, and the skill accepted it at face value without remarking on any discrepancy or re-querying."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, meeting the skill's instruction precisely."
+              }
+            ],
+            "judge_cost_usd": 0.005759,
+            "duration_ms": 6963.226999999733,
+            "error": null,
+            "input_tokens": 2445,
+            "cached_input_tokens": 4140,
+            "output_tokens": 580
+          },
+          "started_at": 1788435439.3900714,
+          "ended_at": 1788435469.7803373
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-kirchenbuch"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with the query 'Kirchenbuch', received a valid response with title, extract, and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabricating facts or adding unsupported claims. The brief confirmation statement is factually correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to look up Kirchenbuch on Wikipedia to understand what German church books are. The skill successfully retrieved the Wikipedia article and confirmed saving it. Per the per-test context, a brief confirmation naming the file is the correct and complete response; the article content belongs in the file, not the chat. All required work was done."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with query 'Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The tool call was well-formed and targeted the correct article the user named. No extraneous arguments were added. The call succeeded with matched.kind == 'predicate', confirming correct tool usage."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title 'Kirchenbuch', extract, and URL, and confirmed saving the file to 'kirchenbuch.md'. The text response states only 'Saved the Wikipedia summary to `kirchenbuch.md`.' without asserting any facts absent from the tool response. No unsupported claims about content, era, or significance appear in the response."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The skill sent a single wikipedia_search call with query 'Kirchenbuch' targeting the article the user named. The returned title 'Kirchenbuch' matches the query exactly. The skill accepted the response at face value and proceeded to save it without re-querying or remarking on any discrepancy. The query was well-aimed and the response was taken correctly."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The skill's text response is exactly one sentence: 'Saved the Wikipedia summary to `kirchenbuch.md`.' It names the saved file and contains no additional narration, characterization of article content, workflow steps, or summary. This adheres precisely to the instruction to tell the user the file was created in one sentence only and not restate or paraphrase the article content."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 30708.866500000113,
+        "duration_api_ms": 25595.0,
+        "judge_duration_ms": 8851.342099999783,
+        "wall_clock_ms": 40188.3807182312,
+        "num_turns": 7,
+        "input_tokens": 367,
+        "cached_input_tokens": 64884,
+        "cache_creation_input_tokens": 8440,
+        "output_tokens": 1347,
+        "judge_input_tokens": 2744,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 727,
+        "skill_cost_usd": 0.0715392,
+        "judge_cost_usd": 0.006793,
+        "total_cost_usd": 0.07833219999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_009_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 30708.866500000113,
+          "duration_api_ms": 25595.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 367,
+          "cached_input_tokens": 64884,
+          "cache_creation_input_tokens": 8440,
+          "output_tokens": 1347,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 356,
+              "outputTokens": 17,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000441,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 1330,
+              "cacheReadInputTokens": 64884,
+              "cacheCreationInputTokens": 8440,
+              "webSearchRequests": 0,
+              "costUSD": 0.0710982,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.0715392,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `kirchenbuch.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Kirchenbuch"
+                },
+                "expected_args": {
+                  "query": "~Kirchenbuch"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-kirchenbuch"
+              }
+            ],
+            "files_created": [
+              "kirchenbuch.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "Kirchenbuch"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_009-0-0-9e21h3y1\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_009-0-0-9e21h3y1\\kirchenbuch.md",
+                  "content": "# Kirchenbuch\n\nA Kirchenbuch (German: 'church book'; plural Kirchenb\u00fccher) is a parish register maintained by a Christian parish \u2014 primarily Roman Catholic and Lutheran \u2014 recording baptisms, marriages"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with the query 'Kirchenbuch', received a valid response with title, extract, and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabricating facts or adding unsupported claims. The brief confirmation statement is factually correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to look up Kirchenbuch on Wikipedia to understand what German church books are. The skill successfully retrieved the Wikipedia article and confirmed saving it. Per the per-test context, a brief confirmation naming the file is the correct and complete response; the article content belongs in the file, not the chat. All required work was done."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with query 'Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The tool call was well-formed and targeted the correct article the user named. No extraneous arguments were added. The call succeeded with matched.kind == 'predicate', confirming correct tool usage."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title 'Kirchenbuch', extract, and URL, and confirmed saving the file to 'kirchenbuch.md'. The text response states only 'Saved the Wikipedia summary to `kirchenbuch.md`.' without asserting any facts absent from the tool response. No unsupported claims about content, era, or significance appear in the response."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The skill sent a single wikipedia_search call with query 'Kirchenbuch' targeting the article the user named. The returned title 'Kirchenbuch' matches the query exactly. The skill accepted the response at face value and proceeded to save it without re-querying or remarking on any discrepancy. The query was well-aimed and the response was taken correctly."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The skill's text response is exactly one sentence: 'Saved the Wikipedia summary to `kirchenbuch.md`.' It names the saved file and contains no additional narration, characterization of article content, workflow steps, or summary. This adheres precisely to the instruction to tell the user the file was created in one sentence only and not restate or paraphrase the article content."
+              }
+            ],
+            "judge_cost_usd": 0.006793,
+            "duration_ms": 8851.342099999783,
+            "error": null,
+            "input_tokens": 2744,
+            "cached_input_tokens": 4140,
+            "output_tokens": 727
+          },
+          "started_at": 1788435469.8310087,
+          "ended_at": 1788435510.0193894
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_w8m",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-wurttemberg"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with the query 'W\u00fcrttemberg', received the correct article, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to look up W\u00fcrttemberg on Wikipedia for genealogical context about a family leaving in the 1840s. The skill completed the requested task: it searched for the article and saved it. The user's mention of the 1840s was context, not a separate request for emigration research or records."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed query='W\u00fcrttemberg' which matches the expected_args pattern '~rttemberg'. The matched.kind is 'predicate' (not 'fixture_not_found'), confirming correct tool usage. The query targets exactly the article the user named."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with 'Saved the Wikipedia summary to `wurttemberg.md`.' The response makes no claims beyond what the tool returned."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'W\u00fcrttemberg' targets the article the user named. The returned title 'W\u00fcrttemberg' is accepted at face value. No re-querying or override of the title occurred. The skill correctly followed the redirect/formal title behavior."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `wurttemberg.md`.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, adhering precisely to SKILL.md step 5."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 43937.3329,
+        "duration_api_ms": 21847.0,
+        "judge_duration_ms": 7583.33870000024,
+        "wall_clock_ms": 53541.21446609497,
+        "num_turns": 7,
+        "input_tokens": 372,
+        "cached_input_tokens": 64878,
+        "cache_creation_input_tokens": 8245,
+        "output_tokens": 1104,
+        "judge_input_tokens": 2831,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 607,
+        "skill_cost_usd": 0.06715615,
+        "judge_cost_usd": 0.00628,
+        "total_cost_usd": 0.07343614999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_w8m_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 43937.3329,
+          "duration_api_ms": 21847.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 372,
+          "cached_input_tokens": 64878,
+          "cache_creation_input_tokens": 8245,
+          "output_tokens": 1104,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 361,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000451,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 1086,
+              "cacheReadInputTokens": 64878,
+              "cacheCreationInputTokens": 8245,
+              "webSearchRequests": 0,
+              "costUSD": 0.06670514999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.06715615,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `wurttemberg.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "W\u00fcrttemberg"
+                },
+                "expected_args": {
+                  "query": "~rttemberg"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-wurttemberg"
+              }
+            ],
+            "files_created": [
+              "wurttemberg.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "W\u00fcrttemberg"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_w8m-0-0-m4sytem9\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_w8m-0-0-m4sytem9\\wurttemberg.md",
+                  "content": "# W\u00fcrttemberg\n\nW\u00fcrttemberg is a historical German territory in the south-west of present-day Baden-W\u00fcrttemberg, ruled as a county, then a duchy, and from 1806 to 1918 as the Kingdom of W\u00fcrttemberg wit"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with the query 'W\u00fcrttemberg', received the correct article, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to look up W\u00fcrttemberg on Wikipedia for genealogical context about a family leaving in the 1840s. The skill completed the requested task: it searched for the article and saved it. The user's mention of the 1840s was context, not a separate request for emigration research or records."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed query='W\u00fcrttemberg' which matches the expected_args pattern '~rttemberg'. The matched.kind is 'predicate' (not 'fixture_not_found'), confirming correct tool usage. The query targets exactly the article the user named."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with 'Saved the Wikipedia summary to `wurttemberg.md`.' The response makes no claims beyond what the tool returned."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'W\u00fcrttemberg' targets the article the user named. The returned title 'W\u00fcrttemberg' is accepted at face value. No re-querying or override of the title occurred. The skill correctly followed the redirect/formal title behavior."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `wurttemberg.md`.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, adhering precisely to SKILL.md step 5."
+              }
+            ],
+            "judge_cost_usd": 0.00628,
+            "duration_ms": 7583.33870000024,
+            "error": null,
+            "input_tokens": 2831,
+            "cached_input_tokens": 4140,
+            "output_tokens": 607
+          },
+          "started_at": 1788435385.8117554,
+          "ended_at": 1788435439.35297
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-obrien-surname"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with the query 'O'Brien surname', received a valid response about the O'Brien surname with its etymology, historical significance, and geographic distribution, and confirmed saving the result to a file. The response is factually accurate and supported by the tool response."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to look up the surname O'Brien on Wikipedia. The skill performed the requested lookup by calling wikipedia_search with an appropriate query targeting the O'Brien surname article, received the response, and confirmed saving it. The task was fully completed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed args matching the fixture's expected_args. The query 'O'Brien surname' satisfies the expected substring pattern '~O'Brien' and correctly targets the article the user requested. The matched.kind is 'predicate', indicating successful matching."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with a clear statement: 'Saved the Wikipedia summary to `o-brien-surname.md`.' The response does not assert any facts absent from the tool response and correctly confirms the file save."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'O'Brien surname' directly targets the article the user named. The returned title 'O'Brien (surname)' is accepted at face value and represents the formal Wikipedia article title. The skill correctly interprets the single response without re-querying or overriding the returned title."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `o-brien-surname.md`.' It names the saved file and contains no restatement, summarization, paraphrase, or characterization of the article content, adhering precisely to the skill's instruction."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 23210.609199999908,
+        "duration_api_ms": 18074.0,
+        "judge_duration_ms": 7646.935400000075,
+        "wall_clock_ms": 31854.191064834595,
+        "num_turns": 7,
+        "input_tokens": 358,
+        "cached_input_tokens": 64489,
+        "cache_creation_input_tokens": 7935,
+        "output_tokens": 970,
+        "judge_input_tokens": 2357,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 630,
+        "skill_cost_usd": 0.06387295000000001,
+        "judge_cost_usd": 0.005921,
+        "total_cost_usd": 0.06979395000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_004_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 23210.609199999908,
+          "duration_api_ms": 18074.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 358,
+          "cached_input_tokens": 64489,
+          "cache_creation_input_tokens": 7935,
+          "output_tokens": 970,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 347,
+              "outputTokens": 16,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00042699999999999997,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 954,
+              "cacheReadInputTokens": 64489,
+              "cacheCreationInputTokens": 7935,
+              "webSearchRequests": 0,
+              "costUSD": 0.06344595,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.06387295000000001,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `o-brien-surname.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "O'Brien surname"
+                },
+                "expected_args": {
+                  "query": "~O'Brien"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-obrien-surname"
+              }
+            ],
+            "files_created": [
+              "o-brien-surname.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "O'Brien surname"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_004-0-0-x9odsalc\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_004-0-0-x9odsalc\\o-brien-surname.md",
+                  "content": "# O'Brien (surname)\n\nO'Brien is an Irish surname. It is the anglicised form of the Gaelic \u00d3 Briain, meaning 'descendant of Brian.' The surname is most famously associated with Brian Boru, the High Kin"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with the query 'O'Brien surname', received a valid response about the O'Brien surname with its etymology, historical significance, and geographic distribution, and confirmed saving the result to a file. The response is factually accurate and supported by the tool response."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to look up the surname O'Brien on Wikipedia. The skill performed the requested lookup by calling wikipedia_search with an appropriate query targeting the O'Brien surname article, received the response, and confirmed saving it. The task was fully completed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed args matching the fixture's expected_args. The query 'O'Brien surname' satisfies the expected substring pattern '~O'Brien' and correctly targets the article the user requested. The matched.kind is 'predicate', indicating successful matching."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with a clear statement: 'Saved the Wikipedia summary to `o-brien-surname.md`.' The response does not assert any facts absent from the tool response and correctly confirms the file save."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'O'Brien surname' directly targets the article the user named. The returned title 'O'Brien (surname)' is accepted at face value and represents the formal Wikipedia article title. The skill correctly interprets the single response without re-querying or overriding the returned title."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `o-brien-surname.md`.' It names the saved file and contains no restatement, summarization, paraphrase, or characterization of the article content, adhering precisely to the skill's instruction."
+              }
+            ],
+            "judge_cost_usd": 0.005921,
+            "duration_ms": 7646.935400000075,
+            "error": null,
+            "input_tokens": 2357,
+            "cached_input_tokens": 4140,
+            "output_tokens": 630
+          },
+          "started_at": 1788435442.3058515,
+          "ended_at": 1788435474.1600425
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_p4t",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-potato-famine",
+        "wikipedia-search-great-famine-ireland"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with query 'potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to look up the potato famine on Wikipedia. The skill performed the lookup, received the article, and confirmed saving it. All required work was completed. The response correctly omits article content per SKILL.md step 5."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with query 'potato famine', which matches the expected_args pattern '~potato'. The tool matched successfully (matched.kind == 'predicate'), confirming the arguments were correct and the right fixture was invoked."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with the statement 'Saved the Wikipedia summary to `great-famine-ireland.md`.' The response makes no claims unsupported by the tool response."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'potato famine' targets the article the user named. The returned title 'Great Famine (Ireland)' is accepted at face value and used correctly for the filename. Following the redirect from the user's phrasing to the formal article title is correct behavior, not a discrepancy."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' It names the saved file and contains no mid-workflow narration, article summary, characterization, or restatement of content. This matches SKILL.md step 5 precisely."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 47380.313800000295,
+        "duration_api_ms": 25698.0,
+        "judge_duration_ms": 7496.444099999735,
+        "wall_clock_ms": 56528.61547470093,
+        "num_turns": 7,
+        "input_tokens": 357,
+        "cached_input_tokens": 64636,
+        "cache_creation_input_tokens": 8210,
+        "output_tokens": 1193,
+        "judge_input_tokens": 2810,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 620,
+        "skill_cost_usd": 0.0683223,
+        "judge_cost_usd": 0.006324,
+        "total_cost_usd": 0.0746463
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_p4t_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 47380.313800000295,
+          "duration_api_ms": 25698.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 357,
+          "cached_input_tokens": 64636,
+          "cache_creation_input_tokens": 8210,
+          "output_tokens": 1193,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 346,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000411,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 1180,
+              "cacheReadInputTokens": 64636,
+              "cacheCreationInputTokens": 8210,
+              "webSearchRequests": 0,
+              "costUSD": 0.06791130000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.0683223,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `great-famine-ireland.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "potato famine"
+                },
+                "expected_args": {
+                  "query": "~potato"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-potato-famine"
+              }
+            ],
+            "files_created": [
+              "great-famine-ireland.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "potato famine"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_p4t-0-0-xpn0mzyj\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_p4t-0-0-xpn0mzyj\\great-famine-ireland.md",
+                  "content": "# Great Famine (Ireland)\n\nThe Great Famine, also known as the Great Hunger, the Famine, or the Irish Potato Famine, was a period of mass starvation and disease in Ireland between 1845 and 1852. The mo"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": "skipped: not a slug-naturalization-act-of-1906 scenario"
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with query 'potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and confirmed saving the file. The response accurately reflects what the tool returned without fabrication or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to look up the potato famine on Wikipedia. The skill performed the lookup, received the article, and confirmed saving it. All required work was completed. The response correctly omits article content per SKILL.md step 5."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with query 'potato famine', which matches the expected_args pattern '~potato'. The tool matched successfully (matched.kind == 'predicate'), confirming the arguments were correct and the right fixture was invoked."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with the statement 'Saved the Wikipedia summary to `great-famine-ireland.md`.' The response makes no claims unsupported by the tool response."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'potato famine' targets the article the user named. The returned title 'Great Famine (Ireland)' is accepted at face value and used correctly for the filename. Following the redirect from the user's phrasing to the formal article title is correct behavior, not a discrepancy."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' It names the saved file and contains no mid-workflow narration, article summary, characterization, or restatement of content. This matches SKILL.md step 5 precisely."
+              }
+            ],
+            "judge_cost_usd": 0.006324,
+            "duration_ms": 7496.444099999735,
+            "error": null,
+            "input_tokens": 2810,
+            "cached_input_tokens": 4140,
+            "output_tokens": 620
+          },
+          "started_at": 1788435385.7054238,
+          "ended_at": 1788435442.2340393
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wikipedia_010",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wikipedia-search-naturalization-act-1906"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with the query 'Naturalization Act of 1906', received a valid response with title, extract, and URL, and confirmed saving the file. The response text accurately reflects what the tool returned without fabrication or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The user asked to look up the Naturalization Act of 1906 on Wikipedia. The skill completed this task by calling wikipedia_search, receiving the article summary, and confirming the file was saved. All required work was performed."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search with query 'Naturalization Act of 1906', which matches the expected_args pattern '~Naturalization'. The query directly targets the article the user named. The tool call matched successfully (matched.kind == 'predicate') with no fixture_not_found errors."
+          },
+          {
+            "source": "rubric",
+            "name": "Template fidelity",
+            "score": 3,
+            "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with the statement 'Saved the Wikipedia summary to naturalization-act-of-1906.md'. The response contains no facts absent from the tool response and does not assert unsupported claims."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool query and response interpretation",
+            "score": 3,
+            "rationale": "The query 'Naturalization Act of 1906' directly targets the article the user named. The returned title 'Naturalization Act of 1906' matches the query exactly, and the skill accepted it at face value without re-querying or overriding the returned title."
+          },
+          {
+            "source": "rubric",
+            "name": "Reply economy",
+            "score": 3,
+            "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to naturalization-act-of-1906.md.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, fully complying with the instruction to keep the reply to one sentence only."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 22801.28549999972,
+        "duration_api_ms": 16822.0,
+        "judge_duration_ms": 7313.388300000042,
+        "wall_clock_ms": 30463.84882926941,
+        "num_turns": 7,
+        "input_tokens": 363,
+        "cached_input_tokens": 64714,
+        "cache_creation_input_tokens": 8095,
+        "output_tokens": 1036,
+        "judge_input_tokens": 2731,
+        "judge_cached_input_tokens": 4140,
+        "judge_output_tokens": 638,
+        "skill_cost_usd": 0.06551545,
+        "judge_cost_usd": 0.006335,
+        "total_cost_usd": 0.07185045000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wikipedia_010_2026-09-03_11-36-25_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 22801.28549999972,
+          "duration_api_ms": 16822.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 363,
+          "cached_input_tokens": 64714,
+          "cache_creation_input_tokens": 8095,
+          "output_tokens": 1036,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 352,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000442,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 1018,
+              "cacheReadInputTokens": 64714,
+              "cacheCreationInputTokens": 8095,
+              "webSearchRequests": 0,
+              "costUSD": 0.06507344999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.06551545,
+          "output": {
+            "text_response": "Saved the Wikipedia summary to `naturalization-act-of-1906.md`.",
+            "activated": true,
+            "skills_invoked": [
+              "search-wikipedia"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wikipedia_search",
+                "args": {
+                  "query": "Naturalization Act of 1906"
+                },
+                "expected_args": {
+                  "query": "~Naturalization"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wikipedia-search-naturalization-act-1906"
+              }
+            ],
+            "files_created": [
+              "naturalization-act-of-1906.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-wikipedia",
+                  "args": "Naturalization Act of 1906"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__wikipedia_search",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_010-0-0-gbk_noes\\.claude\\skills\\search-wikipedia\\templates\\wiki-summary.md"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "C:\\Users\\Paaboat\\AppData\\Local\\Temp\\eval-ut_search_wikipedia_010-0-0-gbk_noes\\naturalization-act-of-1906.md",
+                  "content": "# Naturalization Act of 1906\n\nThe Naturalization Act of 1906 was a United States federal law that standardized the naturalization process for immigrants. Signed by President Theodore Roosevelt on June"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_no_wiki_no_write",
+                "passed": true,
+                "error": "skipped: not a no-wiki-no-write scenario"
+              },
+              {
+                "name": "test_only_wikipedia_search_called",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_reply_does_not_narrate_pending_step",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_saved_file_matches_template",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_albert_einstein",
+                "passed": true,
+                "error": "skipped: not a slug-albert-einstein scenario"
+              },
+              {
+                "name": "test_slug_great_famine_ireland",
+                "passed": true,
+                "error": "skipped: not a slug-great-famine-ireland scenario"
+              },
+              {
+                "name": "test_slug_kirchenbuch",
+                "passed": true,
+                "error": "skipped: not a slug-kirchenbuch scenario"
+              },
+              {
+                "name": "test_slug_matches_returned_title",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_naturalization_act_of_1906",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_slug_obrien_surname",
+                "passed": true,
+                "error": "skipped: not a slug-obrien-surname scenario"
+              },
+              {
+                "name": "test_slug_schuylkill_county_pennsylvania",
+                "passed": true,
+                "error": "skipped: not a slug-schuylkill-county-pennsylvania scenario"
+              },
+              {
+                "name": "test_slug_united_states_census",
+                "passed": true,
+                "error": "skipped: not a slug-united-states-census scenario"
+              },
+              {
+                "name": "test_slug_wurttemberg",
+                "passed": true,
+                "error": "skipped: not a slug-wurttemberg scenario"
+              },
+              {
+                "name": "test_wikipedia_search_called_exactly_once",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_wrote_one_markdown_file",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with the query 'Naturalization Act of 1906', received a valid response with title, extract, and URL, and confirmed saving the file. The response text accurately reflects what the tool returned without fabrication or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The user asked to look up the Naturalization Act of 1906 on Wikipedia. The skill completed this task by calling wikipedia_search, receiving the article summary, and confirming the file was saved. All required work was performed."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search with query 'Naturalization Act of 1906', which matches the expected_args pattern '~Naturalization'. The query directly targets the article the user named. The tool call matched successfully (matched.kind == 'predicate') with no fixture_not_found errors."
+              },
+              {
+                "source": "rubric",
+                "name": "Template fidelity",
+                "score": 3,
+                "rationale": "The skill called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with the statement 'Saved the Wikipedia summary to naturalization-act-of-1906.md'. The response contains no facts absent from the tool response and does not assert unsupported claims."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool query and response interpretation",
+                "score": 3,
+                "rationale": "The query 'Naturalization Act of 1906' directly targets the article the user named. The returned title 'Naturalization Act of 1906' matches the query exactly, and the skill accepted it at face value without re-querying or overriding the returned title."
+              },
+              {
+                "source": "rubric",
+                "name": "Reply economy",
+                "score": 3,
+                "rationale": "The response is exactly one sentence: 'Saved the Wikipedia summary to naturalization-act-of-1906.md.' It names the saved file and contains no restatement, summary, paraphrase, or characterization of the article content, fully complying with the instruction to keep the reply to one sentence only."
+              }
+            ],
+            "judge_cost_usd": 0.006335,
+            "duration_ms": 7313.388300000042,
+            "error": null,
+            "input_tokens": 2731,
+            "cached_input_tokens": 4140,
+            "output_tokens": 638
+          },
+          "started_at": 1788435438.7353337,
+          "ended_at": 1788435469.1991825
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 295706.6548999997,
+    "duration_api_ms": 175649.0,
+    "judge_duration_ms": 79077.18089999937,
+    "num_turns": 64,
+    "input_tokens": 3623,
+    "cached_input_tokens": 589840,
+    "cache_creation_input_tokens": 78146,
+    "output_tokens": 9425,
+    "judge_input_tokens": 40723,
+    "judge_cached_input_tokens": 37260,
+    "judge_output_tokens": 6481,
+    "skill_cost_usd": 0.6136515000000001,
+    "judge_cost_usd": 0.076854,
+    "total_cost_usd": 0.6905055000000001,
+    "wall_clock_ms": 135749.3805885315
+  },
+  "review_sample": {
+    "tests": [
+      "ut_search_wikipedia_005",
+      "ut_search_wikipedia_007",
+      "ut_search_wikipedia_008",
+      "ut_search_wikipedia_009",
+      "ut_search_wikipedia_010"
+    ],
+    "cursor": [
+      "ut_search_wikipedia_001",
+      "ut_search_wikipedia_002",
+      "ut_search_wikipedia_003",
+      "ut_search_wikipedia_004",
+      "ut_search_wikipedia_005",
+      "ut_search_wikipedia_007",
+      "ut_search_wikipedia_008",
+      "ut_search_wikipedia_009",
+      "ut_search_wikipedia_010",
+      "ut_search_wikipedia_p4t"
+    ],
+    "seed": 2613
+  }
+}
