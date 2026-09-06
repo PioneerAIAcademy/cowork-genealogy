@@ -68,6 +68,10 @@ eval/e2e-project/
 # not a fixture validity artifact, so kept out of git to avoid repo bloat.
 eval/runlogs/e2e/*/*.session.jsonl
 
+# Markdown session transcripts — deleted in PR #1238, re-landed via stale-base
+# merges (issue #1342). A vitest guard blocks them from returning.
+eval/runlogs/e2e/*/*.transcript.md
+
 # Description-optimizer output (make optimize-skill). Regenerable; runlogs/optimizer
 # is excluded from the release gate + comparisons (eval/CLAUDE.md).
 eval/runlogs/optimizer/*

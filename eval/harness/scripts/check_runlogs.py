@@ -681,6 +681,12 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
 
 
 def main() -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     changes = git_diff_changes()
 
     # Collect (skill -> [filename]) for added/renamed-into-place released
