@@ -136,11 +136,13 @@ Read:
 
 ## 2. Assess the 7-Point Stop Criteria
 
-**This is the gate.** Assess the seven in the order below and stop at the first
-that fails, naming it. Declaring requires all seven, each with a 1-2 sentence
-assessment tied to project state. A decline writes `stop_criteria: null` and
-names the blocking criterion in `justification`; a partial object is rejected,
-because all seven keys are required whenever the object is present.
+**This is the gate.** Assess the seven in the order below. **The verdict stops
+at the first that fails — name it. The record does not.** Write all seven either
+way, each a 1-2 sentence assessment tied to project state: what was met, what
+failed, and what the evidence could not reach. Declaring requires all seven met.
+A decline carries the same seven, honestly assessed, with the blocking criterion
+named in `justification`. A partial object is rejected — all seven keys are
+required whenever the object is present.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -240,9 +242,9 @@ research_append({
   fields: {
     exhaustive_declaration: {
       declared: false,
-      justification: "conflict_resolution: the 1862 fire destroyed probate and church records; no surviving source names the father. Terminating for lack of further known sources.",
+      justification: "repository_breadth blocks: the 1862 fire destroyed probate and church records; no surviving source names the father. Terminating for lack of further known sources.",
       log_entry_ids: ["log_001", "log_002"],
-      stop_criteria: null
+      stop_criteria: { /* all seven, honestly assessed — what was met, what failed, what the evidence could not reach */ }
     }
   }
 })
