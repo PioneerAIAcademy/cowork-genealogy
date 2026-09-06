@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-08-23_18-36-39.json",
-  "annotator": "dallan@quass.org",
+  "run_log": "v1_2026-09-06_21-49-04.json",
+  "annotator": "edmondoware70@gmail.com",
   "corrections": [
     {
       "test_id": "ut_research_exhaustiveness_006",
@@ -20,16 +20,8 @@
     },
     {
       "test_id": "ut_research_exhaustiveness_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_006",
       "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
+      "dimension_name": "Gate reasoning",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -51,7 +43,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -59,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,83 +67,11 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_003",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -173,14 +101,6 @@
     {
       "test_id": "ut_research_exhaustiveness_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_005",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -196,8 +116,16 @@
     },
     {
       "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
       "dimension_source": "rubric",
-      "dimension_name": "Threshold reasoning",
+      "dimension_name": "Stop criteria coverage",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
@@ -211,11 +139,59 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_010",
       "dimension_source": "rubric",
       "dimension_name": "Stop criteria coverage",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     }
   ]
