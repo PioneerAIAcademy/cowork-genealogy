@@ -354,8 +354,9 @@ which date range they should set in the site's own UI.
   field. (Identity conflicts — `conflict_type: "identity"`,
   `disputed_attribute: null` — put the dispute in `identity_question` and
   name no single field to omit, so this rule does not apply to them.) When
-  more than one such entry names the field, any entry that is **not**
-  `resolved` takes precedence:
+  more than one such entry names the field, apply the highest-precedence
+  status present — `unresolved` beats `resolved` beats `moot` (contested
+  beats settled beats irrelevant):
   - `status: "resolved"` → encode the value from
     `preferred_assertion_id`, and only that value. A recorded resolution
     is the project's answer; a competing value it rejected must not be
