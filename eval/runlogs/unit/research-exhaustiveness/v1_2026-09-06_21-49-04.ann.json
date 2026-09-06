@@ -192,7 +192,7 @@
       "dimension_name": "Gate reasoning",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": " The 3 is right: the skill refused to declare, naming pli_005's in_progress status as the blocker. Recording what this run does not show. The branch moves the already-declared short-circuit above the plan-completeness rule, which only changes an outcome when a question is both already declared and has an in_progress item. No scenario has both, so the reorder is correct by reading and unexercised by measurement — 18/18 is not evidence for it."
     }
   ]
 }
