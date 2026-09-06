@@ -345,11 +345,13 @@ const COUNTRY_ALIASES: Record<string, string> = {
   mexico: "mexico",
   // Not genealogy countries — carried because they are where a mis-resolution
   // lands, and the guard can only declare a contradiction against a country it
-  // recognises. Dropping these re-opens the catches in
-  // eval/tests/e2e/anna-findejsova-daughter/starting-tree.gedcomx.json.
+  // recognises. Dropping either re-opens a catch in
+  // eval/tests/e2e/anna-findejsova-daughter/starting-tree.gedcomx.json, and
+  // both are pinned by tests. Add a country here only with the landing that
+  // needs it: "south korea" was in an earlier revision with no corpus case and
+  // no test, which is an entry that reads as coverage while proving nothing.
   cameroon: "cameroon",
   "north korea": "north korea",
-  "south korea": "south korea",
 
   // Endonyms and other-language forms for the countries above.
   deutschland: "germany",

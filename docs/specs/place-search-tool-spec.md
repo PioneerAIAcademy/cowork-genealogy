@@ -234,12 +234,24 @@ are not wildcards but still move the answer.
 | `#` | dropped | `"Alverson Cemetery #1, …, Indiana"` → *Alverson Cemetery, **North Carolina*** |
 | `~` | dropped | would silently enable fuzzy matching on recorded text |
 
-**`&` maps rather than drops**, and that is load-bearing: the index treats the
-conjunction as a word, so dropping it deletes a token and a shorter parent name
-wins. `"Manila American Cemetery & Memorial, …, Philippines"` returns the
+**`&` maps rather than drops**, measured on the four conjunction strings that
+are the whole corpus population — not on `&` in general. For a conjunction it is
+load-bearing: the index treats the conjunction as a word, so dropping it deletes
+a token and a shorter parent name wins. `"Manila American Cemetery & Memorial, …, Philippines"` returns the
 cemetery at 88 with the word but only the **city** of Manila at 72 with the `&`
 removed. Dropping is right for `#` specifically — the index normalises it, so
 the Alverson query still matches FamilySearch's own place named `#1` at 95.
+
+A `"X & District"` registration district is the known counter-shape, and it is
+absent from this corpus so nothing here measures it: live,
+`"Todmorden & District, Yorkshire, England"` persists the **county** under this
+rule where dropping the `&` returns the town at 95, and `"Keighley & District"`
+behaves the same. That form is common in English and Commonwealth civil
+registration. `&` is genuinely ambiguous — a conjunction wants the word, a
+`"& District"` suffix wants the leaf — and no single rule serves both. A dual
+query (issue both variants, keep the better result) is the fix that would, and
+it is not built: choosing between two live results needs a ranking rule nobody
+has specified.
 
 Escaping is documented but does not work: `\\?` and `\\*` return HTTP 400, and
 `\\&` / `\\#` behave as the bare character because they were never wildcards.

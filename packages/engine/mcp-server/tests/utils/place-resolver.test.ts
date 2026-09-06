@@ -404,10 +404,12 @@ describe("resolveStandardPlace date qualifier and its guards", () => {
     expect(mockSearchPlace).toHaveBeenNthCalledWith(2, "Manger, Hordaland, Norge");
   });
 
-  it("falls back to the undated answer when the dated one contradicts the recorded country", async () => {
-    // A dated answer can legitimately name a different sovereign, but
-    // research_append turns a countryConsistency contradiction into a hard
-    // error that rejects the whole append. Prefer the writable answer.
+  it("falls back to the undated answer when the guard cannot confirm the dated one", async () => {
+    // "Bavaria" names no country the alias table reads, so the verdict here is
+    // `unverifiable`, NOT `contradiction` — which is exactly why the trigger is
+    // `!== "ok"`. Keying it on `contradiction` alone would persist the dated
+    // rendering with the guard having confirmed nothing, so this case is the
+    // rail on that trigger: revert it and this test fails.
     mockSearchPlace
       .mockResolvedValueOnce([entry({ placeRepId: "b1", fullName: "Bavaria", score: 99 })])
       .mockResolvedValueOnce([entry({ placeRepId: "b2", fullName: "Bavaria, Germany", score: 95 })]);
@@ -525,10 +527,10 @@ describe("countryConsistency — diacritics and endonyms", () => {
   });
 
   it("declares a contradiction against a country carried only for that purpose", () => {
-    // cameroon / north korea / south korea are in COUNTRY_ALIASES for no other
-    // reason than this: the guard cannot contradict a country it cannot read,
-    // and these are where the corpus's mis-resolutions actually land. Deleting
-    // any of the three silently disarms the catch.
+    // cameroon / north korea are in COUNTRY_ALIASES for no other reason than
+    // this: the guard cannot contradict a country it cannot read, and these are
+    // where the corpus's mis-resolutions actually land. Deleting either
+    // silently disarms the catch, which is why both are asserted here.
     expect(countryConsistency("West Bromwich, England", "Bamenda, Mezam, Northwest Region, Cameroon")).toBe("contradiction");
     expect(countryConsistency("Bayern, Deutschland", "Changgŭm-ni, South Hwanghae, North Korea")).toBe("contradiction");
   });
