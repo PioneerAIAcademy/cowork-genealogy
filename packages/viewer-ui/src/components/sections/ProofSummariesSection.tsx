@@ -63,6 +63,20 @@ export default function ProofSummariesSection(): React.JSX.Element {
             }
           >
             <div className={styles.body}>
+              {ps.claims && ps.claims.length > 0 && (
+                <div className={styles.claims}>
+                  <span className={styles.footerLabel}>Per-claim tiers:</span>
+                  {ps.claims.map((c) => (
+                    <div key={c.claim} className={styles.claim}>
+                      <span className={styles.claimLabel}>{c.claim}</span>
+                      <StatusBadge value={c.proof_tier} />
+                      <span className={styles.claimEndpoint}>
+                        {c.relationship.type}: {c.relationship.parent} → {c.relationship.child}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className={styles.narrative}>
                 <Markdown remarkPlugins={[remarkGfm]}>{ps.narrative_markdown}</Markdown>
               </div>

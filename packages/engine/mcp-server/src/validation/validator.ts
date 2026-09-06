@@ -485,7 +485,13 @@ export const RESEARCH_SHAPES = {
   proof_summary: new Set([
     "id", "question_id", "tier", "vehicle", "supporting_assertion_ids",
     "resolved_conflict_ids", "exhaustive_search_summary",
-    "narrative_markdown",
+    "narrative_markdown", "claims",
+  ]),
+  proof_claim: new Set([
+    "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+  ]),
+  proof_claim_relationship: new Set([
+    "type", "parent", "child",
   ]),
   evaluation_entry: new Set([
     "id", "focus", "target_id", "target_type", "verdict", "file_path",
@@ -1008,6 +1014,37 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
+    }
+
+    // Per-claim tier breakdown (optional, additive). Nothing walked into a
+    // nested object inside proof_summary before this: without this loop an
+    // arbitrary string in claims[].proof_tier would pass validation and the
+    // tree-encoding gate would then read it.
+    if (ps.claims !== undefined && ps.claims !== null) {
+      const claims = Array.isArray(ps.claims) ? ps.claims : [];
+      if (!Array.isArray(ps.claims)) {
+        addError(report, psp, "'claims' must be an array");
+      }
+      for (let j = 0; j < claims.length; j++) {
+        const claim = claims[j];
+        const clp = `${psp}/claims[${j}]`;
+        checkRequired(claim, [
+          "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+        ], clp, report, NULLABLE_FIELDS);
+        checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
+        if (claim && typeof claim === "object" && "proof_tier" in claim) {
+          checkEnum(claim.proof_tier, "proof_tier", clp, report);
+        }
+        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
+          const rel = claim.relationship;
+          const relp = `${clp}/relationship`;
+          checkRequired(rel, ["type", "parent", "child"], relp, report, NULLABLE_FIELDS);
+          checkAllowedKeys(rel, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", relp, report);
+          if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
+            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}'`);
+          }
+        }
+      }
     }
   }
 

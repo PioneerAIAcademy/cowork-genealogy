@@ -1956,6 +1956,14 @@ describe("Research closed shapes", () => {
           resolved_conflict_ids: [],
           exhaustive_search_summary: "Census and vital records searched",
           narrative_markdown: "## Findings\nProbable.",
+          claims: [
+            {
+              claim: "paternity",
+              proof_tier: "probable",
+              supporting_assertion_ids: ["a_001"],
+              relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+            },
+          ],
         },
       ],
       evaluations: [
@@ -2045,6 +2053,11 @@ describe("Research closed shapes", () => {
     { site: "timeline events", plant: (r) => (r.timelines[0].events[0].zz_extra = true) },
     { site: "timeline gaps", plant: (r) => (r.timelines[0].gaps[0].zz_extra = true) },
     { site: "proof_summaries", plant: (r) => (r.proof_summaries[0].zz_extra = true) },
+    { site: "proof_summaries claims", plant: (r) => (r.proof_summaries[0].claims[0].zz_extra = true) },
+    {
+      site: "proof_claim relationship",
+      plant: (r) => (r.proof_summaries[0].claims[0].relationship.zz_extra = true),
+    },
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
     { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
   ];
@@ -2064,6 +2077,82 @@ describe("Research closed shapes", () => {
       ).toBe(true);
     });
   }
+
+  // #1711 — per-claim tier breakdown on proof_summaries[].claims. Optional
+  // and additive; these pin the write-time enforcement the task-reviewer
+  // flagged as missing (nothing walked into a nested object here before).
+  describe("proof_summaries[].claims (#1711 per-claim tiers)", () => {
+    it("accepts a proof_summaries entry with a valid claims[] breakdown", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "maternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("behaves exactly as before when claims is absent (no regression on the default path)", async () => {
+      const research = maximalResearch();
+      delete research.proof_summaries[0].claims;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects a claims[] entry with an invalid proof_tier value", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].proof_tier = "very_confident";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]" &&
+            e.message.includes("'very_confident' is not a valid proof_tier")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a claims[].relationship.type other than 'ParentChild'", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].relationship.type = "Couple";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]/relationship" &&
+            e.message.includes("relationship.type must be 'ParentChild'")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a claims[] entry missing a required field", async () => {
+      const research = maximalResearch();
+      delete research.proof_summaries[0].claims[0].supporting_assertion_ids;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]" &&
+            e.message.includes("missing required field 'supporting_assertion_ids'")
+        )
+      ).toBe(true);
+    });
+  });
 
   it("RESEARCH_SHAPES mirrors research.schema.json exactly (drift guard)", () => {
     const here = dirname(fileURLToPath(import.meta.url));
@@ -2096,6 +2185,8 @@ describe("Research closed shapes", () => {
       timeline_event: schema.$defs.timeline_event,
       timeline_gap: schema.$defs.timeline_gap,
       proof_summary: schema.$defs.proof_summary,
+      proof_claim: schema.$defs.proof_claim,
+      proof_claim_relationship: schema.$defs.proof_claim_relationship,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
     };

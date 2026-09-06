@@ -247,6 +247,19 @@ export interface Timeline {
   gaps: TimelineGap[]
 }
 
+export interface ProofClaimRelationship {
+  type: 'ParentChild'
+  parent: string
+  child: string
+}
+
+export interface ProofClaim {
+  claim: string
+  proof_tier: ProofTier
+  supporting_assertion_ids: string[]
+  relationship: ProofClaimRelationship
+}
+
 export interface ProofSummary {
   id: string
   question_id: string
@@ -256,6 +269,7 @@ export interface ProofSummary {
   resolved_conflict_ids: string[]
   exhaustive_search_summary: string
   narrative_markdown: string
+  claims?: ProofClaim[]
 }
 
 export interface KnownHolding {
