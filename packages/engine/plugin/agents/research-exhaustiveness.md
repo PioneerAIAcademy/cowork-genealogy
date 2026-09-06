@@ -77,11 +77,6 @@ exhaustive. If the request is really to pick the **next question** (→
 declare/proof guidance in this skill applies only *after* you have decided
 this genuinely is an exhaustiveness check.
 
-Only evaluate a question whose **active** plan's items are all `completed` or
-`skipped`. If any is `in_progress`, refuse to declare and recommend finishing
-the in-flight work first. Items on a non-active plan are audit trail and never
-block.
-
 ## 0. Precondition check (run first)
 
 **Already declared — stop before any other check.** If the question's
@@ -90,6 +85,11 @@ not run the checks below: nothing here can block a declaration that is already
 written, and re-running Step 4's `update` is a structural no-op. Report the
 existing declaration and its `stop_criteria` as they stand, and point to
 `proof-conclusion`.
+
+Only evaluate a question whose **active** plan's items are all `completed` or
+`skipped`. If any is `in_progress`, refuse to declare and recommend finishing
+the in-flight work first. Items on a non-active plan are audit trail and never
+block.
 
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
@@ -138,8 +138,9 @@ Read:
 
 **This is the gate.** Assess the seven in the order below and stop at the first
 that fails, naming it. Declaring requires all seven, each with a 1-2 sentence
-assessment tied to project state. A decline owes the entry that blocks it, not
-all seven.
+assessment tied to project state. A decline writes `stop_criteria: null` and
+names the blocking criterion in `justification`; a partial object is rejected,
+because all seven keys are required whenever the object is present.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -239,9 +240,9 @@ research_append({
   fields: {
     exhaustive_declaration: {
       declared: false,
-      justification: "Probate and church records were destroyed in an 1862 fire; no surviving source names the father. Terminating for lack of further known sources.",
+      justification: "conflict_resolution: the 1862 fire destroyed probate and church records; no surviving source names the father. Terminating for lack of further known sources.",
       log_entry_ids: ["log_001", "log_002"],
-      stop_criteria: { /* honest per-criterion assessment of what was and wasn't met */ }
+      stop_criteria: null
     }
   }
 })
