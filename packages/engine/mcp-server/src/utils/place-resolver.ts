@@ -300,9 +300,10 @@ async function getSearchEntries(
 // Still a hand-maintained subset of ~30 countries, and the corpus contains at
 // least ten more with real volume (chile 129, bolivia 87, honduras 67,
 // philippines 63, croatia 61, brazil 60, slovakia 54, south africa 51). Those
-// are NOT added here because expanding coverage raises a question this map
-// cannot answer on its own — "georgia" is both a US state and a country, and
-// the guard would be treating the state as the country. Tracked separately.
+// are NOT added here to keep this PR to one change. The georgia ambiguity
+// (US state vs country) is settled — the lead ruled 2026-08-27 that Georgia
+// Republic is the country and bare Georgia the state, represent it that way
+// if it is easy and otherwise leave georgia out. Coverage is issue #1907.
 //
 // Note what this map is NOT for: most `unverifiable` verdicts are place strings
 // whose trailing token is a US state or an English county (pennsylvania 1285,
@@ -409,7 +410,9 @@ export function placeSegments(place: string): string[] {
  * is a recognized country) against the standard_place's segments.
  * - "ok": the input names a country and the standard place is consistent.
  * - "contradiction": the input names a country the standard place plainly lacks.
- * - "unverifiable": the input text names no recognized country — cannot compare.
+ * - "unverifiable": cannot compare — either the input text names no recognized
+ *   country, or the standard place names none the alias table carries (a
+ *   historical polity such as "Bohemia").
  */
 export function countryConsistency(place: string, standardPlace: string): "ok" | "contradiction" | "unverifiable" {
   const inputSegs = placeSegments(place);
@@ -524,6 +527,10 @@ export async function resolveStandardPlace(
   // The cost is explicit: where the guard cannot confirm, we keep the modern
   // rendering and lose the historical one. That is the conservative side to err
   // on, since the guard cannot tell a sovereignty change from a mis-resolution.
+  // Measure it before wiring a date caller: `unverifiable` is the verdict for
+  // every place whose text ends in a US state or an English county — 563/2094
+  // distinct corpus places, 8004/27028 occurrences — so for those the qualifier
+  // costs a second query and then changes nothing.
   if (
     year !== undefined &&
     standardPlace &&
