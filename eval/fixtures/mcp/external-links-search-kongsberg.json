@@ -1,0 +1,818 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search -- Digitalarkivet and other off-FamilySearch Kongsberg links.",
+  "args": {
+    "standardPlace": "~Kongsberg"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Kongsberg, Buskerud, Norway",
+      "startYear": 1750,
+      "endYear": 1810
+    },
+    "totalForPlace": 625,
+    "returned": 200,
+    "results": [
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+births+and+baptisms&sid=103&country=norway",
+        "linkText": "British Armed Forces and Overseas Births and Baptisms"
+      },
+      {
+        "url": "https://library.harvard.edu/services-tools/hollis",
+        "linkText": "Harvard Library Catalog"
+      },
+      {
+        "url": "https://www.statueofliberty.org/discover/passenger-ship-search/",
+        "linkText": "The Statue of Liberty-Ellis Island Foundation, Inc."
+      },
+      {
+        "url": "http://surnamearchive.com/document/trinity5.htm",
+        "linkText": "Church Directory September 1, 1917"
+      },
+      {
+        "url": "http://www.rhd.uit.no/kirkebok/kirkebok_sok_e.aspx",
+        "linkText": "Norwegian Historical Data Centre"
+      },
+      {
+        "url": "http://www.dogpile.com/",
+        "linkText": "Dogpile Web Search Home Page"
+      },
+      {
+        "url": "http://www.kvasir.no/",
+        "linkText": "Kvasir - En smartere måte å lete på"
+      },
+      {
+        "url": "http://www.ancestry.com/search/default.aspx?",
+        "linkText": "Birth Records, Death Records, Marriage Records and US Census Records"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/115/rettergangsmateriale",
+        "linkText": "Rettergangsmateriale - Norway Probate Records"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "http://www.rhd.uit.no/kirkebok/kirkebok_sok_e.aspx",
+        "linkText": "Parish Register Search, 1700s-1900s"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60604/",
+        "linkText": "The census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/111/eiendom-og-tinglysing",
+        "linkText": "Eiendom og tinglysing"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Digital Archives"
+      },
+      {
+        "url": "http://www.norwayheritage.com/",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1801",
+        "linkText": "Search for persons in the 1801 census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.arkivverket.no/URN:kb_read?idx_fylke=0&idx_kilde=RESK&idx_periode=&idx_textsearch=&js=j",
+        "linkText": "The category Clerical archives"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1891",
+        "linkText": "1891 Census (Incomplete) Records"
+      },
+      {
+        "url": "https://www.rhd.uit.no/nhdc/census.html#BM1801",
+        "linkText": "Documenting the Norwegian Censuses, 1801"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1910",
+        "linkText": "1910 Folketelling"
+      },
+      {
+        "url": "https://slcl.libguides.com/SLCL_genealogy/Norway",
+        "linkText": "History & Genealogy Department at St. Louis County Library"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=UTVA",
+        "linkText": "DigitalArkivet has additional emigration lists"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=EMIP",
+        "linkText": "DigitalArkivet has additional emigration protocols"
+      },
+      {
+        "url": "https://rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "https://digitalarkivet.no/",
+        "linkText": "Norway Church Records"
+      },
+      {
+        "url": "http://www.ub.uio.no/uhs/",
+        "linkText": "Bibliotek for humaniora og samfunnsvitenskap"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/content/109/church-books",
+        "linkText": "Church Books - The Digital Archive"
+      },
+      {
+        "url": "https://martinroe.com/blog/bygdeboker-available-online/",
+        "linkText": "Bygdebøker Available Online (Outside the National Library)"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.home.no/anna-bendixen/",
+        "linkText": "Utvandring - Pioneers in America"
+      },
+      {
+        "url": "https://slekt1.com/index.php/bygdeboker",
+        "linkText": "Norway's Bibliography of Published Village Books"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/content/scanned-archives",
+        "linkText": "Scanned Archives - The Digital Archive"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources",
+        "linkText": "Finn kilde"
+      },
+      {
+        "url": "http://www.arkivverket.no/URN:kb_read",
+        "linkText": "Skannede kirkebøker"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/content/109/church-books",
+        "linkText": "Church Books - The Digital Archive"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Digitalarkivet - Search for church books"
+      },
+      {
+        "url": "http://www.ellisisland.org/",
+        "linkText": "The Statue of Liberty — Ellis Island Foundation"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/99",
+        "linkText": "Civil Wedding Banns and Marriage Records"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og Skjemaer til Folketellinga 1910"
+      },
+      {
+        "url": "http://www.norwayheritage.com/",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "https://www.norskedalen.org/get-involved/",
+        "linkText": "Get Involved - Norskedalen"
+      },
+      {
+        "url": "http://www.hinsides.no/slekt/linker.htm",
+        "linkText": "Willy's slektssider - Lenker"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/76",
+        "linkText": "Search in Born and Baptised Records"
+      },
+      {
+        "url": "http://www.bklyn-genealogy-info.com/",
+        "linkText": "Brooklyn Genealogy Information Page Index"
+      },
+      {
+        "url": "http://www.arkivverket.no/URN:kb_read",
+        "linkText": "Blaing i digitaliserte kirkeboksider"
+      },
+      {
+        "url": "http://www.norwayheritage.com/ships/index.asp",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Digitalarkivet - Finn kilde"
+      },
+      {
+        "url": "http://surnamearchive.com/document/trinity5.htm",
+        "linkText": "Church Directory September 1, 1917"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-10814/1801-norway-census?utm_source=organic_blog&utm_medium=blog&utm_campaign=supersearch&tr_funnel=supersearch&tr_country=US&tr_creative=nov19historicalrecords&utm_content=nov19historicalrecords",
+        "linkText": "1801 Norway Census"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30030/norway-baptisms-1634-1927",
+        "linkText": "Norway Baptisms, 1634-1927"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1345",
+        "linkText": "Norway Births and Christenings, 1648-1903"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30031/norway-marriages-1660-1926",
+        "linkText": "Norway Marriages, 1660-1926"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "http://www.umu.se/",
+        "linkText": "Umeå universitet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/content/scanned-archives",
+        "linkText": "Scanned Archives - The Digital Archive"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61749/",
+        "linkText": "1801 Norway Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60095",
+        "linkText": "Norway, Select Marriages, 1660-1927"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60095",
+        "linkText": "Norway Select Marriages, 1660-1926"
+      },
+      {
+        "url": "http://www.infobel.com/it/belgium/worldteldir.aspx?page=/eng/euro/no",
+        "linkText": "Telephone Directories"
+      },
+      {
+        "url": "http://www.genealogylinks.net/europe/norway/index.html",
+        "linkText": "Norwegia Genealogy Links - Norway"
+      },
+      {
+        "url": "https://aulis.org/Calendar/Ecclesiastical_dates.html",
+        "linkText": "Ecclesiastical Calendar"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1870",
+        "linkText": "The Digital Archives - 1870 Census"
+      },
+      {
+        "url": "https://www.plu.edu/library/",
+        "linkText": "Library at Pacific Lutheran University"
+      },
+      {
+        "url": "https://library.und.edu/",
+        "linkText": "Chester Fritz Library, University of North Dakota"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=rs",
+        "linkText": "Regnskap og skattemateriale"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60092",
+        "linkText": "Norway Select Baptisms, 1634-1927"
+      },
+      {
+        "url": "https://web.archive.org/web/20150905234542/http://www.genealogi.no/content/fremdriftsplanen-norsk-prestehistorie-1968",
+        "linkText": "Fremdriftsplanen for Norsk Prestehistorie 1968"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61749/",
+        "linkText": "1801 Norway Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/content/scanned-archives",
+        "linkText": "Scanned Archives - The Digital Archive"
+      },
+      {
+        "url": "http://www.riksarkivet.no/",
+        "linkText": "Nasjonalarkivet Hjemmeside"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60095",
+        "linkText": "Norway, Select Marriages, 1660-1927"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/87/folketellinger-og-manntall",
+        "linkText": "Folketellinger og manntall - Digitalarkivet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=EMIP",
+        "linkText": "DigitalArkivet has additional emigration protocols"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1900",
+        "linkText": "1900 Folketelling"
+      },
+      {
+        "url": "https://www.norskedalen.org/",
+        "linkText": "Norskedalen"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1875",
+        "linkText": "Search for persons in the 1875 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1910",
+        "linkText": "1910 Folketelling"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60095",
+        "linkText": "Norway Select Marriages, 1660-1926"
+      },
+      {
+        "url": "http://www.rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "http://slektsbiblioteket.com/sbib/div/div2.htm#041",
+        "linkText": "Tidsbanken hjemmeside"
+      },
+      {
+        "url": "https://apps.library.und.edu/bygdebok/",
+        "linkText": "Arne G. Brekke Bygdebok Collection"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/kb/browse",
+        "linkText": "Søk etter kirkebøke"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60092",
+        "linkText": "Norway Select Baptisms, 1634-1927"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60722/",
+        "linkText": "U.S., Evangelical Lutheran Church in America Church Records, 1781-1969"
+      },
+      {
+        "url": "http://www.cord.edu/",
+        "linkText": "Concordia College, Moorhead, Minnesota"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Digitalarkivet - Finn kilde"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/norway-baptisms-1634-1927",
+        "linkText": "Norway Baptisms, 1634-1927"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.slekt.org/utvandring/utvandring.html",
+        "linkText": "Emigration from Gjerpen to America"
+      },
+      {
+        "url": "http://www.norwayheritage.com/",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "http://www.dokpro.uio.no/rygh_ng/rygh_form.html",
+        "linkText": "Oluf Rygh: Norwegian Farm Names"
+      },
+      {
+        "url": "http://www.searchdetective.net/International_phone_number.html",
+        "linkText": "International phone, fax numbers, e-mail addresses etc."
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/sk/browse",
+        "linkText": "Scanned Probate Records, The National Archives of Norway"
+      },
+      {
+        "url": "http://www.naha.stolaf.edu/",
+        "linkText": "Norwegian-American Historical Association Records"
+      },
+      {
+        "url": "https://rhd.uit.no/",
+        "linkText": "Registreringssentral for historiske data"
+      },
+      {
+        "url": "https://slekt1.com/index.php/bygdeboker",
+        "linkText": "Norway's Bibliography of Published Village Books"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/115/rettergangsmateriale",
+        "linkText": "Rettergangsmateriale - Norway Probate Records"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "http://www.norwayheritage.com/p_year.asp",
+        "linkText": "Solem, Swiggum & Austheim Emigration Ship Index"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30233/finland-baptisms-1657-1890",
+        "linkText": "Finland Baptisms, 1657-1890"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/",
+        "linkText": "The Digital Archive, 1628-1940"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "http://www.ancestry.com/search/default.aspx?",
+        "linkText": "Birth Records, Death Records, Marriage Records and US Census Records"
+      },
+      {
+        "url": "https://www.rhd.uit.no/nhdc/census.html#BM1801",
+        "linkText": "Documenting the Norwegian Censuses, 1801"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1910",
+        "linkText": "The Digital Archives - 1910 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.daughtersofnorway.org/",
+        "linkText": "Daughters of Norway National Organization"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/79/emigrasjon-og-flytting",
+        "linkText": "Emigrasjon og flytting - Digitalarkivet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive"
+      },
+      {
+        "url": "http://www.norwayheritage.com/ships/index.asp",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "http://www.slektshistorielaget.no/Kilder/vtoten/kirkeboker.htm",
+        "linkText": "Kirkebøker"
+      },
+      {
+        "url": "http://vesterheim.org/index.php",
+        "linkText": "Vesterheim Norwegian-American Museum"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60722/",
+        "linkText": "U.S., Evangelical Lutheran Church in America Church Records, 1781-1969"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1865",
+        "linkText": "Search for persons in the 1865 census"
+      },
+      {
+        "url": "https://web.archive.org/web/20150317035439/http://en.slekt1.com/index.php/slektsboker",
+        "linkText": "Genealogy books"
+      },
+      {
+        "url": "https://www.norskedalen.org/get-involved/",
+        "linkText": "Get Involved - Norskedalen"
+      },
+      {
+        "url": "https://martinroe.com/blog/bygdeboker-available-online/",
+        "linkText": "Bygdebøker Available Online (Outside the National Library)"
+      },
+      {
+        "url": "http://www.startsiden.no/",
+        "linkText": "Topp"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/norway-marriage-index-1660-1926",
+        "linkText": "Norway Marriage Index, 1660-1926"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/111/eiendom-og-tinglysing",
+        "linkText": "Eiendom og tinglysing"
+      },
+      {
+        "url": "http://www.freedict.com/onldict/nor.html",
+        "linkText": "Online English to Norwegian to English Dictionary"
+      },
+      {
+        "url": "https://vareminnesider.no/index.php?sign=39cb4f8d032fe87e47bc628d237134e1",
+        "linkText": "Dødsannonser, dødsfall og minnesider for hele Norge"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=tab_ftr&sc%5B%5D=sk",
+        "linkText": "Finn kilde - Digitalarkivet"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Digitalarkivet - Search for church books"
+      },
+      {
+        "url": "https://apps.library.und.edu/bygdebok/history-and-acknowledgements",
+        "linkText": "Arne G. Brekke Bygdebok Collection"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/99",
+        "linkText": "Civil Wedding Banns and Marriage Records"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61749/",
+        "linkText": "1801 Norway Census"
+      },
+      {
+        "url": "http://www.wisconsinbattleflags.com/units-flags/15th-wisconsin.php",
+        "linkText": "15th Wisconsin Infantry Home Page"
+      },
+      {
+        "url": "https://www.plu.edu/library/",
+        "linkText": "Library at Pacific Lutheran University"
+      },
+      {
+        "url": "https://slekt1.com/index.php/bygdeboker",
+        "linkText": "Norway's Bibliography of Published Village Books"
+      },
+      {
+        "url": "http://www.bklyn-genealogy-info.com/",
+        "linkText": "Brooklyn Genealogy Information Page Index"
+      },
+      {
+        "url": "http://www.arkivverket.no/URN:kb_read",
+        "linkText": "Blaing i digitaliserte kirkeboksider"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1900",
+        "linkText": "1900 Folketelling"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://library.und.edu/",
+        "linkText": "Chester Fritz Library, University of North Dakota"
+      },
+      {
+        "url": "https://www.findagrave.com/cemetery/search?cemetery-name=&cemetery-loc=Norway&only-with-cemeteries=cemOnly&locationId=country_52",
+        "linkText": "Find a Grave Norway Page"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "https://digitalarkivet.no/search/sources",
+        "linkText": "Finn kilde"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1891",
+        "linkText": "1891 Census (Incomplete) Records"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "http://www.kvasir.no/",
+        "linkText": "Kvasir - En smartere måte å lete på"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=british+armed+forces+and+overseas+deaths+and+burials&sid=103&country=norway",
+        "linkText": "British Armed Forces and Overseas Deaths and Burials"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og Skjemaer til Folketellinga 1910"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/kb/browse",
+        "linkText": "Søk etter kirkebøke"
+      },
+      {
+        "url": "http://www.arkivverket.no/URN:kb_read",
+        "linkText": "Blaing i digitaliserte kirkeboksider"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1346",
+        "linkText": "Norway Marriages, 1600s-1800s"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/en/kb/browse",
+        "linkText": "Search for church books"
+      },
+      {
+        "url": "http://www.museumsnett.no/emigrantmuseum/",
+        "linkText": "Emigrant Museum"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30032/norway-burials-1666-1927",
+        "linkText": "Norway Burials, 1666-1927"
+      },
+      {
+        "url": "http://www.findagrave.com/cgi-bin/fg.cgi",
+        "linkText": "Norway Cemetery Records"
+      },
+      {
+        "url": "http://www.dokpro.uio.no/rygh_ng/rygh_form.html",
+        "linkText": "Oluf Rygh: Norwegian Farm Names"
+      },
+      {
+        "url": "http://www.nagcnl.org/",
+        "linkText": "Norwegian American Genealogical Center & Naeseth Library"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "Digitalarkivet - Finn kilde"
+      },
+      {
+        "url": "https://www.skatteetaten.no/en/person/national-registry/certificates-and-information/order-certificates/",
+        "linkText": "Order Certificates, Norwegian Tax Administration"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/87/folketellinger-og-manntall",
+        "linkText": "Folketellinger og manntall - Digitalarkivet"
+      },
+      {
+        "url": "http://www.riksarkivet.no/",
+        "linkText": "Nasjonalarkivet Hjemmeside"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60604/",
+        "linkText": "The census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1910",
+        "linkText": "1910 Folketelling"
+      },
+      {
+        "url": "http://www.sofn.com/home/index.jsp",
+        "linkText": "Sons of Norway Records"
+      },
+      {
+        "url": "https://slcl.libguides.com/SLCL_genealogy/Norway",
+        "linkText": "History & Genealogy Department at St. Louis County Library"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=UTVA",
+        "linkText": "DigitalArkivet has additional emigration lists"
+      },
+      {
+        "url": "http://www.emigrationcenter.com/",
+        "linkText": "Emigration Center"
+      },
+      {
+        "url": "https://digitalarkivet.no/",
+        "linkText": "Norway Church Records"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?page=1&s=&from=&to=&format=all&archive_key=&st%5B0%5D=PASS",
+        "linkText": "DigitalArkivet has additional passport records"
+      },
+      {
+        "url": "http://www.museumsnett.no/emigrantmuseum/",
+        "linkText": "Emigrant Museum"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&st%5B%5D=PALI",
+        "linkText": "DigitalArkivet has additional ship passenger lists"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60095",
+        "linkText": "Norway Select Marriages, 1660-1926"
+      },
+      {
+        "url": "http://www.ub.uio.no/uhs/",
+        "linkText": "Bibliotek for humaniora og samfunnsvitenskap"
+      },
+      {
+        "url": "http://www.umu.se/",
+        "linkText": "Umeå universitet"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/norway-burials-1666-1927",
+        "linkText": "Norway Burials, 1666-1927"
+      },
+      {
+        "url": "https://www.nagcnl.org/",
+        "linkText": "Norwegian American Genealogical Center & Naeseth Library"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1345",
+        "linkText": "Norway Births and Christenings, 1648-1903"
+      },
+      {
+        "url": "http://www.nagcnl.org/",
+        "linkText": "Norwegian American Genealogical Center & Naeseth Library"
+      },
+      {
+        "url": "https://nettgrav.no/finn-en-grav",
+        "linkText": "Finn grav i Norge – søk etter gravsted og gravlund"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1910",
+        "linkText": "The Digital Archives - 1910 Census"
+      },
+      {
+        "url": "http://www.genealogi.no/wiki/index.php/Liste_over_digitaliserte_bygdeb%C3%B8ker",
+        "linkText": "List of digitized village books"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archives of Norway"
+      },
+      {
+        "url": "https://www.plu.edu/library/",
+        "linkText": "Library at Pacific Lutheran University"
+      },
+      {
+        "url": "http://www.norwayheritage.com/",
+        "linkText": "100 Years of Emigrant Ships from Norway"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "https://www.rhd.uit.no/nhdc/census.html#BM1801",
+        "linkText": "Documenting the Norwegian Censuses, 1801"
+      },
+      {
+        "url": "https://rhd.uit.no/census/instrukser.html",
+        "linkText": "Instrukser og skjemaer til folketellingene, 1815-1960"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1875",
+        "linkText": "Search for persons in the 1875 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=tab_ftr&sc%5B%5D=sk",
+        "linkText": "Finn kilde - Digitalarkivet"
+      },
+      {
+        "url": "http://files.lib.byu.edu/family-history-library/research-outlines/Scandinavia/Norway.pdf",
+        "linkText": "Research Outline for Norway"
+      },
+      {
+        "url": "http://www.kvasir.no/",
+        "linkText": "Kvasir - En smartere måte å lete på"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/content/115/rettergangsmateriale",
+        "linkText": "Rettergangsmateriale - Digitalarkivet"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/norway-marriage-index-1660-1926",
+        "linkText": "Norway Marriage Index, 1660-1926"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1891",
+        "linkText": "1891 Census (Incomplete)"
+      },
+      {
+        "url": "https://www.norwegianamerican.org/Research-Links",
+        "linkText": "Norwegian-American Genealogical Association Research Links"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-30030/norway-baptisms-1634-1927",
+        "linkText": "Norway Baptisms, 1634-1927"
+      },
+      {
+        "url": "https://media.digitalarkivet.no/db/browse?start_year=&end_year=&text=%3A+Lassens+samlinger",
+        "linkText": "Søk etter skanna arkiver - Nasjonalarkivet"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/search/sources?s=&from=&to=&format=all&archive_key=&sc%5B%5D=rs",
+        "linkText": "Regnskap og skattemateriale"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/",
+        "linkText": "The Digital Archive, 1628-1940"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/census/search/1875",
+        "linkText": "Search for persons in the 1875 Census"
+      },
+      {
+        "url": "https://www.digitalarkivet.no/en/search/sources",
+        "linkText": "The Digital Archive, early - 1900s"
+      },
+      {
+        "url": "https://www.rhd.uit.no/nhdc/census.html#BM1865",
+        "linkText": "Documenting the Norwegian Censuses, 1865"
+      }
+    ]
+  }
+}

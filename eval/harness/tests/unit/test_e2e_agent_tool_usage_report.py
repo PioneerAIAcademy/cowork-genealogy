@@ -273,7 +273,14 @@ def test_body_mentions_matches_whole_names_only():
 
 def test_never_called_is_split_on_whether_the_body_asks_for_the_tool(tmp_path: Path):
     """Dallan's two cases: a never-called tool the body never mentions is a delete
-    candidate; one the body DOES ask for is a body-clarity / binding gap."""
+    candidate; one the body DOES ask for is not.
+
+    The mentioned side names FOUR readings, not two (issue #1344, 2026-08-31):
+    non-compliance, a binding gap, an instruction in a branch the orchestrator
+    no longer routes to, or a mention that BOUNDS the tool. The wording matters
+    because #1344 was filed by paraphrasing this line, and the old text offered
+    only the first two — so the other two causes went unconsidered. See
+    ADR-0009's #1344 section."""
     _write(tmp_path, "run-1.json", {
         "subagents": [_capture("gps-mentor", ["research_query"])],
     })
@@ -286,7 +293,20 @@ def test_never_called_is_split_on_whether_the_body_asks_for_the_tool(tmp_path: P
     assert d.mentioned_in_body == ["wiki_search"]  # orphan_tool is NOT in the body
 
     out = format_report(diffs, {}, s)
-    assert "wiki_search" in out and "clarify the body" in out
+    assert "wiki_search" in out
+    # All four readings must be offered, and none may be presented as settled.
+    # The fourth — a mention that BOUNDS the tool, where zero calls is the
+    # instruction working — is the reading `gps-mentor`'s `wiki_search` already
+    # needs today: its only site marks it "Last-resort", so a zero there is the
+    # instruction working, not a compliance gap. The report must therefore stop
+    # implying that a mentioned-but-uncalled tool is a problem.
+    for reading in (
+        "non-compliance",
+        "binding gap",
+        "unrouted branch",
+        "bounded/last-resort",
+    ):
+        assert reading in out, f"the mentioned-in-body action omits {reading!r}"
     assert "orphan_tool" in out and "candidate to drop from tools:" in out
 
 

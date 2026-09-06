@@ -257,6 +257,34 @@ def test_v1_grounds_served_hyphenated_range():
     check_v1(before, after, served)
 
 
+def test_v1_grounds_served_url_path_identifier():
+    """A collection id served inside a URL path is grounded.
+
+    `external_links_search` is in _TRACEABLE_ID_TOOLS because it returns
+    collection ids, but it returns them ONLY as URL path segments, and the
+    grounding lookbehind refused any digit run preceded by '/'. So every id
+    that tool served was invisible to the grounded set and a correct citation
+    read as a fabrication: 22 of the 40 ids its 16 fixtures serve were
+    ungroundable. Observed on ut_research_plan_r3d in
+    v1_2026-09-01_07-35-31, which cited Ancestry collection 61749 after
+    external_links_search served it. Reds without the fix."""
+    served = [_call("external_links_search", {
+        "query": {"standardPlace": "Kongsberg, Buskerud, Norway"},
+        "totalForPlace": 1,
+        "returned": 1,
+        "results": [
+            {
+                "url": "https://www.ancestry.com/search/collections/61749/",
+                "linkText": "1801 Norway Census",
+            }
+        ],
+    })]
+    before, after = _states([
+        _item("pli_006", rationale="Also available on Ancestry (col 61749)."),
+    ])
+    check_v1(before, after, served)
+
+
 # --- V5 -------------------------------------------------------------------
 
 def test_v5_fires_on_indexed_claim_against_zero_count():
