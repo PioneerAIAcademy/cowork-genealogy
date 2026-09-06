@@ -349,17 +349,26 @@ which date range they should set in the site's own UI.
 - Unusual name → start broad (surname + place only).
 - Common name → start narrow (add dates, relatives, a specific collection).
 - Include only parameters you're confident about; omit uncertain ones.
-- **Check `conflicts[]` before encoding a place or date.** If a
-  `conflicts[]` entry names that field in `disputed_attribute`:
+- **Check `conflicts[]` before encoding a place or date.** Consider only
+  `conflict_type: "fact"` entries whose `disputed_attribute` names that
+  field. (Identity conflicts — `conflict_type: "identity"`,
+  `disputed_attribute: null` — put the dispute in `identity_question` and
+  name no single field to omit, so this rule does not apply to them.) When
+  more than one such entry names the field, any entry that is **not**
+  `resolved` takes precedence:
   - `status: "resolved"` → encode the value from
     `preferred_assertion_id`, and only that value. A recorded resolution
     is the project's answer; a competing value it rejected must not be
     encoded, however plausible it looks elsewhere in the file.
-  - Any other status → the fact is still contested. **Omit the field.**
+  - `status: "unresolved"` → the fact is still contested. **Omit the field.**
     These sites *filter* on it, so a guessed side returns nothing and the
     nil gets logged as evidence of absence for a record that exists. Say
     in one line that the value is contested, naming the candidates so the
     researcher can filter by eye.
+  - `status: "moot"` → the conflict stopped mattering (later evidence made
+    it irrelevant, typically because the disputed person proved to be
+    someone else). The fact is not contested; encode the field as an
+    ordinary parameter.
 - Add relative names when you have them (Ancestry weights them heavily).
 - Widen with spelling variants or wildcards when a search returns little.
 
