@@ -353,6 +353,12 @@ const COUNTRY_ALIASES: Record<string, string> = {
   // Endonyms and other-language forms for the countries above.
   deutschland: "germany",
   preussen: "germany",
+  // `ß` does not decompose under NFD, so canonicalCountry's diacritic fold
+  // leaves "Preußen" as "preußen" and the ASCII key above never matches it.
+  // Both spellings appear in the corpus; without this the guard reads one and
+  // not the other, which is the same silent half-coverage the fold was added
+  // to remove.
+  "preußen": "germany",
   norge: "norway",
   noreg: "norway",
   danmark: "denmark",

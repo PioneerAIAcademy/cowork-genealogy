@@ -513,6 +513,17 @@ describe("countryConsistency — diacritics and endonyms", () => {
     expect(countryConsistency("Prussia, Germany", "Prussia, Germany")).toBe("ok");
   });
 
+  it("reads both spellings of Preußen, since ß survives the diacritic fold", () => {
+    // NFD decomposes "ö" into "o" + combining diaeresis, so the fold strips it;
+    // it does NOT decompose "ß", so "Preußen" folds to "preußen" and misses an
+    // ASCII-only key. Both spellings are in the corpus. The pair below is
+    // synthetic on purpose: in every corpus string the Prussian segment is
+    // followed by "Deutschland"/"Germany", and the guard reads only the
+    // trailing segment, so no corpus case reaches this key at all.
+    expect(countryConsistency("Posen, Preußen", "Poznan, Bavaria, Germany")).toBe("ok");
+    expect(countryConsistency("Posen, Preussen", "Poznan, Bavaria, Germany")).toBe("ok");
+  });
+
   it("declares a contradiction against a country carried only for that purpose", () => {
     // cameroon / north korea / south korea are in COUNTRY_ALIASES for no other
     // reason than this: the guard cannot contradict a country it cannot read,
