@@ -380,10 +380,15 @@ Per-project context about the researcher (experience level, paid
 subscriptions, derived narration guidance) lives in a
 `researcher_profile` section of `research.json`. `init-project` writes
 it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. Every
-`SKILL.md` opens with a one-line `**Narration:**` instruction that
-tells Claude to read `researcher_profile.narration_guidance` and apply
-it as the narration style for that invocation.
+the project's research objective at project start. 26 of the 27 skills
+carry a one-line `**Narration:**` instruction that tells Claude to read
+`researcher_profile.narration_guidance` and apply it as the narration
+style for that invocation. `search-wikipedia` is the deliberate
+exception — the line's own fallback is "a one-line preamble per action",
+and that preamble is exactly what its
+`test_reply_does_not_narrate_pending_step` validator fails it for. Do
+not add the line to it; re-derive the exception list with
+`grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md`.
 
 Three architectural rules made this design necessary:
 
@@ -502,7 +507,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required

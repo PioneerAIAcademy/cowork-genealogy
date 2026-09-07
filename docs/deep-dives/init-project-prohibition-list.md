@@ -28,8 +28,9 @@ rebuilding it.**
 
 ## B. The opening turn — ask, never wait
 
-4. All three questions (objective, experience, access) are asked in the opening
-   turn, alongside the person ID/name request.
+4. Both questions (objective, experience) are asked in the opening turn,
+   alongside the person ID/name request. Site access is **not** asked — the
+   question was dropped and access is assumed available.
 5. Must **never** stop and wait for an answer. "Asking a question and then
    stopping to wait is a failure: the project never gets created."
 6. Both project files are written in the same pass, with whatever mix of stated
@@ -39,17 +40,22 @@ rebuilding it.**
    guarded by `test_objective_default_verbatim` (tag `objective-default`).
 8. Must never invent, infer or default a *specific* research direction from the
    person's data — the verbatim generic default is the only fallback.
-9. No stated experience → `intermediate`. No stated access → `["none"]`. **[V]**
-   — guarded by `test_profile_defaults_when_all_default` (tag
+9. No stated experience → `intermediate`. No stated access → `subscriptions`
+   is left **absent**, never `["none"]`: the latter asserts the researcher told
+   us they have nothing, the opposite of what is now assumed. **[V]** — both
+   directions guarded by `test_profile_defaults_when_all_default` (tag
    `opening-turn-all-defaults`).
 10. The final summary must state **which** fields were defaulted.
 11. Repeating the questions is allowed only *after* both files are written, and
     never as a turn-ending prompt.
-12. Never persist a default profile when the opening message stated experience or
-    subscriptions.
-13. `subscriptions` are normalized before storing: canonical enum only,
-    case-folded, trimmed, deduped, aliases mapped, unrecognized → `other`, empty
-    → `["none"]`. **[V]** (closed enum).
+12. Never persist a default profile when the opening message stated experience,
+    or volunteered access unprompted.
+13. `subscriptions` is not written by the interview at all. It is only ever
+    populated from access the researcher volunteers unprompted, and any value
+    stored must be on the closed enum (`other` for anything unrecognized). A
+    bare FamilySearch account is the baseline everyone has and is never stored.
+    Empty does **not** become `["none"]` — the field stays absent. **[V]**
+    (closed enum).
 14. `narration_guidance` is the table text for the stored `experience_level`,
     **verbatim**, not paraphrased. **[V]** — no validator today; requested as V5.
 

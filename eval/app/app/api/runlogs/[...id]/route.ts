@@ -14,7 +14,10 @@ import { deleteCandidate, releaseRunLog } from '@/lib/release';
  */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments. Decoding again turned a
+  // double-encoded separator into a real one AFTER normalisation had run, so a
+  // traversal reached the path sinks looking clean. Join what Next gave us.
+  const runLogId = id.join('/');
   const found = await readRunLogById(runLogId);
   if (!found) return NextResponse.json({ error: 'not found' }, { status: 404 });
   let annotation;
@@ -59,7 +62,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string[] }> }) {
   const { id } = await params;
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments. Decoding again turned a
+  // double-encoded separator into a real one AFTER normalisation had run, so a
+  // traversal reached the path sinks looking clean. Join what Next gave us.
+  const runLogId = id.join('/');
 
   let body: { action?: string };
   try {

@@ -1,0 +1,350 @@
+{
+  "run_log": "v1_2026-09-01_12-23-44.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All factual claims are supported by the input state and tool responses. The tree stubs accurately reflect known information (Sarah's name, approximate birth year, place; Mary's full name; unknown parent with Donovan surname). The place standardization ('Boston, Suffolk, Massachusetts, United States') comes directly from the place_search tool result. The researcher profile defaults to intermediate with verbatim narration_guidance. The oral knowledge holding is correctly recorded. No fabricated names, dates, or places. Historical context provided is analysis, not fabrication about specific people.\n\nJunior: (No fabricated names, dates, or places. All facts match the input state and tool responses exactly. Correctness = Pass.)"
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: created stubs for Sarah Hennessy (with name, approximate birth year, standardized place), Mary Donovan (full name, no assumptions), and Mary's parent (surname Donovan, gender Unknown, no given name). Recorded the volunteered oral knowledge as a known_holdings entry. Initialized research.json with complete project block (objective, title, subject_person_ids, status, created/updated). Defaulted experience_level to intermediate with explanation. No required items were omitted.\n\nJunior: ( Because every required element was addressed and nothing was omitted, the completeness rating is Pass.)"
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three tool calls passed correct arguments. place_search received 'Boston' with context 'Massachusetts', matching expected_args ~Boston. project_create received the full tree structure with correct person IDs (I1, I2, I3), relationships (R1, R2), sources (S1), and all required fields. research_append correctly updated researcher_profile with experience_level and narration_guidance, and appended known_holdings with proper structure. No fixture_not_found errors. All critical identifiers and arguments are correct.\n\nJunior: (Because each tool call passed the correct arguments, identifiers, and structure, with no omissions or errors, the Tool Arguments rating is Pass.)"
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `rubric` / `Stub & tree fidelity`\nLLM: 3 → Junior: 3\n\n> Tree faithfully represents known information without fabrication. Sarah Hennessy (I1) has name, gender (Female), approximate birth date (~1920), and standardized place from tool result. Mary Donovan (I2) has full name and gender (Female) — no assumptions or guesses. Unknown parent (I3) has surname Donovan and gender Unknown (correctly refusing patrilineal assumption), with empty given name per schema. All facts sourced to S1 at quality 1. Local I IDs used throughout. User-vs-tree discrepancy (no FamilySearch tree exists) is explicitly flagged in the response. No placeholder stubs created for the unknown grandmother.\n\nJunior: (Stub & Tree Fidelity = Pass, because the tree accurately represents the input state, adheres to schema rules, and avoids unsound assumptions or fabricated data.)"
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `rubric` / `Project section seeding & schema validity`\nLLM: 3 → Junior: 3\n\n> research.json initialized with complete project block: id (rp_001), objective (clear and specific), subject_person_ids ([I1]), status, created/updated timestamps, and title ('Sarah Hennessy's maternal grandmother' — concise 4-word title, not a full sentence). All required sections present: researcher_profile populated, known_holdings array with one entry, assertions/sources/research_questions as empty arrays. Written file conforms to schema on inspection per validation response (valid: true, no warnings). No extraneous fields.\n\nJunior: (Project Section Seeding & Schema Validity = Pass, because all required fields are present, correctly populated, and validated without errors.)"
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `rubric` / `Researcher-profile interview`\nLLM: 3 → Junior: 3\n\n> Experience level not stated by user, so correctly defaulted to 'intermediate' with explicit note that it is editable. narration_guidance is verbatim text from the intermediate level table ('One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline.'). subscriptions field absent from written profile (correct per 2026-08-31 change). Objective was stated clearly by user, so no defaulting was needed there. Single-turn execution completed in one pass without blocking.\n\nJunior: (Researcher Profile Interview = Pass, because defaults were applied correctly, verbatim guidance was included, schema changes were respected, and the user’s stated objective was captured faithfully.)"
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `rubric` / `Place standardization`\nLLM: 3 → Junior: 3\n\n> User stated 'Boston, Massachusetts' in the objective. Skill called place_search with 'Boston' and context 'Massachusetts', received 'Boston, Suffolk, Massachusetts, United States' as standardPlace. This tool-supplied value was kept verbatim in the tree (Sarah's birth fact shows standard_place exactly as returned). No hand-entered places were altered or fabricated. The standardization was performed via the tool, not hand-written. All places in the tree are either tool-supplied (kept as-is) or absent (unknown parent has no place facts).\n\nJunior: (Place Standardization = Pass, because the tool was correctly called, the standardized value was preserved exactly, and no hand entered or fabricated places were introduced.)"
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_002`** — `rubric` / `Known-holdings capture`\nLLM: 3 → Junior: 3\n\n> User volunteered one item: 'Sarah's mother's maiden name was Mary Donovan.' Skill captured it as a known_holdings entry with holding_type 'oral_knowledge', confidence 'confident', promoted false, relates_to_person_ids [I2] (correctly linked to Mary Donovan stub). No holdings were fabricated. The entry is recorded as a lightweight survey note, not promoted into sources or assertions. The description accurately reflects what was volunteered. No other holdings were volunteered, so the array contains only this one entry.\n\nJunior: (Known Holdings Capture = Pass, because the oral knowledge was faithfully recorded, properly linked, and schema compliant, with no omissions or fabrications.)"
+    },
+    {
+      "test_id": "ut_init_project_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test. The skill correctly declined to perform init-project's task (project setup) and instead routed the user to question-selection, which is the appropriate skill for handling 'which research question should I pursue next?' on an existing project. The routing decision is accurate and the skill did not re-run setup on a populated project.\n\nJunior: (Correctness = Pass, because the routing decision was accurate, the skill avoided re running setup, and it handled the user’s request in line with the expected workflow.)"
+    },
+    {
+      "test_id": "ut_init_project_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> On a negative test, completeness is graded on the quality of the decline/routing decision. The skill correctly identified that the user's request belongs to question-selection and routed appropriately. The skill did not attempt to perform its own task, which is the correct and complete behavior for this scenario.\n\nJunior: (Completeness = Pass, because the skill fully met the requirement of declining its own workflow and routing the request to the correct skill.)"
+    },
+    {
+      "test_id": "ut_init_project_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_init_project_003`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill. The skill declined and routed to another skill without invoking any tools. N/A per the base rule that Tool Arguments may be null only when no MCP tool calls happened.\n\nJunior: (Tool Arguments = N/A, because the skill avoided unnecessary tool calls, routed correctly, and adhered to the rule that null arguments are valid only when no tools are invoked.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified Patrick Flynn (LZNY-BRF) as the top FamilySearch match, fetched his full record with relatives and sources, and accurately represented all known facts in the tree without fabrication. Birth (~1845, Ireland), death (1908, Schuylkill County, PA), and gender (Male) are all correctly sourced to S1 at quality: 1. The objective was accurately captured from the user's input. No contradictions or unsupported claims present.\n\nJunior: (: Correctness = Pass, because the skill correctly identified the FamilySearch record, represented all known facts without fabrication, and captured the user’s objective faithfully.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: performed person_search with surname and given name, selected the top candidate (LZNY-BRF), called person_read to fetch full record with relatives and sources, created both research.json and tree.gedcomx.json, set the project objective to match the user's goal (finding Patrick Flynn's parents), and defaulted the experience level to intermediate with clear notation that it was defaulted.\n\nJunior: (Completeness = Pass, because the skill executed the full initialization workflow — search, record fetch, project creation, profile update — with no omissions.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed correct arguments. person_search included surname 'Flynn' and givenName 'Patrick' (expected_args satisfied); additional parameters (birthPlace, birthYearFrom/To, residencePlace) were reasonable enrichments from the user's input. person_read correctly targeted LZNY-BRF with relatives=true and sourceDescriptions=true. project_create received the full tree structure with correct person IDs, facts, sources, and metadata. No fixture_not_found errors occurred.\n\nJunior: (Pass, because each tool call used the correct arguments, enriched parameters were appropriate, and all identifiers and structures matched expectations without errors.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `rubric` / `Stub & tree fidelity`\nLLM: 3 → Junior: 3\n\n> Patrick Flynn (I1) is correctly represented with all known facts: name, gender (Male), birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania). Unknown fields (parents, spouse, children) are omitted, not guessed. FamilySearch-derived facts are sourced to S1 at quality: 1 (unverified, collaborative tree). Local I1 person ID is used. The response explicitly flags that Patrick is isolated in FamilySearch (no relatives, no sources) rather than fabricating relationships.\n\nJunior: (Pass, because the tree accurately reflects the FamilySearch record, adheres to schema rules, and avoids unsupported assumptions or fabricated data.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `rubric` / `Project section seeding & schema validity`\nLLM: 3 → Junior: 3\n\n> research.json initialized with complete project block: id (rp_001), objective ('Find the parents of Patrick Flynn, born around 1845 in Ireland, who lived in Schuylkill County, Pennsylvania.'), subject_person_ids ([I1]), status, created/updated timestamps, and title ('Patrick Flynn's parents'). Title is concise (3 words) and distinct from the objective. Researcher profile section populated with experience_level (intermediate) and narration_guidance (verbatim table text). All required sections present; validation passed with no warnings.\n\nJunior: (Pass, because all required fields were present, correctly populated, and validated without errors.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `rubric` / `Researcher-profile interview`\nLLM: 3 → Junior: 3\n\n> Experience level not stated by user; skill correctly defaulted to 'intermediate' and clearly noted it as editable ('you didn't specify — you can update this anytime'). narration_guidance is the verbatim table text for intermediate level. No subscriptions field written (correct — user never mentioned access). Objective was provided by user in the opening turn and accurately captured; no hallucinated specific direction. Single-turn scenario handled correctly with both profile and objective addressed in one pass.\n\nJunior: (Pass, because defaults were applied transparently, verbatim guidance was included, schema rules were respected, and the user’s objective was captured exactly.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `rubric` / `Place standardization`\nLLM: 3 → Junior: 3\n\n> Two places appear in the tree, both tool-supplied from person_read: Birth place 'Ireland' with standard_place 'Ireland', and death place 'Schuylkill County, Pennsylvania, United States' with standard_place 'Schuylkill, Pennsylvania, United States'. Both standard_place values are kept verbatim as returned by the tool. No hand-entered places requiring place_search resolution were present in this test. Tool-supplied standardized places survived unchanged into the tree.\n\nJunior: (= Pass, because all standardized places were preserved verbatim from the tool, no hand entered places were altered, and no fabricated data was introduced.)"
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_004`** — `rubric` / `Known-holdings capture`\nLLM: 3 → Junior: 3\n\n> User volunteered no known holdings ('I don't have his FamilySearch ID' is a constraint, not a holding). Skill correctly skipped the holdings survey and recorded known_holdings as an empty array. No holdings were fabricated. The response explicitly states 'None mentioned' and invites the user to provide holdings in future interactions ('let me know if you have any family documents, certificates, oral history, or prior research').\n\nJunior: (Pass, because the skill correctly distinguished between a constraint and a holding, left the array empty, avoided fabrication, and invited future input.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All facts in the response are accurate and supported by the tool responses. Patrick Flynn's birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania), gender (Male), and isolated status (no relatives, no sources) all match the person_read response exactly. The tree.gedcomx.json correctly uses the standardized values returned by the tool: standard_place 'Ireland' and 'Schuylkill, Pennsylvania, United States', and standard_date 'Abt 1845' and '1908'. The source S1 is correctly attributed to FamilySearch with quality: 1. No fabricated material or unsupported claims are present.\n\nJunior: (Pass, because all facts, standardized values, and isolation status were faithfully represented from the tool responses, with no contradictions or fabricated material.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: fetched Patrick Flynn's record, initialized the project with the stated objective ('Identify the parents of Patrick Flynn'), defaulted experience_level to 'intermediate' with narration_guidance, created both research.json and tree.gedcomx.json, populated the tree with the subject person, and provided comprehensive context including historical signals, source evaluation, and research priorities. The user's request to identify Patrick's parents was fully captured as the project objective.\n\nJunior: (Pass, because the skill executed the full initialization workflow — record fetch, project creation, profile update, context analysis — with no omissions or fabrications.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP tool calls passed correct arguments. person_read was called with personId 'LZNY-BRF', relatives: true, and sourceDescriptions: true—exactly matching expected_args. project_create was called with correct projectPath, title 'Patrick Flynn's parents', objective 'Identify the parents of Patrick Flynn (LZNY-BRF).', subjectPersonIds ['I1'], and a properly structured tree object with the person, facts, sources, and relationships arrays. research_append was called with correct projectPath, section 'researcher_profile', op 'update', and fields containing experience_level 'intermediate' and the verbatim narration_guidance text. No critical identifiers were wrong and no calls landed in fixture_not_found.\n\nJunior: (Pass, because each call used the correct arguments, identifiers were accurate, and the tree and profile were properly structured with no errors.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `rubric` / `Stub & tree fidelity`\nLLM: 3 → Junior: 3\n\n> The tree.gedcomx.json faithfully represents Patrick Flynn with all known facts populated: name (Patrick Flynn), gender (Male), birth (~1845, Ireland), and death (1908, Schuylkill County, Pennsylvania). Unknown fields (parents, spouse, children) are correctly omitted rather than guessed. Both facts are sourced to S1 at quality: 1 as required. Local ID 'I1' is used throughout. The response explicitly flags the isolation ('Patrick is isolated in the FamilySearch tree — no parents, spouse, children, or attached sources were returned') rather than silently resolving it. No placeholder unknown-person stubs were created.\n\nJunior: (Pass, because the tree accurately represents all known facts, preserves standardized sidecars, avoids fabrication, and transparently flags isolation.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `rubric` / `Project section seeding & schema validity`\nLLM: 3 → Junior: 3\n\n> The research.json project block is complete: id 'rp_001', objective 'Identify the parents of Patrick Flynn (LZNY-BRF).', subject_person_ids ['I1'], status initialized, created/updated timestamps present, and title 'Patrick Flynn's parents' (a concise 3-word title, not a full sentence). All required sections are present as empty arrays (known_holdings: [], assertions: [], sources: [], research_questions: [], etc.) or populated where appropriate. The written file conforms to schema: required fields present, correct types, no extraneous fields. The title is appropriately brief and distinct from the objective.\n\nJunior: (Pass, because the project block and all sections were correctly initialized, schema compliant, and validated without warnings.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `rubric` / `Researcher-profile interview`\nLLM: 3 → Junior: 3\n\n> No experience level was supplied by the user, so the skill correctly defaulted to 'intermediate' and noted it as editable ('Experience level was defaulted to intermediate since none was stated. You can update it anytime...'). The narration_guidance is the verbatim text from the intermediate level table: 'One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline.' The subscriptions field is correctly absent from the written profile. The objective was stated by the user ('I want to identify his parents'), so no defaulting of the objective was required; it was captured as provided.\n\nJunior: (Pass, because defaults were applied transparently, narration guidance was included verbatim, schema rules were respected, and the user’s stated objective was captured exactly.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `rubric` / `Place standardization`\nLLM: 3 → Junior: 3\n\n> Both places in the tree came from the person_read tool response and are kept verbatim as required. Birth place 'Ireland' (standard_place: 'Ireland') and death place 'Schuylkill, Pennsylvania, United States' (standard_place from tool: 'Schuylkill, Pennsylvania, United States') both appear in the tree exactly as returned by the tool. No hand-entered places requiring place_search resolution were present in this test. The standardized values are distinguishable from the raw place fields and correctly preserved.\n\nJunior: (= Pass, because both standardized values were preserved exactly as returned by the tool, no hand entered places required resolution, and the schema was respected.)"
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_008`** — `rubric` / `Known-holdings capture`\nLLM: 3 → Junior: 3\n\n> No known holdings were volunteered by the user in the input message. The skill correctly skipped the holdings survey and initialized known_holdings as an empty array in research.json. The response explicitly noted this ('None recorded. If you have family documents, oral knowledge from relatives, or prior research notes about Patrick, let me know and I'll add them...'), inviting the user to supply holdings in future turns without fabricating any.\n\nJunior: (= Pass, because the skill correctly recognized that no holdings were provided, left the array empty, avoided fabrication, and invited future input.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "**`ut_init_project_vqx`** — `base` / `Correctness`\nLLM: 2 → Junior: 1\n\n> The response accurately captures the 4 persons, 7 sources, and 4 relationships from the tool response, with correct dates, places, and source citations. However, the per-test context explicitly states that missing subtypes on Josephine's ParentChild relationships should NOT be presented as a 'structural error' or 'data inconsistency' — yet the response prominently flags this as 'Error #2: Inconsistent ParentChild subtypes' and claims it 'requires investigation.' This is an unsupported inference contradicting the fixture's documented expectations. The response also flags 'No Couple relationship' as a 'structural error,' but the fixture does not list missing Couple relationships in its documented error-detection checks (birth-after-death, age gaps, place/jurisdiction consistency, sibling birth spacing). These are out-of-scope inferences presented as findings.\n\nJunior: (= Fail, because despite accurate reporting of persons, sources, and facts, the response introduced findings outside the documented error detection list, misclassifying them as structural errors.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_vqx`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: initialized the project with objective and title, created the tree with all 4 persons and their facts, captured all 7 sources with proper citations, recorded all 4 relationships, defaulted experience level to intermediate with correct narration guidance, and noted that no known holdings were mentioned. The analysis section provides thorough source evaluation, historical context, and gap identification. All required actions were performed.\n\nJunior: (Pass, because every required element was addressed — project initialization, tree construction, source capture, profile defaults, holdings, and a comprehensive analysis with context and gaps.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_vqx`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP tool calls passed correct arguments. person_read was called with correct personId (MRQ1-JBM) and flags (relatives: true, sourceDescriptions: true). project_create received the full tree structure with 4 persons, 4 relationships, and 7 sources, all with correct IDs, facts, and source references. research_append correctly updated researcher_profile with experience_level 'intermediate' and the verbatim narration_guidance text. No tool calls failed or returned fixture_not_found errors.\n\nJunior: (Pass, because each call used the correct parameters, identifiers were accurate, and the tree and profile were properly structured with no errors.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_vqx`** — `rubric` / `Stub & tree fidelity`\nLLM: 3 → Junior: 3\n\n> The tree.gedcomx.json faithfully represents all known information: Jean Baptiste and Marie with their birth facts and places; Henri and Josephine with birth years and places. Unknown fields (parents, death for Marie, full dates for children) are correctly omitted. All facts are sourced to S1–S7 at quality: 1 (unverified). Local I-person IDs (I1–I4) are used throughout. The response correctly notes gaps (missing parents, Marie's death) without fabricating them. No placeholder persons were created.\n\nJunior: (= Pass, because the tree accurately represents all known information, preserves standardized values, avoids fabrication, and transparently flags gaps.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_vqx`** — `rubric` / `Project section seeding & schema validity`\nLLM: 3 → Junior: 3\n\n> research.json was initialized with a complete project block: id (rp_001), objective ('Analyze the sources and family structure...'), subject_person_ids ([I1]), status, created/updated timestamps, and a concise title ('Moreau source and structure analysis'). The title is appropriately brief (4 words) and distinct from the objective. All required sections are present (researcher_profile, known_holdings as empty array, sources/assertions/questions as empty arrays). The written file conforms to schema on inspection with correct types and no extraneous fields.\n\nJunior: (= Pass, because the project block and all sections were correctly initialized, schema compliant, and validated without warnings.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher-profile interview",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_vqx`** — `rubric` / `Researcher-profile interview`\nLLM: 3 → Junior: 3\n\n> No experience level was stated by the user, so the skill correctly defaulted to 'intermediate' and recorded the verbatim narration_guidance text from the table ('One-line preamble per skill invocation...'). The response explicitly noted the default in the summary ('Experience level was not stated — defaulted to intermediate'). No subscriptions field was written. Known holdings were not mentioned, so the survey was skipped cleanly with known_holdings: []. The objective was provided by the user in the initial message, so no defaulting was needed there.\n\nJunior: (= Pass, because defaults were applied transparently, narration guidance was included verbatim, schema rules were respected, holdings were handled correctly, and the user’s stated objective was captured exactly.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_vqx`** — `rubric` / `Place standardization`\nLLM: 3 → Junior: 3\n\n> All places in the tree came from the person_read tool response and were kept verbatim: 'Bastogne, Luxembourg' appears in the tool's standard_place field and is preserved identically in all four persons' facts (Jean Baptiste birth/death, Marie birth, Henri birth, Josephine birth). No hand-entered places requiring place_search resolution were present in this fixture. The skill correctly did not call place_search on tool-supplied places, which is the documented correct behavior.\n\nJunior: (= Pass, because all places were preserved verbatim from the tool response, no unnecessary calls were made, and the schema was respected.)"
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_init_project_vqx`** — `rubric` / `Known-holdings capture`\nLLM: 3 → Junior: 3\n\n> The user did not volunteer any known holdings (documents, prior research, GEDCOMs, oral knowledge). The skill correctly skipped the holdings survey and initialized known_holdings as an empty array in research.json. No holdings were fabricated or over-promoted into sources/assertions. The response explicitly noted 'No known holdings were mentioned' in the summary.\n\nJunior: (= Pass, because the skill properly recognized that none were provided, left the array empty, avoided fabrication, and clearly communicated the state to the user.)"
+    }
+  ]
+}

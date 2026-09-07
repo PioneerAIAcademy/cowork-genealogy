@@ -2627,6 +2627,72 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123"); // canonicalized
   });
 
+  // ── D2: non-persona producers (fulltext_search / external_links_search) ──
+  // These stage a sidecar keyed on `id`, with no GedcomX persona (#2038).
+  const ftsResearch = () => {
+    const r = baseResearch();
+    r.log = [{ ...searchLogEntry("results/log_001.json"), tool: "fulltext_search" }] as any;
+    return r;
+  };
+  // A fulltext result: bare-ARK `id` (a 3:1: image entry), no `recordId`, no gedcomx.
+  const writeFtsSidecar = () => writeSidecar([{ id: "ark:/61903/3:1:S3HT-XYZ" }]);
+
+  it("canonicalizes a fulltext_search record_id from the sidecar's `id`, never auto-filling a persona (#2038)", async () => {
+    await writeProject(ftsResearch());
+    await writeFtsSidecar();
+    const { source_id: _s, ...a } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...a,
+            source_id: "src_001",
+            // URL form on purpose — the sidecar stores the bare-ARK 3:1: form
+            record_id: "https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const persisted = (await readResearch()).assertions[1];
+    expect(persisted.record_id).toBe("ark:/61903/3:1:S3HT-XYZ"); // canonicalized from `id`
+    expect(persisted.record_persona_id ?? null).toBeNull(); // FTS carries no persona — never auto-filled
+  });
+
+  it("rejects a record_persona_id on a fulltext_search-sourced assertion with a named error (#2038)", async () => {
+    await writeProject(ftsResearch());
+    await writeFtsSidecar();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { source_id: _s, ...a } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...a,
+            source_id: "src_001",
+            record_id: "ark:/61903/3:1:S3HT-XYZ",
+            record_persona_id: "p_1",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]).toMatch(/record_persona_id must be null/);
+    expect(r.errors[0]).toMatch(/fulltext_search-sourced/);
+    expect(r.errors[0]).toMatch(/no GedcomX personas/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before); // nothing written
+  });
+
   it("auto-fills across a multi-assertion batch when all ops share one record_id and one record_role", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();
