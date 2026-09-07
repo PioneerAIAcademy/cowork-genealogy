@@ -44,9 +44,8 @@ _DETACH_TERMS = ("detach", "detaching", "detached", "unlink", "unlinking", "unli
 # The rule is "send the researcher back to what the index was made from", not
 # the literal word "re-read". The corpus's index error sits on the Minnesota
 # Death Index — "database, FamilySearch", index-only, no scan — so a correct
-# report must NOT say "re-read the image" there, and SKILL.md now says so
-# (review of PR #2165, finding 4b). A pattern that only matched re-read
-# phrasings would have failed the very behaviour that change introduced.
+# report must NOT say "re-read the image" there, and SKILL.md says so. A
+# pattern that only matched re-read phrasings would fail that behaviour.
 _GO_TO_SOURCE_PATTERN = re.compile(
     r"re-?read"
     r"|read the original"
@@ -100,16 +99,23 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
     mentioned a misattribution anywhere before allowing the word "detach"
     anywhere — and since this corpus always contains a genuinely
     misattributed source (HOLE-003), a correct report always granted that
-    licence, so the assertion could never fail. Review of PR #2165 proved it
-    with a reply that hedged "re-read the original and correct the index, or
-    detach the source if you prefer" on the index error and still passed,
-    which rubric.md grades `partial`. The fix keeps the module's contract —
-    the test declares the situation, the validator asserts the rule.
+    licence, so the assertion could never fail: a reply hedging "re-read the
+    original and correct the index, or detach the source if you prefer" on
+    the index error passed, while rubric.md grades that hedge `partial`.
+    Scoping to the declared source keeps the module's contract — the test
+    declares the situation, the validator asserts the rule.
     """
     _requires_index_discrepancy(test)
     protected = test.get("index_error_source")
-    if not protected:
-        pytest.skip("test declares no index_error_source to protect")
+    assert protected, (
+        "this test is tagged `index-discrepancy` but no `index_error_source` "
+        "reached the validator, so the detach guard has nothing to scope to "
+        "and asserts nothing. Either the test JSON is missing the top-level "
+        "`index_error_source` field, or the orchestrator stopped threading it "
+        "into the validator-facing `test` dict — the whitelist literal in "
+        "`orchestrator.py`'s `run_validators(... test={...})` call. Skipping "
+        "here is what let this guard run on zero tests once already."
+    )
     hits = [
         block
         for block in re.split(r"\n\s*\n", text_response)
