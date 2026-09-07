@@ -252,12 +252,17 @@ describe("agent delegation framing", () => {
   it("no SKILL.md names an agent it is not a registered caller for", () => {
     // discoverEdges() only sees `@plugin:`. A delegation written any other way
     // adds no edge, and every per-edge assertion above skips it silently.
+    //
+    // Matched on a name boundary, not as a substring: `image-reader-opus` shipped
+    // here once and is parked for a return (image-transcribe-tool-spec.md §15.9),
+    // and a substring match reports a delegation to it as an unregistered edge to
+    // `image-reader` — a failure whose two offered remedies are both wrong.
     const registered = new Set(Object.keys(DELEGATION_EDGES));
     const offenders: string[] = [];
     for (const skill of skillFiles) {
       const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
       for (const agent of agentOnly) {
-        if (!text.includes(agent)) continue;
+        if (!new RegExp(`(?<![a-z0-9-])${agent}(?![a-z0-9-])`).test(text)) continue;
         const edge = `${skill} -> ${agent}`;
         if (!registered.has(edge) && !PROSE_MENTIONS.has(edge)) offenders.push(edge);
       }
@@ -306,7 +311,7 @@ describe("agent delegation framing", () => {
 
       if (spec.exempt) {
         const { side, reason } = spec.exempt;
-        it(`${side}-side exemption has not gone stale`, () => {
+        it(`${side}-side exemption does not sit beside a ${side} pin`, () => {
           expect(reason.length, "an exemption needs a reason").toBeGreaterThan(40);
           // Shrink-only: an exemption must not sit beside a pin on the same
           // side. When that side gains a rule, pin it and delete the exemption.
