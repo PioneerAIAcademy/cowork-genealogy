@@ -54,7 +54,11 @@ Sources with no readable ARK (a user-uploaded document, an external link, a memo
 
 ### 3. Compare the index against the profile
 
-For each source, set the indexed values beside the person's recorded facts and note every place they disagree. A disagreement is a **finding**; the next step decides what kind.
+Sweep the conclusions one at a time — name, birth, christening, marriage, death, burial, residence — and for each, set the indexed values of the sources bearing on it beside the recorded fact. A source bears on a conclusion when its record carries that fact for the person it names: a death index bears on the death, a census on residence, age and household. One source can bear on several conclusions, and one conclusion can have several sources or none.
+
+A conclusion with **no** source bearing on it is a sourcing gap, not a defect in a source. Say so in one line if the sweep meets one, and leave it out of the findings — it is not this audit's to make.
+
+A disagreement is a **finding**; the next step decides what kind.
 
 ### 4. Classify every finding before recommending anything
 
@@ -68,6 +72,8 @@ Three kinds, and the recommendation follows the kind:
 
 **Not every disagreement is an error.** A census age or birth year within a couple of years of the profile is ordinary variance — ages were estimated, reported by whoever answered the door, and rounded. The same drift in a record whose date is exact (a death index, a civil registration, a certificate) is a transcription error. Judge by the record type, and do not report tolerable drift as a finding: a list padded with non-findings is the same failure as a list padded with backend metadata.
 
+**A difference in precision is not a disagreement.** Where the profile is vague and the source is precise — "1814" against "12 March 1814", "Ireland" against "Skibbereen, Co. Cork" — the source refines the conclusion rather than contradicting it. The test is containment: the precise value has to fall inside the vague one. Report it, if at all, as an improvement the researcher can adopt, and never among the findings. "1814" against "12 March 1815" is not containment — the years differ, and that is a finding.
+
 **(b) Genuinely misattributed source — the only case where detaching is right.** The record is about a different person: a same-name individual, a different generation, a different family. Cues: multiple fields disagree, not one; the record's own internal relationships name people who are not this person's family; the dates place it outside this person's lifetime altogether. Before concluding this, call `source_attachments({ uris: [<the ARK>] })`. If the source is also attached to other tree persons, **`person_read` each one before you name them.** An attachment proves only that someone attached it there — it is not evidence the record belongs to them, and the profiles at the other end are often wrong in the same way this one is. Name a person as the record's true subject only when you have read them and their facts fit the record: the dates, the place, the household. If you cannot read them, say the source is attached elsewhere and stop there — do not assert whose it is.
 
 **Recommend detaching only here, and say why the record belongs to someone else** rather than merely asserting that it does not belong here.
@@ -78,7 +84,7 @@ Three kinds, and the recommendation follows the kind:
 
 **These are not findings. Do not list them as problems, do not number them among the errors, and do not recommend an action for them.** Mention one only if it explains something the user can see, and then as context in a closing note — never in the findings list. A user who is handed backend metadata alongside real errors has to triage the list you were supposed to triage for them.
 
-**When the kind is ambiguous between (a) and (b)** — the usual honest outcome on a single disputed field — report it as (a), say what would settle it, and recommend re-reading the original first. Re-reading is recoverable and detaching is not: a wrongly detached source is evidence the next researcher has to rediscover.
+**When the kind is ambiguous between (a) and (b)** — the usual honest outcome on a single disputed field — classify it (a) and **say in the report that the kind cannot be told from this profile alone.** Name what would settle it, and recommend re-reading the original first. The verdict and the action are separate: the verdict is what the user is told, and telling them it is an index error is a claim the evidence has not made; the action is what they do next, and it stays the recoverable one. Re-reading is recoverable and detaching is not: a wrongly detached source is evidence the next researcher has to rediscover.
 
 ### 5. Report
 
@@ -88,6 +94,8 @@ Open with the count of **user-actionable** findings — backend metadata is not 
 - What disagrees with what: the indexed value beside the recorded fact
 - The classification and the cue that decided it
 - The recommended action, in the doctrine of step 4 — for (a), go back to what the index was made from and correct it, naming whether that is the original page or (for an index-only collection) the record it derives from; for (b), detach, with the reason
+
+**If the sweep turns up two sources disagreeing with each other** — not with the profile — characterise it and hand it on: name both sources, both values, what kind of record each is, and what would settle it. **Pick no winner and recommend no detach.** Weighing two sources against each other is the conflict workflow's job, and the user takes it there. This is the one finding that carries a route instead of a remedy. Ordinary variance between two records of the kind step 4 describes is not a disagreement worth reporting here either.
 
 Close with the sources you could not check and why. If any backend metadata came up, one closing sentence of context — not a list, not a to-do.
 
