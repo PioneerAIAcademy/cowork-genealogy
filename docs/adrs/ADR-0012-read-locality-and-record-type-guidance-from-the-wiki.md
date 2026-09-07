@@ -25,9 +25,9 @@
 
 ## Context
 
-**The plugin carries a lot of this, and it is US-shaped.** A full read of all 27
+**The plugin carries a lot of this, and it is US-shaped.** A full read of all 28
 `SKILL.md` files, every `references/` file, and the five agent bodies on
-2026-09-07 found record-type or locality-specific instruction in 21 skills and
+2026-09-07 found record-type or locality-specific instruction in 22 skills and
 4 agents. The dense cases: `search-records` (a year-by-year US and England &
 Wales census field table, a per-collection quirks file for US, English, Mexican,
 German and Norwegian collections), `citation` (a template per record type plus
@@ -144,8 +144,8 @@ Concretely:
   under all three spellings (ADR-0004).
 
 The order for a skill on its way to becoming a pair is: reliable unit suite,
-then this move, then the fold, then the model and effort floor search
-(`docs/skill-to-agent-pair-conversion.md`, "The process, in order").
+then this move, then the fold (`docs/skill-to-agent-pair-conversion.md`, "The
+process, in order"), then the model and effort floor search.
 
 ## Alternatives considered
 
