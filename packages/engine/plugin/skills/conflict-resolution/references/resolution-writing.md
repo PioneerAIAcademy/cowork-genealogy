@@ -60,11 +60,22 @@ uncertain provenance."
 
 ### 4. Explain why the less reliable evidence exists
 
-Provide a plausible, historically grounded reason for the error.
-This is what transforms a resolution from "I prefer source A" into
-a defensible argument.
+Provide a plausible reason for the error, grounded in how the record —
+or our own reading of it — was actually produced. This is what
+transforms a resolution from "I prefer source A" into a defensible
+argument. Not every reason is historical: our own OCR is often the
+weakest link in the chain.
 
 Common explanations:
+- **Our own `image_transcribe` OCR mis-read the image.** When one of the
+  conflicting readings came from `image_transcribe`, suspect the
+  transcription **first** — machine OCR mis-reads digits and letters more
+  often than an enumerator or clerk erred, so do not posit an error in how
+  the record was created until the OCR reading is ruled out. Corroborate it
+  against another **original** record instance (another census year, a
+  different original record) — not an index or other derivative, which can
+  carry the same error — and do not re-read the same image (a second read is
+  no more trustworthy than the first).
 - The informant did not have firsthand knowledge
 - Memory degraded over the decades between event and recording
 - The informant had a motive to misstate (age fraud, pension, etc.)

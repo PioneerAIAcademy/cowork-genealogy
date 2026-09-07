@@ -1,0 +1,45 @@
+{
+  "tool": "record_read",
+  "description": "The C00558-7 (St. Michael and All Angels) entry indexed under recordId NGYP-KXD -- personName 'John Richardson' but recordTitle 'Entry for Dorcas Richardson' in the already-committed search stub (record-search-batch-c00558-7-narrowed-richardson.json), a genuine index quirk preserved as-is rather than corrected. Stocked so the skill's genealogically reasonable cluster read within the batch it is already enumerating does not hit fixture_not_found (issue #1642, chesworthrm's ut_search_records_028 finding -- the recordId the skill reached for varied by run between this one and NGYP-RT5). Restates exactly what the search stub already carries for this recordId -- no additional relatives are invented beyond it.",
+  "args": {
+    "recordId": "~NGYP-KXD"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_12221108532",
+        "ark": "ark:/61903/1:1:NGYP-KXD",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "John",
+            "surname": "Richardson"
+          }
+        ],
+        "facts": []
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "sd_c_1473014",
+        "title": "England, Births and Christenings, 1538-1975",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1473014"
+      },
+      {
+        "id": "src_r_12221108532",
+        "title": "Entry for Dorcas Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:2:9H12-9TY), Entry for Dorcas Richardson, undated.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9H12-9TY"
+      },
+      {
+        "id": "sd_p_12221108532",
+        "title": "John Richardson, \"England, Births and Christenings, 1538-1975\"",
+        "citation": "\"England, Births and Christenings, 1538-1975\", database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NGYP-KXD), John Richardson.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:NGYP-KXD"
+      }
+    ],
+    "places": []
+  }
+}

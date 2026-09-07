@@ -179,6 +179,31 @@ describe("research_query", () => {
     expect(result.errors.join(" ")).toMatch(/not one of/);
   });
 
+  it("names the singular parameter when the caller sends plural `sections`", async () => {
+    await writeResearch({});
+    const result = await researchQuery({ projectPath: dir, sections: '["log"]' } as any);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    const msg = result.errors.join(" ");
+    expect(msg).toMatch(/not one of/);
+    // The near-miss key is called out so the model can learn `section` is singular.
+    expect(msg).toMatch(/'section' \(singular\)/);
+    expect(msg).toMatch(/you sent 'sections'/);
+  });
+
+  it("reports a JSON-encoded string value rather than undefined", async () => {
+    await writeResearch({});
+    const result = await researchQuery({ projectPath: dir, section: '"log"' } as any);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    const msg = result.errors.join(" ");
+    expect(msg).toMatch(/not one of/);
+    // The received value is rendered so the quotes are visible — not swallowed
+    // into a bare `undefined`.
+    expect(msg).toContain('"\\"log\\""');
+    expect(msg).not.toMatch(/section undefined/);
+  });
+
   it("rejects when the section is missing or not an array", async () => {
     await writeResearch({ assertions: "not-an-array" });
     const result = await researchQuery({ projectPath: dir, section: "assertions" });

@@ -81,7 +81,8 @@ research_log_append({
   resultsAvailable?: number | null,
   notes?: string | null,
   externalSite?: {                // REQUIRED when tool === "external_site"; else null/omit
-    site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web",
+    site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web"
+          | "chronicling_america" | "digital_newspaper_archive",
     urlGenerated: string,
     captureReceived: boolean,
     captureFilename?: string | null,

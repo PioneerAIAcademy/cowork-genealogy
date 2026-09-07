@@ -212,8 +212,20 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
 
   try {
     if (!RESEARCH_QUERY_SECTIONS.includes(section)) {
+      // JSON.stringify keeps a string visibly quoted (so a JSON-encoded '"log"'
+      // reads as a string, not an enum member) and renders undefined as
+      // `undefined` rather than a bare, misleading value. Detect the plural
+      // near-miss key too: `sections` is the mistake the model actually makes,
+      // and the bare `section 'undefined'` message gave it no way to learn the
+      // parameter is singular.
+      const near =
+        section === undefined &&
+        (input as unknown as Record<string, unknown>).sections !== undefined
+          ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
+          : "";
       throw new ResearchQueryError(
-        `section '${section}' is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}`,
+        `section ${JSON.stringify(section)} is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}.` +
+          `${near} Send one section name as a string.`,
       );
     }
 

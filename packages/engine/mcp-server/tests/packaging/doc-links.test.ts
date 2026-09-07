@@ -55,7 +55,15 @@ const projectRoot = join(engineRoot, "..", ".."); // repo root
  * with its own backlog of real breaks to fix. `CLAUDE.md` is here because it is
  * the always-loaded tier — a path that rots there rots for every session.
  */
-const LINTED_DOCS = ["docs/task-lifecycle.md", "CLAUDE.md"];
+const LINTED_DOCS = [
+  "docs/task-lifecycle.md",
+  "CLAUDE.md",
+  // The pair-conversion record cites the agent bodies, the hook, the harness
+  // detector and two run logs by path, and eleven conversion cards are worked
+  // against it. A stale path there sends the next converter at a file that
+  // moved, which is the failure this list exists to catch.
+  "docs/skill-to-agent-pair-conversion.md",
+];
 
 /**
  * Claude Code subagents, slash commands, and project skills. Every `.md` at or

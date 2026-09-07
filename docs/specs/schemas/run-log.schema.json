@@ -70,7 +70,7 @@
         "tests": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "test_ids whose every dimension needs a correction entry in the .ann.json."
+          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed or scored a 1 or 2 on any dimension, so the length varies by run."
         },
         "cursor": {
           "type": "array",
@@ -82,7 +82,7 @@
           "description": "Seed for the random slot, so the sample is reproducible from the committed artifact."
         }
       },
-      "description": "Which tests this run log's annotation must cover. Absent on every run log written before sampling shipped, and on partial/scratch writes; readers treat absence as 'every dimension of every test'. Written once by the final build_run_log on a releasable run — the targeted slot needs post-run scores across the whole suite, which do not exist mid-run. See eval/harness/harness/review_sample.py."
+      "description": "Which tests this run log's annotation must cover. Absent on every run log written before sampling shipped, and on partial/scratch writes; readers treat absence as 'every dimension of every test'. Written once by the final build_run_log on a releasable run — the targeted and mandatory slots need post-run scores across the whole suite, which do not exist mid-run. See eval/harness/harness/review_sample.py."
     },
     "tests": {
       "type": "array",

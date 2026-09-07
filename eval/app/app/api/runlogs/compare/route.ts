@@ -21,10 +21,21 @@ export async function GET(req: NextRequest) {
   if (!recent) return NextResponse.json({ error: `not found: ${recentId}` }, { status: 404 });
   if (!previous) return NextResponse.json({ error: `not found: ${previousId}` }, { status: 404 });
 
-  const [recentAnn, previousAnn] = await Promise.all([
-    readAnnotation(recentId),
-    readAnnotation(previousId),
-  ]);
+  let recentAnn, previousAnn;
+  try {
+    [recentAnn, previousAnn] = await Promise.all([
+      readAnnotation(recentId),
+      readAnnotation(previousId),
+    ]);
+  } catch (err) {
+    // A corrupt .ann.json throws in readAnnotation — return a structured 422
+    // (the thrown message carries the offending file's path) instead of a bare
+    // 500, mirroring the run-log route.
+    return NextResponse.json(
+      { error: 'invalid_annotation', message: (err as Error).message },
+      { status: 422 },
+    );
+  }
 
   const result = compareRunLogs({
     recent: { log: recent.runLog, annotation: recentAnn },

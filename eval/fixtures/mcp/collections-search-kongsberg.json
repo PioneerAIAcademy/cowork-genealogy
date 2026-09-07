@@ -1,0 +1,72 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search -- Kongsberg holdings 1750-1810, including the indexed Norway Baptisms extract.",
+  "args": {
+    "standardPlace": "~Kongsberg"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Kongsberg, Buskerud, Norway",
+      "startYear": 1750,
+      "endYear": 1810
+    },
+    "scope": "Norway",
+    "totalForPlace": 15,
+    "results": [
+      {
+        "id": "1467014",
+        "title": "Norway, Baptisms, 1634-1927",
+        "dateRange": "1634-1927",
+        "recordCount": 5277294,
+        "personCount": 15082744,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1467014"
+      },
+      {
+        "id": "1468081",
+        "title": "Norway, Burials, 1666-1927",
+        "dateRange": "1666-1927",
+        "recordCount": 719685,
+        "personCount": 1671901,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1468081"
+      },
+      {
+        "id": "3733603",
+        "title": "Norway, Census, 1801",
+        "dateRange": "1801-1801",
+        "recordCount": 878979,
+        "personCount": 878979,
+        "imageCount": 13261,
+        "url": "https://www.familysearch.org/search/collection/3733603"
+      },
+      {
+        "id": "4237104",
+        "title": "Norway, Church Books, 1797-1958",
+        "dateRange": "1797-1958",
+        "recordCount": 14398439,
+        "personCount": 46445308,
+        "imageCount": 1288153,
+        "url": "https://www.familysearch.org/search/collection/4237104"
+      },
+      {
+        "id": "1468080",
+        "title": "Norway, Marriages, 1660-1926",
+        "dateRange": "1660-1926",
+        "recordCount": 1330979,
+        "personCount": 3519558,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1468080"
+      },
+      {
+        "id": "1661306",
+        "title": "Norway, Probate Index Cards, 1640-1903",
+        "dateRange": "1640-1903",
+        "recordCount": 1058029,
+        "personCount": 1065155,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1661306"
+      }
+    ]
+  }
+}

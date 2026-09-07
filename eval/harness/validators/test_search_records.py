@@ -145,16 +145,44 @@ _CLAIM_PATTERNS = (
 # Any of these in the note satisfies the rule. The skill does not have to use
 # SKILL.md's exact sentence — it has to say, in some form, that the structure
 # is an inference rather than something the record stated.
+_ROLE_WORD = r"(?:heads?|relationships?|co-?residents?|roles?)"
+# Deliberately excludes the bare kinship words (wife/husband/son/daughter/
+# father/mother/parent) that _ROLE_ASSERTIONS/_CLAIM_PATTERNS use elsewhere:
+# "Mother indexed as Sarah A. Price" would satisfy an index-near-role check
+# on the NAME being indexed while a flat, unhedged "Household head: Thomas
+# Flynn" sits elsewhere in the same note -- the marker would fire for a
+# reason unrelated to the household-relationship claim it exists to qualify.
+# "household" is excluded too: it is one of the initial describes_household
+# gate words, and adding it here would let ANY "indexed ... household"
+# combination satisfy the marker regardless of what "indexed" modifies
+# (chesworthrm review, issue #1642; verified against all 28 pinned cases).
+
 _INFERENCE_MARKERS = (
-    r"inferr",            # inferred, inferring, indexer-inferred
-    r"inference",         # inference, inferences
+    r"infer",             # infer, infers, inferred, inferring, inference(s) --
+                          # was "inferr" (double-r only), which missed the
+                          # present-tense "indexer infers ParentChild
+                          # relationships" and false-failed a compliant note
+                          # (issue #1642, ut_search_records_010 2026-08-24_16-32-45)
     r"\bnot\s+(?:a\s+)?stated\b",
     r"\bunstated\b",
     r"\bimplied\b",
-    r"\bpresumed\b",
+    r"\bpresum\w*\b",   # presumed, presumably, presuming -- was
+                          # "presumed" only, which missed a compliant
+                          # "presumably her mother" (issue #1642,
+                          # ut_search_records_017 2026-08-24_12-28-26)
     r"no\s+relationship\s+(?:to\s+head\s+)?column",
     r"relationship\s+column[^.]{0,40}\b(?:does\s+not|did\s+not|is\s+not|"
     r"was\s+not|never|absent)\b",
+    # "indexed"/"indexing" near the actual role/relationship word it
+    # qualifies -- "ParentChild relationships indexed", "indexed as Head
+    # of Household", "co-residents indexed". Deliberately NOT a bare
+    # "index" anywhere in the note: that would also accept "indexed
+    # spelling" / "surname indexed as Flyn" -- notes that flag a NAME or
+    # DATE as indexed while still asserting the household ROLE flat, which
+    # says nothing about the relationship being an inference (issue #1642,
+    # ut_search_records_010/_014/_027 2026-08-28_15-20-05).
+    rf"\bindex\w*\b[^.;,]{{0,20}}\b{_ROLE_WORD}\b",
+    rf"\b{_ROLE_WORD}\b[^.;,]{{0,20}}\bindex\w*\b",
 )
 
 
@@ -175,16 +203,21 @@ def test_pre1880_census_structure_marked_inferred(
     Deterministic rather than judged because compliance is genuinely
     inconsistent, not because the judge misreads it. See issue #1284.
 
-    Re-measured for PR #1946 (superseding this docstring's earlier figure —
-    "17 of 32 ... and all 32 passed" — which the review caught silently
-    dropped rather than updated): across the 5 committed run logs as of this
-    PR, the 9 `pre-1880-census-household`-tagged tests produced 44 logged
-    searches. The marker appears in 26 of 44; outcome is 23 pass / 21 fail.
-    Unlike the earlier figure, marker presence and pass no longer coincide —
-    3 of the 26 marker-present runs still failed (`ut_search_records_014`
-    once, `ut_search_records_h4k` twice), because this validator's own gate
-    is now live and the judge separately reads whether a marker actually
-    qualifies its claim. Re-derive by scanning `research_log_append` notes in
+    Re-measured for this round (issue #1642, chesworthrm review): the PR #1946
+    figure this superseded -- "44 logged searches, marker in 26, 23 pass / 21
+    fail" -- was already stale by the time it was reviewed, because retention
+    keeps only 5 candidate run logs and this PR's own commits rolled three of
+    the five past that measurement. This citation will do the same to whoever
+    reads it next; re-derive rather than trust it. As of this commit, across
+    the 5 committed run logs, the 9 `pre-1880-census-household`-tagged tests
+    produced 43 logged searches; the marker appears in 32. The prior
+    docstring's pass/fail split was a per-note judge-qualification tally
+    (whether a present marker actually qualifies its claim in context, not
+    just appears in the note -- see "the validator is a floor, not a
+    ceiling" in the deep-dive findings doc) and was not re-derived this round;
+    it needs a judge-rationale read per note, not a regex count, so state it
+    freshly rather than carry a guessed number forward. Re-derive the counts
+    above by scanning `research_log_append` notes in
     `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids --
     a call there is sometimes a single entry, sometimes a batched `ops`
     array of several; count each op with `outcome` in (positive, partial)
@@ -445,3 +478,170 @@ def test_capture_pending_item_not_terminal(before_state, after_state, test):
     `completed`/`skipped`. Shared with the other suite that can reach this
     state; the assertion lives in validators_lib."""
     _assert_capture_pending_item_not_terminal(before_state, after_state, test)
+
+
+# --- jurisdictionHints consumption -------------------------------------
+
+_GENERIC_PLACE_WORDS = frozenset({
+    "county", "counties", "parish", "province", "state", "states",
+    "district", "township", "borough", "city", "town", "united",
+    "kingdom", "republic", "region", "department", "canton", "shire",
+})
+
+
+def _place_tokens(place):
+    """Matchable words from a free-text place string. Drops words of 2
+    characters or fewer ("of", "Co") and the generic administrative-unit
+    words every place name shares: "Yell County, Arkansas" and "Union
+    County, South Carolina" both contain "County", so keeping it lets a
+    run that never left the searched jurisdiction satisfy the assertion
+    (promise-emmanuel review, issue #1642 -- verified: the real
+    jimmie-jewel-neal failure sequence, reverting to three more South
+    Carolina searches with no Arkansas anywhere, passed this validator
+    before this fix)."""
+    tokens = []
+    for t in re.split(r"[,\s]+", place or ""):
+        if len(t) > 2 and t.lower() not in _GENERIC_PLACE_WORDS:
+            tokens.append(t)
+    return tokens
+
+
+def test_jurisdiction_hints_followed(tool_calls, test):
+    """Tag-gated (jurisdiction-hints-followed): issue #1642 Finding 1
+    (mercyokum) -- when a record_search response returns a non-empty
+    jurisdictionHints (a marriage search that came back empty in a
+    sub-country place -- see packages/engine/mcp-server/src/tools/
+    record-search.ts's isMarriageSearch/foundNobody/isSubCountryPlace gate),
+    the next 1-2 record_search calls in the run must try the top-ranked
+    candidate's place before reverting to a jurisdiction used prior to the
+    hint.
+
+    Ground truth: jimmie-jewel-neal run 2026-07-30_23-05-46 -- the tool
+    returned a correctly-ordered hint naming Yell, Arkansas third (with
+    supporting date and source person); the agent ran one Arkansas-scoped
+    search, then reverted to nine more South Carolina searches. Both
+    grandparent findings were later scored false.
+
+    Shape: `jurisdictionHints.candidates[]`, each a `{place, earliestYear,
+    whose, fromFact}` (marriage-jurisdictions.ts's own JurisdictionCandidate).
+    The top candidate is candidates[0] -- the function's own date-proximity
+    ordering, not re-derived here.
+    """
+    if "jurisdiction-hints-followed" not in test.get("tags", []):
+        pytest.skip("not a jurisdiction-hints scenario")
+    record_calls = []
+    for c in (tool_calls or []):
+        bare = c.get("tool", "").split("__")[-1]
+        if bare == "record_search":
+            record_calls.append(c)
+
+    hint_pos = None
+    top_place = None
+    for i, c in enumerate(record_calls):
+        response = c.get("response") or {}
+        hints = response.get("jurisdictionHints") or {}
+        candidates = hints.get("candidates") or []
+        if not candidates:
+            continue
+        hint_pos = i
+        top_place = candidates[0].get("place")
+        break
+    if hint_pos is None:
+        pytest.skip("no jurisdictionHints returned in this run")
+    if not top_place:
+        pytest.skip("hint carried no usable place")
+    tokens = _place_tokens(top_place)
+    if not tokens:
+        pytest.skip("hint place had no matchable tokens")
+    place_fields = (
+        "recordCountry", "recordSubdivision", "residencePlace", "birthPlace",
+        "marriagePlace", "anyPlace",
+    )  # recordSubdivision added (issue #1642): record-search.ts's own
+    # searchedPlace computation reads recordSubdivision ahead of recordCountry
+    # for a marriage search, and a real run confirmed the model reaches for
+    # it naturally -- the field was missing here, false-failing a run that
+    # tried the hinted place on its very next call.
+    next_calls = record_calls[hint_pos + 1: hint_pos + 3]
+    followed = False
+    for c in next_calls:
+        args = c.get("args") or {}
+        for field in place_fields:
+            if field == "recordSubdivision" and not args.get("recordCountry"):
+                # record-search.ts throws on recordSubdivision without
+                # recordCountry (promise-emmanuel review, issue #1642 round
+                # 5) -- a call shaped like this is not one production would
+                # ever have accepted, so it cannot count as "followed."
+                continue
+            value = args.get(field) or ""
+            value_lower = value.lower()
+            for t in tokens:
+                if t.lower() in value_lower:
+                    followed = True
+    assert followed, (
+        "record_search returned a jurisdictionHints candidate naming "
+        + repr(top_place)
+        + ", but neither of the next 2 record_search calls set "
+        "recordSubdivision/residencePlace/marriagePlace/recordCountry/"
+        "birthPlace/anyPlace to it "
+        "(issue #1642 Finding 1)."
+    )
+
+
+# --- Asks permission instead of executing a mandated lever -------------
+
+_PERMISSION_PHRASES = (
+    "should i",
+    "would you like",
+    "shall i",
+    "want me to",
+    "do you want",
+)
+
+
+def test_no_permission_ask_before_mandated_lever(tool_calls, text_response, test):
+    """Tag-gated (asks-permission-instead-of-executing): issue #1642
+    Finding 3 (mercyokum) -- when a nil result has been logged and Step
+    8.2's lever ladder mandates trying more variants automatically ("before
+    declaring negative"), the run must not stop and ask the user's
+    permission to try the next one -- it must have already tried it.
+
+    Ground truth: ut_search_records_nickname_bitsie
+    (v1_2026-08-13_13-13-43) -- the skill searched only "Bitsie Jackson,"
+    logged the nil, then asked whether to try "Mary" instead of just
+    running it.
+
+    Deterministic proxy, not a full plan re-derivation: exactly one
+    record_search call was made, it nilled, and the final text_response
+    asks a permission question. A single nil ending that way, with no
+    further record_search call in the same run, is asking permission for
+    a lever the skill was supposed to have already run.
+    """
+    if "asks-permission-instead-of-executing" not in test.get("tags", []):
+        pytest.skip("not an unconditional-next-variant scenario")
+    record_calls = []
+    for c in (tool_calls or []):
+        bare = c.get("tool", "").split("__")[-1]
+        if bare == "record_search":
+            record_calls.append(c)
+
+    if len(record_calls) != 1:
+        pytest.skip("this check only applies to a single-search run")
+    response = record_calls[0].get("response") or {}
+    total_matches = response.get("totalMatches")
+    results = response.get("results")
+    results_is_empty = isinstance(results, list) and len(results) == 0
+    is_nil = total_matches == 0 or results_is_empty
+    if not is_nil:
+        pytest.skip("the one search was not a nil")
+    text = (text_response or "").lower()
+    asked = False
+    for phrase in _PERMISSION_PHRASES:
+        if phrase in text:
+            asked = True
+
+    assert not asked, (
+        "the run made exactly one record_search call, it nilled, and the "
+        "final response asks the user's permission to try the next lever "
+        "instead of having already tried it (issue #1642 Finding 3): "
+        + repr(text_response)
+    )

@@ -110,6 +110,76 @@ def test_ruled_out_requires_reason(before_state, after_state):
     assert not errors, "ruled_out without reason:\n" + "\n".join(errors)
 
 
+def test_supported_requires_evidence_floor(before_state, after_state):
+    """Per research-schema-spec.md §5.9 (issue #1644), a hypothesis at
+    `status: "supported"` must clear a mechanical floor: no conflict naming
+    its own supporting/contradicting assertions is still unresolved, and
+    either one supporting assertion is direct or at least two are indirect
+    and cite at least two distinct `source_id` values.
+
+    One-directional: this only flags a hypothesis that IS supported and
+    fails the floor. A hypothesis that clears the floor but was left
+    `active` is not a violation — the third gate condition (evidence
+    consistency, e.g. no logical/geographic impossibility) is a judgment
+    call a genealogist may legitimately decide either way, and this
+    validator does not attempt it.
+
+    Conflicts are matched by assertion overlap, never by shared
+    `question_id` — `eval/fixtures/scenarios/flynn-unresolved-conflict`
+    is the fixture that separates the two: its h_001 is `supported` while
+    c_001 is unresolved and blocks the same question, but c_001 names
+    entirely different assertions than h_001 does.
+    """
+    after = after_state.get("research_json")
+    if after is None:
+        pytest.skip("No research.json in output")
+
+    assertions_by_id = {a.get("id"): a for a in after.get("assertions", [])}
+    conflicts = after.get("conflicts", [])
+
+    errors = []
+    for h in after.get("hypotheses", []):
+        if h.get("status") != "supported":
+            continue
+        hid = h.get("id", "?")
+        supporting = h.get("supporting_assertion_ids") or []
+        contradicting = h.get("contradicting_assertion_ids") or []
+        linked = set(supporting) | set(contradicting)
+
+        unresolved = [
+            c.get("id") for c in conflicts
+            if linked & set(c.get("competing_assertion_ids") or [])
+            and c.get("status") not in ("resolved", "moot")
+        ]
+        if unresolved:
+            errors.append(
+                f"hypotheses[{hid}]: supported but conflict(s) {unresolved} "
+                f"naming its assertions are unresolved"
+            )
+            continue  # the evidence floor is moot once this already fails
+
+        direct_count = 0
+        indirect_sources: set = set()
+        for aid in supporting:
+            a = assertions_by_id.get(aid)
+            if a is None:
+                continue
+            if a.get("evidence_type") == "direct":
+                direct_count += 1
+            elif a.get("evidence_type") == "indirect":
+                indirect_sources.add(a.get("source_id"))
+
+        if direct_count < 1 and len(indirect_sources) < 2:
+            errors.append(
+                f"hypotheses[{hid}]: supported with no direct supporting "
+                f"assertion and only {len(indirect_sources)} distinct "
+                f"indirect source(s) (needs >=1 direct or >=2 distinct "
+                f"indirect sources)"
+            )
+
+    assert not errors, "supported evidence floor violated:\n" + "\n".join(errors)
+
+
 # --- Tag-gated regression checks ---
 
 def _hyp_by_id(research: dict, hid: str) -> dict | None:

@@ -79,8 +79,42 @@ if [[ -e "$DEST_DIR" ]] && [[ -n "$(ls -A "$DEST_DIR" 2>/dev/null || true)" ]]; 
 fi
 
 # --- Unzip ---
+# unzip exits 1 for warnings that still extracted everything, and a zip
+# submitted from Windows stores backslash path separators — exactly such a
+# warning ("appears to use backslashes as path separators"). Under `set -e`
+# that aborted here on every win32 submission, after extraction but before the
+# marker file, the git baseline and the skill symlinks, and with no output at
+# all. Fail only on a real error (>= 2).
+#
+# But exit 1 is NOT only that warning: Info-ZIP returns it equally for
+# "zipfiles where one or more files was skipped due to unsupported compression
+# method or encryption with an unknown password". Accepting 1 blind would let a
+# partially-extracted case through to the git baseline and the symlinks with no
+# error at all, so the contents are verified below rather than inferred from the
+# exit code.
 mkdir -p "$DEST_DIR"
-unzip -q "$ZIP_PATH" -d "$DEST_DIR"
+UNZIP_STATUS=0
+unzip -q "$ZIP_PATH" -d "$DEST_DIR" || UNZIP_STATUS=$?
+if [[ "$UNZIP_STATUS" -ge 2 ]]; then
+  echo "Error: unzip failed (exit $UNZIP_STATUS): $ZIP_PATH" >&2
+  exit 1
+fi
+
+# --- Verify the bundle actually landed ---
+# apps/electron/docs/feedback-json-spec.md guarantees all three in every
+# submission: the two project files at the zip root, and the report.
+MISSING=()
+for required in research.json tree.gedcomx.json _feedback/feedback.json; do
+  [[ -f "$DEST_DIR/$required" ]] || MISSING+=("$required")
+done
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  echo "Error: extraction incomplete — missing: ${MISSING[*]}" >&2
+  if [[ "$UNZIP_STATUS" -eq 1 ]]; then
+    echo "unzip exited 1, which also covers members skipped for an unsupported" >&2
+    echo "compression method or unknown password. Re-download the zip." >&2
+  fi
+  exit 1
+fi
 
 # --- Write .feedback-repo-root ---
 echo "$REPO_ROOT" > "$DEST_DIR/.feedback-repo-root"

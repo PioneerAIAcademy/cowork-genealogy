@@ -1,0 +1,36 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Doyle",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "place": "Ireland",
+          "sources": [
+            { "ref": "S1", "page": "1900 Census, Carbon Co., PA, Doyle household" }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "1900 U.S. Census, Carbon County, Pennsylvania, population schedule, Thomas Doyle household; NARA microfilm publication T623; digital image, FamilySearch.org, accessed 1 May 2026.",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M6QK-HRD"
+    }
+  ]
+}

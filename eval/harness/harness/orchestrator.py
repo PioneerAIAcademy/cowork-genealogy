@@ -554,6 +554,18 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
+            # Also threaded in: `refinement_targets`, the assertion ids a
+            # classification-refinement test expects updated in place —
+            # deterministic ground truth for
+            # test_refinement_preserves_extraction_fields_and_avoids_duplication
+            # (issue #2021, F12; unit-test-spec.md's `refinement_targets`).
+            "refinement_targets": spec.raw.get("refinement_targets", []),
+            # Also threaded in: `index_error_source`, the one attached source a
+            # doctrine test declares to be an indexing error — deterministic
+            # ground truth for
+            # test_index_discrepancy_does_not_recommend_detaching
+            # (issue #1606; unit-test-spec.md § 5.12 `index_error_source`).
+            "index_error_source": spec.raw.get("index_error_source"),
             # Also threaded in: `execution`, so test_tool_allowlist can widen
             # by the same `run_skills` rule the session allowlist used. A
             # callee's calls land in this run's tool_calls log, and without
