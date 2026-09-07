@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Gust Johs Huhtala had a son Jöran, born 3 February 1820 and christened 7 February 1820 at Kauhava, Vaasa, Finland.",
+      "details": {
+        "subject_person": "Gust Johs Huhtala (K46D-YPY)",
+        "relation": "child",
+        "target_person": {
+          "name": "Jöran",
+          "birth": "3 February 1820, Kauhava, Vaasa, Finland"
+        }
+      },
+      "supporting_sources": [
+        "Finland, Baptisms, 1657-1890 — entry for Joran, 1820, parents Gust Johs Huhtala and Lisa Jordr"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "The mother named on the 1820 Jöran baptism is Lisa Jöransdotter, not the Kaisa Johansdotter the tree records as Gust Johs Huhtala's wife.",
+      "details": {
+        "person": {
+          "name": "Lisa Jordr (Elisabet Jöransdotter)",
+          "role": "named as mother on the 7 February 1820 Kauhava baptism"
+        }
+      },
+      "supporting_sources": [
+        "Finland, Baptisms, 1657-1890 — entry for Joran, 1820"
+      ],
+      "required": true
+    }
+  ]
+}

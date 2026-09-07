@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Ísleifur Ísleifsson had a son Einar, christened 28 September 1856 at Kross, Rangárvallasýsla, Iceland.",
+      "details": {
+        "subject_person": "Ísleifur Ísleifsson (KCS6-8SG)",
+        "relation": "child",
+        "target_person": {
+          "name": "Einar Ísleifsson",
+          "christening": "28 September 1856, Kross, Rangárvallasýsla, Iceland"
+        }
+      },
+      "supporting_sources": [
+        "Iceland, Baptisms, 1730-1905 — entry for Einar, 1856, parents Isleifur Isleifsson and Thorun Einarsdr"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "The mother named on the 1856 Einar baptism is Thórunn Einarsdóttir, not Guðríður Gunnlaugsdóttir, the wife the tree records.",
+      "details": {
+        "person": {
+          "name": "Thórunn Einarsdóttir",
+          "role": "named as mother on the 28 September 1856 Kross baptism"
+        }
+      },
+      "supporting_sources": [
+        "Iceland, Baptisms, 1730-1905 — entry for Einar, 1856"
+      ],
+      "required": true
+    }
+  ]
+}

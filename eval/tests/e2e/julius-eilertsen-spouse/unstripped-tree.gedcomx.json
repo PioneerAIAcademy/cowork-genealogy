@@ -1,0 +1,350 @@
+{
+  "persons": [
+    {
+      "id": "GDCS-WYY",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Julius Edlund",
+          "surname": "Eilertsen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "646f8cfc-7ac7-43d6-846e-3d04eba911a2",
+          "type": "Birth",
+          "date": "24 February 1889",
+          "standard_date": "24 Feb 1889",
+          "place": "Norway",
+          "standard_place": "Norway"
+        },
+        {
+          "id": "61bce16e-b9f9-426d-9d0f-d494fbbc37b1",
+          "type": "Death"
+        },
+        {
+          "id": "05c7fdb0-5881-4da2-807d-35ec78752695",
+          "type": "Baptism",
+          "date": "7 Mar 1889",
+          "standard_date": "7 Mar 1889",
+          "place": "Steigen, Nordland, Norge",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "c531be66-bc87-4976-a10a-19e7c494c7c3",
+          "type": "Baptism",
+          "date": "9 Jun 1889",
+          "standard_date": "9 Jun 1889",
+          "place": "Steigen, Nordland, Norge",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "ba0b9309-9448-4027-a7f5-0c2d1e2107a6",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Ledingen, Nordland, Norge",
+          "standard_place": "Ledingen, Nordland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "GDJ3-R2L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Petrine Elisabeth",
+          "surname": "Edisdatter"
+        }
+      ],
+      "facts": [
+        {
+          "id": "af034479-2aeb-4a7e-8b16-980472b56609",
+          "type": "Residence",
+          "date": "1877",
+          "standard_date": "1877",
+          "place": "Folda, Nordland, Norway",
+          "standard_place": "Nordland, Norway"
+        },
+        {
+          "id": "9f9d6d97-b277-4d97-a3be-ed7d1d723995",
+          "type": "Residence",
+          "date": "1877",
+          "standard_date": "1877",
+          "place": "Rørstad, Nordland, Norway",
+          "standard_place": "Rørstad, Sørfold, Nordland, Norway"
+        },
+        {
+          "id": "22b32cf5-0e97-4b7c-a2a9-2cac8f5cb326",
+          "type": "Birth",
+          "date": "20 SEP 1877",
+          "standard_date": "20 Sep 1877",
+          "place": "Solskinnbakk, Nordland, Norge",
+          "standard_place": "Nordland, Norway"
+        },
+        {
+          "id": "52b79250-52ce-4399-bc25-c36be62d8dd3",
+          "type": "Christening",
+          "date": "10 JUN 1878",
+          "standard_date": "10 Jun 1878",
+          "place": "Folda, Nordland, Norway",
+          "standard_place": "Nordland, Norway"
+        },
+        {
+          "id": "5cc9f268-757a-49db-8b40-acc9d9f7ebde",
+          "type": "Death",
+          "date": "7 MAY 1961",
+          "standard_date": "7 May 1961",
+          "place": "Bodø, Nordland, Norge",
+          "standard_place": "Bodø, Nordland, Norway"
+        },
+        {
+          "id": "49f3fb64-3258-40b1-bc8b-d594850bf9c1",
+          "type": "Burial",
+          "place": "Leines, Steigen, Nordland, Norway",
+          "standard_place": "Leines, Steigen, Nordland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "LCCG-WDJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Anne Kornelie",
+          "surname": "Jakobsdatter"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "29 February 1866 ",
+          "standard_date": "29 Feb 1866",
+          "place": "Steigen, Nordland, Norway",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "6077a940-42c7-463d-ab93-1b7c254135bf",
+          "type": "Baptism",
+          "date": "1 Jul 1866",
+          "standard_date": "1 Jul 1866",
+          "place": "Steigen, Nordland, Norge",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "97a6c6c0-3882-4f4b-ba5a-3ca5c82017b0",
+          "type": "Baptism",
+          "date": "Jul 1866",
+          "standard_date": "Jul 1866",
+          "place": "Steigen, Nordland, Norge",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "2177d566-5e28-40c1-9f14-38fd18dab6d1",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Steigen, Nordland, Norge",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "41d03457-06ed-4927-a781-5c551cfcf6ce",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Ledingen, Nordland, Norge",
+          "standard_place": "Ledingen, Nordland, Norway"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1910",
+          "standard_date": "1910"
+        },
+        {
+          "id": "ac25599e-edbd-4e9c-973f-03d3b3590778",
+          "type": "Residence",
+          "place": "Botn",
+          "standard_place": "Botn, Sogn og Fjordane, Norway"
+        },
+        {
+          "id": "490bf0e3-11b5-4c9d-bfc8-c82a5132ec4c",
+          "type": "Residence",
+          "place": "Boten",
+          "standard_place": "Botèn, Sainyabuli, Laos"
+        },
+        {
+          "id": "e6d4ca53-5c90-4c2d-b11d-93f22e87d22f",
+          "type": "Residence",
+          "place": "Gylseth",
+          "standard_place": "Gyllset, Steigen, Nordland, Norway"
+        }
+      ]
+    },
+    {
+      "id": "LCCG-7T3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Eilert Johan",
+          "surname": "Jensen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 August 1859",
+          "standard_date": "10 Aug 1859",
+          "place": "Steigen, Nordland, Norway",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "3b35afde-b4ab-49e4-b0c9-f47052102509",
+          "type": "Christening",
+          "date": "2 October 1859",
+          "standard_date": "2 Oct 1859",
+          "place": "Steigen, Nordland, Norway",
+          "standard_place": "Steigen, Nordland, Norway"
+        },
+        {
+          "id": "fcb8c0a9-0b88-4b6d-b75a-32ff7b1b6096",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Ledingen, Nordland, Norge",
+          "standard_place": "Ledingen, Nordland, Norway"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "1922",
+          "standard_date": "1922"
+        },
+        {
+          "id": "fbf0223e-5bd4-4ed1-a88c-69cf3d746bc2",
+          "type": "Residence",
+          "place": "Botn.",
+          "standard_place": "Botn, Sogn og Fjordane, Norway"
+        }
+      ]
+    },
+    {
+      "id": "GDJ3-P2Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Emil",
+          "surname": "Knutsen"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ec2f4f3b-08ef-4f28-9b30-544fd6241852",
+          "type": "Birth",
+          "date": "4 JUL 1898",
+          "standard_date": "4 Jul 1898"
+        },
+        {
+          "id": "a630b815-4a43-4117-ab2c-0d28c65f2b27",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Sørfold Prestegjeld, Nordland, Norge",
+          "standard_place": "Sørfold, Nordland, Norway"
+        },
+        {
+          "id": "c9b751b7-14bb-4e09-a1f7-0af4b441ed06",
+          "type": "Death",
+          "date": "3 JUN 1975",
+          "standard_date": "3 Jun 1975",
+          "place": "Voss Fulkessjukehus",
+          "standard_place": "Vosges, France"
+        },
+        {
+          "id": "0976af6e-a740-40ea-b54e-7f74060d37cf",
+          "type": "Burial",
+          "place": "Sævareid Kyrkje",
+          "standard_place": "Sævareid, Etne, Vestland, Norway"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GDCS-WYY",
+      "person2": "GDJ3-R2L",
+      "facts": [
+        {
+          "id": "1edd57b9-8d6c-4f51-b2d9-90d43ff24cb8",
+          "type": "Marriage",
+          "date": "1911",
+          "standard_date": "1911"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LCCG-7T3",
+      "person2": "LCCG-WDJ"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LCCG-7T3",
+      "child": "GDCS-WYY"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LCCG-WDJ",
+      "child": "GDCS-WYY"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GDCS-WYY",
+      "child": "GDJ3-P2Q"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GDJ3-R2L",
+      "child": "GDJ3-P2Q"
+    }
+  ],
+  "sources": [
+    {
+      "id": "3XVZ-QYC",
+      "title": "Julius Eslund, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:687Y-T7V9 : Fri Jan 03 20:23:55 UTC 2025), Entry for Julius Eslund and Eilert Johan Jensen, 9 Jun 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:687Y-T7V9"
+    },
+    {
+      "id": "3XVZ-3JP",
+      "title": "Julius Edlund, \"Norway, Church Books, 1797-1958\"",
+      "citation": "\"Norway, Church Books, 1797-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:687B-9PF2 : Sun Jan 12 12:48:40 UTC 2025), Entry for Julius Edlund and Eilert Johan Jensen, 7 Mar 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:687B-9PF2"
+    },
+    {
+      "id": "74NJ-SRT",
+      "title": "Julius Eilertsen, \"Norway, Census, 1900\"",
+      "citation": "\"Norges folketelling, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DJ6F-6Q2M : Thu Aug 22 01:38:32 UTC 2024), Entry for Eilert Jensen and Anna Jakobsdt, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DJ66-THN2"
+    }
+  ]
+}

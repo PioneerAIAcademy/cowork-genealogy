@@ -1,0 +1,19 @@
+{
+  "id": "domingo-olivera-parents",
+  "name": "Domingo Olivera y Valadyo — parents named on a 1925 Vega Baja birth registration",
+  "genre": "record-hint",
+  "source_pid": "GN5K-19C",
+  "captured": "2026-09-07",
+  "researcher_question": "Who were the parents of Domingo Olivera y Valadyo (b. 1867), and is the Domingo Olivera named as a father on the 1925 Vega Baja birth registration of Carmen Ester Olivera Martínez this man or his son?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1920s",
+    "geography": "PR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 24, hint-samples.csv row 738, flags adds_father/adds_mother, confidence 3). Draft transcribed from a 1925 Puerto Rican civil birth registration; unverified. The likely reading is a generation shift — the subject appearing as the grandfather, not the father."
+}

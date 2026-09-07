@@ -1,0 +1,19 @@
+{
+  "id": "jacob-klatkiewicz-spouse",
+  "name": "Jacob Klatkiewicz — son Stanislaus baptised 1886 at Ceradz, Posen",
+  "genre": "record-hint",
+  "source_pid": "LDZR-XPT",
+  "captured": "2026-09-07",
+  "researcher_question": "Is the Stanislaus Klatkwicz baptised 2 May 1886 at Ceradz, Posen the son of Jacob Klatkiewicz and Hedwig Kurek that the tree records as born in 1884 at Rumianek?",
+  "tags": {
+    "question_type": "children",
+    "era": "1880s",
+    "geography": "PL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 22, hint-samples.csv row 677, flag adds_spouse, confidence 3). Draft transcribed from an 1886 Posen Catholic baptismal entry; unverified. The hinted 'new spouse' is almost certainly the recorded wife under a one-letter index error."
+}

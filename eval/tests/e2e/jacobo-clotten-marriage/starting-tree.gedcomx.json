@@ -1,0 +1,166 @@
+{
+  "persons": [
+    {
+      "id": "MZ13-TN6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Joanni Jacobo",
+          "surname": "Clotten"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MZ1T-5P1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Joannes",
+          "surname": "Clotten"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "07 FEB 1720",
+          "standard_date": "7 Feb 1720"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "08 FEB 1720",
+          "standard_date": "8 Feb 1720",
+          "place": "Roemisch-Katholische,Boppard Oberwesel,Rheinland,Prussia",
+          "standard_place": "Boppard, Oberwesel, Oberwesel, Sankt Goar, Rhineland, Prussia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MZ1T-55B",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Mariae Magdalenae",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MZ13-TF1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Anna Maria",
+          "surname": "Clotten"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "30 SEP 1717",
+          "standard_date": "30 Sep 1717"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "03 OCT 1717",
+          "standard_date": "3 Oct 1717",
+          "place": "Roemisch-Katholische,Boppard Oberwesel,Rheinland,Prussia",
+          "standard_place": "Boppard, Oberwesel, Oberwesel, Sankt Goar, Rhineland, Prussia"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MZ13-TN6",
+      "person2": "MZ1T-55B"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "MZ13-TN6",
+      "child": "MZ13-TF1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "MZ1T-55B",
+      "child": "MZ13-TF1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "MZ13-TN6",
+      "child": "MZ1T-5P1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "MZ1T-55B",
+      "child": "MZ1T-5P1",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MZ52-1F7",
+      "title": "Joanni Jacobo Clotten in entry for Joannes Clotten, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NDP5-SRW : 25 August 2020), Joanni Jacobo Clotten in entry for Joannes Clotten, 1720.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NDP5-SRW"
+    },
+    {
+      "id": "M8JX-HDJ",
+      "title": "Joanni Jacobo Clotten in entry for Anna Maria Clotten, \"Germany, Births and Baptisms, 1558-1898\"",
+      "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NDPR-JXC : 25 August 2020), Joanni Jacobo Clotten in entry for Anna Maria Clotten, 1717.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NDPR-JXC"
+    },
+    {
+      "id": "3CS6-DM3",
+      "title": "Joanni Jacobo Dotten, „Deutschland, Rheinland, Bistum Trier, katholische Kirchenbücher, 1543-1958“",
+      "citation": "\"Deutschland, Rheinland, Bistum Trier, katholische Kirchenbücher, 1543-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W66B-R53Z : Tue Jan 21 12:54:40 UTC 2025), Entry for Anna Maria Dotten and Joanni Jacobo Dotten, 30 Sep 1717.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W66B-R5W2"
+    },
+    {
+      "id": "3CS6-8YG",
+      "title": "Joanni Jacobo Clotten, „Deutschland, Rheinland, Bistum Trier, katholische Kirchenbücher, 1543-1958“",
+      "citation": "\"Deutschland, Rheinland, Bistum Trier, katholische Kirchenbücher, 1543-1958\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W66Y-2V6Z : Wed Jan 22 09:10:28 UTC 2025), Entry for Joannes Clotten and Joanni Jacobo Clotten, 7 Feb 1720.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W66Y-2VN2"
+    }
+  ]
+}
