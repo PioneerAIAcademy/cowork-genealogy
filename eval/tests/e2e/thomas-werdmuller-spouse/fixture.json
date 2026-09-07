@@ -1,0 +1,19 @@
+{
+  "id": "thomas-werdmuller-spouse",
+  "name": "Thomas Werdmüller — a son David by Regula Steiner (bapt. 1698, Zürich)",
+  "genre": "record-hint",
+  "source_pid": "9MF3-9S6",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Thomas Werdmüller of Zürich (b. 1657) have a son David baptised 27 March 1698 by a Regula Steiner, while married to Dorothea von Muralt?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1690s",
+    "geography": "CH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 28, hint-samples.csv row 870, flag adds_spouse, confidence 3). Draft transcribed from a 1698 Zürich Reformed baptismal entry; unverified. The recorded wife was alive and married to him at the hinted date."
+}

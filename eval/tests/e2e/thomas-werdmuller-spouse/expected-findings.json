@@ -1,0 +1,37 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Thomas Werdmüller and Regula Steiner had a son David, baptised 27 March 1698 at Zürich.",
+      "details": {
+        "subject_person": "Thomas Werdmüller (9MF3-9S6)",
+        "relation": "child",
+        "target_person": {
+          "name": "David Werdmüller",
+          "baptism": "27 March 1698, Zürich, Switzerland"
+        },
+        "mother": "Regula Steiner"
+      },
+      "supporting_sources": [
+        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — baptism of David Werdmüller, 27 Mar 1698, parents Thomas Werdmüller and Regula Steiner"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Regula Steiner was a wife of Thomas Werdmüller, named as the mother on the 1698 Zürich baptism.",
+      "details": {
+        "person": {
+          "name": "Regula Steiner",
+          "role": "mother on the 27 March 1698 Zürich baptism"
+        }
+      },
+      "supporting_sources": [
+        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — baptism of 27 Mar 1698"
+      ],
+      "required": true
+    }
+  ]
+}

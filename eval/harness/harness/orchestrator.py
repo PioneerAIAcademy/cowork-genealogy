@@ -538,6 +538,7 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         blocked_protected_writes=result.blocked_protected_writes,
+        blocked_owned_section_writes=result.blocked_owned_section_writes,
         attempted_mcp_calls=result.attempted_mcp_calls,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,

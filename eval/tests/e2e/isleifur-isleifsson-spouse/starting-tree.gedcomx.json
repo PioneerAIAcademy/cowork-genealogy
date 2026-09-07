@@ -1,0 +1,653 @@
+{
+  "persons": [
+    {
+      "id": "KCS6-8SG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Ísleifur",
+          "surname": "Ísleifsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "12 October 1832",
+          "standard_date": "12 Oct 1832",
+          "place": "Bryggjur, Kross, Rangarvalla, Iceland",
+          "standard_place": "Bryggjur, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "10 January 1870",
+          "standard_date": "10 Jan 1870",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "12 OCT 1832",
+          "standard_date": "12 Oct 1832",
+          "place": "Kross,Rangarvallasysla,Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "b260d30f-d61a-48b2-a642-f4554ae4e830",
+          "type": "Residence",
+          "date": "1835",
+          "standard_date": "1835",
+          "place": "Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "e8586ae1-4cbf-4b72-a493-3c8a2b7e462d",
+          "type": "Residence",
+          "date": "1849",
+          "standard_date": "1849",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "4955c532-a86c-4037-93ad-4ecd0ae87ecb",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Rangárvallasýsla, Suðurland, Ísland",
+          "standard_place": "Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "8d48e4ca-7d9e-499e-a70f-1b14cee756b0",
+          "type": "Residence",
+          "date": "1863",
+          "standard_date": "1863",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "adb8daa5-5a8a-49d0-bc26-25f00f90eae7",
+          "type": "Burial",
+          "date": "17 January 1870",
+          "standard_date": "17 Jan 1870",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "1f16599f-7cdd-4aee-84bd-7294d36e6182",
+          "type": "Residence",
+          "place": "Sigluvíkursókn, Eystri-Hóll",
+          "standard_place": "Netherlands"
+        }
+      ]
+    },
+    {
+      "id": "LHP7-4J8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Ísleifur",
+          "surname": "Eyjólfsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "27 FEBRUARY 1799",
+          "standard_date": "27 Feb 1799",
+          "place": "Kross, Rangarvallasysla, Sudurland, Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "Abt 1799",
+          "standard_date": "Abt 1799"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "20 marts 1893",
+          "standard_date": "20 1893"
+        }
+      ]
+    },
+    {
+      "id": "M36N-XCY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Gudridur",
+          "surname": "Gunnlaugsdottirr"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "14 FEB 1836",
+          "standard_date": "14 Feb 1836"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "16 FEB 1836",
+          "standard_date": "16 Feb 1836",
+          "place": "Sigluvik,Rangarvallasysla,Iceland",
+          "standard_place": "Sigluvík, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "e34d48be-0d20-409a-9672-65ae6902ac4b",
+          "type": "Residence",
+          "date": "1847",
+          "standard_date": "1847",
+          "place": "Litla-Hildisey, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "02fab0e6-6c82-4189-bc11-f2452a8e0e0b",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Rangárvallasýsla, Suðurland, Ísland",
+          "standard_place": "Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "87687e7f-7351-4f91-aff3-eef59e0c66f5",
+          "type": "Residence",
+          "date": "1864",
+          "standard_date": "1864",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "bcfa45cf-5d56-4934-ad27-5dc551c92ed7",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "8d13857d-8972-4646-b023-e297bb6b10cd",
+          "type": "Residence",
+          "date": "1873",
+          "standard_date": "1873",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "d538ccc1-2371-403b-adbe-2a0cbc6bde8d",
+          "type": "Residence",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "Litla-Hildisey, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "3dd29cf9-1a8f-472f-8ed9-b095b5c92140",
+          "type": "Residence",
+          "date": "1889",
+          "standard_date": "1889",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "15 May 1905",
+          "standard_date": "15 May 1905"
+        },
+        {
+          "id": "5ab80d56-fd8a-4e63-abd5-1ab3d74e9c0f",
+          "type": "Residence",
+          "place": "Landeyaprestakall, Litla-Hildisey",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "98a63969-a748-4622-b799-ad90757d309f",
+          "type": "Residence",
+          "place": "Landeyjaprestakall, Litla-Hildisey",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        }
+      ]
+    },
+    {
+      "id": "M36T-T97",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Guðmundur",
+          "surname": "Ísleifsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "22 JUN 1859",
+          "standard_date": "22 Jun 1859",
+          "place": "Kross,Rangarvallasysla,Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "4d1a9983-4a77-4ed4-95f8-91b1e130bf1a",
+          "type": "Birth",
+          "date": "1859",
+          "standard_date": "1859"
+        },
+        {
+          "id": "9469a466-0824-4a71-8f99-b2cc3656d9ad",
+          "type": "Residence",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "Litla-Hildisey, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "25 December 1903",
+          "standard_date": "25 Dec 1903",
+          "place": "Vestmanneyjar, Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Vestmanneyjar, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "ebdc6fb8-c878-4a53-b725-5b44d75162ed",
+          "type": "Burial",
+          "date": "30 December 1903",
+          "standard_date": "30 Dec 1903",
+          "place": "Vestmanneyjar, Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Vestmanneyjar, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "00b08e6c-de54-48bf-89de-3fc3c3301deb",
+          "type": "LifeSketch",
+          "value": "From heimaslod.is:\n\nGuðmundur Ísleifsson (Vilborgarstöðum)\nGuðmundur Ísleifsson bóndi á Vilborgarstöðum fæddist 22. júní 1859 í Litlu-Hildisey í A-Landeyjum og lést 25. desember 1903 á Vilborgarstöðum.\nForeldrar hans voru Ísleifur Ísleifsson frá Bryggjum, vinnumaður í Litlu-Hildisey, f. 12. október 1832, d. 10. janúar 1870 og sambýliskona hans Guðríður Gunnlaugsdóttir vinnukona frá Litlu-Hildisey í A-Landeyjum, f. 14. febrúar 1836, d. 15. maí 1905.\n\nGuðmundur var tökubarn hjá móðurforeldrum sínum í Litlu-Hildisey, en þar voru foreldrar hans vinnufólk. Hann var vinnumaður þar hjá Steinunni móðursystur sinni 1880.\nHann fluttist að Godthaab 1887 og var þar vinnumaður – og 1890, er hann fluttist vinnumaður að Háagarði. Þar var hann í vinnumennsku til 1893, en „sjálfs sín“ þar í lok árs 1893.\nÞau Guðrún voru þar gift húsmennskufólk 1894 með barnið Margréti Ísleifu á fyrsta ári.\nÞau fluttust að Vilborgarstöðum og bjuggu þar meðan Guðmundi entist líf.\nHann lést 1903.\n\nKona hans var Guðrún Guðmundsdóttir húsfreyja, f. 24. október 1862, fluttist til Vesturheims 1905.\nBarn þeirra hér:\n1. Margrét Ísleif Guðmundsdóttir , f. 18. maí 1894, fluttist til Vesturheims 1905."
+        }
+      ]
+    },
+    {
+      "id": "M3X3-KMY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Steinunn",
+          "surname": "Ísleifsdóttir"
+        }
+      ],
+      "facts": [
+        {
+          "id": "28f92b68-86da-4b4e-9115-dca5390d528b",
+          "type": "Birth",
+          "date": "1856",
+          "standard_date": "1856"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "16 SEP 1856",
+          "standard_date": "16 Sep 1856",
+          "place": "Kross,Rangarvallasysla,Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "0a38f261-e696-4dad-ab4e-b5cceff7ebdb",
+          "type": "Residence",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "a6189ea5-6c6e-4fa9-bece-414b1f053702",
+          "type": "Residence",
+          "date": "1872",
+          "standard_date": "1872",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "39ede0cd-0577-4080-8087-a826e0aed740",
+          "type": "Residence",
+          "date": "1873",
+          "standard_date": "1873",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "4c9ad586-2c63-40b9-a8fd-01be6dd27b56",
+          "type": "Residence",
+          "date": "1874",
+          "standard_date": "1874",
+          "place": "Ísland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "be76a815-a9ec-4cef-a1f3-718c2f19989a",
+          "type": "Residence",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "Litla-Hildisey, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "a5ab634d-a96c-4d90-9f64-6550eb56f6a8",
+          "type": "Residence",
+          "date": "1889",
+          "standard_date": "1889",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "761499a5-af44-49d4-a86b-b065195b4dad",
+          "type": "Residence",
+          "date": "1895",
+          "standard_date": "1895",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "11 June 1954",
+          "standard_date": "11 Jun 1954",
+          "place": "Iceland",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "4d179a17-98f4-4ca8-a3ec-11ba2f0baf9a",
+          "type": "Residence",
+          "place": "Landeyjaprestakall, Litla-Hildisey",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "6a34f14c-018d-4171-ad14-9beb0b7dcc91",
+          "type": "Burial",
+          "place": ", , Suðurland, Iceland",
+          "standard_place": "Southern, Iceland"
+        },
+        {
+          "id": "3919b224-ca1d-4331-842a-77f9a9c9dd2d",
+          "type": "Residence",
+          "place": "Landeyaprestakall, Litla Hildisey",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        }
+      ]
+    },
+    {
+      "id": "M3X7-RNG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Jóhann",
+          "surname": "Ísleifsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b9b73ed1-e662-4cc0-9918-825ff0b444ce",
+          "type": "Birth",
+          "date": "11 April 1861",
+          "standard_date": "11 Apr 1861",
+          "place": "Kross, Rangárvallasýsla, Southern, Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "12 APR 1861",
+          "standard_date": "12 Apr 1861",
+          "place": "Kross,Rangarvallasysla,Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "128c0dab-b457-4613-bf14-5bea534d5112",
+          "type": "Residence",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "Litla-Hildisey, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Litla-Hildisey, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "16 November 1902",
+          "standard_date": "16 Nov 1902",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "6f1d44d8-d358-4edd-a9b2-79d327b17229",
+          "type": "Burial",
+          "date": "22 November 1902",
+          "standard_date": "22 Nov 1902",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        }
+      ]
+    },
+    {
+      "id": "LZJN-4MC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Guðný",
+          "surname": "Jónsdóttir"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 oktober 1805",
+          "standard_date": "11 Oct 1805",
+          "place": "Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "12 OCT 1805",
+          "standard_date": "12 Oct 1805",
+          "place": "Kross,Rangarvallasysla,Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "00a41003-7b78-4d22-94a6-70959ec9d5d9",
+          "type": "Residence",
+          "date": "1847",
+          "standard_date": "1847",
+          "place": "Island",
+          "standard_place": "Iceland"
+        },
+        {
+          "id": "da6585bb-0b8c-4310-8253-159bda0fc6b9",
+          "type": "Residence",
+          "date": "1849",
+          "standard_date": "1849",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Island",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "23 September 1877",
+          "standard_date": "23 Sep 1877"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KCS6-8SG",
+      "person2": "M36N-XCY",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "ABT 1857",
+          "standard_date": "Abt 1857",
+          "place": "Krosss, Rangarvalla, Iceland",
+          "standard_place": "Rangárvallasýsla, Southern, Iceland"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LHP7-4J8",
+      "person2": "LZJN-4MC",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "6 juni 1824",
+          "standard_date": "6 Jun 1824",
+          "place": "Kross, Rangárvallasýsla, Suðurland, Iceland",
+          "standard_place": "Kross, Rangárvallasýsla, Southern, Iceland"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LHP7-4J8",
+      "child": "KCS6-8SG",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LZJN-4MC",
+      "child": "KCS6-8SG",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KCS6-8SG",
+      "child": "M3X3-KMY",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "M36N-XCY",
+      "child": "M3X3-KMY",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KCS6-8SG",
+      "child": "M36T-T97",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "M36N-XCY",
+      "child": "M36T-T97",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KCS6-8SG",
+      "child": "M3X7-RNG",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "M36N-XCY",
+      "child": "M3X7-RNG",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "9QXQ-47L",
+      "title": "Isleifur Isleifsson in entry for Steinun, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FG58-H5W : 23 June 2020), Isleifur Isleifsson in entry for Steinun, 1856.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FG58-H5W"
+    },
+    {
+      "id": "9QFX-G1G",
+      "title": "Isleifur Isleifsson in entry for Johann, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FG58-XFM : 23 June 2020), Isleifur Isleifsson in entry for Johann, 1861.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FG58-XFM"
+    },
+    {
+      "id": "QL5V-PN8",
+      "title": "Isleifur Isleifsson, \"Iceland, Church Census, 1744-1965\"",
+      "citation": "\"Iceland, Church Census, 1744-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JYQ-VFGP : Wed Oct 23 23:34:58 UTC 2024), Entry for Ingvar Runolfsson and Kristin Sigurdardottir, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JYQ-VFPS"
+    },
+    {
+      "id": "QL5V-2HY",
+      "title": "Isleifur Isleifsson, \"Iceland, Census, 1835\"",
+      "citation": "\"Iceland, Census, 1835\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:681T-F6NT : Tue Aug 18 05:59:48 UTC 2026), Entry for Katrin Isleifsdottir and Isleifur Isleifsson, 1835.",
+      "url": "https://familysearch.org/ark:/61903/1:1:681T-F6JW"
+    },
+    {
+      "id": "QL5V-PRD",
+      "title": "Ísleifur Ísleifsson, \"Iceland, Church Census, 1744-1965\"",
+      "citation": "\"Iceland, Church Census, 1744-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8H2R-VC3Z : Wed Oct 23 23:00:39 UTC 2024), Entry for Guðl. Magnússon and Guðný Jónsdóttir, 1849.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8H2R-VC6Z"
+    },
+    {
+      "id": "QL5V-X5N",
+      "title": "Isleifur Isleifsson, \"Iceland, Census, 1860\"",
+      "citation": "\"Ísland, Manntal, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62DW-GG2H : Tue Jan 21 20:02:32 UTC 2025), Entry for Gudridur Gunnlaugsdottir and Oddny Gunnlaugsdottir, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62DW-GGLB"
+    },
+    {
+      "id": "9QXQ-KQV",
+      "title": "Isleifur Isleifsson in entry for Gudmundur, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FG58-VMR : 23 June 2020), Isleifur Isleifsson in entry for Gudmundur, 1859.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FG58-VMR"
+    },
+    {
+      "id": "7PKR-PNM",
+      "title": "Birth and christening record for Jóhann Ísleifsson, 1861, Iceland, Rangárvalla, Landeyjaþing and Kross, prestþjónustubækur",
+      "url": "https://familysearch.org/ark:/61903/3:1:3Q9M-CSRP-WS4Y-C?cat=2863418&i=24&lang=en"
+    },
+    {
+      "id": "9QXQ-6JT",
+      "title": "Isleifur, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FG58-X8Q : 23 June 2020), Isleifur, 1832.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FG58-X8Q"
+    },
+    {
+      "id": "QL5V-JXR",
+      "title": "Isleifur Isleifsson, \"Iceland, Census, 1835\"",
+      "citation": "\"Iceland, Census, 1835\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:681T-CR21 : Mon Aug 17 22:47:57 UTC 2026), Entry for Katrin Isleifsdottir and Isleifur Isleifsson, 1835.",
+      "url": "https://familysearch.org/ark:/61903/1:1:681T-CRLX"
+    },
+    {
+      "id": "3935-QH8",
+      "title": "Iceland, Rangárvalla, Kross Landeyjaþing, prestþjónustubækur, death and burial of Ísleifur Ísleifsson, 1870",
+      "url": "https://familysearch.org/ark:/61903/3:1:3Q9M-CSRP-WSH9-3"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "marie-kayser-death",
+  "name": "Marie Philippine Kaÿser — death in July 1780, Luxembourg",
+  "genre": "record-hint",
+  "source_pid": "GKZY-81X",
+  "captured": "2026-09-07",
+  "researcher_question": "When did Marie Philippine Kaÿser, wife of Theodore Hochhertz of Luxembourg, die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1780s",
+    "geography": "LU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 18, hint-samples.csv row 556, flag adds_death, confidence 3). Draft transcribed from a 1780 Luxembourg death entry; unverified."
+}

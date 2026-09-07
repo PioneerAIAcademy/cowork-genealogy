@@ -1,0 +1,19 @@
+{
+  "id": "marina-lopez-parents",
+  "name": "Marina López — parents Manuel López and Carmen Nelia Casado (1927 marriage)",
+  "genre": "record-hint",
+  "source_pid": "P874-7BV",
+  "captured": "2026-09-07",
+  "researcher_question": "Who were the parents of Marina López, wife of Juan de Dios Pichardo Chalas of San José de Ocoa, and when was she born and married?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1920s",
+    "geography": "DO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 8, hint-samples.csv row 283, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). Draft transcribed from a 1927 Dominican civil marriage entry; unverified. Four separable claims ride on the one record."
+}

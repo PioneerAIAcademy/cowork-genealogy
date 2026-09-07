@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_francis_fisher_spouse",
+    "objective": "Did Francis Maria Fisher of Hobart, Tasmania (b. 1871) marry Alfred George Holding, and if so when?",
+    "subject_person_ids": [
+      "LZZ9-YL3"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

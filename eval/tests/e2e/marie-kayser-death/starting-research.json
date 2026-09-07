@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_marie_kayser_death",
+    "objective": "When did Marie Philippine Kaÿser, wife of Theodore Hochhertz of Luxembourg, die?",
+    "subject_person_ids": [
+      "GKZY-81X"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_vasily_romanov_spouse",
+    "objective": "Did Vasily Ignatiev Romanov of Samara have a daughter Raisa, born 16 July 1911 at the Peter and Paul church, by a wife named Klavdiya Dmitrieva?",
+    "subject_person_ids": [
+      "L8TL-4NY"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
