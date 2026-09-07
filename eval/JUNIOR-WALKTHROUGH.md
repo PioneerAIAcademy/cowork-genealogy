@@ -211,7 +211,7 @@ npm run dev
 
 **Keep that terminal open** while you work — closing it (or pressing Ctrl-C) stops the app.
 
-**Then, on both platforms:** go to <http://localhost:3000/results> in your browser.
+**Then, on both platforms:** go to <http://127.0.0.1:3000/results> in your browser.
 
 You'll see the run logs grouped by skill. Click your latest `search-wikipedia` candidate.
 
