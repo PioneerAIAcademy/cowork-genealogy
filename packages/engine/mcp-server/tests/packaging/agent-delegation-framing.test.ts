@@ -253,16 +253,27 @@ describe("agent delegation framing", () => {
     // discoverEdges() only sees `@plugin:`. A delegation written any other way
     // adds no edge, and every per-edge assertion above skips it silently.
     //
-    // Matched on a name boundary, not as a substring: `image-reader-opus` shipped
-    // here once and is parked for a return (image-transcribe-tool-spec.md §15.9),
-    // and a substring match reports a delegation to it as an unregistered edge to
-    // `image-reader` — a failure whose two offered remedies are both wrong.
+    // A hit is read as a whole kebab token, because a plain substring match
+    // reports a delegation to `image-reader-opus` — which shipped here once and
+    // is parked for a return (image-transcribe-tool-spec.md §15.9) — as an
+    // unregistered edge to `image-reader`, and both remedies its message offers
+    // are wrong. Only a token that is ANOTHER agent's name is skipped: a token
+    // this arm has no other owner for (`image-readers`, `image-reader-based`)
+    // still names this agent, and dropping those would lose reach a substring
+    // match had. The name is a FILENAME, so it is escaped before it becomes a
+    // pattern — nothing constrains that basename, and a metacharacter in one
+    // would otherwise widen the match or throw.
     const registered = new Set(Object.keys(DELEGATION_EDGES));
     const offenders: string[] = [];
     for (const skill of skillFiles) {
       const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
       for (const agent of agentOnly) {
-        if (!new RegExp(`(?<![a-z0-9-])${agent}(?![a-z0-9-])`).test(text)) continue;
+        const esc = agent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const tokens = [...text.matchAll(new RegExp(`(?<![a-z0-9-])${esc}[a-z0-9-]*`, "g"))];
+        const namesThisAgent = tokens.some(
+          (m) => m[0] === agent || !agentNames.includes(m[0]),
+        );
+        if (!namesThisAgent) continue;
         const edge = `${skill} -> ${agent}`;
         if (!registered.has(edge) && !PROSE_MENTIONS.has(edge)) offenders.push(edge);
       }
