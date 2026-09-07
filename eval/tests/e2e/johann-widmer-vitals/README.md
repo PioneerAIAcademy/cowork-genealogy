@@ -8,6 +8,19 @@ all committed e2e fixtures to be about deceased persons.)
 
 > What are Johann Frederich Widmer's birth date/place, death date/place, and burial date/place?
 
+## Bundled captures (`provided-documents/`)
+
+One Find a Grave page is committed here to let the harness exercise its burial plan item without a live
+browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `findagrave-johann-widmer-136852260.pdf` | findagrave.com | Memorial #136852260 — Johann Frederich Widmer, burial Rose Ridge Cemetery, Naples, Ontario, New York |
+
+This is an authentic page saved from findagrave.com in a credentialed browser. It supplies the specific
+cemetery name (Rose Ridge Cemetery) for the bonus burial finding (f4) and corroborates the burial locale
+for the required finding (f3).
+
 ## What was removed from the starting tree
 
 - Removed fact 248eaba5-34ae-4182-9874-bfcc07166241 on L7B2-QXX: Birth 25 JAN 1847 Hausen, Bellikon, Aargau, Switzerland
