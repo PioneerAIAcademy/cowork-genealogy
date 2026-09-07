@@ -351,12 +351,9 @@ which date range they should set in the site's own UI.
 - Include only parameters you're confident about; omit uncertain ones.
 - **Check `conflicts[]` before encoding a place or date.** Consider only
   `conflict_type: "fact"` entries whose `disputed_attribute` names that
-  field. (Identity conflicts — `conflict_type: "identity"`,
-  `disputed_attribute: null` — put the dispute in `identity_question` and
-  name no single field to omit, so this rule does not apply to them.) When
-  more than one such entry names the field, apply the highest-precedence
-  status present — `unresolved` beats `resolved` beats `moot` (contested
-  beats settled beats irrelevant):
+  field. When more than one such entry names the field, apply the
+  highest-precedence status present — `unresolved` beats `resolved` beats
+  `moot` (contested beats settled beats irrelevant):
   - `status: "resolved"` → encode the value from
     `preferred_assertion_id`, and only that value. A recorded resolution
     is the project's answer; a competing value it rejected must not be
@@ -366,10 +363,12 @@ which date range they should set in the site's own UI.
     nil gets logged as evidence of absence for a record that exists. Say
     in one line that the value is contested, naming the candidates so the
     researcher can filter by eye.
-  - `status: "moot"` → the conflict stopped mattering (later evidence made
-    it irrelevant, typically because the disputed person proved to be
-    someone else). The fact is not contested; encode the field as an
-    ordinary parameter.
+  - `status: "moot"` → the fact is not contested; encode the field as an
+    ordinary parameter, but only a value still asserted for the focus
+    person. A value the mooting discarded must not be encoded, however
+    plausible it looks elsewhere in the file, including in the plan item;
+    if the entry names no surviving value, omit the field as for
+    `unresolved`.
 - Add relative names when you have them (Ancestry weights them heavily).
 - Widen with spelling variants or wildcards when a search returns little.
 

@@ -8,16 +8,16 @@ Grading dimensions for search-external-sites unit tests. Evaluated by the LLM ju
 
 Did the skill generate a correctly pre-filled search URL for the target site (Ancestry, MyHeritage, etc.)? The URL should include the search parameters from the plan item.
 
-**An encoded value must match the project's own resolution of that fact.** These sites *filter* on place and date parameters, so a wrong value returns nothing and the skill then logs that nothing as a negative — false absence evidence in the GPS audit trail. Before grading a place or date parameter, check `conflicts[]` in the scenario's `research.json` for a `conflict_type: "fact"` entry whose `disputed_attribute` names that field (identity conflicts — `conflict_type: "identity"`, `disputed_attribute: null` — name no single field to omit, so this rule does not apply to them); when more than one such entry names the field, apply the highest-precedence status present — `unresolved` beats `resolved` beats `moot` (contested beats settled beats irrelevant):
+**An encoded value must match the project's own resolution of that fact.** These sites *filter* on place and date parameters, so a wrong value returns nothing and the skill then logs that nothing as a negative — false absence evidence in the GPS audit trail. Before grading a place or date parameter, check `conflicts[]` in the scenario's `research.json` for a `conflict_type: "fact"` entry whose `disputed_attribute` names that field (identity conflicts — `conflict_type: "identity"` — put the dispute in `identity_question` rather than a single field, so this rule does not apply to them); when more than one such entry names the field, apply the highest-precedence status present — `unresolved` beats `resolved` beats `moot` (contested beats settled beats irrelevant):
 
 - **`status: "resolved"`** → the value from `preferred_assertion_id` is the correct one to encode, and encoding it is never an unsupported claim. Encoding a value that resolution **rejected** (a `competing_assertion_ids` entry that is not the preferred one) is a **fail** on this dimension — even when that value appears elsewhere in the project, including in the research objective text, which may still echo a superseded value.
 - **`status: "unresolved"`** → the fact is still contested. **Omitting the field is correct**, and naming the candidate values in one line is a **pass**. Silently picking a side is a **partial**.
-- **`status: "moot"`** → the conflict stopped mattering and the fact is not contested; grade the field as an ordinary parameter.
+- **`status: "moot"`** → the conflict stopped mattering and the fact is not contested; grade the field as an ordinary parameter, but only for a value still asserted for the focus person. If the entry names no surviving value, the `unresolved` treatment applies (omitting is correct, silently picking a side is a **partial**).
 - **no `conflicts[]` entry naming the field** → grade it as an ordinary parameter.
 
 - **pass:** Generated URL targets the correct site's search endpoint, includes all relevant search parameters from the plan item (name, date range, place), and is syntactically valid.
 - **partial:** URL targets the right site but is missing a search parameter the plan item specified — unless the `conflicts[]` rule above required omitting that field, in which case a correctly omitted contested field is a **pass**, not a partial — or uses a less-effective query encoding.
-- **fail:** URL targets the wrong site, has malformed query parameters, omits the core search terms entirely, or encodes a value a resolved conflict rejected.
+- **fail:** URL targets the wrong site, has malformed query parameters, omits the core search terms entirely, or encodes a value a resolved conflict rejected or a moot conflict discarded.
 
 ## Capture guidance
 
