@@ -162,7 +162,9 @@ the write ahead of the validation and watching two cases go red.
 > `packages/engine/mcp-server/tests/utils/project-io.test.ts` —
 > `findNestingAncestor`'s predicate: no ancestor, an ancestor one level up, an
 > ancestor several levels up returning the nearest one, `projectPath` not yet
-> existing, and the walk terminating at the filesystem root.
+> existing, the walk terminating at the filesystem root, and the candidate's
+> own `research.json` not counting as its own ancestor (the walk starts at
+> `projectPath`'s *parent*, never `projectPath` itself).
 
 > `packages/engine/mcp-server/tests/packaging/manifest.test.ts` and
 > `readme-catalog.test.ts` — the tool is registered, dispatched, listed in the

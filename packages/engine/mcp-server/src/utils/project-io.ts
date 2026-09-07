@@ -282,13 +282,18 @@ async function fileState(path: string): Promise<"present" | "absent" | "unreadab
  * project at `projectPath` would end up nested inside. `null` when no
  * ancestor holds one.
  *
- * Resolved with the same realpath-with-fallback pattern as `lockKey`
- * (above): `projectPath` itself may not exist yet — this runs before
- * `project_create` writes anything — so a bare `resolve()` is the fallback,
- * tried only after `realpathSync.native` so a symlinked ancestor (macOS's
- * `/tmp` -> `/private/tmp`) doesn't produce a false negative. Once resolved,
- * walking up via `dirname` needs no further realpath calls: the starting
- * path is already fully resolved, so every ancestor derived from it is too.
+ * Each candidate ancestor is realpath'd as the walk reaches it — not once at
+ * the start, on `projectPath` itself. `projectPath` normally doesn't exist
+ * yet (this runs before `project_create` writes anything), so realpath'ing
+ * it always throws and falls back to the raw resolved form; canonicalizing
+ * the *ancestors* instead is what actually matters, since this value is
+ * returned to the caller in the refusal message and compared against real
+ * paths, not just used internally. `fileState`'s `access()` already resolves
+ * symlinks in every path component regardless of canonicalization, so that
+ * is not what realpath buys here — what it buys is the *reported* path: on
+ * Windows, a temp path with an 8.3-shortened component (e.g. a username with
+ * a space) would otherwise surface the short form in the error message
+ * instead of the one the user actually navigated to.
  *
  * Treats "unreadable" the same as "present" (only a clean ENOENT counts as
  * absent), matching `classifyProjectPath`'s posture: a `research.json` that
@@ -296,17 +301,16 @@ async function fileState(path: string): Promise<"present" | "absent" | "unreadab
  * makes that ancestor a project, not an empty folder to nest inside.
  */
 export async function findNestingAncestor(projectPath: string): Promise<string | null> {
-  const resolved = resolve(projectPath);
-  let start: string;
-  try {
-    start = realpathSync.native(resolved);
-  } catch {
-    start = resolved;
-  }
-  let dir = dirname(start);
+  let dir = dirname(resolve(projectPath));
   for (;;) {
-    if ((await fileState(join(dir, "research.json"))) !== "absent") {
-      return dir;
+    let real = dir;
+    try {
+      real = realpathSync.native(dir);
+    } catch {
+      // Not created yet; compare lexically and keep walking.
+    }
+    if ((await fileState(join(real, "research.json"))) !== "absent") {
+      return real;
     }
     const parent = dirname(dir);
     if (parent === dir) return null; // reached the filesystem root
