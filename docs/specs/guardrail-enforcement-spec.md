@@ -1466,6 +1466,48 @@ this section before reopening one.
   bypasses" from "cannot see bypasses" — a gap carried in the `nothing-checks`
   register rather than here.
 
+- **Agent postconditions — "this agent must have made this tool call before it
+  returns."** Rejected 2026-09-07 on measurement, not on cost. The mechanism
+  exists and would work: `SubagentStop` with `decision: "block"`, fed by a
+  `PostToolUse` ledger keyed on `agent_id` (absent on the main thread, present
+  inside a subagent), with `tool_input` in the payload so a parameter condition
+  is expressible. It was proposed for two cases and neither survived contact
+  with the corpus.
+
+  **Measured per agent instance**, over the 22 committed e2e runs that carry
+  agent attribution (it shipped in August; before that the rate is 0%, so older
+  runs cannot answer this at all):
+
+  | Proposed postcondition | Instances | Violations |
+  |---|---:|---:|
+  | `gps-mentor` must write an `evaluations[]` entry before returning | 31 | **0** |
+  | `image-reader` must call `image_transcribe` before returning | 123 | **0** |
+
+  **The weaker instrument said otherwise, and was wrong.** Comparing invocation
+  counts to final-state `evaluations[]` counts across the whole corpus suggests
+  18 lost verdicts in 183 invocations, and 22 runs where `image-reader` ran with
+  no `image_transcribe` anywhere. Both dissolve under per-instance attribution:
+  the first counts re-invocations on one target as losses, and the second is
+  entirely runs from before attribution existed. Cite the per-instance numbers;
+  the count-difference method measures the corpus's age.
+
+  Re-derive by grouping each run log's `tool_calls` on `(agent_id, agent_type)`
+  and asking whether the required tool appears in that instance's calls — skip
+  any run where no call carries an `agent_id`.
+
+  **What would reopen this:** a violation observed per-instance on an attributed
+  run. Not a count difference, and not a `SubagentStop` capability probe — the
+  probe answers whether it *could* be built, which is not in question. No
+  detector was added: on this evidence it would be a row that never fires, and
+  "a zero fire rate is not a licence to graduate" cuts against creating one as
+  much as against promoting one.
+
+  The one case that genuinely has no reachable plane is unchanged and is
+  narrower than the postcondition framing suggested: a **read** performed inside
+  an agent leaves no trace in the project documents, so only run-level
+  attribution sees it, and that is eval-only. It reaches production for nothing
+  today because nothing needs it.
+
 ## 10. Residual risks
 
 Open questions live on the board, not here. This section keeps only the risks
