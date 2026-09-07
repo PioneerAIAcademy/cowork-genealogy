@@ -1,0 +1,19 @@
+{
+  "id": "catharina-gosner-daughter",
+  "name": "Catharina Gosnerin — daughter Magdalena Schedler (chr. 1743, Triesen)",
+  "genre": "record-hint",
+  "source_pid": "KZS8-RS7",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Catharina Gosnerin and Joannes Schedler of Triesen, Liechtenstein have a daughter Magdalena, christened 12 June 1743?",
+  "tags": {
+    "question_type": "children",
+    "era": "1740s",
+    "geography": "LI"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 17, hint-samples.csv row 539, flag adds_daughter, confidence 3). Draft transcribed from a 1743 Liechtenstein Catholic baptismal index entry; unverified."
+}

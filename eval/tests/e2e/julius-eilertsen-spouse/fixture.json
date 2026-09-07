@@ -1,0 +1,19 @@
+{
+  "id": "julius-eilertsen-spouse",
+  "name": "Julius Edlund Eilertsen — a 1910 union with Anne Kathrine Edvardsen",
+  "genre": "record-hint",
+  "source_pid": "GDCS-WYY",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Julius Edlund Eilertsen of Leines, Steigen marry Anne Kathrine Edvardsen on 15 August 1910 — a year before the 1911 marriage to Petrine Elisabeth Edisdatter the tree records?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1910s",
+    "geography": "NO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 20, hint-samples.csv row 611, flag adds_spouse, confidence 3). Draft transcribed from a 1910 Norwegian church-book entry; unverified. Conflicts with the tree's 1911 marriage to a different woman."
+}

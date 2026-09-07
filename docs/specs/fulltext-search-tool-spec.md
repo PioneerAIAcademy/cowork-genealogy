@@ -47,6 +47,10 @@ descriptions distinct so Claude picks the right one.
       "type": "string",
       "description": "Search within place fields. Same operator syntax. Note: place matches against collection metadata, which can cause false positives. Prefer using place as a post-filter rather than in the query."
     },
+    "nlQuery": {
+      "type": "string",
+      "description": "Natural language search query or a FamilySearch tree person ID (e.g. \"Search for John Doe born in Austria\" or \"KD96-TV2\"). Sends the X-FS-Feature-Tag: search_naturalLanguageSupport header — see Auth."
+    },
     "collectionId": {
       "type": "string",
       "description": "Filter to a specific FamilySearch collection by ID."
@@ -57,11 +61,11 @@ descriptions distinct so Claude picks the right one.
     },
     "yearFrom": {
       "type": "number",
-      "description": "Start of year range filter."
+      "description": "Start of year range filter. Must be provided together with yearTo, and must be <= yearTo."
     },
     "yearTo": {
       "type": "number",
-      "description": "End of year range filter."
+      "description": "End of year range filter. Must be provided together with yearFrom, and must be >= yearFrom."
     },
     "recordType": {
       "type": "string",
@@ -95,10 +99,6 @@ descriptions distinct so Claude picks the right one.
       "type": "boolean",
       "description": "When true, include facet counts for collection, place, year, and record type. Default false."
     },
-    "nlQuery": {
-      "type": "string",
-      "description": "A natural-language query, or a FamilySearch tree person ID (e.g. \"Search for John Doe born in Austria\" or \"KD96-TV2\"). Mapped to the upstream `nlQuery` parameter; an alternative to the Lucene-style `keywords`. Supplying it also sends the feature header (see Query parameter mapping)."
-    },
     "projectPath": {
       "type": "string",
       "description": "Absolute path to the active project. When supplied, the tool stages its verbatim response host-side and returns a `staged` handle (see Result staging below); pass `staged.resultsRef` to `research_log_append`. Omit only for a throwaway exploratory search that will not be logged."
@@ -117,9 +117,9 @@ The tool maps its input to the upstream API query parameters:
 | Tool input | API parameter |
 |-----------|--------------|
 | `keywords` | `q.text` |
-| `nlQuery` | `nlQuery` |
 | `name` | `q.fullName` |
 | `place` | `q.recordPlace` |
+| `nlQuery` | `nlQuery` |
 | `collectionId` | `f.collectionId` |
 | `imageGroupNumber` | `q.groupName` |
 | `yearFrom` | `f.recordYear0` |
@@ -161,9 +161,11 @@ interface FulltextResult {
   recordDate?: string;
   recordType?: string;
   recordPlace?: string;
-  /** The full AI-transcribed page. STRIPPED from every result once the
-   *  response is staged (see Result staging) — it lives in the sidecar. Only
-   *  present on an un-staged (no `projectPath`) exploratory search. */
+  /** The full AI-transcribed page. Present whenever nothing was staged —
+   *  either `projectPath` was not supplied, or staging failed (`staged: null`
+   *  with `stagingError` set). Once staged, it is stripped unconditionally
+   *  from every result (see Result staging below for the strip/reachability
+   *  contract) — it lives in the sidecar. */
   textDocument?: string;
   /** Names / places / dates extracted from the transcript (upstream
    *  `content.entities`, bucketed by type). */
@@ -203,7 +205,8 @@ interface FulltextSearchResponse {
   nilSearchNeedsLog?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
-  /** Present only when `projectPath` was supplied. `null` if staging failed. */
+  /** Present only when `projectPath` was supplied. `null` if staging failed.
+   *  See "Result staging" below for the strip/reachability contract. */
   staged?: { resultsRef: string; returnedCount: number } | null;
   /** Present only when staging was attempted and threw. */
   stagingError?: string;
@@ -247,14 +250,19 @@ verify against the original image, not an inability to reach it.
 
 Uses `getValidToken()` from `src/auth/refresh.ts` — same as the
 existing `search` tool. Requires the `BROWSER_USER_AGENT` from
-`src/constants.ts` (Imperva WAF requirement).
+`src/constants.ts` (Imperva WAF requirement). When `nlQuery` is set, an
+additional `X-FS-Feature-Tag: search_naturalLanguageSupport` header is sent
+(the `nlQuery` branch in `fulltextSearchTool`) — omitted for every other
+query shape.
 
 ## Implementation notes
 
-1. **Response mapping**: The upstream API likely returns a different
-   shape than the indexed search. The implementation must probe the
-   actual response and map it to the output schema above. The types
-   above are a starting point — adjust based on the actual API response.
+1. **Response mapping**: the upstream response is mapped to the output
+   schema above by `mapEntry` (`fulltext-search.ts`). Confirmed against a
+   live upstream response: the upstream entry carries no relevance `score`,
+   and its `content.highlightTexts` are bare matched terms, not marked-up
+   snippets — both are reflected in the output schema above, not left as an
+   open question.
 
 2. **Matched terms, not snippets**: the upstream `content.highlightTexts`
    are bare matched terms/phrases (`highlightTerms`), not marked-up snippets
