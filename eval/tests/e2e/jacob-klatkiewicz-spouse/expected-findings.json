@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Jacob Klatkiewicz and Hedwig Kurek had a son Stanislaus, born 30 April 1886 and baptised 2 May 1886 at Ceradz, Posen West.",
+      "details": {
+        "subject_person": "Jacob Klatkiewicz (LDZR-XPT)",
+        "relation": "child",
+        "target_person": {
+          "name": "Stanislaus Klatkiewicz",
+          "birth": "30 April 1886, Ceradz, Posen West, Posen, Prussia"
+        }
+      },
+      "supporting_sources": [
+        "Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998 — baptism of Stanislaus Klatkwicz, 2 May 1886, parents Jacob Klatkwicz and Hedvigis Rurek"
+      ],
+      "required": true
+    }
+  ]
+}
