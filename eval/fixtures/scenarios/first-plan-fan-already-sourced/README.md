@@ -10,17 +10,22 @@ a real source description.
 
 - **Objective / Questions / Hypotheses / Log:** same shape as
   `first-plan-migration-hypothesis` (see that scenario's README), with one
-  divergence — `questions[0].rationale` and `hypotheses[0].notes` both end
-  "for Michael himself" here, since this scenario adds a second person
-  (Patrick) with evidence in scope, and the wording needed to be explicit
-  that no direct record of the move exists *for Michael* specifically.
+  divergence — both `questions[0].rationale` and `hypotheses[0].notes` say
+  no direct record of the move exists "for Michael himself", since this
+  scenario adds a second person (Patrick) with evidence in scope and the
+  wording needed to be explicit the gap is about Michael specifically.
+  `hypotheses[0].notes` ends there; `questions[0].rationale` continues with
+  one more sentence ("No plan has yet been written for this question.").
 - **Plans:** none — `plans: []`. This is the FIRST plan for the question.
 - **GedcomX persons:** I1 (Michael Sheahan, subject), I2 (Patrick
   Sheahan, brother, FAN-cluster), I3 (parent, gender `Unknown`, unnamed
   stub, only to establish the sibling relationship via two `ParentChild`
   links — carries no facts).
-- **Sources:** `S1`, a deed/land record for Patrick's 1875 purchase,
-  `quality: 3` (a real, cited record — not an unverified tree import).
+- **Sources:** `S1`, a deed/land record for Patrick's 1875 purchase, real
+  and cited (not an unverified tree import). `quality: 3` lives on F4's
+  source reference (`I2.facts[0].sources[0]`), not on `S1` itself — `S1`
+  carries no `quality` field, per `TREE_SOURCE_REF_FIELDS` in
+  `tree-shape.ts`.
 
 ## Source and scrub note
 
@@ -49,7 +54,7 @@ Verified across two PR #2004 review rounds and multiple full-suite runs:
 Patrick's 1875 land purchase is unambiguous FAN-cluster evidence a plan
 should surface, and the fixture reliably discriminates a response that
 actually reads it from one that only notices the source exists (see
-`test_survey_surfaces_already_attached_fan_facts` in
+`report_survey_surfaces_already_attached_fan_facts` in
 `eval/harness/validators/test_research_plan.py`).
 
 ## Used by

@@ -32,7 +32,7 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_fallback_for_in_same_plan as check_v3,
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
-    test_survey_surfaces_already_attached_fan_facts as check,
+    report_survey_surfaces_already_attached_fan_facts as check,
 )
 
 QUAL = "mcp__genealogy__"
@@ -378,6 +378,22 @@ def test_passes_when_name_date_and_value_content_present():
     check(BEFORE_STATE, response, TAGGED)  # does not raise
 
 
+def test_passes_when_citation_sits_in_its_own_paragraph():
+    """Proves the same-paragraph scoping removed during PR #2004 review
+    (clack391) was a false-negative source, not a precision gain: this
+    ordinary, correctly-written response cites the fact's content in a
+    paragraph separate from the person's name, and would have wrongly
+    failed under the old same-paragraph rule. Now that the check looks at
+    the whole response, it correctly passes."""
+    response = (
+        "**Already attached (surveyed before planning)**\n\n"
+        "Patrick Sheahan (I2)\n\n"
+        "Source S1 records a land purchase in Schuylkill County dated 1875 "
+        "(Deed Book 42, p. 118)."
+    )
+    check(BEFORE_STATE, response, TAGGED)  # does not raise
+
+
 def test_fires_when_new_search_proposed_using_the_same_year():
     """Reproduces the exact false positive found in a committed run during
     PR #2004 review (clack391): a FAN plan item's own search-window header
@@ -440,14 +456,15 @@ BEFORE_STATE_SHORT_NAME = {"research_json": RESEARCH, "tree_gedcomx_json": TREE_
 
 
 def test_name_and_date_present_but_unrelated_still_fails():
-    """Proves the paragraph-proximity fix, found while re-measuring this
-    validator for PR #2004: a real run's pre-plan narration happened to say
-    "the 1875-1900 window" (an unrelated search-date range) before the plan
-    ever mentioned Patrick. A whole-response substring check counted both
-    "Patrick" and "1875" as present and called it surfaced; the judge
-    correctly scored this run as a silent omission, since the two mentions
-    were unrelated. The validator must require them in the same paragraph,
-    not just the same response."""
+    """A coincidental date match alone must not pass: a real run's pre-plan
+    narration happened to say "the 1875-1900 window" (an unrelated
+    search-date range) before the plan ever mentioned Patrick, and Patrick's
+    own paragraph never restates the fact's content. This is caught by the
+    value-gram requirement, not by paragraph scoping (removed during PR
+    #2004 review, clack391: scoping to one paragraph was itself a
+    false-positive hole, not a precision gain -- see the validator's
+    docstring). The response below carries neither "purchased land" nor
+    "deed book" anywhere, which is what actually fails it here."""
     response = (
         "Discovering record collections for Schuylkill County in the "
         "1875-1900 window.\n\n"

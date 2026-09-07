@@ -89,7 +89,7 @@ the subject and every other person in scope for this question, check
 `tree.gedcomx.json` for the source(s) already attached to their facts
 and relationships. For every one you find, **write down its date,
 place, and value before deciding what to plan for that person** —
-literally state what the fact records, in your own working notes,
+literally state what the fact records, in the plan's rationale,
 before the plan item. "Person X already has a source attached" is
 noticing it exists; it is not the survey. Neither is "review this
 first" as a note to yourself for later — if you wrote that, go read it
