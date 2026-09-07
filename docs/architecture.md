@@ -1730,9 +1730,9 @@ lead you to them:**
   agreement **offline** rather than inferring it from expensive live runs. Three
   axes: `verdict` (genealogical), `compliance` (guardrail), and
   `outcome` (the gate) — so a run whose answer is right but whose audit trail was
-  not earned **fails**. The tier is sampled on a **fixed four-fixture weekly
-  panel**, filed one issue per run by `/file-e2e-panel` and read by
-  `make e2e-panel`: the fixtures are held constant because fixture difficulty
+  not earned **fails**. The tier is sampled on a **fixed four-fixture panel**,
+  filed one issue per run by `/file-e2e-panel` (on demand, not on a cadence) and
+  read by `make e2e-panel`: the fixtures are held constant because fixture difficulty
   varies enough that a changing mix, not a changing system, would explain most of
   any month-to-month move.
 

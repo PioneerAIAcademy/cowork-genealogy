@@ -620,18 +620,22 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
 .PHONY: e2e-panel
-e2e-panel: ## Standing weekly e2e panel — who ran this ISO week, and each fixture's run count: make e2e-panel | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-panel: ## Standing e2e panel — each fixture's last run and its run count in the window: make e2e-panel | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API.
 	#
-	# The scoreboard for the standing weekly panel that /file-e2e-panel files.
-	# Coverage is this ISO week (Monday-anchored) and ignores SINCE; the count
-	# uses SINCE, defaulting to 28 days rather than the usual 14 because the
-	# panel's unit of comparison is the month. No other reader prints runs per
-	# fixture per window — e2e-corpus's concentration block counts violations,
-	# not runs — which is why the panel's own acceptance check needs this one.
+	# The scoreboard for the standing panel that /file-e2e-panel files. Per
+	# fixture: its last run and how many days ago, plus its count over SINCE,
+	# which defaults to 28 days rather than the usual 14 because the panel's
+	# unit of comparison is the month. No other reader prints runs per fixture
+	# per window — e2e-corpus's concentration block counts violations, not runs
+	# — which is why the panel's own acceptance check needs this one.
 	#
-	# Every fixture at zero is a legitimate report (nobody ran the panel that
-	# week) and exits 0; only an unknown TEST= slug exits 1.
+	# Deliberately not anchored to a calendar week: the panel is filed whenever
+	# the lead runs the skill, so "did it run this ISO week" would answer a
+	# question the cadence does not ask.
+	#
+	# Every fixture at zero is a legitimate report (nobody ran the panel in a
+	# while) and exits 0; only an unknown TEST= slug exits 1.
 	cd eval/harness && uv run python -m e2e.panel_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: eval-inventory

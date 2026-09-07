@@ -16,23 +16,25 @@ is not answerable with what was here before.
 Pure analysis over committed run JSONs: no live run, no API spend, same posture
 as `corpus_report.py`, `nudge_report.py` and `latency_report.py`.
 
-## Two windows, deliberately
+## One window, and a cadence-free reading
 
-**Coverage** is this ISO week (Monday-anchored) and ignores `--since` entirely —
-"did the panel run this week" has exactly one meaningful window, and making it
-configurable would let a caller ask a question the panel's cadence cannot answer.
+The count is the `--since` window, defaulting to 28 days rather than the shared
+`DEFAULT_SINCE_DAYS` of 14: the panel's unit of comparison is the month, and a
+fortnight cannot hold the "at least 4 runs" the acceptance check asks for. Pass
+`SINCE=all` for a fixture's whole history — the all-time counts (6/6/5/4 when the
+panel was chosen) are a different number from the trailing-month ones, and it is
+the trailing one that says whether the bet is working.
 
-**The count** is the `--since` window, defaulting to 28 days rather than the
-shared `DEFAULT_SINCE_DAYS` of 14: the panel's unit of comparison is the month,
-and a fortnight cannot hold the "at least 4 runs" the acceptance check asks for.
-Pass `SINCE=all` for a fixture's whole history — note that the all-time counts
-(6/6/5/4 when the panel was chosen) are a different number from the trailing-month
-counts, and it is the trailing one that says whether the bet is working.
+Alongside it, each fixture's last run and how many days ago. **Deliberately not
+anchored to a calendar week.** The panel is filed whenever the lead runs
+`/file-e2e-panel`, not on a Monday schedule, so "did it run this ISO week" would
+answer a question the cadence does not ask — and would read as a miss on a
+Tuesday batch that ran fine on the Friday before.
 
 ## An empty window is a result, not a failure
 
-Exit 0 with every fixture at zero is the honest report on a week nobody ran the
-panel, and it is the state this file was written in. Only an unknown fixture — a
+Exit 0 with every fixture at zero is the honest report on a stretch where nobody
+ran the panel, and it is the state this file was written in. Only an unknown fixture — a
 `--test` slug with no committed runs at all — exits 1, which is also what puts
 this reader on the branch-scope caveat's empty-corpus path.
 
@@ -81,68 +83,54 @@ PANEL: tuple[str, ...] = (
 PANEL_SINCE_DAYS = 28
 
 
-def iso_week_start(today: date | None = None) -> date:
-    """The Monday of `today`'s ISO week."""
-    d = today or date.today()
-    return d - timedelta(days=d.weekday())
-
-
 @dataclass(frozen=True)
 class FixtureRow:
     slug: str
-    this_week: list[Path]
     in_window: list[Path]
     all_runs: list[Path]
 
     @property
-    def covered(self) -> bool:
-        return bool(self.this_week)
+    def last_run(self) -> Path | None:
+        return self.all_runs[-1] if self.all_runs else None
+
+    @property
+    def days_since(self) -> int | None:
+        p = self.last_run
+        d = run_date(p) if p is not None else None
+        return (date.today() - d).days if d is not None else None
 
 
 def scan(
     slugs: tuple[str, ...] | list[str],
     *,
     cutoff: date | None,
-    week_start: date,
 ) -> list[FixtureRow]:
     """One row per fixture. Reads filenames only — never opens a run log."""
-    rows: list[FixtureRow] = []
-    for slug in slugs:
-        runs = result_jsons_for(slug)
-        this_week = [p for p in runs if (d := run_date(p)) is not None and d >= week_start]
-        rows.append(
-            FixtureRow(
-                slug=slug,
-                this_week=this_week,
-                in_window=filter_since(runs, cutoff),
-                all_runs=runs,
-            )
+    return [
+        FixtureRow(
+            slug=slug,
+            in_window=filter_since(runs := result_jsons_for(slug), cutoff),
+            all_runs=runs,
         )
-    return rows
-
-
-def format_report(rows: list[FixtureRow], *, week_start: date) -> str:
-    iso = week_start.isocalendar()
-    covered = [r for r in rows if r.covered]
-    lines = [
-        f"Panel coverage — ISO week {iso.year}-W{iso.week:02d} "
-        f"(from Monday {week_start.isoformat()})",
-        f"  {len(covered)} of {len(rows)} panel fixture(s) have a run this week.",
-        "",
+        for slug in slugs
     ]
+
+
+def format_report(rows: list[FixtureRow]) -> str:
+    lines = ["Panel runs", ""]
     width = max((len(r.slug) for r in rows), default=0)
     for row in rows:
-        if row.covered:
-            mark = f"ran {row.this_week[-1].name}"
+        if (n := row.days_since) is None:
+            last = "never run"
         else:
-            mark = "NOT RUN this week"
-        lines.append(f"  {row.slug.ljust(width)}  {len(row.in_window):>2} in window   {mark}")
+            last = f"last {row.last_run.name.removeprefix('run-')[:10]} ({n}d ago)"
+        lines.append(f"  {row.slug.ljust(width)}  {len(row.in_window):>2} in window   {last}")
 
-    if not covered:
+    if not any(r.in_window for r in rows):
         lines += [
             "",
-            "  Every panel fixture is unrun this week. That is the report, not an error —",
-            "  file the week's issues with /file-e2e-panel.",
+            "  No panel fixture has run inside the window. That is the report, not an",
+            "  error — file the next batch with /file-e2e-panel.",
         ]
     return "\n".join(lines)
 
@@ -163,8 +151,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     slugs = [args.test] if args.test else list(PANEL)
-    week_start = iso_week_start()
-    rows = scan(slugs, cutoff=args.since, week_start=week_start)
+    rows = scan(slugs, cutoff=args.since)
 
     total_all = sum(len(r.all_runs) for r in rows)
     if args.test and not total_all:
@@ -182,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     total_in_window = sum(len(r.in_window) for r in rows)
-    print(format_report(rows, week_start=week_start))
+    print(format_report(rows))
     print()
     print(describe_window(args.since, n_runs=total_in_window, n_total=total_all))
     return 0
