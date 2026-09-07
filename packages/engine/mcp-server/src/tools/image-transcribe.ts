@@ -86,13 +86,17 @@ const OCR_TIMEOUT_MS = 180_000;
 // google/gemini-3.7-flash OpenRouter's /api/v1/models reports
 // top_provider.max_completion_tokens = 65536 and we previously sent no
 // `max_tokens`, so 16000 LOWERS the effective cap rather than raising it. It is
-// still well above a page's content: the largest full transcription across the
-// 175 measurable calls in the committed corpus is ~6.4k chars (~1.6k output
-// tokens). Treat that as a bound, not a proof — 219 of 394 calls carry a null
-// summary so it is measured over the rest, every measured call ran under the
-// prior Qwen default (which spends no reasoning tokens), and reasoning tokens
-// draw on this SAME budget (Gemini is reasoning-capable and reasoning is not
-// disabled), so a reasoning-heavy read could reach 16000 before the page ends.
+// still well above a page's content. Measured 2026-09-07 over the committed e2e
+// run logs: of 455 image_transcribe calls, 219 are excluded by the harness's
+// 14-day capture strip and 126 have a transcription size recoverable from the
+// `full length N chars` marker (or an unelided summary). Over those 126 the
+// largest is 6,443 chars (~1.6k output tokens), median 1,573; under the current
+// default specifically, 36 calls with a max of 4,940 chars (~1.2k tokens).
+// Re-derive by scanning eval/runlogs/e2e/** for that marker — NOT with
+// `make e2e-transcribe-failures`, which reports reachability, not sizes.
+// Treat it as a dated bound, not a proof: reasoning tokens draw on this SAME
+// budget (Gemini is reasoning-capable and reasoning is not disabled), so a
+// reasoning-heavy read could reach 16000 before the page ends.
 // A cap that does bind surfaces as `truncated` (detection reads finish_reason
 // AND native_finish_reason, case-insensitively), so it is visible, never silent.
 export const OCR_MAX_TOKENS = 16000;

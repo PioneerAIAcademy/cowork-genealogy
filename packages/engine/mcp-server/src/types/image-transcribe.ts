@@ -60,7 +60,9 @@ export interface OpenRouterChatResponse {
   choices?: Array<{
     message?: { content?: string | null };
     /** OpenAI-compatible stop reason. "length" marks an output-token-cap
-     *  truncation; "stop" a complete read. (Probe: dev/probe-ocr-finish-reason.ts.) */
+     *  truncation — measured (probe: dev/probe-ocr-finish-reason.ts). "stop" is
+     *  the non-cap value from the OpenAI contract; the probe captured no
+     *  complete-page read, so that half is inferred, not measured. */
     finish_reason?: string | null;
     /** The provider's own un-normalized stop reason. The shipped default
      *  (Gemini) DOES normalize — it reports `finish_reason: "length"` and

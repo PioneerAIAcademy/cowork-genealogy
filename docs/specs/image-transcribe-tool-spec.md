@@ -668,16 +668,21 @@ the condition to re-check on.
   Mind the **direction**: for the current default `google/gemini-3.7-flash`
   OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
   no `max_tokens`, so `16000` **lowers** the effective cap, it does not raise it.
-  It is still well above a page's content — the largest full transcription across
-  the 175 measurable calls in the committed corpus is ~6.4k chars (~1.6k output
+  It is still well above a page's content — measured 2026-09-07, the largest
+  transcription recovered from the committed e2e run logs is 6,443 chars (~1.6k output
   tokens), and both Gemini and the prior Qwen default have *produced gradeable
   output* at 16000 in `dev/try-ocr-compare.ts` (that script reads only
   `choices[0].message` and `usage`, so it cannot itself observe a cap). Treat the
-  figure as a bound, not a proof: it is measured over 175 of 394 calls (219 carry
-  a null summary), every measured call ran under the prior Qwen default which
-  spends no reasoning tokens, and reasoning tokens draw on this same budget (the
-  current model is reasoning-capable), so a reasoning-heavy read could reach
-  16000 before the page is done. A cap that binds is **visible** (`truncated`,
+  figure as a dated bound, not a proof: of 455 calls, 219 are excluded by the
+  harness's 14-day capture strip and 126 have a recoverable transcription size,
+  so it is measured over those 126 (median 1,573 chars); both models are
+  represented, the current default's own 36 measured calls topping out at 4,940
+  chars (~1.2k tokens); and reasoning tokens draw on this same budget (the
+  current model is reasoning-capable and reasoning is not disabled), so a
+  reasoning-heavy read could reach 16000 before the page is done. Re-derive by
+  scanning `eval/runlogs/e2e/**` for the `full length N chars` marker — **not**
+  with `make e2e-transcribe-failures`, which reports reachability, not sizes.
+  A cap that binds is **visible** (`truncated`,
   §6.2), never silent.
 - The OCR **prompt is baked into the tool**, not passed by the caller —
   reuse the `image-reader.md` protocol so behavior is identical to today's
@@ -691,8 +696,10 @@ Guard against empty content (→ error per §5.6).
 
 **Output-cap truncation.** Read `choices[0].finish_reason` **and**
 `choices[0].native_finish_reason`. OpenRouter is OpenAI-compatible and returns
-them per choice (`"length"` on an output-token cap, `"stop"` on a complete read;
-evidence in `dev/probe-ocr-finish-reason.ts`). A capped read usually carries the
+them per choice: `"length"` on an output-token cap (**measured** — see
+`dev/probe-ocr-finish-reason.ts`), and `"stop"` as the non-cap value, which is
+the OpenAI-compatible contract **inferred rather than measured on a full page**,
+since the probe captured no complete-page read. A capped read usually carries the
 partial content it got before the cut, so without this it passes as an ordinary
 success and the caller cannot tell a half-read census page from a whole one.
 
