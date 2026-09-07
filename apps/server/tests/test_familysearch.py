@@ -351,12 +351,14 @@ def test_init_db_removes_stale_allowlist_entries():
 
 
 @pytest.mark.asyncio
-async def test_revoke_sandboxes_destroys_active_projects():
+async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
     """When a user is not on the allowlist, _revoke_sandboxes destroys their
-    active sandbox sessions and archives the Project rows."""
+    active sandbox sessions and archives only the successfully deleted ones."""
     from unittest.mock import AsyncMock
     from app.main import _revoke_sandboxes
     from app.models import Project
+
+    monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
 
     email = "revoke-sandbox-test@example.com"
     with Session(get_engine()) as s:
@@ -387,6 +389,47 @@ async def test_revoke_sandboxes_destroys_active_projects():
 
     with Session(get_engine()) as s:
         for uid in ("usr_revoke_test_01",):
+            u = s.get(User, uid)
+            if u:
+                for p in s.exec(select(Project).where(Project.user_id == uid)).all():
+                    s.delete(p)
+                s.delete(u)
+        s.commit()
+
+
+@pytest.mark.asyncio
+async def test_revoke_sandboxes_skips_archival_on_failed_delete(monkeypatch):
+    """A project whose sandbox deletion failed stays active so the next boot
+    retries it (self-healing)."""
+    from unittest.mock import AsyncMock
+    from app.main import _revoke_sandboxes
+    from app.models import Project
+
+    monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
+
+    email = "revoke-fail-test@example.com"
+    with Session(get_engine()) as s:
+        user = User(id="usr_revoke_fail_01", email=email)
+        s.add(user)
+        s.add(Project(
+            id="prj_revoke_fail_01", user_id=user.id,
+            sandbox_id="sbx_revoke_fail_01", status="active",
+        ))
+        s.commit()
+
+    provider = AsyncMock()
+    provider.delete.side_effect = RuntimeError("E2B API down")
+    await _revoke_sandboxes(provider)
+
+    provider.delete.assert_called_once_with("sbx_revoke_fail_01")
+
+    with Session(get_engine()) as s:
+        project = s.get(Project, "prj_revoke_fail_01")
+        assert project is not None and project.status == "active", \
+            "failed delete must leave project active for retry on next boot"
+
+    with Session(get_engine()) as s:
+        for uid in ("usr_revoke_fail_01",):
             u = s.get(User, uid)
             if u:
                 for p in s.exec(select(Project).where(Project.user_id == uid)).all():

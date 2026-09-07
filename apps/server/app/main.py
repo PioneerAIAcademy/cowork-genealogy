@@ -41,27 +41,32 @@ async def _revoke_sandboxes(provider) -> None:
     """Destroy active sandboxes belonging to users not on the current allowlist.
 
     Computed fresh each boot so a failed prior attempt is retried automatically.
-    Best-effort: DB or provider errors are logged, never crash startup.
+    Only runs when FamilySearch OAuth is the login gate (same condition as the
+    per-request allowlist check in auth.py). Best-effort: DB or provider errors
+    are logged, never crash startup.
     """
-    allowlist = get_settings().allowlist
-    if not allowlist:
+    settings = get_settings()
+    if not settings.familysearch_configured or not settings.allowlist:
         return
     try:
         with Session(get_engine()) as session:
             projects = session.exec(
                 select(Project).join(User).where(
-                    User.email.not_in(allowlist),  # type: ignore[union-attr]
+                    User.email.not_in(settings.allowlist),  # type: ignore[union-attr]
                     Project.status == "active",
                 )
             ).all()
             if not projects:
                 return
 
+            succeeded: set[str] = set()
+
             async def _delete_one(project: Project) -> None:
                 try:
                     await asyncio.wait_for(
                         provider.delete(project.sandbox_id), timeout=_REVOKE_TIMEOUT
                     )
+                    succeeded.add(project.id)
                     log.info("Revoked sandbox %s for de-provisioned user", project.sandbox_id)
                 except Exception:
                     log.warning("Failed to revoke sandbox %s", project.sandbox_id, exc_info=True)
@@ -69,7 +74,8 @@ async def _revoke_sandboxes(provider) -> None:
             await asyncio.gather(*(_delete_one(p) for p in projects))
 
             for project in projects:
-                project.status = "archived"
+                if project.id in succeeded:
+                    project.status = "archived"
             session.commit()
     except Exception:
         log.warning("Sandbox revocation sweep failed", exc_info=True)
