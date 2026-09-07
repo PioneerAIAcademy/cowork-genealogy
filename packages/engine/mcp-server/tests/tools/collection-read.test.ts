@@ -121,6 +121,7 @@ function mockDetailFetch(opts: {
         status: opts.detailStatus,
         statusText: opts.detailStatus === 404 ? "Not Found" : "Error",
         text: async () => "",
+        headers: new Headers(),
       });
     }
     if (opts.detailMalformed) {

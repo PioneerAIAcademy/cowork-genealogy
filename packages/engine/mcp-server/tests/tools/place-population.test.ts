@@ -74,7 +74,7 @@ describe("populationTool", () => {
   });
 
   it("throws a friendly error when the service is unreachable", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
     await expect(populationTool({ standardPlace: "Nigeria" })).rejects.toThrow(
       /Population data service is unavailable/

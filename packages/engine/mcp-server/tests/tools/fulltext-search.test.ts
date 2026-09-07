@@ -355,10 +355,11 @@ describe("fulltextSearchTool error propagation", () => {
   });
 
   it("22. throws a generic message for other non-OK statuses", async () => {
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
+      headers: new Headers(),
     });
     await expect(fulltextSearchTool({ keywords: "Flynn" })).rejects.toThrow(
       /full-text search error: 500 Internal Server Error/

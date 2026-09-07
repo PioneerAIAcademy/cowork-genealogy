@@ -91,11 +91,12 @@ describe("exchangeCodeForTokens", () => {
   });
 
   it("throws a descriptive error on a non-OK HTTP response with no error field", async () => {
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
       json: async () => ({}),
+      headers: new Headers(),
     });
 
     await expect(exchangeCodeForTokens("c", "v")).rejects.toThrow(

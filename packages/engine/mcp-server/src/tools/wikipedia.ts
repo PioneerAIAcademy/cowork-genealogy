@@ -1,4 +1,4 @@
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import type {
   WikipediaAPIResponse,
   WikipediaSearchResult,
@@ -20,14 +20,14 @@ export async function wikipediaSearch(
 ): Promise<WikipediaSearchResult> {
   const url = `${WIKIPEDIA_API_BASE}/${encodeURIComponent(input.query)}`;
 
-  const response = await fetchWithTimeout(
+  const response = await fetchWithRetry(
     url,
     {
       headers: {
         "User-Agent": "genealogy-mcp-server/0.0.1",
       },
     },
-    WIKIPEDIA_TIMEOUT_MS
+    WIKIPEDIA_TIMEOUT_MS,
   );
 
   if (!response.ok) {

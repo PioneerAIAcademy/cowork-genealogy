@@ -154,7 +154,7 @@ describe("wikiPlacePageTool — home section", () => {
   });
 
   it("surfaces a 5xx as an upstream error (does NOT treat it as page-not-found)", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+    mockFetch.mockResolvedValue({ ok: false, status: 500, statusText: "Internal Server Error", headers: new Headers() });
 
     await expect(
       wikiPlacePageTool({ standardPlace: "Portugal", section: "home" })
@@ -162,7 +162,7 @@ describe("wikiPlacePageTool — home section", () => {
   });
 
   it("surfaces a network failure as a friendly server-unreachable error", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
     await expect(
       wikiPlacePageTool({ standardPlace: "Portugal", section: "home" })

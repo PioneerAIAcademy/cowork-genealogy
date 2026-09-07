@@ -291,10 +291,11 @@ describe("collectionsSearchTool error handling", () => {
 
   it("throws on non-OK API response", async () => {
     mockedGetValidToken.mockResolvedValueOnce("test-token");
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
+      headers: new Headers(),
     });
 
     await expect(collectionsSearchTool({ standardPlace: "Alabama" })).rejects.toThrow(

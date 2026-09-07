@@ -289,17 +289,29 @@ describe("recordReadTool", () => {
     );
   });
 
-  // 10. Error: 429 → rate-limit message
-  it("throws on 429 with rate-limit message", async () => {
-    mockStatus(429);
+  // 10. Error: 429 → retried then returned, falls through to generic !res.ok
+  it("throws on 429 after retry exhaustion", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
     await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
-      /rate limit/,
+      /429/,
     );
   });
 
-  // 11. Error: generic non-OK → includes status code
+  // 11. Error: generic non-OK → includes status code (500 is retried then returned)
   it("throws on unexpected non-OK status with code in message", async () => {
-    mockStatus(500);
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
     await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
       /500/,
     );

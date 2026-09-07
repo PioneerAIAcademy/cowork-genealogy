@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   FSCollectionData,
@@ -107,7 +107,7 @@ export async function fetchAllCollections(
 
   const url = `${FS_COLLECTIONS_URL}?count=5000&offset=0&facets=OFF`;
 
-  const response = await fetchWithTimeout(
+  const response = await fetchWithRetry(
     url,
     {
       headers: {
@@ -116,7 +116,7 @@ export async function fetchAllCollections(
         "User-Agent": BROWSER_USER_AGENT,
       },
     },
-    COLLECTIONS_TIMEOUT_MS
+    COLLECTIONS_TIMEOUT_MS,
   );
 
   if (!response.ok) {

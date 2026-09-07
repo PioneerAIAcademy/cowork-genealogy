@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { toArk, arkToBareId } from "../utils/ark.js";
@@ -99,7 +99,7 @@ export async function recordReadTool(
 
   const url = `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`;
 
-  const res = await fetchWithTimeout(url, {
+  const res = await fetchWithRetry(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
@@ -122,11 +122,6 @@ export async function recordReadTool(
   if (res.status === 404) {
     throw new Error(
       `Record ${entityId} was not found in FamilySearch historical records.`,
-    );
-  }
-  if (res.status === 429) {
-    throw new Error(
-      "FamilySearch rate limit reached. Wait a moment and try again.",
     );
   }
   if (!res.ok) {
