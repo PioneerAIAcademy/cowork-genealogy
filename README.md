@@ -122,7 +122,7 @@ way project state changes.
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Gemini Flash via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
-| `configure_openrouter` | Save the user's OpenRouter API key to `~/.familysearch-mcp/config.json` (`openRouterApiKey`) so `image_transcribe` can run; returns a masked preview. Direct-invocation — Claude calls it when `image_transcribe` reports a missing/rejected key. | None |
+| `configure_openrouter` | Save an optional OpenRouter model slug to the per-user config so `image_transcribe` uses a non-default OCR model. Does not accept an API key — the user sets `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
@@ -150,8 +150,8 @@ for end users.
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an
 OpenRouter API key in `~/.familysearch-mcp/config.json` (`openRouterApiKey`);
-in Cowork, if the key is missing or rejected the workflow asks the user
-for one and saves it via `configure_openrouter`. The e2e harness and the
+if the key is missing or rejected, the error directs the user to add it
+in `config.json` directly (never via a tool call). The e2e harness and the
 hosted web server bridge the key from their own environment (see
 CLAUDE.md).
 
