@@ -13,6 +13,8 @@ import { fileURLToPath } from "url";
 import {
   validateProject,
   validateParsed,
+  PROOF_TIER_RANK,
+  VALIDATOR_ENUMS,
   RESEARCH_SHAPES,
   ID_PREFIXES,
   ISO_DATE_PATTERN,
@@ -2211,6 +2213,68 @@ describe("Research closed shapes", () => {
             e.path === "research.json/proof_summaries[0]/claims[0]/relationship"
         )
       ).toBe(true);
+    });
+
+    it("rejects a scalar tier stronger than every per-claim tier", async () => {
+      // The `!==` in the scalar check has two arms. Dropping this one (making it
+      // `<`) left the whole suite green, and it is the arm the orchestrator's
+      // `tier >= probable` routing actually leans on.
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "proved";
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes(
+              "tier 'proved' does not match the stronger of claims[].proof_tier ('probable')"
+            )
+        )
+      ).toBe(true);
+    });
+
+    it("a prototype key cannot pose as a tier rank", async () => {
+      // PROOF_TIER_RANK was an object literal, so `["constructor"]` returned a
+      // function rather than undefined, Math.max went NaN, and the scalar check
+      // silently stopped running for the whole summary.
+      expect(PROOF_TIER_RANK.get("constructor")).toBeUndefined();
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible";
+      research.proof_summaries[0].claims = [
+        {
+          claim: "poison",
+          proof_tier: "constructor",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("does not match the stronger of claims[].proof_tier")
+        )
+      ).toBe(true);
+    });
+
+    it("PROOF_TIER_RANK ranks every proof_tier enum value", () => {
+      expect(new Set(PROOF_TIER_RANK.keys())).toEqual(
+        new Set(VALIDATOR_ENUMS.proof_tier)
+      );
     });
 
     it("rejects a claims[] entry with an invalid proof_tier value", async () => {

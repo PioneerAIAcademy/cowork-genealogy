@@ -83,13 +83,20 @@ const CLOSED_ENUMS = {
 // spec states this as a rule, but nothing checked it, and a scalar that
 // silently disagrees with its own claims is exactly the failure mode #1711
 // was raised to close.
-const PROOF_TIER_RANK: Record<string, number> = {
-  disproved: 0,
-  not_proved: 1,
-  possible: 2,
-  probable: 3,
-  proved: 4,
-};
+// A Map, not a plain object: `PROOF_TIER_RANK["constructor"]` on an object
+// literal returns Object.prototype.constructor — a function, not undefined — so
+// a model-supplied `proof_tier: "constructor"` passed the `!== undefined` guard,
+// made Math.max return NaN, and silently switched the scalar check below off for
+// the whole summary. That is CLAUDE.md's third silent-pass mode (a field-name
+// match colliding with an unrelated key). The Python table this mirrors
+// (test_proof_conclusion.py `_TIER_RANK`) is safe because it uses .get(k, -1).
+export const PROOF_TIER_RANK = new Map<string, number>([
+  ["disproved", 0],
+  ["not_proved", 1],
+  ["possible", 2],
+  ["probable", 3],
+  ["proved", 4],
+]);
 
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
@@ -1163,7 +1170,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         }
         if (claim && typeof claim === "object" && "proof_tier" in claim) {
           checkEnum(claim.proof_tier, "proof_tier", clp, report);
-          const rank = PROOF_TIER_RANK[claim.proof_tier];
+          const rank = PROOF_TIER_RANK.get(claim.proof_tier);
           if (rank !== undefined) maxClaimRank = Math.max(maxClaimRank, rank);
         }
         if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
@@ -1183,9 +1190,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       // enum value, so one bad claim doesn't cascade into a confusing second
       // error here on top of the one already reported above.
       if (maxClaimRank >= 0 && typeof ps.tier === "string") {
-        const scalarRank = PROOF_TIER_RANK[ps.tier];
+        const scalarRank = PROOF_TIER_RANK.get(ps.tier);
         if (scalarRank !== undefined && scalarRank !== maxClaimRank) {
-          const strongest = Object.keys(PROOF_TIER_RANK).find((t) => PROOF_TIER_RANK[t] === maxClaimRank);
+          const strongest = [...PROOF_TIER_RANK].find(([, r]) => r === maxClaimRank)?.[0];
           addError(report, psp, `tier '${ps.tier}' does not match the stronger of claims[].proof_tier ('${strongest}') — the scalar must carry the strongest per-claim tier`);
         }
       }
