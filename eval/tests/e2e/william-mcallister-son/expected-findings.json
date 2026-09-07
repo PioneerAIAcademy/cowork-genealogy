@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "William Mc Allister (McFerran) and Mary Jane Magee had a son, Thomas John McFerran, born 4 June 1879 at Downpatrick, County Down, Ireland.",
+      "details": {
+        "subject_person": "William Mc Allister (LZDC-MJN)",
+        "relation": "child",
+        "target_person": {
+          "name": "Thomas John McFerran",
+          "birth": "4 June 1879, Downpatrick, County Down, Ireland"
+        }
+      },
+      "supporting_sources": [
+        "Ireland, Civil Registration, 1845-1913 — birth entry for Thomas John McFerran, 4 Jun 1879, parents William McFerran and Mary Jane Magee McFeran"
+      ],
+      "required": true
+    }
+  ]
+}
