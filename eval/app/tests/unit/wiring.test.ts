@@ -106,12 +106,22 @@ describe('the control is actually wired', () => {
     // in the browser and cannot touch the filesystem.
     const appRoot = path.resolve(__dirname, '../..')
     const appDir = path.join(appRoot, 'app')
-    // Matches the same three shapes the import-extraction regex below does.
-    // Requiring `from` missed `await import('node:fs')` entirely: the static
-    // form red, the dynamic form walked straight past, and the two reach the
-    // filesystem identically.
+    // Two ways a page can reach project data on the server, and both count.
+    //
+    // Over the FILESYSTEM: an import of the data layer. Matches the same three
+    // shapes the import-extraction regex below does — requiring `from` missed
+    // `await import('node:fs')` entirely, though the static and dynamic forms
+    // reach the filesystem identically.
+    //
+    // Over HTTP: a server component calling its own route handler. `fetch` needs
+    // an absolute URL server-side, so the request carries a loopback `Host`, the
+    // middleware correctly allows it, and the answer lands in HTML served back to
+    // whatever `Host` the PAGE request arrived on — around the /api-only matcher
+    // rather than through it. No server file fetches today, so this costs nothing;
+    // a client component may `fetch` freely, since the `'use client'` boundary
+    // stops the descent before this is applied.
     const SERVER_ONLY =
-      /(?:from|import|require)\s*\(?\s*['"](?:@\/lib\/fs|@\/lib\/identity|@\/lib\/paths|node:|fs(?:['"]|\/)|child_process)/
+      /(?:from|import|require)\s*\(?\s*['"](?:@\/lib\/fs|@\/lib\/identity|@\/lib\/paths|node:|fs(?:['"]|\/)|child_process)|\bfetch\s*\(/
 
     const resolve = (spec: string, fromFile: string): string | null => {
       const base = spec.startsWith('@/')
