@@ -103,7 +103,12 @@ export interface Plan {
   question_id: string
   status: PlanStatus
   created: string
-  items: PlanItem[]
+  /** At least one item, mirroring `$defs/plan.items` in `research.schema.json`
+   *  (`type: array, minItems: 1`). A plain `PlanItem[]` admits `[]`, so this
+   *  mirror silently disagreed with the schema it exists to mirror — the same
+   *  drift the engine's runtime validator had. Held by
+   *  `src/type-assertions.ts`. */
+  items: [PlanItem, ...PlanItem[]]
 }
 
 export interface ExternalSiteDetail {
