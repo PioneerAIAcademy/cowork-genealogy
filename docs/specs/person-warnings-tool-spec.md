@@ -412,9 +412,9 @@ Four consequences a reader has to hold:
    survivor's benefit claim filed the year after the death — a widow's
    pension being the common one — falls inside the hidden window whenever a
    burial year is recorded, which is most of the time. Do not build guidance
-   that depends on this tag firing for that shape. Evidence trail: alpha
-   feedback #2167 and issue #2210, where the case was twice misdiagnosed from
-   two of the person's nine facts.
+   that depends on this tag firing for that shape. A live case was twice
+   misdiagnosed by reading two of the person's nine facts and stopping; run
+   the probe rather than reason about a pair.
 
 Note the divergences from the superseded W3 above, since a reader
 checking implementation against spec will hit them: the shipped code
