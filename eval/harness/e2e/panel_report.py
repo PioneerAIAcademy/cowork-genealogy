@@ -1,10 +1,10 @@
-"""Standing weekly e2e panel: who ran this ISO week, and how often lately.
+"""The standing e2e panel: when each fixture last ran, and how often lately.
 
 The e2e tier is the only measurement of the whole research loop, and it has one
 operator. Runs per ISO week over the seven weeks to 2026-09-07: 43, 37, 12, 4, 4,
 1, 1 — so every corpus report opens with a two-run window and month-over-month
 comparison is impossible. The answer is a standing panel of four fixtures run
-every week, filed one issue per run by `/file-e2e-panel`.
+repeatedly, filed one issue per run by `/file-e2e-panel`.
 
 This is that panel's scoreboard, and the reason it is a module rather than an
 `ls` pipeline in the skill: **no existing reader prints runs-per-fixture-per-
@@ -49,7 +49,7 @@ from __future__ import annotations
 import argparse
 import sys
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 from e2e.runlog_selection import (
@@ -78,8 +78,8 @@ PANEL: tuple[str, ...] = (
     "cruz-corona-ancestry",
 )
 
-#: Four weeks. See "Two windows, deliberately" above for why this is not the
-#: shared 14-day default.
+#: Four weeks. See "One window, and a cadence-free reading" above for why this is
+#: not the shared 14-day default.
 PANEL_SINCE_DAYS = 28
 
 
@@ -94,9 +94,13 @@ class FixtureRow:
         return self.all_runs[-1] if self.all_runs else None
 
     @property
-    def days_since(self) -> int | None:
+    def last_run_date(self) -> date | None:
         p = self.last_run
-        d = run_date(p) if p is not None else None
+        return run_date(p) if p is not None else None
+
+    @property
+    def days_since(self) -> int | None:
+        d = self.last_run_date
         return (date.today() - d).days if d is not None else None
 
 
@@ -120,10 +124,14 @@ def format_report(rows: list[FixtureRow]) -> str:
     lines = ["Panel runs", ""]
     width = max((len(r.slug) for r in rows), default=0)
     for row in rows:
-        if (n := row.days_since) is None:
+        # One extraction, via `run_date`, which is also what dates the window.
+        # Slicing the name at a fixed offset instead reads the same date a second
+        # way, and the two disagree the moment anything sits between `run-` and
+        # the date — printing a garbage date next to a correct age.
+        if (d := row.last_run_date) is None:
             last = "never run"
         else:
-            last = f"last {row.last_run.name.removeprefix('run-')[:10]} ({n}d ago)"
+            last = f"last {d.isoformat()} ({row.days_since}d ago)"
         lines.append(f"  {row.slug.ljust(width)}  {len(row.in_window):>2} in window   {last}")
 
     if not any(r.in_window for r in rows):
@@ -138,8 +146,8 @@ def format_report(rows: list[FixtureRow]) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Standing weekly e2e panel: which panel fixtures ran this ISO week, "
-            "and each one's run count in the window."
+            "The standing e2e panel: each fixture's last run, "
+            "and its run count in the window."
         ),
     )
     parser.add_argument(
@@ -161,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
         #
         # Deliberately NOT applied to the panel path. "None of the four ran"
         # is this reader's headline finding, not a broken read — exiting
-        # non-zero there would make the weekly skill treat its own answer as a
+        # non-zero there would make the panel skill treat its own answer as a
         # tool failure. A fixture directory holding only `.ann.json` and
         # `.final-*` siblings lands here too, and is likewise a real 0.
         print(f"No committed runs found for {args.test}.", file=sys.stderr)
