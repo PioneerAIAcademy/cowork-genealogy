@@ -34,6 +34,7 @@ from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
     HookMatcher,
+    RateLimitEvent,
     ResultMessage,
     TextBlock,
     ToolUseBlock,
@@ -251,6 +252,59 @@ def builtin_call_record(
     if agent_id:
         record["agent_id"] = agent_id
     return record
+
+
+# A subscription quota is deterministic until the seat's window resets, so it is
+# NOT transient: retrying burns attempts in seconds against a limit that clears
+# in hours, and the suite then ships an ungraded test as a real result. Kept out
+# of `_ALWAYS_RETRYABLE_ABORTS` (orchestrator) and `_TRANSIENT_ABORT_REASONS`
+# (run_tests) deliberately — membership in either restores the retry or feeds
+# the abort-storm breaker's ratio arithmetic.
+QUOTA_ABORT_REASON = "quota_exhausted"
+
+# Display prose, localized to the seat and CLI-version-dependent. Observed once,
+# in eval/runlogs/unit/convert-dates/v1_2026-09-01_14-32-09.json:
+#   "You've hit your limit · resets 4pm (Africa/Lagos)"
+# It is the LAST resort, never the primary predicate — the structured signals in
+# `_quota_evidence` are checked first. This exists only so a quota that emits
+# none of them is still caught rather than retried three times.
+_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit", "rate limit")
+
+
+def _looks_like_quota(signals: dict[str, Any], error_text: str | None) -> bool:
+    """True when this run ended on the seat's rate limit rather than a blip.
+
+    Which of the three structured signals a real subscription quota emits is
+    UNVERIFIED — a quota cannot be forced on demand, and the one occurrence in
+    the corpus predates their capture. All three are therefore checked, and all
+    three are recorded on the run whether or not they fired, so the next
+    occurrence settles the question from the run log without another paid suite.
+    """
+    status = signals.get("api_error_status")
+    if status is not None and str(status) == "429":
+        return True
+    if signals.get("assistant_error") == "rate_limit":
+        return True
+    if signals.get("rate_limit_status") == "rejected":
+        return True
+    text = (error_text or "").lower()
+    return any(marker in text for marker in _QUOTA_TEXT_MARKERS)
+
+
+def _format_quota_evidence(signals: dict[str, Any], error_text: str | None) -> str:
+    """The SDK's own error text, plus whichever structured signals fired.
+
+    `error` is the run's only free-form field (`{"type": ["string","null"]}`),
+    and the run object is `additionalProperties: false`, so this is where the
+    evidence goes without widening the schema past the `error` key itself. The
+    verbatim SDK text stays first so nothing is lost by the annotation.
+    """
+    fired = {k: v for k, v in signals.items() if v is not None}
+    base = error_text or ""
+    if not fired:
+        return base
+    detail = " ".join(f"{k}={v}" for k, v in sorted(fired.items()))
+    return f"{base} [rate-limit signals: {detail}]".strip()
 
 
 @dataclass
@@ -590,6 +644,18 @@ async def run_skill(
     # in the orchestrator depends on it (`_is_zero_progress_timeout`).
     # A mutable holder because the nested consumer rebinds `usage` wholesale.
     turns_seen: dict[str, int] = {"n": 0}
+    # Rate-limit evidence, collected from all three places the SDK offers it and
+    # recorded whether or not any fired. Every key stays present-but-None on a
+    # healthy run so a future occurrence shows which signals a real subscription
+    # quota actually emits — that question is currently unverified and cannot be
+    # settled by forcing a quota on demand.
+    rate_limit_signals: dict[str, Any] = {
+        "api_error_status": None,
+        "assistant_error": None,
+        "rate_limit_status": None,
+        "resets_at": None,
+        "rate_limit_type": None,
+    }
     aborted_reason: str | None = None
     error: str | None = None
     # The query() async generator, hoisted so the finally below can close it
@@ -625,8 +691,23 @@ async def run_skill(
             # the hook's stopReason alone can't deliver.
             if routing_resolved["v"]:
                 return
-            if isinstance(message, AssistantMessage):
+            if isinstance(message, RateLimitEvent):
+                # The CLI emits this whenever rate-limit state transitions. It
+                # is in the SDK's Message union and streamed straight past this
+                # loop until now — `status == "rejected"` is the limit actually
+                # being hit, as opposed to `allowed_warning` approaching it.
+                info = message.rate_limit_info
+                rate_limit_signals["rate_limit_status"] = getattr(info, "status", None)
+                rate_limit_signals["resets_at"] = getattr(info, "resets_at", None)
+                rate_limit_signals["rate_limit_type"] = getattr(
+                    info, "rate_limit_type", None
+                )
+            elif isinstance(message, AssistantMessage):
                 turns_seen["n"] += 1
+                # One of the AssistantMessageError literals; "rate_limit" is the
+                # one that matters here. Absent on a healthy turn.
+                if getattr(message, "error", None):
+                    rate_limit_signals["assistant_error"] = message.error
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         text_chunks.append(block.text)
@@ -667,15 +748,32 @@ async def run_skill(
                     # nowhere in `usage`. See orchestrator._skill_tokens.
                     "model_usage": message.model_usage,
                 }
+                rate_limit_signals["api_error_status"] = getattr(
+                    message, "api_error_status", None
+                )
                 if message.is_error:
-                    error = message.result or message.stop_reason
                     # ResultMessage.is_error is the SDK's signal for "the
                     # session ended in a recoverable API/auth/rate-limit
                     # failure." Treat it as an abort so the run doesn't
                     # get scored against the empty/partial output that
                     # landed before the failure.
+                    #
+                    # Split the rate-limit case back out of that bucket: a
+                    # quota is NOT recoverable on this suite's timescale, and
+                    # bucketing it under "error" retried it three times in
+                    # seconds and then shipped the run as releasable (#2192).
+                    error = _format_quota_evidence(
+                        rate_limit_signals, message.result or message.stop_reason
+                    )
                     if aborted_reason is None:
-                        aborted_reason = "error"
+                        aborted_reason = (
+                            QUOTA_ABORT_REASON
+                            if _looks_like_quota(
+                                rate_limit_signals,
+                                message.result or message.stop_reason,
+                            )
+                            else "error"
+                        )
                 if message.stop_reason == "max_turns":
                     aborted_reason = "max_turns"
 

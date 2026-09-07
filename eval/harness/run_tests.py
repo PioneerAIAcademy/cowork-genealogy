@@ -60,7 +60,7 @@ from harness.runlog import (
     write_partial_runlog,
     write_run_log,
 )
-from harness.skill_runner import DEFAULT_MODEL
+from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
 from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
 from harness.versioning import (
@@ -866,6 +866,10 @@ def main(argv: list[str] | None = None) -> int:
     interrupted = False
     transient_abort_count = 0
     breaker_tripped = False
+    # Set once by the first quota abort. Separate from `breaker_tripped` because
+    # the breaker is a ratio over *transient* aborts and a quota is neither
+    # transient nor a storm — one is decisive.
+    quota_stop = False
     total = len(specs)
     done_n = 0
 
@@ -1048,6 +1052,29 @@ def main(argv: list[str] | None = None) -> int:
                             saw_corpus_issue = True
                         else:
                             saw_exec_abort = True
+                            # A subscription quota is seat-wide and deterministic
+                            # until the reset, so every test still to run would
+                            # abort the same way. Stop submitting and take the
+                            # same path the #1600 breaker takes: the completed
+                            # tests are promoted to a scratch log and no
+                            # releasable v{N} is minted. Deliberately NOT the
+                            # breaker itself — that counts transient aborts and
+                            # needs 4-of-20%; one quota is enough, and counting
+                            # it as transient would also restore the retry.
+                            if reason == QUOTA_ABORT_REASON and not quota_stop:
+                                quota_stop = True
+                                stop_submitting = True
+                                print(
+                                    f"\n  ! subscription quota reached on "
+                                    f"{entry.get('test_id', '?')} — not starting "
+                                    f"more tests. The seat's limit is "
+                                    f"deterministic until it resets, so the rest "
+                                    f"of the suite would abort the same way.\n"
+                                    f"    Keeping the tests that finished; no "
+                                    f"releasable run log will be written.",
+                                    file=sys.stderr,
+                                    flush=True,
+                                )
                             if (
                                 not args.no_abort_breaker
                                 and not breaker_tripped
@@ -1193,6 +1220,12 @@ def main(argv: list[str] | None = None) -> int:
             f"Abort-storm breaker: {transient_abort_count} transient aborts in "
             f"{done_n} tests — keeping the tests that finished."
         )
+    if quota_stop:
+        print(
+            "Subscription quota reached — keeping the tests that finished. "
+            "Re-run after the seat's limit resets; the run log is scratch, not "
+            "a releasable candidate."
+        )
 
     _print_timing_report(list(results_by_index.values()), elapsed_total)
     _print_summary(rows)
@@ -1207,7 +1240,7 @@ def main(argv: list[str] | None = None) -> int:
     # operator watching a crashed suite sit there presses Ctrl-C and sets both
     # — and "the harness broke" is the more actionable of the two facts. This
     # also preserves the pre-#943 code, which returned 1 for that state.
-    if interrupted or harness_error is not None or breaker_tripped:
+    if interrupted or harness_error is not None or breaker_tripped or quota_stop:
         promoted = False
         for skill, pp in partial_paths.items():
             if pp.exists():
@@ -1218,7 +1251,7 @@ def main(argv: list[str] | None = None) -> int:
             print("  (no tests finished — nothing to save)")
         if harness_error is not None:
             return 1
-        if breaker_tripped:
+        if breaker_tripped or quota_stop:
             return 3
         return 130  # interrupted
 

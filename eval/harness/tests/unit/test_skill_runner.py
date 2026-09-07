@@ -608,3 +608,184 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
     assert [
         (c["section"], c["rule"]) for c in result.blocked_owned_section_writes
     ] == [("questions.exhaustive_declaration", "declaration")]
+
+
+# ─── Quota aborts are not transient (#2192) ────────────────────────────────
+#
+# Driven through the REAL run_skill with fabricated SDK messages, for the
+# reason `_run_until_timeout` states above: a hand-built SkillRunResult can
+# carry field combinations this path never emits. A subscription quota cannot
+# be forced on demand, so fabricating the messages is the only instrument —
+# and it proves the classifier's branch, NOT that the predicate matches a live
+# quota. That gap is real and is stated in the PR body.
+
+
+def _run_with_messages(monkeypatch, tmp_path, messages):
+    """Stream `messages` through the real run_skill and return its result."""
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    async def fake_query(*, prompt, options):
+        for m in messages:
+            yield m
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+
+    return asyncio.run(
+        sr.run_skill(
+            user_message="x",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        )
+    )
+
+
+def _result_message(**kw):
+    from claude_agent_sdk import ResultMessage
+
+    base = dict(
+        subtype="result",
+        duration_ms=1,
+        duration_api_ms=1,
+        is_error=True,
+        num_turns=1,
+        session_id="S1",
+    )
+    base.update(kw)
+    return ResultMessage(**base)
+
+
+def _rate_limit_event(status):
+    from claude_agent_sdk import RateLimitEvent
+    from claude_agent_sdk.types import RateLimitInfo
+
+    return RateLimitEvent(
+        rate_limit_info=RateLimitInfo(
+            status=status, resets_at=1757260800, rate_limit_type="five_hour"
+        ),
+        uuid="u1",
+        session_id="S1",
+    )
+
+
+def test_an_api_error_status_429_is_a_quota_not_a_blip(monkeypatch, tmp_path):
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [_result_message(api_error_status=429, result="nope")]
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_a_rejected_rate_limit_event_is_a_quota(monkeypatch, tmp_path):
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_rate_limit_event("rejected"), _result_message(result="nope")],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_the_observed_quota_prose_is_caught_by_the_fallback(monkeypatch, tmp_path):
+    """The one occurrence in the corpus emitted no structured signal we can
+    replay — only this string, in convert-dates/v1_2026-09-01_14-32-09.json."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_result_message(result="You've hit your limit · resets 4pm (Africa/Lagos)")],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_an_ordinary_sdk_error_is_still_transient(monkeypatch, tmp_path):
+    """The discriminator. Without this the classifier could call everything a
+    quota and every test above would still pass."""
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [_result_message(result="internal server error")]
+    )
+    assert result.aborted_reason == "error"
+
+
+def test_approaching_the_limit_is_not_hitting_it(monkeypatch, tmp_path):
+    """`allowed_warning` is the CLI warning you are close; only `rejected` is
+    the limit actually refusing work."""
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_rate_limit_event("allowed_warning"), _result_message(result="boom")],
+    )
+    assert result.aborted_reason == "error"
+
+
+def test_the_rate_limit_evidence_reaches_the_error_string(monkeypatch, tmp_path):
+    """Before this, the only trace of a quota was output.text_response."""
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_rate_limit_event("rejected"), _result_message(api_error_status=429)],
+    )
+    assert "rate-limit signals" in (result.error or "")
+    assert "api_error_status=429" in result.error
+    assert "rate_limit_status=rejected" in result.error
+    assert "resets_at=1757260800" in result.error
+
+
+def test_a_quota_is_not_retried(monkeypatch, tmp_path):
+    """Membership in _ALWAYS_RETRYABLE_ABORTS would restore the three-attempt
+    retry against a limit that clears in hours."""
+    from harness.orchestrator import _ALWAYS_RETRYABLE_ABORTS
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    assert QUOTA_ABORT_REASON not in _ALWAYS_RETRYABLE_ABORTS
+
+
+def test_a_quota_does_not_feed_the_abort_storm_breaker():
+    """The breaker is a ratio over transient aborts; a quota is neither
+    transient nor a storm, and counting it there would also skew the ratio."""
+    import run_tests
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    assert QUOTA_ABORT_REASON not in run_tests._TRANSIENT_ABORT_REASONS
+
+
+def test_the_error_string_is_serialized_onto_the_run_entry():
+    """The runs_block serializer is explicit, not asdict — adding the dataclass
+    field alone would persist nothing and no other test would notice."""
+    from harness.runlog import (
+        JudgeResult,
+        SingleRun,
+        ValidatorResult,
+        assemble_test_entry,
+    )
+
+    run = SingleRun(
+        outcome="aborted",
+        aborted_reason="quota_exhausted",
+        error="hit your limit [rate-limit signals: api_error_status=429]",
+        duration_ms=1.0,
+        input_tokens=0,
+        cached_input_tokens=0,
+        output_tokens=0,
+        skill_cost_usd=0.0,
+        output={},
+        validators=ValidatorResult(passed=None, results=[]),
+        judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0),
+    )
+    entry = assemble_test_entry(
+        test_id="ut_x",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        runs=[run],
+        timestamp_for_run_id="2026-09-07_00-00-00",
+    )
+    assert entry["runs"][0]["error"] == run.error
