@@ -187,16 +187,19 @@ _CUSTODY_KEYWORDS = frozenset({
     "fhl", "catalog", "accession", "call number", "custody",
 })
 
-_MARKER_RE = re.compile(r'\[([^\]]+?)\s+NOT\s+RECORDED\]', re.IGNORECASE)
+_MARKER_RE = re.compile(r'\[([^\]]*?)\s*NOT\s+RECORDED\]', re.IGNORECASE)
 
 
 def test_unknown_markers_framework_only(before_state, after_state, test):
     """[... NOT RECORDED] markers must name Who/What/When/Where/Wherein elements.
 
     Two checks:
-    1. Position — no marker is sanctioned in `citation_detail.where` at all.
-       Under "cite what you see" the access point is always known, so `where`
-       can never be genuinely unrecorded (SKILL.md §75–82).
+    1. Position — a marker that IS the entire `citation_detail.where` value
+       means the skill recorded no access point at all.  Under "cite what
+       you see" the access point is always known (SKILL.md §75–82), so
+       a bare marker fails.  A marker appearing alongside a present access
+       point (e.g. custody-layer notation) is checked only by the content
+       rule below.
     2. Content — a marker whose text contains a custody / physical-media
        keyword (repository, archive, microfilm, …) names a `where` layer,
        not a required element.  It belongs in `notes`.
@@ -235,13 +238,14 @@ def test_unknown_markers_framework_only(before_state, after_state, test):
             val = cd.get(field) or ""
             for m in _MARKER_RE.finditer(val):
                 marker_content = m.group(1).strip()
-                if field == "where":
-                    # No marker is sanctioned in `where` — the access point
-                    # is always known under "cite what you see".
+                if field == "where" and val.strip() == m.group(0):
+                    # The marker IS the entire `where` value — no access
+                    # point at all.  Under "cite what you see" the access
+                    # point is always known, so a bare marker fails.
                     violations.append(
                         f"{sid}.citation_detail.where: marker "
-                        f"[{marker_content} NOT RECORDED] — no marker is "
-                        f"sanctioned in `where`"
+                        f"[{marker_content} NOT RECORDED] is the entire "
+                        f"`where` value — no access point recorded"
                     )
                 elif any(kw in marker_content.lower()
                          for kw in _CUSTODY_KEYWORDS):

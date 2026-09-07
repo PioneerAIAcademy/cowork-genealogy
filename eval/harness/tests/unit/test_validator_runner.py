@@ -1677,14 +1677,32 @@ def _v6_states(marker_text, field):
     return before, after
 
 
-def test_v6_fires_on_any_marker_in_where():
-    """V6: a marker in citation_detail.where fails on position alone.
+def test_v6_fires_when_marker_is_entire_where():
+    """V6: a marker that IS the entire citation_detail.where value fails —
+    no access point was recorded at all."""
+    before, after = _v6_states("[CREATOR NOT RECORDED]", "where")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "entire" in (result.error or "").lower()
 
-    The marker text must NOT contain a custody keyword, or the content rule
-    catches it and the position rule is never exercised: with
-    "[PHYSICAL REPOSITORY NOT RECORDED]" the whole `where` branch can be
-    deleted and this test still passes.
-    """
+
+def test_v6_passes_when_marker_accompanies_access_point():
+    """V6: a non-custody marker inside `where` alongside a present access
+    point is NOT a position violation — only a bare marker (= entire value)
+    is.  [CREATOR NOT RECORDED] is not a custody keyword, so the content
+    rule also passes."""
     before, after = _v6_states(
         "FamilySearch.org ([CREATOR NOT RECORDED])", "where"
     )
@@ -1701,10 +1719,52 @@ def test_v6_fires_on_any_marker_in_where():
         None,
     )
     assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_matches_bare_not_recorded():
+    """V6: bare [NOT RECORDED] matches _MARKER_RE (zero chars before NOT).
+    As the entire `where` value it is a position violation."""
+    before, after = _v6_states("[NOT RECORDED]", "where")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
     assert result.passed is False
-    # "sanctioned" appears only in the position-rule message; the custody
-    # message would also contain "where", since it embeds the field name.
-    assert "sanctioned" in (result.error or "").lower()
+    assert "entire" in (result.error or "").lower()
+
+
+def test_v6_fires_on_custody_marker_in_where_with_access_point():
+    """V6: [PHYSICAL REPOSITORY NOT RECORDED] alongside an access point
+    in `where` passes the (narrowed) position rule but fails the custody-
+    keyword content rule."""
+    before, after = _v6_states(
+        "FamilySearch.org ([PHYSICAL REPOSITORY NOT RECORDED])", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "custody" in (result.error or "").lower()
 
 
 def test_v6_fires_on_custody_marker_in_other_field():
