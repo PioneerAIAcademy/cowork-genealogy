@@ -254,15 +254,17 @@ export async function fulltextSearchTool(
     for (const r of results) {
       for (const name of r.names ?? []) {
         for (const word of name.split(/\s+/)) {
-          if (allVariants.has(word.toLowerCase())) {
-            matched.add(word);
+          const lower = word.toLowerCase();
+          if (allVariants.has(lower)) {
+            matched.add(lower);
           }
         }
       }
       for (const hl of r.highlightTerms ?? []) {
         for (const word of hl.split(/\s+/)) {
-          if (allVariants.has(word.toLowerCase())) {
-            matched.add(word);
+          const lower = word.toLowerCase();
+          if (allVariants.has(lower)) {
+            matched.add(lower);
           }
         }
       }
@@ -379,10 +381,10 @@ export const fulltextSearchToolSchema = {
       name: {
         type: "string",
         description:
-          "Search within name fields only. Same operator syntax as keywords. " +
-          "Recognized English given names are automatically expanded with historical " +
-          "diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza). The response " +
-          "includes a nameExpansion field showing what was expanded and which variants matched.",
+          "Search within name fields only. Recognized English given names are automatically expanded " +
+          "with historical diminutives (e.g. Elizabeth also matches Betty, Bess, Eliza). " +
+          "Do not prefix terms with + or the expansion is disabled. " +
+          "The response includes a nameExpansion field showing what was expanded and which variants matched.",
       },
       place: {
         type: "string",

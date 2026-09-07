@@ -217,10 +217,38 @@ describe("expandLookingFor", () => {
     expect(expandLookingFor("marked in may")).toBeNull();
   });
 
-  it("expands capitalized tokens that match", () => {
+  it("skips ambiguous words without an adjacent proper name", () => {
+    // "MAY" in a date context — "1774" is not capitalized, "29" is not → skip MAY
+    expect(expandLookingFor("born 12 May 1877")).toBeNull();
+    // "MAY" surrounded by numbers/lowercase → skip
+    expect(expandLookingFor("29 MAY 1774")).toBeNull();
+  });
+
+  it("skips ambiguous words in isolation", () => {
+    // "Will" alone has no adjacent capital → skip
+    expect(expandLookingFor("Will")).toBeNull();
+    // "May" alone → skip
+    expect(expandLookingFor("May")).toBeNull();
+  });
+
+  it("expands ambiguous words with an adjacent proper name", () => {
+    // "Will Smith" — "Smith" starts with S → expand Will
     const result = expandLookingFor("Will Smith");
     expect(result).not.toBeNull();
     expect(result!.expanded).toContain("William");
+  });
+
+  it("expands May when next to a proper name", () => {
+    const result = expandLookingFor("May Thornton");
+    expect(result).not.toBeNull();
+    expect(result!.expanded).toContain("Mary");
+  });
+
+  it("expands non-ambiguous capitalized tokens normally", () => {
+    // "Elizabeth" is not ambiguous — expands without adjacency check
+    const result = expandLookingFor("Elizabeth");
+    expect(result).not.toBeNull();
+    expect(result!.expanded).toContain("Betty");
   });
 
   it("deduplicates variant forms across multiple matches", () => {
