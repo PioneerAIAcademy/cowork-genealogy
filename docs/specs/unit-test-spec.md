@@ -311,6 +311,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
 | `refinement_targets` | optional (see Section 5.11) | omit (a declined skill updates no assertions) |
+| `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `negative` | omit | required |
 
 ### How a negative test is graded
@@ -446,6 +447,10 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
       "type": "array",
       "items": { "type": "string" },
       "description": "Optional list of a_ assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication. See Section 5.11."
+    },
+    "index_error_source": {
+      "type": "string",
+      "description": "Optional. Names the ONE attached source an index-discrepancy test declares to be an indexing error — the source that must never be recommended for detaching. Checked mechanically by test_index_discrepancy_does_not_recommend_detaching. See Section 5.12."
     },
     "negative": {
       "type": "object",
@@ -810,6 +815,37 @@ value). This is additive only: the candidate pool for every existing
 test's matchers can only grow, never shrink, so a matcher that passed
 under the old "new-only" definition still passes — it cannot introduce a
 new failure on a test that declares no `refinement_targets`.
+
+### 5.12 `index_error_source`
+
+Optional string naming the **one** attached source a test declares to be an
+indexing error — deterministic ground truth for `source-evaluation`'s
+remediation doctrine, where the remedy for a mis-transcribed field is to go
+back to what the index was made from and correct it, never to detach the
+source. Checked mechanically by
+`test_index_discrepancy_does_not_recommend_detaching`
+(`eval/harness/validators/test_source_evaluation.py`), which splits the reply
+on blank lines and fails if the passage naming this source also recommends
+detaching or unlinking. Gated on the `index-discrepancy` tag; a test carrying
+that tag and no `index_error_source` fails rather than skipping, so the guard
+cannot be disarmed by omission.
+
+A reply-wide check cannot express this rule. A correct audit of the same
+person also reports a genuinely *misattributed* source, for which detaching
+**is** the right recommendation — so any reply-wide licence for the word
+"detach" is always granted, and the assertion can never fail. Naming the
+protected source is what makes the check discriminating: the test declares
+the situation, the validator asserts the rule, and neither has to decide for
+itself which finding is which.
+
+**The value must reach the validator to do anything.** Like
+`refinement_targets` (5.11) and `expected_classifications` (5.10), this is a
+*top-level* field, and `orchestrator.py` assembles the validator-facing
+`test` dict as an explicit whitelist rather than passing the whole test JSON.
+A field declared in the schema and read by a validator but absent from that
+literal arrives as `None` on every run.
+`test_orchestrator_threads_index_error_source_into_validators` pins it, as the
+sibling test does for `refinement_targets`.
 
 ---
 
