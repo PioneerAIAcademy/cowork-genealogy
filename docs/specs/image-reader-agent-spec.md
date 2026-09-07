@@ -64,7 +64,7 @@ hands this agent the imageId.
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
 | `imageId` | yes | The **single** image to read — a DGS Image Group Number (`004022578_00190`) or image ARK (`3:1:.../$dist`). |
-| `looking_for` | no | A **search key only** — *who or what* to locate on the page. It focuses the FOUND / NOT FOUND pointer; it is **not** the expected result and **never** suppresses or shortens the full transcription. If the caller's message asserts the answer ("confirm the father is Adam Schreck"), the agent ignores the assertion and transcribes what the page actually says. |
+| `looking_for` | no | A **search key only** — *who or what* to locate on the page. It focuses the FOUND / NOT FOUND pointer (withheld on a truncated read — see §5); it is **not** the expected result and **never** suppresses or shortens the full transcription. If the caller's message asserts the answer ("confirm the father is Adam Schreck"), the agent ignores the assertion and transcribes what the page actually says. |
 | `project_path` | no | Absolute project-folder path. When given, `image_transcribe` saves the fetched JPEG under `images/` and returns an `imageRef` the agent reports, so the caller can cite it as the source's `image_filename` (viewer). Only retained-source images are kept; the rest are swept. |
 
 ### 3.2 One image per invocation
@@ -114,8 +114,11 @@ image, never a request for the caller to fetch it:
   from `image_transcribe`, so the caller can set the source's `image_filename`.
 - An **extracted facts** list (names, dates, relationships, places) the
   caller can turn into assertions.
-- If `looking_for` was set: `FOUND` / `NOT FOUND` + the matching line — as
-  a pointer for the caller, never a substitute for the full transcription.
+- If `looking_for` was set **and the read was not truncated**: `FOUND` /
+  `NOT FOUND` + the matching line — a pointer for the caller, never a
+  substitute for the full transcription. On a truncated read `image_transcribe`
+  withholds `found` (a half-read page cannot support a clean NOT FOUND), so the
+  agent emits no pointer and says the rest of the page is unread.
 
 ### 5.1 Considered and rejected: compressing non-matching pages
 
@@ -133,11 +136,14 @@ independently while designing the (since-retired) `image-reader-opus`
 **One candidate distinction is unresolved, and is the only thing worth reopening
 on:** gate the caller-facing *relay* on `image_transcribe`'s own `FOUND` /
 `NOT FOUND` field, which is deterministically regex-parsed (`parseFound`,
-`packages/engine/mcp-server/src/tools/image-transcribe.ts`) off a **forced,
-always-full** transcription the tool produces regardless. Full-fidelity OCR still
-happens every time; only the relay is conditional, keyed off a mechanical parse
-rather than a fresh relevance judgment by the relaying agent. Whether that avoids
-the hallucination failure mode or is a distinction without a difference is **not
+`packages/engine/mcp-server/src/tools/image-transcribe.ts`). The full-fidelity
+OCR still happens every time; only the relay would be conditional, keyed off a
+mechanical parse rather than a fresh relevance judgment by the relaying agent.
+Caveat: the transcription is *no longer always full* — an output-token
+cap can truncate it, and in that case the tool **withholds `found` entirely**, so
+a relay gated on `found` would correctly emit nothing on a truncated page (the
+half-read case must not yield a clean NOT FOUND). Whether gating avoids the
+hallucination failure mode or is a distinction without a difference is **not
 investigated**. It needs the same genealogist scrutiny that produced the
 2026-07-17 rejection — not a unilateral call. Do not build it without that.
 
