@@ -20,9 +20,43 @@ covered, and by a better plane, so the first job is to find what is actually
 left.
 
 **If the required call is a WRITE, this is a precondition and belongs at the
-writer tool.** That plane binds in every environment, cannot be argued with, and
-is caller-agnostic — ADR-0011's first question settles it. Nothing in this file
-should be built for a rule a writer tool can hold.
+writer tool** — but only *mostly*, and the exception is the interesting part. A
+precondition fires when a write happens. It cannot fire on an agent that returns
+having written nothing; it can only catch that later, at whatever downstream
+write depends on the missing artifact — and only if such a write ever comes.
+
+Measured on the 161 committed e2e runs, for the case this file was written to
+answer (`gps-mentor` must leave a `proof-critique` verdict in `evaluations[]`):
+
+| | |
+|---|---|
+| `gps-mentor` invocations, whole corpus | 188 |
+| `evaluations[]` entries in the matching final states | 170 |
+| Runs invoking the mentor where `evaluations[]` is **empty** | **10** (one invoked it 5 times, one 3) |
+| Runs where invocations exceed verdicts at all | 15 |
+| …of those, runs that never reached `completed`, so the existing gate structurally could not fire | **5** |
+
+The gate that holds this rule today fires only at `project.status =
+"completed"`. `questionResolvedInvariants` does **not** require a verdict, so a
+question can close without one, and a run that never completes never gets
+checked at all.
+
+**Do not read a rate off the table above.** 156 of the 161 runs predate the
+completion gate (landed 2026-08-16). Split on that date the loss is 18 of 183
+invocations before, and **0 of 5 after** — which is not evidence the problem is
+fixed, it is a sample of five. The same split guts the obvious alternative: a
+gate refusing `resolved` while a referenced summary lacks a verdict would have
+refused 26% of resolves corpus-wide and **0 of 5** post-gate. That 26% measures
+the corpus's age, exactly as `guardrail_shadow_report.py`'s docstring warns.
+
+**So the deciding question is not answerable from committed data, and that is
+the finding.** Neither this mechanism nor the cheaper alternative below can be
+priced until enough runs postdate the completion gate. Whoever picks this up
+starts there, not with an implementation.
+
+Reproduce: `eval/runlogs/e2e/*/run-*.json` for the `Agent` calls whose
+`subagent_type` is `gps-mentor`, against the sibling `.final-research.json`'s
+`evaluations[]`, bucketed on the run-log date.
 
 **If the required call is a READ, nothing can currently see it.** A read leaves
 no trace in `research.json` or `tree.gedcomx.json`, so no document-decidable
@@ -126,10 +160,38 @@ move this repo has measured losing, most recently at 23% on the completion gate.
 - **The rule set has to stay tiny.** One or two required calls per agent, chosen
   because a real failure was observed, not because the mechanism exists.
 
-## 6. Recommended sequence
+## 6. The cheaper alternative, for the write case only
 
-1. Probe (section 3). Record in ADR-0005.
-2. If it fires: implement for exactly ONE rule, the `image_transcribe` one, since
-   that failure is documented and the remedy is unambiguous.
-3. Measure the added latency and the block-then-satisfy rate on one e2e run.
-4. Only then consider a second rule.
+Before any of this: **move the check earlier rather than adding a plane.** Today
+the mentor verdict is required at `project.status = "completed"` and nowhere
+else. Requiring it at question resolution instead — a question may not go
+`resolved` while a proof summary it references lacks a non-superseded
+`proof-critique` verdict — uses `questionResolvedInvariants`, which already
+receives `research` and the pre-call snapshot, and needs no new plane, no probe
+and no session state. It shortens detection from a whole project to one step and
+covers the runs that never complete.
+
+It is not a substitute. A postcondition catches the loss at the moment, with the
+agent's context still live and re-invocation cheap; this catches it at the next
+gated write, and only if one comes. But it binds in every environment today,
+where the hook plane fails open and may not fire in Cowork at all.
+
+**It cannot ship on the current corpus** — 26% refusal, on runs that almost all
+predate the gate that would have changed the behaviour, against 5 usable runs
+after it. Per ADR-0011 a gate PR owes a corpus refusal measurement inspected per
+its limits, and this one would be inspecting the wrong corpus.
+
+## 7. Recommended sequence
+
+1. **Get post-gate runs.** Nothing here is decidable without them. This is the
+   blocking item for both options, and it is a scheduling question, not an
+   engineering one.
+2. Probe `SubagentStop` (section 3) — cheap, independent of (1), and worth
+   recording in ADR-0005 either way, including a negative result.
+3. Re-measure both rates on the post-gate corpus. If the loss is gone, close
+   this out; the completion gate was enough.
+4. If it is not gone: build the section 6 alternative first. It is the smaller
+   change on the stronger plane.
+5. Only if a loss survives *that* — an agent returning empty with no downstream
+   write to catch it — implement the postcondition, for exactly one rule, and
+   measure the added latency and the block-then-satisfy rate on one e2e run.
