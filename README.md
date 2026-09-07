@@ -65,7 +65,7 @@ The MCP server exposes 48 tools.
 | `collections_search` | Lists FamilySearch record collections for a place (returns the derived `scope`); optional `startYear`/`endYear` filter | OAuth |
 | `collection_read` | Full detail for a single FamilySearch collection by `id` (FS Research Wiki page converted to markdown) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
-| `record_read` | Fetch a FamilySearch historical record by ARK or entity ID — returns full simplified GEDCOMX | OAuth |
+| `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns full simplified GEDCOMX | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
