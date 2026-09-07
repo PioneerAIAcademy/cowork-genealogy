@@ -360,9 +360,10 @@ consistent across schema, manifest, and skill.)*
   (§8 shares the resolver). Accept the same shapes `image_read` accepts
   today (`3:1:`/`3:2:` ARKs, resolver URLs, `/$dist`, `dgs:.../dist.jpg`).
 - `lookingFor` mirrors the `image-reader` subagent's parameter: a search key
-  only. It focuses a FOUND/NOT FOUND pointer; it **never** shortens or slants
-  the full transcription, and any *assertion* in it ("confirm the father is
-  Adam Schreck") is ignored — transcribe what the page says.
+  only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
+  §6.2); it **never** shortens or slants the full transcription, and any
+  *assertion* in it ("confirm the father is Adam Schreck") is ignored —
+  transcribe what the page says.
 - `projectPath`, when given, makes the tool **save** the fetched JPEG
   host-side to `<projectPath>/images/<key>.jpg` and return an `imageRef`
   (§8.5). Best-effort: a save failure omits `imageRef` rather than losing the
@@ -395,13 +396,15 @@ Returns **text only**:
 
 ```typescript
 {
-  transcription: string      // faithful full-page OCR (the primary payload)
-  found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set
+  transcription: string      // faithful full-page OCR (the primary payload) — never doctored
+  truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
+  truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
+  found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
   browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
     imageGroup: string       // the image-group prefix, e.g. "004261111"
     distinctImagesRead: number
-    notice: string           // pivot advice; the transcription above is complete regardless
+    notice: string           // pivot advice; independent of `truncated` — the two can co-occur
   }
   metadata: {
     imageId?: string
@@ -429,7 +432,8 @@ list the caller can turn into assertions.
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
 | OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present) |
 | OpenRouter unreachable | friendly `Could not reach OpenRouter (...)` (mirror `wiki-search.ts`) |
-| Empty/garbage OCR result | throw rather than return a fabricated read — the caller pivots to indexes |
+| Empty/garbage OCR result (no cap) | throw rather than return a fabricated read — the caller pivots to indexes |
+| Empty result **with** an output cap (`finish_reason`/`native_finish_reason` marks it) | throw too — a zero-content read has nothing to return — but the message names the cap (budget likely spent on reasoning) so the caller learns a budget bound, not an unreadable scan. Keeps the invariant that `truncated: true` never ships beside an empty `transcription` (§6.2) |
 
 The tool **never fabricates** a transcription on failure. It throws; the
 caller (record-extraction) pivots to indexed records, exactly as the
@@ -511,8 +515,9 @@ budget lives on the tool.
 distinct image transcribed within **one image group in one project**, a successful
 result carries an advisory `browseBudget` field naming the count, the group, and a
 pivot instruction (log the browse with a negative outcome and move to the indexed
-route, or ask the user). The transcription itself is complete and unchanged — the
-field is additive.
+route, or ask the user). The field is additive and independent of `truncated`:
+`browseBudget` reports a browse-count advisory, not read completeness, so a
+budget-advised read can also be output-cap truncated (the two co-occur).
 
 **Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
 `` `${projectPath ?? "<no-project>"}\0${imageGroup}` ``) holds the distinct `imageId`s seen per group
@@ -652,11 +657,33 @@ the condition to re-check on.
     ]
   }],
   "temperature": 0,
+  "max_tokens": 16000,                         // OCR_MAX_TOKENS — see below
   "provider": { "data_collection": "deny" }   // privacy — see §11
 }
 ```
 
 - `temperature: 0` — OCR is not a creative task.
+- `max_tokens` (`OCR_MAX_TOKENS`, `image-transcribe.ts`) is set **explicitly**.
+  Setting it makes the cap ours and the truncation case (§6.2) reproducible.
+  Mind the **direction**: for the current default `google/gemini-3.7-flash`
+  OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
+  no `max_tokens`, so `16000` **lowers** the effective cap, it does not raise it.
+  It is still well above a page's content — measured 2026-09-07, the largest
+  transcription recovered from the committed e2e run logs is 6,443 chars (~1.6k output
+  tokens), and both Gemini and the prior Qwen default have *produced gradeable
+  output* at 16000 in `dev/try-ocr-compare.ts` (that script reads only
+  `choices[0].message` and `usage`, so it cannot itself observe a cap). Treat the
+  figure as a dated bound, not a proof: of 455 calls, 219 are excluded by the
+  harness's 14-day capture strip and 126 have a recoverable transcription size,
+  so it is measured over those 126 (median 1,573 chars); both models are
+  represented, the current default's own 36 measured calls topping out at 4,940
+  chars (~1.2k tokens); and reasoning tokens draw on this same budget (the
+  current model is reasoning-capable and reasoning is not disabled), so a
+  reasoning-heavy read could reach 16000 before the page is done. Re-derive by
+  scanning `eval/runlogs/e2e/**` for the `full length N chars` marker — **not**
+  with `make e2e-transcribe-failures`, which reports reachability, not sizes.
+  A cap that binds is **visible** (`truncated`,
+  §6.2), never silent.
 - The OCR **prompt is baked into the tool**, not passed by the caller —
   reuse the `image-reader.md` protocol so behavior is identical to today's
   subagent. `lookingFor` is appended as the optional pointer directive.
@@ -666,6 +693,42 @@ the condition to re-check on.
 Parse `choices[0].message.content` → `transcription`. Derive `found` by
 looking for the FOUND/NOT FOUND marker the prompt asks the model to emit.
 Guard against empty content (→ error per §5.6).
+
+**Output-cap truncation.** Read `choices[0].finish_reason` **and**
+`choices[0].native_finish_reason`. OpenRouter is OpenAI-compatible and returns
+them per choice: `"length"` on an output-token cap (**measured** — see
+`dev/probe-ocr-finish-reason.ts`), and `"stop"` as the non-cap value, which is
+the OpenAI-compatible contract **inferred rather than measured on a full page**,
+since the probe captured no complete-page read. A capped read usually carries the
+partial content it got before the cut, so without this it passes as an ordinary
+success and the caller cannot tell a half-read census page from a whole one.
+
+- Truncated when `finish_reason` **or** `native_finish_reason` matches a cap
+  marker — `"length"` or `"MAX_TOKENS"`, matched **case-insensitively** — → set
+  `truncated: true` and a tool-voiced `truncationNotice` (§5.5). The measured
+  default (`google/gemini-3.7-flash`) normalizes its cap onto the top-level
+  `finish_reason: "length"` and *also* reports `native_finish_reason:
+  "MAX_TOKENS"`; the second field and the loose casing are **insurance** for a
+  model (reachable via the `openRouterModel` override) that does not normalize
+  or spells the marker differently — not a description of the default.
+- **Content present → partial success, not an error:** the tool returns the
+  lines it got and does **not** throw. **Content empty → still throws** (a
+  zero-content read has nothing to return), but the error text names the cap so
+  the caller learns a budget bound rather than an unreadable scan. This keeps the
+  invariant that `truncated: true` never ships beside an empty `transcription`,
+  and it is the case the §5.6 "empty → throw" row governs — the two are
+  consistent, not contradictory.
+- The `transcription` stays **verbatim** — the signal rides the sibling
+  fields, never spliced into the OCR text (that would re-create the
+  prose/OCR blend a truncation notice must never introduce; the
+  `browseBudget.notice` precedent is the same shape).
+- **Suppress `found` on a truncated read.** The FOUND/NOT FOUND marker rides
+  a final line the model never reached, and a target may sit below the cut,
+  so a half-read page must never surface a clean `NOT FOUND` negative.
+- **Out of scope:** a model that stops early on its own
+  (`finish_reason: "stop"` on an unfinished page — no cheap signal, a
+  model-quality problem) and a transport cut mid-body (already thrown by
+  `fetchWithTimeout`, §5.7).
 
 ### 6.3 Model selection
 
