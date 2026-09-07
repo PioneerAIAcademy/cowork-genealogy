@@ -51,7 +51,7 @@ Verified against `apps/server/app/`, `apps/web/src/`, `packages/viewer-ui/src/`,
 | 6.2 | WebSocket protocol | **shipped differently** — same message vocabulary, different endpoint and host; `auth_required` never built |
 | 6.3 | Database tables | **shipped differently** — 4 of 6 tables, with different columns |
 | 6.4 | Durable project storage | **not built** |
-| 7 | Agent runtime in the sandbox | **shipped as specced** (27 skills, not 28); the object-store sync half is not built |
+| 7 | Agent runtime in the sandbox | **shipped as specced** (27 skills against the spec's 28 when this was measured; 28 as of 2026-08-31); the object-store sync half is not built |
 | 7.1 | Sandbox image | **shipped as specced** |
 | 8 | Web client | **shipped as specced** |
 | 9 | Electron app | **shipped as specced** |

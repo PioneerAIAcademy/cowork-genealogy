@@ -5,13 +5,22 @@
     "name": "Initialize project from objective text only — no FamilySearch tree ID",
     "type": "positive",
     "description": "Single-turn decomposition: the user provides a research objective in detail but no FamilySearch person ID to seed the tree. Tests whether init-project can create a project with a minimal stub person built purely from the objective text. The init-project SKILL.md describes this as the bootstrap-sequence case where `subject_person_ids` may even be null at creation.",
-    "tags": ["initialization", "objective-only", "no-tree-id", "minimal-stub"]
+    "tags": [
+      "initialization",
+      "objective-only",
+      "no-tree-id",
+      "minimal-stub"
+    ]
   },
   "input": {
     "user_message": "Start a new research project. I want to identify the maternal grandmother of Sarah Hennessy, who was born around 1920 in Boston, Massachusetts. Sarah's mother's maiden name was Mary Donovan but I don't know Mary's mother's name. No FamilySearch tree exists for any of these people yet.",
     "scenario": null
   },
-  "mcp_fixtures": ["person-search-hennessy-none", "place-search-boston"],
+  "mcp_fixtures": [
+    "person-search-hennessy-none",
+    "place-search-boston",
+    "person-search-donovan-none"
+  ],
   "runs_per_test": 1,
   "execution": {
     "max_wall_clock_seconds": 480

@@ -1629,3 +1629,58 @@ def test_orchestrator_threads_refinement_targets_into_validators(tmp_path, monke
         "run_validators' test dict; test_refinement_preserves_extraction_"
         "fields_and_avoids_duplication silently skips on every run"
     )
+
+
+def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monkeypatch):
+    """A test JSON's top-level `index_error_source` must reach the `test`
+    dict run_validators receives (issue #1606).
+
+    Same whitelist trap as `refinement_targets` above, one field later:
+    `index_error_source` was declared in both unit-test schema mirrors and
+    read by `test_index_discrepancy_does_not_recommend_detaching`, but was
+    never added to the literal, so the guard reported "skipped: test
+    declares no index_error_source to protect" on both of the tests that
+    declare it — the whole population it was written for. Pinned
+    behaviourally, via a patched `run_validators` rather than a source
+    grep, so removing the threading line reddens this instead of quietly
+    disarming the guard.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    spec.raw["index_error_source"] = "Minnesota Death Index"
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=["search-wikipedia"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert captured["test"].get("index_error_source") == "Minnesota Death Index", (
+        "orchestrator did not thread spec.raw['index_error_source'] into "
+        "run_validators' test dict; "
+        "test_index_discrepancy_does_not_recommend_detaching asserts "
+        "nothing on every run"
+    )
