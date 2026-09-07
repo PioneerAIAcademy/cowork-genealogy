@@ -1,0 +1,2186 @@
+{
+  "schema_version": 3,
+  "skill": "source-evaluation",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-09-01_13-25-05",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "03f306ff251260e036d692061c9cd3d6ca6e28d9acde97217a76ce02e5a08101",
+  "snapshot": {
+    "packages/engine/plugin/skills/source-evaluation/SKILL.md": "83accc4973038786559a28edf6d0c061a035ff82d58f2038c51451dd704789fa",
+    "packages/engine/plugin/agents/image-reader.md": "2c2003ab404ac7fd4d9de12fc5b37ebb1662585e0382f8d1add9b6d79c92aca4",
+    "eval/tests/unit/source-evaluation/backend-metadata-not-a-todo.json": "0ec8c6aa3993b181556c4289af2c943a0e848c64984ada27fa5e8f19bcc5321f",
+    "eval/tests/unit/source-evaluation/index-error-recommends-reread.json": "86a7d8e1bd20791a7939046ee8f6d4c33a82ca1706344030b2afa23eb718ffae",
+    "eval/tests/unit/source-evaluation/negative-person-impossibility.json": "c78175eda05eba6050cc4dfd2c2ae8727a350611940d62a044b81ef7f174c3ee",
+    "eval/tests/unit/source-evaluation/negative-source-conflict.json": "f53a310027206ec3bdade45900a0c3001fcab6c2d5083d2575b9ed3d43eb08d6",
+    "eval/tests/unit/source-evaluation/rubric.md": "c0c6b44d87df19c6f5e77ba35b5ee6a622c42812ecbab8ac7c3ee283dd4c527a",
+    "eval/tests/unit/source-evaluation/trigger-support-question.json": "6d0ae285229d6813ae92acf0549ab7261cd107199e3821b754a0c942e14785ce",
+    "eval/tests/unit/source-evaluation/trigger-tester-phrasing.json": "889cb3305a682d35832dc5b59b849006a52f0c716153a47cf176fe806dcd2867",
+    "eval/fixtures/scenarios/christian-hole-quality/README.md": "fca734275e1761fc50a54fdf57a826ae44618924821aaf390717ff5b0761f445",
+    "eval/fixtures/scenarios/christian-hole-quality/research.json": "1ba0176a7c46bc0b70a18fe5cead4a0c538db4943be3b18ad36b5f8b319fe36e",
+    "eval/fixtures/scenarios/christian-hole-quality/tree.gedcomx.json": "b0d8c7defc4b50ef1a7648c99febf6446c3d04babeed51d846dfded9cba45788",
+    "eval/fixtures/mcp/person-read-hole-attached-sources.json": "9e885766416bf1a7cdfb61f0baed462e50afd5b734084fb687a123f8c71d34f2",
+    "eval/fixtures/mcp/person-read-hole-wx7-otter-tail.json": "ca7bf2e7e522200c50d31e7cc03adee8be6c9222bc4c9e8b99880a6ddf788e04",
+    "eval/fixtures/mcp/record-read-hole-1885-state-census.json": "50a26a9bd4e975382874edd96009e2a03ce4ef942ae86f5ac5160fa4a1a24833",
+    "eval/fixtures/mcp/record-read-hole-1900-census.json": "0426627b97915d86decd897fe6bfc319d58a4d1c1df2fd0103568622bb974493",
+    "eval/fixtures/mcp/record-read-hole-mn-death-index.json": "94edf52528e3aefc672206d13dbda4569a2b9622ca9e39eefa7a7100be06f43a",
+    "eval/fixtures/mcp/source-attachments-hole-1885.json": "3f81ca6a8a403960061db8302fa4e1382e567282785a308adabb971469782973"
+  },
+  "tests": [
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "christian-hole-quality",
+      "mcp_fixtures": [
+        "person-read-hole-attached-sources",
+        "record-read-hole-1900-census",
+        "record-read-hole-mn-death-index",
+        "record-read-hole-1885-state-census",
+        "source-attachments-hole-1885",
+        "person-read-hole-wx7-otter-tail"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified two actionable findings: the 1885 census misattribution (with proper evidence that KD96-WX7 is the true subject) and the death index year discrepancy (1954 vs. 1945). The 1900 census two-year variance was correctly classified as ordinary census variance and excluded from findings. All claims are supported by tool responses. No fabricated material."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: read all four attached sources, identified the two actionable findings, explained why the 1900 census variance was not actionable, and explicitly reported the uploaded funeral card as unchecked with the reason (no indexed record). No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All tool calls passed correct arguments matching expected_args: person_read with sourceDescriptions: true for both KD96-TV2 and KD96-WX7; record_read calls with correct ARKs (HOLE-001, HOLE-002, HOLE-003); source_attachments with the correct ARK. All critical identifiers and arguments were accurate."
+          },
+          {
+            "source": "rubric",
+            "name": "Classification before recommendation",
+            "score": 3,
+            "rationale": "Each finding carries explicit classification with supporting evidence. The 1885 census is classified as misattribution with a detailed comparison table showing birth year (1852 vs. 1875), age (~33 vs. ~10), county, wife, and child all wrong. The death index is classified as indexing error with the cue that day-month match exactly but year differs by 9 years. The 1900 census variance is classified as ordinary census noise with the rationale that ages were self-reported."
+          },
+          {
+            "source": "rubric",
+            "name": "Remediation doctrine",
+            "score": 3,
+            "rationale": "The 1885 misattribution correctly recommends detachment with explicit naming of the true subject (KD96-WX7) and the reason (record matches that person exactly on birth year, county, and timeline). The death index indexing error correctly recommends re-reading the original and correcting the indexed year, with the source kept attached. No detachment is recommended for an index error."
+          },
+          {
+            "source": "rubric",
+            "name": "Signal versus backend noise",
+            "score": 3,
+            "rationale": "The findings list contains only user-actionable items: the misattributed 1885 census and the death index year error. Repeated internal IDs (F1, N1, P1, S1) that appear across unrelated records in tool responses are absent from the findings and carry no recommended action. Backend metadata is not counted among the numbered findings."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool selection and argument quality",
+            "score": 3,
+            "rationale": "The skill correctly used person_read with sourceDescriptions: true to enumerate sources; read each ARK-backed source with record_read using the exact ARK from the source's url field; called source_attachments before naming KD96-WX7 as the true subject of the 1885 record, confirming the attachment; and read KD96-WX7's profile to verify the facts fit. All required tool paths were followed."
+          },
+          {
+            "source": "rubric",
+            "name": "Coverage and honesty about what was not checked",
+            "score": 3,
+            "rationale": "All four attached sources are accounted for. The three ARK-backed records (1900 census, death index, 1885 census) were read and judged. The uploaded funeral card (SD-HOLE-D) is explicitly named as unchecked with the reason: 'This is a contributor-uploaded document with no indexed record behind it.' No source is described as clean without a tool response."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 128489.22740000125,
+        "duration_api_ms": 121359.0,
+        "judge_duration_ms": 12194.915400003083,
+        "wall_clock_ms": 141748.32463264465,
+        "num_turns": 10,
+        "input_tokens": 381,
+        "cached_input_tokens": 132711,
+        "cache_creation_input_tokens": 15292,
+        "output_tokens": 4738,
+        "judge_input_tokens": 7482,
+        "judge_cached_input_tokens": 4800,
+        "judge_output_tokens": 1044,
+        "skill_cost_usd": 0.16840929999999998,
+        "judge_cost_usd": 0.013182,
+        "total_cost_usd": 0.18159129999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_source_evaluation_m8q_2026-09-01_13-25-05_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 128489.22740000125,
+          "duration_api_ms": 121359.0,
+          "num_turns": 10,
+          "skill_attempts": 1,
+          "input_tokens": 381,
+          "cached_input_tokens": 132711,
+          "cache_creation_input_tokens": 15292,
+          "output_tokens": 4738,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 366,
+              "outputTokens": 23,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000481,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 15,
+              "outputTokens": 4715,
+              "cacheReadInputTokens": 132711,
+              "cacheCreationInputTokens": 15292,
+              "webSearchRequests": 0,
+              "costUSD": 0.1679283,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.16840929999999998,
+          "output": {
+            "text_response": "Good \u2014 4 sources attached, 1 is an uploaded memory. Now I'll read all three ARK-backed records in parallel.Three key findings are forming. Before calling the 1885 census misattributed, I need to check who else it's attached to.The 1885 census is also on KD96-WX7. I need to read that profile before naming them as the record's true subject.KD96-WX7 is a perfect match for the 1885 record: born 1852 in Norway, resident in Aurdal, Otter Tail, Minnesota, died 1919. I now have everything I need.\n\n---\n\n## SOURCES ON: Christian P. Hole (KD96-TV2) \u2014 4 attached, 2 findings\n\n---\n\n### 1. 1885 Minnesota State Census \u2014 **Misattributed** *(worst)*\n\n**Source:** Christian Hole, \"Minnesota State Census, 1885,\" Otter Tail County, Minnesota.\n\nThe record does not belong to this person on any field that matters:\n\n| Field | Indexed in 1885 record | Profile (KD96-TV2) |\n|---|---|---|\n| Birth year | 1852 | 1875 |\n| Age in 1885 | ~33 | ~10 |\n| County | Otter Tail | Polk |\n| Wife | Bergit | Inger (per 1900 census) |\n| Child | Nils, b. 1879, Minnesota | Ole C. (per 1900 census) |\n\nChristian P. Hole was born in 1875 \u2014 he was a child of about ten in 1885, far too young to head a household with a wife and a six-year-old son. The disagreement is not a single mis-keyed field; every relationship in the record is wrong for this person.\n\nThe source is also attached to **KD96-WX7** (Christian Hole, born 1852 Norway, residing Aurdal, Otter Tail, Minnesota, died 1919) \u2014 and that profile matches the record exactly: same birth year, same county, consistent timeline.\n\n**Action:** Detach this source from KD96-TV2. It is the record of the older Christian Hole at KD96-WX7, not this man.\n\n---\n\n### 2. Minnesota Death Index, 1908\u20132002 \u2014 **Indexing error**\n\n**Source:** Christian P. Hole, \"Minnesota Death Index, 1908\u20132002,\" Polk County, Minnesota.\n\nThe indexed death year is **1954**; the profile records **1945**. The day and month \u2014 10 June \u2014 match exactly, which makes the year the sole point of disagreement. A death index is an exact-date record, not an age estimate, so a 9-year drift is not ordinary variance.\n\n**Action:** Re-read the original death index image and correct the indexed year. Keep the source attached \u2014 the name, county, and day-month are all right; one digit (or pair of digits) in the year appears to have been mis-keyed.\n\n---\n\n### Sources that showed no actionable problem\n\n**1900 US Census:** Indexed birth year is 1877 against the profile's 1875 \u2014 a two-year spread in a census where ages were self-reported. This is ordinary census variance; the rest of the record (name, township, county, household) fits cleanly. No action needed.\n\n---\n\n### Could not check\n\n**Hole family photograph and funeral card (uploaded memory):** This is a contributor-uploaded document with no indexed record behind it. Its contents cannot be compared programmatically. If you want to verify what the funeral card says, compare it directly against the profile's death date and place (10 June 1945, Erskine, Polk County).",
+            "activated": true,
+            "skills_invoked": [
+              "source-evaluation"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true
+                },
+                "expected_args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-read-hole-attached-sources"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-001"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-001"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-read-hole-1900-census"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-002"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-002"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "record-read-hole-mn-death-index"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-003"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 2
+                },
+                "response_fixture": "record-read-hole-1885-state-census"
+              },
+              {
+                "tool": "mcp__genealogy__source_attachments",
+                "args": {
+                  "uris": [
+                    "ark:/61903/1:1:HOLE-003"
+                  ]
+                },
+                "expected_args": {
+                  "uris": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "source-attachments-hole-1885"
+              },
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-WX7",
+                  "sourceDescriptions": true
+                },
+                "expected_args": {
+                  "personId": "KD96-WX7"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "person-read-hole-wx7-otter-tail"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "source-evaluation",
+                  "args": "Christian P. Hole KD96-TV2"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__person_read,mcp__genealogy__record_read,mcp__genealogy__source_attachments,mcp__genealogy__project_context",
+                  "max_results": "4"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_index_discrepancy_does_not_recommend_detaching",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_index_discrepancy_recommends_reread",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified two actionable findings: the 1885 census misattribution (with proper evidence that KD96-WX7 is the true subject) and the death index year discrepancy (1954 vs. 1945). The 1900 census two-year variance was correctly classified as ordinary census variance and excluded from findings. All claims are supported by tool responses. No fabricated material."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: read all four attached sources, identified the two actionable findings, explained why the 1900 census variance was not actionable, and explicitly reported the uploaded funeral card as unchecked with the reason (no indexed record). No required work was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All tool calls passed correct arguments matching expected_args: person_read with sourceDescriptions: true for both KD96-TV2 and KD96-WX7; record_read calls with correct ARKs (HOLE-001, HOLE-002, HOLE-003); source_attachments with the correct ARK. All critical identifiers and arguments were accurate."
+              },
+              {
+                "source": "rubric",
+                "name": "Classification before recommendation",
+                "score": 3,
+                "rationale": "Each finding carries explicit classification with supporting evidence. The 1885 census is classified as misattribution with a detailed comparison table showing birth year (1852 vs. 1875), age (~33 vs. ~10), county, wife, and child all wrong. The death index is classified as indexing error with the cue that day-month match exactly but year differs by 9 years. The 1900 census variance is classified as ordinary census noise with the rationale that ages were self-reported."
+              },
+              {
+                "source": "rubric",
+                "name": "Remediation doctrine",
+                "score": 3,
+                "rationale": "The 1885 misattribution correctly recommends detachment with explicit naming of the true subject (KD96-WX7) and the reason (record matches that person exactly on birth year, county, and timeline). The death index indexing error correctly recommends re-reading the original and correcting the indexed year, with the source kept attached. No detachment is recommended for an index error."
+              },
+              {
+                "source": "rubric",
+                "name": "Signal versus backend noise",
+                "score": 3,
+                "rationale": "The findings list contains only user-actionable items: the misattributed 1885 census and the death index year error. Repeated internal IDs (F1, N1, P1, S1) that appear across unrelated records in tool responses are absent from the findings and carry no recommended action. Backend metadata is not counted among the numbered findings."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool selection and argument quality",
+                "score": 3,
+                "rationale": "The skill correctly used person_read with sourceDescriptions: true to enumerate sources; read each ARK-backed source with record_read using the exact ARK from the source's url field; called source_attachments before naming KD96-WX7 as the true subject of the 1885 record, confirming the attachment; and read KD96-WX7's profile to verify the facts fit. All required tool paths were followed."
+              },
+              {
+                "source": "rubric",
+                "name": "Coverage and honesty about what was not checked",
+                "score": 3,
+                "rationale": "All four attached sources are accounted for. The three ARK-backed records (1900 census, death index, 1885 census) were read and judged. The uploaded funeral card (SD-HOLE-D) is explicitly named as unchecked with the reason: 'This is a contributor-uploaded document with no indexed record behind it.' No source is described as clean without a tool response."
+              }
+            ],
+            "judge_cost_usd": 0.013182,
+            "duration_ms": 12194.915400003083,
+            "error": null,
+            "input_tokens": 7482,
+            "cached_input_tokens": 4800,
+            "output_tokens": 1044
+          },
+          "started_at": 1788269446.856907,
+          "ended_at": 1788269588.6052315
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_source_evaluation_r4k",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "christian-hole-quality",
+      "mcp_fixtures": [
+        "person-read-hole-attached-sources",
+        "record-read-hole-1900-census",
+        "record-read-hole-mn-death-index",
+        "record-read-hole-1885-state-census",
+        "source-attachments-hole-1885",
+        "person-read-hole-wx7-otter-tail"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly identified and classified two substantive findings: (1) the Minnesota Death Index indexing error (1954 vs. 1945 death year), with all supporting details accurate (name, birth year, county, day/month match); (2) the 1885 census misattribution, with correct identification of the true subject (KD96-WX7) via source_attachments and person_read. The 1900 census two-year birth variance (1877 vs. 1875) was correctly characterized as ordinary census drift, not an indexing error. All tool responses were accurately cited and no fabricated material was introduced."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all four attached sources: three readable records (1900 census, death index, 1885 census) were fully read and evaluated; the fourth (contributor upload) was explicitly noted as unchecked with the reason (no record ID). All findings were reported with evidence and recommendations. The user's request to evaluate whether each source belongs and whether indexing matches the profile was fully satisfied."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All six tool calls passed correct arguments matching expected_args: person_read with sourceDescriptions=true to enumerate sources; three record_read calls with correct ARKs (HOLE-001, HOLE-002, HOLE-003); source_attachments with the 1885 census ARK to verify dual attachment; person_read of KD96-WX7 to confirm the true subject. No fixture_not_found errors. Arguments were semantically correct and no extraneous noise was added."
+          },
+          {
+            "source": "rubric",
+            "name": "Remediation doctrine",
+            "score": 3,
+            "rationale": "The skill correctly applied remediation doctrine: for the death index (single field error: year only), it recommended re-reading the original and correcting the indexed year, with the source kept attached. For the 1885 census (entire record mismatch across birth year, county, wife, son), it recommended detaching and correctly identified where the record belongs (KD96-WX7). No detach recommendation was made for the indexing error, and the misattribution recommendation named the true subject."
+          },
+          {
+            "source": "rubric",
+            "name": "Classification before recommendation",
+            "score": 3,
+            "rationale": "Each finding carried explicit classification with supporting evidence: the death index was classified as an indexing error with the cue that 'the full name, birth year, birthplace, death town, and day/month all agree precisely' but the year differs by nine years. The 1885 census was classified as misattribution with detailed evidence of household impossibility (a six-year-old son in 1885 when the subject would have been ten) and county/wife/birth-year mismatches. The reader can verify each classification from the evidence provided."
+          },
+          {
+            "source": "rubric",
+            "name": "Signal versus backend noise",
+            "score": 3,
+            "rationale": "The findings list contained only user-actionable items: two substantive source problems (one correctable indexing error, one misattribution). No backend artifacts (repeated IDs, internal metadata errors) were reported as findings or counted as problems. The response focused on what the researcher could act on."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool selection and argument quality",
+            "score": 3,
+            "rationale": "The skill correctly used person_read with sourceDescriptions=true to enumerate attached sources; read each of the three readable records via record_read with their actual ARKs from the source URLs; called source_attachments before the misattribution recommendation to verify dual attachment and identify the true subject; and confirmed the true subject's facts via person_read of KD96-WX7. The tool sequence was methodologically sound and complete."
+          },
+          {
+            "source": "rubric",
+            "name": "Coverage and honesty about what was not checked",
+            "score": 3,
+            "rationale": "All four attached sources were accounted for: the three readable records (1900 census, death index, 1885 census) were read and judged; the fourth source (contributor upload) was explicitly named and reported as unchecked with the reason ('carries no record ID. Its contents cannot be verified through the index'). No source was described as clean without a tool response behind it."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 104242.78130001039,
+        "duration_api_ms": 98587.0,
+        "judge_duration_ms": 14007.002800004557,
+        "wall_clock_ms": 119111.74488067627,
+        "num_turns": 10,
+        "input_tokens": 396,
+        "cached_input_tokens": 132672,
+        "cache_creation_input_tokens": 14901,
+        "output_tokens": 4767,
+        "judge_input_tokens": 7585,
+        "judge_cached_input_tokens": 4800,
+        "judge_output_tokens": 1151,
+        "skill_cost_usd": 0.16737135,
+        "judge_cost_usd": 0.013819999999999999,
+        "total_cost_usd": 0.18119135
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_source_evaluation_r4k_2026-09-01_13-25-05_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 104242.78130001039,
+          "duration_api_ms": 98587.0,
+          "num_turns": 10,
+          "skill_attempts": 1,
+          "input_tokens": 396,
+          "cached_input_tokens": 132672,
+          "cache_creation_input_tokens": 14901,
+          "output_tokens": 4767,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 381,
+              "outputTokens": 24,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000501,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 15,
+              "outputTokens": 4743,
+              "cacheReadInputTokens": 132672,
+              "cacheCreationInputTokens": 14901,
+              "webSearchRequests": 0,
+              "costUSD": 0.16687035,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.16737135,
+          "output": {
+            "text_response": "Four sources attached \u2014 three carry record ARKs I can read, one is a contributor upload with no indexed record behind it. Let me pull all three readable records at once.Good \u2014 three records returned. The 1885 Minnesota census immediately raises flags. Before I classify it, let me check whether it's attached elsewhere in the tree.It's also attached to KD96-WX7. Let me read that person before drawing any conclusion about whose record this truly is.I have everything I need. Here is the full audit.\n\n---\n\n**SOURCES ON: Christian P. Hole (KD96-TV2) \u2014 4 attached, 2 findings**\n\n---\n\n**1. \"Minnesota Death Index, 1908\u20132002\" \u2014 indexing error**\n\n*Citation: database, FamilySearch, entry for Christian P. Hole, died 10 June 1945, Polk County, Minnesota.*\n\nThe index returns a death date of **10 June 1954**; the profile records **10 June 1945** \u2014 a nine-year difference on the year alone. Every other field agrees precisely: the full name, the birth year (1875), the birthplace (Norway), the death town (Erskine, Polk County), and the day and month of death (10 June). Because this is a death index \u2014 a record type expected to carry exact dates \u2014 a nine-year swing on the year is an indexing error, not ordinary reporting variance.\n\n**Next step:** Re-read the original death index image and correct the indexed year from 1954 to 1945 on FamilySearch. Keep the source attached \u2014 it is clearly about this man, with one bad field.\n\n---\n\n**2. \"Minnesota State Census, 1885\" \u2014 misattributed; detach**\n\n*Citation: database, FamilySearch, entry for Christian Hole, Otter Tail County, Minnesota.*\n\nThis record does not belong to Christian P. Hole (KD96-TV2). The disagreements are not a single garbled field \u2014 they span the entire record:\n\n| Field | Indexed in the 1885 record | KD96-TV2's profile |\n|---|---|---|\n| Birth year | **1852** | **1875** (23 years earlier) |\n| County | **Otter Tail** | **Polk** |\n| Wife | **Bergit** | **Inger** (married 1898) |\n| Son | Nils, born 1879 Minnesota | \u2014 |\n\nThe household is internally impossible for someone born in 1875: the man in the 1885 census was already a head of household with a wife and a six-year-old son, at a time when our Christian would have been roughly ten years old.\n\nThe source is also attached to **KD96-WX7 (Christian Hole)**, and I read that profile: born 1852 in Norway, residence 1885 in Aurdal, Otter Tail County, Minnesota, died 1919 in Aurdal, Otter Tail County. Every field in the record \u2014 birth year, county, and residence date \u2014 lines up exactly with KD96-WX7. That is the record's true subject.\n\n**Next step:** Detach this source from KD96-TV2. The 1885 Otter Tail County household is a different Christian Hole, born a generation earlier, and the source is already correctly attached to his profile (KD96-WX7).\n\n---\n\n**Could not check:**\nThe fourth source \u2014 *Hole family photograph and funeral card* (contributor upload) \u2014 carries no record ID. Its contents cannot be verified through the index. If you want to confirm that it depicts and describes Christian P. Hole rather than another family member, the citation and the card's text would need to be reviewed directly.\n\n---\n\n**Bottom line:** Two sources are clean (the 1900 census fits well; the two-year birth-year difference there is ordinary census drift). One source has a correctable indexing error on the death year; one is attached to the wrong man and should come off.",
+            "activated": true,
+            "skills_invoked": [
+              "source-evaluation"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true
+                },
+                "expected_args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-read-hole-attached-sources"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-001"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-001"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-read-hole-1900-census"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-002"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-002"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "record-read-hole-mn-death-index"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-003"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 2
+                },
+                "response_fixture": "record-read-hole-1885-state-census"
+              },
+              {
+                "tool": "mcp__genealogy__source_attachments",
+                "args": {
+                  "uris": [
+                    "ark:/61903/1:1:HOLE-003"
+                  ]
+                },
+                "expected_args": {
+                  "uris": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "source-attachments-hole-1885"
+              },
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-WX7",
+                  "relatives": true
+                },
+                "expected_args": {
+                  "personId": "KD96-WX7"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "person-read-hole-wx7-otter-tail"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "source-evaluation",
+                  "args": "personId: KD96-TV2, name: Christian P. Hole"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__person_read,mcp__genealogy__record_read,mcp__genealogy__source_attachments,mcp__genealogy__project_context",
+                  "max_results": "4"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_index_discrepancy_does_not_recommend_detaching",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_index_discrepancy_recommends_reread",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly identified and classified two substantive findings: (1) the Minnesota Death Index indexing error (1954 vs. 1945 death year), with all supporting details accurate (name, birth year, county, day/month match); (2) the 1885 census misattribution, with correct identification of the true subject (KD96-WX7) via source_attachments and person_read. The 1900 census two-year birth variance (1877 vs. 1875) was correctly characterized as ordinary census drift, not an indexing error. All tool responses were accurately cited and no fabricated material was introduced."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all four attached sources: three readable records (1900 census, death index, 1885 census) were fully read and evaluated; the fourth (contributor upload) was explicitly noted as unchecked with the reason (no record ID). All findings were reported with evidence and recommendations. The user's request to evaluate whether each source belongs and whether indexing matches the profile was fully satisfied."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All six tool calls passed correct arguments matching expected_args: person_read with sourceDescriptions=true to enumerate sources; three record_read calls with correct ARKs (HOLE-001, HOLE-002, HOLE-003); source_attachments with the 1885 census ARK to verify dual attachment; person_read of KD96-WX7 to confirm the true subject. No fixture_not_found errors. Arguments were semantically correct and no extraneous noise was added."
+              },
+              {
+                "source": "rubric",
+                "name": "Remediation doctrine",
+                "score": 3,
+                "rationale": "The skill correctly applied remediation doctrine: for the death index (single field error: year only), it recommended re-reading the original and correcting the indexed year, with the source kept attached. For the 1885 census (entire record mismatch across birth year, county, wife, son), it recommended detaching and correctly identified where the record belongs (KD96-WX7). No detach recommendation was made for the indexing error, and the misattribution recommendation named the true subject."
+              },
+              {
+                "source": "rubric",
+                "name": "Classification before recommendation",
+                "score": 3,
+                "rationale": "Each finding carried explicit classification with supporting evidence: the death index was classified as an indexing error with the cue that 'the full name, birth year, birthplace, death town, and day/month all agree precisely' but the year differs by nine years. The 1885 census was classified as misattribution with detailed evidence of household impossibility (a six-year-old son in 1885 when the subject would have been ten) and county/wife/birth-year mismatches. The reader can verify each classification from the evidence provided."
+              },
+              {
+                "source": "rubric",
+                "name": "Signal versus backend noise",
+                "score": 3,
+                "rationale": "The findings list contained only user-actionable items: two substantive source problems (one correctable indexing error, one misattribution). No backend artifacts (repeated IDs, internal metadata errors) were reported as findings or counted as problems. The response focused on what the researcher could act on."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool selection and argument quality",
+                "score": 3,
+                "rationale": "The skill correctly used person_read with sourceDescriptions=true to enumerate attached sources; read each of the three readable records via record_read with their actual ARKs from the source URLs; called source_attachments before the misattribution recommendation to verify dual attachment and identify the true subject; and confirmed the true subject's facts via person_read of KD96-WX7. The tool sequence was methodologically sound and complete."
+              },
+              {
+                "source": "rubric",
+                "name": "Coverage and honesty about what was not checked",
+                "score": 3,
+                "rationale": "All four attached sources were accounted for: the three readable records (1900 census, death index, 1885 census) were read and judged; the fourth source (contributor upload) was explicitly named and reported as unchecked with the reason ('carries no record ID. Its contents cannot be verified through the index'). No source was described as clean without a tool response behind it."
+              }
+            ],
+            "judge_cost_usd": 0.013819999999999999,
+            "duration_ms": 14007.002800004557,
+            "error": null,
+            "input_tokens": 7585,
+            "cached_input_tokens": 4800,
+            "output_tokens": 1151
+          },
+          "started_at": 1788269224.3084137,
+          "ended_at": 1788269343.4201586
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_source_evaluation_h3t",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "christian-hole-quality",
+      "mcp_fixtures": [
+        "person-read-hole-attached-sources",
+        "record-read-hole-1900-census",
+        "record-read-hole-mn-death-index",
+        "record-read-hole-1885-state-census",
+        "source-attachments-hole-1885",
+        "person-read-hole-wx7-otter-tail"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the correct behavior is for source-evaluation to decline and route to check-warnings. Claude produced no output and did not invoke source-evaluation; the routing decision itself is scored deterministically by the harness. The skill correctly declined to perform source-evaluation's task."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The correct behavior on this negative test is to decline and route to check-warnings, which is what occurred. The skill did not attempt to enumerate or read sources, which is the correct outcome. No substantive output was required from source-evaluation itself."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test (source-evaluation). The test made zero tool calls, so this dimension is N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 7700.806599998032,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3767.676000003121,
+        "wall_clock_ms": 12593.077659606934,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 6310,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 293,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.007775,
+        "total_cost_usd": 0.007775
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_source_evaluation_h3t_2026-09-01_13-25-05_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 7700.806599998032,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "check-warnings"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "check-warnings",
+                  "args": "Ole C. Hole"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_index_discrepancy_does_not_recommend_detaching",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_index_discrepancy_recommends_reread",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where the correct behavior is for source-evaluation to decline and route to check-warnings. Claude produced no output and did not invoke source-evaluation; the routing decision itself is scored deterministically by the harness. The skill correctly declined to perform source-evaluation's task."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The correct behavior on this negative test is to decline and route to check-warnings, which is what occurred. The skill did not attempt to enumerate or read sources, which is the correct outcome. No substantive output was required from source-evaluation itself."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test (source-evaluation). The test made zero tool calls, so this dimension is N/A."
+              }
+            ],
+            "judge_cost_usd": 0.007775,
+            "duration_ms": 3767.676000003121,
+            "error": null,
+            "input_tokens": 6310,
+            "cached_input_tokens": 0,
+            "output_tokens": 293
+          },
+          "started_at": 1788269606.4946105,
+          "ended_at": 1788269619.0876882
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_source_evaluation_c5n",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "christian-hole-quality",
+      "mcp_fixtures": [
+        "person-read-hole-attached-sources",
+        "record-read-hole-1900-census",
+        "record-read-hole-mn-death-index",
+        "record-read-hole-1885-state-census",
+        "source-attachments-hole-1885",
+        "person-read-hole-wx7-otter-tail"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where source-evaluation should decline and route to conflict-resolution. The skill correctly made that routing decision. No substantive output was produced by source-evaluation itself, which is the correct behavior. The handoff was silent as required."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed the correct action for this negative test: it declined to perform its own task and routed to conflict-resolution. No audit or source-evaluation work was performed, which is exactly what was required. The routing decision was complete and appropriate."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined to call person_read, record_read, or source_attachments, as required by the test specification. N/A because zero tool calls occurred."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 7728.134400007548,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3710.316899989266,
+        "wall_clock_ms": 12480.129957199097,
+        "num_turns": 0,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 6332,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 297,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.007817,
+        "total_cost_usd": 0.007817
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_source_evaluation_c5n_2026-09-01_13-25-05_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "duration_ms": 7728.134400007548,
+          "duration_api_ms": 0.0,
+          "num_turns": 0,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "conflict-resolution"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "conflict-resolution",
+                  "args": "Two census records conflict on Christian's birth year: 1885 state census says born 1852, 1900 federal census says born 1875. User wants to know which to believe."
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill"
+              },
+              {
+                "name": "test_index_discrepancy_does_not_recommend_detaching",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_index_discrepancy_recommends_reread",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where source-evaluation should decline and route to conflict-resolution. The skill correctly made that routing decision. No substantive output was produced by source-evaluation itself, which is the correct behavior. The handoff was silent as required."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed the correct action for this negative test: it declined to perform its own task and routed to conflict-resolution. No audit or source-evaluation work was performed, which is exactly what was required. The routing decision was complete and appropriate."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly declined to call person_read, record_read, or source_attachments, as required by the test specification. N/A because zero tool calls occurred."
+              }
+            ],
+            "judge_cost_usd": 0.007817,
+            "duration_ms": 3710.316899989266,
+            "error": null,
+            "input_tokens": 6332,
+            "cached_input_tokens": 0,
+            "output_tokens": 297
+          },
+          "started_at": 1788269588.809436,
+          "ended_at": 1788269601.289566
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "christian-hole-quality",
+      "mcp_fixtures": [
+        "person-read-hole-attached-sources",
+        "record-read-hole-1900-census",
+        "record-read-hole-mn-death-index",
+        "record-read-hole-1885-state-census",
+        "source-attachments-hole-1885",
+        "person-read-hole-wx7-otter-tail"
+      ],
+      "outcome": "partial",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "partial"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 2,
+            "rationale": "The skill correctly identified two findings and read all sources, but made a critical error in Finding 1. The Death Index record shows death date '10 June 1954' (per the tool response), not 1945 as the skill claims the profile records. The skill states the profile records '10 June 1945' but the tool response for HOLE-002 shows the indexed death is '10 June 1954'. The skill then recommends re-reading to correct the year, but the actual discrepancy is between the profile's recorded date and what the index shows. The skill's characterization of which date is on the profile versus in the index appears inverted or confused. Finding 2 about the 1885 census misattribution is well-supported and correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all four attached sources: read the 1900 Census (HOLE-001), Death Index (HOLE-002), and 1885 Census (HOLE-003) in detail; checked source attachments for the 1885 census; read the alternate person (KD96-WX7) to confirm misattribution; and properly noted the uploaded memory/funeral card as unchecked with explanation. All sources were accounted for."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All tool calls passed correct arguments matching expected_args. person_read was called with sourceDescriptions: true; all three record_read calls used the correct ARKs from the source URLs (HOLE-001, HOLE-002, HOLE-003); source_attachments was called with the correct ARK before the misattribution conclusion; and the follow-up person_read for KD96-WX7 was correct. No fixture_not_found errors occurred."
+          },
+          {
+            "source": "rubric",
+            "name": "Classification before recommendation",
+            "score": 3,
+            "rationale": "Each finding is explicitly classified before recommendation. Finding 1 is labeled 'indexing error' with the cue that 'only the year diverges' while 'day, month, city, county, and name are identical.' Finding 2 is labeled 'misattributed source' with detailed evidence: birth year (1852 vs 1875), county (Otter Tail vs Polk), wife name (Bergit vs Inger), and the logical impossibility that a 10-year-old in 1885 could not be a household head. The classifications are clear and evidence-based."
+          },
+          {
+            "source": "rubric",
+            "name": "Remediation doctrine",
+            "score": 3,
+            "rationale": "Finding 1 (indexing error) correctly recommends re-reading the original and correcting the index, with the source left attached. Finding 2 (misattribution) correctly recommends detaching and explicitly names where the record belongs: 'The census record is about an older, same-named man (KD96-WX7) living in a different county.' No detach recommendation is made for the single-field disagreement in the 1900 Census. The remediation doctrine is properly applied."
+          },
+          {
+            "source": "rubric",
+            "name": "Signal versus backend noise",
+            "score": 3,
+            "rationale": "The findings list contains only user-actionable items: two concrete source problems (the Death Index year and the 1885 census misattribution). No backend artifacts (repeated IDs, internal metadata errors) are presented as findings or counted among the errors. The summary correctly identifies which sources need attention and which are clean, without noise."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool selection and argument quality",
+            "score": 3,
+            "rationale": "person_read was called with sourceDescriptions: true, retrieving the attached source list. All three sources carrying ARKs were read with their actual ARKs from the source URLs. source_attachments was called before the misattribution conclusion, confirming the 1885 census is attached to both KD96-TV2 and KD96-WX7. The follow-up person_read of KD96-WX7 confirmed the record's facts fit that person. Tool selection and argument quality are correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Coverage and honesty about what was not checked",
+            "score": 3,
+            "rationale": "All four attached sources are accounted for. The three indexed sources (1900 Census, Death Index, 1885 Census) were read and judged. The uploaded memory (funeral card and photograph) is explicitly named as unchecked with the reason: 'no indexed record behind it' and 'contents cannot be verified through FamilySearch's record system.' The skill is honest about what could and could not be verified."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 86555.81209999218,
+        "duration_api_ms": 80960.0,
+        "judge_duration_ms": 15437.336499991943,
+        "wall_clock_ms": 103084.05041694641,
+        "num_turns": 10,
+        "input_tokens": 375,
+        "cached_input_tokens": 130028,
+        "cache_creation_input_tokens": 13878,
+        "output_tokens": 4067,
+        "judge_input_tokens": 7329,
+        "judge_cached_input_tokens": 4800,
+        "judge_output_tokens": 1244,
+        "skill_cost_usd": 0.1522709,
+        "judge_cost_usd": 0.014029,
+        "total_cost_usd": 0.1662999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_source_evaluation_w7d_2026-09-01_13-25-05_0",
+          "outcome": "partial",
+          "aborted_reason": null,
+          "duration_ms": 86555.81209999218,
+          "duration_api_ms": 80960.0,
+          "num_turns": 10,
+          "skill_attempts": 1,
+          "input_tokens": 375,
+          "cached_input_tokens": 130028,
+          "cache_creation_input_tokens": 13878,
+          "output_tokens": 4067,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 360,
+              "outputTokens": 19,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000455,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 15,
+              "outputTokens": 4048,
+              "cacheReadInputTokens": 130028,
+              "cacheCreationInputTokens": 13878,
+              "webSearchRequests": 0,
+              "costUSD": 0.1518159,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.1522709,
+          "output": {
+            "text_response": "I have the profile. Now let me read all three indexable sources in parallel.Three records read. The 1885 census looks like a strong misattribution candidate \u2014 let me check its attachments before drawing that conclusion.The 1885 census is also attached to KD96-WX7. I need to read that profile before making any attribution call.I have everything I need. Here is the full audit.\n\n---\n\n**SOURCES ON: Christian P. Hole (KD96-TV2) \u2014 4 attached, 2 findings**\n\n---\n\n**Finding 1 \u2014 Minnesota Death Index, 1908\u20132002 \u2014 indexing error**\n\n> *\"Minnesota Death Index, 1908-2002\", database, FamilySearch, entry for Christian P. Hole, died 10 June 1945, Polk County, Minnesota.*\n\nThe index has the death year as **1954**; the profile records **10 June 1945**. The day, month, city (Erskine), county (Polk), and name are identical \u2014 only the year diverges. A death index is an exact record type, not an estimated age, so this is not ordinary variance.\n\nWith everything else fitting cleanly, this is most likely a transcription error in the indexed year. **Re-read the original death index image and correct the year in the FamilySearch index** \u2014 the source is good evidence about the right person and should stay attached.\n\n---\n\n**Finding 2 \u2014 Minnesota State Census, 1885 \u2014 misattributed source**\n\n> *\"Minnesota State Census, 1885\", database, FamilySearch, entry for Christian Hole, Otter Tail County, Minnesota.*\n\nThe record indexes a Christian Hole born **1852** in Norway, residing in **Aurdal, Otter Tail County**, married to a woman named **Bergit**, with a son Nils born 1879 in Minnesota. Every one of those details conflicts with this profile:\n\n| | This record | KD96-TV2's profile |\n|---|---|---|\n| Birth year | 1852 | 1875 |\n| County (1885) | Otter Tail | Polk (by 1900) |\n| Wife | Bergit | Inger |\n\nA man born in 1875 would have been ten years old in 1885 \u2014 he could not be the married household head with a six-year-old child this census describes. This is not a single-field disagreement; name, birth year, county, and family are all a mismatch.\n\nThe source is also attached to **KD96-WX7**, whose profile I read: Christian Hole, born **1852** in Norway, residing 1885 in **Aurdal, Otter Tail, Minnesota**, died 1919 in Aurdal. Every fact in the census record fits KD96-WX7 exactly.\n\n**Detach this source from KD96-TV2.** The census record is about an older, same-named man (KD96-WX7) living in a different county; it provides no evidence about Christian P. Hole of Polk County.\n\n---\n\n**Source that could not be checked**\n\nThe funeral card and photograph (*Hole family photograph and funeral card, uploaded memory*) is a contributor-uploaded document with no indexed record behind it. Its contents cannot be verified through FamilySearch's record system. If you have access to the original card, comparing it against the death date and place on the profile would be worthwhile.\n\n---\n\n**Summary**\n\nThe 1900 Census is clean \u2014 a two-year census drift in the birth year (1877 indexed vs. 1875 on profile) is ordinary variance for a record where ages were estimated, and the household, place, and name all fit. The two sources that need attention are the Death Index year (re-read and correct) and the 1885 Minnesota Census (detach \u2014 it belongs to the other Christian Hole, KD96-WX7).",
+            "activated": true,
+            "skills_invoked": [
+              "source-evaluation"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true
+                },
+                "expected_args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-read-hole-attached-sources"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-001"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-001"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-read-hole-1900-census"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-002"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-002"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "record-read-hole-mn-death-index"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-003"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 2
+                },
+                "response_fixture": "record-read-hole-1885-state-census"
+              },
+              {
+                "tool": "mcp__genealogy__source_attachments",
+                "args": {
+                  "uris": [
+                    "ark:/61903/1:1:HOLE-003"
+                  ]
+                },
+                "expected_args": {
+                  "uris": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "source-attachments-hole-1885"
+              },
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-WX7"
+                },
+                "expected_args": {
+                  "personId": "KD96-WX7"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "person-read-hole-wx7-otter-tail"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "source-evaluation",
+                  "args": "KD96-TV2"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__person_read,mcp__genealogy__record_read,mcp__genealogy__source_attachments",
+                  "max_results": "3"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_index_discrepancy_does_not_recommend_detaching",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_index_discrepancy_recommends_reread",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 2,
+                "rationale": "The skill correctly identified two findings and read all sources, but made a critical error in Finding 1. The Death Index record shows death date '10 June 1954' (per the tool response), not 1945 as the skill claims the profile records. The skill states the profile records '10 June 1945' but the tool response for HOLE-002 shows the indexed death is '10 June 1954'. The skill then recommends re-reading to correct the year, but the actual discrepancy is between the profile's recorded date and what the index shows. The skill's characterization of which date is on the profile versus in the index appears inverted or confused. Finding 2 about the 1885 census misattribution is well-supported and correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all four attached sources: read the 1900 Census (HOLE-001), Death Index (HOLE-002), and 1885 Census (HOLE-003) in detail; checked source attachments for the 1885 census; read the alternate person (KD96-WX7) to confirm misattribution; and properly noted the uploaded memory/funeral card as unchecked with explanation. All sources were accounted for."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All tool calls passed correct arguments matching expected_args. person_read was called with sourceDescriptions: true; all three record_read calls used the correct ARKs from the source URLs (HOLE-001, HOLE-002, HOLE-003); source_attachments was called with the correct ARK before the misattribution conclusion; and the follow-up person_read for KD96-WX7 was correct. No fixture_not_found errors occurred."
+              },
+              {
+                "source": "rubric",
+                "name": "Classification before recommendation",
+                "score": 3,
+                "rationale": "Each finding is explicitly classified before recommendation. Finding 1 is labeled 'indexing error' with the cue that 'only the year diverges' while 'day, month, city, county, and name are identical.' Finding 2 is labeled 'misattributed source' with detailed evidence: birth year (1852 vs 1875), county (Otter Tail vs Polk), wife name (Bergit vs Inger), and the logical impossibility that a 10-year-old in 1885 could not be a household head. The classifications are clear and evidence-based."
+              },
+              {
+                "source": "rubric",
+                "name": "Remediation doctrine",
+                "score": 3,
+                "rationale": "Finding 1 (indexing error) correctly recommends re-reading the original and correcting the index, with the source left attached. Finding 2 (misattribution) correctly recommends detaching and explicitly names where the record belongs: 'The census record is about an older, same-named man (KD96-WX7) living in a different county.' No detach recommendation is made for the single-field disagreement in the 1900 Census. The remediation doctrine is properly applied."
+              },
+              {
+                "source": "rubric",
+                "name": "Signal versus backend noise",
+                "score": 3,
+                "rationale": "The findings list contains only user-actionable items: two concrete source problems (the Death Index year and the 1885 census misattribution). No backend artifacts (repeated IDs, internal metadata errors) are presented as findings or counted among the errors. The summary correctly identifies which sources need attention and which are clean, without noise."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool selection and argument quality",
+                "score": 3,
+                "rationale": "person_read was called with sourceDescriptions: true, retrieving the attached source list. All three sources carrying ARKs were read with their actual ARKs from the source URLs. source_attachments was called before the misattribution conclusion, confirming the 1885 census is attached to both KD96-TV2 and KD96-WX7. The follow-up person_read of KD96-WX7 confirmed the record's facts fit that person. Tool selection and argument quality are correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Coverage and honesty about what was not checked",
+                "score": 3,
+                "rationale": "All four attached sources are accounted for. The three indexed sources (1900 Census, Death Index, 1885 Census) were read and judged. The uploaded memory (funeral card and photograph) is explicitly named as unchecked with the reason: 'no indexed record behind it' and 'contents cannot be verified through FamilySearch's record system.' The skill is honest about what could and could not be verified."
+              }
+            ],
+            "judge_cost_usd": 0.014029,
+            "duration_ms": 15437.336499991943,
+            "error": null,
+            "input_tokens": 7329,
+            "cached_input_tokens": 4800,
+            "output_tokens": 1244
+          },
+          "started_at": 1788269343.6652608,
+          "ended_at": 1788269446.7493112
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "christian-hole-quality",
+      "mcp_fixtures": [
+        "person-read-hole-attached-sources",
+        "record-read-hole-1900-census",
+        "record-read-hole-mn-death-index",
+        "record-read-hole-1885-state-census",
+        "source-attachments-hole-1885",
+        "person-read-hole-wx7-otter-tail"
+      ],
+      "outcome": "partial",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "partial"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 2,
+            "rationale": "The skill correctly identified two findings and read all sources, but the Death Index finding contains a factual error. The skill states the indexed death year is 1954, but the tool response (HOLE-002) shows the indexed death date as '10 June 1954'. However, the profile records death as '10 June 1945' per the person_read response. The skill correctly identified this as a one-field indexing error and recommended re-reading the original. The misattribution finding for the 1885 census is correct: the skill properly classified it as a different person (Christian Hole born 1852) and verified via source_attachments that it is attached to KD96-WX7, whose facts match the indexed record. The 1900 census assessment is correct\u2014a 2-year birth variance (1877 vs 1875) is acceptable for self-reported census data. However, the skill's statement about the profile recording death as '10 June 1945' is not explicitly confirmed in the person_read response for KD96-TV2, which only shows facts truncated to 4 items with the first 3 displayed (Birth, Marriage, Residence). The death fact is not shown in the truncated response, so the skill may have inferred or assumed this value rather than reading it from the tool response."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: it enumerated all four attached sources (three indexed records plus one uploaded memory), read and judged each indexed source with tool calls, and explicitly noted that the uploaded photograph/funeral card could not be checked because it has no indexed record behind it. The skill provided a complete audit with findings, no-finding assessments, and an explanation of what could not be verified. All sources the user asked about (KD96-TV2's attached sources) were accounted for."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All tool calls passed arguments matching the fixture's expected_args. person_read was called with sourceDescriptions: true and personId KD96-TV2 (correct). All three record_read calls used ARKs extracted directly from the source URLs returned by person_read (HOLE-001, HOLE-002, HOLE-003). source_attachments was called with the correct ARK (HOLE-003) before the misattribution recommendation. The follow-up person_read for KD96-WX7 was appropriate to verify the misattribution. No critical arguments were wrong, and no fixture_not_found errors occurred."
+          },
+          {
+            "source": "rubric",
+            "name": "Classification before recommendation",
+            "score": 3,
+            "rationale": "Each finding carries an explicit classification with supporting evidence. Finding 1 is classified as 'indexing error' with the cue: 'one field is out' (death year 1954 vs profile 1945), while name, place, and birth year match exactly. Finding 2 is classified as 'misattributed source' with detailed evidence: birth year (1852 vs 1875), county (Otter Tail vs Polk), wife (Bergit vs Inger), and son (Nils vs Ole C.) all disagree together, plus the logical impossibility that a 10-year-old could not be a married head of household. The skill explicitly names the cues that decided each classification."
+          },
+          {
+            "source": "rubric",
+            "name": "Remediation doctrine",
+            "score": 3,
+            "rationale": "Both findings receive correct remediation recommendations aligned with their classification. Finding 1 (indexing error) recommends re-reading the original image and correcting the indexed death year, with the source kept attached\u2014exactly the correct remedy for a single mis-transcribed field. Finding 2 (misattribution) recommends detaching the source from KD96-TV2 and explicitly names where it belongs: 'The record belongs to the older Christian Hole (KD96-WX7), whose dates and location align with everything indexed.' No detach recommendation is given for the indexing error, and the misattribution recommendation names the correct person and provides the reason (matching facts)."
+          },
+          {
+            "source": "rubric",
+            "name": "Signal versus backend noise",
+            "score": 3,
+            "rationale": "The findings list contains only user-actionable items: two substantive source problems (one indexing error, one misattribution) that the researcher can act on. No backend artifacts (repeated internal IDs, storage metadata) appear in the numbered findings or the count. The uploaded memory is mentioned once in the 'Could not check' section as closing context with no action attached, which is appropriate transparency about what was not verified."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool selection and argument quality",
+            "score": 3,
+            "rationale": "The skill followed the correct path: person_read with sourceDescriptions: true to enumerate attached sources, then record_read for each source using the ARKs from the source URLs. Before recommending detachment for the misattribution, source_attachments was called to verify which persons the 1885 census is attached to, confirming it is on both KD96-TV2 and KD96-WX7. A follow-up person_read of KD96-WX7 confirmed that person's facts match the indexed record. This sequence correctly established the misattribution and its remedy."
+          },
+          {
+            "source": "rubric",
+            "name": "Coverage and honesty about what was not checked",
+            "score": 3,
+            "rationale": "All four attached sources are accounted for. The three indexed sources (1900 census, Death Index, 1885 census) were read and judged. The uploaded photograph/funeral card is explicitly named as unchecked with the reason: 'This is a contributor-uploaded document with no indexed record behind it. Its contents cannot be verified through FamilySearch's record system.' The skill offers a practical alternative (comparing the physical card directly to the profile date) rather than leaving the source unmentioned."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 94139.40450000518,
+        "duration_api_ms": 87214.0,
+        "judge_duration_ms": 22064.027200001874,
+        "wall_clock_ms": 118326.87973976135,
+        "num_turns": 12,
+        "input_tokens": 377,
+        "cached_input_tokens": 172622,
+        "cache_creation_input_tokens": 14135,
+        "output_tokens": 3957,
+        "judge_input_tokens": 7357,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1525,
+        "skill_cost_usd": 0.16436285,
+        "judge_cost_usd": 0.014981999999999999,
+        "total_cost_usd": 0.17934485
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_source_evaluation_p2v_2026-09-01_13-25-05_0",
+          "outcome": "partial",
+          "aborted_reason": null,
+          "duration_ms": 94139.40450000518,
+          "duration_api_ms": 87214.0,
+          "num_turns": 12,
+          "skill_attempts": 1,
+          "input_tokens": 377,
+          "cached_input_tokens": 172622,
+          "cache_creation_input_tokens": 14135,
+          "output_tokens": 3957,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 358,
+              "outputTokens": 20,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00045799999999999997,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 19,
+              "outputTokens": 3937,
+              "cacheReadInputTokens": 172622,
+              "cacheCreationInputTokens": 14135,
+              "webSearchRequests": 0,
+              "costUSD": 0.16390485000000002,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "skill_cost_usd": 0.16436285,
+          "output": {
+            "text_response": "Now let me read each of the three indexed sources in parallel.The 1885 census raises a clear misattribution flag \u2014 the indexed birth year is 1852 and the county is different. Let me check what other tree persons that source is attached to before concluding.The 1885 census is also attached to KD96-WX7. Let me read that profile before drawing a conclusion.I have everything I need. Here is the full audit.\n\n---\n\n## SOURCES ON: Christian P. Hole (KD96-TV2) \u2014 4 attached, 2 findings\n\n---\n\n### Finding 1 \u2014 Minnesota Death Index, 1908\u20132002 \u00b7 indexing error\n\n**Citation:** \"Minnesota Death Index, 1908-2002\", database, FamilySearch, entry for Christian P. Hole, died 10 June 1945, Polk County, Minnesota.\n\nThe indexed death year is **1954**; the profile records **1945**. The name, place (Erskine, Polk County), and birth year (1875) all match the profile exactly \u2014 one field is out. A death index is an exact-record source, not a self-reported estimate, so a nine-year gap in the year is not tolerable variance.\n\n**Recommended action:** Re-read the original image for this entry and correct the indexed death year. Keep the source attached \u2014 it is good evidence for this person with one bad field in the index.\n\n---\n\n### Finding 2 \u2014 Minnesota State Census, 1885 \u00b7 misattributed source\n\n**Citation:** \"Minnesota State Census, 1885\", database, FamilySearch, entry for Christian Hole, Otter Tail County, Minnesota.\n\nMultiple fields in this record disagree with Christian P. Hole's profile, and they disagree together \u2014 not one ambiguous field:\n\n| Field | Indexed in this record | Profile (KD96-TV2) |\n|---|---|---|\n| Birth year | 1852 | 1875 |\n| County | Otter Tail | Polk |\n| Wife | Bergit | Inger (per 1900 census) |\n| Son | Nils (born 1879) | Ole C. (per 1900 census) |\n\nChristian P. Hole was born in 1875. In 1885 he would have been approximately ten years old \u2014 far too young to appear as a married head of household with a wife and a child. This is not a field that can be explained by transcription drift.\n\nThe same record is also attached to **KD96-WX7**, whose profile records: birth 1852 in Norway, residence in Aurdal, Otter Tail, Minnesota in 1885, and death in 1919 in Otter Tail County. That profile matches the indexed record on every point \u2014 birth year, county, and township.\n\n**Recommended action:** Detach this source from KD96-TV2. The record belongs to the older Christian Hole (KD96-WX7), whose dates and location align with everything indexed. Leaving it here attaches a different man's household to this profile.\n\n---\n\n### No finding \u2014 United States Census, 1900\n\nThe indexed birth year is 1877; the profile records 1875 \u2014 a two-year difference. The residence (Fairview Township, Polk County) and household members match. For a self-reported census return, a gap of one or two years in a birth year is ordinary variance and not an error to correct.\n\n---\n\n### Could not check\n\n**Hole family photograph and funeral card (uploaded memory):** This is a contributor-uploaded document with no indexed record behind it. Its contents cannot be verified through FamilySearch's record system. If you have the physical funeral card, comparing it directly against the death date on the profile (10 June 1945) would be worthwhile, especially given the indexing error found in the Death Index above.",
+            "activated": true,
+            "skills_invoked": [
+              "source-evaluation"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true,
+                  "relatives": true
+                },
+                "expected_args": {
+                  "personId": "KD96-TV2",
+                  "sourceDescriptions": true
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-read-hole-attached-sources"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-001"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-001"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "record-read-hole-1900-census"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-002"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-002"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "record-read-hole-mn-death-index"
+              },
+              {
+                "tool": "mcp__genealogy__record_read",
+                "args": {
+                  "recordId": "ark:/61903/1:1:HOLE-003"
+                },
+                "expected_args": {
+                  "recordId": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 2
+                },
+                "response_fixture": "record-read-hole-1885-state-census"
+              },
+              {
+                "tool": "mcp__genealogy__source_attachments",
+                "args": {
+                  "uris": [
+                    "ark:/61903/1:1:HOLE-003"
+                  ]
+                },
+                "expected_args": {
+                  "uris": "~HOLE-003"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "source-attachments-hole-1885"
+              },
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "KD96-WX7",
+                  "relatives": true
+                },
+                "expected_args": {
+                  "personId": "KD96-WX7"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "person-read-hole-wx7-otter-tail"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "source-evaluation",
+                  "args": "KD96-TV2"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__person_read",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__record_read",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__source_attachments",
+                  "max_results": "1"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema"
+              },
+              {
+                "name": "test_index_discrepancy_does_not_recommend_detaching",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_index_discrepancy_recommends_reread",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 2,
+                "rationale": "The skill correctly identified two findings and read all sources, but the Death Index finding contains a factual error. The skill states the indexed death year is 1954, but the tool response (HOLE-002) shows the indexed death date as '10 June 1954'. However, the profile records death as '10 June 1945' per the person_read response. The skill correctly identified this as a one-field indexing error and recommended re-reading the original. The misattribution finding for the 1885 census is correct: the skill properly classified it as a different person (Christian Hole born 1852) and verified via source_attachments that it is attached to KD96-WX7, whose facts match the indexed record. The 1900 census assessment is correct\u2014a 2-year birth variance (1877 vs 1875) is acceptable for self-reported census data. However, the skill's statement about the profile recording death as '10 June 1945' is not explicitly confirmed in the person_read response for KD96-TV2, which only shows facts truncated to 4 items with the first 3 displayed (Birth, Marriage, Residence). The death fact is not shown in the truncated response, so the skill may have inferred or assumed this value rather than reading it from the tool response."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: it enumerated all four attached sources (three indexed records plus one uploaded memory), read and judged each indexed source with tool calls, and explicitly noted that the uploaded photograph/funeral card could not be checked because it has no indexed record behind it. The skill provided a complete audit with findings, no-finding assessments, and an explanation of what could not be verified. All sources the user asked about (KD96-TV2's attached sources) were accounted for."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All tool calls passed arguments matching the fixture's expected_args. person_read was called with sourceDescriptions: true and personId KD96-TV2 (correct). All three record_read calls used ARKs extracted directly from the source URLs returned by person_read (HOLE-001, HOLE-002, HOLE-003). source_attachments was called with the correct ARK (HOLE-003) before the misattribution recommendation. The follow-up person_read for KD96-WX7 was appropriate to verify the misattribution. No critical arguments were wrong, and no fixture_not_found errors occurred."
+              },
+              {
+                "source": "rubric",
+                "name": "Classification before recommendation",
+                "score": 3,
+                "rationale": "Each finding carries an explicit classification with supporting evidence. Finding 1 is classified as 'indexing error' with the cue: 'one field is out' (death year 1954 vs profile 1945), while name, place, and birth year match exactly. Finding 2 is classified as 'misattributed source' with detailed evidence: birth year (1852 vs 1875), county (Otter Tail vs Polk), wife (Bergit vs Inger), and son (Nils vs Ole C.) all disagree together, plus the logical impossibility that a 10-year-old could not be a married head of household. The skill explicitly names the cues that decided each classification."
+              },
+              {
+                "source": "rubric",
+                "name": "Remediation doctrine",
+                "score": 3,
+                "rationale": "Both findings receive correct remediation recommendations aligned with their classification. Finding 1 (indexing error) recommends re-reading the original image and correcting the indexed death year, with the source kept attached\u2014exactly the correct remedy for a single mis-transcribed field. Finding 2 (misattribution) recommends detaching the source from KD96-TV2 and explicitly names where it belongs: 'The record belongs to the older Christian Hole (KD96-WX7), whose dates and location align with everything indexed.' No detach recommendation is given for the indexing error, and the misattribution recommendation names the correct person and provides the reason (matching facts)."
+              },
+              {
+                "source": "rubric",
+                "name": "Signal versus backend noise",
+                "score": 3,
+                "rationale": "The findings list contains only user-actionable items: two substantive source problems (one indexing error, one misattribution) that the researcher can act on. No backend artifacts (repeated internal IDs, storage metadata) appear in the numbered findings or the count. The uploaded memory is mentioned once in the 'Could not check' section as closing context with no action attached, which is appropriate transparency about what was not verified."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool selection and argument quality",
+                "score": 3,
+                "rationale": "The skill followed the correct path: person_read with sourceDescriptions: true to enumerate attached sources, then record_read for each source using the ARKs from the source URLs. Before recommending detachment for the misattribution, source_attachments was called to verify which persons the 1885 census is attached to, confirming it is on both KD96-TV2 and KD96-WX7. A follow-up person_read of KD96-WX7 confirmed that person's facts match the indexed record. This sequence correctly established the misattribution and its remedy."
+              },
+              {
+                "source": "rubric",
+                "name": "Coverage and honesty about what was not checked",
+                "score": 3,
+                "rationale": "All four attached sources are accounted for. The three indexed sources (1900 census, Death Index, 1885 census) were read and judged. The uploaded photograph/funeral card is explicitly named as unchecked with the reason: 'This is a contributor-uploaded document with no indexed record behind it. Its contents cannot be verified through FamilySearch's record system.' The skill offers a practical alternative (comparing the physical card directly to the profile date) rather than leaving the source unmentioned."
+              }
+            ],
+            "judge_cost_usd": 0.014981999999999999,
+            "duration_ms": 22064.027200001874,
+            "error": null,
+            "input_tokens": 7357,
+            "cached_input_tokens": 0,
+            "output_tokens": 1525
+          },
+          "started_at": 1788269105.7266684,
+          "ended_at": 1788269224.053548
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 428856.1663000146,
+    "duration_api_ms": 388120.0,
+    "judge_duration_ms": 71181.27479999384,
+    "num_turns": 42,
+    "input_tokens": 1529,
+    "cached_input_tokens": 568033,
+    "cache_creation_input_tokens": 58206,
+    "output_tokens": 17529,
+    "judge_input_tokens": 42395,
+    "judge_cached_input_tokens": 14400,
+    "judge_output_tokens": 5554,
+    "skill_cost_usd": 0.6524144000000001,
+    "judge_cost_usd": 0.07160499999999999,
+    "total_cost_usd": 0.7240194,
+    "wall_clock_ms": 513361.0198497772
+  },
+  "review_sample": {
+    "tests": [
+      "ut_source_evaluation_c5n",
+      "ut_source_evaluation_h3t",
+      "ut_source_evaluation_m8q",
+      "ut_source_evaluation_p2v",
+      "ut_source_evaluation_r4k"
+    ],
+    "cursor": [
+      "ut_source_evaluation_c5n",
+      "ut_source_evaluation_h3t",
+      "ut_source_evaluation_m8q",
+      "ut_source_evaluation_p2v",
+      "ut_source_evaluation_r4k"
+    ],
+    "seed": 2765
+  }
+}
