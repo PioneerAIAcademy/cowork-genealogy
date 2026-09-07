@@ -19,10 +19,10 @@ Which steps are yours depends on how you got here:
 - **Authoring a new fixture** — a person you want to turn into a test, whether
   you picked them yourself or a `feedback`-labelled issue sent you here. Do
   **every** step.
-- **Running a panel fixture** — a GitHub issue titled "e2e panel run, week of
-  `<date>`". The fixture is already authored, so do steps **0, 5–9**: skip
-  1a/1b/2/3 (authoring) and 4 (live debugging, which only delays the
-  measurement). See "The standing weekly panel" below.
+- **Running a panel fixture** — a GitHub issue titled "e2e panel run `<date>`".
+  The fixture is already authored, so do steps **0, 5–9**: skip 1a/1b/2/3
+  (authoring) and 4 (live debugging, which only delays the measurement). See
+  "The standing panel" below.
 
 | Step | What you do | Where |
 |---|---|---|
@@ -543,26 +543,26 @@ embedded in the reports above on purpose — see `guardrail-enforcement-spec.md`
 §4 for the measurement behind that call, and its own caveat about reading
 that measurement as a standing property rather than a dated snapshot.
 
-## The standing weekly panel
+## The standing panel
 
-Four fixtures are run every week, so the corpus can be compared month over month
+Four fixtures are run repeatedly, so the corpus can be compared month over month
 instead of describing whichever fixtures someone happened to touch:
 `eval/tests/e2e/spriggs-parents-1898/`, `eval/tests/e2e/hannah-earnest-children/`,
 `eval/tests/e2e/anders-monsen-ancestry/` and `eval/tests/e2e/cruz-corona-ancestry/`.
 
-The lead runs `/file-e2e-panel` once a week alongside the other board skills. It
-files **four issues, one per fixture**, each an unassigned half-day any genealogist
-can pick up — four parallel tasks rather than one bundle, which is what stops the
-tier having a single operator. Take one the same way you would any assigned
-fixture, on the "Running a panel fixture" route above.
+The lead runs `/file-e2e-panel` whenever more panel work is wanted — there is no
+fixed cadence, and every run files **four more issues, one per fixture**, each an
+unassigned half-day any genealogist can pick up. Four parallel tasks rather than
+one bundle is what stops the tier having a single operator. Take one the same way
+you would any assigned fixture, on the "Running a panel fixture" route above.
 
 The panel is **fixed**. Fixture difficulty varies enormously, so a month's
 aggregate is comparable to the next month's only when the mix is constant;
-swapping a fixture in because it looks more interesting this week quietly ends the
-comparison. `make e2e-panel` prints who ran this ISO week and each fixture's run
-count over the last 28 days (`SINCE=all` for the whole history) — the one number
-no other corpus report gives you, since `make e2e-corpus`'s `concentration:` block
-counts violations per fixture rather than runs.
+swapping a fixture in because it looks more interesting today quietly ends the
+comparison. `make e2e-panel` prints each fixture's last run and its count over the
+last 28 days (`SINCE=all` for the whole history) — the one number no other corpus
+report gives you, since `make e2e-corpus`'s `concentration:` block counts
+violations per fixture rather than runs.
 
 ---
 
