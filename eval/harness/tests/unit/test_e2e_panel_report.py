@@ -56,6 +56,25 @@ def test_the_last_run_is_named_with_its_age(tmp_path, monkeypatch, capsys):
     assert f"last {(date.today() - timedelta(days=3)).isoformat()} (3d ago)" in out
 
 
+def test_the_date_shown_is_the_date_the_window_used(tmp_path, monkeypatch, capsys):
+    """The row's date and its age come from one reading of the filename.
+
+    `run_date()` searches for the date; slicing at a fixed offset assumes it
+    starts at character 4. Anything between `run-` and the date splits the two,
+    and the row then shows a garbage date beside a correct age.
+    """
+    monkeypatch.setattr(runlog_selection, "E2E_RUNLOGS", tmp_path)
+    day = date.today() - timedelta(days=2)
+    d = tmp_path / PANEL[0]
+    d.mkdir(parents=True)
+    (d / f"run-retry_{day.isoformat()}_12-00-00.json").write_text("{}", encoding="utf-8")
+
+    assert panel_report.main([]) == 0
+    out = capsys.readouterr().out
+    assert f"last {day.isoformat()} (2d ago)" in out
+    assert "last retry_2026" not in out
+
+
 def test_only_siblings_is_not_a_run(tmp_path, monkeypatch, capsys):
     """The failure an `ls | grep` pipeline makes, and the reason this is a module.
 

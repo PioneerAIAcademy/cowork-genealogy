@@ -123,6 +123,9 @@ guide step 7. Then one PR carrying `run-<ts>.json`, `run-<ts>.ann.json` and both
 `.final-*` siblings. `check_e2e_fixtures.py` blocks a run log that ships without
 its annotation, so the grading is same-PR by construction.
 
+Close this issue yourself once that PR merges. Nothing closes it for you — the
+sweep below skips assigned issues, and a run-log PR carries no closing keyword.
+
 Cost: $5–12 of API spend. `make e2e-latency TEST=<slug>` shows this fixture's own
 last recorded figure.
 ```
@@ -138,9 +141,14 @@ next one lands, and a genealogist facing sixteen near-identical issues cannot te
 which is live.
 
 ```sh
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --label e2e-panel --json number,title,assignees,createdAt
 ```
+
+**`--limit` defaults to 30 and truncates silently**, newest first — so the default
+hides exactly the old issues this step exists to close, and the pool it hides can
+then only grow. Confirm the returned count is below the limit you asked for before
+trusting it.
 
 Propose closing each one that is **older than 14 days**, **unassigned**, and has
 **no linked PR**.
