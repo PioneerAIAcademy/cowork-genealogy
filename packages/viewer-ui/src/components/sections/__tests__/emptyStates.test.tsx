@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 import { render } from '@testing-library/react'
 import type { ResearchData } from '../../../lib/schema'
 import { sectionComponents } from '../../../App'
@@ -39,6 +41,63 @@ describe('section empty states', () => {
       const { container } = render(<Component />)
       const paragraph = container.querySelector('p')
       expect(paragraph?.textContent?.trim()).toBeTruthy()
+    })
+  }
+})
+
+// The producer half of #2211, which the guard above deliberately cannot cover.
+// Derived from docs/specs/schemas/ownership.json rather than a hand-written
+// table, so a section added later with a `skill:` owner is checked here without
+// an edit — the copy has to name the slug that owns the section.
+//
+// One prose exception. `known_holdings` is owned by `skill:init-project` but its
+// copy says "when the project is initialized", which reads better and means the
+// same thing. Listing it explicitly keeps the default strict: a NEW section with
+// no alias must contain its own slug.
+const PROSE_ALIASES: Record<string, string> = {
+  known_holdings: 'project is initialized',
+}
+
+// `log` (owner null, append-only and multi-writer) and `evaluations` (owner is
+// an agent, not a skill) are absent from the derived set by construction — the
+// filter below takes `skill:` owners only.
+const OWNERSHIP = JSON.parse(
+  fs.readFileSync(
+    path.resolve(__dirname, '../../../../../../docs/specs/schemas/ownership.json'),
+    'utf8'
+  )
+) as { rows: { artifact: string; section: string; owner: string | null }[] }
+
+describe('empty-state copy names the section owner', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const owned = OWNERSHIP.rows.filter(
+    (r) =>
+      r.artifact === 'research.json' &&
+      typeof r.owner === 'string' &&
+      r.owner.startsWith('skill:') &&
+      r.section in sectionComponents
+  )
+
+  it('covers every skill-owned section that the viewer renders', () => {
+    expect(owned.length).toBeGreaterThan(0)
+  })
+
+  for (const row of owned) {
+    const slug = (row.owner as string).slice('skill:'.length)
+    // `${slug} step`, not the bare slug: `timeline` alone is a substring of the
+    // Timelines section's own copy ("No timelines recorded"), so a bare-slug
+    // assertion there passes whatever producer the copy names, or none.
+    const expected = PROSE_ALIASES[row.section] ?? `${slug} step`
+    it(`${row.section} names ${expected}`, () => {
+      vi.mocked(useResearchData).mockReturnValue(
+        buildMockContext({ research: {} as ResearchData, activeSection: row.section })
+      )
+      const Component = sectionComponents[row.section]
+      const { container } = render(<Component />)
+      expect(container.querySelector('p')?.textContent).toContain(expected)
     })
   }
 })
