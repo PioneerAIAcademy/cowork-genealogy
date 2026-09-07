@@ -780,7 +780,7 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     );
     const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
     expect(result.nameExpansion).toBeDefined();
-    expect(result.nameExpansion!.variantsInResults).toContain("Betty");
+    expect(result.nameExpansion!.variantsInResults).toContain("betty");
   });
 
   it("43. echoQuery reflects the original input, not the expanded name", async () => {
