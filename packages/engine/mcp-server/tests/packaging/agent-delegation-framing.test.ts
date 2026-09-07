@@ -34,12 +34,19 @@ import { fileURLToPath } from "node:url";
 // What it does is make the rule impossible to drop silently, in the two ways it
 // would otherwise be dropped:
 //
-//   1. **A new agent, or a new call site for an existing one, ships with no
-//      framing rule at all.** DELEGATION_EDGES below is the full set of
-//      caller→callee pairs; adding either end fails this test until the author
-//      registers the pair and says where its handling lives. This is the same
-//      argument as AGENT_PERMISSIONS in `agent-tool-names.test.ts`: without the
-//      pin, the new thing simply is not looped over.
+//   1. **A new call site ships with no framing rule at all.** DELEGATION_EDGES
+//      below is the full set of caller→callee pairs *written as `@plugin:`*;
+//      adding either end fails this test until the author registers the pair and
+//      says where its handling lives. This is the same argument as
+//      AGENT_PERMISSIONS in `agent-tool-names.test.ts`: without the pin, the new
+//      thing simply is not looped over.
+//
+//      A brand-new agent is already caught by AGENT_PERMISSIONS whatever
+//      spelling its delegation uses, so what the edge set uniquely buys is the
+//      SECOND-CALLER case — and that is exactly what a delegation written some
+//      other way ("delegate to the record-extractor subagent") would evade.
+//      `no SKILL.md names an agent it is not a registered caller for` below
+//      closes that, for the three agent names that are unambiguous.
 //   2. **The rule is quietly reworded away.** Each edge pins a VERBATIM excerpt
 //      from the file that carries it. Deleting or softening the sentence fails
 //      here, in the same commit, as a diff a reviewer sees.
@@ -62,8 +69,10 @@ interface Edge {
   /**
    * An edge with no rule on one side, and why that is currently acceptable.
    * Shrink-only: when the side gains a rule, pin it and delete the exemption.
-   * The test fails if an exemption goes stale, so neither list can outlive the
-   * problem.
+   *
+   * Nothing detects that the file gained a rule. The assertion below catches
+   * only a registration that pins and exempts the same side; staleness is
+   * caught by review.
    */
   exempt?: { side: Side; reason: string };
 }
@@ -163,6 +172,8 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
     exempt: {
+      // Staleness here is NOT detected — if gps-mentor.md gains a rule, nothing
+      // fails. Pin it and delete this entry when it does.
       side: "agent",
       reason:
         "gps-mentor states no caller-pressure rule. The caller side is the narrowest " +
@@ -223,6 +234,40 @@ describe("agent delegation framing", () => {
         "the sentence that keeps the caller's read out of the delegation — or, if one " +
         "side genuinely has no rule, an `exempt` entry saying why.",
     ).toEqual(discoverEdges());
+  });
+
+  // Agent names that are not ALSO skill directory names, so a bare mention in a
+  // SKILL.md is unambiguous. Derived, not hand-listed: a hand-listed set is the
+  // same staleness hazard as the exemptions above — a new agent would silently
+  // not be looked for. `proof-conclusion` and `research-exhaustiveness` name a
+  // skill too, so a mention of either proves nothing and they drop out here.
+  const agentNames = readdirSync(agentsDir)
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => f.replace(/\.md$/, ""));
+  const agentOnly = agentNames.filter((a) => !skillFiles.includes(a));
+
+  // A SKILL.md that names an agent in prose without delegating to it.
+  const PROSE_MENTIONS = new Set(["research -> record-extractor"]);
+
+  it("no SKILL.md names an agent it is not a registered caller for", () => {
+    // discoverEdges() only sees `@plugin:`. A delegation written any other way
+    // adds no edge, and every per-edge assertion above skips it silently.
+    const registered = new Set(Object.keys(DELEGATION_EDGES));
+    const offenders: string[] = [];
+    for (const skill of skillFiles) {
+      const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
+      for (const agent of agentOnly) {
+        if (!text.includes(agent)) continue;
+        const edge = `${skill} -> ${agent}`;
+        if (!registered.has(edge) && !PROSE_MENTIONS.has(edge)) offenders.push(edge);
+      }
+    }
+    expect(
+      offenders,
+      "a SKILL.md names an agent it does not delegate to via `@plugin:`. If it is a " +
+        "delegation, write it as `@plugin:<agent>` and register the edge. If it is prose, " +
+        "add it to PROSE_MENTIONS.",
+    ).toEqual([]);
   });
 
   it("finds a callee agent file for every edge", () => {

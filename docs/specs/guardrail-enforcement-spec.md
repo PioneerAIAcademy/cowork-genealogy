@@ -1476,7 +1476,8 @@ this section before reopening one.
 
   **Measured per agent instance**, over the 22 committed e2e runs that carry
   agent attribution (it shipped in August; before that the rate is 0%, so older
-  runs cannot answer this at all):
+  runs cannot answer this at all) — measured at `4fc0e7445`, and every figure
+  below moves on the next attributed run:
 
   | Proposed postcondition | Instances | Violations | True rate could still be |
   |---|---:|---:|---|
