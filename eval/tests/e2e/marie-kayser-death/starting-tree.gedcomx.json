@@ -1,0 +1,140 @@
+{
+  "persons": [
+    {
+      "id": "GKZY-81X",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Marie Philippine",
+          "surname": "Kaÿser"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3e96faea-de2c-431d-bb7c-fe097867f3b2",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GKZY-HQP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Nicolas",
+          "surname": "Hochhertz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0ae0d9cf-fe14-48b6-a3d9-cb2857071676",
+          "type": "Birth",
+          "date": "1778",
+          "standard_date": "1778",
+          "place": "Luxembourg",
+          "standard_place": "Luxembourg"
+        },
+        {
+          "id": "83e8b555-60e5-45f2-a669-06924fcf6010",
+          "type": "Death",
+          "date": "18 Jul 1853",
+          "standard_date": "18 Jul 1853",
+          "place": "Luxembourg",
+          "standard_place": "Luxembourg"
+        }
+      ]
+    },
+    {
+      "id": "GKZY-DFG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Theodore",
+          "surname": "Hochhertz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d56f0c87-5ef0-4279-a813-72945ae039ab",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GKZY-F73",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Jodoc Frederic",
+          "surname": "Hochhertz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "93cc7c53-7ae5-4697-a49f-b44785b8e25f",
+          "type": "Birth",
+          "date": "1776",
+          "standard_date": "1776",
+          "place": "Luxembourg",
+          "standard_place": "Luxembourg"
+        },
+        {
+          "id": "db43b684-242c-4a4e-b0d1-e41b8457db6c",
+          "type": "Death",
+          "date": "10 Dec 1820",
+          "standard_date": "10 Dec 1820",
+          "place": "Luxembourg",
+          "standard_place": "Luxembourg"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GKZY-DFG",
+      "person2": "GKZY-81X"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GKZY-DFG",
+      "child": "GKZY-F73"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GKZY-81X",
+      "child": "GKZY-F73"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GKZY-DFG",
+      "child": "GKZY-HQP"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GKZY-81X",
+      "child": "GKZY-HQP"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QWT7-PVJ",
+      "title": "Marie Philippine Kaÿser, \"Luxembourg, Registres d'état civil, 1796-1941\"",
+      "citation": "\"Luxembourg, Registres d'état civil, 1796-1941\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WQ8T-8N6Z : Sat Mar 09 17:15:56 UTC 2024), Entry for Jodac Frideric Hochhertz and Theodore Hochhertz, 21 Jul 1805.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WQ8T-8N2M"
+    }
+  ]
+}

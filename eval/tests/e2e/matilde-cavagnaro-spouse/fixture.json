@@ -1,0 +1,19 @@
+{
+  "id": "matilde-cavagnaro-spouse",
+  "name": "Matilde Carmela Emanuela Cavagnaro — husband Pietro Dondero and a daughter born 1883 at Genova",
+  "genre": "record-hint",
+  "source_pid": "G4Z4-RJ1",
+  "captured": "2026-09-07",
+  "researcher_question": "Was the Carmela Cavagnaro who bore a daughter, Maria Clementina Angelica Gentile Dondero, at Genova on 30 August 1883 with Pietro Dondero the same woman as Matilde Carmela Emanuela Cavagnaro, born 1866 in Lima?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1880s",
+    "geography": "IT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 21, hint-samples.csv row 640, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from an 1883 Genovese civil birth registration; unverified. The subject would have been 17. The batch CSV labels this row Peru; the records are Genovese and the fixture is tagged IT."
+}

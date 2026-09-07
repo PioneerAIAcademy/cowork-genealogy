@@ -1,0 +1,205 @@
+{
+  "persons": [
+    {
+      "id": "G4Z4-RJ1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Matilde Carmela Emanuela",
+          "surname": "Cavagnaro"
+        }
+      ],
+      "facts": [
+        {
+          "id": "374f2168-6652-43b9-9f4c-d481809e31db",
+          "type": "Birth",
+          "date": "1866",
+          "standard_date": "1866",
+          "place": "Lima",
+          "standard_place": "Lima, Peru"
+        },
+        {
+          "id": "87eee9a2-c50c-443d-a25e-550e96f292a2",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G4Z4-RJM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Maddalena",
+          "surname": "Boitano"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5d735dcb-8acd-4238-8cac-0ac8898deb53",
+          "type": "Birth",
+          "date": "1834",
+          "standard_date": "1834",
+          "place": "San Vincenzo Di Favale",
+          "standard_place": "Di, Sourou, Boucle du Mouhoun, Burkina Faso"
+        },
+        {
+          "id": "317ad0a7-f7cc-4775-aa13-791d9f3b8b38",
+          "type": "Death",
+          "date": "4 de marzo de 1914",
+          "standard_date": "4 Mar 1914",
+          "place": "Genova, Genova, Liguria, Italia",
+          "standard_place": "Genoa, Genoa, Italy"
+        }
+      ]
+    },
+    {
+      "id": "PQWR-QB9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Maria",
+          "surname": "Fereccio"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1b339352-aa95-4cbf-85cb-43bef7f17d1f",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PQWR-XH7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Angelo",
+          "surname": "Vaglio"
+        }
+      ],
+      "facts": [
+        {
+          "id": "da5ba1ad-2908-447f-b033-bb6e34002dfc",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G9WF-FJQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Giuseppe",
+          "surname": "Cavagnaro"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c817fb71-aa3c-403a-a9ca-499928f9f58b",
+          "type": "Birth",
+          "date": "1832",
+          "standard_date": "1832",
+          "place": "Lorsica, Genova, Liguria, Italy",
+          "standard_place": "Lorsica, Genoa, Liguria, Italy"
+        },
+        {
+          "id": "82b0444b-139e-4649-b84f-6e9dce532640",
+          "type": "Death",
+          "date": "26 octubre 1886",
+          "standard_date": "26 Oct 1886",
+          "place": "Lorsica, Genova, Liguria, Italy",
+          "standard_place": "Lorsica, Genoa, Liguria, Italy"
+        },
+        {
+          "id": "289e9501-4fe5-4b94-9c3e-d31c876e2c56",
+          "type": "Occupation",
+          "value": "Possidente"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G9WF-FJQ",
+      "person2": "G4Z4-RJM",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "28 Apr 1853",
+          "standard_date": "28 Apr 1853",
+          "place": "Favale di Malvaro, Genova, Liguria, Italia",
+          "standard_place": "Favale di Malvaro, Genoa, Liguria, Italy"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "PQWR-XH7",
+      "person2": "PQWR-QB9"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "PQWR-XH7",
+      "child": "G4Z4-RJ1"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "PQWR-QB9",
+      "child": "G4Z4-RJ1"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G9WF-FJQ",
+      "child": "G4Z4-RJ1"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "G4Z4-RJM",
+      "child": "G4Z4-RJ1"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7PM9-ZQP",
+      "title": "Matilde Carmela Emanuela Cavagnaro, “Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929”",
+      "citation": "\"Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3L8-MFLN : Wed Jun 18 14:06:36 UTC 2025), Entry for Paolo Andrea Vaglio and Angelo, 26 Jul 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3L8-MFLR"
+    },
+    {
+      "id": "SYXS-SC8",
+      "title": "Matilde Carmela Emanuela Cavagnaro, “Italia, Genova, Stato Civile (Archivio di Stato), 1796-1812, 1838-1859, 1866-1899”",
+      "citation": "\"Italia, Genova, Stato Civile (Archivio di Stato), 1796-1812, 1838-1859, 1866-1899\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVR6-Q9DC : Mon Aug 17 20:37:33 UTC 2026), Entry for Matilde Carmela Emanuela Cavagnaro and Giuseppe Cavagnaro, 20 May 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVR6-Q9DC"
+    },
+    {
+      "id": "7PM9-W4L",
+      "title": "Matilde Carmela Emanuela Cavagnaro, “Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929”",
+      "citation": "\"Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3G7-XG52 : Wed Jun 18 19:45:36 UTC 2025), Entry for Paolo Andrea Vaglio and Angelo, 26 Jul 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3G7-XG5Y"
+    },
+    {
+      "id": "7PM9-W5S",
+      "title": "Paolo Andrea Vaglio, “Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929”",
+      "citation": "\"Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X3G7-XG52 : Wed Jun 18 19:45:36 UTC 2025), Entry for Paolo Andrea Vaglio and Angelo, 26 Jul 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X3G7-XG52"
+    }
+  ]
+}

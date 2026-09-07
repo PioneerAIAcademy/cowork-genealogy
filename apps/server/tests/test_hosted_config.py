@@ -11,7 +11,7 @@ sandbox under the camelCase key the engine actually reads.
 The second half covers `merge_config`, which runs on every connect so a changed
 override reaches sandboxes provisioned under the old one. It has to merge rather
 than overwrite because the control plane is not the only writer of this file —
-`configure_openrouter` writes it from inside the VM.
+`configure_openrouter` writes `openRouterModel` into it from inside the VM.
 """
 
 from __future__ import annotations
@@ -98,13 +98,14 @@ def test_empty_string_is_treated_as_unset():
 
 
 @pytest.mark.asyncio
-async def test_a_connect_refresh_keeps_the_key_the_agent_set_itself():
+async def test_a_connect_refresh_keeps_what_the_agent_set_itself():
     """The reason this merges instead of overwriting.
 
-    `configure_openrouter` writes `openRouterApiKey` into this same file from
+    `configure_openrouter` writes `openRouterModel` into this same file from
     inside the VM. Sandboxes are persistent and every connect re-provisions, so
-    a wholesale write would silently drop the user's own key on the next
-    reconnect — and the failure surfaces much later, as image_transcribe
+    a wholesale write would silently drop it on the next reconnect. The key is
+    asserted alongside it because the control plane does not re-send one on
+    every connect either, and losing it surfaces much later, as image_transcribe
     claiming no key is configured.
     """
     sandbox = FakeSandbox({

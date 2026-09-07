@@ -1,0 +1,304 @@
+{
+  "persons": [
+    {
+      "id": "K46D-YPY",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Gust",
+          "surname": "Johs Huhtala"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M8XS-L9M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Johan",
+          "surname": "Gustafsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "       1817",
+          "standard_date": "1817",
+          "place": "Kauhava,Vaasa,Finland",
+          "standard_place": "Kauhava, Vaasa, Finland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M8XQ-58J",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Gustaf",
+          "surname": "Gustafsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 MAR 1820",
+          "standard_date": "22 Mar 1820"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "24 MAR 1820",
+          "standard_date": "24 Mar 1820",
+          "place": "Kauhava,Vaasa,Finland",
+          "standard_place": "Kauhava, Vaasa, Finland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M86P-V26",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Maria",
+          "surname": "Gustafsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "12 NOV 1824",
+          "standard_date": "12 Nov 1824"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "16 NOV 1824",
+          "standard_date": "16 Nov 1824",
+          "place": "Kauhava,Vaasa,Finland",
+          "standard_place": "Kauhava, Vaasa, Finland"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M8XQ-52L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Gustaf",
+          "surname": "Gustafsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "28 JUN 1822",
+          "standard_date": "28 Jun 1822"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "30 JUN 1822",
+          "standard_date": "30 Jun 1822",
+          "place": "Kauhava,Vaasa,Finland",
+          "standard_place": "Kauhava, Vaasa, Finland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KCBJ-P4K",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Kaisa",
+          "surname": "Johdr"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M86L-KPM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Matts",
+          "surname": "Gustafsson"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "28 APR 1830",
+          "standard_date": "28 Apr 1830"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "29 APR 1830",
+          "standard_date": "29 Apr 1830",
+          "place": "Kauhava,Vaasa,Finland",
+          "standard_place": "Kauhava, Vaasa, Finland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K46D-YPY",
+      "person2": "KCBJ-P4K"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "K46D-YPY",
+      "child": "M8XS-L9M",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KCBJ-P4K",
+      "child": "M8XS-L9M",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K46D-YPY",
+      "child": "M8XQ-58J",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KCBJ-P4K",
+      "child": "M8XQ-58J",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "K46D-YPY",
+      "child": "M8XQ-52L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KCBJ-P4K",
+      "child": "M8XQ-52L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "K46D-YPY",
+      "child": "M86P-V26",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KCBJ-P4K",
+      "child": "M86P-V26",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "K46D-YPY",
+      "child": "M86L-KPM",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "KCBJ-P4K",
+      "child": "M86L-KPM",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "MPDK-DWR",
+      "title": "Gust Johs Huhtala in entry for Maria, \"Finland, Baptisms, 1657-1890\"",
+      "citation": "\"Finland, Baptisms, 1657-1890\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XBLD-84Z : 23 June 2020), Gust Johs Huhtala in entry for Maria, 1824.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XBLD-84Z"
+    },
+    {
+      "id": "M59B-KRT",
+      "title": "Gust Johs Huhtala in entry for Johan, \"Finland, Baptisms, 1657-1890\"",
+      "citation": "\"Finland, Baptisms, 1657-1890\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XBL6-8HK : 23 June 2020), Gust Johs Huhtala in entry for Johan, 1817.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XBL6-8HK"
+    },
+    {
+      "id": "MP5P-ZGY",
+      "title": "Gust Johs Huhtala in entry for Gustaf, \"Finland, Baptisms, 1657-1890\"",
+      "citation": "\"Finland, Baptisms, 1657-1890\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XBL6-V3D : 23 June 2020), Gust Johs Huhtala in entry for Gustaf, 1822.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XBL6-V3D"
+    },
+    {
+      "id": "MLR5-B65",
+      "title": "Gust Johs Huhtala in entry for Gustaf, \"Finland, Baptisms, 1657-1890\"",
+      "citation": "\"Finland, Baptisms, 1657-1890\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XBL6-V7M : 23 June 2020), Gust Johs Huhtala in entry for Gustaf, 1820.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XBL6-V7M"
+    },
+    {
+      "id": "MPT2-4YQ",
+      "title": "Gust Johs Huhtala in entry for Matts, \"Finland, Baptisms, 1657-1890\"",
+      "citation": "\"Finland, Baptisms, 1657-1890\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XBLD-79S : 23 June 2020), Gust Johs Huhtala in entry for Matts, 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XBLD-79S"
+    }
+  ]
+}

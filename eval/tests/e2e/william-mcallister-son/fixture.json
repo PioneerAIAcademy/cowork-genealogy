@@ -1,0 +1,19 @@
+{
+  "id": "william-mcallister-son",
+  "name": "William Mc Allister — son Thomas John McFerran (b. 1879, Downpatrick)",
+  "genre": "record-hint",
+  "source_pid": "LZDC-MJN",
+  "captured": "2026-09-07",
+  "researcher_question": "Did William Mc Allister and Mary Jane Magee have a son, Thomas John McFerran, born 4 June 1879 at Downpatrick, County Down?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "GB-NIR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 19, hint-samples.csv row 602, flag adds_son, confidence 3). Draft transcribed from an 1879 Irish civil birth registration; unverified. The tree may already carry the same birth from a different collection."
+}

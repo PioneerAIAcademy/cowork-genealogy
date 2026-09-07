@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_catharina_gosner_daughter",
+    "objective": "Did Catharina Gosnerin and Joannes Schedler of Triesen, Liechtenstein have a daughter Magdalena, christened 12 June 1743?",
+    "subject_person_ids": [
+      "KZS8-RS7"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

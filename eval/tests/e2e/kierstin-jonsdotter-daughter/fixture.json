@@ -1,0 +1,19 @@
+{
+  "id": "kierstin-jonsdotter-daughter",
+  "name": "Kierstin Jonsdotter — a daughter Anna christened 1777 at Rättvik",
+  "genre": "record-hint",
+  "source_pid": "K8LX-YMK",
+  "captured": "2026-09-07",
+  "researcher_question": "Was the Anna christened 12 January 1777 at Rättvik, daughter of Anders Ersson and Kierstin Jöransdotter, a daughter of Kierstin Jonsdotter and Anders Hansson?",
+  "tags": {
+    "question_type": "children",
+    "era": "1770s",
+    "geography": "SE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 27, hint-samples.csv row 853, flag adds_daughter, confidence 3). Draft transcribed from a 1777 Swedish baptismal index entry; unverified. Both patronymics disagree with the tree."
+}
