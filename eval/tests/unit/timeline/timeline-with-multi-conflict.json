@@ -28,7 +28,10 @@
     "place-search-pennsylvania-by-place",
     "place-distance-ireland-pennsylvania",
     "place-distance-pennsylvania-ireland",
-    "place-distance-within-pennsylvania"
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
   ],
   "judge_context": [
     "Should include events from competing assertions when conflicts are unresolved — the birthplace conflict means the birth event might be Ireland (per a_002, a_009) OR Pennsylvania (per a_012); the timeline should show this ambiguity rather than silently picking one",

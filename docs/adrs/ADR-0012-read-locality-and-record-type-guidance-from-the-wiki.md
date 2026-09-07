@@ -177,8 +177,10 @@ network service at runtime: the wiki tools are single-shot until issue #2054
 lands retries, an outage is recorded as "no page" until issue #2130 lands, and
 the compiled-in default still points at one developer's public tailnet host.
 Each lookup adds tool calls and page tokens to an invocation. Wiki errors we
-have measured — the 1940 census sample, no 1950, no England & Wales table —
-become our errors until the change request lands upstream.
+have measured — the 1940 census sample, no 1950, no England & Wales table, and
+`United_States_Census` omitting the 1890 loss (its loss statement lives on the
+separate `United_States_Census_1890` page, so the country page lists 1890 as an
+available collection) — become our errors until the change request lands upstream.
 
 **Risks.** The model skips the fetch (the `gps-mentor` pattern); a floor search
 at a cheaper model may pass the rubric by skipping the lookups unless a

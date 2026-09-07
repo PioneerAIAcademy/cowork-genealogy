@@ -29,7 +29,10 @@
     "place-search-pennsylvania-by-place",
     "place-distance-ireland-pennsylvania",
     "place-distance-pennsylvania-ireland",
-    "place-distance-within-pennsylvania"
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
   ],
   "judge_context": [
     "Should build the full chronology INCLUDING the 1912 deed (a_014) as an event in events[], sorted after the 1908 death (a_011). The deed is part of the person's record trail, so its presence in events[] is correct and expected — do NOT treat inclusion in events[] as a defect.",

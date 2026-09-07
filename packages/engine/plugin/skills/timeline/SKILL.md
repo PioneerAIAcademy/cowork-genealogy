@@ -20,6 +20,7 @@ allowed-tools:
   - place_search_all
   - place_distance
   - research_append
+  - wiki_read
 ---
 
 # Timeline
@@ -174,6 +175,21 @@ events.
 
 ### 4. Identify gaps
 
+**First, read each residence country's census schedule from the wiki.**
+Do not assume the US decennial years. For every distinct country the
+person's residence events place them in, make this call — one per
+distinct country, not per event and not per state — and do not drop it:
+the expected census years come from the page, not from memory.
+
+```
+wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })
+```
+
+Substitute the residence country for `{Country}` — `United_States_Census`,
+`England_Census`, `Ireland_Census`, and so on. The page lists the years
+that country enumerated; those are the census years to expect while the
+person lived there.
+
 Analyze the timeline for missing periods. A gap is **negative
 evidence** — the absence of expected records carries meaning.
 
@@ -202,8 +218,11 @@ than the events they come from.
   records.
 
 **How to determine expected events:**
-- Census: Every 10 years — 1850, 1860, 1870, 1880, 1900, 1910, 1920.
-  Never 1890, and never 1890 in `expected_events`.
+- Census: the years the residence country enumerated, read from its
+  `{Country}_Census` page fetched above — one expected census event per
+  enumerated year the person was alive and resident there, not a fixed
+  list. For the United States specifically, the 1890 federal census was
+  destroyed and can never fill a gap: never put 1890 in `expected_events`.
 - Marriage: If children exist, a marriage event is expected before
   the first child's birth.
 - Death/burial: If the person is known to have died, both death

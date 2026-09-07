@@ -29,7 +29,10 @@
     "place-search-pennsylvania-by-place",
     "place-distance-ireland-pennsylvania",
     "place-distance-pennsylvania-ireland",
-    "place-distance-within-pennsylvania"
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
   ],
   "judge_context": [
     "Should resolve the baptism place (County Mayo, Ireland) and the 1850 census place (Schuylkill County, Pennsylvania) and call `place_distance` between them, obtaining a transatlantic distance (~5,400 km)",
