@@ -128,7 +128,13 @@ jobs:
           # generates the Zod schemas this job's tests import, from
           # docs/specs/schemas/*.schema.json. Without it a schema-only diff
           # reported success without regenerating or checking them.
-          PATTERNS: '^eval/app/|^docs/specs/schemas/|^\.github/workflows/js-tests\.yml$'
+          # `eval/Start.bat` is outside eval/app/ but is pinned by
+          # eval/app/tests/unit/wiring.test.ts — the launcher URL has to match the
+          # loopback binding. Without it here, a PR editing only the launcher
+          # makes this job report success without running, and that guard never
+          # executes. Nothing else reaches the file: windows-wrappers.test.ts
+          # checks only that it exists.
+          PATTERNS: '^eval/app/|^eval/Start\.bat$|^docs/specs/schemas/|^\.github/workflows/js-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
