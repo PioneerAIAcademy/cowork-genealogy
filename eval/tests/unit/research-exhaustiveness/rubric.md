@@ -2,12 +2,14 @@
 
 Grading dimensions for research-exhaustiveness unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-## Threshold reasoning
+## Gate reasoning
 
-Did the skill honestly apply the five threshold questions and the 7-point stop criteria? An exhaustive declaration must be defensible against the criteria, not asserted unilaterally.
+Did the skill work the 7-point stop criteria as a gate — in order, stopping at the first that fails, and naming it? An exhaustive declaration must be defensible against the criteria, not asserted unilaterally.
 
-- **pass:** The skill explicitly evaluates each criterion against the project's log/assertions and either declares only when all criteria are met, or declines with a specific named gap (e.g., "probate records not yet searched"). The reasoning is grounded in actual log entries, not generic claims.
-- **partial:** The skill applies most criteria but glosses over one or two (e.g., asserts "all record types searched" without naming them), or names a gap but only vaguely.
+This dimension grades the **decision**; `Stop criteria coverage` grades the **content** of each assessment. A run can name the blocking criterion correctly here and still score partial there for saying nothing substantive about it.
+
+- **pass:** The skill evaluates the criteria against the project's log/assertions and either declares only when all seven are met, or declines naming the specific criterion that blocks and the gap under it (e.g., "probate records not yet searched" under `repository_breadth`). The reasoning is grounded in actual log entries, not generic claims.
+- **partial:** The skill applies most criteria but glosses over one or two (e.g., asserts "all record types searched" without naming them), or declines naming a gap without tying it to a criterion.
 - **fail:** The skill declares exhaustive without applying the criteria, declares without grounding in log entries, or declines without naming what's missing.
 
 ## Declaration honesty
@@ -24,6 +26,10 @@ Are the 7 stop criteria assessed with **substance** — each tied to specific pr
 
 **Grade the content, not the presence.** That the seven keys exist at all on a declaring run is asserted deterministically by `test_declared_has_full_stop_criteria` in the skill's validator, so do not spend this dimension on it — a validator names a missing key in one line, where a judge gives an opinion that moves between runs. What only a reader can judge is whether each assessment says anything: "Census, vital records and probate all searched" is an assessment, "Yes" is not. That distinction applies on both paths — as object values when the run declares, as named prose when it declines. An earlier revision narrowed this dimension to the declining path and so left a declaration with seven one-word criteria graded by nothing at all.
 
-- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) carry a 1–2 sentence assessment tied to a specific log entry or assertion — as object values when declaring, as named prose when declining.
-- **partial:** All seven addressed but at least one is generic boilerplate ("yes" with no specifics), or one is missing but the surrounding justification covers it.
-- **fail:** Two or more of the seven unaddressed, or the assessments are all generic without reference to project state.
+**A decline carries all seven, honestly assessed.** The verdict stops at the first criterion that fails; the record does not. Each of the seven says what was met, what failed, or what the evidence could not reach — "For the mother: zero sources" is an honest assessment, not a gap in the write. `justification` names the blocking criterion.
+
+**A claim of work that did not happen is the failure this dimension catches.** "No conflicts exist" on `conflict_resolution` when the conflicts were never examined, or "all repositories searched" against a log that names three, is the write asserting research it did not do — and the stored declaration is what a later reader trusts. An honest negative is the opposite of this failure: "zero sources bear on the mother" is grounded and correct. Judge each of the seven on whether its assessment is answerable from project state, never on how confident it sounds.
+
+- **pass:** All seven criteria (`goal_alignment`, `repository_breadth`, `original_substitution`, `independent_verification`, `evidence_class`, `conflict_resolution`, `overturn_risk`) carry a 1–2 sentence assessment tied to a specific log entry or assertion. On a decline the same seven are present and honest about what failed or was never reached, and `justification` names the blocking criterion.
+- **partial:** All seven are present but at least one is generic boilerplate ("yes" with no specifics); or, on a decline, the blocking criterion is named with substance but the other six are absent or generic. Issue #1843 rules that a decline owes only the blocking entry, so recording just that entry is **partial**, not a fail — all seven is the preferred shape, not the minimum.
+- **fail:** When declaring, any of the seven is missing. Either way, the assessments are all generic without reference to project state, or any criterion asserts research the log does not support. On a decline, no blocking criterion is named, or one is named with no assessment at all.
