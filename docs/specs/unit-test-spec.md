@@ -1291,7 +1291,8 @@ def report_example_pattern(text_response):
 - `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).
 - `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort.
 - `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort.
-- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"error"`). `None` when the run completed normally.
+- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
+- `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate).
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
@@ -1430,7 +1431,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "run_index": "number (0-based)",
       "run_id": "string (run_<test_id>_<timestamp>_<run_index>)",
       "outcome": "string (pass | partial | fail | aborted)",
-      "aborted_reason": "string or null (limit name, `not_runnable`, or `unmatched_tool_call` when outcome is aborted; null otherwise)",
+      "aborted_reason": "string or null (limit name, `not_runnable`, `unmatched_tool_call`, or `quota_exhausted` when outcome is aborted; null otherwise)",
+      "error": "string or null (the SDK's error string plus any rate-limit signals; optional, absent in run logs written before it existed)",
       "duration_ms": "number",
       "input_tokens": "number",
       "cached_input_tokens": "number",
