@@ -1,0 +1,19 @@
+{
+  "id": "vasily-romanov-spouse",
+  "name": "Vasily Ignatiev Romanov — a wife Klavdiya Dmitrieva and a daughter born 1911 at Samara",
+  "genre": "record-hint",
+  "source_pid": "L8TL-4NY",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Vasily Ignatiev Romanov of Samara have a daughter Raisa, born 16 July 1911 at the Peter and Paul church, by a wife named Klavdiya Dmitrieva?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1910s",
+    "geography": "RU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 25, hint-samples.csv row 761, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a 1911 Samara metrical-book entry; unverified. The patronymics disagree, which in Russian records is a hard discriminator."
+}

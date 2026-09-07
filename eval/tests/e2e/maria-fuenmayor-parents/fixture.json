@@ -1,0 +1,19 @@
+{
+  "id": "maria-fuenmayor-parents",
+  "name": "María Concepción Fuenmayor — parents Juan and Graciliana, and a 1912 Maracaibo marriage",
+  "genre": "record-hint",
+  "source_pid": "GMH9-3BJ",
+  "captured": "2026-09-07",
+  "researcher_question": "Who were the parents of María Concepción Fuenmayor of Maracaibo, and when did she marry Eduardo Berrueta Fernández?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1910s",
+    "geography": "VE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 30, hint-samples.csv row 972, flags adds_father/adds_mother/adds_marriage, confidence 3). Draft transcribed from a 1912 Maracaibo Catholic marriage entry; unverified. The bride's middle name differs from the tree's."
+}

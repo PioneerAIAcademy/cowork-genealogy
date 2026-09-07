@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Hinrich Burmeister and his wife had a son Hinrich, baptised 29 July 1687 at Schönberg, Mecklenburg — a second son of that name, after the one christened in 1683.",
+      "details": {
+        "subject_person": "Hinrich Burmeister (G8CJ-7VL)",
+        "relation": "child",
+        "target_person": {
+          "name": "Hinrich Burmeister",
+          "baptism": "29 July 1687, Schönberg, Mecklenburg"
+        }
+      },
+      "supporting_sources": [
+        "Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971 — baptism of Hinrich Burmeister, 29 Jul 1687, parents Hinrich Burmeister and Elsch Burmeister"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "The 'Elsch Burmeister' named as the child's mother is Liesbeth Oldenburg, the subject's first wife (m. 1682, d. 1689), recorded under her married surname — not an additional spouse.",
+      "details": {
+        "person": {
+          "name": "Elsch (Liesbeth) Oldenburg, verh. Burmeister",
+          "role": "mother on the 1687 Schönberg baptism"
+        }
+      },
+      "supporting_sources": [
+        "Deutschland, ausgewählte evangelische Kirchenbücher 1500-1971 — baptism of 29 Jul 1687"
+      ],
+      "required": false
+    }
+  ]
+}
