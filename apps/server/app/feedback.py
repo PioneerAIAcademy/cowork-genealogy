@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import re
 import zipfile
 from datetime import datetime, timezone
 
@@ -46,6 +47,21 @@ _CLAUDE_PROJECTS_DIR = f"{HOME_DIR}/.claude/projects/{_CLAUDE_PROJECT_SLUG}"
 # Backstop so a pathological session can't blow past the Drive/Apps Script POST
 # limit. The reported failure is ~always at the end, so we keep the newest entries.
 _SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
+
+_API_KEY_PATTERNS = [
+    re.compile(rb"sk-ant-[A-Za-z0-9_-]{20,}"),
+    re.compile(rb"sk-or-[A-Za-z0-9_-]{20,}"),
+    re.compile(rb"sk-[A-Za-z0-9_-]{40,}"),
+]
+_REDACTED_KEY = b"[REDACTED_API_KEY]"
+
+
+def _redact_api_keys(data: bytes) -> bytes:
+    out = data
+    for pattern in _API_KEY_PATTERNS:
+        out = pattern.sub(_REDACTED_KEY, out)
+    return out
+
 
 # Mirrors apps/electron/src/main/feedback.ts so a web case and a desktop case
 # unzip to the same shape and the triage workflow consumes them identically.
@@ -292,7 +308,10 @@ async def _session_log(sandbox) -> bytes | None:
             raw = await sandbox.read_file(newest_path)
     if not raw:
         return None
-    return _filter_transcript(raw)
+    filtered = _filter_transcript(raw)
+    if filtered is None:
+        return None
+    return _redact_api_keys(filtered)
 
 
 class FeedbackBody(BaseModel):

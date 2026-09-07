@@ -27,6 +27,16 @@ const ZIP_CAP_BYTES = 35 * 1024 * 1024
 // prepend a truncation note rather than dropping the log.
 const SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 
+// API-key patterns to redact from the session log before bundling. A user who
+// pasted a key in chat has it in the transcript; the feedback zip must not ship
+// it. Each regex matches the full key token so the replacement is unambiguous.
+const API_KEY_PATTERNS: RegExp[] = [
+  /sk-ant-[A-Za-z0-9_-]{20,}/g, // Anthropic
+  /sk-or-[A-Za-z0-9_-]{20,}/g, // OpenRouter
+  /sk-[A-Za-z0-9_-]{40,}/g // generic sk-* (OpenAI-style)
+]
+const REDACTED_KEY = '[REDACTED_API_KEY]'
+
 // Living-person redaction. Mirrors apps/server/app/feedback.py
 // (`_redact_living`) so a bundle built here and one built in the hosted app
 // contain the same thing.
@@ -334,6 +344,18 @@ export function capSessionLog(entries: unknown[]): string {
   return [note, ...tail].join('\n') + '\n'
 }
 
+/**
+ * Replace API-key-shaped tokens in serialized JSONL with a placeholder.
+ */
+export function redactApiKeys(serialized: string): string {
+  let out = serialized
+  for (const pattern of API_KEY_PATTERNS) {
+    pattern.lastIndex = 0
+    out = out.replace(pattern, REDACTED_KEY)
+  }
+  return out
+}
+
 export async function buildFeedbackZip(options: FeedbackOptions): Promise<FeedbackResult> {
   const { folderPath, includeMedia, includeSessionLog, report, viewerVersion } = options
   const folderResolved = path.resolve(folderPath)
@@ -396,7 +418,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
   if (includeSessionLog) {
     const sessionLog = await readSessionLog(folderResolved)
     if (sessionLog.entries.length > 0) {
-      zip.file('_feedback/session-log.jsonl', capSessionLog(sessionLog.entries))
+      zip.file('_feedback/session-log.jsonl', redactApiKeys(capSessionLog(sessionLog.entries)))
       sessionLogStatus = 'included'
     } else {
       sessionLogStatus = 'requested-but-empty'

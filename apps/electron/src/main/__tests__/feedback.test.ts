@@ -10,6 +10,7 @@ import {
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
   NOT_PROVIDED,
+  redactApiKeys,
   type FeedbackOptions
 } from '../feedback'
 
@@ -226,6 +227,46 @@ describe('capSessionLog', () => {
     const last = JSON.parse(lines[lines.length - 1])
     expect(last.i).toBe(63)
     expect(note.dropped_leading_entries + (lines.length - 1)).toBe(64)
+  })
+})
+
+describe('redactApiKeys', () => {
+  it('replaces Anthropic sk-ant- keys', () => {
+    const input = '{"message":"my key is sk-ant-api03-abcDEF123456789012345678901234"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"my key is [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces OpenRouter sk-or- keys', () => {
+    const input = '{"message":"use sk-or-v1-abcdef1234567890abcdef1234567890"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"use [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces generic sk- keys (40+ chars)', () => {
+    const key = 'sk-' + 'a'.repeat(48)
+    const input = `{"message":"${key}"}\n`
+    expect(redactApiKeys(input)).toBe('{"message":"[REDACTED_API_KEY]"}\n')
+  })
+
+  it('leaves short sk- tokens alone (not an API key)', () => {
+    const input = '{"message":"sk-short is fine"}\n'
+    expect(redactApiKeys(input)).toBe(input)
+  })
+
+  it('redacts multiple keys in one log', () => {
+    const lines = [
+      '{"type":"user","message":"sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA"}',
+      '{"type":"assistant","message":"ok"}',
+      '{"type":"user","message":"also sk-or-v1-BBBBBBBBBBBBBBBBBBBBBB"}'
+    ].join('\n')
+    const out = redactApiKeys(lines)
+    expect(out).not.toContain('sk-ant-')
+    expect(out).not.toContain('sk-or-')
+    expect(out).toContain('[REDACTED_API_KEY]')
+  })
+
+  it('leaves a log with no keys unchanged', () => {
+    const input = '{"type":"user","message":"find John Smith in 1870 census"}\n'
+    expect(redactApiKeys(input)).toBe(input)
   })
 })
 
