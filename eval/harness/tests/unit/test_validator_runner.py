@@ -1901,6 +1901,42 @@ def test_informant_not_in_who_ignores_preexisting_informant():
     assert result.passed is True, (
         f"false positive on pre-existing informant data: {result.error}"
     )
+
+
+def test_informant_not_in_who_fires_on_citation_string():
+    """V10: the citation-string arm fires when 'informant' is introduced
+    in the citation field (not citation_detail.who)."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "Pennsylvania Department of Health"},
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    src_after = {
+        **src_before,
+        "citation": "Pennsylvania Department of Health; informant: James Brown",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is False
+    assert "citation string" in (result.error or "").lower()
+
+
 # --- text_response plumbing (#1662) ------------------------------------
 #
 # A validator that reads the reply is inert if the harness stops supplying it.
@@ -2182,9 +2218,9 @@ def test_v8_skips_when_not_activated():
     assert "skipped" in (result.error or "").lower()
 
 
-def test_v8_fires_on_routing_short_circuit():
-    """V8: a negative-test routing short-circuit still fails V8 — zero
-    telemetry and a short response is a dead run regardless of routing."""
+def test_v8_skips_grade_on_invariant():
+    """V8 skips on a grade_on_invariant negative test — those bypass
+    normal routing, so a dead run is expected and not a defect."""
     state = _empty_research_state()
     results = run_validators(
         skill="search-familysearch-wiki",
@@ -2195,14 +2231,15 @@ def test_v8_fires_on_routing_short_circuit():
         activated=True,
         num_turns=0,
         output_tokens=0,
-        text_response="Short routing announcement.",
+        text_response="Short.",
         aborted_reason=None,
-        skills_invoked=["citation"],
+        skills_invoked=["search-familysearch-wiki"],
+        test={"type": "negative", "negative": {"grade_on_invariant": True}},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
-    assert result.passed is False
-    assert "no meaningful output" in (result.error or "")
+    assert result.passed is True  # skip = pass
+    assert "grade_on_invariant" in (result.error or "")
 
 
 # --- Anti-bias constraint (issue #1749) -----------------------------------
