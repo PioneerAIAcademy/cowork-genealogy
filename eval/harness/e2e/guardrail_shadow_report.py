@@ -30,6 +30,33 @@ unnamed-delegate checks. A stored count reads 0 over every run made before that
 check shipped, so on a corpus that is 84% July it measures the corpus's age
 rather than the behaviour. Read `--replay` before concluding a check never fires.
 
+**This report measures ONE of a check's two failure directions, and it cannot be
+made to measure the other.** Every count here is a count of what a check FIRES
+on. Read alongside the runs, those firings are what tells you whether the check
+would block work it should not — the false-DENY direction, which is what a
+graduation decision is mostly weighing. There is no column for what a check
+MISSED, and adding one is not a matter of more code: in a replay the check is its
+own ground truth, so a write it does not recognise as a violation is
+indistinguishable from a write that is fine. Nothing in the committed corpus
+labels violations independently of the detector being measured.
+
+Two consequences, both easy to get wrong when quoting a number off this report:
+
+  - A zero means "this detector fired on nothing here". It does NOT mean the
+    behaviour did not happen — see the §7.5 citation-nulling pair in
+    `guardrail-enforcement-spec.md`, where one arm's 0 and the other's 111 are
+    the same corpus read two ways.
+  - The population is pre-filtered in the same direction. Committed run logs are
+    converged states: runs that failed and were re-run are not in the corpus, so
+    a satisfying-shape rate computed here is a FLOOR, not an estimate.
+
+So a graduation cannot rest on this report alone. What it establishes is that a
+check does not over-fire on real work. That it actually catches the class it
+claims is established the way any other guard is — by breaking the thing in
+several shapes and watching it fire (CLAUDE.md, "A new lint must be proven to
+fail"). If you find a way to give this report an independent false-pass term,
+that supersedes this paragraph; do not quietly widen a count and call it one.
+
 This module adds NO instrumentation to a run (same posture as
 `latency_report.py`); it's pure analysis over already-committed data.
 

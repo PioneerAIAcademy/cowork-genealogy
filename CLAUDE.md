@@ -609,6 +609,31 @@ than no check at all. The three ways one silently passes here: a grep whose
 pattern excludes its own tree, a `git grep` that skips untracked files, and a
 field-name match that collides with an unrelated key.
 
+**One break is not a proof.** Those three are about the check's *reach* — which
+files and lines it looks at. The other way through is the *shape of the input at
+the site*, and the shapes that get past a check are the ones its author never
+pictured: unquoted, commented out, wrapped in another call, a stringified
+argument, a `null`, an empty list, a missing token, a value that parses to `NaN`.
+Break it two or three ways, not one. Two real cases, both caught by review rather
+than by the guard they were added beside: `--limit abc` parsed to `NaN`, matched
+zero images and **exited 0 having done nothing**; and `--only` / `--variants`
+were plain `includes()` filters, so a typo ran nothing, exited 0, and still made
+a paid API call.
+
+**Prove the other direction too.** A guard fails two ways — wrongly blocking
+legitimate work, and wrongly passing the bad thing. Breaking the repo tests only
+the second. Show a legitimate variant the check still accepts (a reflowed line,
+a renamed local, a different but valid spelling), or you have built something
+that will be `skip`ped within a month. Replaying a check over committed runs
+tests the *first* direction only, and cannot test the second at all, because in
+a replay the check is its own ground truth — see
+`eval/harness/e2e/guardrail_shadow_report.py`.
+
+When the bug you are guarding is the **second** instance of a class already
+fixed, write one shared guard rather than a second one-off. `encoding="utf-8"`
+became a single AST lint for exactly this reason, after per-line greps failed on
+shape twice.
+
 ### A measurement that disagrees with belief is re-measured, not reworded
 
 When a recorded measurement contradicts what you believe, re-probe until the two agree.

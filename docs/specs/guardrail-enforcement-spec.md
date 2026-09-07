@@ -375,6 +375,21 @@ if the rate is low enough that a fail is a signal and not a wall" — zero is no
 "low enough", it is *nobody has seen this detector fire*. Graduating it promotes
 an unexercised predicate to a hard failure.
 
+**Every column above counts firings, and no column could count a miss.** The
+replay measures the false-DENY direction — would this check block work that was
+fine — and it is structurally incapable of measuring the other one. In a replay
+the check is its own ground truth: a write it does not recognise as a violation
+is indistinguishable from a write that is correct, and nothing in the committed
+corpus labels violations independently of the detector under test. The
+population leans the same way, since committed run logs are converged states and
+re-run failures are absent, so every rate on this page is a floor.
+
+So this table can establish that a candidate does not over-fire on real work. It
+cannot establish that the candidate catches the class it names — that is
+established the way any guard is, by breaking the thing in several shapes and
+watching it fire (CLAUDE.md, "A new lint must be proven to fail"). A graduation
+argument needs both halves, and only one of them lives here.
+
 **What each check still owes, on two axes.** The predicates are not the open
 question: all three have firing controls in
 `eval/harness/tests/unit/test_skill_invocation.py`, green on every
