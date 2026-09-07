@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Domingo Olivera y Valadyo's parents were Domingo Oliviery and Francisca Gonzalez.",
+      "details": {
+        "subject_person": "Domingo Olivera Y Valadyo (GN5K-19C)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Domingo Oliviery and Francisca Gonzalez"
+        }
+      },
+      "supporting_sources": [
+        "Puerto Rico, Registro Civil, 1805-2002 — birth registration of Carmen Ester Olivera Martinez, 30 Jun 1925, naming the paternal grandparents"
+      ],
+      "required": true
+    }
+  ]
+}

@@ -601,6 +601,7 @@ A test with empty `judge_context` is still graded on the base dimensions (3: Cor
 
 Guidelines for writing `judge_context` notes:
 
+- **A note may not relax a bar its rubric sets.** If a rubric bar is wrong for a class of run, move the bar in `rubric.md`; do not write a per-test note excusing that run from it. A note reading "addressing the unmet criterion in prose is sufficient for a pass" against a rubric whose `fail` bar is "two or more unaddressed" puts two graders in one suite, and which one the judge follows moves between runs. The rubric applies to every test for the skill, so the rubric is the one that has to be right. A note narrows the rubric to this scenario; it never overrides it.
 - **Focus on what's unique to this scenario.** Don't restate what the skill rubric already covers. If the rubric says "extraction completeness," don't add "should extract all facts." Instead note *this specific record's* unusual characteristics.
 - **Be specific.** "Should extract assertions" is too vague. "Should extract assertions for at least 3 persons (head of household, wife, and Patrick)" is testable.
 - **Include reasoning.** "Should classify the relationship as indirect evidence with indeterminate information quality — the 1860 census does not state relationships explicitly (that column was introduced in 1880)" tells the judge *why* the classification is correct.
@@ -1284,6 +1285,7 @@ def report_example_pattern(text_response):
 - `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order.
 - `blocked_context_calls` (list) — main-thread calls to subagent-only tools denied by the PreToolUse hook.
 - `blocked_protected_writes` (list) — raw writes to protected project files denied by the hook.
+- `blocked_owned_section_writes` (list) — `research_append` ops the shipped ownership rule refused, denied by the hook, as `{"tool", "args", "section", "rule", "caller"}`. Empty is the healthy case; `test_no_out_of_lane_section_writes` gates on it.
 - `attempted_mcp_calls` (list) — MCP calls the model emitted that never reached a fixture match.
 - `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
 - `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).

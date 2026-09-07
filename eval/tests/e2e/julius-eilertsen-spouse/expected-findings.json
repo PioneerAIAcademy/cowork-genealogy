@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Julius Edlund Eilertsen married Anne Kathrine Edvardsen (b. 1893, Steigen, of Leines, daughter of Edvard Johannessen) on 15 August 1910.",
+      "details": {
+        "subject_person": "Julius Edlund Eilertsen (GDCS-WYY)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Anne Kathrine Edvardsen",
+          "birth": "1893, Steigen, Nordland, Norway",
+          "father": "Edvard Johannessen"
+        },
+        "marriage": "15 August 1910"
+      },
+      "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — entry for Julius Edmund Eilertsen and Eilert Johan Jensen, 15 Aug 1910"
+      ],
+      "required": true
+    }
+  ]
+}

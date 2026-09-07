@@ -11,7 +11,7 @@
     "user_message": "Search for Patrick Flynn as a beneficiary or executor in Schuylkill County probate records — full-text search.",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["fulltext-search-flynn-probate-empty", "fulltext-search-flynn-probate-empty-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant"],
+  "mcp_fixtures": ["fulltext-search-flynn-probate-empty", "fulltext-search-flynn-probate-empty-by-name", "fulltext-search-flynn-flinn-variant", "fulltext-search-flynn-wildcard-variant", "fulltext-search-flynn-prefix-wildcard-variant"],
   "execution": {
     "max_wall_clock_seconds": 600,
     "max_turns": 30
