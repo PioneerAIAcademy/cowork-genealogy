@@ -1,0 +1,19 @@
+{
+  "id": "hinrich-burmeister-spouse",
+  "name": "Hinrich Burmeister — a second son Hinrich, baptised 1687 at Schönberg",
+  "genre": "record-hint",
+  "source_pid": "G8CJ-7VL",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Hinrich Burmeister of Schönberg (b. 1653) have a son Hinrich baptised 29 July 1687, and is the 'Elsch Burmeister' named as the child's mother his first wife Liesbeth Oldenburg?",
+  "tags": {
+    "question_type": "children",
+    "era": "1680s",
+    "geography": "DE-MV"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 13, hint-samples.csv row 403, flag adds_spouse, confidence 3). Draft transcribed from a 1687 Mecklenburg Lutheran baptismal entry; unverified. The hinted 'spouse' is most likely the first wife under her married surname."
+}

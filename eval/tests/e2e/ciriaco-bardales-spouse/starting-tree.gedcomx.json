@@ -1,0 +1,750 @@
+{
+  "persons": [
+    {
+      "id": "KNYF-2Z8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Ciriaco",
+          "surname": "Bardales"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "       1870",
+          "standard_date": "1870",
+          "place": "Quezaltepeque, Chiquimula, Guatemala",
+          "standard_place": "Quezaltepeque, Chiquimula, Guatemala"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "11 Apr 1933",
+          "standard_date": "11 Apr 1933"
+        }
+      ]
+    },
+    {
+      "id": "L6PW-W6G",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Clara Amelia",
+          "surname": "Palacios Oliva"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 de junio de 1886",
+          "standard_date": "11 Jun 1886",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "16 Sep 1968",
+          "standard_date": "16 Sep 1968",
+          "place": "Guatemala",
+          "standard_place": "Guatemala"
+        },
+        {
+          "id": "a541ca29-0a01-403b-a975-4c9384d79d6b",
+          "type": "Death Registration",
+          "place": "Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "G9WY-VVB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Concepción Alfonso",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f11aace2-c3d9-43a1-bc19-9e11c3527fe0",
+          "type": "Birth",
+          "date": "8 December 1911",
+          "standard_date": "8 Dec 1911",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "39dcdc03-ea69-49c7-95f0-d0f4424f4fa9",
+          "type": "Death",
+          "date": "1925",
+          "standard_date": "1925",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "97060c30-c26a-46fd-b825-564c1f5ea964",
+          "type": "Birth Registration",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "L558-9PW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Lazaro Eduardo",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8a5146a0-1a5d-4d9b-bc14-8816ee56b885",
+          "type": "Birth",
+          "date": "17 Dic 1929",
+          "standard_date": "17 1929",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "630e90de-ad79-4177-a5f0-dccacbf204ad",
+          "type": "Death",
+          "date": "3 abril 2003",
+          "standard_date": "3 Apr 2003",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "GQ9Q-FFD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Miguel Isaac",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "1663214c-5254-4e8b-9f8f-89f92b331178",
+          "type": "Birth",
+          "date": "3 de junio de 1914",
+          "standard_date": "3 Jun 1914",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "6e42a24d-115b-4ab6-9c17-235f86d09b0e",
+          "type": "Christening",
+          "date": "19 de jun de 1914",
+          "standard_date": "19 Jun 1914"
+        },
+        {
+          "id": "aed9e5f1-7559-41cb-96a9-e76985ae1fce",
+          "type": "Baptism",
+          "date": "19 de jun de 1914",
+          "standard_date": "19 Jun 1914",
+          "place": "El Sagrario, Guatemala, Guatemala, Guatemala",
+          "standard_place": "El Sagrario, Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "9e7cda6e-f7e3-4458-b8be-7f51aaa1ea07",
+          "type": "Death",
+          "date": "15 October 1971",
+          "standard_date": "15 Oct 1971",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "e5fbb862-ad70-4fd9-bac3-6b2805c8345b",
+          "type": "Death Registration",
+          "place": "Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "MPH7-2W5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Stella Del Rosario",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "15 Nov 1922",
+          "standard_date": "15 Nov 1922",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "26 Jun 1997",
+          "standard_date": "26 Jun 1997",
+          "place": "Guatemala",
+          "standard_place": "Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "G9WY-XZW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Victor Manuel",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "41aa9849-a73d-4a0f-8fd9-9222ecedcc38",
+          "type": "Birth",
+          "date": "5 de septiembre de 1909",
+          "standard_date": "5 Sep 1909",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "41cad180-03d6-42eb-b219-9efd177dffeb",
+          "type": "Death",
+          "date": "16 June 1921",
+          "standard_date": "16 Jun 1921",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala, Guatemala"
+        },
+        {
+          "id": "6e0a14ee-0225-4757-bf8f-a1b8ad5383f5",
+          "type": "Death+Registration",
+          "date": "16 Jun 1921",
+          "standard_date": "16 Jun 1921",
+          "place": "Guatemala",
+          "standard_place": "Guatemala"
+        },
+        {
+          "id": "03574e72-0422-4f14-9cd2-fdffe7c4b534",
+          "type": "Death+Registration",
+          "place": "Guatemala",
+          "standard_place": "Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "KHTX-KJD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Oscar Rene",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "01 Jul 1927",
+          "standard_date": "1 Jul 1927",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "15 Jan 1997",
+          "standard_date": "15 Jan 1997",
+          "place": "Guatemala",
+          "standard_place": "Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "LKGY-S88",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Ciriaco de Jesús",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "15 de octubre de 1924",
+          "standard_date": "15 Oct 1924",
+          "place": "Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "20 de agosto de 2003",
+          "standard_date": "20 Aug 2003",
+          "place": "Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala"
+        },
+        {
+          "id": "64c0ae6b-10a6-4f51-a22c-676e36cb52ac",
+          "type": "Death Registration",
+          "place": "Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "GJ7L-4BX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Josefa",
+          "surname": "Bardales"
+        }
+      ],
+      "facts": [
+        {
+          "id": "acb20a13-a17e-486f-a619-8de565f12961",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KN77-6NK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N11",
+          "given": "Ricardo Manuel",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": " 7 NOV 1907",
+          "standard_date": "7 Nov 1907",
+          "place": "Yepocapa, Chimaltenango, Guatemala",
+          "standard_place": "San Pedro Yepocapa, Chimaltenango, Guatemala"
+        },
+        {
+          "id": "35fa6cba-3376-485b-8754-c56c65b6c98a",
+          "type": "Birth Registration",
+          "date": "Nov 1907",
+          "standard_date": "Nov 1907",
+          "place": "Yepocapa, Chimaltenango, Guatemala",
+          "standard_place": "San Pedro Yepocapa, Chimaltenango, Guatemala"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "20 APR 2001",
+          "standard_date": "20 Apr 2001",
+          "place": "Guatemala, Guatemala, Guatemala",
+          "standard_place": "Guatemala"
+        },
+        {
+          "id": "32002f45-7062-4b85-9a4e-caf6e8516eed",
+          "type": "Death Registration",
+          "place": "Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala"
+        },
+        {
+          "id": "3dd8574b-2cb9-4fa3-b92c-fb281841105b",
+          "type": "Residence",
+          "place": "San Bartolomé Apóstol, Mazatenango, Suchitepéquez, Guatemala",
+          "standard_place": "San Bartolomé Apóstol, Mazatenango, Suchitepéquez, Guatemala"
+        }
+      ]
+    },
+    {
+      "id": "GJ7L-ZLH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N12",
+          "given": "Maria del Carmen",
+          "surname": "Bardales Palacios"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9a510ce9-b828-44ff-a86e-d039cc53ab8b",
+          "type": "Birth",
+          "date": "1 January 1919",
+          "standard_date": "1 Jan 1919"
+        },
+        {
+          "id": "8aca93ea-7100-427b-a4b7-437b59fc53b5",
+          "type": "Death",
+          "date": "12 Apr 1921",
+          "standard_date": "12 Apr 1921",
+          "place": "Guatemala",
+          "standard_place": "Guatemala"
+        },
+        {
+          "id": "86442324-a09c-4442-9a76-38eb8e72a47a",
+          "type": "Death Registration",
+          "place": "Guatemala, Guatemala",
+          "standard_place": "Guatemala, Guatemala"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KNYF-2Z8",
+      "person2": "L6PW-W6G",
+      "facts": [
+        {
+          "id": "a85a72a0-9dfc-429b-a6c3-dbe546d879b9",
+          "type": "Marriage",
+          "date": "<1906>",
+          "standard_date": "Bef 1906",
+          "place": "Zacapa, Zacapa, Guatemala",
+          "standard_place": "Zacapa, Zacapa, Guatemala"
+        },
+        {
+          "id": "8d120685-3a84-479a-a650-6431946c0d70",
+          "type": "Marriage",
+          "date": "10 Jan 1907",
+          "standard_date": "10 Jan 1907"
+        },
+        {
+          "id": "f7cd21bb-fd4a-4d37-824b-82f423615bcc",
+          "type": "Marriage"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GJ7L-4BX",
+      "child": "KNYF-2Z8"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "KN77-6NK",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "KN77-6NK",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "G9WY-XZW"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "G9WY-XZW"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "G9WY-VVB"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "G9WY-VVB"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "GQ9Q-FFD"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "GQ9Q-FFD"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "GJ7L-ZLH"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "GJ7L-ZLH"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "MPH7-2W5",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "MPH7-2W5",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "LKGY-S88"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "LKGY-S88"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "KHTX-KJD",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "KHTX-KJD",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "KNYF-2Z8",
+      "child": "L558-9PW"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "L6PW-W6G",
+      "child": "L558-9PW"
+    }
+  ],
+  "sources": [
+    {
+      "id": "QM9Q-7T5",
+      "title": "Ciriaco Bardales, \"Guatemala Registro Civil, 1833-2009\"",
+      "citation": "\"Guatemala Registro Civil, 1833-2009\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPZC-6V57 : Thu Aug 15 17:15:05 UTC 2024), Entry for Concepcion Alfonso Bardales and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPZC-6V5W"
+    },
+    {
+      "id": "QM9Q-45W",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68YQ-NFPR : Mon Sep 09 15:56:46 UTC 2024), Entry for Victor Manuel Bardales Palacios and Ciriaco Bardales, 16 Jun 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68YQ-NFPT"
+    },
+    {
+      "id": "SWSX-99R",
+      "title": "Ciriaco Bardales, \"Guatemala Registro Civil, 1833-2009\"",
+      "citation": "\"Guatemala Registro Civil, 1833-2009\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTW-4YLM : Tue Mar 11 10:17:34 UTC 2025), Entry for Ricardo Manuel Bardales and Ciriaco Bardales, noviembre de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTW-4YGQ"
+    },
+    {
+      "id": "38G5-7FY",
+      "title": "Ciriaco Bardales, \"Guatemala Registro Civil, 1833-2009\"",
+      "citation": "\"Guatemala Registro Civil, 1833-2009\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D4XJ-ZN3Z : Tue Mar 11 11:26:55 UTC 2025), Entry for Ciriaco de Jesus Bardales and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D4XJ-ZNW2"
+    },
+    {
+      "id": "SKSM-NR1",
+      "title": "Ciriaco Bardales, \"Guatemala Registro Civil, 1833-2009\"",
+      "citation": "\"Guatemala Registro Civil, 1833-2009\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP4T-QS97 : Thu Aug 15 17:14:31 UTC 2024), Entry for Stella del Rosario Bardales and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP4T-QS9W"
+    },
+    {
+      "id": "QM93-1DK",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6862-2ZCW : Mon Sep 09 17:21:49 UTC 2024), Entry for Oscar René Bardales Palacios and Ciriaco Bardales, 29 Nov 1971.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6862-2ZCH"
+    },
+    {
+      "id": "QM9Q-QCB",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z9GD-2SN2 : Tue Mar 11 21:05:19 UTC 2025), Entry for Miguel Isaac Bardales Palacios and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Z9GD-2S2M"
+    },
+    {
+      "id": "QM9Q-HLV",
+      "title": "Ciriaco Bardales, \"Guatemala, registros parroquiales y diocesanos, 1581-2023\"",
+      "citation": "\"Guatemala, registros parroquiales y diocesanos, 1581-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZMT-N9H4 : Thu Jan 01 00:21:28 UTC 2026), Entry for Ma- Ría del Carmen and Ciriaco Bardales, veintidós de mil novecientos veintidós.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZMT-N9HH"
+    },
+    {
+      "id": "QK4R-ZMB",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KKX-Q5V7 : Mon Apr 28 07:29:42 UTC 2025), Entry for Víctor Manuel Palacios and Ciriaco Bardales, 5 de septiembre de 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KKX-Q5VW"
+    },
+    {
+      "id": "7LMZ-YNV",
+      "title": "Ciriaco Bardales, \"Guatemala, Chimaltenango, Registro Civil, 1877-2008\"",
+      "citation": "\"Guatemala, Chimaltenango, Registro Civil, 1877-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSGW-BYGR : Fri Apr 18 15:11:07 UTC 2025), Entry for Ciriaco Bardales and Clara Amelia Palacios, 10 Jul 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSGW-BYGR"
+    },
+    {
+      "id": "SGBN-L3H",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z912-FJMM : Wed Mar 12 04:29:15 UTC 2025), Entry for Ciriaco de Jesús Bardales Palacios and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Z912-FJ3Z"
+    },
+    {
+      "id": "3878-9GF",
+      "title": "Ciriaco Bardales, \"Guatemala Registro Civil, 1833-2009\"",
+      "citation": "\"Guatemala Registro Civil, 1833-2009\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZVMT-D86Z : Tue Oct 21 07:46:27 UTC 2025), Entry for Lázaro Eduardo Bardales and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZVMT-D8N2"
+    },
+    {
+      "id": "3PSK-XBT",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZS3Y-ZYPZ : Tue Mar 11 19:31:12 UTC 2025), Entry for Lazaro Eduardo Bardales Palacios and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZS3Y-ZYT2"
+    },
+    {
+      "id": "95XV-JNR",
+      "title": "Ciriaco Bardales, \"Guatemala, registros parroquiales y diocesanos, 1581-2023\"",
+      "citation": "\"Guatemala, registros parroquiales y diocesanos, 1581-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F3VQ-N61 : Wed Jan 22 17:04:19 UTC 2025), Entry for Miguel Ysaac Bardales Palacios and Ciriaco Bardales, 19 Jun 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F3VQ-NXM"
+    },
+    {
+      "id": "SWS6-RKX",
+      "title": "Ciriaco Bardales, \"Guatemala, registros parroquiales y diocesanos, 1581-2023\"",
+      "citation": "\"Guatemala, registros parroquiales y diocesanos, 1581-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F3V3-R6R : Mon Jul 08 03:08:37 UTC 2024), Entry for Concepción Alfonso Bardales Palacios and Ciriaco Bardales, 18 Feb 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F3V3-R6T"
+    },
+    {
+      "id": "QZVC-FFB",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NHD-DRHP : Tue Mar 11 14:03:13 UTC 2025), Entry for Alfonzo Bardales and Ciriaco Bardales, 29 Mar 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NHD-DRH5"
+    },
+    {
+      "id": "746H-LMX",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65S3-6NZ4 : Sun Dec 21 14:16:05 UTC 2025), Entry for Lázaro Eduardo Bardales Palacios and Ciriaco Bardales, 17 de diciembre de 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65S3-6NZH"
+    },
+    {
+      "id": "7LMZ-56X",
+      "title": "Ciriaco Bardales, \"Guatemala, registros parroquiales y diocesanos, 1581-2023\"",
+      "citation": "\"Guatemala, registros parroquiales y diocesanos, 1581-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X92G-R6KS : Tue Mar 24 02:58:02 UTC 2026), Entry for Ricardo Bardales and Ciriaco Bardales, 11 June 1000.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X92G-R6K3"
+    },
+    {
+      "id": "SWS6-KJY",
+      "title": "Ciriaco Bardales, \"Guatemala Registro Civil, 1833-2009\"",
+      "citation": "\"Guatemala Registro Civil, 1833-2009\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTW-WPHM : Tue Mar 11 21:04:23 UTC 2025), Entry for Ricardo Manuel Bardales Palacios and Ciriaco Bardales, noviembre de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTW-WPHS"
+    },
+    {
+      "id": "SWSX-MHQ",
+      "title": "Ciriaco Bardales, \"Guatemala, registros parroquiales y diocesanos, 1581-2023\"",
+      "citation": "\"Guatemala, registros parroquiales y diocesanos, 1581-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F3VH-KJZ : Tue Jan 21 20:37:13 UTC 2025), Entry for Victor Manuel Bardales Palacios and Ciriaco Bardales, 07 Nov 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F3VH-KJ8"
+    },
+    {
+      "id": "QM9Q-LLX",
+      "title": "Ciriaco Bardales, \"Guatemala, registros parroquiales y diocesanos, 1581-2023\"",
+      "citation": "\"Guatemala, registros parroquiales y diocesanos, 1581-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:689L-2JBB : Thu Jan 01 00:17:14 UTC 2026), Entry for Manuel Ricardo and Ciriaco Bardales, 6 de diciembre de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:689L-2JB1"
+    },
+    {
+      "id": "WS8W-7BY",
+      "title": "Josefa Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:668Y-N1S6 : Mon Sep 09 19:56:07 UTC 2024), Entry for Josefa Bardales, 6 Oct 1928.",
+      "url": "https://familysearch.org/ark:/61903/1:1:668Y-N1S6"
+    },
+    {
+      "id": "3QRX-4QB",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZSST-683Z : Wed Mar 12 00:40:33 UTC 2025), Entry for Oscar René Bardales Palacios and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZSSY-K23Z"
+    },
+    {
+      "id": "37TH-DNQ",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z9YP-SKN2 : Wed Mar 12 00:20:29 UTC 2025), Entry for Ciriaco Bardales and Josefa Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Z9YP-SKN2"
+    },
+    {
+      "id": "QM9Q-HH1",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68Y7-W31G : Mon Sep 09 19:48:28 UTC 2024), Entry for Victor Manuel Bardales and Ciriaco Bardales, 16 Jun 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68Y7-W31P"
+    },
+    {
+      "id": "7LM4-66R",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS84-Z7TS : Sun Jan 26 01:26:20 UTC 2025), Entry for Oscar Rene Bardales Palacios and Ciriaco Bardales, 10 Oct 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS84-Z7T3"
+    },
+    {
+      "id": "SVRX-Q2Y",
+      "title": "Ciriaco Bardales, \"Guatemala Registro Civil, 1833-2009\"",
+      "citation": "\"Guatemala Registro Civil, 1833-2009\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W8G9-8D3Z : Tue Mar 11 22:58:38 UTC 2025), Entry for Victor Manuel Bardales and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W8G9-8DW2"
+    },
+    {
+      "id": "QM9Q-WTK",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZSQ8-6S2M : Tue Sep 23 05:05:27 UTC 2025), Entry for Ricardo Manuel Bardales Palacios and Ciriaco Bardales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZSQ8-6SPZ"
+    },
+    {
+      "id": "7LM4-J93",
+      "title": "Ciriaco Bardales, \"Guatemala, Guatemala, Registro Civil, 1874-2008\"",
+      "citation": "\"Guatemala, Guatemala, Registro Civil, 1874-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSFR-BJN1 : Thu Feb 06 01:27:39 UTC 2025), Entry for Benjamin Roberto de Paz Marroquin and Ramon a. de Paz, 2 Aug 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSFR-BJJS"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "adelaida-martinez-mother",
+  "name": "Adelaida Martínez — a mother named Dolores Bilares",
+  "genre": "record-hint",
+  "source_pid": "GRS9-MCH",
+  "captured": "2026-09-07",
+  "researcher_question": "Was Adelaida (Adela) Martínez, wife of Rufino Moreira of Dolores, Soriano, the daughter of Juan Martínez and Dolores Bilares, or of Juan Martínez and Josefa Segovia as the tree records?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1870s",
+    "geography": "UY"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 29, hint-samples.csv row 938, flag adds_mother, confidence 3). Draft transcribed from an 1879 Uruguayan civil registration entry; unverified. The record's date is impossible for this couple, so establish what the record is before ruling on the mother."
+}
