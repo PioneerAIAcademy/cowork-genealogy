@@ -361,7 +361,8 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 # staged, per tool. Both are exported from the compiled build so this harness
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
-# against a shape production never sends (#1826, #2009). `external_links_search`
+# against a shape production never sends (#1826, #2009 — both now covered by
+# the compactors below, not by a Python mirror). `external_links_search`
 # stages but compacts nothing, so it is absent here by design.
 _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
