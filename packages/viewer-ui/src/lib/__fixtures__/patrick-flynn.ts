@@ -550,7 +550,7 @@ export const patrickFlynnGedcomx: GedcomxData = {
   persons: [
     {
       id: 'I1',
-      ark: 'https://familysearch.org/ark:/61903/4:1:KGS8-LY1',
+      ark: 'ark:/61903/4:1:KGS8-LY1',
       gender: 'Male',
       names: [
         {
