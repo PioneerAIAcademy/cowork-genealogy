@@ -1,0 +1,19 @@
+{
+  "id": "gust-huhtala-spouse",
+  "name": "Gust Johs Huhtala — wife Lisa Jöransdotter and son Jöran (b. 1820, Kauhava)",
+  "genre": "record-hint",
+  "source_pid": "K46D-YPY",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Gust Johs Huhtala of Kauhava, Vaasa have a son Jöran, born 3 February 1820 to a wife named Lisa Jöransdotter — or does that baptism belong to a different Huhtala household?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1820s",
+    "geography": "FI"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 10, hint-samples.csv row 356, flag adds_spouse, confidence 3). Draft transcribed from an 1820 Finnish baptismal index entry; unverified. Two independent objections — an impossible birth interval and a different patronymic — point at a second Huhtala household."
+}

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_adelaida_martinez_mother",
+    "objective": "Was Adelaida (Adela) Martínez, wife of Rufino Moreira of Dolores, Soriano, the daughter of Juan Martínez and Dolores Bilares, or of Juan Martínez and Josefa Segovia as the tree records?",
+    "subject_person_ids": [
+      "GRS9-MCH"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
