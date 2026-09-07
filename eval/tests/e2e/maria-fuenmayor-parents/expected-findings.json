@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "María Concepción Fuenmayor was the daughter of Juan Fuenmayor and Graciliana Fuenmayor.",
+      "details": {
+        "subject_person": "María Concepción Fuenmayor (GMH9-3BJ)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Juan and Graciliana Fuenmayor"
+        }
+      },
+      "supporting_sources": [
+        "Venezuela, registros parroquiales y diocesanos, 1577-2022 — marriage entry for Eduardo Berrueta and María Tereza Fuenmayor, 13 Jan 1912, naming her parents"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "María Concepción Fuenmayor married Eduardo Berrueta on 13 January 1912 at Maracaibo, Zulia, Venezuela.",
+      "details": {
+        "subject_person": "María Concepción Fuenmayor (GMH9-3BJ)",
+        "fact_type": "Marriage",
+        "date": "13 January 1912",
+        "place": "Maracaibo, Zulia, Venezuela"
+      },
+      "supporting_sources": [
+        "Venezuela, registros parroquiales y diocesanos, 1577-2022 — marriage entry of 13 Jan 1912"
+      ],
+      "required": true
+    }
+  ]
+}

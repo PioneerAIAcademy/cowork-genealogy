@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_research_005",
+    "skill": "research",
+    "name": "Autonomous mode flag triggers research",
+    "type": "positive",
+    "description": "The --autonomous flag is an explicit trigger in the skill description. The user wants unattended GPS research without pausing for clarifying questions.",
+    "tags": ["core-trigger", "autonomous"]
+  },
+  "input": {
+    "user_message": "Research Patrick Flynn's parentage --autonomous",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "--autonomous is a listed trigger for the research orchestrator",
+    "Should proceed without pausing for clarifying questions"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      "question-selection", "locality-guide", "research-plan",
+      "search-records", "record-extraction", "person-evidence",
+      "research-exhaustiveness", "proof-conclusion"
+    ]
+  }
+}

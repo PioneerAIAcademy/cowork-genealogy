@@ -41,7 +41,10 @@ import json
 import sys
 
 # Matched on the basename, so an absolute or relative path is caught alike.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
+# diffs against (issue #1490); a raw overwrite of it would defeat the gate the
+# same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
@@ -155,8 +158,8 @@ OWNER_REASON = (
 
 DECLARATION_REASON = (
     "Declaring a question exhaustive from here is disabled — `{field}` with "
-    "`declared: true` is owned by the {agent} agent, which applies the five "
-    "threshold questions and the 7-point stop criteria this claim rests on. "
+    "`declared: true` is owned by the {agent} agent, which applies the seven "
+    "stop criteria this claim rests on. "
     "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
     "call. Only the claim is routed — creating a question with "
     "`declared: false`, and recording an honest `declared: false` termination, "

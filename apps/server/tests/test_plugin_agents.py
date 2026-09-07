@@ -16,8 +16,10 @@ Three guards, cheapest first:
 3. ``test_bare_agent_names_are_registered`` — the one that would have caught
    #939. Connects a real SDK client with the hosted options and reads the
    registered agent list out of the init handshake. No model call, so it costs
-   nothing but a process start. Skipped when its prerequisites are absent under
-   an ordinary suite run, and FAILED when ``make agent-smoke`` (``AGENT_SMOKE=1``)
+   nothing but a process start. (A second arm added by issue #1743 bills one
+   session start against a dead MCP stub.) Skipped when its prerequisites are
+   absent under an ordinary suite run, and FAILED when ``make agent-smoke``
+   (``AGENT_SMOKE=1``)
    asked for it by name — a silent skip there is a green suite reporting that a
    check ran when it did not.
 """

@@ -200,7 +200,7 @@ Targets the YAML `description` field on skills and MCP tool definitions. Port of
 
 - **30+ labeled queries (50/50 should-trigger / should-not-trigger).** Per `unit-test-spec.md` §12, the hand-authored corpus targets 10-20 tests per skill — the optimizer fills the gap. The proposer LLM generates synthetic should-trigger / should-not-trigger queries inline at optimization time using the skill's SKILL.md, current rubric, and existing test patterns as seed material. Synthetic queries are **ephemeral**: they live in memory during the optimization run, are not checked into `eval/tests/unit/`, and do not need to pass through the senior review queue. If a synthetic query surfaces a useful boundary case the hand-authored corpus missed, a junior can promote it into a regular test afterward.
 - 60/40 stratified train/test split (stratified by should-trigger vs should-not-trigger)
-- 3 runs per query for variance (override `runs_per_test: 3` on the tests being scored against during the pass; revert to N=1 afterward — see `unit-test-spec.md` §7)
+- 3 runs per query for variance — **ruled out.** `runs_per_test` is pinned to 1 as standing policy; the schema caps it at 1 and the loader rejects anything higher, so an optimizer pass cannot buy variance this way. See "Variance: runs per test" in `unit-test-spec.md`.
 - 5 iterations max per pass
 - Per iteration: proposer LLM generates candidate from failed-trigger and false-trigger lists; evaluator scores; argmax test_score selects winner
 - Stop: two consecutive iterations with no test-score gain

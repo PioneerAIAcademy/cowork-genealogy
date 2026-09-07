@@ -1,7 +1,13 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "../utils/http.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
-import { stageSearchResults } from "../utils/results-staging.js";
+import {
+  stageSearchResults,
+  unloggedStagedSearches,
+  formatUnloggedRefs,
+  UNLOGGED_SEARCHES_NOTE,
+  NIL_SEARCH_NEEDS_LOG_NOTE,
+} from "../utils/results-staging.js";
 import type {
   PlaceExternalLink,
   ExternalLinksSearchResult,
@@ -181,10 +187,35 @@ export async function externalLinksSearchTool(
   if (startYear != null) query.startYear = startYear;
   if (endYear != null) query.endYear = endYear;
 
+  // Read BEFORE this call stages its own response, or the count includes the search
+  // being answered right now. Advisory: never throws, 0 on any failure.
+  const unloggedStaged =
+    input.projectPath !== undefined
+      ? await unloggedStagedSearches(input.projectPath)
+      : [];
+
   const out: ExternalLinksSearchResult = {
     query,
     totalForPlace,
     returned: 0,
+    // Both notes are declared here, ahead of `results`, for the same reason
+    // record_search orders them so: a field after the largest field is the first
+    // thing a size bound drops.
+    ...(unloggedStaged.length > 0
+      ? {
+          unloggedSearches: UNLOGGED_SEARCHES_NOTE.replace(
+            "{n}",
+            String(unloggedStaged.length),
+          ).replace("{refs}", formatUnloggedRefs(unloggedStaged.map((s) => s.ref))),
+        }
+      : {}),
+    // Keyed on the PRE-FILTER set. `results` below is host-filtered and capped, so a
+    // `host:` search against a place whose links are all on other hosts returns an
+    // empty `results` with a non-null `staged` — telling the model to record a
+    // negative finding there would deny a place that has records.
+    ...(input.projectPath !== undefined && allLinks.length === 0
+      ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
+      : {}),
     results: [],
   };
 

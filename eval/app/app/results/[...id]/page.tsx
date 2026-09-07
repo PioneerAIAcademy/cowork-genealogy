@@ -655,9 +655,9 @@ function GradesPane({
         </Group>
         {/* Agree All is hidden on a sampled test. Sampling cut the pass ~3x
             precisely so the remaining cells get read; a one-click agree on the
-            five tests that matter reproduces the 91.4%-silent-confirm corpus at
-            a fifth the size. It stays available on unsampled tests, which are
-            optional and where a bulk agree costs nothing. */}
+            handful of tests that matter reproduces the 91.4%-silent-confirm
+            corpus at a fraction of the size. It stays available on unsampled
+            tests, which are optional and where a bulk agree costs nothing. */}
         {owesComments ? (
           <Tooltip
             label="Sampled tests are reviewed one dimension at a time — each needs a comment."
@@ -1067,7 +1067,7 @@ function TestsPane({
     );
     for (const t of tests) {
       // An unsampled test is not "0 reviewed" — nothing is asked of it. Giving
-      // it a denominator is what would render "5/90 reviewed" on a sample of 5
+      // it a denominator is what would render "6/90 reviewed" on a sample of 6
       // and paint an orange badge on every test the annotator must not open.
       const total = sampled && !sampled.has(t.test_id)
         ? 0
@@ -1172,13 +1172,32 @@ export default function RunLogDetailPage({
   params: Promise<{ id: string[] }>;
 }) {
   const { id } = use(params);
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments; decoding again turns
+  // `%252e%252e` into `..` after normalisation has run. The four route handlers
+  // were fixed; this fifth site was missed.
+  const runLogId = id.join('/');
   const qc = useQueryClient();
 
   const query = useQuery<Detail>({
     queryKey: ['runlog', runLogId],
     queryFn: async () => {
       const res = await fetch(`/api/runlogs/${runLogId}`);
+      if (res.status === 422) {
+        // The annotation file is corrupt (e.g. a temp-name collision spliced
+        // two saves together, or an off-schema file). There is no in-product
+        // repair — explain and give the recovery line, per the
+        // corrupt-annotation guard in eval-crud-ui-spec.md. No delete button:
+        // an unrecoverable destructive action on the annotator's written
+        // comments does not belong on the page where they are already
+        // confused. The route hands us the file path directly.
+        const body = await res.json().catch(() => ({}));
+        const msg: string = body.message ?? 'Annotation file is corrupt.';
+        const filePath: string | undefined = body.filePath;
+        const recovery = filePath
+          ? `\n\nTo recover, delete the corrupt file and re-annotate from the start:\n\n    rm ${filePath}\n\n(Copy it somewhere first if you want to keep the partial content.)`
+          : '';
+        throw new Error(msg + recovery);
+      }
       if (!res.ok) throw new Error(`GET /api/runlogs/${runLogId} → ${res.status}`);
       return res.json();
     },
@@ -1361,13 +1380,17 @@ export default function RunLogDetailPage({
     return <Loader />;
   }
   if (query.isError || !query.data) {
-    return <Alert color="red">{(query.error as Error)?.message ?? 'failed to load'}</Alert>;
+    return (
+      <Alert color="red" style={{ whiteSpace: 'pre-wrap' }}>
+        {(query.error as Error)?.message ?? 'failed to load'}
+      </Alert>
+    );
   }
 
   const log = query.data.runLog;
   const ann = localAnn;
-  // Sampled tests only. Counting every dimension here would render "5/90
-  // reviewed" against a sample of 5 and leave Release permanently disabled
+  // Sampled tests only. Counting every dimension here would render "6/90
+  // reviewed" against a sample of 6 and leave Release permanently disabled
   // while CI is green — the annotator would have no way to finish.
   const sampled = sampledTestIds(log);
   const allDimensions = log.tests

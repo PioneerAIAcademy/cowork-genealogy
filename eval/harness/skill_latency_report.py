@@ -385,6 +385,12 @@ def _diff_paths(before_path: Path, after_path: Path) -> LatencyDiff:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="Per-skill unit-runlog latency report / diff.")
     ap.add_argument("files", nargs="*", help="two run-log paths => diff them")
     ap.add_argument("--skill", help="report the latest run log for this skill")
@@ -447,7 +453,7 @@ def main(argv: list[str] | None = None) -> int:
         # the skill from a one-row-per-skill report, hiding that it needs a re-run.
         sls.sort(key=lambda s: (s.stale_days is not None, s.skill))
         if args.since is not None:
-            print(describe_window(args.since, n_runs=len(sls), n_total=n_total))
+            print(describe_window(args.since, n_runs=len(sls), n_total=n_total, corpus="unit"))
         if (note := describe_stale(stale)):
             print(note)
             print()

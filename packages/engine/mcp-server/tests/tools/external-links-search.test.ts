@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { externalLinksSearchTool } from "../../src/tools/external-links-search.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
-import { stageSearchResults } from "../../src/utils/results-staging.js";
+import {
+  stageSearchResults,
+  unloggedStagedSearches,
+} from "../../src/utils/results-staging.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -13,10 +16,19 @@ vi.mock("../../src/utils/place-resolver.js", () => ({
 
 // The staging util is exercised by tests/utils/results-staging.test.ts; here we
 // only assert the tool calls it correctly and shapes the inline copy around it.
-vi.mock("../../src/utils/results-staging.js", () => ({
-  stageSearchResults: vi.fn(),
-}));
+// Spread the real module so the note CONSTANTS stay real — a hand-written copy here
+// would let the tool's wording drift without any test noticing.
+vi.mock("../../src/utils/results-staging.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../src/utils/results-staging.js")>();
+  return {
+    ...actual,
+    stageSearchResults: vi.fn(),
+    unloggedStagedSearches: vi.fn(),
+  };
+});
 const mockedStage = vi.mocked(stageSearchResults);
+const mockedUnlogged = vi.mocked(unloggedStagedSearches);
 
 // Runs before every test (in addition to the per-describe fetch resets);
 // default the resolver to a successful placeId so existing cases reach fetch.
@@ -24,6 +36,8 @@ beforeEach(() => {
   mockStandardPlaceToPlaceId.mockReset();
   mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
   mockedStage.mockReset();
+  mockedUnlogged.mockReset();
+  mockedUnlogged.mockResolvedValue([]);
 });
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -371,6 +385,60 @@ describe("externalLinksSearchTool — staging, host filter, and inline cap", () 
       returnedCount: 3,
     });
     expect(result.stagingError).toBeUndefined();
+  });
+
+  it("does not ask for a negative log entry when the host filter emptied results but links were staged", async () => {
+    // Round 2's blocking case. `results` is host-filtered and capped; `allLinks` is
+    // what gets staged. Keying the nil note on `results` would order a negative
+    // finding for a place that demonstrably has records on other hosts.
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/abc.json",
+      returnedCount: 3,
+    });
+
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      host: "nosuchsite.example",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.results).toHaveLength(0);
+    expect(result.staged).toBeTruthy();
+    expect(result.nilSearchNeedsLog).toBeUndefined();
+  });
+
+  it("asks for a negative log entry when the place itself has no links at all", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage([]));
+
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.results).toHaveLength(0);
+    expect(result.nilSearchNeedsLog).toContain('outcome: "negative"');
+  });
+
+  it("carries the unlogged-search note when the project holds an unlogged staged search", async () => {
+    mockedUnlogged.mockResolvedValue([
+      { ref: "results/.staging/stale0.json", tool: "external_links_search", retrieved: new Date().toISOString() },
+      { ref: "results/.staging/stale1.json", tool: "external_links_search", retrieved: new Date().toISOString() },
+    ]);
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    mockedStage.mockResolvedValueOnce({
+      resultsRef: "results/.staging/abc.json",
+      returnedCount: 3,
+    });
+
+    const result = await externalLinksSearchTool({
+      standardPlace: "Pennsylvania, United States",
+      projectPath: "/tmp/project",
+    });
+
+    expect(result.unloggedSearches).toContain("2 earlier staged search");
+    const keys = Object.keys(result);
+    expect(keys.indexOf("unloggedSearches")).toBeLessThan(keys.indexOf("results"));
   });
 
   it("host filter narrows the inline results while the full set is still staged", async () => {

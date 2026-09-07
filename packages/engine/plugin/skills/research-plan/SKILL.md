@@ -329,6 +329,14 @@ Order items for efficient discovery (BCG Standard 15):
    reveals *about the subject*. On those three question types at least one FAN
    item is mandatory. Everywhere else it is not a quota — if no associate could
    speak to this question, don't manufacture one
+7. **Prioritize the objective's target record** — when the objective explicitly
+   requests a particular record type and provides the jurisdiction needed to
+   search for it, that record is the first research target. Do not prioritize
+   indirect sources whose primary purpose is to re-establish information the
+   objective already supplies. Corroborating and supporting records remain in
+   the plan, but normally follow the target record rather than acting as a
+   prerequisite to searching it. Exceptions are appropriate when identity,
+   jurisdiction, or record availability remain uncertain
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
@@ -439,8 +447,10 @@ supersession only by updating the prior plan's `status` to
 
 ### 6. Handle re-planning
 
-If a previous plan for this question exists and all items are searched
-but the question remains unresolved:
+If a previous plan for this question exists and either all its items are
+searched but the question remains unresolved, or new information has
+invalidated its assumptions while items are still unfinished (Step 1a,
+supersede mode):
 
 1. Supersede the old plan with an `update`:
 
@@ -458,7 +468,10 @@ but the question remains unresolved:
 
 2. Create a new plan (Step 5) targeting what the old missed —
    different repositories, jurisdictions, record types, FAN or
-   contextual sources. Reference the old plan in the rationale.
+   contextual sources. Reference the old plan in the rationale. When
+   superseding a plan with unfinished items, **carry forward every
+   `planned` item the new information does not invalidate**: an item left
+   behind on the superseded plan is never executed again.
 
 Never modify a superseded plan — it is part of the audit trail. Status
 transitions (`planned → in_progress → completed`) on existing items are
@@ -539,9 +552,11 @@ plan is marked `superseded`.
 assume a fresh plan. If an `active` plan already exists for the
 question, default to **review** (recap status and the next item);
 create a **new** plan only when the prior plan is `completed`; mark the
-old plan `superseded` and write a new `pl_` entry only when the user is
-explicitly re-planning. Never edit a `completed` or `superseded` plan's
-items in place.
+old plan `superseded` and write a new `pl_` entry whenever new information
+invalidates the active plan's assumptions (Step 1a, supersede mode) — the user
+saying so is one such trigger, not the only one, and under `--autonomous` a
+sub-skill reporting it is another. Never edit a `completed` or `superseded`
+plan's items in place.
 
 **Do not duplicate:** never leave two `pl_` entries with
 `status: "active"` for the same research question — the audit-trail

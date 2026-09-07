@@ -42,6 +42,12 @@ export interface ExternalLinksSearchResult {
   // cap. Equal to `results.length`; surfaced explicitly so a capped/filtered
   // response is self-describing alongside `totalForPlace`.
   returned: number;
+  // Set when this project holds staged search responses with no research.json log
+  // entry (issue #2056). Advisory — refuses nothing.
+  unloggedSearches?: string;
+  // Set when the PRE-FILTER link set was empty on a `projectPath` search — a genuine
+  // nil for that place and year window, not merely a host filter that matched none.
+  nilSearchNeedsLog?: string;
   results: PlaceExternalLink[];
   // Host-side staging handle (search-result-staging-spec.md). Present only when
   // `projectPath` was supplied and the pre-filter set was non-empty. The staged

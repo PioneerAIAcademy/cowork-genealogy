@@ -37,7 +37,7 @@ there.
 | `make judge-report` | `scripts\windows\judge-report.bat` | Non-discrimination scan of the unit eval judge over committed run logs (no API calls) |
 | `make harness-test` | `scripts\windows\harness-test.bat` | Eval harness tests (pytest) |
 | `make harness-lint` | `scripts\windows\harness-lint.bat` | Harness ruff check |
-| `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration smoke test |
+| `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration + dead-stub abort smoke test |
 | `make deploy-status` | `scripts\windows\deploy-status.bat` | Health-check the deployed control plane |
 
 Pass parameters as environment variables, the same names the make targets use:

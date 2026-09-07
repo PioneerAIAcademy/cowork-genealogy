@@ -18,8 +18,8 @@ tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
   # it: `genealogy` (.mcp.json, both harnesses, hosted web);
-  # `remote-devices__Genealogy_Research` (Cowork in the cloud, via the bridge);
-  # `Genealogy_Research` (Cowork on this computer, no bridge). The latter two
+  # `remote-devices__Genealogy_Research` (Cowork, via the remote-device bridge);
+  # `Genealogy_Research` (Cowork, bare display_name spelling). The latter two
   # derive from manifest.json's display_name, spaces → underscores. Entries are
   # matched EXACTLY with no prefix fallback. Unrecognized entries are ignored as
   # long as one resolves; when ALL of them miss, the runtime refuses to spawn the
@@ -811,10 +811,7 @@ copy first; check the echoed `resolvedPlaces`), validates once, and
 writes both files. **Never predict an id; never call `tree_edit` for the
 source; never write `research.json` or `tree.gedcomx.json` directly** —
 direct writes bypass validation, id allocation, and the `.bak` safety
-net. If a persistence tool shows as deferred, load it via ToolSearch
-first — search by **bare** tool name (`query: "+extraction_append"`),
-never by a hardcoded fully-qualified name, since the MCP server prefix
-differs per deployment.
+net.
 
 **Source reuse is tool-detected.** Always supply `sourceDescription` —
 the tool detects when this record already has a source (same

@@ -102,6 +102,14 @@ Then **fully quit and reopen Claude Desktop.** Cowork runs the uploaded `.zip`,
 not your working tree — skip the rebuild and your fix will look like it did
 nothing.
 
+After reinstalling the plugin, ask the Cowork session: *"List every tool
+available to you, with names spelled exactly as you see them."* If the genealogy
+tools carry a prefix that appears in no agent's `tools:` list, stop — every
+plugin agent is being refused a spawn and every `disallowedTools:` deny is open —
+and file an issue with `--label nothing-checks`. This one prompt is the only known
+detector that the Cowork MCP registrar has moved (ADR-0004); nothing in CI reaches
+Cowork in any run mode.
+
 ---
 
 ## The steps
@@ -304,17 +312,21 @@ has nothing to compare to.
 > again.
 
 Now read the **sampled** tests and correct the judge. The sidebar marks the
-rest `not sampled` — five tests per run get reviewed, not all of them, and the
-Release button only waits on those five. The UI pre-fills every dimension with
+rest `not sampled` — a handful of tests per run get reviewed, not all of them,
+and the Release button only waits on those. Five are chosen for you, and **every
+test that failed — or scored a 1 or 2 on any dimension — is added**, so a run
+with a low score anywhere is more than five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
 - **Change the score** only on dimensions you actually **disagree** with.
 - **Write a comment on every sampled dimension that isn't a clean pass** — any
   score you change, and any 1 or 2 you agree with. A confirmed pass or a
   confirmed N/A — the judge said 3, or said the dimension didn't apply, and you
-  agree — needs nothing. CI blocks the rest. In practice that is
-  about three sentences a run, and they are the whole point of reviewing five
-  tests properly instead of clicking through all twenty.
+  agree — needs nothing. CI blocks the rest. In practice that is a median of
+  three sentences a run — most cells of a failed test still passed — but about
+  a third of runs owe more than five and a bad one can owe a dozen. They are
+  the whole point of reviewing a few tests properly instead of clicking through
+  all twenty.
 
 That second one is the part people skip, and it's what makes the difference in
 step 5. The improver only proposes a body edit when a problem either recurs

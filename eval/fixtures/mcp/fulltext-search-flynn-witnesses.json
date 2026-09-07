@@ -76,7 +76,7 @@
     }
   },
   "response": {
-    "query": { "keywords": "+Flynn", "recordPlace1": "Pennsylvania", "recordPlace2": "Schuylkill" },
+    "query": { "keywords": "+Flynn" },
     "totalResults": 1,
     "returned": 1,
     "offset": 0,

@@ -29,3 +29,13 @@ Did the skill log negative results with enough detail to support exhaustiveness 
 - **pass:** Either (a) all executed searches returned results (nothing to grade), OR (b) the negative log entries capture the collections searched, the queries used, and what was examined (e.g., "0 results for 'Flynn' in the 1900 census Pennsylvania state-wide index, plus a 100-result browse of Schuylkill County images").
 - **partial:** At least one search returned zero results AND the negative entry captures the query but not the breadth of the search (no mention of how many results were examined, or which collections were skipped).
 - **fail:** At least one search returned zero results AND the negative entry is bare ("nothing found") with no detail that would support a future exhaustive-search declaration.
+
+## Result triage
+
+Did the skill triage returned results using the fields the tool actually returns, and correctly recognize what a staged result can and cannot tell it? A staged fulltext result carries only flat stubs — `names`, `places`, `dates`, `highlightTerms` (the matched terms as bare strings), `title`, `recordType`, `recordPlace`, `recordDate`; the full transcript (`textDocument`) is stripped from the tool response and no MCP tool reads it back, though it remains on disk at `staged.resultsRef`.
+
+**This dimension fires only when at least one executed search returned results. When every search was nil, there is nothing to triage — score `pass`.**
+
+- **pass:** For returned results, the skill assesses match quality from the stub fields (is the target in `names`/`highlightTerms`; are `recordPlace`/`recordDate`/`places`/`dates` consistent with the person) and, for the "genuine mention vs. false positive" judgment, defers to verifying against the original image rather than claiming to settle context from the staged result. It does not instruct reading a `textDocument` that staging has removed.
+- **partial:** Triage is broadly right but leans on a field the staged result does not carry (e.g. reasons about transcript context as though `textDocument` were present), or omits the place/date consistency check when the results warranted it.
+- **fail:** No triage of match quality at all (results passed through undifferentiated), or the stated method is premised on the stripped `textDocument` or on a relevance score the tool does not return — so it cannot actually be executed. Reading the transcript back from `staged.resultsRef` is not a fail.

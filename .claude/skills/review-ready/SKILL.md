@@ -37,9 +37,10 @@ gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
 ## 1. Pick the candidates
 
 **The normal case is `fill-ready`'s shortlist, before it promotes.** Its verdicts
-feed that decision: a `senior` or `needs-a-decision` item never enters the
-unassigned pool, so it is never promoted and then swapped back out. Reviewing
-after promotion costs the same issue two deep reads — see the spec, §2.
+feed that decision: a `needs-a-decision` item never enters the unassigned pool,
+so it is never promoted and then swapped back out. A `senior` item does enter it
+— it ranks in its lane's pool like anything else. Reviewing after promotion costs
+the same issue two deep reads — see the spec, §2.
 
 Other entry points:
 

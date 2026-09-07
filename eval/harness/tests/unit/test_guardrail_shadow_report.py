@@ -34,6 +34,8 @@ from e2e.guardrail_shadow_report import (
     scan_one,
     scan_unnamed_delegate,
     format_unnamed_delegate,
+    scan_tree_encoding,
+    format_tree_encoding,
     UnnamedDelegateScan,
 )
 from harness.skill_invocation import (
@@ -41,6 +43,7 @@ from harness.skill_invocation import (
     TREE_CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
     PERSON_EVIDENCE_DENY_KIND,
+    TREE_ENCODING_KIND,
     WARNINGS_UNCHECKED_KIND,
 )
 
@@ -1042,6 +1045,123 @@ def test_format_unnamed_delegate_always_prints_the_attribution_denominator():
     plain = format_unnamed_delegate(scan, replay=False)
     assert "replayed over tool_calls" not in plain
     assert "of 20 run(s) that carry any caller attribution at all" in plain
+
+
+# --- tree-encoding shadow check (issue #1490) --------------------------------
+
+
+def _write_te_fixture(root, slug, seed_persons):
+    """A fixture whose starting-tree carries full person dicts (with facts), so a
+    test can control what counts as seeded vs newly encoded."""
+    d = root / "eval" / "tests" / "e2e" / slug
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "starting-tree.gedcomx.json").write_text(
+        json.dumps({"persons": seed_persons, "relationships": []}), encoding="utf-8"
+    )
+    return d
+
+
+def _te_research(*, tier="probable", status="completed"):
+    """A completed project with one tier->=-probable conclusion whose supporting
+    assertion has person_evidence pointing at person I1."""
+    return {
+        "project": {"id": "rp_001", "status": status, "subject_person_ids": ["I1"]},
+        "proof_summaries": [
+            {"id": "ps_001", "question_id": "q_001", "tier": tier, "supporting_assertion_ids": ["a_001"]}
+        ],
+        "person_evidence": [{"id": "pe_001", "assertion_id": "a_001", "person_id": "I1"}],
+        "questions": [{"id": "q_001", "question": "When was I1 born?"}],
+    }
+
+
+def test_replay_tree_encoding_fires_when_the_conclusion_added_no_structure(tmp_path):
+    # Seed already carries I1 with a Birth fact; the final tree is identical, so
+    # the completed tier=probable conclusion encoded nothing new -> one violation.
+    seed = [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    final_tree = {"persons": seed, "relationships": []}
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[], research=_te_research(), tree=final_tree
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert len(rep.tree_encoding.violations) == 1
+    assert rep.tree_encoding.violations[0]["kind"] == TREE_ENCODING_KIND
+    assert rep.tree_encoding.runs_scanned == 1
+    assert rep.tree_encoding.skipped == []
+
+
+def test_replay_tree_encoding_silent_when_the_subject_gained_a_fact(tmp_path):
+    # Same conclusion, but the final tree adds a NEW fact for I1 that the seed
+    # lacked -> the conclusion was encoded, so no violation. This is the control
+    # that proves the check reads the seed diff, not the mere presence of a fact.
+    seed = [{"id": "I1", "facts": []}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    final_tree = {
+        "persons": [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}],
+        "relationships": [],
+    }
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[], research=_te_research(), tree=final_tree
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.tree_encoding.violations == []
+    assert rep.tree_encoding.runs_scanned == 1
+
+
+def test_replay_tree_encoding_silent_on_a_non_completed_project(tmp_path):
+    # An in-progress project has not reached the completion gate this measures.
+    seed = [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[],
+        research=_te_research(status="active"), tree={"persons": seed, "relationships": []},
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.tree_encoding.violations == []
+
+
+def test_replay_tree_encoding_silent_below_probable_tier(tmp_path):
+    # possible / not_proved / disproved warrant no tree write, so never flagged.
+    seed = [{"id": "I1", "facts": [{"type": "Birth", "standard_date": "+1850"}]}]
+    fixtures = _write_te_fixture(tmp_path, "fx", seed).parent
+    p = _write_posthoc_run(
+        tmp_path, "fx", "run-1.json", tool_calls=[],
+        research=_te_research(tier="possible"), tree={"persons": seed, "relationships": []},
+    )
+    rep = replay_post_hoc([p], fixtures_root=fixtures)
+    assert rep.tree_encoding.violations == []
+
+
+def test_scan_tree_encoding_reads_stored_kind(tmp_path):
+    # The STORED scan reads what a run recorded, keyed on the kind.
+    d = tmp_path / "eval" / "runlogs" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "run-1.json").write_text(
+        json.dumps(
+            {"guardrail_shadow_violations": [{"kind": TREE_ENCODING_KIND, "detail": "x", "question_type": "marriage"}]}
+        ),
+        encoding="utf-8",
+    )
+    got = scan_tree_encoding([d / "run-1.json"])
+    assert len(got) == 1
+    assert got[0]["question_type"] == "marriage"
+
+
+def test_format_tree_encoding_prints_the_count_and_per_type_breakdown():
+    # The per-type breakdown is the point (issue #1490): an aggregate rate can
+    # hide a type that is mostly false flags. Dropping it must fail here.
+    out = format_tree_encoding(
+        [
+            {"file": "a", "question_type": "parentage"},
+            {"file": "a", "question_type": "marriage"},
+            {"file": "b", "question_type": None},
+        ]
+    )
+    assert "3 tier->=-probable conclusion(s)" in out
+    assert "across 2 run(s)" in out  # two distinct files
+    assert "parentage: 1" in out
+    assert "marriage: 1" in out
+    assert "unclassified: 1" in out
 
 
 # --- scan/format tree citation-nulling (issue #1358) --------------------------

@@ -28,6 +28,7 @@
     }
   },
   "response": {
+    "query": { "keywords": "+Naveda" },
     "totalResults": 3,
     "returned": 3,
     "offset": 0,

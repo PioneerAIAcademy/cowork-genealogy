@@ -1,0 +1,685 @@
+{
+  "persons": [
+    {
+      "id": "KK3W-WLT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Patrick",
+          "surname": "Hoban"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b792e957-c745-499b-acc1-bf8c6df7d4f2",
+          "type": "Birth",
+          "date": "1836",
+          "standard_date": "1836",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "ef502d86-9863-4609-9f76-d40be0755c16",
+          "type": "Residence",
+          "date": "1868",
+          "standard_date": "1868",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "d71343e3-0a67-455f-a071-90c45c832671",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        }
+      ]
+    },
+    {
+      "id": "KK3W-WLP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Thomas Patrick",
+          "surname": "Hobin"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b0364ae0-537f-4bae-82a2-99bee5a55d26",
+          "type": "Birth Registration",
+          "date": "11 Feb 1873",
+          "standard_date": "11 Feb 1873",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "11 Feb 1873",
+          "standard_date": "11 Feb 1873",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "c08801f2-26c9-4dad-adf8-6e195a18a18e",
+          "type": "Baptism",
+          "date": "20 Feb 1873",
+          "standard_date": "20 Feb 1873",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "acf1b5e3-7e3d-4785-aa70-1d5b06bd574a",
+          "type": "Residence",
+          "date": "1873",
+          "standard_date": "1873",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "23ddbe2f-ffba-46a5-b360-d0510971c555",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KK3W-WLB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Catherine",
+          "surname": "Donovan"
+        }
+      ],
+      "facts": [
+        {
+          "id": "42108809-46c3-42dc-90ec-269272fc40c2",
+          "type": "Birth",
+          "date": "1847",
+          "standard_date": "1847"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M883-ZHH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Margaret",
+          "surname": "Kilfoyle"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1808",
+          "standard_date": "Abt 1808",
+          "place": ",, Kilkenny, Ireland",
+          "standard_place": "County Kilkenny, Ireland"
+        },
+        {
+          "id": "9de466fe-17d5-4df9-8ac7-9275bba46154",
+          "type": "Death",
+          "date": "28 April 1860",
+          "standard_date": "28 Apr 1860",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        }
+      ]
+    },
+    {
+      "id": "LTCH-PLH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Mary May Margaret",
+          "surname": "Hobin"
+        }
+      ],
+      "facts": [
+        {
+          "id": "90bb734e-b942-4caf-9a42-0bb1b586adb1",
+          "type": "Baptism",
+          "date": "10 May 1816",
+          "standard_date": "10 May 1816",
+          "place": "Nova Scotia, British Colonial America",
+          "standard_place": "Nova Scotia, British North America"
+        },
+        {
+          "id": "1d0db607-060f-47ac-a6aa-2ba03e03ca35",
+          "type": "Birth",
+          "date": "1 May 1875",
+          "standard_date": "1 May 1875",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "efe8bc7d-6c2a-4133-b1b8-158ff9143694",
+          "type": "Baptism",
+          "date": "10 May 1875",
+          "standard_date": "10 May 1875",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "90aed28e-9414-4ac2-8f37-736d8ddc1552",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "9bf21561-4c85-4f39-9af2-a59a78c12064",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Ward 5, Halifax City, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "52317675-6c4a-402c-9416-a62492c9191e",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Halifax Sub-Districts 29-92, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "25d52eef-c0df-447d-a138-1410521580ee",
+          "type": "Residence",
+          "date": "1 Jun 1921",
+          "standard_date": "1 Jun 1921",
+          "place": "City of Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "987dc3f7-9963-4dd8-b0ba-79ff4333c2e0",
+          "type": "Death",
+          "date": "14 December 1943",
+          "standard_date": "14 Dec 1943",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        }
+      ]
+    },
+    {
+      "id": "M883-3ZN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Richard",
+          "surname": "Hobin"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f3ec83e9-394d-433d-b442-9012b2969b8f",
+          "type": "Birth",
+          "date": "about 1803",
+          "standard_date": "Abt 1803",
+          "place": "County Kilkenny, Ireland",
+          "standard_place": "County Kilkenny, Ireland"
+        },
+        {
+          "id": "23b08c61-2749-4989-b7c2-54c643e726a1",
+          "type": "Death",
+          "date": "about 30 July 1849",
+          "standard_date": "Abt 30 Jul 1849",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        }
+      ]
+    },
+    {
+      "id": "G4TT-T38",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "John William",
+          "surname": "Hobin"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3b2b6047-46ed-4049-bedc-49ae1da3e209",
+          "type": "Birth",
+          "date": "31 Dec 1870",
+          "standard_date": "31 Dec 1870",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "0968521f-7d7b-4686-bb37-de1f01e600f5",
+          "type": "Baptism",
+          "date": "7 Jan 1871",
+          "standard_date": "7 Jan 1871",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "f0101b05-b6b1-40a4-ae85-7d1ebd2e1c8d",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "a493120c-ae6a-4563-b2bf-364e6a61271a",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KLLM-GGD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Richard Patrick",
+          "surname": "Hobin"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fb617290-49a5-41ca-bd21-6c2b34811fbf",
+          "type": "Baptism",
+          "date": "23 October 1868",
+          "standard_date": "23 Oct 1868",
+          "place": "Nova Scotia, Canada",
+          "standard_place": "Nova Scotia, Canada"
+        },
+        {
+          "id": "96ddcdeb-f20d-4c31-919d-2d537da65c02",
+          "type": "Birth",
+          "date": "14 October 1869",
+          "standard_date": "14 Oct 1869",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "f8222801-d567-4bc7-a9c7-ab8317ef2076",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "7fc22100-8c9d-425d-ad52-edbac534a1e9",
+          "type": "Residence",
+          "date": "1890",
+          "standard_date": "1890",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "601b90de-caec-48c4-b070-fd05cf884296",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Ward 5a, Halifax City, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "3fce12af-2a79-49cb-a578-04af1d2eceee",
+          "type": "Residence",
+          "date": "31 March 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "fa6fe287-69df-49e4-8b2f-24098fc0534b",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, Canada"
+        },
+        {
+          "id": "38d79fe1-0760-4c91-bafb-e2f494d1efa9",
+          "type": "Residence",
+          "date": "1 June 1931",
+          "standard_date": "1 Jun 1931",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, Canada"
+        },
+        {
+          "id": "fe120064-9167-42fa-a281-5a7aec2a8723",
+          "type": "Death",
+          "date": "5 February 1934",
+          "standard_date": "5 Feb 1934",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "1e211abc-aa46-4784-b8a5-a9e366be27f9",
+          "type": "Burial",
+          "date": "7 February 1934",
+          "standard_date": "7 Feb 1934",
+          "place": "Mount Olivet Cemetery, Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Mount Olivet Cemetery, Halifax, Halifax, Nova Scotia, British North America"
+        },
+        {
+          "id": "ff3dea0b-6e0b-4f27-9f39-29546f338c7a",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "0f6f22ce-c255-4261-a779-08bab92e76aa",
+          "type": "Nationality",
+          "value": "Canada"
+        },
+        {
+          "id": "1f555485-6c91-4a5f-8efd-bd4397f56682",
+          "type": "Occupation",
+          "value": "Checker"
+        },
+        {
+          "id": "ab300b4a-721b-49e8-97bf-df8d73071e47",
+          "type": "Ethnicity",
+          "value": "Irish"
+        },
+        {
+          "id": "fcbe427f-dcc1-4885-bacb-564f5160b6b8",
+          "type": "Religion",
+          "value": "Rc"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KK3W-WLT",
+      "person2": "KK3W-WLB",
+      "facts": [
+        {
+          "id": "2fad2c3e-1c04-4516-ade1-d9e3601ad5f8",
+          "type": "Marriage",
+          "date": "18 November 1867",
+          "standard_date": "18 Nov 1867",
+          "place": "Halifax, Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Halifax, Nova Scotia, British North America"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "M883-3ZN",
+      "person2": "M883-ZHH",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "13 September 1829",
+          "standard_date": "13 Sep 1829",
+          "place": "Halifax, Nova Scotia, Canada",
+          "standard_place": "Halifax, Nova Scotia, British North America"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "M883-3ZN",
+      "child": "KK3W-WLT"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "M883-ZHH",
+      "child": "KK3W-WLT"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KK3W-WLT",
+      "child": "KLLM-GGD"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KK3W-WLB",
+      "child": "KLLM-GGD"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KK3W-WLT",
+      "child": "G4TT-T38"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KK3W-WLB",
+      "child": "G4TT-T38"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KK3W-WLT",
+      "child": "KK3W-WLP"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KK3W-WLB",
+      "child": "KK3W-WLP"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "KK3W-WLT",
+      "child": "LTCH-PLH"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "KK3W-WLB",
+      "child": "LTCH-PLH"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1FT-7DH",
+      "title": "Patrick Hobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D3SK-ZGPZ : Sat Mar 09 05:03:57 UTC 2024), Entry for Richard Michael Hobin and Patrick Hobin, 23 Oct 1868.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D3SK-ZGT2"
+    },
+    {
+      "id": "SLS4-VKC",
+      "title": "Patrick Hobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4Y62-2G6Z : Wed Mar 06 21:03:37 UTC 2024), Entry for Richard Hobin and Patrick Hobin, 6 Oct 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4Y62-2GN2"
+    },
+    {
+      "id": "S1FR-KN3",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DSXQ-GZ6Z : Sun Mar 10 03:43:45 UTC 2024), Entry for Patrick Hoban and Richard Hoban, 18 Nov 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DSXQ-GZ6Z"
+    },
+    {
+      "id": "3LL3-F68",
+      "title": "Patrick Hober, \"Canada, Nova Scotia, Deaths, 1890-1955\"",
+      "citation": "\"Canada, Nova Scotia, Deaths, 1890-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK99-TT7B : Fri Jan 17 12:06:13 UTC 2025), Entry for Mary May Rafter and Patrick Hober, 14 Dec 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK99-TT71"
+    },
+    {
+      "id": "3PZZ-RZP",
+      "title": "Michael Thomas Hobin, \"Canada, Nova Scotia, Deaths, 1890-1955\"",
+      "citation": "\"Canada, Nova Scotia, Deaths, 1890-1955\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK99-PNQ2 : Tue Jan 21 19:22:06 UTC 2025), Entry for Richard Patrick Hobin and Michael Thomas Hobin, 05 Feb 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK99-PNQL"
+    },
+    {
+      "id": "MRVQ-2JP",
+      "title": "Patrick Hoban, \"Canada, Marriages, 1661-1949\"",
+      "citation": "\"Canada, Marriages, 1661-1949\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XL58-SXH : 1 February 2020), Patrick Hoban, 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XL58-SXH"
+    },
+    {
+      "id": "S1FT-MN7",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CYTN-816Z : Thu Mar 07 03:25:36 UTC 2024), Entry for John William Hobin and Patrick Hoban, 7 Jan 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CYTN-81N2"
+    },
+    {
+      "id": "S1FT-SSK",
+      "title": "Patrick Hobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CY4B-XVMM : Fri Mar 08 03:52:20 UTC 2024), Entry for Mary Margaret Hobin and Patrick Hobin, 10 May 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CY4B-XV3Z"
+    },
+    {
+      "id": "S1FR-YNZ",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Vital Records, 1763-1957\"",
+      "citation": "\"Canada, Nova Scotia, Vital Records, 1763-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KMLR-9D8 : Wed Oct 15 22:50:30 UTC 2025), Entry for Patrick Hoban and Catherine Donavan, 1868.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KMLR-9D8"
+    },
+    {
+      "id": "S1FT-9DC",
+      "title": "Patrick Hobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:417B-HQN2 : Fri Mar 08 03:52:19 UTC 2024), Entry for Mary May Margaret Hobin and Patrick Hobin, 10 May 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:417B-HQ2M"
+    },
+    {
+      "id": "S1FT-816",
+      "title": "Patk Hoban, \"Canada, Nova Scotia, Births, 1864-1877\"",
+      "citation": "\"Canada, Nova Scotia, Births, 1864-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WQXB-KR2M : Sat Mar 09 14:53:55 UTC 2024), Entry for Thomas P Hoban and Patk Hoban, 11 Feb 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WQXB-KRPZ"
+    },
+    {
+      "id": "S1FR-G9D",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Marriages, 1864-1918\"",
+      "citation": "\"Canada, Nova Scotia, Marriages, 1864-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W4YS-94N2 : Sun Mar 10 17:19:38 UTC 2024), Entry for Patrick Hoban and Richd Hoban, 18 Nov 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W4YS-94N2"
+    },
+    {
+      "id": "S1FT-4LQ",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Births, 1864-1877\"",
+      "citation": "\"Canada, Nova Scotia, Births, 1864-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W3HM-7HPZ : Thu Mar 07 17:05:14 UTC 2024), Entry for Thomas P Hoban and Patrick Hoban, 11 Feb 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W3HM-7HT2"
+    },
+    {
+      "id": "S1FY-4DL",
+      "title": "Patrick Hobin, \"Canada, Census, 1881\"",
+      "citation": "\"Canada, Census, 1881\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MV6L-YMG : Sun Mar 10 18:46:10 UTC 2024), Entry for Patrick Hobin and Richard Hobin, 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MV6L-YMG"
+    },
+    {
+      "id": "7T3H-1XR",
+      "title": "Patrick Hobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6C1M-V1RY : Fri Mar 08 19:51:26 UTC 2024), Entry for Richard Hobin and Patrick Hobin, 6 Oct 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6C1M-V1RB"
+    },
+    {
+      "id": "S1FR-5C9",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Marriages, 1864-1918\"",
+      "citation": "\"Canada, Nova Scotia, Marriages, 1864-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WHMT-NGW2 : Sun Mar 10 12:58:56 UTC 2024), Entry for Patrick Hoban and Richard Hoban, 18 Nov 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WHMT-NGW2"
+    },
+    {
+      "id": "S1FR-Y1N",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Marriages, 1864-1918\"",
+      "citation": "\"Canada, Nova Scotia, Marriages, 1864-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DX6P-6YT2 : Sun Mar 10 17:19:42 UTC 2024), Entry for Patrick Hoban and Rich'd. Hoban, 18 November 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DX6P-6YT2"
+    },
+    {
+      "id": "S1FT-SNQ",
+      "title": "Patrick, \"Canada, Nova Scotia, Marriages, 1864-1918\"",
+      "citation": "\"Canada, Nova Scotia, Marriages, 1864-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:DXXM-LPW2 : Sun Mar 10 05:55:12 UTC 2024), Entry for Richard Hobin and Patrick, 6 October 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DXXM-LPZM"
+    },
+    {
+      "id": "S1FT-QVP",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Births, 1864-1877\"",
+      "citation": "\"Canada, Nova Scotia, Births, 1864-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WSJL-GP6Z : Sun Mar 10 20:01:53 UTC 2024), Entry for Thomas P Hoban and Patrick Hoban, 11 Feb 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WSJL-GPN2"
+    },
+    {
+      "id": "SLSH-CPX",
+      "title": "Patrick, \"Canada, Nova Scotia, Marriages, 1864-1918\"",
+      "citation": "\"Canada, Nova Scotia, Marriages, 1864-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WQRQ-M7N2 : Sun Mar 10 05:55:14 UTC 2024), Entry for Richard Hobin and Patrick, 6 Oct 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WQRQ-M72M"
+    },
+    {
+      "id": "SLSH-ZV3",
+      "title": "Patrick in entry for Richard Hobin, \"Canada, Marriages, 1661-1949\"",
+      "citation": "\"Canada, Marriages, 1661-1949\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2GH-9CQ : 1 February 2020), Patrick in entry for Richard Hobin, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2GH-9CQ"
+    },
+    {
+      "id": "S1FR-1NW",
+      "title": "Patrick Hoban, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4YDS-2LN2 : Fri Mar 08 07:49:21 UTC 2024), Entry for Thomas Patrick Hoban and Patrick Hoban, 20 Feb 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4YDS-2L2M"
+    },
+    {
+      "id": "S1FT-3XB",
+      "title": "Patrick Hobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8BR9-HYMM : Wed Mar 06 21:03:38 UTC 2024), Entry for Richard Hobon and Patrick Hobin, 6 Oct 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8BR9-HY3Z"
+    },
+    {
+      "id": "S1FT-4ML",
+      "title": "Patrick Kobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4YD6-Y36Z : Thu Mar 07 03:25:38 UTC 2024), Entry for John William Kobin and Patrick Kobin, 7 Jan 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4YD6-Y3N2"
+    },
+    {
+      "id": "S1FT-Z8B",
+      "title": "Patrick Hoban in entry for Thomas P. Hoban, \"Canada, Nova Scotia, Births and Baptisms, 1702-1896\"",
+      "citation": "\"Canada, Nova Scotia, Births and Baptisms, 1702-1896\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FLRK-T4G : 7 February 2020), Patrick Hoban in entry for Thomas P. Hoban, 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLRK-T4G"
+    },
+    {
+      "id": "S1FT-ZTZ",
+      "title": "Pat'k. Hoban, \"Canada, Nova Scotia, Births, 1864-1877\"",
+      "citation": "\"Canada, Nova Scotia, Births, 1864-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F264-DXS : Sat Mar 09 14:54:01 UTC 2024), Entry for Thomas P. Hoban and Pat'k. Hoban, 11 February 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F264-DX3"
+    },
+    {
+      "id": "3PZZ-TBW",
+      "title": "Patrick Hobin, \"Canada, Nova Scotia, Church Records, 1720-2001\"",
+      "citation": "\"Canada, Nova Scotia, Church Records, 1720-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:817F-XCW2 : Fri Mar 08 22:42:25 UTC 2024), Entry for Mary May Margaret Hobin and Patrick Hobin, 10 May 1816.",
+      "url": "https://familysearch.org/ark:/61903/1:1:817F-XCZM"
+    }
+  ]
+}

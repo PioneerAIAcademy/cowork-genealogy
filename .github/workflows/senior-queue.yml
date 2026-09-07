@@ -84,17 +84,20 @@ name: senior-queue
 # writes — so a dispatch dry run is the way to check a readiness change against
 # the live board before letting it label or resolve anything.
 #
-# THE SCHEDULE IS WHAT MAKES THE QUEUE CONVERGE, and it now carries both of the
-# two things that make a PR ready. `check_suite` never fires here (see the
-# trigger below), so nothing observes CI turning green, and there is no approval
-# trigger either (see below), so nothing observes the peer review landing. The
-# `pull_request_target` events are a fast path for open/push only. If you remove
-# the schedule, something else must answer "what re-checks a PR after CI
-# finishes, and after someone approves it?" — and the answer cannot be an
-# approval event.
+# WHAT MAKES THE QUEUE CONVERGE is the `workflow_run` sweep, with the schedule as
+# its floor. `check_suite` never fires here (see the trigger below) and there is
+# no approval trigger (see below), so neither of the two things that make a PR
+# ready is observed directly. `workflow_run` covers both indirectly: any CI
+# completion in the repo re-evaluates every open PR, so a peer approval is picked
+# up by the next one. The `pull_request_target` events are a fast path for
+# open/push only. If you remove BOTH the sweep trigger and the schedule,
+# something else must answer "what re-checks a PR after CI finishes, and after
+# someone approves it?" — and the answer cannot be an approval event.
 #
-# WHAT THIS COSTS: up to 30 minutes between the approval that makes a PR ready
-# and the label that puts it in a senior's queue.
+# WHAT THIS COSTS: at most 15 minutes while CI is running, versus a cron that
+# GitHub delays or drops under load — 200 of an expected 352 runs on 2026-08-27,
+# and an 11h23m gap on 2026-08-28. On a genuinely quiet repo there are no CI
+# completions to ride and it falls back to that cron.
 
 # TRIGGER CHOICE: `pull_request_target`, because developers without write access
 # contribute from forks and a `pull_request` run gets a read-only token there,
@@ -119,10 +122,53 @@ name: senior-queue
 # returns before it ever writes, and goes green. So it only reddened on the
 # approval that mattered, and the sweep 30 minutes later applied the label
 # anyway, leaving a red X on a PR that was correctly queued.
+#
+# WHAT REPLACED IT (2026-09-01, issue #1968): a `workflow_run` trigger on the
+# repo's CI workflows, handled as a sweep. `workflow_run` runs in the base-repo
+# context even for fork-PR CI, so it keeps `issues: write` where the review
+# trigger is denied it, and it needs no new identity. Chosen over granting the
+# Projects App `Issues: write` — the only remedy that fires deterministically on
+# the approval, but an org-admin permission change on a private-key-holding
+# identity, widening it to label writes across every issue and PR, for a path
+# that fires ~1% as often as CI does. Also chosen over a detect-only check, which
+# makes the gap visible and closes nothing.
+#
+# The schedule STAYS. `workflow_run` converges within minutes while CI is busy
+# and does nothing on a quiet weekend; the cron is the floor under it. Do not
+# remove one because the other exists.
 
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
+  workflow_run:
+    # THE APPROVAL-EVENT SUBSTITUTE. `pull_request_review` cannot be used here
+    # (see the ledger above), so nothing observed a peer approval and the cron
+    # was the only thing that converged the queue — measured at 200 of an
+    # expected 352 runs on 2026-08-27, with an 11h23m gap on 2026-08-28.
+    #
+    # `workflow_run` fires in the BASE-REPO context even for a fork PR's CI, so
+    # its `GITHUB_TOKEN` keeps the `issues: write` that a `pull_request_review`
+    # run is denied. It is handled as a SWEEP, never per-PR: see the `sweep`
+    # branch below for why `context.payload.workflow_run.pull_requests` must not
+    # be used.
+    #
+    # This does not fire on the approval itself — it fires on the next CI
+    # completion anywhere in the repo, debounced to one sweep per 15 minutes
+    # (see DEBOUNCE_MIN below; the API budget, not the event rate, sets that
+    # number). The win is NOT a shorter cadence than the cron's 30 minutes — it
+    # is that this does not depend on GitHub's best-effort scheduler, which is
+    # what produced the 11h23m gap on 2026-08-28 that issue #1968 measured.
+    # Fast and probabilistic, not deterministic; the cron stays as the floor.
+    workflows:
+      - "Engine tests"
+      - "JS workspace tests"
+      - "Eval harness tests"
+      - "Server tests"
+      - "Check runlog discipline"
+      - "Check e2e fixtures + grading"
+      - "check-engine-lockfile"
+      - "payload-guard"
+    types: [completed]
   check_suite:
     # DEAD TRIGGER, kept only to document that it is dead. Every check suite here
     # is created by an Actions workflow using `GITHUB_TOKEN`, and GitHub does not
@@ -151,11 +197,22 @@ permissions:
   pull-requests: write
   checks: read
   contents: read
+  # `actions: read` is for listWorkflowRuns in the workflow_run debounce below.
+  # An explicit permissions block makes every UNLISTED scope `none`, so without
+  # this line that call 403s and every workflow_run sweep dies on it.
+  actions: read
 
 concurrency:
   # Per-PR events serialize per PR. Sweeps share ONE key so a delayed cron run
   # cannot race the next one; they are add-only and idempotent, so queueing
   # rather than cancelling costs nothing.
+  #
+  # `workflow_run` has neither a pull_request nor a check_suite payload, so it
+  # falls through to 'sweep' — which is what keeps it cheap. A burst of CI
+  # completions collapses to one running sweep plus one pending, because GitHub
+  # cancels the previously-pending run in a group; and since every sweep
+  # evaluates every open PR, the survivor does the same work the cancelled ones
+  # would have.
   group: >-
     senior-queue-${{ github.event.pull_request.number
       || github.event.check_suite.id
@@ -334,14 +391,62 @@ jobs:
             core.info(`parsed ${rules.length} CODEOWNERS rule(s)`);
 
             // ---- which PRs to evaluate --------------------------------------
+            // `workflow_run` is a SWEEP, deliberately. Do NOT narrow it to
+            // `context.payload.workflow_run.pull_requests`: that array is EMPTY
+            // for fork-authored PRs, which is the exact population the forbidden
+            // `pull_request_review` trigger already fails on — narrowing it here
+            // would rebuild that hole in a new place. Sweeping is also what makes
+            // the trigger useful at all: any CI completion in the repo re-converges
+            // every open PR, not just the one whose CI finished.
             const sweep = context.eventName === 'schedule'
-                       || context.eventName === 'workflow_dispatch';
+                       || context.eventName === 'workflow_dispatch'
+                       || context.eventName === 'workflow_run';
+
+            // ---- workflow_run: debounce, because a sweep is not cheap ---------
+            //
+            // A full sweep costs ~5 REST calls per non-draft open PR — about 130
+            // today. `GITHUB_TOKEN` gets 1,000 REST requests/hour for the WHOLE
+            // REPOSITORY (15,000 only on Enterprise Cloud; this org is on `free`),
+            // shared with project-status-sync, labeler, cosmetic-skip-strip and
+            // this workflow's own per-PR and cron runs. CI completions arrive far
+            // faster than that is affordable: 129 completions across the eight
+            // targeted workflows in the hour 2026-09-01T11 alone, median gap 3s.
+            // Unbounded, this would 403 every GITHUB_TOKEN workflow in the repo.
+            const DEBOUNCE_MIN = 15;
+            if (context.eventName === 'workflow_run') {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner, repo, workflow_id: 'senior-queue.yml',
+                event: 'workflow_run', per_page: 10,
+              });
+              // Skip cancelled runs: concurrency cancels the PENDING run when a
+              // newer event arrives, and one of those never evaluated anything —
+              // debouncing against it would skip on a sweep that never happened.
+              const last = data.workflow_runs.find(
+                r => r.id !== context.runId && r.conclusion !== 'cancelled');
+              if (last && Date.now() - Date.parse(last.run_started_at) < DEBOUNCE_MIN * 60_000) {
+                core.info(`skipped — a workflow_run sweep started at ${last.run_started_at}, ` +
+                          `inside the ${DEBOUNCE_MIN}-minute debounce`);
+                return;
+              }
+            }
 
             let numbers = [];
             if (sweep) {
               const open = await github.paginate(github.rest.pulls.list,
                 { owner, repo, state: 'open', per_page: 100 });
-              numbers = open.map(p => p.number);
+              // The CRON sweep evaluates every open PR and is the floor under
+              // everything else. The workflow_run sweep evaluates only PRs touched
+              // in the last hour, which is what makes it cheap enough to run four
+              // times as often: `updated_at` is already on the objects above, so
+              // the filter costs nothing, and an approval — the event this trigger
+              // exists for — bumps it. Anything the filter misses is picked up by
+              // the next cron sweep, so this is never worse than today.
+              const RECENT_MIN = 60;
+              const recent = context.eventName === 'workflow_run'
+                ? open.filter(p => Date.now() - Date.parse(p.updated_at) < RECENT_MIN * 60_000)
+                : open;
+              core.info(`${context.eventName} sweep: ${recent.length} of ${open.length} open PR(s)`);
+              numbers = recent.map(p => p.number);
             } else if (context.eventName === 'check_suite') {
               numbers = (context.payload.check_suite.pull_requests || []).map(p => p.number);
               if (numbers.length === 0) {

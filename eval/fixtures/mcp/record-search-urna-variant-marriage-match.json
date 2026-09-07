@@ -6,9 +6,11 @@
   },
   "response": {
     "query": {
-      "collectionId": "1468080",
-      "recordType": "marriage"
-    },
+    "givenName": "Urna",
+    "surname": "Halsteinsdr",
+    "collectionId": "1468080",
+    "recordType": "marriage"
+  },
     "totalMatches": 1,
     "paginationCappedAt": 4999,
     "returned": 1,

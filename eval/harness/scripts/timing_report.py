@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
     all_envelopes = _latest_envelope_per_skill(unit_dir)
     envelopes = _latest_envelope_per_skill(unit_dir, cutoff=args.since)
     if args.since is not None:
-        print(describe_window(args.since, n_runs=len(envelopes), n_total=len(all_envelopes)))
+        print(describe_window(args.since, n_runs=len(envelopes), n_total=len(all_envelopes), corpus="unit"))
     if not envelopes:
         print(f"No run logs found under {unit_dir}", file=sys.stderr)
         return 1

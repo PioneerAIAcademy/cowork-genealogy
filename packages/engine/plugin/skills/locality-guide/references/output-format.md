@@ -114,6 +114,13 @@ is what tells the researcher where to route the search.
 | Ancestry | [list] | Subscription |
 | [Others] | [list] | [Access type] |
 
+**Coverage of this survey:** [state how much of the digitized material the
+volumes above represent. When `volume_search` returned a `nextPageToken`, or
+`totalResults` is higher than the number of volumes detailed, give both
+numbers and say the rest were not examined — e.g. "31 digitized volumes match
+this place and period; the 4 detailed above are the first page." Omit this
+line only when the returned page was the complete result set.]
+
 ### Physical repositories
 | Repository | Holdings | Access method |
 |---|---|---|

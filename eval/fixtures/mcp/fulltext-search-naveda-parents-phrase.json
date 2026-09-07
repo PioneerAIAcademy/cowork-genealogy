@@ -28,6 +28,7 @@
     }
   },
   "response": {
+    "query": { "keywords": "\"Naveda Somarriba\"" },
     "totalResults": 1,
     "returned": 1,
     "offset": 0,

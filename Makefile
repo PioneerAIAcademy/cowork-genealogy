@@ -320,22 +320,43 @@ hooks-test: ## Repo-tooling hooks — scripts/claude-hooks (stdlib python3, no v
 	python3 scripts/claude-hooks/test-gate-issue-create.py
 
 .PHONY: agent-smoke
-agent-smoke: $(ENGINE_BUILD) ## Live check that the hosted path registers the plugin agents under their bare names (issue #939; no model call, bills nothing)
-	# The one thing no offline test can see: what the RUNTIME resolves the
-	# hosted options to. It reads the SDK init handshake's agent list — no
-	# query, so it costs nothing but a CLI process start. The key comes from
+agent-smoke: $(ENGINE_BUILD) ## Live agent-registration check (issue #939) + dead-stub MCP abort check (issue #1743)
+	# Arm 1 — agent registration (issue #939). Reads the SDK init
+	# handshake's agent list — no query, no model call. The key comes from
 	# $$ANTHROPIC_API_KEY, else this repo's eval/.env, and is passed under a
 	# distinct name because tests/conftest.py blanks ANTHROPIC_API_KEY.
+	# AGENT_SMOKE=1 turns the live test's skips into hard errors.
 	#
-	# AGENT_SMOKE=1 is what turns the live test's skips into hard errors. The
-	# test skips by design under a plain `make server-test`, so a contributor
-	# with no key still gets a green suite — but it made THIS target report
-	# "passed, 1 skipped" and read as if the check had run. Only the caller
-	# knows which of the two it is, so the caller says.
+	# Arm 2 — dead-stub e2e abort (issue #1743). A real run_e2e against a
+	# server that dies at startup; asserts the init-message abort text and
+	# the retention rule (no files written). Bills one session start (~8s).
+	#
+	# Both arms are hand-run; issue #1142 is what would make them CI.
 	cd apps/server && \
 	  AGENT_SMOKE=1 \
 	  LIVE_ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run pytest tests/test_plugin_agents.py -q -rs
+	# Arm 2 — dead-stub e2e abort (issue #1743).
+	cd eval/harness && \
+	  SMOKE_RUNLOG=$$(mktemp -d) && SMOKE_OUT=$$(mktemp -d) && \
+	  uv run --frozen python -m e2e.run_e2e \
+	    --test kenneth-quass-death \
+	    --mcp-server-entry "$(CURDIR)/eval/harness/tests/fixtures/dead-stub.js" \
+	    --runlog-root "$$SMOKE_RUNLOG" \
+	    --skip-judge > "$$SMOKE_OUT/capture.txt" 2>&1; rc=$$?; \
+	  [ "$$rc" = 2 ] || \
+	    { echo "FAIL: expected exit 2, got $$rc" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  echo "--- Asserting dead-stub arm ---"; \
+	  grep -q "MCP UNAVAILABLE" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing 'MCP UNAVAILABLE'" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  grep -q "the 'genealogy' MCP server reported 'failed'" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing server-reported-failed text" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  grep -q "STUB-MARKER" "$$SMOKE_OUT/capture.txt" || \
+	    { echo "FAIL: output missing stub stderr (STUB-MARKER)" >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  [ -z "$$(find "$$SMOKE_RUNLOG" -type f 2>/dev/null | head -1)" ] || \
+	    { echo "FAIL: runlog-root should hold no files but found:" >&2; find "$$SMOKE_RUNLOG" -type f >&2; rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; exit 1; }; \
+	  rm -rf "$$SMOKE_RUNLOG" "$$SMOKE_OUT"; \
+	  echo "Dead-stub arm: PASS"
 
 .PHONY: probe-agent-binding
 probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallowedTools: actually bind under bypassPermissions? (6 short sessions, ~13k tokens)
@@ -598,6 +619,25 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
+.PHONY: e2e-panel
+e2e-panel: ## Standing e2e panel — each fixture's last run and its run count in the window: make e2e-panel | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# The scoreboard for the standing panel that /file-e2e-panel files. Per
+	# fixture: its last run and how many days ago, plus its count over SINCE,
+	# which defaults to 28 days rather than the usual 14 because the panel's
+	# unit of comparison is the month. No other reader prints runs per fixture
+	# per window — e2e-corpus's concentration block counts violations, not runs
+	# — which is why the panel's own acceptance check needs this one.
+	#
+	# Deliberately not anchored to a calendar week: the panel is filed whenever
+	# the lead runs the skill, so "did it run this ISO week" would answer a
+	# question the cadence does not ask.
+	#
+	# Every fixture at zero is a legitimate report (nobody ran the panel in a
+	# while) and exits 0; only an unknown TEST= slug exits 1.
+	cd eval/harness && uv run python -m e2e.panel_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: eval-inventory
 eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/costed, specs), each by its predicate: make eval-inventory
 	# Pure analysis over committed files — no live run, no API. Reproduces the
@@ -655,12 +695,12 @@ e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue 
 
 .PHONY: e2e-nudges
 e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #1104): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
-	# Pure analysis, no API: reads committed run JSONs and their .transcript.md
-	# siblings. Reports each continue-nudge with the seam it sits on and whether
-	# the agent named its next step before yielding -- the move research/SKILL.md
-	# forbids. Unions both sources on purpose: `narration` replaced the
-	# transcript in #1238, so today it covers 2 of 145 runs while the transcripts
-	# hold 20 of the 23 events. Reading only one silently reports a fraction.
+	# Pure analysis, no API: reads committed run JSONs. Reports each
+	# continue-nudge with the seam it sits on and whether the agent named its
+	# next step before yielding -- the move research/SKILL.md forbids.
+	# `narration` replaced transcripts in #1238; committed .transcript.md files
+	# were removed in PR #2204 (zombie re-lands from stale-base merges).
+	# The transcript fallback code path is retained for local copies only.
 	cd eval/harness && uv run python -m e2e.nudge_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
@@ -723,6 +763,21 @@ e2e-compaction: ## record_search subjectId supply by compaction segment, over co
 	cd eval/harness && uv run python -m e2e.compaction_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-branch-only
+e2e-branch-only: ## Graded e2e runs that exist on another ref but not HEAD (issue #1444): make e2e-branch-only
+	# On-demand crawl, not embedded in any reader (measured 2026-08-25: 23
+	# stale-branch hits against 0 in-flight runs that day -- a reader-embedded
+	# version would add that noise to every invocation; see the module
+	# docstring for why that count is a dated snapshot, not a standing
+	# property). The module itself makes no network call; this recipe fetches
+	# first (--prune, so a deleted remote branch doesn't linger as a stale
+	# local ref either) so a branch nobody has locally yet isn't invisible to
+	# it -- an in-flight graded run was once missed by the crawl only because
+	# it had never been fetched here. Does not distinguish in-flight work
+	# from abandoned; triage by hand.
+	git fetch --prune origin
+	cd eval/harness && uv run python -m scripts.branch_only_runlogs
 
 .PHONY: provenance-report
 provenance-report: ## Identifiers a skill persisted that no input supplied: make provenance-report [SKILL=<name>]

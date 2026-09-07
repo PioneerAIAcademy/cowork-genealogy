@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_research_009",
+    "skill": "research",
+    "name": "Direct plan request should not trigger research",
+    "type": "negative",
+    "description": "The user wants to create or extend a research plan for a specific question. The skill description says: 'Do NOT use when the user wants to drive a specific step directly (use question-selection, research-plan, search-records, etc.).' A direct plan request is research-plan's job.",
+    "tags": ["near-miss", "research-vs-research-plan", "boundary"]
+  },
+  "input": {
+    "user_message": "Write a research plan for question Q1. I want to know what record collections to search for Patrick Flynn's parents.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": ["research-plan"],
+    "explanation": "The user is asking to create a plan for a named question. They are driving a specific step — research-plan — not handing off the full workflow. The research orchestrator is for users who want the system to decide what step comes next."
+  },
+  "judge_context": [
+    "Should route to research-plan — the user is asking for a plan for a specific question, not handing off a research objective"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

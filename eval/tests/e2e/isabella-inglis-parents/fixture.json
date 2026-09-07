@@ -1,0 +1,19 @@
+{
+  "id": "isabella-inglis-parents",
+  "name": "Isabella Inglis — parents Thomas Inglis and Jane Borthwick, and an 1867 Edinburgh marriage",
+  "genre": "record-hint",
+  "source_pid": "KHL9-LKF",
+  "captured": "2026-09-07",
+  "researcher_question": "Who were the parents of Isabella Inglis, wife of David Young of Edinburgh, and when did the couple marry?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1860s",
+    "geography": "GB-SCT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 26, hint-samples.csv row 782, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). Draft transcribed from an 1867 Scottish statutory marriage entry; unverified. The Scottish naming pattern corroborates both sets of parents from inside the tree."
+}

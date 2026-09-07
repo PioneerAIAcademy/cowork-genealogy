@@ -5,7 +5,12 @@
     "standardPlace": "~Illinois"
   },
   "response": {
-    "collections": [
+    "query": {
+      "standardPlace": "Illinois"
+    },
+    "scope": "Illinois",
+    "totalForPlace": 4,
+    "results": [
       {
         "id": "1803978",
         "title": "Illinois, Cook County, Chicago, Church Records, 1833-1925",

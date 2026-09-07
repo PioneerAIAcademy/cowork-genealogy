@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import re
 import zipfile
 from datetime import datetime, timezone
 
@@ -46,6 +47,33 @@ _CLAUDE_PROJECTS_DIR = f"{HOME_DIR}/.claude/projects/{_CLAUDE_PROJECT_SLUG}"
 # Backstop so a pathological session can't blow past the Drive/Apps Script POST
 # limit. The reported failure is ~always at the end, so we keep the newest entries.
 _SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
+
+_API_KEY_PATTERNS = [
+    re.compile(rb"sk-ant-[A-Za-z0-9_-]{20,}"),
+    re.compile(rb"sk-or-[A-Za-z0-9_-]{20,}"),
+    re.compile(rb"sk-[A-Za-z0-9_-]{40,}"),
+]
+_API_KEY_PATTERNS_STR = [
+    re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"sk-or-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"sk-[A-Za-z0-9_-]{40,}"),
+]
+_REDACTED_KEY = b"[REDACTED_API_KEY]"
+_REDACTED_KEY_STR = "[REDACTED_API_KEY]"
+
+
+def _redact_api_keys(data: bytes) -> bytes:
+    out = data
+    for pattern in _API_KEY_PATTERNS:
+        out = pattern.sub(_REDACTED_KEY, out)
+    return out
+
+
+def _redact_api_keys_str(text: str) -> str:
+    for pattern in _API_KEY_PATTERNS_STR:
+        text = pattern.sub(_REDACTED_KEY_STR, text)
+    return text
+
 
 # Mirrors apps/electron/src/main/feedback.ts so a web case and a desktop case
 # unzip to the same shape and the triage workflow consumes them identically.
@@ -93,6 +121,13 @@ async def _walk_project(sandbox) -> list[tuple[str, bytes]]:
 
 
 TREE_FILENAME = "tree.gedcomx.json"
+STARTING_TREE_FILENAME = "starting-tree.gedcomx.json"
+# Both tree-shaped files a project folder can hold. starting-tree.gedcomx.json is
+# the write-once completion-gate baseline (issue #1490); it carries the same
+# living persons as tree.gedcomx.json and is bundled by the same non-media walk,
+# so it must be redacted too or a feedback bundle would ship living details
+# FamilySearch's terms forbid sharing.
+_REDACTED_TREE_FILENAMES = frozenset({TREE_FILENAME, STARTING_TREE_FILENAME})
 LIVING_GIVEN = "Living"
 LIVING_SURNAME_FALLBACK = "Unknown"
 
@@ -149,9 +184,16 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
     out: list[tuple[str, bytes]] = []
     redacted = 0
     for rel, data in files:
-        if rel != TREE_FILENAME:
+        if rel not in _REDACTED_TREE_FILENAMES:
             out.append((rel, data))
             continue
+        # Count into a per-file tally and fold it into the total only once the
+        # file's rewrite has fully succeeded. _redact_person can raise partway
+        # through the person loop (a malformed `names` entry), and this file then
+        # ships UNTOUCHED via the except below — so a running counter would report
+        # living records protected in a file that leaked them. The count must
+        # describe the bytes actually written, not the persons visited.
+        file_redacted = 0
         try:
             tree = json.loads(data.decode("utf-8"))
             persons = tree.get("persons")
@@ -163,7 +205,7 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
                 if isinstance(person, dict) and _is_living(person):
                     living_ids.add(person.get("id"))
                     new_persons.append(_redact_person(person))
-                    redacted += 1
+                    file_redacted += 1
                 else:
                     new_persons.append(person)
             tree["persons"] = new_persons
@@ -173,8 +215,12 @@ def _redact_living(files: list[tuple[str, bytes]]) -> tuple[list[tuple[str, byte
                 if {relationship.get("person1"), relationship.get("person2")} & living_ids:
                     relationship["facts"] = []
             data = json.dumps(tree, indent=2).encode("utf-8")
+            redacted += file_redacted  # only the fully-rewritten file counts
         except Exception:  # noqa: BLE001 — never block a submission on this
-            redacted = 0
+            # Pass this file through untouched, and contribute nothing to the
+            # count — file_redacted is discarded, so a file that failed partway
+            # never reports the persons it visited before raising.
+            pass
         out.append((rel, data))
     return out, redacted
 
@@ -274,7 +320,10 @@ async def _session_log(sandbox) -> bytes | None:
             raw = await sandbox.read_file(newest_path)
     if not raw:
         return None
-    return _filter_transcript(raw)
+    filtered = _filter_transcript(raw)
+    if filtered is None:
+        return None
+    return _redact_api_keys(filtered)
 
 
 class FeedbackBody(BaseModel):
@@ -387,7 +436,9 @@ def _feedback_markdown(
             "",
             "## Living people redacted",
             "",
-            f"{redacted_living} person(s) in `tree.gedcomx.json` are living or not "
+            f"{redacted_living} living-person record(s) across the project's tree "
+            "files (`tree.gedcomx.json` and, when present, `starting-tree.gedcomx.json`) "
+            "were living or not "
             "marked deceased, so their given names, dates and places were replaced "
             f"with `{LIVING_GIVEN} <Surname>` before this bundle was created. Their "
             "ids and relationships are intact, so the case still reproduces. This is "
@@ -417,11 +468,11 @@ async def submit_feedback(
 
     fields = {
         "email": _norm(body.email).lower(),
-        "userPrompt": _norm(body.userPrompt),
-        "agentDid": _norm(body.agentDid),
-        "agentShouldHave": _norm(body.agentShouldHave),
-        "correctAnswer": _norm(body.correctAnswer),
-        "notes": _norm(body.notes or ""),
+        "userPrompt": _redact_api_keys_str(_norm(body.userPrompt)),
+        "agentDid": _redact_api_keys_str(_norm(body.agentDid)),
+        "agentShouldHave": _redact_api_keys_str(_norm(body.agentShouldHave)),
+        "correctAnswer": _redact_api_keys_str(_norm(body.correctAnswer)),
+        "notes": _redact_api_keys_str(_norm(body.notes or "")),
     }
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 

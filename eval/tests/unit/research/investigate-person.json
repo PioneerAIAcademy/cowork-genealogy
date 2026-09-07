@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_research_004",
+    "skill": "research",
+    "name": "Investigate [person] triggers research",
+    "type": "positive",
+    "description": "'Investigate [person]' is an explicit trigger in the skill description. The user wants a full GPS investigation, not a single step.",
+    "tags": ["core-trigger"]
+  },
+  "input": {
+    "user_message": "Investigate Patrick Flynn — I need to know where he came from in Ireland and whether there are any records of his immigration.",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "'Investigate [person]' is a listed trigger for the research orchestrator",
+    "Should drive the full GPS workflow, not just one search or one plan"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      "question-selection", "locality-guide", "research-plan",
+      "search-records", "record-extraction", "person-evidence",
+      "research-exhaustiveness", "proof-conclusion"
+    ]
+  }
+}

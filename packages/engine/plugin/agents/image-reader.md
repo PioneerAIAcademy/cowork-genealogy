@@ -4,8 +4,8 @@ description: Reads ONE FamilySearch image scan and returns ONLY a full text tran
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
-  # hosted web), `remote-devices__Genealogy_Research` (cloud Cowork), and
-  # `Genealogy_Research` (on-computer Cowork). See record-extractor.md for the
+  # hosted web), `remote-devices__Genealogy_Research` (bridged), and
+  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__image_transcribe
   - mcp__remote-devices__Genealogy_Research__image_transcribe
@@ -104,8 +104,9 @@ Return, verbatim:
   (`record_read` / `record_search` / `search-full-text`) or a related person's
   indexed record, which usually carries the same facts.
 - If `image_transcribe` reported **no OpenRouter key** (or a rejected key), say
-  so plainly — the caller can fix it by asking the user for a key and calling
-  `configure_openrouter`.
+  so plainly and tell the user to set the key in their config file
+  (`~/.familysearch-mcp/config.json`, field `openRouterApiKey`). Do not ask the
+  user to paste the key into the chat — it would land in the session transcript.
 
 Do **not** retry with a browser, `web_fetch`, or "Claude in Chrome" — those
 are unavailable and waste turns. Never invent, infer, or guess the page

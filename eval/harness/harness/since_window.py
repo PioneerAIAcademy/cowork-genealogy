@@ -37,6 +37,7 @@ import argparse
 import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Literal
 
 #: Runs newer than this are "current" for reporting purposes.
 DEFAULT_SINCE_DAYS = 14
@@ -150,17 +151,49 @@ def add_since_arg(
     )
 
 
-def describe_window(cutoff: date | None, *, n_runs: int, n_total: int) -> str:
+def branch_scope_note(*, corpus: Literal["e2e", "unit"] = "e2e") -> str:
+    """One always-true sentence: this corpus read is scoped to the current
+    checkout, so a run committed only on another branch is not visible here
+    (GitHub issue #1444).
+
+    `git` is never called from a reader to make this exact — the readers say
+    they *may* be missing something, they do not try to prove it. `corpus`
+    picks the remedy named: `make e2e-branch-only` only crawls
+    `eval/runlogs/e2e/`, so naming it from a unit-corpus caller would be false
+    — an unrecognized value raises rather than silently dropping that remedy
+    line or, the other direction, wrongly claiming it for the unit corpus.
+    There is no CI type-checking over this tree, so the `Literal` hint alone
+    would not be enforced; the raise is what actually catches a typo.
+    """
+    base = (
+        "Scoped to this checkout — a run committed only on another branch "
+        "is not visible here, and this reader cannot tell you if it omitted one."
+    )
+    if corpus == "e2e":
+        return base + " Run `make e2e-branch-only` to list what other refs carry."
+    if corpus == "unit":
+        return base
+    raise ValueError(f"corpus must be 'e2e' or 'unit', got {corpus!r}")
+
+
+def describe_window(
+    cutoff: date | None, *, n_runs: int, n_total: int,
+    corpus: Literal["e2e", "unit"] = "e2e",
+) -> str:
     """One line naming the window and the sample, for a report's own output.
 
     Printed by every reader so a number is never read as a whole-corpus
     measurement when it isn't one, and so an omitted-but-stale subject is
-    visibly omitted rather than silently absent.
+    visibly omitted rather than silently absent. Also carries
+    `branch_scope_note()` — the window and the branch-scope caveat are two
+    different reasons the same corpus read might not be what it looks like,
+    so they are stated together.
     """
+    note = branch_scope_note(corpus=corpus)
     if cutoff is None:
-        return f"Window: entire corpus ({n_runs} run(s))."
+        return f"Window: entire corpus ({n_runs} run(s)). {note}"
     dropped = n_total - n_runs
     return (
         f"Window: runs on/after {cutoff.isoformat()} — {n_runs} of {n_total} run(s), "
-        f"{dropped} older run(s) excluded. Pass --since all for the whole corpus."
+        f"{dropped} older run(s) excluded. Pass --since all for the whole corpus. {note}"
     )

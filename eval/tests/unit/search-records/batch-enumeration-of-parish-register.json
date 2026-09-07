@@ -35,7 +35,9 @@
     "rank-search-matches-richardson-ashton-batch",
     "record-read-richardson-i03213-6-nfcy-7vm",
     "record-read-richardson-c00558-7-jmf4-cl",
-    "validate-research-schema"
+    "validate-research-schema",
+    "record-read-richardson-c00558-7-ngyp-rt5",
+    "record-read-richardson-c00558-7-ngyp-kxd"
   ],
   "judge_context": [
     "This is a POSITIVE test for BATCH ENUMERATION. The user asks for the parish register to be worked systematically but does NOT name the mechanism — finding it is the skill's job. 'Worked systematically' is not permission to invent a batch number: the batch must come off a returned result.",
@@ -51,5 +53,6 @@
     "NARROWING A BATCH WITH A NAME IS CORRECT, NOT AN ERROR. Adding `surname` (and `givenName`) to a batch-anchored call is what SKILL.md and the tool schema instruct, and the live tool narrows on BOTH batches: I03213-6 goes 4,045 -> 5 -> 1, C00558-7 goes 19,206 -> 30 -> 9. Fixtures are stocked for every shape. Do NOT score down a skill for pairing a batch with a name, and do NOT accept a claim that the narrowing was ineffective or that the tool 'silently drops' name filters on a batch search — that is false. Only `recordCountry` / `recordSubdivision` are rejected.",
     "THE MOCK CANNOT PAGE. A fixture returns one static response and the matcher ignores `offset`, so a second call differing only by `offset` gets the SAME rows back. Paging with `offset` is correct behavior that SKILL.md instructs — never score it down, and never score down a skill for reporting that rows remain beyond what it could retrieve. The narrowed-batch fixtures are stocked complete (returned == totalMatches, hasMore false) so a narrowed enumeration CAN be finished; only the bare four/five-figure batches are necessarily partial, and saying so plainly is the pass condition there.",
     "THE TWO EXTRACTIONS DIFFER, AND THAT IS THE PAYOFF. Reading the I03213-6 record (NFCY-7VM) returns John and a mother Mary with NO father; reading the C00558-7 record (JMF4-CL9 / JMF4-CLS, two personas of one record — re-reading is correct, not a loop) returns John, father Thomas Richardson, and mother Mary. A skill that reaches the father has answered the scenario's question through the batch it enumerated; reward that. Do not require it, though — this test grades the enumeration, not parentage."
-  ]
+  ],
+  "judge_reads_files": true
 }

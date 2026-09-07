@@ -10,6 +10,7 @@ import {
   FEEDBACK_SCHEMA_VERSION,
   MAX_FIELD_CHARS,
   NOT_PROVIDED,
+  redactApiKeys,
   type FeedbackOptions
 } from '../feedback'
 
@@ -143,6 +144,34 @@ describe('buildFeedbackZip — feedback.json', () => {
     expect(zip.file('FEEDBACK.md')).not.toBeNull()
     expect(zip.file('_feedback/feedback.json')).not.toBeNull()
   })
+
+  it('redacts API keys from user-typed feedback fields', async () => {
+    const key = 'sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA'
+    const result = await buildFeedbackZip(
+      makeOptions(folder, {
+        userPrompt: `I pasted ${key} and it broke`,
+        agentDid: `It echoed ${key} back`,
+        agentShouldHave: `Not echo ${key}`,
+        correctAnswer: `Refuse the ${key}`,
+        notes: `Also found ${key} in logs`
+      })
+    )
+    const payload = await readFeedbackJson(result.zipBase64)
+    for (const field of [
+      'user_prompt',
+      'agent_did',
+      'agent_should_have',
+      'correct_answer',
+      'notes'
+    ]) {
+      expect(payload[field]).not.toContain('sk-ant-')
+      expect(payload[field]).toContain('[REDACTED_API_KEY]')
+    }
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).not.toContain('sk-ant-')
+    expect(md).toContain('[REDACTED_API_KEY]')
+  })
 })
 
 describe('buildFeedbackZip — size budgets follow the server convention', () => {
@@ -226,6 +255,46 @@ describe('capSessionLog', () => {
     const last = JSON.parse(lines[lines.length - 1])
     expect(last.i).toBe(63)
     expect(note.dropped_leading_entries + (lines.length - 1)).toBe(64)
+  })
+})
+
+describe('redactApiKeys', () => {
+  it('replaces Anthropic sk-ant- keys', () => {
+    const input = '{"message":"my key is sk-ant-api03-abcDEF123456789012345678901234"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"my key is [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces OpenRouter sk-or- keys', () => {
+    const input = '{"message":"use sk-or-v1-abcdef1234567890abcdef1234567890"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"use [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces generic sk- keys (40+ chars)', () => {
+    const key = 'sk-' + 'a'.repeat(48)
+    const input = `{"message":"${key}"}\n`
+    expect(redactApiKeys(input)).toBe('{"message":"[REDACTED_API_KEY]"}\n')
+  })
+
+  it('leaves short sk- tokens alone (not an API key)', () => {
+    const input = '{"message":"sk-short is fine"}\n'
+    expect(redactApiKeys(input)).toBe(input)
+  })
+
+  it('redacts multiple keys in one log', () => {
+    const lines = [
+      '{"type":"user","message":"sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA"}',
+      '{"type":"assistant","message":"ok"}',
+      '{"type":"user","message":"also sk-or-v1-BBBBBBBBBBBBBBBBBBBBBB"}'
+    ].join('\n')
+    const out = redactApiKeys(lines)
+    expect(out).not.toContain('sk-ant-')
+    expect(out).not.toContain('sk-or-')
+    expect(out).toContain('[REDACTED_API_KEY]')
+  })
+
+  it('leaves a log with no keys unchanged', () => {
+    const input = '{"type":"user","message":"find John Smith in 1870 census"}\n'
+    expect(redactApiKeys(input)).toBe(input)
   })
 })
 
@@ -359,7 +428,30 @@ describe('buildFeedbackZip — living-person redaction', () => {
     )
     const md = await zip.file('FEEDBACK.md')!.async('string')
     expect(md).toContain('Living people redacted')
-    expect(md).toContain('2 person(s)')
+    expect(md).toContain('2 living-person record(s)')
+  })
+
+  it('redacts the completion-gate baseline too, not just tree.gedcomx.json', async () => {
+    // starting-tree.gedcomx.json is the write-once baseline (issue #1490). It
+    // carries the same living persons and is bundled by the same walkProject, so
+    // a bundle that redacted only tree.gedcomx.json still leaked living details.
+    await writeFile(join(folder, 'starting-tree.gedcomx.json'), JSON.stringify(TREE), 'utf8')
+    const zip = await JSZip.loadAsync(
+      Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
+    )
+
+    const baselineRaw = await zip.file('starting-tree.gedcomx.json')!.async('string')
+    const baseline = JSON.parse(baselineRaw) as GedcomxData
+    const b2 = person(baseline, 'P2')
+    expect(b2.names[0].given).toBe('Living')
+    expect(b2.ark).toBeUndefined()
+    for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
+      expect(baselineRaw).not.toContain(leak)
+    }
+
+    // Both files' living persons counted: 2 in each.
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).toContain('4 living-person record(s)')
   })
 
   it('passes an unparseable tree through rather than failing the send', async () => {

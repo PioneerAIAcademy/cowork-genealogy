@@ -68,6 +68,7 @@ from e2e.result import axes_from_runlog
 from e2e.runlog_selection import (
     E2E_RUNLOGS,
     add_since_arg,
+    branch_scope_note,
     describe_window,
     filter_since,
     is_result_json as _is_result_json,
@@ -411,6 +412,12 @@ def _load(path: Path) -> LatencyBreakdown:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="e2e latency breakdown (Phase 0).")
     ap.add_argument("files", nargs="*", help="explicit result JSON paths")
     ap.add_argument("--test", help="latest committed run for this fixture slug")
@@ -430,8 +437,12 @@ def main(argv: list[str] | None = None) -> int:
         r = latest_run_for(args.test)
         if not r:
             print(f"No committed run found for '{args.test}'.", file=sys.stderr)
+            print(branch_scope_note(), file=sys.stderr)
             return 1
         paths.append(r)
+        # --all gets the caveat via describe_window() below; --test does not
+        # go through that branch, so it must print it here or never see it.
+        print(branch_scope_note())
     if args.all:
         # The window applies to --all only. An explicit path or --test is a
         # deliberate request for that run; the cutoff guards *aggregate* reads,

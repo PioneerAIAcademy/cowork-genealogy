@@ -136,7 +136,9 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
 # Duplicated from eval/harness/e2e/orchestrator.py rather than shared: this
 # module also runs as a loose script in the baked E2B image and cannot import
 # from eval/ or from the control-plane package (see the module docstring).
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+# starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
+# diffs against (issue #1490); overwriting it would defeat that gate.
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 
 # Tools that write a file directly, by `file_path`. Bash is deliberately NOT
 # here: the skills run their stdlib-only scripts through it, and the only way to

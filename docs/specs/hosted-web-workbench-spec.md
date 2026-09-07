@@ -51,7 +51,7 @@ Verified against `apps/server/app/`, `apps/web/src/`, `packages/viewer-ui/src/`,
 | 6.2 | WebSocket protocol | **shipped differently** — same message vocabulary, different endpoint and host; `auth_required` never built |
 | 6.3 | Database tables | **shipped differently** — 4 of 6 tables, with different columns |
 | 6.4 | Durable project storage | **not built** |
-| 7 | Agent runtime in the sandbox | **shipped as specced** (27 skills, not 28); the object-store sync half is not built |
+| 7 | Agent runtime in the sandbox | **shipped as specced** (27 skills against the spec's 28 when this was measured; 28 as of 2026-08-31); the object-store sync half is not built |
 | 7.1 | Sandbox image | **shipped as specced** |
 | 8 | Web client | **shipped as specced** |
 | 9 | Electron app | **shipped as specced** |
@@ -313,8 +313,9 @@ and electron share code" requires).
 > - **`/packages/engine` split in two** — `packages/engine/mcp-server` (the TS MCP
 >   server) and `packages/engine/plugin` (the Cowork skills + agents). `engine`
 >   itself is a bare container with no `package.json`, deliberately excluded from
->   the pnpm workspace (`!packages/engine/**` in `pnpm-workspace.yaml`) so the
->   `.mcpb` release pipeline stays npm-managed.
+>   the pnpm workspace (`!packages/engine/**` in `pnpm-workspace.yaml`) because
+>   both shipped artifacts install from the engine's own npm lockfile and no CI
+>   job builds either one — see `docs/architecture.md`, "Two products, one repo".
 > - **The counts have moved:** **27** skills (not 28) and **47** MCP tools in
 >   `allToolSchemas`/`manifest.json` (not 30).
 > - **`viewer-ui` holds 13 section components**, not 11 — see the note under

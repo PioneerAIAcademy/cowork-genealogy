@@ -62,6 +62,7 @@
     }
   },
   "response": {
+    "query": { "name": "García" },
     "totalResults": 1,
     "returned": 1,
     "offset": 0,

@@ -223,7 +223,7 @@ research_append({
     { section: "assertions",      op: "append", entry: {...} },   // one op per assertion/persona
     { section: "person_evidence", op: "append", entry: {...} },   // one op per link
     { section: "assertions",      op: "update", entryId: "a_012", fields: {...} },
-    { section: "plan_items",      op: "append", entry: {...}, planId: "pl_001" },
+    { section: "plan_items",      op: "append", entry: {...}, planId: "pl_003" },  // the parent plan's OWN id, never a hard-coded pl_001
   ],
 })
 // → { ok: true, results: [{ section, op, entryId }, ...], sourceDescriptionId?,
@@ -267,8 +267,10 @@ no more expensive (decision from the e2e research-runtime speedup review, §6 Q1
   first is already in the live `research.plans` when the second's invariant runs.
 
 The **persisted shape is byte-identical** to the single-op form; `ops` changes only
-the number of write calls, so no `research.json` schema, validator, web-mirror, or
-fixture change is required (the reason batching is low-risk).
+the number of write calls (the reason batching is low-risk). One exception, added
+with the plan rules in §5: a `plans` append is **not** legal on its own, because
+its plan must end the call carrying an item, so for that one section the batch
+form is the shape rather than a convenience.
 
 **Stringified-argument tolerance.** The model occasionally serializes a large or
 deeply nested argument as a JSON **string** rather than inline JSON — the ~25 KB
@@ -418,12 +420,14 @@ tool enforces the sidecar matrix (spec'd, not vibes — decision D2):
 
 | Log entry state | `record_persona_id` supplied | `record_persona_id` omitted/null |
 |---|---|---|
-| **Sidecar present** (`results_ref` set), `record_id` matches a result (canonical ARK matching via `arkToBareId`) | Verified against the record's `gedcomx.persons[]`; a contradiction is a **hard error naming the expected persona ids** (and the primary persona). | **Auto-filled** with the matched result's `primaryId` when the `record_id` matches exactly one result, that `primaryId` resolves to a persona in the record's `gedcomx.persons[]`, **and the stamp cannot be wrong**: the record holds a single persona, or the batch's assertion appends all cite one canonical `record_id` **and** one distinct `record_role` (a single-focus extraction — sidecar personas carry no role labels, so batch shape is the only sound proxy for "this assertion is about the searched persona"). A multi-persona record in a batch spanning multiple `record_role`s/`record_id`s is a **hard error naming the searched persona** ("supply `record_persona_id` per assertion") — unscoped auto-fill stamped the focus persona's id onto other household members' assertions (observed silent corruption). A degenerate sidecar whose `primaryId` is missing/unresolvable leaves the field null rather than persisting a value the validator would reject. |
-| **Sidecar present**, `record_id` matches **no** result | **Hard error naming the sidecar's stored recordIds** — a claimed persona cannot be verified against a record that isn't there. | No error — a `record_id` outside the sidecar is legal without a persona claim (e.g. a negative assertion naming the collection searched). |
+| **Sidecar present from a persona-bearing producer** (`record_search`; `results_ref` set), `record_id` matches a result (canonical ARK matching via `arkToBareId`) | Verified against the record's `gedcomx.persons[]`; a contradiction is a **hard error naming the expected persona ids** (and the primary persona). | **Auto-filled** with the matched result's `primaryId` when the `record_id` matches exactly one result, that `primaryId` resolves to a persona in the record's `gedcomx.persons[]`, **and the stamp cannot be wrong**: the record holds a single persona, or the batch's assertion appends all cite one canonical `record_id` **and** one distinct `record_role` (a single-focus extraction — sidecar personas carry no role labels, so batch shape is the only sound proxy for "this assertion is about the searched persona"). A multi-persona record in a batch spanning multiple `record_role`s/`record_id`s is a **hard error naming the searched persona** ("supply `record_persona_id` per assertion") — unscoped auto-fill stamped the focus persona's id onto other household members' assertions (observed silent corruption). A degenerate sidecar whose `primaryId` is missing/unresolvable leaves the field null rather than persisting a value the validator would reject. |
+| **Sidecar present** (persona-bearing), `record_id` matches **no** result | **Hard error naming the sidecar's stored recordIds** — a claimed persona cannot be verified against a record that isn't there. | No error — a `record_id` outside the sidecar is legal without a persona claim (e.g. a negative assertion naming the collection searched). |
+| **Sidecar present from a persona-less producer** (`fulltext_search`, `external_links_search` — results carry transcript text, names and places but no GedcomX personas) | **Hard error**: `record_persona_id` must be null; the message names the producer and that its results carry no personas. Never the empty `expected one of:` list a `recordId`-only match produced for these sidecars (they key on `id`, never `recordId`). | No error — the persona stays null, and when `record_id` matches a result (on the result's `id`) it is canonicalized to that stored form. |
 | **No sidecar** (`results_ref: null` — record_read, PDF, image, pasted records, most unit fixtures) | **Hard error**: the field must be absent or null; there is no persona document to point at. | No error. |
 
 Additionally, when the `record_id` matches a sidecar result, it is
-**canonicalized to the sidecar's stored form** (the result's `recordId`) before
+**canonicalized to the sidecar's stored form** (the result's `recordId` for
+`record_search`, its `id` for the persona-less producers) before
 persisting — resolver URLs, bare ARKs, type-prefixed and bare entity ids that
 denote the same record all persist identically, killing the record-id form
 divergence theme. A dangling `log_entry_id`, an unreadable sidecar, or a
@@ -596,8 +600,8 @@ register.
   on the same project folder share one `.mcpb` process is **unverified**; if they
   do not, the lock does not bind across them. The change is strictly better than
   today either way.
-- Under contention the queued call now **waits** instead of losing its write. In
-  Cowork's cloud mode a bridged MCP call is killed at 60s (a limit imposed by the
+- Under contention the queued call now **waits** instead of losing its write. A
+  bridged Cowork MCP call is killed at 60s (a limit imposed by the
   bridge, not settable from our side), so a call queued behind a slow composite
   append can be killed there — a **visible** failure replacing a silent loss. Do
   not add a timeout or retry to work around it.
@@ -618,6 +622,7 @@ audit's recommendation #5):
 | `questions` update → `exhaustive_declared` | `exhaustive_declaration.declared` true ⇒ `log_entry_ids` non-empty and `stop_criteria` non-null; a re-declare on an already-declared question is a **no-op short-circuit** (don't overwrite a settled GPS Component-1 record) | `validator.ts:417–424` + audit |
 | `questions` append/update marking the question **resolved** | a `proof_summaries[]` entry must already carry this question's id in `question_id`. **Both spellings of resolved are gated** — `status: "resolved"` and a truthy `resolved` date — because they are one transition, and gating only the enum leaves the date as an ungated synonym an agent refused on one can reach through the other. Read **live**, not snapshotted: the summary and the resolve are two halves of one author's conclusion, so a batch that appends the summary first satisfies it. Concluding is the only way to close a question; one closed with nothing found still gets a `not_proved` summary saying so | `status: "resolved"` is the orchestrator's stop condition and was a free write — 150 questions reached it across 154 runs from **11 different skill contexts**, neither owning skill claiming it. Measured cost: **0 of 146** corpus writes refused (142 status, 4 date-only). ADR-0011 |
 | `plans` append | at most **one active plan per question** — a second `active` plan for the same `question_id` is rejected | audit; `research-schema-spec.md:265` |
+| `plans` append | the plan must end the call carrying **at least one item** — `items` absent, `[]`, or not an array is rejected. Two satisfying shapes, both already in use: the batched call (shell with `items` omitted, then one `plan_items` op per item carrying the shell's assigned id) or a non-empty inline `items`. **When the emptiness is caused by the call's own `plan_items` ops naming a different plan, the refusal says so** rather than reporting the empty array — the previous message named the symptom, and the model's next call answered it with `"items": []`, which then validated and persisted a document `research.schema.json` rejects. Adds no refusal **beyond the row above it**: every call it catches is one the non-empty rule or the required-field check refuses anyway, so it changes which sentence the caller reads rather than whether the call succeeds. Relative to `main` the refusal of an `items: []` shell IS new, and it comes from the row above, not from this one | **Measured at 9a0eb98e5**, on the same traversal the required-object row below uses: ops in the `args` of each `tool_calls[]` entry, over tracked files under `eval/runlogs/` excluding `.ann.json`. Of **295** `plans` append ops, **280 omit `items`** (281 of the calls batch item ops), **6** carry a non-empty inline `items`, **8 send `[]`**, and **1 carries no `entry` at all** — so the satisfying shape is the documented one by a wide margin. Every count here moves whenever a run log lands in `main`, which is why the numbers carry a stamp and why `tests/packaging/corpus-figures.test.ts` asserts the *claims* rather than the counts: that the documented shape is still the norm, and that no row claims a shape is absent while the corpus holds it. Re-derive before quoting. Neither is a *misrouted* plan — the item ops that followed filled the plan the call had just created — and the misroute arm fires on the three unit runs described in the guardrail register's own row for it, not on either of these. `checkRequired` in `validateResearch`'s plans loop had enforced the key and neither the type nor the length. **Two of the five** sources of truth were failing to enforce it, not one: the JSON Schema in both trees, the prose table, `validator.ts` and `packages/schema`'s TS `interface` are the five, and the last two were the ones that had drifted — the validator checked only that the key was present, and the interface typed `items` as `PlanItem[]`, which admits `[]`. Both are fixed here (the mirror as a non-empty tuple, held by a type-level assertion, since that package has a typecheck task and no test task) |
 | `project` update setting `objective`, `title` or `subject_person_ids` | rejected when the field already holds a non-empty value — set once, at project creation, never rewritten. Empty is per-type: `""` for a string, `[]` for a list, since `subject_person_ids` is seeded as an empty array rather than omitted | the ownership declaration's own statement of the harm: "a skill rewrites the objective, and every later skill plans against a changed goal it never agreed to." Constrains the system only — a human edits the file directly |
 | `person_evidence` revision | revision is an `append` of the new entry **plus** an `update` setting `superseded_by` on the old one; never a field-overwrite-in-place that loses the prior link | `research-schema-spec.md:427–431` |
 | `project` update → `status: "completed"` | **no unresolved blocking conflict** — reject while any `conflicts[]` entry has `status: "unresolved"` AND (a non-empty `identity_question` string OR non-empty `blocks_question_ids`). `resolved` and `moot` both settle a conflict; an unresolved fact-type conflict with empty `blocks_question_ids` and no `identity_question` does not block. Tool precondition on the transition only — an already-completed document with such a conflict still loads (not a document-validity rule) | wilkins-death-kentucky e2e finding 2026-07-15: agent logged an unresolved identity conflict (wrong-person certificate, 43-year birth mismatch) and completed anyway; GPS Component 4 |
@@ -626,6 +631,7 @@ audit's recommendation #5):
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `exhaustive_declaration.declared === true` **as of the start of this call** | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
 | `questions` append/update touching **either** `status` or `exhaustive_declaration` | `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true`. Checked on the post-merge entry (**live**, not snapshotted): the declaration and the status are two halves of one author's own step, and 123 of 125 corpus ops set both in the same op. Gated on EITHER field, because the invariant couples two and an op touching one can break it without naming the other — the agent's own re-invocation path lowers `declared` to false and leaves `status` alone | A zero-violation arm: **0 of 125** corpus ops refused. The converse (declared ⇒ status) has been asserted by the unit validator since it shipped and nothing asserted this direction, which is the one that leaves a question looking finished with no declaration behind it. ADR-0011 |
 | `questions` append/update setting `exhaustive_declaration.declared: true` | **no item on the question's ACTIVE plan is `in_progress`.** Read from the **pre-call snapshot**: plan-item completion is the search work's step, not this writer's — `ownership.json` lists six permitted writers of `plan_items` and `research-exhaustiveness` is not among them — so ADR-0011's snapshot condition applies. Read live it is self-satisfying: three corpus calls batch the item flips ahead of the declaration in one op list. Only `active` plans block, because `research-plan` supersedes by flipping `plans.status` alone and then forbids touching that plan again, so a stale `in_progress` item on a superseded plan would make the declaration permanently unwritable. Items still `planned` do **not** block — the orchestrator routes here before the plan is drained | **5 of 170** corpus declarations refused, one of them `antonio-lucas-spouse`, the run whose bypass opened this phase. Classified **bookkeeping**, not doctrine (lead ruling 2026-08-23) — it contradicts the project's own plan state rather than a genealogical judgment, which is what lets it be scoped this tightly. No gate carries an override in any case (ADR-0011, 2026-08-24); what a blocked researcher lacks here is a route to move the item out of `in_progress`, which no skill can do on the FamilySearch path today |
+| any section | a **required-object field** holding a primitive is rejected — `exhaustive_declaration`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-schema-spec.md:101` |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
@@ -716,6 +722,48 @@ that did nothing.
   compel extraction (`guardrail-enforcement-spec.md` §2). It is the proportionate
   first lever, not the last word.
 
+### 5.2 Tree-encoding completion advisory (warning, not a precondition)
+
+A **warning** — never a rejection — emitted on the successful write that sets
+`project.status: "completed"`, when the completed project holds a
+tier-≥-`probable` proof summary but **none** of the tree persons its evidence
+touches gained any new fact or relationship since the project's opening tree. It
+rides `validation.warnings` and never touches `ok`. Implemented as
+`treeEncodingCompletionWarnings` in `research-append.ts`, using the `tree_diff`
+tool against the write-once `starting-tree.gedcomx.json` baseline.
+
+- **Why a baseline file.** `research_append` loads only the *current* tree, so it
+  cannot tell a conclusion this session encoded from a fact already seeded. The
+  baseline is the opening tree, copied write-once at project creation; the diff
+  against it is what isolates this session's work.
+- **A shape match, not a foreign key — so warn, not deny.** A proof summary
+  carries no machine-readable tree reference. The subject is approximated as the
+  union of persons the summary's `supporting_assertion_ids` have `person_evidence`
+  for (`person_evidence` is the only link table). That approximation is why this
+  is advisory: it cannot certify *which* conclusion a given tree edit encodes,
+  only that *some* structure appeared for *some* evidence person. Deliberately
+  broad — it warns only when NONE of those persons gained ANY structure.
+- **Why warn and not refuse (lead ruling, 2026-08-24).** Gates ship with no
+  override mechanism until one is observed refusing correct work in the field. A
+  wrong refusal then hard-blocks a researcher from finishing correct work with no
+  route out — worse on the hosted path, where the sandbox has no text-editor
+  escape. A shape-match gate cannot clear that bar, so it ships warn-only.
+- **The fire rate, measured before shipping.** Over the committed e2e corpus
+  (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`, the §11.5 shadow family), 3
+  tier-≥-probable conclusions — in 3 of the 158 committed runs scanned — added no
+  new tree structure. The gate keys facts on a content signature (type, date,
+  place, value), so filling in a date or narrowing a place on a seeded fact reads
+  as new structure rather than a false fire; on standardized data this matches
+  the shadow signature the figure is measured from. The diff also counts a fact
+  gained on a relationship present in both trees — a Marriage dated onto an
+  already-seeded Couple — so a proved marriage on a pre-existing couple is not a
+  false fire. This re-measurement corrected a first-pass 32/22% that had
+  mis-classified parentage questions naming a birth date as birth questions.
+- **Fails open on a missing baseline.** A project created before the baseline
+  shipped has no `starting-tree.gedcomx.json`; the check returns no warning rather
+  than treating every fact as new. Fires only on the call that *sets* `completed`,
+  so it never re-warns on a later write to an already-completed project.
+
 ---
 
 ## 6. Decisions recorded
@@ -779,6 +827,9 @@ plain entry write fits here, the computed build may warrant its own tool),
 | sources append referencing a dangling `S` id | op-indexed precondition error naming the existing S ids; write nothing |
 | `record_persona_id` supplied but contradicting the sidecar / supplied with no sidecar (§3.5) | op-indexed hard error naming the expected value; write nothing |
 | `record_id` matching no sidecar result while a persona is claimed (§3.5) | op-indexed hard error naming the sidecar's recordIds; write nothing |
+| A required-object field holds a primitive (§5) | document-level error naming the field: `<field> must be an object — got <type>`. Absent and null are left to the required-field check so nothing is reported twice. Applies to `exhaustive_declaration`, `external_site` and `citation_detail` |
+| A `plans` entry ends the call with `items` empty, absent or not an array (§5) | document-level error; write nothing. Empty: `is empty — a plan carries at least one plan item. Append the items in the same call: one 'plan_items' op per item, each carrying this plan's id.` Not an array: `must be an array of plan items — got <type>.` A plan that was **already** empty before the call rides along as a warning (the introduced-error diff keys on the entry's own id), so a legacy document does not freeze every writer |
+| A `plans` append whose plan ends the call empty **while the same call carries `plan_items` append ops naming some other plan** (§5) | op-indexed hard error on that `plans` op, opening `plan '<newId>' was created for question '<qid>' and ends this call with no items, which cannot be persisted.` and closing `Do not add "items": [] to the plan shell instead; that is what makes the document schema-invalid.` **Two causes, and the middle clause names whichever applies** — they need opposite fixes. (a) The item ops wrote into a plan the call did **not** create: `this call's plan_items ops wrote into '<other>' (<status> plan for <question>) instead — the items went to a plan this call did not create. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one. Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours.` (b) They named only a **sibling plan this same call created**: `this call's plan_items ops named only '<other>', which this same call also created. A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '<newId>' for this one.` When **more than one** created plan ends the call empty, that single-id prescription is replaced in both branches by `<N> of the plans this call created (<ids>) end it with no items, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.` — because naming one id would empty the others. Prescribing (a)'s fix for (b) would likewise empty the sibling and reproduce the loop with the two plans swapped, which is why the branch exists. A `plan_items` **update** never triggers either: its item already lives in the plan it names. The `plans` worked example is attached, which is the batched call. Write nothing |
 | resolved/supplied `standard_place` country contradicts the place text (§3.6) | op-indexed hard error; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: leave `standard_place` unset, add a warning; never fail the op |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
@@ -905,10 +956,11 @@ denial mechanism this section depends on is real in Cowork.
 deployment-dependent: `mcp__genealogy__*` is the arbitrary `mcp_servers` dict
 key the harnesses, `.mcp.json`, and the hosted web control plane chose, while
 Cowork exposes the host-installed `.mcpb` under `manifest.json`'s `display_name`
-either way, but namespaces it through a remote-device *bridge*
-(`mcp__remote-devices__Genealogy_Research__*`) only when the task runs in the cloud;
-a task running on the user's own computer reaches it directly as
-`mcp__Genealogy_Research__*`. No single spelling resolves everywhere, so every agent
+either way — namespaced through a remote-device *bridge*
+(`mcp__remote-devices__Genealogy_Research__*`) or bare
+(`mcp__Genealogy_Research__*`), and the spelling a Cowork session exposes has been
+observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+censuses; see ADR-0004). No single spelling resolves everywhere, so every agent
 lists each MCP tool under **all three** in `tools:` (and would in a
 `disallowedTools:`, if one ever returned). It matters on the `tools:` side: an
 entry naming no spelling the session recognizes grants nothing, and when *every*
@@ -917,7 +969,7 @@ spellings for the weaker reason that a deny naming only an unresolvable spelling
 denies nothing. Enforced by `tests/packaging/agent-tool-names.test.ts`.
 
 With that in place, this section's guarantee holds in every environment. It did **not**
-hold for an on-computer Cowork task until the third spelling was added: the deny
+hold until the third spelling was added: the deny
 named no spelling that session recognized, so it denied nothing.
 `CLAUDE.md`'s superseded claim that a single qualified spelling makes an agent
 "behave identically" across them has been corrected accordingly. The one residual

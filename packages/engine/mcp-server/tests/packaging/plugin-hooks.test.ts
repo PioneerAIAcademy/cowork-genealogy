@@ -112,7 +112,29 @@ function ownedSections(src: string): string[] {
 // scripts/python-interpreter.mjs.
 const PYTHON: string[] | null = resolvePython();
 
-/** Feed the guard script on stdin the way the runtime does; return raw stdout. */
+/**
+ * Feed the guard script on stdin the way the runtime does; return raw stdout.
+ *
+ * **This doubles as a stdlib-only guard.** The hook ships into the Cowork VM,
+ * where a non-stdlib import is not available and fails at load — silently, from
+ * the user's point of view, since a hook that raises falls through to allowing
+ * the call. Nothing lints the imports; what catches them is that the tests below
+ * *execute* the real script under a bare interpreter, so an added
+ * `import requests` turns this file red. Keep it that way: if you stub or mock
+ * the script instead of running it, this file stops enforcing the stdlib rule.
+ *
+ * It is not the only enforcement, so do not weaken the other one either:
+ * `eval/harness/harness/context_policy.py` loads this same file by path and
+ * `exec_module`s it at import, so a non-stdlib import here also reds
+ * `make harness-test`. Two independent suites, one rule.
+ *
+ * One hole, known and accepted: `resolvePython` falls back to `uv run python`
+ * when no system interpreter exists, and that one has the eval harness's
+ * dependencies (`anthropic`, `jsonschema`, `pyyaml`, `mcp`, `python-dotenv`,
+ * `claude-agent-sdk`). On such a machine an import of one of those six would
+ * pass here and still break in the VM. Every other third-party import is
+ * caught on every machine.
+ */
 function execGuard(input: string): string {
   if (!PYTHON) {
     throw new Error(

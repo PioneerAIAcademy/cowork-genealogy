@@ -19,6 +19,10 @@ Which steps are yours depends on how you got here:
 - **Authoring a new fixture** — a person you want to turn into a test, whether
   you picked them yourself or a `feedback`-labelled issue sent you here. Do
   **every** step.
+- **Running a panel fixture** — a GitHub issue titled "e2e panel run `<date>`".
+  The fixture is already authored, so do steps **0, 5–9**: skip 1a/1b/2/3
+  (authoring) and 4 (live debugging, which only delays the measurement). See
+  "The standing panel" below.
 
 | Step | What you do | Where |
 |---|---|---|
@@ -527,16 +531,49 @@ this target can print. A run committed before 2026-07-26 (#895) carries no
 per-message tool names and can't be segmented; it's excluded from the report
 and the exclusion is counted, never silently dropped.
 
+**`make e2e-branch-only` is a different kind of tool** — not a run-log
+analysis but a git-ref crawl (issue #1444). Every corpus report above reads
+`eval/runlogs/e2e/` in the current checkout only, and now says so on every
+run; this is what a human runs when that caveat actually matters — it fetches
+(`git fetch --prune origin`), then diffs `git ls-tree` between HEAD and every
+other local/remote-tracking ref, naming any graded run present elsewhere and
+absent from HEAD (excluding refs already merged into HEAD, so a run
+deliberately deleted from `main` doesn't read as one it's missing). Not
+embedded in the reports above on purpose — see `guardrail-enforcement-spec.md`
+§4 for the measurement behind that call, and its own caveat about reading
+that measurement as a standing property rather than a dated snapshot.
+
+## The standing panel
+
+Four fixtures are run repeatedly, so the corpus can be compared month over month
+instead of describing whichever fixtures someone happened to touch:
+`eval/tests/e2e/spriggs-parents-1898/`, `eval/tests/e2e/hannah-earnest-children/`,
+`eval/tests/e2e/anders-monsen-ancestry/` and `eval/tests/e2e/cruz-corona-ancestry/`.
+
+The lead runs `/file-e2e-panel` whenever more panel work is wanted — there is no
+fixed cadence, and every run files **four more issues, one per fixture**, each an
+unassigned half-day any genealogist can pick up. Four parallel tasks rather than
+one bundle is what stops the tier having a single operator. Take one the same way
+you would any assigned fixture, on the "Running a panel fixture" route above.
+
+The panel is **fixed**. Fixture difficulty varies enormously, so a month's
+aggregate is comparable to the next month's only when the mix is constant;
+swapping a fixture in because it looks more interesting today quietly ends the
+comparison. `make e2e-panel` prints each fixture's last run and its count over the
+last 28 days (`SINCE=all` for the whole history) — the one number no other corpus
+report gives you, since `make e2e-corpus`'s `concentration:` block counts
+violations per fixture rather than runs.
+
 ---
 
 ## Windows equivalents
 
 Every `make` target in the fixture-authoring steps above has a batch file in
 `eval\`. The corpus reports (`make e2e-corpus`, `e2e-nudges`, `e2e-latency`,
-`e2e-wiki-failures`, `e2e-compaction`) do not — run those from Git Bash or
-WSL. Double-click a batch file or run it from that folder; each prompts for
-what it needs instead of taking `TEST=`-style arguments, and builds the MCP
-server first where that matters.
+`e2e-wiki-failures`, `e2e-compaction`, `e2e-branch-only`) do not — run those
+from Git Bash or WSL. Double-click a batch file or run it from that folder;
+each prompts for what it needs instead of taking `TEST=`-style arguments, and
+builds the MCP server first where that matters.
 
 | Instead of | Double-click |
 |---|---|

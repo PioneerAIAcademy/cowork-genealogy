@@ -9,7 +9,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-04
-- **Last updated:** 2026-08-26 (#1165)
+- **Last updated:** 2026-08-31
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -28,7 +28,8 @@ schemas.
 **Nothing can import its way out of this.** Four dependency islands: the pnpm
 workspace (`packages/schema`, `packages/viewer-ui`, `apps/web`, `apps/electron`);
 the engine, excluded by the `!packages/engine/**` negation in
-`pnpm-workspace.yaml` so the `.mcpb` pipeline stays npm-managed; `eval/app`, with
+`pnpm-workspace.yaml` so its shipped artifacts keep installing from its own npm
+lockfile; `eval/app`, with
 its own `package-lock.json` and not a workspace member; and Python
 (`eval/harness`, `apps/server`). No TS import crosses a boundary.
 

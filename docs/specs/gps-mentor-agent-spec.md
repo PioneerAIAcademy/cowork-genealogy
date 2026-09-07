@@ -38,7 +38,7 @@ things when the evidence demands it.
 |------|--------|-------|
 | `packages/engine/plugin/agents/gps-mentor.md` | Done | Implemented and conformant. The original pre-spec draft (commit `c533ce9`) has been brought into full conformance: it now includes the existing-verdict skip logic (§10), `mode`/`force_reevaluate` handling, `evaluations[]` indexing (§8/§12), and the deterministic fallback priority order (§3.3). The shipped plugin zip carries the agent (`scripts/package-plugin.sh`); the eval e2e harness stages it into the workspace's `.claude/agents/` via `eval/harness/e2e/orchestrator.py::build_workspace` so the real agent (not an improvised generic subagent) runs under `/research`. |
 | `docs/specs/research-schema-spec.md` | Modify | Add §5.12 `evaluations` section and update §3 ID prefix table and §6 cross-reference map. Also carries `researcher_profile.intended_audience` (§5.1.1), which §6.4's audience check reads. |
-| `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its opening-turn interview covers objective, experience level, and access only. |
+| `researcher_profile.intended_audience` | Done | Optional string added for §6.4. Five sites per CLAUDE.md: both `research.schema.json` mirrors, the §5.1.1 prose table, `validator.ts` (allow-list + type check), and `packages/schema/src/index.ts`. Not written by `init-project` — its opening-turn interview covers the objective and experience level only. |
 | `docs/specs/schemas/research.schema.json` | Modify | Add `evaluations` to `required` list and `properties`, add `$defs/evaluation_entry`. |
 | `CLAUDE.md` | Modify | Document `packages/engine/plugin/agents/` directory and the Cowork plugin agent pattern. |
 
@@ -160,8 +160,7 @@ description: >-
   search-records or search-external-sites), or to write proof conclusions
   (use proof-conclusion). A user-driven GPS review of an existing proof
   summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
-  components") goes through the proof-conclusion skill, which invokes this
-  mentor.
+  components") goes through the proof-conclusion skill.
 model: claude-sonnet-5
 tools:
   - Read
@@ -189,13 +188,15 @@ phrase, not a new sentence.
 Every MCP tool **must** appear under **all three** server spellings. Bare names
 leave the subagent toolless in the unit-harness SDK path, but a single
 qualified name is equally wrong: `mcp__genealogy__*` resolves under
-`.mcp.json`, both harnesses, and hosted web; Cowork in the **cloud** reaches the
-host-installed `.mcpb` through a remote-device bridge as
-`mcp__remote-devices__Genealogy_Research__*`; Cowork **on the user's own
-computer** reaches it directly as `mcp__Genealogy_Research__*`. Entries are
-matched exactly with no fallback, and an agent whose entries all miss is refused a
-spawn outright — which is what happened to `record-extractor` in on-computer mode
-before the third spelling was added. Unrecognized entries are ignored so long as one
+`.mcp.json`, both harnesses, and hosted web; Cowork reaches the host-installed
+`.mcpb` either through a remote-device bridge as
+`mcp__remote-devices__Genealogy_Research__*` or under the bare `display_name` as
+`mcp__Genealogy_Research__*` — and the spelling a Cowork session exposes has been
+observed to move (bare live in #1341 on 2026-08-04/05, absent in the 2026-08-15
+censuses; see ADR-0004). Entries are matched exactly with no fallback, and an
+agent whose entries all miss is refused a spawn outright — which is what happened
+to `record-extractor` when its entries missed the live spelling, before
+the third spelling was added. Unrecognized entries are ignored so long as one
 resolves, so
 listing all three is safe. Enforced by
 `tests/packaging/agent-tool-names.test.ts`. `Read` is a built-in Cowork

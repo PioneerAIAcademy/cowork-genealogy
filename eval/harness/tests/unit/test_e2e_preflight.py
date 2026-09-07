@@ -500,6 +500,7 @@ def test_read_mcp_stderr_lines_skips_one_malformed_json_line_among_valid_ones(mo
 
 def test_read_mcp_stderr_lines_missing_directory_degrades_to_empty_plus_dir_name(monkeypatch, tmp_path):
     _use_linux_cache_root(monkeypatch, tmp_path)
+    monkeypatch.setattr("e2e.mcp_stderr.time.sleep", lambda _: None)
     lines, log_dir = pf.read_mcp_stderr_lines(
         cwd=Path("/nonexistent-cwd"), server_name="genealogy", since=0,
     )
@@ -510,6 +511,7 @@ def test_read_mcp_stderr_lines_missing_directory_degrades_to_empty_plus_dir_name
 def test_read_mcp_stderr_lines_unrecognized_platform_degrades_to_empty(monkeypatch, tmp_path):
     monkeypatch.setattr(pf.sys, "platform", "some-unheard-of-os")
     monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    monkeypatch.setattr("e2e.mcp_stderr.time.sleep", lambda _: None)
     lines, log_dir = pf.read_mcp_stderr_lines(cwd=tmp_path, server_name="genealogy", since=0)
     assert lines == []
     assert isinstance(log_dir, str)
@@ -531,6 +533,7 @@ def test_read_mcp_stderr_lines_since_filter_skips_files_older_than_the_check(mon
     """A log left over from a PREVIOUS session must not be mistaken for this
     one's — `since` is the check's own start time, and an old file predates it."""
     _use_linux_cache_root(monkeypatch, tmp_path)
+    monkeypatch.setattr("e2e.mcp_stderr.time.sleep", lambda _: None)
     cwd = Path("/some/cwd")
     log_dir = _stderr_log_dir(tmp_path, cwd, "genealogy")
     log_dir.mkdir(parents=True)

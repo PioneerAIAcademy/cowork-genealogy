@@ -327,7 +327,7 @@ function isSelfRelationship(r: SimplifiedRelationship): boolean {
   return false;
 }
 
-function relationshipKey(r: SimplifiedRelationship): string {
+export function relationshipKey(r: SimplifiedRelationship): string {
   const type = r.type ?? "?";
   // Couple endpoints are unordered; ParentChild is directional.
   if (r.person1 !== undefined || r.person2 !== undefined) {

@@ -84,6 +84,8 @@ Examples:
 |-------|------|-------------|
 | `query` | object | Echo of the input: `{ standardPlace, startYear?, endYear? }`. Only includes the years that were actually provided. |
 | `totalForPlace` | number | Total curated resources FS knows about for the resolved place, **before** the date filter. The only non-derivable count. |
+| `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory; serialized before `results`. Contract and rationale: `record-search-tool-spec-v2.md`. |
+| `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied and the **pre-filter** link set was empty. Keyed on the pre-filter set deliberately: `results` below is host-filtered and capped, so a `host:` search whose links all sit on other hosts returns an empty `results` with a non-null `staged` — claiming a nil there would order a negative finding for a place that has records. |
 | `results` | `{ url, linkText }[]` | URLs FS curates for this place, year-filtered when years are given. **`results.length` IS the matched count** — there is no separate count field. |
 
 Each `results[]` item:
@@ -329,7 +331,7 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 
 ## Testing
 
-### `tests/tools/external-links-search.test.ts` (12 cases)
+### `tests/tools/external-links-search.test.ts` (15 cases)
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
@@ -345,6 +347,9 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 | 10 | Rejects endYear < startYear without hitting the network | Handler-level guard + no fetch |
 | 11 | Returns all resources when both years are omitted | Optional-years path; `query` omits years; `totalForPlace` set |
 | 12 | Rejects empty standardPlace without hitting the network | Handler-level guard + no fetch |
+| 13 | No negative-log note when the host filter emptied `results` but links were staged | The note keys on the pre-filter set, not on `results` |
+| 14 | Negative-log note when the place itself has no links at all | Genuine nil for that place and year window |
+| 15 | Carries `unloggedSearches`, ordered before `results` | Staged-backlog note + key order |
 
 ### Smoke-test script
 

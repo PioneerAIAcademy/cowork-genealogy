@@ -70,6 +70,7 @@ from e2e.runlog_selection import (
     REPO_ROOT,
     add_since_arg,
     all_result_jsons,
+    branch_scope_note,
     describe_window,
     filter_since,
     result_jsons_for,
@@ -130,7 +131,7 @@ VIOLATION_ARMS: tuple[tuple[str, str], ...] = (
 # registering it there would be false and leaving it unregistered would trip
 # that test's "no unregistered copy" rule. Kept in step with the real constant
 # by `test_the_census_watches_the_files_the_lockdown_protects`.
-WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
 
 _PROTECTED_RE = "|".join(re.escape(f) for f in WATCHED_PROJECT_FILES)
 
@@ -779,6 +780,12 @@ def format_calibration(ratios: list[float]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(
         description=(
             "Three-axis totals + violation detail across committed e2e runs "
@@ -820,6 +827,7 @@ def main(argv: list[str] | None = None) -> int:
         # hunting for a window bug that isn't there.
         where = f" on/after {cutoff.isoformat()}" if (cutoff and all_paths) else ""
         print(f"No committed runs found{where}.", file=sys.stderr)
+        print(branch_scope_note(), file=sys.stderr)
         return 1
 
     counts = tally(paths)

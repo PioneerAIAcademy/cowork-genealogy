@@ -784,10 +784,11 @@ def main(argv: list[str] | None = None) -> int:
     if len(specs) > 20:
         print(
             "  NOTE: the judge is pinned to temperature=0, but the skill run "
-            "is not (the SDK exposes no temperature), so single-run variance "
-            "is unavoidable. For description-optimizer passes or golden-set "
-            "calibration, bump runs_per_test on the tests being scored "
-            "(spec §7).",
+            "is not (the SDK exposes no temperature), so a single run can "
+            "vary. That is a reason to re-run a suspect test, not to accept "
+            "one that flaps: re-run it with --test <id> --runlogs-root <tmp> "
+            "and fix whatever differs. runs_per_test cannot be bumped — the "
+            "schema pins it to 1, so the flaky flag never fires.",
             file=sys.stderr,
         )
     mode, has_tag_filter = _classify_invocation(args)

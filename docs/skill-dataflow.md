@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 27 skills and 6 agents. Besides the `research` orchestrator itself, its routing
+There are 28 skills and 5 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 14 fire only when the user asks — see
+name. The remaining 15 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -30,8 +30,9 @@ is what lets the `PreToolUse` hook route a section's writes to exactly one calle
 
 **Monolithic skill.** Reads state, does the work, writes its own section. Most skills.
 
-**Leaf agent.** Called by a skill, calls nothing (agents cannot nest agents), returns
-text. `image-reader`, `gps-mentor`.
+**Leaf agent.** Called by a skill, calls nothing, returns text. `image-reader`,
+`gps-mentor`. They call nothing because no agent here grants `Agent`/`Task`, not
+because the runtime forbids it — a subagent may spawn subagents three layers deep.
 
 ---
 
@@ -118,7 +119,7 @@ unreachable from an autonomous run.
 | 8 | **`conflict-resolution`** | Evidence conflicts present. Inline elimination of a namesake, or comparing two records for shared identity, is forbidden anywhere else | `conflicts` — independence analysis, the weighing, and the resolution rationale or the documented deferral | `research.json` `assertions`, `person_evidence`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance`, `convert_calendar` | `conflicts[]` only — `research_append` |
 | 9 | **`hypothesis-tracking`** | Identity uncertainty across assertions | `hypotheses` — the `active` → `supported` / `ruled_out` transitions and the reasoning behind each | `research.json` `hypotheses`, `assertions`, `person_evidence`, `questions` by whole-file `Read` | `hypotheses[]` only — `research_append` |
 | 10 | **`research-exhaustiveness`** (skill) | Analyzed evidence now plausibly answers the question — **even with plan items still `planned`**; or all items `completed`/`skipped` | Resolving the request to one `q_` by matching question **text**, delegating, relaying. It judges nothing and reads nothing else | `project_context` `openQuestions` only. `questionStatuses` is advisory and may never rule a question in or out | Nothing |
-| 10 | **`research-exhaustiveness`** (agent) | Delegated with `questionId` + `projectPath`. Refuses while any plan item is `in_progress` | The five threshold questions and the seven stop criteria. The **only** caller permitted to set `exhaustive_declaration.declared: true` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].exhaustive_declaration`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
+| 10 | **`research-exhaustiveness`** (agent) | Delegated with `questionId` + `projectPath`, and confirms the question by TEXT when the id does not resolve or disagrees with the prose. Refuses while an item on the question's **active** plan is `in_progress` | The seven stop criteria, assessed in order as a gate and stopping at the first that fails. The **only** caller permitted to set `exhaustive_declaration.declared: true` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].exhaustive_declaration`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
 | 11 | **`proof-conclusion`** (skill) | A question at `exhaustive_declared` with no `proof_summaries` entry; or re-invoked because a tier-≥-probable conclusion is not yet in the tree | Resolving to one `q_` and delegating. Reads nothing else and forms no view on readiness | `project_context` only | Nothing — the section is denied to it at the hook |
 | 11 | **`proof-conclusion`** (agent) | Delegated with `questionId` + `projectPath`. Its own three-check gate — unresolved conflicts, unclassified assertions, unlinked persons — hard-blocks before Step 1 | Tier and form selection, the self-contained narrative, and the tree encoding | `research_query` projections (never a raw whole-file `Read`), `sources[].citation`, tree facts and relationships, `source_attachments`, `merge_warnings` | `proof_summaries[]` + the question's `status`/`resolved`/`resolution_assertion_ids` in one batch, and `project` — `research_append`; tree `relationships`, `persons[].facts[]` and `sources` at tier ≥ probable — `tree_edit` / `tree_correct` |
 | 12 | **`gps-mentor`** (agent) | `proof-conclusion` wrote a `ps_id`, and either tier < probable or the conclusion is now in the tree. Skipped when `evaluations/` already holds a `proof-critique-<ps_id>-*.json` newer than the summary | One structured advisory verdict on the finished proof, read as a standalone document. **Mandatory to invoke and record; advisory in what it recommends.** It holds no search tool — it grades what was gathered | `project_context`, `research_query` (`evaluations`, `conflicts`, `hypotheses`, and the proof's `narrative_markdown`), the `evaluations/` verdict files, `validate_research_schema`, `collections_search` | `evaluations[]` in `research.json` — `research_append` — plus `superseded_by` on the prior entry for the same focus and target. The verdict file under `evaluations/` is written by the tool, not by the agent |
@@ -174,6 +175,7 @@ sibling skill.
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one** | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** | After any tree edit or merge; after `person-evidence` mints persons; "check for problems" | Running the offline impossibility check and the live FamilySearch quality score, and interpreting both. Never fixes anything | `person_warnings` (offline, deterministic), `person_quality` (live FamilySearch); the tree only to resolve a name to an id | Nothing |
+| **`source-evaluation`** | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do). Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`. Reads no images — it holds no image tool, and none of those three returns an image id | Nothing |
 | **`tree-edit`** | Direct user correction; a merge after a conclusion established identity at probable or better | Out-of-pipeline tree changes and person merges | `tree.gedcomx.json`; `place_search`, `person_record_matches`, `person_person_matches` | Tree `persons`, `relationships`, `facts`, `names`, `sources` — `tree_edit` / `tree_correct`. A merge via `merge_tree_persons` **also rewrites `research.json`** ids (see the discrepancies below) |
 | **`translation`** | A non-English record or term; handoff from `historical-context` | Transcription, translation as an explicitly derivative rendering, and paleography | The text or an image already in the conversation. **No MCP tool at all** | Nothing |
 | **`historical-context`** | "why does this record look like this", boundary and naming questions | Narrative context — what the sources say, kept distinct from what it merely believes | `wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`, `place_search_all`, `place_population` | Nothing |
@@ -202,11 +204,11 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `sources` | `record-extraction` | `citation` (refine only, never create) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
 | | `assertions` | `record-extraction` | — | `research_append`, `extraction_append` | unit + tool preconditions |
 | | `person_evidence` | `person-evidence` | — | `research_append` | unit + tool — `extraction_append` does not accept the section, which is what holds the extraction lane off it |
-| | `conflicts` | `conflict-resolution` | — | `research_append` | unit. The hook also keeps both writing agents out of the section, but it cannot bind a skill — a section owned by a skill has no agent to permit |
+| | `conflicts` | `conflict-resolution` | — | `research_append` | unit, on two checks since 2026-09-02: `test_ownership_table` (detects, keyed on the calling skill) and `test_no_out_of_lane_section_writes` (denies, keyed on the calling agent — issue #2022). The hook also keeps both writing agents out of the section, but it cannot bind a skill — a section owned by a skill has no agent to permit |
 | | `hypotheses` | `hypothesis-tracking` | — | `research_append` | unit |
 | | `timelines` | `timeline` | — | `research_append` | unit |
 | | `proof_summaries` | `proof-conclusion` | — | `research_append` | unit + hook — the hook denies the op unless the caller is the proof-conclusion **agent** |
-| | `evaluations` | `gps-mentor` (agent) | — | `research_append` | **nothing** — and unenforceable on the unit plane, which can only see a calling *skill* |
+| | `evaluations` | `gps-mentor` (agent) | — | `research_append` | **nothing** in the shipped hook: `evaluations` is in no owner map. But since 2026-09-02 the unit plane records the hook's `owner_denied` verdict (issue #2022), and `evaluations` is outside `proof-conclusion`'s lane, so a `proof-conclusion` write there IS now denied and gated on that plane — the "can only see a calling *skill*" limit no longer holds |
 | | `localities` | `locality-guide` | — | `research_append` | unit |
 | `tree.gedcomx.json` | `persons` | none by design — four co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget` | unit |
 | | `relationships` | none by design — same four | same four | same, less `materialize_facts` | unit + tool |
@@ -256,10 +258,12 @@ touch either side.
    manifest makes it the owner and sole writer of the `evaluations` section, through
    `research_append`. The manifest is right — the section holds a pointer record and the
    file holds the verdict. — issue #1335, where this one needs no ruling
-4. **`proof-conclusion` advertises a mentor call it does not make.** Its `description`
-   says it handles proof review and "invokes the gps-mentor critique", and `gps-mentor`'s
-   own description agrees. Its body has no such step, and the only file that delegates to
-   the mentor is the orchestrator. — issue #1861
+4. **`proof-conclusion` credited its proof review to a mentor call it does not make.**
+   — **RESOLVED in PR #2162 (closing #1861):** its `description` claimed the review
+   "invokes the gps-mentor critique", and `gps-mentor`'s own description agreed, while
+   the only file that delegates to the mentor is the orchestrator. The review itself is
+   real: the `proof-conclusion` agent performs it in review mode and two tests grade it,
+   so only the attribution was wrong. Both descriptions now name no delegation.
 5. **Who closes a plan item.** `search-records` refuses to set `completed`, deferring to
    `record-extraction`. `record-extraction` never mentions plan items and holds no
    `research_append`. `search-external-sites` sets `completed` itself. The manifest lists
@@ -285,6 +289,20 @@ touch either side.
    `known_holdings[].relates_to_person_ids` onto the surviving person. The manifest has
    `tree-edit` on tree rows only. — issue #1790, ruled: the tool is a legitimate
    cross-cutting writer and the manifest is what needs updating
+9. **When a plan blocks a declaration** — **RESOLVED (#1843, folded from #1830):** the
+   orchestrator said to consult exhaustiveness "even with plan items still `planned`",
+   while the gate said to evaluate only a question whose plan items are all `completed`
+   or `skipped`. The tool had already settled it and the prose had not caught up:
+   `planCompleteInvariants` (`research-append.ts`) skips any plan whose `status !==
+   "active"` and blocks only on `in_progress`, and its refusal says "Items still at
+   `planned` do not block". The gate side is now scoped to the active plan in all three
+   places it was stated unscoped. **Only the active plan blocks, and that is what keeps
+   the gate escapable:** `research-plan` supersedes a plan by flipping its status alone,
+   leaving item statuses untouched, and then forbids editing it ever again — so a
+   question re-planned while one item sat `in_progress` would otherwise carry that item
+   forever, with no route to clear it. Read literally, the old prose also made leftover
+   `planned` items look like a blocker, and the cheapest way past a blocker is to sweep
+   them to `skipped`, destroying the audit trail. — issue #1843 (closed by this PR)
 
 ---
 
@@ -295,7 +313,7 @@ No routing-table row names these, so an autonomous `/research` run never enters 
 `search-full-text` · `timeline` · `citation` · `check-warnings` · `translation` ·
 `historical-context` · `convert-dates` · `tree-edit` · `validate-schema` ·
 `forget-and-rederive` · `project-status` · `search-familysearch-wiki` ·
-`search-wikipedia` · `init-project` (named in prose, not in the table)
+`search-wikipedia` · `source-evaluation` · `init-project` (named in prose, not in the table)
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

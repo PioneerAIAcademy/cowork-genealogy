@@ -5,6 +5,7 @@ import { tmpdir } from "os";
 import {
   stageSearchResults,
   finalizeStagedResults,
+  unloggedStagedSearches,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -86,6 +87,175 @@ describe("results-staging", () => {
       const remaining = await stagingFiles();
       expect(remaining).not.toContain("stale.json");
       expect(remaining).toHaveLength(1); // the fresh one
+    });
+  });
+
+  describe("unloggedStagedSearches", () => {
+    // A project the reader will accept: classifyProjectPath wants research.json
+    // present before it will read anything out of the folder.
+    const writeResearch = async (log: unknown[]) =>
+      writeFile(join(dir, "research.json"), JSON.stringify({ log }, null, 2), "utf-8");
+
+    const stage = async (tool = "record_search") =>
+      stageSearchResults({
+        projectPath: dir,
+        tool,
+        response: { results: [{ recordId: "R1" }] },
+      });
+
+    it("returns [] with no staging directory at all", async () => {
+      await writeResearch([]);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
+    });
+
+    it("returns one handle per staged file when the log is empty", async () => {
+      await writeResearch([]);
+      await stage();
+      await stage();
+      expect(await unloggedStagedSearches(dir)).toHaveLength(2);
+    });
+
+    it("returns handles the model can hand straight back as stagedResultsRef", async () => {
+      // A bare count is unusable to the session that lost the ref, which is the
+      // session this note exists for. The ref must come back with it.
+      await writeResearch([]);
+      const handle = await stage();
+      const [unlogged] = await unloggedStagedSearches(dir);
+
+      expect(unlogged.ref).toBe(handle!.resultsRef);
+      expect(unlogged.tool).toBe("record_search");
+      expect(Date.parse(unlogged.retrieved)).not.toBeNaN();
+
+      // And it is a ref finalizeStagedResults actually accepts.
+      await finalizeStagedResults({
+        projectPath: dir,
+        stagedResultsRef: unlogged.ref,
+        logId: "log_009",
+        expectedTool: unlogged.tool,
+      });
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
+    });
+
+    it("stops counting a staged file once its search is logged", async () => {
+      await writeResearch([]);
+      const handle = await stage();
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
+
+      // The real path: research_log_append finalizes, which unlinks the staged file.
+      await finalizeStagedResults({
+        projectPath: dir,
+        stagedResultsRef: handle!.resultsRef,
+        logId: "log_001",
+        expectedTool: "record_search",
+      });
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
+    });
+
+    it("does not count a staged file whose search was logged without a sidecar", async () => {
+      // The ~10% population: logged with results, no `results_ref`, so finalize
+      // never ran and the staged file outlives the entry that documents it.
+      await stage();
+      await writeResearch([
+        {
+          id: "log_001",
+          tool: "record_search",
+          performed: new Date(Date.now() + 1000).toISOString(),
+          results_available: 4,
+          results_ref: null,
+        },
+      ]);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
+    });
+
+    it("still counts an unlogged staged file when the project also holds an older logged-without-sidecar entry", async () => {
+      // Round 2's blocking case. Count subtraction gives max(0, 1 - 1) = 0 here even
+      // though the entry predates the file and cannot be describing it.
+      await stage();
+      await writeResearch([
+        {
+          id: "log_001",
+          tool: "record_search",
+          performed: new Date(Date.now() - 60_000).toISOString(),
+          results_available: 4,
+          results_ref: null,
+        },
+      ]);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
+    });
+
+    it("pairs at most one staged file per unattached entry", async () => {
+      await stage();
+      await stage();
+      await writeResearch([
+        {
+          id: "log_001",
+          tool: "record_search",
+          performed: new Date(Date.now() + 1000).toISOString(),
+          results_available: 4,
+          results_ref: null,
+        },
+      ]);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
+    });
+
+    it("does not pair across tools", async () => {
+      await stage("record_search");
+      await writeResearch([
+        {
+          id: "log_001",
+          tool: "external_links_search",
+          performed: new Date(Date.now() + 1000).toISOString(),
+          results_available: 4,
+          results_ref: null,
+        },
+      ]);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
+    });
+
+    it("ignores a staged file past the TTL, whether or not prune has swept it", async () => {
+      await writeResearch([]);
+      const handle = await stage();
+      const stale = new Date(Date.now() - 25 * 60 * 60 * 1000);
+      await utimes(join(dir, handle!.resultsRef), stale, stale);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
+    });
+
+    it("still ignores a stale file after a nil search, which never prunes", async () => {
+      // `pruneStale` runs inside `stageSearchResults` after its nil early-return, so
+      // a nil search sweeps nothing. The reader's TTL skip has to stand on its own
+      // rather than on the file being about to disappear.
+      await writeResearch([]);
+      const handle = await stage();
+      const stale = new Date(Date.now() - 25 * 60 * 60 * 1000);
+      await utimes(join(dir, handle!.resultsRef), stale, stale);
+
+      // A nil search: stages nothing, prunes nothing.
+      const nil = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { results: [] },
+      });
+      expect(nil).toBeNull();
+      await access(join(dir, handle!.resultsRef)); // still on disk
+
+      expect(await unloggedStagedSearches(dir)).toStrictEqual([]);
+    });
+
+    it("returns [] rather than throwing on an explicit null or empty projectPath", async () => {
+      // The callers gate on `!== undefined`, so a null gets through to here and
+      // `join(null, …)` is a TypeError — which would fail a search that already
+      // succeeded. The absent case is covered by the tool tests; this is the shape
+      // one over.
+      expect(
+        await unloggedStagedSearches(null as unknown as string),
+      ).toStrictEqual([]);
+      expect(await unloggedStagedSearches("")).toStrictEqual([]);
+    });
+
+    it("returns [] rather than throwing when research.json is unreadable", async () => {
+      await stage();
+      await writeFile(join(dir, "research.json"), "{ not json", "utf-8");
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
     });
   });
 

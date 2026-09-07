@@ -13,7 +13,8 @@ description: Genealogy-specific translation and paleography assistance for
   parse due to language or script. Do NOT use when the user wants to
   extract assertions from an English record (use record-extraction), wants
   historical context about a place (use historical-context), or wants a
-  locality guide (use locality-guide).
+  locality guide (use locality-guide). A Wikipedia lookup is
+  search-wikipedia, not translation.
 ---
 
 # Translation

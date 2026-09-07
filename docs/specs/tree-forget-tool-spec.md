@@ -65,8 +65,12 @@ tree_forget({
 })
 ```
 
-Writes **only** `tree.gedcomx.json` (plus the restore file, §5). Never touches
-`research.json`, the log, or the `results/` sidecars.
+Writes `tree.gedcomx.json` (plus the restore file, §5), and — when the project
+holds a completion-gate baseline (`starting-tree.gedcomx.json`) — rewinds that
+baseline to the same forgotten tree, so a later re-derivation reads
+as new structure against it rather than as a no-op. It never *creates* a
+baseline where none exists. Never touches `research.json`, the log, or the
+`results/` sidecars.
 
 ### 2.1 Selectors
 
@@ -313,7 +317,8 @@ identifier-casing rule).
     factsByType: { [factType: string]: number },
   },
   remaining: { persons: number, relationships: number },
-  filesWritten: string[],           // [] under dryRun, else ["tree.gedcomx.json"]
+  filesWritten: string[],           // [] under dryRun, else ["tree.gedcomx.json"],
+                                    // plus "starting-tree.gedcomx.json" when a baseline exists
   restoreFile: string | null,       // the restore file's name, or null under dryRun
   validation: { valid: true, warnings: string[] },
 }

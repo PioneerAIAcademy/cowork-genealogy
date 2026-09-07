@@ -37,8 +37,8 @@ export const recordReadSchema = {
           "finalized results/<log_id>.json ref) — read this record from that " +
           "sidecar host-side, WITHOUT a live FamilySearch fetch. For the person " +
           "you searched, the sidecar carries the same facts, the source citation, " +
-          "and correctly standardized places (more reliable than a live read, whose " +
-          "place standardization can misfire). It returns OTHER household members " +
+          "and standardized places from the search stage (a live read keeps only " +
+          "the record's own normalized places, never resolver-derived ones). It returns OTHER household members " +
           "(co-residents) with reduced facts — so omit this (live read) when you " +
           "need a co-resident's full facts, or for a record that was not part of a " +
           "staged search. Requires `projectPath`.",
@@ -69,10 +69,11 @@ export async function recordReadTool(
 
   // Sidecar mode: resolve the record from a staged/finalized search sidecar
   // instead of a live FS fetch (no network round-trip). The staged gedcomx
-  // carries the same persons, facts, and relationships as a live read (verified);
-  // we re-apply place standardization here (the search stage skips it) so the
-  // result matches a live read. A live read (omit `resultsRef`) additionally
-  // guarantees the authoritative source citation.
+  // carries the same persons, facts, and relationships as a live read (verified),
+  // and it already carries standardized places from the search stage
+  // (record_search runs standardizePlaces) — so we return it as-is and do NOT
+  // re-standardize here. A live read (omit `resultsRef`) additionally guarantees
+  // the authoritative source citation.
   if (resultsRef !== undefined) {
     return await readFromSidecar(recordId.trim(), resultsRef, projectPath);
   }
@@ -124,20 +125,25 @@ export async function recordReadTool(
   }
 
   const body = (await res.json()) as GedcomX;
-  // Use toSimplified, NOT toSimplifiedStandardized. The recapi record response
-  // carries no FS-normalized place (only `original` + parsed County/City/State
-  // fields), so re-standardizing would resolve the ambiguous place *name* through
-  // the resolver and mis-place it (observed: "Southampton, NY" -> "Southampton,
-  // England"; "Rochdale, England" -> "Rochdale, South Africa"). Leaving
-  // standard_place unset is correct — never fabricate a wrong one. Records reached
-  // via the search sidecar already carry FS's correct normalized place.
+  // Use toSimplified, NOT toSimplifiedStandardized. toSimplified keeps whatever
+  // standard_place the record's own `normalized` value supplies and never falls
+  // back to the resolver; toSimplifiedStandardized would additionally resolve any
+  // free-text place NAME the record left un-normalized, and the resolver
+  // mis-places ambiguous names (observed 2026-07-08: "Southampton, NY" ->
+  // "Southampton, England"; "Rochdale, England" -> "Rochdale, South Africa").
+  // How often a recapi record response carries a `normalized` place is what
+  // dev/probe-record-read-places.ts measures; either way, we never resolver-fill
+  // it here. Records reached via the search sidecar already carry the search
+  // stage's standardized place.
   return toSimplified(body);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 // Resolve one record's gedcomx from a staged/finalized search sidecar by id,
-// re-applying place standardization so the result matches a live record_read.
+// returning it as-is. The staged search result already carries standardized
+// places from the search stage; this path does not re-standardize (and a live
+// record_read does not standardize either — it uses pure toSimplified).
 async function readFromSidecar(
   recordId: string,
   resultsRef: string,
@@ -164,12 +170,19 @@ async function readFromSidecar(
         "Do a live read (omit `resultsRef`) instead, or verify the ref/id.",
     );
   }
-  // Return the staged record as-is. The search result already carries the
-  // record's standardized places (from FamilySearch), and they are the more
-  // trustworthy value: a live record_read re-standardizes place NAMES through the
-  // resolver, which mis-resolves ambiguous names (observed: "Southampton, NY" ->
-  // "Southampton, England"; "Rochdale, England" -> "Rochdale, South Africa"). So
-  // we deliberately do NOT re-run standardizePlaces here.
+  // Return the staged record as-is. Its standard_place values are a mixture set
+  // at search time: FS-normalized where the search response supplied a
+  // `normalized` value (via toSimplified), resolver-derived where it did not (via
+  // record_search's standardizePlaces, whose filter fills only facts that lack a
+  // standard_place). We do NOT re-run standardizePlaces here — that same filter
+  // skips every fact that already has a standard_place, so a re-run cannot change
+  // any value already set; it could only retry the few that resolved to null or
+  // hit the soft cap, spending FS round-trips on the one path whose purpose is to
+  // avoid them. A live record_read (omit resultsRef) does not resolver-standardize
+  // at all: it uses pure toSimplified (see the comment above), keeping only the
+  // record's own normalized places — never resolving an ambiguous place NAME and
+  // mis-placing it (see the toSimplified comment above for the observed
+  // mis-resolutions).
   return match.gedcomx as SimplifiedGedcomX;
 }
 

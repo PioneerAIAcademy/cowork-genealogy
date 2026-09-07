@@ -21,6 +21,8 @@ allowed-tools:
   - research_log_append
   - research_append
   - research_query
+  - wiki_search
+  - wiki_read
 ---
 
 # Search Records
@@ -97,9 +99,9 @@ grows all run, so a whole-file read costs more context every time.
 **At most one such call per invocation, and only when you are actually missing
 something.** Ask for `plans` — the plan item you are executing and its status —
 and nothing else; not `questions`, since the question is already in the plan item.
-Do not re-query between searches; the plan does not change while you are searching
-it. If the plan item arrived in your prompt, in a hand-off, or from
-`research-plan` earlier in this same run, issue no query at all.
+Do not re-query between searches in this invocation. If the plan item arrived
+in your prompt, in a hand-off, or from `research-plan` earlier in this same run,
+issue no query at all.
 
 **Planned or ad-hoc — decide before you search.** The line is *who chose the
 search*, not whether a plan exists.
@@ -108,12 +110,12 @@ search*, not whether a plan exists.
 |---|---|
 | A plan item | Execute. Full GPS, including the Step 8 escalation |
 | No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
-| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. If the user then says yes, it comes back as a plan item — not as ad-hoc |
+| No plan item, and **you** thought of the search | `Skill("research-plan")` and stop. It comes back as a plan item — not as ad-hoc |
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
-nobody asked for is how a session drifts off its question. An autonomous
-`/research` run has no ad-hoc searches — the orchestrator only dispatches you when
-a plan item is waiting.
+nobody asked for is how a session drifts off its question. The third row applies
+under `--autonomous` too — `research-plan` decides in the user's place, so route the
+search through it rather than running it yourself.
 
 ### 2. Construct the search query
 
@@ -131,7 +133,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | Parameter | Source | Notes |
 |-----------|--------|-------|
 | `surname` | tree.gedcomx.json person name | Try the spelling the tree holds first, then variant spellings as separate searches. Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. |
-| `givenName` | tree.gedcomx.json person name | **Use the full given-name string when a source names one** — "Anna Maria Eva", not just "Anna": a common first name alone returns a large, undifferentiated set, while the full name tends to surface the target as a clear top-scoring outlier. Truncate to first-name-only as a **lever** if it nils (`references/search-strategy-levers.md`), not as the default. |
+| `givenName` | tree.gedcomx.json person name | **Use the full given-name string when a source names one** — "Anna Maria Eva", not just "Anna": a common first name alone returns a large, undifferentiated set, while the full name tends to surface the target as a clear top-scoring outlier. If it nils, truncate as a **lever** (`references/search-strategy-levers.md`) — but not automatically to the first name: records commonly index by the second or third given name, so a person named "Anna Maria Eva" may appear as "Maria" or "Eva," not "Anna." Try each name in the string in turn rather than assuming the first. |
 | `birthYearFrom` / `birthYearTo` | Assertions or facts | Year range, both required when filtering by birth year (±5 years typical) |
 | `birthPlace` | Assertions or facts | Use the broadest useful level (state, not city) |
 | `residenceYearFrom` / `residenceYearTo` | Plan item year | Census-style anchor. Set both to the same year for a single-census search |
@@ -258,6 +260,14 @@ For wildcard rules and fuzzy matching behavior, read `references/name-search-mec
 - Abbreviations (William → Wm, Thomas → Thos)
 - Initials (J. Smith)
 - Maiden names for married women
+- **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
+
+For the historical reasoning behind why one person's name appears in several
+spellings within one record set — spelling wasn't standardized before
+widespread literacy, and names were written phonetically, filtered through the
+recorder's accent — fetch FamilySearch's own explanation on demand rather than
+reconstructing it here: `wiki_search({ query: "guessing a name variation" })`,
+then `wiki_read` the page it returns.
 
 **Secondary names need variants too — the given name, not just the surname.** The
 variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`
@@ -412,9 +422,9 @@ candidates; you still confirm the top ones:
   greater precision makes the conflict a stronger caution flag, not a reason to
   relax scrutiny. Present it as `needs-review — possible namesake`, never as a
   "Top Match" and never with warm framing — not "almost certainly the right
-  person", "highly promising", "very likely ours", nor the date reduced to a
-  footnote. A disqualifying conflict makes the record *probably someone else*,
-  and your summary has to say so.
+  person", "highly promising", "very likely ours", "a strong candidate", nor the
+  date reduced to a footnote. A disqualifying conflict makes the record
+  *probably someone else*, and your summary has to say so.
   **Do not offer extraction as a next step — not even as a question.** "Shall I
   proceed with extraction?" hands the judgment back to a user who is trusting
   you to have made it, and a user who says yes has just adopted a namesake's
@@ -423,6 +433,17 @@ candidates; you still confirm the top ones:
   expected year window, a matching spouse or child, a later residence); propose
   **that narrower search** as the next step. Extraction is available again only
   once an independent anchor confirms identity.
+  **This gate is not special to the namesake case — it applies to every top
+  match.** Extraction may be offered only when the top match clears
+  `needs-review` on every check above (logical cross-check, name/date
+  conflicts, `relativeTerms`) — not on `matchScore` alone. A `needs-review`
+  flag on any of those checks means: state the concern, name the anchor that
+  would settle it, and stop there — see Step 9 for the matching presentation
+  rule. Score is one input to the needs-review determination, not a
+  separate gate on top of it: the civil-death-registration exception above
+  can clear a match to non-needs-review despite an ordinary matchScore, and
+  once cleared that way extraction is offered on the same terms as any other
+  clean match.
   **Dismissing one result does not close the search.** After ruling out a
   candidate, evaluate the next result in the same ranked list — #2, then #3 — in
   score order, and move on only when the whole list is triaged. The error is:
@@ -457,9 +478,22 @@ candidates; you still confirm the top ones:
   signals. Write the listing and mark the family structure inferred — not "head
   Daniel + wife Margaret + daughter Hannah" but "Daniel, Margaret, Hannah in one
   dwelling; family structure inferred from surname, ages and order, not stated."
-  **Before summarizing any census household, read
-  `references/census-field-availability.md` for that year** — same caution for
-  any field that year didn't collect.
+  **This is required for every pre-1880 household you log, including a clean,
+  unconflicted top match — a high `matchScore` does not put a relationship
+  column back on the page.** Do not save the inference marker for entries
+  where you are also flagging a conflict.
+  **This inference belongs in the same sentence as any needs-review
+  reasoning about the household, not just a role-based conflict.** Whenever
+  you are already explaining why a candidate in THIS pre-1880 household is
+  flagged, dismissed, or provisionally accepted — a role that seems to
+  contradict an age ("Head" for a 5-year-old), or a birth year a few years
+  off between two ranked candidates — that reasoning and the inference
+  marker are the same fact told twice: the household relationships you are
+  reasoning about were never stated by the record either. Write both in the
+  sentence you are already building, not as a fact appended once the
+  candidate reasoning is settled.
+  **When a match turns on a field — or before calling one absent — check that
+  year's entry in `references/census-field-availability.md`.**
 - **Cite `matchScore`, never `results[].score` — they are different numbers.** A
   raw search stub's `score` (and `confidence`) is FamilySearch's own *search
   relevance*, the unreliable ordering the match-ranker exists to replace;
@@ -467,6 +501,14 @@ candidates; you still confirm the top ones:
   subject. Quoting a stub's `score` as a match score is a reasoning error, not a
   wording slip: the triage would rest on the ordering you were supposed to
   discard. Before citing a number, check which array you read it from.
+- **Follow a returned `jurisdictionHints`.** When a `record_search` response
+  carries a non-empty `jurisdictionHints`, the next 1–2 retries in this same
+  plan-item search sequence must set `marriagePlace` or `residencePlace` to
+  the top-ranked hint's place before reverting to a jurisdiction used prior
+  to the hint. `recordSubdivision` also works, but only with `recordCountry`
+  set alongside it — the tool rejects it on its own. The hint is host-scored
+  from the record's own supporting data — a jurisdiction you have not yet
+  tried outranks the one you happen to already be anchored on.
 - **Needs-review band.** A genuinely *different* same-name/same-place person can
   land inside the match band, and sparse/dateless records score unstably. When the
   top scores don't clearly separate, or a candidate is a thin/dateless stub, treat
@@ -567,14 +609,14 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 2. If the full record is unavailable but an image exists, record the image URL in the log and pass to record-extraction, which fetches and transcribes.
 3. If only the index entry is available, flag it in log notes as "derivative only — original not located." Never treat an index entry as equivalent to examining the original.
 
-**Passenger lists:** Passenger lists record every person aboard including infants. When a result matches a parent, examine the full manifest for all family members — children's ages and birthplaces can resolve parentage questions.
+**Passenger lists:** Starting 1820, US passenger manifests list every person aboard by name, including infants and young children — not just heads of household. (Canadian passenger lists are the exception, scarce before 1865.) When a result matches a parent, examine the full manifest for all family members — children's ages and birthplaces can resolve parentage questions.
 
 ### 8. Handle nil results
 
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
-2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry as a separate `research_log_append` call immediately after it completes — do not batch log calls at the end.**
+2. **Iterate through search strategy levers** before declaring negative. Read `references/search-strategy-levers.md`. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped into a batched `ops[]` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
    **NEVER drop given name as a nil search lever.** A surname-only search is not a valid escalation step. Keep both surname and given name on every retry.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
@@ -583,7 +625,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
    first (they are checkable and you can say which letter changed), then a wildcard to
    catch the shape you could not guess.
    **If a boundary may have changed and a search nils, use the successor jurisdiction the plan gives you.** A record can be filed under the jurisdiction in force at the event *or* the place's present-day one. A plan item may carry a fallback jurisdiction in its `rationale` — use it. If the plan offers none and the nil persists, **bounce back to `research-plan`**: deciding what jurisdiction to search (and consulting `locality-guide`) is its job, not this skill's. Do not look up place history or hardcode per-country rules here. See `references/search-strategy-levers.md`.
-3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations.
+3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations. **That figure is a floor for a well-covered collection, not a ceiling.** A high-coverage collection (a well-indexed census, a large civil-registration index) earns more persistence than a thin one — the mirror of item 5's low-coverage pivot below. Reaching 5 variations on a collection you know covers the place and period well is a reason to try the levers you have not yet tried, not a reason to stop, when the likelier explanation is still an untried spelling or lever rather than genuine absence.
 4. **Assess whether absence is meaningful.** After exhausting variants and levers, explicitly evaluate three conditions:
    (a) the record type existed in this jurisdiction at this time,
    (b) the collection is reasonably complete for the period,
@@ -615,7 +657,8 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 - Show plan progress: "3 of 5 plan items completed"
 - Suggest next steps:
   - **If the invoking message already authorized continuing** (e.g. "...and continue with exhaustive research," "...don't stop to check in with me between searches") → execute the next `planned` item in the same turn instead of asking. That item is already part of the plan the user asked you to run — it is not a self-initiated idea (see Step 1's ad-hoc/planned distinction), so it does not need a fresh yes. Re-asking a question the message already answered is the defect this guards against, not a safety margin.
-  - Promising results found, not yet extracted → "I found N promising record(s) for <person> — want me to run record-extraction now to turn them into sourced, GPS-classified assertions?" Do not present these results as already persisted beyond the search log.
+  - Top match clears `needs-review` (Step 4) → "I found N promising record(s) for <person> — want me to run record-extraction now to turn them into sourced, GPS-classified assertions?" Do not present these results as already persisted beyond the search log.
+  - Top match is `needs-review` → do not call it promising and do not offer extraction. State the concern plainly, name the anchor that would confirm identity, and propose that narrower search as the next step instead (Step 4).
   - Collection mismatch confirmed (Step 5) → State the mismatch plainly and point to a different source or collection filter. Step 5's ban on variant-spelling escalation covers this summary, not just the tool calls you make: do not float a variant spelling as a possible explanation for the gap, or as one option among several next steps, even hedged — that reintroduces the escalation the mismatch protocol forbids, in the one place the user actually reads a recommendation.
   - More plan items, no prior authorization to continue → "Shall I continue with the next search?"
   - All done → "All planned searches are complete. Would you like me to evaluate whether the research is exhaustive?" (research-exhaustiveness)

@@ -27,10 +27,27 @@ const ZIP_CAP_BYTES = 35 * 1024 * 1024
 // prepend a truncation note rather than dropping the log.
 const SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 
+// API-key patterns to redact from the session log before bundling. A user who
+// pasted a key in chat has it in the transcript; the feedback zip must not ship
+// it. Each regex matches the full key token so the replacement is unambiguous.
+const API_KEY_PATTERNS: RegExp[] = [
+  /sk-ant-[A-Za-z0-9_-]{20,}/g, // Anthropic
+  /sk-or-[A-Za-z0-9_-]{20,}/g, // OpenRouter
+  /sk-[A-Za-z0-9_-]{40,}/g // generic sk-* (OpenAI-style)
+]
+const REDACTED_KEY = '[REDACTED_API_KEY]'
+
 // Living-person redaction. Mirrors apps/server/app/feedback.py
 // (`_redact_living`) so a bundle built here and one built in the hosted app
 // contain the same thing.
 const TREE_FILENAME = 'tree.gedcomx.json'
+const STARTING_TREE_FILENAME = 'starting-tree.gedcomx.json'
+// Both tree-shaped files a project folder can hold. starting-tree.gedcomx.json
+// is the write-once completion-gate baseline (issue #1490); it carries the same
+// living persons as tree.gedcomx.json and is bundled by the same walkProject, so
+// it must be redacted too or a bundle ships living details FamilySearch's terms
+// forbid sharing. Mirror of apps/server/app/feedback.py's _REDACTED_TREE_FILENAMES.
+const REDACTED_TREE_FILENAMES = [TREE_FILENAME, STARTING_TREE_FILENAME]
 const LIVING_GIVEN = 'Living'
 const LIVING_SURNAME_FALLBACK = 'Unknown'
 
@@ -90,8 +107,19 @@ function redactPerson(person: Record<string, unknown>): Record<string, unknown> 
  * report fails to send.
  */
 function redactLivingPersons(selected: { relativePath: string; buf: Buffer }[]): number {
-  const entry = selected.find((s) => s.relativePath === TREE_FILENAME)
-  if (!entry) return 0
+  let total = 0
+  for (const name of REDACTED_TREE_FILENAMES) {
+    const entry = selected.find((s) => s.relativePath === name)
+    if (entry) total += redactOneTree(entry)
+  }
+  return total
+}
+
+/** Redact one tree file in place, returning the number of persons redacted. A
+ *  parse failure or unexpected shape leaves the file untouched and returns 0, so
+ *  a file that fails partway never contributes a count for bytes it did not
+ *  rewrite. */
+function redactOneTree(entry: { relativePath: string; buf: Buffer }): number {
   try {
     const tree = JSON.parse(entry.buf.toString('utf-8')) as Record<string, unknown>
     const persons = tree.persons
@@ -268,11 +296,11 @@ type NormalizedFields = {
 function normalizeAndValidate(report: FeedbackReport): NormalizedFields {
   const fields: NormalizedFields = {
     email: report.email.trim().toLowerCase(),
-    userPrompt: report.userPrompt.trim(),
-    agentDid: report.agentDid.trim(),
-    agentShouldHave: report.agentShouldHave.trim(),
-    correctAnswer: (report.correctAnswer ?? '').trim(),
-    notes: (report.notes ?? '').trim()
+    userPrompt: redactApiKeys(report.userPrompt.trim()),
+    agentDid: redactApiKeys(report.agentDid.trim()),
+    agentShouldHave: redactApiKeys(report.agentShouldHave.trim()),
+    correctAnswer: redactApiKeys((report.correctAnswer ?? '').trim()),
+    notes: redactApiKeys((report.notes ?? '').trim())
   }
   for (const [name, value] of Object.entries(fields)) {
     if (value.length > MAX_FIELD_CHARS) {
@@ -314,6 +342,18 @@ export function capSessionLog(entries: unknown[]): string {
     reason: `session log exceeded ${SESSION_LOG_CAP_BYTES} bytes; kept newest ${tail.length} entries`
   })
   return [note, ...tail].join('\n') + '\n'
+}
+
+/**
+ * Replace API-key-shaped tokens in serialized JSONL with a placeholder.
+ */
+export function redactApiKeys(serialized: string): string {
+  let out = serialized
+  for (const pattern of API_KEY_PATTERNS) {
+    pattern.lastIndex = 0
+    out = out.replace(pattern, REDACTED_KEY)
+  }
+  return out
 }
 
 export async function buildFeedbackZip(options: FeedbackOptions): Promise<FeedbackResult> {
@@ -378,7 +418,7 @@ export async function buildFeedbackZip(options: FeedbackOptions): Promise<Feedba
   if (includeSessionLog) {
     const sessionLog = await readSessionLog(folderResolved)
     if (sessionLog.entries.length > 0) {
-      zip.file('_feedback/session-log.jsonl', capSessionLog(sessionLog.entries))
+      zip.file('_feedback/session-log.jsonl', redactApiKeys(capSessionLog(sessionLog.entries)))
       sessionLogStatus = 'included'
     } else {
       sessionLogStatus = 'requested-but-empty'
@@ -538,7 +578,9 @@ function renderFeedbackMarkdown(args: {
       '',
       '## Living people redacted',
       '',
-      `${redactedLiving} person(s) in \`${TREE_FILENAME}\` are living or not marked ` +
+      `${redactedLiving} living-person record(s) across the project's tree files ` +
+        `(\`${TREE_FILENAME}\` and, when present, \`${STARTING_TREE_FILENAME}\`) are living ` +
+        `or not marked ` +
         `deceased, so their given names, dates and places were replaced with ` +
         `\`${LIVING_GIVEN} <Surname>\` before this bundle was created. Their ids and ` +
         `relationships are intact, so the case still reproduces. This is expected — ` +

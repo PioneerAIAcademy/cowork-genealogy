@@ -34,12 +34,12 @@ of the streaming path (affinity-free).
   `apps/server/app`: no `ws.py`, no `realtime/`, no `live_session`, no
   `_idle_suspend_loop`, no capability-token endpoint, and no Ably import
   anywhere (the only surviving mentions are two historical comments, in
-  `sandbox/e2b.py` and `tests/conftest.py`). LocalProvider is unified onto the
+  `tests/conftest.py` and `deploy/fly.toml` — the `sandbox/e2b.py` one went on
+  2026-08-09). LocalProvider is unified onto the
   same in-sandbox WS server — it launches `python -m app.sandbox_server` as a
   subprocess, so local dev and E2B now run identical streaming code.
-  **One loose end:** `ably>=3.1.2` is still a declared dependency in
-  `apps/server/pyproject.toml` (and `uv.lock`) with nothing importing it —
-  drop it on the next dependency pass.
+  The last loose end is closed too: `ably` was dropped from
+  `apps/server/pyproject.toml` and `uv.lock` on 2026-08-09.
 
 ## Morning run — client + server + E2B
 Prereqs in `apps/server/.env`: `E2B_API_KEY`, `E2B_ACCESS_TOKEN`,
@@ -84,9 +84,11 @@ sidecar, feedback) — never the stream.
 - ~~**FamilySearch token** is not auto-injected into E2B.~~ **Closed (verified
   2026-08-09):** `sessions.sync_fs_token` writes the token into the sandbox on
   session create and on every `/connect`, and reports a `familysearch` state
-  back to the client. What is still open is a different thing — the stored
-  access/refresh values are **unencrypted at rest** in the control plane's
-  database.
+  back to the client. The follow-on is closed as well: since 2026-08-10 the
+  stored access/refresh values are Fernet-encrypted at rest by
+  `crypto.EncryptedStr`. That was belt-and-braces rather than a gate — an FS
+  grant dies within 24h (8h idle / 24h absolute), so the columns never hold a
+  long-lived secret.
 - ~~**Wiki tools** need the pre-crawled markdown corpus baked into the image
   (`wikiMarkdownDir`).~~ **Obsolete, not pending (verified 2026-08-02).**
   `wiki_read` and `wiki_place_page` are now HTTP clients against the hosted

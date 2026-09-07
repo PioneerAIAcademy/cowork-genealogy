@@ -78,6 +78,7 @@
     }
   },
   "response": {
+    "query": { "keywords": "?nn" },
     "totalResults": 0,
     "returned": 0,
     "offset": 0,

@@ -51,9 +51,9 @@ would silently diverge:
   script only enforces.
 - An edge whose target has no `eval/tests/unit/<target>/` directory is
   SKIPPED, not flagged. A reciprocal cannot be written into a suite that does
-  not exist. Today `research` and `forget-and-rederive` are the only two
-  skills without one and neither is a target, but a future one must not be
-  asked for a test that has nowhere to live.
+  not exist. Today `forget-and-rederive` is the only skill without one
+  (`research` gained a suite in #1494), but a future one must not be asked
+  for a test that has nowhere to live.
 - Malformed JSON, or a test missing `test.skill`, contributes nothing rather
   than raising: a lint that cannot run is worse than one that under-reports.
   This is no longer a blind spot. `tests/unit/test_unit_test_corpus.py` runs

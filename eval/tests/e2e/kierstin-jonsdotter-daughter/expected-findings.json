@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Kierstin Jonsdotter and her husband Anders had a daughter Anna, christened 12 January 1777 at Rättvik, Kopparberg, Sweden.",
+      "details": {
+        "subject_person": "Kierstin Jonsdotter (K8LX-YMK)",
+        "relation": "child",
+        "target_person": {
+          "name": "Anna Andersdotter",
+          "christening": "12 January 1777, Rättvik, Kopparberg, Sweden"
+        }
+      },
+      "supporting_sources": [
+        "Sweden, Baptisms, 1611-1920 — entry for Anna, 12 Jan 1777, parents Anders Ersson and Kierstin Joransdr"
+      ],
+      "required": true
+    }
+  ]
+}

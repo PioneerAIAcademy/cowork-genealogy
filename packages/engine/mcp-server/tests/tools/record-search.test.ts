@@ -863,6 +863,109 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     entries: [lincolnEntry()],
   });
 
+  describe("unlogged-search notes (#2056)", () => {
+    const writeResearch = async (log: unknown[]) =>
+      writeFile(join(dir, "research.json"), JSON.stringify({ log }, null, 2), "utf-8");
+
+    it("emits the unlogged-search note when a prior staged search was never finalized", async () => {
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+      const first = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      expect(first.staged).toBeTruthy();
+      // Nothing logged that first search, so the second one says so.
+      expect(first.unloggedSearches).toBeUndefined();
+
+      mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+      const second = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      expect(second.unloggedSearches).toContain("1 earlier staged search");
+      expect(second.unloggedSearches).toContain("research_log_append");
+    });
+
+    it("counts the backlog before this call stages, so a first search never accuses itself", async () => {
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      expect(out.staged).toBeTruthy();
+      expect(out.unloggedSearches).toBeUndefined();
+    });
+
+    it("serializes both notes before results", async () => {
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+      await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+      // Nil second search: both notes fire at once, and both must precede the
+      // largest field — a trailing field is the first thing a size bound drops.
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 0, index: 0, entries: [] }),
+      );
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      expect(out.unloggedSearches).toBeTruthy();
+      expect(out.nilSearchNeedsLog).toBeTruthy();
+
+      const keys = Object.keys(out);
+      expect(keys.indexOf("unloggedSearches")).toBeLessThan(keys.indexOf("results"));
+      expect(keys.indexOf("nilSearchNeedsLog")).toBeLessThan(keys.indexOf("results"));
+    });
+
+    it("asks for a negative log entry on a nil projectPath search", async () => {
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 0, index: 0, entries: [] }),
+      );
+      const out = await recordSearchTool({ surname: "Nonesuch", projectPath: dir });
+      expect(out.staged).toBeNull();
+      expect(out.nilSearchNeedsLog).toContain('outcome: "negative"');
+    });
+
+    it("does not ask for a negative log entry when entries failed mapping but matches exist", async () => {
+      // `mapEntry` returns null on a missing represented person or a missing
+      // `entry.id`, so a page can map to zero results while the corpus holds 812
+      // matches. Keying the note on `results.length` alone would order an
+      // `outcome: "negative"` entry for a query that has hits — and the log is
+      // append-only, so a wrong negative can only be corrected by a later append.
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({
+          results: 812,
+          index: 0,
+          entries: [{ id: undefined } as unknown as FSSearchEntry],
+        }),
+      );
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+      expect(out.results).toHaveLength(0);
+      expect(out.totalMatches).toBe(812);
+      expect(out.nilSearchNeedsLog).toBeUndefined();
+    });
+
+    it("says nothing about logging when no projectPath was supplied", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 0, index: 0, entries: [] }),
+      );
+      const out = await recordSearchTool({ surname: "Nonesuch" });
+      expect(out.nilSearchNeedsLog).toBeUndefined();
+      expect(out.unloggedSearches).toBeUndefined();
+    });
+
+    it("withholds both notes from the staged payload", async () => {
+      await writeResearch([]);
+      mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+      await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+
+      mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
+      expect(out.unloggedSearches).toBeTruthy();
+
+      const envelope = JSON.parse(
+        await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
+      );
+      // The sidecar records what the search RETURNED, not instructions to the model.
+      expect(envelope.payload.unloggedSearches).toBeUndefined();
+      expect(envelope.payload.nilSearchNeedsLog).toBeUndefined();
+    });
+  });
+
   it("strips inline results[].gedcomx whenever staging succeeds, keeping the stub", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
