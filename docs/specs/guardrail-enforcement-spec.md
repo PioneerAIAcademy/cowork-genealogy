@@ -1478,10 +1478,26 @@ this section before reopening one.
   agent attribution (it shipped in August; before that the rate is 0%, so older
   runs cannot answer this at all):
 
-  | Proposed postcondition | Instances | Violations |
-  |---|---:|---:|
-  | `gps-mentor` must write an `evaluations[]` entry before returning | 31 | **0** |
-  | `image-reader` must call `image_transcribe` before returning | 123 | **0** |
+  | Proposed postcondition | Instances | Violations | True rate could still be |
+  |---|---:|---:|---|
+  | `gps-mentor` must write an `evaluations[]` entry before returning | 31 | **0** | up to ~9.7% |
+  | `image-reader` must call `image_transcribe` before returning | 123 | **0** | up to ~2.4% |
+
+  **This is "not observed", not "does not happen", and the two cases are not
+  equally bounded.** At zero events the 95% upper bound is about 3/n, so the
+  `image-reader` result is tight and the `gps-mentor` one is not — a real 5%
+  verdict-loss rate is entirely consistent with 0 of 31. Two of five agents were
+  tested, on 22 of 161 runs, in the harness rather than production, over
+  committed logs that are converged states. Treat the table as a floor.
+
+  The rejection does not rest on the rate. It rests on three things that hold
+  whatever the rate turns out to be: a lost verdict is **caught downstream** by
+  the completion gate as a visible stall rather than silent corruption; the
+  sample **grows on its own** now that attribution has shipped, so no monitoring
+  task is needed to improve it; and the alternative is a plane that fails open
+  and costs a hook invocation per tool call, bought against an unobserved
+  failure. Roughly 30 more attributed runs bring the `gps-mentor` bound down to
+  the `image-reader` level with nobody doing anything.
 
   **The weaker instrument said otherwise, and was wrong.** Comparing invocation
   counts to final-state `evaluations[]` counts across the whole corpus suggests
