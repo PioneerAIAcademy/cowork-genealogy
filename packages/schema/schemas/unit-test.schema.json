@@ -333,7 +333,7 @@
     },
     "index_error_source": {
       "type": "string",
-      "description": "Optional. Names the ONE attached source this test declares to be an indexing error — the source that must never be recommended for detaching. Consumed by test_index_discrepancy_does_not_recommend_detaching in eval/harness/validators/test_source_evaluation.py, which splits the reply on blank lines and fails if the passage naming this source also recommends detaching or unlinking. Exists because a reply-wide check cannot express the rule: a correct report also contains a genuinely misattributed source for which detaching IS right, so any reply-wide licence is always granted and the assertion can never fail (review of PR #2165). The test declares the situation; the validator asserts the rule."
+      "description": "Optional. Names the ONE attached source this test declares to be an indexing error — the source that must never be recommended for detaching. Consumed by test_index_discrepancy_does_not_recommend_detaching in eval/harness/validators/test_source_evaluation.py, which splits the reply on blank lines and fails if the passage naming this source also recommends detaching or unlinking. Exists because a reply-wide check cannot express the rule: a correct report also contains a genuinely misattributed source for which detaching IS right, so any reply-wide licence is always granted and the assertion can never fail (see unit-test-spec.md § 5.12). The test declares the situation; the validator asserts the rule."
     }
   },
   "allOf": [
