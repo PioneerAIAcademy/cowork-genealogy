@@ -84,7 +84,11 @@ if not exist "!DEST_DIR!" mkdir "!DEST_DIR!"
 REM -ErrorAction Stop + exit 1: without them powershell.exe returns 0 even
 REM when Expand-Archive errors, so the errorlevel check below never fired
 REM and a corrupt zip printed "Imported to ..." and exited 0 (issue #1876).
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force -ErrorAction Stop } catch { Write-Error $_; exit 1 }"
+REM Escape single quotes in the paths: a filename containing ' would break
+REM out of the PowerShell single-quoted string and allow command injection.
+set "PS_ZIP=!ZIP_PATH:'=''!"
+set "PS_DEST=!DEST_DIR:'=''!"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!PS_ZIP!' -DestinationPath '!PS_DEST!' -Force -ErrorAction Stop } catch { Write-Error $_; exit 1 }"
 if errorlevel 1 (
     echo Error: failed to unzip !ZIP_PATH! 1>&2
     exit /b 1
@@ -96,7 +100,7 @@ REM starting with "."), so .claude\, .claude.json, and .mcp.json in the zip are
 REM either hand-crafted or from an unexpected source. Remove them so the script's
 REM own fresh .claude\ (with repo-junctioned skills only) is the sole config
 REM Claude Code reads.
-for %%F in (.claude .claude.json .mcp.json) do (
+for %%F in (.claude .claude.json .mcp.json .gitattributes) do (
     if exist "!DEST_DIR!\%%F" (
         echo Warning: stripped %%F from the zip ^(not expected in a feedback submission^).
         if exist "!DEST_DIR!\%%F\." (
@@ -168,7 +172,8 @@ set "FB_JSON=!DEST_DIR!\_feedback\feedback.json"
 if exist "!FB_JSON!" (
     echo User's prompt to issue first:
     echo ---------------------------------------------
-    powershell -NoProfile -Command "try { (Get-Content -Raw -LiteralPath '!FB_JSON!' | ConvertFrom-Json).user_prompt } catch { '(could not parse feedback.json)' }"
+    set "PS_FB=!FB_JSON:'=''!"
+    powershell -NoProfile -Command "try { (Get-Content -Raw -LiteralPath '!PS_FB!' | ConvertFrom-Json).user_prompt } catch { '(could not parse feedback.json)' }"
     echo ---------------------------------------------
 ) else (
     echo User's prompt: see !DEST_DIR!\_feedback\feedback.json ^(user_prompt field^)
