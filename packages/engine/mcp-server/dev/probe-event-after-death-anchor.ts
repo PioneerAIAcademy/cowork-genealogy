@@ -1,15 +1,15 @@
 /**
  * Probe — evidence trail behind the death-like anchor's suppression corollary
- * in docs/specs/person-warnings-tool-spec.md ("Three consequences a reader has
+ * in docs/specs/person-warnings-tool-spec.md ("Four consequences a reader has
  * to hold", consequence 4) and behind the `hasEventAfterDeath1` cause guidance
  * in packages/engine/plugin/skills/check-warnings/.
  *
  * It exists because a live case was misdiagnosed on hand arithmetic. Issue
  * #2210 came from alpha feedback #2167: a widow's pension filed 11 Jul 1890
  * against a death of 17 Apr 1889 was reported to the tester as a date conflict.
- * The first two readings of that case both assumed `hasEventAfterDeath1` had
- * fired — one arguing it could not (year-only dates, exactly 365 days), one
- * arguing it must (day-precision dates, 450 days). Both were wrong, because
+ * The first two readings of that case each settled `hasEventAfterDeath1` from
+ * two facts — one arguing it could not have fired (year-only dates, exactly
+ * 365 days), one arguing it must have (day-precision dates, 450 days). Both were wrong, because
  * both looked at two facts when the person had nine. The tester's William M
  * Nickle also carried a year-only `Burial 1889`, and `Burial` is death-like.
  *
