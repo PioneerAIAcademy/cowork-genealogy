@@ -147,15 +147,23 @@ describe('buildFeedbackZip — feedback.json', () => {
 
   it('redacts API keys from user-typed feedback fields', async () => {
     const key = 'sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA'
-    const result = await buildFeedbackZip(makeOptions(folder, {
-      userPrompt: `I pasted ${key} and it broke`,
-      agentDid: `It echoed ${key} back`,
-      agentShouldHave: `Not echo ${key}`,
-      correctAnswer: `Refuse the ${key}`,
-      notes: `Also found ${key} in logs`,
-    }))
+    const result = await buildFeedbackZip(
+      makeOptions(folder, {
+        userPrompt: `I pasted ${key} and it broke`,
+        agentDid: `It echoed ${key} back`,
+        agentShouldHave: `Not echo ${key}`,
+        correctAnswer: `Refuse the ${key}`,
+        notes: `Also found ${key} in logs`
+      })
+    )
     const payload = await readFeedbackJson(result.zipBase64)
-    for (const field of ['user_prompt', 'agent_did', 'agent_should_have', 'correct_answer', 'notes']) {
+    for (const field of [
+      'user_prompt',
+      'agent_did',
+      'agent_should_have',
+      'correct_answer',
+      'notes'
+    ]) {
       expect(payload[field]).not.toContain('sk-ant-')
       expect(payload[field]).toContain('[REDACTED_API_KEY]')
     }
