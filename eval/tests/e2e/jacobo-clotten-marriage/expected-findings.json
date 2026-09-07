@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Joanni Jacobo Clotten married Maria Magdalena Weber on 30 June 1716 in the diocese of Trier, Rhineland.",
+      "details": {
+        "subject_person": "Joanni Jacobo Clotten (MZ13-TN6)",
+        "fact_type": "Marriage",
+        "date": "30 June 1716",
+        "place": "Rheinland, Bistum Trier"
+      },
+      "supporting_sources": [
+        "Deutschland, Rheinland, Bistum Trier, katholische Kirchenbücher, 1543-1958 — entry for Joannes Jacobus Klotten and Maria Magdalena Weber, 30 Jun 1716"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "The wife the tree records only as 'Mariae Magdalenae' had the surname Weber.",
+      "details": {
+        "person": {
+          "name": "Maria Magdalena Weber",
+          "role": "wife of Joanni Jacobo Clotten, mother of the 1717 and 1720 children"
+        }
+      },
+      "supporting_sources": [
+        "Deutschland, Rheinland, Bistum Trier, katholische Kirchenbücher, 1543-1958 — marriage entry of 30 Jun 1716"
+      ],
+      "required": true
+    }
+  ]
+}

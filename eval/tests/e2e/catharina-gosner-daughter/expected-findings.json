@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Catharina Gosnerin and Joannes Schedler had a daughter, Magdalena Schedler, christened 12 June 1743 at Triesen, Liechtenstein.",
+      "details": {
+        "subject_person": "Catharina Gosnerin (KZS8-RS7)",
+        "relation": "child",
+        "target_person": {
+          "name": "Magdalena Schedler",
+          "christening": "12 June 1743, Triesen, Liechtenstein"
+        }
+      },
+      "supporting_sources": [
+        "Liechtenstein, Births and Baptisms, 1650-1875 — entry for Magdalena Schedler, 1743, parents Joannes Schedler and Catharina Schedlerin"
+      ],
+      "required": true
+    }
+  ]
+}
