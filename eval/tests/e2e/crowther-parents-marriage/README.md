@@ -63,6 +63,23 @@ Mary Prizer with matching children, rather than pointing to one
 certificate. The agent should also avoid treating the children's shared
 "Prizer" surname alone as proof — that's a lead, not evidence.
 
+## Bundled captures (`provided-documents/`)
+
+Three Ancestry negative-result pages are committed here to let the harness exercise its Ancestry plan
+items without a paywalled browser session (issue #2083):
+
+| File | Collection searched | Result |
+|------|---------------------|--------|
+| `ancestry-md-births-1854-crowther-mary-NEGATIVE.pdf` | Ancestry — Maryland Births 1854 | 0 results for Mary Crowther b. 1854 |
+| `ancestry-md-marriages-crowther-john-bosley-honor-NEGATIVE.pdf` | Ancestry — Maryland Compiled Marriages | 0 results for John Crowther × Honor Bosley |
+| `ancestry-md-marriages-crowther-mary-prizer-1883-NEGATIVE.pdf` | Ancestry — Maryland Compiled Marriages | 0 results for Mary Crowther × Edward Prizer ca. 1883 |
+
+All three are authentic search-result pages saved from ancestry.com in a credentialed browser. All three
+returned zero results, confirming that Ancestry's Maryland indexed collections have no record for these
+events — the supporting evidence for all three findings stays FamilySearch-only. The agent should reach
+the same negative conclusion autonomously from the captures; the captures make the plan items executable
+rather than skipped.
+
 ## Notes for reviewers
 
 The kept children are a real research surface, not filler: their own
