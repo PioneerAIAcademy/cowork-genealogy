@@ -252,28 +252,12 @@ describe("agent delegation framing", () => {
   it("no SKILL.md names an agent it is not a registered caller for", () => {
     // discoverEdges() only sees `@plugin:`. A delegation written any other way
     // adds no edge, and every per-edge assertion above skips it silently.
-    //
-    // A hit is read as a whole kebab token, because a plain substring match
-    // reports a delegation to `image-reader-opus` — which shipped here once and
-    // is parked for a return (image-transcribe-tool-spec.md §15.9) — as an
-    // unregistered edge to `image-reader`, and both remedies its message offers
-    // are wrong. Only a token that is ANOTHER agent's name is skipped: a token
-    // this arm has no other owner for (`image-readers`, `image-reader-based`)
-    // still names this agent, and dropping those would lose reach a substring
-    // match had. The name is a FILENAME, so it is escaped before it becomes a
-    // pattern — nothing constrains that basename, and a metacharacter in one
-    // would otherwise widen the match or throw.
     const registered = new Set(Object.keys(DELEGATION_EDGES));
     const offenders: string[] = [];
     for (const skill of skillFiles) {
       const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
       for (const agent of agentOnly) {
-        const esc = agent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const tokens = [...text.matchAll(new RegExp(`(?<![a-z0-9-])${esc}[a-z0-9-]*`, "g"))];
-        const namesThisAgent = tokens.some(
-          (m) => m[0] === agent || !agentNames.includes(m[0]),
-        );
-        if (!namesThisAgent) continue;
+        if (!text.includes(agent)) continue;
         const edge = `${skill} -> ${agent}`;
         if (!registered.has(edge) && !PROSE_MENTIONS.has(edge)) offenders.push(edge);
       }
@@ -322,7 +306,7 @@ describe("agent delegation framing", () => {
 
       if (spec.exempt) {
         const { side, reason } = spec.exempt;
-        it(`${side}-side exemption does not sit beside a ${side} pin`, () => {
+        it(`${side}-side exemption has not gone stale`, () => {
           expect(reason.length, "an exemption needs a reason").toBeGreaterThan(40);
           // Shrink-only: an exemption must not sit beside a pin on the same
           // side. When that side gains a rule, pin it and delete the exemption.
