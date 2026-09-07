@@ -84,7 +84,8 @@ this genuinely is an exhaustiveness check.
 not run the checks below: nothing here can block a declaration that is already
 written, and re-running Step 4's `update` is a structural no-op. Report the
 existing declaration and its `stop_criteria` as they stand, and point to
-`proof-conclusion`.
+`proof-conclusion` unless the question already carries a `proof_summaries`
+entry — when it does, say plainly that no further exhaustiveness work is owed.
 
 Only evaluate a question whose **active** plan's items are all `completed` or
 `skipped`. If any is `in_progress`, refuse to declare and recommend finishing
@@ -99,10 +100,10 @@ criteria, run two checks over the assertions tied to this question
 
 - **Classification (hard block, all assertions).** Every assertion must have
   a real, reasoned `information_quality` and `evidence_type` — not a
-  placeholder. `indeterminate` is a reasoned value and passes this check: it is
-  the correct classification when a record does not state how its informant
-  knew, and it is not a missing one. Block only on an absent or placeholder
-  value. If any assertion fails, stop here, name the specific assertion
+  placeholder. `information_quality: "indeterminate"` is a reasoned value and
+  passes this check: it is the correct classification when a record does not
+  state how its informant knew, and it is not a missing one. Block only on an
+  absent or placeholder value. If any assertion fails, stop here, name the specific assertion
   IDs, and recommend `record-extraction`, which owns classification and
   refines it in place.
 - **person_evidence (hard block scoped to person identity).** `person_evidence`
@@ -120,9 +121,10 @@ criteria, run two checks over the assertions tied to this question
   available tool — or (b) a single source's data quality issue that a *different*
   record type might independently resolve? If (b), stop here: route to
   research-plan with a specific new plan item targeting the alternative record
-  type. While a value is still marked tentative, `evidence_class` and
+  type — while the value stays tentative on a (b) path, `evidence_class` and
   `independent_verification` assess nothing. The inaccessibility exception in
-  Step 3 applies only when (a) is confirmed.
+  Step 3 applies only when (a) is confirmed; on an (a) path assess both
+  criteria against the accessible evidence.
 
 Do not declare exhaustive while a blocking check fails.
 
@@ -141,8 +143,7 @@ at the first that fails — name it. The record does not.** Write all seven eith
 way, each a 1-2 sentence assessment tied to project state: what was met, what
 failed, and what the evidence could not reach. Declaring requires all seven met.
 A decline carries the same seven, honestly assessed, with the blocking criterion
-named in `justification`. A partial object is rejected — all seven keys are
-required whenever the object is present.
+named in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -242,7 +243,7 @@ research_append({
   fields: {
     exhaustive_declaration: {
       declared: false,
-      justification: "repository_breadth blocks: the 1862 fire destroyed probate and church records; no surviving source names the father. Terminating for lack of further known sources.",
+      justification: "goal_alignment blocks: the 1862 fire destroyed probate and church records; every identified repository was consulted and no surviving source names the father, so no convincing answer is obtainable. Terminating for lack of further known sources — pursued-and-unavailable, not an unsearched gap.",
       log_entry_ids: ["log_001", "log_002"],
       stop_criteria: { /* all seven, honestly assessed — what was met, what failed, what the evidence could not reach */ }
     }
@@ -304,6 +305,7 @@ the offending field — do not blindly retry the same payload.
   stopping.
 - **Plan items still in progress:** Refuse to declare when an **active**
   plan item is `in_progress`; recommend completing the in-flight work first.
+
 ## Re-invocation behavior
 
 **Writes:** the `exhaustive_declaration` object and `status` on a single
