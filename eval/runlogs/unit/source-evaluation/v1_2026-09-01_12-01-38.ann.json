@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-09-01_12-01-38.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_source_evaluation_h3t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h3t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h3t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_c5n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_c5n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_c5n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly identified the two substantive findings and classified the sources appropriately. However, it introduced an unsupported claim that the 1900 census birth year was 1877, while the tool response provided 1875. The “digit transposition” explanation for the death index is also somewhat speculative until the original image is reread."
+    },
+    {
+      "test_id": "ut_source_evaluation_w7d",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_p2v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The 1885 misattribution and death-index conflict are well handled. However, the response claims the 1900 census says 1877, while the supplied record_read output does not establish that value. It also speculates that “5” was misread as “7.” Those details should not be asserted without evidence."
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Classification before recommendation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection and argument quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_m8q",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "he core findings are correct, but the response recommends that the 1885 census belongs to KD96-WX7 without actually reading KD96-WX7's profile. The attachment check only proves that the source is attached there; it does not prove that KD96-WX7 is the correct person. The response should have read KD96-WX7 before making that claim."
+    }
+  ]
+}
