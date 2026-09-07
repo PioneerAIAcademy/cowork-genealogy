@@ -1,0 +1,20 @@
+{
+  "tool": "person_search",
+  "description": "Nil FamilySearch Family Tree search for the MOTHER in the objective-only init path — no candidates. Sibling of person-search-hennessy-none, which covers the daughter. That fixture's own description says it 'matches any surname containing Hennessy, so a search on the mother or a relative resolves too', but the mother in this scenario is Mary Donovan, so its `~Hennessy` predicate never reaches her: ut_init_project_002 searched {surname: Donovan, givenName: Mary, birthPlace: Boston, childGivenName: Sarah} and again without childGivenName, and both returned fixture_not_found, costing Tool Arguments a 1 while the judge recorded the tree stubs themselves as factually sound. Searching the mother after the daughter is correct behaviour for this path, so the gap was in the corpus, not the skill. The predicate is a subset match on surname + givenName, so it resolves both calls whatever optional filters the skill adds. Per person-search-tool-spec.md a 204 from upstream returns totalMatches 0 with an empty results array.",
+  "args": {
+    "surname": "~Donovan",
+    "givenName": "~Mary"
+  },
+  "response": {
+    "query": {
+      "givenName": "Mary",
+      "surname": "Donovan"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
