@@ -105,8 +105,8 @@ produce identical flatness; the 09-05 draft read the second from evidence that
 cannot distinguish them.
 
 The 09-05 candidate-mass table can be retired. Tool schemas are not the mass:
-`ToolSearch` results average **40 tokens** across 182 calls, because deferral is
-on.
+`ToolSearch` results average **40 tokens** across the 182 calls in the 11
+transcripts (the committed corpus records 2,304), because deferral is on.
 
 ### Where the money goes
 
@@ -168,8 +168,9 @@ falsified it, and the half that survives is easy to over-read.
 **True:** Claude Code truncates a skill body to 20,000 characters and appends
 `[... skill content truncated for compaction; use Read on the skill path if you
 need the full text]`. Ten of 28 skills exceed the cap. In all 11 transcripts the
-`invoked_skills` attachment count **equals the compaction count exactly**, and
-every attachment sits immediately after a `COMPACT_SUMMARY` record.
+`invoked_skills` attachment count **equals the compaction count exactly** (33 and
+33), and every attachment follows, within a few records, a system record whose
+`subtype` is `compact_boundary`.
 
 **False — and this was the tempting reading:** that long skills are therefore
 delivered truncated. They are not. The probe above delivered 44,164 characters
@@ -274,7 +275,10 @@ converts a large class of stalled doctrine work into ordinary developer tasks.
 
 - **issue #1915** — hosted runner wedges when subagents outlive a turn; 4 of 8
   extractions lost in a real session. Highest-severity live bug on the board,
-  `senior`, `reviewed`, and unruled.
+  `senior`, `reviewed`, and **already ruled 2026-08-26** — the lead wrote the
+  issue and then specified the fix to three numbered steps in
+  `apps/server/app/agent/real_agent.py`, with two further sightings recorded
+  2026-08-31. It needs a senior developer, not a ruling.
 - **issue #2037** (a security control no required check tests), **#1127**,
   **#1124** — all unruled. **issue #1489**, **#1120**, **#1036** (53 open
   Dependabot alerts, 4 with a rationale) carry lead comments.
@@ -318,10 +322,13 @@ Both are now delegable implementation work, not lead work.
 | `source_attachments` | never consulted (issue #2208) | Unruled |
 | `gps-mentor` | zero eval coverage (issue #1253) | Direction given 2026-09-01 and 2026-09-05: build the missing agent-invocation path once, shared with issue #2246 |
 
-Issue #1335 ("reconcile the four contradictions") carries **eleven** lead
-comments, the most recent saying "Both rulings landed 2026-08-25 and neither has
-reached a skill body. **Nothing here is blocked.**" It needs an owner, not a
-ruling.
+Issue #1335 ("reconcile the four contradictions") carries **ten** lead comments.
+The 2026-09-01 one says "Both rulings landed 2026-08-25 and neither has reached a
+skill body. **Nothing here is blocked**" — but four lead comments come after it,
+and they re-open the cost question: `research` gained a unit suite on 2026-09-01,
+so editing `research/SKILL.md` now buys a paid run, PRs #2237 and #2249 already
+edit that file, and the 2026-09-07 comment says "**Re-price this card before
+scheduling it.**" It needs that re-pricing before it needs an owner.
 
 `timelines[]` is empty in **161 of 161** committed final states, not 157.
 
@@ -358,7 +365,7 @@ the lead can accept the blast radius.
    ratio.
 
 Theme 4 is delegable after issue #1915. The two collapsed themes need owners,
-not rulings.
+not rulings — except issue #1335, which needs re-pricing first.
 
 ---
 
