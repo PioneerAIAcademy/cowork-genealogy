@@ -1,0 +1,38 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Ciriaco Bardales and Carmen Morales had a son, also named Ciriaco Bardales, born in 1905 and died 12 August 1905 at Guatemala City, registered 13 August 1905.",
+      "details": {
+        "subject_person": "Ciriaco Bardales (KNYF-2Z8)",
+        "relation": "child",
+        "target_person": {
+          "name": "Ciriaco Bardales",
+          "birth": "1905, Guatemala",
+          "death": "12 August 1905, Guatemala, Guatemala"
+        },
+        "mother": "Carmen Morales"
+      },
+      "supporting_sources": [
+        "Guatemala, Guatemala, Registro Civil, 1874-2008 — death registration of 13 Aug 1905 naming parents Ciriaco Bardales and Carmen Morales"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Carmen Morales was the mother of the 1905 infant — a partner of Ciriaco Bardales before his marriage to Clara Amelia Palacios Oliva.",
+      "details": {
+        "person": {
+          "name": "Carmen Morales",
+          "role": "named as the child's mother on the 1905 death registration"
+        }
+      },
+      "supporting_sources": [
+        "Guatemala, Guatemala, Registro Civil, 1874-2008 — death registration of 13 Aug 1905"
+      ],
+      "required": true
+    }
+  ]
+}

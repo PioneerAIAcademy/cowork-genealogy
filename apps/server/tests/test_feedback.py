@@ -485,3 +485,57 @@ def test_non_json_response_surfaces_as_502(monkeypatch):
         assert "failed" in r.json()["detail"].lower()
 
         client.delete(f"/api/sessions/{sid}")
+
+
+# ---------- API-key redaction in session logs ----------
+
+
+def test_redact_anthropic_key():
+    data = b'{"message":"my key is sk-ant-api03-abcDEF123456789012345678901234"}\n'
+    out = fb._redact_api_keys(data)
+    assert b"sk-ant-" not in out
+    assert b"[REDACTED_API_KEY]" in out
+
+
+def test_redact_openrouter_key():
+    data = b'{"message":"use sk-or-v1-abcdef1234567890abcdef1234567890"}\n'
+    out = fb._redact_api_keys(data)
+    assert b"sk-or-" not in out
+    assert b"[REDACTED_API_KEY]" in out
+
+
+def test_redact_generic_sk_key():
+    key = b"sk-" + b"a" * 48
+    data = b'{"message":"' + key + b'"}\n'
+    out = fb._redact_api_keys(data)
+    assert key not in out
+    assert b"[REDACTED_API_KEY]" in out
+
+
+def test_short_sk_token_not_redacted():
+    data = b'{"message":"sk-short is fine"}\n'
+    assert fb._redact_api_keys(data) == data
+
+
+def test_redact_multiple_keys():
+    data = (
+        b'{"type":"user","message":"sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA"}\n'
+        b'{"type":"user","message":"sk-or-v1-BBBBBBBBBBBBBBBBBBBBBB"}\n'
+    )
+    out = fb._redact_api_keys(data)
+    assert b"sk-ant-" not in out
+    assert b"sk-or-" not in out
+    assert out.count(b"[REDACTED_API_KEY]") == 2
+
+
+def test_redact_api_keys_str():
+    text = "I pasted sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA into the field"
+    out = fb._redact_api_keys_str(text)
+    assert "sk-ant-" not in out
+    assert "[REDACTED_API_KEY]" in out
+    assert "I pasted" in out
+
+
+def test_redact_api_keys_str_passthrough():
+    text = "normal text with no keys"
+    assert fb._redact_api_keys_str(text) == text
