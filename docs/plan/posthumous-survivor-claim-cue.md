@@ -1,7 +1,25 @@
 # Survivor's-claim cue for the posthumous-mention arm — plan
 
-> **Status:** **partially implemented (2026-09-07) — §0 NOT cleared, do not
-> open a PR yet.** Built: all four prose sites (§1), the `flynn-widow-pension`
+> **Status: §0 FAILED (2026-09-07) — this plan does not fix issue #2210. Do
+> not implement it as written; do not open a PR.** The session log shows
+> `check-warnings` never ran: no `person_warnings` call, no `hasEventAfterDeath1`
+> anywhere in 36 entries. The tester's sentence came from `init-project`'s
+> step-5 pedigree analysis flagging a `Pension` fact dated after death —
+> an error type its own closed list at `init-project/SKILL.md:225` forbids it
+> from flagging ("birth after death" is the list's only after-death item).
+> Evidence and recommendation posted on #2210 and #2167 (2026-09-07). The
+> cue-list gap this plan addresses is real but is **not** this defect; it needs
+> its own issue so its paid run is spent deliberately. Two premises this plan
+> inherited from the issue are also wrong: the real facts are day-precision
+> (450-day gap, so the tag *would* fire), and the fact type is `Pension`, not
+> `Military` — legal, because `gedcomx_fact_type_recommended` is an open enum.
+>
+> Below is retained as the record of what was built and verified, since the
+> lead may want the cue-list half split out rather than discarded. Commit
+> `f1dbaa376` reverts cleanly.
+>
+> **Previously — partially implemented (2026-09-07).** Built: all four prose
+> sites (§1), the `flynn-widow-pension`
 > scenario, the MCP fixture, `ut_check_warnings_v4m`, and the §2e validator
 > (proven to fire — six cases, real `pytest.skip`, under the harness venv).
 > Free checks green: `make engine-test` (122 files, 2863 passed) and
