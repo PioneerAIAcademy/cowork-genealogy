@@ -7,10 +7,10 @@
  * they have (whether they agreed or disagreed).
  */
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { z } from 'zod';
 import { runlogsUnitDir } from '../paths';
 import { atomicWriteJson } from './atomic';
+import { resolveWithin, PathEscapeError } from './safe-path';
 import { sampledTestIds, uncommentedSampledCorrections } from '../types';
 import type { AnnotationCorrection, AnnotationFile, RunLogFile } from '../types';
 
@@ -67,11 +67,33 @@ export function validateAnnotation(value: unknown): AnnotationFile {
 }
 
 export function annPathForRunLog(runLogId: string): string {
-  return path.join(runlogsUnitDir(), `${runLogId}.ann.json`);
+  // `runLogId` is built from catch-all URL segments and reaches both a write and
+  // an `fs.rm`. Contained here, at the one place every caller shares, rather than
+  // at each call site.
+  //
+  // Exported by main for the 422 body of `GET /api/runlogs/<...id>`, which calls
+  // it from a catch block. That cannot throw a second time: `readRunLogById`
+  // runs first and answers 404 on a refused path, so the catch is only reached
+  // for an id already known contained.
+  return resolveWithin(runlogsUnitDir(), `${runLogId}.ann.json`);
 }
 
 export async function readAnnotation(runLogId: string): Promise<AnnotationFile | null> {
-  const filePath = annPathForRunLog(runLogId);
+  // A refused path returns null, like `readFixture` and `readRunLogById`: a read
+  // with a not-found contract should not start throwing because the reason
+  // changed, and the caller cannot then tell "absent" from "refused" — which is
+  // the right amount to tell an unauthenticated requester. `writeAnnotation`
+  // deliberately still throws: a refused WRITE must be loud.
+  let filePath: string;
+  try {
+    filePath = annPathForRunLog(runLogId);
+  } catch (e) {
+    // Narrowed: an untyped catch here also swallows an `evalDir()`
+    // misconfiguration, turning a broken environment into a silent "not found".
+    // Only a refused path is expected; anything else stays loud.
+    if (!(e instanceof PathEscapeError)) throw e;
+    return null;
+  }
   let raw: string;
   try {
     raw = await fs.readFile(filePath, 'utf8');

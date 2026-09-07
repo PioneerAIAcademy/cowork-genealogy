@@ -1172,7 +1172,10 @@ export default function RunLogDetailPage({
   params: Promise<{ id: string[] }>;
 }) {
   const { id } = use(params);
-  const runLogId = id.map(decodeURIComponent).join('/');
+  // Next has ALREADY decoded these catch-all segments; decoding again turns
+  // `%252e%252e` into `..` after normalisation has run. The four route handlers
+  // were fixed; this fifth site was missed.
+  const runLogId = id.join('/');
   const qc = useQueryClient();
 
   const query = useQuery<Detail>({

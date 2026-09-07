@@ -346,13 +346,21 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+19 of the 28 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
-**A reference is loaded only if its own `SKILL.md` names it** — or if a
-reference the body names links on to it. Nothing lists a `references/` folder at
-runtime, so a file neither route reaches is unreachable: it costs no prompt
-tokens and carries every byte of the drift risk.
+**A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
+a reference the body names links on to it. Nothing lists a `references/` folder at
+runtime, so a file neither route reaches is never loaded on purpose: in the normal
+path it costs no prompt tokens, while carrying every byte of the drift risk.
+
+Both halves of that are claims about the normal path, not about reach. **An
+unnamed file is not out of reach.** Both environments put every skill's
+`references/` folder in front of a session — the harness copies each skill
+directory into the workspace's `.claude/skills/`, and the Cowork `.zip` ships the
+whole plugin — so a model that globs can read any of them, unreviewed. Measured,
+not theorised: `ut_convert_dates_012` globbed `**/*`, read three files on that
+test's exemption list, and one of them changed its answer.
 
 `tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
 where the still-unreached files are listed. Its exemption list **only shrinks** —
@@ -363,10 +371,13 @@ it carries a measured reason per file, which a grep cannot.
 
 The same test pins the other direction: **a `SKILL.md` naming a `references/`
 file that is not on disk fails CI too**, since the agent is then told to read
-something it cannot open. One is exempt — `project-status` names
-`output-formats.md` twice as the render source for both its summaries, and that
-file has never existed in this repo. Writing it decides what the skill outputs,
-which is a content call owing a paid eval run rather than a mechanical fix.
+something it cannot open. **Nothing is exempt from this half** — its exemption
+list is empty, so a dangling pointer fails outright. The one entry it ever
+carried was `project-status` naming a render source for both its summaries that
+had never existed in this repo; both pointers were deleted rather than the file
+written, because `SKILL.md` already states what each summary must carry and
+`rubric.md` grades them on that coverage and on being distinct from each other,
+so there was no layout contract to lose.
 
 **Reachable is not read, and what gates it is the skill's reference-manifest
 block — not the file, and not the strength of the wording.** A file listed in the
@@ -458,9 +469,9 @@ Three families are duplicated today, and only one is lint-guarded:
 | `validation-protocol.md` | 2 | **2** | **none** |
 | `research-log-protocol.md` | 1 | 1 | **none** |
 
-The last two were 11 and 3 until the unreachable copies were deleted. Nine
+The last two were 11 and 3 until the unnamed copies were deleted. Nine
 `validation-protocol.md` copies and two `research-log-protocol.md` copies were
-named by no `SKILL.md`, so no session could load them; three of the nine also
+named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine also
 carried the retired "run `validate_research_schema` after writing" doctrine, and
 four named a `check-warnings` trigger their skill cannot reach — it writes
 `questions` or `plans`, never `assertions` or `person_evidence`. The two
@@ -489,7 +500,8 @@ lists, and the test asserts that too.
 > `validation-protocol.md` largely restates rules `research_append`'s error
 > contract already enforces at write time, and a rule the tool rejects can be one
 > sentence. **Before adding a copy, say why in the PR — and name it in the
-> `SKILL.md`, or you are shipping a file nothing can read.**
+> `SKILL.md`, or you are shipping a file nothing loads on purpose — and that a
+> globbing model can still read, unreviewed.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
@@ -1295,7 +1307,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-26 of the 27 skills carry a `**Narration:**` line — 22 of them as the first line
+26 of the 28 skills carry a `**Narration:**` line — 22 of them as the first line
 of the body, the other four further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1703,10 +1715,10 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **433** committed
+  run logs, and negative routing tests across 27 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
-  totals **433 rows, 379 passing (88%)**. Those two numbers count different things
+  `eval/tests/unit/` — and across the 27 live suites the latest run log per suite
+  totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
   about the snapshots — not an identity, so re-derive rather than quoting them.
@@ -1896,7 +1908,7 @@ re-run until it comes back green (`docs/skill-lifecycle.md` carries the
 symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
 construction, catching one is on you: re-run a suspect test with
 `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
-94 of the 433 definitions are **negative** tests that exist to prove
+97 of the 446 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
