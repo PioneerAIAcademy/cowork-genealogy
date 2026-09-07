@@ -254,15 +254,17 @@ export async function fulltextSearchTool(
     for (const r of results) {
       for (const name of r.names ?? []) {
         for (const word of name.split(/\s+/)) {
-          if (allVariants.has(word.toLowerCase())) {
-            matched.add(word);
+          const lower = word.toLowerCase();
+          if (allVariants.has(lower)) {
+            matched.add(lower);
           }
         }
       }
       for (const hl of r.highlightTerms ?? []) {
         for (const word of hl.split(/\s+/)) {
-          if (allVariants.has(word.toLowerCase())) {
-            matched.add(word);
+          const lower = word.toLowerCase();
+          if (allVariants.has(lower)) {
+            matched.add(lower);
           }
         }
       }
