@@ -50,15 +50,11 @@ Always investigate.
   Posthumous records include probate and estate administration
   running years after death, including an heir petition that
   reopens it; obituaries; death notices, which are distinct from
-  obituaries; city directories; and survivors' and dependents'
-  benefit claims, where the deceased is named to establish another
-  person's entitlement and the death itself creates the claim.
-  What decides whether such a record fires this tag is the fact
-  TYPE it was attached as, not its date: the same estate file is
-  silent as a Probate fact and fires as a Residence fact.
+  obituaries; and city directories. What decides whether such a
+  record fires this tag is the fact TYPE it was attached as, not
+  its date: the same estate file is silent as a Probate fact and
+  fires as a Residence fact.
 - Action: check person_evidence links for the post-death event.
-  On a survivor's claim, keep the source and correct the fact type
-  or date -- do not unlink it.
 
 ### `hasAgeRangeGreaterThan120`
 - Rule: latest possible death year minus latest possible birth
