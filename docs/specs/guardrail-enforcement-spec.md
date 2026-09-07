@@ -151,6 +151,7 @@ depends on another shipping first.
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
+| §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
 | §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
@@ -761,6 +762,130 @@ their own project is explicitly out of scope for this layer. The refusal message
 says so outright rather than leaving the researcher to guess. That route does
 not exist on the hosted path, where the project lives in a sandbox — see the
 ADR's two stated limits.
+
+### Blocking conflicts before completion
+
+`project.status` may not be set to `"completed"` while any `conflicts[]` entry is
+`unresolved` **and** any of three arms holds:
+
+1. `blocks_question_ids` is non-empty — the declared link.
+2. `identity_question` is a non-empty string — the declared identity link. The
+   schema types this field as the question's *text* (`string | null`), never a
+   boolean, so an early `=== true` reading was unsatisfiable dead code.
+3. Some member of `competing_assertion_ids` is an assertion whose
+   `extracted_for_question_ids` is non-empty — the **derived** link.
+
+`resolved` and `moot` both settle a conflict, and both now carry a precondition:
+a `resolved` conflict owes the three analyses, and a `moot` one owes a
+`resolution_rationale` saying why it no longer bears on the question. `moot` had
+none until this gate widened — it was the one settling write that asserted
+nothing, so a bare `{status: "moot"}` cleared the gate. Implemented as
+`conflictBlocksCompletion` in `packages/engine/mcp-server/src/utils/question-state.ts`,
+called from both arms of the gate in
+`packages/engine/mcp-server/src/tools/research-append.ts`; specified with the
+other state-coupling invariants in `docs/specs/research-append-tool-spec.md` §5.
+
+**Why arm 3 exists.** The two declared fields are not reliably written. Measured
+at `f459af71b` with `packages/engine/mcp-server/dev/replay_completion_gate.py`,
+over the 161 committed e2e final states: 75 conflicts, and 42 of them carry
+neither declared field. So the two-arm gate saw 5 of the 14 unresolved conflicts
+held by completed runs, and 7 runs reached `completed` over a conflict it could
+not see. Arm 3 sees all 14. A conflict
+competing over an assertion a question was built on bears on that question
+whether or not the agent wrote the link down — the correlation is a property of
+the evidence, not of a bookkeeping field.
+
+**Three properties are load-bearing and must survive any refactor.**
+
+- **The union of pre-call and live state.** The gate refuses on either. Read live
+  alone, one batch could settle the blocking conflict and complete in the same
+  call; read from the snapshot alone, it would miss a conflict the batch newly
+  introduces. Settling a conflict is `conflict-resolution`'s step and not the
+  completing writer's own prior step, which is the ADR-0011 condition that puts
+  it on the snapshot side.
+- **Arm 3 is not narrowed to still-open questions.** A conflict bearing on an
+  already-concluded question still means that conclusion rests on unresolved
+  evidence. Narrowing it halves the coverage — 7 of 14 conflicts in 7 runs
+  against 14 in 11 — and every existing unit test passes either way, so nothing
+  but this sentence catches the narrowing.
+- **Arm 3 does not require the question id to exist in `questions[]`.** Nothing
+  reference-checks `extracted_for_question_ids`, so a dangling id is possible;
+  none exists in the corpus, and blocking on one is the safer direction.
+
+**The satisfying shape, including the case that has no winner.** For a conflict
+that can be settled, `conflict-resolution` writes `status: "resolved"` with
+`independence_analysis`, `weighing_analysis` and `resolution_rationale`, or
+`moot` with a rationale. For a conflict the researcher weighed and honestly
+**could not** settle, neither reads true as usually stated — so the shape is
+`resolved` with all three analyses, `resolution_rationale` saying why it cannot
+be settled and what would settle it, and `preferred_assertion_id` left **null**,
+which `conflictInvariants` permits. That is a deferral recorded as a finding, per
+`gps-research-flow.md`'s "a conflict that can't be resolved yet is written down
+as a finding, with what would resolve it"; it is not `moot`, which asserts the
+conflict no longer matters. The gate's refusal message states this shape, because
+without it a deferring researcher has no writable route to `completed` and no
+override tier exists. Note that the corpus's 52 resolved conflicts are counted
+over resolved conflicts generally and are **not** evidence that any refused run
+could have satisfied the gate.
+
+**The refusal measurement, and its inspection.** ADR-0011 limit 2's bar is
+inspection, not a rate: replay the gate over the corpus and read every refusal.
+Measured at `f459af71b` with that same script — which replays four readings side
+by side, so a narrowing can be compared against what shipped, and prints the
+per-refusal inspection rather than only a count — the widened predicate refuses
+**11 of the 128 completed runs** (5 of them the declared arms already refuse, 6
+new), holding **14** unresolved conflicts between them, **7** of which only the
+derived arm sees.
+
+What settles each refusal is not the tier guidance alone but a stricter shipped
+invariant: `conflictedSourceInvariants` refuses any tier other than `not_proved`
+or `disproved` when a non-resolved conflict disputes a source the summary relies
+on, because correlation presupposes identity. Read against it — per summary, on
+the summary's own `supporting_assertion_ids`, **not** scoped by question, which
+is how the invariant itself reads:
+
+- **All 7 conflicts only the derived arm sees are already invalid** — every one
+  of them sits in a document whose summary claims `probable` or `proved` on a
+  source the conflict disputes. So nothing the widening newly refuses is a
+  correct state this gate denies. Two of them dispute a fact that is not the
+  concluded one (a child's birth month; a one-year birth-year variance on a
+  non-subject) and read at first as false denies on the tier guidance alone; the
+  shared-source reading is what makes them true positives.
+- Across all 14, **13 of 14**. The one exception is `hannah-earnest-children`
+  c_001, a **declared** conflict the gate already refuses today, so this
+  predicate does not change its outcome — and its run is already invalid anyway
+  through c_003/c_004, which the derived arm catches.
+- At run level, **11 of 11** refused runs hold at least one already-invalid
+  conflict.
+
+An earlier draft of this paragraph asserted 14 of 14 from a project-wide reading
+the cited script did not perform, and a first correction scoped the check by
+question and under-counted to 12. Neither number survived re-measurement; the
+script now models the shipped invariant and prints what it found, per
+`CLAUDE.md` § "A measurement that disagrees with belief is re-measured, not
+reworded".
+
+**The reachable false deny, which the corpus does not contain.** A project whose
+only honest tier is `not_proved` over a genuinely unresolvable conflict would
+clear `conflictedSourceInvariants` and still be refused completion here. No such
+document exists in the corpus — every refused run tiers above `not_proved` — so
+there is nothing to inspect, but it is the shape to watch, and it is the
+population of the open `preferred_assertion_id`-on-a-resolve adjudication.
+
+**Every figure here is the eval corpus, not production.** There is no production
+telemetry (`docs/architecture.md` §9.4), so none of these numbers says whether
+the gate is right for a real researcher, and the gate is not calibrated.
+
+**Four other readings of "a conflict blocks a question" exist and this
+subsection governs none of them.** `questionResolvedInvariants` and the
+disputed-source tier rule both read a shared `source_id` via `disputedSourceIds`
+(which counts `moot` as disputing, unlike this gate); `question-selection`'s
+prioritization reads `blocks_question_ids` only; and the `proof-conclusion` agent
+queries conflicts by `blocks_question_ids` only, which is the one with a
+behavioural consequence — it is the writer of the tier, and it cannot see a
+derived blocker before writing a tier the disputed-source rule will refuse.
+`research_query`'s `conflicts.questionId` filter is narrower than this gate for
+the same reason and is an advertised contract.
 
 ### Exhaustiveness before a proved tier
 
