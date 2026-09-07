@@ -705,6 +705,35 @@ def test_the_observed_quota_prose_is_caught_by_the_fallback(monkeypatch, tmp_pat
     assert result.aborted_reason == QUOTA_ABORT_REASON
 
 
+def _assistant_text(text):
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    return AssistantMessage(content=[TextBlock(text=text)], model="claude-opus-4")
+
+
+def test_the_observed_quota_prose_is_caught_in_its_real_shape(monkeypatch, tmp_path):
+    """The shape the corpus actually recorded, which the test above does not.
+
+    In convert-dates/v1_2026-09-01_14-32-09.json, ut_convert_dates_012 has
+    `error: null` — `message.result` and `stop_reason` were both empty — and
+    the prose arrives as assistant text, landing in `output.text_response`.
+    Feeding the same string through `result=` exercises a channel that
+    occurrence never populated, so the fallback has to read the response text
+    too or it misses the one case it exists for.
+    """
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [
+            _assistant_text("You've hit your limit \u00b7 resets 4pm (Africa/Lagos)"),
+            _result_message(result=None, stop_reason=None),
+        ],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
 def test_an_ordinary_sdk_error_is_still_transient(monkeypatch, tmp_path):
     """The discriminator. Without this the classifier could call everything a
     quota and every test above would still pass."""

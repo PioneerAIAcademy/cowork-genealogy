@@ -271,7 +271,11 @@ QUOTA_ABORT_REASON = "quota_exhausted"
 _QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit", "rate limit")
 
 
-def _looks_like_quota(signals: dict[str, Any], error_text: str | None) -> bool:
+def _looks_like_quota(
+    signals: dict[str, Any],
+    error_text: str | None,
+    response_text: str | None = None,
+) -> bool:
     """True when this run ended on the seat's rate limit rather than a blip.
 
     Which of the three structured signals a real subscription quota emits is
@@ -287,7 +291,12 @@ def _looks_like_quota(signals: dict[str, Any], error_text: str | None) -> bool:
         return True
     if signals.get("rate_limit_status") == "rejected":
         return True
-    text = (error_text or "").lower()
+    # Both text sources. The one occurrence in the corpus
+    # (convert-dates/v1_2026-09-01_14-32-09.json, ut_convert_dates_012) has
+    # `error: null` and carries the prose in `output.text_response`, so a
+    # fallback that reads only the SDK's error text misses the very case it
+    # was written for and the run is retried three times anyway.
+    text = f"{error_text or ''}\n{response_text or ''}".lower()
     return any(marker in text for marker in _QUOTA_TEXT_MARKERS)
 
 
@@ -771,6 +780,7 @@ async def run_skill(
                             if _looks_like_quota(
                                 rate_limit_signals,
                                 message.result or message.stop_reason,
+                                "".join(text_chunks),
                             )
                             else "error"
                         )
