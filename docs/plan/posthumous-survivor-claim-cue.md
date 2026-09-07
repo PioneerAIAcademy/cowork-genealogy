@@ -14,9 +14,31 @@
 > (450-day gap, so the tag *would* fire), and the fact type is `Pension`, not
 > `Military` — legal, because `gedcomx_fact_type_recommended` is an open enum.
 >
+> **Retraction (2026-09-07, measured against the compiled engine).** An earlier
+> version of this note said the tag "*would* have fired" on the tester's data.
+> It would not. William M Nickle carries a year-only `Burial 1889` alongside
+> `Death 17 Apr 1889`; `Burial` is death-like, a year-only date resolves to
+> 31 Dec, so the anchor is 31 Dec 1889 and `Pension 11 Jul 1890` is 192 days
+> past it — `hasEventAfterDeath(365) => false`. Removing the Burial gives 450
+> days and fires, which isolates the mechanism. So `check-warnings` would have
+> been **silent** on this person, and no wording of the cue list could have
+> reached this defect.
+>
+> **This narrows the cue-list work itself.** When a burial is recorded
+> year-only in the year of death — common in FamilySearch data — the anchor
+> moves to 31 Dec of that year, so a survivor's claim filed anywhere in the
+> *following* calendar year is suppressed. That is exactly the case the cue was
+> written for. The cue fires mainly on claims two or more years out. Whether it
+> earns `check-warnings`' $1.76 run plus an annotation pass is a question for
+> the split issue, not an assumption. Re-scoping it around the fact **type**
+> the file was attached as — which `warning-checks.md` already says is what
+> decides whether the tag fires — is the more promising shape.
+>
 > Below is retained as the record of what was built and verified, since the
 > lead may want the cue-list half split out rather than discarded. Commit
-> `f1dbaa376` reverts cleanly.
+> `f1dbaa376` reverts cleanly. The staged scenario is itself consistent
+> (`flynn-widow-pension`: 602 days, tag fires — verified against
+> `build/tools/person-warnings.js`, not by hand).
 >
 > **Previously — partially implemented (2026-09-07).** Built: all four prose
 > sites (§1), the `flynn-widow-pension`
