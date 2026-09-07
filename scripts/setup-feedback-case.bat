@@ -100,7 +100,7 @@ REM starting with "."), so .claude\, .claude.json, and .mcp.json in the zip are
 REM either hand-crafted or from an unexpected source. Remove them so the script's
 REM own fresh .claude\ (with repo-junctioned skills only) is the sole config
 REM Claude Code reads.
-for %%F in (.claude .claude.json .mcp.json .gitattributes) do (
+for %%F in (.claude .claude.json .mcp.json .gitattributes .git) do (
     if exist "!DEST_DIR!\%%F" (
         echo Warning: stripped %%F from the zip ^(not expected in a feedback submission^).
         if exist "!DEST_DIR!\%%F\." (

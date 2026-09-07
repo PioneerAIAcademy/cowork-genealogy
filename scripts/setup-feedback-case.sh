@@ -122,7 +122,7 @@ fi
 # either hand-crafted or from an unexpected source. Remove them so the script's
 # own fresh .claude/ (with repo-symlinked skills only) is the sole config
 # Claude Code reads.
-for injected in .claude .claude.json .mcp.json .gitattributes; do
+for injected in .claude .claude.json .mcp.json .gitattributes .git; do
   if [[ -e "$DEST_DIR/$injected" ]]; then
     echo "Warning: stripped $injected from the zip (not expected in a feedback submission)."
     rm -rf "$DEST_DIR/$injected"
