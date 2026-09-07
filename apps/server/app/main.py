@@ -20,46 +20,59 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+import asyncio
 import logging
+
+from sqlmodel import Session, select
 
 from . import auth, feedback, sessions, v1
 from .config import assert_production_config, get_settings
-from .db import init_db
+from .db import get_engine, init_db
+from .models import Project, User
 from .obs import setup_logging
 from .sandbox import make_provider
 
 log = logging.getLogger(__name__)
 
+_REVOKE_TIMEOUT = 30.0
 
-async def _revoke_sandboxes(removed_emails: set[str], provider) -> None:
-    """Destroy active sandboxes belonging to de-provisioned users."""
-    if not removed_emails:
+
+async def _revoke_sandboxes(provider) -> None:
+    """Destroy active sandboxes belonging to users not on the current allowlist.
+
+    Computed fresh each boot so a failed prior attempt is retried automatically.
+    Best-effort: DB or provider errors are logged, never crash startup.
+    """
+    allowlist = get_settings().allowlist
+    if not allowlist:
         return
-    from sqlmodel import Session, select
-    from .db import get_engine
-    from .models import Project, User
+    try:
+        with Session(get_engine()) as session:
+            projects = session.exec(
+                select(Project).join(User).where(
+                    User.email.not_in(allowlist),  # type: ignore[union-attr]
+                    Project.status == "active",
+                )
+            ).all()
+            if not projects:
+                return
 
-    with Session(get_engine()) as session:
-        users = session.exec(
-            select(User).where(User.email.in_(removed_emails))  # type: ignore[union-attr]
-        ).all()
-        if not users:
-            return
-        user_ids = [u.id for u in users]
-        projects = session.exec(
-            select(Project).where(
-                Project.user_id.in_(user_ids),  # type: ignore[union-attr]
-                Project.status == "active",
-            )
-        ).all()
-    for project in projects:
-        try:
-            await provider.delete(project.sandbox_id)
-            log.info("Revoked sandbox %s for de-provisioned user", project.sandbox_id)
-        except Exception:
-            log.warning(
-                "Failed to revoke sandbox %s", project.sandbox_id, exc_info=True
-            )
+            async def _delete_one(project: Project) -> None:
+                try:
+                    await asyncio.wait_for(
+                        provider.delete(project.sandbox_id), timeout=_REVOKE_TIMEOUT
+                    )
+                    log.info("Revoked sandbox %s for de-provisioned user", project.sandbox_id)
+                except Exception:
+                    log.warning("Failed to revoke sandbox %s", project.sandbox_id, exc_info=True)
+
+            await asyncio.gather(*(_delete_one(p) for p in projects))
+
+            for project in projects:
+                project.status = "archived"
+            session.commit()
+    except Exception:
+        log.warning("Sandbox revocation sweep failed", exc_info=True)
 
 
 @asynccontextmanager
@@ -69,9 +82,9 @@ async def lifespan(app: FastAPI):
     # forgeable cookies and WS tokens. See config.assert_production_config.
     assert_production_config(get_settings())
     setup_logging()
-    removed = init_db()
+    init_db()
     app.state.provider = make_provider()
-    await _revoke_sandboxes(removed, app.state.provider)
+    await _revoke_sandboxes(app.state.provider)
     try:
         yield
     finally:

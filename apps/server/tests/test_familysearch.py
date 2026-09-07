@@ -343,10 +343,8 @@ def test_init_db_removes_stale_allowlist_entries():
             s.commit()
         assert s.get(AllowedEmail, "stale-user@example.com") is not None
 
-    removed = init_db()
+    init_db()
 
-    assert "stale-user@example.com" in removed, \
-        "init_db() must return the emails it removed"
     with Session(get_engine()) as s:
         assert s.get(AllowedEmail, "stale-user@example.com") is None, \
             "stale allowlist entry should be removed on init_db()"
@@ -354,8 +352,8 @@ def test_init_db_removes_stale_allowlist_entries():
 
 @pytest.mark.asyncio
 async def test_revoke_sandboxes_destroys_active_projects():
-    """When a user is removed from the allowlist, _revoke_sandboxes destroys
-    their active sandbox sessions."""
+    """When a user is not on the allowlist, _revoke_sandboxes destroys their
+    active sandbox sessions and archives the Project rows."""
     from unittest.mock import AsyncMock
     from app.main import _revoke_sandboxes
     from app.models import Project
@@ -375,9 +373,17 @@ async def test_revoke_sandboxes_destroys_active_projects():
         s.commit()
 
     provider = AsyncMock()
-    await _revoke_sandboxes({email}, provider)
+    await _revoke_sandboxes(provider)
 
     provider.delete.assert_called_once_with("sbx_revoke_test_01")
+
+    with Session(get_engine()) as s:
+        active = s.get(Project, "prj_revoke_test_01")
+        assert active is not None and active.status == "archived", \
+            "active project must be archived after sandbox revocation"
+        already = s.get(Project, "prj_revoke_test_02")
+        assert already is not None and already.status == "archived", \
+            "already-archived project must remain archived"
 
     with Session(get_engine()) as s:
         for uid in ("usr_revoke_test_01",):
