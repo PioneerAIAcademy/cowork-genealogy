@@ -799,15 +799,17 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
 # --- V8: Activated run must produce a response --------------------------
 
 def test_activated_run_produces_response(
-    activated, aborted_reason, num_turns, output_tokens, text_response,
+    activated, aborted_reason, num_turns, output_tokens, text_response, test,
 ):
     """An activated run that produced no output is a dead run — fail it.
 
-    Gate on four conditions: activated is True, not aborted,
-    num_turns == 0 AND output_tokens == 0, AND text_response shorter
-    than 200 characters. The 200-char floor avoids flagging
-    telemetry-only dropouts where a real response exists.
+    Gate on five conditions: not a grade_on_invariant test, activated is
+    True, not aborted, num_turns == 0 AND output_tokens == 0, AND
+    text_response shorter than 200 characters. The 200-char floor avoids
+    flagging telemetry-only dropouts where a real response exists.
     """
+    if (test or {}).get("negative", {}).get("grade_on_invariant"):
+        pytest.skip("grade_on_invariant test — not gated by V8")
     if activated is not True:
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
