@@ -25,7 +25,7 @@ var FOLDER_ID = 'YOUR_FOLDER_ID_HERE';
 // Bump this when you paste a new Code.gs into the console. doGet() returns it,
 // so `curl <exec-url>` says which version is actually deployed — otherwise an
 // unpublished edit is indistinguishable from a working one.
-var SCRIPT_VERSION = '2026-08-30';
+var SCRIPT_VERSION = '2026-09-07';
 
 // Labels applied to every feedback issue, in the same POST that creates it.
 // `genealogist` says who claims it; `feedback` is what add-to-project.yml
