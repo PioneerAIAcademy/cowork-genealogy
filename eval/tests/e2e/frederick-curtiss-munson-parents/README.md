@@ -32,7 +32,7 @@ paywalled browser session (issue #2083):
 
 | File | Collection searched | What it shows |
 |------|---------------------|---------------|
-| `ancestry-brooklyn-city-directory-1888-jared-munson.pdf` | Ancestry — U.S., City Directories, 1822–1995 | Jared H. Munson, Broker, 363 Sackett Street, Brooklyn, 1888 |
+| `ancestry-brooklyn-city-directory-1888-jared-munson.png` | Ancestry — U.S., City Directories, 1822–1995 | Jared H. Munson, Broker, 363 Sackett Street, Brooklyn, 1888 |
 
 This is an authentic page saved from ancestry.com in a credentialed browser. It places the father in
 Brooklyn one year after Frederick's birth (31 July 1887), corroborating the birth-index and census
