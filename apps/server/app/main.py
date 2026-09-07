@@ -20,11 +20,46 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+import logging
+
 from . import auth, feedback, sessions, v1
 from .config import assert_production_config, get_settings
 from .db import init_db
 from .obs import setup_logging
 from .sandbox import make_provider
+
+log = logging.getLogger(__name__)
+
+
+async def _revoke_sandboxes(removed_emails: set[str], provider) -> None:
+    """Destroy active sandboxes belonging to de-provisioned users."""
+    if not removed_emails:
+        return
+    from sqlmodel import Session, select
+    from .db import get_engine
+    from .models import Project, User
+
+    with Session(get_engine()) as session:
+        users = session.exec(
+            select(User).where(User.email.in_(removed_emails))  # type: ignore[union-attr]
+        ).all()
+        if not users:
+            return
+        user_ids = [u.id for u in users]
+        projects = session.exec(
+            select(Project).where(
+                Project.user_id.in_(user_ids),  # type: ignore[union-attr]
+                Project.status == "active",
+            )
+        ).all()
+    for project in projects:
+        try:
+            await provider.delete(project.sandbox_id)
+            log.info("Revoked sandbox %s for de-provisioned user", project.sandbox_id)
+        except Exception:
+            log.warning(
+                "Failed to revoke sandbox %s", project.sandbox_id, exc_info=True
+            )
 
 
 @asynccontextmanager
@@ -34,8 +69,9 @@ async def lifespan(app: FastAPI):
     # forgeable cookies and WS tokens. See config.assert_production_config.
     assert_production_config(get_settings())
     setup_logging()
-    init_db()
+    removed = init_db()
     app.state.provider = make_provider()
+    await _revoke_sandboxes(removed, app.state.provider)
     try:
         yield
     finally:

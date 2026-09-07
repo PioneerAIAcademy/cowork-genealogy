@@ -30,10 +30,10 @@ else:
     )
 
 
-def init_db() -> None:
+def init_db() -> set[str]:
+    """Bootstrap schema + sync allowlist. Returns emails that were removed."""
     SQLModel.metadata.create_all(_engine)
-    # Sync the allowlist from config: add new entries AND remove stale ones,
-    # so removing an email from ALLOWED_EMAILS actually revokes access.
+    removed: set[str] = set()
     with Session(_engine) as session:
         existing = {e.email for e in session.exec(select(AllowedEmail)).all()}
         for email in _settings.allowlist:
@@ -43,7 +43,9 @@ def init_db() -> None:
             row = session.get(AllowedEmail, stale)
             if row is not None:
                 session.delete(row)
+                removed.add(stale)
         session.commit()
+    return removed
 
 
 def get_engine():

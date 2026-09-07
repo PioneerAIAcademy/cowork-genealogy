@@ -9,6 +9,8 @@ sandbox; with no row, nothing is written (mock mode never reads it).
 import json
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
@@ -341,11 +343,50 @@ def test_init_db_removes_stale_allowlist_entries():
             s.commit()
         assert s.get(AllowedEmail, "stale-user@example.com") is not None
 
-    init_db()
+    removed = init_db()
 
+    assert "stale-user@example.com" in removed, \
+        "init_db() must return the emails it removed"
     with Session(get_engine()) as s:
         assert s.get(AllowedEmail, "stale-user@example.com") is None, \
             "stale allowlist entry should be removed on init_db()"
+
+
+@pytest.mark.asyncio
+async def test_revoke_sandboxes_destroys_active_projects():
+    """When a user is removed from the allowlist, _revoke_sandboxes destroys
+    their active sandbox sessions."""
+    from unittest.mock import AsyncMock
+    from app.main import _revoke_sandboxes
+    from app.models import Project
+
+    email = "revoke-sandbox-test@example.com"
+    with Session(get_engine()) as s:
+        user = User(id="usr_revoke_test_01", email=email)
+        s.add(user)
+        s.add(Project(
+            id="prj_revoke_test_01", user_id=user.id,
+            sandbox_id="sbx_revoke_test_01", status="active",
+        ))
+        s.add(Project(
+            id="prj_revoke_test_02", user_id=user.id,
+            sandbox_id="sbx_revoke_test_02", status="archived",
+        ))
+        s.commit()
+
+    provider = AsyncMock()
+    await _revoke_sandboxes({email}, provider)
+
+    provider.delete.assert_called_once_with("sbx_revoke_test_01")
+
+    with Session(get_engine()) as s:
+        for uid in ("usr_revoke_test_01",):
+            u = s.get(User, uid)
+            if u:
+                for p in s.exec(select(Project).where(Project.user_id == uid)).all():
+                    s.delete(p)
+                s.delete(u)
+        s.commit()
 
 
 def test_get_current_user_rejects_removed_allowlist_email(monkeypatch):
