@@ -277,6 +277,44 @@ async function fileState(path: string): Promise<"present" | "absent" | "unreadab
 }
 
 /**
+ * Walk from `projectPath`'s PARENT up to the filesystem root, returning the
+ * first ancestor directory holding `research.json` — the project a new
+ * project at `projectPath` would end up nested inside. `null` when no
+ * ancestor holds one.
+ *
+ * Resolved with the same realpath-with-fallback pattern as `lockKey`
+ * (above): `projectPath` itself may not exist yet — this runs before
+ * `project_create` writes anything — so a bare `resolve()` is the fallback,
+ * tried only after `realpathSync.native` so a symlinked ancestor (macOS's
+ * `/tmp` -> `/private/tmp`) doesn't produce a false negative. Once resolved,
+ * walking up via `dirname` needs no further realpath calls: the starting
+ * path is already fully resolved, so every ancestor derived from it is too.
+ *
+ * Treats "unreadable" the same as "present" (only a clean ENOENT counts as
+ * absent), matching `classifyProjectPath`'s posture: a `research.json` that
+ * exists but cannot be read (a permissions issue, a restrictive mount) still
+ * makes that ancestor a project, not an empty folder to nest inside.
+ */
+export async function findNestingAncestor(projectPath: string): Promise<string | null> {
+  const resolved = resolve(projectPath);
+  let start: string;
+  try {
+    start = realpathSync.native(resolved);
+  } catch {
+    start = resolved;
+  }
+  let dir = dirname(start);
+  for (;;) {
+    if ((await fileState(join(dir, "research.json"))) !== "absent") {
+      return dir;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return null; // reached the filesystem root
+    dir = parent;
+  }
+}
+
+/**
  * Read and parse one of the project's JSON documents.
  *
  * Throws:
