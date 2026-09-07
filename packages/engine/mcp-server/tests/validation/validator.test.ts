@@ -745,6 +745,43 @@ describe("Project Validator", () => {
         )
       ).toBe(true);
     });
+
+    // #1711 follow-up (review finding): claims[].relationship.parent/child were
+    // not registered in person-id-refs.ts, so a dangling reference here
+    // validated clean and merge_tree_persons never remapped it either.
+    it("reports a proof_summaries claim's relationship referencing a non-existent person", async () => {
+      const research = {
+        ...minimalResearch,
+        proof_summaries: [
+          {
+            id: "ps_001",
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: [],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Test",
+            narrative_markdown: "Test",
+            claims: [
+              {
+                claim: "paternity",
+                proof_tier: "probable",
+                supporting_assertion_ids: [],
+                relationship: { type: "ParentChild", parent: "NONEXISTENT", child: "I1" },
+              },
+            ],
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("relationship.parent 'NONEXISTENT' not found in tree.gedcomx.json persons")
+        )
+      ).toBe(true);
+    });
   });
 
   describe("Conflict validation", () => {
@@ -1729,6 +1766,10 @@ describe("Research closed shapes", () => {
   const maximalTree = {
     persons: [
       { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] },
+      // I2/I3 back the proof_summaries claims[].relationship fixtures below —
+      // #1711's person-id-refs follow-up checks those endpoints exist.
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Robert", surname: "Smith" }] },
+      { id: "I3", gender: "Female", names: [{ id: "N3", given: "Mary", surname: "Smith" }] },
     ],
     relationships: [],
     sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
@@ -2212,6 +2253,77 @@ describe("Research closed shapes", () => {
             e.message.includes("missing required field 'supporting_assertion_ids'")
         )
       ).toBe(true);
+    });
+
+    // Review follow-up (#1711): nothing enforced these two invariants, though
+    // the eval validator looks a claim up by its `claim` label (first match
+    // silently wins on a duplicate) and the viewer keys its list by the same
+    // label — both assume uniqueness the schema never required.
+    it("rejects two claims[] entries sharing the same claim label", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "paternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[1]" &&
+            e.message.includes("duplicate claim label 'paternity'")
+        )
+      ).toBe(true);
+    });
+
+    // The scalar must carry the STRONGER per-claim tier (research-schema-spec
+    // §7) — this is the exact invariant the _018 review episode showed only
+    // living in agent prose, with nothing catching a scalar that disagrees
+    // with its own claims.
+    it("rejects a scalar tier that doesn't match the stronger per-claim tier", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible"; // claims[0] is "probable"
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes("tier 'possible' does not match the stronger of claims[].proof_tier ('probable')")
+        )
+      ).toBe(true);
+    });
+
+    it("accepts a scalar tier that correctly matches the stronger of two differing claims", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "maternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      research.proof_summaries[0].tier = "probable"; // the stronger of the two
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
     });
   });
 

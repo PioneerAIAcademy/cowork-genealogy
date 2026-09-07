@@ -77,6 +77,20 @@ const CLOSED_ENUMS = {
   ]),
 };
 
+// Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
+// enforce (#1711 review follow-up) that a proof_summary's scalar `tier` is
+// never anything but the strongest of its `claims[].proof_tier` values — the
+// spec states this as a rule, but nothing checked it, and a scalar that
+// silently disagrees with its own claims is exactly the failure mode #1711
+// was raised to close.
+const PROOF_TIER_RANK: Record<string, number> = {
+  disproved: 0,
+  not_proved: 1,
+  possible: 2,
+  probable: 3,
+  proved: 4,
+};
+
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
   "objective_decomposition", "new_evidence", "record_found_incidentally",
@@ -1127,6 +1141,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       if (!Array.isArray(ps.claims)) {
         addError(report, psp, "'claims' must be an array");
       }
+      const seenClaimLabels = new Set<string>();
+      let maxClaimRank = -1;
       for (let j = 0; j < claims.length; j++) {
         const claim = claims[j];
         const clp = `${psp}/claims[${j}]`;
@@ -1139,8 +1155,16 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           "claim", "proof_tier", "supporting_assertion_ids", "relationship",
         ], clp, report, NULLABLE_FIELDS);
         checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
+        if (claim && typeof claim === "object" && "claim" in claim && typeof claim.claim === "string") {
+          if (seenClaimLabels.has(claim.claim)) {
+            addError(report, clp, `duplicate claim label '${claim.claim}' — claims[] entries must be uniquely named (the eval validator and viewer both look one up by this label)`);
+          }
+          seenClaimLabels.add(claim.claim);
+        }
         if (claim && typeof claim === "object" && "proof_tier" in claim) {
           checkEnum(claim.proof_tier, "proof_tier", clp, report);
+          const rank = PROOF_TIER_RANK[claim.proof_tier];
+          if (rank !== undefined) maxClaimRank = Math.max(maxClaimRank, rank);
         }
         if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
           const rel = claim.relationship;
@@ -1151,6 +1175,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
             addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}'`);
           }
+        }
+      }
+      // The scalar must carry the STRONGER of the per-claim tiers (spec §7) —
+      // never the weaker, and never anything the claims themselves don't
+      // support. Checked only once every claim's own tier is a recognized
+      // enum value, so one bad claim doesn't cascade into a confusing second
+      // error here on top of the one already reported above.
+      if (maxClaimRank >= 0 && typeof ps.tier === "string") {
+        const scalarRank = PROOF_TIER_RANK[ps.tier];
+        if (scalarRank !== undefined && scalarRank !== maxClaimRank) {
+          const strongest = Object.keys(PROOF_TIER_RANK).find((t) => PROOF_TIER_RANK[t] === maxClaimRank);
+          addError(report, psp, `tier '${ps.tier}' does not match the stronger of claims[].proof_tier ('${strongest}') — the scalar must carry the strongest per-claim tier`);
         }
       }
     }
@@ -1640,9 +1676,10 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings). The set of fields walked here is shared with
-  // the merge_tree_persons remap via PERSON_ID_REF_FIELDS so the two cannot
-  // drift; the walker preserves this check's original order and messages.
+  // timelines, known_holdings, proof_summaries[].claims[].relationship). The
+  // set of fields walked here is shared with the merge_tree_persons remap via
+  // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
+  // check's original order and messages.
   for (const ref of iteratePersonIdRefs(research)) {
     if (!gedcomxPersonIds.has(ref.pid)) {
       addError(report, ref.path, ref.message);
