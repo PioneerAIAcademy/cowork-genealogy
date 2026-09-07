@@ -44,3 +44,34 @@ def test_ensure_server_env_carries_pythonutf8(tmp_path: Path, monkeypatch) -> No
     )
 
     assert captured.get("PYTHONUTF8") == "1"
+    assert "ANTHROPIC_API_KEY" not in captured, \
+        "ANTHROPIC_API_KEY must not leak into sandbox subprocess env"
+
+
+def test_ensure_server_env_excludes_anthropic_key_even_when_set(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    """If the control-plane process has ANTHROPIC_API_KEY set (normal for
+    hosted deployments), it must not propagate into the sandbox subprocess."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-LEAKED")
+
+    captured: dict[str, str] = {}
+
+    def fake_popen(argv, *, env=None, **kwargs):
+        captured.update(env or {})
+        return _FakeProc()
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(local_mod.subprocess, "Popen", fake_popen)
+
+    provider = LocalProvider(tmp_path / "sandboxes")
+    (provider._root("sbx_test2")).mkdir(parents=True, exist_ok=True)
+    provider.ensure_server(
+        "sbx_test2",
+        project_dir=tmp_path / "project",
+        home_dir=str(tmp_path / "home"),
+        model="claude-sonnet-5",
+    )
+
+    assert "ANTHROPIC_API_KEY" not in captured, \
+        "ANTHROPIC_API_KEY from os.environ must be stripped before spawning"

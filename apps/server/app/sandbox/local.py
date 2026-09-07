@@ -137,6 +137,7 @@ class LocalSandbox(Sandbox):
     ) -> ExecResult:
         workdir = self._abs(cwd) if cwd else self.project_path
         full_env = {**os.environ, **(env or {})}
+        full_env.pop("ANTHROPIC_API_KEY", None)
         proc = await asyncio.create_subprocess_shell(
             cmd, cwd=str(workdir), env=full_env,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
@@ -227,6 +228,7 @@ class LocalProvider(SandboxProvider):
             # the path is real inside the microVM.
             "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
         }
+        env.pop("ANTHROPIC_API_KEY", None)
         log = open(self._root(sandbox_id) / "ws.log", "ab")
         proc = subprocess.Popen(
             [sys.executable, "-m", "app.sandbox_server"],
