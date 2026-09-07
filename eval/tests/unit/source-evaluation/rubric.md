@@ -10,12 +10,14 @@ Do not assert that a fact is or is not in the tree, in a source, or in any recor
 
 ## Remediation doctrine
 
-The core of the skill. When a source disagrees with the profile, does the recommended remedy match the kind of disagreement? An indexing or transcription error — one field wrong in a record that otherwise fits the person — is fixed by re-reading the original image and correcting the index, with the source left attached. Detaching is correct only for a source genuinely about a different person.
+The core of the skill. When a source disagrees, does the recommended remedy match the kind of disagreement? An indexing or transcription error — one field wrong in a record that otherwise fits the person — is fixed by re-reading the original image and correcting the index, with the source left attached. Detaching is correct only for a source genuinely about a different person.
+
+**Detaching is the one unrecoverable recommendation in this skill, so every bar below turns on what licensed it.** Before scoring, find each passage that recommends detaching, unlinking, removing or flagging, and ask two questions of it: was the disagreement with the **profile** or with **another source**, and does the passage **name the person whose record it is**? A detach is licensed only when the answer is "with the profile" and the person is named. Neither question is answerable from the classification label the reply used — a reply that writes the word "misattributed" over a source-vs-source disagreement has not made it one.
 
 - **pass:** Every index-error finding recommends re-reading the original and correcting the index, and none recommends detaching, unlinking, removing or flagging the source. Where a source really is about another person, detaching is recommended and the reason names whose record it is.
-- **partial:** The re-read remedy is given but hedged with a detach alternative for an index error; or the misattributed source is correctly identified but the recommendation stops at "this doesn't belong" without saying where it does.
-- **fail:** Detaching, unlinking or flagging is recommended for a source whose disagreement is a single mis-transcribed field. This is the failure issue #1606 was filed on and it is a fail even when everything else in the report is right.
-- **N/A:** No disagreement was found between any source and the profile. Score `null`.
+- **partial:** The re-read remedy is given but hedged with a detach alternative for an index error; or the misattributed source is correctly identified but the recommendation stops at "this doesn't belong" without saying where it does — including a reply that states it cannot name the true subject and recommends detaching anyway.
+- **fail:** Detaching, unlinking or flagging is recommended for a source whose disagreement is a single mis-transcribed field. This is the failure issue #1606 was filed on and it is a fail even when everything else in the report is right. **Also a fail:** detaching is recommended for a source whose disagreement is with **another source** rather than with the profile. Two sources contradicting each other is not evidence that either is about a different person — nothing has discredited either record — so a detach there discards evidence on the strength of a conflict the skill is not the one to resolve.
+- **N/A:** No disagreement of any kind was found — neither between a source and the profile, nor between two sources. Score `null`.
 
 ## Classification before recommendation
 
