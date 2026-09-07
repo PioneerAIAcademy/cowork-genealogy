@@ -38,5 +38,6 @@
     "Log quality: research_log_append entries should record both the negative (exact-spelling) and positive (variant-spelling) queries as distinct log entries — not overwrite or omit the negative one.",
     "It is acceptable for the skill to also try a query-structure change (e.g. searching under the groom's name, or without a place filter) as one of its attempts — that is good practice. What must NOT happen is stopping after query-structure changes alone, without ever touching the letters of the given name.",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }

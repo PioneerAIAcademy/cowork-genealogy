@@ -18,6 +18,12 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
 - **Compensation:** Use surname wildcards (`q.surname=Sm?th`);
   search by neighbors; for unindexed enumeration districts, switch
   to image browsing
+- **A wildcard at the start or middle of a surname can be as useful as one at
+  the end.** A family surnamed Bipes was indexed across records as Bipes,
+  Bippes, Biepes, Bieps, Bifes, Bipers, Bippers, and Piper — no single
+  trailing wildcard catches all of these. When a surname keeps resisting
+  every explicit variant, try a leading or middle wildcard (`q.surname=?ip*s`
+  or `q.surname=B*p*s`) alongside the usual trailing one.
 - Collection-specific forms expose extra fields (Residence Year
   locked to census year, Race, Marital Status, 1935 Residence for
   1940 census)

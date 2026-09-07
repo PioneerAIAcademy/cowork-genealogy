@@ -1373,6 +1373,40 @@ describe("Project Validator", () => {
       const result = await validateProject(testDir);
       expect(result.errors.some((e) => e.message.includes("does not match any result's recordId"))).toBe(true);
     });
+
+    it("D5: rejects a record_persona_id on a fulltext_search-sourced assertion with a named error (#2038)", async () => {
+      const research = {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "fulltext_search", query: {}, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json", external_site: null },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/3:1:S3HT-XYZ", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [], log_entry_id: "log_001" },
+        ],
+      };
+      // A fulltext result: `id`-keyed, no recordId, no gedcomx.
+      const sidecar = {
+        log_id: "log_001", tool: "fulltext_search", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        payload: { results: [{ id: "ark:/61903/3:1:S3HT-XYZ" }] },
+      };
+      const tree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+      await writeProject(research, tree);
+      await mkdir(join(testDir, "results"));
+      await writeFile(join(testDir, "results/log_001.json"), JSON.stringify(sidecar));
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      // The named reason, not the misleading "does not match any result's recordId".
+      expect(
+        result.errors.some(
+          (e) => e.message.includes("record_persona_id must be null") && e.message.includes("fulltext_search-sourced"),
+        ),
+      ).toBe(true);
+      expect(result.errors.some((e) => e.message.includes("does not match any result's recordId"))).toBe(false);
+    });
   });
 
   describe("Evaluations", () => {

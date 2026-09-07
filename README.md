@@ -159,7 +159,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 27 skills covering the full GPS research cycle. Skills
+The plugin ships 28 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -197,6 +197,7 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
 | **citation** | Polishes citations to Evidence Explained standards (Who/What/When/Where/Where-within). | "Fix citations" |
+| **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do). Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 
 ### Identity resolution and analysis
 
@@ -319,35 +320,32 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks three
+When you start a new project with `init-project`, the skill asks two
 short questions in one opening turn:
 
 1. **Research objective** — what you are trying to find out.
 2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
-3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts,
-   and is now recorded as such rather than collapsing to "other": a
-   partner subscription through your FamilySearch account stores as
-   `FamilySearch-Partner`, and a public library, family history centre
-   or affiliate library as `LibraryAccess`. A plain FamilySearch
-   account is the baseline everyone here has, so it isn't recorded —
-   that alone is "none".
 
-None of the three blocks. Answer what you like; anything you skip takes
+You are no longer asked which subscription sites you have. Access is
+assumed available, so nothing is recorded unless you mention it
+yourself — a project that says nothing about access is not a project
+that said it has none.
+
+Neither question blocks. Answer what you like; anything you skip takes
 a documented default, and the summary at the end names what was
 defaulted so you can correct it.
 
 The answers are written to a `researcher_profile` section of
 `research.json` alongside the rest of your project state. Every skill
-reads from it:
+but one reads from it:
 
 - **Experience level** drives narration density. A novice gets
   step-by-step "why I'm doing this" narration; an experienced
   researcher gets concise reporting. Internally the level maps to a
   `narration_guidance` string that the skill reads and follows
   verbatim — one place defines the mapping (`init-project`), one place
-  stores it (`research.json`), every skill reads it.
+  stores it (`research.json`), every skill but one reads it.
 - **Access** guides `search-external-sites` URL prioritization. Sites
   you can reach land first; the rest are still searchable but flagged.
 
@@ -500,7 +498,7 @@ What's shipped:
 - **48 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **27 shipped skills.** Full GPS research cycle from `init-project`
+- **28 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three
@@ -512,9 +510,9 @@ What's shipped:
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
   the only caller that may declare one exhaustive) and `image-reader` (page OCR).
-- **Researcher profile.** `init-project` asks the research objective,
-  experience level, and site access together in one non-blocking opening
-  turn; every skill adapts narration density to the answer.
+- **Researcher profile.** `init-project` asks the research objective and
+  experience level together in one non-blocking opening turn; every skill
+  adapts narration density to the answer. Site access is not asked.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs

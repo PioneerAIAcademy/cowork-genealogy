@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SidecarResultCard from '../SidecarResultCard'
+import { setOpenExternal, setOpenFamilySearch } from '../../../lib/external'
 import { patrickFlynnSidecar } from '../../../lib/__fixtures__/patrick-flynn-sidecar'
 import type { RecordSearchResult, FulltextSearchResult } from '../../../lib/schema'
 
@@ -91,5 +92,70 @@ describe('SidecarResultCard — fulltext_search', () => {
     )
     expect(screen.getByText('Thomas Flynn, Patrick Flynn, James Flynn')).toBeInTheDocument()
     expect(screen.getByText('Schuylkill County, PA')).toBeInTheDocument()
+  })
+})
+
+/**
+ * Link visibility, sidecar side (#2049 review).
+ *
+ * Same regression PersonCard.test.tsx pins, in the component that did not gate.
+ * PersonCard checked `resolveFamilySearchTarget` before rendering; the three
+ * sidecar sinks checked only truthiness, so a value the policy refuses rendered
+ * "Open in FamilySearch →" and clicking it did nothing.
+ *
+ * Not hypothetical: `apps/server/app/agent/mock_agent.py` writes
+ * `"arkUrl": "https://www.familysearch.org/ark:/example"`, and `agent_mode`
+ * defaults to `"mock"` — so the default hosted path rendered the dead button.
+ * `ark:/example` carries no `\d:\d:` and the policy returns null for it.
+ */
+describe('SidecarResultCard — link visibility', () => {
+  const withArkUrl = (arkUrl: string): RecordSearchResult =>
+    ({ ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult), arkUrl }) as RecordSearchResult
+
+  it('renders the link for an arkUrl the policy resolves', () => {
+    render(
+      <SidecarResultCard
+        result={withArkUrl('https://www.familysearch.org/ark:/61903/1:1:MXYZ-9QP')}
+        tool="record_search"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByRole('button', { name: /Open in FamilySearch/ })).toBeInTheDocument()
+  })
+
+  it('renders NO link for an arkUrl the policy refuses', () => {
+    // The mock agent's literal value.
+    render(
+      <SidecarResultCard
+        result={withArkUrl('https://www.familysearch.org/ark:/example')}
+        tool="record_search"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.queryByRole('button', { name: /Open in FamilySearch/ })).toBeNull()
+  })
+})
+
+/** Same channel assertion as PersonCard's, for the other constrained component. */
+describe('SidecarResultCard — link channel', () => {
+  const fs = vi.fn()
+  const generic = vi.fn()
+
+  beforeEach(() => {
+    fs.mockClear()
+    generic.mockClear()
+    setOpenFamilySearch(fs)
+    setOpenExternal(generic)
+  })
+
+  it('routes the FamilySearch link through the constrained channel', async () => {
+    const result = {
+      ...(patrickFlynnSidecar.payload.results![0] as RecordSearchResult),
+      arkUrl: 'https://www.familysearch.org/ark:/61903/1:1:MXYZ-9QP'
+    } as RecordSearchResult
+    render(<SidecarResultCard result={result} tool="record_search" defaultExpanded={true} />)
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(fs).toHaveBeenCalledTimes(1)
+    expect(generic).not.toHaveBeenCalled()
   })
 })

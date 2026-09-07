@@ -8,6 +8,7 @@ export interface ProjectFile {
 export interface AppAPI {
   openFile: () => Promise<{ filePath: string; content: string; ext: string } | null>
   openExternal: (url: string) => Promise<void>
+  openFamilySearch: (value: string) => Promise<void>
   getVersion: () => Promise<string>
   onResearchUpdated: (callback: (data: unknown) => void) => void
   onGedcomxUpdated: (callback: (data: unknown) => void) => void

@@ -310,6 +310,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
+| `refinement_targets` | optional (see Section 5.11) | omit (a declined skill updates no assertions) |
+| `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `negative` | omit | required |
 
 ### How a negative test is graded
@@ -440,6 +442,15 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "additionalProperties": false
       }
+    },
+    "refinement_targets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional list of a_ assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication. See Section 5.11."
+    },
+    "index_error_source": {
+      "type": "string",
+      "description": "Optional. Names the ONE attached source an index-discrepancy test declares to be an indexing error — the source that must never be recommended for detaching. Checked mechanically by test_index_discrepancy_does_not_recommend_detaching. See Section 5.12."
     },
     "negative": {
       "type": "object",
@@ -766,6 +777,74 @@ A floor that rewrote such a `1` to `2` shipped briefly and was **removed** in 20
 **Do not reintroduce it gated on empty output.** All 4 overrides had `text_response == ""` and zero turns, but so did 6 of the 20 confirmations, and `ut_search_records_003` carries that identical signature in all 8 of its eligible cells — confirmed in two run logs, overridden in two others. Such a gate would have fired on 10 cells and been wrong on 6. There is no mechanical discriminator; that is the reason the floor is gone rather than narrowed. Deleting it changes no outcome — `_compute_outcome` decides these tests on routing alone, so a base-dimension score there has never gated anything.
 
 Read a `routing_negative_judge_fail` warning before overriding the `1`. Either the skill carried out its own task inline — a real defect the routing pass hides — or the judge misread a clean decline.
+
+### 5.11 `refinement_targets`
+
+Optional array of `a_` assertion ids — deterministic ground truth for a
+**classification-refinement** test, where the scenario seeds an assertion
+that already exists and the run is expected to correct its classification
+in place rather than create a new one. Checked mechanically by
+`test_refinement_preserves_extraction_fields_and_avoids_duplication`
+(`eval/harness/validators/test_record_extraction.py`) — added because no
+test in the corpus exercised the classification-refinement path at all.
+For each id: the assertion must still exist under the same id in the
+after-state; its extraction fields (`source_id`, `record_id`,
+`record_role`, `fact_type`, `value`, `structured_value`, `date`,
+`date_certainty`, `place`) must be byte-identical to before (a refinement
+corrects classification, not the extracted fact); at least one field must
+actually differ from before (a no-op "update" that changes nothing is not
+a refinement); every other pre-existing assertion must be untouched
+(scope enforcement); and no new assertion may share a target's
+`(source_id, record_role, fact_type)` shape (catches "fixed" via a
+duplicate append rather than an `update` op on the original).
+
+`expected_classifications` (5.10) alone cannot check any of this — its
+matcher looks for *new* assertions (as of the widening below, new-or-
+updated) matching a role/fact pair; it has no notion of "this specific
+existing assertion, and nothing else, changed." `refinement_targets` is
+the complementary check when the scenario's starting state already
+contains the assertion under test, which `expected_classifications`
+alone was never able to express.
+
+**Widened matching in `expected_classifications`.** To let a matcher find
+the refinement target at all, `test_expected_classifications`'s notion of
+"new" was widened from *created this run* to *created-or-updated this
+run* (an id absent from the before-state, or present with a changed
+value). This is additive only: the candidate pool for every existing
+test's matchers can only grow, never shrink, so a matcher that passed
+under the old "new-only" definition still passes — it cannot introduce a
+new failure on a test that declares no `refinement_targets`.
+
+### 5.12 `index_error_source`
+
+Optional string naming the **one** attached source a test declares to be an
+indexing error — deterministic ground truth for `source-evaluation`'s
+remediation doctrine, where the remedy for a mis-transcribed field is to go
+back to what the index was made from and correct it, never to detach the
+source. Checked mechanically by
+`test_index_discrepancy_does_not_recommend_detaching`
+(`eval/harness/validators/test_source_evaluation.py`), which splits the reply
+on blank lines and fails if the passage naming this source also recommends
+detaching or unlinking. Gated on the `index-discrepancy` tag; a test carrying
+that tag and no `index_error_source` fails rather than skipping, so the guard
+cannot be disarmed by omission.
+
+A reply-wide check cannot express this rule. A correct audit of the same
+person also reports a genuinely *misattributed* source, for which detaching
+**is** the right recommendation — so any reply-wide licence for the word
+"detach" is always granted, and the assertion can never fail. Naming the
+protected source is what makes the check discriminating: the test declares
+the situation, the validator asserts the rule, and neither has to decide for
+itself which finding is which.
+
+**The value must reach the validator to do anything.** Like
+`refinement_targets` (5.11) and `expected_classifications` (5.10), this is a
+*top-level* field, and `orchestrator.py` assembles the validator-facing
+`test` dict as an explicit whitelist rather than passing the whole test JSON.
+A field declared in the schema and read by a validator but absent from that
+literal arrives as `None` on every run.
+`test_orchestrator_threads_index_error_source_into_validators` pins it, as the
+sibling test does for `refinement_targets`.
 
 ---
 

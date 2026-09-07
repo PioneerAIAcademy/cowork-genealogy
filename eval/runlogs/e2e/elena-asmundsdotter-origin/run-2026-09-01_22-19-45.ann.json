@@ -1,0 +1,19 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "false",
+    "f4": "false",
+    "f5": "false",
+    "f6": "false"
+  },
+  "notes": {
+    "f1": "Absent. No birth or christening fact on Elena in the final tree; the tree carries no person-level change from the starting state at all. Henckelstorp appears zero times in the final research document.",
+    "f2": "Absent. No father person and no ParentChild to one. Torsson appears zero times. Unlike run 2, no wrong father was asserted either — the tree is unchanged rather than wrong, which is the better failure.",
+    "f3": "Absent. The six Pernilla mentions are a Pernilla Larsdotter, an unrelated child baptised in Kallinge in 1699, not Pernilla Jonsdotter.",
+    "f4": "Absent. The Couple relationship between Jons Jonsson and Elena is inherited from the starting tree and still carries no marriage fact, date or place. The Vastra Karaby register (004523018) was never opened — zero mentions.",
+    "f5": "Absent. No paternal grandfather asserted, and nothing in the research document reaches the 1658-1663 tax lists, which are not on FamilySearch in any case.",
+    "f6": "Absent. No burial or death assertion for any Asmund Torsson. The page holding it, 004523018_00072, was never reached."
+  },
+  "findings_hash": "05f4c5fb6c8b0043934780844711212f847ea46a12a4b0531c0cee55234e9e93"
+}

@@ -11,6 +11,7 @@ import path from 'node:path';
 import { testsUnitDir, scenariosDir, fixturesDir } from '../paths';
 import type { BlockedReason, UnitTestFile, UnitTestListEntry } from '../types';
 import { atomicWriteJson } from './atomic';
+import { resolveWithin, PathEscapeError } from './safe-path';
 
 /** Result of a `listTests` call — separates clean rows from corrupt ones. */
 export interface ListTestsResult {
@@ -35,13 +36,36 @@ async function computeBlockedReason(
     return { kind: 'scenario-notes-present', notes: test.input.scenario_notes };
   }
   if (scenario) {
-    const scenarioPath = path.join(scenariosDir(), scenario);
+    // Existence oracle: `fs.access` on a caller-supplied name leaks whether an
+    // arbitrary path exists. A traversing value is reported as missing rather
+    // than probed.
+    //
+    // Resolved ONCE and the resolved value used. The first version validated one
+    // `path.join` and then built a second for the sink — which is precisely what
+    // the comment in `snapshot.ts` calls the bug class this PR closes. Same
+    // commit, opposite sides.
+    let scenarioPath: string;
+    try {
+      scenarioPath = resolveWithin(scenariosDir(), scenario);
+    } catch (e) {
+      // Only a containment refusal is "missing" — reporting a broken `evalDir()`
+      // as a missing scenario hides a misconfiguration behind a content error.
+      // Matches the four other sinks (#2000 review).
+      if (e instanceof PathEscapeError) return { kind: 'missing-scenario', scenario };
+      throw e;
+    }
     if (!(await exists(scenarioPath))) {
       return { kind: 'missing-scenario', scenario };
     }
   }
   for (const fix of test.mcp_fixtures ?? []) {
-    const fixPath = path.join(fixturesDir(), `${fix}.json`);
+    let fixPath: string;
+    try {
+      fixPath = resolveWithin(fixturesDir(), `${fix}.json`);
+    } catch (e) {
+      if (e instanceof PathEscapeError) return { kind: 'missing-fixture', fixture: fix };
+      throw e;
+    }
     if (!(await exists(fixPath))) {
       return { kind: 'missing-fixture', fixture: fix };
     }
@@ -173,11 +197,15 @@ export async function writeTest(test: UnitTestFile): Promise<string> {
   const existing = await readTest(test.test.id);
   let filePath: string;
 
+  // `test.skill` (a directory) and `test.id` (a basename) both arrive in the
+  // request body and both build this path. Contained on every branch — the
+  // else-branch takes a basename from disk but still joins an untrusted
+  // `test.skill`, so it needs the check as much as the first.
   if (!existing) {
-    filePath = path.join(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
+    filePath = resolveWithin(testsUnitDir(), test.test.skill, `${test.test.id}.json`);
   } else {
-    const targetDir = path.join(testsUnitDir(), test.test.skill);
-    filePath = path.join(targetDir, path.basename(existing.filePath));
+    const targetDir = resolveWithin(testsUnitDir(), test.test.skill);
+    filePath = resolveWithin(targetDir, path.basename(existing.filePath));
   }
 
   await atomicWriteJson(filePath, test);
@@ -251,7 +279,10 @@ export async function nextTestId(skill: string): Promise<string> {
   // and the random-suffix ones.
   let prefix = `ut_${skill.replace(/-/g, '_')}_`;
 
-  const skillPath = path.join(testsUnitDir(), skill);
+  // Runs a readdir BEFORE the guarded write, from a POST body field. Throws
+  // rather than returning a fallback: this is the id-allocation step of a write,
+  // and this PR's rule is that a refused write is loud.
+  const skillPath = resolveWithin(testsUnitDir(), skill);
   let files: string[] = [];
   try {
     files = await fs.readdir(skillPath);

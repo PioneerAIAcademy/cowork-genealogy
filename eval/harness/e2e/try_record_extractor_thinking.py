@@ -261,6 +261,12 @@ def run_config(client: anthropic.Anthropic, *, model: str, system: str, prompt: 
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
+    # and dies on the arrows and box glyphs this module prints; the team it is
+    # written for is on Windows. Guarded by tests/unit/test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="claude-sonnet-5", help="model id (default: claude-sonnet-5, the record-extractor pin)")
     ap.add_argument("--prompt-file", type=Path, help="override the delegation message (default: the frozen run's exact message)")

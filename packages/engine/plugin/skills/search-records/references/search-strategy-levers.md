@@ -41,22 +41,44 @@ and expect a specific record.
 3. **10–100 hits** → Evaluate the top results directly.
 4. **0 hits** → Apply levers in priority order (see below).
 
+**A drop should be paired with a compensating tighten, not left on its own.**
+Index entries are mistranscribed roughly 5-15% of the time, so after
+exhausting correctly-indexed spellings, dropping a different criterion
+(surname, given name, a relative's name) is itself a lever — it treats the
+possibility that criterion, not the one you have been varying, is the
+mistranscribed one. But dropping widens the pool, so pair the drop with a
+tighten elsewhere (a narrower place, a narrower date range, an added
+relative's name) and read further down the resulting pool (paging past the
+default cap, per SKILL.md Step 4) rather than reading only the top handful of
+a now-broader search. Balance name specificity against place specificity:
+loosening one is easier to read to the end when the other tightens to
+compensate.
+
 ## Name levers
+
+**Anchor reminder before using any lever below.** `record_search` rejects a
+query carrying none of `surname`, `recordCountry`, or `batchNumber`
+(SKILL.md's Anchor rule). Any lever here that clears `surname` — Drop
+surname, Drop both names, Search by parent, Replace name with structural
+params below — must set `recordCountry` or `batchNumber` in its place, or
+the call fails validation before it ever reaches FamilySearch. A
+`collectionId` does **not** anchor a call on its own, so scoping to a
+collection does not exempt a lever from this requirement.
 
 | Lever | API change | When to try |
 |---|---|---|
-| Drop surname | Clear `q.surname`; keep `q.givenName` + place + date | Surname heavily corrupted, foreign, or transliterated |
+| Drop surname | Clear `q.surname`; keep `q.givenName` + place + date, and set `recordCountry` or `batchNumber` as the anchor | Surname heavily corrupted, foreign, or transliterated; or the given name is itself unusual enough to anchor the search alone |
 | Drop given name | Clear `q.givenName`; keep `q.surname` + place + date | Given name indexed as initials, nickname, "Infant," or in another language |
-| Truncate a multi-part given name to first name only | `q.givenName="Anna Maria Eva"` → `q.givenName="Anna"` | **Only after the full given name has nilled** — a full given name is usually *more* discriminating (see SKILL.md's `givenName` guidance), so truncating it first turns a distinctive search into a generic one. |
-| Drop both names | Use only place + date + `q.sex` + relationship params | Both names corrupted; only structural clues stable |
+| Truncate a multi-part given name to one of its parts | `q.givenName="Anna Maria Eva"` → `q.givenName="Anna"`, `"Maria"`, or `"Eva"` — try each in turn, not just the first | **Only after the full given name has nilled** — a full given name is usually *more* discriminating (see SKILL.md's `givenName` guidance), so truncating it first turns a distinctive search into a generic one. Records commonly index by the second or third given name rather than the first, so a single truncation to the first name is not exhaustive. |
+| Drop both names | Use only place + date + `q.sex` + relationship params, anchored on `recordCountry` or `batchNumber` | Both names corrupted; only structural clues stable |
 | Search by spouse | Swap principal and spouse: put spouse in `q.givenName/surname`, subject in `q.spouseGivenName/spouseSurname` | Subject's name is common; spouse's is unique |
-| Search by parent | Clear principal name; fill `q.fatherGivenName/Surname` and/or `q.motherGivenName/Surname` | Looking for sibling sets; principal may have been "Baby" or stillborn; **or the subject's own vital record nils by name — re-anchor on the parent's given name + exact dates before pivoting to indirect evidence** |
+| Search by parent | Clear principal name; fill `q.fatherGivenName/Surname` and/or `q.motherGivenName/Surname`, and set `recordCountry` or `batchNumber` as the anchor — `f.collectionId` does not anchor a call on its own, so scoping to a collection does not remove this requirement | Looking for sibling sets; principal may have been "Baby" or stillborn; **or the subject's own vital record nils by name — re-anchor on the parent's given name + exact dates before pivoting to indirect evidence** |
 | **Retry under an already-discovered name variant** | Re-run the same search with the variant **in place of** (not alongside) the name you had. A father recorded as "Friedrich Carl" on one record but "Karl" on another is indexed under two different given names, not a spelling variant a fuzzy match will bridge: `fatherGivenName: Friedrich` will not find a child's record that indexes him as `Karl`. Where the variant you hold is a multi-word given name ("Friedrich Karl"), each word alone is a candidate. | A search using the name you have **nils**, and a record already examined indexed this person or a close relative under a different given name — a call name, a dropped middle name, a translated form. Try before wildcarding or dropping the name — a known variant is a stronger lead than a guess. |
 | Search by child | Search child as principal with parent name set to subject | Subject's own records scarce; child's are abundant |
 | Wildcard surname | `q.surname=Sm*th` or `q.surname=*tnam` | Foreign transliteration, indexing errors, married-name variants |
 | Wildcard given name | `q.givenName=Joh*` or `q.givenName=Eli?abeth` | Diminutives, abbreviations, ambiguous handwriting |
 | Use initials only | `q.givenName=J W`. Fuzzy returns records indexed `W J` too — usually the same person, so do not discard on order. `.exact=on` keeps only the literal initials form: it cut a US-wide pool roughly 120-fold, and returned nothing at all in every English marriage pool read in full, because those records spell given names out | Census/directory records abbreviated as initials |
-| Replace name with structural params | Fill `q.sex`, residence date+place, parent name; clear principal name | Name unrecoverable (e.g., "Negro woman aged 30") |
+| Replace name with structural params | Fill `q.sex`, residence date+place, parent name; clear principal name, and set `recordCountry` or `batchNumber` as the anchor | Name unrecoverable (e.g., "Negro woman aged 30") |
 
 ## Place levers
 
@@ -107,7 +129,7 @@ When a search returns 0 hits with reasonable inputs, try in this order:
 4. **Re-anchor on a known relative (spouse / parent / child) — before dropping or wildcarding the subject's name.** If the subject's own record nils but you have a relative's name plus exact dates from another record, search by the relative: fill `q.fatherGivenName`/`q.motherGivenName` (or `q.spouseGivenName`), or search a child as principal with the subject as parent. This is often the *primary* recovery move for emigrant-origin cases, where the subject's own record is indexed under names you can't guess.
 5. **If a record already examined gave this person or a relative a different given name than the one in your query, retry with that variant — before wildcarding or dropping the name.** A father recorded as "Friedrich Carl" on one record but "Karl" on another is indexed under two different given names, not a spelling variant; `fatherGivenName: Friedrich` will not find a record that indexes him as `Karl`.
 6. Drop given name (surname + place + date)
-7. Drop surname (given name + place + date + relationships)
+7. Drop surname (given name + place + date + relationships) — add `recordCountry` or `batchNumber` as the anchor when you do; the tool rejects a query carrying none of the three
 8. Wildcard the surname
 9. Wildcard the given name
 10. Switch event type to Any

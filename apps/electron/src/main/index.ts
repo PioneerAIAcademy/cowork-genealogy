@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, session, dialog } from 'electron'
+import { registerExternalLinkHandlers } from './external-link'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'node:fs/promises'
@@ -89,6 +90,11 @@ function setupIPC(): void {
     const content = await fs.readFile(filePath, 'utf8')
     return { filePath, content, ext }
   })
+
+  // The constrained sibling of `open-external` (#1018). Its policy lives in its
+  // own module so it is reachable from a test — nothing can import this file in
+  // one (module-scope `app.whenReady()`, an unresolvable `?asset` import).
+  registerExternalLinkHandlers(ipcMain)
 
   ipcMain.handle('open-external', async (_e, url: string) => {
     if (typeof url !== 'string') return
