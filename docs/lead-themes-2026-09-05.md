@@ -326,9 +326,9 @@ Issue #1335 ("reconcile the four contradictions") carries **ten** lead comments.
 The 2026-09-01 one says "Both rulings landed 2026-08-25 and neither has reached a
 skill body. **Nothing here is blocked**" — but four lead comments come after it,
 and they re-open the cost question: `research` gained a unit suite on 2026-09-01,
-so editing `research/SKILL.md` now buys a paid run, PRs #2237 and #2249 already
-edit that file, and the 2026-09-07 comment says "**Re-price this card before
-scheduling it.**" It needs that re-pricing before it needs an owner.
+so editing `research/SKILL.md` now buys a paid run, PR #2249 still edits that
+file (PR #2237 landed 2026-09-07), and that day's comment says "**Re-price this
+card before scheduling it.**" It needs that re-pricing before it needs an owner.
 
 `timelines[]` is empty in **161 of 161** committed final states, not 157.
 
