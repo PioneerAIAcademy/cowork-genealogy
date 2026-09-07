@@ -221,7 +221,7 @@ The app reads and writes directly to the eval/ directory on disk. No database â€
 
 ### Authentication
 
-TBD. At minimum, the app needs to know the current user's GitHub username (for annotation filenames). Options range from a simple username prompt to GitHub OAuth.
+No login, by design. The app is single-operator and local: `next dev` / `next start` bind `127.0.0.1`, and `eval/app/middleware.ts` refuses any `/api` request whose `Host` is not loopback, plus any state-changing request whose `Origin` does not match that `Host`. Enforced locality replaces authentication â€” do not change the binding without reading that file. Annotator identity is separate and is not a login: `lib/identity.ts` returns `eval/app/.local/identity.json`'s `annotator` if set, else `git config user.email`, else null, in which case the annotation write route returns 409 `identity_unresolved`.
 
 ### API routes
 

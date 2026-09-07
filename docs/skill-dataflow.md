@@ -119,7 +119,7 @@ unreachable from an autonomous run.
 | 8 | **`conflict-resolution`** | Evidence conflicts present. Inline elimination of a namesake, or comparing two records for shared identity, is forbidden anywhere else | `conflicts` — independence analysis, the weighing, and the resolution rationale or the documented deferral | `research.json` `assertions`, `person_evidence`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance`, `convert_calendar` | `conflicts[]` only — `research_append` |
 | 9 | **`hypothesis-tracking`** | Identity uncertainty across assertions | `hypotheses` — the `active` → `supported` / `ruled_out` transitions and the reasoning behind each | `research.json` `hypotheses`, `assertions`, `person_evidence`, `questions` by whole-file `Read` | `hypotheses[]` only — `research_append` |
 | 10 | **`research-exhaustiveness`** (skill) | Analyzed evidence now plausibly answers the question — **even with plan items still `planned`**; or all items `completed`/`skipped` | Resolving the request to one `q_` by matching question **text**, delegating, relaying. It judges nothing and reads nothing else | `project_context` `openQuestions` only. `questionStatuses` is advisory and may never rule a question in or out | Nothing |
-| 10 | **`research-exhaustiveness`** (agent) | Delegated with `questionId` + `projectPath`. Refuses while any plan item is `in_progress` | The five threshold questions and the seven stop criteria. The **only** caller permitted to set `exhaustive_declaration.declared: true` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].exhaustive_declaration`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
+| 10 | **`research-exhaustiveness`** (agent) | Delegated with `questionId` + `projectPath`, and confirms the question by TEXT when the id does not resolve or disagrees with the prose. Refuses while an item on the question's **active** plan is `in_progress` | The seven stop criteria, assessed in order as a gate and stopping at the first that fails. The **only** caller permitted to set `exhaustive_declaration.declared: true` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].exhaustive_declaration`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
 | 11 | **`proof-conclusion`** (skill) | A question at `exhaustive_declared` with no `proof_summaries` entry; or re-invoked because a tier-≥-probable conclusion is not yet in the tree | Resolving to one `q_` and delegating. Reads nothing else and forms no view on readiness | `project_context` only | Nothing — the section is denied to it at the hook |
 | 11 | **`proof-conclusion`** (agent) | Delegated with `questionId` + `projectPath`. Its own three-check gate — unresolved conflicts, unclassified assertions, unlinked persons — hard-blocks before Step 1 | Tier and form selection, the self-contained narrative, and the tree encoding | `research_query` projections (never a raw whole-file `Read`), `sources[].citation`, tree facts and relationships, `source_attachments`, `merge_warnings` | `proof_summaries[]` + the question's `status`/`resolved`/`resolution_assertion_ids` in one batch, and `project` — `research_append`; tree `relationships`, `persons[].facts[]` and `sources` at tier ≥ probable — `tree_edit` / `tree_correct` |
 | 12 | **`gps-mentor`** (agent) | `proof-conclusion` wrote a `ps_id`, and either tier < probable or the conclusion is now in the tree. Skipped when `evaluations/` already holds a `proof-critique-<ps_id>-*.json` newer than the summary | One structured advisory verdict on the finished proof, read as a standalone document. **Mandatory to invoke and record; advisory in what it recommends.** It holds no search tool — it grades what was gathered | `project_context`, `research_query` (`evaluations`, `conflicts`, `hypotheses`, and the proof's `narrative_markdown`), the `evaluations/` verdict files, `validate_research_schema`, `collections_search` | `evaluations[]` in `research.json` — `research_append` — plus `superseded_by` on the prior entry for the same focus and target. The verdict file under `evaluations/` is written by the tool, not by the agent |
@@ -204,11 +204,11 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `sources` | `record-extraction` | `citation` (refine only, never create) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
 | | `assertions` | `record-extraction` | — | `research_append`, `extraction_append` | unit + tool preconditions |
 | | `person_evidence` | `person-evidence` | — | `research_append` | unit + tool — `extraction_append` does not accept the section, which is what holds the extraction lane off it |
-| | `conflicts` | `conflict-resolution` | — | `research_append` | unit. The hook also keeps both writing agents out of the section, but it cannot bind a skill — a section owned by a skill has no agent to permit |
+| | `conflicts` | `conflict-resolution` | — | `research_append` | unit, on two checks since 2026-09-02: `test_ownership_table` (detects, keyed on the calling skill) and `test_no_out_of_lane_section_writes` (denies, keyed on the calling agent — issue #2022). The hook also keeps both writing agents out of the section, but it cannot bind a skill — a section owned by a skill has no agent to permit |
 | | `hypotheses` | `hypothesis-tracking` | — | `research_append` | unit |
 | | `timelines` | `timeline` | — | `research_append` | unit |
 | | `proof_summaries` | `proof-conclusion` | — | `research_append` | unit + hook — the hook denies the op unless the caller is the proof-conclusion **agent** |
-| | `evaluations` | `gps-mentor` (agent) | — | `research_append` | **nothing** — and unenforceable on the unit plane, which can only see a calling *skill* |
+| | `evaluations` | `gps-mentor` (agent) | — | `research_append` | **nothing** in the shipped hook: `evaluations` is in no owner map. But since 2026-09-02 the unit plane records the hook's `owner_denied` verdict (issue #2022), and `evaluations` is outside `proof-conclusion`'s lane, so a `proof-conclusion` write there IS now denied and gated on that plane — the "can only see a calling *skill*" limit no longer holds |
 | | `localities` | `locality-guide` | — | `research_append` | unit |
 | `tree.gedcomx.json` | `persons` | none by design — four co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget` | unit |
 | | `relationships` | none by design — same four | same four | same, less `materialize_facts` | unit + tool |
@@ -289,6 +289,20 @@ touch either side.
    `known_holdings[].relates_to_person_ids` onto the surviving person. The manifest has
    `tree-edit` on tree rows only. — issue #1790, ruled: the tool is a legitimate
    cross-cutting writer and the manifest is what needs updating
+9. **When a plan blocks a declaration** — **RESOLVED (#1843, folded from #1830):** the
+   orchestrator said to consult exhaustiveness "even with plan items still `planned`",
+   while the gate said to evaluate only a question whose plan items are all `completed`
+   or `skipped`. The tool had already settled it and the prose had not caught up:
+   `planCompleteInvariants` (`research-append.ts`) skips any plan whose `status !==
+   "active"` and blocks only on `in_progress`, and its refusal says "Items still at
+   `planned` do not block". The gate side is now scoped to the active plan in all three
+   places it was stated unscoped. **Only the active plan blocks, and that is what keeps
+   the gate escapable:** `research-plan` supersedes a plan by flipping its status alone,
+   leaving item statuses untouched, and then forbids editing it ever again — so a
+   question re-planned while one item sat `in_progress` would otherwise carry that item
+   forever, with no route to clear it. Read literally, the old prose also made leftover
+   `planned` items look like a blocker, and the cheapest way past a blocker is to sweep
+   them to `skipped`, destroying the audit trail. — issue #1843 (closed by this PR)
 
 ---
 

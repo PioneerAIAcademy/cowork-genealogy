@@ -323,13 +323,28 @@ def test_conflict_blocks_proved(after_state, test):
         "conflict and what would settle it, then route to conflict-resolution."
     )
     # 2. At not_proved — not proved, and not probable either.
+    #
+    # The conflict's state is READ, not asserted in prose. The message used to
+    # hardcode "(c_001, birthplace) is open", which asserts the opposite of the
+    # truth on a run that legitimately settled it first — and reading that
+    # sentence is part of why this failure was originally filed as two separate
+    # defects rather than one chain (issue #2022).
+    c_001 = next(
+        (c for c in after.get("conflicts", []) if c.get("id") == "c_001"), None
+    )
+    c_state = (
+        "absent" if c_001 is None else f"status={c_001.get('status')!r}"
+    )
     bad = [ps for ps in for_q if ps.get("tier") != "not_proved"]
     assert not bad, (
         "proof-conclusion concluded q_001 at "
-        f"{[ps.get('tier') for ps in bad]} while an unresolved conflict on an "
-        "identifying attribute (c_001, birthplace) is open. The disputed "
-        "attribute goes to whether the cited sources describe the same person, "
-        "so no tier is available — record it at `not_proved`."
+        f"{[ps.get('tier') for ps in bad]} while the conflict on an "
+        f"identifying attribute (c_001, birthplace) reads {c_state}. The "
+        "disputed attribute goes to whether the cited sources describe the "
+        "same person, so no tier is available — record it at `not_proved`. If "
+        "c_001 reads as resolved, check whether this run resolved it ITSELF: "
+        "that is an out-of-lane write, and test_no_out_of_lane_section_writes "
+        "is the assertion for it."
     )
     # 3. The question stays open — resolving it is the downstream step's call.
     q = next((x for x in after.get("questions", []) if x.get("id") == "q_001"), None)
