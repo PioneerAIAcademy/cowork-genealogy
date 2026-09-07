@@ -6,13 +6,20 @@
 > would be too strict to ship · widen a gate that already exists · convert a
 > skill into a skill-agent pair · route the orchestrator to a paired agent ·
 > decide whether a thin routing skill is an enforcement layer.
+>
+> **This list means stop and read this file. It does not mean ask the lead.**
+> Where a ruling in "Rulings that generalize" below already answers your case,
+> apply it and cite it in the PR. Escalate what is genuinely unanswered — that
+> is cheap and welcome — but do not file a `needs-decision` for a question this
+> file has settled.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-08-31 (a direct `Agent` spawn of a paired agent is the
-  sanctioned in-loop route; the 2026-08-23 ruling that required the routing skill
-  is retired to an alternatives row. Previously 2026-08-24, when the override
-  tier was retired — gates ship without one until a false deny is observed)
+- **Last updated:** 2026-09-05 (a ruling that generalizes is promoted into this
+  file as part of closing its issue — "Rulings that generalize" below; the
+  satisfiability bar is inspection rather than a rate, and the 1.2% precedent
+  quoted on the board is corrected to 2.9%. Previously 2026-08-31, when a direct
+  `Agent` spawn of a paired agent became the sanctioned in-loop route)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -293,6 +300,33 @@ measured rather than argued.
    writes** — 1,451 protected pairs across 140 runs — which projects to failing
    132 of 145 runs. A check that fails almost every run is a constant, not a
    guardrail, and each of those runs costs $7–25.
+
+   **The bar is inspection, not a rate.** Replay the gate over the committed
+   corpus, then *read every refusal it produces* and confirm each is a true
+   positive. Ship when they all are; escalate when one is not, naming it. That
+   is the whole test, and a rate never substitutes for it — in both directions:
+
+   - **A low rate does not clear a gate.** ADR-0009's disqualification was 3 of
+     103 — the *lowest* number on this page. Its problem was that no satisfying
+     shape existed, which a threshold cannot see.
+   - **A high rate needs no inspection to reject.** At #1463's 52% the gate is a
+     constant; do not read 1,451 refusals to establish that. Use judgment on the
+     order of magnitude, and spend the inspection on gates that might ship.
+
+   **Two worked precedents, and a correction.** The shipped
+   `planCompleteInvariants` refuses **5 of 170 (2.9%)** — read the pre-call
+   snapshot, which is what it ships. **The 1.2% "only shipped precedent" quoted
+   on issue #2182 is the live-read variant (2 of 170), the configuration this
+   gate deliberately does not use** (recorded in `planCompleteInvariants`'s own
+   header comment); a comparison
+   against it understates the shipped precedent by 2.4×. That is precisely why
+   this bar is inspection: the figure a filer reaches for is easy to misread,
+   and nobody caught it. What actually cleared `planCompleteInvariants` was its
+   author reasoning through *which* refusals were unrecoverable — the
+   `plan.status !== "active"` branch inside `planCompleteInvariants` works out
+   why a superseded plan must not block,
+   because doing so would make the declaration permanently unwritable. That
+   reasoning is the deliverable, not the percentage.
 3. **Agent frontmatter binds even under `bypassPermissions`, but only by exact
    tool name.** A tool omitted from an agent's `tools:` is absent from it
    (measured 2026-08-30, `make probe-agent-binding`). This entry used to call
@@ -310,6 +344,39 @@ measured rather than argued.
    matches, and only where the hook loads. The plugin hook is the one that
    reaches Cowork (see the plugin-hooks section of `CLAUDE.md`); the unit eval
    harness carries no protected-file rule at all (issue #1493).
+
+## Rulings that generalize
+
+**A ruling that settles more than its own issue is promoted here as part of
+closing that issue.** The issue keeps the reasoning and the evidence; this table
+carries the part that binds the next gate. Cite the row in the PR.
+
+**Why this exists.** The rulings were being made and then lost. Issue #2108 was
+filed asking a question whose general half #2030 had already answered, and its
+own body records the mechanism: *"Issue #2051 scoped this out and said to record
+it on issue #2030. That pointer is wrong… A search of open and closed issues
+found nothing covering this question, so it was tracked nowhere."* Issue #2086
+went further — it **found** #2030, wrote *"the same fork is already open on issue
+#2030,"* and filed `needs-decision` anyway, because nothing said a ruling on one
+issue binds the next. Findability was only half the failure; the other half was
+that a per-issue ruling had no standing beyond its issue. Ten `needs-decision`
+issues are already closed, each carrying rulings at that level of decay.
+
+| Ruling | What it binds | Decided | Source |
+|---|---|---|---|
+| **A gate PR owes an actionable error.** The refusal must name what it expected and why, so the agent can satisfy it rather than be stuck. | every gate | 2026-09-02 | #2030 |
+| **A gate PR owes a corpus refusal measurement before merge**, inspected per limit 2 above. | every gate | 2026-09-02 | #2030, ADR-0009 c6, #1463 |
+| **A precondition beats an advisory field** in the same position. An advisory was rationalized away in `wilkins-death-kentucky`. | choosing between a refusal and a warning on a *state* write | 2026-09-02 | #2030; the `image_transcribe` read-tool carve-out is the scoped exception |
+| **Production beats eval-only.** A gate that could bind at the writer tool does not ship as a harness validator instead. | placement | 2026-09-02 | #2030 — "production is where the tester lost 3h18m" |
+| **An accepted false-deny cost is a legitimate reason to ship**, when it is stated and the refusals inspect clean. A gate need not be perfect to be correct. | limit 1 balancing | 2026-09-02 | #2030 |
+| **A gate ships with no override mechanism** until a false deny is observed in the field. | every gate | 2026-08-24 | this ADR, "Overridable or not" |
+| **Snapshot when the precondition must be satisfied by someone else; read live when it is the same author's own prior step.** | every gate | — | this ADR, "Snapshot or live" |
+
+**Promoting one.** When a ruling's reasoning would apply to a gate other than
+the one it was made on, add a row here in the PR that closes the issue, and link
+the issue. When it would not, leave it on the issue. If that call is unclear,
+promote it — a redundant row costs a line, and the failure this section exists
+to prevent cost four issues.
 
 ## Alternatives considered
 
@@ -380,6 +447,14 @@ that diffs the final tree against a write-once opening-tree baseline (issue
 **None for the placement decision — convention only.** No lint can see that a
 rule which should be a check is still a sentence. The check is review, carried by
 the "Read before you" line above and by ADR-0003.
+
+**Nor for promotion.** Nothing can detect a ruling that generalized and was left
+on its issue — that is the failure "Rulings that generalize" exists to reduce,
+and it reduces it by convention too. The one mechanical handle available is the
+`needs-decision` label: an issue filed with it whose question this file already
+answers is a promotion that did not happen, or a row that reads less clearly
+than it should. Treat each one as a defect in this file rather than only as a
+question to answer.
 
 What exists holds the gates that did ship:
 

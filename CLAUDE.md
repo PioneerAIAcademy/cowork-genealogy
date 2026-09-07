@@ -380,10 +380,15 @@ Per-project context about the researcher (experience level, paid
 subscriptions, derived narration guidance) lives in a
 `researcher_profile` section of `research.json`. `init-project` writes
 it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. Every
-`SKILL.md` opens with a one-line `**Narration:**` instruction that
-tells Claude to read `researcher_profile.narration_guidance` and apply
-it as the narration style for that invocation.
+the project's research objective at project start. 26 of the 27 skills
+carry a one-line `**Narration:**` instruction that tells Claude to read
+`researcher_profile.narration_guidance` and apply it as the narration
+style for that invocation. `search-wikipedia` is the deliberate
+exception — the line's own fallback is "a one-line preamble per action",
+and that preamble is exactly what its
+`test_reply_does_not_narrate_pending_step` validator fails it for. Do
+not add the line to it; re-derive the exception list with
+`grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md`.
 
 Three architectural rules made this design necessary:
 

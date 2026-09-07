@@ -1,0 +1,24 @@
+{
+  "test": {
+    "id": "ut_check_warnings_s6v",
+    "skill": "check-warnings",
+    "name": "Auditing the sources attached to a profile routes to source-evaluation",
+    "type": "negative",
+    "description": "Reciprocal of ut_source_evaluation_h3t, which pins the same boundary from the other side. The user asks whether the sources on a profile are right — that is an audit of attached evidence, which source-evaluation owns. check-warnings covers a single person's own data violating physical, biological or temporal limits, and its two tools (person_warnings, person_quality) read no source at all. Added with the source-evaluation skill (#1606) because widening one skill's description is exactly what starts the neighbouring skill under-triggering, and a negative pins only one direction of a pair.",
+    "tags": ["negative", "boundary", "source-evaluation"]
+  },
+  "input": {
+    "user_message": "Have a look at the sources attached to Christian P. Hole (KD96-TV2) -- are they actually right, or is something mis-indexed?",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": ["person-warnings-hole-christian-none"],
+  "negative": {
+    "correct_skill": ["source-evaluation"],
+    "explanation": "The question is about the attached sources — whether each belongs on this person and whether what was indexed from it is correct. That needs the sources enumerated and read, which source-evaluation does with person_read, record_read and source_attachments. person_warnings and person_quality answer a different question entirely: whether the person's own recorded data is internally impossible, which no source read can tell you."
+  },
+  "judge_context": [
+    "Should NOT call person_warnings or person_quality -- the user did not ask about impossibilities in the person's own data",
+    "Should route to source-evaluation, which owns auditing sources already attached to a profile",
+    "If check-warnings is invoked anyway, it should hand off without running either check"
+  ]
+}
