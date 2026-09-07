@@ -53,7 +53,13 @@ _API_KEY_PATTERNS = [
     re.compile(rb"sk-or-[A-Za-z0-9_-]{20,}"),
     re.compile(rb"sk-[A-Za-z0-9_-]{40,}"),
 ]
+_API_KEY_PATTERNS_STR = [
+    re.compile(r"sk-ant-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"sk-or-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"sk-[A-Za-z0-9_-]{40,}"),
+]
 _REDACTED_KEY = b"[REDACTED_API_KEY]"
+_REDACTED_KEY_STR = "[REDACTED_API_KEY]"
 
 
 def _redact_api_keys(data: bytes) -> bytes:
@@ -61,6 +67,12 @@ def _redact_api_keys(data: bytes) -> bytes:
     for pattern in _API_KEY_PATTERNS:
         out = pattern.sub(_REDACTED_KEY, out)
     return out
+
+
+def _redact_api_keys_str(text: str) -> str:
+    for pattern in _API_KEY_PATTERNS_STR:
+        text = pattern.sub(_REDACTED_KEY_STR, text)
+    return text
 
 
 # Mirrors apps/electron/src/main/feedback.ts so a web case and a desktop case
@@ -456,11 +468,11 @@ async def submit_feedback(
 
     fields = {
         "email": _norm(body.email).lower(),
-        "userPrompt": _norm(body.userPrompt),
-        "agentDid": _norm(body.agentDid),
-        "agentShouldHave": _norm(body.agentShouldHave),
-        "correctAnswer": _norm(body.correctAnswer),
-        "notes": _norm(body.notes or ""),
+        "userPrompt": _redact_api_keys_str(_norm(body.userPrompt)),
+        "agentDid": _redact_api_keys_str(_norm(body.agentDid)),
+        "agentShouldHave": _redact_api_keys_str(_norm(body.agentShouldHave)),
+        "correctAnswer": _redact_api_keys_str(_norm(body.correctAnswer)),
+        "notes": _redact_api_keys_str(_norm(body.notes or "")),
     }
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 

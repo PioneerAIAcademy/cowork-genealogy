@@ -526,3 +526,16 @@ def test_redact_multiple_keys():
     assert b"sk-ant-" not in out
     assert b"sk-or-" not in out
     assert out.count(b"[REDACTED_API_KEY]") == 2
+
+
+def test_redact_api_keys_str():
+    text = "I pasted sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA into the field"
+    out = fb._redact_api_keys_str(text)
+    assert "sk-ant-" not in out
+    assert "[REDACTED_API_KEY]" in out
+    assert "I pasted" in out
+
+
+def test_redact_api_keys_str_passthrough():
+    text = "normal text with no keys"
+    assert fb._redact_api_keys_str(text) == text

@@ -296,11 +296,11 @@ type NormalizedFields = {
 function normalizeAndValidate(report: FeedbackReport): NormalizedFields {
   const fields: NormalizedFields = {
     email: report.email.trim().toLowerCase(),
-    userPrompt: report.userPrompt.trim(),
-    agentDid: report.agentDid.trim(),
-    agentShouldHave: report.agentShouldHave.trim(),
-    correctAnswer: (report.correctAnswer ?? '').trim(),
-    notes: (report.notes ?? '').trim()
+    userPrompt: redactApiKeys(report.userPrompt.trim()),
+    agentDid: redactApiKeys(report.agentDid.trim()),
+    agentShouldHave: redactApiKeys(report.agentShouldHave.trim()),
+    correctAnswer: redactApiKeys((report.correctAnswer ?? '').trim()),
+    notes: redactApiKeys((report.notes ?? '').trim())
   }
   for (const [name, value] of Object.entries(fields)) {
     if (value.length > MAX_FIELD_CHARS) {
