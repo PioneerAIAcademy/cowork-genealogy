@@ -1,0 +1,395 @@
+{
+  "persons": [
+    {
+      "id": "LDZR-XPT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Jacob",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "21.06.1827 r. ",
+          "standard_date": "21 Jun 1827",
+          "place": "Garaschewo, Posen Ost, Posen, Prussia, Germany",
+          "standard_place": "Garaschewo, Posen Ost, Posen, Prussia"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "Rumianek, Posen West, Posen, Prussia, Germany",
+          "place": "Runkeln, Posen West, Posen, Prussia, Germany",
+          "standard_place": "Runkeln, Posen West, Posen, Prussia, Germany"
+        },
+        {
+          "id": "c9122a45-c8cc-4cb4-a06e-9dc11b675069",
+          "type": "Baptism",
+          "date": "1 Jul 1827",
+          "standard_date": "1 Jul 1827",
+          "place": "Gluschin, Posen Ost, Provinz Posen, Preußen",
+          "standard_place": "Gluschin, Posen Ost, Posen, Prussia"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "Runkeln, Posen West, Posen, Prussia, Germany",
+          "standard_place": "Runkeln, Posen West, Posen, Prussia, Germany"
+        }
+      ]
+    },
+    {
+      "id": "PWL6-PDJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Franciszka",
+          "surname": "Paszkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "43bf0d24-4aec-4388-a47a-8fe7b4656d01",
+          "type": "Birth",
+          "date": "około 1793 r.",
+          "standard_date": "1793",
+          "place": "Czapury, poznański, wielkopolskie, Polska",
+          "standard_place": "Czapury, Poznań, Greater Poland, Poland"
+        },
+        {
+          "id": "28d09a40-8969-4c95-b212-eda1e7c1d095",
+          "type": "Death",
+          "date": "25.11.1843 r. ",
+          "standard_date": "25 Nov 1843",
+          "place": "Garaszewo, Poznań, wielkopolskie, Polska",
+          "standard_place": "Garaszewo, Poznań, Greater Poland, Poland"
+        },
+        {
+          "id": "3571fcfa-d868-450d-a7cf-8be4a5f6644f",
+          "type": "Burial",
+          "place": "Gluschin, Posen Ost, Provinz Posen, Preußen",
+          "standard_place": "Gluschin, Posen Ost, Posen, Prussia"
+        }
+      ]
+    },
+    {
+      "id": "LDZR-NC1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Adalbert",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LDZR-TCG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": ":Ludwika",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "1974",
+          "standard_date": "1974",
+          "place": "Poznań, Poland",
+          "standard_place": "Poznań, Poland"
+        }
+      ]
+    },
+    {
+      "id": "LDZR-TBF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "One More",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "place": "Poznań, Poland",
+          "standard_place": "Poznań, Poland"
+        }
+      ]
+    },
+    {
+      "id": "LDZR-FTC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Hedvirgis",
+          "surname": "Kurek"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "place": "Poznań, Posen, Prussia, Germany",
+          "standard_place": "Kreis Posen, Posen, Prussia"
+        }
+      ]
+    },
+    {
+      "id": "KFL8-84B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Stanisław Florian",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": " 9 MAY 1790",
+          "standard_date": "9 May 1790",
+          "place": "Krzesiny, Prussia",
+          "standard_place": "Prussia, Germany"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "18.03.1859 r. ",
+          "standard_date": "18 Mar 1859"
+        },
+        {
+          "id": "c45ff0ed-4363-497f-9d63-5cb7e4e08537",
+          "type": "Burial",
+          "place": "Gluschin, Posen Ost, Provinz Posen, Preußen",
+          "standard_place": "Gluschin, Posen Ost, Posen, Prussia"
+        }
+      ]
+    },
+    {
+      "id": "LDZR-TNM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Weronika",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "Tarnowo Podgórne, Poznań, Poland",
+          "standard_place": "Tarnowo Podgórne, Poznań, Greater Poland, Poland"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "place": "Poznan, Poland",
+          "standard_place": "Poznań, Poland"
+        }
+      ]
+    },
+    {
+      "id": "LDZR-TGG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Eldest",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "1858",
+          "standard_date": "1858",
+          "place": "Mosina, Poznan, Prussia, Germany",
+          "standard_place": "Ludwisberg Oberförsterei-Anteil, Posen West, Posen, Prussia, Germany"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "place": "Rumianek, Poznan, Prussia, Germany",
+          "standard_place": "Runkeln, Posen West, Posen, Prussia, Germany"
+        }
+      ]
+    },
+    {
+      "id": "LDZR-PH7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N10",
+          "given": "Stanislaw",
+          "surname": "Klatkiewicz"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1884",
+          "standard_date": "1884",
+          "place": "Rumianek, Poznan, Prussia, Germany",
+          "standard_place": "Runkeln, Posen West, Posen, Prussia, Germany"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LDZR-XPT",
+      "person2": "LDZR-FTC"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "KFL8-84B",
+      "person2": "PWL6-PDJ",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": " 3 JUN 1811",
+          "standard_date": "3 Jun 1811",
+          "place": "Garaszewo, Prussia",
+          "standard_place": "Prussia, Germany"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KFL8-84B",
+      "child": "LDZR-XPT"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "PWL6-PDJ",
+      "child": "LDZR-XPT"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LDZR-XPT",
+      "child": "LDZR-PH7"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LDZR-FTC",
+      "child": "LDZR-PH7"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LDZR-XPT",
+      "child": "LDZR-TGG"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LDZR-FTC",
+      "child": "LDZR-TGG"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LDZR-XPT",
+      "child": "LDZR-TNM"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LDZR-FTC",
+      "child": "LDZR-TNM"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LDZR-XPT",
+      "child": "LDZR-TCG"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LDZR-FTC",
+      "child": "LDZR-TCG"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LDZR-XPT",
+      "child": "LDZR-NC1"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "LDZR-FTC",
+      "child": "LDZR-NC1"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LDZR-XPT",
+      "child": "LDZR-TBF"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LDZR-FTC",
+      "child": "LDZR-TBF"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7BFR-LY7",
+      "title": "Jacobum Klatkiewicz, „Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998“",
+      "citation": "\"Deutschland, Preußen, Posen, Katholische und Lutherisch Kirchenbücher, 1430-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FCM-B93L : Thu Jul 24 00:06:52 UTC 2025), Entry for Jacobum Klatkiewicz and Stanislai Klatkiewicz, 1 Jul 1827.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FCM-B93L"
+    }
+  ]
+}

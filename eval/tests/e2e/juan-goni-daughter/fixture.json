@@ -1,0 +1,19 @@
+{
+  "id": "juan-goni-daughter",
+  "name": "Juan José Goñi — daughter Martina Eulalia Goñi (m. 1872, Elizondo)",
+  "genre": "record-hint",
+  "source_pid": "G18D-QZW",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Juan José Goñi and his wife Francisca de Goñi of Elizondo, Navarra have a daughter, Martina Eulalia Goñi, who married Francisco Casimiro Yriarte in 1872?",
+  "tags": {
+    "question_type": "children",
+    "era": "1870s",
+    "geography": "ES-NA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 6, hint-samples.csv row 230, flag adds_daughter, confidence 3). Draft transcribed from an 1872 Navarrese marriage index entry; unverified. The batch CSV labels this row Cuba; every event on the tree person and the hint record is in Elizondo, Baztán, Navarra, and the fixture is tagged ES-NA accordingly."
+}
