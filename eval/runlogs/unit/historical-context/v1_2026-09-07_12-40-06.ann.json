@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-18_17-26-59.json",
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "run_log": "v1_2026-09-07_12-40-06.json",
+  "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_historical_context_004",
+      "test_id": "ut_historical_context_003",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_004",
+      "test_id": "ut_historical_context_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,11 +19,43 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_004",
+      "test_id": "ut_historical_context_003",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -83,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -91,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -99,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -107,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_007",
       "dimension_source": "rubric",
       "dimension_name": "Relevance to research",
       "llm_score": 3,
@@ -115,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_007",
       "dimension_source": "rubric",
       "dimension_name": "Source quality",
       "llm_score": 3,
@@ -123,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_007",
       "dimension_source": "rubric",
       "dimension_name": "Citation completeness",
       "llm_score": 3,
@@ -131,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_006",
+      "test_id": "ut_historical_context_007",
       "dimension_source": "rubric",
       "dimension_name": "Genealogical implications",
       "llm_score": 3,
@@ -139,15 +171,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Test failed on non-activation, not on answer quality: activated=False, skills_invoked=[], and every graded dimension scored 3/null (the inline answer was correct). The four prior committed runs (08-18/08-20/08-24/08-28) all activated and passed. The activation-failure mechanism is the known #2106 class — this skill is never invoked in the e2e corpus and unit activation flaps at the skill's non-zero temperature — and is independent of the edited rows (:163/:164 govern the place/absence/ordering register only and are read after activation). This run's non-activation is a fresh sample, not a claim that this specific failure predates the edit."
     },
     {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -155,7 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_010",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -163,31 +195,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Agree — pre-existing, unrelated to #1315. Confirmed across 3 separate runs of this test: the model states general-knowledge historical causes (crop failures, Vormärz repression, Old Lutheran persecution) with more confidence than its own flagged uncertainty implies. The Citation completeness dimension this test targets scored a clean 3 in all 3 runs — the URL-citation fix (structural \"Sources consulted\" list, mirroring search-familysearch-wiki) is robust and repeatable. This overclaiming pattern is a separate, real issue worth a follow-up but out of #1315's scope."
-    },
-    {
-      "test_id": "ut_historical_context_013",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "rubric",
       "dimension_name": "Relevance to research",
       "llm_score": 3,
@@ -195,15 +203,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "rubric",
       "dimension_name": "Source quality",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Same finding as Correctness above — see that comment. Distinct from Citation completeness (which is clean), confirming the rubric split is doing its job of isolating the two concerns."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
       "dimension_source": "rubric",
       "dimension_name": "Citation completeness",
       "llm_score": 3,
@@ -211,7 +219,87 @@
       "comment": null
     },
     {
-      "test_id": "ut_historical_context_013",
+      "test_id": "ut_historical_context_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_gsm",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_gsm",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_gsm",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_gsm",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_gsm",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Source Quality 2 belongs to the separately split issue #2283 (per-claim attribution granularity when the wiki tools return general-but-not-subject-specific content) and is outside #2193's scope. #2193's :163/:164 gate does not fire here because the tools did return general content."
+    },
+    {
+      "test_id": "ut_historical_context_gsm",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_gsm",
       "dimension_source": "rubric",
       "dimension_name": "Genealogical implications",
       "llm_score": 3,
