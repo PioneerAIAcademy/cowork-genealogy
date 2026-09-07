@@ -76,6 +76,13 @@ without describing actions by them. Examples:
   is often indexed separately.
 - A city directory listing the household at the deceased's former
   address.
+- A survivor's or dependent's benefit claim, where the claimant is
+  the survivor and the deceased is named to establish the
+  entitlement. The death is what creates the claim, so a filing
+  dated after it is the expected sequence, not evidence against
+  either date. Unlike the others here, the file is evidence FOR
+  the deceased: keep it attached and correct the fact it was
+  recorded as, rather than unlinking it.
 
 If a source of this type is attached to the deceased's profile as
 a Residence-style fact (rather than as a reference), the tool
@@ -85,13 +92,19 @@ re-treat it as a reference, NOT to split the profile. Splitting
 on a posthumous mention is a false-positive identity-split that
 damages the data.
 
+The survivor's-claim cue is the exception to the unlink half: the
+claim file is evidence for the deceased, so keep it attached and
+correct the fact it was recorded as. The no-split half holds for
+every cue in the category.
+
 The rule: before recommending an identity split for
 `hasEventAfterDeath1`, look at the type of the late-dated source.
 If it is a record about the deceased's life (a census, marriage,
 or vital record purportedly performed by them), identity
 confusion is likely. If it is a record about someone else where
 the deceased is merely named, treat it as a posthumous mention
-and recommend re-linking instead.
+and recommend re-linking instead -- or, on a survivor's claim,
+keeping the source and correcting the fact it was recorded as.
 
 Phrase all recommendations as research actions the user can
 take, not as instructions to run a specific skill. The user does

@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_check_warnings_v4m",
+    "skill": "check-warnings",
+    "name": "A widow's pension filed after death is the expected sequence, not a date conflict",
+    "type": "positive",
+    "description": "User asks to check Patrick (d. 12 Mar 1908). The tool returns hasEventAfterDeath1 with factIds pointing at F3 -- a Military fact dated 4 Nov 1909, ~20 months after his death, which in the scenario cites S6, the widow's pension application filed by his widow Bridget that names Patrick as her late husband and was auto-attached to Patrick as a Military fact dated to its filing. This is the survivor's-claim form of the posthumous mention: the death is what creates the entitlement, so a filing after it is the expected sequence and NEITHER date is wrong. The skill should report the warning, name F3 as a Military fact sourced to a survivor's pension claim, call the sequence expected, and recommend keeping the source while correcting the fact it was recorded as -- NOT offering either date as possibly incorrect, NOT an identity split, and NOT a detach/unlink (which is the right action for a relative's obituary and the wrong one here, because the pension file is evidence for Patrick). Reproduces alpha-feedback issue #2167 / issue #2210, where the workbench told the tester one of two correct dates must be wrong.",
+    "tags": ["positive", "detection", "fundamental", "event-after-death", "posthumous-mention", "survivor-claim", "critical"]
+  },
+  "input": {
+    "user_message": "Check Patrick Flynn for any warnings.",
+    "scenario": "flynn-widow-pension"
+  },
+  "mcp_fixtures": ["person-warnings-widow-pension"],
+  "judge_context": [
+    "Should call the person_warnings tool with personId: 'I1' (Patrick) and treat the tool as the source of truth -- it should NOT re-derive the warning by reasoning over the scenario data.",
+    "Should report the hasEventAfterDeath1 warning with Critical severity (the tool emits severity: 'contradiction', which maps to a Fundamental-assumption violation). Reporting the warning is correct and expected -- the skill must not suppress it.",
+    "The warning's factIds names F3. The skill should name that fact in its report -- F3 is a Military fact dated 4 Nov 1909 citing source S6 (a widow's pension application filed by Patrick's widow Bridget). Identifying it as a survivor's pension claim is the key cue.",
+    "A survivor's or dependent's benefit claim -- here a widow's pension application, where the claimant is the widow and the deceased is named to establish the entitlement -- is a POSTHUMOUS MENTION. The death is what creates the claim, so a filing dated after it is the EXPECTED sequence. The skill should surface posthumous mention as the cause and say the sequence is expected. It must NOT assert or default to identity confusion / 'records of a same-name individual merged in'.",
+    "CRITICAL -- neither date may be offered as wrong. The recorded death date (12 Mar 1908) is correct and the filing date (4 Nov 1909) is correct as a filing date. A reply that says one of the two must be incorrect, or that recommends verifying the death date because the pension date contradicts it, is a FAIL on Correctness: that is the exact wrong answer this test reproduces (issue #2210). What is wrong is only the use of the filing date as the date of one of Patrick's own events.",
+    "The recommended action should be to KEEP the pension file attached to Patrick and correct the fact it was recorded as -- dated to the service period the file documents, or moved to Bridget's own event. The skill must NOT recommend unlinking, detaching, or treating the source as belonging to someone else: the pension file is genuine evidence for Patrick, documenting his service, death and marriage. (Unlink is the right action for a relative's obituary, which is a different cue in the same category.)",
+    "Should NOT recommend an identity split, rebuilding a chronology to separate a same-name individual, or a merge investigation.",
+    "Should NOT suggest schema-level fixes (validate-schema) or conflict-resolution -- those are different skills.",
+    "Patrick's id (I1) is synthetic, not a FamilySearch ID, so person_quality does not apply and must not be called. Per SKILL.md the skip must be SILENT -- the report should say nothing whatever about FamilySearch quality, including no 'not available' note and no narration that the id is synthetic."
+  ]
+}

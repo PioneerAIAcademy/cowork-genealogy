@@ -95,7 +95,8 @@ The three causes, with cues and recommended actions:
 
 - **Identity confusion** -- the late-dated record actually describes a same-name individual who outlived the deceased. Cue: the source describes events apparently performed BY the deceased (e.g. a later census listing them as head of household, a later marriage record). Recommended action: "Let's rebuild a full chronological timeline of every recorded event for [person] and go through each record one by one to check whether it actually belongs to this person or to a same-name individual who outlived them."
 - **Wrong death date** -- the recorded death date is too early. Cue: a single late-dated record is inconsistent with one earlier death record but consistent with everything else. Recommended action: "Verify the recorded death date for [person] against the original death record (the certificate or burial register) -- one of the two dates is likely wrong."
-- **Posthumous mention** -- the late-dated record was created after the deceased's death and merely references them. Cue: the source is an obituary, a death notice (a distinct record from an obituary), a descendant's death certificate, a city directory, or an estate or probate document where the deceased is named as a parent or prior owner but is not performing an action -- probate and estate administration routinely run years after death, and an heir petition can reopen a will later still. What decides whether such a record raises the warning is the fact type it was attached as, not its date. Recommended action: "Look at the late-dated record itself -- if it's a record about someone else that just mentions [person] as a parent or relative, it shouldn't be attached to [person]'s profile as one of their own events. Unlink it and treat it as a reference instead."
+- **Posthumous mention** -- the late-dated record was created after the deceased's death and merely references them. Cue: the source is an obituary, a death notice (a distinct record from an obituary), a descendant's death certificate, a city directory, an estate or probate document where the deceased is named as a parent or prior owner but is not performing an action, or a survivor's or dependent's benefit claim where the claimant is the survivor and the deceased is named to establish the entitlement -- probate and estate administration routinely run years after death, an heir petition can reopen a will later still, and a survivor's claim is created by the death, so a filing dated after it is the expected sequence. What decides whether such a record raises the warning is the fact type it was attached as, not its date. Recommended action: "Look at the late-dated record itself -- if it's a record about someone else that just mentions [person] as a parent or relative, it shouldn't be attached to [person]'s profile as one of their own events. Unlink it and treat it as a reference instead."
+  - On the survivor's-claim cue the action is **not** unlink -- the file is evidence for the deceased. Recommended action: "Keep the claim file attached to [person] and correct the fact it was recorded as -- date it to the service period the file documents, or move the filing to the survivor's own event. Neither the recorded death date nor the filing date is suspect."
 
 When the cause is ambiguous (the most common case), report the warning, list the three candidate causes, and recommend inspecting the source next. Do not recommend a specific corrective action before the source type is known -- recommending an identity split when the record is actually a posthumous mention would damage the data.
 
@@ -122,10 +123,11 @@ WARNINGS FOR: Patrick Flynn (I1)
     a same-name individual whose records were merged in, OR (c)
     the late-dated record is a posthumous mention (an obituary,
     a death notice, a city directory, a descendant's death
-    certificate, or an estate, probate, or guardianship record --
+    certificate, an estate, probate, or guardianship record --
     probate often runs years after death, and an heir petition
-    can reopen a will later still -- that names the deceased
-    without describing actions by them).
+    can reopen a will later still -- or a survivor's or
+    dependent's benefit claim, which the death itself creates --
+    that names the deceased without describing actions by them).
     Next step: take a closer look at the late-dated record
     itself -- what kind of document is it? The right corrective
     action depends on what you find.
