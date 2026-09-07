@@ -1040,13 +1040,25 @@ def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
             for c in blocked_owned_section_writes
         }
     )
+    # Only mention the batch when one of the denied calls actually carried
+    # sibling ops. Said unconditionally it reads as though ops were lost on a
+    # one-op call, where there were none to lose.
+    batched = any(
+        len(((c.get("args") or {}).get("ops")) or []) > 1
+        for c in blocked_owned_section_writes
+    )
+    batch_note = (
+        " The deny is per CALL, not per op: every other op in the same "
+        "research_append batch was refused with it."
+        if batched
+        else ""
+    )
     raise AssertionError(
         f"research_append op(s) to a section the caller does not own, denied by "
         f"the hook ({len(blocked_owned_section_writes)} call(s)): "
         f"{'; '.join(offending)}. Route the write through the owning skill, or "
         f"stay inside this agent's declared lane "
-        f"(docs/specs/schemas/ownership.json). The deny is per CALL, not per op: "
-        f"every other op in the same research_append batch was refused with it."
+        f"(docs/specs/schemas/ownership.json).{batch_note}"
     )
 
 

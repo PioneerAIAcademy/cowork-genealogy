@@ -247,7 +247,7 @@ row says:
 
 | Section | Observed | Row as promoted |
 |---|---|---|
-| `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | `agent:gps-mentor`, **no enforcement plane**. The harness check keys on the calling *skill's* name and cannot see an agent, so claiming a plane would deny the owner's own writes. The loader raises rather than silently dropping an agent caller |
+| `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | `agent:gps-mentor`, **no enforcement plane in the shipped hook** — `evaluations` is in no owner map. The `test_ownership_table` harness check keys on the calling *skill's* name and cannot see an agent, but since 2026-09-02 `test_no_out_of_lane_section_writes` records the hook's agent-keyed verdict on the unit plane, so a write from an agent whose lane excludes `evaluations` IS denied there, so claiming a plane would deny the owner's own writes. The loader raises rather than silently dropping an agent caller |
 | `localities` | 73 ops, 71 to `locality-guide` | `skill:locality-guide`, **newly enforced**. The paper row was always correct and had never once been evaluated — the check iterated `REQUIRED_SECTIONS`, which the section is not in |
 | `known_holdings` | **zero successful writes corpus-wide** | `owner: null` with a reason. Writable through `research_append`, solicited by nothing; the paper owners the prose table named have never written it, and repeating them here would read as coverage |
 | `researcher_profile` | **0 writes, non-empty in 154/154 sidecars** — every fixture seeds it | `owner: null` with a reason. **No tool can write it**; its only route is a raw `Write` the lockdown denies |

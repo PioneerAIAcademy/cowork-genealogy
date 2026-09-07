@@ -250,3 +250,22 @@ def test_pretool_hook_calls_the_predicate_before_the_call_counter():
         "the ownership deny is checked AFTER the max_tool_calls counter; a "
         "denied call never executes and must not consume the budget"
     )
+
+
+def test_the_batch_clause_only_appears_when_ops_were_actually_batched():
+    """Said unconditionally it reads as though sibling ops were lost on a one-op
+    call. Deleting the conditional leaves the suite green otherwise."""
+    one_op = {"tool": "mcp__genealogy__research_append",
+              "args": {"ops": [{"op": "append", "section": "conflicts"}]},
+              "section": "conflicts", "rule": "out_of_lane",
+              "caller": "proof-conclusion"}
+    with pytest.raises(AssertionError) as e:
+        check_no_out_of_lane([one_op])
+    assert "per CALL, not per op" not in str(e.value), str(e.value)
+
+    batched = dict(one_op)
+    batched["args"] = {"ops": [{"op": "append", "section": "conflicts"},
+                               {"op": "append", "section": "proof_summaries"}]}
+    with pytest.raises(AssertionError) as e2:
+        check_no_out_of_lane([batched])
+    assert "per CALL, not per op" in str(e2.value), str(e2.value)

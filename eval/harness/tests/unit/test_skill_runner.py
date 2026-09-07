@@ -549,3 +549,62 @@ def test_a_denied_call_does_not_consume_the_max_tool_calls_budget(
         "a denied call consumed the max_tool_calls budget: the ownership deny "
         f"is being checked after the counter (aborted_reason={result.aborted_reason!r})"
     )
+
+
+def _rule_payload(section, caller, entry=None, op="append"):
+    """A `research_append` op parameterised by SECTION and CALLER.
+
+    `_ownership_payload` above hardcodes `proof-conclusion` and varies only the
+    section, so all three tests before this one drive the `out_of_lane` rule.
+    Narrowing the recorded arm to `denied[1] == "out_of_lane"` left the whole
+    suite at baseline, so `routed` and `declaration` passed through the hook with
+    nothing watching (@clack391) — while guardrail-enforcement-spec.md names this
+    validator as what gates the first and claims the second binds here too.
+
+    What was unguarded is the hook PASS-THROUGH on this plane, not the
+    predicate's decision: both rules are covered by direct `owner_denied` calls
+    in test_universal_owned_sections.py, and the e2e closure is hook-driven in
+    test_e2e_context_block.py.
+    """
+    o = {"op": op, "section": section, "entry": entry or {"x": 1}}
+    return {
+        "tool_name": "mcp__genealogy__research_append",
+        "tool_input": {"ops": [o]},
+        "agent_id": "agent-abc123",
+        "agent_type": caller,
+    }
+
+
+def test_the_routed_arm_is_driven_through_the_real_hook(tmp_path, monkeypatch):
+    """`proof_summaries` reached by an agent that does not own it: 47 of 133
+    committed e2e runs wrote one without launching the owning skill."""
+    result, returns = _drive_hook(
+        tmp_path, monkeypatch, [_rule_payload("proof_summaries", "record-extractor")]
+    )
+    assert returns[0] is not None, "the routed arm allowed the write"
+    assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert [
+        (c["section"], c["rule"]) for c in result.blocked_owned_section_writes
+    ] == [("proof_summaries", "routed")]
+
+
+def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypatch):
+    """A routed CLAIM, field-scoped, whose section is the dotted form that keys
+    neither owner map — the arm where branching on the section's shape rather
+    than on `rule` raises KeyError."""
+    result, returns = _drive_hook(
+        tmp_path,
+        monkeypatch,
+        [
+            _rule_payload(
+                "questions",
+                "proof-conclusion",
+                entry={"exhaustive_declaration": {"declared": True}},
+            )
+        ],
+    )
+    assert returns[0] is not None, "the declaration arm allowed the claim"
+    assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert [
+        (c["section"], c["rule"]) for c in result.blocked_owned_section_writes
+    ] == [("questions.exhaustive_declaration", "declaration")]

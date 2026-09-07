@@ -493,8 +493,10 @@ async def run_skill(
         # test_no_unregistered_copy_of_the_lockdown_exists).
         #
         # This plane called the predicate nowhere until issue #2022, while the e2e
-        # orchestrator, Cowork and the hosted path all bound it — so the one plane
-        # that GRADES could not see an out-of-lane write. Checked BEFORE the
+        # orchestrator, Cowork and the hosted path all bound it. What that cost is
+        # PREVENTION, not detection: the universal test_ownership_table already
+        # fails such a run after the fact, but cannot stop the write landing (see
+        # the field's own comment above). Checked BEFORE the
         # max_tool_calls counter for the same reason as the two blocks above: a
         # denied call never executes, so it must not consume the budget.
         #
