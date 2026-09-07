@@ -1,0 +1,306 @@
+{
+  "persons": [
+    {
+      "id": "LCX2-LKN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Paerai",
+          "surname": "Teupooihi"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LCX2-L8S",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Parauhia",
+          "surname": "Paura"
+        }
+      ],
+      "facts": [
+        {
+          "id": "93e02df8-2882-4f41-a81a-9a15d08bbd41",
+          "type": "Birth",
+          "date": "1810",
+          "standard_date": "1810",
+          "place": "Moorea-Maiao, Windward Islands, French Polynesia",
+          "standard_place": "Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GHNN-4HL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Raitui",
+          "surname": "PARAUHIA"
+        }
+      ],
+      "facts": [
+        {
+          "id": "146e3e90-d97d-4b45-9db8-854a0f32a2e4",
+          "type": "Birth",
+          "date": "1847",
+          "standard_date": "1847",
+          "place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia",
+          "standard_place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "3c3be382-5e23-47d9-8ed0-7f764cbe2230",
+          "type": "Marriage Registration",
+          "date": "1863",
+          "standard_date": "1863",
+          "place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia",
+          "standard_place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "e9ad2f88-6d86-4879-9930-08488d1c1bbe",
+          "type": "Death",
+          "date": "7 February 1895",
+          "standard_date": "7 Feb 1895",
+          "place": "Teaharoa, Moorea-Maiao, Windward Islands, French Polynesia",
+          "standard_place": "Teaharoa, Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "ba7ab035-8505-40e3-8cf6-805f25db0ace",
+          "type": "Birth Registration",
+          "place": "Papetoai, French Polynesia",
+          "standard_place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "d03483cd-1ef0-406f-8ff6-c99ac4a9e867",
+          "type": "Marriage Registration",
+          "place": "Papetoai, French Polynesia",
+          "standard_place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "f4dc46ea-6c2e-42c1-b4af-9bbea6b63c29",
+          "type": "Death+Registration",
+          "place": "French Polynesia",
+          "standard_place": "French Polynesia"
+        }
+      ]
+    },
+    {
+      "id": "97XW-C6Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Mataare",
+          "surname": "Parauhia"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "       1843",
+          "standard_date": "1843",
+          "place": "Papetoai Moorea,Iles Du Vent,Pacific Islands",
+          "standard_place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "97X7-DQG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Teuratau",
+          "surname": "Parauhia"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "       1831",
+          "standard_date": "1831",
+          "place": "Afareaitu Moorea,Iles Du Vent,Pacific Islands",
+          "standard_place": "Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "97XW-7VN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Moe",
+          "surname": "PARAUHIA"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "       1836",
+          "standard_date": "1836",
+          "place": "Papetoai Moorea,Iles Du Vent,Pacific Islands",
+          "standard_place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "afe8787c-d676-428f-af26-8fa07229228c",
+          "type": "Birth Registration",
+          "place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia",
+          "standard_place": "Papetoai, Moorea-Maiao, Windward Islands, French Polynesia"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LCX2-L8S",
+      "person2": "LCX2-LKN",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Moorea-Maiao, Windward Islands, French Polynesia",
+          "standard_place": "Moorea-Maiao, Windward Islands, French Polynesia"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "LCX2-L8S",
+      "child": "97X7-DQG",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LCX2-LKN",
+      "child": "97X7-DQG",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LCX2-L8S",
+      "child": "97XW-7VN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "LCX2-LKN",
+      "child": "97XW-7VN",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LCX2-L8S",
+      "child": "97XW-C6Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "LCX2-LKN",
+      "child": "97XW-C6Y",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LCX2-L8S",
+      "child": "GHNN-4HL",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "LCX2-LKN",
+      "child": "GHNN-4HL",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7G42-SMS",
+      "title": "Paerai Teupooihi, \"French Polynesia, Civil Registration, 1780-1999\"",
+      "citation": "\"French Polynesia, Civil Registration, 1780-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6RC5-FZZ7 : Tue Jan 13 19:48:44 UTC 2026), Entry for Raitui Parauhia and Parauhia Paura.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RC5-FZZ4"
+    },
+    {
+      "id": "7L92-BH8",
+      "title": "Paerai Teupooihi, \"French Polynesia, Civil Registration, 1780-1999\"",
+      "citation": "\"French Polynesia, Civil Registration, 1780-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6RC5-FZZD : Tue Jan 13 19:45:48 UTC 2026), Entry for Raitui Parauhia and Parauhia Paura.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RC5-FZZX"
+    },
+    {
+      "id": "WZ7Y-M2Y",
+      "title": "Paerai Teupooihi, \"French Polynesia, Civil Registration, 1780-1999\"",
+      "citation": "\"French Polynesia, Civil Registration, 1780-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XML9-FP3R : Tue Jan 13 18:06:43 UTC 2026), Entry for Raitui Parauhia and Parauhia Paura, 7 Feb 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XML9-FP3Y"
+    },
+    {
+      "id": "SBQG-DTH",
+      "title": "Paerai Teupooihi, \"French Polynesia, Civil Registration, 1780-1999\"",
+      "citation": "\"French Polynesia, Civil Registration, 1780-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QRVR-ZSZM : Tue Jan 13 21:55:40 UTC 2026), Entry for Tetuaereva Maiti and Raitui Parauhia, 1863.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QRVR-ZSW2"
+    },
+    {
+      "id": "WZ7Y-PNB",
+      "title": "Paerai Teupooihi, \"French Polynesia, Civil Registration, 1780-1999\"",
+      "citation": "\"French Polynesia, Civil Registration, 1780-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:61HG-BVTF : Tue Jan 13 17:56:49 UTC 2026), Entry for Raitui Parauhia and Parauhia Paûra, 7 Feb 1895.",
+      "url": "https://familysearch.org/ark:/61903/1:1:61HG-BVTJ"
+    },
+    {
+      "id": "SBQG-6QM",
+      "title": "Paerai a Teupooihi, \"French Polynesia, Civil Registration, 1780-1999\"",
+      "citation": "\"French Polynesia, Civil Registration, 1780-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG24-B2FH : Tue Jan 13 20:00:51 UTC 2026), Entry for Raitui Parauhia and Parauhia a Paura, 1847.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG24-B2F2"
+    },
+    {
+      "id": "7PMW-31P",
+      "title": "Paerai Teupovihi, \"French Polynesia, Civil Registration, 1780-1999\"",
+      "citation": "\"French Polynesia, Civil Registration, 1780-1999\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68B2-T9XK : Tue Jan 13 19:43:26 UTC 2026), Entry for Teuratau Parauhia and Parauhia Taura, 1831.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68B2-T9XL"
+    }
+  ]
+}

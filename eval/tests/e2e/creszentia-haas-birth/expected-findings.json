@@ -1,0 +1,34 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Creszentia Haas was born 25 May 1835 and christened 26 May 1835 at Lichtental, Amt Baden, Baden.",
+      "details": {
+        "subject_person": "Creszentia Haas (9DZX-B29)",
+        "fact_type": "Birth",
+        "date": "25 May 1835",
+        "place": "Lichtental, Amt Baden, Baden, Germany"
+      },
+      "supporting_sources": [
+        "Germany, Births and Baptisms, 1558-1898 — entry for Creszentia Haas, 1835, parents Mathias Haas and M. Anna Steinel"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Creszentia Haas was christened 26 May 1835 at Lichtental, Amt Baden.",
+      "details": {
+        "subject_person": "Creszentia Haas (9DZX-B29)",
+        "fact_type": "Christening",
+        "date": "26 May 1835",
+        "place": "Lichtental, Amt Baden, Baden, Germany"
+      },
+      "supporting_sources": [
+        "Germany, Births and Baptisms, 1558-1898 — entry for Creszentia Haas, 1835"
+      ],
+      "required": false
+    }
+  ]
+}

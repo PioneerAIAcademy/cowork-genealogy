@@ -1,0 +1,19 @@
+{
+  "id": "ignacio-alvarado-daughter",
+  "name": "Ignacio Alvarado — infant daughter Angela, buried 1880 at El Carmen, San José",
+  "genre": "record-hint",
+  "source_pid": "K21K-P1C",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Ignacio Alvarado and Teodosia Durán of San José, Costa Rica have an infant daughter, Angela, who died and was buried in June 1880?",
+  "tags": {
+    "question_type": "children",
+    "era": "1880s",
+    "geography": "CR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 5, hint-samples.csv row 212, flag adds_daughter, confidence 3). Draft transcribed from an 1880 Costa Rican Catholic burial entry; unverified. The hint's date conflicts with the tree's birth year for the named mother."
+}

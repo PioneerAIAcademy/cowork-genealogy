@@ -1,0 +1,19 @@
+{
+  "id": "isleifur-isleifsson-spouse",
+  "name": "Ísleifur Ísleifsson — a son Einar by Thórunn Einarsdóttir (chr. 1856, Kross)",
+  "genre": "record-hint",
+  "source_pid": "KCS6-8SG",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Ísleifur Ísleifsson of Kross, Rangárvallasýsla have a son Einar christened 28 September 1856 by a Thórunn Einarsdóttir — or does that baptism belong to a different Ísleifur Ísleifsson?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1850s",
+    "geography": "IS"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 15, hint-samples.csv row 485, flags adds_spouse/adds_son, confidence 3). Draft transcribed from an 1856 Icelandic baptismal index entry; unverified. Twelve days separate it from a christening the tree already has."
+}

@@ -1,0 +1,50 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Isabella Inglis was the daughter of Thomas Inglis and Jane Borthwick Inglis.",
+      "details": {
+        "subject_person": "Isabella Inglis (KHL9-LKF)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Thomas Inglis and Jane Borthwick Inglis"
+        }
+      },
+      "supporting_sources": [
+        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry for David Young and Isabella Inglis, 25 Dec 1867, naming her parents"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Isabella Inglis married David Young on 25 December 1867 in Scotland.",
+      "details": {
+        "subject_person": "Isabella Inglis (KHL9-LKF)",
+        "fact_type": "Marriage",
+        "date": "25 December 1867",
+        "place": "Edinburgh, Midlothian, Scotland"
+      },
+      "supporting_sources": [
+        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry of 25 Dec 1867"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Isabella Inglis was born about 1844.",
+      "details": {
+        "subject_person": "Isabella Inglis (KHL9-LKF)",
+        "fact_type": "Birth",
+        "date": "about 1844",
+        "place": "Scotland"
+      },
+      "supporting_sources": [
+        "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry of 25 Dec 1867, giving the bride's age"
+      ],
+      "required": false
+    }
+  ]
+}

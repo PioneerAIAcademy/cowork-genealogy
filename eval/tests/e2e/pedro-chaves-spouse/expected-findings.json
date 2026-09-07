@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Pedro Pablo Chaves married Juana Flores on 30 August 1859 in Buenos Aires; she was the daughter of Sebastian Flores and Isabel Rivero.",
+      "details": {
+        "subject_person": "Pedro Pablo Chaves (2761-R34)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Juana Flores",
+          "birth": "about 1835",
+          "parents": "Sebastian Flores and Isabel Rivero"
+        },
+        "marriage": "30 August 1859, Buenos Aires, Argentina"
+      },
+      "supporting_sources": [
+        "Argentina, Buenos Aires, registros parroquiales, 1635-2017 — entry for Pedro Chaves and Juana Flores, 30 Aug 1859, naming his parents Isidro Chaves and Andrea Guerra"
+      ],
+      "required": true
+    }
+  ]
+}

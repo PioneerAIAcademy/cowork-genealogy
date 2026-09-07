@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_juan_goni_daughter",
+    "objective": "Did Juan José Goñi and his wife Francisca de Goñi of Elizondo, Navarra have a daughter, Martina Eulalia Goñi, who married Francisco Casimiro Yriarte in 1872?",
+    "subject_person_ids": [
+      "G18D-QZW"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

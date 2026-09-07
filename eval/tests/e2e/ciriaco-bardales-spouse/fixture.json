@@ -1,0 +1,19 @@
+{
+  "id": "ciriaco-bardales-spouse",
+  "name": "Ciriaco Bardales — an earlier partner, Carmen Morales, and an infant son who died in 1905",
+  "genre": "record-hint",
+  "source_pid": "KNYF-2Z8",
+  "captured": "2026-09-07",
+  "researcher_question": "Before his marriage to Clara Amelia Palacios Oliva, did Ciriaco Bardales have a son by a Carmen Morales — an infant Ciriaco who died 12 August 1905 in Guatemala City?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1900s",
+    "geography": "GT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 14, hint-samples.csv row 422, flags adds_spouse/adds_son, confidence 3). Draft transcribed from a 1905 Guatemalan civil death registration; unverified. Proposes a relationship predating the tree's only marriage."
+}
