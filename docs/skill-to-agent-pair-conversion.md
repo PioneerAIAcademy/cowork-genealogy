@@ -15,7 +15,7 @@ written for the first:
 - **Attribution.** Only an agent carries an `agent_id`, which is what the whole
   guardrail programme is built on — the hook routes a protected write to the
   agent that owns it. This is what PR #1819 and PR #1847 bought, and it is what
-  ADR-0011 and step 3 below are about.
+  ADR-0011 and step 4 below are about.
 - **Cost and context.** An agent is the only surface that honours a `model:` or
   `effort:` pin (`docs/architecture.md` §3.5), and a folded body stops occupying
   the orchestrator's context. This buys no attribution and needs none.
@@ -271,7 +271,7 @@ the other side: reopen a size argument only on a measurement that body size
 costs something end to end, not on a byte count.
 
 Use the folded size to size the work — what moves, what stays skill-side, how
-much prose a reviewer has to read. What does bind is step 4 below: a fold
+much prose a reviewer has to read. What does bind is step 5 below: a fold
 deletes `references/`, so a candidate whose references carry content the body
 cannot absorb is blocked until that content has another home, whatever it
 measures.
@@ -296,23 +296,27 @@ Two consequences for a conversion:
 
 1. Record the pre-conversion baseline from existing run logs.
 2. Audit that skill's fixtures for self-contradiction and unsatisfiability.
-3. Move any rule that must *hold* into the writer tool. Prove it fails first.
+3. Move locality-specific and record-type-specific guidance onto the wiki
+   (ADR-0012). This is its own card and its own paid run, before the fold; the
+   fold then carries only what the wiki lacks. The agent grants the wiki tools
+   it will call, under all three spellings.
+4. Move any rule that must *hold* into the writer tool. Prove it fails first.
    On a cost-motivated conversion there may be no such rule; say so and move on
    rather than inventing one.
-4. Fold the prose verbatim. Delete `references/` — an agent reading its own
+5. Fold the prose verbatim. Delete `references/` — an agent reading its own
    reference files is measured unreliable and silent.
-5. Give the routing skill only the tools it needs to route.
-6. Put everything load-bearing in the **agent**, including the resolution of its
+6. Give the routing skill only the tools it needs to route.
+7. Put everything load-bearing in the **agent**, including the resolution of its
    own arguments and its refusal to be steered by the delegation. The routing
    skill keeps only the five items listed under "Everything load-bearing goes in
    the agent". The delegation message now comes from the orchestrator, which the
    conversion does not own — so the agent must be correct under a delegation that
    names the artifact and pre-states the answer, not merely a well-phrased one.
-7. Apply the delete-the-skill acceptance check: delete the routing skill and read
+8. Apply the delete-the-skill acceptance check: delete the routing skill and read
    the agent as the orchestrator will reach it. Anything that changes goes into
    the agent before you run.
-8. Run once, unchanged. Compare against step 1.
-9. Fix one thing per run.
+9. Run once, unchanged. Compare against step 1.
+10. Fix one thing per run.
 
 ## What is still open
 
