@@ -83,18 +83,18 @@ const OCR_TIMEOUT_MS = 180_000;
 
 // Explicit output-token budget. Setting it makes the cap OURS and the
 // truncation case reproducible. Note the DIRECTION: for the current default
-// google/gemini-3.7-flash (config.ts) OpenRouter reports a 65536 max-completion
-// ceiling and we previously sent no `max_tokens`, so 16000 LOWERS the effective
-// cap rather than raising it. It is still comfortably above a page's content:
-// the largest full transcription in the committed corpus is ~6.4k chars (~1.6k
-// output tokens), and both `google/gemini-3.7-flash` and the prior Qwen default
-// have been run at 16000 in dev/try-ocr-compare.ts without a content-driven cap.
-// Two caveats keep this a "bound it, don't trust it blindly" number: that char
-// count is content only, and reasoning tokens draw on the SAME budget (this
-// model is reasoning-capable and reasoning is not disabled), so a
-// reasoning-heavy read could reach 16000 before the page is done. A cap that
-// does bind surfaces as `truncated` (detection reads finish_reason AND
-// native_finish_reason, case-insensitively), so it is visible, never silent.
+// google/gemini-3.7-flash OpenRouter's /api/v1/models reports
+// top_provider.max_completion_tokens = 65536 and we previously sent no
+// `max_tokens`, so 16000 LOWERS the effective cap rather than raising it. It is
+// still well above a page's content: the largest full transcription across the
+// 175 measurable calls in the committed corpus is ~6.4k chars (~1.6k output
+// tokens). Treat that as a bound, not a proof — 219 of 394 calls carry a null
+// summary so it is measured over the rest, every measured call ran under the
+// prior Qwen default (which spends no reasoning tokens), and reasoning tokens
+// draw on this SAME budget (Gemini is reasoning-capable and reasoning is not
+// disabled), so a reasoning-heavy read could reach 16000 before the page ends.
+// A cap that does bind surfaces as `truncated` (detection reads finish_reason
+// AND native_finish_reason, case-insensitively), so it is visible, never silent.
 export const OCR_MAX_TOKENS = 16000;
 
 // One retry, transport failures only. Measured over the committed e2e corpus,
@@ -312,8 +312,13 @@ export async function imageTranscribeTool(
   // OpenRouter emit "max_tokens") is still caught, regardless of which field it
   // lands in. Out of scope: a model that stops early on its own ("stop", page
   // unfinished) and a transport cut (already thrown by fetchWithTimeout) — #1974.
-  const marksCap = (reason?: string | null): boolean => {
-    const v = reason?.trim().toUpperCase();
+  // `reason` is typed string|null but arrives via the unchecked `as
+  // OpenRouterChatResponse` cast, so guard the type before `.trim()` — a number,
+  // boolean, array or object would otherwise throw and turn a complete read into
+  // a spurious tool error (the `=== "length"` this replaced could not throw).
+  const marksCap = (reason: unknown): boolean => {
+    if (typeof reason !== "string") return false;
+    const v = reason.trim().toUpperCase();
     return v === "LENGTH" || v === "MAX_TOKENS";
   };
   const truncated =

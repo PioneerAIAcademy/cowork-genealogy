@@ -33,7 +33,11 @@
  *     native_finish_reason === "MAX_TOKENS" (Gemini normalizes onto the
  *     top-level field and also reports its native value). Confirmed twice: the
  *     max_tokens:64 OCR call and the text-only max_tokens:16 call.
- *   - A complete read → finish_reason === "stop", native_finish_reason "STOP".
+ *   - A non-cap stop → finish_reason === "stop", native_finish_reason "STOP".
+ *     (Observed on the max_tokens:16000 census call — but that was the degenerate
+ *     6-char output below, NOT a full-page read; a genuine complete-page "stop"
+ *     was not captured in these runs. "STOP" as the OpenAI-contract complete
+ *     value is inferred, not measured on a full page.)
  *   - Gemini is REASONING-capable and reasoning tokens draw on the SAME output
  *     budget: at max_tokens:64, completion_tokens_details.reasoning_tokens was
  *     58 of 60, leaving content 2 chars WITH finish_reason "length". So an

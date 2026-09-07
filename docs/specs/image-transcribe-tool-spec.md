@@ -360,9 +360,10 @@ consistent across schema, manifest, and skill.)*
   (§8 shares the resolver). Accept the same shapes `image_read` accepts
   today (`3:1:`/`3:2:` ARKs, resolver URLs, `/$dist`, `dgs:.../dist.jpg`).
 - `lookingFor` mirrors the `image-reader` subagent's parameter: a search key
-  only. It focuses a FOUND/NOT FOUND pointer; it **never** shortens or slants
-  the full transcription, and any *assertion* in it ("confirm the father is
-  Adam Schreck") is ignored — transcribe what the page says.
+  only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
+  §6.2); it **never** shortens or slants the full transcription, and any
+  *assertion* in it ("confirm the father is Adam Schreck") is ignored —
+  transcribe what the page says.
 - `projectPath`, when given, makes the tool **save** the fetched JPEG
   host-side to `<projectPath>/images/<key>.jpg` and return an `imageRef`
   (§8.5). Best-effort: a save failure omits `imageRef` rather than losing the
@@ -403,7 +404,7 @@ Returns **text only**:
   browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
     imageGroup: string       // the image-group prefix, e.g. "004261111"
     distinctImagesRead: number
-    notice: string           // pivot advice; the transcription above is complete regardless
+    notice: string           // pivot advice; independent of `truncated` — the two can co-occur
   }
   metadata: {
     imageId?: string
@@ -431,7 +432,8 @@ list the caller can turn into assertions.
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
 | OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present) |
 | OpenRouter unreachable | friendly `Could not reach OpenRouter (...)` (mirror `wiki-search.ts`) |
-| Empty/garbage OCR result | throw rather than return a fabricated read — the caller pivots to indexes |
+| Empty/garbage OCR result (no cap) | throw rather than return a fabricated read — the caller pivots to indexes |
+| Empty result **with** an output cap (`finish_reason`/`native_finish_reason` marks it) | throw too — a zero-content read has nothing to return — but the message names the cap (budget likely spent on reasoning) so the caller learns a budget bound, not an unreadable scan. Keeps the invariant that `truncated: true` never ships beside an empty `transcription` (§6.2) |
 
 The tool **never fabricates** a transcription on failure. It throws; the
 caller (record-extraction) pivots to indexed records, exactly as the
@@ -513,8 +515,9 @@ budget lives on the tool.
 distinct image transcribed within **one image group in one project**, a successful
 result carries an advisory `browseBudget` field naming the count, the group, and a
 pivot instruction (log the browse with a negative outcome and move to the indexed
-route, or ask the user). The transcription itself is complete and unchanged — the
-field is additive.
+route, or ask the user). The field is additive and independent of `truncated`:
+`browseBudget` reports a browse-count advisory, not read completeness, so a
+budget-advised read can also be output-cap truncated (the two co-occur).
 
 **Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
 `` `${projectPath ?? "<no-project>"}\0${imageGroup}` ``) holds the distinct `imageId`s seen per group
@@ -665,13 +668,17 @@ the condition to re-check on.
   Mind the **direction**: for the current default `google/gemini-3.7-flash`
   OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
   no `max_tokens`, so `16000` **lowers** the effective cap, it does not raise it.
-  It is still well above a page's content — the largest full transcription in the
-  committed corpus is ~6.4k chars (~1.6k output tokens), and both Gemini and the
-  prior Qwen default have run at 16000 in `dev/try-ocr-compare.ts` without a
-  content-driven cap. Two caveats keep it a bound, not a proof: that figure is
-  content only, and reasoning tokens draw on the same budget (this model is
-  reasoning-capable), so a reasoning-heavy read could reach 16000 before the page
-  is done. A cap that binds is **visible** (`truncated`, §6.2), never silent.
+  It is still well above a page's content — the largest full transcription across
+  the 175 measurable calls in the committed corpus is ~6.4k chars (~1.6k output
+  tokens), and both Gemini and the prior Qwen default have *produced gradeable
+  output* at 16000 in `dev/try-ocr-compare.ts` (that script reads only
+  `choices[0].message` and `usage`, so it cannot itself observe a cap). Treat the
+  figure as a bound, not a proof: it is measured over 175 of 394 calls (219 carry
+  a null summary), every measured call ran under the prior Qwen default which
+  spends no reasoning tokens, and reasoning tokens draw on this same budget (the
+  current model is reasoning-capable), so a reasoning-heavy read could reach
+  16000 before the page is done. A cap that binds is **visible** (`truncated`,
+  §6.2), never silent.
 - The OCR **prompt is baked into the tool**, not passed by the caller —
   reuse the `image-reader.md` protocol so behavior is identical to today's
   subagent. `lookingFor` is appended as the optional pointer directive.

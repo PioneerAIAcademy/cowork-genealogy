@@ -341,11 +341,29 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "length");
     const result = await imageTranscribeTool({ imageId: "004884748_02613" });
     const notice = result.truncationNotice ?? "";
-    // Guard the load-bearing claims, so replacing the notice with a same-keyword
-    // sentence that licenses an absence inference fails this test.
+    // Required claims.
     expect(notice).toMatch(/unread/i);
     expect(notice).toMatch(/not\s+blank/i);
     expect(notice).toMatch(/not\s+treat\s+any\s+target\s+as\s+absent/i);
+    // Forbid the LICENSING construction, not a keyword (@clack391): this fails a
+    // notice that appends "it is safe to record a negative finding" while still
+    // passing a STRICTER one ("do not record a negative finding from it").
+    expect(notice).not.toMatch(
+      /\b(safe|safely|okay|fine|acceptable|permissible)\b[^.]{0,40}\b(record|treat|assume|conclude)\b/i
+    );
+  });
+
+  it("does not crash on a non-string finish_reason — a complete read survives (@yinkid28 W5)", async () => {
+    // finish_reason arrives via an unchecked cast; a number/object must not
+    // throw in marksCap and misfile a successful read as an error.
+    for (const bad of [0, true, {}, ["length"]] as unknown[]) {
+      mockOpenRouterRaw({
+        choices: [{ message: { content: "Row 1: Anna" }, finish_reason: bad }],
+      });
+      const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+      expect(result.truncated).toBeUndefined();
+      expect(result.transcription).toBe("Row 1: Anna");
+    }
   });
 });
 

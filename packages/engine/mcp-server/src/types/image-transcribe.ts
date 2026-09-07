@@ -2,10 +2,11 @@ export interface ImageTranscribeInput {
   imageId?: string;
   ark?: string;
   /**
-   * Optional search key — who/what to locate on the page. Sets a FOUND /
-   * NOT FOUND pointer; it never shortens or slants the full transcription,
-   * and any assertion in it is ignored. Mirrors the image-reader subagent's
-   * `looking_for`.
+   * Optional search key — who/what to locate on the page. On a complete read it
+   * sets a FOUND / NOT FOUND pointer (`found`); the pointer is withheld on a
+   * truncated read (a half-read page cannot support a clean NOT FOUND). It never
+   * shortens or slants the full transcription, and any assertion in it is
+   * ignored. Mirrors the image-reader subagent's `looking_for`.
    */
   lookingFor?: string;
   /** Absolute project-folder path. When given, the fetched JPEG is saved under
