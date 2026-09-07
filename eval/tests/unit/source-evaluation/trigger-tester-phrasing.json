@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_p2v",
+    "skill": "source-evaluation",
+    "name": "Triggers on the tester's own phrasing from feedback case #1536",
+    "type": "positive",
+    "description": "Trigger test. Issue #1606 records that this flow 'has no skill and no routing today; it was freelanced in the main thread with only init-project ever invoked' -- the user addressed the session directly and nothing fired. That is a description binding, not a routing one (docs/architecture.md, 'Fix a skill that is not triggering', case 2), so it is pinned here as a trigger positive on the utterance the tester actually used.",
+    "tags": [
+      "trigger",
+      "feedback-1536"
+    ]
+  },
+  "input": {
+    "user_message": "Can you evaluate the sources on this profile and look for errors? KD96-TV2.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail"
+  ],
+  "judge_context": [
+    "The source-evaluation skill must activate on this utterance",
+    "It must not hand off to conflict-resolution, check-warnings or record-extraction -- the user asked for an audit of what is attached, which is this skill's own job",
+    "Should begin by enumerating the attached sources with person_read before judging any of them",
+    "Ground truth for the death index: `record_read` on HOLE-002 indexes the death as 10 June 1954, and `person_read` on KD96-TV2 records 10 June 1945 on the profile. A finding that reports the index as 1954 and the profile as 1945 is CORRECT and must not be deducted."
+  ]
+}

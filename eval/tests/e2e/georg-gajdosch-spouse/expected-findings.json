@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Georg Gajdosch had a daughter Anna, baptised 22 April 1718 at Lidečko, Vsetín, Moravia.",
+      "details": {
+        "subject_person": "Georg Gajdosch (K69J-F7Y)",
+        "relation": "child",
+        "target_person": {
+          "name": "Anna Gajdosch",
+          "birth": "22 April 1718, Lidečko, Vsetín, Moravia"
+        }
+      },
+      "supporting_sources": [
+        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Anna Gajdosch, 1718, parents Georg Gajdosch and Catharina"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "The mother of the 1718 daughter Anna is named Catharina, not the Dorothea the tree records as Georg Gajdosch's wife.",
+      "details": {
+        "person": {
+          "name": "Catharina",
+          "role": "wife of Georg Gajdosch, named as mother on the 1718 Lidečko baptism"
+        }
+      },
+      "supporting_sources": [
+        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Anna Gajdosch, 1718"
+      ],
+      "required": true
+    }
+  ]
+}

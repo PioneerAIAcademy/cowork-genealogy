@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Juan José Goñi and Francisca de Goñi had a daughter, Martina Eulalia Goñi of Elizondo, who married Francisco Casimiro Yriarte in 1872.",
+      "details": {
+        "subject_person": "Juan José Goñi (G18D-QZW)",
+        "relation": "child",
+        "target_person": {
+          "name": "Martina Eulalia Goñi",
+          "residence": "Elizondo, Baztán, Navarra",
+          "marriage": "1872, to Francisco Casimiro Yriarte"
+        }
+      },
+      "supporting_sources": [
+        "Spain, Marriages, 1565-1950 — entry for Francisco Casimiro Yriarte, 1872, naming the bride's parents Juan Jose and Francisca Goñi"
+      ],
+      "required": true
+    }
+  ]
+}

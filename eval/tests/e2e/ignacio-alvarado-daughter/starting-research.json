@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_ignacio_alvarado_daughter",
+    "objective": "Did Ignacio Alvarado and Teodosia Durán of San José, Costa Rica have an infant daughter, Angela, who died and was buried in June 1880?",
+    "subject_person_ids": [
+      "K21K-P1C"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

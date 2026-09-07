@@ -402,12 +402,17 @@ export interface RecordSearchResult {
 
 export interface FulltextSearchResult {
   id: string
+  sourceUrl?: string
+  collectionId?: string
   collectionTitle?: string
+  title?: string
+  recordDate?: string
   recordType?: string
   recordPlace?: string
   textDocument?: string
   names?: string[]
   places?: string[]
+  dates?: string[]
   highlightTerms?: string[]
 }
 

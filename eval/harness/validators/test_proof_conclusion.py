@@ -323,13 +323,28 @@ def test_conflict_blocks_proved(after_state, test):
         "conflict and what would settle it, then route to conflict-resolution."
     )
     # 2. At not_proved — not proved, and not probable either.
+    #
+    # The conflict's state is READ, not asserted in prose. The message used to
+    # hardcode "(c_001, birthplace) is open", which asserts the opposite of the
+    # truth on a run that legitimately settled it first — and reading that
+    # sentence is part of why this failure was originally filed as two separate
+    # defects rather than one chain (issue #2022).
+    c_001 = next(
+        (c for c in after.get("conflicts", []) if c.get("id") == "c_001"), None
+    )
+    c_state = (
+        "absent" if c_001 is None else f"status={c_001.get('status')!r}"
+    )
     bad = [ps for ps in for_q if ps.get("tier") != "not_proved"]
     assert not bad, (
         "proof-conclusion concluded q_001 at "
-        f"{[ps.get('tier') for ps in bad]} while an unresolved conflict on an "
-        "identifying attribute (c_001, birthplace) is open. The disputed "
-        "attribute goes to whether the cited sources describe the same person, "
-        "so no tier is available — record it at `not_proved`."
+        f"{[ps.get('tier') for ps in bad]} while the conflict on an "
+        f"identifying attribute (c_001, birthplace) reads {c_state}. The "
+        "disputed attribute goes to whether the cited sources describe the "
+        "same person, so no tier is available — record it at `not_proved`. If "
+        "c_001 reads as resolved, check whether this run resolved it ITSELF: "
+        "that is an out-of-lane write, and test_no_out_of_lane_section_writes "
+        "is the assertion for it."
     )
     # 3. The question stays open — resolving it is the downstream step's call.
     q = next((x for x in after.get("questions", []) if x.get("id") == "q_001"), None)
@@ -506,3 +521,88 @@ def test_open_candidate_blocks_closure(before_state, after_state, test):
             f"{qid} was marked resolved while {', '.join(open_h)} is still "
             f"`active`"
         )
+
+
+# --- Per-claim tier breakdown (#1711) -----------------------------------
+#
+# A parentage question whose two claims carry different evidence strength
+# must not let the stronger claim's scalar `tier` license writing the
+# weaker claim's relationship. `flynn-split-parentage-tiers` ships paternity
+# (I2->I1) strongly evidenced and maternity (I3->I1) resting on a single
+# 0.0002-scored match -- exactly the real-world case that raised #1711.
+
+def test_per_claim_tree_encoding(before_state, after_state, test):
+    """Tagged `per-claim-tier-split`: the proof summary for q_001 must carry
+    a `claims[]` breakdown with paternity at `probable` and maternity at
+    `possible`, and the tree must reflect each claim's OWN tier — not the
+    scalar. The scalar `tier` (the stronger claim, per
+    research-schema-spec.md §7) legitimately reads `probable`, but that must
+    not license writing the maternal relationship too; only the paternal one
+    may land.
+
+    Deliberately not `no-tree-write` (its whole-tree-diff premise breaks on
+    a mixed proof that legitimately writes one relationship and not the
+    other) or `tree-write-expected` (which pins a single parent/child pair).
+    """
+    if "per-claim-tier-split" not in test.get("tags", []):
+        pytest.skip("not a per-claim-tier-split scenario")
+
+    ps = _proof_summary_for_question(after_state, "q_001")
+    assert ps is not None, "no proof_summaries entry for q_001 found in after_state"
+
+    claims = ps.get("claims") or []
+    assert claims, (
+        "no `claims[]` breakdown on the q_001 proof summary — paternity and "
+        "maternity carry different evidence strength here and must be tiered "
+        "independently (#1711), not folded into one scalar `tier`"
+    )
+
+    paternity = next((c for c in claims if c.get("claim") == "paternity"), None)
+    maternity = next((c for c in claims if c.get("claim") == "maternity"), None)
+    assert paternity is not None, f"no 'paternity' entry in claims[]: {claims!r}"
+    assert maternity is not None, f"no 'maternity' entry in claims[]: {claims!r}"
+
+    assert paternity.get("proof_tier") == "probable", (
+        f"paternity should be 'probable' (three independent original sources "
+        f"converge); got {paternity.get('proof_tier')!r}"
+    )
+    assert maternity.get("proof_tier") in ("possible", "not_proved"), (
+        f"maternity should be 'possible' or weaker (a single 0.0002-scored "
+        f"same-person match, no record naming Bridget as Patrick's mother); "
+        f"got {maternity.get('proof_tier')!r}"
+    )
+
+    before = _tree(before_state)
+    after = _tree(after_state)
+    if before is None or after is None:
+        pytest.skip("Missing tree.gedcomx.json for diff")
+
+    def has_pc(tree, parent, child):
+        return any(
+            r.get("type") == "ParentChild"
+            and r.get("parent") == parent
+            and r.get("child") == child
+            for r in (tree or {}).get("relationships", [])
+        )
+
+    assert not has_pc(before, "I2", "I1") and not has_pc(before, "I3", "I1"), (
+        "scenario pre-state already contains a concluded ParentChild "
+        "relationship — flynn-split-parentage-tiers must ship both "
+        "candidate-parent links absent so this guard can verify which one "
+        "the skill actually wrote"
+    )
+
+    assert has_pc(after, "I2", "I1"), (
+        "proof-conclusion did not write the paternal ParentChild relationship "
+        "(I2 -> I1) even though paternity reached `probable` — see "
+        "proof-conclusion agent body §6. post-state relationships="
+        f"{after.get('relationships', [])!r}"
+    )
+    assert not has_pc(after, "I3", "I1"), (
+        "proof-conclusion wrote the maternal ParentChild relationship "
+        "(I3 -> I1) even though maternity is only `possible` — this is the "
+        "exact defect #1711 reports: a `probable` scalar tier (the stronger "
+        "claim) must never license writing a claim whose own tier is "
+        "`possible`. post-state relationships="
+        f"{after.get('relationships', [])!r}"
+    )

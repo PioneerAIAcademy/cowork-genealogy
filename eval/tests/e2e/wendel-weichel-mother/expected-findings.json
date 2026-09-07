@@ -1,0 +1,39 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Wendel Weichel's mother was Josefine Weichel/Weishel, born about 1892 in Russia; his father was Jacob Weichel/Weishel, born about 1890 in Russia. The family immigrated to Canada in 1924 and was enumerated at Weyburn No. 67, Saskatchewan in 1926.",
+      "details": {
+        "subject_person": "Wendel Weichel (G8Q5-BJ1)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Josefine Weishel",
+          "birth": "about 1892, Russia"
+        },
+        "father": "Jacob Weishel, b. about 1890, Russia",
+        "residence": "Weyburn No. 67, Saskatchewan, 1926"
+      },
+      "supporting_sources": [
+        "Canada, Prairie Provinces, Census, 1926 — household of Jacob Weishel and Josefine Weishel, Weyburn No. 67, Saskatchewan"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Wendel Weichel had siblings Peter (b. 1919, Russia), Augina (b. 1922, Germany), Katherina (b. 1923, Germany) and Barbara (b. 1925, Saskatchewan).",
+      "details": {
+        "subject_person": "Wendel Weichel (G8Q5-BJ1)",
+        "relation": "siblings",
+        "target_person": {
+          "name": "Peter, Augina, Katherina and Barbara Weichel"
+        }
+      },
+      "supporting_sources": [
+        "Canada, Prairie Provinces, Census, 1926 — household of Jacob Weishel and Josefine Weishel"
+      ],
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Patrick Hoban's wife was named Ellen, and their son Thomas Dee married Bessie Butler at Halifax, Nova Scotia in 1895.",
+      "details": {
+        "subject_person": "Patrick Hoban (KK3W-WLT)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Ellen"
+        },
+        "son": "Thomas Dee, b. about 1874, Halifax; m. Bessie Butler 1895"
+      },
+      "supporting_sources": [
+        "Canada, Marriages, 1661-1949 — entry for Thomas Dee and Bessie Butler, 1895, naming the groom's parents Patrick and Ellen"
+      ],
+      "required": true
+    }
+  ]
+}

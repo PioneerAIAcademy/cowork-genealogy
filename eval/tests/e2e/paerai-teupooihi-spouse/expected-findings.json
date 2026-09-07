@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Moe Parauhia (b. 1836), son of Parauhia Paura and Paerai Teupooihi, married Aufait Toehae.",
+      "details": {
+        "subject_person": "Moe PARAUHIA (97XW-7VN), son of Paerai Teupooihi (LCX2-LKN)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Aufait Toehae"
+        }
+      },
+      "supporting_sources": [
+        "French Polynesia, Civil Registration, 1780-1999 — entry for Moe Parauhia and Paura Parauhia, naming Moe's spouse Aufait Toehae"
+      ],
+      "required": true
+    }
+  ]
+}
