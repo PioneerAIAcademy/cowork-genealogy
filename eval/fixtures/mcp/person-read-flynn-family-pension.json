@@ -1,0 +1,152 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Patrick Flynn WITH relatives and source descriptions — a copy of person-read-flynn-family whose subject carries a post-death `Pension` fact. Patrick has Military service 1864, Death 17 Apr 1889 (day precision), Burial 1889 (year only), and Pension 11 Jul 1890: a survivor's claim his widow Mary would have filed, which necessarily postdates the death that created the entitlement. Both dates are correct and the sequence is expected. Reproduces the shape a live tester hit, where init-project's step-5 pedigree analysis reported one of the two dates as wrong — an error type its closed list at SKILL.md:225 does not permit it to flag (\"birth after death\" is that list's only after-death item). Note the year-only Burial: it is death-like, so it raises the anchor to 31 Dec 1889 and person_warnings is silent here too (dev/probe-event-after-death-anchor.ts), meaning nothing downstream catches this if the pedigree analysis mis-frames it. Used by ut_init_project_h7t.",
+  "args": { "personId": "LZNY-BRF", "relatives": true, "sourceDescriptions": true },
+  "response": {
+    "persons": [
+      {
+        "id": "LZNY-BRF",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "Patrick", "surname": "Flynn" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "~1845",
+            "standard_date": "Abt 1845",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          },
+          {
+            "type": "Military",
+            "date": "1864",
+            "standard_date": "1864",
+            "place": "Pennsylvania, United States",
+            "standard_place": "Pennsylvania, United States"
+          },
+          {
+            "type": "Residence",
+            "date": "3 June 1880",
+            "standard_date": "3 Jun 1880",
+            "place": "Branch Township, Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Branch, Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Death",
+            "date": "17 April 1889",
+            "standard_date": "17 Apr 1889",
+            "place": "Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Burial",
+            "date": "1889",
+            "standard_date": "1889",
+            "place": "Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Pension",
+            "date": "11 Jul 1890",
+            "standard_date": "11 Jul 1890",
+            "place": "Pennsylvania, United States",
+            "standard_place": "Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "LZNY-K2M",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Mary", "surname": "Kelly" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1849",
+            "standard_date": "1849",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          }
+        ]
+      },
+      {
+        "id": "LZNY-P7Q",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "James", "surname": "Flynn" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1871",
+            "standard_date": "1871",
+            "place": "Branch Township, Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Branch, Schuylkill, Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "LZNY-R4T",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Margaret", "surname": "Flynn" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1874",
+            "standard_date": "1874",
+            "place": "Branch Township, Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Branch, Schuylkill, Pennsylvania, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "LZNY-BRF",
+        "person2": "LZNY-K2M",
+        "facts": [
+          {
+            "type": "Marriage",
+            "date": "1869",
+            "standard_date": "1869",
+            "place": "Schuylkill County, Pennsylvania, United States",
+            "standard_place": "Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "sources": [{ "description": "MMM9-7RB" }]
+      },
+      { "type": "ParentChild", "parent": "LZNY-BRF", "child": "LZNY-P7Q", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "LZNY-K2M", "child": "LZNY-P7Q", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "LZNY-BRF", "child": "LZNY-R4T", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "LZNY-K2M", "child": "LZNY-R4T", "subtype": "Biological" }
+    ],
+    "sources": [
+      {
+        "id": "MMM9-1QF",
+        "title": "Pennsylvania, Church and Town Records, 1708-1985, Patrick Flynn, 1889",
+        "citation": "\"Pennsylvania, Church and Town Records, 1708-1985\", database with images, FamilySearch, burial register entry for Patrick Flynn, 1889, Schuylkill County.",
+        "url": "https://familysearch.org/ark:/61903/1:1:JQ4M-2XS"
+      },
+      {
+        "id": "MMM9-7RB",
+        "title": "United States Census, 1880, Branch Township, Schuylkill, Pennsylvania",
+        "url": "https://familysearch.org/ark:/61903/1:1:MFK9-3WD"
+      },
+      {
+        "id": "MMM9-4KD",
+        "title": "United States Civil War Widow's Pension Application Files, Mary Flynn, 1890",
+        "citation": "\"United States Civil War and Later Pension Files\", National Archives, widow's application no. 712905, Mary Flynn, filed 11 Jul 1890, naming her late husband Patrick Flynn.",
+        "url": "https://familysearch.org/ark:/61903/1:1:QK7P-9ZL"
+      }
+    ]
+  }
+}

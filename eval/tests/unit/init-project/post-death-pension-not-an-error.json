@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_init_project_h7t",
+    "skill": "init-project",
+    "name": "A post-death pension is not on the obvious-error list — do not report it as a date conflict",
+    "type": "positive",
+    "description": "Initialize from a FamilySearch person ID. The imported subject, Patrick Flynn, carries Military service 1864, Death 17 Apr 1889, Burial 1889, and a Pension dated 11 Jul 1890 — a survivor's claim his widow Mary would have filed, which necessarily postdates the death that created the entitlement. Both dates are correct. Step 5's obvious-error list (SKILL.md:225) is closed and its only after-death item is 'birth after death', and the same sentence assigns any deeper data-integrity pass to check-warnings. So the pedigree analysis must not present the post-death pension as an error, an impossibility, or a date conflict, and must not offer either date as possibly wrong. Reproduces what a live tester hit, where this reply said 'The date or the death record is wrong' about exactly this shape. Nothing downstream catches the mis-framing either: the year-only Burial is death-like and raises the anchor to 31 Dec 1889, so person_warnings is silent here too (dev/probe-event-after-death-anchor.ts).",
+    "tags": [
+      "initialization",
+      "pedigree-analysis",
+      "obvious-error-list",
+      "post-death-event",
+      "off-list-flag"
+    ]
+  },
+  "input": {
+    "user_message": "PID: LZNY-BRF. I would like to verify the information on Patrick Flynn and find his parents, if possible. I have some research under my belt.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-flynn-family-pension"],
+  "runs_per_test": 1,
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "judge_context": [
+    "THE POINT OF THIS TEST. Patrick has a Death fact dated 17 Apr 1889 and a Pension fact dated 11 Jul 1890. Both dates are correct: a survivor's pension claim is created BY the death, so a filing after it is the expected sequence, not a discrepancy. The reply must NOT present this as an error, a data problem, an impossibility, or a conflict, and must NOT say or imply that one of the two dates must be wrong. A sentence of the form 'a Pension fact is dated after the recorded death — the date or the death record is wrong' is a FAIL on Correctness. That is the exact wrong output this test reproduces.",
+    "WHY, in the skill's own terms. Step 5's obvious-error detection list is closed — 'birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart' — and it ends 'This is the complete list — do not flag anything else as an error, no matter how odd it looks.' A pension dated after death is an event-after-death, which is not 'birth after death' and is not on the list. The same sentence assigns a deeper data-integrity pass to check-warnings. So this belongs to no error section here.",
+    "WHAT IS ACCEPTABLE. Saying nothing at all about the pension is correct and complete. Mentioning it neutrally as part of the fact inventory is fine. Reading it as evidence of Civil War service that opens a pension-file research avenue is fine and good — the subject also carries a Military 1864 fact. Naming it as something check-warnings should look at later is acceptable. What is not acceptable is presenting it as a defect, an anomaly to resolve, or a reason to doubt either date.",
+    "DO NOT DEDUCT for the skill omitting the pension from its analysis entirely. Silence is the compliant outcome; the closed list's own wording is that an off-list pattern 'is simply not mentioned — never presented as a defect.'",
+    "THE SOURCE IS INFORMATIVE ON PURPOSE. One attached source is titled 'United States Civil War Widow's Pension Application Files, Mary Flynn, 1890' and its citation names her late husband Patrick. So the correct reading is available to the skill without any inference — which removes 'it could not have known' as an excuse. Recognising what the record is and then still filing it under an issues/flags/verification heading is the failure this test is about, not a mitigation of it.",
+    "ALSO OFF-LIST: auditing the attached sources. The same SKILL.md:225 sentence ends 'Auditing the sources already attached — whether each belongs, whether it was indexed correctly — is source-evaluation's; name it, never audit them here.' So a section questioning whether a source belongs, whether its collection fits the date, or whether it was mis-indexed is the same category of violation as the pension flag. Naming source-evaluation as a later step is fine; performing the audit here is not.",
+    "The rest of the initialization should still be graded normally against the skill's usual contract: research.json and tree.gedcomx.json written and schema-valid, the four imported persons and their relationships present with local I/N/F/R/S ids, FamilySearch-derived facts sourced at quality 1, the researcher_profile capturing the stated experience level ('some research under my belt' -> intermediate), and the objective recorded as stated rather than invented.",
+    "SUBSCRIPTIONS ARE OUT OF SCOPE HERE. The user message states no site access, so `subscriptions` should simply be absent — `init-project/SKILL.md:211` says not to ask about access and not to write the field, and `[\"none\"]` is explicitly not written as a default. Do not deduct for its absence, and do not expect it. (An earlier draft of this test volunteered access in the user message, which lands on a live disagreement between that instruction and `research-schema-spec.md`'s row for the field, and graded as an unrelated failure. Keep access out of the message so this test measures the pension framing only.)",
+    "Patrick's id is a FamilySearch ID, not synthetic — but person_quality is check-warnings' tool, not this skill's, and no quality call is expected here."
+  ]
+}
