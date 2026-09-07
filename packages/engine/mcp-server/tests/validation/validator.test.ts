@@ -2141,6 +2141,37 @@ describe("Research closed shapes", () => {
       expect(result.valid).toBe(true);
     });
 
+    it("reports a non-object claims[] element instead of throwing", async () => {
+      // `checkRequired` tests `field in obj` and `in` throws on null and every
+      // primitive — the reason the other 21 element loops call isObjectEntry.
+      // claims[] is filled from LLM output and validateParsed gates every
+      // writer tool, so a throw here fails them all with no repairable message.
+      for (const bad of [null, "paternity", 42]) {
+        const research = maximalResearch();
+        research.proof_summaries[0].claims = [bad];
+        const result = await validateParsed(research, maximalTree);
+        expect(result.valid).toBe(false);
+        expect(
+          result.errors.some(
+            (e) => e.path === "research.json/proof_summaries[0]/claims[0]"
+          )
+        ).toBe(true);
+      }
+    });
+
+    it("reports a non-object claims[].relationship instead of throwing", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].relationship = "I2";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]/relationship"
+        )
+      ).toBe(true);
+    });
+
     it("rejects a claims[] entry with an invalid proof_tier value", async () => {
       const research = maximalResearch();
       research.proof_summaries[0].claims[0].proof_tier = "very_confident";

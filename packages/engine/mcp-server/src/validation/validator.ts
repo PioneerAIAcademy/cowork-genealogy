@@ -1130,6 +1130,11 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       for (let j = 0; j < claims.length; j++) {
         const claim = claims[j];
         const clp = `${psp}/claims[${j}]`;
+        // Same guard the other 21 element loops carry: `checkRequired` tests
+        // `field in obj`, and `in` throws on null and every primitive. Without
+        // it a stray `claims: [null]` from LLM output fails every writer tool
+        // with a TypeError naming no field instead of a repairable error.
+        if (!isObjectEntry(claim, clp, report)) continue;
         checkRequired(claim, [
           "claim", "proof_tier", "supporting_assertion_ids", "relationship",
         ], clp, report, NULLABLE_FIELDS);
@@ -1140,6 +1145,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
           const rel = claim.relationship;
           const relp = `${clp}/relationship`;
+          if (!isObjectEntry(rel, relp, report)) continue;
           checkRequired(rel, ["type", "parent", "child"], relp, report, NULLABLE_FIELDS);
           checkAllowedKeys(rel, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", relp, report);
           if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
