@@ -169,13 +169,23 @@ other's job.
 
 ```
 materialize_facts({ projectPath, personId, recordId, recordRole })
-  -> compact summary
+  -> compact summary                        // persona form
 
-materialize_facts({ projectPath, ops: [{ personId?, recordId, recordRole }, ...] })
-  -> { results: [compact summary, ...] }   // batch form
+materialize_facts({ projectPath, assertionId, relatedRole,
+                    name: { given, surname }, gender?, personId? })
+  -> compact summary                        // named-party form (§4.6)
+
+materialize_facts({ projectPath, ops: [ <either form>, ... ] })
+  -> { results: [compact summary, ...] }   // batch form, arms may be mixed
 ```
 
-- The caller passes **references**, not data. The tool reads the persona's
+- **Two arms, one guarantee.** The persona form takes references; the
+  named-party form (§4.6) takes one piece of caller-supplied data, a name,
+  because the party it mints has no persona to reference. What is structural in
+  both is the **source-ref**, which the tool resolves itself and refuses to
+  write without — not the input shape. An op supplying both forms is rejected
+  as ambiguous rather than merged.
+- In the persona form, the caller passes **references**, not data. The tool reads the persona's
   assertions (all assertions matching `recordId`+`recordRole`) from
   `research.json`, resolves each one's provenance, and writes to
   `tree.gedcomx.json`. (`personId` may be an id that does not yet exist —
@@ -240,8 +250,21 @@ If `personId` does not exist, `materialize_facts` **mints** the person from
 the persona's name/gender assertions, then writes its facts — all in one
 validated call. "Create a new person from a record" and "enrich an existing
 person from a record" are the **same** operation. Because facts are the
-*input*, a person created this way **cannot** be fact-less — which is the
-structural cure for symptoms (1) and (2).
+*input*, a person created **from a persona** this way **cannot** be fact-less —
+which is the structural cure for symptoms (1) and (2).
+
+The named-party arm (§4.6) is the one deliberate exception, and it is not the
+symptom (1) disease returning. A name-only shell is a defect when the record
+*had* facts for that person and they were dropped; the party §4.6 mints is
+named inside someone else's assertion and the record states nothing else about
+her, so a name plus its resolved ref is the whole of what the evidence
+supports. §4.6 backs that with a check rather than an assumption: it refuses
+when the named role has a persona the persona arm could mint instead, which is
+the case in which facts exist and would be dropped. The check is a steer and
+not a proof, for the reasons given there. The event that *does* concern her — the marriage — stays on the
+Couple edge per §4.5, rather than being invented onto her as a person-level
+fact. She is a sourced name because that is all there is, not because
+something was lost.
 
 > Reading assertions to *instantiate* a person is still an evidence-driven
 > act (it reads assertions, not nodes), so it stays on the correct side of
@@ -284,7 +307,169 @@ discipline. Guards the exact mistake a person-evidence regression test
 whose only assertion was `marriage` got materialized straight onto that
 person, leaving the Couple relationship itself factless. The marriage's
 date/place belongs on the Couple via `tree_edit` `add_relationship`'s
-`facts`, sourced with the same assertion through `sourceAssertionId` (§8).
+`facts`, sourced with that same `marriage` assertion through
+`sourceAssertionId` (§8). That instruction was unfollowable until
+`add_relationship` accepted a `marriage` assertion — it took only
+`relationship`. The two tools contradicted each other across the seam rather
+than either being internally wrong: `tree_edit`'s own description said
+`relationship`-type and matched its guard, while this sentence and
+`materialize_facts`'s description named the marriage assertion. The accepted
+set is now the shared `RELATIONSHIP_ESTABLISHING_TYPES` in
+`utils/source-ref-resolver.ts`.
+
+What §4.5 does **not** say is that the party the skipped assertion *names* has
+nowhere to go. She is minted by §4.6 — as a sourced name, still with no fact,
+so every clause above holds unchanged.
+
+---
+
+### 4.6 The named party (a person the record names but gives no persona)
+
+A person named only *inside* another persona's `relationship` or `marriage`
+assertion — a bride named in the groom's marriage register, a father named in a
+child's baptism — has no `record_role` of her own and no name assertion, so the
+persona arm has nothing to select on and `SKIP_TYPES` drops the only assertion
+that names her.
+
+Until this arm existed she could be written only by `tree_edit add_person`,
+whose **name** path is ref-tolerant by the §6 exemption. That exemption is
+reserved for hypothesis, oral and manual stubs, and its safety argument is
+"those names come through `materialize_facts`, which enforces a resolved ref."
+A bride in a marriage register is **record-derived**, so she travelled through
+an exemption whose own justification did not cover her, and landed with no
+provenance. This arm closes that.
+
+```
+materialize_facts({ projectPath, assertionId, relatedRole,
+                    name: { given, surname }, gender?, personId? })
+```
+
+- **The caller supplies the name; the tool supplies and enforces the ref.** The
+  ref is resolved from `assertion.source_id` through the same shared resolver
+  (`utils/source-ref-resolver.ts`) every other name this tool authors uses, and
+  a hop that will not resolve is an **error, never a null** (§4.2 step 2). The
+  name is *remembered*; the ref is *enforced* — and the ref is the thing that
+  leaked.
+- **`assertionId` must name an assertion that establishes a link between two
+  parties** — the shared `RELATIONSHIP_ESTABLISHING_TYPES`: `relationship`,
+  `marriage`, `parentage` and `parentchild`, matched case-insensitively. `age`,
+  the third `SKIP_TYPES` member, is out: it is indirect evidence about one
+  person and names nobody. The set is a ruling on the spellings the corpus
+  actually shows, not an attempt to enumerate an open enum — `parentage` and
+  its variants total 45 occurrences in agent output against `Marriage`'s 27, so
+  refusing them while accepting `Marriage` was not a defensible line. Widen it
+  the same way: measure first, then decide.
+- **`relatedRole` should name a party that has no persona on that record**, and
+  the tool refuses when it can see that it does *and* that the persona arm would
+  do better: it scans the record's assertions for one carrying
+  `record_role == relatedRole`, and refuses only when that persona could
+  actually be minted (it has a name assertion) or the target person already
+  exists. Both halves are load-bearing. **Having a `record_role` does not imply
+  having facts, or being mintable at all**: in a mirrored marriage register both
+  parties have a persona and neither carries anything but the `marriage`
+  assertion, so an unconditional refusal left the bride writable by *neither*
+  arm, which is worse than the name-only shell it was trying to prevent.
+  Measured over `eval/**/research.json`, 85 of 301 personas carry no usable
+  `name` assertion. When the guard does fire, the refusal names the exact
+  `{ recordId, recordRole }` to call instead.
+
+  **This guard is best-effort, and it is worth being exact about why.** It
+  compares the caller's free-text `relatedRole` against extraction's free-text
+  `record_role`, and that vocabulary is open: the corpus spells the same party
+  `bride` (16) and `wife` (3), and head-of-household as `head_of_household`
+  (63), `head` (5), `self` (2) and `principal` (13). A spelling disagreement
+  makes the guard **miss**, and the result is the name-only shell it exists to
+  prevent. What makes that acceptable is the direction of the failure: a miss
+  degrades to exactly the behaviour this arm would have had without the guard,
+  and the write still carries an enforced ref, whereas a false refusal blocks
+  correct work outright. The arm's **guarantee** is the ref (§4.6's opening);
+  the role check is a steer, not a proof, and nothing downstream can detect a
+  miss because `relatedRole` is never persisted.
+
+  Comparing `relatedRole` only against the *assertion's own* `record_role` is
+  not enough and was the first version of this guard. Measured over
+  `eval/**/research.json`, the role a relationship/marriage assertion names
+  already has its own persona on the same record in **52 of 162 cases (32.1%)**,
+  including `flynn-baptism-names-mother` — the "father named in a child's
+  baptism" shape this section leads with. The narrow check missed every one.
+
+  `relatedRole` is otherwise validated and never persisted: nothing on a tree
+  person holds a role and this tool never writes `research.json`. It is required
+  rather than optional because a guard a caller can skip by omitting it is not a
+  guard.
+- **Negative evidence cannot mint anyone.** An assertion with
+  `evidence_type: "negative"` records what a source does **not** say
+  (`"Father: not recorded (informant reported 'unknown')"` is live in the
+  corpus), so minting a father from it would assert the opposite of the
+  evidence. The persona arm already skips negative assertions per §7.1 (4);
+  here there is only one assertion, so the call is refused rather than
+  silently emptied.
+- **Writes a sourced name and the gender scalar. Nothing else.** No facts, no
+  relationship edge, never `preferred`. §4.5 therefore holds in full: a
+  `marriage` assertion still never becomes a person-level fact, and the Couple
+  event stays on the edge.
+- **Idempotent for a given `personId`** — a re-run unions the ref onto the
+  matching name rather than duplicating it. An omitted `personId` allocates a
+  fresh `I` on every call, exactly as the persona arm does; that is allocation,
+  not a broken re-run.
+
+**Why the caller supplies the name — and the alternatives this beat.** Recorded
+here so it is not re-derived. Measured 2026-09-07 by walking
+`assertions[].structured_value` over `eval/**/research.json`, keyed on
+`fact_type in {relationship, marriage}`:
+
+| | |
+|---|---|
+| relationship + marriage assertions in the corpus | **162** |
+| carrying the other party's **name** in `structured_value` | **8 (4.9%)**, under five distinct key *shapes* (nine distinct key strings), **7 of the 8 assertions distinct** |
+| carrying `related_person_role` | **143 (88.3%)** |
+| …of those, where `related_person_role` holds the **persona's own** `record_role` | 39 raw, but only **5 distinct** assertion shapes |
+
+The last row needs its caveat stated or it misleads: 35 of those 39 are one
+byte-identical assertion cloned across 35 `flynn-*` scenario fixtures. Counted
+over the wider `eval/**/*research.json` set (which adds the e2e starting
+documents) the raw rate falls to 45 of 1550, across 11 distinct shapes and ten
+different role values. **The rate is a fixture-cloning artifact; the
+phenomenon is not.** The name row survives the same widening and strengthens
+(23 name-carrying of 1760, 21 of them distinct), which is why it, and not the
+rate, carries the argument below.
+
+- **Rejected: have the tool read a standardized `structured_value` name key.**
+  The name is there 4.9% of the time under five distinct key shapes, and the shape
+  this repo's own schema spec recommends (`spouse_given`/`spouse_surname`)
+  occurs in 1 of 162. Standardizing one would mean changing record-extraction's
+  prose — a second paid eval run and a second reviewer — and every project
+  written before that change would stay unmintable. `structured_value` is
+  `type: object` with no properties, is deliberately not deep-checked by the
+  validator, and the schema spec calls its shape guidance rather than a
+  contract, so **no lint would report a key that had gone missing.**
+- **Rejected: cross-check the caller's `relatedRole` against
+  `structured_value.related_person_role`.** That key is present often enough to
+  look tempting (88.3%), but it holds the persona's **own** role rather than the
+  other party's in eleven distinct assertion shapes spanning ten role values
+  (`baptized_child`, `child`, `child_1`, `child_2`, `deceased`, `father`,
+  `head_of_household`, `mother`, `testator`, `wife`). A refusal keyed on it
+  would therefore reject correct calls — not
+  at some headline rate, which fixture cloning inflates in either direction, but
+  reliably and on shapes that recur. Measured before it was built, not after,
+  and re-measured after a reviewer showed the first rate was inflated.
+- **Rejected as the answer, though it is the smaller diff: teach `tree_edit`
+  `add_person`/`add_name` a `sourceAssertionId`.** It leaves the omission path
+  open — a caller who passes nothing still gets a ref-less name — so it makes
+  the ref easier to supply without making it impossible to skip. This arm
+  refuses the write instead.
+
+**What this deliberately does not enforce.** The tool cannot know the name the
+record gives, so it does not pretend to check it. Nor does it check the write
+target: `personId` names whatever person the caller says, exactly as it does on
+the persona arm, so pointing this arm at the wrong existing person adds a
+sourced name to that person. That is the `personId` contract both arms share,
+not something this arm weakens. In particular it does **not**
+refuse a name matching the persona's own: a same-named father and son is
+ordinary genealogy, and refusing there would block correct mints far more often
+than it would catch a duplicate. The guarantee this arm makes is about
+provenance, and it is exact — a person minted here always carries a resolved
+source-ref, or was never written.
 
 ---
 
@@ -292,7 +477,7 @@ date/place belongs on the Couple via `tree_edit` `add_relationship`'s
 
 | Tool | Role | Status |
 |---|---|---|
-| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref on every fact/name it authors; never sets `primary`. | **NEW — the record→tree workhorse** |
+| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref on every fact/name it authors; never sets `primary`. Its named-party arm (§4.6) additionally mints the party a relationship/marriage assertion names but gives no persona — a sourced **name** only, under the same mandatory ref. | **NEW — the record→tree workhorse** |
 | **`merge_tree_persons`** | Collapse two duplicate **tree nodes**; union their facts, carrying each fact's existing refs through untouched. Legacy ref-less facts are **tolerated** — the Mode-2 fold neither requires nor fabricates a ref (Cluster B / §6). | **Keep** (needs a trigger — e.g. cruz's unmerged grandparents — but the tool is right) |
 | **`merge_record_into_tree`** | Fold a candidate GedcomX *document*. | **Retire** (§9) — 0 live calls; its hand-assembled-candidate input is the re-serialize anti-pattern that dropped cruz's refs; its niche does not occur in the assertion pipeline |
 | `tree_edit` / `tree_correct` | Structure (`add_person`, `add_relationship`) / corrections + `primary`. `add_household_children` **retires** (§9) — superseded by `materialize_facts` create-or-enrich (stubs, now with facts) + `add_relationship` (edges). | Keep; refs mandatory on **newly-authored** facts/names/edges only (add-ops); `tree_correct` may not null an existing ref (§6, §8) |
@@ -343,6 +528,22 @@ Where the guard does **not** fire:
   would forbid the "start from what the family told you" workflow, and it is
   safe: **upload is conclusion-gated (§7)**, so a ref-less hypothesis name
   never reaches FamilySearch until it is proof-backed.
+
+  **One class travelled this exemption without qualifying for it**, and the
+  argument above is why it mattered: a person named inside another persona's
+  relationship or marriage assertion is *record-derived*, but before §4.6 she
+  had no `materialize_facts` path at all, so "those names come through
+  `materialize_facts`" was simply not true of her. §4.6 gives her one, and it
+  enforces the ref.
+
+  **The exemption's safety argument is not yet restored, and saying so is the
+  point of this paragraph.** A ref-enforcing path now exists; person-evidence
+  still routes her through `tree_edit add_person`, because retiring that
+  carve-out is a change to skill prose and buys a paid eval run this engine
+  change did not. Until that lands, the sentence above describes what the tools
+  *can* do, not what the pipeline *does*. Treat the exemption as covering
+  hypothesis, oral and manual stubs **plus** one known record-derived leak that
+  is tracked and closing.
 
 Consequences:
 
@@ -433,8 +634,12 @@ that record. **Newly written** relationship edges (`tree_edit`
 rule, resolved from the relationship assertion's `source_id` (the same
 resolver `materialize_facts` uses), or relationships become the next
 provenance leak. **The tool does this resolution itself**: pass
-`sourceAssertionId` (the research.json `relationship`-type assertion the edge
-comes from) rather than a hand-walked literal ref — `tree_edit` resolves
+`sourceAssertionId` (the research.json assertion the edge comes from — a
+`relationship` **or** `marriage` type, the shared
+`RELATIONSHIP_ESTABLISHING_TYPES`; a marriage register is precisely what
+establishes a Couple, and accepting only `relationship` made §4.5's own
+instruction unfollowable for the commonest Couple edge there is) rather than a
+hand-walked literal ref — `tree_edit` resolves
 `assertion.source_id → research source → tree S-entry` via the shared
 `utils/source-ref-resolver.ts` (`docs/specs/tree-edit-tool-spec.md`, the
 `add_relationship` entry). Added 2026-07-26 after the model was observed

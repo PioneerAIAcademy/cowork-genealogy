@@ -1221,7 +1221,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
     expect(rel.sources).toEqual([{ ref: "S1", quality: 2 }]);
   });
 
-  it("rejects a sourceAssertionId that is not a 'relationship' assertion", async () => {
+  it("rejects a sourceAssertionId that establishes no relationship (a 'birth' assertion)", async () => {
     await writeProject(
       twoPersons(),
       research([relationshipAssertion({ id: "a_002", fact_type: "birth" })]),
@@ -1236,7 +1236,51 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/is a 'birth' assertion, not a 'relationship' assertion/);
+    expect(r.errors.join(" ")).toMatch(
+      /is a 'birth' assertion, which establishes no link between two parties/,
+    );
+    // The refusal names the accepted set, so the model can correct itself.
+    expect(r.errors.join(" ")).toContain("parentage");
+  });
+
+  // A marriage register IS the assertion that establishes a Couple, and it is
+  // the type the commonest Couple edge carries. While this arm accepted only
+  // `relationship`, both this tool's description and materialize_facts's told
+  // the caller to source that edge "with the same assertion via
+  // sourceAssertionId" — an instruction the engine then refused.
+  it("accepts a 'marriage' assertion — the Couple edge's own provenance", async () => {
+    await writeProject(
+      twoPersons(),
+      research([
+        relationshipAssertion({
+          id: "a_005",
+          fact_type: "marriage",
+          record_role: "groom",
+          value: "Thomas Flynn married Mary Doyle, 12 May 1843",
+          structured_value: null,
+        }),
+      ]),
+    );
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        facts: [{ type: "Marriage", date: "12 May 1843" }],
+      } as any,
+      sourceAssertionId: "a_005",
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const rel = (await readTree()).relationships[0];
+    expect(rel.type).toBe("Couple");
+    expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+    // A Couple fact with no sources of its own inherits the resolved ref.
+    expect(rel.facts[0].sources).toEqual([{ ref: "S1", quality: 3 }]);
   });
 
   it("rejects an unknown sourceAssertionId", async () => {

@@ -420,9 +420,15 @@ def test_research_query_called_for_coverage(tool_calls, test):
 # skips when it does not hold, so a test written next year is covered
 # without anyone remembering to add a tag (the failure mode #1757 records).
 
-# The fact_types materialize_facts refuses outright — a persona carrying
-# only these has nothing to write onto a person. Mirrors SKIP_TYPES in
+# The fact_types materialize_facts refuses to write as facts of the persona
+# they sit on — a persona carrying only these has nothing to write onto its own
+# person. Mirrors SKIP_TYPES in
 # packages/engine/mcp-server/src/tools/materialize-facts.ts.
+#
+# Scoped to the persona deliberately. The tool's named-party arm DOES mint from
+# a relationship/marriage assertion, but it mints the OTHER party the assertion
+# names, as a sourced name — never a fact, and never onto this persona. So the
+# demand this set stands down is still absent.
 _UNMATERIALIZABLE = frozenset({"relationship", "marriage", "age"})
 
 # Fact types that bear on a SECOND party rather than asserting the persona's own
