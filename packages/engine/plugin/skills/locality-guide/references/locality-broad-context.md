@@ -44,9 +44,10 @@ that shape record creation and survival.
 - **Dominant industries** — Agriculture, mining, manufacturing, trade,
   and maritime industries each generate distinctive record types
   (land records, mine employment rolls, factory records, port records).
-- **Land distribution systems** — State-land states vs. federal-land
-  states (US); manorial systems, enclosure acts (Europe); homestead
-  laws, land grants, land bounties, and patents each create different record sets.
+- **Land distribution systems** — Who granted land, and on what terms,
+  decides which office holds the grants and patents and what record sets
+  exist at all. Read it off the `{Jurisdiction}_Land_and_Property` page
+  rather than assuming a system.
 - **Economic disruptions** — Depressions, crop failures, and industry
   collapses drove migration and appear in court records, tax
   delinquency lists, and poor relief records.
@@ -59,9 +60,10 @@ that shape record creation and survival.
 - **Naming conventions** — Patronymic systems, anglicization of
   immigrant names, and use of middle names all affect how people appear
   in records. Do not assume a woman took her husband's surname at
-  marriage: in much of Scandinavia, Iberia, and elsewhere she keeps her
-  birth surname in records for the whole post-marriage span, so searching
-  the married name for those years finds nothing.
+  marriage: where she kept her birth surname, searching the married name
+  for those years finds nothing. Read the jurisdiction's
+  `{Country}_Naming_Customs` page for its own practice rather than
+  assuming either convention.
 - **Religious record-keeping** — Different denominations kept different
   records at different levels of detail. Some denominations have
   centralized archives; others have records scattered across local
