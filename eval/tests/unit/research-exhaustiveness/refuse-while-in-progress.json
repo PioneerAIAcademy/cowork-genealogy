@@ -8,13 +8,20 @@
     "name": "Refuse to declare when plan item is still in progress",
     "type": "positive",
     "description": "q_001 in flynn-plan-in-progress has pli_005 (death certificate search) still at status 'in_progress'. The SKILL.md explicitly says: 'If items are still in_progress, refuse to declare and recommend completing the in-flight work first.' The skill must refuse and tell the user to finish the death certificate search before evaluating exhaustiveness.",
-    "tags": ["research-exhaustiveness", "refuse-in-progress", "no-exhaustive-declaration"]
+    "tags": [
+      "research-exhaustiveness",
+      "refuse-in-progress",
+      "no-exhaustive-declaration"
+    ]
   },
   "input": {
     "user_message": "Can we declare the research on q_001 exhaustive? I think we have enough with the two census records.",
     "scenario": "flynn-plan-in-progress"
   },
-  "mcp_fixtures": ["validate-research-schema"],
+  "mcp_fixtures": [
+    "validate-research-schema",
+    "wiki-read-pennsylvania-vital-records"
+  ],
   "judge_context": [
     "Claude must REFUSE to write an exhaustive declaration because pli_005 (death certificate search) has status 'in_progress'.",
     "Claude should specifically identify pli_005 as the in-progress plan item blocking the declaration.",
