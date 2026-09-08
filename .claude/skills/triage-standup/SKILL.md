@@ -335,6 +335,10 @@ gh issue create --label developer|genealogist [--label icebox] \
   --assignee <login> --title "..." --body "..."
 ```
 
+**Never `--label high-priority`.** It is Ready-only, applied and removed by
+`/fill-ready` from criteria it re-derives each run. A row the lead calls urgent
+files without it and says so in the body.
+
 **A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
 
 **And if he answers one in the room, record it before you move on.** Standup is
