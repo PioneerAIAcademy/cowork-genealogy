@@ -223,7 +223,7 @@ describe("fetchWithRetry", () => {
 
   it("retries a thrown timeout error then returns 200", async () => {
     const err = new Error("timed out");
-    (err as Record<symbol, unknown>)[Symbol.for("cowork-genealogy.fetchWithTimeout.timedOut")] = true;
+    (err as unknown as Record<symbol, unknown>)[Symbol.for("cowork-genealogy.fetchWithTimeout.timedOut")] = true;
     mockFetch
       .mockRejectedValueOnce(err)
       .mockResolvedValueOnce(mockResponse(200));
