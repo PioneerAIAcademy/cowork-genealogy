@@ -23,6 +23,11 @@ import { readFile, mkdir } from "fs/promises";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  conflictBlocksCompletion,
+  questionTiedAssertionIds,
+  whyConflictBlocksCompletion,
+} from "../utils/question-state.js";
+import {
   atomicWriteJson,
   atomicWriteBoth,
   backupIfExists,
@@ -156,11 +161,37 @@ const SECTIONS: Record<string, SectionConfig> = {
 // Each returns error strings on the post-mutation entry; empty = ok.
 
 function conflictInvariants(entry: any): string[] {
+  // `moot` settles a conflict for every gate that reads `status` — the
+  // completion gate included — and was the one settling write with no
+  // precondition, so a bare `{status: "moot"}` cleared that gate while
+  // asserting nothing. It owes the reason, because "this no longer matters" is
+  // a genealogical judgment; it owes only the reason, because there is nothing
+  // to weigh or to declare independent once the conflict has stopped bearing
+  // on the question. Measured cost: 0 of the 1 moot conflict in the committed
+  // e2e corpus (`ogletree-children` c_006, which carries one).
+  if (entry.status === "moot") {
+    const rationale = entry.resolution_rationale;
+    // Trimmed, and type-checked: a whitespace-only string asserts exactly as
+    // much as an absent one, and a non-string (a number, an object) satisfies
+    // no `=== ""` comparison at all. Same reading as `isIdentityConflict`.
+    return typeof rationale !== "string" || rationale.trim() === ""
+      ? [
+          "a moot conflict requires 'resolution_rationale' — say why the conflict no " +
+            "longer bears on the question. To settle it on the evidence instead, use " +
+            "status 'resolved' with independence_analysis, weighing_analysis and " +
+            "resolution_rationale.",
+        ]
+      : [];
+  }
   if (entry.status !== "resolved") return [];
   const errs: string[] = [];
   for (const f of ["independence_analysis", "weighing_analysis", "resolution_rationale"]) {
     const v = entry[f];
-    if (v === undefined || v === null || v === "") {
+    // Same trimmed, type-checked reading as the `moot` arm above: this had
+    // admitted `"   "` for all three since it shipped, which satisfies the
+    // field and states nothing. Free on the corpus — 0 of 85 resolved
+    // conflicts carry a blank or non-string analysis field.
+    if (typeof v !== "string" || v.trim() === "") {
       errs.push(`a resolved conflict requires '${f}'`);
     }
   }
@@ -1398,28 +1429,26 @@ function applyOne(
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the
     // project completed while a BLOCKING conflict is unresolved. Blocking =
-    // status "unresolved" AND (it is an identity conflict OR blocks_question_ids
-    // non-empty). "resolved" and "moot" both settle a conflict. This is a
-    // tool precondition on the status transition, not a document-validity
+    // status "unresolved" AND (blocks_question_ids non-empty OR it is an
+    // identity conflict OR it disputes an assertion some question was built
+    // on). "resolved" and "moot" both settle a conflict. This is a tool
+    // precondition on the status transition, not a document-validity
     // rule — an already-completed project with such a conflict still loads.
     // Motivated by the wilkins-death-kentucky e2e run where an agent logged
     // an unresolved identity conflict (wrong-person death certificate,
     // 43-year birth mismatch) and completed the project anyway; prose-level
     // guardrails (warnings, mentor) fired and were rationalized away.
+    //
+    // The third arm is derived rather than declared, because the two declared
+    // fields are not reliably written: 42 of the 75 conflicts in the committed
+    // e2e corpus carry neither, so the two-arm gate saw 5 of the 14 unresolved
+    // conflicts held by completed runs. Deriving sees all 14. The predicate is
+    // shared with `question-state.ts`, which computes the per-question form of
+    // the same reading for the router's advisory ladder.
     if (section === "project" && op.fields.status === "completed") {
-      // An identity conflict is flagged by a non-empty identity_question STRING.
-      // The schema types identity_question as the question's text (string|null),
-      // never a boolean, so the old `=== true` was unsatisfiable dead code —
-      // an unresolved identity conflict slipped past the gate whenever
-      // blocks_question_ids was also empty (issue #1001).
-      const isIdentityConflict = (c: any) =>
-        typeof c.identity_question === "string" && c.identity_question.trim() !== "";
+      const tied = questionTiedAssertionIds(research);
       const live = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
-        (c: any) =>
-          c &&
-          c.status === "unresolved" &&
-          (isIdentityConflict(c) ||
-            (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
+        (c: any) => c && conflictBlocksCompletion(c, tied),
       );
       // Refuse on the UNION of the pre-call and live blocking sets, not on live
       // alone. `applyOne` mutates `research` in place per op, so a live-only read
@@ -1438,7 +1467,10 @@ function applyOne(
       }
       if (blocking.length > 0) {
         const names = blocking
-          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${isIdentityConflict(c) ? ", identity" : ""})`)
+          .map(
+            (c: any) =>
+              `${c.id} (${c.conflict_type ?? "conflict"}; ${whyConflictBlocksCompletion(c, research)})`,
+          )
           .join(", ");
         throw new ResearchAppendError(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
@@ -1446,6 +1478,10 @@ function applyOne(
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
             "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
             "(with a rationale for why it no longer matters) — then retry completing the project. " +
+            "A conflict you weighed and could not settle is still recorded as 'resolved' with all " +
+            "three analyses, saying in resolution_rationale why it cannot be settled and what " +
+            "would settle it, and leaving preferred_assertion_id null — a deferral is a finding, " +
+            "not an omission, but it is not 'moot', which means the conflict no longer matters. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
         );
@@ -1479,7 +1515,9 @@ function applyOne(
       // replaced it, the critique genuinely no longer stands.
       // `resolved` is an ISO date string or null, never a boolean, so the old
       // `=== true` was unsatisfiable dead code — the same shape as the
-      // `identity_question === true` bug 60 lines above. `Boolean(q.resolved)`
+      // `identity_question === true` bug, written up on `isIdentityConflict` in
+      // `utils/question-state.ts` (it used to sit in the sibling gate above,
+      // which now shares that helper). `Boolean(q.resolved)`
       // is what `question-state.ts` already uses to answer the same question,
       // and the two disagreeing is how a question could read as resolved to
       // `project_context` while this gate never counted it. Widening the set can
@@ -2369,8 +2407,10 @@ async function prepareOps(
       }
       if (verdict === "unverifiable" && geocoded) {
         warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the place text ` +
-            "names no country, so the resolution could not be cross-checked; verify it is the right place",
+          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
+            "could not be cross-checked (either the place text names no country, or the standard place " +
+            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+            "right place",
         );
       }
     }
@@ -2454,15 +2494,13 @@ export async function researchAppend(
     // Same discipline again, for the conflict half of the completion gate: the
     // conflicts that were blocking BEFORE this call's ops. Without it a single
     // batch could resolve the conflict and complete in one go.
+    // Widened with the live arm, not instead of it: the gate refuses on the
+    // union, so narrowing only one half would let a batch resolve a
+    // derived-blocking conflict and complete in the same call.
+    const preCallTiedAssertionIds = questionTiedAssertionIds(research);
     const preCallBlockingConflicts = (
       Array.isArray(research.conflicts) ? research.conflicts : []
-    ).filter(
-      (c: any) =>
-        c &&
-        c.status === "unresolved" &&
-        ((typeof c.identity_question === "string" && c.identity_question.trim() !== "") ||
-          (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
-    );
+    ).filter((c: any) => c && conflictBlocksCompletion(c, preCallTiedAssertionIds));
     const preCallCritiquedSummaryIds = new Set<string>(
       (Array.isArray(research.evaluations) ? research.evaluations : [])
         .filter(

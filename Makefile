@@ -425,9 +425,16 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	# `make eval-skill` processes at once; concurrent SDK subprocesses SIGKILL.
 	#
 	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
-	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
-	# 16 GiB machine resolves to 8). Override for a bigger box or tighter API
-	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
+	# the harness pick a RAM-aware default (~1 per 2 GiB of RAM the OS reports,
+	# floor 1, cap 8 — the kernel always reports under the nominal figure, so a
+	# nominal 8 GiB box reports about 7.7 and resolves to 3, a 16 GiB one about
+	# 15.4 and resolves to 7). Override for a bigger box or tighter API rate
+	# limits, e.g. CONCURRENCY=8 — or CONCURRENCY=1 on a small box, where the
+	# RAM-derived default still SIGKILLs.
+	# The floor is 1, not 4: it exists only to forbid 0 and must not override
+	# the RAM measurement upward (#1026, `_MIN_AUTO_CONCURRENCY` in
+	# run_tests.py). This comment said "floor 4" until 2026-09-07 and sent a
+	# plan out with the wrong number.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
@@ -644,6 +651,21 @@ eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/coste
 	# counts that drift in docs/architecture.md §9.1/§9.3, each defined by a
 	# printed predicate rather than a hand count (issue #1484 c).
 	cd eval/harness && uv run python -m e2e.inventory
+
+.PHONY: e2e-provided-docs-coverage
+e2e-provided-docs-coverage: ## External-repo capture-coverage gap report (issue #2083): which fixtures skip non-FS primary items but ship no bundled capture
+	# Pure analysis over committed .final-research.json sidecars — no live run,
+	# no API.  Re-derives the skip table from the issue and lists every fixture
+	# where the provided-documents/ mechanism could close the gap but hasn't.
+	#
+	# Exit code:  0 = no gap fixtures (all external-skip fixtures have captures)
+	#             1 = at least one fixture has external skips and zero captures
+	#
+	# A capture must be a real page saved from the real site by a human in a
+	# credentialed browser — never synthesized (issue #2083 "The failure mode
+	# this task is exposed to").  This report flags the gap; closing it is
+	# manual capture-authoring work.
+	cd eval/harness && uv run python -m e2e.provided_docs_coverage
 
 .PHONY: e2e-agent-tools
 e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD

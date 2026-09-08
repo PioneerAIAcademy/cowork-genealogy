@@ -720,6 +720,93 @@ describe("research_append (Phase 2)", () => {
     expect((await readResearch()).conflicts[0].status).toBe("resolved");
   });
 
+  // `moot` settles a conflict for every gate that reads `status`, including the
+  // completion gate — and it was the one settling write with no precondition at
+  // all, so a bare `{status: "moot"}` cleared that gate while asserting nothing.
+  // The claim it makes ("this no longer matters") is a genealogical judgment, so
+  // it owes the same written reason a `resolved` does; it owes only the one,
+  // because there is nothing to weigh or to declare independent when the
+  // conflict has stopped bearing on the question.
+  it("rejects mooting a conflict without a rationale", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: { status: "moot" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/resolution_rationale/);
+    expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
+  // A whitespace-only string asserts exactly as much as an absent one, and this
+  // is an LLM-facing tool, so a degenerate value is a real shape rather than a
+  // hypothetical. Both settling writes are checked the same way, and both are
+  // free on the corpus: 0 of 1 moot and 0 of 85 resolved conflicts carry a
+  // blank-or-non-string analysis field.
+  it("rejects mooting a conflict with a whitespace-only rationale", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: { status: "moot", resolution_rationale: "   " },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/resolution_rationale/);
+    expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
+  it("rejects resolving a conflict whose analysis fields are whitespace only", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "   ",
+        weighing_analysis: "\t\n",
+        resolution_rationale: " ",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/independence_analysis|weighing_analysis|resolution_rationale/);
+    expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
+  it("accepts mooting a conflict with a rationale", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "moot",
+        resolution_rationale: "Superseded: the certificate was re-attributed to the correct person.",
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect((await readResearch()).conflicts[0].status).toBe("moot");
+  });
+
   it("rejects ruling out a hypothesis without a reason (validator)", async () => {
     const research = phase2Research();
     research.hypotheses = [{ ...validHypothesis(), id: "h_001" }];
@@ -1762,6 +1849,89 @@ describe("research_append (project singleton section)", () => {
     );
     const r = await complete();
     expect(r.ok).toBe(true);
+  });
+
+  // ── Completed-gate: a conflict that names no question but disputes one's
+  // evidence. 42 of the 75 conflicts in the committed e2e corpus carry neither
+  // `identity_question` nor `blocks_question_ids`, so the two declared arms
+  // above are blind to 56% of them; deriving the link from the disputed
+  // assertions sees all 14 unresolved conflicts held by completed runs instead
+  // of 5. Every fixture above is built from `validAssertion`, whose
+  // `extracted_for_question_ids` is `[]`, which is why all five pass unchanged
+  // after the widening and these three carry its only coverage.
+  const derivedConflict = () => ({
+    id: "c_001",
+    conflict_type: "fact",
+    disputed_attribute: "birth_date",
+    // Both declared arms empty: this is the shape the gate could not see.
+    identity_question: null,
+    blocks_question_ids: [],
+    description: "Two registrations give different birth years for the subject.",
+    competing_assertion_ids: ["a_001", "a_002"],
+    status: "unresolved",
+  });
+  /** `tiedTo` goes on the competing assertion `a_002`; `[]` is the pass case. */
+  const withDerivedConflict = (tiedTo: string[]) => {
+    const r = baseResearch();
+    r.questions.push(validQuestion("q_001"));
+    r.assertions.push({ ...validAssertion("a_002"), extracted_for_question_ids: tiedTo });
+    (r.conflicts as any[]).push(derivedConflict());
+    return r;
+  };
+
+  it("refuses completed while an unresolved conflict disputes a question-tied assertion", async () => {
+    await writeProject(withDerivedConflict(["q_001"]));
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/cannot set project\.status/);
+    expect(msg).toMatch(/c_001/);
+    // The refusal names WHY it fired: a derived link is inferred, so naming the
+    // assertion and the question is what makes it actionable (ADR-0011).
+    expect(msg).toMatch(/a_002/);
+    expect(msg).toMatch(/q_001/);
+    // And the shape that settles a conflict nobody can settle, since neither
+    // 'resolved' nor 'moot' reads true for one that was weighed and deferred.
+    expect(msg).toMatch(/preferred_assertion_id/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active"); // nothing written
+  });
+
+  it("allows completed when the unresolved conflict's competing assertions are tied to no question", async () => {
+    await writeProject(withDerivedConflict([]));
+    const r = await complete();
+    expect(r.ok).toBe(true);
+  });
+
+  it("a batch cannot resolve its own derived-blocking conflict and complete", async () => {
+    // The pre-call-snapshot arm, on a conflict only the derived arm sees. The
+    // sibling test below covers this for a declared identity conflict; without
+    // this one, widening the live arm alone would pass every existing test.
+    await writeProject(withDerivedConflict(["q_001"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "conflicts",
+          op: "update",
+          entryId: "c_001",
+          fields: {
+            status: "resolved",
+            resolution_rationale: "The 1857 registration names a different child.",
+            independence_analysis: "Sources are independent.",
+            weighing_analysis: "The parish register is decisive.",
+            preferred_assertion_id: "a_001",
+          },
+        },
+        { section: "project", op: "update", fields: { status: "completed" } },
+      ],
+    } as never);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/c_001/);
+    const research = await readResearch();
+    expect(research.project.status).toBe("active");
   });
 
   // ── Completed-gate: the mentor verdict (issue #1490 phase 1) ──
