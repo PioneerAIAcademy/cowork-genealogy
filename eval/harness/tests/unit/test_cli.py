@@ -11,6 +11,7 @@ _HARNESS_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_HARNESS_ROOT))
 
 import run_tests  # noqa: E402
+from harness.warning_kinds import HARNESS_WARNING_KINDS, JUDGE_WARNING_KINDS  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -1447,53 +1448,27 @@ def test_summary_reads_warnings_off_the_real_entry(tmp_path, monkeypatch, capsys
 
 
 def test_summary_ignores_non_judge_warning_kinds():
-    """`output.warnings` is a shared list. orchestrator._build_warnings also
-    puts `unread_skill_call`, `missing_tool_usage_dimension` and
-    `uncovered_tool_call` in it — none of which is the judge misbehaving.
-    Tallying those under a "Judge rule violations" header would report a
-    routine unmatched tool call as a judge fault."""
-    assert "unread_skill_call" not in run_tests._JUDGE_WARNING_KINDS
-    assert "missing_tool_usage_dimension" not in run_tests._JUDGE_WARNING_KINDS
-    assert "uncovered_tool_call" not in run_tests._JUDGE_WARNING_KINDS
+    """`output.warnings` is a shared list. Harness-side advisories
+    (`unread_skill_call`, `uncovered_tool_call`, `harness_node_timeout`, …) are
+    not the judge misbehaving; tallying them under "Judge rule violations" would
+    report a routine unmatched tool call as a judge fault.
 
-    # And every judge-warning kind either file emits IS in the set, or it prints
-    # nowhere — which is the state this whole section exists to end.
-    #
-    # BOTH files, not just judge.py. Scanning judge.py alone is how the routing
-    # warning stayed dark for its entire life: it was emitted from
-    # orchestrator.py, so this guard never read the line that declared it and
-    # passed green the whole time. A guard that cannot see the file where the
-    # bug lives is not a guard.
-    from pathlib import Path as _P
-    import re as _re
-
-    harness_dir = _P(__file__).resolve().parents[2] / "harness"
-    emitted: set[str] = set()
-    for name in ("judge.py", "orchestrator.py"):
-        emitted |= set(
-            _re.findall(
-                r'"kind": "([a-z_]+)"',
-                (harness_dir / name).read_text(encoding="utf-8"),
-            )
-        )
-
-    # orchestrator.py emits both classes. These three are harness-side
-    # advisories about the skill or the fixtures, asserted above to be OUT of
-    # the set; everything else either file emits is a judge warning and must be
-    # IN it. Listing them here rather than filtering by call site is deliberate:
-    # a NEW orchestrator kind fails this test until someone classifies it, which
-    # is the decision that was skipped last time.
-    harness_side = {
-        "unread_skill_call",
-        "missing_tool_usage_dimension",
-        "uncovered_tool_call",
-        "prose_observation",  # tier-2 report_* findings (issue #1749)
-    }
-    judge_side = emitted - harness_side
-    assert judge_side <= run_tests._JUDGE_WARNING_KINDS, (
-        f"judge/orchestrator emit warning kind(s) the summary will never print: "
-        f"{sorted(judge_side - run_tests._JUDGE_WARNING_KINDS)}"
-    )
+    The summary's tally list is now DERIVED from the `warning_kinds` registry —
+    not a regex scan of a hardcoded file list — so it is `is`-identical to the
+    registry's judge side and cannot drift from it. That closes the failure the
+    old scan could not: a kind emitted from an unscanned file, or built from a
+    const, went untallied and dark. Both are now caught at the `_build_warnings`
+    chokepoint (see test_orchestrator.py), so this test only pins the
+    classification, not the discovery."""
+    assert run_tests._JUDGE_WARNING_KINDS is JUDGE_WARNING_KINDS
+    # Harness-side kinds are excluded from the judge tally...
+    assert HARNESS_WARNING_KINDS.isdisjoint(run_tests._JUDGE_WARNING_KINDS)
+    for k in ("unread_skill_call", "uncovered_tool_call", "harness_node_timeout"):
+        assert k in HARNESS_WARNING_KINDS
+        assert k not in run_tests._JUDGE_WARNING_KINDS
+    # ...and the judge-side kinds are all tallied.
+    for k in ("routing_negative_judge_fail", "dropped_unknown_rubric_dimension"):
+        assert k in run_tests._JUDGE_WARNING_KINDS
 
 
 def test_summary_count_matches_the_names_it_shows(capsys):
