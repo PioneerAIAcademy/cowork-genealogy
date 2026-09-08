@@ -670,11 +670,26 @@ scenario `flynn-identity-geographic` — `c_001` set `resolved` on `a_002` (src_
 `c_002` is `unresolved` and asks whether src_001's Patrick is src_004's Patrick.
 `ut_conflict_resolution_006` does the same in 3 of 5.
 
-**Note for the implementer:** this overlaps issue #1823's territory conceptually but not
-in code — #1823 widens the *completion gate*'s blocking predicate; this is a
-`conflict-resolution` eval validator. Coordinate on the shared definition of "blocking"
-before both ship, and expect #1823's step 2 ruling to be the thing that settles the
-`source_id`-sharing heuristic above into something firmer.
+**Note for the implementer — answered, and the answer is that the heuristic stands.**
+This overlaps issue #1823's territory conceptually but not in code: #1823 widens the
+*completion gate*'s blocking predicate; this is a `conflict-resolution` eval validator.
+Step 2 was ruled 2026-09-02 and does NOT firm up the `source_id` join. The ruling is
+unary — when does a conflict block a *question* — and its shipped predicate
+(`utils/question-state.ts`) joins by assertion-id membership, which misses this rule's own
+worked example (`c_001` = `[a_002, a_009, a_012]` vs `c_002` = `[a_001]`: no overlap).
+
+Transposing the ruling to a conflict→conflict join was implemented and **withdrawn under
+review**, because it could not discriminate: every multi-conflict scenario declares
+`blocks_question_ids: ["q_001"]` for all of its conflicts, so the arm reduced to "an open
+identity conflict exists somewhere", attached 14 spurious pair-observations to the 7 real
+ones, and fired on `ut_conflict_resolution_005` — whose own prompt says to resolve the
+identity conflict it then flagged. A three-disjunct version keyed on
+`extracted_for_question_ids` yields the same 8 runs, so nothing is lost by waiting for a
+fixture whose conflicts declare *different* blocked questions.
+
+So V3 ships on the `source_id` join alone, scoped to a `resolved` **fact** conflict as this
+heading says. Recorded here because #1823 step 3 is the next consumer of "the ruled
+predicate" and would otherwise re-derive this.
 
 ---
 
