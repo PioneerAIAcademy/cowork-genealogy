@@ -1819,8 +1819,20 @@ def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
         out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
         return out
 
+    # Stub the releasable write, as the sibling discriminator does. Without it
+    # `_stub_log` fails `write_run_log`'s schema validation the moment the quota
+    # stop is mutated out, so the test reds on a jsonschema ValidationError at
+    # the `main()` call and NONE of the five assertions below ever runs — it
+    # would be proving the stub is thin, not that the suite stopped.
+    def fake_write_run_log(log, *, runlogs_root, filename, **kwargs):
+        out = Path(runlogs_root) / "unit" / "skill-a" / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}", encoding="utf-8")
+        return out
+
     monkeypatch.setattr(run_tests, "run_one_test", fake_run)
     monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write_run_log)
 
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
@@ -1845,7 +1857,7 @@ def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
     assert len(list(out_dir.glob("scratch_*.json"))) == 1
 
     # 4. Submission stopped — the whole point. Without the quota stop the
-    #    suite runs all 10 and this is the assertion that reds.
+    #    suite runs all 10.
     assert counter["n"] < n_tests, \
         "a quota abort must stop the suite submitting further tests"
 

@@ -299,9 +299,11 @@ def _looks_like_quota(
     worth that trade here.
 
     Which structured signal a real subscription quota actually emits remains
-    UNVERIFIED — one cannot be forced on demand. All five are recorded on every
-    run regardless, so the next occurrence settles it from the run log without
-    another paid suite.
+    UNVERIFIED — one cannot be forced on demand. Whichever signals fire are
+    recorded in `runs[].error` on any run that aborts, so the next occurrence
+    settles it from the run log without another paid suite. A healthy run
+    persists none of them: `_format_quota_evidence` drops the None ones and
+    `error` is assigned on failure paths only.
     """
     if signals.get("rate_limit_status") == "rejected":
         return True
