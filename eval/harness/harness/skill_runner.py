@@ -217,6 +217,19 @@ def read_skill_tool_input(tool_input: dict[str, Any]) -> tuple[str | None, list[
 # about (a Read `file_path`, a Skill name, a Grep pattern) and bounds the rest.
 BUILTIN_ARG_TRUNCATE = 200
 
+# (tool_name, arg_key) pairs exempted from BUILTIN_ARG_TRUNCATE (issue #2020,
+# absorbed into #2189). The cap's stated purpose is bounding a Read/Grep/
+# Write/Edit-shaped argument; it was applied uniformly to every built-in
+# argument instead, which also cut the Agent tool's `prompt` — the delegation
+# contract between a routing skill and its agent — to 200 characters. Measured
+# on the five committed record-extraction run logs: 100 of 103 Agent prompts
+# were exactly 200 characters long. record-extraction/SKILL.md's prohibitions
+# that live only in that message (never frame the delegation as a "fix"; never
+# instruct identity-confidence assignment; pass project_path; phrase
+# looking_for as a search key; carry recordId/logId/open question ids) were
+# consequently unauditable from any committed run log.
+_UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
+
 
 def builtin_call_record(
     tool_name: str, input_data: dict[str, Any]
@@ -243,7 +256,8 @@ def builtin_call_record(
     record: dict[str, Any] = {
         "tool": tool_name,
         "args": {
-            key: str(value)[:BUILTIN_ARG_TRUNCATE]
+            key: str(value) if (tool_name, key) in _UNTRUNCATED_ARGS
+            else str(value)[:BUILTIN_ARG_TRUNCATE]
             for key, value in tool_input.items()
         },
     }
@@ -323,6 +337,13 @@ class SkillRunResult:
     # {"tool", "args", "agent_id"?} — see builtin_call_record for why this
     # exists. Telemetry only: nothing reads it to gate, grade, or abort.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # True when the run ended before a ResultMessage ever arrived even though
+    # it is NOT an abort — currently only the negative-test routing
+    # short-circuit (issue #2189). On that path num_turns is real (turns_seen
+    # survives regardless of exit path), but output_tokens has no real answer:
+    # no partial token count exists before a ResultMessage. This says so
+    # instead of leaving 0 indistinguishable from "the skill used no tokens."
+    no_result_message: bool = False
 
 
 async def run_skill(
@@ -617,25 +638,26 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
-            # Negative-test routing short-circuit: the hook denied the
-            # correct-skill launch and set this flag. The SDK does NOT honor
-            # the hook's `continue_: False` to end the run (it just retries
-            # other tools), so we stop consuming here — the routing verdict
-            # is already captured in skills_invoked. This is the early-exit
-            # the hook's stopReason alone can't deliver.
-            if routing_resolved["v"]:
-                return
             if isinstance(message, AssistantMessage):
                 turns_seen["n"] += 1
+                # Collected per-turn, not appended to text_chunks block by
+                # block: multiple TextBlocks in one AssistantMessage are the
+                # same utterance, but two different AssistantMessages are two
+                # different turns and must not run together (issue #2189 —
+                # 1,267 of 1,674 texted runs carried a word-final ./!/?/`
+                # against a capital with no boundary between them).
+                turn_text_parts: list[str] = []
                 for block in message.content:
                     if isinstance(block, TextBlock):
-                        text_chunks.append(block.text)
+                        turn_text_parts.append(block.text)
                     elif isinstance(block, ToolUseBlock) and block.name.startswith(
                         "mcp__"
                     ):
                         attempted_mcp_calls.append(
                             {"tool": block.name, "args": dict(block.input or {})}
                         )
+                if turn_text_parts:
+                    text_chunks.append("".join(turn_text_parts))
                 # Per-turn input-token cap, post-hoc: the SDK exposes usage
                 # on the AssistantMessage *after* the model returned, so
                 # the offending turn was already billed. This still catches
@@ -678,6 +700,30 @@ async def run_skill(
                         aborted_reason = "error"
                 if message.stop_reason == "max_turns":
                     aborted_reason = "max_turns"
+            # Negative-test routing short-circuit: the hook denied the
+            # correct-skill launch and set this flag. The SDK does NOT honor
+            # the hook's `continue_: False` to end the run (it just retries
+            # other tools), so we stop consuming here — the routing verdict
+            # is already captured in skills_invoked. This is the early-exit
+            # the hook's stopReason alone can't deliver. Checked AFTER the
+            # message-type branches above (not before, which was issue
+            # #2189's defect): the flag is set by the hook as a side effect of
+            # dispatching the very tool call carried in THIS message, so
+            # checking first dropped that message's own text/tool-use content
+            # — the hand-off narration the routing test's judge_context asks
+            # for was silently lost in most runs.
+            if routing_resolved["v"]:
+                # No ResultMessage will ever arrive on this path (the
+                # downstream skill never launched), so `usage` never gets its
+                # SDK-reported fields. num_turns has a real answer already —
+                # turns_seen counts every AssistantMessage regardless of exit
+                # path, the same counter the wall-clock-timeout path below
+                # uses for the identical reason. output_tokens has no real
+                # answer (no partial token count exists pre-ResultMessage);
+                # no_result_message says so instead of leaving a fabricated 0
+                # indistinguishable from "the skill used no tokens."
+                usage["num_turns"] = turns_seen["n"]
+                return
 
     start = time.perf_counter()
     try:
@@ -740,7 +786,11 @@ async def run_skill(
     duration_ms = (time.perf_counter() - start) * 1000.0
 
     return SkillRunResult(
-        text_response="".join(text_chunks),
+        # Turn-separated, not "".join: two AssistantMessages' text must not
+        # run together (issue #2189). Each text_chunks entry is already one
+        # turn's own TextBlocks joined with no separator (they're one
+        # utterance); "\n\n" is the boundary between separate turns.
+        text_response="\n\n".join(text_chunks),
         skills_invoked=skills_invoked,
         tool_calls=call_log,
         duration_ms=duration_ms,
@@ -754,4 +804,5 @@ async def run_skill(
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
         builtin_tool_calls=builtin_tool_calls,
+        no_result_message=routing_resolved["v"],
     )
