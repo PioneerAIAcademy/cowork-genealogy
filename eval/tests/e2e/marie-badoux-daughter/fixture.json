@@ -1,0 +1,19 @@
+{
+  "id": "marie-badoux-daughter",
+  "name": "Marie Badoux — daughter Claudine Thénot (b. 1781, Romenay)",
+  "genre": "record-hint",
+  "source_pid": "LT9H-SK3",
+  "captured": "2026-09-07",
+  "researcher_question": "Was Claudine Thénot, baptised 12 October 1781 at Romenay to Philippe Thénot and Marie Joly, a daughter of Marie Badoux — or of a second wife?",
+  "tags": {
+    "question_type": "children",
+    "era": "1780s",
+    "geography": "FR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 11, hint-samples.csv row 377, flag adds_daughter, confidence 3). Draft transcribed from a 1781 Saône-et-Loire baptismal entry; unverified. The tree's own duplicate marriage facts suggest the child may belong to a second wife."
+}

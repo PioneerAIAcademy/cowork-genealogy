@@ -59,9 +59,10 @@ export const HOSTED_REAUTH_INSTRUCTION =
   "a sign-in page from here.)";
 
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
-  "No OpenRouter API key is configured. Ask the user for their OpenRouter " +
-  "API key (from https://openrouter.ai/keys) and call configure_openrouter " +
-  "to save it for future projects.";
+  "No OpenRouter API key is configured. Tell the user to add their " +
+  "OpenRouter API key (from https://openrouter.ai/keys) to " +
+  "~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. " +
+  "Do not ask the user to paste the key into the chat.";
 
 export async function loadConfig(): Promise<AppConfig> {
   try {

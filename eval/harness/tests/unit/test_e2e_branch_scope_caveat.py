@@ -25,6 +25,7 @@ from e2e import (
     guardrail_shadow_report,
     image_transcribe_report,
     nudge_report,
+    panel_report,
     skill_episode_report,
     wiki_failure_report,
 )
@@ -39,6 +40,7 @@ _READERS = [
     (guardrail_shadow_report, []),
     (image_transcribe_report, []),
     (nudge_report, []),
+    (panel_report, []),
     (skill_episode_report, []),
     (wiki_failure_report, []),
     (detector_before_after_report, ["--detector", "lane-check"]),
