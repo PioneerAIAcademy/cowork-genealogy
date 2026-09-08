@@ -67,6 +67,7 @@ describe('AssertionsSection — B1 persona row', () => {
   it('renders an empty message when there are no assertions', () => {
     mockResearch({ assertions: [] })
     render(<AssertionsSection />)
-    expect(screen.getByText('No assertions yet.')).toBeInTheDocument()
+    expect(screen.getByText(/No assertions yet\./)).toBeInTheDocument()
+    expect(screen.getByText(/record-extraction step/)).toBeInTheDocument()
   })
 })
