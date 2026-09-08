@@ -55,6 +55,17 @@ def _load_validator_unrewritten():
 _VALIDATOR = _load_validator_unrewritten()
 check_word_caps = _VALIDATOR.report_resolution_word_caps
 check_one_per_turn = _VALIDATOR.test_at_most_one_conflict_analysis_modified
+# Resolved by getattr over BOTH tier spellings rather than the report_ name
+# directly. A rename to `test_*` (i.e. promotion to gating) would otherwise
+# AttributeError at import and break every test in this file with a message
+# about a missing attribute; this way the rename produces one clean failure from
+# `test_v3_is_tier_2_reporting_not_gating`, which explains what it means, while
+# the rest still exercise the logic.
+check_identity_first = getattr(
+    _VALIDATOR,
+    "report_resolution_precedes_identity",
+    getattr(_VALIDATOR, "test_resolution_precedes_identity", None),
+)
 
 _REPO = Path(__file__).resolve().parents[4]  # eval/harness/tests/unit -> repo root
 _CORPUS = sorted(
@@ -253,7 +264,15 @@ def _replay(validator):
             fixture = _REPO / "eval/fixtures/scenarios" / str(t.get("scenario")) / "research.json"
             if not fixture.exists():
                 continue
-            base = json.loads(fixture.read_text(encoding="utf-8")).get("conflicts", [])
+            fx = json.loads(fixture.read_text(encoding="utf-8"))
+            base = fx.get("conflicts", [])
+            # V3's shared-source arm joins competing_assertion_ids -> source_id,
+            # so the replay has to carry assertions[] too. V6 and V2 never read
+            # them, which is why this widens the shared helper instead of
+            # forking it. Valid to take them from the FIXTURE unchanged: across
+            # the committed logs `sections_modified` is ["conflicts"] on every
+            # run, so no run altered assertions[].
+            base_assertions = fx.get("assertions", [])
             for r in t.get("runs", []):
                 diff = (((r.get("output") or {}).get("file_changes") or {})
                         .get("research.json") or {}).get("diff") or {}
@@ -262,7 +281,8 @@ def _replay(validator):
                 added = conflicts_diff.get("added") or []
                 if not modified and not added:
                     continue
-                before = {"research_json": {"conflicts": base}}
+                before = {"research_json": {"conflicts": base,
+                                           "assertions": base_assertions}}
                 after_conflicts = [dict(c) for c in base]
                 by_id = {c["id"]: c for c in after_conflicts}
                 for m in modified:
@@ -277,7 +297,8 @@ def _replay(validator):
                 for a in added:
                     if isinstance(a, dict) and a.get("id") not in by_id:
                         after_conflicts.append(dict(a))
-                after = {"research_json": {"conflicts": after_conflicts}}
+                after = {"research_json": {"conflicts": after_conflicts,
+                                          "assertions": base_assertions}}
                 try:
                     validator(before, after)
                 except AssertionError as e:
@@ -683,3 +704,368 @@ def test_v6_still_fires_when_both_were_already_resolved_and_both_change():
     )
     with pytest.raises(AssertionError, match="more than one conflict"):
         check_one_per_turn(before, after)
+
+
+# --- V3: no resolution while an open identity conflict covers it -------------
+#
+# The rule has TWO arms and they are not of equal standing (see the validator's
+# own comment): arm B (shared source) is the deep dive's heuristic and carries
+# the signal; arm A (shared blocked question) is #1823 step 2's ruled definition
+# transposed to conflict->conflict, and its sole extra hit on the current corpus
+# is one identity<->identity pair. Each arm is pinned separately below, because
+# a single fixture that satisfies both would let either one rot silently.
+
+
+def _v3_states(before_conflicts, after_conflicts, assertions):
+    return (
+        {"research_json": {"conflicts": before_conflicts, "assertions": assertions}},
+        {"research_json": {"conflicts": after_conflicts, "assertions": assertions}},
+    )
+
+
+def _assertions(**id_to_source):
+    return [{"id": i, "source_id": s} for i, s in id_to_source.items()]
+
+
+# Two sources, no overlap between the fact conflict and the identity conflict
+# unless a test arranges it.
+_A = _assertions(a_001="src_001", a_002="src_001", a_009="src_003", a_014="src_005")
+
+
+def _resolved(cid, **kw):
+    kw.setdefault("status", "resolved")
+    kw.setdefault("resolution_rationale", "x")
+    return _conflict(cid, **kw)
+
+
+def test_v3_clean_when_the_identity_conflict_is_unrelated():
+    """Neither arm: no shared blocked question, no shared source."""
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]),
+         _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_014"])],
+        [_resolved("c_001", competing_assertion_ids=["a_002"]),
+         _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_014"])],
+        _A,
+    )
+    check_identity_first(before, after)
+
+
+def test_v3_fires_on_arm_B_alone_shared_source():
+    """The deep dive's own worked shape: c_001 resolved on a_002 (src_001) while
+    an identity conflict disputes a_001 (also src_001). No blocked question on
+    either, so arm A cannot be what fired."""
+    ident = _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
+        [_resolved("c_001", competing_assertion_ids=["a_002"]), ident],
+        _A,
+    )
+    with pytest.raises(AssertionError) as e:
+        check_identity_first(before, after)
+    msg = str(e.value)
+    assert "c_001" in msg and "c_002" in msg
+    assert "B:shared source" in msg and "src_001" in msg
+    assert "A:shared blocked question" not in msg, f"arm A fired too: {msg}"
+
+
+def test_v3_fires_on_arm_A_alone_shared_blocked_question():
+    """#1823 step 2's ruled definition. Sources deliberately disjoint, so arm B
+    cannot be what fired — this is the arm that would vanish if someone
+    'simplified' the rule back to the deep dive's heuristic alone."""
+    ident = _conflict("c_002", conflict_type="identity",
+                      competing_assertion_ids=["a_014"], blocks_question_ids=["q_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"], blocks_question_ids=["q_001"]),
+         ident],
+        [_resolved("c_001", competing_assertion_ids=["a_002"], blocks_question_ids=["q_001"]),
+         ident],
+        _A,
+    )
+    with pytest.raises(AssertionError) as e:
+        check_identity_first(before, after)
+    msg = str(e.value)
+    assert "A:shared blocked question" in msg
+    assert "B:shared source" not in msg, f"arm B fired too: {msg}"
+
+
+def test_v3_fires_with_no_preferred_assertion_id():
+    """The case the dropped narrowing was blind on.
+
+    An earlier draft keyed the join on the source of `preferred_assertion_id`.
+    That is schema-legal to omit on a resolved conflict (research.schema.json
+    does not require it, and validator.ts adds no requirement), and 11 of 52
+    resolved conflicts in the committed e2e corpus are in exactly this shape —
+    so the narrow form could not see any of them.
+    """
+    ident = _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
+        [_resolved("c_001", competing_assertion_ids=["a_002"],
+                   preferred_assertion_id=None), ident],
+        _A,
+    )
+    with pytest.raises(AssertionError):
+        check_identity_first(before, after)
+
+
+@pytest.mark.parametrize("status", ["resolved", "moot"])
+def test_v3_clean_when_the_identity_conflict_is_no_longer_open(status):
+    """Only an UNRESOLVED identity conflict blocks. `moot` is a real enum value
+    (enums.schema.json $defs.conflict_status), not a placeholder."""
+    ident = _conflict("c_002", conflict_type="identity",
+                      competing_assertion_ids=["a_001"], status=status)
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
+        [_resolved("c_001", competing_assertion_ids=["a_002"]), ident],
+        _A,
+    )
+    check_identity_first(before, after)
+
+
+def test_v3_clean_when_the_related_conflict_is_not_an_identity_conflict():
+    """A shared source with another open FACT conflict is ordinary and common —
+    firing on it would flag most multi-conflict scenarios."""
+    other = _conflict("c_002", conflict_type="fact", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]), other],
+        [_resolved("c_001", competing_assertion_ids=["a_002"]), other],
+        _A,
+    )
+    check_identity_first(before, after)
+
+
+def test_v3_clean_when_the_run_wrote_moot_instead_of_resolved():
+    """The spec's stated correct behaviour: 'if the identity resolves the other
+    way the entry is moot, not resolved'. A run that does the right thing must
+    not be flagged for it."""
+    ident = _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
+        [_conflict("c_001", competing_assertion_ids=["a_002"], status="moot",
+                   resolution_rationale="deferred to the identity question"), ident],
+        _A,
+    )
+    check_identity_first(before, after)
+
+
+def test_v3_clean_when_the_violation_is_preexisting_and_untouched():
+    """Population is entries this run RESOLVED, not the whole after-state.
+
+    Whole-state scanning would report a fixture's own defect as this run's
+    doing. Unreachable on today's fixtures — the only two shared-source
+    conflicts across all 95 start `unresolved` — but the next fixture edit
+    would decide it silently, so it is pinned rather than left to luck.
+    """
+    ident = _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_001"])
+    stale = _resolved("c_001", competing_assertion_ids=["a_002"])
+    # Identical in both states: this run touched nothing.
+    before, after = _v3_states([stale, ident], [dict(stale), ident], _A)
+    check_identity_first(before, after)
+
+
+def test_v3_a_dangling_competing_assertion_id_does_not_raise():
+    """Load-bearing, not defensive tidiness. `validator_runner.py:244-256`
+    deliberately does NOT mark an exception `reporting_only`, so a crash inside
+    a report_* function GATES and suppresses the judge — the precise outcome
+    tier 2 exists to avoid. `validator.ts` runs no `checkRefExists` on
+    `competing_assertion_ids`, so a dangling id is reachable."""
+    ident = _conflict("c_002", conflict_type="identity",
+                      competing_assertion_ids=["a_999_missing"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_404_missing"]), ident],
+        [_resolved("c_001", competing_assertion_ids=["a_404_missing"]), ident],
+        _A,
+    )
+    check_identity_first(before, after)  # must not raise, and must not fire
+
+
+def test_v3_a_conflict_is_not_related_to_itself():
+    """An unresolved identity conflict cannot block its own resolution: if it is
+    `unresolved` it is not in the resolved population, and self-pairing would
+    otherwise make any resolved identity conflict flag itself."""
+    before, after = _v3_states(
+        [_conflict("c_001", conflict_type="identity", competing_assertion_ids=["a_001"],
+                   blocks_question_ids=["q_001"])],
+        [_resolved("c_001", conflict_type="identity", competing_assertion_ids=["a_001"],
+                   blocks_question_ids=["q_001"])],
+        _A,
+    )
+    check_identity_first(before, after)
+
+
+def test_v3_clean_when_no_identity_conflict_is_open_at_all():
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"])],
+        [_resolved("c_001", competing_assertion_ids=["a_002"])],
+        _A,
+    )
+    check_identity_first(before, after)
+
+
+def test_v3_skips_when_either_side_lacks_research_json():
+    with pytest.raises(pytest.skip.Exception):
+        check_identity_first({"research_json": None}, {"research_json": {}})
+
+
+def test_v3_message_says_the_check_cannot_read_the_acknowledgement():
+    """The rubric's harm is resolving over an identity conflict *without saying
+    so*, and that half is prose. A message that read as a verdict would send a
+    genealogist to fail a run that correctly caveated the dependency —
+    `ut_006`'s own judge_context blesses resolve-with-caveat."""
+    ident = _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
+        [_resolved("c_001", competing_assertion_ids=["a_002"]), ident],
+        _A,
+    )
+    with pytest.raises(AssertionError) as e:
+        check_identity_first(before, after)
+    assert "cannot read" in str(e.value)
+
+
+def test_v3_is_tier_2_reporting_not_gating():
+    """The tier is carried by the function-name PREFIX and nothing else
+    (`validator_runner.py` branches on `startswith("report_")`), so a rename
+    flips gating on silently. Gating would suppress the judge
+    (orchestrator.py:607) on runs that do produce signal on other dimensions —
+    Correctness 2, Source independence analysis 2, Tool Arguments 2."""
+    assert hasattr(_VALIDATOR, "report_resolution_precedes_identity")
+    assert not hasattr(_VALIDATOR, "test_resolution_precedes_identity"), (
+        "V3 was promoted to a gating test_* function; that is a lead decision "
+        "and it suppresses the LLM judge on every run it fires"
+    )
+
+
+# --- V3 over the committed corpus -------------------------------------------
+#
+# Same contract as the V6/V2 corpus tests above: a SECOND DERIVATION that shares
+# none of the validator's code, so a drift between the validator's dict access
+# and the run logs' real structure makes the two disagree. Deliberately no
+# pinned hit count — candidate retention keeps 5 logs per skill, so a literal
+# rots on its own.
+
+
+_V3_ANALYSIS_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "preferred_assertion_id",
+    "resolution_rationale",
+    "status",
+)
+
+
+def _independently_v3_hits():
+    """Re-derive V3's hits from raw `changed_fields`, knowing nothing about
+    `_relation_arms`, `_sources_for`, `_conflicts_with_changed_analysis` or
+    `_source_of`. Field names restated rather than imported, for the reason the
+    V6/V2 second derivations give: importing them would make both sides share
+    the thing most likely to be wrong."""
+    hits = set()
+    for path in _CORPUS:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        for t in log.get("tests", []):
+            fixture = (_REPO / "eval/fixtures/scenarios"
+                       / str(t.get("scenario")) / "research.json")
+            if not fixture.exists():
+                continue
+            fx = json.loads(fixture.read_text(encoding="utf-8"))
+            src = {a.get("id"): a.get("source_id") for a in fx.get("assertions") or []}
+            start = {c.get("id"): c for c in fx.get("conflicts") or []}
+
+            for r in t.get("runs", []):
+                cd = ((((r.get("output") or {}).get("file_changes") or {})
+                       .get("research.json") or {}).get("diff") or {}).get("conflicts") or {}
+                after = {k: dict(v) for k, v in start.items()}
+                touched = set()
+                for m in cd.get("modified") or []:
+                    cid = m.get("id")
+                    if cid is None:
+                        continue
+                    entry = after.setdefault(cid, {"id": cid})
+                    for f, ch in (m.get("changed_fields") or {}).items():
+                        if f in _V3_ANALYSIS_FIELDS:
+                            touched.add(cid)
+                        entry[f] = ch.get("after")
+                for a in cd.get("added") or []:
+                    if not isinstance(a, dict) or not a.get("id"):
+                        continue
+                    after[a["id"]] = dict(a)
+                    if any(a.get(f) not in (None, "", [], {}, "unresolved")
+                           for f in _V3_ANALYSIS_FIELDS):
+                        touched.add(a["id"])
+
+                openi = [c for c in after.values()
+                         if c.get("status") == "unresolved"
+                         and c.get("conflict_type") == "identity"]
+                for cid in touched:
+                    c = after.get(cid) or {}
+                    if c.get("status") != "resolved":
+                        continue
+                    csrc = {src.get(x) for x in (c.get("competing_assertion_ids") or [])}
+                    csrc.discard(None)
+                    cq = set(c.get("blocks_question_ids") or [])
+                    for other in openi:
+                        oid = other.get("id")
+                        if not oid or oid == cid:
+                            continue
+                        osrc = {src.get(x) for x in (other.get("competing_assertion_ids") or [])}
+                        osrc.discard(None)
+                        if (cq and cq & set(other.get("blocks_question_ids") or [])) or (csrc & osrc):
+                            hits.add((Path(path).name, t["test_id"]))
+    return hits
+
+
+def test_v3_agrees_with_a_second_derivation_over_the_corpus():
+    fired = {(name, tid) for name, tid, _ in _replay(check_identity_first)}
+    independent = _independently_v3_hits()
+
+    assert independent, (
+        "the second derivation found nothing, so this test cannot detect a "
+        "validator that fires on nothing — has the corpus rotated away every "
+        "flynn-identity-geographic run?"
+    )
+    assert fired == independent, (
+        "V3 and an independent re-derivation disagree over the committed "
+        f"corpus.\n  validator only: {sorted(fired - independent)}\n"
+        f"  derivation only: {sorted(independent - fired)}"
+    )
+
+
+def test_v3_fires_only_where_an_identity_conflict_is_actually_open():
+    """A cheap sanity arm on the corpus result: every run V3 flags must come
+    from a scenario that HAS an open identity conflict. Catches a validator that
+    fires on the wrong population without needing a pinned count."""
+    with_identity = set()
+    for d in (_REPO / "eval/fixtures/scenarios").iterdir():
+        f = d / "research.json"
+        if not f.is_file():
+            continue
+        try:
+            fx = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if any(c.get("conflict_type") == "identity" for c in fx.get("conflicts") or []):
+            with_identity.add(d.name)
+
+    scenarios = set()
+    for path in _CORPUS:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        by_id = {t["test_id"]: t.get("scenario") for t in log.get("tests", [])}
+        for name, tid, _ in _replay(check_identity_first):
+            if name == Path(path).name and tid in by_id:
+                scenarios.add(by_id[tid])
+
+    assert scenarios, "V3 fired on nothing in the corpus; the arms may be dead"
+    assert scenarios <= with_identity, (
+        f"V3 fired on scenarios with no identity conflict: {sorted(scenarios - with_identity)}"
+    )
+
+
+def test_v3_a_non_dict_conflict_entry_does_not_raise():
+    """Paired with the dangling-id test, for the same reason: a crash inside a
+    report_* function gates and suppresses the judge, so malformed state must
+    degrade to "no observation" rather than to an exception."""
+    ident = _conflict("c_002", conflict_type="identity", competing_assertion_ids=["a_001"])
+    before = {"research_json": {"conflicts": [_conflict("c_001"), ident], "assertions": _A}}
+    after = {"research_json": {"conflicts": ["not a dict", None, ident], "assertions": _A}}
+    check_identity_first(before, after)

@@ -265,8 +265,24 @@ def test_resolved_flynn_birthplace(after_state, test):
 _ANALYSIS_FIELDS = (*CONFLICT_ANALYSIS_FIELDS, "status")
 
 
+def _conflict_entries(state: dict) -> list:
+    """The dict entries of `conflicts`, skipping anything malformed.
+
+    Added for V3, but shared by all three checks here because they all iterate
+    `conflicts` the same way. On well-formed state every entry is a dict and
+    this is a no-op, so V6's and V2's behaviour is unchanged.
+
+    It matters because a non-dict entry raises `AttributeError` on `.get`, and
+    an exception inside a `report_*` function GATES — validator_runner.py's
+    crash path withholds `reporting_only` on purpose — which suppresses the LLM
+    judge for that run. That is the outcome tier 2 is chosen to avoid, so a
+    malformed entry has to degrade to "no observation" rather than to a crash.
+    """
+    return [c for c in (state.get("conflicts") or []) if isinstance(c, dict)]
+
+
 def _conflicts_by_id(state: dict) -> dict:
-    return {c.get("id"): c for c in (state.get("conflicts") or []) if c.get("id")}
+    return {c.get("id"): c for c in _conflict_entries(state) if c.get("id")}
 
 
 def _analysis_written(conflict: dict) -> bool:
@@ -298,7 +314,7 @@ def _conflicts_with_changed_analysis(before: dict, after: dict) -> list[dict]:
     """
     before_by_id = _conflicts_by_id(before)
     touched: list[dict] = []
-    for c in (after.get("conflicts") or []):
+    for c in _conflict_entries(after):
         cid = c.get("id")
         if not cid:
             continue
@@ -321,7 +337,7 @@ def _conflicts_written(before: dict, after: dict) -> list[dict]:
     """
     before_by_id = _conflicts_by_id(before)
     written: list[dict] = []
-    for c in (after.get("conflicts") or []):
+    for c in _conflict_entries(after):
         cid = c.get("id")
         if not cid:
             continue
@@ -390,7 +406,7 @@ def report_resolution_word_caps(before_state, after_state):
     corpus rotates, so do not quote this).
 
     Reporting, not gating, and that is not a style choice: a failing tier-1
-    validator suppresses the LLM judge for that run (orchestrator.py:600), so a
+    validator suppresses the LLM judge for that run (orchestrator.py:607), so a
     gating version would silence the Evidence weighing and Resolution
     completeness grading on the runs it fires -- the craft grading this dive
     exists to protect.
@@ -433,3 +449,144 @@ def report_resolution_word_caps(before_state, after_state):
     # (validator_runner.py:264-276) passes r.error and deliberately never
     # r.name. State counts as fact; a verdict here would anchor the grade.
     assert not observations, "\n".join(observations)
+
+
+# --- No resolution while an open identity conflict covers it (V3) -------
+#
+# Issue #1972 V3, from the conflict-resolution deep dive (findings doc § V3).
+#
+# Until an identity question is settled, two assertions are not known to
+# describe one person, so their disagreement is not established as a conflict at
+# all -- and if the identity resolves the other way the entry is `moot`, not
+# `resolved`.
+#
+# TWO ARMS, because the issue requires it. The deep dive's rule joins on a
+# shared `source_id`; the issue adds that this "is a heuristic standing in for
+# [#1823 step 2] and must be replaced by whatever step 2 settles on". Step 2 was
+# ruled 2026-09-02 -- a conflict blocks a question when it lists that question
+# or disputes one of the question's assertions -- so arm A is that definition
+# transposed to conflict->conflict using only the fields the ruling blessed.
+#
+# The arms are NOT of equal standing, and the message says which matched so a
+# reader can weigh them. Measured over the 4 committed logs: arm B flags 7 runs,
+# arm A 8, union 8. They agree on every case where the resolved conflict is a
+# `fact` conflict; arm A's sole extra hit is one identity<->identity pair
+# (v1_2026-08-18_19-42-11 / ut_006: c_002 resolved while c_003 open, related
+# only by both blocking q_001, sharing no source). Whether that is a violation
+# at all is a genealogist's call. So arm B carries the signal and arm A is an
+# independent confirmation plus one debatable pair. Re-derive rather than quote:
+# candidate retention keeps 5 logs per skill.
+#
+# The dropped alternative, recorded so it is not re-proposed: keying the join on
+# the source of the *preferred* assertion only. It is strictly narrower and
+# blind two ways -- on flynn-identity-geographic it fires only if the run
+# prefers a_002 of {a_002, a_009, a_012} (all measured runs did, which is a coin
+# flip, not a property of the rule), and it cannot see a `resolved` conflict
+# carrying no preferred_assertion_id at all, which is 11 of 52 resolved
+# conflicts in the committed e2e corpus.
+
+
+def _source_of(state: dict) -> dict:
+    return {a.get("id"): a.get("source_id") for a in (state.get("assertions") or []) if a.get("id")}
+
+
+def _sources_for(conflict: dict, source_of: dict) -> set:
+    """The sources behind a conflict's competing assertions.
+
+    A dangling id resolves to None and is dropped rather than raising. That
+    matters more here than it looks: `validator.ts` runs no `checkRefExists` on
+    `competing_assertion_ids`, and validator_runner.py:244-256 deliberately does
+    NOT mark an exception `reporting_only` -- so a crash inside a report_*
+    function GATES and suppresses the judge, the exact outcome tier 2 buys
+    insurance against.
+    """
+    out = {source_of.get(a) for a in (conflict.get("competing_assertion_ids") or [])}
+    out.discard(None)
+    return out
+
+
+def _relation_arms(conflict: dict, other: dict, source_of: dict) -> list[str]:
+    """Which arms relate two conflicts. Empty means unrelated."""
+    arms = []
+    qs = set(conflict.get("blocks_question_ids") or [])
+    if qs and qs & set(other.get("blocks_question_ids") or []):
+        arms.append("A:shared blocked question")
+    shared = _sources_for(conflict, source_of) & _sources_for(other, source_of)
+    if shared:
+        arms.append(f"B:shared source {sorted(shared)}")
+    return arms
+
+
+def report_resolution_precedes_identity(before_state, after_state):
+    """A conflict must not be resolved while a related identity question is open.
+
+    Tier 2 by design, on measured grounds rather than caution:
+
+    - A failing tier-1 validator suppresses the LLM judge for that run
+      (orchestrator.py:607; compute_validators_passed at :126-139 confirms tier
+      2 never gates). The runs this fires on DO produce judge signal on other
+      dimensions -- Correctness 2, Source independence analysis 2, Tool
+      Arguments 2 -- which gating would delete.
+    - `Resolution completeness` already carries a fail branch for this exact
+      ground, and it is not firing: it scored 3 on 7 of 7 flagged runs, 4 of 4
+      of them post-PR-#1973, and a genealogist annotator CONFIRMED the 3 on
+      ut_conflict_resolution_008 in two separate logs. That is what gives a
+      mechanical V3 its marginal value -- and it also means this observation
+      contradicts a recorded human judgement, so it is a pointer, not a verdict.
+    - The harm the rubric names is resolving over an identity conflict *without
+      saying so*, and that half is prose this cannot read: resolve-with-caveat
+      and resolve-silently look identical here, and ut_006's judge_context
+      explicitly blesses the former. 0 of 7 flagged runs acknowledge the
+      dependency anywhere in their analysis prose today, so there is no false
+      positive now -- but the rule cannot tell the difference if that changes.
+
+    Population is entries this run RESOLVED (V6's `_conflicts_with_changed_analysis`),
+    not the whole after-state. Scanning everything would report a pre-existing
+    fixture defect as this run's doing. Unreachable on today's fixtures -- the
+    only two shared-source conflicts across all 95 both start `unresolved` -- but
+    the next fixture edit would decide it silently.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    source_of = _source_of(after)
+    open_identity = [
+        c
+        for c in _conflict_entries(after)
+        if c.get("status") == "unresolved" and c.get("conflict_type") == "identity"
+    ]
+    if not open_identity:
+        return
+
+    observations = []
+    for c in _conflicts_with_changed_analysis(before, after):
+        if c.get("status") != "resolved":
+            continue
+        cid = c.get("id", "?")
+        for other in open_identity:
+            # No `oid == cid` guard: a conflict cannot be in both populations,
+            # since this one requires status=='resolved' and open_identity
+            # requires 'unresolved'. A guard stood here and was deleted as dead
+            # code — a mutation removing it left all 49 tests green.
+            oid = other.get("id")
+            if not oid:
+                continue
+            arms = _relation_arms(c, other, source_of)
+            if not arms:
+                continue
+            observations.append(
+                f"conflicts[{cid}] (conflict_type={c.get('conflict_type')!r}) was "
+                f"written status='resolved' while conflicts[{oid}] is an "
+                f"unresolved identity conflict related to it via "
+                f"{'; '.join(arms)}. Until that identity question is settled the "
+                f"competing assertions are not known to describe one person, so "
+                f"the disagreement is not established as a conflict -- and if the "
+                f"identity resolves the other way the entry is 'moot', not "
+                f"'resolved'. Whether the rationale ACKNOWLEDGES this dependency "
+                f"is prose this check cannot read; grade that separately."
+            )
+
+    if observations:
+        raise AssertionError(" ".join(observations))
