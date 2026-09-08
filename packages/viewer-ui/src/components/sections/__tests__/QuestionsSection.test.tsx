@@ -41,7 +41,8 @@ describe('QuestionsSection', () => {
   it('shows the empty state when there are no questions', () => {
     mockResearch({ questions: [] })
     render(<QuestionsSection />)
-    expect(screen.getByText('No questions defined yet.')).toBeInTheDocument()
+    expect(screen.getByText(/No questions defined yet\./)).toBeInTheDocument()
+    expect(screen.getByText(/question-selection step/)).toBeInTheDocument()
   })
 
   // A question missing exhaustive_declaration and its array fields must not throw

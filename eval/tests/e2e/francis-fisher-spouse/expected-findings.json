@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Francis Maria Fisher married Alfred George Holding in 1895; he was born about 1871.",
+      "details": {
+        "subject_person": "Francis Maria Fisher (LZZ9-YL3)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Alfred George Holding",
+          "birth": "about 1871"
+        },
+        "marriage": "1895, Australia"
+      },
+      "supporting_sources": [
+        "Australia, Marriages, 1810-1980 — entry for Alfred George Holding and Frances Maria Fisher, 1895"
+      ],
+      "required": true
+    }
+  ]
+}

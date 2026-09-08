@@ -1,0 +1,37 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Matilde Carmela Emanuela Cavagnaro and Pietro Dondero had a daughter, Maria Clementina Angelica Gentile Dondero, born 30 August 1883 at Genova.",
+      "details": {
+        "subject_person": "Matilde Carmela Emanuela Cavagnaro (G4Z4-RJ1)",
+        "relation": "child",
+        "target_person": {
+          "name": "Maria Clementina Angelica Gentile Dondero",
+          "birth": "30 August 1883, Genova, Genova, Liguria, Italy"
+        }
+      },
+      "supporting_sources": [
+        "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929 — entry for Maria Clementina Angelica Gentile Dondero, 30 Aug 1883, parents Pietro Dondero and Carmela Cavagnaro"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Matilde Carmela Emanuela Cavagnaro's husband was Pietro Dondero.",
+      "details": {
+        "subject_person": "Matilde Carmela Emanuela Cavagnaro (G4Z4-RJ1)",
+        "relation": "spouse",
+        "target_person": {
+          "name": "Pietro Dondero"
+        }
+      },
+      "supporting_sources": [
+        "Italia, Genova, Genova, Stato Civile (Tribunale), 1866-1929 — entry for the 30 Aug 1883 birth, naming the couple"
+      ],
+      "required": true
+    }
+  ]
+}

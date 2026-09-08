@@ -1,0 +1,37 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Vasily Ignatiev Romanov and Klavdiya Dmitrieva had a daughter, Raisa Romanova, born 16 July 1911 at the Peter and Paul church, Samara.",
+      "details": {
+        "subject_person": "Василий Игнатьев Романов (L8TL-4NY)",
+        "relation": "child",
+        "target_person": {
+          "name": "Раиса Романова",
+          "birth": "16 July 1911, Петропавловская церковь, Самара, Россия"
+        },
+        "mother": "Клавдия Димитриева"
+      },
+      "supporting_sources": [
+        "Россия, Самарские метрические книги, 1748-1934 — entry for Раиса Романов and Василий Алексеев Романов, 16 Jul 1911"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "person",
+      "description": "Klavdiya Dmitrieva was a wife of Vasily Romanov, named as the mother on the 1911 Samara birth entry.",
+      "details": {
+        "person": {
+          "name": "Клавдия Димитриева",
+          "role": "mother on the 16 July 1911 Samara birth entry"
+        }
+      },
+      "supporting_sources": [
+        "Россия, Самарские метрические книги, 1748-1934 — entry of 16 Jul 1911"
+      ],
+      "required": true
+    }
+  ]
+}
