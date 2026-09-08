@@ -23,6 +23,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # harness-supplied fixtures. Same pattern as the sibling validator tests.
 from test_timeline import (  # noqa: E402
     test_census_years_read_from_wiki as check_census_from_wiki,
+    test_us_1890_never_expected as check_us_1890_backstop,
 )
 
 # A faithful-enough slice of the England_Census page: it lists the English
@@ -32,6 +33,19 @@ ENGLAND_PAGE = (
     "1801 1811 1821 1831 1841 1851 1861 1871 1881 1891 1901 1911 1921 1931\n"
     "The first census listing people by name was taken in 1841."
 )
+
+US_URL = "https://www.familysearch.org/en/wiki/United_States_Census"
+# The real US page lists 1890 as an available collection even though the
+# returns were destroyed (ADR-0012) — which is exactly why the 1890 backstop
+# reads expected_events, not the page.
+US_PAGE = (
+    "# United States Census\n"
+    "1790 1800 1810 1820 1830 1840 1850 1860 1870 1880 1890 1900 1910 1920 1930 1940\n"
+)
+IRELAND_URL = "https://www.familysearch.org/en/wiki/Ireland_Census"
+# Ireland enumerated 1821-1911; it never had a 1921 census (that year is on the
+# England page), which the contamination test relies on.
+IRELAND_PAGE = "# Ireland Census\n1821 1831 1841 1851 1861 1871 1881 1891 1901 1911\n"
 
 BEFORE = {"research_json": {"timelines": []}}
 
@@ -90,6 +104,47 @@ def test_passes_on_underscore_joined_census_year_tokens():
          "expected_events": ["burial"], "severity": "low"},
     ]
     check_census_from_wiki(BEFORE, _after(underscore_gaps), [_wiki_call()], TAGGED)
+
+
+def test_passes_on_mixed_marriage_and_census_gap():
+    """Finding #2: a gap naming both a marriage and a census must not count the
+    marriage year as a census year. `["marriage 1859", "census 1861"]` on a
+    correct England timeline must NOT raise — the old joined-blob extraction
+    raised a false 'absent from page' on 1859."""
+    mixed = [{"start": "1859", "end": "1861",
+              "expected_events": ["marriage 1859", "census 1861"], "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(mixed), [_wiki_call()], TAGGED)
+
+
+def test_fires_on_cross_country_page_contamination():
+    """Finding #3: a year attributed to Ireland that is absent from the Ireland
+    page but present on another fetched page (England's 1921) must be caught.
+    The old concatenated-page check passed this — 1921 is on the England page
+    and is non-US — while the per-jurisdiction check fires."""
+    gaps = [{"start": "1911", "end": "1921",
+             "expected_events": ["Ireland census 1921"], "severity": "high"}]
+    calls = [_wiki_call(IRELAND_URL, IRELAND_PAGE), _wiki_call()]  # Ireland + England
+    with pytest.raises(AssertionError, match="1921"):
+        check_census_from_wiki(BEFORE, _after(gaps), calls, TAGGED)
+
+
+def test_us_1890_backstop_fires_and_is_scoped():
+    """Finding #7: an expected US 1890 census event trips the deterministic
+    backstop, and the guard is scoped to the US-1890 fact — it does NOT fire on
+    a non-US 1890 census even when US census evidence is present in the run."""
+    positive = {"type": "positive"}
+    # Unattributed 1890 in a run where a US census page was fetched -> fires.
+    us_gap = [{"start": "1885", "end": "1895",
+               "expected_events": ["1890 census"], "severity": "high"}]
+    with pytest.raises(AssertionError, match="1890"):
+        check_us_1890_backstop(BEFORE, _after(us_gap), [_wiki_call(US_URL, US_PAGE)], positive)
+    # A 1890 census named for a non-US jurisdiction, with the US page also
+    # fetched, must NOT fire the US backstop (scope check).
+    other_gap = [{"start": "1885", "end": "1895",
+                  "expected_events": ["Ireland census 1890"], "severity": "high"}]
+    check_us_1890_backstop(
+        BEFORE, _after(other_gap),
+        [_wiki_call(US_URL, US_PAGE), _wiki_call(IRELAND_URL, IRELAND_PAGE)], positive)
 
 
 def test_fires_when_no_census_page_fetched():

@@ -202,6 +202,27 @@ def _wiki_read_calls(tool_calls) -> list[dict]:
     return [tc for tc in (tool_calls or []) if "wiki_read" in (tc.get("tool") or "")]
 
 
+def _census_country_of_url(url: str | None) -> str | None:
+    """`United_States` from `.../wiki/United_States_Census`; None when the URL is
+    not a `{Country}_Census` page."""
+    m = re.search(r"/wiki/([A-Za-z_]+)_Census\b", url or "")
+    return m.group(1) if m else None
+
+
+def _entry_names_country(text: str, country_slug: str) -> bool:
+    """True when an `expected_events` entry names the jurisdiction whose census
+    page is `country_slug` (`United_States` matches "united states" or
+    "united_states")."""
+    t = (text or "").lower()
+    return country_slug.lower() in t or country_slug.replace("_", " ").lower() in t
+
+
+def _year_on_page(year: int, content: str) -> bool:
+    """True when `year` appears on the page as a standalone token — not inside a
+    longer digit run — so a coincidental substring does not count as provenance."""
+    return re.search(rf"(?<!\d){year}(?!\d)", content or "") is not None
+
+
 def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test):
     """Tag-gated (`census-from-wiki`): the timeline must derive expected census
     years from the residence jurisdiction's `{Country}_Census` wiki page
@@ -212,8 +233,14 @@ def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test
          `tool_calls` — ADR-0012 requires the fetch be observed, not merely
          instructed (the `gps-mentor` skip pattern).
       2. Every census year the timeline placed in a gap's `expected_events`
-         appears on a fetched census page, and at least one is outside the US
-         federal set — proving the years came from the page, not the default.
+         appears on the fetched census page for the jurisdiction it is
+         attributed to (not the concatenation of every fetched page), and at
+         least one is outside the US federal set — proving the years came from
+         the page, not the default.
+
+    Census years are collected from the individual `expected_events` entries
+    that name a census, never from the whole joined gap, so a marriage or birth
+    year sharing a gap with a census is not miscounted as a census year.
     """
     if "census-from-wiki" not in (test.get("tags") or []):
         pytest.skip("not a census-from-wiki test")
@@ -228,28 +255,49 @@ def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test
         f"{[(tc.get('args') or {}).get('url') for tc in _wiki_read_calls(tool_calls)]}"
     )
 
-    page_text = "".join(
-        str((tc.get("response") or {}).get("content") or "")
-        for tc in census_reads
-        if isinstance(tc.get("response"), dict)
-    )
+    # Map each fetched {Country}_Census page to its jurisdiction, so a year's
+    # provenance is checked against the page for the jurisdiction it is
+    # attributed to — not the concatenation of every fetched page (finding #3).
+    pages: dict[str, str] = {}
+    for tc in census_reads:
+        country = _census_country_of_url((tc.get("args") or {}).get("url"))
+        if not country:
+            continue
+        content = ""
+        if isinstance(tc.get("response"), dict):
+            content = str((tc.get("response") or {}).get("content") or "")
+        pages[country] = pages.get(country, "") + "\n" + content
 
     timelines = _produced_timelines(before_state, after_state)
     if not timelines:
         pytest.skip("no produced timeline (covered by test_positive_produces_timeline)")
 
+    # Collect census years from the individual expected_events entries that name
+    # a census — never from the whole joined gap — so a marriage/birth year in a
+    # mixed gap is not miscounted as a census year (finding #2).
     census_years: set[int] = set()
+    absent: list[tuple[int, str]] = []
     for tl in timelines:
         for gap in (tl.get("gaps") or []):
             if not isinstance(gap, dict):
                 continue
-            joined = " ".join(str(x) for x in (gap.get("expected_events") or []))
-            if "census" not in joined.lower():
-                continue
-            # Only the years named in expected_events are census years; the gap's
-            # start/end are the bounding events (a birth/marriage/death), not
-            # census years, so they are deliberately not collected here.
-            census_years.update(int(y) for y in _YEAR_RE.findall(joined))
+            for item in (gap.get("expected_events") or []):
+                entry = str(item)
+                if "census" not in entry.lower():
+                    continue
+                named = [c for c in pages if _entry_names_country(entry, c)]
+                for y in _YEAR_RE.findall(entry):
+                    year = int(y)
+                    census_years.add(year)
+                    if named:
+                        # Attributed to a jurisdiction whose page was fetched:
+                        # the year must appear on THAT page (finding #3), not on
+                        # some other country's page that was also fetched.
+                        if not any(_year_on_page(year, pages[c]) for c in named):
+                            absent.append((year, "/".join(named)))
+                    elif not any(_year_on_page(year, txt) for txt in pages.values()):
+                        # Unattributed: provenance floor — on some fetched page.
+                        absent.append((year, "any fetched page"))
 
     assert census_years, (
         "census-from-wiki test produced no census gap naming a year in "
@@ -257,11 +305,11 @@ def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test
         "undocumented census years"
     )
 
-    missing = sorted(y for y in census_years if str(y) not in page_text)
-    assert not missing, (
-        f"expected census years absent from the fetched census page: {missing} "
-        f"(all expected census years: {sorted(census_years)}) — a year the page "
-        "does not list was not read from it"
+    assert not absent, (
+        "expected census year(s) not found on the fetched census page for the "
+        f"jurisdiction they are attributed to: {absent} — a year the page does "
+        f"not list was not read from it (all expected census years: "
+        f"{sorted(census_years)})"
     )
 
     non_us = sorted(census_years - US_FEDERAL_CENSUS_YEARS)
@@ -269,4 +317,64 @@ def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test
         f"every expected census year is a US federal year ({sorted(census_years)}); "
         "a non-US life must expect its own jurisdiction's census years, not the "
         "US schedule"
+    )
+
+
+def test_us_1890_never_expected(before_state, after_state, tool_calls, test):
+    """Deterministic backstop for the single documented fact that the US 1890
+    federal census does not survive (ADR-0012, issue #2261): it can never fill a
+    gap, so 1890 must not appear as a US census `expected_event`.
+
+    Scope is the US-1890 fact only. It encodes no census *schedule* — it asserts
+    nothing about which years the US did enumerate, and nothing about a non-US
+    1890 census (some jurisdictions did enumerate that year). A 1890 census entry
+    fires only when it is attributable to the United States: the entry names the
+    US, or it names no jurisdiction and a `United_States_Census` page was fetched
+    this run. An entry naming a non-US jurisdiction is left to that jurisdiction's
+    own provenance check.
+
+    Not tag-gated, so it also covers the US/Ireland positive tests that
+    `test_census_years_read_from_wiki` skips — the deterministic backstop those
+    tests otherwise lack (finding #7)."""
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests produce timelines")
+    timelines = _produced_timelines(before_state, after_state)
+    if not timelines:
+        pytest.skip("no produced timeline")
+
+    census_reads = [
+        tc for tc in _wiki_read_calls(tool_calls)
+        if "_Census" in ((tc.get("args") or {}).get("url") or "")
+    ]
+    fetched = {c for tc in census_reads
+               if (c := _census_country_of_url((tc.get("args") or {}).get("url")))}
+    us_involved = "United_States" in fetched
+
+    offending: list[str] = []
+    for tl in timelines:
+        for gap in (tl.get("gaps") or []):
+            if not isinstance(gap, dict):
+                continue
+            for item in (gap.get("expected_events") or []):
+                entry = str(item)
+                if "census" not in entry.lower():
+                    continue
+                if not re.search(r"(?<!\d)1890(?!\d)", entry):
+                    continue
+                names_us = (
+                    _entry_names_country(entry, "United_States")
+                    or "u.s." in entry.lower()
+                    or re.search(r"\bus\b", entry.lower()) is not None
+                )
+                names_other = any(
+                    c != "United_States" and _entry_names_country(entry, c)
+                    for c in fetched
+                )
+                if names_us or (not names_other and us_involved):
+                    offending.append(entry)
+
+    assert not offending, (
+        "the US 1890 federal census does not survive and can never fill a gap, "
+        f"but 1890 appears as a US census expected_event: {offending} "
+        "(ADR-0012, issue #2261)"
     )
