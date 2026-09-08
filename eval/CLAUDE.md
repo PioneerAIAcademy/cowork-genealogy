@@ -71,7 +71,11 @@ eval/
   one run and this compares runs *within* a log. It reads the **effective**
   post-run state (`changed_fields`, else the scenario's starting value); a
   `changed_fields`-only scan reports zero on a corpus that does contradict
-  itself. Issue #1972 V7.
+  itself. Because every way it can break also prints a cheerful zero, a clean
+  scan reports its denominators — groups examined and multi-verdict groups, plus
+  every run log it could not read and every scenario whose fixture could not
+  supply a fallback. `GROUPS EXAMINED: 0` means the scan proves nothing. An
+  unknown `--skill` is an error (exit 2), not an empty clean pass. Issue #1972 V7.
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
 - **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls". A fixture's `response` must be a shape its tool can actually return: the top-level fields are checked against the handler's declared return type by `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts`, so copy the envelope from a sibling fixture for the same tool rather than writing a short form.
