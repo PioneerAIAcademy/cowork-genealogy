@@ -1,3 +1,5 @@
+import { isObject } from "./types.js";
+
 // person-id-refs — the single source of truth for which research.json fields
 // reference tree.gedcomx.json person ids.
 //
@@ -11,7 +13,8 @@ export type PersonIdRefField =
   | "person_evidence"
   | "subject_person_ids"
   | "timelines"
-  | "known_holdings";
+  | "known_holdings"
+  | "proof_summaries";
 
 /** The research.json fields that hold tree person-id references. */
 export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
@@ -19,6 +22,7 @@ export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
   "subject_person_ids",
   "timelines",
   "known_holdings",
+  "proof_summaries",
 ];
 
 export interface PersonIdRef {
@@ -50,6 +54,11 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
     : [];
   for (let i = 0; i < personEvidence.length; i++) {
     const pe = personEvidence[i];
+    // A malformed element (null, or a primitive) yields no refs. The document
+    // validator reports its shape; this generator's job is only to find person
+    // ids, and dereferencing here threw instead — which took down the whole
+    // cross-file pass, and with it every writer tool, on one stray element.
+    if (!isObject(pe)) continue;
     const pid = pe.person_id;
     if (pid) {
       yield {
@@ -84,6 +93,7 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
   // timelines[].person_ids — array.
   const timelines = Array.isArray(research.timelines) ? research.timelines : [];
   for (let i = 0; i < timelines.length; i++) {
+    if (!isObject(timelines[i])) continue;
     const personIds = Array.isArray(timelines[i].person_ids)
       ? timelines[i].person_ids
       : [];
@@ -106,6 +116,7 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
     ? research.known_holdings
     : [];
   for (let i = 0; i < holdings.length; i++) {
+    if (!isObject(holdings[i])) continue;
     const personIds = Array.isArray(holdings[i].relates_to_person_ids)
       ? holdings[i].relates_to_person_ids
       : [];
@@ -120,6 +131,41 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
           personIds[j] = newId;
         },
       };
+    }
+  }
+
+  // proof_summaries[].claims[].relationship.{parent,child} — a per-claim tier
+  // breakdown's tree endpoint (#1711). Without this, a dangling or merged-away
+  // person id here validates clean, and merge_tree_persons never remaps it —
+  // the tree-encoding gate then looks for a relationship at an id that no
+  // longer exists and re-invokes proof-conclusion for an already-answered
+  // question.
+  const proofSummaries = Array.isArray(research.proof_summaries)
+    ? research.proof_summaries
+    : [];
+  for (let i = 0; i < proofSummaries.length; i++) {
+    if (!isObject(proofSummaries[i])) continue;
+    const claims = Array.isArray(proofSummaries[i].claims)
+      ? proofSummaries[i].claims
+      : [];
+    for (let j = 0; j < claims.length; j++) {
+      if (!isObject(claims[j])) continue;
+      const rel = claims[j].relationship;
+      if (!isObject(rel)) continue;
+      const clp = `research.json/proof_summaries[${i}]/claims[${j}]/relationship`;
+      for (const side of ["parent", "child"] as const) {
+        const pid = rel[side];
+        if (!pid) continue;
+        yield {
+          pid,
+          field: "proof_summaries",
+          path: clp,
+          message: `relationship.${side} '${pid}' not found in tree.gedcomx.json persons`,
+          set: (newId) => {
+            rel[side] = newId;
+          },
+        };
+      }
     }
   }
 }

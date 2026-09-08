@@ -300,6 +300,34 @@ def test_session_log_bundles_subagent_transcripts_and_their_meta():
     assert dropped == []
 
 
+def test_session_log_redacts_api_keys_in_every_member_of_the_set():
+    """Before this set existed, redaction sat at `_session_log`'s single return
+    (#2175 / #1018 Task 5). The set now has four kinds of member -- active
+    parent, grouped parent, subagent transcript, subagent meta -- and a key
+    pasted in chat reaches the parent while a subagent handed it reaches the
+    child's, so one call site per member is the shape that lets the next member
+    ship a key. Mirrors `redacts an API key in every transcript in the set` in
+    apps/electron/src/main/__tests__/feedback.test.ts."""
+    sid = "sid-live"
+    key = "sk-or-v1-" + "a" * 40
+    sbx = _FakeSandbox({
+        f"{PROJECT_DIR}/.agent_session": (sid + "\n").encode("utf-8"),
+        f"{fb._CLAUDE_PROJECTS_DIR}/{sid}.jsonl": _jsonl(_turn(text=f"my key is {key}")),
+        f"{fb._CLAUDE_PROJECTS_DIR}/{sid}/subagents/agent-abc.jsonl":
+            _jsonl(_turn(text=f"reusing {key}")),
+        f"{fb._CLAUDE_PROJECTS_DIR}/{sid}/subagents/agent-abc.meta.json": json.dumps({
+            "agentType": "proof-conclusion", "description": f"use {key}",
+            "toolUseId": "toolu_01", "spawnDepth": 1,
+        }).encode("utf-8"),
+    })
+    entries, dropped = asyncio.run(fb._session_log(sbx))
+    assert dropped == []
+    assert len(entries) == 3
+    for relpath, data in entries:
+        assert key.encode("utf-8") not in data, relpath
+        assert b"[REDACTED_API_KEY]" in data, relpath
+
+
 def test_session_log_recovers_subagents_from_a_stale_session_id():
     """The SDK can hand back a new session id on resume and `_remember_session`
     persists it (app/agent/real_agent.py), so the live `.agent_session` can point
@@ -907,3 +935,57 @@ def test_non_json_response_surfaces_as_502(monkeypatch):
         assert "failed" in r.json()["detail"].lower()
 
         client.delete(f"/api/sessions/{sid}")
+
+
+# ---------- API-key redaction in session logs ----------
+
+
+def test_redact_anthropic_key():
+    data = b'{"message":"my key is sk-ant-api03-abcDEF123456789012345678901234"}\n'
+    out = fb._redact_api_keys(data)
+    assert b"sk-ant-" not in out
+    assert b"[REDACTED_API_KEY]" in out
+
+
+def test_redact_openrouter_key():
+    data = b'{"message":"use sk-or-v1-abcdef1234567890abcdef1234567890"}\n'
+    out = fb._redact_api_keys(data)
+    assert b"sk-or-" not in out
+    assert b"[REDACTED_API_KEY]" in out
+
+
+def test_redact_generic_sk_key():
+    key = b"sk-" + b"a" * 48
+    data = b'{"message":"' + key + b'"}\n'
+    out = fb._redact_api_keys(data)
+    assert key not in out
+    assert b"[REDACTED_API_KEY]" in out
+
+
+def test_short_sk_token_not_redacted():
+    data = b'{"message":"sk-short is fine"}\n'
+    assert fb._redact_api_keys(data) == data
+
+
+def test_redact_multiple_keys():
+    data = (
+        b'{"type":"user","message":"sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA"}\n'
+        b'{"type":"user","message":"sk-or-v1-BBBBBBBBBBBBBBBBBBBBBB"}\n'
+    )
+    out = fb._redact_api_keys(data)
+    assert b"sk-ant-" not in out
+    assert b"sk-or-" not in out
+    assert out.count(b"[REDACTED_API_KEY]") == 2
+
+
+def test_redact_api_keys_str():
+    text = "I pasted sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA into the field"
+    out = fb._redact_api_keys_str(text)
+    assert "sk-ant-" not in out
+    assert "[REDACTED_API_KEY]" in out
+    assert "I pasted" in out
+
+
+def test_redact_api_keys_str_passthrough():
+    text = "normal text with no keys"
+    assert fb._redact_api_keys_str(text) == text

@@ -160,8 +160,8 @@ secondary informant) for birthplace."
 | User asks to translate, or asks the meaning of, a non-English term or record | If it is language-specific (e.g., German church vocabulary), hand off to translation — do not translate it here. If it is English terminology with a historical meaning (e.g., "yeoman," "in-law"), handle here |
 | Place discrepancy in records | Check boundary changes first (most common cause), then consider ethnic concealment, informant error, naming conventions. Present multiple possibilities |
 | Date discrepancy of exactly 10-13 days or 1 year (Jan-Mar) | Note this likely reflects a calendar-system difference, not a true conflict. Suggest convert-dates for the actual conversion |
-| User asks "why" about an absence of records | Explain the historical reason (courthouse fire, pre-civil-registration era, boundary change moving records to a different jurisdiction) |
-| Multiple possible explanations | Present all plausible explanations, ordered by likelihood. Do not pick one without evidence |
+| User asks "why" about an absence of records | Explain the historical reason (courthouse fire, pre-civil-registration era, boundary change moving records to a different jurisdiction). When no tool returned anything about the place itself, give these as general possibilities and lead with what to check first — whether the name is a colloquial/unofficial name for part of a real, findable jurisdiction — never asserting a cause for this specific place |
+| Multiple possible explanations | Present all plausible explanations. Order them by likelihood only when a tool returned content about the subject; when no tool did, give them as unranked general possibilities ("one common reason is…", "this could be why…"), never a confident or "most likely" itemized list. Do not pick one without evidence |
 
 ## Important rules
 

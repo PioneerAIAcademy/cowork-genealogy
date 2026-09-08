@@ -12,6 +12,7 @@ import {
   NOT_PROVIDED,
   PARENT_LOG_ENTRY,
   readSessionLog,
+  redactApiKeys,
   renderFeedbackMarkdown,
   type FeedbackOptions
 } from '../feedback'
@@ -195,6 +196,34 @@ describe('buildFeedbackZip — feedback.json', () => {
     expect(zip.file('FEEDBACK.md')).not.toBeNull()
     expect(zip.file('_feedback/feedback.json')).not.toBeNull()
   })
+
+  it('redacts API keys from user-typed feedback fields', async () => {
+    const key = 'sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA'
+    const result = await buildFeedbackZip(
+      makeOptions(folder, {
+        userPrompt: `I pasted ${key} and it broke`,
+        agentDid: `It echoed ${key} back`,
+        agentShouldHave: `Not echo ${key}`,
+        correctAnswer: `Refuse the ${key}`,
+        notes: `Also found ${key} in logs`
+      })
+    )
+    const payload = await readFeedbackJson(result.zipBase64)
+    for (const field of [
+      'user_prompt',
+      'agent_did',
+      'agent_should_have',
+      'correct_answer',
+      'notes'
+    ]) {
+      expect(payload[field]).not.toContain('sk-ant-')
+      expect(payload[field]).toContain('[REDACTED_API_KEY]')
+    }
+    const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
+    const md = await zip.file('FEEDBACK.md')!.async('string')
+    expect(md).not.toContain('sk-ant-')
+    expect(md).toContain('[REDACTED_API_KEY]')
+  })
 })
 
 describe('buildFeedbackZip — size budgets follow the server convention', () => {
@@ -278,6 +307,46 @@ describe('capSessionLog', () => {
     const last = JSON.parse(lines[lines.length - 1])
     expect(last.i).toBe(63)
     expect(note.dropped_leading_entries + (lines.length - 1)).toBe(64)
+  })
+})
+
+describe('redactApiKeys', () => {
+  it('replaces Anthropic sk-ant- keys', () => {
+    const input = '{"message":"my key is sk-ant-api03-abcDEF123456789012345678901234"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"my key is [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces OpenRouter sk-or- keys', () => {
+    const input = '{"message":"use sk-or-v1-abcdef1234567890abcdef1234567890"}\n'
+    expect(redactApiKeys(input)).toBe('{"message":"use [REDACTED_API_KEY]"}\n')
+  })
+
+  it('replaces generic sk- keys (40+ chars)', () => {
+    const key = 'sk-' + 'a'.repeat(48)
+    const input = `{"message":"${key}"}\n`
+    expect(redactApiKeys(input)).toBe('{"message":"[REDACTED_API_KEY]"}\n')
+  })
+
+  it('leaves short sk- tokens alone (not an API key)', () => {
+    const input = '{"message":"sk-short is fine"}\n'
+    expect(redactApiKeys(input)).toBe(input)
+  })
+
+  it('redacts multiple keys in one log', () => {
+    const lines = [
+      '{"type":"user","message":"sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA"}',
+      '{"type":"assistant","message":"ok"}',
+      '{"type":"user","message":"also sk-or-v1-BBBBBBBBBBBBBBBBBBBBBB"}'
+    ].join('\n')
+    const out = redactApiKeys(lines)
+    expect(out).not.toContain('sk-ant-')
+    expect(out).not.toContain('sk-or-')
+    expect(out).toContain('[REDACTED_API_KEY]')
+  })
+
+  it('leaves a log with no keys unchanged', () => {
+    const input = '{"type":"user","message":"find John Smith in 1870 census"}\n'
+    expect(redactApiKeys(input)).toBe(input)
   })
 })
 
@@ -738,6 +807,43 @@ describe('buildFeedbackZip — FEEDBACK.md always states the session-log status'
       const zip = await JSZip.loadAsync(Buffer.from(result.zipBase64, 'base64'))
       const md = await zip.file('FEEDBACK.md')!.async('string')
       expect(md).toContain('agent-empty')
+    })
+  })
+
+  // Before the set existed, redaction sat at the single zip write (#2175 /
+  // #1018 Task 5). Four kinds of member ship now -- active parent, grouped
+  // parent, subagent transcript, subagent meta -- and a key pasted in chat
+  // reaches the parent while a subagent handed it reaches the child's, so one
+  // call site per member is the shape that lets the next member ship a key.
+  // Mirrors test_session_log_redacts_api_keys_in_every_member_of_the_set in
+  // apps/server/tests/test_feedback.py.
+  it('redacts an API key in every transcript in the set, not just the parent', async () => {
+    const key = `sk-or-v1-${'a'.repeat(40)}`
+    await withPlantedHome(folder, async (projectDir) => {
+      const subagents = join(projectDir, 'session', 'subagents')
+      await mkdir(subagents, { recursive: true })
+      await writeFile(join(projectDir, 'session.jsonl'), turn(`my key is ${key}`), 'utf8')
+      await writeFile(join(subagents, 'agent-abc.jsonl'), turn(`reusing ${key}`), 'utf8')
+      await writeFile(
+        join(subagents, 'agent-abc.meta.json'),
+        `{"agentType":"proof-conclusion","description":"use ${key}",` +
+          '"toolUseId":"toolu_01","spawnDepth":1}\n',
+        'utf8'
+      )
+
+      const opts = { ...makeOptions(folder), includeSessionLog: true }
+      const zip = await JSZip.loadAsync(
+        Buffer.from((await buildFeedbackZip(opts)).zipBase64, 'base64')
+      )
+      for (const name of [
+        '_feedback/session-log.jsonl',
+        '_feedback/subagents/agent-abc.jsonl',
+        '_feedback/subagents/agent-abc.meta.json'
+      ]) {
+        const text = await zip.file(name)!.async('string')
+        expect(text, name).not.toContain(key)
+        expect(text, name).toContain('[REDACTED_API_KEY]')
+      }
     })
   })
 })

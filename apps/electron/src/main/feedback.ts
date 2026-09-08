@@ -27,6 +27,16 @@ const ZIP_CAP_BYTES = 35 * 1024 * 1024
 // prepend a truncation note rather than dropping the log.
 const SESSION_LOG_CAP_BYTES = 20 * 1024 * 1024
 
+// API-key patterns to redact from the session log before bundling. A user who
+// pasted a key in chat has it in the transcript; the feedback zip must not ship
+// it. Each regex matches the full key token so the replacement is unambiguous.
+const API_KEY_PATTERNS: RegExp[] = [
+  /sk-ant-[A-Za-z0-9_-]{20,}/g, // Anthropic
+  /sk-or-[A-Za-z0-9_-]{20,}/g, // OpenRouter
+  /sk-[A-Za-z0-9_-]{40,}/g // generic sk-* (OpenAI-style)
+]
+const REDACTED_KEY = '[REDACTED_API_KEY]'
+
 // Living-person redaction. Mirrors apps/server/app/feedback.py
 // (`_redact_living`) so a bundle built here and one built in the hosted app
 // contain the same thing.
@@ -347,10 +357,16 @@ export async function readSessionLog(folderPath: string): Promise<SessionLog> {
     const files: TranscriptFile[] = []
     const dropped: string[] = []
     let spent = 0
+    // Redaction happens HERE, not at the zip write, because the set now has
+    // four kinds of member (active parent, grouped parent, subagent transcript,
+    // subagent meta) and a per-call-site redaction would have to be repeated at
+    // each one -- the shape that lets a new member ship a key. Charged to the
+    // budget post-redaction so `sizeBytes` is the bytes that actually leave.
     const admit = (p: string, text: string): boolean => {
-      const size = Buffer.byteLength(text)
+      const redacted = redactApiKeys(text)
+      const size = Buffer.byteLength(redacted)
       if (spent + size > SESSION_LOG_CAP_BYTES) return false
-      files.push({ path: p, text })
+      files.push({ path: p, text: redacted })
       spent += size
       return true
     }
@@ -451,11 +467,11 @@ type NormalizedFields = {
 function normalizeAndValidate(report: FeedbackReport): NormalizedFields {
   const fields: NormalizedFields = {
     email: report.email.trim().toLowerCase(),
-    userPrompt: report.userPrompt.trim(),
-    agentDid: report.agentDid.trim(),
-    agentShouldHave: report.agentShouldHave.trim(),
-    correctAnswer: (report.correctAnswer ?? '').trim(),
-    notes: (report.notes ?? '').trim()
+    userPrompt: redactApiKeys(report.userPrompt.trim()),
+    agentDid: redactApiKeys(report.agentDid.trim()),
+    agentShouldHave: redactApiKeys(report.agentShouldHave.trim()),
+    correctAnswer: redactApiKeys((report.correctAnswer ?? '').trim()),
+    notes: redactApiKeys((report.notes ?? '').trim())
   }
   for (const [name, value] of Object.entries(fields)) {
     if (value.length > MAX_FIELD_CHARS) {
@@ -497,6 +513,18 @@ export function capSessionLog(entries: unknown[]): string {
     reason: `session log exceeded ${SESSION_LOG_CAP_BYTES} bytes; kept newest ${tail.length} entries`
   })
   return [note, ...tail].join('\n') + '\n'
+}
+
+/**
+ * Replace API-key-shaped tokens in serialized JSONL with a placeholder.
+ */
+export function redactApiKeys(serialized: string): string {
+  let out = serialized
+  for (const pattern of API_KEY_PATTERNS) {
+    pattern.lastIndex = 0
+    out = out.replace(pattern, REDACTED_KEY)
+  }
+  return out
 }
 
 export async function buildFeedbackZip(options: FeedbackOptions): Promise<FeedbackResult> {

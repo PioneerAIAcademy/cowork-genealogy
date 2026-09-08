@@ -65,7 +65,7 @@ The MCP server exposes 48 tools.
 | `collections_search` | Lists FamilySearch record collections for a place (returns the derived `scope`); optional `startYear`/`endYear` filter | OAuth |
 | `collection_read` | Full detail for a single FamilySearch collection by `id` (FS Research Wiki page converted to markdown) | OAuth |
 | `record_search` | FamilySearch historical-record search for a person | OAuth |
-| `record_read` | Fetch a FamilySearch historical record by ARK or entity ID — returns full simplified GEDCOMX | OAuth |
+| `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns full simplified GEDCOMX | OAuth |
 | `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
 | `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
 | `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
@@ -122,7 +122,7 @@ way project state changes.
 | `place_distance` | Distance between two FamilySearch places | None |
 | `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
 | `image_transcribe` | OCR a FamilySearch image by imageId or ark host-side (Gemini Flash via OpenRouter) and return **text** — no bytes cross the MCP transport, so it handles scans of any size. The `image-reader` subagent's reader. | OAuth + OpenRouter |
-| `configure_openrouter` | Save the user's OpenRouter API key to `~/.familysearch-mcp/config.json` (`openRouterApiKey`) so `image_transcribe` can run; returns a masked preview. Direct-invocation — Claude calls it when `image_transcribe` reports a missing/rejected key. | None |
+| `configure_openrouter` | Save an optional OpenRouter model slug to the per-user config so `image_transcribe` uses a non-default OCR model. Does not accept an API key — the user sets `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly. | None |
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives, reading the local tree — offline | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
@@ -150,8 +150,8 @@ for end users.
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an
 OpenRouter API key in `~/.familysearch-mcp/config.json` (`openRouterApiKey`);
-in Cowork, if the key is missing or rejected the workflow asks the user
-for one and saves it via `configure_openrouter`. The e2e harness and the
+if the key is missing or rejected, the error directs the user to add it
+in `config.json` directly (never via a tool call). The e2e harness and the
 hosted web server bridge the key from their own environment (see
 CLAUDE.md).
 
@@ -159,7 +159,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 27 skills covering the full GPS research cycle. Skills
+The plugin ships 28 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -180,7 +180,7 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
-| **research-exhaustiveness** | The gate before proof. Runs *after* all plan items for a question are `completed` or `skipped` and the resulting evidence has been extracted, classified, person-linked, and conflict-resolved. Applies the GPS 5 threshold questions and 7-point stop criteria; either writes the question's `exhaustive_declaration` or explains what's missing so you can extend the plan (`research-plan`) or pivot to FAN (`question-selection`). | "Is this research exhaustive?" / "Are we done?" / "Can we declare exhaustive?" |
+| **research-exhaustiveness** | The gate before proof. Runs *after* all plan items for a question are `completed` or `skipped` and the resulting evidence has been extracted, classified, person-linked, and conflict-resolved. Applies the seven stop criteria; either writes the question's `exhaustive_declaration` or explains what's missing so you can extend the plan (`research-plan`) or pivot to FAN (`question-selection`). | "Is this research exhaustive?" / "Are we done?" / "Can we declare exhaustive?" |
 
 ### Executing searches
 
@@ -197,6 +197,7 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 |-------|-------------|----------|
 | **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
 | **citation** | Polishes citations to Evidence Explained standards (Who/What/When/Where/Where-within). | "Fix citations" |
+| **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do). Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 
 ### Identity resolution and analysis
 
@@ -264,7 +265,7 @@ don't load it explicitly.
 | **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
 | **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
 | **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. The `proof-conclusion` skill delegates to it; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | (not invoked directly — `proof-conclusion` delegates) |
-| **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
+| **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the seven stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 
 ## Recommended workflow
@@ -285,9 +286,8 @@ don't load it explicitly.
 8. timeline                  Build chronological timeline, find gaps
 9. conflict-resolution       Resolve disagreements between sources
 10. hypothesis-tracking      Track competing candidates
-11. research-exhaustiveness  Gate before proof — applies the GPS 5
-                             threshold questions and 7-point stop
-                             criteria. If not yet exhaustive, loop
+11. research-exhaustiveness  Gate before proof — applies the seven
+                             stop criteria. If not yet exhaustive, loop
                              back to step 3 (extend plan) or step 2
                              (FAN pivot). If exhaustive, advance.
 12. proof-conclusion         Write the GPS conclusion
@@ -319,35 +319,32 @@ Specs: `docs/specs/research-schema-spec.md` and
 
 ## Researcher profile
 
-When you start a new project with `init-project`, the skill asks three
+When you start a new project with `init-project`, the skill asks two
 short questions in one opening turn:
 
 1. **Research objective** — what you are trying to find out.
 2. **Experience level** — *just starting out / some research under my
    belt / experienced / professional or certified*.
-3. **Access** — Ancestry, MyHeritage, FindMyPast, Newspapers.com,
-   GenealogyBank, FindAGrave-Plus, other, or none. Free access counts,
-   and is now recorded as such rather than collapsing to "other": a
-   partner subscription through your FamilySearch account stores as
-   `FamilySearch-Partner`, and a public library, family history centre
-   or affiliate library as `LibraryAccess`. A plain FamilySearch
-   account is the baseline everyone here has, so it isn't recorded —
-   that alone is "none".
 
-None of the three blocks. Answer what you like; anything you skip takes
+You are no longer asked which subscription sites you have. Access is
+assumed available, so nothing is recorded unless you mention it
+yourself — a project that says nothing about access is not a project
+that said it has none.
+
+Neither question blocks. Answer what you like; anything you skip takes
 a documented default, and the summary at the end names what was
 defaulted so you can correct it.
 
 The answers are written to a `researcher_profile` section of
 `research.json` alongside the rest of your project state. Every skill
-reads from it:
+but one reads from it:
 
 - **Experience level** drives narration density. A novice gets
   step-by-step "why I'm doing this" narration; an experienced
   researcher gets concise reporting. Internally the level maps to a
   `narration_guidance` string that the skill reads and follows
   verbatim — one place defines the mapping (`init-project`), one place
-  stores it (`research.json`), every skill reads it.
+  stores it (`research.json`), every skill but one reads it.
 - **Access** guides `search-external-sites` URL prioritization. Sites
   you can reach land first; the rest are still searchable but flagged.
 
@@ -500,7 +497,7 @@ What's shipped:
 - **48 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **27 shipped skills.** Full GPS research cycle from `init-project`
+- **28 shipped skills.** Full GPS research cycle from `init-project`
   through `proof-conclusion`, plus reference skills (locality-guide,
   historical-context, translation, search-familysearch-wiki, search-wikipedia)
   and guardrails (validate-schema, check-warnings, convert-dates). The three
@@ -512,9 +509,9 @@ What's shipped:
   for one question, and the only writer of `proof_summaries`),
   `research-exhaustiveness` (the exhaustiveness judgment for one question, and
   the only caller that may declare one exhaustive) and `image-reader` (page OCR).
-- **Researcher profile.** `init-project` asks the research objective,
-  experience level, and site access together in one non-blocking opening
-  turn; every skill adapts narration density to the answer.
+- **Researcher profile.** `init-project` asks the research objective and
+  experience level together in one non-blocking opening turn; every skill
+  adapts narration density to the answer. Site access is not asked.
 - **Eval harness** under `eval/` for skill regression testing.
 
 ## Developer and contributor docs
