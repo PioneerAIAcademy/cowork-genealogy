@@ -58,7 +58,7 @@ Two labels carry the routing:
 **`high-priority` is a picker signal, not routing.** It tells whoever is scanning
 Ready *take this before any other card in your lane* — a soft ordering, not an
 interrupt. It is applied only to cards in Ready and is yours alone to add and
-remove: § 2 "Mark the high-priority cards". It is never a filing label, so one
+remove: § 5 "Mark the high-priority cards". It is never a filing label, so one
 sitting anywhere but Ready is a hygiene finding, not a ranking input.
 
 **The `feedback` label means untriaged, and nothing else.** An issue labelled
@@ -454,45 +454,6 @@ Deprioritise, explicitly and out loud: anything downstream of a broken
 measurement (assigning it buys numbers nobody can read), and anything whose
 cost is a paid eval run that a nearby issue is about to spend anyway.
 
-### Mark the high-priority cards
-
-After ranking, and over every card **in Ready** — nowhere else; the signal means
-something only to someone scanning the menu — decide which carry `high-priority`. A card qualifies on **any one**
-of four criteria. Effort is never one.
-
-1. **Critical path.** It gates a milestone and its honest lead time is longer
-   than the slack computed above — the same item the previous section already
-   sends to the top of its pool.
-2. **Live harm shipping now.** Heuristic 1: silent corruption, a wrong conclusion
-   reaching a user, a guardrail hole in a production path.
-3. **Holds a contended skill slot.** Three or more other open issues name the
-   same skill, agent or unit-test directory in their `Touches:` line. Read it
-   off the slot map already built for Gate 4 — do not run a fresh query.
-   Finishing this card is what releases them.
-4. **A lead's call.** Applied by hand by Richard or Dallan, and never proposed
-   for removal here — only by hand.
-
-**Every application writes one line into the body**, directly below any
-`> **Reviewed …**` line and above the body proper, naming the criterion and the
-date. It is what tells the next run — and the picker — why the card is marked:
-
-```
-> **High priority (2026-09-08):** critical path — gates Beta; ~5 wks lead vs 8 wks slack.
-> **High priority (2026-09-08):** live harm — <one clause>.
-> **High priority (2026-09-08):** holds <skill> — #N, #M, #K waiting.
-> **High priority (2026-09-08):** lead: <login>.
-```
-
-**Re-derive criteria 1–3 every run.** A labelled card whose criterion has lapsed
-— the waiting issues merged or closed, the slack recovered, the harm fixed
-upstream — or that has left Ready, gets a proposed `--remove-label high-priority`
-and the body line deleted in the same write. A card whose line reads `lead:` is
-left alone. A card whose criterion changed gets the line rewritten.
-
-Propose additions, removals and rewrites together in the report (Output shape,
-1c), each with its criterion, and apply only what is approved — § 5 has the
-writes.
-
 ## 3. The four gates — nothing enters Ready that fails one
 
 A Ready item must be startable *today* by one person who reads only that issue.
@@ -835,12 +796,47 @@ same workflow files it into the Feedback column, where `/triage-feedback` moves
 it to Not planned or to Backlog, dropping the `feedback` label on the way. It
 reaches you as an ordinary issue and is promoted with this move like any other.)
 
-**Then the `high-priority` writes** from § 2 "Mark the high-priority cards" —
-each one approved like every other write here, and the body line always in the
-same write as the label:
+### Mark the high-priority cards
+
+After the promotions above, and over every card **in Ready** — nowhere else; the
+signal means something only to someone scanning the menu — decide which carry
+`high-priority`. A card qualifies on **any one**
+of four criteria. Effort is never one.
+
+1. **Critical path.** It gates a milestone and its honest lead time is longer
+   than the slack computed above — the same item the previous section already
+   sends to the top of its pool.
+2. **Live harm shipping now.** Heuristic 1: silent corruption, a wrong conclusion
+   reaching a user, a guardrail hole in a production path.
+3. **Holds a contended skill slot.** Three or more other open issues name the
+   same skill, agent or unit-test directory in their `Touches:` line. Read it
+   off the slot map already built for Gate 4 — do not run a fresh query.
+   Finishing this card is what releases them.
+4. **A lead's call.** Applied by hand by Richard or Dallan, and never proposed
+   for removal here — only by hand.
+
+**Every application writes one line into the body**, directly below any
+`> **Reviewed …**` line and above the body proper, naming the criterion and the
+date. It is what tells the next run — and the picker — why the card is marked:
+
+```
+> **High priority (2026-09-08):** critical path — gates Beta; ~5 wks lead vs 8 wks slack.
+> **High priority (2026-09-08):** live harm — <one clause>.
+> **High priority (2026-09-08):** holds <skill> — #N, #M, #K waiting.
+> **High priority (2026-09-08):** lead: <login>.
+```
+
+**Re-derive criteria 1–3 every run.** A labelled card whose criterion has lapsed
+— the waiting issues merged or closed, the slack recovered, the harm fixed
+upstream — or that has left Ready, gets a proposed `--remove-label high-priority`
+and the body line deleted in the same write. A card whose line reads `lead:` is
+left alone. A card whose criterion changed gets the line rewritten.
+
+Propose additions, removals and rewrites together in the report (Output shape,
+1c), each with its criterion, and apply only what is approved:
 
 ```sh
-# add
+# add — the body line always goes in the same write as the label
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label high-priority
 gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body > /tmp/body.md
 # insert `> **High priority (<date>):** <criterion> — <clause>.` below any `> **Reviewed` line, then:
