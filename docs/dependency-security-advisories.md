@@ -8,22 +8,27 @@ Last reviewed: **2026-09-08**.
 
 **Reachability, once, up front.** Every finding below except `fast-uri` lives in a
 **devDependency** — dev tooling (eslint, vite/vitest, electron-builder,
-`@anthropic-ai/mcpb`) or the internal-only Eval CRUD UI. `pnpm why --prod` returns
-*nothing* for every vulnerable package in the workspace. The `.mcpb` is built with
+`@anthropic-ai/mcpb`) or the internal-only Eval CRUD UI. Check reachability with
+`pnpm why --prod -r <pkg>` — **without `-r` the command inspects only the root
+package, which declares no dependencies, so it returns nothing for everything**
+(`pnpm why --prod react` is silent even though `apps/web` depends on it). The
+`.mcpb` is built with
 `npm ci --omit=dev` (`scripts/build-mcpb.mjs`), so dev-tree findings never reach
 **that** artifact. Weigh fix churn against that before treating a HIGH as urgent.
 
 **One dev-tree package does ship, and it is the exception to the paragraph above.**
-`electron` is a devDependency — `pnpm why --prod electron` returns nothing — but
+`electron` is a devDependency of `apps/electron` — but
 `apps/electron/electron-builder.yml` sets no `electronVersion`, so electron-builder
 packages the runtime at whatever version that devDependency resolves to. An advisory
 against `electron` therefore reaches every installed Research Viewer, and the
 `npm ci --omit=dev` reasoning does not cover it. Treat `electron` findings as shipping.
 
-**`pnpm audit --prod` over-reports here.** It flagged `extract-zip` as production while
-`pnpm why --prod extract-zip` returns nothing. It fails safe, so it is still usable as a
-gate, but do not read its output as the production tree — `pnpm why --prod` is what
-answers that.
+**`pnpm audit --prod` reaches through peer edges, and was right here.** It flags
+`extract-zip` as production because `@electron-toolkit/utils` — a real production
+dependency of `apps/electron` — peer-depends on `electron`, which declares
+`extract-zip`. `pnpm why --prod -r extract-zip` prints that path. Confirm any such
+finding with `-r` rather than assuming the audit over-reports; the bare command
+returns nothing for every package, so it cannot disagree with anything.
 
 ## Fixed
 
@@ -113,8 +118,9 @@ answers that.
   bump to and an override has no target. Not reachable by a user of the shipped app:
   `extract-zip` is what electron's own postinstall uses to unpack the runtime archive it
   downloads from Electron's release server over HTTPS at install time on a developer's
-  machine, and the traversal needs an attacker-controlled zip. `pnpm why --prod
-  extract-zip` returns nothing.
+  machine, and the traversal needs an attacker-controlled zip. It reaches the
+  production graph only through `electron`'s peer edge
+  (`pnpm why --prod -r extract-zip`).
   **Revisit when** a fixed `extract-zip` is published, or when `electron` drops the
   dependency.
 
