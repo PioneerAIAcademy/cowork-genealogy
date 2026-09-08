@@ -361,40 +361,41 @@ async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
     monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
 
     email = "revoke-sandbox-test@example.com"
-    with Session(get_engine()) as s:
-        user = User(id="usr_revoke_test_01", email=email)
-        s.add(user)
-        s.add(Project(
-            id="prj_revoke_test_01", user_id=user.id,
-            sandbox_id="sbx_revoke_test_01", status="active",
-        ))
-        s.add(Project(
-            id="prj_revoke_test_02", user_id=user.id,
-            sandbox_id="sbx_revoke_test_02", status="archived",
-        ))
-        s.commit()
+    with TestClient(app):
+        with Session(get_engine()) as s:
+            user = User(id="usr_revoke_test_01", email=email)
+            s.add(user)
+            s.add(Project(
+                id="prj_revoke_test_01", user_id=user.id,
+                sandbox_id="sbx_revoke_test_01", status="active",
+            ))
+            s.add(Project(
+                id="prj_revoke_test_02", user_id=user.id,
+                sandbox_id="sbx_revoke_test_02", status="archived",
+            ))
+            s.commit()
 
-    provider = AsyncMock()
-    await _revoke_sandboxes(provider)
+        provider = AsyncMock()
+        await _revoke_sandboxes(provider)
 
-    provider.delete.assert_called_once_with("sbx_revoke_test_01")
+        provider.delete.assert_called_once_with("sbx_revoke_test_01")
 
-    with Session(get_engine()) as s:
-        active = s.get(Project, "prj_revoke_test_01")
-        assert active is not None and active.status == "archived", \
-            "active project must be archived after sandbox revocation"
-        already = s.get(Project, "prj_revoke_test_02")
-        assert already is not None and already.status == "archived", \
-            "already-archived project must remain archived"
+        with Session(get_engine()) as s:
+            active = s.get(Project, "prj_revoke_test_01")
+            assert active is not None and active.status == "archived", \
+                "active project must be archived after sandbox revocation"
+            already = s.get(Project, "prj_revoke_test_02")
+            assert already is not None and already.status == "archived", \
+                "already-archived project must remain archived"
 
-    with Session(get_engine()) as s:
-        for uid in ("usr_revoke_test_01",):
-            u = s.get(User, uid)
-            if u:
-                for p in s.exec(select(Project).where(Project.user_id == uid)).all():
-                    s.delete(p)
-                s.delete(u)
-        s.commit()
+        with Session(get_engine()) as s:
+            for uid in ("usr_revoke_test_01",):
+                u = s.get(User, uid)
+                if u:
+                    for p in s.exec(select(Project).where(Project.user_id == uid)).all():
+                        s.delete(p)
+                    s.delete(u)
+            s.commit()
 
 
 @pytest.mark.asyncio
@@ -408,34 +409,35 @@ async def test_revoke_sandboxes_skips_archival_on_failed_delete(monkeypatch):
     monkeypatch.setattr(get_settings(), "familysearch_web_enabled", True)
 
     email = "revoke-fail-test@example.com"
-    with Session(get_engine()) as s:
-        user = User(id="usr_revoke_fail_01", email=email)
-        s.add(user)
-        s.add(Project(
-            id="prj_revoke_fail_01", user_id=user.id,
-            sandbox_id="sbx_revoke_fail_01", status="active",
-        ))
-        s.commit()
+    with TestClient(app):
+        with Session(get_engine()) as s:
+            user = User(id="usr_revoke_fail_01", email=email)
+            s.add(user)
+            s.add(Project(
+                id="prj_revoke_fail_01", user_id=user.id,
+                sandbox_id="sbx_revoke_fail_01", status="active",
+            ))
+            s.commit()
 
-    provider = AsyncMock()
-    provider.delete.side_effect = RuntimeError("E2B API down")
-    await _revoke_sandboxes(provider)
+        provider = AsyncMock()
+        provider.delete.side_effect = RuntimeError("E2B API down")
+        await _revoke_sandboxes(provider)
 
-    provider.delete.assert_called_once_with("sbx_revoke_fail_01")
+        provider.delete.assert_called_once_with("sbx_revoke_fail_01")
 
-    with Session(get_engine()) as s:
-        project = s.get(Project, "prj_revoke_fail_01")
-        assert project is not None and project.status == "active", \
-            "failed delete must leave project active for retry on next boot"
+        with Session(get_engine()) as s:
+            project = s.get(Project, "prj_revoke_fail_01")
+            assert project is not None and project.status == "active", \
+                "failed delete must leave project active for retry on next boot"
 
-    with Session(get_engine()) as s:
-        for uid in ("usr_revoke_fail_01",):
-            u = s.get(User, uid)
-            if u:
-                for p in s.exec(select(Project).where(Project.user_id == uid)).all():
-                    s.delete(p)
-                s.delete(u)
-        s.commit()
+        with Session(get_engine()) as s:
+            for uid in ("usr_revoke_fail_01",):
+                u = s.get(User, uid)
+                if u:
+                    for p in s.exec(select(Project).where(Project.user_id == uid)).all():
+                        s.delete(p)
+                    s.delete(u)
+            s.commit()
 
 
 def test_get_current_user_rejects_removed_allowlist_email(monkeypatch):
