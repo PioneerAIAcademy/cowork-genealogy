@@ -128,14 +128,15 @@ for injected in .claude .claude.json .mcp.json .gitattributes .git; do
     rm -rf "$DEST_DIR/$injected"
   fi
 done
-# CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and it
-# arrives in ordinary submissions. Claude Code would load it as project
-# instructions, so rename rather than delete — the triager keeps the content
-# for reproduction, but it no longer executes as config.
-if [[ -e "$DEST_DIR/CLAUDE.md" ]]; then
-  echo "Note: renamed CLAUDE.md to CLAUDE.md.submitted so it is not loaded as instructions."
-  mv "$DEST_DIR/CLAUDE.md" "$DEST_DIR/CLAUDE.md.submitted"
-fi
+# CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and they
+# walk recursively, so one can arrive at any depth. Claude Code loads a subtree
+# CLAUDE.md when it reads files in that subtree, and the triage workflow reads
+# results/. Rename rather than delete: the triager keeps the content for
+# reproduction, but it no longer executes as config.
+while IFS= read -r -d '' f; do
+  echo "Note: renamed ${f#"$DEST_DIR"/} to ${f#"$DEST_DIR"/}.submitted so it is not loaded as instructions."
+  mv "$f" "$f.submitted"
+done < <(find "$DEST_DIR" -type f -name CLAUDE.md -print0)
 
 # --- Write .feedback-repo-root ---
 echo "$REPO_ROOT" > "$DEST_DIR/.feedback-repo-root"

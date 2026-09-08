@@ -104,6 +104,7 @@ Given a zip, the setup script MUST:
 | 4 | Append `.claude/` to the case's `.gitignore`, preserving any existing entries, creating the file if absent. |
 | 5 | `git init` and make exactly one commit titled **`imported`**. |
 | 6 | Create `.claude/skills/` as a **real directory** (never a symlink) holding one symlink per skill — every skill in `packages/engine/plugin/skills/` and every dev skill in the repo's `.claude/skills/`. Symlinks mean a `SKILL.md` edit takes effect on the next run with no rebuild, which is what makes the fix loop cheap. |
+| 8 | Strip injected config files (`.claude/`, `.claude.json`, `.mcp.json`, `.gitattributes`, `.git/`) and rename every `CLAUDE.md` at any depth to `CLAUDE.md.submitted`. The strip runs after the completeness check but before `.gitignore`, `git init`, and the script's own `.claude/`. |
 | 7 | Print the tester's `user_prompt` verbatim, for first paste. The submission dialog does not require that box, so it may legitimately be empty. **Neither script handles that case yet**: the `.sh` falls through to "see feedback.json (user_prompt field)", pointing at the empty field, and the `.bat` prints the heading and both rules with nothing between them. Until that lands, a triager who sees either should read `_feedback/session-log.jsonl` instead, remembering that a trimmed log drops its oldest entries and so the prompt first. |
 
 Ordering matters: the marker and `.gitignore` are written **before** the commit

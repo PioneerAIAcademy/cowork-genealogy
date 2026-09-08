@@ -239,12 +239,16 @@ The script:
   you did.
 
 > **Security: always unpack with the setup script, not plain `unzip`.** The
-> script strips any `.claude/` directory from the zip before wiring the skills
-> in. A legitimate feedback zip never contains dotfiles (both walkers skip
-> them), so a `.claude/` in the zip would be injected configuration. If the
-> script prints "Warning: stripped .claude/ from the zip", note it on the
-> issue: it means the bundle was hand-crafted or came from an unexpected
-> source.
+> script strips injected config before wiring the skills in: `.claude/`,
+> `.claude.json`, `.mcp.json`, `.gitattributes`, and `.git/` are deleted, and
+> every `CLAUDE.md` at any depth is renamed to `CLAUDE.md.submitted` so it is
+> kept for reproduction but not loaded as instructions. A legitimate feedback
+> zip never contains dotfiles (both walkers skip them), so any of the first
+> five would be injected; `CLAUDE.md` arrives in ordinary submissions but
+> executes as project config if left in place. `.gitattributes` and `.git/`
+> execute through git filters during `git add`, not through Claude Code.
+> If the script prints a "Warning: stripped" or "Note: renamed" line, note it
+> on the issue.
 
 > **Why the snapshot matters — it's the retry mechanism.** The case folder is a
 > *capture*: unlike an e2e fixture, there is no `make e2e-project` to re-seed it

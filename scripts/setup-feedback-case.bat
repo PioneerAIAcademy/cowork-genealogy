@@ -110,13 +110,16 @@ for %%F in (.claude .claude.json .mcp.json .gitattributes .git) do (
         )
     )
 )
-REM CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and it
-REM arrives in ordinary submissions. Claude Code would load it as project
-REM instructions, so rename rather than delete -- the triager keeps the content
-REM for reproduction, but it no longer executes as config.
-if exist "!DEST_DIR!\CLAUDE.md" (
-    echo Note: renamed CLAUDE.md to CLAUDE.md.submitted so it is not loaded as instructions.
-    ren "!DEST_DIR!\CLAUDE.md" "CLAUDE.md.submitted"
+REM CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and they
+REM walk recursively, so one can arrive at any depth. Claude Code loads a subtree
+REM CLAUDE.md when it reads files there, and the triage workflow reads results/.
+REM Rename rather than delete: the triager keeps the content for reproduction,
+REM but it no longer executes as config.
+for /r "!DEST_DIR!" %%F in (CLAUDE.md) do (
+    if exist "%%F" (
+        echo Note: renamed %%F to CLAUDE.md.submitted so it is not loaded as instructions.
+        ren "%%F" "CLAUDE.md.submitted"
+    )
 )
 
 REM --- Write .feedback-repo-root ---
