@@ -1903,6 +1903,43 @@ def test_informant_not_in_who_ignores_preexisting_informant():
     )
 
 
+def test_informant_not_in_who_ignores_preexisting_citation_informant():
+    """The citation-string arm's novelty guard, which nothing pinned.
+
+    The `who` arm has ignores_preexisting_informant; the citation arm had
+    coverage for firing but none for NOT firing, so removing
+    `citation != before_citation` passed the whole 3200-test suite. Without
+    the guard, any run that leaves an already-'informant' citation untouched
+    is a false positive — the same shape as the mid-research-flynn null run.
+    """
+    src = {
+        "id": "src_004",
+        "citation": "Pennsylvania Department of Health; informant: James Brown",
+        "citation_detail": {"who": "Pennsylvania Department of Health"},
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [dict(src)]  # identical — skill changed nothing
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is True, (
+        f"false positive on a pre-existing citation-string informant: {result.error}"
+    )
+
+
 def test_informant_not_in_who_fires_on_citation_string():
     """V10: the citation-string arm fires when 'informant' is introduced
     in the citation field (not citation_detail.who)."""
