@@ -68,8 +68,7 @@ is what tells the researcher where to route the search.
 - **Survey system:** [metes and bounds, rectangular survey, other]
 - **Land-distribution jurisdiction:** [who granted the land, and which office holds the
   grants/patents — from the `{Jurisdiction}_Land_and_Property` page, not assumed]
-- **Types:** [deeds, grants, patents, mortgages, tax records, bounties, and any
-  land act that created its own series — named from the fetched page, not recalled]
+- **Types:** [deeds, grants, patents, mortgages, tax records, bounties, land acts (e.g., the Homestead Act)]
 - **Date range:** [earliest available]
 - **Where held:** [recorder of deeds, state land office, online?]
 
