@@ -1743,6 +1743,30 @@ def test_v6_matches_bare_not_recorded():
     assert "entire" in (result.error or "").lower()
 
 
+def test_v6_fires_on_bare_not_recorded_inside_where():
+    """V6: bare [NOT RECORDED] inside a longer `where` value — names no
+    framework element.  The position rule does not fire (marker is not
+    the entire value), but the empty-element rule catches it."""
+    before, after = _v6_states(
+        "FamilySearch.org; original repository [NOT RECORDED]", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "bare" in (result.error or "").lower()
+
+
 def test_v6_fires_on_custody_marker_in_where_with_access_point():
     """V6: [PHYSICAL REPOSITORY NOT RECORDED] alongside an access point
     in `where` passes the (narrowed) position rule but fails the custody-
