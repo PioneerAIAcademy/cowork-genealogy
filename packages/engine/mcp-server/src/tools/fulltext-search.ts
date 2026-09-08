@@ -244,35 +244,38 @@ export async function fulltextSearchTool(
   // transcript (the tool's "mentioned anywhere in the document" case).
   function detectVariantsInResults(): string[] {
     if (!expansion) return [];
-    const allVariants = new Set<string>();
+    // Map lowercase -> canonical table form so the output correlates with
+    // expansions (which uses table casing, e.g. "Betty" not "betty").
+    const lowerToCanonical = new Map<string, string>();
     for (const variants of Object.values(expansion.expansions)) {
       for (const v of variants) {
-        allVariants.add(v.toLowerCase());
+        lowerToCanonical.set(v.toLowerCase(), v);
       }
     }
     const matched = new Set<string>();
     for (const r of results) {
       for (const name of r.names ?? []) {
         for (const word of name.split(/\s+/)) {
-          const lower = word.toLowerCase();
-          if (allVariants.has(lower)) {
-            matched.add(lower);
+          const canonical = lowerToCanonical.get(word.toLowerCase());
+          if (canonical) {
+            matched.add(canonical);
           }
         }
       }
       for (const hl of r.highlightTerms ?? []) {
         for (const word of hl.split(/\s+/)) {
-          const lower = word.toLowerCase();
-          if (allVariants.has(lower)) {
-            matched.add(lower);
+          const canonical = lowerToCanonical.get(word.toLowerCase());
+          if (canonical) {
+            matched.add(canonical);
           }
         }
       }
       if (r.textDocument) {
         for (const word of r.textDocument.split(/\s+/)) {
           const clean = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
-          if (clean && allVariants.has(clean)) {
-            matched.add(clean);
+          const canonical = clean ? lowerToCanonical.get(clean) : undefined;
+          if (canonical) {
+            matched.add(canonical);
           }
         }
       }

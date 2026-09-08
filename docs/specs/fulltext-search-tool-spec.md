@@ -275,7 +275,7 @@ nameExpansion?: {
   original: string;            // the caller's input.name
   expanded: string;            // the query actually sent (quoted-phrase variants)
   expansions: Record<string, string[]>;  // original token → variant forms added
-  variantsInResults: string[]; // variant forms found in result names/highlights
+  variantsInResults: string[]; // variant forms found in result names/highlights/textDocument (canonical table casing)
 };
 ```
 
