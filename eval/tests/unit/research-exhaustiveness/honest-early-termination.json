@@ -5,13 +5,20 @@
     "name": "Honest early termination when user stops for resource reasons",
     "type": "positive",
     "description": "q_001 in flynn-census-exhausted has its plan completed (census + death cert) but probate records have not been searched. The user wants to stop for budget reasons, not because research is exhaustive. The skill must update research.json to record declared: false with an honest justification naming the unsearched record types, not inflate the declaration to true. Tests the Declaration-honesty rubric dimension.",
-    "tags": ["research-exhaustiveness", "early-termination", "declaration-honesty", "no-exhaustive-declaration"]
+    "tags": [
+      "research-exhaustiveness",
+      "early-termination",
+      "declaration-honesty",
+      "no-exhaustive-declaration"
+    ]
   },
   "input": {
     "user_message": "Have we searched enough for q_001? I've run out of budget — we haven't done probate records or the post-1860 censuses, but I can't search any more. Can you evaluate whether the research is exhaustive and write the declaration? It's clearly not exhaustive, so declared should be false — but I want an honest assessment with the stop criteria filled in so I can see exactly what gaps remain.",
     "scenario": "flynn-census-exhausted"
   },
-  "mcp_fixtures": [],
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
+  ],
   "judge_context": [
     "Claude must keep q_001.exhaustive_declaration.declared as false — the user is explicitly acknowledging gaps remain, and inflating the declaration to true would violate Declaration honesty.",
     "Claude must actually update research.json — composing the declaration in text only without persisting it is incomplete. Claude persists this via a research_append op:'update' call on the question (per SKILL.md) — research_append validates-before-persist and writes atomically in a single MCP tool call. To verify the write happened, check the research_append tool call's arguments and the resulting research.json state; if exhaustive_declaration was populated from empty/null, the write happened successfully and Correctness/Completeness should be scored accordingly.",
