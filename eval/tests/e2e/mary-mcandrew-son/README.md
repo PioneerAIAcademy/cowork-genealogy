@@ -73,3 +73,18 @@ guard naming the 1873 John A Morgan birth (spec §3.4.1 — the harness
 mechanically fails a run whose final tree contains the avoided claim)
 paired with a `required` negative-conclusion finding: no sixth child of
 Mary and John Mogan can be established, and the hint record was rejected.
+
+## Bundled captures (`provided-documents/`)
+
+Two Ancestry pages are committed here to let the harness exercise its Ancestry plan items without a
+paywalled browser session (issue #2083):
+
+| File | Collection searched | What it shows |
+|------|---------------------|---------------|
+| `ancestry-mi-deaths-mogan-wayneco.pdf` | Ancestry — Michigan Death Records, Mogan, Wayne County | Michigan death records for the Mogan surname in Wayne County |
+| `ancestry-mi-probate-mogan-john.pdf` | Ancestry — Michigan Wills and Probate, John Mogan | Michigan probate records for John Mogan |
+
+Both are authentic pages saved from ancestry.com in a credentialed browser. They give the agent access to
+Michigan Ancestry collections it would otherwise skip for lack of a human upload. The agent uses them to
+verify whether the Mogan/McAndrew family has any record touching a child born around 1873 — which it
+does not — and to support the negative conclusion that no sixth child can be established.
