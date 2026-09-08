@@ -57,6 +57,17 @@ _DRAIN_IDLE = 0.5
 # SSE heartbeat interval: emit a comment if no frame arrives within this window so
 # proxies don't drop a long-running stream.
 _HEARTBEAT_S = 15.0
+# The text of the `error` event a stream turn ends on when it exceeds
+# v1_stream_idle_seconds without a non-ping frame. It names the SAME code the
+# sync path's 504 carries (`turn_timeout`), because it is the same condition
+# reported on the transport that cannot carry a status line. The published
+# `finish_reason` enum stays "stop" | "error" — a third value would be a
+# breaking change to the response contract for a case the error text already
+# distinguishes.
+_IDLE_MESSAGE = (
+    "turn_timeout: the turn produced no output for "
+    "v1_stream_idle_seconds and was ended. Retry, or send a shorter request."
+)
 # Retry the in-process connect to the freshly-launched sandbox WS server until it
 # is listening (~5s budget).
 _CONNECT_ATTEMPTS = 50
@@ -182,6 +193,33 @@ def _normalize(raw: str):
     return None
 
 
+def _is_liveness(raw: str) -> bool:
+    """Does this frame prove the turn is still alive?
+
+    EVERY in-sandbox frame except the Hub's heartbeat counts, and both halves of
+    that are load-bearing:
+
+    - Not "any frame". The Hub broadcasts {"type":"ping"} to every connected
+      client every WS_HEARTBEAT_INTERVAL seconds (sandbox_server), so an idle
+      clock reset by any frame can never fire — the pings keep arriving whether
+      the agent is working or dead. `_normalize` drops them from the public
+      stream, which is exactly why they are invisible here unless looked for.
+    - Not "only public events". A real turn is silent of text/tool frames for
+      minutes while a subagent works — the reason the heartbeat loop exists at
+      all — so counting only what `_normalize` returns would fire on a HEALTHY
+      turn. `status` frames and viewer deltas are dropped from the public stream
+      but are still proof the sandbox is doing something.
+
+    An unparseable frame counts as liveness: it is not a ping, and the socket
+    delivering something is evidence. Failing toward "alive" keeps this from
+    ending a legitimate turn, which is the worse error here.
+    """
+    try:
+        return (json.loads(raw) or {}).get("type") != "ping"
+    except (json.JSONDecodeError, AttributeError, TypeError):
+        return True
+
+
 async def _drain_replay(ws) -> None:
     """Consume the snapshot/history replay burst, stopping once the socket has been
     idle for _DRAIN_IDLE. A cancelled recv leaves any buffered frame for the next
@@ -269,10 +307,23 @@ async def _handle_stream(provider, sandbox_id: str, message: str, session_id: st
     async def gen():
         text_parts: list[str] = []
         finish = "stop"
+        idle_cap = get_settings().v1_stream_idle_seconds
+        last_alive = time.monotonic()
         try:
             await _drain_replay(ws)
             await ws.send(json.dumps({"type": "user_msg", "text": message}))
             while True:
+                # Checked at the TOP of the loop, not only on a recv timeout,
+                # because a recv timeout is not reached when the agent is silent
+                # but the Hub is not: its pings return from `recv()` inside
+                # _HEARTBEAT_S forever, so a check hung off `asyncio.TimeoutError`
+                # alone would never run in the case this cap exists for. Here the
+                # loop turns over at least every _HEARTBEAT_S either way — on a
+                # ping or on the timeout — so this is reached in both.
+                if time.monotonic() - last_alive >= idle_cap:
+                    finish = "error"
+                    yield _sse("error", {"type": "error", "text": _IDLE_MESSAGE})
+                    break
                 try:
                     raw = await asyncio.wait_for(ws.recv(), timeout=_HEARTBEAT_S)
                 except asyncio.TimeoutError:
@@ -280,6 +331,8 @@ async def _handle_stream(provider, sandbox_id: str, message: str, session_id: st
                     continue
                 except websockets.ConnectionClosed:
                     break
+                if _is_liveness(raw):
+                    last_alive = time.monotonic()
                 ev = _normalize(raw)
                 if ev is None:
                     continue

@@ -6,8 +6,11 @@ Keys come from conftest's API_KEYS:
   sk_test  → api-bot@example.com   (NOT on the allowlist — operator-granted)
   sk_other → other-bot@example.com (a second client, for isolation)
 """
+import asyncio
 import json
 from datetime import timedelta
+
+import pytest
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -241,6 +244,164 @@ def test_sync_turn_timeout_returns_504(monkeypatch):
                         json={"message": "let's start"}, headers=K)
         assert r.status_code == 504, r.text
         assert r.json()["error"]["code"] == "turn_timeout"
+        client.delete(f"/v1/sessions/{sid}", headers=K)
+
+
+# ── streaming idle cap ───────────────────────────────────────────
+# WHAT THESE PROVE, AND WHAT THEY DO NOT. Together they show the cap fires on a
+# silent agent behind a LIVE Hub, that a non-public frame resets it, and that a
+# ping flood breaks nothing on a healthy turn. What no test here does is drive a
+# genuinely silent real sandbox: the mock agent has no silence knob, and adding
+# one would be a product change made for a test. So the ping frames in the two
+# unit-level tests are the Hub's real bytes over a fake socket, and the
+# integration test runs the real Hub with its interval turned down. Nothing in
+# CI exercises a silent sandbox (docs/architecture.md §9.4), which is what
+# `nothing-checks` is on this card for.
+
+
+class _PingOnlyWS:
+    """A socket delivering the Hub's heartbeat and nothing else.
+
+    This is the exact shape of the wedge: a live Hub in front of an agent that
+    has stopped producing. The frame is byte-identical to what
+    `sandbox_server`'s `_heartbeat_loop` broadcasts.
+    """
+
+    def __init__(self, interval: float = 0.02):
+        self.interval = interval
+        self.pings = 0
+        self.sent: list[str] = []
+        self.closed = False
+
+    async def recv(self):
+        await asyncio.sleep(self.interval)
+        self.pings += 1
+        return json.dumps({"type": "ping", "ts": 1})
+
+    async def send(self, raw):
+        self.sent.append(raw)
+
+    async def close(self):
+        self.closed = True
+
+
+class _StatusThenDoneWS(_PingOnlyWS):
+    """Pings, interleaved with `status` frames the public stream DROPS, then a
+    turn_done. A real turn looks like this while a subagent works."""
+
+    def __init__(self, interval: float = 0.02, status_every: int = 3, finish_after: int = 12):
+        super().__init__(interval)
+        self.status_every = status_every
+        self.finish_after = finish_after
+        self.frames = 0
+
+    async def recv(self):
+        await asyncio.sleep(self.interval)
+        self.frames += 1
+        if self.frames >= self.finish_after:
+            return json.dumps({"type": "agent_event", "event": {"kind": "turn_done"}})
+        if self.frames % self.status_every == 0:
+            return json.dumps({"type": "status", "phase": "active"})
+        self.pings += 1
+        return json.dumps({"type": "ping", "ts": 1})
+
+
+async def _stream_body(monkeypatch, ws, idle_cap: float) -> str:
+    """Drive `_handle_stream`'s generator over `ws` and return the SSE body.
+
+    `_drain_replay` is stubbed out: it loops until a recv TIMES OUT, which a
+    socket that always has a frame ready never does. It is not what is under
+    test here.
+    """
+    from app import v1
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "v1_stream_idle_seconds", idle_cap)
+    monkeypatch.setattr(v1, "_HEARTBEAT_S", 0.05)
+    monkeypatch.setattr(v1, "_open_ws", _async_return(ws))
+    monkeypatch.setattr(v1, "_drain_replay", _async_noop)
+    monkeypatch.setattr(v1, "_release_turn", lambda *a, **k: None)
+
+    resp = await v1._handle_stream(None, "sb", "go", "sess", "tok")
+    return "".join([chunk async for chunk in resp.body_iterator])
+
+
+def _async_return(value):
+    async def _f(*_a, **_k):
+        return value
+
+    return _f
+
+
+async def _async_noop(*_a, **_k):
+    return None
+
+
+@pytest.mark.asyncio
+async def test_stream_idle_cap_fires_through_a_ping_flood(monkeypatch):
+    """THE CAP THIS CARD IS ABOUT. Before it, `_handle_stream` had no bound of
+    any kind and this stream never ended.
+
+    The discriminating property is the ping flood: an idle clock reset by any
+    frame can never fire, because the Hub keeps sending. If `_is_liveness`
+    stopped excluding pings, this test would hang rather than fail, which is why
+    the ping count is asserted too.
+    """
+    ws = _PingOnlyWS(interval=0.02)
+    body = await asyncio.wait_for(_stream_body(monkeypatch, ws, idle_cap=0.3), timeout=15)
+
+    assert "event: error" in body, body
+    assert "turn_timeout" in body, body
+    blocks = [b for b in body.split("\n\n") if b.startswith("event: done")]
+    assert blocks, body
+    assert json.loads(blocks[-1].split("data: ", 1)[1])["finish_reason"] == "error"
+    assert ws.pings >= 3, (
+        f"only {ws.pings} ping(s) arrived, so the flood was not exercised and this "
+        f"test does not discriminate a ping-blind clock from a ping-aware one"
+    )
+    assert ws.closed, "the finally did not run: the socket is still open"
+
+
+@pytest.mark.asyncio
+async def test_a_dropped_status_frame_still_resets_the_idle_clock(monkeypatch):
+    """The other direction, and the one that would break a healthy turn.
+
+    `status` frames and viewer deltas never reach the public stream, so a cap
+    counting only text/tool events would fire on a turn that is working. The cap
+    here is shorter than the run, so it WOULD fire if status frames did not count.
+    """
+    ws = _StatusThenDoneWS(interval=0.02, status_every=3, finish_after=12)
+    body = await asyncio.wait_for(_stream_body(monkeypatch, ws, idle_cap=0.12), timeout=15)
+
+    assert "event: error" not in body, body
+    blocks = [b for b in body.split("\n\n") if b.startswith("event: done")]
+    assert blocks, body
+    assert json.loads(blocks[-1].split("data: ", 1)[1])["finish_reason"] == "stop"
+
+
+def test_a_live_ping_loop_does_not_break_a_healthy_stream_turn(monkeypatch):
+    """INTEGRATION, with the real in-sandbox Hub and its interval turned down, so
+    the pings are real rather than fabricated. A generous cap must not fire on a
+    turn that completes normally under a flood."""
+    from app.config import get_settings
+
+    # Above `_DRAIN_IDLE`, deliberately. `_drain_replay` returns only after that
+    # many seconds of SILENCE, so a ping interval below it means silence never
+    # happens and the turn is never sent - the drain loops forever. Found by
+    # setting 0.1 here and watching this test hang. Not reachable in production
+    # (the default interval is 15s against a 0.5s drain), but it does mean a
+    # future heartbeat speed-up has a floor, which is recorded in the spec.
+    monkeypatch.setenv("WS_HEARTBEAT_INTERVAL", "0.7")
+    monkeypatch.setattr(get_settings(), "v1_stream_idle_seconds", 60)
+    with TestClient(app) as client:
+        sid = _create(client)
+        r = client.post(f"/v1/sessions/{sid}/messages",
+                        json={"message": "let's start", "stream": True}, headers=K)
+        assert r.status_code == 200, r.text
+        assert "event: error" not in r.text, r.text
+        done = [b for b in r.text.split("\n\n") if b.startswith("event: done")]
+        assert done, r.text
+        assert json.loads(done[-1].split("data: ", 1)[1])["finish_reason"] == "stop"
         client.delete(f"/v1/sessions/{sid}", headers=K)
 
 
