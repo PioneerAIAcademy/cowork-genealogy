@@ -393,9 +393,17 @@ function checkIsoDate(
  * rule would refuse a write the moment an agent follows the instruction above,
  * with no field anywhere to record that a moot conflict was accounted for.
  * Rejecting a legitimate citation costs a blocked write; permitting a slightly
- * imprecise one costs nothing downstream. Tightening is a one-entry change.
+ * imprecise one costs nothing downstream.
+ *
+ * Tightening is NOT a one-entry change, which an earlier version of this comment
+ * claimed. It is eleven sites: this constant, three comment sites (this block,
+ * the conflicts-loop note, and the proof_summaries block), the shipped error
+ * text, the `research_schema-spec.md` row, and the four fixture READMEs. This is
+ * `export`ed so `validator.test.ts`'s corpus scan imports it rather than
+ * hand-copying the predicate, which removes the only one of those a test guards
+ * — and therefore the only one that would fail silently.
  */
-const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
+export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
 
 function checkRefExists(
   refId: string,
@@ -1187,17 +1195,38 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // introduced and refuses the write — a self-inflicted freeze on exactly the
     // pre-existing drift that module exists to tolerate.
     //
-    // Latent rather than live as shipped, and measured both ways: embedding the
-    // status alone reds only the message test, because accepting two of the
-    // three `conflict_status` values leaves `unresolved` as the sole failing
-    // one, so the text cannot vary. Embedding it AND dropping `moot` — i.e. the
-    // deep dive's rule text plus a naturally informative message — reds
-    // introduced-errors.test.ts's `unresolved -> moot` test: `valid` goes false
-    // on an unchanged defect. So the two decisions are coupled, and shipping
-    // the dive verbatim with this message would have frozen such a project.
+    // The reason is NOT "only one status can fail, so the text cannot vary" —
+    // that was the first version of this comment and it is false. FIVE document
+    // states reach this error: `unresolved`, an absent `status` key, `null`, a
+    // number, and an out-of-enum string. A status-naming message would differ
+    // across all five.
+    //
+    // Which makes the decision MORE load-bearing than a latency argument, not
+    // less. `status` absent -> `unresolved` is a strict improvement to the
+    // document, and it returns `valid: true` only because the message is
+    // status-free. Measured both ways: embedding the status alone reds the
+    // message test; embedding it AND dropping `moot` — the deep dive's rule
+    // text plus a naturally informative message — reds
+    // introduced-errors.test.ts's `unresolved -> moot` test, where `valid` goes
+    // false on an unchanged defect. So the two decisions are coupled, and
+    // shipping the dive verbatim with this message would have frozen such a
+    // project.
     if (Array.isArray(ps.resolved_conflict_ids)) {
       for (const cid of ps.resolved_conflict_ids) {
-        if (typeof cid !== "string") continue;
+        if (typeof cid !== "string") {
+          // Previously a silent skip. Both schema trees declare an array of
+          // `^c_` strings and the runtime validator does not load them, so
+          // `[123]`, `[null]` and `[{...}]` added no error anywhere — measured
+          // as a delta against an otherwise-valid document. This is the
+          // cheapest place to close that.
+          addError(
+            report,
+            psp,
+            `resolved_conflict_ids contains a non-string entry ` +
+              `(${JSON.stringify(cid)}); every entry must be a 'c_' conflict id`
+          );
+          continue;
+        }
         if (!ids.conflicts.has(cid)) {
           checkRefExists(cid, ids.conflicts, "conflict", psp, report);
         } else if (!ids.settled_conflicts.has(cid)) {
@@ -1205,8 +1234,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
             report,
             psp,
             `resolved_conflict_ids references conflict '${cid}' which is not ` +
-              `settled ('resolved' or 'moot' required); proof-conclusion owns ` +
-              `resolved_conflict_ids`
+              `settled ('resolved' or 'moot' required); settle it first, or ` +
+              `have the citation removed before re-opening it, ` +
+              `proof-conclusion owns resolved_conflict_ids`
           );
         }
       }

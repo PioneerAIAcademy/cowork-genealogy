@@ -18,6 +18,7 @@ import {
   RESEARCH_SHAPES,
   ID_PREFIXES,
   ISO_DATE_PATTERN,
+  SETTLED_CONFLICT_STATUSES,
 } from "../../src/validation/validator.js";
 
 describe("Project Validator", () => {
@@ -873,7 +874,69 @@ describe("Project Validator", () => {
       expect(errs[0].message).toContain("not settled");
     });
 
-    it("does NOT put the conflict's live status in the message", async () => {
+    it("emits a byte-identical message for every state that reaches the error", async () => {
+      // The property, not one forbidden token. A previous version asserted only
+      // that the string "unresolved" was absent, which review defeated by
+      // making the message vary with the ARRAY INDEX instead — the whole engine
+      // suite passed while the freeze was re-introduced, since dropping one of
+      // two citations shifts the survivor's index.
+      //
+      // Five document states reach this error. `introduced-errors.ts` keys on
+      // the normalized path plus the message, so if any pair of them produces
+      // different text, a project transitioning between them has its unchanged
+      // defect read as newly introduced and its write refused.
+      const states: unknown[] = ["unresolved", null, 42, "not_a_status"];
+      const messages = new Set<string>();
+      for (const st of states) {
+        const research = withConflictAndSummary(st as string, ["c_001"]);
+        messages.add(v5Errors(await validateParsed(research, minimalTree))[0]?.message);
+      }
+      // ...and the fifth: `status` absent entirely.
+      const noStatus = withConflictAndSummary("unresolved", ["c_001"]);
+      delete (noStatus.conflicts[0] as any).status;
+      messages.add(v5Errors(await validateParsed(noStatus, minimalTree))[0]?.message);
+
+      expect(messages.size).toBe(1);
+      expect([...messages][0]).toContain("'c_001'");
+
+      // And it must not vary with position: two citations vs one must give the
+      // survivor the same text.
+      const two = withConflictAndSummary("unresolved", ["c_000_first", "c_001"]);
+      const shifted = v5Errors(await validateParsed(two, minimalTree)).find((e) =>
+        e.message.includes("'c_001'")
+      );
+      expect(shifted?.message).toBe([...messages][0]);
+    });
+
+    it("names the remedy and the order, because the order is inverted", async () => {
+      // Two independently correct guards compose into a dead end: re-opening a
+      // conflict that a proof summary cites is refused, and `research_append`'s
+      // ownership routing gives conflict-resolution no move from inside its own
+      // lane (it may not touch `proof_summaries`, and a combined batch is denied
+      // op-by-op). The only compliant sequence is inverted relative to the
+      // causal order — proof-conclusion prunes the citation FIRST, then
+      // conflict-resolution re-opens — and it is documented nowhere else.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      const msg = v5Errors(result)[0].message;
+      expect(msg).toContain("settle it first");
+      expect(msg).toContain("before re-opening it");
+      expect(msg).toContain("proof-conclusion owns");
+    });
+
+    it("reports a non-string entry rather than skipping it", async () => {
+      // Pre-existing gap this closes: both schema trees declare an array of
+      // `^c_` strings and the runtime validator does not load them, so a
+      // non-string entry added no error anywhere.
+      const research = withConflictAndSummary("resolved", [42 as unknown as string]);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(v5Errors(result)[0].message).toContain("non-string entry");
+    });
+
+    it("keeps a legacy assertion that the live status is absent", async () => {
       // Load-bearing, and the subtlest thing here. `introduced-errors.ts`'s
       // diff key is the normalized path PLUS the message text, so a message
       // that varies with the conflict's status makes an UNCHANGED defect read
@@ -935,9 +998,13 @@ describe("Project Validator", () => {
         const rp = join(scenarios, name, "research.json");
         if (!existsSync(rp)) continue;
         const research = JSON.parse(readFileSync(rp, "utf-8"));
+        // Imported rather than hand-copied. A local `["resolved","moot"]` was
+        // the only one of the eleven sites a tightening must touch that a test
+        // guards — so the copy would have gone green against a narrowed
+        // implementation, which is the drift this scan exists to catch.
         const settled = new Set(
           (research.conflicts ?? [])
-            .filter((c: any) => c?.status === "resolved" || c?.status === "moot")
+            .filter((c: any) => SETTLED_CONFLICT_STATUSES.has(c?.status))
             .map((c: any) => c?.id)
         );
         const known = new Set((research.conflicts ?? []).map((c: any) => c?.id));

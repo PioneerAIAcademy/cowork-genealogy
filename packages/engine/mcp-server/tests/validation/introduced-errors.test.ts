@@ -256,9 +256,35 @@ describe("validateIntroduced", () => {
 describe("validateIntroduced — proof_summaries resolved_conflict_ids (V5)", () => {
   const t = { persons: [], relationships: [], sources: [] };
 
+  // `questions: [q_001]` is load-bearing, not scenery. `minimalResearch` ships
+  // `questions: []`, so a proof summary's `question_id: "q_001"` is a DANGLING
+  // REFERENCE — and that error alone supplies the `valid: true`, the
+  // `errors: []` and the pre-existing warning these tests assert. Measured:
+  // with `questions: []` and the whole V5 block deleted from `validator.ts`,
+  // only the third test below reds; the first two pass on the dangling
+  // reference. Supplying the question makes every assertion here specific to
+  // V5, and all three then red on that deletion.
+  const q_001 = {
+    id: "q_001",
+    question: "Who were the parents of John Smith?",
+    rationale: "Timeline gap",
+    selection_basis: "timeline_gap",
+    priority: "high",
+    status: "open",
+    depends_on: [],
+    unblocks: [],
+    created: "2026-01-01",
+    resolved: null,
+    resolution_assertion_ids: [],
+    exhaustive_declaration: {
+      declared: false, log_entry_ids: [], justification: null, stop_criteria: null,
+    },
+  };
+
   function state(conflictStatus: string, refs: string[]) {
     return {
       ...minimalResearch,
+      questions: [q_001],
       conflicts: [
         {
           id: "c_001",
