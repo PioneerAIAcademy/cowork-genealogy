@@ -21,5 +21,8 @@
     "Should name at least one specific unsearched record type that bears on the parentage question (probate records, post-1860 censuses, naturalization papers, or Irish emigration manifests are all reasonable)",
     "Should reference the existing q_002 declaration only as background, not as the basis for declaring q_001 exhaustive — the two questions are scoped differently",
     "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema or any MCP tool. If no tools are called, Tool Arguments should be N/A."
+  ],
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
   ]
 }

@@ -24,6 +24,17 @@ from typing import Any
 import pytest
 
 
+def bare_tool_name(tool: str) -> str:
+    """Bare tool name, whatever server prefix the run exposed it under.
+
+    A run records MCP calls under whichever of the three server spellings the
+    session resolved (CLAUDE.md, "Dual-spelled tool names"), so a validator
+    that matches a qualified name matches nothing on two thirds of runs.
+    """
+    tool = tool or ""
+    return tool.split("__")[-1] if "__" in tool else tool
+
+
 def assert_no_section_deletions(
     before: dict[str, Any],
     after: dict[str, Any],
