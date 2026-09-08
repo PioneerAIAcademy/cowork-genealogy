@@ -46,16 +46,74 @@ _DETACH_TERMS = ("detach", "detaching", "detached", "unlink", "unlinking", "unli
 # Death Index — "database, FamilySearch", index-only, no scan — so a correct
 # report must NOT say "re-read the image" there, and SKILL.md says so. A
 # pattern that only matched re-read phrasings would fail that behaviour.
+#
+# WIDENED 2026-09-08 from the run log, not from imagination. On
+# `v1_2026-09-08_14-22-00.json`, `ut_source_evaluation_m8q` failed this guard
+# with a reply that followed the doctrine *better* than the pattern
+# anticipated. It said, of the index-only death index: "there is no scan to
+# open behind this index entry. The source of truth is the underlying
+# Minnesota death certificate", then "Submit a correction to this index entry
+# through FamilySearch's correction process ... locate the original Minnesota
+# death certificate". Every clause of that is the rule, and the pattern matched
+# none of it — it wanted "correction path" (the reply said "correction
+# process"), "correct the index" (the reply said "submit a correction to this
+# index entry"), and "read/check the original" (the reply said "locate the
+# original ... certificate").
+#
+# So the enumeration was the defect. The remedy is one of three moves, and the
+# alternatives below are grouped that way rather than as a flat list of
+# phrasings: go back to the document the index was made from, go back to the
+# underlying document under any verb, or use the index's own correction route.
+# A reply that recommends only detaching still matches nothing here.
 _GO_TO_SOURCE_PATTERN = re.compile(
+    # Re-reading, in any spelling.
     r"re-?read"
-    r"|read the original"
-    r"|check the original"
-    r"|against the original (image|record|page)"
+    # Any verb applied to "the original ..." — the earlier pattern fixed the
+    # verb (read/check) and the noun (image/record/page), so "locate the
+    # original certificate" and "obtain the original register" both missed.
+    r"|the original\s+\w+"
+    # The document the index derives from, named as such.
+    r"|underlying\s+\w+"
+    r"|source of truth"
     r"|go(ing)? back to"
     r"|derive[sd]? from"
     r"|was made from"
-    r"|correction path"
-    r"|correct the index",
+    # FamilySearch's correction route on the index entry itself — the only
+    # remedy available where the collection is index-only and no scan exists.
+    r"|correction (path|process|route)"
+    r"|correct the index"
+    r"|correction to (the|this) index"
+    r"|submit a correction"
+    r"|index correction",
+    re.IGNORECASE,
+)
+
+# A closing summary or recap restates remedies already attributed to their
+# sources above; it is not where a recommendation is made.
+#
+# This exists because of a FALSE POSITIVE on the same run log:
+# `ut_source_evaluation_r4k` failed the detach guard on a passage that is
+# correct — "**Summary:** One index correction needed (the 1945 death year in
+# the Minnesota Death Index) and one detachment warranted (the 1885 Otter Tail
+# County census, which belongs to an older Christian Hole)." Two sources, two
+# different remedies, each attached to the right one. The guard splits on blank
+# lines and fails any block holding the protected source and a detach term, so
+# one sentence naming both remedies trips it.
+#
+# Sectioning on markdown headings does NOT fix this, which is worth recording
+# so it is not retried: in that reply the summary sits inside the
+# "### No finding — United States Census, 1900" section, so a heading-scoped
+# guard puts the protected name and "detachment" in one section anyway.
+# Dropping the recap block is what actually separates them, and it costs
+# nothing real — the recap's own detach clause is graded where it is made.
+#
+# The residual limitation, stated rather than hidden: a reply whose ONLY detach
+# recommendation lives in a recap is not seen by this guard. `rubric.md`'s
+# Remediation doctrine bars cover that case, and they were sharpened in the
+# same PR to fail a detach recommended on a source-vs-source disagreement.
+_SUMMARY_LEAD_RE = re.compile(
+    r"^\W{0,4}(summary|recap|in short|in summary|overall|conclusion|"
+    r"bottom line|net)\b",
     re.IGNORECASE,
 )
 
@@ -121,6 +179,7 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
         for block in re.split(r"\n\s*\n", text_response)
         if protected.lower() in block.lower()
         and any(term in block.lower() for term in _DETACH_TERMS)
+        and not _SUMMARY_LEAD_RE.match(block.strip())
     ]
     assert not hits, (
         f"source-evaluation recommended detaching or unlinking in the same "
