@@ -142,6 +142,52 @@ describe("extractEntityId", () => {
   it("handles an ARK with two-segment path after slash", () => {
     expect(extractEntityId("ark:/61903/1:1:ABCD-1234")).toBe("ABCD-1234");
   });
+
+  // Regression guards for the shapes that must keep working. A check anchored on
+  // a literal "ark:/" prefix would silently break the resolver-URL form, which
+  // works today via the old last-colon split (2 occurrences in eval/runlogs).
+  it("accepts a resolver URL wrapping a persona ARK", () => {
+    expect(
+      extractEntityId("https://www.familysearch.org/ark:/61903/1:1:QVS9-DHDB"),
+    ).toBe("QVS9-DHDB");
+  });
+
+  it("accepts a bare type-prefixed persona id", () => {
+    expect(extractEntityId("1:1:QVS9-DHDB")).toBe("QVS9-DHDB");
+  });
+
+  // The bug this guard exists for (#2061). Before the fix these two ARKs both
+  // collapsed to "M8GR-TJY", so asking for the 1920 Detroit household returned
+  // persona 1:1:M8GR-TJY — Isaac Tremble, 1880 census, Richmond, Georgia — as a
+  // clean success. Captured in
+  // eval/runlogs/e2e/mary-mcandrew-son/run-2026-08-05_20-48-08.json.
+  it("rejects a 1:2: record ARK rather than resolving it to a different entity", () => {
+    expect(() => extractEntityId("ark:/61903/1:2:M8GR-TJY")).toThrow(
+      /1:2: record ARK/i,
+    );
+  });
+
+  it("names the field to use instead when given a 1:2: ARK", () => {
+    expect(() => extractEntityId("ark:/61903/1:2:M8GR-TJY")).toThrow(/recordId/);
+  });
+
+  it("does not confuse a 1:2: ARK with the persona sharing its id suffix", () => {
+    // The suffixes are identical; only the type segment tells them apart.
+    expect(extractEntityId("ark:/61903/1:1:M8GR-TJY")).toBe("M8GR-TJY");
+    expect(() => extractEntityId("ark:/61903/1:2:M8GR-TJY")).toThrow();
+  });
+
+  it("rejects a 3:1: document-image ARK and points at the image tools", () => {
+    expect(() => extractEntityId("ark:/61903/3:1:3Q9M-CSNL-S98H-M")).toThrow(
+      /image_read|image_transcribe/,
+    );
+  });
+
+  it("rejects a 3:2: document-image ARK", () => {
+    expect(() => extractEntityId("ark:/61903/3:2:3Q9M-CSNL-S98H-M")).toThrow(
+      /document-image ARK/i,
+    );
+  });
 });
 
 // ─── recordReadTool tests ─────────────────────────────────────────────────
@@ -165,6 +211,24 @@ describe("recordReadTool", () => {
     const calledUrl = String(mockFetch.mock.calls[0][0]);
     expect(calledUrl).toContain("QVS9-DHDB");
     expect(calledUrl).not.toContain("ark");
+  });
+
+  // 2b. The #2061 guard at the tool boundary. Refusing without fetching is the
+  // point: the old behaviour spent a live round-trip and came back with a
+  // well-formed record for the wrong person. Mirrors the image_read precedent
+  // in image-read.test.ts, which refuses a 1:2: ARK the same way.
+  it("refuses a 1:2: record ARK without fetching", async () => {
+    await expect(
+      recordReadTool({ recordId: "ark:/61903/1:2:M8GR-TJY" }),
+    ).rejects.toThrow(/1:2: record ARK/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a 3:1: document-image ARK without fetching", async () => {
+    await expect(
+      recordReadTool({ recordId: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }),
+    ).rejects.toThrow(/image_read|image_transcribe/);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   // 3. URL construction: bare ID is included in the path

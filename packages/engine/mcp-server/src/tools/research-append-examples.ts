@@ -357,6 +357,44 @@ export function exampleFor(
   fields: { /* only the fields you are changing */ }
 })`;
   }
+  // A caller refused for writing an unrecognized/malformed `claims[]` entry
+  // (#1711's per-claim tier breakdown) gets a worked body showing the shape,
+  // rather than the base single-claim example below, which never mentions
+  // `claims` at all. Mirrors the `questions`+`exhaustive_declaration` branch
+  // above: swap in a different worked body for the same section+op when a
+  // specific field was named in the failing call. `tier` here is the
+  // stronger of the two per-claim tiers (probable, over maternity's
+  // possible) — see research-schema-spec.md §7 for why.
+  if (section === "proof_summaries" && fieldsNamed.includes("claims")) {
+    return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "append",
+  entry: {
+    question_id: "q_002",
+    tier: "probable",
+    vehicle: "summary",
+    supporting_assertion_ids: ["a_013", "a_025"],
+    resolved_conflict_ids: ["c_001"],
+    exhaustive_search_summary: "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
+    narrative_markdown: "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father...",
+    claims: [
+      {
+        claim: "paternity",
+        proof_tier: "probable",
+        supporting_assertion_ids: ["a_013"],
+        relationship: { type: "ParentChild", parent: "I2", child: "I1" }
+      },
+      {
+        claim: "maternity",
+        proof_tier: "possible",
+        supporting_assertion_ids: ["a_025"],
+        relationship: { type: "ParentChild", parent: "I3", child: "I1" }
+      }
+    ]
+  }
+})`;
+  }
   return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "${section}",
