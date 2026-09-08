@@ -1938,6 +1938,7 @@ something already decided. The live register is the board:
 
 ```sh
 gh issue list --state open --label needs-decision   # blocked on one answer from the lead
+gh issue list --state open --label high-priority    # take these first in your lane (soft ordering; /fill-ready owns it)
 ```
 
 That label — not `senior`, which is work that stays hard after every question is
