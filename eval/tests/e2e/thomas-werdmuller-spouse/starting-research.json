@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_thomas_werdmuller_spouse",
+    "objective": "Did Thomas Werdmüller of Zürich (b. 1657) have a son David baptised 27 March 1698 by a Regula Steiner, while married to Dorothea von Muralt?",
+    "subject_person_ids": [
+      "9MF3-9S6"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

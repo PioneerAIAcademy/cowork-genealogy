@@ -4,7 +4,7 @@
  * Prereqs:
  *   - Logged in to FamilySearch (tokens.json in ~/.familysearch-mcp).
  *   - An OpenRouter key in ~/.familysearch-mcp/config.json under
- *     "openRouterApiKey" (or run the configure_openrouter tool once).
+ *     "openRouterApiKey". The configure_openrouter tool does not accept a key.
  *
  * Usage:
  *   npx tsx dev/try-image-transcribe.ts "<imageId>" ["<lookingFor>"]

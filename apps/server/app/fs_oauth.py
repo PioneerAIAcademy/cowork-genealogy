@@ -212,8 +212,9 @@ async def write_config(sandbox, config: dict) -> None:
     same way it provisions tokens.json.
 
     Replaces the whole document. The control plane is not the only writer —
-    `configure_openrouter` writes this same file from inside the VM — so prefer
-    `merge_config` for any write after the sandbox has run."""
+    `configure_openrouter` writes `openRouterModel` into this same file from
+    inside the VM — so prefer `merge_config` for any write after the sandbox has
+    run."""
     await sandbox.write_file(CONFIG_PATH, json.dumps(config, indent=2).encode())
 
 
@@ -240,8 +241,9 @@ async def merge_config(sandbox, updates: dict) -> None:
     The engine's own `saveConfig` merges (`{...existing, ...patch}` in
     src/auth/config.ts), so this is its counterpart on the control plane and
     the two writers no longer clobber each other. Without it a per-connect
-    refresh would drop an `openRouterApiKey` the agent set via
-    `configure_openrouter` from inside the VM.
+    refresh would drop an `openRouterModel` the agent set via
+    `configure_openrouter` from inside the VM. (The key itself is written only by
+    the control plane — `configure_openrouter` does not accept one.)
 
     Operator keys win on conflict, matching `agent_secrets.write_secrets`: a
     rotated credential has to be able to reach a sandbox provisioned under the

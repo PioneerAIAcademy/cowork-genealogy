@@ -1,0 +1,19 @@
+{
+  "id": "patrick-hoban-spouse",
+  "name": "Patrick Hoban — a wife Ellen and a son Thomas Dee (m. 1895, Halifax)",
+  "genre": "record-hint",
+  "source_pid": "KK3W-WLT",
+  "captured": "2026-09-07",
+  "researcher_question": "Was the Patrick whose son Thomas Dee married Bessie Butler at Halifax in 1895 the same man as Patrick Hoban (b. 1836), and was his wife an Ellen?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1890s",
+    "geography": "CA-NS"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 16, hint-samples.csv row 494, flag adds_spouse, confidence 3). Draft transcribed from an 1895 Nova Scotia marriage index entry; unverified. The hinted groom's surname is Dee, not Hoban/Hobin. The batch CSV labels this row Ireland; the records are Nova Scotian, and Ireland is where the subject's parents were born."
+}
