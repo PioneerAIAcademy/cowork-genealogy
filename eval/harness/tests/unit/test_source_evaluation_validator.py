@@ -148,6 +148,52 @@ def test_a_correct_closing_summary_naming_two_remedies_passes():
     _no_detach(_R4K_SUMMARY, _TEST)
 
 
+def test_a_per_source_verdict_table_passes():
+    """x6b's real shape, from `v1_2026-09-08_15-25-07.json`.
+
+    A markdown table carries no blank lines, so before `_passages` split rows
+    out, all four verdicts landed in one block: the protected source's row
+    ("Belongs, but the indexed death year reads 1954") and the 1885 census's
+    row ("Detach") were judged together and the correct report failed.
+    """
+    reply = (
+        "| Source | Verdict |\n"
+        "|---|---|\n"
+        "| 1900 US Census | Belongs - the 2-year drift is ordinary variance |\n"
+        "| Minnesota Death Index, 1908-2002 | Belongs, but the indexed death "
+        "year reads 1954 - correct it to 1945 via the original certificate |\n"
+        "| Minnesota State Census, 1885 | Detach - it is about a different "
+        "Christian Hole (KD96-WX7) |\n"
+        "| Funeral card (uploaded memory) | Could not verify |"
+    )
+    _no_detach(reply, _TEST)
+
+
+def test_a_detach_in_the_protected_sources_own_table_row_still_fails():
+    reply = (
+        "| Source | Verdict |\n"
+        "|---|---|\n"
+        "| Minnesota Death Index, 1908-2002 | Detach - wrong person |"
+    )
+    try:
+        _no_detach(reply, _TEST)
+    except AssertionError:
+        return
+    raise AssertionError(
+        "row splitting now hides a detach recommended for the protected "
+        "source in its own row, which is the same defect as the block-level "
+        "guard it replaced, only quieter"
+    )
+
+
+def test_passages_splits_table_rows_and_keeps_prose_separate():
+    text = "Lead-in prose.\n| a | b |\n| c | d |\n\nA later paragraph."
+    got = _VALIDATOR._passages(text)
+    assert "| a | b |" in got and "| c | d |" in got, got
+    assert any("Lead-in prose." in p for p in got), got
+    assert any("A later paragraph." in p for p in got), got
+
+
 def test_summary_lead_matches_the_recap_labels_it_claims_to():
     for lead in ("**Summary:** x", "Summary: x", "## In short - x", "*Recap:* x",
                  "**Overall:** x", "Bottom line: x"):

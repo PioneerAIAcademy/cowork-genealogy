@@ -117,6 +117,52 @@ _SUMMARY_LEAD_RE = re.compile(
     re.IGNORECASE,
 )
 
+_TABLE_ROW_RE = re.compile(r"^\s*\|")
+
+
+def _passages(text: str) -> list[str]:
+    """Split a report into the units that carry ONE source's remedy.
+
+    The guard's premise is that a passage recommending a detach names the
+    source it is detaching, so co-occurrence within a passage is attribution.
+    Blank-line blocks are a poor unit for that, and the corpus has now produced
+    two different report shapes where they fail — both of them CORRECT reports:
+
+    - A closing recap naming two sources and their two different remedies in
+      one sentence (`ut_source_evaluation_r4k`, `v1_2026-09-08_14-22-00.json`).
+      Handled by `_SUMMARY_LEAD_RE` at the call site.
+    - A per-source verdict TABLE (`ut_source_evaluation_x6b`,
+      `v1_2026-09-08_15-25-07.json`). Markdown tables carry no blank lines, so
+      every row lands in one block: the Minnesota Death Index row read
+      "Belongs, but the indexed death year reads 1954 — correct it to 1945 via
+      the original certificate" and the row below it read "Detach — it is about
+      a different Christian Hole". Exactly right, and flagged.
+
+    A table row is the per-source unit the guard wants, so rows are split out
+    and judged individually. Everything else keeps the blank-line block.
+
+    Two false positives from two shapes in two runs is the signal worth
+    recording: this guard is lexical and attribution is not, so the shape of
+    the report decides whether it is right. Handle a new shape here rather than
+    loosening the rule that fires, and keep `rubric.md`'s Remediation doctrine
+    bars as the judgment-based backstop.
+    """
+    out: list[str] = []
+    for block in re.split(r"\n\s*\n", text):
+        rows = [ln for ln in block.splitlines() if _TABLE_ROW_RE.match(ln)]
+        if rows:
+            # A table's rows are separately attributed; its prose lead-in (if
+            # any) is still one passage.
+            out.extend(rows)
+            prose = "\n".join(
+                ln for ln in block.splitlines() if not _TABLE_ROW_RE.match(ln)
+            )
+            if prose.strip():
+                out.append(prose)
+        else:
+            out.append(block)
+    return out
+
 
 def _requires_index_discrepancy(test) -> None:
     """Skip unless this test declares an index discrepancy in its tags."""
@@ -176,7 +222,7 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
     )
     hits = [
         block
-        for block in re.split(r"\n\s*\n", text_response)
+        for block in _passages(text_response)
         if protected.lower() in block.lower()
         and any(term in block.lower() for term in _DETACH_TERMS)
         and not _SUMMARY_LEAD_RE.match(block.strip())
