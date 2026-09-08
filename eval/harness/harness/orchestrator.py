@@ -698,6 +698,7 @@ async def _execute_single_run(
     return SingleRun(
         outcome=outcome,
         aborted_reason=result.aborted_reason,
+        error=result.error,
         duration_ms=result.duration_ms,
         duration_api_ms=skill_duration_api_ms,
         num_turns=skill_num_turns,

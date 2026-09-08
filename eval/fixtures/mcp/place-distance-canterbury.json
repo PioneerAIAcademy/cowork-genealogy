@@ -1,0 +1,14 @@
+{
+  "tool": "place_distance",
+  "description": "place_distance between two Canterbury, Kent, England points (same place, ~0 km) for the england-census-timeline scenario.",
+  "args": {
+    "standardPlace1": "~Canterbury",
+    "standardPlace2": "~Canterbury"
+  },
+  "response": {
+    "standardPlace1": "Canterbury, Kent, England",
+    "standardPlace2": "Canterbury, Kent, England",
+    "miles": 0,
+    "kilometers": 0
+  }
+}

@@ -30,5 +30,8 @@
     "max_turns": 40,
     "max_wall_clock_seconds": 900,
     "sdk_message_silence_seconds": 600
-  }
+  },
+  "mcp_fixtures": [
+    "wiki-read-utah-vital-records"
+  ]
 }

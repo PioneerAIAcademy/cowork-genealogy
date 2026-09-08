@@ -220,14 +220,32 @@ tree_edit({
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree
     S-entry` and supplying a literal `relationship.sources`, pass
-    `sourceAssertionId` naming the research.json `relationship`-type assertion
-    this edge comes from; the tool resolves the ref itself via the same
-    resolver `materialize_facts` uses (`utils/source-ref-resolver.ts`),
-    including the direct/indirect quality distinction (§7.1). Rejected if: the
-    assertion id doesn't exist; its `fact_type` isn't `"relationship"`; its
-    source has no matching tree S-entry (mirrors `materialize_facts`'s
-    missing-S-entry error); or a literal `relationship.sources` is *also*
-    supplied (ambiguous — pick one). A Couple fact (e.g. Marriage) with no
+    `sourceAssertionId` naming the research.json assertion this edge comes
+    from; the tool resolves the ref itself via the same resolver
+    `materialize_facts` uses (`utils/source-ref-resolver.ts`), including the
+    direct/indirect quality distinction (§7.1). The accepted `fact_type`s are
+    the shared `RELATIONSHIP_ESTABLISHING_TYPES` — `relationship`, `marriage`,
+    `parentage` and `parentchild`, matched case-insensitively because the enum
+    is open and models emit PascalCase for it. `marriage` was added because a marriage register is exactly
+    the assertion that establishes the links a marriage record records: the
+    Couple, and — where the record names them, as `father_of_bride` and
+    `father_of_groom` in the `record_role` vocabulary attest — the parents. The
+    check is on the assertion type, not the edge type, so a `marriage` assertion
+    may source a `ParentChild` edge; that is deliberate and matches how a
+    `relationship` assertion has always been accepted for any edge type. Which
+    edge an assertion truly supports is the caller's judgement, as it was before. While it was refused, the two tools
+    contradicted each other across the seam: this tool's own description said
+    `relationship`-type and matched its guard, so it read as self-consistent,
+    while `materialize_facts`'s description and `tree-materialization-spec.md`
+    §4.5 both told callers to put the marriage on the Couple "sourced with the
+    same assertion via `sourceAssertionId`" — a call this tool then rejected.
+    Each side was internally consistent, which is why the contradiction went
+    unnoticed. Models attempted the refused call anyway: the refusal appears
+    seven times in committed run logs, five of them on a `marriage` assertion,
+    across two unit runs and three e2e runs. Rejected if: the assertion id doesn't
+    exist; its `fact_type` is none of those; its source has no matching
+    tree S-entry (mirrors `materialize_facts`'s missing-S-entry error); or a
+    literal `relationship.sources` is *also* supplied (ambiguous — pick one). A Couple fact (e.g. Marriage) with no
     `sources` of its own inherits the resolved ref — but only when it came
     from `sourceAssertionId`; a literal edge ref is never auto-propagated onto
     facts (unchanged: each still needs its own ref). Added 2026-07-26 to
