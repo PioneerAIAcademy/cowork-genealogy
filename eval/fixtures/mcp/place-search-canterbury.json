@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "place_search for Canterbury, Kent, England (england-census-timeline scenario).",
+  "args": {
+    "placeName": "~Canterbury"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Canterbury, Kent, England",
+        "type": "City",
+        "dateRange": "",
+        "latitude": 51.28,
+        "longitude": 1.08,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Canterbury"
+      }
+    ]
+  }
+}
