@@ -219,6 +219,51 @@ const WITH_SOURCES: FSTreeResponse = {
   ],
 };
 
+// #2002: FS lists an AlsoKnownAs name *before* the preferred BirthName, and
+// carries the tree-person ARK as a Persistent identifier resolver URL.
+const MULTI_NAME: FSTreeResponse = {
+  persons: [
+    {
+      id: "KNDX-MKG",
+      living: false,
+      gender: { type: "http://gedcomx.org/Male" },
+      identifiers: {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/4:1:KNDX-MKG",
+        ],
+      },
+      names: [
+        {
+          type: "http://gedcomx.org/AlsoKnownAs",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "Georgie" },
+                { type: "http://gedcomx.org/Surname", value: "Washington" },
+              ],
+            },
+          ],
+        },
+        {
+          id: "name-birth-1",
+          type: "http://gedcomx.org/BirthName",
+          preferred: true,
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Prefix", value: "President" },
+                { type: "http://gedcomx.org/Given", value: "George" },
+                { type: "http://gedcomx.org/Surname", value: "Washington" },
+                { type: "http://gedcomx.org/Suffix", value: "Jr." },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 // ─── Tests ────────────────────────────────────────────────────────────────
 
 describe("personReadTool", () => {
@@ -558,5 +603,73 @@ describe("personReadTool", () => {
       /non-empty personId/,
     );
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  // 27. Surfaces the canonical ARK lifted from the Persistent identifier
+  it("surfaces ark from the Persistent identifier", async () => {
+    mockOk(MULTI_NAME);
+    const result = await personReadTool({ personId: "KNDX-MKG" });
+    expect(result.persons[0].ark).toBe("ark:/61903/4:1:KNDX-MKG");
+  });
+
+  // 28. Omits ark entirely when FS supplies no Persistent identifier
+  it("omits ark when no Persistent identifier is present", async () => {
+    mockOk(PERSON_ONLY);
+    const result = await personReadTool({ personId: "KNDX-MKG" });
+    expect(result.persons[0].ark).toBeUndefined();
+    expect("ark" in result.persons[0]).toBe(false);
+  });
+
+  // 29. Keeps every name FS returned, not just the first
+  it("keeps all names rather than collapsing to the first", async () => {
+    mockOk(MULTI_NAME);
+    const result = await personReadTool({ personId: "KNDX-MKG" });
+    expect(result.persons[0].names).toHaveLength(2);
+    expect(result.persons[0].names.map((n) => n.given)).toEqual([
+      "George",
+      "Georgie",
+    ]);
+  });
+
+  // 30. Preferred name lands first and keeps its flag; alternates do not
+  it("orders the preferred name first and flags only it", async () => {
+    mockOk(MULTI_NAME);
+    const [person] = (await personReadTool({ personId: "KNDX-MKG" })).persons;
+    expect(person.names[0].preferred).toBe(true);
+    expect(person.names[0].type).toBe("BirthName");
+    expect(person.names[1].preferred).toBeUndefined();
+    expect(person.names[1].type).toBe("AlsoKnownAs");
+  });
+
+  // 31. Prefix/suffix are carried per name, not only on the first
+  it("carries prefix and suffix on the name that has them", async () => {
+    mockOk(MULTI_NAME);
+    const [person] = (await personReadTool({ personId: "KNDX-MKG" })).persons;
+    expect(person.names[0].prefix).toBe("President");
+    expect(person.names[0].suffix).toBe("Jr.");
+    expect(person.names[1].prefix).toBeUndefined();
+    expect(person.names[1].suffix).toBeUndefined();
+  });
+
+  // 32. Name id carries through (the name subschema requires it), and is
+  // omitted rather than faked when FS supplies none.
+  it("carries the name id through, omitting it when absent", async () => {
+    mockOk(MULTI_NAME);
+    const [person] = (await personReadTool({ personId: "KNDX-MKG" })).persons;
+    expect(person.names[0].id).toBe("name-birth-1");
+    expect(person.names[1].id).toBeUndefined();
+    expect("id" in person.names[1]).toBe(false);
+  });
+
+  // 33. names is required with minItems 1 — a nameless person keeps the stub
+  it("falls back to one empty name when FS returns none", async () => {
+    const nameless: FSTreeResponse = {
+      persons: [
+        { id: "X", living: false, gender: { type: "http://gedcomx.org/Unknown" } },
+      ],
+    };
+    mockOk(nameless);
+    const result = await personReadTool({ personId: "X" });
+    expect(result.persons[0].names).toEqual([{ given: "", surname: "" }]);
   });
 });
