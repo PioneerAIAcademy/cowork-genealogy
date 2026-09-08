@@ -172,7 +172,7 @@ materialize_facts({ projectPath, personId, recordId, recordRole })
   -> compact summary                        // persona form
 
 materialize_facts({ projectPath, assertionId, relatedRole,
-                    name: { given, surname }, gender?, personId? })
+                    name: { given, surname }, gender?, nameType?, personId? })
   -> compact summary                        // named-party form (§4.6)
 
 materialize_facts({ projectPath, ops: [ <either form>, ... ] })
@@ -326,10 +326,21 @@ so every clause above holds unchanged.
 ### 4.6 The named party (a person the record names but gives no persona)
 
 A person named only *inside* another persona's `relationship` or `marriage`
-assertion — a bride named in the groom's marriage register, a father named in a
-child's baptism — has no `record_role` of her own and no name assertion, so the
-persona arm has nothing to select on and `SKIP_TYPES` drops the only assertion
-that names her.
+assertion — the bride named in the groom's marriage register is the canonical
+case — has no `record_role` of her own and no name assertion, so the persona arm
+has nothing to select on and `SKIP_TYPES` drops the only assertion that names
+her.
+
+**Which shapes actually reach this arm, measured rather than assumed.** Running
+the arm against the corpus fixtures: the bride in `flynn-spouse-stub-marriage`
+and `flynn-couple-marriage` **mints**, and `flynn-baptism-names-mother` — the
+only corpus instance of a parent named in a child's baptism — is **refused**,
+because extraction gave Bridget her own `mother` persona with a name assertion,
+so the persona arm is the correct call and writes her facts too. Take the
+marriage register as the canonical case. A baptism naming a parent the record
+gives no persona is a legitimate use, but it is not what the corpus contains
+today, so do not reach for this arm on a parentage assertion without checking
+first: the refusal will name the `{ recordId, recordRole }` to use instead.
 
 Until this arm existed she could be written only by `tree_edit add_person`,
 whose **name** path is ref-tolerant by the §6 exemption. That exemption is
@@ -341,7 +352,7 @@ provenance. This arm closes that.
 
 ```
 materialize_facts({ projectPath, assertionId, relatedRole,
-                    name: { given, surname }, gender?, personId? })
+                    name: { given, surname }, gender?, nameType?, personId? })
 ```
 
 - **The caller supplies the name; the tool supplies and enforces the ref.** The
@@ -354,23 +365,35 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   parties** — the shared `RELATIONSHIP_ESTABLISHING_TYPES`: `relationship`,
   `marriage`, `parentage` and `parentchild`, matched case-insensitively. `age`,
   the third `SKIP_TYPES` member, is out: it is indirect evidence about one
-  person and names nobody. The set is a ruling on the spellings the corpus
+  person and names nobody. So are the rarer link-ish spellings the corpus also
+  shows — `marriage_intention` (3), `Father`/`Mother` (3 each), `marriage_bann`
+  (2), `spouse` (2), `parent_name` (2), and a tail of single occurrences. Read
+  that as a sample, not an enumeration: `fact_type` is open, so no set here can
+  be complete, and one of the seven refusals this change was measured against
+  was a `marriage_bann` that stays refused. The set is a ruling on the spellings the corpus
   actually shows, not an attempt to enumerate an open enum — `parentage` and
   its variants total 45 occurrences in agent output against `Marriage`'s 27, so
   refusing them while accepting `Marriage` was not a defensible line. Widen it
   the same way: measure first, then decide.
 - **`relatedRole` should name a party that has no persona on that record**, and
   the tool refuses when it can see that it does *and* that the persona arm would
-  do better: it scans the record's assertions for one carrying
-  `record_role == relatedRole`, and refuses only when that persona could
-  actually be minted (it has a name assertion) or the target person already
-  exists. Both halves are load-bearing. **Having a `record_role` does not imply
+  actually write something: it scans the record's assertions for one carrying
+  `record_role == relatedRole`, and refuses only when that persona has an
+  assertion this tool would materialize (a name, a gender, or any fact that is
+  neither skipped nor negative evidence). **Having a `record_role` does not imply
   having facts, or being mintable at all**: in a mirrored marriage register both
   parties have a persona and neither carries anything but the `marriage`
   assertion, so an unconditional refusal left the bride writable by *neither*
   arm, which is worse than the name-only shell it was trying to prevent.
   Measured over `eval/**/research.json`, 85 of 301 personas carry no usable
-  `name` assertion. When the guard does fire, the refusal names the exact
+  `name` assertion, and 28 carry nothing but `relationship`/`marriage`.
+
+  **"Or the target person already exists" is NOT part of the condition, and
+  adding it was a bug worth recording.** It reads plausibly — the persona arm
+  would enrich rather than mint — but an existing person gives that persona
+  nothing to write, so it recreated the same dead end, and it made the
+  idempotency guarantee below false: the first call mints the person, so the
+  second call refused itself. Both regressions are pinned by tests. When the guard does fire, the refusal names the exact
   `{ recordId, recordRole }` to call instead.
 
   **This guard is best-effort, and it is worth being exact about why.** It
@@ -405,7 +428,19 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   here there is only one assertion, so the call is refused rather than
   silently emptied.
 - **Writes a sourced name and the gender scalar. Nothing else.** No facts, no
-  relationship edge, never `preferred`. §4.5 therefore holds in full: a
+  relationship edge, never `preferred`.
+- **No name type is invented.** `nameType` is optional and the field is
+  **omitted** when the caller does not supply one. This differs from the persona
+  arm, which records `BirthName`, and the difference is deliberate: a persona's
+  `name` assertion is that person's own recorded name, whereas a party named
+  inside someone *else's* assertion is often named by a surname that is not her
+  birth surname — *"survived by his wife Mary Smith"* gives the husband's. A
+  `BirthName` on that node would be a claim the record never made, carried under
+  a resolved ref that says the record made it, which is the precise failure this
+  spec exists to prevent. Omitting is legal (the tree schema requires only
+  `id`/`given`/`surname`) and is what most of the corpus does; the caller names
+  the type when the record settles it, as a marriage register does for a bride's
+  maiden name. §4.5 therefore holds in full: a
   `marriage` assertion still never becomes a person-level fact, and the Couple
   event stays on the edge.
 - **Idempotent for a given `personId`** — a re-run unions the ref onto the
@@ -470,6 +505,23 @@ ordinary genealogy, and refusing there would block correct mints far more often
 than it would catch a duplicate. The guarantee this arm makes is about
 provenance, and it is exact — a person minted here always carries a resolved
 source-ref, or was never written.
+
+Nor does it guess a name apart. A multi-token `given` with no `surname` **key**
+is refused as ambiguous rather than split: *"Mary Doyle"* is a full name and
+*"Anna Maria"* is a compound given name a register may supply with no surname,
+and splitting the second fabricates a surname that then rides an enforced ref,
+which is the shape that makes a fabrication look provenanced. Passing
+`surname: ""` states that the record gives none.
+
+**One downstream interaction to know about.** `person_warnings` reports a person
+with no facts and no relatives as `missingFactsAndRelatives` at severity
+`implausible` ("likely an unfinished stub record"), which is this arm's
+documented output verbatim, so a party minted here is flagged until her edge and
+the record's other facts land. That is not a defect in either tool: she *is*
+incomplete at that moment, and `check_warnings` runs after every write to
+surface what is still owed. What the warning cannot see is that she carries a
+resolved ref where a hypothesis stub does not. Do not answer it by writing her a
+fact the record does not support.
 
 ---
 

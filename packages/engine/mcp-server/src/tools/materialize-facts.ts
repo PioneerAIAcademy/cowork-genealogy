@@ -15,8 +15,7 @@
 //
 // NAMED-PARTY arm ({ projectPath, assertionId, relatedRole, name, gender? }) —
 // for a party a relationship/marriage assertion NAMES but gives no persona of
-// her own (a bride in the groom's marriage register, a father in a child's
-// baptism). There is no recordRole to reference, so this arm necessarily takes
+// her own (the bride in the groom's marriage register is the canonical case). There is no recordRole to reference, so this arm necessarily takes
 // one piece of caller-supplied DATA — her name — and nothing else. The
 // provenance is still not the caller's to supply or drop: the ref is resolved
 // from the assertion's own source_id through the same shared resolver, and the
@@ -41,8 +40,8 @@ import { join } from "path";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
-  SimplifiedName,
   SimplifiedFact,
+  SimplifiedName,
   SimplifiedSourceReference,
 } from "../types/gedcomx.js";
 import type {
@@ -104,7 +103,21 @@ class MaterializeFactsError extends Error {}
  *  fact, so the Couple event stays on the edge where it belongs. */
 const NAME_TYPES: ReadonlySet<string> = new Set(["name"]);
 const GENDER_TYPES: ReadonlySet<string> = new Set(["gender", "sex"]);
-const SKIP_TYPES: ReadonlySet<string> = new Set(["relationship", "age", "marriage"]);
+const SKIP_TYPES: ReadonlySet<string> = new Set([
+  "relationship",
+  "age",
+  "marriage",
+  // `parentage`/`parentchild` join for the reason the comment above gives for
+  // `marriage`: they establish a link between TWO parties, so they can never be
+  // a correct person-level write, and the shared
+  // RELATIONSHIP_ESTABLISHING_TYPES now says so on the sourcing side. Leaving
+  // them out made the tool treat one fact_type two ways — a two-party link when
+  // sourcing an edge, a person-level fact when materializing a persona. No tree
+  // in the corpus carries a Parentage-like person fact, so nothing depended on
+  // the old behaviour.
+  "parentage",
+  "parentchild",
+]);
 
 /** Couple-relationship event types, broken out so tree-forget.ts can import
  *  the set and sweep all of them without maintaining a parallel list. */
@@ -227,6 +240,10 @@ function upsertName(
   given: string,
   surname: string,
   ref: SimplifiedSourceReference,
+  /** Name type to record. OMITTED when undefined, which is legal (the tree
+   *  schema requires only id/given/surname) and is what most of the corpus
+   *  does. Omitting is a smaller claim than asserting the wrong one. */
+  nameType?: string,
 ): { namesAdded: number; refsAttached: number } {
   person.names ??= [];
   const match = person.names.find(
@@ -237,13 +254,9 @@ function upsertName(
   if (match) {
     return { namesAdded: 0, refsAttached: unionRef(match, ref) ? 1 : 0 };
   }
-  person.names.push({
-    id: nextId(tree, "N"),
-    type: "BirthName",
-    given,
-    surname,
-    sources: [ref],
-  });
+  const name: SimplifiedName = { id: nextId(tree, "N"), given, surname, sources: [ref] };
+  if (nameType !== undefined) name.type = nameType;
+  person.names.push(name);
   return { namesAdded: 1, refsAttached: 1 };
 }
 
@@ -385,7 +398,7 @@ function applyMaterializeOp(
     if (NAME_TYPES.has(rawType)) {
       const ref = resolveSourceRef(a, research, tree);
       const { given, surname } = nameParts(a);
-      const n = upsertName(tree, person, given, surname, ref);
+      const n = upsertName(tree, person, given, surname, ref, "BirthName");
       namesAdded += n.namesAdded;
       refsAttached += n.refsAttached;
       continue;
@@ -492,8 +505,8 @@ function isNamedPartyOp(op: MaterializeFactsAnyOp): op is MaterializeFactsNamedP
 // ─── apply one NAMED-PARTY op (§4.6) ─────────────────────────────────────────
 //
 // Mint or enrich the party a `relationship`/`marriage` assertion NAMES but does
-// not give a persona of its own — the bride in the groom's marriage register,
-// the father in a child's baptism. She has no `record_role`, so the persona arm
+// not give a persona of its own — canonically the bride in the groom's marriage
+// register. She has no `record_role`, so the persona arm
 // has nothing to select on and `SKIP_TYPES` drops the only assertion naming
 // her; before this arm she could only be written by `tree_edit add_person`,
 // whose name path is ref-tolerant, so a record-derived person landed with NO
@@ -575,16 +588,33 @@ function applyNamedPartyOp(
   // the guard fires only when the persona arm can do the better job: the
   // persona has a name to mint from, or the target person already exists and
   // the persona arm would enrich it rather than mint.
-  const siblingCanMint =
-    siblings.some((a: any) => NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase())) ||
-    (str(op.personId) !== undefined &&
-      (tree.persons ?? []).some((pn) => pn && pn.id === str(op.personId)));
+  // The guard is only a valid steer when the persona arm would actually WRITE
+  // something for this party. Having a `record_role` does not mean that: in a
+  // mirrored marriage register both parties have a persona and each carries
+  // nothing but the `marriage` assertion, which SKIP_TYPES drops — so the
+  // persona call returns ok:true and writes nothing, and refusing here would
+  // leave the party writable by neither arm. So the test is "does that persona
+  // have an assertion this tool would materialize": a name, a gender, or any
+  // fact that is not skipped and not negative evidence.
+  //
+  // Deliberately NOT part of this test: whether the target person already
+  // exists. An earlier version added that as a second condition, reasoning that
+  // the persona arm would enrich rather than mint — but an existing person does
+  // not give the persona anything to write, so it re-created the same dead end,
+  // and it broke idempotency (the first call mints the person, so the second
+  // call refuses itself).
+  const siblingCanMint = siblings.some((a: any) => {
+    const ft = String(a.fact_type ?? "").toLowerCase();
+    if (a.evidence_type === "negative") return false;
+    return NAME_TYPES.has(ft) || GENDER_TYPES.has(ft) || !SKIP_TYPES.has(ft);
+  });
   if (siblings.length > 0 && siblingCanMint) {
+    const personIdHint = str(op.personId) !== undefined ? `personId: '${str(op.personId)}', ` : "";
     throw new MaterializeFactsError(
       `role '${relatedRole}' already has its own persona on record '${recordId}' (e.g. assertion ` +
-        `'${siblings[0].id}') — materialize it with { recordId: '${recordId}', recordRole: ` +
-        `'${siblings[0].record_role}' }, which writes her facts too. This form is for a party the ` +
-        "record names without giving it a persona of its own",
+        `'${siblings[0].id}') — materialize it with { ${personIdHint}recordId: '${recordId}', ` +
+        `recordRole: '${siblings[0].record_role}' }, which writes her facts too. This form is for ` +
+        "a party the record names without giving it a persona of its own",
     );
   }
 
@@ -603,17 +633,25 @@ function applyNamedPartyOp(
   // Trimmed before persisting: `str()` only proves non-blank, and the persona
   // arm's own `nameParts` trims what it parses, so an untrimmed part here would
   // put "  Mary  " in the tree and disagree with the other arm.
-  // Split the same way the persona arm's `nameParts` does. A caller that passes
-  // the whole name in `given` ("Mary Doyle") would otherwise write a name node
-  // the persona arm can never match, and the same woman would end up with two
-  // sourced BirthNames — the drift the shared `upsertName` was lifted to stop,
-  // reappearing one layer up in its inputs.
-  let given = str(op.name?.given)?.trim() ?? "";
-  let surname = str(op.name?.surname)?.trim() ?? "";
-  if (surname === "" && /\s/.test(given)) {
-    const parts = nameParts({ value: given });
-    given = parts.given;
-    surname = parts.surname;
+  const given = str(op.name?.given)?.trim() ?? "";
+  const surname = str(op.name?.surname)?.trim() ?? "";
+  // A multi-token `given` with no `surname` KEY is ambiguous and the tool must
+  // not guess: "Mary Doyle" is a full name, "Anna Maria" is a compound given
+  // name a register may supply with no surname at all, and splitting the second
+  // fabricates a surname — under an enforced ref, which makes the fabrication
+  // look provenanced. Guessing the other way is no better: writing "Mary Doyle"
+  // whole produces a name node the persona arm can never match, so the same
+  // woman ends up with two sourced names. So neither is guessed: the caller
+  // splits it, or says explicitly that there is no surname by passing the
+  // `surname` key (even empty).
+  const surnameStated = !!op.name && typeof op.name === "object" && "surname" in op.name;
+  if (!surnameStated && /\s/.test(given)) {
+    throw new MaterializeFactsError(
+      `name.given '${given}' has more than one token and no \`surname\` was given, which is ` +
+        "ambiguous: it may be a full name or a compound given name. Pass given and surname " +
+        "separately, or pass surname: \"\" to state that the record gives none. This tool does " +
+        "not guess a surname it would then carry under a resolved source-ref",
+    );
   }
   if (given === "" && surname === "") {
     throw new MaterializeFactsError(
@@ -642,7 +680,16 @@ function applyNamedPartyOp(
   // Same upsert the persona arm's name assertions use: an equivalent name
   // already there unions the ref (so a re-run with the same personId is a
   // no-op), otherwise the name is minted carrying it.
-  const { namesAdded, refsAttached } = upsertName(tree, person, given, surname, ref);
+  // No default name type here. A party named inside someone ELSE's assertion is
+  // often named by a surname that is not her birth surname — "survived by his
+  // wife Mary Smith" gives the husband's — so asserting BirthName would source a
+  // claim to a record that never made it, which is the failure this tool exists
+  // to prevent. The caller names the type when the record supports one (a bride
+  // in a marriage register is giving her maiden name); otherwise the field is
+  // omitted, which the tree schema allows and most of the corpus does.
+  const { namesAdded, refsAttached } = upsertName(
+    tree, person, given, surname, ref, str(op.nameType),
+  );
 
   return {
     personId: targetId,
@@ -809,6 +856,7 @@ export async function materializeFacts(
             relatedRole: input.relatedRole!,
             name: input.name!,
             gender: input.gender,
+            nameType: input.nameType,
             personId: input.personId,
             ...(input.recordId !== undefined ? { recordId: input.recordId } : {}),
             ...(input.recordRole !== undefined ? { recordRole: input.recordRole } : {}),
@@ -856,12 +904,15 @@ export const materializeFactsSchema = {
   name: "materialize_facts",
   description:
     "Write a record persona's extracted assertions onto a tree person as SOURCED " +
-    "facts and names. Pass REFERENCES only — { projectPath, personId, recordId, " +
-    "recordRole } — and the tool reads the persona's assertions (every assertion " +
-    "matching recordId + recordRole) from research.json, resolves each one's " +
+    "facts and names. For a persona, pass REFERENCES only — { projectPath, personId, " +
+    "recordId, recordRole } — and the tool reads the persona's assertions (every " +
+    "assertion matching recordId + recordRole) from research.json, resolves each one's " +
     "provenance (assertion.source_id -> research source -> tree S-entry) into a " +
     "non-null source-ref, and writes only tree.gedcomx.json. You never hand-assemble " +
-    "a document, so the provenance chain cannot be dropped.\n" +
+    "a document, so the provenance chain cannot be dropped. (There is a second form " +
+    "below, for a party the record names WITHOUT giving it a persona: it takes one " +
+    "piece of data, her name, because no reference to her exists. The provenance is " +
+    "still resolved by the tool and still cannot be dropped.)\n" +
     "\n" +
     "Create-or-enrich: if personId names a person that does not exist yet, the tool " +
     "mints it from the persona's name/gender assertions, so the person is never " +
@@ -894,8 +945,9 @@ export const materializeFactsSchema = {
     "namesAdded, refsAttached, conflicts_surfaced }]`, one entry per op, in order.\n" +
     "\n" +
     "NAMED PARTY — for a person the record names only INSIDE another persona's " +
-    "`relationship` or `marriage` assertion: a bride named in the groom's marriage " +
-    "register, a father named in a child's baptism. She has no record_role and no " +
+    "link-establishing assertion (`relationship`, `marriage`, `parentage` or " +
+    "`parentchild`, case-insensitive): a bride named in the groom's marriage " +
+    "register. She has no record_role and no " +
     "name assertion of her own, so there is no persona to pass. Call " +
     "`{ projectPath, assertionId, relatedRole, name: { given, surname }, gender?, " +
     "personId? }` (or the same fields as an `ops` element) instead of " +
@@ -909,7 +961,8 @@ export const materializeFactsSchema = {
     "the call is refused and names the { recordId, recordRole } to use, because that " +
     "form writes her facts too. A negative-evidence " +
     "assertion (what the source does NOT say) is refused too — it cannot mint anyone. " +
-    "This " +
+    "Pass nameType only when the record settles whether the surname is her own or " +
+    "a married one; omitted means no claim, which is preferable to a wrong one. This " +
     "writes a SOURCED NAME and the gender scalar only: no facts, no relationship. " +
     "The marriage event still belongs on the Couple via tree_edit " +
     "add_relationship, and the edge itself via add_relationship's " +
@@ -947,8 +1000,10 @@ export const materializeFactsSchema = {
       assertionId: {
         type: "string",
         description:
-          "NAMED-PARTY form: the `relationship`/`marriage` assertion that NAMES a party who " +
-          "has no persona of her own (the bride in the groom's marriage register). Selects " +
+          "NAMED-PARTY form: the assertion that NAMES a party who has no persona of her own " +
+          "(the bride in the groom's marriage register). Any type that establishes a link " +
+          "between two parties: relationship, marriage, parentage or parentchild, matched " +
+          "case-insensitively. Selects " +
           "this form; supply it INSTEAD of recordId/recordRole, never alongside. The tool " +
           "resolves this assertion's source-ref and refuses the write without it.",
       },
@@ -977,6 +1032,15 @@ export const materializeFactsSchema = {
         description:
           "NAMED-PARTY form, optional: Male/Female/Unknown for the minted person. Fills an " +
           "absent or Unknown gender only — never overwrites a resolved one.",
+      },
+      nameType: {
+        type: "string",
+        description:
+          "NAMED-PARTY form, optional: the name's type — \"BirthName\" when the record gives " +
+          "her own/maiden surname (a bride in a marriage register), \"MarriedName\" when it " +
+          "gives a married one (\"survived by his wife Mary Smith\" gives the husband's " +
+          "surname). OMIT IT when the record does not settle which; the field is optional and " +
+          "no type is a smaller claim than the wrong type.",
       },
       ops: {
         type: "array",

@@ -45,9 +45,12 @@ export interface NamedPartyName {
 
 /** One NAMED-PARTY reference (§4.6) — mint or enrich the party a
  *  `relationship`/`marriage` assertion NAMES but does not give its own
- *  `record_role`: the bride in the groom's marriage register, the father in a
- *  child's baptism. She has no persona, so there is nothing for the persona op
- *  above to select on.
+ *  `record_role`: the bride in the groom's marriage register is the canonical
+ *  case. She has no persona, so there is nothing for the persona op above to
+ *  select on. A parent named in a child's baptism is the same shape in
+ *  principle, but in this corpus extraction gives that parent its own persona,
+ *  so the arm refuses it and points at the persona form — check before
+ *  reaching for this one on a parentage assertion.
  *
  *  The caller supplies the name because the assertion usually does not carry
  *  one in machine-readable form (8 of 162 corpus `relationship`/`marriage`
@@ -62,15 +65,25 @@ export interface MaterializeFactsNamedPartyOp {
    *  (matches assertion.id). Selects this op shape. */
   assertionId: string;
   /** The role of the party being minted — the one that is NOT the persona
-   *  ("bride", "mother"). Validated against the assertion's own `record_role`
-   *  and otherwise unused: nothing on a tree person holds a role, and this tool
+   *  ("bride", "mother"). Use the record's own spelling where it has one. It is
+   *  checked against the assertion's own `record_role` AND against every
+   *  `record_role` on that record: if a persona with this role exists and could
+   *  be materialized instead, the call is refused and names the
+   *  `{ recordId, recordRole }` to use, because that form writes her facts too.
+   *  Otherwise unused — nothing on a tree person holds a role, and this tool
    *  never writes research.json. Required rather than optional because a guard
-   *  a caller can skip by omitting it is not a guard. */
+   *  a caller can skip by omitting it is not a guard, and best-effort because
+   *  both roles are free text (spec section 4.6). */
   relatedRole: string;
   /** The name the record gives this party. At least one part non-empty. */
   name: NamedPartyName;
   /** Optional gender for the minted person; fills only an absent/Unknown one. */
   gender?: string;
+  /** Optional name type ("BirthName", "MarriedName", …). OMITTED when absent:
+   *  a party named inside another persona's assertion is often named by a
+   *  surname that is not her birth surname, so the tool asserts no type it
+   *  cannot support from the record. */
+  nameType?: string;
   /** Target tree person. Omit to mint a brand-new person with the next `I` id. */
   personId?: string;
 }

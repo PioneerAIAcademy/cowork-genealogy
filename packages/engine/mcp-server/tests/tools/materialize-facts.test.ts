@@ -722,7 +722,10 @@ describe("materialize_facts", () => {
     const p = findPerson(await readTree(), result.personId);
     expect(p.gender).toBe("Female");
     expect(p.names).toHaveLength(1);
-    expect(p.names[0]).toMatchObject({ given: "Mary", surname: "Doyle", type: "BirthName" });
+    expect(p.names[0]).toMatchObject({ given: "Mary", surname: "Doyle" });
+    // No name type asserted: the caller did not say, and the record does not
+    // settle whether "Doyle" is her own surname or a married one.
+    expect(p.names[0].type).toBeUndefined();
     // Resolved from the assertion's own source_id — never null, never hand-passed.
     expect(p.names[0].sources).toEqual([{ ref: "S1", quality: 3 }]);
     // proof-conclusion alone concludes a preferred name.
@@ -1391,10 +1394,12 @@ describe("materialize_facts", () => {
     if (!refused.ok) expect(refused.errors[0]).toContain("already has its own persona");
   });
 
-  it("(44) a whole name in `given` splits the way the persona arm splits it", async () => {
-    // Otherwise the same woman gets two sourced BirthNames: one from this arm
-    // ({given:"Mary Doyle"}) and one from the persona arm ({given:"Mary",
-    // surname:"Doyle"}), which is the drift the shared upsertName exists to stop.
+  it("(44) an ambiguous whole-name `given` is REFUSED, never split into a guess", async () => {
+    // "Mary Doyle" is a full name; "Anna Maria" is a compound given name a
+    // register may give with no surname at all. Splitting the second fabricates
+    // a surname, under an enforced ref, which makes the fabrication look
+    // provenanced. Writing the first whole produces a name the persona arm can
+    // never match, so one woman gets two sourced names. Neither is guessed.
     await writeProject(
       tree(),
       research({
@@ -1406,44 +1411,54 @@ describe("materialize_facts", () => {
       }),
     );
 
-    const first = single(
+    const ambiguous = single(
       await materializeFacts({
         projectPath: dir,
         personId: "I2",
         assertionId: "a_005",
         relatedRole: "bride",
-        name: { given: "Mary Doyle" }, // whole name in `given`
+        name: { given: "Mary Doyle" }, // no surname KEY at all
       }),
     );
-    expect(first.ok).toBe(true);
-    if (!first.ok) return;
+    expect(ambiguous.ok).toBe(false);
+    if (!ambiguous.ok) {
+      expect(ambiguous.errors[0]).toContain("ambiguous");
+      expect(ambiguous.errors[0]).toContain("does not guess");
+    }
+    expect((await readTree()).persons).toHaveLength(1);
 
-    const second = single(
-      await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-HER", recordRole: "bride" }),
-    );
-    expect(second.ok).toBe(true);
-    if (!second.ok) return;
-
-    const p = findPerson(await readTree(), "I2");
-    expect(p.names).toHaveLength(1); // ONE woman, one name
-    expect(p.names[0]).toMatchObject({ given: "Mary", surname: "Doyle" });
-  });
-
-  it("(41) name parts are TRIMMED before they reach the tree", async () => {
-    await writeProject(tree(), research({ sources: [S1], assertions: marriageNamingBride() }));
-
-    const r = single(
+    // Stating the surname key, even empty, is honoured verbatim: a compound
+    // given name with no surname is a real record shape.
+    const mononym = single(
       await materializeFacts({
         projectPath: dir,
+        personId: "I3",
         assertionId: "a_005",
         relatedRole: "bride",
-        name: { given: "  Mary  ", surname: " Doyle" },
+        name: { given: "Anna Maria", surname: "" },
       }),
     );
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    const p = findPerson(await readTree(), r.personId);
-    expect(p.names[0]).toMatchObject({ given: "Mary", surname: "Doyle" });
+    expect(mononym.ok).toBe(true);
+    if (!mononym.ok) return;
+    const p3 = findPerson(await readTree(), "I3");
+    expect(p3.names[0]).toMatchObject({ given: "Anna Maria", surname: "" });
+
+    // And split properly, both arms agree on one name node for one woman.
+    const split = single(
+      await materializeFacts({
+        projectPath: dir,
+        personId: "I4",
+        assertionId: "a_005",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(split.ok).toBe(true);
+    const viaPersona = single(
+      await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-HER", recordRole: "bride" }),
+    );
+    expect(viaPersona.ok).toBe(true);
+    expect(findPerson(await readTree(), "I4").names).toHaveLength(1); // ONE woman, one name
   });
 
   it("(45) `parentage` and `ParentChild` establish a link, and both arms agree", async () => {
@@ -1503,6 +1518,203 @@ describe("materialize_facts", () => {
       );
       expect(r.ok, factType).toBe(false);
       if (!r.ok) expect(r.errors[0], factType).toContain(`fact_type '${factType}'`);
+    }
+  });
+
+  it("(47) records a name type only when the caller supplies one, and never invents one", async () => {
+    // A party named inside someone else's assertion is often named by a surname
+    // that is not her birth surname ("survived by his wife Mary Smith" gives the
+    // husband's). The tree schema requires only id/given/surname, and most of
+    // the corpus carries no type, so omitting is legal and is the smaller claim.
+    await writeProject(tree(), research({ sources: [S1], assertions: marriageNamingBride() }));
+
+    const stated = single(
+      await materializeFacts({
+        projectPath: dir,
+        personId: "I2",
+        assertionId: "a_005",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+        nameType: "BirthName", // a marriage register gives the bride's maiden name
+      }),
+    );
+    expect(stated.ok).toBe(true);
+    if (!stated.ok) return;
+    expect(findPerson(await readTree(), "I2").names[0].type).toBe("BirthName");
+
+    const married = single(
+      await materializeFacts({
+        projectPath: dir,
+        personId: "I3",
+        assertionId: "a_005",
+        relatedRole: "wife",
+        name: { given: "Mary", surname: "Smith" },
+        nameType: "MarriedName",
+      }),
+    );
+    expect(married.ok).toBe(true);
+    if (!married.ok) return;
+    expect(findPerson(await readTree(), "I3").names[0].type).toBe("MarriedName");
+
+    // Omitted: the node is still schema-valid, and carries no type claim.
+    const silent = single(
+      await materializeFacts({
+        projectPath: dir,
+        personId: "I4",
+        assertionId: "a_005",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(silent.ok).toBe(true);
+    if (!silent.ok) return;
+    const n = findPerson(await readTree(), "I4").names[0];
+    expect(n.type).toBeUndefined();
+    expect(n.sources).toEqual([{ ref: "S1", quality: 3 }]); // the ref is never optional
+  });
+
+  it("(48) the PERSONA arm still records BirthName, unchanged by the named-party arm", async () => {
+    // upsertName is shared, so a change for one arm must not move the other.
+    await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
+    const r = single(
+      await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }),
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(findPerson(await readTree(), "I2").names[0].type).toBe("BirthName");
+  });
+
+  /** A mirrored register: both parties have a persona, each carrying ONLY the
+   *  marriage assertion, so the persona arm can mint neither. */
+  const mirroredRegister = () => [
+    assertion("a_002", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "Thomas Flynn married Mary Doyle" }),
+    assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "marriage", value: "Mary Doyle married Thomas Flynn" }),
+  ];
+
+  it("(49) does NOT refuse when the party is already a tree person but her persona writes nothing", async () => {
+    // The guard's job is to steer to a call that does MORE. When the sibling
+    // persona carries only a `marriage` assertion, the persona call returns
+    // ok:true and writes nothing, so refusing leaves her writable by neither
+    // arm — the provenance leak this arm exists to close, reopened by its own
+    // guard. Existing-person-ness is NOT what makes the steer valid.
+    const existing = { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Kelly" }] };
+    await writeProject(
+      tree({ persons: [existing] }),
+      research({ sources: [S1], assertions: mirroredRegister() }),
+    );
+
+    const r = single(
+      await materializeFacts({
+        projectPath: dir,
+        personId: "I2",
+        assertionId: "a_002",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.namesAdded).toBe(1);
+    const p = findPerson(await readTree(), "I2");
+    expect(p.names).toHaveLength(2);
+    expect(p.names[1].sources).toEqual([{ ref: "S1", quality: 3 }]);
+  });
+
+  it("(50) idempotent for a given personId EVEN when a sibling persona exists", async () => {
+    // The regression this pins: a guard keyed on "the target person exists"
+    // makes call 1 mint the person and call 2 refuse itself, so the documented
+    // idempotency was false exactly where a re-run is most likely.
+    await writeProject(tree(), research({ sources: [S1], assertions: mirroredRegister() }));
+    const call = () =>
+      materializeFacts({
+        projectPath: dir,
+        personId: "I5",
+        assertionId: "a_002",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      });
+
+    const first = single(await call());
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.created).toBe(true);
+
+    const second = single(await call());
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.created).toBe(false);
+    expect(second.namesAdded).toBe(0);
+    expect(second.refsAttached).toBe(0);
+    expect(findPerson(await readTree(), "I5").names).toHaveLength(1);
+
+    // And the same in ONE batch: two mirrored records naming the same woman.
+    const batched = await materializeFacts({
+      projectPath: dir,
+      ops: [
+        { personId: "I6", assertionId: "a_002", relatedRole: "bride", name: { given: "Mary", surname: "Doyle" } },
+        { personId: "I6", assertionId: "a_003", relatedRole: "groom", name: { given: "Thomas", surname: "Flynn" } },
+      ],
+    });
+    expect(batched.ok).toBe(true);
+  });
+
+  it("(51) the refusal carries the personId the caller supplied, so following it cannot duplicate", async () => {
+    // The steer said { recordId, recordRole } with no personId, so a caller who
+    // followed it verbatim minted a SECOND person for the same woman.
+    const existing = { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Kelly" }] };
+    await writeProject(
+      tree({ persons: [existing] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_002", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+          assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "name", value: "Mary Doyle" }),
+        ],
+      }),
+    );
+
+    const r = single(
+      await materializeFacts({
+        projectPath: dir,
+        personId: "I2",
+        assertionId: "a_002",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toContain("personId: 'I2'");
+    expect(r.errors[0]).toContain("recordRole: 'bride'");
+  });
+
+  it("(52) a `parentage` assertion is treated ONE way: a two-party link, never a person fact", async () => {
+    // The inconsistency this pins: widening the sourcing set without widening
+    // SKIP_TYPES left one fact_type meaning two things — a link when sourcing
+    // an edge, a person-level `Parentage` fact when materializing a persona.
+    await writeProject(
+      tree(),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_008", { record_id: "REC-WILL", record_role: "decedent", fact_type: "name", value: "Peter Geach" }),
+          assertion("a_009", { record_id: "REC-WILL", record_role: "decedent", fact_type: "parentage", value: "father of Elizabeth Geach" }),
+          assertion("a_010", { record_id: "REC-WILL", record_role: "decedent", fact_type: "ParentChild", value: "father of Elizabeth" }),
+        ],
+      }),
+    );
+
+    const r = single(
+      await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-WILL", recordRole: "decedent" }),
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.namesAdded).toBe(1);
+    expect(r.factsAdded).toBe(0); // neither spelling becomes a person fact
+
+    const p = findPerson(await readTree(), "I2");
+    for (const f of p.facts ?? []) {
+      expect(f.type).not.toMatch(/[Pp]arent/);
     }
   });
 });

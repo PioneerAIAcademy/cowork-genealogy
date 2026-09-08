@@ -1248,6 +1248,38 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
   // `relationship`, both this tool's description and materialize_facts's told
   // the caller to source that edge "with the same assertion via
   // sourceAssertionId" — an instruction the engine then refused.
+  it("accepts a PascalCase fact_type and a parentage assertion — the SHARED predicate, from tree_edit's own call site", async () => {
+    // The shared set is read through `isRelationshipEstablishing`, which folds
+    // case, because `fact_type` is an open enum and models emit PascalCase for
+    // it. Without a test on THIS side, replacing the predicate with a raw
+    // `.has()` at this call site leaves the whole suite green, so the "both
+    // tools agree" claim rests on nothing. This is that test.
+    for (const factType of ["Marriage", "parentage", "ParentChild", "Relationship"]) {
+      await writeProject(
+        twoPersons(),
+        research([
+          relationshipAssertion({
+            id: "a_007",
+            fact_type: factType,
+            record_role: "groom",
+            structured_value: null,
+          }),
+        ]),
+      );
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: { type: "Couple", person1: "I1", person2: "I2" } as any,
+        sourceAssertionId: "a_007",
+      });
+      expect(r.ok, factType).toBe(true);
+      if (!r.ok) continue;
+      expect((await readTree()).relationships[0].sources, factType).toEqual([
+        { ref: "S1", quality: 3 },
+      ]);
+    }
+  });
+
   it("accepts a 'marriage' assertion — the Couple edge's own provenance", async () => {
     await writeProject(
       twoPersons(),

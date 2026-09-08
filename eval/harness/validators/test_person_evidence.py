@@ -429,7 +429,24 @@ def test_research_query_called_for_coverage(tool_calls, test):
 # a relationship/marriage assertion, but it mints the OTHER party the assertion
 # names, as a sourced name — never a fact, and never onto this persona. So the
 # demand this set stands down is still absent.
-_UNMATERIALIZABLE = frozenset({"relationship", "marriage", "age"})
+_UNMATERIALIZABLE = frozenset(
+    {"relationship", "marriage", "age", "parentage", "parentchild"}
+)
+
+
+def _ft(assertion: dict) -> str:
+    """An assertion's `fact_type`, case-folded.
+
+    `fact_type` is an OPEN enum with no pattern and models really do emit
+    PascalCase for it (`Marriage` and `Relationship` appear 27 and 64 times in
+    the committed `final-research` snapshots). The engine folds case for the
+    same reason (`isRelationshipEstablishing` in
+    packages/engine/mcp-server/src/utils/source-ref-resolver.ts); a validator
+    that does not fold FAILS a correct run, and a failing validator
+    short-circuits the judge and discards the dimension scores, so it burns a
+    paid run rather than merely mis-scoring one.
+    """
+    return str(assertion.get("fact_type") or "").strip().lower()
 
 # Fact types that bear on a SECOND party rather than asserting the persona's own
 # identity. A `relationship` assertion on the groom persona ("child of Thomas")
@@ -437,7 +454,13 @@ _UNMATERIALIZABLE = frozenset({"relationship", "marriage", "age"})
 # deliberately different people and `same_person(groom, father)` is a comparison
 # SKILL.md never asks for. Excluding them costs no coverage: the same persona's
 # `name`/`sex` assertions are still in scope and still carry the demand.
-_NON_IDENTITY_FACT_TYPES = frozenset({"relationship", "marriage"})
+# Kept in step with RELATIONSHIP_ESTABLISHING_TYPES on the engine side: a
+# `parentage`/`parentchild` assertion bears on a second party exactly as a
+# `relationship` one does, so scoring it against the persona's own identity is
+# the same comparison SKILL.md never asks for.
+_NON_IDENTITY_FACT_TYPES = frozenset(
+    {"relationship", "marriage", "parentage", "parentchild"}
+)
 
 
 def _new_person_evidence(before: dict, after: dict) -> list[dict]:
@@ -615,7 +638,7 @@ def test_same_person_called_when_persona_meets_existing_candidate(
         for e in _new_person_evidence(before, after)
         if (assertions.get(e.get("assertion_id")) or {}).get("record_persona_id")
         and e.get("person_id") in existing_persons
-        and (assertions.get(e.get("assertion_id")) or {}).get("fact_type")
+        and _ft(assertions.get(e.get("assertion_id")) or {})
         not in _NON_IDENTITY_FACT_TYPES
         and not _results_ref_missing(after, assertions.get(e.get("assertion_id")) or {})
     ]
@@ -781,7 +804,7 @@ def test_matched_persona_is_materialized_onto_its_person(
     for e in _new_person_evidence(before, after):
         if e.get("person_id") not in existing_persons:
             continue
-        fact_type = (assertions.get(e.get("assertion_id")) or {}).get("fact_type")
+        fact_type = _ft(assertions.get(e.get("assertion_id")) or {})
         if fact_type and fact_type not in _UNMATERIALIZABLE:
             owed.add(e.get("person_id"))
     if not owed:
@@ -798,6 +821,12 @@ def test_matched_persona_is_materialized_onto_its_person(
     named = set()
     for args in materialize_args:
         for op in _materialize_ops(args):
+            # A named-party op (`assertionId`) writes a sourced NAME and never a
+            # fact, so it cannot discharge a demand whose message is "the pe_
+            # link landed and the facts did not". Counting it would let this
+            # validator pass on exactly the state it exists to catch.
+            if op.get("assertionId"):
+                continue
             if op.get("personId"):
                 named.add(op["personId"])
 

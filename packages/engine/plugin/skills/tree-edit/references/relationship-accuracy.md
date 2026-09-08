@@ -91,8 +91,11 @@ validation (the edge and each fact are checked independently). Prefer
 between two parties — `relationship`, `marriage`, `parentage`,
 `parentchild` — so a Couple edge is sourced with the marriage assertion
 itself, and the tool resolves the ref and propagates it to an inline
-Couple fact that has none. Supply a literal `relationship.sources` *and*
-each fact's own `sources` only when no such assertion exists:
+Couple fact that has none. `sourceAssertionId` resolves `{ ref, quality }` and nothing more, so supply a
+literal `relationship.sources` *and* each fact's own `sources` when no such
+assertion exists **or when you need to record a `page`** (dwelling, family or
+entry number) — the resolver carries no page, and the two are mutually
+exclusive, so a page means the literal form:
 `relationship: { type: "Couple", person1, person2, sources: [{ ref:
 "S5", page }], facts: [{ type: "Marriage", date, place, sources: [{ ref:
 "S5", page }] }] }`.
