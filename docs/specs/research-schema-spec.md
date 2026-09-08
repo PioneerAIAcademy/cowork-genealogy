@@ -688,7 +688,7 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 | `tier` | `proof_tier` | yes | Confidence tier |
 | `vehicle` | `proof_vehicle` | yes | Proof vehicle |
 | `supporting_assertion_ids` | string[] | yes | `a_` references forming the body of evidence |
-| `resolved_conflict_ids` | string[] | yes | `c_` references to conflicts resolved in this proof (may be empty) |
+| `resolved_conflict_ids` | string[] | yes | `c_` references to conflicts settled in this proof (may be empty). Each ID must reference an existing `conflicts[]` entry whose `status` is `resolved` or `moot` — enforced by `validator.ts`. Note the contrast with the hypothesis transition below, which is the same pair: an `unresolved` conflict cannot be cited here at all. `proof-conclusion` is the only skill permitted to write this field |
 | `exhaustive_search_summary` | string | yes | Brief summary of search scope, referencing log entries |
 | `narrative_markdown` | string | yes | Self-contained GPS conclusion narrative |
 | `claims` | `proof_claim[]` | no | Optional per-claim tier breakdown — see below |

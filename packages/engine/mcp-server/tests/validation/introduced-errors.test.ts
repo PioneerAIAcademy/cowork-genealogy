@@ -245,3 +245,95 @@ describe("validateIntroduced", () => {
     expect(introduced).toEqual(direct);
   });
 });
+
+// --- issue #1972 V5 ---------------------------------------------------------
+//
+// V5 added a referential error to a WHOLE-DOCUMENT validator, so without this
+// module a project already citing an open conflict could never be written to
+// again. These three tests are what make that claim true rather than assumed —
+// and the second is the one an adversarial plan review produced, because the
+// first two on their own pass while the real freeze happens.
+describe("validateIntroduced — proof_summaries resolved_conflict_ids (V5)", () => {
+  const t = { persons: [], relationships: [], sources: [] };
+
+  function state(conflictStatus: string, refs: string[]) {
+    return {
+      ...minimalResearch,
+      conflicts: [
+        {
+          id: "c_001",
+          conflict_type: "fact",
+          description: "Birth year conflict",
+          competing_assertion_ids: ["a_001", "a_002"],
+          status: conflictStatus,
+          blocks_question_ids: [],
+          disputed_attribute: "birth_date",
+        },
+      ],
+      proof_summaries: [
+        {
+          id: "ps_001",
+          question_id: "q_001",
+          tier: "probable",
+          vehicle: "summary",
+          supporting_assertion_ids: [],
+          resolved_conflict_ids: refs,
+          exhaustive_search_summary: "Test",
+          narrative_markdown: "Test",
+        },
+      ],
+    };
+  }
+
+  it("does not block a write on a pre-existing violation", async () => {
+    // The whole reason V5 can be an error rather than a warning.
+    const before = state("unresolved", ["c_001"]);
+    const after = JSON.parse(JSON.stringify(before));
+    after.project.updated = "2026-02-02";
+
+    const res = await validateIntroduced(
+      { research: before, tree: t },
+      { research: after, tree: t }
+    );
+    expect(res.valid).toBe(true);
+    expect(res.warnings.some((w) => w.message.includes("pre-existing schema error"))).toBe(true);
+  });
+
+  it("still does not block when the cited conflict moves unresolved -> moot", async () => {
+    // The trap. `errorKey` is the normalized path PLUS the message text, so an
+    // error message naming the conflict's LIVE STATUS would produce a different
+    // key here, read as newly introduced, and REFUSE the write — while the
+    // defect is unchanged and the agent is doing exactly what the engine told
+    // it to (research-append.ts:1447-1448 says set the status to 'resolved' or
+    // 'moot'). Since `moot` is accepted by V5 the error clears outright, and
+    // because the message never embedded the status this also survives a fourth
+    // conflict_status value being added later.
+    //
+    // The same-before-state test above passes regardless, which is why this one
+    // is separate. It reds under the two-mutation combination "status in the
+    // message" + "moot rejected" (the dive's literal rule), which is the
+    // behavioural proof that the freeze is real and not merely reasoned about.
+    const before = state("unresolved", ["c_001"]);
+    const after = state("moot", ["c_001"]);
+
+    const res = await validateIntroduced(
+      { research: before, tree: t },
+      { research: after, tree: t }
+    );
+    expect(res.valid).toBe(true);
+    expect(res.errors).toEqual([]);
+  });
+
+  it("blocks a write that introduces the violation", async () => {
+    // The prevention half: without this the guard tolerates everything.
+    const before = state("unresolved", []);
+    const after = state("unresolved", ["c_001"]);
+
+    const res = await validateIntroduced(
+      { research: before, tree: t },
+      { research: after, tree: t }
+    );
+    expect(res.valid).toBe(false);
+    expect(res.errors.some((e) => e.message.includes("not settled"))).toBe(true);
+  });
+});

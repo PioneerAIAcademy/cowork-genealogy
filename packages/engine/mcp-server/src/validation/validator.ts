@@ -375,6 +375,28 @@ function checkIsoDate(
   }
 }
 
+/**
+ * The conflict statuses that count as SETTLED for
+ * `proof_summaries[].resolved_conflict_ids` (issue #1972 V5).
+ *
+ * `moot` is included, which deviates from the deep dive's rule text
+ * (docs/deep-dives/conflict-resolution-findings-2026-08-27.md § V5 says
+ * `resolved` only). Four shipped sites already treat the pair as jointly
+ * terminal, and one of them is this engine instructing the agent:
+ * research-append.ts:1402 ("'resolved' and 'moot' both settle a conflict"),
+ * research-append.ts:1447-1448 (the completion-gate error says set it to
+ * "'resolved' … or 'moot'"), research-schema-spec.md:261 and :616, and
+ * eval/harness/validators/test_hypothesis_tracking.py:152.
+ *
+ * The harm V5 names is a proof summary claiming an OPEN conflict is settled.
+ * `moot` is not open, so the harm does not reach it — while a `resolved`-only
+ * rule would refuse a write the moment an agent follows the instruction above,
+ * with no field anywhere to record that a moot conflict was accounted for.
+ * Rejecting a legitimate citation costs a blocked write; permitting a slightly
+ * imprecise one costs nothing downstream. Tightening is a one-entry change.
+ */
+const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
+
 function checkRefExists(
   refId: string,
   validIds: Set<string>,
@@ -426,6 +448,13 @@ interface ResearchIds {
   assertions: Set<string>;
   person_evidence: Set<string>;
   conflicts: Set<string>;
+  /**
+   * Conflicts in a terminal state — `resolved` or `moot`. Separate from
+   * `conflicts` because `proof_summaries[].resolved_conflict_ids` must reference
+   * a conflict that both EXISTS and is settled, and `checkRefExists` only
+   * answers the first half (issue #1972 V5).
+   */
+  settled_conflicts: Set<string>;
   hypotheses: Set<string>;
   timelines: Set<string>;
   proof_summaries: Set<string>;
@@ -581,6 +610,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     assertions: new Set(),
     person_evidence: new Set(),
     conflicts: new Set(),
+    settled_conflicts: new Set(),
     hypotheses: new Set(),
     timelines: new Set(),
     proof_summaries: new Set(),
@@ -1022,6 +1052,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("status" in c) {
       checkEnum(c.status, "conflict_status", cp, report);
+      // Collected here, and read by the proof_summaries block below. Safe
+      // because validateResearch is a single sequential pass and conflicts
+      // precede proof_summaries in it.
+      if (SETTLED_CONFLICT_STATUSES.has(c.status) && typeof c.id === "string") {
+        ids.settled_conflicts.add(c.id);
+      }
     }
 
     const ct = c.conflict_type;
@@ -1137,6 +1173,43 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
+    }
+
+    // resolved_conflict_ids -> conflicts[].id, and that conflict must be
+    // SETTLED (issue #1972 V5, labelled nothing-checks). Before this, the field
+    // was checked for presence and shape only, so a proof summary could claim
+    // an open conflict was settled and no tool, schema or eval check could see
+    // it — the state four shipped fixtures were in.
+    //
+    // The message deliberately does NOT name the conflict's live status.
+    // `introduced-errors.ts`'s diff key is the normalized path PLUS the message
+    // text, so a varying message makes an unchanged defect read as newly
+    // introduced and refuses the write — a self-inflicted freeze on exactly the
+    // pre-existing drift that module exists to tolerate.
+    //
+    // Latent rather than live as shipped, and measured both ways: embedding the
+    // status alone reds only the message test, because accepting two of the
+    // three `conflict_status` values leaves `unresolved` as the sole failing
+    // one, so the text cannot vary. Embedding it AND dropping `moot` — i.e. the
+    // deep dive's rule text plus a naturally informative message — reds
+    // introduced-errors.test.ts's `unresolved -> moot` test: `valid` goes false
+    // on an unchanged defect. So the two decisions are coupled, and shipping
+    // the dive verbatim with this message would have frozen such a project.
+    if (Array.isArray(ps.resolved_conflict_ids)) {
+      for (const cid of ps.resolved_conflict_ids) {
+        if (typeof cid !== "string") continue;
+        if (!ids.conflicts.has(cid)) {
+          checkRefExists(cid, ids.conflicts, "conflict", psp, report);
+        } else if (!ids.settled_conflicts.has(cid)) {
+          addError(
+            report,
+            psp,
+            `resolved_conflict_ids references conflict '${cid}' which is not ` +
+              `settled ('resolved' or 'moot' required); proof-conclusion owns ` +
+              `resolved_conflict_ids`
+          );
+        }
+      }
     }
 
     // Per-claim tier breakdown (optional, additive). Nothing walked into a

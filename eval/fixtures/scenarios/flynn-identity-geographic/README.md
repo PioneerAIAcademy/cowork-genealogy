@@ -2,6 +2,8 @@
 
 Patrick Flynn parentage research with **three** unresolved conflicts. A copy of `flynn-multi-conflict` plus a third conflict (`c_003`) purpose-built to exercise the skill's geographic-impossibility / travel-feasibility reasoning (`place_search` → `place_distance`).
 
+`ps_001.resolved_conflict_ids` is `[]`: `c_001` is unresolved here, and a proof summary may only cite a conflict that is `resolved` or `moot` (issue #1972 V5, enforced by `validator.ts`).
+
 - **Conflicts:**
   - `c_001` — birthplace (Ireland vs Pennsylvania), fact conflict, status: `unresolved`
   - `c_002` — identity (which Patrick Flynn in 1850 Schuylkill County is the subject?), identity conflict, status: `unresolved`

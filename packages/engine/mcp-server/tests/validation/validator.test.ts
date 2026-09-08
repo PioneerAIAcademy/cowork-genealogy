@@ -786,6 +786,173 @@ describe("Project Validator", () => {
     });
   });
 
+  // --- issue #1972 V5 -------------------------------------------------------
+  //
+  // `proof_summaries[].resolved_conflict_ids` was checked for presence and
+  // shape only, so a proof summary could claim an open conflict was settled and
+  // no tool, schema or eval check could see it. Four shipped scenario fixtures
+  // were in exactly that state. Labelled `nothing-checks`.
+  describe("proof_summaries resolved_conflict_ids -> conflicts[].status (V5)", () => {
+    function withConflictAndSummary(status: string | undefined, refs: string[]) {
+      const conflicts =
+        status === undefined
+          ? []
+          : [
+              {
+                id: "c_001",
+                conflict_type: "fact",
+                description: "Birth year conflict",
+                competing_assertion_ids: ["a_001", "a_002"],
+                status,
+                blocks_question_ids: [],
+                disputed_attribute: "birth_date",
+              },
+            ];
+      return {
+        ...minimalResearch,
+        conflicts,
+        proof_summaries: [
+          {
+            id: "ps_001",
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: [],
+            resolved_conflict_ids: refs,
+            exhaustive_search_summary: "Test",
+            narrative_markdown: "Test",
+          },
+        ],
+      };
+    }
+
+    const v5Errors = (r: { errors: { message: string }[] }) =>
+      r.errors.filter((e) => e.message.includes("resolved_conflict_ids"));
+
+    it("accepts a citation of a resolved conflict", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("accepts a citation of a MOOT conflict", async () => {
+      // Deliberate deviation from the deep dive's rule text, which says
+      // `resolved` only. Four shipped sites treat the pair as jointly terminal,
+      // and one is this engine instructing the agent: research-append.ts:1402
+      // ("'resolved' and 'moot' both settle a conflict") and :1447-1448 (the
+      // completion-gate error says set it to "'resolved' … or 'moot'"). V5's
+      // harm is claiming an OPEN conflict is settled; `moot` is terminal, so a
+      // `resolved`-only rule would refuse a write the moment an agent follows
+      // that instruction, with nowhere to record the moot conflict.
+      const result = await validateParsed(
+        withConflictAndSummary("moot", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("accepts an empty resolved_conflict_ids", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", []),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("reports a citation of an unresolved conflict, naming the conflict", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      expect(result.valid).toBe(false);
+      const errs = v5Errors(result);
+      expect(errs).toHaveLength(1);
+      expect(errs[0].message).toContain("'c_001'");
+      expect(errs[0].message).toContain("not settled");
+    });
+
+    it("does NOT put the conflict's live status in the message", async () => {
+      // Load-bearing, and the subtlest thing here. `introduced-errors.ts`'s
+      // diff key is the normalized path PLUS the message text, so a message
+      // that varies with the conflict's status makes an UNCHANGED defect read
+      // as newly introduced and refuses the write — a self-inflicted freeze on
+      // the pre-existing drift that module exists to tolerate. The paired
+      // behavioural proof is the unresolved -> moot test in
+      // introduced-errors.test.ts.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)[0].message).not.toContain("unresolved");
+    });
+
+    it("reports a citation of a conflict that does not exist", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", ["c_404"]),
+        minimalTree
+      );
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("references conflict 'c_404' which does not exist")
+        )
+      ).toBe(true);
+    });
+
+    it("reports each bad id separately, with distinct messages", async () => {
+      // Distinctness is what `introduced-errors.ts` keys on: two bad ids
+      // collapsing to one message would make fixing one of them read as "still
+      // pre-existing" and leave the other tolerated forever.
+      const research = withConflictAndSummary("unresolved", ["c_001", "c_404"]);
+      const result = await validateParsed(research, minimalTree);
+      const messages = new Set(
+        result.errors
+          .filter((e) => /c_001|c_404/.test(e.message))
+          .map((e) => e.message)
+      );
+      expect(messages.size).toBe(2);
+    });
+
+    it("holds across every shipped scenario fixture", async () => {
+      // Scoped to the V5 join ON PURPOSE, not full validation: seven fixtures
+      // exist to FAIL validation (mid-research-flynn-bad-id-prefix,
+      // -dangling-ref, -bad-enum, -missing-field, -cross-file, -broken-fk-refs,
+      // -broken-fk), driven by `intentionally_invalid: true` tests, so a
+      // full-validation scan would red on landing.
+      //
+      // A scan rather than four hand-written cases so a FIFTH fixture
+      // acquiring the fault is caught. Four carried it when V5 landed:
+      // flynn-with-birthplace-conflict, flynn-multi-conflict,
+      // flynn-identity-geographic and flynn-unresolved-conflict — one more than
+      // the deep dive predicted.
+      const here = dirname(fileURLToPath(import.meta.url));
+      const scenarios = join(here, "..", "..", "..", "..", "..", "eval", "fixtures", "scenarios");
+      const { readdirSync, existsSync } = await import("fs");
+      const offenders: string[] = [];
+      for (const name of readdirSync(scenarios)) {
+        const rp = join(scenarios, name, "research.json");
+        if (!existsSync(rp)) continue;
+        const research = JSON.parse(readFileSync(rp, "utf-8"));
+        const settled = new Set(
+          (research.conflicts ?? [])
+            .filter((c: any) => c?.status === "resolved" || c?.status === "moot")
+            .map((c: any) => c?.id)
+        );
+        const known = new Set((research.conflicts ?? []).map((c: any) => c?.id));
+        for (const ps of research.proof_summaries ?? []) {
+          for (const cid of ps?.resolved_conflict_ids ?? []) {
+            if (!known.has(cid) || !settled.has(cid)) {
+              offenders.push(`${name}: ${ps.id} -> ${cid}`);
+            }
+          }
+        }
+      }
+      expect(offenders).toEqual([]);
+    });
+  });
+
   describe("Conflict validation", () => {
     it("requires disputed_attribute for fact conflicts", async () => {
       const research = {
