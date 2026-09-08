@@ -10,6 +10,19 @@ FamilySearch ToS requires all committed e2e fixtures to be about deceased person
 > Who were the parents of Simpson Ridley Stribling, born 15 July 1821 in Amite
 > County, Mississippi?
 
+## Bundled captures (`provided-documents/`)
+
+One BLM General Land Office page is committed here to let the harness exercise its land-patent plan item
+without a live browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `blm-glo-stribling-amite-county-ms.pdf` | glorecords.blm.gov | Taliaferro Stribling co-patentee with William McDowell, Credit Volume patent, Amite County, Mississippi, 15 June 1821, Accession CV-0112-265 |
+
+This is an authentic page saved from glorecords.blm.gov. It places the father (Taliaferro Stribling) in
+Amite County, Mississippi in the year Simpson was born (1821). The co-patentee William McDowell shares
+the mother Margaret "Peggy" McDowell's maiden surname, providing an additional corroborating connection.
+
 ## Why this fixture exists
 
 Filed as issue #1413, from an alpha report: *"Claude might need more help with the
@@ -328,7 +341,8 @@ Read these before attributing a failed headless run.
   `possible`, `possible` is beneath the `probable` tree-write gate, and resolving that
   conflict means reading the deed image. **Without a key, a correctly-behaving agent
   cannot reach a tree write at all, and f1–f3 are unreachable by construction.** Verify
-  `configure_openrouter` before starting a scored run, or the result is predetermined.
+  `openRouterApiKey` is set in `~/.familysearch-mcp/config.json` before starting a
+  scored run, or the result is predetermined.
 - **`a_046` — "Taliafer Stribling" among the 1836 grantors — is the binding constraint,
   and there is a third reading the debug run didn't consider.** The conclusion needs
   Taliaferro dead c. 1822–23; a living Taliaferro conveying in 1836 would dismantle the

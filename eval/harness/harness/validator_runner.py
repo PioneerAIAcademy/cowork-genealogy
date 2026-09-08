@@ -47,6 +47,7 @@ def run_validators(
     test: dict[str, Any] | None = None,
     blocked_context_calls: list[dict[str, Any]] | None = None,
     blocked_protected_writes: list[dict[str, Any]] | None = None,
+    blocked_owned_section_writes: list[dict[str, Any]] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
     text_response: str | None = None,
@@ -86,6 +87,13 @@ def run_validators(
         # `tool_calls`, so this is the only place a raw-write attempt is visible.
         # The universal validator asserts it is empty (issue #1493).
         "blocked_protected_writes": blocked_protected_writes or [],
+        # `research_append` ops the SHIPPED ownership rule refused and the hook
+        # denied (harness.context_policy.owner_denied). Same shape and rationale
+        # as the two above — the denied call never reaches `tool_calls`, so this
+        # is the only place an out-of-lane write is visible. Until issue #2022
+        # this plane never called that predicate, so a skill could write a
+        # section it does not own and still grade clean.
+        "blocked_owned_section_writes": blocked_owned_section_writes or [],
         # MCP calls the model emitted that never reached a fixture match —
         # denied by policy, fixture caps, or aborts. Distinct from tool_calls,
         # which records only successful dispatches. Used by test_tool_allowlist

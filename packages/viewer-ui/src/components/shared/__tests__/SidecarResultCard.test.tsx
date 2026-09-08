@@ -62,16 +62,32 @@ describe('SidecarResultCard — record_search', () => {
 })
 
 describe('SidecarResultCard — fulltext_search', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setOpenExternal(() => {})
+    setOpenFamilySearch(() => {})
+  })
 
+  // Production-shaped: mapEntry emits a bare ARK `id` plus a separate
+  // `sourceUrl`, and a `title` when the upstream record has one (#1996) —
+  // the old fixture gave `id` a full URL and no `title`, a shape the tool
+  // never emits today. Sidecars staged before #272 do carry that shape and
+  // are still on disk, so it is covered separately below.
   const fulltextResult: FulltextSearchResult = {
-    id: 'https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ',
+    id: 'ark:/61903/3:1:S3HT-XYZ',
+    sourceUrl: 'https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ',
     collectionTitle: 'Pennsylvania Probate Records',
+    title: 'Last Will and Testament of Thomas Flynn',
+    recordDate: '1849',
     recordType: 'Will',
     recordPlace: 'Schuylkill County, PA',
     textDocument: 'Last Will of Thomas Flynn, naming sons Patrick and James as heirs.',
     names: ['Thomas Flynn', 'Patrick Flynn', 'James Flynn'],
     places: ['Schuylkill County, PA'],
+    // Deliberately distinct from recordDate (probate filed 1849, referencing
+    // an earlier 1846 death date in the body) so a test can tell "merged"
+    // apart from "recordDate silently hid dates' other entries".
+    dates: ['1849', '1846'],
     highlightTerms: ['Thomas', 'Patrick']
   }
 
@@ -92,6 +108,151 @@ describe('SidecarResultCard — fulltext_search', () => {
     )
     expect(screen.getByText('Thomas Flynn, Patrick Flynn, James Flynn')).toBeInTheDocument()
     expect(screen.getByText('Schuylkill County, PA')).toBeInTheDocument()
+  })
+
+  it('titles the card from `title`, not `recordType`', () => {
+    render(<SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={false} />)
+    expect(
+      screen.getByRole('heading', { name: 'Last Will and Testament of Thomas Flynn' })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Will' })).toBeNull()
+  })
+
+  it('falls back to recordType then collectionTitle when title is absent', () => {
+    const { title: _title, ...noTitle } = fulltextResult
+    render(<SidecarResultCard result={noTitle} tool="fulltext_search" defaultExpanded={false} />)
+    expect(screen.getByRole('heading', { name: 'Will' })).toBeInTheDocument()
+  })
+
+  it('opens sourceUrl (not the bare ARK id) when the footer link is clicked', async () => {
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={true} />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('https://www.familysearch.org/ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('falls back to the bare ARK id when sourceUrl is absent', async () => {
+    const { sourceUrl: _sourceUrl, ...noSourceUrl } = fulltextResult
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard result={noSourceUrl} tool="fulltext_search" defaultExpanded={true} />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    // openFamilySearch forwards the raw identifier; resolution happens
+    // downstream in the platform implementation, not in this component.
+    expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('falls back to the bare ARK id when sourceUrl is an empty string', async () => {
+    // A producer setting sourceUrl to "" (not absent) must not be treated as
+    // "present" -- `||` alone would substitute nothing and openFamilySearch
+    // would then silently no-op on the empty string.
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, sourceUrl: '' }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('falls back to id when sourceUrl is present but the policy refuses it', async () => {
+    // The gap the other two fallback tests don't cover: sourceUrl absent, and
+    // sourceUrl === '' are both falsy, so `sourceUrl || id` and
+    // `resolveFamilySearchTarget(sourceUrl) || resolveFamilySearchTarget(id)`
+    // agree by construction. A TRUTHY sourceUrl the policy refuses is the case
+    // where they can diverge: the gate falls through to id and renders the
+    // button, but a naive `onClick={() => openFamilySearch(sourceUrl || id)}`
+    // still passes the bad sourceUrl, since it is non-empty. That renders a
+    // button which opens nothing.
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, sourceUrl: 'https://evil.example/whatever' }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    const button = screen.getByRole('button', { name: /Open in FamilySearch/ })
+    await userEvent.click(button)
+    // Raw id, matching the other fallback tests: openFamilySearch forwards the
+    // raw identifier and resolution happens downstream, not in this component.
+    expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('falls back to id when sourceUrl is a real FamilySearch URL the policy still refuses', async () => {
+    // A realistic instance of the same gap: resolveFamilySearchTarget's ARK_RE
+    // is `$`-anchored, so a page-parameter suffix (a shape Linkify.test.tsx
+    // already pins as occurring in project data) fails to resolve even though
+    // the host is genuinely familysearch.org.
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard
+        result={{
+          ...fulltextResult,
+          sourceUrl: 'https://www.familysearch.org/ark:/61903/3:1:S3HT-XKR9-NXF?i=353'
+        }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('ark:/61903/3:1:S3HT-XYZ')
+  })
+
+  it('opens a legacy full-URL id as-is, without prefixing the host again', async () => {
+    const { sourceUrl: _sourceUrl, ...legacy } = fulltextResult
+    const spy = vi.fn()
+    setOpenFamilySearch(spy)
+    render(
+      <SidecarResultCard
+        result={{ ...legacy, id: 'https://familysearch.org/ark:/61903/1:1:K5M9-P3WT' }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Open in FamilySearch/ }))
+    expect(spy).toHaveBeenCalledWith('https://familysearch.org/ark:/61903/1:1:K5M9-P3WT')
+  })
+
+  it('falls back past an empty-string title to recordType', () => {
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, title: '' }}
+        tool="fulltext_search"
+        defaultExpanded={false}
+      />
+    )
+    expect(screen.getByRole('heading', { name: 'Will' })).toBeInTheDocument()
+  })
+
+  it('merges recordDate with dates rather than letting recordDate hide the rest', () => {
+    render(
+      <SidecarResultCard result={fulltextResult} tool="fulltext_search" defaultExpanded={true} />
+    )
+    // recordDate is '1849' and dates adds a distinct '1846' -- both must render.
+    expect(screen.getByText('1849, 1846')).toBeInTheDocument()
+  })
+
+  it('deduplicates when recordDate also appears in dates', () => {
+    render(
+      <SidecarResultCard
+        result={{ ...fulltextResult, dates: ['1849'] }}
+        tool="fulltext_search"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByText('1849')).toBeInTheDocument()
   })
 })
 

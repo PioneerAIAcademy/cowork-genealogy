@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile, writeFile, readdir } from "fs/promises";
-import { join } from "path";
+import { mkdtemp, rm, readFile, writeFile, readdir, mkdir } from "fs/promises";
+import { realpathSync } from "node:fs";
+import { join, parse } from "path";
 import { tmpdir } from "os";
 import {
   isInsideProject,
@@ -8,6 +9,7 @@ import {
   atomicWriteJson,
   atomicWriteBoth,
   withProjectLock,
+  findNestingAncestor,
 } from "../../src/utils/project-io.js";
 
 describe("project-io write layer", () => {
@@ -180,6 +182,60 @@ describe("project-io write layer", () => {
       // a fresh acquire, not a re-entry.
       const second = await withProjectLock(dir, async () => "second");
       expect(second).toBe("second");
+    });
+  });
+
+  describe("findNestingAncestor", () => {
+    // The realpath `dir` itself resolves to — matches what the function
+    // returns, so assertions don't depend on whether the OS temp dir is
+    // itself a symlink (macOS's /tmp -> /private/tmp).
+    const realDir = () => realpathSync.native(dir);
+
+    it("returns null when no ancestor holds research.json", async () => {
+      const candidate = join(dir, "brand-new-project");
+      expect(await findNestingAncestor(candidate)).toBeNull();
+    });
+
+    it("finds an ancestor one level up", async () => {
+      await writeFile(join(dir, "research.json"), "{}", "utf-8");
+      const candidate = join(dir, "sub-project");
+      expect(await findNestingAncestor(candidate)).toBe(realDir());
+    });
+
+    it("finds an ancestor several levels up, returning the FIRST one found", async () => {
+      await writeFile(join(dir, "research.json"), "{}", "utf-8");
+      // A second, nested project between dir and the candidate — the walk
+      // must stop at this closer one, not the outer one.
+      const nested = join(dir, "a", "b");
+      await mkdir(nested, { recursive: true });
+      await writeFile(join(nested, "research.json"), "{}", "utf-8");
+      const candidate = join(nested, "c", "d");
+      expect(await findNestingAncestor(candidate)).toBe(realpathSync.native(nested));
+    });
+
+    it("still finds the ancestor when projectPath itself does not exist yet", async () => {
+      await writeFile(join(dir, "research.json"), "{}", "utf-8");
+      // Nothing on this path below `dir` has been created.
+      const candidate = join(dir, "not-created", "yet");
+      expect(await findNestingAncestor(candidate)).toBe(realDir());
+    });
+
+    it("terminates at the filesystem root instead of hanging or throwing", async () => {
+      // Assumes no research.json sits at the OS drive/filesystem root, which
+      // holds on any normal dev machine or CI runner.
+      const root = parse(dir).root;
+      const candidate = join(root, "cowork-genealogy-findnestingancestor-probe");
+      await expect(findNestingAncestor(candidate)).resolves.toBeNull();
+    });
+
+    it("does not treat the candidate's OWN research.json as an ancestor", async () => {
+      // The scan starts at the PARENT of projectPath, never projectPath
+      // itself — an already-existing project must not block its own
+      // project_create refusal path with a self-nesting false positive.
+      const candidate = join(dir, "existing-project");
+      await mkdir(candidate, { recursive: true });
+      await writeFile(join(candidate, "research.json"), "{}", "utf-8");
+      expect(await findNestingAncestor(candidate)).toBeNull();
     });
   });
 });

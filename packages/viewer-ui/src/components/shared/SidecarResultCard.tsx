@@ -158,6 +158,26 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
   const text = result.textDocument ?? ''
   const terms = result.highlightTerms ?? []
   let rendered: React.ReactNode = text
+  // recordDate (the record's own canonical date) and dates (every date
+  // entity-extracted from the document text) are not redundant — a probate
+  // filing can carry a filing date plus an earlier death date in the body —
+  // so merge and dedupe rather than letting recordDate hide dates' other
+  // entries.
+  const allDates = Array.from(
+    new Set([result.recordDate, ...(result.dates ?? [])].filter(Boolean))
+  )
+  // Prefer sourceUrl (the upstream-supplied resolver URL) when it resolves;
+  // fall back to id, which can itself be a legacy full-URL shape for sidecars
+  // staged before #272. Gated on RESOLVABILITY, not truthiness — matching
+  // PersonCard and the tree-match sink above (#2049 review). Keeps the RAW
+  // identifier (not the resolved URL) as the winner, matching this component's
+  // other two sinks: openFamilySearch forwards the raw value and resolves it
+  // again downstream, so the gate and the click handler must pick the same
+  // field or the button can render for one and open the other.
+  const fulltextLinkSource =
+    (result.sourceUrl && resolveFamilySearchTarget(result.sourceUrl) && result.sourceUrl) ||
+    (result.id && resolveFamilySearchTarget(result.id) && result.id) ||
+    undefined
   if (terms.length > 0 && text) {
     const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean)
     if (escaped.length > 0) {
@@ -189,12 +209,18 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
           <span>{result.places.join(', ')}</span>
         </div>
       )}
-      {result.id && resolveFamilySearchTarget(result.id) && (
+      {allDates.length > 0 && (
+        <div className={styles.metaRow}>
+          <span className={styles.metaLabel}>Dates</span>
+          <span>{allDates.join(', ')}</span>
+        </div>
+      )}
+      {fulltextLinkSource && (
         <div className={styles.footerLink}>
           <button
             type="button"
             className={styles.externalLink}
-            onClick={() => openFamilySearch(result.id)}
+            onClick={() => openFamilySearch(fulltextLinkSource)}
           >
             Open in FamilySearch →
           </button>
@@ -213,11 +239,10 @@ export default function SidecarResultCard({
   const [expanded, setExpanded] = useState(defaultExpanded)
 
   const isRS = isRecordSearch(result, tool)
+  const ft = result as FulltextSearchResult
   const title = isRS
     ? (result.recordTitle ?? result.collectionTitle ?? 'Untitled record')
-    : ((result as FulltextSearchResult).recordType ??
-      (result as FulltextSearchResult).collectionTitle ??
-      'Untitled record')
+    : (ft.title || ft.recordType || ft.collectionTitle || 'Untitled record')
   const score = isRS ? result.score : undefined
 
   return (

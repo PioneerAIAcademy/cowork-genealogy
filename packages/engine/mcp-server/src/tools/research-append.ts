@@ -23,6 +23,11 @@ import { readFile, mkdir } from "fs/promises";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  conflictBlocksCompletion,
+  questionTiedAssertionIds,
+  whyConflictBlocksCompletion,
+} from "../utils/question-state.js";
+import {
   atomicWriteJson,
   atomicWriteBoth,
   backupIfExists,
@@ -156,11 +161,37 @@ const SECTIONS: Record<string, SectionConfig> = {
 // Each returns error strings on the post-mutation entry; empty = ok.
 
 function conflictInvariants(entry: any): string[] {
+  // `moot` settles a conflict for every gate that reads `status` — the
+  // completion gate included — and was the one settling write with no
+  // precondition, so a bare `{status: "moot"}` cleared that gate while
+  // asserting nothing. It owes the reason, because "this no longer matters" is
+  // a genealogical judgment; it owes only the reason, because there is nothing
+  // to weigh or to declare independent once the conflict has stopped bearing
+  // on the question. Measured cost: 0 of the 1 moot conflict in the committed
+  // e2e corpus (`ogletree-children` c_006, which carries one).
+  if (entry.status === "moot") {
+    const rationale = entry.resolution_rationale;
+    // Trimmed, and type-checked: a whitespace-only string asserts exactly as
+    // much as an absent one, and a non-string (a number, an object) satisfies
+    // no `=== ""` comparison at all. Same reading as `isIdentityConflict`.
+    return typeof rationale !== "string" || rationale.trim() === ""
+      ? [
+          "a moot conflict requires 'resolution_rationale' — say why the conflict no " +
+            "longer bears on the question. To settle it on the evidence instead, use " +
+            "status 'resolved' with independence_analysis, weighing_analysis and " +
+            "resolution_rationale.",
+        ]
+      : [];
+  }
   if (entry.status !== "resolved") return [];
   const errs: string[] = [];
   for (const f of ["independence_analysis", "weighing_analysis", "resolution_rationale"]) {
     const v = entry[f];
-    if (v === undefined || v === null || v === "") {
+    // Same trimmed, type-checked reading as the `moot` arm above: this had
+    // admitted `"   "` for all three since it shipped, which satisfies the
+    // field and states nothing. Free on the corpus — 0 of 85 resolved
+    // conflicts carry a blank or non-string analysis field.
+    if (typeof v !== "string" || v.trim() === "") {
       errs.push(`a resolved conflict requires '${f}'`);
     }
   }
@@ -173,8 +204,13 @@ function conflictInvariants(entry: any): string[] {
 
 function planActiveInvariants(entry: any, research: any): string[] {
   if (entry.status !== "active") return [];
+  // `p &&`: a legacy `plans: [null]` made this throw
+  // `Cannot read properties of null`, so the writer crashed on the very shape
+  // the document validator now reports. A malformed neighbour is not this
+  // entry's problem — the validator reports it, and this call is not refused
+  // for it (the introduced-error diff demotes pre-existing drift).
   const conflicting = (research.plans ?? []).filter(
-    (p: any) => p !== entry && p.question_id === entry.question_id && p.status === "active",
+    (p: any) => p && p !== entry && p.question_id === entry.question_id && p.status === "active",
   );
   if (conflicting.length > 0) {
     return [
@@ -983,6 +1019,135 @@ interface AppliedOp {
   warnings?: string[];
 }
 
+/**
+ * A plan this call CREATED that ends the call with no items, while the same
+ * call's `plan_items` ops wrote into a different plan — the misroute that
+ * persisted a schema-invalid `research.json`.
+ *
+ * Nine `plan_items` ops carrying a hard-coded `planId: "pl_001"` appended
+ * themselves to a pre-existing `completed` plan for another question, and the
+ * plan the same batch had just created ended with no `items` key. The document
+ * validator refused that with "missing required field 'items'", which names the
+ * symptom; the model's next call added `"items": []` to the shell, kept the
+ * wrong `planId`, and was accepted. The error string is what drives the next
+ * move, so it has to name the cause.
+ *
+ * This refuses nothing that was not already refused: a created plan with no
+ * items fails `checkRequired` when `items` is absent and the non-empty check
+ * when it is `[]`, both introduced by this call and neither demotable. What it
+ * changes is which sentence the model reads.
+ *
+ * Silent unless the created plan is EMPTY, so a batch that legitimately adds an
+ * item to an existing plan alongside a populated new one is untouched.
+ */
+function emptyCreatedPlanErrors(
+  ops: ResearchAppendOp[],
+  research: any,
+  applied: AppliedOp[],
+): Array<{ index: number; message: string }> {
+  const createdIds = applied
+    .filter((a) => a.section === "plans" && a.op === "append" && typeof a.entryId === "string")
+    .map((a) => a.entryId);
+  if (createdIds.length === 0) return [];
+  // APPENDS only. A `plan_items` update targets an item that already exists in
+  // the plan it names, so it is not a misdirected item and the prescription
+  // below ("re-issue with planId X") would make it fail on a missing entryId.
+  const itemPlanIds = ops
+    .filter((o) => o.section === "plan_items" && o.op === "append" && typeof o.planId === "string")
+    .map((o) => o.planId as string);
+  if (itemPlanIds.length === 0) return [];
+
+  // The k-th `plans` append op produced the k-th created plan id, in op order.
+  const planOpIndexes = ops
+    .map((o, i) => ({ o, i }))
+    .filter(({ o }) => o.section === "plans" && o.op === "append")
+    .map(({ i }) => i);
+  const plans = Array.isArray(research.plans) ? research.plans : [];
+  const byId = new Map<string, any>(
+    plans.filter((pl: any) => pl && typeof pl.id === "string").map((pl: any) => [pl.id, pl]),
+  );
+  const createdSet = new Set(createdIds);
+
+  const describe = (id: string): string => {
+    const other = byId.get(id);
+    const status = other && typeof other.status === "string" ? other.status : "unknown-status";
+    const q = other && typeof other.question_id === "string" ? other.question_id : "an unknown question";
+    return `'${id}' (${status} plan for ${q})`;
+  };
+
+  // Which created plans end EMPTY. When more than one does, "put this id on
+  // every item op" is wrong for both of them: following either empties the
+  // other. That case gets a per-plan prescription instead.
+  const emptyCreated = createdIds.filter((id) => {
+    const pl = byId.get(id);
+    return pl && !(Array.isArray(pl.items) && pl.items.length > 0) &&
+      !("items" in pl && pl.items !== null && !Array.isArray(pl.items));
+  });
+
+  const out: Array<{ index: number; message: string }> = [];
+  for (let k = 0; k < createdIds.length; k++) {
+    const newId = createdIds[k];
+    const pl = byId.get(newId);
+    if (!pl) continue;
+    if (Array.isArray(pl.items) && pl.items.length > 0) continue; // the items landed here
+    // A present-but-non-array `items` gets its own type error from the document
+    // validator; calling that "ends this call with no items" would describe the
+    // document wrongly.
+    if ("items" in pl && pl.items !== null && !Array.isArray(pl.items)) continue;
+    const elsewhere = [...new Set(itemPlanIds.filter((id) => id !== newId))];
+    if (elsewhere.length === 0) continue;
+    const preExisting = elsewhere.filter((id) => !createdSet.has(id));
+    const alsoCreated = elsewhere.filter((id) => createdSet.has(id));
+    const forQuestion =
+      typeof pl.question_id === "string" ? ` for question '${pl.question_id}'` : "";
+
+    // Every clause below is conditional on the state that makes it TRUE. The
+    // first draft asserted all of them unconditionally, so it told a caller who
+    // wrote `pl_007` never to hard-code `pl_001`, and called a superseded plan
+    // for the SAME question "another question's plan".
+    const prescription =
+      emptyCreated.length > 1
+        ? `${emptyCreated.length} of the plans this call created (${emptyCreated.join(", ")}) end it with no items, so there is no single id to add: give each plan_items op the id of the plan ITS item belongs to.`
+        : `A plan_items op must carry the id the tool assigned the plan the item belongs to, which is '${newId}' for this one.`;
+
+    let cause: string;
+    if (preExisting.length > 0) {
+      const named = preExisting.map(describe).join(", ");
+      // EVERY named plan, not `.some()`: with one same-question and one
+      // different-question target, a `.some()` gate printed a singular "it
+      // belongs to a different question" over a list where one of them does not.
+      const otherQuestion = preExisting.every((id) => {
+        const o = byId.get(id);
+        return o && typeof o.question_id === "string" && o.question_id !== pl.question_id;
+      });
+      const hardCoded = preExisting.includes("pl_001") && newId !== "pl_001";
+      const tail = hardCoded
+        ? " Never a hard-coded 'pl_001': in an ongoing project that is the first plan in the file, not yours."
+        : otherQuestion
+          ? (preExisting.length === 1
+              ? " It belongs to a different question, so its audit trail is not yours to append to."
+              : " None of them belongs to this question, so their audit trails are not yours to append to.")
+          : "";
+      cause =
+        `this call's plan_items ops wrote into ${named} instead — the items went to a plan this ` +
+        `call did not create. ${prescription}${tail}`;
+    } else {
+      cause =
+        `this call's plan_items ops named only ${alsoCreated.map((id) => `'${id}'`).join(", ")}, ` +
+        `which this same call also created. ${prescription}`;
+    }
+
+    out.push({
+      index: planOpIndexes[k] ?? 0,
+      message:
+        `plan '${newId}' was created${forQuestion} and ends this call with no items, which cannot be ` +
+        `persisted. ${cause} Do not add "items": [] to the plan shell instead; that is what makes the ` +
+        "document schema-invalid.",
+    });
+  }
+  return out;
+}
+
 /** Apply ONE mutation to the in-memory research document. Mutates `research` in
  *  place and returns a descriptor; throws ResearchAppendError on any precondition
  *  failure so a batch aborts before anything is written. Does NOT validate or
@@ -1264,28 +1429,26 @@ function applyOne(
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the
     // project completed while a BLOCKING conflict is unresolved. Blocking =
-    // status "unresolved" AND (it is an identity conflict OR blocks_question_ids
-    // non-empty). "resolved" and "moot" both settle a conflict. This is a
-    // tool precondition on the status transition, not a document-validity
+    // status "unresolved" AND (blocks_question_ids non-empty OR it is an
+    // identity conflict OR it disputes an assertion some question was built
+    // on). "resolved" and "moot" both settle a conflict. This is a tool
+    // precondition on the status transition, not a document-validity
     // rule — an already-completed project with such a conflict still loads.
     // Motivated by the wilkins-death-kentucky e2e run where an agent logged
     // an unresolved identity conflict (wrong-person death certificate,
     // 43-year birth mismatch) and completed the project anyway; prose-level
     // guardrails (warnings, mentor) fired and were rationalized away.
+    //
+    // The third arm is derived rather than declared, because the two declared
+    // fields are not reliably written: 42 of the 75 conflicts in the committed
+    // e2e corpus carry neither, so the two-arm gate saw 5 of the 14 unresolved
+    // conflicts held by completed runs. Deriving sees all 14. The predicate is
+    // shared with `question-state.ts`, which computes the per-question form of
+    // the same reading for the router's advisory ladder.
     if (section === "project" && op.fields.status === "completed") {
-      // An identity conflict is flagged by a non-empty identity_question STRING.
-      // The schema types identity_question as the question's text (string|null),
-      // never a boolean, so the old `=== true` was unsatisfiable dead code —
-      // an unresolved identity conflict slipped past the gate whenever
-      // blocks_question_ids was also empty (issue #1001).
-      const isIdentityConflict = (c: any) =>
-        typeof c.identity_question === "string" && c.identity_question.trim() !== "";
+      const tied = questionTiedAssertionIds(research);
       const live = (Array.isArray(research.conflicts) ? research.conflicts : []).filter(
-        (c: any) =>
-          c &&
-          c.status === "unresolved" &&
-          (isIdentityConflict(c) ||
-            (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
+        (c: any) => c && conflictBlocksCompletion(c, tied),
       );
       // Refuse on the UNION of the pre-call and live blocking sets, not on live
       // alone. `applyOne` mutates `research` in place per op, so a live-only read
@@ -1304,7 +1467,10 @@ function applyOne(
       }
       if (blocking.length > 0) {
         const names = blocking
-          .map((c: any) => `${c.id} (${c.conflict_type ?? "conflict"}${isIdentityConflict(c) ? ", identity" : ""})`)
+          .map(
+            (c: any) =>
+              `${c.id} (${c.conflict_type ?? "conflict"}; ${whyConflictBlocksCompletion(c, research)})`,
+          )
           .join(", ");
         throw new ResearchAppendError(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
@@ -1312,6 +1478,10 @@ function applyOne(
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
             "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
             "(with a rationale for why it no longer matters) — then retry completing the project. " +
+            "A conflict you weighed and could not settle is still recorded as 'resolved' with all " +
+            "three analyses, saying in resolution_rationale why it cannot be settled and what " +
+            "would settle it, and leaving preferred_assertion_id null — a deferral is a finding, " +
+            "not an omission, but it is not 'moot', which means the conflict no longer matters. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
         );
@@ -1333,15 +1503,21 @@ function applyOne(
       //
       // Prose was tried on exactly this rule and lost: research/SKILL.md has
       // carried "verify BOTH gates, in order — do not write completed until both
-      // hold" since PR #1029, and 23% of completed runs in the committed e2e
-      // corpus reach `completed` with at least one uncritiqued summary anyway.
+      // hold" since PR #811 (merged 2026-07-23; #1029 touched this file but not
+      // that row), and 29 of 128 completed runs in the committed e2e corpus
+      // reach `completed` with at least one uncritiqued summary anyway — 23%.
+      // Date-split, that 23% is 23/70 before the prose existed, 6/53 with the
+      // prose and no enforcement, and 0/5 since this precondition went live:
+      // the prose cut the rate by two thirds, and the live window is n=5.
       //
       // A superseded verdict does not count: if a newer verdict replaced it, the
       // newer one is itself in evaluations[] and satisfies the gate; if nothing
       // replaced it, the critique genuinely no longer stands.
       // `resolved` is an ISO date string or null, never a boolean, so the old
       // `=== true` was unsatisfiable dead code — the same shape as the
-      // `identity_question === true` bug 60 lines above. `Boolean(q.resolved)`
+      // `identity_question === true` bug, written up on `isIdentityConflict` in
+      // `utils/question-state.ts` (it used to sit in the sibling gate above,
+      // which now shares that helper). `Boolean(q.resolved)`
       // is what `question-state.ts` already uses to answer the same question,
       // and the two disagreeing is how a question could read as resolved to
       // `project_context` while this gate never counted it. Widening the set can
@@ -2231,8 +2407,10 @@ async function prepareOps(
       }
       if (verdict === "unverifiable" && geocoded) {
         warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the place text ` +
-            "names no country, so the resolution could not be cross-checked; verify it is the right place",
+          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
+            "could not be cross-checked (either the place text names no country, or the standard place " +
+            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+            "right place",
         );
       }
     }
@@ -2316,15 +2494,13 @@ export async function researchAppend(
     // Same discipline again, for the conflict half of the completion gate: the
     // conflicts that were blocking BEFORE this call's ops. Without it a single
     // batch could resolve the conflict and complete in one go.
+    // Widened with the live arm, not instead of it: the gate refuses on the
+    // union, so narrowing only one half would let a batch resolve a
+    // derived-blocking conflict and complete in the same call.
+    const preCallTiedAssertionIds = questionTiedAssertionIds(research);
     const preCallBlockingConflicts = (
       Array.isArray(research.conflicts) ? research.conflicts : []
-    ).filter(
-      (c: any) =>
-        c &&
-        c.status === "unresolved" &&
-        ((typeof c.identity_question === "string" && c.identity_question.trim() !== "") ||
-          (Array.isArray(c.blocks_question_ids) && c.blocks_question_ids.length > 0)),
-    );
+    ).filter((c: any) => c && conflictBlocksCompletion(c, preCallTiedAssertionIds));
     const preCallCritiquedSummaryIds = new Set<string>(
       (Array.isArray(research.evaluations) ? research.evaluations : [])
         .filter(
@@ -2432,6 +2608,22 @@ export async function researchAppend(
       }
     }
 
+    // A plan this call created that ends with no items, while the call's
+    // plan_items ops wrote elsewhere. Checked on POST-APPLY state (that is what
+    // "ends the call with no items" means) and before any write, so nothing is
+    // persisted. The `plans` hint teaches the batched shape that satisfies it.
+    // Computed here, on post-apply state, but NOT returned on: an early return
+    // suppressed every other document-level error in the same batch, so a
+    // caller with a misroute AND a bad enum elsewhere was told about one of
+    // them and had to make a second call to discover the other. Reordering is
+    // not needed to fix that: a created plan ending with no items always
+    // produces a validation error (`items` absent fails the required check,
+    // `[]` fails the non-empty check, and the non-array case is excluded from
+    // the misroute set), so the misroute set is a strict SUBSET of the
+    // validation-failing set. Carrying the messages down to the validation
+    // failure and merging them there loses nothing and reports everything.
+    const misrouted = emptyCreatedPlanErrors(ops, research, applied);
+
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     const anyMutation = applied.some((a) => !a.noop) || prep.treeMutated;
 
@@ -2458,16 +2650,21 @@ export async function researchAppend(
         // Shape errors surface here (the document validator, not applyOne), so
         // this is the site the evaluations/known_holdings rejections land on.
         const mapped = mapValidationErrors(formatIssues(validation.errors), applied, isBatch);
+        // The cause-naming messages lead, because they name what to change;
+        // the document errors follow so nothing in the batch is hidden.
+        const misrouteMsgs = misrouted.map((m) => fmt(m.index, m.message));
         // Only hint the sections the errors actually name — in a wide batch,
         // examples for ops that validated fine would be noise pointing away
         // from the real problem.
         const blamed = ops.filter((o) => mapped.some((m) => m.includes(String(o.section))));
         return fail(
-          mapped,
-          (blamed.length > 0 ? blamed : ops).map((o) => ({
-            section: String(o.section),
-            op: o.op === "update" ? "update" : "append",
-          })),
+          [...misrouteMsgs, ...mapped],
+          misrouteMsgs.length > 0
+            ? [{ section: "plans", op: "append" as const }]
+            : (blamed.length > 0 ? blamed : ops).map((o) => ({
+                section: String(o.section),
+                op: o.op === "update" ? ("update" as const) : ("append" as const),
+              })),
         );
       }
       validationWarnings = formatIssues(validation.warnings);

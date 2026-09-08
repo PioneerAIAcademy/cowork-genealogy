@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_pedro_chaves_spouse",
+    "objective": "Did Pedro Pablo Chaves, christened 1 July 1836 in Buenos Aires, marry Juana Flores, and if so when and where?",
+    "subject_person_ids": [
+      "2761-R34"
+    ],
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

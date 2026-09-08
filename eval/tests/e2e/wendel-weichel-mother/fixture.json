@@ -1,0 +1,19 @@
+{
+  "id": "wendel-weichel-mother",
+  "name": "Wendel Weichel — parents Jacob and Josefine (1926 Saskatchewan census)",
+  "genre": "record-hint",
+  "source_pid": "G8Q5-BJ1",
+  "captured": "2026-09-07",
+  "researcher_question": "Who were the parents of Wendel Weichel (b. 1912, d. 1980, Odessa, Saskatchewan) — in particular his mother, whom the tree does not name?",
+  "tags": {
+    "question_type": "parents",
+    "era": "1920s",
+    "geography": "CA-SK"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 4, hint-samples.csv row 155, flag adds_mother, confidence 3). Draft transcribed from the 1926 Prairie Provinces census household; unverified."
+}

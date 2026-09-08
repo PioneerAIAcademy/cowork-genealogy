@@ -1,0 +1,19 @@
+{
+  "id": "georg-gajdosch-spouse",
+  "name": "Georg Gajdosch — wife Catharina and daughter Anna (b. 1718, Lidečko)",
+  "genre": "record-hint",
+  "source_pid": "K69J-F7Y",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Georg Gajdosch of Lidečko, Moravia have a daughter Anna, baptised 22 April 1718 — and was her mother named Catharina rather than the Dorothea the tree records as his wife?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1710s",
+    "geography": "CZ"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 7, hint-samples.csv row 243, flags adds_spouse/adds_daughter, confidence 3). Draft transcribed from a 1718 Moravian baptismal index entry; unverified. The hint conflicts with the tree's recorded wife (Dorothea vs Catharina)."
+}
