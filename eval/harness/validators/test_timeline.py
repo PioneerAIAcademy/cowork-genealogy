@@ -25,6 +25,7 @@ from validators_lib import assert_foreign_keys_valid
 # must expect its residence jurisdiction's schedule instead (issue #2261).
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
+_PAREN_RE = re.compile(r"\([^()]*\)")
 
 
 # --- Helpers ----------------------------------------------------------
@@ -229,8 +230,15 @@ def _census_year_of_entry(entry: str) -> int | None:
     mentions (e.g. "1861 England census enumeration (married 1859, died 1874)")
     is not the census year and must not be counted (finding A). Returns None when
     the entry names no `census` or carries no year."""
-    census_at = [m.start() for m in re.finditer("census", entry.lower())]
-    years = [(m.start(), int(m.group(1))) for m in _YEAR_RE.finditer(entry)]
+    # Blank parenthesised asides first, preserving offsets. A bounding year in a
+    # SHORT trailing parenthetical sits closer to the word `census` than the
+    # census year does — "1870 US federal census (b. 1861)" picks 1861 at
+    # distance 11 over 1870 at 16 — so nearest-token alone inverts on exactly
+    # the shape #2261 is about: a US federal year on a non-US life then passes
+    # a Tier-1 gate. The longer asides in the finding-A shapes hid this.
+    text = _PAREN_RE.sub(lambda m: " " * len(m.group(0)), entry)
+    census_at = [m.start() for m in re.finditer("census", text.lower())]
+    years = [(m.start(), int(m.group(1))) for m in _YEAR_RE.finditer(text)]
     if not census_at or not years:
         return None
     return min(years, key=lambda py: min(abs(py[0] - c) for c in census_at))[1]

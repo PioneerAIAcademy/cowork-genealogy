@@ -171,6 +171,23 @@ def test_us_1890_backstop_fires_when_no_census_page_fetched():
         check_us_1890_backstop(BEFORE, _after(gap), [], positive)  # no wiki_read at all
 
 
+def test_fires_on_a_us_year_hidden_behind_a_short_parenthetical():
+    """The nearest-token heuristic inverts on a short trailing aside.
+
+    In "1870 US federal census (b. 1861)" the bounding year sits 11 characters
+    from `census` and the census year sits 16, so nearest-token alone picks
+    1861 — which IS on the England page — and a US federal schedule year on an
+    England-only life passes a Tier-1 gate. That is the #2261 defect itself.
+    Nothing pinned the heuristic: replacing it with "take the first year"
+    passed all 3367 tests, and that simpler version is more correct here.
+    """
+    gaps = [{"start": "1840", "end": "1900",
+             "expected_events": ["1870 US federal census (b. 1861)"],
+             "severity": "high"}]
+    with pytest.raises(AssertionError, match="not found on the fetched census page"):
+        check_census_from_wiki(BEFORE, _after(gaps), [_wiki_call()], TAGGED)
+
+
 def test_fires_when_no_census_page_fetched():
     """census_reads arm: no wiki_read to a *_Census page fires it. `match=` pins
     THIS assertion — without it the `absent` arm fires first and would mask a
