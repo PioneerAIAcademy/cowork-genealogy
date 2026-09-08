@@ -1114,6 +1114,8 @@ def arm_visibility(
     submitted: str | None,
     *,
     anchored_agents: set[str] | frozenset[str] = frozenset(),
+    excluded_agents: set[str] | frozenset[str] = frozenset(),
+    excluded_unknown_owner: bool = False,
     has_dropped: bool = False,
 ) -> dict[str, str]:
     """Per-agent-owned-arm visibility for one bundle.
@@ -1132,14 +1134,30 @@ def arm_visibility(
     Compared bare (`strip_agent_namespace`): the hosted path registers agents
     bare and the SDK plugin path namespaces them, so a raw `==` would miss.
 
-    `has_dropped` holds EVERY arm at `"unknown"`. The producer names transcripts
-    it could not include (`feedback.json`'s `dropped_transcripts`); a count read
-    from what IS here cannot account for those, and "we could not include it"
-    must never read as "we read it and found nothing"."""
+    `excluded_agents` OUTRANKS `anchored_agents`, and that order is the whole
+    point: a bundle can carry two transcripts of the same agent and have one of
+    them anchor. Reading the arm live off the one that anchored reports a
+    real-looking 0 resting on the one that did not — the same fabricated
+    measurement `has_dropped` exists to prevent, arriving from the consumer end
+    instead of the producer's. Per agent, so an excluded `image-reader`
+    transcript does not throw away a real `proof-conclusion` count.
+
+    `has_dropped` and `excluded_unknown_owner` hold EVERY arm at `"unknown"`.
+    The first is the producer naming transcripts it could not include
+    (`feedback.json`'s `dropped_transcripts`); the second is this consumer
+    excluding one it cannot attribute to any single agent — an unreadable
+    `agentType`, or a whole session group lost to a parent decode failure.
+    Either way "we could not read it" must never read as "we read it and found
+    nothing"."""
     bare = {strip_agent_namespace(a) for a in anchored_agents}
+    # Stripped the same way as `anchored_agents`: the SDK plugin path namespaces
+    # agent names and the hosted path does not, so a raw `==` misses one of them.
+    excluded_bare = {strip_agent_namespace(a) for a in excluded_agents}
     out: dict[str, str] = {}
     for agent, (split, _owns) in _AGENT_SPLIT_DATES.items():
-        if has_dropped:
+        if has_dropped or excluded_unknown_owner:
+            out[agent] = "unknown"
+        elif agent in excluded_bare:
             out[agent] = "unknown"
         elif agent in bare:
             out[agent] = "live"
@@ -1256,6 +1274,10 @@ def scan_feedback_bundle(
         # Named, never appended: a transcript we cannot place would land far
         # from its own skill invocation and manufacture a violation.
         "unanchored_subagents": [],
+        # The agents whose transcripts this bundle carried and the adapter then
+        # excluded. Holds those arms at "unknown" — see `arm_visibility`.
+        "excluded_agents": [],
+        "excluded_unknown_owner": False,
         # A transcript we could not DECODE, as distinct from one we could not
         # adapt. Invalid UTF-8 used to propagate out of parse_jsonl and take
         # every other bundle's result with it.
@@ -1307,9 +1329,13 @@ def scan_feedback_bundle(
             out["window_overruns"] = _window_overruns(adapted["groups"], window=window)
             if adapted["unreadable_transcripts"]:
                 out["transcript_unreadable"] = True
+            out["excluded_agents"] = adapted["excluded_agents"]
+            out["excluded_unknown_owner"] = adapted["excluded_unknown_owner"]
             out["arms"] = arm_visibility(
                 submitted,
                 anchored_agents=set(adapted["anchored_agents"]),
+                excluded_agents=set(adapted["excluded_agents"]),
+                excluded_unknown_owner=adapted["excluded_unknown_owner"],
                 has_dropped=bool(dropped_transcripts),
             )
             out["tool_call_count"] = len(tool_calls)
@@ -1404,6 +1430,14 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             tag += " [could not adapt]"
         if r.get("transcript_unreadable"):
             tag += " [transcript unreadable]"
+        # An exclusion is its own cause. Without this the row's only marking is
+        # `[plugin era unknown for: …]`, which says the transcript may never
+        # have been here — the opposite of "it was here and we could not read
+        # it", and the difference decides whether anyone goes looking.
+        excluded_here = list(r.get("excluded_agents") or [])
+        if excluded_here or r.get("excluded_unknown_owner"):
+            named = ", ".join(excluded_here) or "owner unknown"
+            tag += f" [subagent transcript excluded: {named}]"
         if r.get("research_unreadable"):
             tag += " [research unreadable]"
         elif not r.get("has_research"):
@@ -1480,16 +1514,29 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
     # here, whatever its date. Failing that, a PRE-split bundle's write came from
     # the main thread and IS in the parent transcript, so the count is a real
     # measurement — #1054 was waiting on exactly that number and a blanket "0 by
-    # construction" would tell its reader to discard it.
+    # construction" would tell its reader to discard it. Both routes are
+    # OVERRIDDEN by an exclusion of that agent's own transcript: a bundle can
+    # carry two of them and have only one anchor, and reading the arm live off
+    # that one reports a 0 resting on the other.
     with_sub = [r for r in results if r.get("subagent_transcripts")]
-    unanchored = [r for r in results if r.get("unanchored_subagents")]
+    # Any exclusion, not just the unanchorable ones: a transcript that failed to
+    # DECODE never reaches `unanchored_subagents`, so counting that list alone
+    # left the commoner half of this invisible in the one line a reader
+    # cross-checks an arm against.
+    unanchored = [
+        r
+        for r in results
+        if r.get("unanchored_subagents")
+        or r.get("excluded_agents")
+        or r.get("excluded_unknown_owner")
+    ]
     dropped_any = [r for r in results if r.get("dropped_transcripts")]
     lines.append(
         f"\nOwner-arm visibility ({len(with_sub)} bundle(s) carry subagent "
         f"transcripts under _feedback/subagents/, spliced at the spawning Agent "
-        f"call; {len(unanchored)} carry at least one that could not be anchored "
-        f"and was EXCLUDED, not appended; {len(dropped_any)} name a transcript "
-        f"the producer had to drop):"
+        f"call; {len(unanchored)} carry at least one the consumer EXCLUDED — "
+        f"unanchorable or undecodable — rather than appending it; "
+        f"{len(dropped_any)} name a transcript the producer had to drop):"
     )
     for agent, (split, owns) in sorted(_AGENT_SPLIT_DATES.items()):
         live = [r for r in results if (r.get("arms") or {}).get(agent) == "live"]
@@ -1500,10 +1547,15 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             f"carries this agent's own spliced transcript, or it predates the split "
             f"and the write came from the main thread, un-denied and in the parent "
             f"transcript, so those counts are real measurements; "
-            f"{len(unknown)} where it is not — no transcript of this agent's here, "
-            f"and on/after the split or undated, so the write may have happened "
-            f"inside the agent (invisible) while a main-thread attempt would be "
-            f"hook-denied and skipped as is_error, so 0 there is NOT evidence. 'May' "
+            f"{len(unknown)} where it is not, for either of two reasons that send "
+            f"you to different places: no transcript of this agent's here and the "
+            f"bundle is on/after the split or undated, so the write may have "
+            f"happened inside the agent (invisible) while a main-thread attempt "
+            f"would be hook-denied and skipped as is_error; or the bundle DID "
+            f"carry one of this agent's transcripts and it was excluded as "
+            f"unanchorable or undecodable, in which case the file exists and the "
+            f"per-bundle row names it — so 0 there is NOT evidence in either "
+            f"case. 'May' "
             f"because a deploy does not ship the sandbox image "
             f"(docs/architecture.md §9.4 pt 2), so the era is unknown, not post-split."
         )

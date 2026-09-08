@@ -1450,7 +1450,10 @@ this section before reopening one.
   **that** agent — matched per agent, since a bundle can carry one agent's
   transcript and not another's — or it predates that arm's split, in which case
   the write came from the main thread, was un-denied, and is in the parent
-  transcript. Every bundle collected before this landed (2026-08-05 onward;
+  transcript. **Both routes are overridden by an exclusion of that same agent's
+  own transcript** (`excluded_agents`): a bundle can carry two of an agent's
+  transcripts and have only one of them anchor, and reading the arm `live` off
+  the one that anchored reports a 0 resting on the one that did not. Every bundle collected before this landed (2026-08-05 onward;
   newest 2026-08-20) is on the second side of both dates. Otherwise the arm is
   `unknown`: the write may have happened inside an agent whose transcript is
   not here. "May", not "was" — a deploy does not ship the sandbox image
@@ -1459,6 +1462,19 @@ this section before reopening one.
   being assumed live, and **any** bundle whose `feedback.json` names a
   `dropped_transcripts` entry holds every arm at `unknown` — a count read from
   what is present cannot account for a file the producer had to leave out.
+
+  **The consumer's own exclusions carry the same weight as the producer's, and
+  for the same reason.** A transcript can reach the scan and still not be
+  readable by it: unanchorable (no meta, or a `toolUseId` matching no `Agent`
+  block, which is what a parent trimmed from the head produces), undecodable,
+  or lost with its whole session group when that group's parent fails to
+  decode. Where the excluded transcript's `agentType` is known, that agent's
+  arm alone goes `unknown`, so an excluded `image-reader` transcript does not
+  throw away a real `proof-conclusion` measurement. Where it is not — an
+  unreadable meta, or a dropped group — every arm goes `unknown`, because no
+  single one can be blamed. The two `unknown`s send a reader to different
+  places, so the per-bundle row names the exclusion rather than leaving the
+  era tag to imply the file was never there.
 
   The `tree_edit`/`tree_correct` arms were blind only to the agent route: the
   hook covers `research_append` alone, so a main-thread `primary: true` or

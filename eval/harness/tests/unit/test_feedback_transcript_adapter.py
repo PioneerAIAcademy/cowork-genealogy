@@ -903,6 +903,96 @@ def test_the_window_does_not_bleed_across_sessions(tmp_path):
     )
 
 
+# --- an EXCLUDED transcript must hold its own agent's arm ------------------
+#
+# `has_dropped` already holds every arm at unknown for a transcript the PRODUCER
+# could not include. The consumer excludes them too — unanchorable, undecodable,
+# or a whole group lost with its parent — and `anchored_agents` alone let an arm
+# read `live` off the transcript that anchored while another of the same agent's
+# was thrown away. The report then calls that 0 a real measurement.
+#
+# `submitted` is pinned PER TEST. `_subagent_bundle` defaults to 2026-09-01,
+# after both `_AGENT_SPLIT_DATES` entries, so the date fallback already returns
+# `unknown` — a check written on the default cannot fail for the right reason.
+_PRE_SPLIT = "2026-08-10T10:00:00Z"
+
+
+def _bad_bytes() -> bytes:
+    """Invalid UTF-8. `parse_jsonl` raises on it, which is the decode failure
+    this bundle is built to produce — cp1252 in a real transcript did it once."""
+    return b'{"type":"assistant","cwd":"\xe9\x28"}\n'
+
+
+def test_an_unanchored_transcript_holds_its_own_agents_arm_at_unknown(tmp_path):
+    """POST-split on purpose: the date fallback already says `unknown` there, so
+    only an anchored transcript can make this arm read `live`. That is what
+    makes the check discriminate exclusion against anchoring rather than
+    re-testing the date."""
+    bundle = _subagent_bundle(tmp_path / "one-of-two")
+    sub = bundle / "_feedback" / "subagents"
+    # A second transcript of the SAME agent that anchors nowhere. agent-a1 still
+    # anchors, so `anchored_agents` holds proof-conclusion either way.
+    _write_jsonl(sub / "agent-a2.jsonl", [_assistant([_PROOF_WRITE])])
+    (sub / "agent-a2.meta.json").write_text(
+        json.dumps({"agentType": "proof-conclusion", "description": "d",
+                    "toolUseId": "matches-nothing", "spawnDepth": 1}),
+        encoding="utf-8")
+
+    result = scan_feedback_bundle(bundle)
+    assert result["unanchored_subagents"] == ["agent-a2"]
+    assert result["excluded_agents"] == ["proof-conclusion"]
+    assert result["arms"]["proof-conclusion"] == "unknown", (
+        "one of this agent's transcripts was thrown away — a 0 over what is "
+        "left is not a measurement"
+    )
+    # And the row a reader checks the arm against says so, rather than leaving
+    # `[plugin era unknown]` to imply the file was never here.
+    assert "subagent transcript excluded: proof-conclusion" in format_feedback_report([result])
+
+
+def test_an_undecodable_transcript_holds_its_own_agents_arm_at_unknown(tmp_path):
+    """PRE-split, so the date fallback would otherwise say `live` — and one
+    undecodable child, with no anchored sibling, because a sibling would make
+    the `subagent_transcripts_anchored == 0` half arithmetically impossible."""
+    bundle = _subagent_bundle(tmp_path / "undecodable", submitted=_PRE_SPLIT)
+    (bundle / "_feedback" / "subagents" / "agent-a1.jsonl").write_bytes(_bad_bytes())
+
+    result = scan_feedback_bundle(bundle)
+    assert result["excluded_agents"] == ["proof-conclusion"]
+    assert result["arms"]["proof-conclusion"] == "unknown"
+    # An arm this bundle says nothing about keeps the date answer.
+    assert result["arms"]["research-exhaustiveness"] == "live"
+    assert result["subagent_transcripts_anchored"] == 0, (
+        "it did not anchor — counting it as anchored contradicts excluded_agents"
+    )
+
+
+def test_an_undecodable_parent_holds_every_arm_at_unknown(tmp_path):
+    """A parent decode failure drops the whole group, children included, so
+    there is no agent to blame and no arm that can be told it was seen. PRE-split
+    again, so the date fallback would otherwise call both arms `live`."""
+    bundle = _subagent_bundle(tmp_path / "bad-parent", submitted=_PRE_SPLIT)
+    (bundle / "_feedback" / "session-log.jsonl").write_bytes(_bad_bytes())
+
+    result = scan_feedback_bundle(bundle)
+    assert result["excluded_unknown_owner"] is True
+    assert result["arms"] == {"proof-conclusion": "unknown",
+                              "research-exhaustiveness": "unknown"}
+
+
+def test_a_namespaced_agent_type_still_matches_its_arm_when_excluded(tmp_path):
+    """The SDK plugin path registers an agent as `genealogy-research:<name>` and
+    the hosted path registers it bare. `anchored_agents` is stripped at both
+    ends; an unstripped `excluded_agents` would miss the arm and read `live`."""
+    bundle = _subagent_bundle(tmp_path / "namespaced", submitted=_PRE_SPLIT,
+                              agent_type="genealogy-research:proof-conclusion")
+    (bundle / "_feedback" / "subagents" / "agent-a1.jsonl").write_bytes(_bad_bytes())
+
+    result = scan_feedback_bundle(bundle)
+    assert result["excluded_agents"] == ["proof-conclusion"]
+    assert result["arms"]["proof-conclusion"] == "unknown"
+
+
 def test_arm_visibility_still_falls_back_to_the_date(tmp_path):
     """A bundle with no subagent transcripts keeps the old date-only behaviour:
     before a split the write came from the main thread and IS in the log."""

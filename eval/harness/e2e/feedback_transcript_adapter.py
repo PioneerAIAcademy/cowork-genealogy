@@ -188,6 +188,15 @@ def _parse_meta(path: Path) -> dict[str, Any] | None:
     return meta if isinstance(meta, dict) else None
 
 
+def _bare_agent(agent_type: str) -> str:
+    """`agentType` without its plugin namespace. The SDK plugin path registers
+    an agent as `genealogy-research:proof-conclusion` and the hosted path
+    registers it bare, so the two spellings must not read as two agents. Used
+    for `anchored_agents` and `excluded_agents` alike — building the two sets
+    by different rules is how one of them stops matching an arm."""
+    return agent_type.split(":", 1)[-1]
+
+
 def _agent_id_of(calls: list[dict[str, Any]]) -> str | None:
     """The `agentId` the child's own records carry, if any. It is on the
     records, not on the `.meta.json` (whose four keys are `agentType`,
@@ -256,6 +265,16 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
     unanchored: list[str] = []
     unreadable: list[str] = []
     anchored_agents: set[str] = set()
+    # The `agentType` of every transcript this bundle CARRIED and this function
+    # then had to exclude, `None` where the meta could not name one. Kept as a
+    # flat list and resolved after the walk: `anchored_agents` alone lets an arm
+    # read live off one anchored transcript while another of the same agent's
+    # was thrown away, which reports a real-looking 0 resting on a file nobody
+    # read.
+    excluded_owners: list[str | None] = []
+    # A whole session group dropped on a parent decode failure — its children
+    # have nothing left to anchor into, so no arm can be told it was seen.
+    dropped_group = False
     subagent_transcripts = 0
 
     for name, parent_path, subagents_dir in _group_dirs(bundle_dir):
@@ -265,6 +284,7 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
             parent = adapt_bundle_transcript(parent_path)
         except (ValueError, OSError):
             unreadable.append(f"{name}/session-log.jsonl")
+            dropped_group = True
             continue
         calls: list[dict[str, Any]] = parent["tool_calls"]
         truncated = truncated or parent["truncated"]
@@ -288,13 +308,18 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
         # depth-2 transcript is placed, its spawning call is already in the list.
         for _order, stem, path, meta in sorted(children, key=lambda c: (c[0], c[1])):
             subagent_transcripts += 1
+            # Read BEFORE the decode, off the meta already in hand: an exclusion
+            # has to name its owner, and an undecodable transcript is exactly
+            # the one whose owner would otherwise be lost.
+            agent_type = (meta or {}).get("agentType")
+            owner = agent_type if isinstance(agent_type, str) and agent_type else None
             try:
                 child = adapt_bundle_transcript(path)
             except (ValueError, OSError):
                 unreadable.append(f"{name}/subagents/{path.name}")
+                excluded_owners.append(owner)
                 continue
             anchor = (meta or {}).get("toolUseId")
-            agent_type = (meta or {}).get("agentType")
             # Stamp every child entry, and NEVER leave `agent_id` None on one:
             # `find_protected_writes_by_unnamed_delegate` reads `agent_id is
             # None` as "the main thread did it", so an unstamped subagent write
@@ -311,11 +336,12 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
                 # No meta, or an id matching nothing here. EXCLUDED and named —
                 # never appended.
                 unanchored.append(stem)
+                excluded_owners.append(owner)
                 continue
             truncated = truncated or child["truncated"]
             adapted_records += child["adapted_records"]
-            if isinstance(agent_type, str) and agent_type:
-                anchored_agents.add(agent_type.split(":", 1)[-1])
+            if owner is not None:
+                anchored_agents.add(_bare_agent(owner))
 
         groups.append({"name": name, "tool_calls": calls})
 
@@ -328,6 +354,13 @@ def adapt_bundle(bundle_dir: Path) -> dict[str, Any]:
         "unanchored_subagents": unanchored,
         "unreadable_transcripts": unreadable,
         "anchored_agents": sorted(anchored_agents),
+        "excluded_agents": sorted({_bare_agent(a) for a in excluded_owners if a}),
+        # No single arm can be blamed for these, so they hold every arm at
+        # unknown — exactly as a producer-side `dropped_transcripts` entry does.
+        "excluded_unknown_owner": dropped_group or any(a is None for a in excluded_owners),
         "subagent_transcripts": subagent_transcripts,
-        "subagent_transcripts_anchored": subagent_transcripts - len(unanchored),
+        # Every excluded child, not just the unanchored ones: an undecodable
+        # transcript used to count as anchored here, which disagreed with the
+        # `excluded_agents` printed beside it.
+        "subagent_transcripts_anchored": subagent_transcripts - len(excluded_owners),
     }
