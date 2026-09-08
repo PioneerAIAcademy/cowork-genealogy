@@ -41,7 +41,7 @@ Repo `PioneerAIAcademy/cowork-genealogy`, project **1**.
 ```sh
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1500 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
-  --json number,title,body,labels,assignees,createdAt,updatedAt,comments > /tmp/issues.json
+  --json number,title,body,labels,assignees,createdAt,updatedAt,comments,blockedBy > /tmp/issues.json
 ```
 
 **`--limit` defaults to 30 and truncates silently.** The board carries ~500 items,
@@ -657,10 +657,12 @@ Ask these, and answer only the ones with a real finding:
 - **Do two issues want the same thing generated rather than guarded twice?** Two
   lints over two hand-maintained mirrors of one source usually collapse into one
   codegen decision.
-- **Is a blocked-on edge invisible?** Blockers live in prose, so `/fill-ready`
-  and the lead re-derive them by reading bodies every time. Emit the dependency
-  edges as output, and propose whichever is cheapest: a `blocked` label, a title
-  suffix, or accepting that this skill's weekly output is the record.
+- **Is a blocked-on edge recorded only in prose?** Edges have a home now —
+  GitHub's native issue dependencies (`gh issue edit <N> --add-blocked-by <M>`),
+  which `/fill-ready` reads for Gate 1 and counts for `high-priority` criterion
+  3 (blocks three or more open issues). A body that says "Blocked on #M" with no
+  native edge is invisible to both. § 6's lint emits the `--add-blocked-by` line
+  for every such edge; propose them, and the first run is the backfill.
 - **Did a warn-only check ship without a triage owner?** A lint that emits N
   warnings nobody reads becomes its own issue. If the board already carries one of
   those, say so before endorsing another warn-only check.
@@ -695,8 +697,58 @@ print('unassigned in Ready/In Progress/Review:',
       [n for n in _unass if not (onboard[n]=='Ready' and _senior(n))])
 print('  of which senior-pool cards in Ready (expected, not a finding):',
       [n for n in _unass if onboard[n]=='Ready' and _senior(n)])
+
+# `high-priority` — /fill-ready applies it to Ready cards only and it rides
+# along into In Progress / Review; Backlog is where a filing that slipped the
+# hook lands. The body line is what /fill-ready re-derives against.
+import datetime, re
+def _hp(n): return any(l['name']=='high-priority' for l in issues[n]['labels'])
+def _lane(n, lane): return any(l['name']==lane for l in issues[n]['labels'])
+hp=[n for n in issues if _hp(n)]
+print('high-priority in Backlog (never applied there):',
+      [n for n in hp if onboard.get(n)=='Backlog'])
+print('high-priority without a `> **High priority (` body line:',
+      [n for n in hp if '> **High priority (' not in (issues[n]['body'] or '')])
+_week=(datetime.datetime.now(datetime.timezone.utc)
+       -datetime.timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+print('high-priority unassigned in Ready > 7 days (pickers not honouring it):',
+      [n for n in hp if onboard.get(n)=='Ready' and not issues[n]['assignees']
+       and issues[n]['updatedAt'] < _week])
+for lane in ('developer','genealogist'):
+    pool=[n for n,s in onboard.items() if s=='Ready' and n in issues
+          and not issues[n]['assignees'] and _lane(n,lane) and not _lane(n,'cross-cutting')]
+    marked=[n for n in pool if _hp(n)]
+    if pool and 2*len(marked) > len(pool):
+        print(f'{lane}: high-priority on {len(marked)}/{len(pool)} unassigned Ready — the ordering says nothing')
+
+# Transition lint: a blocker named in prose but not recorded as a native
+# dependency. Emits the exact write; only an OPEN ISSUE in the pool can be a
+# target (a PR number or a closed issue is reported, not converted).
+PHRASE=re.compile(r'Blocked on|Prerequisite:|Wait for #|must land first|land this after|Settle that first', re.I)
+NUM=re.compile(r'#(\d+)')
+convertible, other = set(), []
+for n,i in issues.items():
+    body=i.get('body') or ''
+    have={b['number'] for b in (i.get('blockedBy') or {}).get('nodes',[])}
+    for m in PHRASE.finditer(body):
+        num=NUM.search(body, m.start(), m.start()+120)
+        if not num: other.append((n,'no number',m.group(0))); continue
+        k=int(num.group(1))
+        if k==n: continue
+        if k not in issues: other.append((n,k,'closed or PR')); continue
+        if k not in have: convertible.add((n,k))
+for n,k in sorted(convertible):
+    print(f'gh issue edit {n} --repo PioneerAIAcademy/cowork-genealogy --add-blocked-by {k}')
+print(f'prose blockers: {len(convertible)} convertible, {len(other)} not:', other)
 PY
 ```
+
+The `high-priority` lines are reports, not removals — `/fill-ready` owns the
+label and re-derives it; a card that has sat unassigned in Ready for a week
+under it says the ordering is not being read, which is a standup topic, not a
+label change. The transition lint's output is the backfill the first time it
+runs and a trickle after; propose the lines, and list the non-convertible rest
+so the filer can fix the body.
 
 Also report **stalled** work: anything in `In Progress` or `Review` whose
 `updatedAt` is more than a week old, with its assignee. In Progress is a promise;

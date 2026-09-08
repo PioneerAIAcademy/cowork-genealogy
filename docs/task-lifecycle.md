@@ -21,6 +21,18 @@ Say which one in your PR description.
 
 ---
 
+## Pick a card
+
+Ready is a self-serve menu, two pools (`developer`, `genealogist`), and the
+`senior` label says which cards are not yours. One more label orders the rest:
+**take a `high-priority` card in your lane before any other.** It is a soft
+ordering — finish what you have started; do not drop it for one. The card's
+body opens with a `> **High priority (date):**` line saying why (critical path
+to a milestone, live harm, blocks three or more issues, or a lead's call).
+`/fill-ready` applies and removes the label; nobody files with it.
+
+---
+
 ## Ask early
 
 **When you aren't confident, ask a senior. At any step, about anything.** A

@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready / In Progress / Review cards from four criteria it re-derives every run — a soft "take this first" for whoever picks from the menu, never a filing label. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -28,7 +28,7 @@ PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
 # Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86
 # Done 98236657 / Not planned c44314b0 — both terminal, closed issues only; never promote out of one
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000
 ```
 
 Each item carries `id` (the item id you need to move it), `content.number`,
@@ -54,6 +54,14 @@ Two labels carry the routing:
 |---|---|
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
+
+**`high-priority` is a picker signal, not routing.** It tells whoever is scanning
+Ready *take this before any other card in your lane* — a soft ordering, not an
+interrupt. It is applied only to cards already in Ready, stays on through In
+Progress and Review, and is yours alone to add and remove: § 2 "Mark the
+high-priority cards". It is never a filing label — the filing gate in
+`scripts/claude-hooks/gate-issue-create.py` denies a filing that carries it — so
+one sitting in Backlog is a hygiene finding, not a ranking input.
 
 **The `feedback` label means untriaged, and nothing else.** An issue labelled
 `feedback` is a raw user bug report, filed automatically into the **Feedback**
@@ -126,10 +134,17 @@ gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1500 \
   | jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0
       and ((.labels|index("cross-cutting"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
-                     senior: map(select((index("developer")) and index("senior")))|length },
+                     senior: map(select((index("developer")) and index("senior")))|length,
+                     high_priority: map(select((index("developer")) and index("high-priority")))|length },
         genealogist: { total: map(select(index("genealogist")))|length,
-                       senior: map(select((index("genealogist")) and index("senior")))|length } }'
+                       senior: map(select((index("genealogist")) and index("senior")))|length,
+                       high_priority: map(select((index("genealogist")) and index("high-priority")))|length } }'
 ```
+
+**Report the `high-priority` share of each pool from the same numbers** —
+labelled over total, per lane. There is no cap, and the share is never a swap
+trigger; but when it passes half in a lane the ordering says nothing to a picker,
+and that sentence goes in the report.
 
 Count each pool **separately** — an item's label decides which target it counts
 against, and a pool at 16 while the other sits at 8 is invisible in a combined
@@ -441,6 +456,60 @@ Deprioritise, explicitly and out loud: anything downstream of a broken
 measurement (assigning it buys numbers nobody can read), and anything whose
 cost is a paid eval run that a nearby issue is about to spend anyway.
 
+### Mark the high-priority cards
+
+After ranking, and over every **open** card in Ready, In Progress and Review —
+never Backlog — decide which carry `high-priority`. A card qualifies on **any one**
+of four criteria. Effort is never one.
+
+1. **Critical path.** It gates a milestone and its honest lead time is longer
+   than the slack computed above — the same item the previous section already
+   sends to the top of its pool.
+2. **Live harm shipping now.** Heuristic 1: silent corruption, a wrong conclusion
+   reaching a user, a guardrail hole in a production path.
+3. **Blocks three or more open issues.** Counted from GitHub's native issue
+   dependencies at run time — `Issue.blocking`, open nodes only. Prose "Blocked
+   on #N" in another body counts for nothing here; `/audit-board` § 6 converts
+   prose to native edges, and until it has, the count is what it is.
+4. **A lead's call.** Applied by hand by Richard or Dallan, and never proposed
+   for removal here — only by hand.
+
+One paginated query gives every open issue's blocking count. This is repository
+GraphQL, not ProjectsV2, so it does not draw on the Projects quota:
+
+```sh
+gh api graphql --paginate -f query='query($endCursor:String){
+  repository(owner:"PioneerAIAcademy",name:"cowork-genealogy"){
+    issues(first:100,states:OPEN,after:$endCursor){
+      pageInfo{hasNextPage endCursor}
+      nodes{ number blocking(first:50){ nodes{ number state } } } } } }' \
+  | jq -c '.data.repository.issues.nodes[]
+           | {n:.number, blocks:[.blocking.nodes[]|select(.state=="OPEN")|.number]}
+           | select((.blocks|length)>=3)'
+```
+
+**Every application writes one line into the body**, directly below any
+`> **Reviewed …**` line and above the body proper, naming the criterion and the
+date. It is what tells the next run — and the picker — why the card is marked:
+
+```
+> **High priority (2026-09-08):** critical path — gates Beta; ~5 wks lead vs 8 wks slack.
+> **High priority (2026-09-08):** live harm — <one clause>.
+> **High priority (2026-09-08):** blocks #N, #M, #K.
+> **High priority (2026-09-08):** lead: <login>.
+```
+
+**Re-derive criteria 1–3 every run.** A labelled card whose criterion has lapsed
+— the blocked issues closed, the slack recovered, the harm fixed upstream — gets
+a proposed `--remove-label high-priority` and the body line deleted in the same
+write. A card whose line reads `lead:` is left alone. A card whose criterion
+changed gets the line rewritten. Removal on closure is nobody's job: every query
+in this loop runs `--state open`, so a closed card's label is read by nothing.
+
+Propose additions, removals and rewrites together in the report (Output shape,
+1c), each with its criterion, and apply only what is approved — § 5 has the
+writes.
+
 ## 3. The four gates — nothing enters Ready that fails one
 
 A Ready item must be startable *today* by one person who reads only that issue.
@@ -451,10 +520,21 @@ Check all four. They fail differently and the distinction matters.
 The task's answer is unknowable, or its work would be thrown away, until
 something else lands.
 
-Read the body for the language this repo actually uses: "Blocked on…",
+**Read the native dependency first**, then the prose:
+
+```sh
+gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json blockedBy \
+  -q '.blockedBy.nodes[] | "#\(.number)"'
+```
+
+Then read the body for the language this repo actually uses: "Blocked on…",
 "Prerequisite:", "Wait for #N", "land this after…", "X must land first",
 "Settle that first". These issues are unusually good at stating it — trust the
-prose, then **verify the blocker's real state.**
+prose, then **verify the blocker's real state.** When the prose names a blocker
+the native field lacks, say so in the report: `/audit-board` § 6 emits the
+`--add-blocked-by` line, but this run is where the miss is noticed, and until it
+is recorded natively the blocker counts for nothing toward `high-priority`
+criterion 3.
 
 Checking that the blocker issue *exists* is not enough. Confirm it is genuinely
 done: closed **and** the work reachable on main.
@@ -518,7 +598,7 @@ lines, so it is only ever as good as they are — a missing line means an item
 simply does not appear.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -628,7 +708,7 @@ every open PR (the only input here that is not self-reported), and the `**Touche
 line of every open issue in **Ready, In Progress or Review** — not Review and PRs alone.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -782,6 +862,20 @@ Ready still needs this move. (A raw feedback submission is the exception: the
 same workflow files it into the Feedback column, where `/triage-feedback` moves
 it to Not planned or to Backlog, dropping the `feedback` label on the way. It
 reaches you as an ordinary issue and is promoted with this move like any other.)
+
+**Then the `high-priority` writes** from § 2 "Mark the high-priority cards" —
+each one approved like every other write here, and the body line always in the
+same write as the label:
+
+```sh
+# add
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label high-priority
+gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body > /tmp/body.md
+# insert `> **High priority (<date>):** <criterion> — <clause>.` below any `> **Reviewed` line, then:
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file /tmp/body.md
+# remove — same shape, deleting the line
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --remove-label high-priority
+```
 
 **Gate every issue you are moving into Ready through `/review-ready` before you
 promote it — both pools, not just `developer`, and not just the ones you
@@ -1076,6 +1170,12 @@ list it does not appear in. Add state when it matters.
    junior-blocked / junior-after-a-decision / senior, and whether the junior pool
    is about to run dry. Add the arrival-vs-closure line for the last four weeks,
    flagged if arrival has led for three.
+1c. **High-priority cards** — every card carrying the label, with its criterion
+   and column; proposed additions, each with its criterion and the body line you
+   will write; proposed removals, each with the criterion that lapsed; and the
+   per-lane share from section 1, with the sentence when a lane passes half.
+   `lead:` cards are listed, never proposed for removal. A picker reads the
+   label, not this report, so this is the only place the reasoning is visible.
 2. **Splits** — anything you broke in two, and which half is going to Ready. Skip
    the heading if you split nothing.
 3. **Promote to Ready** — a table: issue, the **impact clause** (what right

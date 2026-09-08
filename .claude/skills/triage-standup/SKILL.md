@@ -333,7 +333,17 @@ Only after the lead approves List 2.
 ```sh
 gh issue create --label developer|genealogist [--label icebox] \
   --assignee <login> --title "..." --body "..."
+gh issue edit <new> --repo PioneerAIAcademy/cowork-genealogy --add-blocked-by <N>[,<M>]
 ```
+
+**Record every blocker the row names as a native dependency** — the second
+command; `gh issue create` has no dependency flag. Prose "Blocked on #N" is read
+by no query: `/fill-ready` Gate 1 reads `blockedBy`, and a blocker's `blocking`
+count of three or more is what earns it `high-priority`.
+
+**Never `--label high-priority`.** It is Ready-only, applied and removed by
+`/fill-ready` from criteria it re-derives each run, and the filing gate denies
+it. A row the lead calls urgent files without it and says so in the body.
 
 **A `Lead`-tagged row files with `--label needs-decision` and no `--assignee`.**
 

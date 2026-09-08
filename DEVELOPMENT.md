@@ -198,8 +198,14 @@ gh issue create --label developer|genealogist [--label icebox] \
   --title "…" --body "**Touches:** path/one.ts, path/two.py
 
 …"
+gh issue edit <new> --add-blocked-by <N>[,<M>]   # when it waits on another issue
 ```
 
+- **Never `--label high-priority`.** That label is a picker signal — *take this
+  before other cards in your lane* — applied to Ready cards by `/fill-ready`
+  from criteria it re-derives every run, and never at filing. The filing gate
+  denies it. If the item is urgent, say so in the body; the next `/fill-ready`
+  decides.
 - **Pick the label by who does the work.** `developer` for anything with a
   mechanical pass/fail (lints, CI, validators, harness/Python, MCP tools,
   refactors, tooling bugs). `genealogist` for fixture adjudication, run-log
@@ -240,6 +246,12 @@ gh issue create --label developer|genealogist [--label icebox] \
   it was written. This line is what makes that visible in a grep instead of a
   three-hour read. Best guess is fine and being wrong costs nothing — it is read
   by the weekly audit, not by a gate.
+- **Record a blocker as a native dependency, not prose.** `gh issue edit <new>
+  --add-blocked-by <N>` (a second command — `gh issue create` has no dependency
+  flag). "Blocked on #N" in the body is read by nobody's query: `/fill-ready`
+  Gate 1 reads the native field, and the blocker's own `blocking` count is what
+  earns it `high-priority` (three or more). `/audit-board` lists prose-only
+  edges and emits the line to convert each one; save it the trip.
 - **Mention the number in your PR description** so the reviewer can see what you
   chose not to do.
 
