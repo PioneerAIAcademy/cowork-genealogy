@@ -12,6 +12,7 @@ silent, which is the failure mode this whole issue is about.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -99,5 +100,110 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
 
     matchers = opts.hooks["PreToolUse"]
     assert [h for m in matchers for h in m.hooks] == [real_agent._pretool_hook]
-    # matcher=None so it fires for every tool, not just an MCP prefix.
-    assert all(m.matcher is None for m in matchers)
+    # Scoped, not matcher=None. `None` fired the hook for every tool, so one
+    # unanswered callback took down `ToolSearch` too (issue #1915).
+    assert [m.matcher for m in matchers] == [real_agent._PRETOOL_MATCHER]
+    assert all(m.matcher for m in matchers), "a falsy matcher fires for every tool"
+    # Explicitly set, so the effective bound is not whichever CLI default applies.
+    assert [m.timeout for m in matchers] == [real_agent._PRETOOL_TIMEOUT_S]
+    assert 0 < real_agent._PRETOOL_TIMEOUT_S <= 60
+
+
+def test_the_matcher_is_derived_from_the_deny_arms_not_restated(tmp_path, monkeypatch):
+    """Hard-errors if a constant is renamed or emptied, rather than silently
+    checking nothing — the failure mode `tests/packaging/plugin-hooks.test.ts`
+    is written against, and the way the plugin's matcher and its predicate
+    diverged with every test green (guardrail spec, "Closed 2026-08-17/18").
+    """
+    file_tools = real_agent._FILE_WRITE_TOOLS
+    device_tools = real_agent.DEVICE_WRITE_TOOLS
+    assert file_tools, "_FILE_WRITE_TOOLS is empty — the matcher would lose its file arm"
+    assert device_tools, "DEVICE_WRITE_TOOLS is empty — the matcher would lose the bridge"
+
+    expected = "|".join((*file_tools, *(f".*{t}" for t in device_tools)))
+    assert real_agent._PRETOOL_MATCHER == expected, (
+        "the matcher is no longer the join of the deny-arm constants. Derive it; "
+        "a restated list is what diverges."
+    )
+    # The `.*` on the bridge name is load-bearing, not decoration: the bare form
+    # shipped inert once, because Cowork namespaces the tool and the predicate
+    # matches on the bare tail.
+    for t in device_tools:
+        assert f".*{t}" in real_agent._PRETOOL_MATCHER
+
+
+@pytest.mark.parametrize(
+    "tool_name",
+    [
+        "Write",
+        "Edit",
+        "NotebookEdit",
+        "device_commit_files",
+        "mcp__remote-devices__device_commit_files",
+        "mcp__remote-devices__Genealogy_Research__device_commit_files",
+    ],
+)
+def test_the_matcher_binds_every_tool_the_hook_denies(tool_name):
+    """Anchored full match AND substring search, because which one the CLI
+    applies is not ours to choose."""
+    payload = {"file_path": "research.json", "files": [{"path": "research.json"}]}
+    assert real_agent.direct_project_file_write(tool_name, payload), (
+        f"{tool_name} is in this list because the hook denies it; it no longer does"
+    )
+    pattern = real_agent._PRETOOL_MATCHER
+    assert re.fullmatch(pattern, tool_name) or re.search(pattern, tool_name), (
+        f"the hook denies {tool_name} but the matcher does not bind it, so the "
+        f"deny never runs — inert with the whole suite green"
+    )
+
+
+@pytest.mark.asyncio
+async def test_the_matcher_covers_every_tool_the_hook_can_deny():
+    """THE ANTI-INERT ARM, and the one that catches a future deny arm.
+
+    A matcher narrower than its predicate is a guard that does nothing while
+    every test passes. This asserts the converse of the test above: the hook
+    must deny NOTHING the matcher fails to bind. So if a deny arm is added to
+    `_pretool_hook` for a tool absent from `_PRETOOL_MATCHER` — the shape open
+    PR #2179 introduces with its `Bash` credential-exfiltration deny, whose own
+    tests call `_pretool_hook` directly and would stay green — this fails and
+    names the tool.
+
+    Deliberately not a hard-coded list of "tools we know are safe": the point is
+    to catch a tool nobody thought about, so the payload is one that WOULD be
+    denied if the tool were ever routed.
+    """
+    pattern = real_agent._PRETOOL_MATCHER
+    payload = {
+        "file_path": "research.json",
+        "files": [{"path": "research.json"}],
+        "command": "cat > research.json",
+        "ops": [],
+    }
+    unbound_but_denied = []
+    for tool_name in (
+        "Bash",
+        "ToolSearch",
+        "Read",
+        "Glob",
+        "Grep",
+        "Task",
+        "device_bash",
+        "mcp__remote-devices__device_bash",
+        "mcp__genealogy__research_append",
+        "mcp__genealogy__tree_edit",
+        "WebFetch",
+    ):
+        binds = bool(re.fullmatch(pattern, tool_name) or re.search(pattern, tool_name))
+        if binds:
+            continue
+        decision = await real_agent._pretool_hook(
+            {"tool_name": tool_name, "tool_input": payload}, None, None
+        )
+        if decision:
+            unbound_but_denied.append(tool_name)
+    assert unbound_but_denied == [], (
+        f"_pretool_hook denies {unbound_but_denied}, which _PRETOOL_MATCHER does not "
+        f"bind, so those denies never fire. Add the tool(s) to the deny-arm constants "
+        f"the matcher is derived from, in the same commit as the arm."
+    )

@@ -981,6 +981,37 @@ nothing. **The general rule: a guardrail's matcher is part of the guardrail.**
 Widening a predicate without widening what reaches it is a no-op that tests
 cannot see.
 
+**The hosted copy's matcher was `None` until 2026-09-08, and that is now closed
+too — narrowed, and derived.** `real_agent.build_options` registered
+`HookMatcher(matcher=None, …)`, which fires the hook for **every** tool. The
+predicate was correct, so nothing was un-guarded; the cost was the opposite
+failure. When the SDK's message buffer filled and its transport read loop
+stalled, that loop is also what answers hook callbacks, so every PreToolUse
+callback went unanswered and the CLI timed each one out — and because the matcher
+was `None`, that killed calls with nothing to deny, including a purely local
+`ToolSearch`. A live session on 2026-08-25 lost 4 of 8 extractions this way. The
+matcher is now `_PRETOOL_MATCHER`, **derived** as
+`"|".join((*_FILE_WRITE_TOOLS, *(f".*{t}" for t in DEVICE_WRITE_TOOLS)))` — the
+same two constants the predicate reads, so the divergence above cannot recur by
+restatement — and it comes out identical to the plugin's minus `.*research_append`,
+which this hook returns `{}` for.
+
+`_pretool_hook` also carries an explicit `timeout`. Unset, the bound was
+whichever CLI default applied: the bundled CLI (2.1.258) ships both
+`Timeout ?? 60000` and `timeout ?? 600000`, the SDK's own `HookMatcher` docstring
+advertises 60, and the wedged session observed 600s per call. Three numbers, none
+of them chosen. It is a mitigation and is labelled as one in the code: a shorter
+timeout makes a starved callback fail faster, not succeed.
+
+**What checks it.** `test_the_matcher_covers_every_tool_the_hook_can_deny`
+(`apps/server/tests/test_write_lockdown.py`) asserts the converse of the usual
+direction: the hook must deny **nothing** the matcher fails to bind. That is the
+arm that catches a *future* deny arm — a `Bash` deny whose own tests call
+`_pretool_hook` directly would otherwise be inert with the whole suite green.
+Proven to fail by planting exactly that arm. The three-copy parity test compares
+**predicates, not matchers**, so it stays green through a wrong matcher and is
+not the check here.
+
 Two properties, both deliberate and both pinned by vectors in
 `eval/harness/tests/unit/test_write_lockdown_parity.py`:
 

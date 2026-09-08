@@ -34,6 +34,7 @@ turn and rebuilds the client when it changes.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import shutil
@@ -162,6 +163,49 @@ _FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 # Mirrored in all three lockdown copies even though only the plugin one ever
 # sees the bridge; the parity test holds them to one vector set.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# The PreToolUse matcher, DERIVED from the deny arms above rather than restated.
+# `matcher=None` fired the hook for EVERY tool, which is how one unanswered hook
+# callback took down `ToolSearch` — a purely local call with nothing to deny
+# (issue #1915). Narrowing it means a starved callback can only ever fail the
+# calls this hook could actually refuse.
+#
+# Derived, not written out, because a restated list is exactly what let the
+# plugin's matcher and its predicate diverge with every test green
+# (docs/specs/guardrail-enforcement-spec.md, "Closed 2026-08-17/18"; ADR-0005,
+# "The matcher is part of the guardrail").
+#
+# The device-bridge name takes a `.*` prefix: Cowork namespaces it
+# (`mcp__remote-devices__device_commit_files`) and `_device_bridge_target`
+# matches on the BARE TAIL, so the prefix is what makes this bind under an
+# anchored full match as well as a substring search. A bare
+# `device_commit_files` is the form that shipped inert once. `research_append`
+# is deliberately absent, unlike the plugin's matcher: this hook returns `{}`
+# for it (see `direct_project_file_write`), so matching it would only widen the
+# blast radius of a starved callback.
+#
+# IF YOU ADD A DENY ARM TO `_pretool_hook`, ADD ITS TOOLS HERE IN THE SAME
+# COMMIT. `test_the_matcher_covers_every_tool_the_hook_can_deny` fails when the
+# hook denies something this string does not match, because a matcher narrower
+# than its predicate is a guard that is inert with the whole suite green.
+_PRETOOL_MATCHER = "|".join((*_FILE_WRITE_TOOLS, *(f".*{t}" for t in DEVICE_WRITE_TOOLS)))
+
+# How long the CLI waits for a PreToolUse callback before giving up on it.
+#
+# Unset, the effective value is the CLI's own default, and the bundled CLI
+# (2.1.258) carries BOTH `Timeout ?? 60000` and `timeout ?? 600000`; the wedged
+# session observed 600s per call, so this path takes the longer one. The SDK's
+# own docstring advertises 60 (`claude_agent_sdk/types.py`, `HookMatcher`),
+# which is a third number and is not what bound. So it is set explicitly here
+# rather than inherited from whichever default applies.
+#
+# Ten seconds: the callback is in-process and does a bounded walk over the tool
+# payload with no I/O, so this is orders of magnitude of headroom, while a
+# starved call now fails in 10s instead of 600s.
+#
+# A MITIGATION, NOT THE FIX. A shorter timeout makes a starved callback fail
+# faster; it does not make it succeed. `_drain_background` is the fix.
+_PRETOOL_TIMEOUT_S = 10.0
 
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
@@ -325,8 +369,17 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # The only restraint on this session. permission_mode is
         # bypassPermissions with no allowlist, so the hook is what keeps raw
         # Write/Edit off research.json and tree.gedcomx.json (see
-        # _pretool_hook). matcher=None fires it for every tool.
-        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[_pretool_hook])]},
+        # _pretool_hook). Scoped to the tools it can actually deny, and given an
+        # explicit timeout — see _PRETOOL_MATCHER and _PRETOOL_TIMEOUT_S.
+        hooks={
+            "PreToolUse": [
+                HookMatcher(
+                    matcher=_PRETOOL_MATCHER,
+                    hooks=[_pretool_hook],
+                    timeout=_PRETOOL_TIMEOUT_S,
+                )
+            ]
+        },
         # Stream partial assistant content. Without it a block reaches the UI only
         # when its whole message completes, so a long turn — a record-extraction
         # subagent reasoning before its next tool call — shows nothing at all for
@@ -520,6 +573,9 @@ class RealAgent:
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
         self._tasks: dict[str, str] = {}  # Task tool_use_id → subagent label, for attribution
+        # The background stream drainer, when one is running. At most one, ever
+        # — see _stop_drain for why that is not merely tidy.
+        self._drain_task: asyncio.Task | None = None
         # Running cumulative cost/usage last seen from the SDK, so we can emit
         # per-turn deltas (see _usage_delta). The SDK's ResultMessage reports
         # session totals, not per-turn values.
@@ -539,9 +595,108 @@ class RealAgent:
             except OSError:
                 self._resume_id = None
 
+    async def _stop_drain(self) -> None:
+        """Hand the SDK stream back before anything else reads it.
+
+        NEVER TWO CONCURRENT READERS, and this is the mechanism.
+        `Query.receive_messages` iterates ONE anyio memory object stream, which
+        hands each item to exactly one receiver. A drainer still running when
+        the next turn starts would steal that turn's messages — including its
+        `ResultMessage`, and `handle_turn` waits for that forever. So every path
+        about to read the stream calls this first, and it is an explicit
+        handoff rather than a hope about scheduling.
+
+        Nothing is lost by cancelling mid-await: an item is handed to a receiver
+        only when the await completes, and what this task reads it discards
+        anyway. The messages that must not be lost are the NEXT turn's, and
+        those have not been sent yet — the handoff happens before `query()`.
+        """
+        task, self._drain_task = self._drain_task, None
+        if task is None or task.done():
+            return
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass  # expected: we just cancelled it
+        except Exception as exc:  # best-effort teardown
+            _log(f"[agent] background drain ended with an error (ignored): {exc}")
+
+    async def _drain_background(self, client) -> None:
+        """Keep the SDK stream read while background subagents are still writing.
+
+        WHY THIS EXISTS (issue #1915). Background subagents keep streaming after
+        the parent turn ends — the SDK holds stdin open for exactly that. Those
+        messages land in a stream with `max_buffer_size=100`
+        (`claude_agent_sdk/_internal/query.py`), and with
+        `include_partial_messages=True` and several subagents emitting thinking
+        and text deltas, 100 slots fill in seconds. Once full, the SDK's
+        transport read loop blocks on `await self._message_send.send(message)`.
+        That same loop is what dispatches the CLI's `control_request` frames, so
+        every PreToolUse callback goes unanswered and the CLI times each one
+        out. The session then cannot run ANY tool call — a live session died
+        this way with a purely local `ToolSearch` timing out at 600s.
+
+        WHAT IT DOES WITH WHAT IT READS: discards it, after an operator log
+        line. Delivering these events to the browser was considered and
+        deferred — it would extend this change into `runner.py`,
+        `sandbox_server.py` and `apps/web`, and reopen the
+        one-`turn_done`-per-turn contract that `_run_turn` owns and
+        `test_runner_interrupt.py` pins. The user-visible half stays with issue
+        #1971 (a wedged session and a finished turn look identical) and issue
+        #1125. Recorded in docs/specs/hosted-web-workbench-spec.md §7.
+
+        IT RUNS OUTSIDE THE TURN, deliberately. Draining inside `handle_turn`
+        would hold that generator open, and `runner.serve` drops any `user_msg`
+        while the turn task is alive — leaving the UI spinning and Send disabled
+        until the last subagent finished, which is the symptom the reporter
+        filed rather than a fix for it.
+        """
+        dropped = 0
+        # Held in a name so it can be CLOSED deterministically below. Iterating
+        # `client.receive_messages()` inline leaves the async generator
+        # suspended when this task is cancelled, and a suspended generator still
+        # holds its claim on the stream until the event loop finalizes it —
+        # which is not a moment the handoff can wait for. Measured: without the
+        # explicit close, two readers were live on one stream across a turn
+        # boundary (test_the_next_turn_loses_none_of_its_own_messages).
+        stream = client.receive_messages()
+        try:
+            async for message in stream:
+                # `map_message` maintains `self._tasks` — filled on
+                # TaskStartedMessage, popped on TaskNotificationMessage — which
+                # is the in-process signal for "subagents still running". Its
+                # returned events are dropped on purpose; see the docstring.
+                map_message(message, self._tool_names, self._tasks)
+                dropped += 1
+                if not self._tasks:
+                    break
+        except asyncio.CancelledError:
+            raise  # the handoff in _stop_drain; not an error
+        except Exception as exc:
+            # A dead stream here must not take the session with it: the next
+            # turn rebuilds or reuses the client on its own terms.
+            log_operator("background_drain", classify(exc), exc=exc)
+        finally:
+            try:
+                await stream.aclose()
+            except (asyncio.CancelledError, Exception):
+                # Teardown of an iterator we are discarding. Both are swallowed
+                # so a close failure cannot mask the reason we are unwinding,
+                # and CancelledError is listed because it is a BaseException.
+                pass
+            if dropped:
+                log_operator(
+                    "background_drain",
+                    f"discarded {dropped} post-turn message(s) from background "
+                    f"subagents; {len(self._tasks)} subagent(s) still running",
+                )
+
     async def _close_client(self) -> None:
         """Drop the live client. State is cleared FIRST so a disconnect that
         throws can't leave a half-dead client cached for the next turn."""
+        # Before the client goes: the drainer is reading its stream.
+        await self._stop_drain()
         client, self._client, self._client_key = self._client, None, None
         if client is None:
             return
@@ -667,6 +822,9 @@ class RealAgent:
             log_operator("ensure_client", classification, exc=exc)
             yield _event("error", text=classification)
             return
+        # The handoff. A drainer from the previous turn is reading this stream,
+        # and it would take this turn's ResultMessage if left running.
+        await self._stop_drain()
         try:
             await client.query(text)
             # Whether an errored AssistantMessage has already told the user about
@@ -764,3 +922,14 @@ class RealAgent:
             classification = classify(exc)
             log_operator("receive_loop", classification, exc=exc)
             yield _event("error", text=classification)
+
+        # Subagents outlive the turn. Hand the stream to a background drainer so
+        # the SDK's 100-slot buffer cannot fill and stall the transport read loop
+        # that answers hook callbacks — see _drain_background.
+        #
+        # AFTER the loop, never inside it: this generator has to finish so the
+        # runner emits its single `turn_done` and the UI stops being busy. If the
+        # caller abandoned the generator instead (Stop), this line is not reached
+        # and no drainer starts, which is correct — that path closes the client.
+        if self._tasks and self._client is not None:
+            self._drain_task = asyncio.create_task(self._drain_background(self._client))
