@@ -4,16 +4,53 @@ Tracking note for `pnpm audit` / `npm audit` findings across the repo's three JS
 dependency trees (root pnpm workspace, `packages/engine/mcp-server` npm,
 `eval/app` npm). Re-run the audits after any dependency bump and update this file.
 
-Last reviewed: **2026-07-31**.
+Last reviewed: **2026-09-08**.
 
 **Reachability, once, up front.** Every finding below except `fast-uri` lives in a
 **devDependency** — dev tooling (eslint, vite/vitest, electron-builder,
 `@anthropic-ai/mcpb`) or the internal-only Eval CRUD UI. `pnpm why --prod` returns
 *nothing* for every vulnerable package in the workspace. The `.mcpb` is built with
-`npm ci --omit=dev` (`scripts/build-mcpb.mjs`), so dev-tree findings never reach a
-shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
+`npm ci --omit=dev` (`scripts/build-mcpb.mjs`), so dev-tree findings never reach
+**that** artifact. Weigh fix churn against that before treating a HIGH as urgent.
+
+**One dev-tree package does ship, and it is the exception to the paragraph above.**
+`electron` is a devDependency — `pnpm why --prod electron` returns nothing — but
+`apps/electron/electron-builder.yml` sets no `electronVersion`, so electron-builder
+packages the runtime at whatever version that devDependency resolves to. An advisory
+against `electron` therefore reaches every installed Research Viewer, and the
+`npm ci --omit=dev` reasoning does not cover it. Treat `electron` findings as shipping.
+
+**`pnpm audit --prod` over-reports here.** It flagged `extract-zip` as production while
+`pnpm why --prod extract-zip` returns nothing. It fails safe, so it is still usable as a
+gate, but do not read its output as the production tree — `pnpm why --prod` is what
+answers that.
 
 ## Fixed
+
+- **electron** (2 HIGH + 3 MODERATE: context-isolation bypass, sandboxed-iframe
+  `allow-popups` bypass, DevTools JS injection, `shell.openPath` validation bypass,
+  redirect followed into a local file) — `apps/electron`, 39.8.5. **Fixed 2026-09-08:
+  39.8.5 → 39.8.10.** Every one of the five is patched inside the 39.8.x line, so this
+  is a patch bump, not the five-major jump to 44 that `npm view electron version`
+  suggests — check the patch line before assuming a major is required. These ship (see
+  the electron exception above), which is why they were the priority in this pass.
+  Cleared 15 of the workspace's 16 `--prod` findings; the diff is one `package.json`
+  line plus the lockfile.
+
+- **@xmldom/xmldom** (MODERATE), **browserslist** (HIGH), **fast-uri** (HIGH ×4),
+  **js-yaml** (HIGH), **nanoid** (HIGH GHSA-2v37-7h3g-55p8) — root pnpm workspace,
+  dev-only. **Fixed 2026-09-08** with a targeted refresh, no overrides and no
+  `package.json` change:
+
+      pnpm update --recursive --lockfile-only @xmldom/xmldom browserslist esbuild fast-uri js-yaml nanoid
+
+  Took the full workspace audit from 11 findings to 2. `esbuild` was included in the
+  command and did **not** move — it is out of range behind vite (see its entry below),
+  which is the deferral holding rather than the command failing.
+
+- **nanoid** (HIGH GHSA-2v37-7h3g-55p8) — `eval/app`, `<3.3.18`. **Fixed 2026-09-08**
+  with `npm audit fix --package-lock-only`; lockfile only, `package.json` untouched.
+  That tree is now clean on both `--omit=dev` and the full audit.
 
 - **tar** (CRITICAL GHSA-23hp-3jrh-7fpw + HIGH GHSA-8x88-c5mf-7j5w + 3 MODERATE),
   **postcss** (HIGH GHSA-r28c-9q8g-f849, source-map path traversal),
@@ -68,6 +105,18 @@ shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
   scoped to form-data only.
 
 ## Deferred / no clean fix
+
+- **extract-zip** (HIGH, unvalidated symlink path traversal) — root pnpm workspace,
+  `2.0.1`, pulled by `electron` itself (both 39.8.5 and 39.8.10 declare
+  `extract-zip: ^2.0.1`). **Deferred 2026-09-08 — no patch exists.** npm reports
+  `patched_versions: <0.0.0`, i.e. no released version fixes it, so there is nothing to
+  bump to and an override has no target. Not reachable by a user of the shipped app:
+  `extract-zip` is what electron's own postinstall uses to unpack the runtime archive it
+  downloads from Electron's release server over HTTPS at install time on a developer's
+  machine, and the traversal needs an attacker-controlled zip. `pnpm why --prod
+  extract-zip` returns nothing.
+  **Revisit when** a fixed `extract-zip` is published, or when `electron` drops the
+  dependency.
 
 - **brace-expansion** (HIGH, GHSA-mh99-v99m-4gvg, unbounded-expansion OOM DoS) —
   root pnpm workspace, dev-only (eslint's `minimatch@3.1.5`, electron-builder's
