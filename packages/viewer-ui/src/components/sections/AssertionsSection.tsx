@@ -175,7 +175,7 @@ export default function AssertionsSection(): React.JSX.Element {
       {filtered.length === 0 ? (
         <p className={styles.empty}>
           {assertions.length === 0
-            ? 'No assertions yet.'
+            ? 'No assertions yet. Assertions are the individual facts pulled from a source — names, dates, places, relationships — recorded during the record-extraction step.'
             : 'No assertions match the current filters.'}
         </p>
       ) : (
