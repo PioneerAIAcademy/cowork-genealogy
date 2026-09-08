@@ -1,0 +1,19 @@
+{
+  "id": "jacobo-clotten-marriage",
+  "name": "Joanni Jacobo Clotten — marriage to Maria Magdalena Weber, 30 June 1716",
+  "genre": "record-hint",
+  "source_pid": "MZ13-TN6",
+  "captured": "2026-09-07",
+  "researcher_question": "When did Joanni Jacobo Clotten marry the 'Mariae Magdalenae' the tree records as his wife, and what was her surname?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1710s",
+    "geography": "DE-RP"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 23, hint-samples.csv row 719, flag adds_marriage, confidence 3). Draft transcribed from a 1716 Rhineland Catholic marriage entry; unverified."
+}

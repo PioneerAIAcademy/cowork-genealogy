@@ -1,0 +1,324 @@
+{
+  "persons": [
+    {
+      "id": "GSPY-NFZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Robert",
+          "surname": "Lord"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9845d73e-358f-4ba3-995b-036053ea5c55",
+          "type": "Birth",
+          "date": "1858",
+          "standard_date": "1858",
+          "place": "Lancashire, England, United Kingdom",
+          "standard_place": "Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "93c636b8-061e-407b-970a-d42a73439900",
+          "type": "Death"
+        },
+        {
+          "id": "e6201d4b-08c3-4f86-bfab-939d33913709",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Rochdale St Chad, Lancashire, England, United Kingdom",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "362bea4c-6a30-458d-a06c-0051527f4305",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Spotland, Lancashire, England, United Kingdom",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "68c824b3-7d80-409c-ba3c-c5697a8d7c1e",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "72093aff-4fdb-48f8-8812-87b1ed5fe1d4",
+          "type": "Occupation",
+          "value": "Weaver Cotton"
+        },
+        {
+          "id": "0906131c-ffe3-451a-9500-190a9650d3e5",
+          "type": "LifeSketch",
+          "value": "Robert Lord\nCensus • England and Wales, Census, 1891\n\nEdit\nName\tRobert Lord\nSex\tMale\nAge\t33 years\nBirth Year (Estimated)\t1858\nBirthplace\tLancashire, England\nMarital Status\tSingle\nRelationship to Head of Household\tBrother\nEvent Type\tCensus\nEvent Date\t1891\nEvent Place\tRochdale St Chad, Lancashire, England, United Kingdom\nEvent Place (Original)\tSpotland, Lancashire, England\nEnumeration District\t8\nRegistration District\tRochdale\nHousehold Identifier\t4889992\nLine Number\t13\nPage Number\t1\nPiece/Folio\t3343/ 28\nRegistration Number\tRG12\nRobert Lord's Parents and Siblings\n\nOpen All\nAbel Brierley\nFather\nM\n58 years\nHeywood, Lancashire, England\n\nJames Brierley\nBrother\nM\n34 years\nLancashire, England\n\nName\tJames Brierley\nSex\tMale\nAge\t34 years\nBirth Year (Estimated)\t1857\nBirthplace\tLancashire, England\nMarital Status\tMarried\nRelationship to Head of Household\tHead\nEvent Type\tCensus\nEvent Date\t1891\nEvent Place\tRochdale St Chad, Lancashire, England, United Kingdom\nEvent Place (Original)\tSpotland, Lancashire, England\nEnumeration District\t8\nRegistration District\tRochdale\nHousehold Identifier\t4889992\nLine Number\t13\nPage Number\t1\nPiece/Folio\t3343/ 28\nRegistration Number\tRG12\nOther People on This Record\n\nOpen All\nFanny Brierley\nF\n35 years\nLancashire, England\n\nJames Brierley\nM\n7 years\nLancashire, England\n\nAbel Brierley\nM\n5 years\nRossendale, Lancashire, England\n\nMary Brierley\nF\n2 years\nLancashire, England\n\nMargaret Brierley\nF\n1 years\nLancashire, England\n\nEllen Lord\nF\n21 years\nLancashire, England\n\n"
+        }
+      ]
+    },
+    {
+      "id": "MHT6-DVD",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Abel",
+          "surname": "Brierley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "31208b9c-b331-43d7-a9a7-d0cb777e8882",
+          "type": "Birth",
+          "date": "6 February 1833",
+          "standard_date": "6 Feb 1833",
+          "place": "Heywood, Lancashire, England, United Kingdom",
+          "standard_place": "Heywood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "2c132d33-ebb3-4724-b6ed-792c615e760f",
+          "type": "Christening",
+          "date": "3 March 1833",
+          "standard_date": "3 Mar 1833",
+          "place": "Heywood, Lancashire, England, United Kingdom",
+          "standard_place": "Heywood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "3b6ae87e-4cd5-4a96-afcf-a614fed98edf",
+          "type": "Baptism",
+          "date": "3 Mar 1833",
+          "standard_date": "3 Mar 1833",
+          "place": "St Luke, Heywood, Lancashire, England",
+          "standard_place": "Heywood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "93c8031e-9918-4796-8305-46cd63f8cdbd",
+          "type": "Residence",
+          "date": "1833",
+          "standard_date": "1833",
+          "place": "Heywood, Lancashire, England",
+          "standard_place": "Heywood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "487b6368-90f1-43a3-a727-2ab2b9c67cf9",
+          "type": "Residence",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Rochdale, Lancashire, England, United Kingdom",
+          "standard_place": "Rochdale, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "6d9bf3d4-3a5c-4f5f-abe9-406d0e0223cc",
+          "type": "Residence",
+          "date": "1851",
+          "standard_date": "1851",
+          "place": "Spotland, Lancashire, England",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "cb4cdfda-a7f2-4673-a69e-7f55af3304e9",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Brandwood, Lancashire, England, United Kingdom",
+          "standard_place": "Brandwood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "a00258af-78f1-49ef-863f-cb82e15be155",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Spotland, Lancashire, England, United Kingdom",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "0fed52d6-965e-4ef0-9167-aee46679244c",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Rochdale St Chad, Lancashire, England, United Kingdom",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "9b0117ab-3db7-46a2-9965-4a366d3b8246",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Spotland, Lancashire, England, United Kingdom",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        },
+        {
+          "id": "aa4eaa39-6e49-428f-9b68-6e0992f934b2",
+          "type": "Residence",
+          "place": "Heywood, Lancashire, England",
+          "standard_place": "Heywood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "f3ffaf3a-2dcd-4f35-a047-1ab7c0497892",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "6f141727-f58e-4e28-a1c5-f09387e6b166",
+          "type": "Occupation",
+          "value": "Colliery Proprietor"
+        },
+        {
+          "id": "997bdf61-a8e4-45f9-b02c-26eddc1f49a0",
+          "type": "Occupation",
+          "value": "Farmer"
+        },
+        {
+          "id": "b2c9f335-955a-42f6-8284-08fec016308b",
+          "type": "Occupation",
+          "value": "Farmer Of 3 Acres Colliery & Brick Mk & Proprietor Employin G 19 Men & 10 Boys"
+        }
+      ]
+    },
+    {
+      "id": "G1P7-2BL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Alice",
+          "surname": "",
+          "suffix": "- Brierley or Brearley"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2a06ca57-f834-40e2-98c7-6fd3778c3602",
+          "type": "Birth",
+          "date": "1836",
+          "standard_date": "1836",
+          "place": "Spotland Bridge, Lancashire",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "737212d2-c0d9-4a6e-bc06-1b0c96fa69d3",
+          "type": "Residence",
+          "date": "1871",
+          "standard_date": "1871",
+          "place": "Brandwood, Lancashire, England, United Kingdom",
+          "standard_place": "Brandwood, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "d7bc6205-9a40-4f8b-8da3-46be5c9b3598",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Spotland, Lancashire, England, United Kingdom",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "6c30457d-f383-4650-a3c5-cf6d71e6e71b",
+          "type": "Residence",
+          "date": "1881",
+          "standard_date": "1881",
+          "place": "Oldham, Lancashire, England, United Kingdom",
+          "standard_place": "Oldham, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "5ae1077a-0525-426a-81e9-af63ffa5ac7f",
+          "type": "Death"
+        },
+        {
+          "id": "42c9c43c-920a-4e83-a25b-d748cad55216",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "d577eaf0-93a0-499b-8c6c-ba5569723379",
+          "type": "Occupation",
+          "value": "Farmers Wife"
+        },
+        {
+          "id": "e253a28a-3bfe-4446-a874-174a5c79d83a",
+          "type": "Marital Status",
+          "value": "Widow"
+        },
+        {
+          "id": "cf9ce75f-c97c-4122-8c30-17f12af64b6d",
+          "type": "Occupation",
+          "value": "Beerseller"
+        }
+      ]
+    },
+    {
+      "id": "GSPY-LH7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Ellen",
+          "surname": ""
+        }
+      ],
+      "facts": [
+        {
+          "id": "eade5ed5-5946-46b0-bc9f-a0c01f5ef795",
+          "type": "Birth",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Lancashire, England, United Kingdom",
+          "standard_place": "Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "6909c403-d71b-41f6-912b-4037fa3502bf",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Rochdale St Chad, Lancashire, England, United Kingdom",
+          "standard_place": "Spotland, Lancashire, England, United Kingdom"
+        },
+        {
+          "id": "530f2351-cceb-488c-9e77-b160d075011c",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GSPY-NFZ",
+      "person2": "GSPY-LH7"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "MHT6-DVD",
+      "person2": "G1P7-2BL"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "MHT6-DVD",
+      "child": "GSPY-NFZ"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G1P7-2BL",
+      "child": "GSPY-NFZ"
+    }
+  ],
+  "sources": [
+    {
+      "id": "7CPQ-4Y7",
+      "title": "Robert Lord, \"England and Wales, Census, 1891\"",
+      "citation": "\"England and Wales, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q19Y-J3Z : Sun Jan 19 05:50:33 UTC 2025), Entry for James H Brierley and Fanny Brierley, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q191-WN2"
+    }
+  ]
+}

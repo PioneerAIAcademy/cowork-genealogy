@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Marie Philippine Kaÿser died in July 1780 in Luxembourg.",
+      "details": {
+        "subject_person": "Marie Philippine Kaÿser (GKZY-81X)",
+        "fact_type": "Death",
+        "date": "July 1780",
+        "place": "Luxembourg, Luxembourg"
+      },
+      "supporting_sources": [
+        "Luxembourg, Church and Civil Registration, 1601-1923 — entry for Maria Philippina Kayser and Theodori Hochbertz, July 1780"
+      ],
+      "required": true
+    }
+  ]
+}

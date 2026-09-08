@@ -425,9 +425,16 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	# `make eval-skill` processes at once; concurrent SDK subprocesses SIGKILL.
 	#
 	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
-	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
-	# 16 GiB machine resolves to 8). Override for a bigger box or tighter API
-	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
+	# the harness pick a RAM-aware default (~1 per 2 GiB of RAM the OS reports,
+	# floor 1, cap 8 — the kernel always reports under the nominal figure, so a
+	# nominal 8 GiB box reports about 7.7 and resolves to 3, a 16 GiB one about
+	# 15.4 and resolves to 7). Override for a bigger box or tighter API rate
+	# limits, e.g. CONCURRENCY=8 — or CONCURRENCY=1 on a small box, where the
+	# RAM-derived default still SIGKILLs.
+	# The floor is 1, not 4: it exists only to forbid 0 and must not override
+	# the RAM measurement upward (#1026, `_MIN_AUTO_CONCURRENCY` in
+	# run_tests.py). This comment said "floor 4" until 2026-09-07 and sent a
+	# plan out with the wrong number.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
@@ -618,6 +625,25 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
 	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
+
+.PHONY: e2e-panel
+e2e-panel: ## Standing e2e panel — each fixture's last run and its run count in the window: make e2e-panel | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# The scoreboard for the standing panel that /file-e2e-panel files. Per
+	# fixture: its last run and how many days ago, plus its count over SINCE,
+	# which defaults to 28 days rather than the usual 14 because the panel's
+	# unit of comparison is the month. No other reader prints runs per fixture
+	# per window — e2e-corpus's concentration block counts violations, not runs
+	# — which is why the panel's own acceptance check needs this one.
+	#
+	# Deliberately not anchored to a calendar week: the panel is filed whenever
+	# the lead runs the skill, so "did it run this ISO week" would answer a
+	# question the cadence does not ask.
+	#
+	# Every fixture at zero is a legitimate report (nobody ran the panel in a
+	# while) and exits 0; only an unknown TEST= slug exits 1.
+	cd eval/harness && uv run python -m e2e.panel_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: eval-inventory
 eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/costed, specs), each by its predicate: make eval-inventory
