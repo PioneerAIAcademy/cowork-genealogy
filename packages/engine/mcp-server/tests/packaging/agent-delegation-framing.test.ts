@@ -238,18 +238,41 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   },
 };
 
-// A SKILL.md that names an agent WITHOUT delegating to it. Authoritative for
-// BOTH arms, and that is the fix for a shape with no green path: the repo's own
-// prohibition idiom (`record-extraction/SKILL.md:269`, `search-images:278`)
-// writes "`@plugin:image-reader` only." to mean "not here". In a non-caller
-// skill that text failed two arms at once, and adding the pair here cleared
-// only the prose arm because discoverEdges() still saw the `@plugin:` token.
-// Now it clears both — so the sole green path is no longer registering a
-// delegation that does not exist.
+// A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
+// EXCERPT that proves it. The excerpt is what makes this safe to honour in both
+// arms, and it was added after review: a plain Set silenced arm 1 too, so one
+// line suppressed a REAL delegation. Reproduced on this file's own code — a
+// corrective-framing `@plugin:record-extractor` added to a non-caller skill
+// failed two arms, and the remedy the failure message itself offers ("if it is
+// prose, add it to PROSE_MENTIONS") turned both green with the delegation still
+// in the file. Both arms fire together on a real delegation, so the guard was
+// pointing the author straight down the bypass.
 //
-// Held to a real discipline below (`PROSE_MENTIONS is not stale`): every entry
-// must still name its agent, and no entry may shadow a registered edge.
-const PROSE_MENTIONS = new Set(["research -> record-extractor"]);
+//   ""        a BARE-NAME mention. It spells no `@plugin:` token, so it never
+//             reaches discoverEdges() and there is nothing to suppress.
+//   "<text>"  the sentence that shows the mention is a prohibition rather than
+//             a delegation. ONLY a quoted entry suppresses arm 1, so dropping
+//             the rule shows up in the same commit as a diff a reviewer sees,
+//             which is the standard the rest of this file already holds pins to.
+//
+// Held to a real discipline below (`PROSE_MENTIONS is not stale`): a dead entry
+// fails, an entry shadowing a registered edge fails, and an entry whose skill
+// spells the token fails unless it quotes a sentence that carries the token and
+// clears PIN_FLOOR.
+//
+// TWO RESIDUAL LIMITS, both measured, neither closable by a lint:
+//
+//   - Prohibition and delegation are not decidable from the token, so quoting a
+//     REAL delegation's own sentence does satisfy this check. What the excerpt
+//     buys is not detection, it is that the claim is verbatim in the diff a
+//     reviewer reads — the same standard every pin in this file is held to, and
+//     the reason the plain Set was wrong: that needed no claim at all.
+//   - `normalize` collapses whitespace, so an "excerpt" spanning two paragraphs
+//     would satisfy the quote check. Already true of every pin here, so it is a
+//     property of the mechanism rather than something this adds.
+const PROSE_MENTIONS = new Map<string, string>([
+  ["research -> record-extractor", ""],
+]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
   .filter((d) => d.isDirectory())
@@ -273,6 +296,18 @@ const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
 // scanners on any name the two classes read differently.
 const AGENT_REF_RE = /@plugin:([a-z0-9-]+)/g;
 
+/**
+ * Does `text` spell `@plugin:<agent>` EXACTLY? Never a substring: the review
+ * that produced this arm had its own first patch broken by
+ * `@plugin:image-reader-opus` containing `@plugin:image-reader`, which is the
+ * same class this file's `namesAgent` exists for, reintroduced in the remedy.
+ * Uses AGENT_REF_RE so this and discoverEdges() cannot disagree about what a
+ * delegation token is.
+ */
+function spellsAgent(text: string, agent: string): boolean {
+  return [...text.matchAll(AGENT_REF_RE)].some((m) => m[1] === agent);
+}
+
 /** Every `<skill> -> <agent>` pair a SKILL.md actually delegates. */
 function discoverEdges(): string[] {
   const edges = new Set<string>();
@@ -280,9 +315,14 @@ function discoverEdges(): string[] {
     const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
     for (const m of text.matchAll(AGENT_REF_RE)) {
       const edge = `${skill} -> ${m[1]}`;
-      // A declared prose mention is not a delegation, even when it spells the
-      // token — see PROSE_MENTIONS.
-      if (!PROSE_MENTIONS.has(edge)) edges.add(edge);
+      // Only a QUOTED prose mention suppresses the edge. `.get()` not `.has()`:
+      // an entry with "" is a bare-name mention that never spells a token, so
+      // it must not silence one — that difference is the whole guard. Trimmed,
+      // so truthiness agrees with the staleness arm below: "   " is truthy in
+      // JS, so untrimmed a whitespace-only excerpt suppressed arm 1 here while
+      // the staleness arm rejected the same entry. Only one of the two caught
+      // it, which is one failure away from neither.
+      if (!(PROSE_MENTIONS.get(edge) || "").trim()) edges.add(edge);
     }
   }
   return [...edges].sort();
@@ -412,11 +452,13 @@ describe("agent delegation framing", () => {
   it("the prose arm still covers every agent it is relied on to police", () => {
     expect(
       [...agentOnly].sort(),
-      "the set of unambiguous agent names changed. If an agent gained a " +
-        "skills/<name>/ directory, the prose arm has SILENTLY stopped looking for it " +
-        "— that agent's bare-name delegations are now invisible. Decide what replaces " +
-        "the coverage (a registered edge, or a PROSE_MENTIONS entry) before updating " +
-        "this list.",
+      "the set of unambiguous agent names changed. If a name LEFT, it gained a " +
+        "skills/<name>/ directory and the prose arm has SILENTLY stopped looking for " +
+        "it — that agent's bare-name delegations are now invisible, so decide what " +
+        "replaces the coverage (a registered edge, or a PROSE_MENTIONS entry) before " +
+        "updating this list. If a name ARRIVED, a new agent needs policing and the " +
+        "only thing owed is adding it here. Both directions land on this assertion; " +
+        "read which one happened off the diff.",
     ).toEqual([...PROSE_ARM_COVERS].sort());
   });
 
@@ -429,7 +471,9 @@ describe("agent delegation framing", () => {
     // which is the second-caller case this file says the edge set uniquely buys.
     const dead: string[] = [];
     const shadowed: string[] = [];
-    for (const entry of PROSE_MENTIONS) {
+    const unquoted: string[] = [];
+    const misquoted: string[] = [];
+    for (const [entry, excerpt] of PROSE_MENTIONS) {
       const [skill, agent] = entry.split(" -> ");
       if (Object.prototype.hasOwnProperty.call(DELEGATION_EDGES, entry)) {
         shadowed.push(entry);
@@ -440,7 +484,24 @@ describe("agent delegation framing", () => {
         continue;
       }
       const text = readFileSync(join(skillsDir, skill, "SKILL.md"), "utf8");
-      if (!namesAgent(text, agent, agentNames)) dead.push(`${entry} (no longer named)`);
+      if (!namesAgent(text, agent, agentNames)) {
+        dead.push(`${entry} (no longer named)`);
+        continue;
+      }
+      // The entry only suppresses arm 1 when the skill actually SPELLS the
+      // token. That is the case where a plain declaration could silence a real
+      // delegation, so it is the case that has to quote the sentence.
+      if (spellsAgent(text, agent)) {
+        if (!excerpt.trim()) {
+          unquoted.push(entry);
+        } else if (
+          !normalize(text).includes(normalize(excerpt)) ||
+          normalize(excerpt).length < PIN_FLOOR ||
+          !spellsAgent(excerpt, agent)
+        ) {
+          misquoted.push(entry);
+        }
+      }
     }
     expect(
       dead,
@@ -452,6 +513,19 @@ describe("agent delegation framing", () => {
       shadowed,
       "a PROSE_MENTIONS entry names a REGISTERED delegation edge. That would remove " +
         "the edge from discoverEdges() and skip every per-edge assertion for it.",
+    ).toEqual([]);
+    expect(
+      unquoted,
+      "this skill SPELLS `@plugin:<agent>`, so the entry suppresses a real delegation " +
+        "edge and must quote the sentence that shows the mention is a prohibition. An " +
+        "undeclared entry here silences arm 1 with one line, which is the bypass this " +
+        "map replaced a Set to close. If it IS a delegation, register the edge instead.",
+    ).toEqual([]);
+    expect(
+      misquoted,
+      "a PROSE_MENTIONS excerpt does not hold up: it is absent from the skill after " +
+        "normalizing, shorter than PIN_FLOOR, or does not itself carry the " +
+        "`@plugin:<agent>` token it is meant to account for. Quote the real sentence.",
     ).toEqual([]);
   });
 
