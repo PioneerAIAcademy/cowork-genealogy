@@ -75,10 +75,10 @@ items without a paywalled browser session (issue #2083):
 | `ancestry-md-marriages-crowther-mary-prizer-1883-NEGATIVE.pdf` | Ancestry — Maryland Compiled Marriages | 0 results for Mary Crowther × Edward Prizer ca. 1883 |
 
 All three are authentic search-result pages saved from ancestry.com in a credentialed browser. All three
-returned zero results, confirming that Ancestry's Maryland indexed collections have no record for these
-events — the supporting evidence for all three findings stays FamilySearch-only. The agent should reach
-the same negative conclusion autonomously from the captures; the captures make the plan items executable
-rather than skipped.
+returned zero results, corroborating that these searches — with these name spellings, in these collections —
+returned nothing. The supporting evidence for all three findings stays FamilySearch-only. The agent should
+reach the same negative conclusion autonomously from the captures; the captures make the plan items
+executable rather than skipped.
 
 ## Notes for reviewers
 

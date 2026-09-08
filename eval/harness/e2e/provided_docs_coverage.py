@@ -224,7 +224,7 @@ def main() -> int:
 
     # Exit 1 when any fixture has external skips and zero captures, so a
     # pre-commit hook or a developer can catch the gap before it silently
-    # corrupts the benchmark.  Pass --no-fail to suppress this for reporting.
+    # corrupts the benchmark.
     return 1 if gap else 0
 
 
