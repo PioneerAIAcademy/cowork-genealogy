@@ -744,6 +744,51 @@ describe("research_append (Phase 2)", () => {
     expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
   });
 
+  // A whitespace-only string asserts exactly as much as an absent one, and this
+  // is an LLM-facing tool, so a degenerate value is a real shape rather than a
+  // hypothetical. Both settling writes are checked the same way, and both are
+  // free on the corpus: 0 of 1 moot and 0 of 85 resolved conflicts carry a
+  // blank-or-non-string analysis field.
+  it("rejects mooting a conflict with a whitespace-only rationale", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: { status: "moot", resolution_rationale: "   " },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/resolution_rationale/);
+    expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
+  it("rejects resolving a conflict whose analysis fields are whitespace only", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "   ",
+        weighing_analysis: "\t\n",
+        resolution_rationale: " ",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/independence_analysis|weighing_analysis|resolution_rationale/);
+    expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
   it("accepts mooting a conflict with a rationale", async () => {
     const research = phase2Research();
     research.conflicts = [{ ...validConflict(), id: "c_001" }];

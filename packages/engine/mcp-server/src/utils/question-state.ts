@@ -165,6 +165,13 @@ export function whyConflictBlocksCompletion(conflict: any, research: any): strin
       .flatMap((a) => arr(a?.extracted_for_question_ids));
     if (questions.length > 0) {
       reasons.push(`disputes ${id}, which ${[...new Set(questions)].join(", ")} relies on`);
+      // One tied assertion, deliberately, even when the conflict disputes
+      // several. The message exists to make the refusal actionable, and the
+      // action is the same for all of them — run conflict-resolution on this
+      // conflict — so naming every one lengthens an error the caller reads
+      // under failure without changing what it does next. The conflict id is
+      // the handle; the assertion is there to show the link that was inferred
+      // rather than declared.
       break;
     }
   }

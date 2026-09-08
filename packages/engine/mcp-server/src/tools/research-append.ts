@@ -171,7 +171,10 @@ function conflictInvariants(entry: any): string[] {
   // e2e corpus (`ogletree-children` c_006, which carries one).
   if (entry.status === "moot") {
     const rationale = entry.resolution_rationale;
-    return rationale === undefined || rationale === null || rationale === ""
+    // Trimmed, and type-checked: a whitespace-only string asserts exactly as
+    // much as an absent one, and a non-string (a number, an object) satisfies
+    // no `=== ""` comparison at all. Same reading as `isIdentityConflict`.
+    return typeof rationale !== "string" || rationale.trim() === ""
       ? [
           "a moot conflict requires 'resolution_rationale' — say why the conflict no " +
             "longer bears on the question. To settle it on the evidence instead, use " +
@@ -184,7 +187,11 @@ function conflictInvariants(entry: any): string[] {
   const errs: string[] = [];
   for (const f of ["independence_analysis", "weighing_analysis", "resolution_rationale"]) {
     const v = entry[f];
-    if (v === undefined || v === null || v === "") {
+    // Same trimmed, type-checked reading as the `moot` arm above: this had
+    // admitted `"   "` for all three since it shipped, which satisfies the
+    // field and states nothing. Free on the corpus — 0 of 85 resolved
+    // conflicts carry a blank or non-string analysis field.
+    if (typeof v !== "string" || v.trim() === "") {
       errs.push(`a resolved conflict requires '${f}'`);
     }
   }

@@ -777,9 +777,12 @@ ADR's two stated limits.
 
 `resolved` and `moot` both settle a conflict, and both now carry a precondition:
 a `resolved` conflict owes the three analyses, and a `moot` one owes a
-`resolution_rationale` saying why it no longer bears on the question. `moot` had
-none until this gate widened — it was the one settling write that asserted
-nothing, so a bare `{status: "moot"}` cleared the gate. Implemented as
+`resolution_rationale` saying why it no longer bears on the question. Both are
+read trimmed and type-checked: a whitespace-only string satisfies the field and
+states nothing, which on an LLM-facing tool is a real shape rather than a
+hypothetical one. `moot` had no precondition at all until this gate widened —
+it was the one settling write that asserted nothing, so a bare
+`{status: "moot"}` cleared the gate. Implemented as
 `conflictBlocksCompletion` in `packages/engine/mcp-server/src/utils/question-state.ts`,
 called from both arms of the gate in
 `packages/engine/mcp-server/src/tools/research-append.ts`; specified with the
