@@ -26,7 +26,10 @@
     "place-search-schuylkill-by-place",
     "place-distance-ireland-pennsylvania",
     "place-distance-pennsylvania-ireland",
-    "place-distance-within-pennsylvania"
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
   ],
   "judge_context": [
     "Should produce timeline events covering at least birth (Ireland, estimated from census ages), 1850 census, 1860 census, and 1908 death — with `date_certainty` reflecting source confidence (e.g. `estimated` for census-derived births, `exact` for the death certificate)",
