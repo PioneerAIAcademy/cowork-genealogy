@@ -23,6 +23,9 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__wiki_read
+  - mcp__remote-devices__Genealogy_Research__wiki_read
+  - mcp__Genealogy_Research__wiki_read
   - Read
 ---
 
@@ -135,6 +138,9 @@ Read:
 - Log entries for its plan items (via `plan_item_id`)
 - Assertions from those searches (via each assertion's `log_entry_id`)
 - Skipped plan items and their reasons
+- The jurisdiction's registration start date, via `wiki_read`:
+  `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
+  otherwise
 
 ## 2. Assess the 7-Point Stop Criteria
 
@@ -165,8 +171,8 @@ named in `justification`.
   default to `research-plan`.**
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
-    e.g. a recent U.S. vital record embargoed ~100 years and released before
-    then only to the registrant or a direct heir; nil across
+    e.g. a recent vital record still inside its statutory embargo and
+    released before then only to the registrant or a direct heir; nil across
     `record_search` / `fulltext_search` / `image_search` / external sites
     after the bounded search-records attempts; or a negative result from
     `record_search` / `fulltext_search` for a record type **not indexed in
@@ -284,13 +290,14 @@ the offending field — do not blindly retry the same payload.
   record has been searched or the declaration explicitly justifies why
   it is inaccessible. Where civil registration existed, the subject's
   own birth record outranks the death record for parentage. Where the
-  jurisdiction's own registration did not yet exist at that date — Irish
-  births before 1864, Pennsylvania before 1906 — its absence is not a
-  gap, and the baptism is what to gate on instead. A
+  jurisdiction's own registration began after that date, its absence is
+  not a gap, and the baptism is what to gate on instead. If the start
+  date could not be read, gate on the baptism and note the date as
+  unverified — do not demand the registration. A
   known, decisive, accessible record left unsearched fails the
   overturn-risk test by definition — but a decisive record that is
-  **sealed by privacy law** (e.g. a recent birth certificate embargoed
-  ~100 years, heir-request only) counts as inaccessible: note the
+  **sealed by privacy law** (e.g. a recent birth certificate still inside
+  its statutory embargo, heir-request only) counts as inaccessible: note the
   limitation and declare on the accessible evidence; do not gate on it.
 - **Proof is all-or-nothing.** If exhaustiveness cannot be declared
   honestly, say so.
@@ -386,7 +393,7 @@ This may mean:
 - The records were destroyed (courthouse fires, war damage)
 - The person was never recorded in surviving sources
 - The records exist but are access-restricted by privacy law (e.g.,
-  recent U.S. vital records — births are commonly sealed for ~100 years,
+  recent vital records — births are commonly sealed for a statutory term,
   released only to the registrant or an heir on request). A record that
   is not reasonably obtainable is not an exhaustiveness gap, and must not
   be offered as a routine next step to advance the tier.
