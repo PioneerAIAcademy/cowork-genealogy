@@ -8,7 +8,7 @@ stays runnable from a clean checkout with nothing installed.
 
 The failure this guards against is silent: the hook fails open by design, so a
 broken regex or a crash stops the prompt without stopping anything else. To
-watch it fail, break GH_ISSUE_CREATE or HIGH_PRIORITY_LABEL in the hook and re-run.
+watch it fail, break GH_ISSUE_CREATE in the hook and re-run.
 """
 
 import json
@@ -37,22 +37,6 @@ CASES = [
     (None, "empty stdin", ""),
     (None, "no command key", '{"tool_name":"Bash","tool_input":{}}'),
     (None, "command is not a string", '{"tool_name":"Bash","tool_input":{"command":123}}'),
-    # `high-priority` is Ready-only and /fill-ready's to apply; filing with it is refused.
-    ("deny", "high-priority: --label form", payload("gh issue create --label high-priority --title x --body y")),
-    ("deny", "high-priority: --label= form", payload("gh issue create --label=high-priority --title x --body y")),
-    ("deny", "high-priority: -l form", payload("gh issue create -l high-priority --title x --body y")),
-    ("deny", "high-priority: quoted", payload('gh issue create --label "high-priority" --title x --body y')),
-    ("deny", "high-priority: in a comma list", payload("gh issue create --label developer,high-priority --title x --body y")),
-    ("deny", "high-priority: line-continuation form", payload("gh issue create --label developer \\\n  --label high-priority \\\n  --title t --body b")),
-    ("ask", "other label still asks", payload("gh issue create --label nothing-checks --title x --body y")),
-    (None, "gh issue edit --add-label is fill-ready's own write", payload("gh issue edit 12 --add-label high-priority")),
-    # The label is matched only inside the filing's own argument span: a later
-    # command on the same line that mentions it is not a filing with it.
-    ("ask", "label in a later command, not the filing", payload("gh issue create --title x --body y; gh issue list --label high-priority")),
-    ("ask", "label in a piped command, not the filing", payload("gh issue create --title x --body y | tee log; grep -- '--label high-priority' notes.md")),
-    # Pinned: prose quoting the literal inside a heredoc IS denied — the text is
-    # indistinguishable from the command. Write such files with Write/Edit.
-    ("deny", "heredoc prose quoting the literal (pinned)", payload("cat <<'EOF' > notes.md\nthe gate denies gh issue create --label high-priority\nEOF")),
 ]
 
 

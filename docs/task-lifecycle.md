@@ -28,7 +28,8 @@ Ready is a self-serve menu, two pools (`developer`, `genealogist`), and the
 **take a `high-priority` card in your lane before any other.** It is a soft
 ordering — finish what you have started; do not drop it for one. The card's
 body opens with a `> **High priority (date):**` line saying why (critical path
-to a milestone, live harm, blocks three or more issues, or a lead's call).
+to a milestone, live harm, a skill slot three or more issues wait on, or a
+lead's call).
 `/fill-ready` applies and removes the label; nobody files with it.
 
 ---
