@@ -42,7 +42,10 @@ export default function EvaluationsSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Mentor Evaluations</h2>
-        <p className={styles.empty}>No mentor evaluations recorded.</p>
+        <p className={styles.empty}>
+          No mentor evaluations recorded. These are added when the GPS mentor
+          reviews the research against the Genealogical Proof Standard.
+        </p>
       </div>
     )
   }
