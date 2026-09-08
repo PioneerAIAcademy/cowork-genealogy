@@ -240,7 +240,8 @@ _SECRETS_MARKERS = (
     "ANTHROPIC_API_KEY",
     "sk-ant-",
 )
-_NETWORK_TOOLS = ("curl", "wget", "nc ", "ncat ", "socat ", "python3 -c", "python -c")
+_NETWORK_TOOLS = ("curl", "wget", "nc ", "ncat ", "socat ",
+                  "urllib", "requests", "httpx", "http.client", "socket")
 
 
 def _bash_secrets_exfil(command: str) -> bool:
