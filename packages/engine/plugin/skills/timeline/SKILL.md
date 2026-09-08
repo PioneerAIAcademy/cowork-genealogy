@@ -178,8 +178,10 @@ events.
 **First, read each residence country's census schedule from the wiki.**
 Do not assume the US decennial years. For every distinct country the
 person's residence events place them in, make this call — one per
-distinct country, not per event and not per state — and do not drop it:
-the expected census years come from the page, not from memory.
+distinct country, not per event and not per state, and issue the
+per-country calls together in a single turn rather than one per turn —
+and do not drop it: the expected census years come from the page, not
+from memory.
 
 ```
 wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })
@@ -187,8 +189,11 @@ wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })
 
 Substitute the residence country for `{Country}` — `United_States_Census`,
 `England_Census`, `Ireland_Census`, and so on. The page lists the years
-that country enumerated; those are the census years to expect while the
-person lived there.
+that country enumerated; expect only those whose returns survive (see the
+census bullet below). If a `{Country}_Census` page does not exist
+(`wiki_read` reports no page found), do not substitute the US years or any
+assumed schedule — record that the schedule could not be retrieved and
+reason about that country's census gaps from the other evidence in hand.
 
 Analyze the timeline for missing periods. A gap is **negative
 evidence** — the absence of expected records carries meaning.
@@ -218,11 +223,13 @@ than the events they come from.
   records.
 
 **How to determine expected events:**
-- Census: the years the residence country enumerated, read from its
-  `{Country}_Census` page fetched above — one expected census event per
-  enumerated year the person was alive and resident there, not a fixed
-  list. For the United States specifically, the 1890 federal census was
-  destroyed and can never fill a gap: never put 1890 in `expected_events`.
+- Census: the years the residence country enumerated whose returns
+  survive, read from its `{Country}_Census` page fetched above — one
+  expected census event per surviving enumerated year the person was
+  alive and resident there, not a fixed list. Exclude any year the page
+  marks destroyed, lost, or not surviving (for example the US 1890
+  federal census, the Irish 1821–1891 censuses, and the English 1931
+  census); never put a non-surviving year in `expected_events`.
 - Marriage: If children exist, a marriage event is expected before
   the first child's birth.
 - Death/burial: If the person is known to have died, both death
