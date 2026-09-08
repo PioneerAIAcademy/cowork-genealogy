@@ -27,5 +27,8 @@
   ],
   "execution": {
     "max_wall_clock_seconds": 900
-  }
+  },
+  "mcp_fixtures": [
+    "wiki-read-massachusetts-vital-records"
+  ]
 }
