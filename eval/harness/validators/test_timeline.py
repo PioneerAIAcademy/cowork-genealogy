@@ -223,6 +223,19 @@ def _year_on_page(year: int, content: str) -> bool:
     return re.search(rf"(?<!\d){year}(?!\d)", content or "") is not None
 
 
+def _census_year_of_entry(entry: str) -> int | None:
+    """The census year an `expected_events` entry refers to: the 18xx/19xx token
+    nearest an occurrence of the word `census`. A bounding year the entry also
+    mentions (e.g. "1861 England census enumeration (married 1859, died 1874)")
+    is not the census year and must not be counted (finding A). Returns None when
+    the entry names no `census` or carries no year."""
+    census_at = [m.start() for m in re.finditer("census", entry.lower())]
+    years = [(m.start(), int(m.group(1))) for m in _YEAR_RE.finditer(entry)]
+    if not census_at or not years:
+        return None
+    return min(years, key=lambda py: min(abs(py[0] - c) for c in census_at))[1]
+
+
 def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test):
     """Tag-gated (`census-from-wiki`): the timeline must derive expected census
     years from the residence jurisdiction's `{Country}_Census` wiki page
@@ -273,8 +286,9 @@ def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test
         pytest.skip("no produced timeline (covered by test_positive_produces_timeline)")
 
     # Collect census years from the individual expected_events entries that name
-    # a census — never from the whole joined gap — so a marriage/birth year in a
-    # mixed gap is not miscounted as a census year (finding #2).
+    # a census — never from the whole joined gap (finding #2) — and within an
+    # entry take only the year nearest the word `census`, so a bounding
+    # birth/marriage/death year in the same entry is not miscounted (finding A).
     census_years: set[int] = set()
     absent: list[tuple[int, str]] = []
     for tl in timelines:
@@ -285,19 +299,20 @@ def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test
                 entry = str(item)
                 if "census" not in entry.lower():
                     continue
+                year = _census_year_of_entry(entry)
+                if year is None:
+                    continue
+                census_years.add(year)
                 named = [c for c in pages if _entry_names_country(entry, c)]
-                for y in _YEAR_RE.findall(entry):
-                    year = int(y)
-                    census_years.add(year)
-                    if named:
-                        # Attributed to a jurisdiction whose page was fetched:
-                        # the year must appear on THAT page (finding #3), not on
-                        # some other country's page that was also fetched.
-                        if not any(_year_on_page(year, pages[c]) for c in named):
-                            absent.append((year, "/".join(named)))
-                    elif not any(_year_on_page(year, txt) for txt in pages.values()):
-                        # Unattributed: provenance floor — on some fetched page.
-                        absent.append((year, "any fetched page"))
+                if named:
+                    # Attributed to a jurisdiction whose page was fetched: the
+                    # year must appear on THAT page (finding #3), not on some
+                    # other country's page that was also fetched.
+                    if not any(_year_on_page(year, pages[c]) for c in named):
+                        absent.append((year, "/".join(named)))
+                elif not any(_year_on_page(year, txt) for txt in pages.values()):
+                    # Unattributed: provenance floor — on some fetched page.
+                    absent.append((year, "any fetched page"))
 
     assert census_years, (
         "census-from-wiki test produced no census gap naming a year in "
@@ -332,6 +347,12 @@ def test_us_1890_never_expected(before_state, after_state, tool_calls, test):
     US, or it names no jurisdiction and a `United_States_Census` page was fetched
     this run. An entry naming a non-US jurisdiction is left to that jurisdiction's
     own provenance check.
+
+    The "no census page fetched at all" case fires too: an unattributed 1890
+    census with no fetched census evidence is never evidence-backed, and this is
+    exactly the schedule-revert regression the backstop guards — the model drops
+    the lookup and re-emits 1890 from memory (finding B). This stays scoped to
+    the 1890 fact; it validates no other year and no schedule.
 
     Not tag-gated, so it also covers the US/Ireland positive tests that
     `test_census_years_read_from_wiki` skips — the deterministic backstop those
@@ -370,7 +391,7 @@ def test_us_1890_never_expected(before_state, after_state, tool_calls, test):
                     c != "United_States" and _entry_names_country(entry, c)
                     for c in fetched
                 )
-                if names_us or (not names_other and us_involved):
+                if names_us or (not names_other and (us_involved or not fetched)):
                     offending.append(entry)
 
     assert not offending, (

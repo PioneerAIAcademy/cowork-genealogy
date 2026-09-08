@@ -116,6 +116,17 @@ def test_passes_on_mixed_marriage_and_census_gap():
     check_census_from_wiki(BEFORE, _after(mixed), [_wiki_call()], TAGGED)
 
 
+def test_passes_on_single_entry_with_bounding_years():
+    """Finding A: a single census entry that also mentions bounding years must
+    count only the census year. `"1861 England census enumeration (married 1859,
+    died 1874)"` on a correct England timeline must NOT raise — per-entry
+    extraction that pulled every year flagged 1859/1874 as absent census years."""
+    gap = [{"start": "1859", "end": "1874",
+            "expected_events": ["1861 England census enumeration (married 1859, died 1874)"],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
 def test_fires_on_cross_country_page_contamination():
     """Finding #3: a year attributed to Ireland that is absent from the Ireland
     page but present on another fetched page (England's 1921) must be caught.
@@ -147,10 +158,46 @@ def test_us_1890_backstop_fires_and_is_scoped():
         [_wiki_call(US_URL, US_PAGE), _wiki_call(IRELAND_URL, IRELAND_PAGE)], positive)
 
 
+def test_us_1890_backstop_fires_when_no_census_page_fetched():
+    """Finding B: the schedule-revert regression — the model skips the census
+    lookup and re-emits an unattributed `1890_census` from memory. With no
+    fetched census page the guard must still fire (an unattributed 1890 census
+    with no fetched evidence is never evidence-backed). Before the fix the guard
+    was silent here, so the two failures arrived together and neither was caught."""
+    positive = {"type": "positive"}
+    gap = [{"start": "1885", "end": "1895",
+            "expected_events": ["1890_census"], "severity": "high"}]
+    with pytest.raises(AssertionError, match="1890"):
+        check_us_1890_backstop(BEFORE, _after(gap), [], positive)  # no wiki_read at all
+
+
 def test_fires_when_no_census_page_fetched():
-    """No wiki_read to a *_Census page → assertion (1) fires."""
-    with pytest.raises(AssertionError):
+    """census_reads arm: no wiki_read to a *_Census page fires it. `match=` pins
+    THIS assertion — without it the `absent` arm fires first and would mask a
+    neutered census_reads check (finding C)."""
+    with pytest.raises(AssertionError, match="must call wiki_read"):
         check_census_from_wiki(BEFORE, _after(ENGLAND_GAPS), [], TAGGED)
+
+
+def test_fires_when_no_census_year_named():
+    """census_years arm: a census-from-wiki timeline whose gaps name no census
+    year at all fires it. Pins the census_years assertion (finding C) — a census
+    page is fetched so census_reads passes, and the gap has no census entry."""
+    gap = [{"start": "1841", "end": "1851",
+            "expected_events": ["baptism", "burial"], "severity": "high"}]
+    with pytest.raises(AssertionError, match="produced no census gap"):
+        check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
+def test_fires_when_all_census_years_are_us_federal():
+    """non_us arm: when the only census years are US federal years and they are
+    on the fetched US page (so the `absent` arm passes), the non_us assertion is
+    the one that fires. Pins non_us (finding C) — unreachable as a failure with
+    the England fixture alone, so it needs the US page + US years."""
+    gap = [{"start": "1895", "end": "1915",
+            "expected_events": ["1900 census", "1910 census"], "severity": "high"}]
+    with pytest.raises(AssertionError, match="US federal year"):
+        check_census_from_wiki(BEFORE, _after(gap), [_wiki_call(US_URL, US_PAGE)], TAGGED)
 
 
 def test_fires_when_only_us_years_expected():
@@ -166,10 +213,11 @@ def test_fires_when_only_us_years_expected():
 
 
 def test_fires_when_expected_year_absent_from_page():
-    """A census year the fetched page does not list (1861 with a page that only
-    goes to 1851) → assertion (2) 'absent from page' fires."""
+    """absent arm: a census year the fetched page does not list (1861/1871 with a
+    page that only goes to 1851) fires it. `match=` pins THIS assertion (finding
+    C)."""
     short_page = "# England Census\n1801 1811 1821 1831 1841 1851\n"
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError, match="not found on the fetched census page"):
         check_census_from_wiki(
             BEFORE, _after(ENGLAND_GAPS), [_wiki_call(content=short_page)], TAGGED
         )
