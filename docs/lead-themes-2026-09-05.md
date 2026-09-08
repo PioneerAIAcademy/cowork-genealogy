@@ -275,22 +275,51 @@ class an issue is in:**
 
   The arc is the whole argument of this theme, walked to the end on one rule:
   `research/SKILL.md` has carried "verify BOTH gates, in order — do not write
-  `completed` until both hold" since PR #1029, **23% of completed runs in the
-  committed corpus reached `completed` with an uncritiqued summary anyway**, and
-  the precondition is what closed it. Prose stated it, measurement killed it, a
-  writer tool now holds it.
+  `completed` until both hold" since **PR #811** (merged 2026-07-23; the prose
+  landed in `ee088b964`), and **29 of 128 completed runs in the committed corpus
+  reached `completed` with an uncritiqued summary anyway** — the 23% headline.
+
+  **The blend is the wrong instrument, and it flatters this theme's own thesis.**
+  Date-split over the same 128 runs, re-derived 2026-09-08 over the 161 committed
+  run logs:
+
+  | window | rate |
+  |---|---|
+  | before the prose existed | 23/70 = 32.9% |
+  | prose stated, nothing enforcing | 6/53 = 11.3% |
+  | precondition live (2026-08-17 on) | 0/5 = 0% |
+
+  **23 of the 29 violations predate the prose.** So "prose stated it, measurement
+  killed it" *understates* what prose did — the rate fell by two thirds once the
+  sentence existed — and "the precondition is what closed it" rests on n=5, whose
+  3/n bound is 60%, the same rule of three this document applies to the
+  postconditions table. The direction is monotonic and survives; the number and
+  the attribution do not. This is the trap this theme names twice elsewhere: the
+  corpus's age wearing a finding's clothes.
+
+  Re-derive: for each `eval/runlogs/e2e/*/run-*.final-research.json` with
+  `project.status == "completed"`, flag it when some `proof_summaries[]` entry
+  whose `question_id` names a question that is `resolved` has no `evaluations[]`
+  entry with `focus: "proof-critique"`, a matching `target_id`, and a null
+  `superseded_by`; bucket by the date in the filename.
 
   So the second class is smaller than it looks. The test is not "can we observe
   the skill" — it is **"is there a later write we can gate, and can the step be
   made to leave something behind."** Issue #1852 has both: a conflict is written,
-  and a question resolution follows it. Calling it structurally unreachable is
-  at minimum unproven, and the ruling should not enshrine that.
+  and a question resolution follows it, so calling it structurally unreachable is
+  unproven. That conclusion is not contested: the lead already ruled on #1852 on
+  2026-09-01 (the blocker is gone, and an acceptance criterion for the conversion
+  followed on 2026-09-02). The point stands with more support than "unproven"
+  claims for it — what remains is to stop citing it as the unreachable case.
 
 A reference implementation cited against a case it structurally cannot cover
 will discredit the mechanism — and so will one that declares a case unreachable
 when a shipped gate already reaches its shape. Four issues are stalled asking
-for that mechanism one at a time: **issues #2182, #2184, #2086, #2108** (two of
-the four unruled).
+for that mechanism one at a time: **issues #2182, #2184, #2086, #2108**. All
+four now carry a lead ruling dated 2026-09-07 with the `needs-decision` label
+removed (13:28, 14:42, 13:29 and 14:18 UTC), every one of them before this
+branch's first commit — so what they are stalled on is the mechanism, not a
+decision.
 
 **Highest delegation leverage on the board** — a general precondition mechanism
 converts a large class of stalled doctrine work into ordinary developer tasks.
@@ -321,8 +350,10 @@ The rule as written asks for one broken shape — the one its author already had
 mind. That is the weakest possible proof, and it reads as a strong one, which is
 CLAUDE.md's own "worse than no check" argument turned back on the rule.
 
-Two instances in a single recent PR, both found by review rather than by a guard
-(PR #2044):
+Two instances, both found by review rather than by a guard, in two PRs merged 59
+minutes apart — `ba73881ad` (PR #2042) fixed the `--only`/`--variants` filter and
+PR #2044 the rest. CLAUDE.md's version of this rule names no PR and is accurate
+as written:
 
 - `--limit abc` parsed to `NaN`, selected zero images, and **exited 0 having done
   nothing**.
@@ -356,8 +387,13 @@ same filter applies to a shadow replay.
 Related, and unwritten for guards: when a bug turns out to be the second instance
 of a class already fixed, the remedy is one shared guard, not a second one-off.
 "Code reuse" in CLAUDE.md covers implementation; "redundant guards are
-untestable" is a different rule. The AST encoding lint replacing three greps is
-an unwritten instance of exactly this.
+untestable" is a different rule. The `encoding="utf-8"` AST lint is the nearest
+shipped instance, and it is worth stating precisely rather than as a count:
+CLAUDE.md justifies it on a grep being **wrong in both directions** — a per-line
+grep false-flags a compliant call whose `encoding=` sits on a later physical
+line, and a file-level grep misses a bare offender inside a multi-line call. It
+replaced a grep that could not be made right, not a tally of three checks, and
+its add-commit deleted no grep check.
 
 ### Coverage is shaped by section, not by agent — and two agents have no gate at all
 
@@ -376,8 +412,11 @@ The consequence: **an agent whose deliverable is a return summary has nothing to
 gate.** Of five plugin agents, three write documents and are covered
 incidentally — `gps-mentor` (`evaluations[]`), `proof-conclusion`
 (`proof_summaries`, plus `proofSummaryInvariants`), `research-exhaustiveness`
-(`exhaustive_declaration`). Two are not covered at all, and they are where the
-worst measured failures sit:
+(`exhaustive_declaration`). Two have **no gate on the deliverable that carries
+the failure**, and they are where the worst measured failures sit. "Not covered
+at all" would overstate it for `record-extractor`, which writes `sources` and
+`assertions` under ownership rows; what is ungated is its identity assessment,
+which the bullet below states correctly:
 
 - **`record-extractor`'s identity assessments go in its return summary by
   design** — `extraction_append` refuses the `person_evidence` section, which is
@@ -385,7 +424,8 @@ worst measured failures sit:
   lane that produced *"a fabricated identity link carrying a match score no tool
   had computed."*
 - **`image-reader`'s transcription is returned as text.** The image-transcribe
-  spec's own closing line is "Nothing checks a transcription against its scan."
+  spec's own §4.6 closes on "Nothing checks a transcription against its scan"
+  (line 318 of 1123 — it is that section's last line, not the document's).
 
 And what coverage exists checks **existence or shape, never judgement**. The
 mentor gate asks whether a `proof-critique` verdict is on record. Nothing

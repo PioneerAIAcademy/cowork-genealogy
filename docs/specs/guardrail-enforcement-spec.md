@@ -376,9 +376,12 @@ if the rate is low enough that a fail is a signal and not a wall" — zero is no
 an unexercised predicate to a hard failure.
 
 **Every column above counts firings, and no column could count a miss.** The
-replay measures the false-DENY direction — would this check block work that was
-fine — and it is structurally incapable of measuring the other one. In a replay
-the check is its own ground truth: a write it does not recognise as a violation
+replay is *aimed at* the false-DENY direction — would this check block work that
+was fine — but it does not measure that either, and the distinction matters
+because the two halves are argued from it. Twenty lines above, the tree-side arm
+records the reason: "the gate that would tell those apart is the thing being
+measured, not an input to it." That applies to both directions. In a replay the
+check is its own ground truth: a write it does not recognise as a violation
 is indistinguishable from a write that is correct, and nothing in the committed
 corpus labels violations independently of the detector under test. The
 population leans the same way, since committed run logs are converged states and
@@ -389,6 +392,14 @@ cannot establish that the candidate catches the class it names — that is
 established the way any guard is, by breaking the thing in several shapes and
 watching it fire (CLAUDE.md, "A new lint must be proven to fail"). A graduation
 argument needs both halves, and only one of them lives here.
+
+**This is in tension with ADR-0011, and the tension is named rather than
+resolved here.** ADR-0011 sets the graduation bar as "replay the gate over the
+committed corpus, then read every refusal it produces and confirm each is a true
+positive", and says in terms that "that is the whole test". This section says
+that is one half. Nothing checks the two against each other, and a spec does not
+overrule an ADR: read the sentence above as an argument for amending ADR-0011,
+not as an amendment. Whoever owns that ADR decides which stands.
 
 **What each check still owes, on two axes.** The predicates are not the open
 question: all three have firing controls in
@@ -1497,12 +1508,17 @@ this section before reopening one.
   sample **grows on its own** now that attribution has shipped, so no monitoring
   task is needed to improve it; and the alternative is a plane that fails open
   and costs a hook invocation per tool call, bought against an unobserved
-  failure. Roughly 30 more attributed runs bring the `gps-mentor` bound down to
-  the `image-reader` level with nobody doing anything.
+  failure. **About 65** more attributed runs bring the `gps-mentor` bound down to
+  the `image-reader` level with nobody doing anything — from this page's own
+  figures: at 31 and 22 instances per run, matching `image-reader`'s 2.4% bound
+  needs n=123, and +30 reaches only 4.1%. Either way nobody has to do anything;
+  the arithmetic is stated because "roughly 30" is one of the three legs this
+  section rejects a detector on.
 
   **The weaker instrument said otherwise, and was wrong.** Comparing invocation
   counts to final-state `evaluations[]` counts across the whole corpus suggests
-  18 lost verdicts in 183 invocations, and 22 runs where `image-reader` ran with
+  18 lost verdicts in 188 invocations (the 18 does not reproduce against 183), and
+  22 runs where `image-reader` ran with
   no `image_transcribe` anywhere. Both dissolve under per-instance attribution:
   the first counts re-invocations on one target as losses, and the second is
   entirely runs from before attribution existed. Cite the per-instance numbers;
@@ -1514,7 +1530,12 @@ this section before reopening one.
 
   **What would reopen this:** a violation observed per-instance on an attributed
   run. Not a count difference, and not a `SubagentStop` capability probe — the
-  probe answers whether it *could* be built, which is not in question. No
+  probe answers whether it *could* be built, which is not the question this
+  section turns on. Stated as a limit rather than as settled: **no probe was
+  run**, and this page names no environment the hook would bind in. In the repo
+  whose ADR-0005 exists because a live probe contradicted upstream threads, that
+  is an assumption, and `SubagentStop` firing only for Task-spawned agents
+  (recorded above) is exactly the kind of thing a probe would settle. No
   detector was added: on this evidence it would be a row that never fires, and
   "a zero fire rate is not a licence to graduate" cuts against creating one as
   much as against promoting one.

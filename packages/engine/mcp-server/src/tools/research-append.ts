@@ -1467,8 +1467,12 @@ function applyOne(
       //
       // Prose was tried on exactly this rule and lost: research/SKILL.md has
       // carried "verify BOTH gates, in order — do not write completed until both
-      // hold" since PR #1029, and 23% of completed runs in the committed e2e
-      // corpus reach `completed` with at least one uncritiqued summary anyway.
+      // hold" since PR #811 (merged 2026-07-23; #1029 touched this file but not
+      // that row), and 29 of 128 completed runs in the committed e2e corpus
+      // reach `completed` with at least one uncritiqued summary anyway — 23%.
+      // Date-split, that 23% is 23/70 before the prose existed, 6/53 with the
+      // prose and no enforcement, and 0/5 since this precondition went live:
+      // the prose cut the rate by two thirds, and the live window is n=5.
       //
       // A superseded verdict does not count: if a newer verdict replaced it, the
       // newer one is itself in evaluations[] and satisfies the gate; if nothing

@@ -1765,10 +1765,11 @@ describe("research_append (project singleton section)", () => {
   });
 
   // ── Completed-gate: the mentor verdict (issue #1490 phase 1) ──
-  // Prose carried this rule since PR #1029 ("verify BOTH gates, in order — do
-  // not write completed until both hold") and 23% of completed runs in the
-  // committed e2e corpus reach `completed` with at least one uncritiqued
-  // summary anyway. This is that rule at the write boundary.
+  // Prose carried this rule since PR #811 ("verify BOTH gates, in order — do
+  // not write completed until both hold"; #1029 touched the file but not that
+  // row) and 29 of 128 completed runs in the committed e2e corpus reach
+  // `completed` with at least one uncritiqued summary anyway — 23%, of which
+  // 23 predate the prose. This is that rule at the write boundary.
 
   const resolvedQuestion = () => ({
     id: "q_001",
