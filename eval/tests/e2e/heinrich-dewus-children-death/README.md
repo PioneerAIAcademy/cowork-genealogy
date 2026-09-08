@@ -12,6 +12,16 @@ about 1850); the tree carries an undated Death fact.
 > Pommerania, Germany) die, and did he and his wife Augusta have
 > children besides the four already in the tree?
 
+## Bundled captures (`provided-documents/`)
+
+One Wisconsin death record is committed here to give the harness access to the official state death registration without a live browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `ancestry-wi-death-cert-dewus-henry-1936.pdf` | ancestry.com — Wisconsin, U.S., Death Records, 1872–2004 | Index entry for Henry Dewus, death 28 Aug 1936, Milwaukee, Wisconsin. Note: the 28 Aug date is the state registration date; the actual death date of 23 Aug 1936 is established by a contemporaneous death notice and the one-year memorial the family published. |
+
+This is an authentic record saved from ancestry.com in a credentialed browser. It corroborates the Milwaukee death and gives the agent the official state registration to cross-reference against the obituary date discrepancy (f1).
+
 ## What was removed from the starting tree
 
 **Nothing.** This is a *record-hint* fixture (`"genre": "record-hint"`
