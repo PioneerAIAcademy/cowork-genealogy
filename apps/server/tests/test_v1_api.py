@@ -380,18 +380,37 @@ async def test_a_dropped_status_frame_still_resets_the_idle_clock(monkeypatch):
 
 
 def test_a_live_ping_loop_does_not_break_a_healthy_stream_turn(monkeypatch):
-    """INTEGRATION, with the real in-sandbox Hub and its interval turned down, so
-    the pings are real rather than fabricated. A generous cap must not fire on a
-    turn that completes normally under a flood."""
+    """INTEGRATION: a healthy turn still completes with the real in-sandbox Hub's
+    heartbeat loop running at a low interval.
+
+    WHAT THIS DOES NOT ESTABLISH, stated because the first version of this
+    docstring claimed it did: it is not the proof that the idle clock ignores
+    pings. It cannot be. The turn is short, the socket is open for less than a
+    second of it, and nothing here can observe how many pings crossed the wire -
+    so a mis-set interval would leave this passing with zero pings and prove
+    nothing. The discriminating proof is
+    `test_stream_idle_cap_fires_through_a_ping_flood`, which fails when
+    `_is_liveness` is made ping-blind. This test's job is narrower and real: the
+    no-false-positive direction, with the loop switched on.
+    """
+    import os
+
     from app.config import get_settings
 
-    # Above `_DRAIN_IDLE`, deliberately. `_drain_replay` returns only after that
-    # many seconds of SILENCE, so a ping interval below it means silence never
-    # happens and the turn is never sent - the drain loops forever. Found by
-    # setting 0.1 here and watching this test hang. Not reachable in production
-    # (the default interval is 15s against a 0.5s drain), but it does mean a
-    # future heartbeat speed-up has a floor, which is recorded in the spec.
-    monkeypatch.setenv("WS_HEARTBEAT_INTERVAL", "0.7")
+    # 1.0, which is 2x `_DRAIN_IDLE`, and the margin is deliberate rather than
+    # arbitrary. `_drain_replay` returns only after _DRAIN_IDLE seconds of
+    # SILENCE on the socket before the turn is sent, so a ping interval at or
+    # below it means silence never occurs and the turn is never sent at all -
+    # the drain loops forever. Found by setting 0.1 here and watching this test
+    # hang, which is also what proves the env var really does reach the
+    # subprocess Hub. 0.7 worked but left 0.2s of slack, which is a flake
+    # waiting for a slower machine - and the platform this card is about is the
+    # slow one. Recorded in the spec: any future heartbeat speed-up has a floor.
+    monkeypatch.setenv("WS_HEARTBEAT_INTERVAL", "1.0")
+    assert os.environ.get("WS_HEARTBEAT_INTERVAL") == "1.0", (
+        "the heartbeat interval was not set, so this test would run against the "
+        "15s default and exercise no heartbeat at all"
+    )
     monkeypatch.setattr(get_settings(), "v1_stream_idle_seconds", 60)
     with TestClient(app) as client:
         sid = _create(client)
