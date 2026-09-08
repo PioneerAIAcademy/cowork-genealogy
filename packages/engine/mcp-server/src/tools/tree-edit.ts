@@ -40,7 +40,7 @@ import {
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import { resolveSourceRef } from "../utils/source-ref-resolver.js";
+import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
 export type TreeEditOperation =
   | "add_fact"
@@ -105,10 +105,11 @@ export interface TreeEditOp {
   /** Auto-resolve standard_place when a place is set (default true). */
   resolveStandardPlace?: boolean;
   /** add_relationship only: resolve the edge's (and any inline Couple fact's)
-   *  source-ref from this research.json `relationship`-type assertion instead
-   *  of supplying a literal `relationship.sources` — mirrors
-   *  materialize_facts's resolver (tree-materialization-spec §8). Mutually
-   *  exclusive with a literal ref on `relationship`. */
+   *  source-ref from this research.json assertion — a `relationship` or
+   *  `marriage` type (RELATIONSHIP_ESTABLISHING_TYPES) — instead of supplying a
+   *  literal `relationship.sources`; mirrors materialize_facts's resolver
+   *  (tree-materialization-spec §8). Mutually exclusive with a literal ref on
+   *  `relationship`. */
   sourceAssertionId?: string;
 }
 
@@ -482,11 +483,12 @@ async function applyOperation(
       if (input.relationship.id) throw new TreeEditError("add_relationship `relationship` must not carry an id");
       const rel: SimplifiedRelationship = { ...input.relationship, id: nextId(tree, "R") };
 
-      // Resolve the edge's source-ref from a research.json `relationship`-type
-      // assertion instead of requiring the caller to hand-walk the provenance
-      // chain (tree-materialization-spec §8: "the same resolver
-      // materialize_facts uses"). A literal `relationship.sources` alongside
-      // it is rejected as ambiguous — pick one.
+      // Resolve the edge's source-ref from a research.json relationship-
+      // establishing assertion (`relationship` or `marriage`) instead of
+      // requiring the caller to hand-walk the provenance chain
+      // (tree-materialization-spec §8: "the same resolver materialize_facts
+      // uses"). A literal `relationship.sources` alongside it is rejected as
+      // ambiguous — pick one.
       if (input.sourceAssertionId !== undefined) {
         if (hasNonNullRef(rel)) {
           throw new TreeEditError(
@@ -501,11 +503,18 @@ async function applyOperation(
             `add_relationship: sourceAssertionId '${input.sourceAssertionId}' not found in research.json assertions`,
           );
         }
-        if (assertion.fact_type !== "relationship") {
+        // `marriage` counts as relationship-establishing: a marriage register is
+        // exactly the assertion that establishes a Couple, and it is the type the
+        // commonest Couple edge carries. Excluding it made this tool's own
+        // instruction — and materialize_facts's — impossible to follow for that
+        // edge, since a marriage assertion was the "same assertion" both told the
+        // caller to source it with.
+        if (!isRelationshipEstablishing(assertion.fact_type)) {
           throw new TreeEditError(
             `add_relationship: sourceAssertionId '${input.sourceAssertionId}' is a '${assertion.fact_type}' ` +
-              "assertion, not a 'relationship' assertion — the edge's provenance must come from the " +
-              "relationship-establishing assertion",
+              "assertion, which establishes no link between two parties — the edge's provenance " +
+              "must come from a relationship-establishing assertion ('relationship', 'marriage', " +
+              "'parentage', 'parentchild'; case-insensitive)",
           );
         }
         rel.sources = [resolveRelationshipRef(assertion, research, tree)];
@@ -745,8 +754,11 @@ export const treeEditSchema = {
     "duplicate persons (this tool never deletes a person).\n" +
     "\n" +
     "add_relationship requires a non-null source-ref on the edge. Prefer " +
-    "`sourceAssertionId` (the research.json `relationship`-type assertion this " +
-    "edge comes from) over a literal `relationship.sources` — the tool resolves " +
+    "`sourceAssertionId` (the research.json assertion this edge comes from — any " +
+    "that establishes a link between two parties: relationship, marriage, parentage " +
+    "or parentchild. A marriage register is what establishes a Couple, so source a " +
+    "Couple edge with the marriage assertion itself) over a " +
+    "literal `relationship.sources` — the tool resolves " +
     "assertion.source_id -> research source -> tree S-entry itself (the same " +
     "resolver materialize_facts uses), so you never hand-walk the chain. Any inline " +
     "Couple fact (e.g. Marriage) with no ref of its own inherits the same resolved " +
@@ -821,10 +833,12 @@ export const treeEditSchema = {
       sourceAssertionId: {
         type: "string",
         description:
-          "add_relationship only: the research.json `relationship`-type assertion this edge comes " +
-          "from. The tool resolves its source-ref itself (assertion.source_id -> research source -> " +
-          "tree S-entry) instead of you supplying a literal `relationship.sources` — mutually " +
-          "exclusive with one.",
+          "add_relationship only: the research.json assertion this edge comes from — any type " +
+          "that establishes a link between two parties (relationship, marriage, parentage, " +
+          "parentchild; a Couple edge is sourced with the marriage assertion itself). The tool " +
+          "resolves its source-ref itself (assertion.source_id -> " +
+          "research source -> tree S-entry) instead of you supplying a literal " +
+          "`relationship.sources` — mutually exclusive with one.",
       },
       source: {
         type: "object",
