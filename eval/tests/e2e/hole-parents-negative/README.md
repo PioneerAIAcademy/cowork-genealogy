@@ -37,7 +37,7 @@ Two 1875 Norwegian census records are committed here to give the harness access 
 | `digitalarkivet-census-1875-benjamin-kristofersen-hole.pdf` | Digitalarkivet — Norway, 1875 Census | Household at Stade nordre, Vågå, Oppland. Benjamin Kristofersen Hole (b. 1852, Lesje Hovedsogn), listed as son of Marit Hole, occupation: schoolteacher (Skolelærer), assumed residence: Ringebo (Ringebu). |
 | `digitalarkivet-census-1875-mathea-pedersdatter-ringebu.pdf` | Digitalarkivet — Norway, 1875 Census | Household at Spangrudlien Spangrud søndre, Ringebu. Mathea Pedersdatter (b. 1857, Ringebu), daughter (d) of Peder Pedersen (b. 1812, Ringebu) and Mali Larsdatter (b. 1820, Ringebu). |
 
-Both are authentic records saved from digitalarkivet.no in a credentialed browser. They place both parents in Ringebu in 1875 — one year before Christian's 5 Nov 1876 christening there — and corroborate their identities before the family's emigration to Minnesota.
+Both are authentic records saved from digitalarkivet.no in a credentialed browser. Mathea's entry enumerates her household at Spangrudlien in Ringebu. Benjamin's entry enumerates him at Stade nordre in Vågå, with Ringebu recorded only as his assumed residence (hjemsted) — the administrative home of a schoolteacher working away from his registered municipality. Both corroborate their identities one year before Christian's 5 Nov 1876 christening in Ringebu.
 
 ## What was removed from the starting tree
 
