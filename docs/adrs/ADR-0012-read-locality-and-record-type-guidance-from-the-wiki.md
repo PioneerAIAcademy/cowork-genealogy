@@ -188,6 +188,45 @@ validator asserts the call. A guessed slug 404s silently and the model proceeds
 without the page. `wiki_place_page`'s address space stays narrower than the
 corpus until issue #2078.
 
+### Per-agent ruling: what a failed registration-date fetch means (issue #2257)
+
+`research-exhaustiveness` was the first body to move under this ADR, and it
+forced a decision the ADR had left open. Its era rule — where the
+jurisdiction's registration began after the event, the missing registration is
+not a gap — now depends on a fetched date. The agent's standing default for
+uncertainty is *"a gap is unsearched, not unobtainable — default to
+research-plan"*, and applying that to a failed fetch produces a demand for a
+birth registration the jurisdiction never created: precisely the error the
+hardcoded Ireland/Pennsylvania clause was added to prevent (38662fb8b). The
+failure had to be ruled on explicitly because both obvious answers are wrong.
+
+**Ruled (genealogist, 2026-09-04): on a failed fetch, gate on the baptism and
+record the start date as unverified — do not demand the registration.**
+
+The two rejected alternatives, and why:
+
+- **Fall back to the standing default (demand the registration).** Never misses
+  a real gap, but the demand is unsatisfiable, so the declaration becomes
+  unreachable rather than merely delayed. This reinstates the bug the removed
+  clause existed to prevent.
+- **Skip the era test when the date is unknown.** Never invents impossible
+  work, but lets a genuine gap pass as exhaustive, silently — the failure mode
+  this agent exists to prevent, in the direction hardest to notice.
+
+The ruling reuses behaviour the rule already contains, which is what makes it
+safe under either unknown: if registration truly had not begun, the church
+record is the correct target; if it had begun and was missed, gating on the
+church record still demands a source for the event rather than nothing. One
+sentence, no new branch.
+
+**How often this path fires — measured, not assumed.** Building the fixtures on
+2026-09-04 the hosted sidecar returned empty bodies on several `GET /page/`
+calls, needing up to three retries on one slug. Combined with the single-shot
+call (#2054) and outage-as-no-page (#2130) already recorded above, the failure
+behaviour is a **common** path rather than a defensive edge case. Read the
+ruling as load-bearing: it is what the agent does whenever the sidecar is
+unwell, which is often enough to matter.
+
 ## Enforcement
 
 None — convention only, beyond two neighbours:
