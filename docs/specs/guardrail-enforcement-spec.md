@@ -1502,6 +1502,16 @@ this section before reopening one.
   tested, on 22 of 161 runs, in the harness rather than production, over
   committed logs that are converged states. Treat the table as a floor.
 
+  **A fifth item belongs in that list, and it cuts for the postcondition rather
+  than against it.** The same 22 attributed runs carry **12 `general-purpose`
+  subagent instances, 5 of which call a writer tool** — the documented fallback
+  shape, where a namespaced delegation fails to resolve and the model retries as
+  a general-purpose stand-in that binds none of the declared `tools:`. Those 12
+  sit outside both denominators above, because a postcondition keyed on
+  `agent_type` cannot name an agent type the delegation never became. That is
+  precisely why such a postcondition would be worth having; it is also why "0 of
+  31" and "0 of 123" do not cover the population the rule is aimed at.
+
   The rejection does not rest on the rate. It rests on three things that hold
   whatever the rate turns out to be: a lost verdict is **caught downstream** by
   the completion gate as a visible stall rather than silent corruption; the

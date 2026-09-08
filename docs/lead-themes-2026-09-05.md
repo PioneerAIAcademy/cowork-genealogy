@@ -431,10 +431,13 @@ And what coverage exists checks **existence or shape, never judgement**. The
 mentor gate asks whether a `proof-critique` verdict is on record. Nothing
 anywhere asks whether the verdict is any good.
 
-**First action:** add the input-shape requirement to the new-lint rule, and give
-`guardrail_shadow_report.py` a stated false-pass term or a written admission that
-it has none. Both are cheap. The third section is a design question and belongs
-with the Theme 3 ruling, since it bounds what that ruling can promise.
+**First action: both halves are done in this PR.** The input-shape requirement is
+in CLAUDE.md ("One break is not a proof" and "Prove the other direction too"),
+and `guardrail_shadow_report.py` now carries the written admission that it has no
+false-pass term, in its docstring and beside the graduation table. Left as
+pending, this line invites `/fill-ready` to file two finished tasks. The third
+section is a design question and belongs with the Theme 3 ruling, since it bounds
+what that ruling can promise.
 
 ---
 
