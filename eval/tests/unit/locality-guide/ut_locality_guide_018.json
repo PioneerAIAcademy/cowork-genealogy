@@ -4,7 +4,7 @@
     "skill": "locality-guide",
     "name": "Locality guide for Pennsylvania, late 1800s \u2014 coal mining records",
     "type": "positive",
-    "description": "Checks if the skill recognizes Pennsylvania\u2019s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers.",
+    "description": "Checks if the skill recognizes Pennsylvania\u2019s coal mining industry and directs researchers to employment records, union lists, census schedules, and church registers. Wall-clock cap raised 480 -> 720s (issue #2252): the 2026-09-03 run was killed at 485s having already COMPLETED the job — file_changes shows loc_001 written to research.json — and died during the closing message, so a finished run scored aborted with zero graded dimensions (49 turns, 21 MCP calls, the suite's most turn-heavy test against a passing median of 19). Issue #2252 adds two required constructed-URL wiki_read fetches, so the cap is sized to that measured need plus margin. This is NOT issue #2025, whose signature is an ok:false writer-tool result from a 30s node subprocess cap and is absent here.",
     "tags": [
       "Pennsylvania",
       "coal mining",
@@ -20,7 +20,7 @@
     "scenario_notes": null
   },
   "execution": {
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 720
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
