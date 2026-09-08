@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_timeline_eng",
+    "skill": "timeline",
+    "name": "Timeline derives English census years from the England_Census wiki page, not the US schedule",
+    "type": "positive",
+    "description": "Build a timeline for William Ashford (b. ~1838 Canterbury, Kent, England; d. 1874), a person resident only in England. The skill must read the England census schedule from the England_Census wiki page via wiki_read and expect the English decennial census years (1841, 1851, 1861, 1871) — only 1851 is documented, so 1841/1861/1871 are gaps expecting an English census. It must NOT assume the US federal years (1850/1860/1870/...), none of which apply to an England-only life.",
+    "tags": [
+      "timeline",
+      "chronological",
+      "gap-detection",
+      "census-from-wiki",
+      "non-us",
+      "I1"
+    ]
+  },
+  "input": {
+    "user_message": "Build a timeline for William Ashford.",
+    "scenario": "england-census-timeline"
+  },
+  "mcp_fixtures": [
+    "place-search-canterbury",
+    "place-distance-canterbury",
+    "wiki-read-england-census",
+    "wiki-read-any"
+  ],
+  "judge_context": [
+    "Should call wiki_read for the England_Census page (https://www.familysearch.org/en/wiki/England_Census) to obtain the jurisdiction's census schedule, rather than assuming the US decennial years.",
+    "Should build a chronology from the documented events (birth ~1838, 1851 census residence, marriage 1859, death 1874), all in Canterbury, Kent, England.",
+    "Should identify gaps where an English census should exist but is undocumented — the person was alive and resident in England for the 1841, 1861 and 1871 censuses (1851 is documented) — and populate expected_events with those English census years.",
+    "Must NOT list US federal census years (1850, 1860, 1870, 1880, 1900, 1910, 1920) as expected for this England-only life; the expected census years are England's (1841, 1851, 1861, 1871, ...), read from the England_Census page.",
+    "The distance dimension is N/A: all events are at the same place (Canterbury), so there is no distance-sensitive pair to judge."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

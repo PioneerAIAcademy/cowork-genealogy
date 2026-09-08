@@ -147,6 +147,13 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
   },
   conflicts: {
     assertionId: { field: "competing_assertion_ids", mode: "contains" },
+    // Narrower than the completion gate, deliberately: the gate also derives a
+    // block from the disputed assertions, so this filter reports no blocker for
+    // a question `research_append` refuses completion on. The mapping is an
+    // advertised contract (research-query-tool-spec.md §2.1); widening it is
+    // its own card. `proof-conclusion` is the consumer this bites — it reads
+    // conflicts this way before writing a tier `conflictedSourceInvariants`
+    // will refuse.
     questionId: { field: "blocks_question_ids", mode: "contains" },
     status: { field: "status", mode: "exact" },
   },
