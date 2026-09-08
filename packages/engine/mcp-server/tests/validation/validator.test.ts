@@ -13,6 +13,8 @@ import { fileURLToPath } from "url";
 import {
   validateProject,
   validateParsed,
+  PROOF_TIER_RANK,
+  VALIDATOR_ENUMS,
   RESEARCH_SHAPES,
   ID_PREFIXES,
   ISO_DATE_PATTERN,
@@ -742,6 +744,43 @@ describe("Project Validator", () => {
       expect(
         result.errors.some((e) =>
           e.message.includes("not found in tree.gedcomx.json persons")
+        )
+      ).toBe(true);
+    });
+
+    // #1711 follow-up (review finding): claims[].relationship.parent/child were
+    // not registered in person-id-refs.ts, so a dangling reference here
+    // validated clean and merge_tree_persons never remapped it either.
+    it("reports a proof_summaries claim's relationship referencing a non-existent person", async () => {
+      const research = {
+        ...minimalResearch,
+        proof_summaries: [
+          {
+            id: "ps_001",
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: [],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Test",
+            narrative_markdown: "Test",
+            claims: [
+              {
+                claim: "paternity",
+                proof_tier: "probable",
+                supporting_assertion_ids: [],
+                relationship: { type: "ParentChild", parent: "NONEXISTENT", child: "I1" },
+              },
+            ],
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("relationship.parent 'NONEXISTENT' not found in tree.gedcomx.json persons")
         )
       ).toBe(true);
     });
@@ -1729,6 +1768,10 @@ describe("Research closed shapes", () => {
   const maximalTree = {
     persons: [
       { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] },
+      // I2/I3 back the proof_summaries claims[].relationship fixtures below —
+      // #1711's person-id-refs follow-up checks those endpoints exist.
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Robert", surname: "Smith" }] },
+      { id: "I3", gender: "Female", names: [{ id: "N3", given: "Mary", surname: "Smith" }] },
     ],
     relationships: [],
     sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
@@ -1986,6 +2029,14 @@ describe("Research closed shapes", () => {
           resolved_conflict_ids: [],
           exhaustive_search_summary: "Census and vital records searched",
           narrative_markdown: "## Findings\nProbable.",
+          claims: [
+            {
+              claim: "paternity",
+              proof_tier: "probable",
+              supporting_assertion_ids: ["a_001"],
+              relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+            },
+          ],
         },
       ],
       evaluations: [
@@ -2075,6 +2126,11 @@ describe("Research closed shapes", () => {
     { site: "timeline events", plant: (r) => (r.timelines[0].events[0].zz_extra = true) },
     { site: "timeline gaps", plant: (r) => (r.timelines[0].gaps[0].zz_extra = true) },
     { site: "proof_summaries", plant: (r) => (r.proof_summaries[0].zz_extra = true) },
+    { site: "proof_summaries claims", plant: (r) => (r.proof_summaries[0].claims[0].zz_extra = true) },
+    {
+      site: "proof_claim relationship",
+      plant: (r) => (r.proof_summaries[0].claims[0].relationship.zz_extra = true),
+    },
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
     { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
   ];
@@ -2094,6 +2150,246 @@ describe("Research closed shapes", () => {
       ).toBe(true);
     });
   }
+
+  // #1711 — per-claim tier breakdown on proof_summaries[].claims. Optional
+  // and additive; these pin the write-time enforcement the task-reviewer
+  // flagged as missing (nothing walked into a nested object here before).
+  describe("proof_summaries[].claims (#1711 per-claim tiers)", () => {
+    it("accepts a proof_summaries entry with a valid claims[] breakdown", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "maternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("behaves exactly as before when claims is absent (no regression on the default path)", async () => {
+      const research = maximalResearch();
+      delete research.proof_summaries[0].claims;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("reports a non-object claims[] element instead of throwing", async () => {
+      // `checkRequired` tests `field in obj` and `in` throws on null and every
+      // primitive — the reason the other 21 element loops call isObjectEntry.
+      // claims[] is filled from LLM output and validateParsed gates every
+      // writer tool, so a throw here fails them all with no repairable message.
+      for (const bad of [null, "paternity", 42]) {
+        const research = maximalResearch();
+        research.proof_summaries[0].claims = [bad];
+        const result = await validateParsed(research, maximalTree);
+        expect(result.valid).toBe(false);
+        expect(
+          result.errors.some(
+            (e) => e.path === "research.json/proof_summaries[0]/claims[0]"
+          )
+        ).toBe(true);
+      }
+    });
+
+    it("reports a non-object claims[].relationship instead of throwing", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].relationship = "I2";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]/relationship"
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a scalar tier stronger than every per-claim tier", async () => {
+      // The `!==` in the scalar check has two arms. Dropping this one (making it
+      // `<`) left the whole suite green, and it is the arm the orchestrator's
+      // `tier >= probable` routing actually leans on.
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "proved";
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes(
+              "tier 'proved' does not match the stronger of claims[].proof_tier ('probable')"
+            )
+        )
+      ).toBe(true);
+    });
+
+    it("a prototype key cannot pose as a tier rank", async () => {
+      // PROOF_TIER_RANK was an object literal, so `["constructor"]` returned a
+      // function rather than undefined, Math.max went NaN, and the scalar check
+      // silently stopped running for the whole summary.
+      expect(PROOF_TIER_RANK.get("constructor")).toBeUndefined();
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible";
+      research.proof_summaries[0].claims = [
+        {
+          claim: "poison",
+          proof_tier: "constructor",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("does not match the stronger of claims[].proof_tier")
+        )
+      ).toBe(true);
+    });
+
+    it("PROOF_TIER_RANK ranks every proof_tier enum value", () => {
+      expect(new Set(PROOF_TIER_RANK.keys())).toEqual(
+        new Set(VALIDATOR_ENUMS.proof_tier)
+      );
+    });
+
+    it("rejects a claims[] entry with an invalid proof_tier value", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].proof_tier = "very_confident";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]" &&
+            e.message.includes("'very_confident' is not a valid proof_tier")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a claims[].relationship.type other than 'ParentChild'", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].relationship.type = "Couple";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]/relationship" &&
+            e.message.includes("relationship.type must be 'ParentChild'")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a claims[] entry missing a required field", async () => {
+      const research = maximalResearch();
+      delete research.proof_summaries[0].claims[0].supporting_assertion_ids;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]" &&
+            e.message.includes("missing required field 'supporting_assertion_ids'")
+        )
+      ).toBe(true);
+    });
+
+    // Review follow-up (#1711): nothing enforced these two invariants, though
+    // the eval validator looks a claim up by its `claim` label (first match
+    // silently wins on a duplicate) and the viewer keys its list by the same
+    // label — both assume uniqueness the schema never required.
+    it("rejects two claims[] entries sharing the same claim label", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "paternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[1]" &&
+            e.message.includes("duplicate claim label 'paternity'")
+        )
+      ).toBe(true);
+    });
+
+    // The scalar must carry the STRONGER per-claim tier (research-schema-spec
+    // §7) — this is the exact invariant the _018 review episode showed only
+    // living in agent prose, with nothing catching a scalar that disagrees
+    // with its own claims.
+    it("rejects a scalar tier that doesn't match the stronger per-claim tier", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible"; // claims[0] is "probable"
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes("tier 'possible' does not match the stronger of claims[].proof_tier ('probable')")
+        )
+      ).toBe(true);
+    });
+
+    it("accepts a scalar tier that correctly matches the stronger of two differing claims", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "maternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      research.proof_summaries[0].tier = "probable"; // the stronger of the two
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+  });
 
   it("RESEARCH_SHAPES mirrors research.schema.json exactly (drift guard)", () => {
     const here = dirname(fileURLToPath(import.meta.url));
@@ -2126,6 +2422,8 @@ describe("Research closed shapes", () => {
       timeline_event: schema.$defs.timeline_event,
       timeline_gap: schema.$defs.timeline_gap,
       proof_summary: schema.$defs.proof_summary,
+      proof_claim: schema.$defs.proof_claim,
+      proof_claim_relationship: schema.$defs.proof_claim_relationship,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
     };

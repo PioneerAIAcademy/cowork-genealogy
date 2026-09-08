@@ -28,6 +28,7 @@ import pytest
 from validators_lib import (
     assert_log_append_only,
     assert_no_section_deletions,
+    extract_year,
 )
 
 # Identifier extraction is shared with `make provenance-report` (issue #1667)
@@ -763,4 +764,184 @@ def test_research_plan_availability_claim_matches_counts(
     assert not errors, (
         "availability claim contradicts returned personCount:\n  - "
         + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: already-attached FAN-cluster facts must reach the response ---
+
+
+def _word_grams(text: str, n: int) -> set[str]:
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return {" ".join(words[i : i + n]) for i in range(len(words) - n + 1)}
+
+
+def report_survey_surfaces_already_attached_fan_facts(before_state, text_response, test):
+    """Tag-gated (issue #1948), tier 2 -- reporting only, per ADR-0011 /
+    `unit-test-spec.md`: the harness can detect whether a non-subject
+    person's already-sourced fact was surfaced, but not decide whether the
+    response's reasoning about it is sound, so a miss here is an observation
+    fed to the judge (Correctness/Completeness), not an independent gate on
+    the run's outcome.
+
+    Started as tier 1 and was moved during PR #2004 review (clack391): a
+    tier-1 gate on this behavior means a coin-flip miss makes ordinary model
+    variance loud rather than regressions loud (EdmondOware, round 1), and
+    -- separately and more importantly -- the predicate can be satisfied by
+    a response that read nothing (see the false-positive shapes below),
+    which a tier-1 pass would have hidden from the judge entirely
+    (`orchestrator.py` gates the judge on `validators_passed`).
+
+    Live alpha-feedback report: a first plan for a "why did the family move"
+    question never surfaced a sibling's already-sourced 1875 land purchase in
+    the destination county, seven years before the subject's own documented
+    arrival. Three SKILL.md wording attempts (see the mined test
+    `ut_research_plan_bpx`) moved the failure rate from "every sample" to
+    roughly half -- expected, since the skill runs without `temperature=0`,
+    so no wording can pin any behavior at exactly 100%. The 5 committed runs
+    of `ut_research_plan_bpx` against the final wording
+    (`v1_2026-08-28_06-14-42`, `_10-59-10`, `v1_2026-08-30_04-40-39`,
+    `_16-05-12`, `v1_2026-08-31_10-37-11`) give 3 pass / 2 fail -- roughly
+    the same "about half" rate, though five runs is too few to pin the exact
+    fraction. Now that this check is tier 2, that rate no longer independently
+    decides the test's outcome (the judge does), which is what makes the
+    rate a curiosity rather than a marking decision.
+
+    Deliberately gated on the `already-attached` tag rather than running on
+    every research-plan test. Measured against the corpus at review time
+    (clack391): of the research-plan tests then in the suite, only this
+    PR's own fixture had a non-subject person with a checkable sourced
+    fact, so gating false-positives on nothing today -- but a future
+    scenario could add one incidentally, and this check has no way to know
+    whether surfacing it was that test's point.
+
+    Check: for each non-subject person with a sourced fact, require
+    somewhere in the response (case-insensitive) -- their given name
+    (word-boundary match, not a bare substring test: "Ann" must not match
+    inside "planning") AND the fact's *content*: a date token (`date`,
+    `standard_date`, or a bare year extracted from either, so `~1845`,
+    `1908-03-12` and "Abt 1850" are all recognized, not just a literal bare
+    year) AND, when the fact carries a `value`, at least one two-word gram
+    from that value. A fact with no `value` degrades to name+date; a fact
+    with no date at all degrades to name+value -- either signal alone still
+    gates on *some* fact-specific content, never on the name alone. A fact
+    with neither a date nor a value has nothing fact-specific to check
+    against and is out of scope, the same as a person with no sourced facts
+    at all (there is no content to confirm was read, so nothing is asked of
+    the response) -- this closes a real false negative found during review
+    (clack391): `date` is optional in the schema, so a sourced fact that
+    only carries a place, say, previously failed unconditionally regardless
+    of what the response said.
+
+    This design replaced an earlier name+date-only check found to have two
+    real gaps during PR #2004's review (clack391): (1) matching `date`
+    verbatim missed every non-bare-year format -- of 113 sourced facts with
+    a date across the scenario corpus, only 9 are bare years; 53 are
+    `~yyyy`, 47 are ISO `yyyy-mm-dd`, the rest free text -- so `"~1845" in
+    "...about 1845..."` was false and the check failed a correct response.
+    (2) A committed run (`v1_2026-08-27_16-18-15.json`, since pruned by
+    retention -- see the review thread for its recorded text) exposed the
+    deeper problem the value-gram requirement exists for: its response
+    mentions Patrick seven times and a FAN plan item's own search-window
+    header happens to read "Schuylkill County, PA -- 1875-1905", satisfying
+    a bare name+date check, while the response's own text is entirely
+    conditional ("if Patrick preceded Michael...") and proposes searching to
+    *discover* what the tree already states. Name and date co-occurrence
+    cannot tell "citing a known fact" apart from "proposing a new search
+    that happens to start near the same year"; a content fragment from the
+    fact's own `value` can.
+
+    Checked against the WHOLE response, not scoped to one paragraph. An
+    earlier version required the name and the content signals to land in
+    the same blank-line-delimited paragraph, on the theory that a stray
+    date elsewhere in the response shouldn't count. Review (clack391) found
+    this scoping was itself a false-positive hole, not a precision gain: a
+    response naming nobody can still pass if a date token and a value gram
+    both happen to appear anywhere near the person's name by coincidence of
+    the fixture's own wording (measured directly against this fixture's own
+    plan-item search window), and restricting to same-paragraph did nothing
+    to prevent it while failing at least one honestly-correct response
+    whose citation sits in its own paragraph, separate from the name. Since
+    this is now tier 2, the judge is the backstop for "did the response
+    actually reason about this fact" regardless of scope; the mechanical
+    check's job is only to flag whether the content appears at all.
+
+    Does not grade whether the response's *reasoning* about the fact is
+    sound once it clears this bar -- that is exactly what moving this to
+    tier 2 hands to the judge (Completeness/Correctness already grade
+    reasoning quality on this test).
+    """
+    if "already-attached" not in test.get("tags", []):
+        pytest.skip("not an already-attached-fan-facts scenario")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    if not text_response:
+        pytest.skip("no text_response captured")
+
+    subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
+    response_lower = text_response.lower()
+    paragraphs = [response_lower]
+
+    missed: list[str] = []
+    for person in tree.get("persons", []) or []:
+        pid = person.get("id")
+        if not pid or pid in subject_ids:
+            continue
+        given = (person.get("names") or [{}])[0].get("given", "")
+        if not given:
+            continue
+        sourced_facts = [f for f in (person.get("facts") or []) if f.get("sources")]
+        if not sourced_facts:
+            continue  # nothing already attached for this person -- not in scope for this check
+
+        name_pattern = rf"\b{re.escape(given.lower())}\b"
+        name_present = bool(re.search(name_pattern, response_lower))
+
+        surfaced = False
+        any_checkable = False
+        for fact in sourced_facts:
+            date_tokens = {
+                t.lower() for t in (fact.get("date"), fact.get("standard_date")) if t
+            }
+            date_tokens |= {
+                y
+                for y in (extract_year(fact.get("date")), extract_year(fact.get("standard_date")))
+                if y
+            }
+            value_grams = _word_grams(fact["value"], 2) if fact.get("value") else set()
+            if not date_tokens and not value_grams:
+                continue  # nothing fact-specific to check for this one
+            any_checkable = True
+
+            for para in paragraphs:
+                if not re.search(name_pattern, para):
+                    continue
+                date_ok = not date_tokens or any(
+                    re.search(rf"\b{re.escape(tok)}\b", para) for tok in date_tokens
+                )
+                value_ok = not value_grams or bool(value_grams & _word_grams(para, 2))
+                if date_ok and value_ok:
+                    surfaced = True
+                    break
+            if surfaced:
+                break
+
+        if not any_checkable:
+            continue  # no sourced fact on this person has a date or value -- nothing to check
+
+        if surfaced:
+            continue
+
+        if not name_present:
+            reason = "the person's given name never appears in the response"
+        else:
+            reason = (
+                "the person's given name appears, but no sourced fact's date and value "
+                "content (whichever the fact carries) both also appear in the response"
+            )
+        missed.append(f"{pid} ({given}): has a sourced fact but {reason}")
+    assert not missed, (
+        "already-attached FAN-cluster fact(s) never surfaced in the "
+        "response:\n  - " + "\n  - ".join(missed)
     )

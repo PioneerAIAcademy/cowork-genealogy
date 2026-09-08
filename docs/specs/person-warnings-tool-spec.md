@@ -386,7 +386,7 @@ however long after the death it is dated. That is why no exclusion list is
 needed, and why adding one would be a behaviour change rather than a
 tidy-up.
 
-Three consequences a reader has to hold:
+Four consequences a reader has to hold:
 
 1. **A probate twenty years after death is silent.** It moves the anchor
    forward instead of tripping the check.
@@ -399,6 +399,22 @@ Three consequences a reader has to hold:
    pushes the anchor *forward* and hides genuine post-death events (and
    inflates `hasAgeRangeGreaterThan120`). The same wrong date on any other
    fact type manufactures a post-death event that never happened.
+4. **A year-only burial in the year of death hides everything in the next
+   calendar year.** This needs no wrong date and no unusual data — it is the
+   ordinary case. A year-only date resolves to its late edge (31 Dec,
+   `maxDayNum` in `src/utils/date-helpers.ts`), and `Burial` is death-like, so
+   `Death 17 Apr 1889` plus `Burial 1889` anchors at **31 Dec 1889** rather
+   than April. An event on 11 Jul 1890 is then 192 days past the anchor, not
+   450, and the tag stays silent; the same event on 11 Jul 1891 is 557 days
+   and fires. Measured, with the control leg, by
+   `dev/probe-event-after-death-anchor.ts` (offline, no token). The practical
+   consequence is a limit on what this tag can be asked to catch: a
+   survivor's benefit claim filed the year after the death — a widow's
+   pension being the common one — falls inside the hidden window whenever a
+   burial year is recorded, which is most of the time. Do not build guidance
+   that depends on this tag firing for that shape. A live case was twice
+   misdiagnosed by reading two of the person's nine facts and stopping; run
+   the probe rather than reason about a pair.
 
 Note the divergences from the superseded W3 above, since a reader
 checking implementation against spec will hit them: the shipped code
