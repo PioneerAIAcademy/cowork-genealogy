@@ -268,7 +268,10 @@ QUOTA_ABORT_REASON = "quota_exhausted"
 # It is the LAST resort, never the primary predicate — the structured signals in
 # `_quota_evidence` are checked first. This exists only so a quota that emits
 # none of them is still caught rather than retried three times.
-_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit", "rate limit")
+# Subscription prose only. `"rate limit"` is deliberately NOT here: it matches
+# Anthropic's own 429 body text, which in `api_key` mode is a per-minute org
+# limit that clears in under a minute — see the predicate note below.
+_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit")
 
 
 def _looks_like_quota(
@@ -276,19 +279,30 @@ def _looks_like_quota(
     error_text: str | None,
     response_text: str | None = None,
 ) -> bool:
-    """True when this run ended on the seat's rate limit rather than a blip.
+    """True when this run ended on the SEAT'S SUBSCRIPTION limit, not a blip.
 
-    Which of the three structured signals a real subscription quota emits is
-    UNVERIFIED — a quota cannot be forced on demand, and the one occurrence in
-    the corpus predates their capture. All three are therefore checked, and all
-    three are recorded on the run whether or not they fired, so the next
-    occurrence settles the question from the run log without another paid suite.
+    Only one signal classifies, and the choice is deliberate. `RateLimitEvent`
+    carries a `rate_limit_type` whose every literal is a subscription window —
+    `five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`, `overage` —
+    so `status == "rejected"` cannot be produced by a per-minute API limit.
+
+    `api_error_status == 429` and `assistant_error == "rate_limit"` are captured
+    as EVIDENCE but do not classify, because either can come from a per-minute
+    org limit in `api_key` mode, which this repo twice calls transient
+    (`harness/auth.py:151`, `harness/judge.py`). Treating one as a quota would
+    stop the suite and discard a whole paid `make eval-skill` slot over a limit
+    that had already cleared — a worse failure than the retry this change
+    exists to remove, and one this PR briefly introduced (review of #2326).
+
+    The asymmetry is the argument: a false positive throws away a paid run; a
+    false negative merely returns the old three-retry behaviour. Recall is not
+    worth that trade here.
+
+    Which structured signal a real subscription quota actually emits remains
+    UNVERIFIED — one cannot be forced on demand. All five are recorded on every
+    run regardless, so the next occurrence settles it from the run log without
+    another paid suite.
     """
-    status = signals.get("api_error_status")
-    if status is not None and str(status) == "429":
-        return True
-    if signals.get("assistant_error") == "rate_limit":
-        return True
     if signals.get("rate_limit_status") == "rejected":
         return True
     # Both text sources. The one occurrence in the corpus

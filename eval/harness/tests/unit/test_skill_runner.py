@@ -672,13 +672,35 @@ def _rate_limit_event(status):
     )
 
 
-def test_an_api_error_status_429_is_a_quota_not_a_blip(monkeypatch, tmp_path):
-    from harness.skill_runner import QUOTA_ABORT_REASON
+def test_a_bare_429_stays_transient_and_is_only_evidence(monkeypatch, tmp_path):
+    """A 429 on its own is NOT a subscription quota.
 
+    In `api_key` mode it is a per-minute org limit that clears in under a
+    minute, which this repo twice calls transient (`harness/auth.py:151`).
+    Classifying it as a quota would stop the suite and discard a whole paid
+    `make eval-skill` slot over a limit that had already cleared — strictly
+    worse than the three retries this change removes. It is still captured as
+    evidence, so a future occurrence can be diagnosed from the run log.
+    """
     result = _run_with_messages(
         monkeypatch, tmp_path, [_result_message(api_error_status=429, result="nope")]
     )
-    assert result.aborted_reason == QUOTA_ABORT_REASON
+    assert result.aborted_reason == "error"
+    assert "api_error_status=429" in (result.error or "")
+
+
+def test_a_bare_assistant_rate_limit_error_stays_transient(monkeypatch, tmp_path):
+    """Same reasoning: `AssistantMessage.error == "rate_limit"` is emitted for
+    a per-minute API limit too, so it is evidence rather than a verdict."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    msg = AssistantMessage(content=[TextBlock(text="x")], model="stub")
+    object.__setattr__(msg, "error", "rate_limit")
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [msg, _result_message(result="nope")]
+    )
+    assert result.aborted_reason == "error"
+    assert "assistant_error=rate_limit" in (result.error or "")
 
 
 def test_a_rejected_rate_limit_event_is_a_quota(monkeypatch, tmp_path):
@@ -818,3 +840,41 @@ def test_the_error_string_is_serialized_onto_the_run_entry():
         timestamp_for_run_id="2026-09-07_00-00-00",
     )
     assert entry["runs"][0]["error"] == run.error
+
+
+def test_the_quota_markers_are_matched_case_insensitively(monkeypatch, tmp_path):
+    """`.lower()` in the fallback was unverified: the one corpus fixture is
+    already lowercase, so deleting the call left the suite green."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_result_message(result="You've HIT YOUR LIMIT — resets 4pm")],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_the_usage_limit_marker_is_live_too(monkeypatch, tmp_path):
+    """Both markers are load-bearing: cutting the tuple to just
+    `("hit your limit",)` left the suite green."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [_result_message(result="monthly usage limit reached")]
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_an_anthropic_429_body_is_not_read_as_a_subscription_quota(
+    monkeypatch, tmp_path
+):
+    """`"rate limit"` was removed from the markers because it matches
+    Anthropic's own 429 body, which in api_key mode is a per-minute org limit.
+    Re-adding it would make this red."""
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_result_message(result="429 rate limit exceeded, please retry")],
+    )
+    assert result.aborted_reason == "error"
