@@ -14,7 +14,11 @@ export default function PersonEvidenceSection(): React.JSX.Element {
     return (
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Person Evidence</h2>
-        <p className={styles.empty}>No person evidence recorded.</p>
+        <p className={styles.empty}>
+          No person evidence recorded. The evidence gathered for each person —
+          which sources speak to them and what each one says — is compiled
+          during the person-evidence step.
+        </p>
       </div>
     )
   }
