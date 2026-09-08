@@ -8,13 +8,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from e2e.feedback_transcript_adapter import adapt_bundle_transcript
+from e2e.feedback_transcript_adapter import adapt_bundle, adapt_bundle_transcript
 from e2e.guardrail_shadow_report import (
+    arm_visibility,
     format_feedback_report,
     main,
     scan_feedback_bundle,
     scan_feedback_dir,
 )
+from harness.skill_invocation import find_unguarded_protected_writes
 
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:
@@ -695,3 +697,338 @@ def test_main_warns_instead_of_printing_a_confident_zero_for_a_case_dir(tmp_path
     rc = main(["--feedback-dir", str(case)])
     assert rc == 0
     assert "no bundle directories directly under" in capsys.readouterr().err
+
+
+# --- subagent transcripts: splice, do not append (issue #1880) --------------
+#
+# The summons and the write live in different streams. `research/SKILL.md`
+# invokes `proof-conclusion` as a `Skill` call, and that skill's body delegates
+# to the agent of the same name, which does the protected write inside its own
+# transcript. `find_unguarded_protected_writes` walks ONE flat list and scans
+# the 40 entries BY INDEX before each write for that `Skill` call
+# (`skill_name_if_skill_call` matches `tool == "Skill"` only, so the `Agent`
+# call is not a summons). Append the child after a long parent and the write
+# lands far from its summons: a violation that never happened.
+
+_PROOF_WRITE = {
+    "type": "tool_use", "id": "w", "name": "mcp__genealogy__research_append",
+    "input": {"section": "proof_summaries", "entry": {"id": "ps_1"}},
+}
+
+
+def _subagent_bundle(
+    bundle: Path,
+    *,
+    parent_tail: int = 0,
+    tool_use_id: str = "spawn-1",
+    meta_tool_use_id: str | None = "spawn-1",
+    write_meta: bool = True,
+    submitted: str = "2026-09-01T10:00:00Z",
+    agent_type: str = "proof-conclusion",
+    depth: int = 1,
+) -> Path:
+    """A post-split bundle: the summons and spawn in the parent, the protected
+    write in the subagent's own transcript."""
+    (bundle / "_feedback" / "subagents").mkdir(parents=True, exist_ok=True)
+    parent = [
+        _assistant([{"type": "tool_use", "id": "s", "name": "Skill",
+                     "input": {"skill": "proof-conclusion"}}]),
+        _assistant([{"type": "tool_use", "id": tool_use_id, "name": "Agent",
+                     "input": {"subagent_type": agent_type}}]),
+    ]
+    # Filler AFTER the spawn. This is what makes the check falsifiable: with a
+    # short parent, an appending implementation also lands inside the window.
+    parent += [
+        _assistant([{"type": "tool_use", "id": f"f{i}", "name": "record_search",
+                     "input": {}}])
+        for i in range(parent_tail)
+    ]
+    _write_jsonl(bundle / "_feedback" / "session-log.jsonl", parent)
+    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
+        _assistant([{"type": "tool_use", "id": "c1", "name": "project_context",
+                     "input": {}}]),
+        _assistant([_PROOF_WRITE]),
+    ])
+    if write_meta:
+        (bundle / "_feedback" / "subagents" / "agent-a1.meta.json").write_text(
+            json.dumps({"agentType": agent_type, "description": "conclude q_001",
+                        "toolUseId": meta_tool_use_id, "spawnDepth": depth}),
+            encoding="utf-8",
+        )
+    (bundle / "research.json").write_text("{}", encoding="utf-8")
+    (bundle / "_feedback" / "feedback.json").write_text(
+        json.dumps({"submitted_at": submitted, "platform": "web"}), encoding="utf-8")
+    return bundle
+
+
+def test_the_subagent_write_is_spliced_beside_its_own_summons(tmp_path):
+    """The whole point. 41 parent calls sit AFTER the spawn, so an appending
+    implementation would put the write >40 entries from its `Skill` call and
+    report a violation that never happened."""
+    bundle = _subagent_bundle(tmp_path / "post-split", parent_tail=41)
+    adapted = adapt_bundle(bundle)
+    tools = [c["tool"] for c in adapted["tool_calls"]]
+    assert any("research_append" in t for t in tools), "the agent-owned write must be visible"
+    assert find_unguarded_protected_writes(adapted["tool_calls"], window=40) == []
+
+
+def test_appending_the_subagent_stream_would_report_a_false_violation(tmp_path):
+    """The same records in the wrong order, through the same code path. Without
+    this the splice is unmeasured: a fabricated non-zero is worse than a known
+    zero, because it is the number people act on."""
+    bundle = _subagent_bundle(tmp_path / "no-anchor", parent_tail=41,
+                              meta_tool_use_id="does-not-exist")
+    adapted = adapt_bundle(bundle)
+    # Unanchorable, so it is excluded and NAMED rather than appended.
+    assert adapted["unanchored_subagents"] == ["agent-a1"]
+    assert not any("research_append" in c["tool"] for c in adapted["tool_calls"])
+    # And the arm must not read as visible off a transcript we could not place.
+    result = scan_feedback_bundle(bundle)
+    assert result["arms"]["proof-conclusion"] == "unknown"
+
+
+def test_a_subagent_transcript_with_no_meta_is_excluded_and_named(tmp_path):
+    bundle = _subagent_bundle(tmp_path / "no-meta", write_meta=False)
+    adapted = adapt_bundle(bundle)
+    assert adapted["unanchored_subagents"] == ["agent-a1"]
+    assert not any("research_append" in c["tool"] for c in adapted["tool_calls"])
+
+
+def test_the_arm_goes_live_per_agent_not_per_bundle(tmp_path):
+    """`_AGENT_SPLIT_DATES` is per agent. Flipping both arms on the presence of
+    ANY anchored transcript would report `proof-conclusion: live, 0 findings`
+    for a bundle whose proof-conclusion transcript was dropped upstream."""
+    bundle = _subagent_bundle(tmp_path / "one-arm", submitted="2026-09-01T10:00:00Z")
+    result = scan_feedback_bundle(bundle)
+    assert result["arms"]["proof-conclusion"] == "live"
+    assert result["arms"]["research-exhaustiveness"] == "unknown"
+
+
+def test_an_anchored_transcript_that_made_no_tool_calls_still_reads_live(tmp_path):
+    """Deliberate, and the opposite of the case above.
+
+    `unknown` exists for "the write may have happened somewhere we cannot see"
+    — the arm the per-agent rule and `has_dropped` both protect is one whose
+    transcript is NOT in the bundle. Here it is: this agent's whole session
+    shipped and it made no tool calls, so it made no protected write and the 0
+    is a real measurement, not an absence. Labelling it `unknown` would discard
+    an honest zero, which is the failure `_bundle`'s date test guards in the
+    other direction.
+
+    Raised in review on PR #2134 and kept on purpose; pinned here so the choice
+    is checkable rather than remembered."""
+    bundle = tmp_path / "silent-child"
+    (bundle / "_feedback" / "subagents").mkdir(parents=True)
+    _write_jsonl(bundle / "_feedback" / "session-log.jsonl", [
+        _assistant([{"type": "tool_use", "id": "s", "name": "Skill",
+                     "input": {"skill": "proof-conclusion"}}]),
+        _assistant([{"type": "tool_use", "id": "spawn-1", "name": "Agent",
+                     "input": {"subagent_type": "proof-conclusion"}}]),
+    ])
+    # Conversation entries, but not one tool_use block.
+    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
+        _assistant([{"type": "text", "text": "nothing to conclude yet"}]),
+    ])
+    (bundle / "_feedback" / "subagents" / "agent-a1.meta.json").write_text(
+        json.dumps({"agentType": "proof-conclusion", "description": "conclude q_001",
+                    "toolUseId": "spawn-1", "spawnDepth": 1}), encoding="utf-8")
+    (bundle / "research.json").write_text("{}", encoding="utf-8")
+    (bundle / "_feedback" / "feedback.json").write_text(
+        json.dumps({"submitted_at": "2026-09-01T10:00:00Z", "platform": "web",
+                    "dropped_transcripts": []}), encoding="utf-8")
+
+    adapted = adapt_bundle(bundle)
+    assert adapted["unanchored_subagents"] == [], "it anchored — the file is here"
+    assert adapted["anchored_agents"] == ["proof-conclusion"]
+    result = scan_feedback_bundle(bundle)
+    assert result["arms"]["proof-conclusion"] == "live"
+    assert result["unguarded_writes"] == [], "and the honest count over it is 0"
+
+
+def test_a_dropped_transcript_holds_every_arm_at_unknown(tmp_path):
+    """The producer names what it could not include. A count read from what IS
+    here cannot account for those, so no arm may read as visible."""
+    bundle = _subagent_bundle(tmp_path / "dropped")
+    (bundle / "_feedback" / "feedback.json").write_text(
+        json.dumps({"submitted_at": "2026-09-01T10:00:00Z", "platform": "web",
+                    "dropped_transcripts": ["_feedback/subagents/agent-b2.jsonl (over budget)"]}),
+        encoding="utf-8")
+    result = scan_feedback_bundle(bundle)
+    assert result["arms"]["proof-conclusion"] == "unknown"
+    assert result["dropped_transcripts"]
+
+
+def test_a_nested_subagent_anchors_inside_its_parent_subagent(tmp_path):
+    """Depth 2: the spawning call exists only inside a depth-1 transcript.
+    Reachable through the general-purpose fallback (#939) — the very failure
+    this evidence is for — since no declared plugin agent can spawn one."""
+    bundle = _subagent_bundle(tmp_path / "nested", parent_tail=41)
+    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
+        _assistant([{"type": "tool_use", "id": "c1", "name": "project_context", "input": {}}]),
+        _assistant([{"type": "tool_use", "id": "spawn-2", "name": "Task",
+                     "input": {"subagent_type": "general-purpose"}}]),
+    ])
+    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a2.jsonl", [
+        _assistant([_PROOF_WRITE]),
+    ])
+    (bundle / "_feedback" / "subagents" / "agent-a2.meta.json").write_text(
+        json.dumps({"agentType": "general-purpose", "description": "nested",
+                    "toolUseId": "spawn-2", "spawnDepth": 2}), encoding="utf-8")
+    adapted = adapt_bundle(bundle)
+    assert adapted["unanchored_subagents"] == []
+    assert any("research_append" in c["tool"] for c in adapted["tool_calls"])
+    assert find_unguarded_protected_writes(adapted["tool_calls"], window=40) == []
+
+
+def test_the_window_does_not_bleed_across_sessions(tmp_path):
+    """One session's summons must not vouch for another session's write. Each
+    group is scanned on its own; a single flat scan over the concatenation
+    would let the ACTIVE session's `Skill` call cover the older session's
+    write, and report a clean bundle — a false negative, quieter than a false
+    positive and just as wrong. Groups flatten active-first, so the summons has
+    to be in the active group for this to discriminate."""
+    bundle = tmp_path / "two-sessions"
+    (bundle / "_feedback" / "sessions" / "sid-old").mkdir(parents=True)
+    _write_jsonl(bundle / "_feedback" / "session-log.jsonl", [
+        _assistant([{"type": "tool_use", "id": "s", "name": "Skill",
+                     "input": {"skill": "proof-conclusion"}}]),
+    ])
+    _write_jsonl(bundle / "_feedback" / "sessions" / "sid-old" / "session-log.jsonl", [
+        _assistant([_PROOF_WRITE]),
+    ])
+    (bundle / "research.json").write_text("{}", encoding="utf-8")
+    result = scan_feedback_bundle(bundle)
+    assert len(result["unguarded_writes"]) == 1, (
+        "the active session's Skill call must not cover the older session's write"
+    )
+
+
+# --- an EXCLUDED transcript must hold its own agent's arm ------------------
+#
+# `has_dropped` already holds every arm at unknown for a transcript the PRODUCER
+# could not include. The consumer excludes them too — unanchorable, undecodable,
+# or a whole group lost with its parent — and `anchored_agents` alone let an arm
+# read `live` off the transcript that anchored while another of the same agent's
+# was thrown away. The report then calls that 0 a real measurement.
+#
+# `submitted` is pinned PER TEST. `_subagent_bundle` defaults to 2026-09-01,
+# after both `_AGENT_SPLIT_DATES` entries, so the date fallback already returns
+# `unknown` — a check written on the default cannot fail for the right reason.
+_PRE_SPLIT = "2026-08-10T10:00:00Z"
+
+
+def _bad_bytes() -> bytes:
+    """Invalid UTF-8. `parse_jsonl` raises on it, which is the decode failure
+    this bundle is built to produce — cp1252 in a real transcript did it once."""
+    return b'{"type":"assistant","cwd":"\xe9\x28"}\n'
+
+
+def test_an_unanchored_transcript_holds_its_own_agents_arm_at_unknown(tmp_path):
+    """POST-split on purpose: the date fallback already says `unknown` there, so
+    only an anchored transcript can make this arm read `live`. That is what
+    makes the check discriminate exclusion against anchoring rather than
+    re-testing the date."""
+    bundle = _subagent_bundle(tmp_path / "one-of-two")
+    sub = bundle / "_feedback" / "subagents"
+    # A second transcript of the SAME agent that anchors nowhere. agent-a1 still
+    # anchors, so `anchored_agents` holds proof-conclusion either way.
+    _write_jsonl(sub / "agent-a2.jsonl", [_assistant([_PROOF_WRITE])])
+    (sub / "agent-a2.meta.json").write_text(
+        json.dumps({"agentType": "proof-conclusion", "description": "d",
+                    "toolUseId": "matches-nothing", "spawnDepth": 1}),
+        encoding="utf-8")
+
+    result = scan_feedback_bundle(bundle)
+    assert result["unanchored_subagents"] == ["agent-a2"]
+    assert result["excluded_agents"] == ["proof-conclusion"]
+    assert result["arms"]["proof-conclusion"] == "unknown", (
+        "one of this agent's transcripts was thrown away — a 0 over what is "
+        "left is not a measurement"
+    )
+    # And the row a reader checks the arm against says so, rather than leaving
+    # `[plugin era unknown]` to imply the file was never here.
+    assert "subagent transcript excluded: proof-conclusion" in format_feedback_report([result])
+
+
+def test_an_undecodable_transcript_holds_its_own_agents_arm_at_unknown(tmp_path):
+    """PRE-split, so the date fallback would otherwise say `live` — and one
+    undecodable child, with no anchored sibling, because a sibling would make
+    the `subagent_transcripts_anchored == 0` half arithmetically impossible."""
+    bundle = _subagent_bundle(tmp_path / "undecodable", submitted=_PRE_SPLIT)
+    (bundle / "_feedback" / "subagents" / "agent-a1.jsonl").write_bytes(_bad_bytes())
+
+    result = scan_feedback_bundle(bundle)
+    assert result["excluded_agents"] == ["proof-conclusion"]
+    assert result["arms"]["proof-conclusion"] == "unknown"
+    # An arm this bundle says nothing about keeps the date answer.
+    assert result["arms"]["research-exhaustiveness"] == "live"
+    assert result["subagent_transcripts_anchored"] == 0, (
+        "it did not anchor — counting it as anchored contradicts excluded_agents"
+    )
+
+
+def test_an_undecodable_parent_holds_every_arm_at_unknown(tmp_path):
+    """A parent decode failure drops the whole group, children included, so
+    there is no agent to blame and no arm that can be told it was seen. PRE-split
+    again, so the date fallback would otherwise call both arms `live`."""
+    bundle = _subagent_bundle(tmp_path / "bad-parent", submitted=_PRE_SPLIT)
+    (bundle / "_feedback" / "session-log.jsonl").write_bytes(_bad_bytes())
+
+    result = scan_feedback_bundle(bundle)
+    assert result["excluded_unknown_owner"] is True
+    assert result["arms"] == {"proof-conclusion": "unknown",
+                              "research-exhaustiveness": "unknown"}
+
+
+def test_a_namespaced_agent_type_still_matches_its_arm_when_excluded(tmp_path):
+    """The SDK plugin path registers an agent as `genealogy-research:<name>` and
+    the hosted path registers it bare. `anchored_agents` is stripped at both
+    ends; an unstripped `excluded_agents` would miss the arm and read `live`."""
+    bundle = _subagent_bundle(tmp_path / "namespaced", submitted=_PRE_SPLIT,
+                              agent_type="genealogy-research:proof-conclusion")
+    (bundle / "_feedback" / "subagents" / "agent-a1.jsonl").write_bytes(_bad_bytes())
+
+    result = scan_feedback_bundle(bundle)
+    assert result["excluded_agents"] == ["proof-conclusion"]
+    assert result["arms"]["proof-conclusion"] == "unknown"
+
+
+def test_arm_visibility_still_falls_back_to_the_date(tmp_path):
+    """A bundle with no subagent transcripts keeps the old date-only behaviour:
+    before a split the write came from the main thread and IS in the log."""
+    assert arm_visibility("2026-08-10", anchored_agents=set(), has_dropped=False) == {
+        "proof-conclusion": "live", "research-exhaustiveness": "live"}
+    assert arm_visibility(None, anchored_agents=set(), has_dropped=False) == {
+        "proof-conclusion": "unknown", "research-exhaustiveness": "unknown"}
+
+
+def test_spliced_entries_carry_who_made_the_call(tmp_path):
+    """`find_protected_writes_by_unnamed_delegate` reads `agent_id is None` as
+    "the main thread did it". An unstamped subagent write therefore fails OPEN
+    the moment that detector is wired to bundles — silently, since no detector
+    running today reads the field."""
+    bundle = _subagent_bundle(tmp_path / "stamped")
+    adapted = adapt_bundle(bundle)
+    write = next(c for c in adapted["tool_calls"] if "research_append" in c["tool"])
+    assert write["agent_type"] == "proof-conclusion"
+    assert write["agent_id"], "never None on a child — None means main thread"
+    summons = next(c for c in adapted["tool_calls"] if c["tool"] == "Skill")
+    assert not summons.get("agent_type"), "a parent-stream call is not a child"
+
+
+def test_a_subagent_that_overruns_the_window_is_counted_not_hidden(tmp_path):
+    """Splicing puts the child's own calls inside the window, so a subagent
+    making more than `window` calls before its write pushes the parent's Skill
+    call back out. Not fixed here (the e2e corpus has the same flat shape), so
+    it has to be COUNTED — the trigger for changing it is a measurement."""
+    bundle = _subagent_bundle(tmp_path / "chatty")
+    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
+        _assistant([{"type": "tool_use", "id": f"c{i}", "name": "record_search",
+                     "input": {}}])
+        for i in range(45)
+    ] + [_assistant([_PROOF_WRITE])])
+    result = scan_feedback_bundle(bundle)
+    assert result["window_overruns"] == 1
+    assert result["subagent_transcripts_anchored"] == 1
+    # And the finding it produces is exactly the one the count warns about.
+    assert len(result["unguarded_writes"]) == 1

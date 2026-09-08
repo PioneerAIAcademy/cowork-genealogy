@@ -332,7 +332,9 @@ responses — check:
     open and work it like any other finding: classify it against the checks
     below, fix what's fixable, and close it only once you have. **Never close on
     the flag alone.** If the Notes are thin, the bundle's
-    `_feedback/session-log.jsonl` transcript has the tool-level detail.
+    `_feedback/session-log.jsonl` transcript has the tool-level detail — and
+    work the agent delegated is in its own file under `_feedback/subagents/`,
+    not in that one, so check there before concluding the agent did nothing.
 - Did `record_search` **return** the second Robert Schuster, and the skill
   ignore him? → a **skill** problem. Continue. ✅ *(This is the case.)*
 - Did the search **never surface** him? → a **tool** problem. Different fix, an
@@ -612,7 +614,11 @@ script first, then `cd` into the resulting directory.
 An empty field is not a broken submission. The dialog requires only the Yes/No
 answer, so `user_prompt` and `agent_did` may both legitimately be blank. When the
 bundle carries `_feedback/session-log.jsonl`, read that instead — it has the
-prompt and the conversation verbatim. Two limits: it is filtered to the `user`
+prompt and the conversation verbatim. Anything the agent delegated to a subagent
+is in a separate file under `_feedback/subagents/` (and, for a session other
+than the newest, under `_feedback/sessions/<session-id>/`), so a main log that
+looks idle for a stretch is usually a subagent working. Two limits: it is
+filtered to the `user`
 and `assistant` turns and scoped to that project's folder, so it is not the whole
 session; and a `_truncation_note` at its head means the log was trimmed, which
 drops the oldest entries and so the prompt first. That file is optional (§6 of the
