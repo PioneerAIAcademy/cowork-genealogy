@@ -264,6 +264,108 @@ const MULTI_NAME: FSTreeResponse = {
   ],
 };
 
+// #2002: the real `LZPL-493` payload from
+// `dev/explore-preferred-name-relatives.ts` against `LHKH-XKK?relatives=true`.
+// FamilySearch puts the initials-only alternate at names[0] and the preferred
+// full name last — 8 of the 12 persons in that probe carry an alternate ahead
+// of the primary. `LZPL-493` reaches the tool as a RELATIVE, which is the path
+// that had no `preferred` coverage at all. The Couple relationship is
+// scaffolding to make it a non-anchor person; the probe recorded the names and
+// the ARK, not how the two are related. Clorinda's five real names are trimmed
+// to two; hers is already preferred-first upstream.
+const RELATIVE_INITIALS_ALTERNATE: FSTreeResponse = {
+  persons: [
+    {
+      id: "LHKH-XKK",
+      living: false,
+      gender: { type: "http://gedcomx.org/Female" },
+      identifiers: {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/4:1:LHKH-XKK",
+        ],
+      },
+      names: [
+        {
+          preferred: true,
+          type: "http://gedcomx.org/BirthName",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "Clorinda" },
+                { type: "http://gedcomx.org/Surname", value: "Sleeper" },
+              ],
+            },
+          ],
+        },
+        {
+          type: "http://gedcomx.org/BirthName",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "C" },
+                { type: "http://gedcomx.org/Surname", value: "Sleeper" },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "LZPL-493",
+      living: false,
+      gender: { type: "http://gedcomx.org/Male" },
+      identifiers: {
+        "http://gedcomx.org/Persistent": [
+          "https://familysearch.org/ark:/61903/4:1:LZPL-493",
+        ],
+      },
+      names: [
+        {
+          type: "http://gedcomx.org/BirthName",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "R B" },
+                { type: "http://gedcomx.org/Surname", value: "Torrance" },
+              ],
+            },
+          ],
+        },
+        {
+          type: "http://gedcomx.org/BirthName",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "Blake" },
+                { type: "http://gedcomx.org/Surname", value: "Torrance" },
+              ],
+            },
+          ],
+        },
+        {
+          preferred: true,
+          type: "http://gedcomx.org/BirthName",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "Robert Blake" },
+                { type: "http://gedcomx.org/Surname", value: "Torrance" },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  relationships: [
+    {
+      type: "http://gedcomx.org/Couple",
+      person1: { resourceId: "LZPL-493" },
+      person2: { resourceId: "LHKH-XKK" },
+    },
+  ],
+};
+
 // ─── Tests ────────────────────────────────────────────────────────────────
 
 describe("personReadTool", () => {
@@ -671,5 +773,70 @@ describe("personReadTool", () => {
     mockOk(nameless);
     const result = await personReadTool({ personId: "X" });
     expect(result.persons[0].names).toEqual([{ given: "", surname: "" }]);
+  });
+
+  // 34. #2002 acceptance: a RELATIVE whose initials-only alternate precedes the
+  // preferred full name keeps the full name at names[0]. Guards the #1318
+  // reorder at the tool layer, which had no coverage — without it the tool
+  // returns "R B Torrance", the exact symptom the alpha tester reported.
+  it("keeps the preferred full name first for a relative with an initials alternate", async () => {
+    mockOk(RELATIVE_INITIALS_ALTERNATE);
+    const result = await personReadTool({
+      personId: "LHKH-XKK",
+      relatives: true,
+    });
+    const rel = result.persons.find((p) => p.id === "LZPL-493");
+    expect(rel).toBeDefined();
+    expect(rel!.names[0].given).toBe("Robert Blake");
+    expect(rel!.names[0].surname).toBe("Torrance");
+    expect(rel!.names[0].preferred).toBe(true);
+  });
+
+  // 35. The alternates are kept, not discarded — including the initials form
+  // the tester saw. Relative order within the non-preferred group is stable.
+  it("keeps a relative's initials alternate behind the preferred name", async () => {
+    mockOk(RELATIVE_INITIALS_ALTERNATE);
+    const result = await personReadTool({
+      personId: "LHKH-XKK",
+      relatives: true,
+    });
+    const rel = result.persons.find((p) => p.id === "LZPL-493")!;
+    expect(rel.names).toHaveLength(3);
+    expect(rel.names.map((n) => n.given)).toEqual([
+      "Robert Blake",
+      "R B",
+      "Blake",
+    ]);
+    // Only the FS-preferred name carries the flag.
+    expect(rel.names.filter((n) => n.preferred === true)).toHaveLength(1);
+  });
+
+  // 36. A relative carries its own ark — the only field that survives the
+  // caller's re-ID to local ids still pointing at the FamilySearch person.
+  it("emits ark for a relative, not just the anchor", async () => {
+    mockOk(RELATIVE_INITIALS_ALTERNATE);
+    const result = await personReadTool({
+      personId: "LHKH-XKK",
+      relatives: true,
+    });
+    expect(result.persons.find((p) => p.id === "LHKH-XKK")!.ark).toBe(
+      "ark:/61903/4:1:LHKH-XKK",
+    );
+    expect(result.persons.find((p) => p.id === "LZPL-493")!.ark).toBe(
+      "ark:/61903/4:1:LZPL-493",
+    );
+  });
+
+  // 37. An anchor already preferred-first is left alone — the reorder is
+  // stable, not an unconditional rotation.
+  it("leaves an already-preferred-first anchor in place", async () => {
+    mockOk(RELATIVE_INITIALS_ALTERNATE);
+    const result = await personReadTool({
+      personId: "LHKH-XKK",
+      relatives: true,
+    });
+    const anchor = result.persons.find((p) => p.id === "LHKH-XKK")!;
+    expect(anchor.names.map((n) => n.given)).toEqual(["Clorinda", "C"]);
+    expect(anchor.names[0].preferred).toBe(true);
   });
 });
