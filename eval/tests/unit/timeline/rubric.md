@@ -18,9 +18,9 @@ Does every place and distance in the persisted timeline trace back to a tool res
 
 Did the skill identify meaningful gaps where records should exist but don't, and does `expected_events` name records a researcher could actually go and look for? A 48-year gap (1860-1908) is significant. A 1-year gap between census enumerations is not.
 
-- **pass:** `gaps` array names the significant gaps (e.g., between the 1860 census and 1908 death) with `expected_events` populated with specific record types that survive and can be searched, and severity reflects the gap's impact on research.
+- **pass:** `gaps` array names the significant gaps (e.g., between the 1860 census and 1908 death) with `expected_events` populated with specific record types that survive and can be searched — including census years drawn from each residence jurisdiction's own enumeration schedule (its `{Country}_Census` page), not a fixed US list — and severity reflects the gap's impact on research.
 - **partial:** significant gaps detected but `expected_events` is generic ("more records needed") without naming specific record types.
-- **fail:** significant gaps missed; a trivial gap (between two adjacent censuses) flagged as significant; or `expected_events` names a record set that does not survive to be searched — the 1890 US federal census is the standing example, destroyed by fire and unrecoverable, so it can never fill a gap. A chat sentence acknowledging the destruction does not offset listing it in the field; grade what is in `expected_events`.
+- **fail:** significant gaps missed; a trivial gap (between two adjacent censuses) flagged as significant; or `expected_events` names a record set that does not survive to be searched — the 1890 US federal census is the standing example, destroyed by fire and unrecoverable, so it can never fill a gap; the Irish 1821–1891 and English 1931 censuses are the same case in another jurisdiction (enumerated but destroyed, so equally unable to fill a gap). A chat sentence acknowledging the destruction does not offset listing it in the field; grade what is in `expected_events`.
 
 ## Deferral of logical-impossibility detection
 

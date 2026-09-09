@@ -77,8 +77,11 @@ range) or a known `imageGroupNumber` — never a borrowed `collectionId`.
 - **No stemming.** `marries` does NOT match `married`. Use `marri*`.
 - **No phonetic/Soundex matching.** "Stephen Jarman" ≠ "Steven
   Jarmon". Search both explicitly.
-- **No abbreviation expansion.** `Wm`≠`William`, `Jno`≠`John`,
-  `Jas`≠`James`, `Thos`≠`Thomas`. Run separate queries.
+- **No abbreviation expansion** in `keywords` and `place` fields.
+  `Wm`≠`William`, `Jno`≠`John`, `Jas`≠`James`, `Thos`≠`Thomas`. Run
+  separate queries. The `name` field auto-expands recognized English
+  given names with historical diminutives (do not use `+` in the `name`
+  field — it disables expansion).
 - **Case insensitive** — confirmed.
 - **Diacritic insensitivity** — partial; generally works for
   Spanish/Portuguese but coverage is uneven.
