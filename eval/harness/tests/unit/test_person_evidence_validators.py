@@ -213,9 +213,12 @@ def test_materialized_passes_on_the_batched_ops_form():
 
 
 def test_materialized_stands_down_on_unmaterializable_fact_types():
-    """materialize_facts skips `relationship`, `marriage` and `age` outright
-    (SKIP_TYPES in materialize-facts.ts), so a persona carrying only those has
-    nothing owed. This is `ut_person_evidence_022`'s shape."""
+    """materialize_facts skips `relationship`, `marriage` and `age` as facts of
+    the persona they sit on (SKIP_TYPES in materialize-facts.ts), so a persona
+    carrying only those has nothing owed. Its named-party arm mints the OTHER
+    party such an assertion names, which is a different person and a name
+    rather than a fact, so it owes this persona nothing either. This is
+    `ut_person_evidence_022`'s shape."""
     after = {
         "assertions": [{"id": "a_005", "record_persona_id": None,
                         "fact_type": "marriage"}],
