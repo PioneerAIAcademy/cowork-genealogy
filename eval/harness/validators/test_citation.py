@@ -213,7 +213,8 @@ def test_unknown_markers_framework_only(before_state, after_state, test):
     `citation` string embeds the where layer, so the same exemption applies.
     Only the position rule (check 1) survives for `where`.
 
-    Tier 1 — gates.  Reads persisted citation / citation_detail fields only.
+    Tier 1 — gates.  Reads persisted citation_detail fields only; the
+    assembled `citation` string is exempt (see the custody exemption above).
     """
     if test.get("type") == "negative":
         pytest.skip("negative test")
