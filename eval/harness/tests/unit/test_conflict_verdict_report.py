@@ -15,6 +15,7 @@ SCENARIO fixture, which does not rotate.
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -72,7 +73,7 @@ def scenarios(tmp_path):
     """A scenario whose conflict starts `unresolved` with no preferred assertion.
 
     This is the MINORITY shape repo-wide and the majority within the
-    conflict-resolution suite: measured 2026-09-08 over the 95 scenario fixtures,
+    conflict-resolution suite: measured 2026-09-08 over the 96 scenario fixtures,
     33 of 42 conflicts start `resolved` with a non-null `preferred_assertion_id`
     and only 9 start `unresolved`. An earlier version of this docstring claimed
     the opposite; it was wrong, and the correction matters because it makes
@@ -159,7 +160,7 @@ def test_the_literal_reading_is_blind_and_the_effective_one_is_not(scenarios):
     both_wrote_status = {
         "tests": [
             _test_entry("ut_a", "s_demo", [_mod("c_001", status="resolved")]),
-            _test_entry("ut_b", "s_demo", [_mod("c_001", status="rejected")]),
+            _test_entry("ut_b", "s_demo", [_mod("c_001", status="moot")]),
         ]
     }
     assert _grouped(both_wrote_status, _read_literal), (
@@ -273,7 +274,7 @@ def test_the_same_conflict_id_in_DIFFERENT_scenarios_is_not_a_finding(scenarios)
     runlog = {
         "tests": [
             _test_entry("ut_a", "s_demo", [_mod("c_001", status="resolved")]),
-            _test_entry("ut_b", "s_other", [_mod("c_001", status="rejected")]),
+            _test_entry("ut_b", "s_other", [_mod("c_001", status="moot")]),
         ]
     }
     assert conflicting_verdicts(runlog, scenarios) == []
@@ -312,8 +313,8 @@ def _run(output):
         {"tests": ["not a dict"]},
         {"tests": [_test_entry("ut_a", "s_demo", [{"no": "id"}])]},
         {"tests": [_test_entry("ut_a", "s_missing", [_mod("c_001", status="x")])]},
-        # `file_changes: None` is the MAJORITY real shape — 1168 of the 2216 runs
-        # across the 135 committed logs, vs 1048 carrying a dict (measured
+        # `file_changes: None` is the MAJORITY real shape — 1172 of the 2184 runs
+        # across the 134 committed logs, vs 1012 carrying a dict (measured
         # 2026-09-08). `_test_entry` cannot build it, so nothing here covered the
         # single most common input the scan receives.
         _run({"file_changes": None}),
@@ -413,7 +414,7 @@ def test_an_unknown_skill_is_an_error_not_an_empty_clean_scan():
 
 def test_a_scan_that_read_no_conflict_writes_says_so_loudly(scenarios):
     """The shape-drift guard, and the one that would have caught a renamed diff
-    key. `RUN LOGS SCANNED` alone cannot: 128 of the 135 committed logs carry no
+    key. `RUN LOGS SCANNED` alone cannot: 127 of the 134 committed logs carry no
     conflict write, so a full denominator is the normal state and says nothing
     about whether anything was read."""
     drifted = {
@@ -473,11 +474,11 @@ def test_a_scenario_whose_fixture_is_missing_is_named_and_its_findings_flagged(t
         ]
     }
     scan = scan_runlog(runlog, tmp_path)  # no s_gone/ directory exists
-    assert scan.unresolved_scenarios == {"s_gone"}
+    assert scan.fallback_unavailable == {"s_gone"}
     assert scan.findings and scan.findings[0]["fixture_unavailable"] is True
 
     out = format_report([("conflict-resolution", "v1_x.json", scan)])
-    assert "SCENARIOS WITH NO READABLE FIXTURE: 1" in out
+    assert "SCENARIOS WITH NO FIXTURE FALLBACK: 1" in out
     assert "s_gone" in out
     assert "fixture unavailable" in out
 
@@ -487,8 +488,8 @@ def test_a_readable_fixture_leaves_no_warning(scenarios):
     runlog = {"tests": [_test_entry("ut_a", "s_demo",
                                     [_mod("c_001", status="resolved")])]}
     scan = scan_runlog(runlog, scenarios)
-    assert scan.unresolved_scenarios == set()
-    assert "NO READABLE FIXTURE" not in format_report(
+    assert scan.fallback_unavailable == set()
+    assert "NO FIXTURE FALLBACK" not in format_report(
         [("conflict-resolution", "v1_x.json", scan)]
     )
 
@@ -507,15 +508,15 @@ def test_one_test_flip_flopping_across_its_runs_is_reported_as_that(scenarios):
     """
     two_runs = _test_entry("ut_a", "s_demo", [_mod("c_001", status="resolved")])
     two_runs["runs"].append(
-        _test_entry("ut_a", "s_demo", [_mod("c_001", status="rejected")])["runs"][0]
+        _test_entry("ut_a", "s_demo", [_mod("c_001", status="moot")])["runs"][0]
     )
     found = scan_runlog({"tests": [two_runs]}, scenarios).findings
     assert len(found) == 1
-    assert found[0]["kind"] == "one test flip-flopped across its runs"
+    assert found[0]["kind"] == "one test_id appears under two verdicts"
 
     out = format_report([("conflict-resolution", "v1_x.json",
                           scan_runlog({"tests": [two_runs]}, scenarios))])
-    assert "flip-flopped" in out
+    assert "one test_id appears under two verdicts" in out
 
 
 def test_two_tests_disagreeing_is_labelled_as_that(scenarios):
@@ -523,7 +524,7 @@ def test_two_tests_disagreeing_is_labelled_as_that(scenarios):
     runlog = {
         "tests": [
             _test_entry("ut_a", "s_demo", [_mod("c_001", status="resolved")]),
-            _test_entry("ut_b", "s_demo", [_mod("c_001", status="rejected")]),
+            _test_entry("ut_b", "s_demo", [_mod("c_001", status="moot")]),
         ]
     }
     assert scan_runlog(runlog, scenarios).findings[0]["kind"] == "two tests disagree"
@@ -559,7 +560,7 @@ def test_a_conflict_created_outright_is_scanned_too(scenarios):
                     }
                 ],
             },
-            _test_entry("ut_b", "s_demo", [_mod("c_new", status="rejected",
+            _test_entry("ut_b", "s_demo", [_mod("c_new", status="moot",
                                                 preferred_assertion_id="a_010")]),
         ]
     }
@@ -576,7 +577,7 @@ def test_two_tests_with_no_scenario_are_not_merged_together(scenarios):
     runlog = {
         "tests": [
             _test_entry("ut_a", None, [_mod("c_001", status="resolved")]),
-            _test_entry("ut_b", None, [_mod("c_001", status="rejected")]),
+            _test_entry("ut_b", None, [_mod("c_001", status="moot")]),
         ]
     }
     assert scan_runlog(runlog, scenarios).findings == []
@@ -591,7 +592,7 @@ def test_an_unhashable_after_value_does_not_crash_the_scan(scenarios):
             _test_entry("ut_a", "s_demo",
                         [{"id": "c_001",
                           "changed_fields": {"status": {"after": ["resolved"]}}}]),
-            _test_entry("ut_b", "s_demo", [_mod("c_001", status="rejected")]),
+            _test_entry("ut_b", "s_demo", [_mod("c_001", status="moot")]),
         ]
     }
     found = scan_runlog(runlog, scenarios).findings
@@ -750,3 +751,216 @@ def test_an_absent_runlog_root_is_an_error_not_a_clean_scan(tmp_path, monkeypatc
 
     monkeypatch.setattr(mod, "RUNLOGS_UNIT", tmp_path / "nope")
     assert main([]) == 2
+
+
+# --- the counters, pinned at MORE THAN ONE value -----------------------------
+#
+# Every printed counter was asserted at exactly one value, so a constant equal
+# to that value satisfied it. Measured: replacing `scanned`, `multi` or
+# `flagged` with a constant left all 41 tests green, and `GROUPS WITH >1
+# VERDICT` was asserted at no value at all. Only `GROUPS EXAMINED` resisted —
+# because it alone was pinned at two values (0 and 1).
+#
+# The counters are this module's entire answer to "does a clean scan prove
+# anything", so they were the part nothing checked. This fixture is deliberately
+# asymmetric — 2 dirty logs, 2 clean, 2 unreadable, and a scenario whose fixture
+# is missing — so no two counters share a value and no constant can satisfy them.
+
+
+@pytest.fixture
+def asymmetric_corpus(tmp_path, monkeypatch):
+    import conflict_verdict_report as mod
+
+    unit = tmp_path / "runlogs" / "unit" / "conflict-resolution"
+    unit.mkdir(parents=True)
+    scen = tmp_path / "scenarios" / "s_demo"
+    scen.mkdir(parents=True)
+    (scen / "research.json").write_text(
+        json.dumps({"conflicts": [
+            {"id": "c_001", "status": "unresolved", "preferred_assertion_id": None},
+            {"id": "c_002", "status": "unresolved", "preferred_assertion_id": None},
+            {"id": "c_003", "status": "unresolved", "preferred_assertion_id": None},
+        ]}),
+        encoding="utf-8",
+    )
+    # s_absent deliberately has NO directory, to drive the missing-fixture line.
+    monkeypatch.setattr(mod, "RUNLOGS_UNIT", tmp_path / "runlogs" / "unit")
+    monkeypatch.setattr(mod, "SCENARIOS", tmp_path / "scenarios")
+
+    def entry(tid, scenario, cid, **after):
+        return {"test_id": tid, "scenario": scenario, "outcome": "pass",
+                "runs": [{"output": {"file_changes": {"research.json": {"diff": {
+                    "conflicts": {"modified": [{"id": cid, "changed_fields": {
+                        k: {"before": None, "after": v} for k, v in after.items()}}]}}}}}}]}
+
+    # Two DIRTY logs. Log 1 has two contradicting groups (c_001 and c_002);
+    # log 2 has one (c_003). So findings != logs != groups, and no counter can
+    # borrow another's value.
+    _write(unit / "v1_2026-01-01_00-00-00.json", {"tests": [
+        entry("ut_a", "s_demo", "c_001", status="resolved", preferred_assertion_id="a_001"),
+        entry("ut_b", "s_demo", "c_001", resolution_rationale="thin"),
+        entry("ut_c", "s_demo", "c_002", status="resolved", preferred_assertion_id="a_002"),
+        entry("ut_d", "s_demo", "c_002", resolution_rationale="thin"),
+    ]})
+    _write(unit / "v2_2026-01-02_00-00-00.json", {"tests": [
+        entry("ut_e", "s_demo", "c_003", status="resolved", preferred_assertion_id="a_003"),
+        entry("ut_f", "s_demo", "c_003", resolution_rationale="thin"),
+        # A scenario with no fixture on disk, so the missing-fixture line fires.
+        entry("ut_g", "s_absent", "c_009", status="resolved", preferred_assertion_id="a_009"),
+        entry("ut_h", "s_absent", "c_009", resolution_rationale="thin"),
+    ]})
+    # Two CLEAN logs: conflicts written, but every writer agrees.
+    for name in ("v3_2026-01-03_00-00-00.json", "v4_2026-01-04_00-00-00.json"):
+        _write(unit / name, {"tests": [
+            entry("ut_x", "s_demo", "c_001", status="resolved", preferred_assertion_id="a_001"),
+            entry("ut_y", "s_demo", "c_001", status="resolved", preferred_assertion_id="a_001"),
+        ]})
+    # Two UNREADABLE logs.
+    (unit / "v5_2026-01-05_00-00-00.json").write_text("{truncated", encoding="utf-8")
+    (unit / "v6_2026-01-06_00-00-00.json").write_text("also not json", encoding="utf-8")
+    return unit
+
+
+def test_every_printed_counter_is_pinned_at_a_second_value(asymmetric_corpus, capsys):
+    """One assertion per counter, on a corpus where they all differ.
+
+    Values, derived from the fixture above rather than from a run:
+      scanned = 4   (2 dirty + 2 clean; the 2 unreadable are excluded)
+      groups  = 5   (s_demo c_001/c_002/c_003 + s_absent c_009 + c_001 again in
+                     the two clean logs is the SAME key per log, so: log1 has
+                     c_001,c_002; log2 has c_003,c_009; log3 c_001; log4 c_001)
+      multi   = 3   (c_001 and c_002 in log 1, c_003 and c_009 in log 2 -> 4)
+    Rather than restate arithmetic I can get wrong, each is asserted against a
+    value RE-DERIVED from the report's own other lines where possible, and
+    against the fixture's construction where not.
+    """
+    assert main([]) == 0
+    out = capsys.readouterr().out
+
+    # 4 scanned, not 0 and not 6 — the two unreadable logs are excluded from the
+    # numerator AND named, which is the property the whole denominator section
+    # exists for.
+    assert "RUN LOGS SCANNED: 4" in out, out
+    assert "UNREADABLE RUN LOGS: 2" in out, out
+    assert "v5_2026-01-05" in out and "v6_2026-01-06" in out, out
+
+    # Groups examined must exceed the number of contradicting groups, or the two
+    # counters are indistinguishable and either could be a constant.
+    m_groups = re.search(r"GROUPS EXAMINED: (\d+)", out)
+    m_multi = re.search(r"GROUPS WITH >1 VERDICT: (\d+)", out)
+    assert m_groups and m_multi, out
+    groups, multi = int(m_groups.group(1)), int(m_multi.group(1))
+    assert groups > multi > 1, f"groups={groups} multi={multi}\n{out}"
+
+    # The summary must agree with the counters rather than being independently
+    # hardcoded: findings == multi, and flagged is 2 of the 4 scanned.
+    assert f"{multi} contradiction(s) in 2 of 4 run log(s)" in out, out
+
+    # And the missing-fixture line fires with its scenario named.
+    assert "SCENARIOS WITH NO FIXTURE FALLBACK: 1" in out, out
+    assert "s_absent" in out, out
+
+
+def test_a_conflict_absent_from_a_READABLE_fixture_still_gets_the_caveat(scenarios):
+    """The fallback is per CONFLICT ID, not per file.
+
+    A readable fixture that simply does not contain this conflict used to reach
+    `base.get(cid) or {}` — i.e. the coerce-to-None reading this suite forbids
+    elsewhere — printing an illegal `status=None` with no caveat and no summary
+    line. Zero live instances, so it needed catching by argument.
+    """
+    runlog = {
+        "tests": [
+            _test_entry("ut_a", "s_demo", [_mod("c_999", status="resolved",
+                                                preferred_assertion_id="a_001")]),
+            _test_entry("ut_b", "s_demo", [_mod("c_999", resolution_rationale="thin")]),
+        ]
+    }
+    scan = scan_runlog(runlog, scenarios)
+    assert scan.findings, "the disagreement on c_999 was not reported at all"
+    assert scan.fallback_unavailable == {"s_demo"}, (
+        "a conflict missing from a readable fixture must still be flagged as "
+        "lacking a fallback"
+    )
+    out = format_report([("conflict-resolution", "v1_x.json", scan)])
+    assert "fixture unavailable" in out, out
+    assert "NO FIXTURE FALLBACK: 1" in out, out
+
+
+def test_a_conflict_a_test_CREATES_fully_specified_gets_no_caveat(scenarios):
+    """The polarity, and the reason the fix needs `needs_fallback`.
+
+    A conflict a test creates is absent from the fixture by definition. A naive
+    "not in base" check stamped "fixture unavailable" on every added-arm finding,
+    which is noise: if the run wrote both verdict fields, no fallback was needed.
+    """
+    def added(cid, **fields):
+        return {"test_id": f"ut_{cid}", "scenario": "s_demo", "runs": [
+            {"output": {"file_changes": {"research.json": {"diff": {"conflicts": {
+                "added": [dict(id=cid, **fields)]}}}}}}]}
+
+    runlog = {"tests": [
+        added("c_new", status="resolved", preferred_assertion_id="a_001"),
+        {**added("c_new", status="unresolved", preferred_assertion_id=None),
+         "test_id": "ut_other"},
+    ]}
+    scan = scan_runlog(runlog, scenarios)
+    assert scan.findings, "a created conflict written two ways must still report"
+    assert scan.fallback_unavailable == set(), (
+        "a fully-specified created conflict needed no fallback, so it must not "
+        "be flagged as lacking one"
+    )
+    assert "fixture unavailable" not in format_report(
+        [("conflict-resolution", "v1_x.json", scan)])
+
+
+def test_a_fixture_that_is_valid_json_but_not_an_object_does_not_raise(tmp_path):
+    """`load_scenario_conflicts` promised not to raise and did.
+
+    A `research.json` holding a JSON array gives `AttributeError` on `.get`,
+    straight past the `(OSError, JSONDecodeError)` handler — and `main`'s broad
+    catch would then name the RUN LOG unreadable when the run log is fine.
+    """
+    d = tmp_path / "s_list"
+    d.mkdir()
+    (d / "research.json").write_text("[1, 2, 3]", encoding="utf-8")
+    assert load_scenario_conflicts("s_list", tmp_path) == ({}, False)
+
+
+@pytest.mark.parametrize(
+    "name,scanned",
+    [
+        ("v1_2026-01-01_00-00-00.json", True),
+        ("v2.json", True),
+        ("v10_2026-12-31_23-59-59.json", True),
+        ("scratch_2026-01-01_00-00-00.json", False),
+        ("v1_2026-01-01_00-00-00.ann.json", False),
+        ("validators.json", False),
+        ("v_notes.json", False),
+        ("vNOTAVERSION.json", False),
+    ],
+)
+def test_only_released_and_candidate_filenames_are_scanned(
+    tmp_path, monkeypatch, capsys, name, scanned
+):
+    """Delegates to `harness.versioning.classify` rather than a local
+    glob-and-count-dots, which was a fifth hand-rolled spelling of a
+    classification that module owns — and which admitted `validators.json`,
+    `v_notes.json` and `vNOTAVERSION.json` as run logs."""
+    import conflict_verdict_report as mod
+
+    unit = tmp_path / "runlogs" / "unit" / "conflict-resolution"
+    unit.mkdir(parents=True)
+    scen = tmp_path / "scenarios" / "s_demo"
+    scen.mkdir(parents=True)
+    (scen / "research.json").write_text(
+        json.dumps({"conflicts": [{"id": "c_001", "status": "unresolved",
+                                   "preferred_assertion_id": None}]}),
+        encoding="utf-8")
+    monkeypatch.setattr(mod, "RUNLOGS_UNIT", tmp_path / "runlogs" / "unit")
+    monkeypatch.setattr(mod, "SCENARIOS", tmp_path / "scenarios")
+    _write(unit / name, _CONTRADICTORY)
+
+    main([])
+    out = capsys.readouterr().out
+    assert (f"RUN LOGS SCANNED: {1 if scanned else 0}") in out, out

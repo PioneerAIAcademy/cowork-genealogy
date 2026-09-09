@@ -17,7 +17,7 @@ calls, no network.
 **Reading `changed_fields` alone finds nothing.** A run that correctly *declines*
 to resolve writes `weighing_analysis` and `resolution_rationale` but leaves
 `status` untouched, so the contradiction never appears in the diff. Measured
-2026-09-08 across the 135 committed unit run logs:
+2026-09-08 across the 134 committed unit run logs:
 
     literal (changed_fields only)   0 hits
     effective (fixture fallback)    3 hits  (all flynn-multi-conflict/c_002)
@@ -47,8 +47,8 @@ A report whose payload is "nothing found" has to say what it looked at, because
 every way this module can break produces the same cheerful zero. Three such ways
 were live before review and are why the counters exist:
 
-- **Only 7 of the 135 committed logs carry any conflict write at all** — so
-  "scanned 135" is a ~19x inflated denominator that says almost nothing about
+- **Only 7 of the 134 committed logs carry any conflict write at all** — so
+  "scanned 134" is a ~19x inflated denominator that says almost nothing about
   whether the scan read anything. Rename the diff's `file_changes` key and the
   report still printed a full-denominator green.
 - **An unreadable run log left both numerator and denominator**, so a truncated
@@ -62,6 +62,32 @@ So the report prints groups examined and multi-verdict groups alongside the log
 count, and names every run log it could not read and every scenario whose fixture
 could not supply a fallback. `GROUPS EXAMINED: 0` is the line that says a green
 scan proves nothing.
+
+## Scope is one run log, and that is a ruling rather than an oversight
+
+#1972 says "group every conflict write in a run log" and "flag the run log", so
+per-log is settled and not this module's to reverse. Two consequences worth
+stating, because a reader will otherwise assume they were missed.
+
+**`conflict-resolution` is NOT the only skill that writes conflicts.**
+`proof-conclusion` writes them too, in 3 committed logs — which the "7 of the
+134" figure above already implies, since conflict-resolution has only 4. An
+earlier version of this PR's body claimed otherwise.
+
+**Grouping the same rule ACROSS logs finds two groups this scan structurally
+cannot see**, and one of them is the evidence #1972 itself quotes for V7:
+
+    conflict-resolution / ut_conflict_resolution_003 / flynn-multi-conflict / c_002
+        ('unresolved', None)   <- three logs
+        ('resolved', 'a_001')  <- one log
+    proof-conclusion / ut_proof_conclusion_011 / flynn-with-birthplace-conflict / c_001
+        ('resolved', 'a_009')  <- two logs
+        ('resolved', 'a_002')  <- one log
+
+The issue's own wording is "across the five logs `ut_003` alone splits 2
+resolved / 3 unresolved on that same conflict" — a cross-log observation that a
+per-log scan cannot make. Not widened here, because the scope is ruled; recorded
+so whoever revisits it starts from a count rather than a hunch.
 
 ## Why this is a report and not a validator
 
@@ -87,6 +113,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from harness.versioning import classify
 
 # The two fields a verdict consists of. `status` alone is not enough: a run can
 # agree that a conflict is resolved and disagree about which assertion won.
@@ -114,9 +142,11 @@ class LogScan:
     findings: list[dict[str, Any]] = field(default_factory=list)
     groups: int = 0
     multi_verdict: int = 0
-    # Scenarios whose fixture could not supply a fallback value, so any group
-    # under them was read WITHOUT the fixture half of the effective reading.
-    unresolved_scenarios: set[str] = field(default_factory=set)
+    # Scenarios where the fixture could not supply a fallback for some conflict
+    # this run wrote — either the file was unreadable or the conflict was not in
+    # it. Those groups were read WITHOUT the fixture half of the effective
+    # reading, which is the shortcut the suite forbids.
+    fallback_unavailable: set[str] = field(default_factory=set)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -141,6 +171,12 @@ def load_scenario_conflicts(
         return {}, False
     try:
         data = _load(scenarios_dir / scenario / "research.json")
+        if not isinstance(data, dict):
+            # Valid JSON that is not an object. Without this, `.get` raises
+            # AttributeError straight past the handler below — contradicting
+            # this docstring — and `main`'s broad catch then names the RUN LOG
+            # unreadable when the run log is fine and the fixture is broken.
+            return {}, False
     except (OSError, json.JSONDecodeError):
         # Absent (FileNotFoundError is an OSError) or malformed. A no-op
         # `is_file` pre-check stood here and was deleted: it was unreachable
@@ -190,7 +226,8 @@ def effective_verdict(
 def _writes(run: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     """Every conflict write in one run, as `(conflict id, changed_fields)`.
 
-    Both diff arms, which carry DIFFERENT shapes (`harness/diff.py`): a
+    Two of the THREE diff arms, which carry DIFFERENT shapes
+    (`harness/diff.py` returns added, modified and deleted): a
     `modified` entry is `{id, changed_fields}`, while an `added` entry is the
     whole conflict object. A conflict a test creates outright — verdict and all —
     lands in `added`, so reading only `modified` makes it invisible with nothing
@@ -265,8 +302,18 @@ def scan_runlog(runlog: dict[str, Any], scenarios_dir: Path = SCENARIOS) -> LogS
             if not isinstance(run, dict):
                 continue
             for cid, changed in _writes(run):
-                if scenario and not resolved:
-                    scan.unresolved_scenarios.add(scenario)
+                # Per CONFLICT ID, not per file. `resolved` says the fixture was
+                # readable; it does not say this conflict was IN it. A conflict
+                # the fixture never had reached `base.get(cid) or {}` and so the
+                # coerce-to-None reading this suite forbids elsewhere, printing
+                # an illegal `status=None` with no caveat.
+                #
+                # `needs_fallback` is what keeps it honest: a conflict a test
+                # CREATES is absent from the fixture by definition, so without it
+                # every added-arm finding got stamped "fixture unavailable".
+                needs_fallback = any(f not in changed for f in VERDICT_FIELDS)
+                if scenario and needs_fallback and (not resolved or cid not in base):
+                    scan.fallback_unavailable.add(scenario)
                 verdict = effective_verdict(changed, base.get(cid) or {})
                 by_verdict = groups[(key_scenario, cid)]
                 if test_id not in by_verdict[verdict]:
@@ -283,11 +330,17 @@ def scan_runlog(runlog: dict[str, Any], scenarios_dir: Path = SCENARIOS) -> LogS
                 "scenario": scenario,
                 "conflict_id": cid,
                 "kind": (
+                    # NOT "flip-flopped across its runs": 2184 of 2184
+                    # committed test entries carry exactly one run, so the
+                    # multi-`runs[]` route cannot fire. The live route is two
+                    # `tests[]` entries sharing one `test_id` — the corruption
+                    # check_runlogs rule 4 exists to catch — reaching here as
+                    # one id under two verdicts.
                     "two tests disagree"
                     if len(writers) > 1
-                    else "one test flip-flopped across its runs"
+                    else "one test_id appears under two verdicts"
                 ),
-                "fixture_unavailable": scenario in scan.unresolved_scenarios,
+                "fixture_unavailable": scenario in scan.fallback_unavailable,
                 "verdicts": {
                     v: sorted(tids) for v, tids in sorted(by_verdict.items(), key=str)
                 },
@@ -324,7 +377,18 @@ def _runlogs(skill: str | None) -> list[Path]:
 
     out: list[Path] = []
     for d in dirs:
-        out.extend(sorted(p for p in d.glob("v*.json") if p.name.count(".") == 1))
+        # `classify()` rather than a local glob-and-count-dots. That filter was
+        # a fifth hand-rolled spelling of a classification
+        # `harness/versioning.py` owns and `eval/CLAUDE.md` points at, and it
+        # admitted `validators.json`, `v_notes.json` and `vNOTAVERSION.json` as
+        # run logs (zero instances today).
+        out.extend(
+            sorted(
+                p
+                for p in d.glob("*.json")
+                if classify(p.name).kind in ("released", "candidate")
+            )
+        )
     return out
 
 
@@ -339,7 +403,7 @@ def format_report(
     flagged = sum(1 for _, _, r in rows if r.findings)
     groups = sum(r.groups for _, _, r in rows)
     multi = sum(r.multi_verdict for _, _, r in rows)
-    unresolved = sorted({s for _, _, r in rows for s in r.unresolved_scenarios})
+    unresolved = sorted({s for _, _, r in rows for s in r.fallback_unavailable})
 
     for skill, name, r in rows:
         if not r.findings:
@@ -393,7 +457,7 @@ def format_report(
         lines += [f"  - {p}" for p in unreadable]
     if unresolved:
         lines.append(
-            f"SCENARIOS WITH NO READABLE FIXTURE: {len(unresolved)} — groups under "
+            f"SCENARIOS WITH NO FIXTURE FALLBACK: {len(unresolved)} — groups under "
             "these were read WITHOUT the fixture fallback, which both manufactures "
             "false positives and can hide real contradictions"
         )
