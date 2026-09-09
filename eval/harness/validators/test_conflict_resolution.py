@@ -543,7 +543,11 @@ def _certainty_upgrades(text: str, names: set[str]) -> list[tuple[str, str]]:
         ):
             start = max(0, text.rfind(".", 0, m.start()) + 1)
             end = text.find(".", m.end())
-            found.append((name, text[start : end if end > 0 else len(text)].strip()))
+            # `end != -1`, not `end > 0`: `find` returns -1 on not-found, and
+            # `> 0` also rejects a legitimate period at index 0. Unreachable
+            # today (the match is always >=15 chars in, so `find` from
+            # `m.end()` cannot return 0) but the idiom said the wrong thing.
+            found.append((name, text[start : end if end != -1 else len(text)].strip()))
     return found
 
 
@@ -631,4 +635,4 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
                 )
 
     if observations:
-        raise AssertionError(" ".join(observations))
+        raise AssertionError("\n".join(observations))

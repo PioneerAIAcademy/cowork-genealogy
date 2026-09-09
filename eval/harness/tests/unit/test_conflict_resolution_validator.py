@@ -932,8 +932,17 @@ def test_v4_a_malformed_informant_does_not_raise(informant):
 
 
 def test_v4_skips_when_either_side_lacks_research_json():
+    """Each side independently, the way V6 and V2 do it.
+
+    Only the before=None path was covered. Worth being exact about the reason:
+    an `or` -> `and` mutation DOES red this, but by raising `AttributeError`
+    inside `_conflicts_by_id(None)` rather than by failing the skip assertion —
+    so the after=None branch was untested and the red proved something else.
+    """
     with pytest.raises(pytest.skip.Exception):
         check_certainty_upgrade({"research_json": None}, {"research_json": {}}, "")
+    with pytest.raises(pytest.skip.Exception):
+        check_certainty_upgrade({"research_json": {}}, {"research_json": None}, "")
 
 
 def test_v4_is_tier_2_reporting_not_gating():
@@ -1035,6 +1044,18 @@ def _independently_v4_hits():
                         tgt[f] = ch.get("after")
                     if {"weighing_analysis", "resolution_rationale"} & set(fields):
                         wrote.add(cid)
+                # The `added` arm, which `_replay_v4` handles and this omitted.
+                # Dormant — 0 added conflict entries in the corpus — but a
+                # rotation introducing a created-and-upgraded conflict would
+                # make the agreement test fail as "validator only", pointing at
+                # the derivation rather than at a real drift. The V2 derivation
+                # had to fix this same gap once already.
+                for a in cd.get("added") or []:
+                    if not isinstance(a, dict) or a.get("id") is None:
+                        continue
+                    after[a["id"]] = dict(a)
+                    if {"weighing_analysis", "resolution_rationale"} & set(a):
+                        wrote.add(a["id"])
                 for cid in wrote:
                     c = after.get(cid) or {}
                     names = set()
@@ -1188,3 +1209,86 @@ def test_v4_ignores_prose_the_run_did_not_author():
 
     # Paired: authoring the prose in the same turn IS reported.
     _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+
+
+def test_v4_derivation_and_validator_agree_on_a_CREATED_conflict():
+    """Pins the `added` arm of the second derivation, which was dormant.
+
+    The corpus has 0 added conflict entries, so agreement over it cannot
+    exercise that path — a rotation introducing a created-and-upgraded conflict
+    would have failed the agreement test as "validator only", which points at
+    the derivation rather than at real drift. This drives both sides over a
+    synthetic run log carrying exactly that shape.
+    """
+    inf = "Unknown household member (likely Thomas Flynn or wife)"
+    log = {"tests": [{
+        "test_id": "ut_synth", "scenario": "flynn-identity-geographic",
+        "runs": [{"output": {"file_changes": {"research.json": {"diff": {"conflicts": {
+            "added": [{
+                "id": "c_new", "status": "resolved", "conflict_type": "fact",
+                "competing_assertion_ids": ["a_002"],
+                "preferred_assertion_id": "a_002",
+                "independence_analysis": None,
+                "weighing_analysis": "The informant was almost certainly Thomas Flynn.",
+                "resolution_rationale": None,
+            }]}}}}}}],
+    }]}
+
+    fx_path = _REPO / "eval/fixtures/scenarios/flynn-identity-geographic/research.json"
+    fx = json.loads(fx_path.read_text(encoding="utf-8"))
+    # Confirm the fixture still supplies the hedged informant this rests on.
+    A = {a["id"]: a for a in fx.get("assertions") or []}
+    assert inf == A["a_002"]["informant"], (
+        "flynn-identity-geographic's a_002 informant changed; re-point this test"
+    )
+
+    # Drive BOTH real functions over a synthetic corpus, rather than
+    # re-implementing either. An earlier version of this test recomputed the
+    # `wrote` set inline, so deleting the derivation's `added` arm left it green
+    # — shape-only, which is the failure this whole test exists to prevent.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "v1_2026-01-01_00-00-00.json"
+        path.write_text(json.dumps(log), encoding="utf-8")
+        saved = globals()["_CORPUS"]
+        globals()["_CORPUS"] = [str(path)]
+        try:
+            fired = {(n, t) for n, t, _ in _replay_v4()}
+            independent = _independently_v4_hits()
+            messages = [m for _, _, m in _replay_v4()]
+        finally:
+            globals()["_CORPUS"] = saved
+
+    assert fired == {("v1_2026-01-01_00-00-00.json", "ut_synth")}, fired
+    assert independent == fired, (
+        "the second derivation missed a CREATED conflict the validator reported "
+        f"— its `added` arm is the gap.\n  validator: {sorted(fired)}"
+        f"\n  derivation: {sorted(independent)}"
+    )
+    assert any("c_new" in m for m in messages), messages
+
+
+def test_v4_observations_are_newline_separated():
+    """V2 joins with newlines; a run-on sentence is harder to triage, and a
+    genealogist reads this text directly."""
+    inf = "Unknown household member (likely Thomas Flynn or wife)"
+    a = {"id": "a_002", "source_id": "src_001", "informant": inf,
+         "information_quality": "indeterminate"}
+    base = {"id": "c_001", "status": "resolved", "conflict_type": "fact",
+            "competing_assertion_ids": ["a_002"], "preferred_assertion_id": "a_002",
+            "independence_analysis": None, "resolution_rationale": None,
+            "weighing_analysis": None}
+    # Two fields each carrying an upgrade -> two observations.
+    after_c = dict(base,
+                   weighing_analysis="It was almost certainly Thomas Flynn.",
+                   resolution_rationale="Again, almost certainly Thomas Flynn.")
+    with pytest.raises(AssertionError) as e:
+        check_certainty_upgrade(
+            {"research_json": {"conflicts": [base], "assertions": [a]}},
+            {"research_json": {"conflicts": [after_c], "assertions": [a]}},
+            "",
+        )
+    msg = str(e.value)
+    assert msg.count("asserts 'Thomas Flynn'") == 2, msg
+    assert "\n" in msg, f"observations are not newline-separated:\n{msg}"
