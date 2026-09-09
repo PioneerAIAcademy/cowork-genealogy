@@ -30,7 +30,6 @@ import pytest
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
-    bare_tool_name,
 )
 
 
@@ -1244,25 +1243,32 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 _POSITION_RE = re.compile(r"(?<!\d)(\d{1,3})\s*(?:of|/)\s*(\d{1,3})(?!\d)", re.IGNORECASE)
 
 
-def _records_extracted(tool_calls):
-    """Records extracted this run, counted by the per-record write.
+def _records_extracted(before_state, after_state):
+    """Records extracted this run, counted by the sources they created.
 
-    SKILL.md delegates once per record and the agent writes the source and
-    its assertions in one composite `extraction_append`, so the call count is
-    the record count. `bare_tool_name` because a run records the call under
-    whichever of the three server spellings the session resolved.
+    NOT by counting `extraction_append` calls. That was the first version and
+    it was wrong: `ut_record_extraction_006` and `_007` in
+    `v1_2026-09-09_16-38-08` each made TWO append calls against ONE `Agent`
+    delegation, and the two calls are identical - same source title, same op
+    count. They are a retry. Counting calls scored a compliant single-record
+    run as a two-record batch and failed it.
+
+    One record creates one source, so the new-source count is the record
+    count. `Agent` delegations would be the most direct signal but
+    `builtin_tool_calls` is not among the fixtures the harness exposes here.
     """
+    before = (before_state or {}).get("research_json") or {}
+    after = (after_state or {}).get("research_json") or {}
+    before_ids = {s.get("id") for s in (before.get("sources") or [])}
     return sum(
-        1
-        for c in (tool_calls or [])
-        if bare_tool_name(c.get("tool") or "") == "extraction_append"
+        1 for s in (after.get("sources") or []) if s.get("id") not in before_ids
     )
 
 
 def test_a_multi_record_batch_announces_each_record_position(
-    text_response, tool_calls, test
+    text_response, before_state, after_state, test
 ):
-    """Every record in a batch is announced with its position before its turn.
+    """Each record extracted is announced with its position before its turn.
 
     SKILL.md "Per-record delegation": state the count once, then name each
     record and its position before invoking the agent for it.
@@ -1270,15 +1276,24 @@ def test_a_multi_record_batch_announces_each_record_position(
     A document costs ~136 seconds and 81.9% of that is model reasoning inside
     the subagent, so the silence falls INSIDE each extraction rather than
     between them - and `record-extractor.md` is deliberately mute ("Work
-    silently ... the caller handles presentation"). A ten-document batch is
-    therefore ~23 minutes during which the router is the only thing that can
-    speak, which is why a tester read a working run as a hang (#1998).
+    silently ... the caller handles presentation"). The router is the only
+    thing that can speak during it, which is why a tester read a working run
+    as a hang (#1998).
 
-    Gated on two or more records because a single-record run has no position
-    to report. That gate leaves the check live rather than dormant: 5 of 31
-    tests in `v1_2026-09-08_17-39-37` extracted two or more (one extracted
-    three), and `ut_record_extraction_006`, `_007` and `_017` do so in all
-    five committed run logs.
+    **Gated at one record, not two, and that is deliberate.** The batch this
+    card describes does not exist in the unit corpus: counting DISTINCT source
+    titles across all five committed run logs, 0 of 153 runs extracted more
+    than one record - 133 extracted exactly one and 20 extracted none. A
+    two-record gate is therefore dormant forever, which is the "reads as
+    coverage" failure this file's own #1950 sibling exists to prevent. At one
+    record the check is live and discriminating: on
+    `v1_2026-09-09_16-38-08`, 24 of the 28 extracting runs carried a marker
+    and 4 did not (`_013`, `_023`, `_028`, `_029` narrate their setup steps
+    and never state a count).
+
+    Verifying the batch case needs a multi-record test in
+    `eval/tests/unit/record-extraction/`, which is genealogist-authored, sits
+    inside the run-log snapshot, and is its own card.
 
     The denominator is accepted at `>= n` rather than `== n`: announcing "1 of
     3" and then failing to extract the third record is a different defect, and
@@ -1287,9 +1302,9 @@ def test_a_multi_record_batch_announces_each_record_position(
     if test.get("type") != "positive":
         pytest.skip("only positive tests extract records")
 
-    n = _records_extracted(tool_calls)
-    if n < 2:
-        pytest.skip("not a batch - fewer than two records extracted")
+    n = _records_extracted(before_state, after_state)
+    if n < 1:
+        pytest.skip("no record extracted - nothing to announce")
 
     announced = {
         int(k)
@@ -1298,8 +1313,8 @@ def test_a_multi_record_batch_announces_each_record_position(
     }
     missing = sorted(set(range(1, n + 1)) - announced)
     assert len(announced) >= n, (
-        f"{n} records were extracted but only {len(announced)} carried a "
+        f"{n} record(s) extracted, but only {len(announced)} carried a "
         f"position marker in the narration (missing {missing}). At ~136s per "
         f"document an unannounced record is silence the user cannot "
-        f"distinguish from a hang - say '2 of {n}' before delegating it."
+        f"distinguish from a hang - say '1 of {n}' before delegating it."
     )
