@@ -387,7 +387,8 @@ Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
 When expansion fires, the response includes a `nameExpansion` field
-(reversing the prior §5.3.1 decision, per review thread #9 on PR #2164):
+(reversing the prior §5.3.1 decision — the genealogist needs to know
+what the VLM was primed with before reading a contested hand):
 
 - `original`: the caller's `lookingFor` string
 - `expanded`: the rewritten prompt the VLM actually saw
