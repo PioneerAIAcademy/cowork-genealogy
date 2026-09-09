@@ -13,17 +13,30 @@ Last reviewed: **2026-09-08**.
 `npm ci --omit=dev` (`scripts/build-mcpb.mjs`), so dev-tree findings never reach
 **that** artifact. Weigh fix churn against that before treating a HIGH as urgent.
 
-**One dev-tree package does ship, and it is the exception to the paragraph above.**
-`electron` is a devDependency — `pnpm why --prod electron` returns nothing — but
+**`electron` ships, and it is the exception to the paragraph above.** It reaches
+production two ways, and either alone is enough. It is in the production graph:
+`apps/electron` declares `@electron-toolkit/utils` as a production dependency, which
+takes `electron` as a peer — `pnpm why --prod -r electron` shows the edge. And
 `apps/electron/electron-builder.yml` sets no `electronVersion`, so electron-builder
-packages the runtime at whatever version that devDependency resolves to. An advisory
-against `electron` therefore reaches every installed Research Viewer, and the
-`npm ci --omit=dev` reasoning does not cover it. Treat `electron` findings as shipping.
+packages the runtime at whatever the installed `electron` resolves to. So an advisory
+against `electron` reaches every installed Research Viewer, and the `npm ci --omit=dev`
+reasoning above does not cover it. Treat `electron` findings as shipping.
 
-**`pnpm audit --prod` over-reports here.** It flagged `extract-zip` as production while
-`pnpm why --prod extract-zip` returns nothing. It fails safe, so it is still usable as a
-gate, but do not read its output as the production tree — `pnpm why --prod` is what
-answers that.
+**Use `pnpm why --prod -r`, never `pnpm why --prod`.** Without `-r` the command inspects
+only the root package, which declares no `dependencies`, so it returns nothing for
+**everything** and reads exactly like proof that a package is dev-only. Control:
+`pnpm why --prod react` returns nothing while `apps/web` declares react as a production
+dependency. An earlier revision of this file used the bare form to argue that
+`pnpm audit --prod` over-reported `extract-zip`; @clack391 refuted that on #2274. With
+`-r`, `extract-zip` is genuinely production (`apps/electron` → `@electron-toolkit/utils`
+→ `electron` peer → `extract-zip`), so `pnpm audit --prod` was right and the bare
+`why` was the broken instrument.
+
+That makes the "Reachability, once, up front" paragraph above unreliable where it says
+`pnpm why --prod` returns nothing for every vulnerable package: the command returns
+nothing regardless. @DallanQ ruled on 2026-09-09 (#2352) that this file stays the
+mechanism and that paragraph gets re-derived, so it is deliberately left for that pass
+rather than patched here.
 
 ## Fixed
 
@@ -110,11 +123,13 @@ answers that.
   `2.0.1`, pulled by `electron` itself (both 39.8.5 and 39.8.10 declare
   `extract-zip: ^2.0.1`). **Deferred 2026-09-08 — no patch exists.** npm reports
   `patched_versions: <0.0.0`, i.e. no released version fixes it, so there is nothing to
-  bump to and an override has no target. Not reachable by a user of the shipped app:
-  `extract-zip` is what electron's own postinstall uses to unpack the runtime archive it
-  downloads from Electron's release server over HTTPS at install time on a developer's
-  machine, and the traversal needs an attacker-controlled zip. `pnpm why --prod
-  extract-zip` returns nothing.
+  bump to and an override has no target. **It is in the production graph** —
+  `apps/electron` → `@electron-toolkit/utils` → `electron` (peer) → `extract-zip`, per
+  `pnpm why --prod -r` — so `pnpm audit --prod` is right to flag it. What limits it is
+  *when* it runs, not whether it ships: `extract-zip` is what electron's own postinstall
+  uses to unpack the runtime archive it downloads from Electron's release server over
+  HTTPS, at install time on a developer's machine. The shipped app never invokes it, and
+  the traversal needs an attacker-controlled zip.
   **Revisit when** a fixed `extract-zip` is published, or when `electron` drops the
   dependency.
 
