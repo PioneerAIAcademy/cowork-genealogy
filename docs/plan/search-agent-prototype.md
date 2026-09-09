@@ -1167,6 +1167,14 @@ failure needs two tool-server instances and a parallel write within one turn.
 **Turn claiming is not addressed at all**: the prototype grants any claim carrying the
 same `turn_id` immediately, with no fencing and no expiry. That is correct at one worker
 and unsafe above it, and it is what the Locking section defers here.
+**The trigger is the second worker, not a date** — this stays unreachable through the
+prototype and through the early two-backend implementation, and becomes live the moment
+the worker tier scales past one, which is the first thing horizontal scaling does.
+**The fix is a `claim_epoch` fencing token**: minted fresh on every successful claim,
+with the heartbeat and the release both conditioned on it still matching, so a
+mismatched write is a no-op and that worker aborts. One column, two `WHERE` clauses,
+roughly one to two days with a two-worker integration test. It is textbook, which is why
+it was cut from the build plan rather than from this register.
 *Owner: us; needs a two-instance test before production.*
 
 **R9 — Blueprint provisioner coverage and the custom AMI check.** The architecture
