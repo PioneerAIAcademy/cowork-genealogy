@@ -63,14 +63,29 @@ place as "Tasmania, Australia". The rest of that caution was sound: the entry
 gives no parents and no registration number, which is why it could not be the
 confirming record.
 
-**What was searched and did not resolve.** No record found names the bride's
-parents, so nothing directly ties this Frances Maria Fisher to the tree's
-William Fisher (`GZBM-JS3`) and Alice Smith (`KC1F-ZW3`). Neither registration
-indexes parents; the marriage image would, and was not read. The
+**What was searched and did not resolve.** No record consulted names the
+bride's parents, so nothing directly ties this Frances Maria Fisher to the
+tree's William Fisher (`GZBM-JS3`) and Alice Smith (`KC1F-ZW3`). The
 identification rests on the given name and surname, the town (Hobart), the era,
-and the daughter already sitting in the tree as Francis's child. A reviewer who
-wants that last link closed should read
-`ark:/61903/3:1:3QS7-99CH-CY6T`.
+a `same_person` score of 0.92 on the bride, and the daughter already sitting in
+the tree as Francis's child.
+
+**Do not send the next adjudicator to the marriage image for the parents — the
+1895 Tasmanian register has no parents column.** The benchmark run read
+`ark:/61903/3:1:3QS7-99CH-CY6T` and recorded the form's columns: number; when
+married and where; name and surname; age; rank; signature and description of
+parties; officiating minister; when registered; registrar's signature. Its own
+source note states it plainly — "Register format does not include fathers'
+names". That is the M.—1. form behaving normally, not a failed reading, so this
+route is a permanent dead end rather than an unexplored one.
+
+**What the register does give toward the bride is the witness line.** J. Fisher,
+Sarah Ann Fisher and John Fisher all signed (recorded in the run as
+`a_022`-`a_024`). The shared surname makes them likely Fisher family and a live
+FAN lead toward `GZBM-JS3` — weaker than an indexed parent field, but real, and
+the thread the image actually supports. The other untried route is the district
+registers (collection 2514003), which the run's own locality plan says carry
+parents' names.
 
 **One discrepancy, recorded rather than smoothed.** The tree gives the
 daughter's birth as "about 1898"; the registration gives 2 November 1897. That
