@@ -652,6 +652,21 @@ eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/coste
 	# printed predicate rather than a hand count (issue #1484 c).
 	cd eval/harness && uv run python -m e2e.inventory
 
+.PHONY: e2e-provided-docs-coverage
+e2e-provided-docs-coverage: ## External-repo capture-coverage gap report (issue #2083): which fixtures skip non-FS primary items but ship no bundled capture
+	# Pure analysis over committed .final-research.json sidecars — no live run,
+	# no API.  Re-derives the skip table from the issue and lists every fixture
+	# where the provided-documents/ mechanism could close the gap but hasn't.
+	#
+	# Exit code:  0 = no gap fixtures (all external-skip fixtures have captures)
+	#             1 = at least one fixture has external skips and zero captures
+	#
+	# A capture must be a real page saved from the real site by a human in a
+	# credentialed browser — never synthesized (issue #2083 "The failure mode
+	# this task is exposed to").  This report flags the gap; closing it is
+	# manual capture-authoring work.
+	cd eval/harness && uv run python -m e2e.provided_docs_coverage
+
 .PHONY: e2e-agent-tools
 e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API.

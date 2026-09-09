@@ -556,6 +556,11 @@ unassigned half-day any genealogist can pick up. Four parallel tasks rather than
 one bundle is what stops the tier having a single operator. Take one the same way
 you would any assigned fixture, on the "Running a panel fixture" route above.
 
+A panel run is landed at whatever verdict it earned — `pass`, `partial` or `fail`
+— because the panel counts runs and a failed run is the data point; re-run only
+when the run wrote no files at all (`mcp_unavailable`, or an abort before any
+`run-<ts>.json`), which is an environment failure rather than a result.
+
 The panel is **fixed**. Fixture difficulty varies enormously, so a month's
 aggregate is comparable to the next month's only when the mix is constant;
 swapping a fixture in because it looks more interesting today quietly ends the
