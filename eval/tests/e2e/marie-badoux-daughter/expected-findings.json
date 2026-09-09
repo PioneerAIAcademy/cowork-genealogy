@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Marie Badoux and Philippe Thénot had a daughter, Claudine Thénot, baptised 12 October 1781 at Romenay, Saône-et-Loire.",
+      "details": {
+        "subject_person": "Marie Badoux (LT9H-SK3)",
+        "relation": "child",
+        "target_person": {
+          "name": "Claudine Thénot",
+          "birth": "12 October 1781, Romenay, Saône-et-Loire, France"
+        }
+      },
+      "supporting_sources": [
+        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — baptism of Claudine Tenot, 12 Oct 1781, parents Philipe Tenot and Marie Joly"
+      ],
+      "required": true
+    }
+  ]
+}

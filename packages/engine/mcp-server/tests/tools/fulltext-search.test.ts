@@ -95,6 +95,9 @@ function flynnEntry(): FSFulltextEntry {
         { type: "DATE", value: "1849" },
         { type: "OTHER", value: "ignored" }, // not NAME/PLACE/DATE -> dropped
       ],
+      // Bare matched terms, not marked-up snippets -- confirmed against a
+      // live upstream response; the old "<em>"-wrapped assumption here
+      // never matched what production actually sends.
       highlightTexts: ["Patrick", "Flynn", "Flynn Patrick"],
     },
   };
@@ -780,7 +783,7 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     );
     const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
     expect(result.nameExpansion).toBeDefined();
-    expect(result.nameExpansion!.variantsInResults).toContain("betty");
+    expect(result.nameExpansion!.variantsInResults).toContain("Betty");
   });
 
   it("43. echoQuery reflects the original input, not the expanded name", async () => {
@@ -819,7 +822,7 @@ describe("fulltextSearchTool given-name expansion (issue #607)", () => {
     );
     const result = await fulltextSearchTool({ name: "Elizabeth Martin" });
     expect(result.nameExpansion).toBeDefined();
-    expect(result.nameExpansion!.variantsInResults).toContain("betty");
+    expect(result.nameExpansion!.variantsInResults).toContain("Betty");
   });
 
   it("45b. nameExpansion appears before results in JSON key order", async () => {

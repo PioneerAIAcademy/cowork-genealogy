@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Adelaida (Adela) Martínez was the daughter of Juan Martínez and Dolores Bilares.",
+      "details": {
+        "subject_person": "Adelaida Martinez (GRS9-MCH)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Juan Martínez and Dolores Bilares"
+        }
+      },
+      "supporting_sources": [
+        "Uruguay, registro civil, 1879-2020 — entry for Rufino Moreira and Adela Martínez, 17 Jun 1879, naming her parents Juan Martínez and Dolores Bilares"
+      ],
+      "required": true
+    }
+  ]
+}

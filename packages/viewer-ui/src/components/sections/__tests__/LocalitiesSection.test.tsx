@@ -59,6 +59,7 @@ describe('LocalitiesSection', () => {
     render(<LocalitiesSection />)
     expect(screen.getByText('Localities')).toBeInTheDocument()
     expect(screen.getByText(/No locality guides saved yet/)).toBeInTheDocument()
+    expect(screen.getByText(/locality-guide step/)).toBeInTheDocument()
   })
 
   it('renders the empty state when localities is empty', () => {

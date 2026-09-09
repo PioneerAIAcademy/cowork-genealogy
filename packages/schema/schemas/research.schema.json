@@ -654,7 +654,37 @@
           "items": { "type": "string", "pattern": "^c_" }
         },
         "exhaustive_search_summary": { "type": "string" },
-        "narrative_markdown": { "type": "string" }
+        "narrative_markdown": { "type": "string" },
+        "claims": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/proof_claim" }
+        }
+      }
+    },
+    "proof_claim": {
+      "description": "One claim within a multi-claim question (e.g. paternity or maternity within a single parentage question), tiered independently of the proof_summary's scalar `tier`. Optional and additive — omit entirely for the default, single-conclusion case. `tier` on the parent proof_summary carries the stronger of the per-claim tiers; the tree-encoding gate reads each claim's own `proof_tier` to decide whether that claim's `relationship` is written, independent of the scalar.",
+      "type": "object",
+      "required": ["claim", "proof_tier", "supporting_assertion_ids", "relationship"],
+      "additionalProperties": false,
+      "properties": {
+        "claim": { "type": "string" },
+        "proof_tier": { "$ref": "enums.schema.json#/$defs/proof_tier" },
+        "supporting_assertion_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^a_" }
+        },
+        "relationship": { "$ref": "#/$defs/proof_claim_relationship" }
+      }
+    },
+    "proof_claim_relationship": {
+      "description": "The tree endpoint a proof_claim concludes — a ParentChild relationship in tree.gedcomx.json, named so the tree-encoding gate has something to bind to mechanically rather than a prose label. Scoped to ParentChild only (paternity/maternity); a Couple (marriage) claim split can be added later if a second concrete need for it arises.",
+      "type": "object",
+      "required": ["type", "parent", "child"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "ParentChild" },
+        "parent": { "type": "string" },
+        "child": { "type": "string" }
       }
     },
     "evaluation_entry": {

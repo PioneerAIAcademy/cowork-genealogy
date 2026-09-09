@@ -158,8 +158,8 @@ OWNER_REASON = (
 
 DECLARATION_REASON = (
     "Declaring a question exhaustive from here is disabled — `{field}` with "
-    "`declared: true` is owned by the {agent} agent, which applies the five "
-    "threshold questions and the 7-point stop criteria this claim rests on. "
+    "`declared: true` is owned by the {agent} agent, which applies the seven "
+    "stop criteria this claim rests on. "
     "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
     "call. Only the claim is routed — creating a question with "
     "`declared: false`, and recording an honest `declared: false` termination, "

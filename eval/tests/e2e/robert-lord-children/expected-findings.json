@@ -1,0 +1,53 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Robert Lord (Brierley) and his wife Ellen had a son James, born about 1895 in Rochdale, Lancashire.",
+      "details": {
+        "subject_person": "Robert Lord (GSPY-NFZ)",
+        "relation": "child",
+        "target_person": {
+          "name": "James Brierley",
+          "birth": "about 1895, Rochdale, Lancashire, England"
+        }
+      },
+      "supporting_sources": [
+        "England and Wales, Census, 1911 — household of Robert Brierley and Ellen Brierley, Rochdale, Lancashire"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Robert Lord (Brierley) and his wife Ellen had a daughter Betsy, born about 1899 in Rochdale, Lancashire.",
+      "details": {
+        "subject_person": "Robert Lord (GSPY-NFZ)",
+        "relation": "child",
+        "target_person": {
+          "name": "Betsy Brierley",
+          "birth": "about 1899, Rochdale, Lancashire, England"
+        }
+      },
+      "supporting_sources": [
+        "England and Wales, Census, 1911 — household of Robert Brierley and Ellen Brierley, Rochdale, Lancashire"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Robert and Ellen were living as a married couple at Rochdale, Lancashire in 1911.",
+      "details": {
+        "subject_person": "Robert Lord (GSPY-NFZ)",
+        "fact_type": "Census",
+        "date": "1911",
+        "place": "Rochdale, Lancashire, England"
+      },
+      "supporting_sources": [
+        "England and Wales, Census, 1911 — household of Robert Brierley and Ellen Brierley"
+      ],
+      "required": false
+    }
+  ]
+}

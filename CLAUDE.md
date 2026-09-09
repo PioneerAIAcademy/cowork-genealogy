@@ -507,7 +507,7 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Written by the `configure_openrouter` tool. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent so Claude can prompt the user. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required
@@ -608,6 +608,25 @@ fires and watch it fail. A check that cannot fail reads as coverage and is worse
 than no check at all. The three ways one silently passes here: a grep whose
 pattern excludes its own tree, a `git grep` that skips untracked files, and a
 field-name match that collides with an unrelated key.
+
+**One break is not a proof.** Those three are about the check's *reach*. The
+other way through is the *shape of the input at the site*: unquoted, commented
+out, wrapped in another call, a stringified argument, a `null`, an empty list, a
+missing token, a value that parses to `NaN`. Break it two or three ways, not one.
+Both real: an argument parsing to `NaN`, and a typo'd `--only` matching nothing —
+each made the tool **exit 0 having done nothing**, past a guard added beside it.
+
+**Prove the other direction too.** A guard fails two ways — wrongly blocking
+legitimate work, and wrongly passing the bad thing. Breaking the repo tests only
+the second. Show a legitimate variant the check still accepts (a reflowed line, a
+renamed local, a valid alternate spelling), or you have built something that will
+be `skip`ped within a month. Replaying a check over committed runs tests the
+*first* direction only and cannot test the second at all, because in a replay the
+check is its own ground truth — `eval/harness/e2e/guardrail_shadow_report.py`.
+
+When the bug is the **second** instance of a class already fixed, write one
+shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
+per-line greps for exactly this reason.
 
 ### A measurement that disagrees with belief is re-measured, not reworded
 

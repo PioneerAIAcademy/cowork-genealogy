@@ -143,12 +143,16 @@ class _HookDrivingStream:
     """An async message stream that first drives the registered PreToolUse hook
     with scripted inputs, then yields its messages so run_skill completes."""
 
-    def __init__(self, hook, hook_inputs, messages):
+    def __init__(self, hook, hook_inputs, messages, returns=None):
         self._hook = hook
         self._hook_inputs = hook_inputs
         self._messages = messages
         self._started = False
         self._i = 0
+        # Optional sink for what the hook RETURNED per input. A deny is only
+        # visible in the return value, so a test asserting on the deny needs
+        # this; widened rather than copied (issue #2022 review).
+        self._returns = returns
 
     def __aiter__(self):
         return self
@@ -157,7 +161,9 @@ class _HookDrivingStream:
         if not self._started:
             self._started = True
             for inp in self._hook_inputs:
-                await self._hook(inp, "tool-use-id", None)
+                out = await self._hook(inp, "tool-use-id", None)
+                if self._returns is not None:
+                    self._returns.append(out)
         if self._i >= len(self._messages):
             raise StopAsyncIteration
         msg = self._messages[self._i]
@@ -419,3 +425,456 @@ def test_timeout_records_the_turns_a_slow_run_did_produce(monkeypatch, tmp_path)
     result = _run_until_timeout(monkeypatch, tmp_path, turns=4)
     assert result.aborted_reason == "max_wall_clock_seconds"
     assert result.usage.get("num_turns") == 4
+
+
+# --- the ownership deny, driven through the real hook (issue #2022) ----------
+#
+# These replace a source-grep guard that was green under two mutations its own
+# message named: `body.index()` searched to EOF, so deleting the arm and leaving
+# a comment that mentioned both calls satisfied it, and so did keeping the call
+# while dropping the `return`. The guard's stated reason was also false --
+# `_HookDrivingStream` above drives this exact closure, and has since it was
+# written (@chesworthrm).
+
+
+def _ownership_payload(section):
+    """A `research_append` op from the proof-conclusion agent. `conflicts` is
+    outside its lane ({proof_summaries, questions, project})."""
+    return {
+        "tool_name": "mcp__genealogy__research_append",
+        "tool_input": {"ops": [{"op": "append", "section": section, "entry": {"x": 1}}]},
+        "agent_id": "agent-proof-conclusion",
+        "agent_type": "proof-conclusion",
+    }
+
+
+def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None):
+    """Run run_skill with the given PreToolUse inputs; return (result, returns)."""
+    import asyncio
+
+    from claude_agent_sdk import ResultMessage
+
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    returns = []
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            hook_inputs,
+            [
+                ResultMessage(
+                    subtype="result",
+                    duration_ms=1,
+                    duration_api_ms=1,
+                    is_error=False,
+                    num_turns=1,
+                    session_id="S1",
+                )
+            ],
+            returns=returns,
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    kwargs = dict(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    if max_tool_calls is not None:
+        kwargs["max_tool_calls"] = max_tool_calls
+    return asyncio.run(sr.run_skill(**kwargs)), returns
+
+
+def test_an_out_of_lane_append_is_denied_and_recorded(tmp_path, monkeypatch):
+    """The deny must both RETURN a deny payload and land on the result.
+
+    Deleting the arm, or keeping the call and dropping the `return`, fails this
+    -- neither of which the source-grep guard caught.
+    """
+    result, returns = _drive_hook(tmp_path, monkeypatch, [_ownership_payload("conflicts")])
+
+    assert returns and returns[0] is not None, "the hook allowed an out-of-lane append"
+    decision = returns[0]["hookSpecificOutput"]["permissionDecision"]
+    assert decision == "deny", f"expected a deny, got {decision!r}"
+
+    assert len(result.blocked_owned_section_writes) == 1, (
+        "the denied attempt was not recorded on SkillRunResult, so the gating "
+        "validator sees nothing and the run grades clean"
+    )
+    recorded = result.blocked_owned_section_writes[0]
+    assert recorded["section"] == "conflicts"
+    assert recorded["caller"] == "proof-conclusion"
+
+
+def test_an_in_lane_append_is_not_denied(tmp_path, monkeypatch):
+    """The polarity control. proof_summaries is the agent's OWN section, and a
+    deny there would fail every test in that skill's suite."""
+    result, returns = _drive_hook(
+        tmp_path, monkeypatch, [_ownership_payload("proof_summaries")]
+    )
+    assert returns[0] is None or returns[0].get("hookSpecificOutput", {}).get(
+        "permissionDecision"
+    ) != "deny", "the owner's own section was denied"
+    assert result.blocked_owned_section_writes == []
+
+
+def test_a_denied_call_does_not_consume_the_max_tool_calls_budget(
+    tmp_path, monkeypatch
+):
+    """Pins the ORDERING behaviourally rather than by source position.
+
+    A denied call never executes, so it must not spend budget. With
+    max_tool_calls=1, a denied append followed by one real call must not abort:
+    if the ownership deny sits after the counter, the denied call consumes the
+    single slot and the second call trips the cap.
+    """
+    result, _ = _drive_hook(
+        tmp_path,
+        monkeypatch,
+        [
+            _ownership_payload("conflicts"),
+            {
+                "tool_name": "mcp__genealogy__research_query",
+                "tool_input": {"section": "questions"},
+            },
+        ],
+        max_tool_calls=1,
+    )
+    assert result.aborted_reason is None, (
+        "a denied call consumed the max_tool_calls budget: the ownership deny "
+        f"is being checked after the counter (aborted_reason={result.aborted_reason!r})"
+    )
+
+
+def _rule_payload(section, caller, entry=None, op="append"):
+    """A `research_append` op parameterised by SECTION and CALLER.
+
+    `_ownership_payload` above hardcodes `proof-conclusion` and varies only the
+    section, so all three tests before this one drive the `out_of_lane` rule.
+    Narrowing the recorded arm to `denied[1] == "out_of_lane"` left the whole
+    suite at baseline, so `routed` and `declaration` passed through the hook with
+    nothing watching (@clack391) — while guardrail-enforcement-spec.md names this
+    validator as what gates the first and claims the second binds here too.
+
+    What was unguarded is the hook PASS-THROUGH on this plane, not the
+    predicate's decision: both rules are covered by direct `owner_denied` calls
+    in test_universal_owned_sections.py, and the e2e closure is hook-driven in
+    test_e2e_context_block.py.
+    """
+    o = {"op": op, "section": section, "entry": entry or {"x": 1}}
+    return {
+        "tool_name": "mcp__genealogy__research_append",
+        "tool_input": {"ops": [o]},
+        "agent_id": "agent-abc123",
+        "agent_type": caller,
+    }
+
+
+def test_the_routed_arm_is_driven_through_the_real_hook(tmp_path, monkeypatch):
+    """`proof_summaries` reached by an agent that does not own it: 47 of 133
+    committed e2e runs wrote one without launching the owning skill."""
+    result, returns = _drive_hook(
+        tmp_path, monkeypatch, [_rule_payload("proof_summaries", "record-extractor")]
+    )
+    assert returns[0] is not None, "the routed arm allowed the write"
+    assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert [
+        (c["section"], c["rule"]) for c in result.blocked_owned_section_writes
+    ] == [("proof_summaries", "routed")]
+
+
+def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypatch):
+    """A routed CLAIM, field-scoped, whose section is the dotted form that keys
+    neither owner map — the arm where branching on the section's shape rather
+    than on `rule` raises KeyError."""
+    result, returns = _drive_hook(
+        tmp_path,
+        monkeypatch,
+        [
+            _rule_payload(
+                "questions",
+                "proof-conclusion",
+                entry={"exhaustive_declaration": {"declared": True}},
+            )
+        ],
+    )
+    assert returns[0] is not None, "the declaration arm allowed the claim"
+    assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert [
+        (c["section"], c["rule"]) for c in result.blocked_owned_section_writes
+    ] == [("questions.exhaustive_declaration", "declaration")]
+
+
+# ─── Quota aborts are not transient (#2192) ────────────────────────────────
+#
+# Driven through the REAL run_skill with fabricated SDK messages, for the
+# reason `_run_until_timeout` states above: a hand-built SkillRunResult can
+# carry field combinations this path never emits. A subscription quota cannot
+# be forced on demand, so fabricating the messages is the only instrument —
+# and it proves the classifier's branch, NOT that the predicate matches a live
+# quota. That gap is real and is stated in the PR body.
+
+
+def _run_with_messages(monkeypatch, tmp_path, messages):
+    """Stream `messages` through the real run_skill and return its result."""
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    async def fake_query(*, prompt, options):
+        for m in messages:
+            yield m
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+
+    return asyncio.run(
+        sr.run_skill(
+            user_message="x",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        )
+    )
+
+
+def _result_message(**kw):
+    from claude_agent_sdk import ResultMessage
+
+    base = dict(
+        subtype="result",
+        duration_ms=1,
+        duration_api_ms=1,
+        is_error=True,
+        num_turns=1,
+        session_id="S1",
+    )
+    base.update(kw)
+    return ResultMessage(**base)
+
+
+def _rate_limit_event(status):
+    from claude_agent_sdk import RateLimitEvent
+    from claude_agent_sdk.types import RateLimitInfo
+
+    return RateLimitEvent(
+        rate_limit_info=RateLimitInfo(
+            status=status, resets_at=1757260800, rate_limit_type="five_hour"
+        ),
+        uuid="u1",
+        session_id="S1",
+    )
+
+
+def test_a_bare_429_stays_transient_and_is_only_evidence(monkeypatch, tmp_path):
+    """A 429 on its own is NOT a subscription quota.
+
+    In `api_key` mode it is a per-minute org limit that clears in under a
+    minute, which this repo twice calls transient (`harness/auth.py:151`).
+    Classifying it as a quota would stop the suite and discard a whole paid
+    `make eval-skill` slot over a limit that had already cleared — strictly
+    worse than the three retries this change removes. It is still captured as
+    evidence, so a future occurrence can be diagnosed from the run log.
+    """
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [_result_message(api_error_status=429, result="nope")]
+    )
+    assert result.aborted_reason == "error"
+    assert "api_error_status=429" in (result.error or "")
+
+
+def test_a_bare_assistant_rate_limit_error_stays_transient(monkeypatch, tmp_path):
+    """Same reasoning: `AssistantMessage.error == "rate_limit"` is emitted for
+    a per-minute API limit too, so it is evidence rather than a verdict."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    msg = AssistantMessage(content=[TextBlock(text="x")], model="stub")
+    object.__setattr__(msg, "error", "rate_limit")
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [msg, _result_message(result="nope")]
+    )
+    assert result.aborted_reason == "error"
+    assert "assistant_error=rate_limit" in (result.error or "")
+
+
+def test_a_rejected_rate_limit_event_is_a_quota(monkeypatch, tmp_path):
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_rate_limit_event("rejected"), _result_message(result="nope")],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_the_observed_quota_prose_is_caught_by_the_fallback(monkeypatch, tmp_path):
+    """The one occurrence in the corpus emitted no structured signal we can
+    replay — only this string, in convert-dates/v1_2026-09-01_14-32-09.json."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_result_message(result="You've hit your limit · resets 4pm (Africa/Lagos)")],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def _assistant_text(text):
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    return AssistantMessage(content=[TextBlock(text=text)], model="claude-opus-4")
+
+
+def test_the_observed_quota_prose_is_caught_in_its_real_shape(monkeypatch, tmp_path):
+    """The shape the corpus actually recorded, which the test above does not.
+
+    In convert-dates/v1_2026-09-01_14-32-09.json, ut_convert_dates_012 has
+    `error: null` — `message.result` and `stop_reason` were both empty — and
+    the prose arrives as assistant text, landing in `output.text_response`.
+    Feeding the same string through `result=` exercises a channel that
+    occurrence never populated, so the fallback has to read the response text
+    too or it misses the one case it exists for.
+    """
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [
+            _assistant_text("You've hit your limit \u00b7 resets 4pm (Africa/Lagos)"),
+            _result_message(result=None, stop_reason=None),
+        ],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_an_ordinary_sdk_error_is_still_transient(monkeypatch, tmp_path):
+    """The discriminator. Without this the classifier could call everything a
+    quota and every test above would still pass."""
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [_result_message(result="internal server error")]
+    )
+    assert result.aborted_reason == "error"
+
+
+def test_approaching_the_limit_is_not_hitting_it(monkeypatch, tmp_path):
+    """`allowed_warning` is the CLI warning you are close; only `rejected` is
+    the limit actually refusing work."""
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_rate_limit_event("allowed_warning"), _result_message(result="boom")],
+    )
+    assert result.aborted_reason == "error"
+
+
+def test_the_rate_limit_evidence_reaches_the_error_string(monkeypatch, tmp_path):
+    """Before this, the only trace of a quota was output.text_response."""
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_rate_limit_event("rejected"), _result_message(api_error_status=429)],
+    )
+    assert "rate-limit signals" in (result.error or "")
+    assert "api_error_status=429" in result.error
+    assert "rate_limit_status=rejected" in result.error
+    assert "resets_at=1757260800" in result.error
+
+
+def test_a_quota_is_not_retried(monkeypatch, tmp_path):
+    """Membership in _ALWAYS_RETRYABLE_ABORTS would restore the three-attempt
+    retry against a limit that clears in hours."""
+    from harness.orchestrator import _ALWAYS_RETRYABLE_ABORTS
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    assert QUOTA_ABORT_REASON not in _ALWAYS_RETRYABLE_ABORTS
+
+
+def test_a_quota_does_not_feed_the_abort_storm_breaker():
+    """The breaker is a ratio over transient aborts; a quota is neither
+    transient nor a storm, and counting it there would also skew the ratio."""
+    import run_tests
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    assert QUOTA_ABORT_REASON not in run_tests._TRANSIENT_ABORT_REASONS
+
+
+def test_the_error_string_is_serialized_onto_the_run_entry():
+    """The runs_block serializer is explicit, not asdict — adding the dataclass
+    field alone would persist nothing and no other test would notice."""
+    from harness.runlog import (
+        JudgeResult,
+        SingleRun,
+        ValidatorResult,
+        assemble_test_entry,
+    )
+
+    run = SingleRun(
+        outcome="aborted",
+        aborted_reason="quota_exhausted",
+        error="hit your limit [rate-limit signals: api_error_status=429]",
+        duration_ms=1.0,
+        input_tokens=0,
+        cached_input_tokens=0,
+        output_tokens=0,
+        skill_cost_usd=0.0,
+        output={},
+        validators=ValidatorResult(passed=None, results=[]),
+        judge=JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0),
+    )
+    entry = assemble_test_entry(
+        test_id="ut_x",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        runs=[run],
+        timestamp_for_run_id="2026-09-07_00-00-00",
+    )
+    assert entry["runs"][0]["error"] == run.error
+
+
+def test_the_quota_markers_are_matched_case_insensitively(monkeypatch, tmp_path):
+    """`.lower()` in the fallback was unverified: the one corpus fixture is
+    already lowercase, so deleting the call left the suite green."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_result_message(result="You've HIT YOUR LIMIT — resets 4pm")],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_the_usage_limit_marker_is_live_too(monkeypatch, tmp_path):
+    """Both markers are load-bearing: cutting the tuple to just
+    `("hit your limit",)` left the suite green."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch, tmp_path, [_result_message(result="monthly usage limit reached")]
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_an_anthropic_429_body_is_not_read_as_a_subscription_quota(
+    monkeypatch, tmp_path
+):
+    """`"rate limit"` was removed from the markers because it matches
+    Anthropic's own 429 body, which in api_key mode is a per-minute org limit.
+    Re-adding it would make this red."""
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [_result_message(result="429 rate limit exceeded, please retry")],
+    )
+    assert result.aborted_reason == "error"

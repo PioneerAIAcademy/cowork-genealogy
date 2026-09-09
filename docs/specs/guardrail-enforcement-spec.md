@@ -148,14 +148,18 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
-| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm) | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
+| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
+| §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
 | §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
 | §5 | `stop_criteria` shape | engine (validator) — so Cowork, hosted, both harnesses | `stop_criteria` written as prose, a number or an array instead of the seven-key object | **enforcing** (since 2026-08-23; 48 corpus write ops, all of them on the bypassed path — 0 of 241 writes made by runs that invoked the owning skill) |
-| §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload) |
+| §5 | Plan-item non-emptiness | engine (validator) — so Cowork, hosted, both harnesses | a `plans[]` entry whose `items` is `[]` or not an array. `research.schema.json` has always said `type: array, minItems: 1`; `validateResearch` required only the key, so an empty plan passed the runtime enforcer and failed nothing but the eval harness's jsonschema pass | **enforcing** (since 2026-09-01; measured at 9a0eb98e5, **8 of 295** `plans` append ops in the committed corpus send `items: []`, and each is the *second* half of a retry loop — the shell was sent with `items` absent, refused for a missing field, then re-sent with `[]`. The two calls are observed; the refusal and acceptance between them are deduced, since run logs record no tool responses) |
+| §5 | Misrouted plan items name their cause | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` **append** op writing into a plan other than the one its own call created, leaving that plan empty — whether the other plan pre-existed (the hard-coded-`pl_001` misroute) or was created by the same call (a forgotten sibling, which needs the opposite fix and gets a different sentence). Adds **no** refusal — the call was already refused by the row above, or by `items` being required — it replaces a message naming the symptom with one naming the cause, because the previous message drove the model to `"items": []` and that then validated | **enforcing** (since 2026-09-01; fires on **6** corpus `plans` append ops, measured at 9a0eb98e5 — both halves of the retry loop in each of three unit runs, where nine item ops carry a hard-coded `pl_001`, a **completed** plan for another question, while the plan the same call created ends empty. That is exactly the corruption this arm exists to stop, committed to the corpus, so it is the arm's strongest evidence rather than a gap. It is a derivable **floor**, not a total: the assigned `pl_` id is only recoverable where a scenario fixture seeds the plan ids. The arm still adds no refusal — every call it catches is one the row above or the required-field check already refused — so it changes the message, not the outcome — but no check observes whether the new message actually breaks the loop, and none can outside a paid eval run) |
+| n/a | Malformed element reported, not thrown | engine (validator) — so Cowork, hosted, both harnesses, and `validate_research_schema` | a `null` or primitive element in any document array, and a primitive in a required-object field. `checkRequired` tests `field in obj` and `in` THROWS on null and on every primitive, so one stray element took `validateParsed` down with `TypeError: Cannot use 'in' operator` — and because every writer tool validates the whole document, every one of them failed with a message naming no field and no fix, while the read-only reporter crashed instead of saying what to repair. Guarded at the 20 array loops, at **four** further sites outside them that a loop-by-loop patch missed (three dereferences in `person-id-refs.ts`, reached from the cross-file pass, and the cross-file `sources` ref), and at **four** required-object fields — `exhaustive_declaration`, `external_site` and `citation_detail`, whose `typeof X === "object" && X !== null` opening skipped a primitive silently, plus `researcher_profile`, whose `typeof rp !== "object"` opening caught a string and missed `[]`. The four missed cross-file sites are why the tests enumerate every section rather than sampling one. **Arrays are treated differently on the two halves, deliberately:** an array ELEMENT is left alone (`in` does not throw on one, so re-shaping its messages would be an unrelated change riding on a crash fix), while an array in a required-object FIELD is refused, and refused once rather than once per missing key | **enforcing** (since 2026-09-01; reachable by hand edit or a truncated write, and the one persisted itemless plan in the committed corpus arrived exactly that way, from a run that made zero MCP tool calls) |
+| §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload) |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
 > 2026-08-15: in Cowork with a connected folder the lockdown never fires, because
@@ -172,8 +176,9 @@ depends on another shipping first.
 > while re-implementing the *rule*, so the planes looked single-sourced and were
 > not — the copy had no out-of-lane arm at all, and a dedicated agent writing
 > outside its section set was denied in Cowork and allowed in e2e. Since
-> 2026-08-23 the harness calls the shipped `owner_denied` itself. The unit plane
-> still has neither arm.
+> 2026-08-23 the harness calls the shipped `owner_denied` itself, and since
+> 2026-09-02 the unit plane calls it too (`skill_runner.py`'s `pretool_hook`),
+> with `test_no_out_of_lane_section_writes` gating on it.
 
 ### The ownership declaration: promoted out of Python, still not a hard deny
 
@@ -246,7 +251,7 @@ row says:
 
 | Section | Observed | Row as promoted |
 |---|---|---|
-| `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | `agent:gps-mentor`, **no enforcement plane**. The harness check keys on the calling *skill's* name and cannot see an agent, so claiming a plane would deny the owner's own writes. The loader raises rather than silently dropping an agent caller |
+| `evaluations` | 230 ops, 114/154 runs; **32 of 34 attributable writes are the `gps-mentor` agent** | `agent:gps-mentor`, **no enforcement plane in the shipped hook** — `evaluations` is in no owner map. The `test_ownership_table` harness check keys on the calling *skill's* name and cannot see an agent, but since 2026-09-02 `test_no_out_of_lane_section_writes` records the hook's agent-keyed verdict on the unit plane, so a write from an agent whose lane excludes `evaluations` IS denied there, so claiming a plane would deny the owner's own writes. The loader raises rather than silently dropping an agent caller |
 | `localities` | 73 ops, 71 to `locality-guide` | `skill:locality-guide`, **newly enforced**. The paper row was always correct and had never once been evaluated — the check iterated `REQUIRED_SECTIONS`, which the section is not in |
 | `known_holdings` | **zero successful writes corpus-wide** | `owner: null` with a reason. Writable through `research_append`, solicited by nothing; the paper owners the prose table named have never written it, and repeating them here would read as coverage |
 | `researcher_profile` | **0 writes, non-empty in 154/154 sidecars** — every fixture seeds it | `owner: null` with a reason. **No tool can write it**; its only route is a raw `Write` the lockdown denies |
@@ -370,6 +375,32 @@ own graduation gate reads "only
 if the rate is low enough that a fail is a signal and not a wall" — zero is not
 "low enough", it is *nobody has seen this detector fire*. Graduating it promotes
 an unexercised predicate to a hard failure.
+
+**Every column above counts firings, and no column could count a miss.** The
+replay is *aimed at* the false-DENY direction — would this check block work that
+was fine — but it does not measure that either, and the distinction matters
+because the two halves are argued from it. Twenty lines above, the tree-side arm
+records the reason: "the gate that would tell those apart is the thing being
+measured, not an input to it." That applies to both directions. In a replay the
+check is its own ground truth: a write it does not recognise as a violation
+is indistinguishable from a write that is correct, and nothing in the committed
+corpus labels violations independently of the detector under test. The
+population leans the same way, since committed run logs are converged states and
+re-run failures are absent, so every rate on this page is a floor.
+
+So this table can establish that a candidate does not over-fire on real work. It
+cannot establish that the candidate catches the class it names — that is
+established the way any guard is, by breaking the thing in several shapes and
+watching it fire (CLAUDE.md, "A new lint must be proven to fail"). A graduation
+argument needs both halves, and only one of them lives here.
+
+**This is in tension with ADR-0011, and the tension is named rather than
+resolved here.** ADR-0011 sets the graduation bar as "replay the gate over the
+committed corpus, then read every refusal it produces and confirm each is a true
+positive", and says in terms that "that is the whole test". This section says
+that is one half. Nothing checks the two against each other, and a spec does not
+overrule an ADR: read the sentence above as an argument for amending ADR-0011,
+not as an amendment. Whoever owns that ADR decides which stands.
 
 **What each check still owes, on two axes.** The predicates are not the open
 question: all three have firing controls in
@@ -757,6 +788,133 @@ their own project is explicitly out of scope for this layer. The refusal message
 says so outright rather than leaving the researcher to guess. That route does
 not exist on the hosted path, where the project lives in a sandbox — see the
 ADR's two stated limits.
+
+### Blocking conflicts before completion
+
+`project.status` may not be set to `"completed"` while any `conflicts[]` entry is
+`unresolved` **and** any of three arms holds:
+
+1. `blocks_question_ids` is non-empty — the declared link.
+2. `identity_question` is a non-empty string — the declared identity link. The
+   schema types this field as the question's *text* (`string | null`), never a
+   boolean, so an early `=== true` reading was unsatisfiable dead code.
+3. Some member of `competing_assertion_ids` is an assertion whose
+   `extracted_for_question_ids` is non-empty — the **derived** link.
+
+`resolved` and `moot` both settle a conflict, and both now carry a precondition:
+a `resolved` conflict owes the three analyses, and a `moot` one owes a
+`resolution_rationale` saying why it no longer bears on the question. Both are
+read trimmed and type-checked: a whitespace-only string satisfies the field and
+states nothing, which on an LLM-facing tool is a real shape rather than a
+hypothetical one. `moot` had no precondition at all until this gate widened —
+it was the one settling write that asserted nothing, so a bare
+`{status: "moot"}` cleared the gate. Implemented as
+`conflictBlocksCompletion` in `packages/engine/mcp-server/src/utils/question-state.ts`,
+called from both arms of the gate in
+`packages/engine/mcp-server/src/tools/research-append.ts`; specified with the
+other state-coupling invariants in `docs/specs/research-append-tool-spec.md` §5.
+
+**Why arm 3 exists.** The two declared fields are not reliably written. Measured
+at `f459af71b` with `packages/engine/mcp-server/dev/replay_completion_gate.py`,
+over the 161 committed e2e final states: 75 conflicts, and 42 of them carry
+neither declared field. So the two-arm gate saw 5 of the 14 unresolved conflicts
+held by completed runs, and 7 runs reached `completed` over a conflict it could
+not see. Arm 3 sees all 14. A conflict
+competing over an assertion a question was built on bears on that question
+whether or not the agent wrote the link down — the correlation is a property of
+the evidence, not of a bookkeeping field.
+
+**Three properties are load-bearing and must survive any refactor.**
+
+- **The union of pre-call and live state.** The gate refuses on either. Read live
+  alone, one batch could settle the blocking conflict and complete in the same
+  call; read from the snapshot alone, it would miss a conflict the batch newly
+  introduces. Settling a conflict is `conflict-resolution`'s step and not the
+  completing writer's own prior step, which is the ADR-0011 condition that puts
+  it on the snapshot side.
+- **Arm 3 is not narrowed to still-open questions.** A conflict bearing on an
+  already-concluded question still means that conclusion rests on unresolved
+  evidence. Narrowing it halves the coverage — 7 of 14 conflicts in 7 runs
+  against 14 in 11 — and every existing unit test passes either way, so nothing
+  but this sentence catches the narrowing.
+- **Arm 3 does not require the question id to exist in `questions[]`.** Nothing
+  reference-checks `extracted_for_question_ids`, so a dangling id is possible;
+  none exists in the corpus, and blocking on one is the safer direction.
+
+**The satisfying shape, including the case that has no winner.** For a conflict
+that can be settled, `conflict-resolution` writes `status: "resolved"` with
+`independence_analysis`, `weighing_analysis` and `resolution_rationale`, or
+`moot` with a rationale. For a conflict the researcher weighed and honestly
+**could not** settle, neither reads true as usually stated — so the shape is
+`resolved` with all three analyses, `resolution_rationale` saying why it cannot
+be settled and what would settle it, and `preferred_assertion_id` left **null**,
+which `conflictInvariants` permits. That is a deferral recorded as a finding, per
+`gps-research-flow.md`'s "a conflict that can't be resolved yet is written down
+as a finding, with what would resolve it"; it is not `moot`, which asserts the
+conflict no longer matters. The gate's refusal message states this shape, because
+without it a deferring researcher has no writable route to `completed` and no
+override tier exists. Note that the corpus's 52 resolved conflicts are counted
+over resolved conflicts generally and are **not** evidence that any refused run
+could have satisfied the gate.
+
+**The refusal measurement, and its inspection.** ADR-0011 limit 2's bar is
+inspection, not a rate: replay the gate over the corpus and read every refusal.
+Measured at `f459af71b` with that same script — which replays four readings side
+by side, so a narrowing can be compared against what shipped, and prints the
+per-refusal inspection rather than only a count — the widened predicate refuses
+**11 of the 128 completed runs** (5 of them the declared arms already refuse, 6
+new), holding **14** unresolved conflicts between them, **7** of which only the
+derived arm sees.
+
+What settles each refusal is not the tier guidance alone but a stricter shipped
+invariant: `conflictedSourceInvariants` refuses any tier other than `not_proved`
+or `disproved` when a non-resolved conflict disputes a source the summary relies
+on, because correlation presupposes identity. Read against it — per summary, on
+the summary's own `supporting_assertion_ids`, **not** scoped by question, which
+is how the invariant itself reads:
+
+- **All 7 conflicts only the derived arm sees are already invalid** — every one
+  of them sits in a document whose summary claims `probable` or `proved` on a
+  source the conflict disputes. So nothing the widening newly refuses is a
+  correct state this gate denies. Two of them dispute a fact that is not the
+  concluded one (a child's birth month; a one-year birth-year variance on a
+  non-subject) and read at first as false denies on the tier guidance alone; the
+  shared-source reading is what makes them true positives.
+- Across all 14, **13 of 14**. The one exception is `hannah-earnest-children`
+  c_001, a **declared** conflict the gate already refuses today, so this
+  predicate does not change its outcome — and its run is already invalid anyway
+  through c_003/c_004, which the derived arm catches.
+- At run level, **11 of 11** refused runs hold at least one already-invalid
+  conflict.
+
+An earlier draft of this paragraph asserted 14 of 14 from a project-wide reading
+the cited script did not perform, and a first correction scoped the check by
+question and under-counted to 12. Neither number survived re-measurement; the
+script now models the shipped invariant and prints what it found, per
+`CLAUDE.md` § "A measurement that disagrees with belief is re-measured, not
+reworded".
+
+**The reachable false deny, which the corpus does not contain.** A project whose
+only honest tier is `not_proved` over a genuinely unresolvable conflict would
+clear `conflictedSourceInvariants` and still be refused completion here. No such
+document exists in the corpus — every refused run tiers above `not_proved` — so
+there is nothing to inspect, but it is the shape to watch, and it is the
+population of the open `preferred_assertion_id`-on-a-resolve adjudication.
+
+**Every figure here is the eval corpus, not production.** There is no production
+telemetry (`docs/architecture.md` §9.4), so none of these numbers says whether
+the gate is right for a real researcher, and the gate is not calibrated.
+
+**Four other readings of "a conflict blocks a question" exist and this
+subsection governs none of them.** `questionResolvedInvariants` and the
+disputed-source tier rule both read a shared `source_id` via `disputedSourceIds`
+(which counts `moot` as disputing, unlike this gate); `question-selection`'s
+prioritization reads `blocks_question_ids` only; and the `proof-conclusion` agent
+queries conflicts by `blocks_question_ids` only, which is the one with a
+behavioural consequence — it is the writer of the tier, and it cannot see a
+derived blocker before writing a tier the disputed-source rule will refuse.
+`research_query`'s `conflicts.questionId` filter is narrower than this gate for
+the same reason and is an advertised contract.
 
 ### Exhaustiveness before a proved tier
 
@@ -1412,40 +1570,158 @@ this section before reopening one.
   `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
   bundle; the adapter and report live in `eval/harness/e2e/`
   (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
-  **Three of `find_unguarded_protected_writes`' owner arms are blind over a
-  bundle, two of them completely — but only for bundles submitted after each
-  arm's split date, and the report decides that per bundle rather than
-  globally.** A bundle carries only the main session's `{sid}.jsonl`, never the
-  `subagents/agent-*.jsonl` beside it: `feedback.py` reads `{sid}.jsonl` and its
-  fallback loop skips anything `is_dir`, and `readSessionLog` does a
-  non-recursive `readdir`. Two arms have since moved their write inside an
-  agent — `proof_summaries` into `proof-conclusion` on 2026-08-21 (`73b3d98e`) and
-  `questions.exhaustive_declaration` into `research-exhaustiveness` on
-  2026-08-23 (`c78efb0b`), enforced by `OWNED_SECTIONS` and
-  `OWNED_DECLARATIONS` in `plugin/hooks/guard_project_files.py`.
+  **Two of `find_unguarded_protected_writes`' owner arms move their write
+  inside an agent, and whether that write is visible is decided per bundle and
+  per agent, never globally.** `proof_summaries` moved into `proof-conclusion`
+  on 2026-08-21 (`73b3d98e`) and `questions.exhaustive_declaration` into
+  `research-exhaustiveness` on 2026-08-23 (`c78efb0b`), enforced by
+  `OWNED_SECTIONS` and `OWNED_DECLARATIONS` in
+  `plugin/hooks/guard_project_files.py`.
 
-  **The date cuts both ways, and getting this wrong in either direction
-  falsifies the counts this scan reports.** For a bundle submitted BEFORE an
-  arm's split, that write came from the MAIN thread, was un-denied, and is in
-  the transcript — the count is a real measurement, and every bundle collected so
-  far (2026-08-05 onward; the newest is 2026-08-20) is on that side of both
-  dates. For a bundle submitted on or after, the write may
-  have happened inside the agent (invisible) and a main-thread attempt would be
-  denied and recorded as `is_error: true`, which the detector skips — so a 0
-  there is not evidence. "May", not "was": a deploy does not ship the sandbox
-  image (`docs/architecture.md` §9.4 point 2), so a post-split bundle can still
-  have run a pre-split plugin. The label is therefore **"plugin era unknown"**,
-  never a clean cutoff, and an undated bundle takes the same label rather than
-  being assumed live.
+  A bundle used to carry only the main session's `{sid}.jsonl`, so an
+  agent-owned write was in no file the scan could read while a main-thread
+  attempt was hook-denied and recorded `is_error: true` — which the detector
+  skips. Both routes closed, and those arms returned 0 by construction. **Both
+  producers now bundle the subagent transcripts** (`_feedback/subagents/`, and
+  `_feedback/sessions/<sid>/` for a session other than the newest), each with
+  the `agent-*.meta.json` that names the spawning `Agent` call.
 
-  The `tree_edit`/`tree_correct` arms are blind only to the agent route
-  regardless of date: the hook covers `research_append` alone, so a main-thread
-  `primary: true` or `ParentChild`/`Couple` write still fires. Recovering the
-  agent route means bundling the subagent transcripts, a change to
-  `apps/server/app/feedback.py`. Until that lands, two arms return 0
-  unconditionally for a post-split bundle, so no report can distinguish "no
-  bypasses" from "cannot see bypasses" — a gap carried in the `nothing-checks`
-  register rather than here.
+  **The consumer SPLICES, and that is the whole risk in reading them.** The
+  summons is a `Skill` call in the parent stream and the write happens in the
+  child's, so `adapt_bundle` inserts a child's calls at the index of the
+  `Agent`/`Task` call its meta names. Appending them instead would put the
+  write outside its own skill's `window` entries and report a violation that
+  never happened — a fabricated non-zero, worse than a known zero because it is
+  the number people act on. A transcript that cannot be anchored is excluded
+  and named (`unanchored_subagents`), never appended, and each session group is
+  scanned on its own so one session's summons cannot vouch for another's write.
+  Nothing is filtered by `agentType`: a silent fallback to a general-purpose
+  stand-in that binds none of the declared agent's tools is exactly the
+  transcript an allow-list of known agent names would drop.
+
+  **An arm reads `live` two ways, and getting either wrong falsifies the counts
+  this scan reports.** Either the bundle carries an anchored transcript owned by
+  **that** agent — matched per agent, since a bundle can carry one agent's
+  transcript and not another's — or it predates that arm's split, in which case
+  the write came from the main thread, was un-denied, and is in the parent
+  transcript. **Both routes are overridden by an exclusion of that same agent's
+  own transcript** (`excluded_agents`): a bundle can carry two of an agent's
+  transcripts and have only one of them anchor, and reading the arm `live` off
+  the one that anchored reports a 0 resting on the one that did not. Every bundle collected before this landed (2026-08-05 onward;
+  newest 2026-08-20) is on the second side of both dates. Otherwise the arm is
+  `unknown`: the write may have happened inside an agent whose transcript is
+  not here. "May", not "was" — a deploy does not ship the sandbox image
+  (`docs/architecture.md` §9.4 point 2), so a post-split bundle can still have
+  run a pre-split plugin. An undated bundle takes the same label rather than
+  being assumed live, and **any** bundle whose `feedback.json` names a
+  `dropped_transcripts` entry holds every arm at `unknown` — a count read from
+  what is present cannot account for a file the producer had to leave out.
+
+  **The consumer's own exclusions carry the same weight as the producer's, and
+  for the same reason.** A transcript can reach the scan and still not be
+  readable by it: unanchorable (no meta, or a `toolUseId` matching no `Agent`
+  block, which is what a parent trimmed from the head produces), undecodable,
+  or lost with its whole session group when that group's parent fails to
+  decode. Where the excluded transcript's `agentType` is known, that agent's
+  arm alone goes `unknown`, so an excluded `image-reader` transcript does not
+  throw away a real `proof-conclusion` measurement. Where it is not — an
+  unreadable meta, or a dropped group — every arm goes `unknown`, because no
+  single one can be blamed. The two `unknown`s send a reader to different
+  places, so the per-bundle row names the exclusion rather than leaving the
+  era tag to imply the file was never there.
+
+  The `tree_edit`/`tree_correct` arms were blind only to the agent route: the
+  hook covers `research_append` alone, so a main-thread `primary: true` or
+  `ParentChild`/`Couple` write always fired. A bundle carrying subagent
+  transcripts closes that route too.
+
+  One limit stays, and it is measured rather than fixed: splicing puts a
+  subagent's own calls inside the window, so a subagent making more than
+  `window` calls before its protected write pushes the parent's `Skill` call
+  back out. The e2e harness already carries subagent calls in one flat list
+  (its hook stamps `agent_id`/`agent_type` onto each), so changing the window
+  for bundles alone would make the two corpora incomparable. Anchoring the window at the spawning call rather than the write
+  is a change to `skill_invocation.py` and belongs to whichever measurement
+  shows it is needed.
+
+- **Agent postconditions — "this agent must have made this tool call before it
+  returns."** Rejected 2026-09-07 on measurement, not on cost. The mechanism
+  exists and would work: `SubagentStop` with `decision: "block"`, fed by a
+  `PostToolUse` ledger keyed on `agent_id` (absent on the main thread, present
+  inside a subagent), with `tool_input` in the payload so a parameter condition
+  is expressible. It was proposed for two cases and neither survived contact
+  with the corpus.
+
+  **Measured per agent instance**, over the 22 committed e2e runs that carry
+  agent attribution (it shipped in August; before that the rate is 0%, so older
+  runs cannot answer this at all) — measured at `4fc0e7445`, and every figure
+  below moves on the next attributed run:
+
+  | Proposed postcondition | Instances | Violations | True rate could still be |
+  |---|---:|---:|---|
+  | `gps-mentor` must write an `evaluations[]` entry before returning | 31 | **0** | up to ~9.7% |
+  | `image-reader` must call `image_transcribe` before returning | 123 | **0** | up to ~2.4% |
+
+  **This is "not observed", not "does not happen", and the two cases are not
+  equally bounded.** At zero events the 95% upper bound is about 3/n, so the
+  `image-reader` result is tight and the `gps-mentor` one is not — a real 5%
+  verdict-loss rate is entirely consistent with 0 of 31. Two of five agents were
+  tested, on 22 of 161 runs, in the harness rather than production, over
+  committed logs that are converged states. Treat the table as a floor.
+
+  **A fifth item belongs in that list, and it cuts for the postcondition rather
+  than against it.** The same 22 attributed runs carry **12 `general-purpose`
+  subagent instances, 5 of which call a writer tool** — the documented fallback
+  shape, where a namespaced delegation fails to resolve and the model retries as
+  a general-purpose stand-in that binds none of the declared `tools:`. Those 12
+  sit outside both denominators above, because a postcondition keyed on
+  `agent_type` cannot name an agent type the delegation never became. That is
+  precisely why such a postcondition would be worth having; it is also why "0 of
+  31" and "0 of 123" do not cover the population the rule is aimed at.
+
+  The rejection does not rest on the rate. It rests on three things that hold
+  whatever the rate turns out to be: a lost verdict is **caught downstream** by
+  the completion gate as a visible stall rather than silent corruption; the
+  sample **grows on its own** now that attribution has shipped, so no monitoring
+  task is needed to improve it; and the alternative is a plane that fails open
+  and costs a hook invocation per tool call, bought against an unobserved
+  failure. **About 65** more attributed runs bring the `gps-mentor` bound down to
+  the `image-reader` level with nobody doing anything — from this page's own
+  figures: at 31 and 22 instances per run, matching `image-reader`'s 2.4% bound
+  needs n=123, and +30 reaches only 4.1%. Either way nobody has to do anything;
+  the arithmetic is stated because "roughly 30" is one of the three legs this
+  section rejects a detector on.
+
+  **The weaker instrument said otherwise, and was wrong.** Comparing invocation
+  counts to final-state `evaluations[]` counts across the whole corpus suggests
+  18 lost verdicts in 188 invocations (the 18 does not reproduce against 183), and
+  22 runs where `image-reader` ran with
+  no `image_transcribe` anywhere. Both dissolve under per-instance attribution:
+  the first counts re-invocations on one target as losses, and the second is
+  entirely runs from before attribution existed. Cite the per-instance numbers;
+  the count-difference method measures the corpus's age.
+
+  Re-derive by grouping each run log's `tool_calls` on `(agent_id, agent_type)`
+  and asking whether the required tool appears in that instance's calls — skip
+  any run where no call carries an `agent_id`.
+
+  **What would reopen this:** a violation observed per-instance on an attributed
+  run. Not a count difference, and not a `SubagentStop` capability probe — the
+  probe answers whether it *could* be built, which is not the question this
+  section turns on. Stated as a limit rather than as settled: **no probe was
+  run**, and this page names no environment the hook would bind in. In the repo
+  whose ADR-0005 exists because a live probe contradicted upstream threads, that
+  is an assumption, and `SubagentStop` firing only for Task-spawned agents
+  (recorded above) is exactly the kind of thing a probe would settle. No
+  detector was added: on this evidence it would be a row that never fires, and
+  "a zero fire rate is not a licence to graduate" cuts against creating one as
+  much as against promoting one.
+
+  The one case that genuinely has no reachable plane is unchanged and is
+  narrower than the postcondition framing suggested: a **read** performed inside
+  an agent leaves no trace in the project documents, so only run-level
+  attribution sees it, and that is eval-only. It reaches production for nothing
+  today because nothing needs it.
 
 ## 10. Residual risks
 

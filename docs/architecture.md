@@ -1334,7 +1334,7 @@ outside this list and outside every check.)*
 | 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
 | 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
-| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches |
+| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
@@ -1607,8 +1607,8 @@ Other environment differences that bite:
   register the server over stdio and are **not** capped (committed e2e run
   logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
   past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
-  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
-  spec's Timeout budget section for why it is a range, not a point), but
+  budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
+  60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
   budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
   above the ceiling too. **No automated check reaches this** — neither harness
@@ -1730,7 +1730,11 @@ lead you to them:**
   agreement **offline** rather than inferring it from expensive live runs. Three
   axes: `verdict` (genealogical), `compliance` (guardrail), and
   `outcome` (the gate) — so a run whose answer is right but whose audit trail was
-  not earned **fails**.
+  not earned **fails**. The tier is sampled on a **fixed four-fixture panel**,
+  filed one issue per run by `/file-e2e-panel` (on demand, not on a cadence) and
+  read by `make e2e-panel`: the fixtures are held constant because fixture difficulty
+  varies enough that a changing mix, not a changing system, would explain most of
+  any month-to-month move.
 
 ### 9.4 What nothing checks
 
@@ -1934,6 +1938,7 @@ something already decided. The live register is the board:
 
 ```sh
 gh issue list --state open --label needs-decision   # blocked on one answer from the lead
+gh issue list --state open --label high-priority    # take these first in your lane (soft ordering; /fill-ready owns it)
 ```
 
 That label — not `senior`, which is work that stays hard after every question is
