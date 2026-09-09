@@ -59,6 +59,7 @@ the two who are not are listed under "Does not post standup" below.
 | pascal | Pascal Okezie | `Gennecis` | developer | **senior** |
 | marc | Marc Mangum | `MMagnum` | developer | |
 | richard | Richard | `chesworthrm` | developer | **senior** |
+| praise | Praise Enato | `Praise-Enato` | developer | **senior** |
 
 Two handles are not guessable from the name: **Pascal Okezie is `Gennecis`**,
 and **Precious Onotu is `clack391`**. Attributing their PRs by guessing at the
@@ -86,6 +87,20 @@ that turns out wrong, that is a finding about the doctrine, not just about the
 author.
 
 ## Known identity quirks
+
+- **Praise** (`Praise-Enato`) works on **both** this team and the book-to-tree
+  team. His name in a standup is therefore not evidence of which team you are
+  reading — added 2026-09-08 by the lead. This collides with SKILL.md §0, which
+  names "Praise" as a stop signal for the book-to-tree team; that rule only fires
+  when the update set *is* Wilson, Nnanna and Praise, so check the other names
+  before stopping.
+- **Praise is marked senior here but is not yet on the `senior-developers` GitHub
+  team** (checked 2026-09-08: the team is DallanQ, chesworthrm, clack391,
+  promise-emmanuel, T-FEH, Gennecis, jud-sdev). Until he is added, the column is
+  a statement of intent, not of review authority: CODEOWNERS will keep asking for
+  a senior review he has already given, exactly as the Promise note below warns,
+  and issue #1915 (`developer`+`senior`) is already assigned to him. He is
+  assignable (`GET /repos/:owner/:repo/assignees/Praise-Enato` → 204).
 
 - **Ernest** commits as `ernestjacob789@gmail.com` while his GitHub account is
   `aghadiayeamayanvboernest`. Any roll call derived from git activity rather than
