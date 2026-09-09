@@ -420,10 +420,33 @@ def test_research_query_called_for_coverage(tool_calls, test):
 # skips when it does not hold, so a test written next year is covered
 # without anyone remembering to add a tag (the failure mode #1757 records).
 
-# The fact_types materialize_facts refuses outright — a persona carrying
-# only these has nothing to write onto a person. Mirrors SKIP_TYPES in
+# The fact_types materialize_facts refuses to write as facts of the persona
+# they sit on — a persona carrying only these has nothing to write onto its own
+# person. Mirrors SKIP_TYPES in
 # packages/engine/mcp-server/src/tools/materialize-facts.ts.
-_UNMATERIALIZABLE = frozenset({"relationship", "marriage", "age"})
+#
+# Scoped to the persona deliberately. The tool's named-party arm DOES mint from
+# a relationship/marriage assertion, but it mints the OTHER party the assertion
+# names, as a sourced name — never a fact, and never onto this persona. So the
+# demand this set stands down is still absent.
+_UNMATERIALIZABLE = frozenset(
+    {"relationship", "marriage", "age", "parentage", "parentchild"}
+)
+
+
+def _ft(assertion: dict) -> str:
+    """An assertion's `fact_type`, case-folded.
+
+    `fact_type` is an OPEN enum with no pattern and models really do emit
+    PascalCase for it (`Marriage` and `Relationship` appear 27 and 64 times in
+    the committed `final-research` snapshots). The engine folds case for the
+    same reason (`isRelationshipEstablishing` in
+    packages/engine/mcp-server/src/utils/source-ref-resolver.ts); a validator
+    that does not fold FAILS a correct run, and a failing validator
+    short-circuits the judge and discards the dimension scores, so it burns a
+    paid run rather than merely mis-scoring one.
+    """
+    return str(assertion.get("fact_type") or "").strip().lower()
 
 # Fact types that bear on a SECOND party rather than asserting the persona's own
 # identity. A `relationship` assertion on the groom persona ("child of Thomas")
@@ -431,7 +454,13 @@ _UNMATERIALIZABLE = frozenset({"relationship", "marriage", "age"})
 # deliberately different people and `same_person(groom, father)` is a comparison
 # SKILL.md never asks for. Excluding them costs no coverage: the same persona's
 # `name`/`sex` assertions are still in scope and still carry the demand.
-_NON_IDENTITY_FACT_TYPES = frozenset({"relationship", "marriage"})
+# Kept in step with RELATIONSHIP_ESTABLISHING_TYPES on the engine side: a
+# `parentage`/`parentchild` assertion bears on a second party exactly as a
+# `relationship` one does, so scoring it against the persona's own identity is
+# the same comparison SKILL.md never asks for.
+_NON_IDENTITY_FACT_TYPES = frozenset(
+    {"relationship", "marriage", "parentage", "parentchild"}
+)
 
 
 def _new_person_evidence(before: dict, after: dict) -> list[dict]:
@@ -609,7 +638,7 @@ def test_same_person_called_when_persona_meets_existing_candidate(
         for e in _new_person_evidence(before, after)
         if (assertions.get(e.get("assertion_id")) or {}).get("record_persona_id")
         and e.get("person_id") in existing_persons
-        and (assertions.get(e.get("assertion_id")) or {}).get("fact_type")
+        and _ft(assertions.get(e.get("assertion_id")) or {})
         not in _NON_IDENTITY_FACT_TYPES
         and not _results_ref_missing(after, assertions.get(e.get("assertion_id")) or {})
     ]
@@ -775,7 +804,7 @@ def test_matched_persona_is_materialized_onto_its_person(
     for e in _new_person_evidence(before, after):
         if e.get("person_id") not in existing_persons:
             continue
-        fact_type = (assertions.get(e.get("assertion_id")) or {}).get("fact_type")
+        fact_type = _ft(assertions.get(e.get("assertion_id")) or {})
         if fact_type and fact_type not in _UNMATERIALIZABLE:
             owed.add(e.get("person_id"))
     if not owed:
@@ -792,6 +821,12 @@ def test_matched_persona_is_materialized_onto_its_person(
     named = set()
     for args in materialize_args:
         for op in _materialize_ops(args):
+            # A named-party op (`assertionId`) writes a sourced NAME and never a
+            # fact, so it cannot discharge a demand whose message is "the pe_
+            # link landed and the facts did not". Counting it would let this
+            # validator pass on exactly the state it exists to catch.
+            if op.get("assertionId"):
+                continue
             if op.get("personId"):
                 named.add(op["personId"])
 
@@ -806,7 +841,9 @@ def test_matched_persona_is_materialized_onto_its_person(
     )
 
 
-def test_check_warnings_runs_after_a_write(before_state, after_state, skills_invoked, test):
+def test_check_warnings_runs_after_a_write(
+    before_state, after_state, skills_invoked, tool_calls, test
+):
     """SKILL.md §8: "After creating links and any stub persons, invoke
     `check-warnings` on the affected persons to catch genealogical
     impossibilities (married before 12, died after 120, child born after a
@@ -851,16 +888,28 @@ def test_check_warnings_runs_after_a_write(before_state, after_state, skills_inv
     148s/13.2 vs 209s/19.1), so they finished early without the step rather
     than running out of room. Widen the tag once compliance is consistent.
 
-    **What this does NOT assert.** That the impossibility check actually ran.
-    No test in either directory declares a `person-warnings-*` mcp_fixture (13
-    exist under `eval/fixtures/mcp/`), so `check-warnings` reaches
-    `person_warnings`, finds no fixture, and reports the tool unavailable —
-    which is what `ut_person_evidence_027` did on `v1_2026-08-24_18-17-08`
-    ("the offline impossibility check cannot run"). This assertion therefore
-    covers the delegation, not its result. #1657's docstring states the
-    fixture gap was "now fixed alongside this validator"; it was not, on
-    either side. Referencing a fixture from a test is what would close it,
-    and that edit flips the run-log snapshot.
+    **Either route satisfies it, and that is the point.** Since 2026-09-02 the
+    person-evidence AGENT calls `person_warnings` itself rather than the routing
+    skill invoking `check-warnings`: `/research` may spawn a paired agent
+    directly (ADR-0011, the route is free), so a step parked in the router is
+    guaranteed by nothing. An assertion keyed on `skills_invoked` alone would
+    therefore fail every compliant agent run. It accepts the skill invocation
+    too, because that is what the monolithic skill did and what the other
+    tree-writing skill still does.
+
+    **What this does NOT assert.** That the impossibility check actually
+    RESOLVED. No test in either directory declares a `person-warnings-*`
+    mcp_fixture (13 exist under `eval/fixtures/mcp/`), so the call finds no
+    fixture and reports the tool unavailable — which is what
+    `ut_person_evidence_027` did on `v1_2026-08-24_18-17-08` ("the offline
+    impossibility check cannot run"). This covers that the check was
+    ATTEMPTED, not its result. #1657's docstring states the fixture gap was
+    "now fixed alongside this validator"; it was not, on either side.
+    Referencing a fixture from a test is what would close it, and that edit
+    flips the run-log snapshot — so the cheapest moment to do it is a PR that
+    is already re-running the suite for another reason. This PR is one; it was
+    left undone deliberately rather than bundled, because it changes what four
+    tests exercise and deserves its own justification.
     """
     if "check-warnings-required" not in test.get("tags", []):
         pytest.skip("not tagged check-warnings-required")
@@ -883,9 +932,16 @@ def test_check_warnings_runs_after_a_write(before_state, after_state, skills_inv
         what.append(f"{len(_new_person_evidence(before, after))} new pe_ entr(ies)")
     if minted:
         what.append(f"minted {sorted(minted)}")
-    assert "check-warnings" in (skills_invoked or []), (
-        f"wrote to the project ({'; '.join(what)}) but never invoked "
-        f"check-warnings — SKILL.md §8 requires it after creating links and "
-        f"any stub persons, to catch impossibilities the writer tools do not "
-        f"check. skills_invoked={list(skills_invoked or [])}"
+    called_tool = any(
+        str(c.get("tool") or "").split("__")[-1] == "person_warnings"
+        for c in (tool_calls or [])
+    )
+    invoked_skill = "check-warnings" in (skills_invoked or [])
+    assert called_tool or invoked_skill, (
+        f"wrote to the project ({'; '.join(what)}) but ran no impossibility "
+        f"check — §8 requires one after creating links and any stub persons, to "
+        f"catch what the writer tools do not. Either route satisfies this: a "
+        f"`person_warnings` call (what the AGENT does) or a `check-warnings` "
+        f"invocation (what the monolithic skill did). "
+        f"skills_invoked={list(skills_invoked or [])}"
     )

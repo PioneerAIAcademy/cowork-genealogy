@@ -506,7 +506,33 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // field on one question and must never reach the tree; a deny naming one of
   // five writers fails open on the other four, silently, and no CI job sees it.
   "research-exhaustiveness.md": {
-    tools: ["Read", "project_context", "research_append", "research_query"],
+    tools: ["Read", "project_context", "research_append", "research_query", "wiki_read"],
+    denies: [],
+  },
+  // The only caller permitted to write research.json's person_evidence; the
+  // plugin PreToolUse hook denies that section to everyone else. Like
+  // proof-conclusion it holds the BROAD research_append, and the hook's caller
+  // check plus AGENT_WRITABLE_SECTIONS — not this list — is what keeps it to the
+  // one section. The grant is the folded skill's own former allowed-tools plus
+  // `person_warnings`/`person_quality`, which the monolith reached by invoking
+  // the check-warnings SKILL — a route an agent does not have. Widened
+  // deliberately (lead review, 2026-09-02) because the warnings pass cannot sit
+  // in the routing skill: `/research` may spawn this agent directly, so no
+  // plane guarantees the router runs at all. Still no `Read` and no
+  // `project_context` — the body reaches project state through research_query
+  // and never named either.
+  "person-evidence.md": {
+    tools: [
+      "materialize_facts",
+      "merge_warnings",
+      "person_quality",
+      "person_warnings",
+      "record_read",
+      "research_append",
+      "research_query",
+      "same_person",
+      "tree_edit",
+    ],
     denies: [],
   },
 };

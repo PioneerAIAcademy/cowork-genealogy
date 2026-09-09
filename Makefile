@@ -652,6 +652,21 @@ eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/coste
 	# printed predicate rather than a hand count (issue #1484 c).
 	cd eval/harness && uv run python -m e2e.inventory
 
+.PHONY: e2e-provided-docs-coverage
+e2e-provided-docs-coverage: ## External-repo capture-coverage gap report (issue #2083): which fixtures skip non-FS primary items but ship no bundled capture
+	# Pure analysis over committed .final-research.json sidecars — no live run,
+	# no API.  Re-derives the skip table from the issue and lists every fixture
+	# where the provided-documents/ mechanism could close the gap but hasn't.
+	#
+	# Exit code:  0 = no gap fixtures (all external-skip fixtures have captures)
+	#             1 = at least one fixture has external skips and zero captures
+	#
+	# A capture must be a real page saved from the real site by a human in a
+	# credentialed browser — never synthesized (issue #2083 "The failure mode
+	# this task is exposed to").  This report flags the gap; closing it is
+	# manual capture-authoring work.
+	cd eval/harness && uv run python -m e2e.provided_docs_coverage
+
 .PHONY: e2e-agent-tools
 e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API.
@@ -793,6 +808,17 @@ provenance-report: ## Identifiers a skill persisted that no input supplied: make
 	# Triage the hits before acting — a derived value and a punctuation-carrying
 	# ARK both land here. See issue #1667.
 	cd eval/harness && uv run python -m provenance_report $(if $(SKILL),--skill $(SKILL),)
+
+.PHONY: conflict-verdicts
+conflict-verdicts: ## Run logs whose own tests reach opposite verdicts on one conflict: make conflict-verdicts [SKILL=<name>]
+	# Offline, no API calls. Two tests writing one conflict cannot both be right:
+	# the evidence on file is identical in each. Which verdict is correct is a
+	# genealogist's call, so this reports and never gates. Issue #1972 V7.
+	#
+	# Reads the EFFECTIVE post-run state (changed_fields, else the scenario's
+	# starting value). A changed_fields-only scan reports zero on a corpus that
+	# does contradict itself — that gap is the finding, and is why this exists.
+	cd eval/harness && uv run python -m conflict_verdict_report $(if $(SKILL),--skill $(SKILL),)
 
 .PHONY: skill-latency
 skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json [SINCE=all|N|YYYY-MM-DD]

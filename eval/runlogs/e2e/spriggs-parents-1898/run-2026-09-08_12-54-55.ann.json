@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "True. The fact under test is the identity of Reuben's father, not a full reconstruction of John William Spriggs's biography. The tree carries the parent relationship directly (R2), sourced to the 1910 census. The gap between the tree's ~1872, Iowa and the fixture's 17 March 1872, Decorah Township is a vital-detail completeness issue, not a failure to recover the father. The alternate name William Spriggs also makes the 1906 sibling birth-index evidence coherent with the tree.",
+    "f2": "True. Same reasoning. The tree explicitly identifies Charlotte Spriggs / Charlotte Westby as Reuben's mother (R3) and preserves the maiden surname. The approximate ~1877, Norway does not recover the fixture's 13 June 1876 Akershus details, but those missing vitals are not the parentage fact being tested. The 1910 census supplies the sourced parent relationship, and S3 (1906 SD birth index) independently corroborates Charlotte Westby as the mother of a Spriggs child."
+  },
+  "annotator": "Emruthwill",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda"
+}
