@@ -180,7 +180,30 @@ _EXFIL_GUARD_TOOLS = ("Bash",)
 # `matcher=None` fired the hook for EVERY tool, which is how one unanswered hook
 # callback took down `ToolSearch` — a purely local call with nothing to deny
 # (issue #1915). Narrowing it means a starved callback can only ever fail the
-# calls this hook could actually refuse.
+# calls this hook could actually refuse — and THAT CLAIM NEEDED THE ANCHORS
+# BELOW to be true. Raised in review: the bundled CLI (2.1.220) applies a matcher
+# that does not fit its own charset as `new RegExp(t).test(e)`, an unanchored
+# SEARCH. Read out of the binary:
+#
+#     function IF_(e,t,r,n){ if(!t||t==="*")return!0;
+#       if((r?/^[a-zA-Z0-9_|, -]+$/:/^[a-zA-Z0-9_|]+$/).test(t))
+#           return t.split(...).map(...).flatMap(...).includes(e);   // EXACT LIST
+#       try{ let i=new RegExp(t); if(i.test(e))return!0; ... }catch{...} }
+#
+# So an unanchored `Write|Edit|...|Bash` also bound `TodoWrite`, `MultiEdit`,
+# `BashOutput`, `KillBash` and `EditNotebook` — every one of which this hook
+# denies nothing about. `TodoWrite` is precisely the "purely local call with
+# nothing to deny" class that `ToolSearch` died in, so the over-match reopened
+# the failure this narrowing exists to close. The bare names are anchored with
+# `^(...)$` for that reason; the device-bridge arm stays a search because it must
+# match a prefix it cannot predict.
+#
+# THE PATTERN MUST KEEP A CHARACTER OUTSIDE BOTH CHARSETS ABOVE (`.` and `*` do
+# it). If a future edit ever makes it fit — someone dropping `.*` on the
+# reasoning that a search matches anyway — the CLI silently switches to EXACT
+# STRING LIST membership and every namespaced spelling stops binding. The CLI's
+# own warning text a few bytes earlier says "it is compared as an exact string".
+# `test_the_matcher_stays_in_the_clis_regex_branch` pins this.
 #
 # Derived, not written out, because a restated list is exactly what let the
 # plugin's matcher and its predicate diverge with every test green
@@ -201,17 +224,37 @@ _EXFIL_GUARD_TOOLS = ("Bash",)
 # hook denies something this string does not match, because a matcher narrower
 # than its predicate is a guard that is inert with the whole suite green.
 _PRETOOL_MATCHER = "|".join(
-    (*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS, *(f".*{t}" for t in DEVICE_WRITE_TOOLS))
+    (
+        # Anchored, so a search cannot bind a tool that merely CONTAINS one of
+        # these names. Three constants, not two.
+        "^(" + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS)) + ")$",
+        *(f".*{t}" for t in DEVICE_WRITE_TOOLS),
+    )
 )
 
 # How long the CLI waits for a PreToolUse callback before giving up on it.
 #
-# Unset, the effective value is the CLI's own default, and the bundled CLI
-# (2.1.258) carries BOTH `Timeout ?? 60000` and `timeout ?? 600000`; the wedged
-# session observed 600s per call, so this path takes the longer one. The SDK's
-# own docstring advertises 60 (`claude_agent_sdk/types.py`, `HookMatcher`),
-# which is a third number and is not what bound. So it is set explicitly here
-# rather than inherited from whichever default applies.
+# Unset, the effective value is the CLI's own default, and that default IS
+# findable — an earlier version of this comment said it was not, named the wrong
+# CLI (2.1.258; the SDK pinned in uv.lock bundles 2.1.220, as lines 102 and 443
+# already say) and cited two literals that are not hook timeouts. Corrected in
+# review by reading the PreToolUse executor itself out of the binary:
+#
+#     var Hm=600000, frd=30000;
+#     async function*VOt(e,t,r,n,o,i,s=Hm,a){ ...
+#       yield*lM({hookInput:u, toolUseID:t, matchQuery:e, signal:i, timeoutMs:s, ...})
+#
+# The executor's own timeout parameter defaults to `Hm` = 600000 ms and hands it
+# to the dispatcher as `timeoutMs`. 600 s — which is exactly what the wedged
+# session observed per call, so the measurement and the default agree rather
+# than leaving three unexplained numbers. (`Timeout ?? 60000` in that binary is
+# an HTTP server's `headersTimeout`; `timeout ?? 600000` as spaced does not
+# occur at all.) The SDK's own `HookMatcher` docstring advertises 60 and
+# documents the unit as SECONDS (`claude_agent_sdk/types.py`), so the value
+# below is 10 s.
+#
+# Set explicitly anyway: 600 s is far too long for a callback this cheap, and a
+# shorter timeout makes a starved callback fail faster rather than succeed.
 #
 # Ten seconds: the callback is in-process and does a bounded walk over the tool
 # payload with no I/O, so this is orders of magnitude of headroom, while a
@@ -464,7 +507,12 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
     return ClaudeAgentOptions(**kwargs)
 
 
-def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | None = None) -> list[dict]:
+def map_message(
+    message,
+    tool_names: dict[str, str],
+    tasks: dict[str, str] | None = None,
+    live: set[str] | None = None,
+) -> list[dict]:
     """SDK message → the wire events the UI consumes.
 
     Two things here are easy to miss:
@@ -486,9 +534,11 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
     from claude_agent_sdk import (
         AssistantMessage,
         StreamEvent,
+        TERMINAL_TASK_STATUSES,
         TaskNotificationMessage,
         TaskProgressMessage,
         TaskStartedMessage,
+        TaskUpdatedMessage,
         TextBlock,
         ThinkingBlock,
         ToolResultBlock,
@@ -497,6 +547,7 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
     )
 
     tasks = tasks if tasks is not None else {}
+    live = live if live is not None else set()
 
     def _event_for(msg, kind: str, **kw) -> dict:
         """Attach the originating subagent's label, when there is one."""
@@ -506,8 +557,15 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
     out: list[dict] = []
     if isinstance(message, TaskStartedMessage):
         label = message.description or message.task_type or "subagent"
+        # ATTRIBUTION is keyed on `tool_use_id`, which the SDK types as
+        # `str | None` — a Task without one simply goes unlabelled.
         if message.tool_use_id:
             tasks[message.tool_use_id] = label
+        # LIVENESS is keyed on `task_id`, which is a required `str`. These were
+        # one dict until review: keying liveness on the optional field meant a
+        # Task with no `tool_use_id` registered nothing, so the drainer never
+        # started and the fix silently did not engage.
+        live.add(message.task_id)
         out.append(_event("task_started", agent=label, task_id=message.task_id))
     elif isinstance(message, TaskProgressMessage):
         usage = message.usage or {}
@@ -521,6 +579,7 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
             duration_ms=usage.get("duration_ms"),
         ))
     elif isinstance(message, TaskNotificationMessage):
+        live.discard(message.task_id)
         out.append(_event(
             "task_done",
             agent=tasks.pop(message.tool_use_id or "", "subagent"),
@@ -528,6 +587,26 @@ def map_message(message, tool_names: dict[str, str], tasks: dict[str, str] | Non
             status=message.status,
             summary=str(message.summary or "")[:160],
         ))
+    elif isinstance(message, TaskUpdatedMessage):
+        # A terminal state can arrive ONLY here, with no accompanying
+        # TaskNotificationMessage: the SDK's own lifecycle note says a task
+        # stopped via TaskStop reports `status="killed"` on this message and the
+        # matching notification "is sometimes suppressed", so consumers tracking
+        # active ids must clear on a terminal status from EITHER message. Without
+        # this arm a killed subagent stayed in the liveness set forever and every
+        # later turn spawned a drainer for a phantom. Harmless while the set was
+        # only attribution labels; load-bearing now that it gates the drainer.
+        #
+        # `status` and `patch["status"]` are both read because the dataclass
+        # carries the field while the CLI reports it inside the patch, and
+        # TERMINAL_TASK_STATUSES spans both vocabularies (`killed` here,
+        # `stopped` on a notification).
+        status = message.status or (message.patch or {}).get("status")
+        if status in TERMINAL_TASK_STATUSES:
+            live.discard(message.task_id)
+        # No wire event: delivering task_updated to the browser would extend this
+        # change into runner.py/sandbox_server.py/apps/web, which Decision A
+        # keeps out of scope.
     elif isinstance(message, StreamEvent):
         # Raw Anthropic stream event. Only the incremental content deltas are
         # useful here; block start/stop is implied by the canonical block event.
@@ -625,6 +704,9 @@ class RealAgent:
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
         self._tasks: dict[str, str] = {}  # Task tool_use_id → subagent label, for attribution
+        # Liveness, keyed on the REQUIRED task_id rather than the optional
+        # tool_use_id above. This is what gates the drainer; see map_message.
+        self._live_tasks: set[str] = set()
         # The background stream drainer, when one is running. At most one, ever
         # — see _stop_drain for why that is not merely tidy.
         self._drain_task: asyncio.Task | None = None
@@ -658,21 +740,40 @@ class RealAgent:
         about to read the stream calls this first, and it is an explicit
         handoff rather than a hope about scheduling.
 
-        Nothing is lost by cancelling mid-await: an item is handed to a receiver
-        only when the await completes, and what this task reads it discards
-        anyway. The messages that must not be lost are the NEXT turn's, and
-        those have not been sent yet — the handoff happens before `query()`.
+        An in-flight item can be lost by cancelling mid-await, and that is
+        acceptable here rather than untrue: anyio's `MemoryObjectSendStream`
+        pops the waiting receiver, sets `receiver.item` and fires the event
+        before returning, so a cancellation landing between that and the
+        receiver resuming drops the item. What this task reads it discards
+        anyway, so losing one costs nothing. The messages that must not be lost
+        are the NEXT turn's, and those have not been sent yet — the handoff
+        happens before `query()`.
+
+        THE WAIT IS DELIBERATELY UNBOUNDED. A slow iterator teardown therefore
+        delays the next turn before `client.query()`, inside the window where
+        the UI is spinning with Send disabled. That was raised in review with a
+        timeout as the remedy, and a timeout is the wrong trade: giving up on
+        the wait means starting the turn with the drainer still attached to the
+        stream, which is two readers on one stream — it would take this turn's
+        `ResultMessage` and `handle_turn` waits for that forever. A bounded wait
+        converts a visible delay into a hang, so the delay stays.
         """
         task, self._drain_task = self._drain_task, None
         if task is None or task.done():
             return
         task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass  # expected: we just cancelled it
-        except Exception as exc:  # best-effort teardown
-            _log(f"[agent] background drain ended with an error (ignored): {exc}")
+        # `gather(..., return_exceptions=True)` rather than `await task` inside a
+        # bare `except CancelledError: pass`. That arm could not tell the task we
+        # just cancelled ending from THIS COROUTINE being cancelled, so it
+        # swallowed the caller's cancellation and let the turn run on: `serve`
+        # cancels `turn_task` when `interrupt()` raises, and on stdin EOF, and a
+        # dropped Stop there means `_run_turn` never emits `(stopped)` and the
+        # turn proceeds into `client.query(text)`. Here the task's own
+        # CancelledError comes back as a RESULT, so the only thing that can raise
+        # out of this await is a cancellation aimed at us — which must propagate.
+        (outcome,) = await asyncio.gather(task, return_exceptions=True)
+        if isinstance(outcome, Exception):  # best-effort teardown
+            _log(f"[agent] background drain ended with an error (ignored): {outcome}")
 
     async def _drain_background(self, client) -> None:
         """Keep the SDK stream read while background subagents are still writing.
@@ -693,8 +794,13 @@ class RealAgent:
         line. Delivering these events to the browser was considered and
         deferred — it would extend this change into `runner.py`,
         `sandbox_server.py` and `apps/web`, and reopen the
-        one-`turn_done`-per-turn contract that `_run_turn` owns and
-        `test_runner_interrupt.py` pins. The user-visible half stays with issue
+        one-`turn_done`-per-turn contract that `_run_turn` owns. The contract is
+        real — `_run_turn` emits it unconditionally at the end and its own
+        docstring says "exactly one" — but `test_runner_interrupt.py` does not
+        pin it: that file asserts `events[-1] == {"kind": "turn_done"}` three
+        times, which is "ends with", and carries no count assertion. This
+        citation said "pins" and was inherited from the issue; corrected in
+        review rather than left to imply coverage that is not there. The user-visible half stays with issue
         #1971 (a wedged session and a finished turn look identical) and issue
         #1125. Recorded in docs/specs/hosted-web-workbench-spec.md §7.
 
@@ -705,29 +811,60 @@ class RealAgent:
         filed rather than a fix for it.
         """
         dropped = 0
-        # Held in a name so it can be CLOSED deterministically below. Iterating
-        # `client.receive_messages()` inline leaves the async generator
-        # suspended when this task is cancelled, and a suspended generator still
-        # holds its claim on the stream until the event loop finalizes it —
-        # which is not a moment the handoff can wait for. Measured: without the
-        # explicit close, two readers were live on one stream across a turn
-        # boundary (test_the_next_turn_loses_none_of_its_own_messages).
+        # Held in a name so the close below is explicit rather than implicit.
+        #
+        # NO TEST DETECTS REMOVING THAT CLOSE, and the comment here used to claim
+        # one did — it cited test_the_next_turn_loses_none_of_its_own_messages as
+        # having measured two readers live on one stream without it. Checked in
+        # review: deleting the `aclose()` leaves the whole suite green. Probed
+        # afterwards to find out why, rather than just dropping the claim:
+        # cancelling this task throws CancelledError INTO the generator at its
+        # await point, so the generator's own teardown runs from the cancellation
+        # itself and `aclose()` completes as a no-op — it is ordered second in
+        # the log. On the paths that exit without a cancellation, `stream` is a
+        # local whose last reference drops at return, and CPython's refcounting
+        # finalizes it there.
+        #
+        # So the close is redundant on every path, and it is kept as explicit
+        # deterministic teardown rather than as a guard: it costs one await and
+        # it stops the correctness of this function depending on refcount timing,
+        # which is a CPython implementation detail rather than a language
+        # guarantee. It is NOT load-bearing, and nothing should be built on the
+        # belief that it is.
         stream = client.receive_messages()
         try:
             async for message in stream:
-                # `map_message` maintains `self._tasks` — filled on
-                # TaskStartedMessage, popped on TaskNotificationMessage — which
-                # is the in-process signal for "subagents still running". Its
-                # returned events are dropped on purpose; see the docstring.
-                map_message(message, self._tool_names, self._tasks)
+                # THIS LOOP HAS NO SELF-EXIT, AND THAT IS THE POINT.
+                #
+                # It used to `break` on `not self._tasks`. That reads a signal
+                # which is legitimately zero *between* subagents: t1's terminal
+                # message can arrive before t2's TaskStartedMessage, and the
+                # drainer stopped on that zero and left the producer to stall at
+                # the 100-slot bound — the pre-fix wedge exactly, while the
+                # operator line read "0 subagent(s) still running" and looked
+                # like success. Caught in review; the original fixture could not
+                # see it because it emitted its only task_done last, which made
+                # the zero terminal there.
+                #
+                # There is no reliable "nothing more is coming" signal to read:
+                # the buffer's own emptiness is not observable from here. So the
+                # lifetime belongs to `_stop_drain`, which every path that is
+                # about to read the stream calls, and which is what the handoff
+                # test pins.
+                try:
+                    map_message(message, self._tool_names, self._tasks, self._live_tasks)
+                except Exception as exc:
+                    # One unmappable message must not end draining. This arm used
+                    # to sit outside the loop, so a single failure stopped the
+                    # drainer until the next turn ended — which is precisely the
+                    # window the wedge lived in.
+                    log_operator("background_drain", f"skipped an unmappable message: {exc}")
                 dropped += 1
-                if not self._tasks:
-                    break
         except asyncio.CancelledError:
             raise  # the handoff in _stop_drain; not an error
         except Exception as exc:
-            # A dead stream here must not take the session with it: the next
-            # turn rebuilds or reuses the client on its own terms.
+            # A dead STREAM (not a bad message) must not take the session with
+            # it: the next turn rebuilds or reuses the client on its own terms.
             log_operator("background_drain", classify(exc), exc=exc)
         finally:
             try:
@@ -741,7 +878,7 @@ class RealAgent:
                 log_operator(
                     "background_drain",
                     f"discarded {dropped} post-turn message(s) from background "
-                    f"subagents; {len(self._tasks)} subagent(s) still running",
+                    f"subagents; {len(self._live_tasks)} subagent(s) still running",
                 )
 
     async def _close_client(self) -> None:
@@ -867,6 +1004,18 @@ class RealAgent:
             log_operator("import_sdk", UNEXPECTED, exc=exc)
             yield _event("error", text=UNEXPECTED)
             return
+        # The handoff, and it is FIRST rather than after `_ensure_client`. A
+        # drainer from the previous turn is reading this stream and would take
+        # this turn's ResultMessage if left running. It used to sit below the
+        # block that follows, whose `except` arm ends in a bare `return`, so the
+        # `_ensure_client` failure path never reached the handoff at all —
+        # against `_stop_drain`'s own contract that every path about to read the
+        # stream calls it first. Latent, because that path issues no `query()`;
+        # moved rather than argued, since the ordering costs nothing.
+        # `_ensure_client` may itself replace the client, and `_close_client`
+        # calls `_stop_drain` too — it is idempotent, so calling it here first is
+        # strictly safe.
+        await self._stop_drain()
         try:
             client = await self._ensure_client()
         except Exception as exc:
@@ -874,9 +1023,6 @@ class RealAgent:
             log_operator("ensure_client", classification, exc=exc)
             yield _event("error", text=classification)
             return
-        # The handoff. A drainer from the previous turn is reading this stream,
-        # and it would take this turn's ResultMessage if left running.
-        await self._stop_drain()
         try:
             await client.query(text)
             # Whether an errored AssistantMessage has already told the user about
@@ -884,7 +1030,9 @@ class RealAgent:
             # is a new fact the user needs.
             error_emitted = False
             async for message in client.receive_response():
-                for ev in map_message(message, self._tool_names, self._tasks):
+                for ev in map_message(
+                    message, self._tool_names, self._tasks, self._live_tasks
+                ):
                     if ev.get("kind") == "tool_use" and str(
                         ev.get("tool") or ""
                     ).startswith(GENEALOGY_TOOL_PREFIX):
@@ -980,8 +1128,17 @@ class RealAgent:
         # that answers hook callbacks — see _drain_background.
         #
         # AFTER the loop, never inside it: this generator has to finish so the
-        # runner emits its single `turn_done` and the UI stops being busy. If the
-        # caller abandoned the generator instead (Stop), this line is not reached
-        # and no drainer starts, which is correct — that path closes the client.
-        if self._tasks and self._client is not None:
+        # runner emits its single `turn_done` and the UI stops being busy.
+        #
+        # What happens on Stop, corrected in review — the previous comment here
+        # was wrong in both halves. `serve` cancels `turn_task` only when
+        # `agent.interrupt()` returns falsy or raises; on the ordinary Stop it
+        # returns True, nothing is cancelled, this generator completes normally,
+        # and a drainer DOES start. That is the right outcome rather than an
+        # accident: Stop ends the parent turn, and background subagents keep
+        # streaming regardless, which is the whole reason this drainer exists.
+        # And on the path that genuinely does abandon the generator, nothing
+        # closes the client — `_close_client` has exactly one production caller,
+        # the key-rotation rebuild in `_ensure_client`.
+        if self._live_tasks and self._client is not None:
             self._drain_task = asyncio.create_task(self._drain_background(self._client))

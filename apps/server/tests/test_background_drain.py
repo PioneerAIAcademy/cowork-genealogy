@@ -24,7 +24,12 @@ import asyncio
 
 import pytest
 from claude_agent_sdk import ResultMessage
-from claude_agent_sdk.types import StreamEvent, TaskNotificationMessage, TaskStartedMessage
+from claude_agent_sdk.types import (
+    StreamEvent,
+    TaskNotificationMessage,
+    TaskStartedMessage,
+    TaskUpdatedMessage,
+)
 
 from app.agent import real_agent
 
@@ -34,11 +39,11 @@ SDK_BUFFER = 100
 POST_TURN = 150  # > SDK_BUFFER, so an undrained stream MUST stall
 
 
-def _task_started(tool_use_id: str) -> TaskStartedMessage:
+def _task_started(tool_use_id: str | None, task_id: str = "task-1") -> TaskStartedMessage:
     return TaskStartedMessage(
         subtype="task_started",
         data={},
-        task_id="task-1",
+        task_id=task_id,
         description="record-extractor",
         uuid="u1",
         session_id="s1",
@@ -46,17 +51,30 @@ def _task_started(tool_use_id: str) -> TaskStartedMessage:
     )
 
 
-def _task_done(tool_use_id: str) -> TaskNotificationMessage:
+def _task_done(tool_use_id: str, task_id: str = "task-1") -> TaskNotificationMessage:
     return TaskNotificationMessage(
         subtype="task_notification",
         data={},
-        task_id="task-1",
+        task_id=task_id,
         status="completed",
         output_file="",
         summary="done",
         uuid="u2",
         session_id="s1",
         tool_use_id=tool_use_id,
+    )
+
+
+def _task_updated(task_id: str, status: str) -> TaskUpdatedMessage:
+    """A `task_updated` frame. For a task stopped via TaskStop this is the ONLY
+    terminal notification the CLI is guaranteed to emit -- see the SDK's
+    lifecycle note on TaskUpdatedMessage."""
+    return TaskUpdatedMessage(
+        subtype="task_updated",
+        data={},
+        task_id=task_id,
+        patch={"status": status},
+        status=status,
     )
 
 
@@ -169,9 +187,15 @@ async def test_post_turn_messages_past_the_buffer_bound_are_consumed(tmp_path):
     assert client.produced == POST_TURN + 3
     assert client.produced > SDK_BUFFER, "the test did not exceed the bound it is about"
 
-    await asyncio.wait_for(agent._drain_task, timeout=5)
-    # It stopped because the last subagent reported, not because it was cancelled.
-    assert agent._tasks == {}
+    # The drainer is NOT awaited to completion. It has no self-exit any more --
+    # it used to `break` on an empty task set, which is legitimately zero
+    # between two subagents and stalled the producer at the bound. Its lifetime
+    # belongs to `_stop_drain`, so the assertion is that everything was
+    # consumed, then that stopping it works.
+    assert client.consumed == client.produced, "the drainer left messages unread"
+    assert agent._live_tasks == set(), "the last subagent's terminal message was not seen"
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
+    assert agent._drain_task is None
 
 
 @pytest.mark.asyncio
@@ -268,3 +292,157 @@ async def test_without_the_drainer_the_producer_stalls_at_the_bound(tmp_path):
         "not being modelled and the positive tests prove nothing"
     )
     producer.cancel()
+
+
+@pytest.mark.asyncio
+async def test_a_second_subagent_starting_after_the_first_finishes_keeps_draining(tmp_path):
+    """The drainer must not stop on a task set that is transiently empty.
+
+    THE REGRESSION THIS PINS. The loop used to `break` on `not self._tasks`,
+    checked after every message. Between one subagent's terminal message and the
+    next one's TaskStartedMessage the set is legitimately zero, so the drainer
+    stopped there and left the producer to stall at the bound -- the pre-fix
+    wedge, while the operator line read "0 subagent(s) still running" and looked
+    like success. The original fixture could not see it: it emitted its only
+    task_done LAST, which made that zero terminal.
+
+    Ordering is the whole test: t1 done, THEN t2 started, then enough deltas to
+    exceed the bound.
+    """
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+
+    producer = asyncio.create_task(
+        client.produce(
+            [_task_started("t1", "task-1"), _result()]
+            + [_task_done("t1", "task-1")]          # -> live set empty here
+            + [_task_started("t2", "task-2")]       # -> and refilled one message later
+            + [_delta(i) for i in range(POST_TURN)]
+            + [_task_done("t2", "task-2")]
+        )
+    )
+    await _drive(agent, "launch two subagents")
+    await asyncio.wait_for(producer, timeout=5)
+
+    assert client.produced == POST_TURN + 5
+    assert client.produced > SDK_BUFFER, "the test did not exceed the bound it is about"
+    assert client.consumed == client.produced, (
+        "the drainer stopped on the transient zero between the two subagents and "
+        "the producer stalled at the buffer bound"
+    )
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
+
+
+@pytest.mark.asyncio
+async def test_a_killed_subagent_is_cleared_by_task_updated_alone(tmp_path):
+    """A terminal state can arrive ONLY as a TaskUpdatedMessage.
+
+    The SDK's lifecycle note: a task stopped via TaskStop reports
+    `status="killed"` there and "the matching notification is sometimes
+    suppressed". `map_message` handled TaskStarted/Progress/Notification only,
+    so a killed subagent stayed in the tracking set forever and every later turn
+    spawned a drainer for a phantom. Harmless while that set was attribution
+    labels; load-bearing once it gates the drainer.
+    """
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+    producer = asyncio.create_task(
+        client.produce([_task_started("t1", "task-1"), _result()])
+    )
+    await _drive(agent, "launch")
+    await asyncio.wait_for(producer, timeout=5)
+    assert agent._live_tasks == {"task-1"}
+
+    # No TaskNotificationMessage will ever come for this one.
+    real_agent.map_message(
+        _task_updated("task-1", "killed"), agent._tool_names, agent._tasks, agent._live_tasks
+    )
+    assert agent._live_tasks == set(), (
+        "a killed subagent stayed in the liveness set, so every later turn would "
+        "spawn a drainer for a phantom"
+    )
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
+
+
+@pytest.mark.asyncio
+async def test_a_non_terminal_task_updated_does_not_clear_liveness(tmp_path):
+    """The converse of the arm above, so it cannot be satisfied by clearing on
+    every `task_updated`: `running` and `paused` are not terminal."""
+    tasks: dict[str, str] = {}
+    live: set[str] = set()
+    real_agent.map_message(_task_started("t1", "task-1"), {}, tasks, live)
+    for status in ("pending", "running", "paused"):
+        real_agent.map_message(_task_updated("task-1", status), {}, tasks, live)
+        assert live == {"task-1"}, f"{status} is not terminal and must not clear"
+    real_agent.map_message(_task_updated("task-1", "completed"), {}, tasks, live)
+    assert live == set()
+
+
+@pytest.mark.asyncio
+async def test_a_task_without_a_tool_use_id_still_starts_the_drainer(tmp_path):
+    """`TaskStartedMessage.tool_use_id` is `str | None`.
+
+    Liveness used to be keyed on it, so a Task arriving without one registered
+    nothing, no drainer started, and the fix silently did not engage. Liveness
+    is keyed on `task_id` -- a required `str` -- for exactly this reason. The
+    attribution label is what is legitimately lost here, and that is all.
+    """
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+    producer = asyncio.create_task(
+        client.produce(
+            [_task_started(None, "task-1"), _result()]
+            + [_delta(i) for i in range(POST_TURN)]
+        )
+    )
+    await _drive(agent, "launch a task with no tool_use_id")
+    await asyncio.wait_for(producer, timeout=5)
+
+    assert agent._drain_task is not None, "no drainer started, so the fix did not engage"
+    assert agent._tasks == {}, "nothing to attribute to, which is the accepted cost"
+    assert client.consumed == client.produced == POST_TURN + 2
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
+
+
+@pytest.mark.asyncio
+async def test_the_handoff_happens_while_a_subagent_is_still_running(tmp_path):
+    """The handoff, against a drainer that is genuinely still alive.
+
+    WHY THIS EXISTS ALONGSIDE test_the_next_turn_loses_none_of_its_own_messages.
+    That test's fixture ended with the subagent's task_done, so on the old code
+    the drain task was already finished by turn two and `_stop_drain` returned
+    at its `if task is None or task.done()` guard -- `max_waiting == 1` was
+    satisfied by a drainer that was already dead. Deleting the `_stop_drain()`
+    call from `handle_turn` left the whole suite green.
+
+    Here the subagent never reports, so the drainer is unambiguously live when
+    turn two starts and only a real handoff can let turn two read its own
+    ResultMessage.
+    """
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+
+    producer = asyncio.create_task(
+        client.produce(
+            [_task_started("t1", "task-1"), _result()] + [_delta(i) for i in range(10)]
+        )
+    )
+    await _drive(agent, "turn one")
+    await asyncio.wait_for(producer, timeout=5)
+    assert agent._drain_task is not None and not agent._drain_task.done(), (
+        "the drainer is not live, so this test cannot see the handoff at all"
+    )
+    assert agent._live_tasks == {"task-1"}, "the subagent must still be running"
+
+    second = asyncio.create_task(client.produce([_delta(999), _result()]))
+    events = await asyncio.wait_for(_drive(agent, "turn two"), timeout=5)
+    await asyncio.wait_for(second, timeout=5)
+
+    assert any(e["kind"] == "usage" for e in events), (
+        "turn two produced no usage event, so its ResultMessage never arrived -- "
+        "the still-running drainer stole it"
+    )
+    assert client.max_waiting == 1, (
+        "two coroutines were suspended on the stream at once; the handoff did not happen"
+    )
+
