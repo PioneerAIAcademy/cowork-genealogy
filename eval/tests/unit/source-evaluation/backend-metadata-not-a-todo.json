@@ -30,7 +30,8 @@
     "Mentioning backend metadata once as closing context is acceptable; listing it as a problem to fix is the failure this test pins",
     "The stated count of findings must exclude backend metadata",
     "The 1900 census birth year is two years off the profile. It must not be counted among the numbered findings, but noting it and explaining it as ordinary census variance is correct and must not be penalised.",
-    "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean"
+    "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean",
+    "The death index also indexes a birth year of 1875, which MATCHES the profile; the 1900 census indexes 1877. So the two sources differ from each other by two years, but the drift sits on the census's estimated age, not on the death index's exact date -- the same record-type distinction the body draws. Not a reportable source-versus-source conflict, and it must not become a third numbered finding. Saying nothing about the pair is correct. The two user-actionable items in this corpus stay the death index's transposed year and the misattributed 1885 state census."
   ],
   "index_error_source": "Minnesota Death Index"
 }
