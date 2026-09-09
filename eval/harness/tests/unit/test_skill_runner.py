@@ -670,6 +670,89 @@ def _routing_short_circuit_stream(tool_use_id="tool-use-id"):
     return hook_inputs, handoff_message
 
 
+async def _run_short_circuit_with_prefix(monkeypatch, tmp_path, prefix):
+    """Like `_run_short_circuit`, but yields `prefix` BEFORE the hand-off.
+
+    `_HookDrivingStream` drives every hook input before message one, so the
+    plain helper can only ever produce the ordering where the flag is already
+    up and the very first message carries the routed call. Both new guards —
+    the `if not usage:` check and the `tool_use_id` match — are no-ops under
+    that ordering, so a test built on it cannot tell whether either is there
+    (review of #2189, round 2: both mutations left all 46 tests green).
+    """
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(hook, hook_inputs, [*prefix, handoff_message])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        routing_short_circuit_skills={"record-extraction"},
+    )
+
+
+def test_a_result_message_already_seen_keeps_its_real_telemetry(tmp_path, monkeypatch):
+    """The `if not usage:` guard, isolated.
+
+    A ResultMessage consumed before the hand-off populates `usage` with the
+    SDK's own count. The short-circuit must not overwrite it, and must not
+    claim no ResultMessage arrived. Without the guard `num_turns` becomes the
+    manufactured `turns_seen` and `no_result_message` lies — the same
+    self-contradicting telemetry this PR exists to remove, pointing the other
+    way.
+    """
+    import asyncio
+    from claude_agent_sdk import ResultMessage
+
+    early = ResultMessage(
+        subtype="result", duration_ms=1, duration_api_ms=1,
+        is_error=False, num_turns=7, session_id="S1",
+    )
+    result = asyncio.run(_run_short_circuit_with_prefix(monkeypatch, tmp_path, [early]))
+
+    assert result.no_result_message is False, (
+        "a ResultMessage did arrive, so the field must not say otherwise"
+    )
+    assert result.usage.get("num_turns") == 7, (
+        "the SDK's own num_turns must survive the short-circuit, not be "
+        "replaced by the manufactured turns_seen count"
+    )
+
+
+def test_the_stop_point_keys_on_the_routed_tool_use_id(tmp_path, monkeypatch):
+    """The `block.id == routing_resolved["tool_use_id"]` match, isolated.
+
+    An earlier turn carrying a DIFFERENT tool use must not be mistaken for the
+    routed hand-off. Stopping on "any tool use once the flag is up" drops the
+    hand-off turn entirely — the narration the routing test's judge_context
+    asks for, which is the defect this PR fixes.
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock, ToolUseBlock
+
+    earlier = AssistantMessage(
+        content=[
+            TextBlock(text="Reading the plan first."),
+            ToolUseBlock(id="some-other-id", name="Read", input={"file_path": "p.md"}),
+        ],
+        model="stub",
+    )
+    result = asyncio.run(_run_short_circuit_with_prefix(monkeypatch, tmp_path, [earlier]))
+
+    assert "Routing this to record-extraction." in result.text_response, (
+        "stopped on a non-routed ToolUseBlock; the hand-off turn was dropped"
+    )
+
+
 async def _run_short_circuit(monkeypatch, tmp_path, messages):
     import asyncio
     from harness import skill_runner as sr
