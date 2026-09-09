@@ -4,7 +4,7 @@
     "skill": "locality-guide",
     "name": "Locality guide for New Orleans, early 1800s \u2014 disaster\u2011affected records",
     "type": "positive",
-    "description": "Verifies that the skill recognizes New Orleans\u2019 vulnerability to floods, fires, and hurricanes in the early 1800s and explains how these events impacted record survival. Ensures guidance includes parish registers, notarial records, and land deeds, while noting that some records were lost and later reconstructed in state or church archives.",
+    "description": "Verifies that the skill recognizes New Orleans\u2019 vulnerability to floods, fires, and hurricanes in the early 1800s and explains how these events impacted record survival. Ensures guidance includes parish registers, notarial records, and land deeds, while noting that some records were lost and later reconstructed in state or church archives. Wall-clock cap 480 -> 720s as insurance, NOT because this test needs it (issue #2252). In v1_2026-09-03_14-07-35 it was killed at 485s against the 480s cap, having already presented the full 27,754-char guide and ending mid-wrap-up at \"Now I'll persist this guide\", one research_append short of finishing (39 turns). But that does not reproduce: re-run alone at --concurrency 1 on 2026-09-08 it passed in 211s with 23 turns — 2.3x inside the OLD cap. So 485s reflected run conditions (machine contention is the likely cause and matches this box's known behaviour above concurrency 1), not the test's cost. The raised ceiling costs nothing when a run finishes in 211s and prevents a contended run from discarding a completed test. It is NOT issue #2025, whose signature is an ok:false writer-tool result from a 30s node subprocess cap, absent here.",
     "tags": [
       "New Orleans",
       "disaster records",
@@ -22,7 +22,7 @@
     "scenario_notes": null
   },
   "execution": {
-    "max_wall_clock_seconds": 480
+    "max_wall_clock_seconds": 720
   },
   "mcp_fixtures": [
     "place-search-new-orleans",
