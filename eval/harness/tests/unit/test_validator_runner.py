@@ -1780,10 +1780,10 @@ def test_v6_matches_bare_not_recorded():
     assert "entire" in (result.error or "").lower()
 
 
-def test_v6_fires_on_bare_not_recorded_inside_where():
-    """V6: bare [NOT RECORDED] inside a longer `where` value — names no
-    framework element.  The position rule does not fire (marker is not
-    the entire value), but the empty-element rule catches it."""
+def test_v6_passes_bare_not_recorded_inside_where():
+    """V6: bare [NOT RECORDED] inside a longer `where` value is a custody
+    pattern — the element name sits outside the brackets.  Custody markers
+    in `where` are the field working as designed (Edmond ruling)."""
     before, after = _v6_states(
         "FamilySearch.org; original repository [NOT RECORDED]", "where"
     )
@@ -1800,14 +1800,13 @@ def test_v6_fires_on_bare_not_recorded_inside_where():
         None,
     )
     assert result is not None, "test_unknown_markers_framework_only did not run"
-    assert result.passed is False
-    assert "bare" in (result.error or "").lower()
+    assert result.passed is True, f"unexpected failure: {result.error}"
 
 
-def test_v6_fires_on_custody_marker_in_where_with_access_point():
+def test_v6_passes_custody_marker_in_where_with_access_point():
     """V6: [PHYSICAL REPOSITORY NOT RECORDED] alongside an access point
-    in `where` passes the (narrowed) position rule but fails the custody-
-    keyword content rule."""
+    in `where` is a custody marker — the field working as designed
+    (Edmond ruling).  Exempt from checks 2 + 3."""
     before, after = _v6_states(
         "FamilySearch.org ([PHYSICAL REPOSITORY NOT RECORDED])", "where"
     )
@@ -1824,8 +1823,7 @@ def test_v6_fires_on_custody_marker_in_where_with_access_point():
         None,
     )
     assert result is not None, "test_unknown_markers_framework_only did not run"
-    assert result.passed is False
-    assert "custody" in (result.error or "").lower()
+    assert result.passed is True, f"unexpected failure: {result.error}"
 
 
 def test_v6_fires_on_custody_marker_in_other_field():
@@ -1847,6 +1845,64 @@ def test_v6_fires_on_custody_marker_in_other_field():
     assert result is not None, "test_unknown_markers_framework_only did not run"
     assert result.passed is False
     assert "custody" in (result.error or "").lower()
+
+
+def test_v6_passes_custody_marker_in_citation_string():
+    """V6: a custody keyword marker in the assembled `citation` string is
+    exempt — citation embeds the where layer, and custody notation there
+    is the field working as designed (Edmond ruling)."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "", "where": "FamilySearch.org"},
+    }
+    src_after = {
+        **src_before,
+        "citation": (
+            "Pennsylvania Department of Health, birth certificate no. 12345; "
+            "FamilySearch.org ([ORIGINAL REPOSITORY NOT RECORDED])"
+        ),
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_fires_on_bare_not_recorded_in_who():
+    """V6: bare [NOT RECORDED] in citation_detail.who names no framework
+    element — the empty-element rule fires.  Proves V6 can still catch
+    defects after the custody exemption scoped checks off `where`."""
+    before, after = _v6_states("[NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "bare" in (result.error or "").lower()
 
 
 def test_v6_passes_on_framework_marker():

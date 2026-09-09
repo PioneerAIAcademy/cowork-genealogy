@@ -193,19 +193,25 @@ _MARKER_RE = re.compile(r'\[([^\]]*?)\s*NOT\s+RECORDED\]', re.IGNORECASE)
 def test_unknown_markers_framework_only(before_state, after_state, test):
     """[... NOT RECORDED] markers must name Who/What/When/Where/Wherein elements.
 
-    Three checks:
+    Three checks, scoped per field:
     1. Position — a marker that IS the entire `citation_detail.where` value
        means the skill recorded no access point at all.  Under "cite what
        you see" the access point is always known (SKILL.md §75–82), so
-       a bare marker fails.  A marker appearing alongside a present access
-       point (e.g. custody-layer notation) is checked only by the content
-       rule below.
+       a bare marker fails.
     2. Empty element — a bare `[NOT RECORDED]` with no element name before
        NOT names nothing at all, so it cannot be a valid framework element.
-       Fails in any field, regardless of position.
+       Fails in non-where citation_detail fields only (see exemption below).
     3. Content — a marker whose text contains a custody / physical-media
        keyword (repository, archive, microfilm, …) names a `where` layer,
-       not a required element.  It belongs in `notes`.
+       not a required element.  It belongs in `notes`.  Fails in non-where
+       citation_detail fields only (see exemption below).
+
+    Custody exemption (Edmond ruling, applied to `where` and `citation`):
+    citation/SKILL.md:79 defines `where` as a layered path from access point
+    back to origin; layer 3 is the original custodian.  A custody marker
+    there is the field working as designed, not a defect.  The assembled
+    `citation` string embeds the where layer, so the same exemption applies.
+    Only the position rule (check 1) survives for `where`.
 
     Tier 1 — gates.  Reads persisted citation / citation_detail fields only.
     """
@@ -224,20 +230,9 @@ def test_unknown_markers_framework_only(before_state, after_state, test):
         if sid not in before_sources:
             continue
 
-        # Check citation string
-        citation = src.get("citation") or ""
-        for m in _MARKER_RE.finditer(citation):
-            marker_content = m.group(1).strip()
-            if not marker_content:
-                violations.append(
-                    f"{sid}.citation: bare [NOT RECORDED] names no "
-                    f"framework element"
-                )
-            elif any(kw in marker_content.lower() for kw in _CUSTODY_KEYWORDS):
-                violations.append(
-                    f"{sid}.citation: marker [{marker_content} NOT RECORDED] "
-                    f"names a custody/location element; use `notes` instead"
-                )
+        # Check citation string — custody markers here are the where-layer
+        # working as designed (Edmond ruling); exempt from checks 2 + 3.
+        # No check survives for the assembled citation string.
 
         # Check citation_detail fields
         cd = src.get("citation_detail") or {}
@@ -247,22 +242,27 @@ def test_unknown_markers_framework_only(before_state, after_state, test):
             for m in _MARKER_RE.finditer(val):
                 marker_content = m.group(1).strip()
                 if field == "where" and val.strip() == m.group(0):
-                    # The marker IS the entire `where` value — no access
-                    # point at all.  Under "cite what you see" the access
-                    # point is always known, so a bare marker fails.
+                    # Check 1 (position): the marker IS the entire `where`
+                    # value — no access point at all.
                     violations.append(
                         f"{sid}.citation_detail.where: marker "
                         f"[{marker_content} NOT RECORDED] is the entire "
                         f"`where` value — no access point recorded"
                     )
+                elif field == "where":
+                    # Custody exemption: any marker inside `where` alongside
+                    # a present access point is the field working as designed.
+                    continue
                 elif not marker_content:
-                    # Bare [NOT RECORDED] — names no framework element.
+                    # Check 2 (empty element): bare [NOT RECORDED] names no
+                    # framework element.
                     violations.append(
                         f"{sid}.citation_detail.{field}: bare "
                         f"[NOT RECORDED] names no framework element"
                     )
                 elif any(kw in marker_content.lower()
                          for kw in _CUSTODY_KEYWORDS):
+                    # Check 3 (content): custody keyword in a non-where field.
                     violations.append(
                         f"{sid}.citation_detail.{field}: marker "
                         f"[{marker_content} NOT RECORDED] names a "
