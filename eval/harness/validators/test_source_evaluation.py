@@ -88,29 +88,29 @@ _GO_TO_SOURCE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# A closing summary or recap restates remedies already attributed to their
-# sources above; it is not where a recommendation is made.
+# Identifies a closing summary or recap, which carries SEVERAL sources' remedies
+# in one sentence and so is the wrong unit to judge whole. `_passages` splits one
+# on clause boundaries; it does not skip it. That distinction is the whole point
+# of this constant, and getting it wrong once is why the comment is this long.
 #
-# This exists because of a FALSE POSITIVE on the same run log:
-# `ut_source_evaluation_r4k` failed the detach guard on a passage that is
-# correct — "**Summary:** One index correction needed (the 1945 death year in
-# the Minnesota Death Index) and one detachment warranted (the 1885 Otter Tail
-# County census, which belongs to an older Christian Hole)." Two sources, two
-# different remedies, each attached to the right one. The guard splits on blank
-# lines and fails any block holding the protected source and a detach term, so
-# one sentence naming both remedies trips it.
+# It exists because of a FALSE POSITIVE: `ut_source_evaluation_r4k` failed the
+# detach guard on a passage that is correct — "**Summary:** One index correction
+# needed (the 1945 death year in the Minnesota Death Index) and one detachment
+# warranted (the 1885 Otter Tail County census, which belongs to an older
+# Christian Hole)." Two sources, two different remedies, each attached to the
+# right one, and blank-line blocks put them in one passage.
 #
-# Sectioning on markdown headings does NOT fix this, which is worth recording
-# so it is not retried: in that reply the summary sits inside the
-# "### No finding — United States Census, 1900" section, so a heading-scoped
-# guard puts the protected name and "detachment" in one section anyway.
-# Dropping the recap block is what actually separates them, and it costs
-# nothing real — the recap's own detach clause is graded where it is made.
+# Sectioning on markdown headings does NOT fix that, which is worth recording so
+# it is not retried: in that reply the summary sits inside the "### No finding —
+# United States Census, 1900" section, so a heading-scoped guard puts the
+# protected name and "detachment" in one section anyway.
 #
-# The residual limitation, stated rather than hidden: a reply whose ONLY detach
-# recommendation lives in a recap is not seen by this guard. `rubric.md`'s
-# Remediation doctrine bars cover that case, and they were sharpened in the
-# same PR to fail a detach recommended on a source-vs-source disagreement.
+# SKIPPING the recap block was the first fix and it was WRONG — a false negative
+# in the one guard that stops an unrecoverable action, which is strictly worse
+# than the false positive it removed. The skill puts its real recommendation in
+# the recap routinely: 2 of 10 tests in `v1_2026-09-08_15-53-39` did, and
+# "**Conclusion:** Detach the Minnesota Death Index" passed silently. Clause
+# splitting separates the two remedies without dropping either.
 _SUMMARY_LEAD_RE = re.compile(
     r"^\W{0,4}(summary|recap|in short|in summary|overall|conclusion|"
     r"bottom line|net)\b",
@@ -118,6 +118,15 @@ _SUMMARY_LEAD_RE = re.compile(
 )
 
 _TABLE_ROW_RE = re.compile(r"^\s*\|")
+
+# Clause boundaries inside a recap sentence. A recap reads "correct the death
+# year on X (Finding 1), detach the 1885 census (Finding 2), and the rest are
+# fine" — each remedy is its own clause naming its own source, so splitting
+# here attributes them separately. The `(?<=\))\s*,` arm splits only on a comma
+# that follows a closing paren, which is what separates those parenthesised
+# findings without also splitting a source's own comma'd title ("Minnesota
+# Death Index, 1908-2002").
+_CLAUSE_RE = re.compile(r"(?:;|\s+and\s+|(?<=\))\s*,\s*|\.\s+)")
 
 
 def _passages(text: str) -> list[str]:
@@ -141,11 +150,14 @@ def _passages(text: str) -> list[str]:
     A table row is the per-source unit the guard wants, so rows are split out
     and judged individually. Everything else keeps the blank-line block.
 
-    Two false positives from two shapes in two runs is the signal worth
-    recording: this guard is lexical and attribution is not, so the shape of
-    the report decides whether it is right. Handle a new shape here rather than
-    loosening the rule that fires, and keep `rubric.md`'s Remediation doctrine
-    bars as the judgment-based backstop.
+    Three shapes needing bespoke handling, each found inside a paid run, is the
+    signal worth recording: this guard is lexical and attribution is not, so
+    the shape of the report decides whether it is right. Handle a new shape
+    here rather than loosening the rule that fires, and keep `rubric.md`'s
+    Remediation doctrine bars as the judgment-based backstop. **Issue #2382**
+    owns the durable fix — narrowing to object-adjacency so shape stops
+    mattering — and records the measured constraint that passage-scoping
+    `_GO_TO_SOURCE_PATTERN` breaks 23 of 24 committed positive runs.
     """
     out: list[str] = []
     for block in re.split(r"\n\s*\n", text):
@@ -159,6 +171,15 @@ def _passages(text: str) -> list[str]:
             )
             if prose.strip():
                 out.append(prose)
+        elif _SUMMARY_LEAD_RE.match(block.strip()):
+            # A recap is one sentence carrying several sources' remedies, so
+            # the block is the wrong unit — but SKIPPING it is worse than
+            # judging it whole, because the skill routinely puts its real
+            # recommendation only in the recap. Split on clause boundaries and
+            # judge each clause, so "correct the death index, detach the 1885
+            # census" attributes each remedy to its own source while
+            # "Conclusion: detach the Minnesota Death Index" still fires.
+            out.extend(c for c in _CLAUSE_RE.split(block) if c and c.strip())
         else:
             out.append(block)
     return out
@@ -225,7 +246,6 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
         for block in _passages(text_response)
         if protected.lower() in block.lower()
         and any(term in block.lower() for term in _DETACH_TERMS)
-        and not _SUMMARY_LEAD_RE.match(block.strip())
     ]
     assert not hits, (
         f"source-evaluation recommended detaching or unlinking in the same "

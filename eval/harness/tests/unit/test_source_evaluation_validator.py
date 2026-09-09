@@ -148,6 +148,66 @@ def test_a_correct_closing_summary_naming_two_remedies_passes():
     _no_detach(_R4K_SUMMARY, _TEST)
 
 
+def test_the_live_recap_shapes_pass():
+    """The two recaps the skill actually wrote, from `v1_2026-09-08_15-53-39`.
+
+    2 of 10 tests in that run put their real recommendations in a recap, which
+    is why the earlier "skip the recap block" fix was wrong: it made these pass
+    by not looking at them, and `test_a_detach_hidden_in_a_recap_still_fails`
+    below is what that bought.
+    """
+    _no_detach(
+        "In summary: correct the death year on the Minnesota Death Index entry "
+        "(Finding 1), detach the 1885 Otter Tail County census from this "
+        "profile (Finding 2), and the remaining sources are in good order.",
+        _TEST,
+    )
+    _no_detach(
+        "**Bottom line:** One source to correct (the death index year), one to "
+        "detach (the 1885 Otter Tail census, which belongs to a different "
+        "Christian Hole), and the 1900 census and uploaded memory are fine "
+        "as-is.",
+        _TEST,
+    )
+
+
+def test_a_detach_hidden_in_a_recap_still_fails():
+    """The regression the recap skip introduced, and the reason it was replaced.
+
+    A reply whose ONLY detach recommendation lives in a recap is the #1536
+    failure. While `_SUMMARY_LEAD_RE` dropped the whole block, this passed
+    silently — a false negative in the one guard that stops an unrecoverable
+    action, which is strictly worse than the false positive it was fixing.
+    """
+    for reply in (
+        "### Findings\nThe indexed death year is 1954 against the profile's "
+        "1945.\n\n**Conclusion:** Detach the Minnesota Death Index - I do not "
+        "think it is the right man.",
+        "In summary: detach the Minnesota Death Index; it is not this man.",
+        "**Bottom line:** the Minnesota Death Index should be detached.",
+    ):
+        try:
+            _no_detach(reply, _TEST)
+        except AssertionError:
+            continue
+        raise AssertionError(
+            f"a detach of the protected source hidden in a recap was not "
+            f"caught, so the guard is toothless on the shape the skill "
+            f"actually uses: {reply!r}"
+        )
+
+
+def test_passages_splits_a_recap_into_clauses():
+    got = _VALIDATOR._passages(
+        "In summary: correct the death year on the Minnesota Death Index "
+        "(Finding 1), detach the 1885 census (Finding 2), and the rest are fine."
+    )
+    assert any("Minnesota Death Index" in c for c in got), got
+    assert not any(
+        "Minnesota Death Index" in c and "detach" in c.lower() for c in got
+    ), f"the two remedies did not separate: {got}"
+
+
 def test_a_per_source_verdict_table_passes():
     """x6b's real shape, from `v1_2026-09-08_15-25-07.json`.
 
