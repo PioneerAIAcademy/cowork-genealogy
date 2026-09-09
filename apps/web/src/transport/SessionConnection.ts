@@ -33,6 +33,46 @@ export type CredentialsProvider = () => Promise<SessionCredentials>
 const MAX_RETRIES = 20
 const retryDelayMs = (attempt: number): number => Math.min(1000, 150 * attempt)
 
+// How long one credentials fetch may take before it is abandoned.
+//
+// WHAT THIS FIXES. `connecting` guards the await window inside connect(), and it
+// is cleared only by the provider settling. A provider that never settles leaves
+// it true forever, so every later connect() returns at the guard: no socket, no
+// retry, and no `chat_error` either. The panel sits on "Connecting to the
+// agent..." indefinitely, which is one of the only two paths that can produce
+// that symptom.
+//
+// SIZED FROM THE COST OF THE THING IT BOUNDS, not picked round. /connect resumes
+// the sandbox (~1s, `docs/realtime-architecture.md`), writes secrets, merges
+// config, refreshes the FamilySearch token over the network and exposes the WS
+// port (`sessions.py` connect_session). A legitimate call is seconds; 30 is
+// generous enough not to fire on a slow one and short enough that a person is
+// not left staring at a placeholder.
+//
+// NOT ON `api.req`. That is the shared REST helper, and `resumeSession` plus the
+// viewer's /state hydration resume the same paused sandbox and are just as slow,
+// so a blanket timeout there aborts them too. It is not at the `connectSession`
+// call site either: the flag that actually wedges lives in this class, so the
+// bound belongs here, where it also covers any future provider.
+const CREDENTIALS_TIMEOUT_MS = 30_000
+
+// A hang gets a TIGHTER ceiling than a refusal, and the asymmetry is the point.
+// A refused socket is cheap and fast, so MAX_RETRIES of them is fine. Each
+// credentials attempt is a full server-side E2B resume + secret write + config
+// merge + FamilySearch token refresh, so retrying a hang 20 times would multiply
+// that load by 20 against a control plane already failing to answer - trading a
+// wedge for a stampede. Two, then tell the user.
+const MAX_CREDENTIAL_TIMEOUTS = 2
+
+/** The credentials fetch exceeded CREDENTIALS_TIMEOUT_MS. Distinct from a
+ *  rejection: a rejection is an answer, this is the absence of one. */
+class CredentialsTimeout extends Error {
+  constructor() {
+    super('credentials request timed out')
+    this.name = 'CredentialsTimeout'
+  }
+}
+
 export class WsSessionConnection implements SessionConnection {
   private ws: WebSocket | null = null
   private listeners = new Set<Listener>()
@@ -49,6 +89,10 @@ export class WsSessionConnection implements SessionConnection {
   // Guards the await window inside connect(): without it a retry firing while
   // the credentials request is in flight would open a second socket.
   private connecting = false
+  // Counts only credential fetches that never answered. Reset on success, like
+  // `attempts`, so an intermittent control plane does not accumulate toward the
+  // ceiling across an otherwise healthy session.
+  private credentialTimeouts = 0
 
   private onVisibility = (): void => {
     if (typeof document === 'undefined') return
@@ -82,12 +126,36 @@ export class WsSessionConnection implements SessionConnection {
     }
   }
 
+  /** `getCredentials()` bounded by CREDENTIALS_TIMEOUT_MS.
+   *
+   *  The timer is always cleared, so a settled fetch leaves nothing pending. The
+   *  losing side of the race is dropped rather than cancelled - there is no
+   *  AbortSignal on the provider contract - so a late resolution is ignored; its
+   *  only side effect is the `onFsState` callback, which is idempotent.
+   */
+  private credentials(): Promise<SessionCredentials> {
+    return new Promise<SessionCredentials>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new CredentialsTimeout()), CREDENTIALS_TIMEOUT_MS)
+      this.getCredentials().then(
+        (creds) => {
+          clearTimeout(timer)
+          resolve(creds)
+        },
+        (err) => {
+          clearTimeout(timer)
+          reject(err)
+        }
+      )
+    })
+  }
+
   connect(): void {
     if (this.ws || this.closed || this.connecting) return
     this.connecting = true
-    void this.getCredentials().then(
+    void this.credentials().then(
       (creds) => {
         this.connecting = false
+        this.credentialTimeouts = 0
         // close() or a racing connect landed while we were awaiting.
         if (this.closed || this.ws) return
         // Backgrounded mid-fetch: opening now would auto-resume a paused sandbox
@@ -96,11 +164,18 @@ export class WsSessionConnection implements SessionConnection {
         if (this.hidden) return
         this.openSocket(creds)
       },
-      () => {
+      (err) => {
         // The control plane is unreachable or the session is gone. Same backoff
         // as a refused socket, so this can't spin and can't hang silently.
         this.connecting = false
         if (this.closed || this.hidden) return
+        if (err instanceof CredentialsTimeout) {
+          this.credentialTimeouts += 1
+          if (this.credentialTimeouts >= MAX_CREDENTIAL_TIMEOUTS) {
+            this.fail('The agent is not responding (connection timed out).')
+            return
+          }
+        }
         this.scheduleRetry()
       }
     )
@@ -110,11 +185,16 @@ export class WsSessionConnection implements SessionConnection {
     for (const l of [...this.listeners]) l({ type: 'conn_state', state })
   }
 
+  /** Surface a terminal connection failure. `chat_error` is what ChatPane turns
+   *  into "Chat unavailable: ..."; without it the placeholder never resolves. */
+  private fail(message: string): void {
+    for (const l of [...this.listeners]) l({ type: 'status', state: 'chat_error', message })
+  }
+
   private scheduleRetry(): void {
     this.attempts += 1
     if (this.attempts > MAX_RETRIES) {
-      for (const l of [...this.listeners])
-        l({ type: 'status', state: 'chat_error', message: 'Could not reach the agent (connection failed).' })
+      this.fail('Could not reach the agent (connection failed).')
       return
     }
     this.retryTimer = setTimeout(() => {
