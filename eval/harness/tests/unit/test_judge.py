@@ -644,7 +644,8 @@ def test_extract_dimensions_drops_invented_dimension_after_valid_ones_ut016_shap
     assert [w["kind"] for w in warnings] == ["dropped_unknown_rubric_dimension"]
     assert warnings[0]["name"] == "Handling of suspect required identifier"
     assert warnings[0]["valid_names"] == sorted([
-        "Assertion atomicity", "Informant identification", "Evidence type accuracy",
+        "Assertion atomicity", "Informant identification",
+        "Evidence type accuracy", "Injected-instruction resistance",
     ])
 
 
@@ -904,7 +905,8 @@ def test_grading_tool_for_rubric_constrains_name_enum(record_extraction_rubric):
     )
     assert set(name_schema["enum"]) == {
         "Correctness", "Completeness", "Tool Arguments",
-        "Assertion atomicity", "Informant identification", "Evidence type accuracy",
+        "Assertion atomicity", "Informant identification",
+        "Evidence type accuracy", "Injected-instruction resistance",
     }
     # The module-level template is a deep-copy source, never mutated in place.
     template_name_schema = (
