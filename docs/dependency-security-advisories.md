@@ -4,7 +4,7 @@ Tracking note for `pnpm audit` / `npm audit` findings across the repo's three JS
 dependency trees (root pnpm workspace, `packages/engine/mcp-server` npm,
 `eval/app` npm). Re-run the audits after any dependency bump and update this file.
 
-Last reviewed: **2026-07-31**.
+Last reviewed: **2026-09-08**.
 
 **Reachability, once, up front.** Every finding below except `fast-uri` lives in a
 **devDependency** — dev tooling (eslint, vite/vitest, electron-builder,
@@ -14,6 +14,46 @@ Last reviewed: **2026-07-31**.
 shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
 
 ## Fixed
+
+- **The engine's entire production tree** — `packages/engine/mcp-server`.
+  **Fixed 2026-09-08.** Went from **5 packages carrying 17 advisories** (npm's summary
+  line says "5 vulnerabilities" because it counts *packages* and reports each one's
+  worst severity) to `found 0 vulnerabilities` on `npm audit --omit=dev`. The five were
+  `fast-uri` (4, all HIGH), `hono` (4), `undici` (5), `ip-address` (3) and
+  `@hono/node-server` (1). Two moves did it:
+
+  - **Dropped `cheerio`**, an unused production dependency. It was the sole root of
+    `undici`, so removing it cleared five advisories permanently rather than rebasing
+    them onto a newer version, and took 22 lockfile entries out of the shipped tree
+    (128 → 106 non-dev packages). The `.mcpb` went 6,786,824 → 5,484,516 bytes, a
+    19.19% reduction, both measured at base `07f1fd31d`.
+    *Provenance, since a path-scoped `git log -S` gets this wrong:* `cheerio` was added
+    **and used** by `20261a61b` (PR #67, wiki page fetching) — `wikiFetchPage.ts`
+    imported `load` from it. It was orphaned by `44f40d6cf`, which switched the wiki
+    tools to the pre-crawled markdown corpus. `371e5db55` (PR #293) only renamed
+    `mcp-server/` → `packages/engine/mcp-server/` with 0 insertions and 0 deletions,
+    which is why a `git log -S` scoped to the current path fingers it. Use
+    `git log --follow -S` here.
+  - **`npm audit fix --package-lock-only`** for the rest. Lockfile only, no
+    `package.json` change beyond the `cheerio` line. `fast-uri` 3.1.5 → 3.1.7,
+    `hono` 4.12.27 → 4.13.7, `ip-address` 10.2.0 → 10.7.0, `@hono/node-server`
+    1.19.14 → 2.1.1, plus `qs` and `nanoid`. `es-object-atoms` and `hasown` moved as
+    incidental re-resolution.
+
+  **On the `@hono/node-server` major, and the deferral it replaces.** The entry removed
+  from Deferred said "The patch is 2.0.5, i.e. a **major** bump". That was wrong when
+  written: 1.19.15 shipped 2026-07-24 and 1.19.17 on 2026-07-27, both before the
+  2026-07-31 deferral, and the advisory range is `<1.19.15`, so the fix existed inside
+  the 1.x line. **@DallanQ ruled 2026-09-08** to take 2.1.1 anyway rather than pin 1.x,
+  noting he had originally avoided the major because it broke something he no longer
+  recalls, and asking that it be verified working. Verified on 2.1.1: production tree
+  installs clean under `engine-strict=true`, `tsc` clean, 123 files / 2986 tests pass,
+  the real `build/index.js` boots over stdio and serves all 48 tools with empty stderr,
+  and `make mcpb` produces a working artifact. hono is unreachable regardless —
+  `src/index.ts` constructs only `StdioServerTransport`, and hono is imported solely by
+  the SDK's `streamableHttp` transport.
+  **Revisit when** the server grows an HTTP/SSE transport, which would make hono
+  reachable for the first time.
 
 - **tar** (CRITICAL GHSA-23hp-3jrh-7fpw + HIGH GHSA-8x88-c5mf-7j5w + 3 MODERATE),
   **postcss** (HIGH GHSA-r28c-9q8g-f849, source-map path traversal),
@@ -34,11 +74,18 @@ shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
   `packages/engine/mcp-server`. Fixed 2026-07-31 by
   `npm update --package-lock-only fast-uri postcss` (npm 11.12.1, the
   `packageManager` pin). Four lockfile entries, no `package.json` change;
-  `check-engine-lockfile` verified idempotent. **`fast-uri` is the one finding in
-  this file that ships** — it is a prod dep via `@modelcontextprotocol/sdk` → `ajv`
-  and is bundled into the `.mcpb`. Exploitability is still low: `ajv` uses it only
-  to resolve `$id`/`$ref` in our own static tool schemas, never an attacker-supplied
-  URL.
+  `check-engine-lockfile` verified idempotent. **`fast-uri` ships** — it is a prod dep
+  via `@modelcontextprotocol/sdk` → `ajv` and is bundled into the `.mcpb`. It was never
+  the *only* one: the `@hono/node-server` entry that used to sit under Deferred said of
+  itself "a prod dep that ships in the `.mcpb`", so the phrasing this entry carried —
+  "the one finding in this file that ships" — was wrong when written.
+  **Moved again 2026-09-08: 3.1.5 → 3.1.7.** Its advisory count is **four, all HIGH**,
+  not the two recorded above: two SSRF (`GHSA-f65p-4m7j-42xc` malformed IPv6
+  normalization, `GHSA-fph4-wmhf-6fwf` repeated hostname percent-decoding) and two host
+  confusion (`GHSA-5jgf-p345-68v8` skipped IDN canonicalization, `GHSA-jqff-g426-hqxp`
+  percent-encoded scheme normalization). Exploitability is still low, and the reason
+  covers all four rather than only the SSRF pair: `ajv` uses it only to resolve
+  `$id`/`$ref` in our own static tool schemas, never an attacker-supplied URL.
 
 - **postcss** (HIGH GHSA-r28c-9q8g-f849 + HIGH GHSA-6g55-p6wh-862q + MODERATE
   GHSA-qx2v-qp2m-jg93) and **sharp** (HIGH GHSA-f88m-g3jw-g9cj, inherited libvips
@@ -100,21 +147,6 @@ shipped artifact. Weigh fix churn against that before treating a HIGH as urgent.
   or any deployed artifact.
   **Revisit when** `@anthropic-ai/mcpb` publishes a release that bumps the
   `@inquirer`/`tmp` chain.
-
-- **@hono/node-server** (MODERATE, GHSA-frvp-7c67-39w9, `serve-static` path
-  traversal on Windows via encoded backslash) — `packages/engine/mcp-server`,
-  1.19.14, pulled by `@modelcontextprotocol/sdk`. **Deliberately deferred
-  2026-07-31.** The patch is 2.0.5, i.e. a **major** bump of a prod dep that ships
-  in the `.mcpb`. The SDK does permit it (`"@hono/node-server": "^1.19.9 ||
-  ^2.0.5"`), but the vulnerable code is unreachable here: `src/index.ts` uses
-  `StdioServerTransport`, so the SDK's HTTP/SSE transport — the only thing that
-  imports hono — is never loaded. The bump would buy no real security and add
-  major-version risk to the shipped artifact.
-  *Historical note:* PR #920 is titled "bump @hono/node-server … to 2.0.12" but
-  **did not** move it — the merged lockfile still reads 1.19.14. Dependabot bumped
-  only the SDK (1.29.0 → 1.30.0), which widened the *declared* range. Don't read
-  that PR title as evidence hono 2 was ever exercised here.
-  **Revisit when** the server grows an HTTP/SSE transport, or on the next SDK major.
 
 - **esbuild** (LOW, GHSA-g7r4-m6w7-qqqr, dev-server arbitrary file read,
   **Windows only**) — root pnpm workspace, bundled by `vite@7.3.5`. **Deferred.**
