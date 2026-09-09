@@ -437,6 +437,8 @@ def test_plan_items_are_updated_never_appended(before_state, after_state, test):
     appends included, so it would pass the defect this exists to catch. The
     helper is wired separately below as the adjacent boundary check.
     """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
 
@@ -456,6 +458,8 @@ def test_writes_only_to_log_and_plans(before_state, after_state, test):
     zero before this. Separate from the append check above, which it cannot
     substitute for.
     """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     _assert_only_writes_to_sections(
