@@ -388,6 +388,10 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# Arm B re-runs the turn with hooks/ removed; if that denies too, the run is
 	# VOID rather than green.
 	#
+	# Answered 2026-09-09 (Claude Code 2.1.258, SDK 0.2.128): the hosted
+	# loader DOES bind it -- arm A denied with the guard's own reason text,
+	# arm B (hooks/ removed) did not. Re-run when the CLI or the SDK moves.
+	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the
 	# nothing-checks register either way. Hard-errors without a key rather than

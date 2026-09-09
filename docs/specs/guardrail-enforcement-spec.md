@@ -1391,6 +1391,20 @@ deny back; a packaging problem reports as VOID (preflight), never as "does not
 bind". The preflight was proven to fail four ways — script absent, script always
 allowing, script exiting non-zero, script printing non-JSON.
 
+**Measured 2026-09-09** (Claude Code 2.1.258, agent SDK 0.2.128): the hosted SDK
+loader **does** bind it. Arm A came back `DENIED_BY_GUARD` with `OWNER_REASON` on
+the `research_append` tool_result; arm B, the same turn with `hooks/` removed,
+came back `NOT_DENIED`.
+
+> **Arm B earned its place on the first run, and it is the reason the
+> read-the-structured-result rule is not merely stylistic.** With `hooks/`
+> removed the model still reported `PROBE_RESULT: DENIED` — but that refusal was
+> `research_append`'s own "This folder is not a research project", produced by the
+> **tool**, not the hook. A probe reading the model's prose would have scored arm
+> B as a deny, and would then either have voided a run that was actually clean or
+> let arm A stand on a deny it had never attributed. Keying on the guard's own
+> imported reason text is what tells the two apart.
+
 **What a pass does not prove.** The hosted SDK loader is not Cowork's loader, and
 Cowork is where this hook is the *only* guardrail. Per `docs/architecture.md`
 §9.4, no CI job can verify binding in any environment. **The Cowork gap stays on

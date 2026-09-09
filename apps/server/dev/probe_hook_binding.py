@@ -12,6 +12,21 @@ That gap is silent by construction. The script's contract is "never raise, fall
 through to allowing the call", so a hook that stops binding is indistinguishable
 from a hook with no opinion -- no error, no log, no red test.
 
+Answered 2026-09-09 against Claude Code 2.1.258 / agent SDK 0.2.128:
+**the hosted SDK loader DOES bind it.**
+
+    arm               hooks/    verdict            what came back
+    a-hooks-present   present   DENIED_BY_GUARD    OWNER_REASON on the tool_result
+    b-hooks-removed   removed   NOT_DENIED         no guard text; tool's own error
+
+**Arm B earned its place on the first run.** With `hooks/` removed the model
+still reported `PROBE_RESULT: DENIED` -- but the refusal was `research_append`'s
+own "This folder is not a research project", from the TOOL, not the hook. A
+probe reading the model's prose would have scored that as a deny and either
+called the run VOID or, worse, let arm A stand on a deny it had not attributed.
+Keying on the guard's own imported reason text is what separates them, and this
+is the concrete case that shows why the card insists on it.
+
 WHAT IS PROVOKED, AND WHY THIS ONE
 
 A main-thread `research_append` writing `proof_summaries`. Two reasons it is the
