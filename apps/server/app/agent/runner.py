@@ -18,8 +18,7 @@ anyio subprocess transport hangs when hosted inside websockets.serve.
 Project-file changes are NOT emitted here — the control plane watches /project
 and streams viewer deltas separately. This runner is the chat channel only.
 
-Run as:  python -m app.agent.runner   (env: AGENT_MODE, PROJECT_DIR, MODEL,
-          ANTHROPIC_API_KEY, HOME)
+Run as:  python -m app.agent.runner   (env: AGENT_MODE, PROJECT_DIR, MODEL, HOME)
 """
 from __future__ import annotations
 

@@ -44,6 +44,60 @@ def _invoke(tools_by_name, tool_name: str, args: dict):
     return asyncio.run(tools_by_name[tool_name].handler(args))
 
 
+def _seed_project(tmp_path):
+    """A minimal project with one tree person, enough for person_warnings."""
+    (tmp_path / "research.json").write_text(
+        json.dumps({"project": {"id": "rp_x"}, "questions": []}), encoding="utf-8"
+    )
+    (tmp_path / "tree.gedcomx.json").write_text(
+        json.dumps(
+            {
+                "persons": [
+                    {"id": "I1", "names": [{"full_text": "Test Person"}], "facts": []}
+                ],
+                "relationships": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_person_warnings_runs_live_when_no_fixture_declared(tmp_path):
+    """The bug this closes: `person_warnings` was fixture-backed only, and no
+    person-evidence test declares a `person-warnings-*` fixture, so every call
+    in every committed person-evidence run log since August reported the tool
+    missing. The skill launched; the impossibility check never ran. It computes
+    every tag from the workspace tree and holds zero `getValidToken` calls, so
+    a live handler is both possible and more faithful than a canned answer.
+    """
+    _seed_project(tmp_path)
+    server, call_log, tools_by_name = create_mock_server(
+        [], FIXTURES_DIR, workspace=tmp_path
+    )
+    assert "person_warnings" in tools_by_name
+    body = _extract_response_dict(_invoke(tools_by_name, "person_warnings", {"personId": "I1"}))
+    assert "warningCount" in body, f"expected a real computation, got {body}"
+
+
+def test_a_declared_fixture_beats_the_live_handler(tmp_path):
+    """`person_warnings` is the only tool in both LIVE_TOOLS and the fixture
+    corpus. The check-warnings suite drives it from fixtures tuned to specific
+    tag combinations, so the test's own declaration must win — otherwise going
+    live for everyone else would silently retune that suite. Registering both
+    would define the name twice and the second would shadow the first, so the
+    live loop skips what the fixtures already cover.
+    """
+    _seed_project(tmp_path)
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-warnings-early-marriage"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "person_warnings", {"personId": "I1"}))
+    issues = [w.get("issueType") for w in body.get("warnings") or []]
+    assert "hasEarlyMarriage14" in issues, (
+        f"the canned fixture must win over the live handler; got {issues}"
+    )
+
+
 def test_returns_fixture_response_for_known_tool():
     server, call_log, tools_by_name = create_mock_server(
         ["wikipedia-search-schuylkill-county"], FIXTURES_DIR

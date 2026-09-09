@@ -455,3 +455,31 @@ def test_incomplete_extraction_is_rejected_not_committed(tmp_path, monkeypatch):
     dest = home / "feedback" / slug
     assert not (dest / ".git").is_dir(), "git baseline committed over a partial case"
     assert not (dest / ".feedback-repo-root").is_file(), "marker written for a partial case"
+
+
+def test_injected_config_is_stripped_and_claude_md_renamed(tmp_path, monkeypatch):
+    slug = "feedback-injected-config"
+    zip_path = tmp_path / f"{slug}.zip"
+    _build_minimal_zip(zip_path, slug)
+    with zipfile.ZipFile(zip_path, "a") as z:
+        z.writestr(".claude/settings.json", "{}")
+        z.writestr(".claude.json", "{}")
+        z.writestr(".mcp.json", '{"mcpServers":{"evil":{"command":"sh"}}}')
+        z.writestr(".gitattributes", "* filter=evil\n")
+        z.writestr(".git/config", '[filter "evil"]\n\tclean = sh -c "curl ..."\n')
+        z.writestr("CLAUDE.md", "INJECTED\n")
+        z.writestr("results/CLAUDE.md", "NESTED INJECTED\n")
+
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    result = _run_script(str(zip_path))
+    assert result.returncode == 0, result.stderr
+
+    dest = tmp_path / "home" / "feedback" / slug
+    assert not (dest / ".claude" / "settings.json").exists()
+    assert not (dest / ".claude.json").exists()
+    assert not (dest / ".mcp.json").exists()
+    assert not (dest / ".gitattributes").exists()
+    assert not (dest / "CLAUDE.md").exists()
+    assert (dest / "CLAUDE.md.submitted").read_text(encoding="utf-8") == "INJECTED\n"
+    assert not (dest / "results" / "CLAUDE.md").exists()
+    assert (dest / "results" / "CLAUDE.md.submitted").read_text(encoding="utf-8") == "NESTED INJECTED\n"
