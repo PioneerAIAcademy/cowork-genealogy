@@ -3,6 +3,9 @@
     "f1": "true"
   },
   "proof_quality_score": 3,
+  "notes": {
+    "f1": "Lydia Grice present as I1, daughter of Edwin (R15) and Hannah (R16), with christening F23 = 8 Aug 1878 West Bromwich citing S5 (QL3R-C5SR). True label rests on the christening and parent relationships, not birth date precision: the tree's birth fact F5 reads ~1879, back-calculated from census ages, and no birth year from the 1878 register reaches the tree. Two citation-hygiene issues carried forward: (a) R15/R16 cite S1 (1881 census) rather than S5 (1878 baptism) which actually attests the parentage — same pattern flagged on 2026-07-22 and 2026-07-27 runs, still unfixed; (b) resolved_conflict_ids in ps_001 is empty despite c_001 being marked resolved. PQ 3 over the 2026-07-27 score of 2: that run left Fanny with no mother link and c_001 substantively open; here R18 closes the mother link (9DJ7-219 → I2, citing S3) and c_001 carries a full resolution entry with correct independence analysis (all five sibling entries are one informant chain, not five independent corroborations) and five-to-one weighing. The empty resolved_conflict_ids is a schema-level omission, not a reasoning failure — the resolution content is substantively complete."
+  },
   "annotator": "mercyokum",
   "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145"
 }
