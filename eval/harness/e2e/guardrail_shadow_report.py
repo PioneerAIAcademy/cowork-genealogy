@@ -30,6 +30,33 @@ unnamed-delegate checks. A stored count reads 0 over every run made before that
 check shipped, so on a corpus that is 84% July it measures the corpus's age
 rather than the behaviour. Read `--replay` before concluding a check never fires.
 
+**This report measures ONE of a check's two failure directions, and it cannot be
+made to measure the other.** Every count here is a count of what a check FIRES
+on. Read alongside the runs, those firings are what tells you whether the check
+would block work it should not — the false-DENY direction, which is what a
+graduation decision is mostly weighing. There is no column for what a check
+MISSED, and adding one is not a matter of more code: in a replay the check is its
+own ground truth, so a write it does not recognise as a violation is
+indistinguishable from a write that is fine. Nothing in the committed corpus
+labels violations independently of the detector being measured.
+
+Two consequences, both easy to get wrong when quoting a number off this report:
+
+  - A zero means "this detector fired on nothing here". It does NOT mean the
+    behaviour did not happen — see the §7.5 citation-nulling pair in
+    `guardrail-enforcement-spec.md`, where one arm's 0 and the other's 111 are
+    the same corpus read two ways.
+  - The population is pre-filtered in the same direction. Committed run logs are
+    converged states: runs that failed and were re-run are not in the corpus, so
+    a satisfying-shape rate computed here is a FLOOR, not an estimate.
+
+So a graduation cannot rest on this report alone. What it establishes is that a
+check does not over-fire on real work. That it actually catches the class it
+claims is established the way any other guard is — by breaking the thing in
+several shapes and watching it fire (CLAUDE.md, "A new lint must be proven to
+fail"). If you find a way to give this report an independent false-pass term,
+that supersedes this paragraph; do not quietly widen a count and call it one.
+
 This module adds NO instrumentation to a run (same posture as
 `latency_report.py`); it's pure analysis over already-committed data.
 
@@ -61,7 +88,7 @@ from e2e.runlog_selection import (
     is_result_json as _is_result_json,
     result_jsons_for,
 )
-from e2e.feedback_transcript_adapter import adapt_bundle_transcript
+from e2e.feedback_transcript_adapter import adapt_bundle
 from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     TREE_CITATION_NULLING_KIND,
@@ -75,6 +102,8 @@ from harness.skill_invocation import (
     find_relationship_writes_without_warnings_check,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
+    owning_skills,
+    strip_agent_namespace,
     PERSON_EVIDENCE_DENY_KIND,
     same_person_scored_ids,
     skill_name_if_skill_call,
@@ -1108,17 +1137,106 @@ def _bundle_metadata(bundle_dir: Path) -> tuple[str | None, str | None]:
     return submitted, platform
 
 
-def arm_visibility(submitted: str | None) -> dict[str, str]:
-    """Per-agent-owned-arm visibility for a bundle submitted on `submitted`.
+def arm_visibility(
+    submitted: str | None,
+    *,
+    anchored_agents: set[str] | frozenset[str] = frozenset(),
+    excluded_agents: set[str] | frozenset[str] = frozenset(),
+    excluded_unknown_owner: bool = False,
+    has_dropped: bool = False,
+) -> dict[str, str]:
+    """Per-agent-owned-arm visibility for one bundle.
 
-    `"live"` — the write came from the main thread and IS in the transcript, so
-    a count is a real measurement. `"unknown"` — the bundle may have run the
-    post-split plugin, where both routes are closed, so 0 is not evidence."""
+    `"live"` — the write is in this bundle's transcripts, so a count over it is
+    a real measurement. `"unknown"` — it may have happened somewhere we cannot
+    see, so 0 is not evidence.
+
+    Two inputs, and the second one now outranks the date. A bundle that
+    actually carries an ANCHORED transcript owned by that agent has the
+    evidence physically present, whatever its submission date. Matched **per
+    agent**: `_AGENT_SPLIT_DATES` is per agent, so flipping every arm on the
+    presence of any anchored transcript would report `proof-conclusion: live,
+    0 findings` for a bundle carrying only, say, an anchored `image-reader`
+    transcript — a real-looking number resting on a file that is not here.
+    Compared bare (`strip_agent_namespace`): the hosted path registers agents
+    bare and the SDK plugin path namespaces them, so a raw `==` would miss.
+
+    `excluded_agents` OUTRANKS `anchored_agents`, and that order is the whole
+    point: a bundle can carry two transcripts of the same agent and have one of
+    them anchor. Reading the arm live off the one that anchored reports a
+    real-looking 0 resting on the one that did not — the same fabricated
+    measurement `has_dropped` exists to prevent, arriving from the consumer end
+    instead of the producer's. Per agent, so an excluded `image-reader`
+    transcript does not throw away a real `proof-conclusion` count.
+
+    `has_dropped` and `excluded_unknown_owner` hold EVERY arm at `"unknown"`.
+    The first is the producer naming transcripts it could not include
+    (`feedback.json`'s `dropped_transcripts`); the second is this consumer
+    excluding one it cannot attribute to any single agent — an unreadable
+    `agentType`, or a whole session group lost to a parent decode failure.
+    Either way "we could not read it" must never read as "we read it and found
+    nothing"."""
+    bare = {strip_agent_namespace(a) for a in anchored_agents}
+    # Stripped the same way as `anchored_agents`: the SDK plugin path namespaces
+    # agent names and the hosted path does not, so a raw `==` misses one of them.
+    excluded_bare = {strip_agent_namespace(a) for a in excluded_agents}
     out: dict[str, str] = {}
     for agent, (split, _owns) in _AGENT_SPLIT_DATES.items():
-        out[agent] = "unknown" if submitted is None or submitted >= split else "live"
+        if has_dropped or excluded_unknown_owner:
+            out[agent] = "unknown"
+        elif agent in excluded_bare:
+            out[agent] = "unknown"
+        elif agent in bare:
+            out[agent] = "live"
+        else:
+            out[agent] = "unknown" if submitted is None or submitted >= split else "live"
     return out
 
+
+def _window_overruns(groups: list[dict[str, Any]], *, window: int) -> int:
+    """Spliced protected writes whose spawning call sits more than `window`
+    entries back — the one limit the splice does NOT fix.
+
+    Putting a subagent's own calls into the list is what lets its write see the
+    `Skill` call that authorised it. But those calls occupy window slots, so a
+    subagent making more than `window` calls before its protected write pushes
+    that `Skill` call back out and the false violation returns by another door.
+    Local subagent transcripts run 0-204 tool calls, so it is reachable.
+
+    Not fixed here on purpose: the e2e harness carries subagent calls in one
+    flat list too, so a bundle-only window rule would make the two corpora
+    incomparable. Anchoring the window at the spawning call instead of the write
+    is a change to `skill_invocation.py`. This counts how often it would matter,
+    so that change is made on a measurement rather than a hunch."""
+    overruns = 0
+    for group in groups:
+        calls = group["tool_calls"]
+        for i, entry in enumerate(calls):
+            # A spliced child entry carries `agent_type`; a parent one does not.
+            if not entry.get("agent_type"):
+                continue
+            if not owning_skills(entry.get("tool", ""), entry.get("args") or {}):
+                continue
+            # Walk back to the nearest parent-stream entry: that is the call
+            # that spawned this subagent (directly, or its ancestor).
+            spawn = next((j for j in range(i - 1, -1, -1) if not calls[j].get("agent_type")), None)
+            if spawn is not None and i - spawn > window:
+                overruns += 1
+    return overruns
+
+
+def _dropped_transcripts(bundle_dir: Path) -> list[str]:
+    """Transcripts the PRODUCER could not include, from `feedback.json`.
+
+    Named there as well as in `FEEDBACK.md` precisely so a program can read
+    them: a dropped transcript that reads downstream as "we looked and found
+    nothing" is the invisible zero this whole feature exists to remove."""
+    try:
+        meta = json.loads((bundle_dir / "_feedback" / "feedback.json").read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return []
+    names = meta.get("dropped_transcripts") if isinstance(meta, dict) else None
+    return [n for n in names if isinstance(n, str)] if isinstance(names, list) else []
 
 
 def _submitted_research(bundle_dir: Path, research_path: Path) -> str:
@@ -1160,6 +1278,7 @@ def scan_feedback_bundle(
     transcript = bundle_dir / "_feedback" / "session-log.jsonl"
     research_path = bundle_dir / "research.json"
     submitted, meta_platform = _bundle_metadata(bundle_dir)
+    dropped_transcripts = _dropped_transcripts(bundle_dir)
     out: dict[str, Any] = {
         "bundle": bundle_dir.name,
         # An explicit --platforms mapping wins; otherwise use the platform the
@@ -1169,12 +1288,28 @@ def scan_feedback_bundle(
         # this bundle (see _AGENT_SPLIT_DATES). None means undated, which is
         # reported as such rather than assumed either way.
         "submitted": submitted,
-        "arms": arm_visibility(submitted),
+        # Filled in below once the transcripts are adapted: an arm reads live
+        # when THIS bundle carries an anchored transcript owned by that agent,
+        # and every arm is held at unknown when the producer dropped one.
+        "arms": arm_visibility(submitted, has_dropped=bool(dropped_transcripts)),
+        "dropped_transcripts": dropped_transcripts,
+        "subagent_transcripts": 0,
+        "subagent_transcripts_anchored": 0,
+        # Spliced writes whose spawning call is further back than the window —
+        # the limit the splice does not fix, counted rather than guessed at.
+        "window_overruns": 0,
+        # Named, never appended: a transcript we cannot place would land far
+        # from its own skill invocation and manufacture a violation.
+        "unanchored_subagents": [],
+        # The agents whose transcripts this bundle carried and the adapter then
+        # excluded. Holds those arms at "unknown" — see `arm_visibility`.
+        "excluded_agents": [],
+        "excluded_unknown_owner": False,
         # A transcript we could not DECODE, as distinct from one we could not
         # adapt. Invalid UTF-8 used to propagate out of parse_jsonl and take
         # every other bundle's result with it.
         "transcript_unreadable": False,
-        "has_transcript": transcript.exists(),
+        "has_transcript": transcript.exists() or (bundle_dir / "_feedback" / "sessions").is_dir(),
         "truncated": False,
         # A transcript file present but with zero adaptable records is a shape
         # the adapter didn't recognise — #1558 item 3 requires naming it, and it
@@ -1192,9 +1327,9 @@ def scan_feedback_bundle(
         "missing_mentor_verdicts": [],
     }
 
-    if transcript.exists():
+    if out["has_transcript"]:
         try:
-            adapted = adapt_bundle_transcript(transcript)
+            adapted = adapt_bundle(bundle_dir)
         except (ValueError, OSError):
             # `UnicodeDecodeError` is a ValueError, and `parse_jsonl` catches
             # only OSError, so one cp1252 byte or smart quote in one bundle's
@@ -1202,6 +1337,8 @@ def scan_feedback_bundle(
             # keep going -- the same shape `research_unreadable` already has.
             # Caught here rather than widened inside the shared `parse_jsonl`,
             # which would silently hand its other caller [] instead of raising.
+            # `adapt_bundle` also catches PER FILE, so one bad subagent
+            # transcript no longer discards its parent's findings.
             adapted = None
             out["transcript_unreadable"] = True
         # Do NOT early-return when the transcript is unreadable or unadaptable:
@@ -1213,6 +1350,21 @@ def scan_feedback_bundle(
             out["truncated"] = adapted["truncated"]
             out["could_not_adapt"] = adapted.get("adapted_records", 0) == 0
             out["session_ids"] = adapted["session_ids"]
+            out["subagent_transcripts"] = adapted["subagent_transcripts"]
+            out["subagent_transcripts_anchored"] = adapted["subagent_transcripts_anchored"]
+            out["unanchored_subagents"] = adapted["unanchored_subagents"]
+            out["window_overruns"] = _window_overruns(adapted["groups"], window=window)
+            if adapted["unreadable_transcripts"]:
+                out["transcript_unreadable"] = True
+            out["excluded_agents"] = adapted["excluded_agents"]
+            out["excluded_unknown_owner"] = adapted["excluded_unknown_owner"]
+            out["arms"] = arm_visibility(
+                submitted,
+                anchored_agents=set(adapted["anchored_agents"]),
+                excluded_agents=set(adapted["excluded_agents"]),
+                excluded_unknown_owner=adapted["excluded_unknown_owner"],
+                has_dropped=bool(dropped_transcripts),
+            )
             out["tool_call_count"] = len(tool_calls)
             out["skill_call_count"] = sum(
                 1
@@ -1222,7 +1374,15 @@ def scan_feedback_bundle(
             # A truncated transcript reads as a bypass (a skill invoked before the
             # cut is invisible), so its writes are unattributable — the caller
             # buckets truncated bundles separately rather than counting them.
-            out["unguarded_writes"] = find_unguarded_protected_writes(tool_calls, window=window)
+            #
+            # PER GROUP, never over the concatenation: one session's `Skill`
+            # call must not vouch for another session's write, which a single
+            # flat scan would let it do inside the 40-entry window.
+            out["unguarded_writes"] = [
+                v
+                for group in adapted["groups"]
+                for v in find_unguarded_protected_writes(group["tool_calls"], window=window)
+            ]
 
     if research_path.exists():
         try:
@@ -1256,14 +1416,19 @@ def scan_feedback_dir(
     platforms: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Scan every unpacked bundle directory under `root` (each holding a
-    `research.json` and/or `_feedback/session-log.jsonl`). `platforms` maps a
+    `research.json`, `_feedback/session-log.jsonl` and/or `_feedback/sessions/`).
+    `platforms` maps a
     bundle directory name to its platform (from the feedback issue's `Platform:`
     line — not knowable from the bundle alone); unmapped bundles get `None`."""
     root = Path(root)
     platforms = platforms or {}
     results: list[dict[str, Any]] = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
-        if (child / "_feedback" / "session-log.jsonl").exists() or (child / "research.json").exists():
+        if (
+            (child / "_feedback" / "session-log.jsonl").exists()
+            or (child / "_feedback" / "sessions").is_dir()
+            or (child / "research.json").exists()
+        ):
             results.append(
                 scan_feedback_bundle(child, window=window, platform=platforms.get(child.name))
             )
@@ -1292,6 +1457,14 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             tag += " [could not adapt]"
         if r.get("transcript_unreadable"):
             tag += " [transcript unreadable]"
+        # An exclusion is its own cause. Without this the row's only marking is
+        # `[plugin era unknown for: …]`, which says the transcript may never
+        # have been here — the opposite of "it was here and we could not read
+        # it", and the difference decides whether anyone goes looking.
+        excluded_here = list(r.get("excluded_agents") or [])
+        if excluded_here or r.get("excluded_unknown_owner"):
+            named = ", ".join(excluded_here) or "owner unknown"
+            tag += f" [subagent transcript excluded: {named}]"
         if r.get("research_unreadable"):
             tag += " [research unreadable]"
         elif not r.get("has_research"):
@@ -1362,32 +1535,71 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             f"across {len(p_res)} bundle(s) with a readable research.json"
         )
 
-    # Owner-arm visibility, decided per bundle from its submission date rather
-    # than asserted globally. Both directions matter: over a PRE-split bundle the
-    # write came from the main thread and IS in the transcript, so the count is a
-    # real measurement — #1054 is waiting on exactly that number and a blanket
-    # "0 by construction" would tell its reader to discard it.
+    # Owner-arm visibility, decided per bundle and per agent rather than asserted
+    # globally. Two ways an arm reads live, and both directions matter. A bundle
+    # that CARRIES an anchored transcript owned by that agent has the evidence
+    # here, whatever its date. Failing that, a PRE-split bundle's write came from
+    # the main thread and IS in the parent transcript, so the count is a real
+    # measurement — #1054 was waiting on exactly that number and a blanket "0 by
+    # construction" would tell its reader to discard it. Both routes are
+    # OVERRIDDEN by an exclusion of that agent's own transcript: a bundle can
+    # carry two of them and have only one anchor, and reading the arm live off
+    # that one reports a 0 resting on the other.
+    with_sub = [r for r in results if r.get("subagent_transcripts")]
+    # Any exclusion, not just the unanchorable ones: a transcript that failed to
+    # DECODE never reaches `unanchored_subagents`, so counting that list alone
+    # left the commoner half of this invisible in the one line a reader
+    # cross-checks an arm against.
+    unanchored = [
+        r
+        for r in results
+        if r.get("unanchored_subagents")
+        or r.get("excluded_agents")
+        or r.get("excluded_unknown_owner")
+    ]
+    dropped_any = [r for r in results if r.get("dropped_transcripts")]
     lines.append(
-        "\nOwner-arm visibility (a bundle carries only the main session's "
-        "{sid}.jsonl, never the subagents/ transcripts beside it):"
+        f"\nOwner-arm visibility ({len(with_sub)} bundle(s) carry subagent "
+        f"transcripts under _feedback/subagents/, spliced at the spawning Agent "
+        f"call; {len(unanchored)} carry at least one the consumer EXCLUDED — "
+        f"unanchorable or undecodable — rather than appending it; "
+        f"{len(dropped_any)} name a transcript the producer had to drop):"
     )
     for agent, (split, owns) in sorted(_AGENT_SPLIT_DATES.items()):
         live = [r for r in results if (r.get("arms") or {}).get(agent) == "live"]
         unknown = [r for r in results if (r.get("arms") or {}).get(agent) != "live"]
         lines.append(
             f"  {agent} ({owns}) became a skill-agent pair {split}: "
-            f"{len(live)} bundle(s) submitted BEFORE it — the write came from the "
-            f"main thread, un-denied and in the transcript, so those counts are "
-            f"real measurements; {len(unknown)} on/after or undated — the write "
-            f"may have happened inside the agent (invisible) and a main-thread "
-            f"attempt would be hook-denied and skipped as is_error, so 0 there is "
-            f"NOT evidence. 'May' because a deploy does not ship the sandbox image "
+            f"{len(live)} bundle(s) where the write is visible — either the bundle "
+            f"carries this agent's own spliced transcript, or it predates the split "
+            f"and the write came from the main thread, un-denied and in the parent "
+            f"transcript, so those counts are real measurements; "
+            f"{len(unknown)} where it is not, for either of two reasons that send "
+            f"you to different places: no transcript of this agent's here and the "
+            f"bundle is on/after the split or undated, so the write may have "
+            f"happened inside the agent (invisible) while a main-thread attempt "
+            f"would be hook-denied and skipped as is_error; or the bundle DID "
+            f"carry one of this agent's transcripts and it was excluded as "
+            f"unanchorable or undecodable, in which case the file exists and the "
+            f"per-bundle row names it — so 0 there is NOT evidence in either "
+            f"case. 'May' "
+            f"because a deploy does not ship the sandbox image "
             f"(docs/architecture.md §9.4 pt 2), so the era is unknown, not post-split."
         )
+    overruns = sum(r.get("window_overruns") or 0 for r in results)
     lines.append(
-        "  The tree_edit/tree_correct arms are blind only to the agent route: the "
+        f"  Window overruns: {overruns} spliced protected write(s) whose spawning "
+        f"call sits more than the window back, so the parent's Skill call is out "
+        f"of reach and the finding may be false. Non-zero is the trigger for "
+        f"anchoring the window at the spawning call (skill_invocation.py), which "
+        f"is deliberately NOT done here — the e2e corpus has the same flat shape, "
+        f"and a bundle-only rule would make the two incomparable."
+    )
+    lines.append(
+        "  The tree_edit/tree_correct arms were blind only to the agent route (the "
         "hook covers research_append alone, so a main-thread primary:true or "
-        "ParentChild/Couple write still fires regardless of date."
+        "ParentChild/Couple write always fired). A bundle carrying subagent "
+        "transcripts closes that route too."
     )
     lines.append(
         "\nRun with --replay for the recomputed e2e baseline to compare against "
@@ -1440,7 +1652,8 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "scan unpacked hosted feedback bundles under this directory (issue #1558) "
             "instead of the committed e2e corpus — each subdir a bundle with a "
-            "research.json and/or _feedback/session-log.jsonl. Bundles live OUTSIDE the repo "
+            "research.json, _feedback/session-log.jsonl and/or _feedback/sessions/. "
+            "Bundles live OUTSIDE the repo "
             "(make feedback-case → ~/feedback/); nothing bundle-derived is committed."
         ),
     )
@@ -1500,7 +1713,8 @@ def main(argv: list[str] | None = None) -> int:
             # prints) matches nothing and used to exit 0 saying "0 bundle(s)".
             print(
                 f"note: no bundle directories directly under {root} — each child must hold "
-                f"a research.json and/or _feedback/session-log.jsonl. If you pointed at a "
+                f"a research.json, _feedback/session-log.jsonl and/or "
+                f"_feedback/sessions/. If you pointed at a "
                 f"single case dir, pass its PARENT.",
                 file=sys.stderr,
             )

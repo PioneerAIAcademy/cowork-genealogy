@@ -31,7 +31,10 @@
     "place-search-pennsylvania-by-place",
     "place-distance-ireland-pennsylvania",
     "place-distance-pennsylvania-ireland",
-    "place-distance-within-pennsylvania"
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
   ],
   "judge_context": [
     "Should build a candidate (hypothesis-testing) timeline that aggregates assertions from BOTH candidate persons (I1 and I3) and ties it to the hypothesis (hypothesis_id h_002)",

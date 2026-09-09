@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Multi-fact vitals question: birth (Albany, 1775), death and burial (Niskayuna, Schenectady County, 1819). Sources exist in the New York Births/Christenings collection and Find A Grave Index."
+  "notes": "Bundled capture (provided-documents/): Find a Grave memorial #140729859 — John Perry Witbeck, died 28 Feb 1819, buried Niskayuna Reformed Church Cemetery, Schenectady County, NY — gives the agent direct access to the memorial page that the plan item deferred (issue #2083). Multi-fact vitals question: birth (Albany, 1775), death and burial (Niskayuna, Schenectady County, 1819). Sources exist in the New York Births/Christenings collection and Find A Grave Index."
 }
