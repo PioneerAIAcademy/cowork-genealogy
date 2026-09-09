@@ -14,6 +14,55 @@
 
 import type { SimplifiedGedcomX, SimplifiedSourceReference } from "../types/gedcomx.js";
 
+/** The assertion `fact_type`s that establish a link between TWO parties, and
+ *  so can source a two-party write: `tree_edit add_relationship`'s edge, and
+ *  `materialize_facts`'s named-party mint (tree-materialization-spec §4.6/§8).
+ *
+ *  `marriage` belongs here as squarely as `relationship` does — a marriage
+ *  register is precisely the assertion that establishes a Couple — and its
+ *  earlier absence made `add_relationship`'s own instruction ("source the
+ *  Couple fact with the same assertion via sourceAssertionId") impossible to
+ *  follow for the commonest Couple edge there is.
+ *
+ *  `parentage` and `parentchild` are in for the same reason: a parentage
+ *  assertion establishes a parent-child link as squarely as a `relationship`
+ *  one does, and the spellings are what models actually emit. Measured over the
+ *  agent-produced `final-research` snapshots under `eval/runlogs/`: `parentage`
+ *  19, `Parentage` 12, `ParentChild` 14 — 45 together, outnumbering the 27
+ *  `Marriage` occurrences that motivated the case fold. Refusing those while
+ *  accepting `Marriage` was not a defensible line.
+ *
+ *  `age` is deliberately out: it is indirect evidence about ONE person and
+ *  names no second party. So are `marriage_intention` (3), `marriage_bann` (2)
+ *  and `spouse` (2), each rarer by an order of magnitude and each a judgement
+ *  about intent rather than an established link. `fact_type` is an OPEN enum,
+ *  so this set can never be complete; it is a deliberate ruling on the
+ *  spellings the corpus actually shows, not an attempt to enumerate the enum.
+ *  Widen it the same way: measure first, then decide.
+ *
+ *  Lives here because this module is what both tools already share for exactly
+ *  this pair. Read it through `isRelationshipEstablishing` rather than calling
+ *  `.has()` directly: `fact_type` is an OPEN enum with no pattern, and models
+ *  really do emit PascalCase for it: `Marriage` 27 times and `Relationship` 64
+ *  across the agent-produced `final-research` snapshots under `eval/runlogs/`.
+ *  The hand-written fixture corpus is clean of it, which is exactly why a
+ *  fixture-only check would miss this. A caller that skips the case fold
+ *  silently disagrees with one that does; sharing the set but not the
+ *  normalization is how the two spellings drift apart while looking as though
+ *  they cannot. */
+export const RELATIONSHIP_ESTABLISHING_TYPES: ReadonlySet<string> = new Set([
+  "relationship",
+  "marriage",
+  "parentage",
+  "parentchild",
+]);
+
+/** True when an assertion's `fact_type` establishes a link between two parties.
+ *  Case-folded, because the enum is open and the corpus is not consistent. */
+export function isRelationshipEstablishing(factType: unknown): boolean {
+  return RELATIONSHIP_ESTABLISHING_TYPES.has(String(factType ?? "").trim().toLowerCase());
+}
+
 export function resolveSourceRef(
   assertion: any,
   research: any,
