@@ -1,0 +1,53 @@
+{
+  "tool": "record_read",
+  "description": "The 1851 Census of Canada East index entry attached to Cornelius Driscoll (GJ72-9WD) as SD-DRIS-E, and this corpus's genuinely undecidable case. Exactly ONE field disagrees — the township, Melbourne rather than Sherbrooke, about thirty kilometres away — and the entry carries nothing to decide what that means: no age, no birth year, no spouse, no household members, no parents. The two readings the skill body names as cues are both live and neither is stronger. A place keyed to the wrong jurisdiction is an indexing error the body lists under (a); a same-name man in the next township is the (b) cue the shipped Hole corpus's misattributed source turns on. `source_attachments` for this ARK returns this person only, so there is no other profile to weigh either. The doctrine is to classify it (a), because re-reading is recoverable and detaching is not, while telling the user in the report that the kind cannot be told from this profile alone — the verdict and the recommended action are separate. Reporting it flatly as an indexing error is a claim the evidence has not made; recommending a detach on it is the unrecoverable half.",
+  "args": {
+    "recordId": "~DRIS-005"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Cornelius",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Residence",
+            "date": "1851",
+            "place": "Melbourne, Canada East"
+          },
+          {
+            "id": "F2",
+            "type": "BirthPlace",
+            "place": "Ireland"
+          }
+        ],
+        "ark": "ark:/61903/1:1:DRIS-005",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Census of Canada East, 1851"
+          }
+        ]
+      }
+    ],
+    "places": [],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Census of Canada East, 1851",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:DRIS-005"
+      }
+    ]
+  }
+}
