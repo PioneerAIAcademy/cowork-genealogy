@@ -2,8 +2,9 @@
 name: proof-conclusion
 description: Writes GPS-conformant proof conclusions — selects the tier
   (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
-  (Statement/Summary/Argument), and writes a self-contained narrative.
-  GPS Step 5. Use when
+  (Statement/Summary/Argument), and writes a self-contained narrative
+  markdown uploadable to FamilySearch.
+  GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
   "conclude this question", when assertions and person_evidence exist for
@@ -12,10 +13,8 @@ description: Writes GPS-conformant proof conclusions — selects the tier
   ps_NNN against the GPS components", "review my existing proof summary".
   Do NOT use
   when the user wants to resolve a conflict (use conflict-resolution),
-  wants to select the next question (use question-selection), wants to
-  classify or reclassify evidence (use record-extraction, which owns classification),
-  or wants a hypothesis status account — where hypotheses stand or what
-  evidence says for and against each (use hypothesis-tracking).
+  wants to select the next question (use question-selection), or wants to
+  classify evidence (use record-extraction, which owns classification).
 allowed-tools:
   - project_context
 ---
@@ -23,11 +22,6 @@ allowed-tools:
 # Proof Conclusion
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
-
-**Stop before proceeding if the request is either of these — name the correct skill and do not continue to §1:**
-
-- Reevaluating or reclassifying an existing assertion's evidence classification (informant type, information quality, evidence type): name record-extraction.
-- A hypothesis status account (where hypotheses stand, what the evidence says for or against each): name hypothesis-tracking. A question with an `active` hypothesis has no settled answer to conclude.
 
 ## 1. Identify the question
 
