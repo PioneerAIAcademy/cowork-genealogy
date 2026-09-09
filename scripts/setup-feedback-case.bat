@@ -84,10 +84,42 @@ if not exist "!DEST_DIR!" mkdir "!DEST_DIR!"
 REM -ErrorAction Stop + exit 1: without them powershell.exe returns 0 even
 REM when Expand-Archive errors, so the errorlevel check below never fired
 REM and a corrupt zip printed "Imported to ..." and exited 0 (issue #1876).
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!ZIP_PATH!' -DestinationPath '!DEST_DIR!' -Force -ErrorAction Stop } catch { Write-Error $_; exit 1 }"
+REM Escape single quotes in the paths: a filename containing ' would break
+REM out of the PowerShell single-quoted string and allow command injection.
+set "PS_ZIP=!ZIP_PATH:'=''!"
+set "PS_DEST=!DEST_DIR:'=''!"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Expand-Archive -LiteralPath '!PS_ZIP!' -DestinationPath '!PS_DEST!' -Force -ErrorAction Stop } catch { Write-Error $_; exit 1 }"
 if errorlevel 1 (
     echo Error: failed to unzip !ZIP_PATH! 1>&2
     exit /b 1
+)
+
+REM --- Strip Claude Code config that may have been injected into the zip ---
+REM Legitimate feedback zips never contain dotfiles (both walkers skip entries
+REM starting with "."), so .claude\, .claude.json, and .mcp.json in the zip are
+REM either hand-crafted or from an unexpected source. Remove them so the script's
+REM own fresh .claude\ (with repo-junctioned skills only) is the sole config
+REM Claude Code reads.
+for %%F in (.claude .claude.json .mcp.json .gitattributes .git) do (
+    if exist "!DEST_DIR!\%%F" (
+        echo Warning: stripped %%F from the zip ^(not expected in a feedback submission^).
+        if exist "!DEST_DIR!\%%F\." (
+            rmdir /s /q "!DEST_DIR!\%%F"
+        ) else (
+            del /q "!DEST_DIR!\%%F"
+        )
+    )
+)
+REM CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and they
+REM walk recursively, so one can arrive at any depth. Claude Code loads a subtree
+REM CLAUDE.md when it reads files there, and the triage workflow reads results/.
+REM Rename rather than delete: the triager keeps the content for reproduction,
+REM but it no longer executes as config.
+for /r "!DEST_DIR!" %%F in (CLAUDE.md) do (
+    if exist "%%F" (
+        echo Note: renamed %%F to CLAUDE.md.submitted so it is not loaded as instructions.
+        ren "%%F" "CLAUDE.md.submitted"
+    )
 )
 
 REM --- Write .feedback-repo-root ---
@@ -143,7 +175,8 @@ set "FB_JSON=!DEST_DIR!\_feedback\feedback.json"
 if exist "!FB_JSON!" (
     echo User's prompt to issue first:
     echo ---------------------------------------------
-    powershell -NoProfile -Command "try { (Get-Content -Raw -LiteralPath '!FB_JSON!' | ConvertFrom-Json).user_prompt } catch { '(could not parse feedback.json)' }"
+    set "PS_FB=!FB_JSON:'=''!"
+    powershell -NoProfile -Command "try { (Get-Content -Raw -LiteralPath '!PS_FB!' | ConvertFrom-Json).user_prompt } catch { '(could not parse feedback.json)' }"
     echo ---------------------------------------------
 ) else (
     echo User's prompt: see !DEST_DIR!\_feedback\feedback.json ^(user_prompt field^)
