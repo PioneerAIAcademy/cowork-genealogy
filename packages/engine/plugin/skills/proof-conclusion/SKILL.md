@@ -2,9 +2,8 @@
 name: proof-conclusion
 description: Writes GPS-conformant proof conclusions — selects the tier
   (Proved/Probable/Possible/Not Proved/Disproved), chooses the form
-  (Statement/Summary/Argument), and writes a self-contained narrative
-  markdown uploadable to FamilySearch.
-  GPS Step 5 — Soundly Reasoned, Coherently Written Conclusion. Use when
+  (Statement/Summary/Argument), and writes a self-contained narrative.
+  GPS Step 5. Use when
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
   "conclude this question", when assertions and person_evidence exist for
