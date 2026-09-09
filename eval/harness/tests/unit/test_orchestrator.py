@@ -1684,3 +1684,56 @@ def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monke
         "test_index_discrepancy_does_not_recommend_detaching asserts "
         "nothing on every run"
     )
+
+
+def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
+    """The second hop of the serializer trap (#2192, review of #2326).
+
+    `runlog.py` persists `SingleRun.error`, and a test covers that. But the
+    value only ever gets ONTO `SingleRun` via `error=result.error` in
+    `_execute_single_run`, and deleting that line left the entire 3313-test
+    suite green — the persistence test builds `SingleRun(error=…)` by hand, so
+    it proves the serializer and nothing about the wiring.
+
+    This drives the real path: a `SkillRunResult` carrying an error goes in,
+    and the assembled entry must carry it out. Deleting `error=result.error`
+    reds this and only this.
+    """
+    import asyncio
+
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    quota_error = (
+        "You've hit your limit [rate-limit signals: rate_limit_status=rejected "
+        "resets_at=1757260800]"
+    )
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        return SkillRunResult(
+            text_response="",
+            skills_invoked=[],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={},
+            aborted_reason="quota_exhausted",
+            error=quota_error,
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-08_10-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["aborted_reason"] == "quota_exhausted"
+    assert run["error"] == quota_error, (
+        "the SDK's error string must reach the committed run entry — this is "
+        "the only place a reader can see WHY a run aborted"
+    )

@@ -1,0 +1,222 @@
+{
+  "run_log": "v1_2026-09-08_08-32-34.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Data preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Edit minimality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Merge correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Merge correctness",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "Rubric says a non-merge test scores pass, not N/A — the judge scored this same situation 3 on ut_tree_edit_001. Corrected to 3 for consistency; a rubric null on a positive test can mask a fail."
+    },
+    {
+      "test_id": "ut_tree_edit_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Edit minimality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Data preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Score is right but the rationale is wrong: it says record-extraction was not invoked, when skills_invoked shows it was. Routing there IS the pass condition; crediting \"stayed silent, user invokes it next\" would also pass a run that routed nowhere."
+    },
+    {
+      "test_id": "ut_tree_edit_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence grounding",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "Rubric says match-checking scores pass — no edit to ground. Corrected to 3."
+    },
+    {
+      "test_id": "ut_tree_edit_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Merge correctness",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": " Rubric names match-checking as a non-merge case that scores pass, not N/A. Corrected to 3."
+    },
+    {
+      "test_id": "ut_tree_edit_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Edit minimality",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "The rationale confirms no edits occurred, which is the pass criterion met, not an inapplicable dimension. Corrected to 3."
+    },
+    {
+      "test_id": "ut_tree_edit_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Data preservation",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "Read-only run altered nothing; a wrongful edit here would have failed this dimension, so it does apply and it passed. Corrected to 3."
+    },
+    {
+      "test_id": "ut_tree_edit_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

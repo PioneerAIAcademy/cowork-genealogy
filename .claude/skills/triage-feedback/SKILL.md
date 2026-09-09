@@ -32,7 +32,7 @@ PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
 # Feedback 429222f8 / Backlog 0207fe08 / Not planned c44314b0
 
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 | jq -r '
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 | jq -r '
   [.items[] | select(.status == "Feedback")]
   | sort_by(.content.number)
   | .[] | "\(.content.number)\t\(.id)\t\(.content.title)"'
