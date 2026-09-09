@@ -119,19 +119,33 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   stated on the marriage line. Cost $11.58 / 102.9 min — roughly double this
   fixture's prior mean, the excess spent on a second research loop after
   `research-exhaustiveness` returned `declared: false`.
-- **What run 8 settled about `f2` (probed live 2026-09-09, after the run):** the
-  expected record is **not** absent, and this closes the "Not yet tried" item
-  above. `record_read ark:/61903/1:1:NW44-PM2` returns it in full — Anders Monsen
-  + Urna Halsteinsdr, Marriage `25 Jun 1786`, Hamre, Hordaland, collection
-  1468080. It is nonetheless unreachable through `record_search`:
-  `collectionId=1468080, givenName=Anders, surname=Monsen, isPrincipal=true,
-  marriageYearFrom=1780, marriageYearTo=1790` returns exactly **4** records
-  (1780 Vardal, 1780 Svanøy, 1782 Selje, 1790 Bø) and the target is not among
-  them — the entire result set is 4, so this is not a ranking or pagination
-  effect. Dropping `isPrincipal` and pinning `marriageYear=1786` returns 19
-  records, every one of them Anders-Monsen-as-parent. Run 5's hypothesis is
-  therefore confirmed and sharpened: **the record's marriage date is not
-  searchable in the index even though `record_read` serves it.** `f2` is not
-  recoverable by any documented search path, which makes it an expected-findings
-  defect rather than an agent miss — do not read future `f2` failures as a
-  search-quality regression.
+- **What run 8 probed about `f2` (probed live 2026-09-09, after the run):** the
+  expected record is **not** absent. `record_read ark:/61903/1:1:NW44-PM2`
+  returns it in full — Anders Monsen + Urna Halsteinsdr, Marriage `25 Jun 1786`,
+  Hamre, Hordaland, collection 1468080. **Run 1 recovered this same record from
+  `record_search`** — same collection, `isPrincipal: true`, over a wider
+  `1770-1800` window (`tool_calls[29]`, then `rank_search_matches` ranked it #2
+  of 58, then `record_read` of the ark at `[32]`), and run 1's annotation grades
+  `f2` true. So `f2` is recoverable in principle, and any claim that this record
+  is inherently unsearchable is wrong.
+  **What changed is the index, not the query.** Re-running run 1's query
+  *verbatim* on 2026-09-09 — including its `recordType: marriage` and
+  `recordCountry: Norway` — returns **10** matches, not 58, and the target is
+  not among them. Eight configurations were probed and none reached it:
+  `marriageYear 1786-1786` (19 hits, all Anders-Monsen-as-*parent*);
+  `isPrincipal` + `1780-1790` (4); `isPrincipal` + `1770-1800` (10, with and
+  without run 1's two extra params); `isPrincipal` + `marriagePlace=Hamre`
+  (50, target not in top 5); `isPrincipal` + `marriagePlace=Hamre` +
+  `1770-1800` (**0**); and the previously "not yet tried" principal-only with
+  **no** year filter at all (165 hits). Most telling: the bride's own exact
+  indexed name from `record_read`, `Urna Halsteinsdr`, returns **0** in
+  collection 1468080 with no year filter and no `isPrincipal` — so the record's
+  personas are not in that collection's search index today, which is a stronger
+  and simpler explanation than year-range semantics.
+  **How to read an `f2` miss:** as a search result about a drifting index, not
+  as proof of an expected-findings defect and not as an agent regression. The
+  record was reachable on 2026-07-09 and is not reachable by any probed query on
+  2026-09-09; it may revert. Before attributing a future `f2` miss to the agent,
+  re-run run 1's `tool_calls[29]` query and the `Urna Halsteinsdr` probe above —
+  if they still return 10 and 0, the record is out of the search index and no
+  search strategy will find it.
