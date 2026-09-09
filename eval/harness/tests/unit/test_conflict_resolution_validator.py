@@ -797,10 +797,13 @@ def test_v3_fires_on_a_shared_source():
 def test_v3_does_not_fire_when_the_resolved_conflict_is_not_a_fact_conflict():
     """The scope gate, and it is not cosmetic.
 
-    Without it the check fired on ut_conflict_resolution_005, whose own prompt
-    says "Analyze the geographic identity conflict c_003 and resolve it" — a
-    prompt-compliant resolution reported as premature. #1972's V3 heading scopes
-    the rule to a `resolved` FACT conflict; this is that scope.
+    Precisely, because this docstring used to contradict the validator's: with
+    the gate replaced by `if False:` the SHIPPED arm reports the identical 7
+    runs, so on the shipped arm the gate is a measured no-op. What it prevented
+    was the WITHDRAWN blocked-question arm firing on
+    ut_conflict_resolution_005, whose own prompt says "Analyze the geographic
+    identity conflict c_003 and resolve it". It is kept for scope, because
+    #1972's V3 heading scopes the rule to a `resolved` FACT conflict.
     """
     ident = _identity("c_002", competing_assertion_ids=["a_001"])
     before, after = _v3_states(
@@ -846,8 +849,13 @@ def test_v3_reports_a_real_pair_that_happens_to_share_a_conflict_id():
         check_identity_first(before, after)
     msg = str(e.value)
     assert "src_001" in msg
-    # Both indices, so a reader can tell the two same-id entries apart.
-    assert "index 0" in msg and "index 1" in msg, msg
+    # ORDER-SENSITIVE. `"index 0" in msg and "index 1" in msg` is order-blind —
+    # swapping the two values left the whole suite green, and telling the two
+    # same-id entries apart is the only thing the indices are for. The resolved
+    # entry is at array position 0 and the open identity at 1, so the message
+    # must say so in that order.
+    assert "(a fact conflict, index 0)" in msg, msg
+    assert "conflicts[c_001] (index 1) is an unresolved identity" in msg, msg
 
 
 def test_v3_ignores_a_prose_only_edit_to_an_already_resolved_conflict():
@@ -867,69 +875,59 @@ def test_v3_ignores_a_prose_only_edit_to_an_already_resolved_conflict():
     check_identity_first(before, after)
 
 
-def test_v3_fires_when_an_already_resolved_conflict_is_repointed_onto_a_disputed_source():
-    """The detection class a status-only population dropped.
+@pytest.mark.parametrize(
+    "label,before_kw,after_kw",
+    [
+        ("competing reordered, same members",
+         dict(competing_assertion_ids=["a_002", "a_009"]),
+         dict(competing_assertion_ids=["a_009", "a_002"])),
+        ("preferred changed, competing unchanged",
+         dict(competing_assertion_ids=["a_002"], preferred_assertion_id="a_002"),
+         dict(competing_assertion_ids=["a_002"], preferred_assertion_id=None)),
+        ("an UNDISPUTED id added",
+         dict(competing_assertion_ids=["a_002"]),
+         dict(competing_assertion_ids=["a_002", "a_009"])),
+        ("an id removed",
+         dict(competing_assertion_ids=["a_002", "a_009"]),
+         dict(competing_assertion_ids=["a_002"])),
+    ],
+)
+def test_v3_does_not_report_an_edit_to_an_ALREADY_resolved_conflict(
+    label, before_kw, after_kw
+):
+    """The withdrawn `repoint` arm, pinned so it is not re-proposed a third time.
 
-    The conflict is `resolved` in both states, so no status transition occurs —
-    but this run moved its `preferred_assertion_id` and `competing_assertion_ids`
-    from `a_014` (src_005) onto `a_002` (src_001), which an open identity
-    conflict disputes. The run stood a resolution on a disputed person-link this
-    turn just as surely as a fresh resolution would.
+    An arm shipped for one revision that reported a conflict `resolved` in both
+    states whose `preferred_assertion_id` or `competing_assertion_ids` this run
+    changed. Two reasons it is gone, and the first is that it had no evidence:
+    the shape needs a conflict already `resolved` in the BEFORE state, and 0 of
+    the 136 e2e starting states ship any conflict at all, let alone a resolved
+    one. The round-2 figure that justified it ("4 of 161 e2e final states") was
+    measured wrongly; those 4 are the create-and-resolve path the transition arm
+    already covers.
 
-    A revision shipped with a status-only population and went silent on this. It
-    came from misreading a review finding whose actual defect was the MESSAGE
-    claiming "was written status='resolved'" on a run that had only reworded
-    prose — a wording bug, for which narrowing the population was the wrong
-    remedy.
-
-    Latent on the unit corpus (no unit fixture ships a `resolved` conflict beside
-    an open identity conflict) and present in real project state: 4 of the 161
-    committed e2e final states carry the shape.
+    The second is that it was defective. Each case below FIRED under it, and in
+    every one the shared source pre-existed the run — so it attributed a
+    pre-existing violation to this turn, which is exactly what the population
+    exists to prevent. On the reorder case the message's literal claim
+    ("repointed onto different evidence") was also false.
     """
     ident = _identity("c_002", competing_assertion_ids=["a_001"])
     before, after = _v3_states(
-        [_v3_resolved("c_001", competing_assertion_ids=["a_014"],
-                      preferred_assertion_id="a_014"), ident],
-        [_v3_resolved("c_001", competing_assertion_ids=["a_002"],
-                      preferred_assertion_id="a_002"), ident],
-        _A,
-    )
-    with pytest.raises(AssertionError) as e:
-        check_identity_first(before, after)
-    # The message must say which act it is reporting: a repoint is a different
-    # claim from a fresh resolution, and conflating them was the original defect.
-    msg = str(e.value)
-    assert "repointed" in msg, msg
-    assert "was moved to status='resolved'" not in msg, msg
-
-
-def test_v3_says_moved_to_resolved_only_when_the_status_actually_moved():
-    """Polarity for the message arm above."""
-    ident = _identity("c_002", competing_assertion_ids=["a_001"])
-    before, after = _v3_states(
-        [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
-        [_v3_resolved("c_001", competing_assertion_ids=["a_002"]), ident],
-        _A,
-    )
-    with pytest.raises(AssertionError) as e:
-        check_identity_first(before, after)
-    msg = str(e.value)
-    assert "was moved to status='resolved'" in msg, msg
-    assert "repointed" not in msg, msg
-
-
-def test_v3_a_repoint_that_moves_AWAY_from_a_disputed_source_is_clean():
-    """The inverse repoint: same field changes, opposite direction. Firing on
-    this would flag a run that fixed the very problem the check reports."""
-    ident = _identity("c_002", competing_assertion_ids=["a_001"])
-    before, after = _v3_states(
-        [_v3_resolved("c_001", competing_assertion_ids=["a_002"],
-                      preferred_assertion_id="a_002"), ident],
-        [_v3_resolved("c_001", competing_assertion_ids=["a_014"],
-                      preferred_assertion_id="a_014"), ident],
+        [_v3_resolved("c_001", **before_kw), ident],
+        [_v3_resolved("c_001", **after_kw), ident],
         _A,
     )
     check_identity_first(before, after)
+
+    # Paired, so this cannot pass on the check being inert: the same conflict
+    # moved INTO `resolved` this turn is still reported.
+    with pytest.raises(AssertionError):
+        check_identity_first(*_v3_states(
+            [_conflict("c_001", **after_kw), ident],
+            [_v3_resolved("c_001", **after_kw), ident],
+            _A,
+        ))
 
 
 def test_v3_fires_when_a_conflict_arrives_already_resolved():
@@ -949,7 +947,7 @@ def test_v3_fires_with_no_preferred_assertion_id():
     """The case the plan-stage narrowing was blind on.
 
     An earlier draft keyed the join on the source of `preferred_assertion_id`.
-    That is schema-legal to omit on a resolved conflict, and 11 of 52 resolved
+    That is schema-legal to omit on a resolved conflict, and 11 of 53 resolved
     conflicts in the committed e2e corpus are in exactly that shape.
     """
     ident = _identity("c_002", competing_assertion_ids=["a_001"])
@@ -1133,7 +1131,7 @@ def test_v3_is_tier_2_reporting_not_gating():
 
 def _independently_v3_hits():
     """Re-derive V3's hits from raw `changed_fields`, knowing nothing about
-    `_sources_for`, `_newly_resolved_conflicts`, `_source_of` or
+    `_sources_for`, `_resolutions_this_run`, `_source_of` or
     `_conflict_entries`."""
     hits = set()
     for path in _CORPUS:
@@ -1236,3 +1234,66 @@ def test_v3_a_non_dict_conflict_entry_does_not_raise():
     after = {"research_json": {"conflicts": ["not a dict", None, ident],
                                "assertions": _A}}
     check_identity_first(before, after)
+
+
+def test_v3_the_printed_index_is_the_array_position_not_the_filtered_one():
+    """With a malformed entry first, the index must still point at the right row.
+
+    Enumerating the dict-filtered view printed 0 and 1 where the array positions
+    are 1 and 2 — wrong in exactly the malformed state that makes indices
+    necessary in the first place.
+    """
+    dup_open = _identity("c_001", competing_assertion_ids=["a_001"])
+    dup_resolved = _v3_resolved("c_001", competing_assertion_ids=["a_002"])
+    before = {"research_json": {"conflicts": [_conflict("c_001",
+                                competing_assertion_ids=["a_002"]), dup_open],
+                                "assertions": _A}}
+    after = {"research_json": {"conflicts": ["not a dict", dup_resolved, dup_open],
+                               "assertions": _A}}
+    with pytest.raises(AssertionError) as e:
+        check_identity_first(before, after)
+    msg = str(e.value)
+    assert "index 1" in msg and "index 2" in msg, msg
+    assert "index 0" not in msg, f"index 0 is the non-dict entry: {msg}"
+
+
+@pytest.mark.parametrize("competing", [42, "a_002", {"a_002": 1}, None])
+def test_v2_does_not_crash_on_a_non_list_competing_assertion_ids(competing):
+    """The round-3 blocker, and it is V2's exposure rather than V3's.
+
+    `report_resolution_word_caps` evaluated `len(competing) < 3`, so a non-list
+    raised `TypeError` — and a crash inside a `report_*` GATES the run and
+    suppresses the LLM judge, the one outcome the tier-2 design exists to
+    prevent. It needed only a NON-EMPTY rationale, not an over-cap one, because
+    `len(competing) < 3` is evaluated before the word count in the same
+    left-to-right `and`.
+
+    Reachable through a normal write: `validator.ts` accepts both `42` and
+    `"a_002"` here with 0 conflict errors (only `null` is rejected), so a model
+    can produce it and nothing upstream stops it.
+    """
+    before, after = _states(
+        [_conflict("c_001", competing_assertion_ids=competing)],
+        [_conflict("c_001", competing_assertion_ids=competing, status="resolved",
+                   resolution_rationale="x")],
+    )
+    # Must not raise anything other than the check's own AssertionError.
+    try:
+        check_word_caps(before, after)
+    except AssertionError:
+        pass
+
+
+@pytest.mark.parametrize("competing", [42, "a_002", {"a_002": 1}, None])
+def test_v3_does_not_crash_on_a_non_list_competing_assertion_ids(competing):
+    """The same shape through V3, which shares the accessor."""
+    ident = _identity("c_002", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=competing), ident],
+        [_v3_resolved("c_001", competing_assertion_ids=competing), ident],
+        _A,
+    )
+    try:
+        check_identity_first(before, after)
+    except AssertionError:
+        pass

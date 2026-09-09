@@ -281,6 +281,24 @@ def _conflict_entries(state: dict) -> list:
     return [c for c in (state.get("conflicts") or []) if isinstance(c, dict)]
 
 
+def _competing_ids(conflict: dict) -> list:
+    """`competing_assertion_ids` as a list, or `[]` if it is not one.
+
+    NOT defensive tidiness. `validator.ts` accepts a non-list here — measured:
+    `competing_assertion_ids: 42` and `"a_002"` both validate with 0 conflict
+    errors, while `null` is rejected — so a model can write it and nothing
+    stops it. With `42`, V2's `len(competing) < 3` raised `TypeError`, and a
+    crash inside a `report_*` GATES the run and suppresses the LLM judge, which
+    is the one outcome the whole tier-2 design exists to prevent.
+
+    It needed only a NON-EMPTY rationale, not an over-cap one, because
+    `len(competing) < 3` is evaluated before the word count in the same
+    left-to-right `and`.
+    """
+    ids = conflict.get("competing_assertion_ids")
+    return ids if isinstance(ids, list) else []
+
+
 def _conflicts_by_id(state: dict) -> dict:
     return {c.get("id"): c for c in _conflict_entries(state) if c.get("id")}
 
@@ -436,7 +454,7 @@ def report_resolution_word_caps(before_state, after_state):
             # it appears in changed_fields on 0 of the 26 over-cap
             # writes in the corpus -- so reading it from a diff makes the
             # three-or-more-way escape never apply and inflates the finding.
-            competing = c.get("competing_assertion_ids") or []
+            competing = _competing_ids(c)
             n = len(rationale.split())
             if len(competing) < 3 and n > _RATIONALE_BAND:
                 observations.append(
@@ -501,7 +519,7 @@ def report_resolution_word_caps(before_state, after_state):
 # only if the run prefers a_002 of {a_002, a_009, a_012} (every measured run
 # did, which is a coin flip and not a property of the rule), and it cannot see a
 # `resolved` conflict carrying no preferred_assertion_id at all, which is 11 of
-# 52 resolved conflicts in the committed e2e corpus.
+# 53 resolved conflicts in the committed e2e corpus (measured at be386317).
 
 
 def _source_of(state: dict) -> dict:
@@ -534,56 +552,66 @@ def _sources_for(conflict: dict, source_of: dict) -> set:
     `validator.ts` runs no `checkRefExists` on `competing_assertion_ids`, so a
     dangling id is reachable, and the crash consequence above applies.
     """
-    ids = conflict.get("competing_assertion_ids")
-    if not isinstance(ids, list):
-        return set()
-    out = {source_of.get(a) for a in ids if isinstance(a, str)}
+    out = {source_of.get(a) for a in _competing_ids(conflict) if isinstance(a, str)}
     out.discard(None)
     return out
 
 
-# The two ways a run can stand a resolution on a disputed person-link THIS TURN.
-_REPOINT_FIELDS = ("preferred_assertion_id", "competing_assertion_ids")
+# WITHDRAWN ARM, recorded so it is not re-proposed a third time.
+#
+# A `repoint` arm shipped for one revision: a conflict `resolved` in BOTH states
+# whose `preferred_assertion_id` or `competing_assertion_ids` this run moved onto
+# disputed evidence. It came from a round-2 review request, and the figure that
+# justified it -- "the shape occurs in 4 of 162 committed e2e final states (measured at be386317)" --
+# was measured wrongly by the reviewer and carried into this file by me.
+#
+# What the shape actually needs is a conflict already `resolved` in the BEFORE
+# state. Measured at this head:
+#
+#   e2e starting-research.json files                     136
+#   ...that ship ANY conflict                              0
+#   ...with a conflict already `resolved`                  0   <- impossible
+#   repoint instances in the unit corpus                   0
+#
+# So all 4 of those e2e states are the create-and-resolve path the transition arm
+# already covers, and only 3 of the 4 carry a resolved FACT conflict at all.
+#
+# It was also defective rather than merely unevidenced. All four of these fired,
+# and in every one the shared source pre-existed the run -- so it attributed a
+# pre-existing violation to this turn, which is what the population exists to
+# prevent:
+#
+#   competing reordered, same members         FIRED  (the message's claim is false)
+#   preferred changed, competing unchanged    FIRED
+#   an UNDISPUTED id added                    FIRED
+#   an id removed                             FIRED
+#
+# Plus: both trigger fields were individually unpinned (dropping either left the
+# suite green), the second derivation did not model it, and it defeated the
+# anti-fan-out guard, which counts the transition wording only.
+#
+# Withdrawn on the same reasoning as the blocked-question arm: no evidence, a
+# false-positive class, and no test that could distinguish it. Round 1's actual
+# finding -- that the MESSAGE claimed "was written status='resolved'" on a run
+# that only reworded prose -- stays fixed, and by construction: a prose-only edit
+# is not in the transition population at all.
 
 
-def _resolutions_this_run(before: dict, after: dict) -> list[tuple[dict, str]]:
-    """Conflicts left `resolved` whose resolution this run created or repointed.
+def _resolutions_this_run(before: dict, after: dict) -> list[dict]:
+    """Conflicts whose STATUS this run moved to `resolved`.
 
-    Returns `(conflict, how)` so the message can say which happened, because the
-    two are not the same claim and conflating them was a real defect.
-
-    TWO arms, and the second was missing for one revision:
-
-    - `transition` -- the status moved to `resolved` (or arrived `resolved` on a
-      created entry, which is the create-and-resolve path V6 documents).
-    - `repoint` -- already `resolved` in both states, but this run changed
-      `preferred_assertion_id` or `competing_assertion_ids`, moving the
-      resolution onto different evidence. If that evidence is disputed by an
-      open identity conflict, the run stood a resolution on a disputed
-      person-link this turn just as surely as a fresh resolution would.
-
-    A narrower status-only population shipped briefly and dropped the repoint
-    class entirely. It came from misreading a round-1 review finding: the defect
-    it reported was that the MESSAGE said "was written status='resolved'" on a
-    run that had only reworded prose. That is a wording bug, and narrowing the
-    population was the wrong remedy for it. The wording is fixed instead, and
-    the prose-only case stays silent because reworded prose changes neither arm.
-
-    Latent on the unit corpus -- no unit fixture ships a `resolved` conflict
-    alongside an open identity conflict -- but the shape occurs in real project
-    state: 4 of the 161 committed e2e final states.
+    A new entry arriving already `resolved` counts -- the create-and-resolve path
+    V6 documents, and the path every one of the corpus's resolved conflicts took.
     """
     before_by_id = _conflicts_by_id(before)
-    out: list[tuple[dict, str]] = []
+    out = []
     for c in _conflict_entries(after):
         cid = c.get("id")
         if not cid or c.get("status") != "resolved":
             continue
         prev = before_by_id.get(cid)
         if prev is None or prev.get("status") != "resolved":
-            out.append((c, "transition"))
-        elif any(c.get(f) != prev.get(f) for f in _REPOINT_FIELDS):
-            out.append((c, "repoint"))
+            out.append(c)
     return out
 
 
@@ -597,11 +625,17 @@ def report_resolution_precedes_identity(before_state, after_state):
     Stated honestly: on the SHIPPED arm this gate is a measured no-op. It was
     added because the two-arm revision fired on ut_conflict_resolution_005, whose
     own prompt says "Analyze the geographic identity conflict c_003 and resolve
-    it" -- but that firing came from the withdrawn blocked-question arm. The
-    source arm cannot reach ut_005 at all: c_003's competing assertion is a_014
-    (src_005) and c_002's is a_001 (src_001), so they share no source. Re-derived
-    with and without the gate: the identical 7 runs and 7 pairs, and ut_005 in
-    neither set.
+    it" -- but that firing came from the withdrawn blocked-question arm.
+
+    Precisely, because an earlier version of this paragraph overclaimed: the
+    source arm does NOT fire on the outcome ut_005's prompt directs. Resolving
+    `c_003` is silent, because c_003's competing assertion is a_014 (src_005) and
+    c_002's is a_001 (src_001). It is NOT true that the arm "cannot reach ut_005
+    at all" -- ut_005, ut_006 and ut_008 share the flynn-identity-geographic
+    scenario and the arm fires on the c_001-to-c_002 pair, so a run of ut_005
+    that resolved `c_001` would be reported. The claim is about one pair, not the
+    scenario. Re-derived with and without the gate: the identical 7 runs and 7
+    pairs, ut_005 in neither.
 
     Kept anyway, for scope rather than for effect -- it is the rule #1972's
     heading states, and it makes the check's population say so rather than
@@ -658,9 +692,17 @@ def report_resolution_precedes_identity(before_state, after_state):
     # tell apart. Ids are not unique in practice: `validator.ts` accepts a
     # duplicated `conflicts[].id` (measured: `c_003` duplicated, one `resolved`
     # and one `unresolved`, validates clean with 0 errors).
-    positions = {id(c): i for i, c in enumerate(_conflict_entries(after))}
+    # Position in `conflicts` as written, NOT in the dict-filtered view. With a
+    # non-dict entry first, enumerating the filtered list printed 0 and 1 where
+    # the array positions are 1 and 2 — so the index pointed at the wrong entry
+    # in exactly the malformed state that makes indices necessary.
+    positions = {
+        id(c): i
+        for i, c in enumerate(after.get("conflicts") or [])
+        if isinstance(c, dict)
+    }
 
-    for c, how in _resolutions_this_run(before, after):
+    for c in _resolutions_this_run(before, after):
         if c.get("conflict_type") != "fact":
             continue
         cid = c.get("id", "?")
@@ -686,15 +728,10 @@ def report_resolution_precedes_identity(before_state, after_state):
             shared = _sources_for(c, source_of) & _sources_for(other, source_of)
             if not shared:
                 continue
-            acted = (
-                "was moved to status='resolved'"
-                if how == "transition"
-                else "was already resolved and had its resolution repointed "
-                "onto different evidence"
-            )
             observations.append(
                 f"conflicts[{cid}] (a fact conflict, index "
-                f"{positions.get(id(c), '?')}) {acted} while "
+                f"{positions.get(id(c), '?')}) was moved to "
+                f"status='resolved' while "
                 f"conflicts[{oid}] (index {positions.get(id(other), '?')}) is an "
                 f"unresolved identity conflict over the same source(s) "
                 f"{sorted(shared)}. "
