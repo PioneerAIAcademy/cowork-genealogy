@@ -1,0 +1,19 @@
+{
+  "id": "creszentia-haas-birth",
+  "name": "Creszentia Haas — birth and christening (May 1835, Lichtental, Baden)",
+  "genre": "record-hint",
+  "source_pid": "9DZX-B29",
+  "captured": "2026-09-07",
+  "researcher_question": "When and where was Creszentia Haas — mother of Genofeva Haas (chr. 1855, Durbach, Baden) — born and christened?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1830s",
+    "geography": "DE-BW"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "hard",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 3, hint-samples.csv row 45, flags adds_birth/adds_christening, confidence 3). Draft transcribed from a Baden Catholic christening index entry; unverified."
+}

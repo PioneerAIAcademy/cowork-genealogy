@@ -1,0 +1,64 @@
+{
+  "tool": "record_search",
+  "description": "A follow-up marriage search for Jesse Neal, re-scoped to Arkansas via `marriagePlace` per the jurisdictionHints candidate, returns a positive match. Hand-authored for ut_search_records_jurisdiction_hint (issue #1642 Finding 1).",
+  "args": {
+    "surname": "Neal",
+    "marriagePlace": "~Arkansas"
+  },
+  "response": {
+    "query": {
+      "surname": "Neal",
+      "recordType": "marriage",
+      "marriagePlace": "Yell County, Arkansas"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "JN4L-QK1",
+        "recordId": "JN4L-QK1",
+        "personName": "Jesse Neal",
+        "score": 0.87,
+        "sex": "Male",
+        "birthDate": "~1857",
+        "birthPlace": "Arkansas",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:JN4L-QK1",
+        "collectionId": "1614804",
+        "collectionTitle": "Arkansas, County Marriages, 1837-1957",
+        "recordTitle": "Jesse Neal, Yell County, Arkansas",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jesse",
+                  "surname": "Neal",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Marriage",
+                  "date": "1878",
+                  "place": "Yell County, Arkansas"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

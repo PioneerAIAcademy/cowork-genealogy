@@ -121,17 +121,22 @@ entity.
 ```
 active ──► supported ──► (to proof-conclusion)
   │
+  ├──► (or straight to proof-conclusion via assertions only, bypassing `supported`)
+  │
   └──► ruled_out
 ```
 
 **`active`** — Evidence accumulating, no threshold crossed. Starting state.
 
 **`supported`** — Transition when ALL of these are true:
-- At least one line of direct evidence supports the claim (an
-  assertion with `evidence_type: "direct"` in the supporting list)
-- No unresolved contradictions remain (contradicting assertions have
-  been explained, resolved via conflict-resolution, or outweighed)
-- The evidence is consistent — no logical impossibilities (check-warnings) or geographic infeasibilities (timeline)
+- Every `conflicts[]` entry whose `competing_assertion_ids` overlap this
+  hypothesis's `supporting_assertion_ids` or `contradicting_assertion_ids`
+  has `status` of `resolved` or `moot`
+- Either at least one supporting assertion carries `evidence_type: "direct"`,
+  or at least two carry `evidence_type: "indirect"` and cite at least two
+  distinct `source_id` values
+- The evidence is consistent — no logical impossibilities (check-warnings) or
+  geographic infeasibilities (timeline)
 
 **Do NOT downgrade from `supported` to `active` for minor
 discrepancies.** Census age rounding (e.g., a 5-year birth year
@@ -155,10 +160,12 @@ it is genealogically reasonable.
 review.** When the user asks you to update or evaluate a hypothesis
 and the age arithmetic shows a candidate was 10 years old at the
 subject's birth, that is a biological impossibility — rule it out in
-this interaction. Do NOT defer to conflict-resolution or hedge on
-person_evidence confidence when the link is rated `confident`
-(match_score >= 0.80) — treat the identification as settled and apply
-the ruling. **Exception:** if the user explicitly asks for a read-only
+this interaction. Before applying the ruling, **query `person_evidence`
+(filtered by the relevant `assertion_id`) for the match confidence** — do
+not assume or dismiss a same-name identity link without checking it. Do
+NOT defer to conflict-resolution or hedge on person_evidence confidence
+when the link is rated `confident` (match_score >= 0.80) — treat the
+identification as settled and apply the ruling. **Exception:** if the user explicitly asks for a read-only
 summary/review, do NOT modify research.json — identify the issue in
 your response text but defer changes to a follow-up request.
 
@@ -186,7 +193,7 @@ accumulates — the GPS process of elimination.
 
 - **timeline:** Request a hypothesis-testing timeline to check event coherence.
 - **conflict-resolution:** When supporting and contradicting evidence exist, specific conflicts may need resolution.
-- **proof-conclusion:** When a hypothesis reaches `supported`, it's ready for a proof conclusion.
+- **proof-conclusion:** When a hypothesis reaches `supported`, it's ready for a proof conclusion. A hypothesis that cannot reach `supported` still concludes — `proof-conclusion` accepts assertions and `person_evidence` for a question as an alternative; an indirect argument resting on a single source takes that route.
 
 ## Present
 

@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_record_extraction_030",
+    "skill": "record-extraction",
+    "name": "Pre-1752 colonial baptism — resolve the calendar before delegating",
+    "type": "positive",
+    "description": "Extract a March 1750 baptism from Albany in the Province of New York, while it was a British colony. England and its colonies kept 25 March as the start of the legal year until 1752, so both stated dates fall inside the Old Style year-start window and may be 1751 by modern reckoning. The router holds the record content and the place at this point, and the record-extractor agent grants neither Skill nor Task, so the calendar question must be resolved by invoking convert-dates BEFORE delegating, with the reading carried in the delegation flag. Guards the referrer routing added for #2107: convert-dates had 0 invocations across 159 committed e2e runs because nothing on a reachable path named it. The record states every fact it needs — birth date included — deliberately, so no expected-but-absent fact invites a negative-evidence assertion and the run does not collide with #986.",
+    "tags": [
+      "extraction",
+      "old-style-date",
+      "convert-dates-handoff",
+      "colonial-america",
+      "pre-1752"
+    ]
+  },
+  "input": {
+    "user_message": "Extract assertions from this baptism record:\n\nRecords of the Reformed Protestant Dutch Church of Albany\nProvince of New York (British colonial America)\nRegister of baptisms, page 214\n\n  Child: John Perry\n  Born: 12 March 1750\n  Baptized: 18 March 1750\n  Father: Jacob Perry, cordwainer, of Albany\n  Mother: Elisabeth Witbeck, of Albany\n  Sponsors: Hendrick Witbeck, Maria Van Deusen",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "The March 1750 dates are the point of this test. England and its colonies began the legal year on 25 March until the Calendar (New Style) Act took effect in 1752, so a March 1750 colonial date falls inside the Old Style year-start window and may be 1751 by modern reckoning. The skill must recognise this and resolve it by invoking convert-dates BEFORE delegating to the record-extractor — not after, and not by doing the arithmetic itself.",
+    "Whether convert-dates was invoked is asserted mechanically by a validator on skills_invoked, not by you. Do not deduct because the delegation is absent from the prose narration, and do not credit a response that merely NARRATES the calendar issue without invoking the skill.",
+    "The skill must NOT perform the conversion itself. Naming a converted date, an Old Style/New Style day offset, or a double-dated year from its own reasoning is a failure — convert-dates owns the country cutoffs and the double-dating conventions. Stating that the dates need conversion, and that convert-dates was asked, is correct.",
+    "Over-application is also a failure. England and its colonies dropped 11 days in September 1752, AFTER this record, so the day of month does not shift here: a response that moves 18 March to 29 March, or that applies a 10-to-13-day offset to these dates, has over-applied the rule. Only the year number is in question.",
+    "Extraction itself is still delegated per record to the record-extractor agent — the router writes no sources, assertions or classifications in this context. A response that extracts inline fails regardless of how it handled the calendar.",
+    "The reading convert-dates returns should ride along in the delegation message as a flag, so the agent records the dates with that qualification. The router must not write the corrected date into research.json itself.",
+    "Parentage (Jacob Perry, Elisabeth Witbeck) and the father's occupation are DIRECT evidence — the register states them. Sponsors are FAN associates worth noting as identifying facts, not full assertion sets. The record states both a birth and a baptism date, so no birth-date absence arises and no negative-evidence assertion is expected."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300,
+    "stub_skills": [
+      {
+        "skill": "convert-dates",
+        "response": "Albany, Province of New York is British colonial America, where the legal year began 25 March until 1752. Both dates fall in that window, so both are Old Style:\n\n- Born 12 March 1750 O.S. = 12 March 1751 by modern reckoning; write 12 March 1750/51.\n- Baptized 18 March 1750 O.S. = 18 March 1751 by modern reckoning; write 18 March 1750/51.\n\nThe day of month does not shift. England and its colonies dropped 11 days only in September 1752, after this record, so no day offset applies here — the year number alone is corrected. Record both dates in the 1750/51 double-dated form and flag them Old Style."
+      }
+    ]
+  }
+}

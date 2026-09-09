@@ -28,6 +28,7 @@ import pytest
 from validators_lib import (
     assert_log_append_only,
     assert_no_section_deletions,
+    extract_year,
 )
 
 # Identifier extraction is shared with `make provenance-report` (issue #1667)
@@ -361,6 +362,126 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
     assert not errors, "New plan items with non-planned status:\n  - " + "\n  - ".join(errors)
 
 
+# --- Tag-gated: the objective's target record leads the plan ----------
+
+# Scenario-specific expectation for `hansen-kongsberg-baptism`. Its objective
+# asks for a birth or baptism record and supplies the place, so SKILL.md
+# step 4 item 7 makes the Kongsberg baptism the first research target. Trysil
+# is the death place: legitimate corroboration, but not ahead of the target
+# and not a precondition for reaching it.
+#
+# Deliberately mechanical and judge-independent. The rubric's `Sequencing
+# logic` dimension does not discriminate: across every committed run log it
+# scores 3 on all but one graded occurrence. No exact count is quoted here on
+# purpose -- it has needed re-deriving twice (73 of 74, then 93 of 94) as new
+# logs landed and old ones were pruned, and nothing guards the figure, so a
+# number in this comment is stale the moment the corpus moves. Re-derive it
+# from `eval/runlogs/unit/research-plan/v*.json` if you need it. The 2026-08-24
+# dive called the dimension "worse than no" -- it once cited a fabricated
+# collection id as its evidence -- and `rubric.md` is fenced by #1404/#1668, so
+# the ordering this guards cannot be enforced there. Origin: alpha feedback
+# #1945.
+_TARGET_JURISDICTION = "kongsberg"
+# `record_type` is an open string with only *recommended* values
+# (`enums.schema.json` -> record_type_recommended), and a baptism register is
+# defensibly either. Both spellings have been observed for this scenario's
+# target: `church` in the 09:58 run, `vital_record` in the 18:16 run. The
+# jurisdiction is the discriminator here, not the type -- the Trysil burial is
+# `vital_record` as well -- so this set must stay narrow enough to exclude
+# census/probate/military/land, which are breadth items and not the record the
+# objective asked for.
+_TARGET_RECORD_TYPES = ("church", "vital_record")
+_INDIRECT_JURISDICTION = "trysil"
+
+
+def _plan_items_in_sequence(research: dict) -> list[dict]:
+    items: list[dict] = []
+    for plan in research.get("plans", []) or []:
+        for item in plan.get("items", []) or []:
+            items.append(item)
+    return sorted(items, key=lambda i: i.get("sequence") or 0)
+
+
+def test_objective_target_leads_the_plan(before_state, after_state, test):
+    """Tag-gated: the record the objective asks for is the first research
+    target, and is not gated behind an indirect source (SKILL.md step 4
+    item 7).
+
+    Two distinct failures, both seen in the submitted session behind #1945:
+    the target sequenced behind the death place, and the target written as
+    a `fallback_for` of a death-place item so it is only reached if that
+    search succeeds."""
+    if "objective-target" not in test.get("tags", []):
+        pytest.skip("not an objective-target scenario")
+    after = after_state.get("research_json")
+    if after is None:
+        pytest.skip("missing research.json for diff")
+
+    items = _plan_items_in_sequence(after)
+    if not items:
+        pytest.skip("no plan items written")
+
+    def juris(item: dict) -> str:
+        return str(item.get("jurisdiction") or "").lower()
+
+    # An item naming BOTH places cannot be the target. `jurisdiction` is free
+    # text and the skill really writes multi-place values -- `r3d`'s own run
+    # produced "Trysil, Hedmark, Norway; Kongsberg, Buskerud, Norway" -- so
+    # without this exclusion one item satisfies both the target test and the
+    # ahead-of-target test, and relabelling the seq-1 death item makes the
+    # identical defect pass. Found in review of #2033.
+    target = next(
+        (
+            i
+            for i in items
+            if _TARGET_JURISDICTION in juris(i)
+            and _INDIRECT_JURISDICTION not in juris(i)
+            and str(i.get("record_type") or "").lower() in _TARGET_RECORD_TYPES
+        ),
+        None,
+    )
+    assert target is not None, (
+        f"no plan item targets the objective's record "
+        f"(record_type in {_TARGET_RECORD_TYPES} in {_TARGET_JURISDICTION.title()}); "
+        f"items were: "
+        + ", ".join(
+            f"seq {i.get('sequence')} {i.get('record_type')}/{i.get('jurisdiction')}"
+            for i in items
+        )
+    )
+
+    target_seq = target.get("sequence") or 0
+    # ANY earlier item, not just an indirect-jurisdiction one. Keying this on
+    # `_INDIRECT_JURISDICTION` made it a place-name substring match: `jurisdiction`
+    # is free text and the skill routinely writes a bare county or country, so a
+    # leading item labelled "Norway" — an actual value in this scenario's own run —
+    # slipped past while the identical defect labelled "Trysil, Hedmark, Norway"
+    # was caught. Same evasion class as the combined-jurisdiction one, one field
+    # over (#2033 review). The rule the objective states is that the target LEADS;
+    # what precedes it is not the point.
+    ahead = [i for i in items if (i.get("sequence") or 0) < target_seq]
+    assert not ahead, (
+        f"the objective asks for a baptism record in "
+        f"{_TARGET_JURISDICTION.title()} and supplies the place, but "
+        f"{len(ahead)} item(s) are sequenced "
+        f"ahead of it (target is seq {target_seq}):\n  - "
+        + "\n  - ".join(
+            f"seq {i.get('sequence')} {i.get('record_type')} — "
+            f"{str(i.get('rationale') or '')[:120]}"
+            for i in ahead
+        )
+    )
+
+    # The target must not be reachable only via an indirect item.
+    fallback_of = target.get("fallback_for")
+    if fallback_of:
+        parent = next((i for i in items if i.get("id") == fallback_of), None)
+        assert parent is None or _INDIRECT_JURISDICTION not in juris(parent), (
+            f"the objective's target item {target.get('id')} is a "
+            f"fallback_for {fallback_of}, a {_INDIRECT_JURISDICTION.title()} "
+            f"item — the requested record must not be gated behind an "
+            f"indirect source"
+        )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY
@@ -469,7 +590,14 @@ _TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_se
 # unioned onto candidate_identifiers so grounding stays a strict SUPERSET —
 # permissive grounding can only remove a false fabrication, never add one. The
 # CITED side keeps candidate_identifiers, matching make provenance-report.
-_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:/])\d{5,}(?![\w.])")
+# The lookbehind must NOT exclude '/': external_links_search is in
+# _TRACEABLE_ID_TOOLS because it returns collection ids, and it returns them
+# only as URL path segments ("ancestry.com/search/collections/61749/"), so
+# excluding a slash-preceded run made every id that tool serves ungroundable
+# — 22 of the 40 across its 16 fixtures — and turned a correct citation into
+# a fabrication flag (ut_research_plan_r3d, v1_2026-09-01_07-35-31). Widening
+# grounding can only clear a false positive, per the invariant above.
+_GROUNDED_NUM_RE = re.compile(r"(?<![\w.:])\d{5,}(?![\w.])")
 
 
 def _grounded_identifiers(text: str) -> set[str]:
@@ -636,4 +764,184 @@ def test_research_plan_availability_claim_matches_counts(
     assert not errors, (
         "availability claim contradicts returned personCount:\n  - "
         + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: already-attached FAN-cluster facts must reach the response ---
+
+
+def _word_grams(text: str, n: int) -> set[str]:
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return {" ".join(words[i : i + n]) for i in range(len(words) - n + 1)}
+
+
+def report_survey_surfaces_already_attached_fan_facts(before_state, text_response, test):
+    """Tag-gated (issue #1948), tier 2 -- reporting only, per ADR-0011 /
+    `unit-test-spec.md`: the harness can detect whether a non-subject
+    person's already-sourced fact was surfaced, but not decide whether the
+    response's reasoning about it is sound, so a miss here is an observation
+    fed to the judge (Correctness/Completeness), not an independent gate on
+    the run's outcome.
+
+    Started as tier 1 and was moved during PR #2004 review (clack391): a
+    tier-1 gate on this behavior means a coin-flip miss makes ordinary model
+    variance loud rather than regressions loud (EdmondOware, round 1), and
+    -- separately and more importantly -- the predicate can be satisfied by
+    a response that read nothing (see the false-positive shapes below),
+    which a tier-1 pass would have hidden from the judge entirely
+    (`orchestrator.py` gates the judge on `validators_passed`).
+
+    Live alpha-feedback report: a first plan for a "why did the family move"
+    question never surfaced a sibling's already-sourced 1875 land purchase in
+    the destination county, seven years before the subject's own documented
+    arrival. Three SKILL.md wording attempts (see the mined test
+    `ut_research_plan_bpx`) moved the failure rate from "every sample" to
+    roughly half -- expected, since the skill runs without `temperature=0`,
+    so no wording can pin any behavior at exactly 100%. The 5 committed runs
+    of `ut_research_plan_bpx` against the final wording
+    (`v1_2026-08-28_06-14-42`, `_10-59-10`, `v1_2026-08-30_04-40-39`,
+    `_16-05-12`, `v1_2026-08-31_10-37-11`) give 3 pass / 2 fail -- roughly
+    the same "about half" rate, though five runs is too few to pin the exact
+    fraction. Now that this check is tier 2, that rate no longer independently
+    decides the test's outcome (the judge does), which is what makes the
+    rate a curiosity rather than a marking decision.
+
+    Deliberately gated on the `already-attached` tag rather than running on
+    every research-plan test. Measured against the corpus at review time
+    (clack391): of the research-plan tests then in the suite, only this
+    PR's own fixture had a non-subject person with a checkable sourced
+    fact, so gating false-positives on nothing today -- but a future
+    scenario could add one incidentally, and this check has no way to know
+    whether surfacing it was that test's point.
+
+    Check: for each non-subject person with a sourced fact, require
+    somewhere in the response (case-insensitive) -- their given name
+    (word-boundary match, not a bare substring test: "Ann" must not match
+    inside "planning") AND the fact's *content*: a date token (`date`,
+    `standard_date`, or a bare year extracted from either, so `~1845`,
+    `1908-03-12` and "Abt 1850" are all recognized, not just a literal bare
+    year) AND, when the fact carries a `value`, at least one two-word gram
+    from that value. A fact with no `value` degrades to name+date; a fact
+    with no date at all degrades to name+value -- either signal alone still
+    gates on *some* fact-specific content, never on the name alone. A fact
+    with neither a date nor a value has nothing fact-specific to check
+    against and is out of scope, the same as a person with no sourced facts
+    at all (there is no content to confirm was read, so nothing is asked of
+    the response) -- this closes a real false negative found during review
+    (clack391): `date` is optional in the schema, so a sourced fact that
+    only carries a place, say, previously failed unconditionally regardless
+    of what the response said.
+
+    This design replaced an earlier name+date-only check found to have two
+    real gaps during PR #2004's review (clack391): (1) matching `date`
+    verbatim missed every non-bare-year format -- of 113 sourced facts with
+    a date across the scenario corpus, only 9 are bare years; 53 are
+    `~yyyy`, 47 are ISO `yyyy-mm-dd`, the rest free text -- so `"~1845" in
+    "...about 1845..."` was false and the check failed a correct response.
+    (2) A committed run (`v1_2026-08-27_16-18-15.json`, since pruned by
+    retention -- see the review thread for its recorded text) exposed the
+    deeper problem the value-gram requirement exists for: its response
+    mentions Patrick seven times and a FAN plan item's own search-window
+    header happens to read "Schuylkill County, PA -- 1875-1905", satisfying
+    a bare name+date check, while the response's own text is entirely
+    conditional ("if Patrick preceded Michael...") and proposes searching to
+    *discover* what the tree already states. Name and date co-occurrence
+    cannot tell "citing a known fact" apart from "proposing a new search
+    that happens to start near the same year"; a content fragment from the
+    fact's own `value` can.
+
+    Checked against the WHOLE response, not scoped to one paragraph. An
+    earlier version required the name and the content signals to land in
+    the same blank-line-delimited paragraph, on the theory that a stray
+    date elsewhere in the response shouldn't count. Review (clack391) found
+    this scoping was itself a false-positive hole, not a precision gain: a
+    response naming nobody can still pass if a date token and a value gram
+    both happen to appear anywhere near the person's name by coincidence of
+    the fixture's own wording (measured directly against this fixture's own
+    plan-item search window), and restricting to same-paragraph did nothing
+    to prevent it while failing at least one honestly-correct response
+    whose citation sits in its own paragraph, separate from the name. Since
+    this is now tier 2, the judge is the backstop for "did the response
+    actually reason about this fact" regardless of scope; the mechanical
+    check's job is only to flag whether the content appears at all.
+
+    Does not grade whether the response's *reasoning* about the fact is
+    sound once it clears this bar -- that is exactly what moving this to
+    tier 2 hands to the judge (Completeness/Correctness already grade
+    reasoning quality on this test).
+    """
+    if "already-attached" not in test.get("tags", []):
+        pytest.skip("not an already-attached-fan-facts scenario")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    if not text_response:
+        pytest.skip("no text_response captured")
+
+    subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
+    response_lower = text_response.lower()
+    paragraphs = [response_lower]
+
+    missed: list[str] = []
+    for person in tree.get("persons", []) or []:
+        pid = person.get("id")
+        if not pid or pid in subject_ids:
+            continue
+        given = (person.get("names") or [{}])[0].get("given", "")
+        if not given:
+            continue
+        sourced_facts = [f for f in (person.get("facts") or []) if f.get("sources")]
+        if not sourced_facts:
+            continue  # nothing already attached for this person -- not in scope for this check
+
+        name_pattern = rf"\b{re.escape(given.lower())}\b"
+        name_present = bool(re.search(name_pattern, response_lower))
+
+        surfaced = False
+        any_checkable = False
+        for fact in sourced_facts:
+            date_tokens = {
+                t.lower() for t in (fact.get("date"), fact.get("standard_date")) if t
+            }
+            date_tokens |= {
+                y
+                for y in (extract_year(fact.get("date")), extract_year(fact.get("standard_date")))
+                if y
+            }
+            value_grams = _word_grams(fact["value"], 2) if fact.get("value") else set()
+            if not date_tokens and not value_grams:
+                continue  # nothing fact-specific to check for this one
+            any_checkable = True
+
+            for para in paragraphs:
+                if not re.search(name_pattern, para):
+                    continue
+                date_ok = not date_tokens or any(
+                    re.search(rf"\b{re.escape(tok)}\b", para) for tok in date_tokens
+                )
+                value_ok = not value_grams or bool(value_grams & _word_grams(para, 2))
+                if date_ok and value_ok:
+                    surfaced = True
+                    break
+            if surfaced:
+                break
+
+        if not any_checkable:
+            continue  # no sourced fact on this person has a date or value -- nothing to check
+
+        if surfaced:
+            continue
+
+        if not name_present:
+            reason = "the person's given name never appears in the response"
+        else:
+            reason = (
+                "the person's given name appears, but no sourced fact's date and value "
+                "content (whichever the fact carries) both also appear in the response"
+            )
+        missed.append(f"{pid} ({given}): has a sourced fact but {reason}")
+    assert not missed, (
+        "already-attached FAN-cluster fact(s) never surfaced in the "
+        "response:\n  - " + "\n  - ".join(missed)
     )

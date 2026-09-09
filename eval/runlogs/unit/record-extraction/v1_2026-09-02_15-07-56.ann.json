@@ -1,0 +1,484 @@
+{
+  "run_log": "v1_2026-09-02_15-07-56.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A confirmed correct -- negative test, zero MCP tool calls made."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree. Verified: the model's response is genuinely empty -- no text_response, no tool calls at all. Not a case of routing_negative_judge_fail hiding a legitimate self-handling (the test's correct_skill IS record-extraction itself, so handling the request inline would have been acceptable) -- an empty response is neither a clear decline nor self-handling, so the 1 stands. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree, same root cause -- zero output means zero completeness regardless of routing target."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with the judge's own cited policy. Its rationale describes exactly one validation rejection, immediately corrected, retry succeeded with correct args -- and says so explicitly ('a single clean recovery from a tool validation error'). Both judge/prompt.md and rubric.md are unambiguous: 'A single clean recovery... scores full credit (3)... one competent course-correction on a clear tool error is not a defect.' The rationale names the exact shape the written policy scores 3, then scores 2 anyway. Unrelated to issue #2021, but the same policy-violation pattern recurs on ut_record_extraction_014 in this same run -- worth a look at whether the judge prompt needs tightening."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree, same policy violation as ut_record_extraction_007 above: the rationale explicitly says 'a single clean recovery per the policy: one validation rejection, immediately corrected, retry succeeded with correct args' -- the exact shape judge/prompt.md and rubric.md score 3 -- then scores 2 anyway."
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with the judge's own quoted text. The rationale quotes this test's judge_context verbatim -- 'an observable route toward the image must appear in this run's tool calls or subagent invocations -- a search-images delegation, a volume_search call, or an image-reader delegation' -- which lists volume_search as one of three sufficient alternatives, then concludes 'the volume_search call alone is insufficient; the skill needed to attempt image_read or delegate to the image-reader subagent,' contradicting the very rule it just quoted. Verified against tool_calls: the skill did call volume_search (locating register 013729012). This is the F7 fix from issue #2021 doing exactly its job -- the router genuinely attempted the confirmation route the SKILL.md doctrine (post-#2170) now names, and the answer key (widened this same PR round for #2170's search-images route) explicitly treats that as compliant."
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Real, if minor, imprecision: the rationale names a concrete better alternative ('father' or 'household member reporting father's identity' vs. the generic 'presenting parent(s)') rather than just asserting a problem without specifics. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Real, verified defect distinct from the ut_record_extraction_003 pattern seen earlier in this PR's annotations (there, the judge's underlying factual premise was wrong; here it's confirmed right): the persisted assertions correctly carry evidence_type 'direct', but the response's narrative summary table mislabels the same facts 'Indirect' / 'Derivative-Secondary-Indirect'. A user reading only the narration would be misled about what was actually saved, which is a real Correctness defect even though the persisted data itself is sound. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree. Concrete, verified defect: the marriage-event assertion's value field embeds the spouse's name ('Married Ella May Horne...'), fabricating a relationship claim the record doesn't directly state (it's inferred from two parties sharing one marriage entry) into a fact assertion with informant 'self'/'direct'. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, same root cause as Correctness -- the marriage-event assertion conflates a stated event (date/place) with an inferred relationship (spouse identity) in one entry."
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, same root cause -- correct informants applied to a malformed/compound assertion, and no separate relationship assertion was created for the marriage bond."
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree, same root cause -- the embedded spouse-relationship claim is inferred, not stated, and should be indirect (or a separate assertion), not folded into the direct marriage-event value."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Concrete defect: record_role marked 'child_1' for Patrick Flynn when the 1850 census (no relationship column) doesn't establish a parent-child relationship -- role should reflect household membership, not an inferred relationship. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Uncertain, not overriding. The rationale opens by claiming 'one concrete issue' but every sentence that follows calls the actual choices acceptable/defensible/correct -- it never names a wrong value, only that the informant_bias_notes reasoning 'could be slightly more explicit.' Reads similar in shape to the confirmed self-contradictions elsewhere in this run (ut_record_extraction_016's Completeness, ut_record_extraction_007/_014's Tool Arguments), but unlike those I can't verify a specific wrong classification here to justify overriding to 3 -- leaving as scored and flagging for a second look rather than guessing."
+    },
+    {
+      "test_id": "ut_record_extraction_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Concrete defect: birth year (a_005) marked 'direct' when it's computed from the census's stated age, which is indirect evidence by doctrine. Unrelated to issue #2021."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "N/A confirmed correct -- zero MCP tool calls made (empty response)."
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3
+    }
+  ]
+}

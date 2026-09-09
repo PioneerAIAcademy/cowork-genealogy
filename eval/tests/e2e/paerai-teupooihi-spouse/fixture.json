@@ -1,0 +1,19 @@
+{
+  "id": "paerai-teupooihi-spouse",
+  "name": "Paerai Teupooihi — her son Moe Parauhia's wife, Aufait Toehae",
+  "genre": "record-hint",
+  "source_pid": "LCX2-LKN",
+  "captured": "2026-09-07",
+  "researcher_question": "Whom did Moe Parauhia, son of Parauhia Paura and Paerai Teupooihi of Moorea, marry?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1830s",
+    "geography": "PF"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 12, hint-samples.csv row 397, flag adds_spouse, confidence 3). Draft transcribed from a French Polynesian civil registration entry; unverified. The addition is one step out from the subject — her son's spouse."
+}

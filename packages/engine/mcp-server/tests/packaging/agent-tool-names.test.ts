@@ -506,7 +506,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // field on one question and must never reach the tree; a deny naming one of
   // five writers fails open on the other four, silently, and no CI job sees it.
   "research-exhaustiveness.md": {
-    tools: ["Read", "project_context", "research_append", "research_query"],
+    tools: ["Read", "project_context", "research_append", "research_query", "wiki_read"],
     denies: [],
   },
   // The only caller permitted to write research.json's person_evidence; the

@@ -144,8 +144,9 @@ sites.
 name-indexed. This is the only way to find someone as a witness, executor,
 appraiser, bondsman, heir, or neighbor rather than as the principal of a
 record. It behaves nothing like an indexed search: no fuzzy matching, no
-Soundex, no abbreviation expansion — *Wm* and *William* are separate
-searches. Three rules come from repeated failures:
+Soundex, no abbreviation expansion in `keywords`/`place` — *Wm* and
+*William* are separate `keywords` searches (the `name` field
+auto-expands recognized English given names). Three rules come from repeated failures:
 
 - Search by **name only**, then filter for place. Putting the place in the
   query matches the collection's description, not the document.
@@ -261,8 +262,11 @@ what would resolve it — not left as a remark in conversation.
 Competing candidates are tracked explicitly through *active*, *supported*,
 and *ruled out*. A new hypothesis starts active even when the evidence
 already leans toward it; promotion is a separate judgment against stated
-criteria — a supporting direct-evidence claim, no unresolved contradictions,
-no chronological impossibility.
+criteria — no unresolved contradictions naming the hypothesis's own
+evidence, no chronological impossibility, and either one supporting
+direct-evidence claim or two supporting indirect claims from two distinct
+sources. An indirect argument resting on a single source doesn't clear that
+floor; it concludes through a proof conclusion instead of promotion.
 
 There is an explicit rule against demoting a supported hypothesis over
 ordinary noise: census age rounding and a few years' drift in a reported

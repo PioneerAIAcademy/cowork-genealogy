@@ -84,6 +84,29 @@ check whether starting-point facts are documented or merely assumed.
 Flag unsupported assumptions (e.g., "widow = mother of all children")
 and add plan items to verify them before relying on them.
 
+**Survey what's already attached, before planning new searches.** For
+the subject and every other person in scope for this question, check
+`tree.gedcomx.json` for the source(s) already attached to their facts
+and relationships. For every one you find, **write down its date,
+place, and value before deciding what to plan for that person** —
+literally state what the fact records, in the plan's rationale,
+before the plan item. "Person X already has a source attached" is
+noticing it exists; it is not the survey. Neither is "review this
+first" as a note to yourself for later — if you wrote that, go read it
+now, in this same pass, before the plan item for that person, not as a
+deferred step folded into the new item's own rationale.
+
+Two things a real read of the content catches that noticing a
+source's existence does not: a plan item that re-requests a record
+type already covered by an attached source, and a detail already
+sitting on an attached source — a stated residence, a death date, a
+place named in passing — that bears on the question even though it
+isn't what that source was originally cited for. If the survey itself
+answers part of the question or changes what still needs searching,
+say so in the plan's rationale, stating the fact's content, rather
+than silently planning around it — and rather than planning a new
+search for something an already-attached fact already states.
+
 ### 1a. Decide the planning mode
 
 Read ALL plans for the target question (`plans[]` where
@@ -306,6 +329,14 @@ Order items for efficient discovery (BCG Standard 15):
    reveals *about the subject*. On those three question types at least one FAN
    item is mandatory. Everywhere else it is not a quota — if no associate could
    speak to this question, don't manufacture one
+7. **Prioritize the objective's target record** — when the objective explicitly
+   requests a particular record type and provides the jurisdiction needed to
+   search for it, that record is the first research target. Do not prioritize
+   indirect sources whose primary purpose is to re-establish information the
+   objective already supplies. Corroborating and supporting records remain in
+   the plan, but normally follow the target record rather than acting as a
+   prerequisite to searching it. Exceptions are appropriate when identity,
+   jurisdiction, or record availability remain uncertain
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is

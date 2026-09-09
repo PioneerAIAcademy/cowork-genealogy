@@ -310,6 +310,8 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
+| `refinement_targets` | optional (see Section 5.11) | omit (a declined skill updates no assertions) |
+| `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `negative` | omit | required |
 
 ### How a negative test is graded
@@ -440,6 +442,15 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         },
         "additionalProperties": false
       }
+    },
+    "refinement_targets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional list of a_ assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication. See Section 5.11."
+    },
+    "index_error_source": {
+      "type": "string",
+      "description": "Optional. Names the ONE attached source an index-discrepancy test declares to be an indexing error — the source that must never be recommended for detaching. Checked mechanically by test_index_discrepancy_does_not_recommend_detaching. See Section 5.12."
     },
     "negative": {
       "type": "object",
@@ -590,6 +601,7 @@ A test with empty `judge_context` is still graded on the base dimensions (3: Cor
 
 Guidelines for writing `judge_context` notes:
 
+- **A note may not relax a bar its rubric sets.** If a rubric bar is wrong for a class of run, move the bar in `rubric.md`; do not write a per-test note excusing that run from it. A note reading "addressing the unmet criterion in prose is sufficient for a pass" against a rubric whose `fail` bar is "two or more unaddressed" puts two graders in one suite, and which one the judge follows moves between runs. The rubric applies to every test for the skill, so the rubric is the one that has to be right. A note narrows the rubric to this scenario; it never overrides it.
 - **Focus on what's unique to this scenario.** Don't restate what the skill rubric already covers. If the rubric says "extraction completeness," don't add "should extract all facts." Instead note *this specific record's* unusual characteristics.
 - **Be specific.** "Should extract assertions" is too vague. "Should extract assertions for at least 3 persons (head of household, wife, and Patrick)" is testable.
 - **Include reasoning.** "Should classify the relationship as indirect evidence with indeterminate information quality — the 1860 census does not state relationships explicitly (that column was introduced in 1880)" tells the judge *why* the classification is correct.
@@ -766,6 +778,74 @@ A floor that rewrote such a `1` to `2` shipped briefly and was **removed** in 20
 **Do not reintroduce it gated on empty output.** All 4 overrides had `text_response == ""` and zero turns, but so did 6 of the 20 confirmations, and `ut_search_records_003` carries that identical signature in all 8 of its eligible cells — confirmed in two run logs, overridden in two others. Such a gate would have fired on 10 cells and been wrong on 6. There is no mechanical discriminator; that is the reason the floor is gone rather than narrowed. Deleting it changes no outcome — `_compute_outcome` decides these tests on routing alone, so a base-dimension score there has never gated anything.
 
 Read a `routing_negative_judge_fail` warning before overriding the `1`. Either the skill carried out its own task inline — a real defect the routing pass hides — or the judge misread a clean decline.
+
+### 5.11 `refinement_targets`
+
+Optional array of `a_` assertion ids — deterministic ground truth for a
+**classification-refinement** test, where the scenario seeds an assertion
+that already exists and the run is expected to correct its classification
+in place rather than create a new one. Checked mechanically by
+`test_refinement_preserves_extraction_fields_and_avoids_duplication`
+(`eval/harness/validators/test_record_extraction.py`) — added because no
+test in the corpus exercised the classification-refinement path at all.
+For each id: the assertion must still exist under the same id in the
+after-state; its extraction fields (`source_id`, `record_id`,
+`record_role`, `fact_type`, `value`, `structured_value`, `date`,
+`date_certainty`, `place`) must be byte-identical to before (a refinement
+corrects classification, not the extracted fact); at least one field must
+actually differ from before (a no-op "update" that changes nothing is not
+a refinement); every other pre-existing assertion must be untouched
+(scope enforcement); and no new assertion may share a target's
+`(source_id, record_role, fact_type)` shape (catches "fixed" via a
+duplicate append rather than an `update` op on the original).
+
+`expected_classifications` (5.10) alone cannot check any of this — its
+matcher looks for *new* assertions (as of the widening below, new-or-
+updated) matching a role/fact pair; it has no notion of "this specific
+existing assertion, and nothing else, changed." `refinement_targets` is
+the complementary check when the scenario's starting state already
+contains the assertion under test, which `expected_classifications`
+alone was never able to express.
+
+**Widened matching in `expected_classifications`.** To let a matcher find
+the refinement target at all, `test_expected_classifications`'s notion of
+"new" was widened from *created this run* to *created-or-updated this
+run* (an id absent from the before-state, or present with a changed
+value). This is additive only: the candidate pool for every existing
+test's matchers can only grow, never shrink, so a matcher that passed
+under the old "new-only" definition still passes — it cannot introduce a
+new failure on a test that declares no `refinement_targets`.
+
+### 5.12 `index_error_source`
+
+Optional string naming the **one** attached source a test declares to be an
+indexing error — deterministic ground truth for `source-evaluation`'s
+remediation doctrine, where the remedy for a mis-transcribed field is to go
+back to what the index was made from and correct it, never to detach the
+source. Checked mechanically by
+`test_index_discrepancy_does_not_recommend_detaching`
+(`eval/harness/validators/test_source_evaluation.py`), which splits the reply
+on blank lines and fails if the passage naming this source also recommends
+detaching or unlinking. Gated on the `index-discrepancy` tag; a test carrying
+that tag and no `index_error_source` fails rather than skipping, so the guard
+cannot be disarmed by omission.
+
+A reply-wide check cannot express this rule. A correct audit of the same
+person also reports a genuinely *misattributed* source, for which detaching
+**is** the right recommendation — so any reply-wide licence for the word
+"detach" is always granted, and the assertion can never fail. Naming the
+protected source is what makes the check discriminating: the test declares
+the situation, the validator asserts the rule, and neither has to decide for
+itself which finding is which.
+
+**The value must reach the validator to do anything.** Like
+`refinement_targets` (5.11) and `expected_classifications` (5.10), this is a
+*top-level* field, and `orchestrator.py` assembles the validator-facing
+`test` dict as an explicit whitelist rather than passing the whole test JSON.
+A field declared in the schema and read by a validator but absent from that
+literal arrives as `None` on every run.
+`test_orchestrator_threads_index_error_source_into_validators` pins it, as the
+sibling test does for `refinement_targets`.
 
 ---
 
@@ -1205,12 +1285,14 @@ def report_example_pattern(text_response):
 - `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order.
 - `blocked_context_calls` (list) — main-thread calls to subagent-only tools denied by the PreToolUse hook.
 - `blocked_protected_writes` (list) — raw writes to protected project files denied by the hook.
+- `blocked_owned_section_writes` (list) — `research_append` ops the shipped ownership rule refused, denied by the hook, as `{"tool", "args", "section", "rule", "caller"}`. Empty is the healthy case; `test_no_out_of_lane_section_writes` gates on it.
 - `attempted_mcp_calls` (list) — MCP calls the model emitted that never reached a fixture match.
 - `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
 - `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).
 - `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort.
 - `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort.
-- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"error"`). `None` when the run completed normally.
+- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
+- `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate).
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
@@ -1349,7 +1431,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "run_index": "number (0-based)",
       "run_id": "string (run_<test_id>_<timestamp>_<run_index>)",
       "outcome": "string (pass | partial | fail | aborted)",
-      "aborted_reason": "string or null (limit name, `not_runnable`, or `unmatched_tool_call` when outcome is aborted; null otherwise)",
+      "aborted_reason": "string or null (limit name, `not_runnable`, `unmatched_tool_call`, or `quota_exhausted` when outcome is aborted; null otherwise)",
+      "error": "string or null (the SDK's error string plus any rate-limit signals; optional, absent in run logs written before it existed)",
       "duration_ms": "number",
       "input_tokens": "number",
       "cached_input_tokens": "number",
@@ -1515,7 +1598,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
 - **Tool call repetition.** A fixture has no usage limit — it fires on every call whose `args` match its predicate (Section 3.2). A skill that calls a tool repeatedly with the same arguments therefore receives a copy of the same response each time. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
-- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `sdk_stream_silence` (the per-message watchdog in `skill_runner` fired because no SDK message arrived within `sdk_message_silence_seconds`, indicating an upstream stall mid-generation; the orchestrator retries this reason like `error`), `not_runnable` (Section 9 runnability gate), `unmatched_tool_call` (Section 15 — the skill called a tool no fixture covers), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
+- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `sdk_stream_silence` (the per-message watchdog in `skill_runner` fired because no SDK message arrived within `sdk_message_silence_seconds`, indicating an upstream stall mid-generation; the orchestrator retries this reason like `error`), `not_runnable` (Section 9 runnability gate), `unmatched_tool_call` (Section 15 — the skill called a tool no fixture covers), `quota_exhausted` (the seat's subscription limit refused the call), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
+- **`quota_exhausted` is split out of `error` because it is not transient.** The limit is deterministic until the seat's window resets, so retrying spends attempts in seconds against something that clears in hours. It is deliberately absent from both `_ALWAYS_RETRYABLE_ABORTS` (orchestrator) and `_TRANSIENT_ABORT_REASONS` (run_tests) — membership in either would restore the retry or feed the abort-storm breaker's ratio arithmetic. One such abort stops the suite submitting new tests and promotes what finished to a `scratch_` log, so no releasable `v{N}` is minted from a run a quota cut short. Classified from one structured signal — `RateLimitEvent.rate_limit_info.status == "rejected"`, the only one that cannot come from a per-minute API limit, since every `RateLimitType` literal is a subscription window — with a text match on the CLI's display string as a documented last resort. `ResultMessage.api_error_status` and `AssistantMessage.error == "rate_limit"` are recorded as evidence but do not classify: in `api_key` mode either can be an org per-minute limit this repo treats as transient (`harness/auth.py`, `harness/judge.py`), and misreading one discards a whole paid run. **No CI job can produce a real subscription quota**, so a green suite proves the classifier's branch, not that the predicate matches a live quota — whichever signals fire are recorded in `runs[].error` on any run that aborts, so the next occurrence settles which one fires. A healthy run persists none of them — `error` is set on failure paths only.
+- **`runs[].error`** (str | None, optional) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. Optional rather than required, so already-committed run logs stay valid. Before it existed the only trace of *why* a run aborted was inside `output.text_response`, which is not anywhere a reader looks: a subscription quota sat there unread while the PR that shipped the run described it as an SDK error.
 - **`runs[].validators.passed`** — top-level boolean per run for at-a-glance status.
 - **`runs[].judge.skipped`** — true when validators failed in this run *or* the run was aborted. When skipped, `dimensions` is an empty array and `judge_cost_usd` is 0.
 - **`totals.skill_cost_usd` + `totals.judge_cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently.

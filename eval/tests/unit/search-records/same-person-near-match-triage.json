@@ -34,5 +34,6 @@
     "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test",
     "Nil escalation: score null (N/A) for this test. The scenario returned one result and the skill triaged it. This test grades near-match triage behavior only — it is NOT a nil search. Do not penalize for not attempting additional variant searches.",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }

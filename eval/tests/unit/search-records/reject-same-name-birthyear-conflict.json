@@ -40,5 +40,6 @@
     "Do NOT require the skill to find the true baptism — it is not available in this scenario. Recognizing the decoy is the wrong person and declining to adopt it is a complete, correct response; do not penalize the skill for not producing parents.",
     "Log/Sidecar: do NOT require the skill to print raw log-entry or sidecar JSON. Score log quality 3 if the skill states it wrote results/<log_id>.json and appended a log entry capturing the conflict. This is NOT a nil search (one result was returned), so it should write a sidecar and set results_ref.",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
-  ]
+  ],
+  "judge_reads_files": true
 }

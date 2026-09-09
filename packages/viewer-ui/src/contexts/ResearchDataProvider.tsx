@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { ResearchData, GedcomxData, SidecarFile } from '../lib/schema'
 import type { ResearchTransport } from '../transport'
-import { setOpenExternal } from '../lib/external'
+import { setOpenExternal, setOpenFamilySearch } from '../lib/external'
 import {
   ResearchDataContext,
   buildIndex,
@@ -99,6 +99,10 @@ export function ResearchDataProvider({
 
     // Wire external-URL opening to this transport's implementation.
     setOpenExternal(transport.openExternal)
+    // The constrained sibling MUST be wired here too (#1018). Without it every
+    // "Open in FamilySearch" link silently does nothing — `openFamilySearch`
+    // fails closed by design — with every test still green.
+    setOpenFamilySearch(transport.openFamilySearch)
 
     // Hydrate from the transport's latest known state (covers initial load,
     // reconnect, and page reloads).

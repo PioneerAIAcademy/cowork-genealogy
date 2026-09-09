@@ -103,7 +103,12 @@ export interface Plan {
   question_id: string
   status: PlanStatus
   created: string
-  items: PlanItem[]
+  /** At least one item, mirroring `$defs/plan.items` in `research.schema.json`
+   *  (`type: array, minItems: 1`). A plain `PlanItem[]` admits `[]`, so this
+   *  mirror silently disagreed with the schema it exists to mirror — the same
+   *  drift the engine's runtime validator had. Held by
+   *  `src/type-assertions.ts`. */
+  items: [PlanItem, ...PlanItem[]]
 }
 
 export interface ExternalSiteDetail {
@@ -247,6 +252,19 @@ export interface Timeline {
   gaps: TimelineGap[]
 }
 
+export interface ProofClaimRelationship {
+  type: 'ParentChild'
+  parent: string
+  child: string
+}
+
+export interface ProofClaim {
+  claim: string
+  proof_tier: ProofTier
+  supporting_assertion_ids: string[]
+  relationship: ProofClaimRelationship
+}
+
 export interface ProofSummary {
   id: string
   question_id: string
@@ -256,6 +274,7 @@ export interface ProofSummary {
   resolved_conflict_ids: string[]
   exhaustive_search_summary: string
   narrative_markdown: string
+  claims?: ProofClaim[]
 }
 
 export interface KnownHolding {
@@ -445,12 +464,17 @@ export interface RecordSearchResult {
 
 export interface FulltextSearchResult {
   id: string
+  sourceUrl?: string
+  collectionId?: string
   collectionTitle?: string
+  title?: string
+  recordDate?: string
   recordType?: string
   recordPlace?: string
   textDocument?: string
   names?: string[]
   places?: string[]
+  dates?: string[]
   highlightTerms?: string[]
 }
 

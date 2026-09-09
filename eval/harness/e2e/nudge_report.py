@@ -20,9 +20,9 @@ disobeyed anyway. So the live hypothesis is that the *sub-skills* close the turn
 from the other side, and that is a claim about which skill boundary each nudge
 follows.
 
-## Two sources, and reading only the newer one sees almost nothing
+## Two sources
 
-Nudges are recoverable two ways, and this unions both:
+Nudges are recoverable two ways:
 
 1. **`narration[]`** — entries `{tool_calls_before, kind, text}`, where a nudge is
    `kind == "harness"` and the text opens `continue-nudge N/M:`. `tool_calls_before`
@@ -33,19 +33,18 @@ Nudges are recoverable two ways, and this unions both:
    preceded by the assistant's own prose. No tool markers, so the seam is read
    from what the agent said it was doing.
 
-`narration` replaced the transcript in #1238 (2026-08-04). At the time of
-writing it covers **2 of 145** committed runs while the transcripts carry **20
-nudge events across 7 runs** — so a reader that only understands `narration`
-reports 3 events and misses the finding entirely. That asymmetry is the whole
-reason for the fallback, and it inverts as the corpus turns over: keep both.
+`narration` replaced the transcript in #1238 (2026-08-04) and is now the sole
+source. The committed `.transcript.md` files were removed in PR #2204 — they
+were zombie re-lands from stale-base merges (issue #1342). The transcript
+fallback code path is retained for any local copies that may still exist on
+developer machines.
 
-## Both sources together still see about a tenth of the nudges
+## Coverage is still sparse
 
-Neither source is retained for most runs. `usage.continue_nudges` records **224
-nudges in 98 of 145 committed runs**; only 9 of those 98 carry a narration nudge
-or a `.transcript.md` sibling, because transcripts stopped being written and
-`narration` started too recently. So the seam histogram is a sample — drawn
-overwhelmingly from the corpus's oldest week — and never a census.
+`narration` is not retained for most runs. `usage.continue_nudges` records **264
+nudges in 110 of the committed runs**; only **12** of those carry a narration
+nudge entry, because `narration` started recently. So the seam histogram is a
+sample and never a census.
 
 `counter_totals()` reads that counter so every report states the gap, and so the
 no-results branch cannot claim a clean loop over runs it simply could not read.

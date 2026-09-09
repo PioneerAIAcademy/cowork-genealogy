@@ -1,0 +1,340 @@
+{
+  "persons": [
+    {
+      "id": "GN5K-19C",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Domingo",
+          "surname": "Olivera Y Valadyo"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0f7e6e17-d956-473e-9420-820211df39b1",
+          "type": "Birth",
+          "date": "1867",
+          "standard_date": "1867",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "536373f5-83fb-44dc-b714-2ba62ef1d3f5",
+          "type": "Death"
+        },
+        {
+          "id": "85080573-0efb-4270-997f-01439b7ea5c3",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Rio Abajo, Vega Baja, Puerto Rico",
+          "standard_place": "Río Abajo, Vega Baja, Puerto Rico"
+        }
+      ]
+    },
+    {
+      "id": "GN52-9LV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Felix",
+          "surname": "Olivera Y Gonsalez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "93f02cb8-2002-4a7c-988c-02cbb6578a21",
+          "type": "Birth",
+          "date": "1902",
+          "standard_date": "1902",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "dd245dc4-53d3-4582-b135-e4a065d5e9d7",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Rio Abajo, Vega Baja, Puerto Rico",
+          "standard_place": "Río Abajo, Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "c144ee8c-3f7f-4af6-9bc1-9a2d01c92d17",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GN5K-L8W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Francisca",
+          "surname": "González  Maysonet"
+        }
+      ],
+      "facts": [
+        {
+          "id": "44f33fb3-f5dd-47aa-b13b-1f8635316212",
+          "type": "Birth",
+          "date": "about 1871",
+          "standard_date": "Abt 1871",
+          "place": "Ciales, Puerto Rico",
+          "standard_place": "Ciales, Puerto Rico"
+        },
+        {
+          "id": "35623f0e-8a33-4f9a-aaf5-c407d456ec06",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Rio Abajo, Vega Baja, Puerto Rico",
+          "standard_place": "Río Abajo, Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "331be0f3-fd49-43bc-9863-b3a902b47de1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GN52-SH9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Domingo",
+          "surname": "Olivera Y Gonsalez"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8c48b002-cab4-4bc4-b3c8-c9f0de616254",
+          "type": "Birth",
+          "date": "1897",
+          "standard_date": "1897",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "c9e41628-f664-4a61-b24f-16965d845ad3",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Rio Abajo, Vega Baja, Puerto Rico",
+          "standard_place": "Río Abajo, Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "fa55994b-0292-4ed0-9ac9-55294c075d64",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GN5K-251",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Inocencia",
+          "surname": "Oliveras González"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4dcd47bc-4e33-4f88-8d4a-75f6cf0898e4",
+          "type": "Birth",
+          "date": "about 1900",
+          "standard_date": "Abt 1900",
+          "place": "Ciales, Puerto Rico",
+          "standard_place": "Ciales, Puerto Rico"
+        },
+        {
+          "id": "364cf8a1-233b-44b3-b2bc-47c44cd34abd",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Rio Abajo, Vega Baja, Puerto Rico",
+          "standard_place": "Río Abajo, Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "4cea05df-3b7e-4444-967a-b17971c58738",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Vega Baja",
+          "standard_place": "Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "43ab2adb-e54d-4da4-9fb6-0853c871aaca",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Vega Baja, Vega Baja, Puerto Rico",
+          "standard_place": "Vega Baja, Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "728c69f5-9ed9-4dff-b439-0793e8bf16ae",
+          "type": "Social Program Application",
+          "date": "26 Oct 1973",
+          "standard_date": "26 Oct 1973"
+        },
+        {
+          "id": "920cdd42-384f-4664-b032-af4c4f1f35cb",
+          "type": "Death Registration",
+          "date": "19 Nov 1992",
+          "standard_date": "19 Nov 1992",
+          "place": "Vega Baja, Puerto Rico, Estados Unidos de América",
+          "standard_place": "Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "1ecafb71-07cc-40b4-9483-8e0f3febdf80",
+          "type": "Death",
+          "date": "19 November 1992",
+          "standard_date": "19 Nov 1992",
+          "place": "Vega Baja, Puerto Rico",
+          "standard_place": "Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "96cc238e-7bdb-4d0d-8d12-3b47280f4f11",
+          "type": "Previous Residence",
+          "place": "Vega Baja, Vega Baja, Puerto Rico, United States",
+          "standard_place": "Vega Baja, Vega Baja, Puerto Rico"
+        },
+        {
+          "id": "25d722bf-0ea3-4ef3-88ed-59ded1f5ca1a",
+          "type": "Marital Status",
+          "value": "Common law"
+        },
+        {
+          "id": "5ea5f620-5238-41a8-80b5-938ced38eb1e",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ]
+    },
+    {
+      "id": "GBR2-2W6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Félix",
+          "surname": "Olivéra González"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e9891bb1-5d8a-4344-bf29-8334b1d6259b",
+          "type": "Birth",
+          "date": "1910",
+          "standard_date": "1910"
+        },
+        {
+          "id": "bbfdefbd-1a18-421d-847f-7b931a36fd29",
+          "type": "Death",
+          "date": "21 December 1950",
+          "standard_date": "21 Dec 1950",
+          "place": "Vega Baja, Vega Baja, Puerto Rico",
+          "standard_place": "Vega Baja, Vega Baja, Puerto Rico"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GN5K-19C",
+      "person2": "GN5K-L8W"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GN5K-19C",
+      "child": "GN52-SH9"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GN5K-L8W",
+      "child": "GN52-SH9"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GN5K-19C",
+      "child": "GN5K-251"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GN5K-L8W",
+      "child": "GN5K-251"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GN5K-19C",
+      "child": "GN52-9LV"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GN5K-L8W",
+      "child": "GN52-9LV"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GN5K-19C",
+      "child": "GBR2-2W6"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GN5K-L8W",
+      "child": "GBR2-2W6"
+    }
+  ],
+  "sources": [
+    {
+      "id": "74KQ-ZKV",
+      "title": "Domingo Oliviery, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJW-7HRB : Wed May 14 00:00:01 UTC 2025), Entry for Carmen Ester Olivera Martinez and Domingo Olivera.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6T48-QDLZ"
+    },
+    {
+      "id": "7WL9-PLN",
+      "title": "Domíngo Olivera, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJ3-F565 : Wed May 14 04:09:06 UTC 2025), Entry for Félix Olivéra González and Domíngo Olivera, 21 Dec 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJ3-F56R"
+    },
+    {
+      "id": "QY82-ZSB",
+      "title": "Domingo Oliveras Bal*, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K4N-JH1D : Mon Jul 06 02:12:42 UTC 2026), Entry for Inocencia Olivera and Domingo Oliveras Bal*.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K4N-JH1F"
+    },
+    {
+      "id": "31Q9-M4X",
+      "title": "Domingo Olivera Y Valadyo, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9W5-6G7 : Tue Oct 21 07:14:02 UTC 2025), Entry for Domingo Olivera Y Valadyo and Francisca Gonzalez Y Maisonet De Olivera, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9W5-6G7"
+    },
+    {
+      "id": "Q28F-6NX",
+      "title": "Domingo Oliveras, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJ3-GCSW : Wed May 14 06:36:07 UTC 2025), Entry for Inocencia Oliveras González and Domingo Oliveras, 19 Nov 1992.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJ3-GCS4"
+    }
+  ]
+}

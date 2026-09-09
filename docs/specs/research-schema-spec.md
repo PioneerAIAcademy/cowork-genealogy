@@ -85,7 +85,7 @@ flagged. (One row below is the exception, and says so.)
 | `plan_status` | `active`, `completed`, `superseded` | plans |
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
-| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
+| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `evidence_type` | `direct`, `indirect`, `negative` | assertions |
@@ -316,10 +316,11 @@ Single object (not an array).
 ### 5.1.1 `researcher_profile`
 
 Optional single object. Captures per-project context about the
-researcher. Mostly written once by `init-project` from a short interview
-asked alongside the project's research objective in the same non-blocking
-opening turn (`intended_audience` is the exception — it is set
-by hand, see below); read by every skill. Skills adapt their narration density to
+researcher. `experience_level` and `narration_guidance` are written once by
+`init-project` from a short interview asked alongside the project's research
+objective in the same non-blocking opening turn; `intended_audience` and
+`subscriptions` are not written by that interview (see their rows below). Read
+by every skill. Skills adapt their narration density to
 `narration_guidance`, and `search-external-sites` prioritizes URLs for
 sites listed in `subscriptions`. All fields optional — absence falls
 back to default narration. To update mid-project, edit this section
@@ -328,9 +329,9 @@ directly.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `experience_level` | string | no | One of `novice`, `intermediate`, `experienced`, `professional`. Drives `narration_guidance` derivation in `init-project`. |
-| `subscriptions` | string[] | no | How the researcher can reach pay-walled sites. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`. Inputs are normalized at write time (case-folded, trimmed, deduped, common aliases mapped) so stored values always match the enum exactly. The field is named for subscriptions but records *access* — free access counts, which is why the last two are routes rather than sites: `FamilySearch-Partner` is a partner subscription granted through a FamilySearch account, `LibraryAccess` a public library, family history centre, or FamilySearch affiliate library. Neither names which sites it unlocks (that varies by institution and changes), so `search-external-sites` treats them as "ask before assuming a paywall blocks this", not as a match for any particular site. A plain FamilySearch account is the product's baseline and is **never** stored — a researcher with only that has `["none"]`. |
+| `subscriptions` | string[] | no | How the researcher can reach pay-walled sites. Enum: `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `FamilySearch-Partner`, `LibraryAccess`, `other`, `none`. **No longer written by `init-project`** — the interview question was dropped 2026-08-31 rather than the field, because removing the field would be a five-site schema change and buys nothing. Access is now assumed available for every site, and the field records it only when a researcher volunteers it unprompted; absent is the normal state, and `["none"]` is not written as a default because it asserts the researcher said they have nothing. Any value written is still normalized to the enum exactly. |
 | `narration_guidance` | string | no | Concrete instruction text derived from `experience_level` at write time. Skills read and follow this text directly — the mapping logic lives only in `init-project`. |
-| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening-turn interview covers experience level, access, and (separately, in `project.objective`) the research objective; it does not ask about audience. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
+| `intended_audience` | string | no | Free text naming who the finished write-ups are for (e.g. "my cousins, none of them researchers"; "submission to NGSQ"). Read by `gps-mentor`'s narrative-craft checks (`gps-mentor-agent-spec.md` §6.4) so audience calibration is judged against a stated audience instead of inferred from the prose. **Not** written by `init-project` — the opening-turn interview covers experience level and (separately, in `project.objective`) the research objective; it does not ask about audience. Set this by hand when it matters, and when it is absent the mentor infers the audience and says which one it assumed. |
 
 ### 5.1.2 `known_holdings`
 
@@ -408,7 +409,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `question_id` | string | yes | The question this plan addresses (`q_` reference) |
 | `status` | `plan_status` | yes | Current status |
 | `created` | string | yes | ISO 8601 date |
-| `items` | object[] | yes | At least one plan item (see below) |
+| `items` | object[] | yes | At least one plan item (see below). Enforced by the validator, so a plan cannot be created empty and filled later: the item writes belong in the same `research_append` call as the shell. `packages/schema`'s TypeScript mirror types this as a non-empty tuple for the same reason |
 
 **Plan items:**
 
@@ -442,11 +443,13 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 | `notes` | string or null | no | Free text observations, including the one-line human summary of what the search returned |
 | `external_site` | object or null | yes | External site details when `tool` is `external_site`, otherwise null. See below |
 
-**`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow on a commercial genealogy site.
+**`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow.
+
+Not every site here is commercial. `chronicling_america` and `digital_newspaper_archive` are **free to search**, and are in this workflow for a different reason: both sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, or `familysearch_web` |
+| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, or `digital_newspaper_archive`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the user returned a PDF/capture |
 | `capture_filename` | string or null | no | Filename of the returned capture |
@@ -514,7 +517,7 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
 | `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
-| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions (no sidecar → supplying a value is a hard error). A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
+| `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
 | `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `direct`, computed birth year `indirect`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
 | `structured_value` | object or null | no | Machine-readable structured form of the value. Shape depends on `fact_type`. See below |
@@ -610,7 +613,21 @@ Array of hypothesis objects.
 
 FAN findings are regular assertions about the subject's associates. There is no separate `fan_evidence_ids` field — hypothesis support links to FAN assertions via `supporting_assertion_ids`.
 
-**Status transitions:** A hypothesis moves to `supported` when at least one line of direct evidence supports the claim and no unresolved contradictions remain. It moves to `ruled_out` when evidence affirmatively refutes the claim, exhaustive elimination logic excludes the candidate, or a chronological impossibility makes the hypothesis untenable. A hypothesis at `active` has supporting or contradicting evidence accumulating but has not yet crossed either threshold.
+**Status transitions:** A hypothesis moves to `supported` when every `conflicts[]` entry whose `competing_assertion_ids` overlap its `supporting_assertion_ids` or `contradicting_assertion_ids` is `resolved` or `moot`, and either at least one supporting assertion carries `evidence_type: "direct"` or at least two carry `evidence_type: "indirect"` and cite at least two distinct `source_id` values. It moves to `ruled_out` when evidence affirmatively refutes the claim, exhaustive elimination logic excludes the candidate, or a chronological impossibility makes the hypothesis untenable. A hypothesis at `active` has supporting or contradicting evidence accumulating but has not yet crossed either threshold.
+
+**Why the indirect route exists.** Until 2026-08-31 `supported` required direct
+evidence, so a proof argument resting entirely on correlated indirect
+evidence — the standard form for a relationship no record states — could
+never be promoted; observed live in the `stribling-father-1821` debug run,
+where the agent assembled a guardianship bond, the mother's remarriage, a
+prior marriage and four equal co-heir shares, reasoned about them correctly,
+and held the hypothesis at `active`. Merely
+documenting `proof-conclusion`'s assertions-only route was rejected as
+insufficient; relaxing the gate to "a correlated set that survived
+conflict-resolution" was rejected as unassertable. The rule above reads only
+schema-required fields, which is what makes it checkable. An indirect
+argument resting on one rich source still fails the two-source floor and
+concludes through the assertions route rather than by promotion.
 
 ### 5.10 `timelines`
 
@@ -674,10 +691,35 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 | `resolved_conflict_ids` | string[] | yes | `c_` references to conflicts resolved in this proof (may be empty) |
 | `exhaustive_search_summary` | string | yes | Brief summary of search scope, referencing log entries |
 | `narrative_markdown` | string | yes | Self-contained GPS conclusion narrative |
+| `claims` | `proof_claim[]` | no | Optional per-claim tier breakdown — see below |
 
 **Timing:** Proof summaries may be written for questions at any status. A summary for an `in_progress` question represents a preliminary conclusion; its tier should reflect the incomplete state of research (typically `probable` or `possible`, not `proved`). Writing preliminary conclusions is encouraged — it forces the skill to articulate the current state of evidence and identify what's missing.
 
 The `narrative_markdown` is the authoritative GPS conclusion — the written proof per GPS Step 5. The structured fields (`tier`, `vehicle`, `supporting_assertion_ids`, `resolved_conflict_ids`) are metadata about it, not replacements for it. If the narrative and the structured fields disagree, the narrative governs; the skill should update the structured fields to match. The narrative must be readable as a standalone document without reference to the rest of the JSON, written in a form uploadable to FamilySearch as a Memory/Document. It includes inline citations, the evidence summary, conflict resolution rationale, and the confidence tier declaration. It cannot include images (it lives inside a JSON string field); image references should be described by citation.
+
+**`claims` — per-claim tier breakdown.** A question like "who were the
+parents of X" can resolve into two claims (paternity, maternity) whose evidence
+strength differs — the scalar `tier` can only speak for one of them. `claims`
+is optional and additive: `tier` keeps its current meaning (the conclusion as a
+whole) and stays required; a proof summary with no `claims` behaves exactly as
+it always has. When present, each entry is a `proof_claim`:
+
+| Field | Type | Required | Description |
+|-------|------|----------|--------------|
+| `claim` | string | yes | Free-text label (e.g. `"paternity"`, `"maternity"`). Must be unique within one proof_summary's `claims[]` — the eval validator looks a claim up by this label and the viewer keys its rendered list by it, so a duplicate silently shadows the earlier entry in both. The validator rejects a repeat |
+| `proof_tier` | `proof_tier` | yes | This claim's own confidence tier — same enum and rules as the scalar `tier`, applied to only the evidence bearing on this claim |
+| `supporting_assertion_ids` | string[] | yes | `a_` references grounding this claim specifically |
+| `relationship` | `proof_claim_relationship` | yes | The tree endpoint this claim concludes — currently `{ type: "ParentChild", parent: "<tree person id>", child: "<tree person id>" }`. Named so the tree-encoding gate has a mechanical target rather than a prose label. `parent`/`child` are checked against `tree.gedcomx.json persons[].id` by the same walker (`person-id-refs.ts`) that drives `merge_tree_persons`'s remap, so a dangling id is caught and a merged-away id is repointed to its survivor rather than going stale |
+
+**The scalar `tier` carries the stronger of the per-claim tiers** when `claims`
+is present (see §7 for why). **The tree-encoding gate (proof-conclusion §6)
+reads per claim when `claims` is present, and falls back to the scalar when it
+is absent** — a claim at `possible` stays off the tree even though the scalar
+(the stronger claim) may already read `probable`. Splitting a question into
+separate paternity/maternity questions remains available, but only when the
+two parents need genuinely different research plans (different jurisdictions,
+different record sets) — not merely different evidence strength, which
+`claims` now covers without forcing a split.
 
 ### 5.12 `evaluations`
 
@@ -783,7 +825,9 @@ timelines
 proof_summaries
   ├─ question_id ────────────────────────────────► questions[].id
   ├─ supporting_assertion_ids ───────────────────► assertions[].id
-  └─ resolved_conflict_ids ─────────────────────► conflicts[].id
+  ├─ resolved_conflict_ids ─────────────────────► conflicts[].id
+  ├─ claims[].supporting_assertion_ids ─────────► assertions[].id
+  └─ claims[].relationship.parent / .child ─────► tree.gedcomx.json persons[].id
 
 evaluations
   ├─ target_id (when target_type == "question") ─► questions[].id
@@ -810,6 +854,10 @@ evaluations
 **Why `fan_evidence_ids` was removed from hypotheses.** FAN (Family, Associates, Neighbors) findings are regular assertions about persons associated with the research subject. A witness pattern on land deeds, a neighbor correlation in census records — these are assertions like any other. The hypothesis links to them via `supporting_assertion_ids`. A separate `fan_evidence_ids` field would reference an entity type that was never defined.
 
 **Why `independence_analysis` is per-conflict, not per-source-pair.** Independence depends on context. Two sources may be independent for one fact but not another — e.g., two census records with different enumerators are independent as sources, but if the same household member answered both times, their assertions about birth facts may share a single informant and are not fully independent for those facts. The skill writer must assess independence in the context of the specific conflict, not globally.
+
+**Why the scalar `tier` carries the stronger claim once a `claims` breakdown exists.** Three things still read the scalar after a question splits into per-claim tiers: the orchestrator's routing table, its completion gate, and the tree-write invariant tests — all keyed on "tier ≥ probable." The scalar has to resolve to one of the per-claim tiers, and the chosen rule is the **stronger** one. The rejected alternative is scalar-follows-weakest-claim: it reads more conservative, but it would suppress a proved paternal link from the orchestrator's routing for as long as the maternal claim stayed weak, leaving a mechanically resolvable question permanently invisible to the routing table that is supposed to drive it to completion. Taking the stronger claim is safe specifically because the *scalar* no longer decides what gets written to the tree — the `claims` breakdown does that, per claim, at each claim's own tier (§5.11) — so a `probable` scalar next to a `possible` maternity claim can no longer license writing the weak claim.
+
+This rule is **mechanically enforced by the validator**, not left to agent prose alone: `tier` must equal the strongest of `claims[].proof_tier` whenever `claims` is present, checked against `PROOF_TIER_RANK` in `validator.ts`. It started as prose-only, and a PR review of the first cut of this feature caught exactly the failure that omission allows — an unrelated agent-body edit destabilized a *different* test's tier selection, and nothing would have caught a scalar silently drifting from its own claims had that edit gone the other way. `tier === max(claims[].proof_tier)` is decidable from the document alone, which is why it belongs in the validator rather than only in `proof-conclusion.md`.
 
 ---
 

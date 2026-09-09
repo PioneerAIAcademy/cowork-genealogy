@@ -102,3 +102,45 @@ describe('atomicWriteText — EBUSY retry', () => {
     expect(siblings).toHaveLength(0);
   });
 });
+
+describe('atomicWriteText — concurrent writes to one target do not corrupt it', () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'atomic-concurrent-test-'));
+  });
+
+  afterEach(async () => {
+    // Restore the Date.now spy so it does not leak into any later describe.
+    vi.restoreAllMocks();
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  // Reproduces the .ann.json corruption: two saves in the same millisecond
+  // share a Date.now() value, so without a per-write counter both temp paths
+  // are identical. Pinning Date.now() to a constant makes the collision
+  // deterministic. On unpatched atomic.ts one write's rename ENOENTs, so the
+  // Promise.all rejects (all-must-resolve) — this test goes red. The counter
+  // fixes it. The secondary assertions (valid JSON, one whole payload, no tmp
+  // sibling) hold on unpatched code too, which is why the "both writes resolve"
+  // assertion is the one that actually discriminates.
+  it('both concurrent writes resolve, leaving one intact payload', async () => {
+    const file = path.join(tmpDir, 'run.ann.json');
+    const long = JSON.stringify({ corrections: Array.from({ length: 40 }, (_, i) => ({ i })) });
+    const short = JSON.stringify({ corrections: [{ i: 0 }] });
+    expect(long.length).toBeGreaterThan(short.length);
+
+    // Force the same-millisecond collision every run.
+    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
+
+    await expect(
+      Promise.all([atomicWriteText(file, long), atomicWriteText(file, short)]),
+    ).resolves.toBeDefined();
+
+    const onDisk = await fs.readFile(file, 'utf8');
+    expect([long, short]).toContain(onDisk); // exactly one whole payload, not a splice
+
+    const siblings = await fs.readdir(tmpDir);
+    expect(siblings.filter((s) => s.includes('.tmp'))).toHaveLength(0);
+  });
+});

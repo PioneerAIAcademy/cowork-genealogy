@@ -360,15 +360,43 @@ consistent across schema, manifest, and skill.)*
   (§8 shares the resolver). Accept the same shapes `image_read` accepts
   today (`3:1:`/`3:2:` ARKs, resolver URLs, `/$dist`, `dgs:.../dist.jpg`).
 - `lookingFor` mirrors the `image-reader` subagent's parameter: a search key
-  only. It focuses a FOUND/NOT FOUND pointer; it **never** shortens or slants
-  the full transcription, and any *assertion* in it ("confirm the father is
-  Adam Schreck") is ignored — transcribe what the page says.
+  only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
+  §6.2); it **never** shortens or slants the full transcription, and any
+  *assertion* in it ("confirm the father is Adam Schreck") is ignored —
+  transcribe what the page says.
 - `projectPath`, when given, makes the tool **save** the fetched JPEG
   host-side to `<projectPath>/images/<key>.jpg` and return an `imageRef`
   (§8.5). Best-effort: a save failure omits `imageRef` rather than losing the
   transcription. Omit it (e.g. in the spike / dev smoke) to skip persistence
   and just get text.
 - All input is camelCase (MCP wire convention).
+
+### 5.3.1 Given-name expansion in `lookingFor`
+
+When `lookingFor` contains a recognized English given name (formal or
+variant), the tool automatically expands it with historical diminutives
+from the bundled variant table (`config/given-name-variants.json`) before
+building the OCR prompt.
+
+- Input: `lookingFor: "Elizabeth Martin"`
+- VLM sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)" by writing exactly FOUND or NOT FOUND`
+
+All variant forms are included (including scribal abbreviations with
+periods) because the VLM reads natural language, not query syntax.
+Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
+and all other variants.
+
+When expansion fires, the response includes a `nameExpansion` field
+(reversing the prior §5.3.1 decision — the genealogist needs to know
+what the VLM was primed with before reading a contested hand):
+
+- `original`: the caller's `lookingFor` string
+- `expanded`: the rewritten prompt the VLM actually saw
+- `expansions`: which formal names were expanded and to which variant
+  forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
+
+This mirrors `fulltext_search`'s `nameExpansion` without
+`variantsInResults`, which has no equivalent for VLM transcription.
 
 ### 5.4 Behavior (pipeline)
 
@@ -395,13 +423,15 @@ Returns **text only**:
 
 ```typescript
 {
-  transcription: string      // faithful full-page OCR (the primary payload)
-  found?: "FOUND" | "NOT FOUND"  // present iff lookingFor was set
+  transcription: string      // faithful full-page OCR (the primary payload) — never doctored
+  truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
+  truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
+  found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"
   browseBudget?: {           // advisory, present only from the 21st distinct image in one group/project (§5.8)
     imageGroup: string       // the image-group prefix, e.g. "004261111"
     distinctImagesRead: number
-    notice: string           // pivot advice; the transcription above is complete regardless
+    notice: string           // pivot advice; independent of `truncated` — the two can co-occur
   }
   metadata: {
     imageId?: string
@@ -424,12 +454,13 @@ list the caller can turn into assertions.
 | No `imageId`/`ark` | `image_transcribe requires either imageId or ark.` |
 | Both provided | `Provide either imageId or ark, not both.` |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
-| No OpenRouter key configured | LLM-instruction error telling Claude to ask the user for a key and call `configure_openrouter` (§6.3) |
+| No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |
 | FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused) |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
 | OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present) |
 | OpenRouter unreachable | friendly `Could not reach OpenRouter (...)` (mirror `wiki-search.ts`) |
-| Empty/garbage OCR result | throw rather than return a fabricated read — the caller pivots to indexes |
+| Empty/garbage OCR result (no cap) | throw rather than return a fabricated read — the caller pivots to indexes |
+| Empty result **with** an output cap (`finish_reason`/`native_finish_reason` marks it) | throw too — a zero-content read has nothing to return — but the message names the cap (budget likely spent on reasoning) so the caller learns a budget bound, not an unreadable scan. Keeps the invariant that `truncated: true` never ships beside an empty `transcription` (§6.2) |
 
 The tool **never fabricates** a transcription on failure. It throws; the
 caller (record-extraction) pivots to indexed records, exactly as the
@@ -455,21 +486,12 @@ inside the e2e harness's 600s inactivity window — and a timeout returns as a
 MCP call at 60s (a client-side ceiling this repo does not set and cannot change
 from the plugin or the `.mcpb` — see `docs/architecture.md`, "Other environment
 differences that bite"), so a Cowork transcription slower than a minute is
-aborted long before either budget above fires. Measured over the committed e2e
-corpus, roughly 10-15% of healthy calls ran past 60s — a floor, since the corpus
-carries no bridge hop, and a range rather than a point because `usage.timeline`
-records no `tool_use_id`: in roughly a dozen of the 28 runs containing a
-transcription, several parallel `image-reader` subagents have a call outstanding
-at once, so per-call durations there cannot be recovered. The range is the
-spread across pairing methods on the runs where exactly one call is outstanding
-(12.5% by the corpus-timeline script from the sizing issue, 15.6% pairing each
-call to its own result). Do not quote a corpus-wide re-run of that script as the
-figure: it reports lower and keeps dropping as the corpus grows — 13 of 144
-(9.0%) at commit `6a32f70d`, lower since — because the run-log retention step in
-commit `b065b687` strips `response_summary` past 14 days, so its errored-call
-filter no longer sees most of the corpus and counts sub-second "no API key"
-failures as healthy transcriptions. The 90/90/180 budgets hold only on the
-paths that honour them — verified over stdio for the harnesses and the hosted
+aborted long before either budget above fires. Measured 2026-09-08 over 59 live
+reads, none ran past 60s (p50 18.7s, p95 42.8s, max 50.1s), so a Cowork
+transcription now usually finishes inside the window — though several
+`image-reader` subagents transcribing at once still stretch the tail past it.
+The 90/90/180 budgets hold only on the paths that honour them — verified over
+stdio for the harnesses and the hosted
 control plane; whether the desktop `.mcpb` is bridged too is unverified, so the
 ceiling may apply to every Cowork session. This is a documented
 environment property, not a tool defect: raising
@@ -479,22 +501,18 @@ in the `image-reader` agent were both weighed against this write-down and droppe
 — the first recovers nothing until a config file is hand-edited, the second costs
 two fresh eval suites (lead decision, 2026-08-17).
 
-**Where 180s comes from.** Measured across every `image_transcribe` call in the
-committed e2e run logs (n=101, matched to its own `tool_result` in
-`usage.timeline`): p50 36s, p90 98s, p95 114s, max 316s. That tail is not the
-steady state — all five calls above 150s belong to the single run that hung
-(`pierre-tullier-son`, 2026-07-27). Excluding it: n=89, p90 79s, p95 98s, max
-167s. The download leg is small enough not to move the split — `image_read`
-runs the same fetch without OCR at a 7.2s maximum, though only 6 such calls
-exist in the corpus — so the tool distribution is the OCR distribution plus
-roughly 7s.
+**Where 180s comes from.** Measured 2026-09-08 by timing the tool directly, one
+call at a time, over 59 images drawn from the committed run logs on the current
+default model (repeat with `dev/try-image-transcribe.ts`): whole call p50 18.7s,
+p90 40.6s, max 50.1s, of which the download leg is p50 1.9s, max 8.0s. So 180s is not a latency budget
+but a hang-catcher — 3.6x the slowest healthy read — and the run logs show what
+it catches: seven calls returned `timed out after 180000ms`, all of them before
+the 2026-08-30 model change.
 
-180s therefore clears every genuine read observed, including the 167s one,
-while still cutting the 190s/208s/286s/316s calls of the run that hung. A 90s
-OCR budget would have failed 5 of the 89 healthy calls (~6%) — turning a slow
-page into a lost one mid-sweep. Re-measure before changing it: the analyzer is
-`eval/harness/e2e/latency_report.py`'s source data (`usage.timeline`), and a
-model change can move the whole distribution.
+Re-measure the same way after any change to `DEFAULT_OPENROUTER_MODEL`. **Do not
+derive it from run-log `usage.timeline` gaps**: those are per SDK message, not
+per tool call, and the figures they gave here (p90 79s, max 167s) were both
+inflated and a model generation stale.
 
 ### 5.8 Browse budget
 
@@ -511,8 +529,9 @@ budget lives on the tool.
 distinct image transcribed within **one image group in one project**, a successful
 result carries an advisory `browseBudget` field naming the count, the group, and a
 pivot instruction (log the browse with a negative outcome and move to the indexed
-route, or ask the user). The transcription itself is complete and unchanged — the
-field is additive.
+route, or ask the user). The field is additive and independent of `truncated`:
+`browseBudget` reports a browse-count advisory, not read completeness, so a
+budget-advised read can also be output-cap truncated (the two co-occur).
 
 **Counting.** A module-level `Map<string, Set<string>>` (`browseBudgetSeen`, keyed
 `` `${projectPath ?? "<no-project>"}\0${imageGroup}` ``) holds the distinct `imageId`s seen per group
@@ -652,11 +671,33 @@ the condition to re-check on.
     ]
   }],
   "temperature": 0,
+  "max_tokens": 16000,                         // OCR_MAX_TOKENS — see below
   "provider": { "data_collection": "deny" }   // privacy — see §11
 }
 ```
 
 - `temperature: 0` — OCR is not a creative task.
+- `max_tokens` (`OCR_MAX_TOKENS`, `image-transcribe.ts`) is set **explicitly**.
+  Setting it makes the cap ours and the truncation case (§6.2) reproducible.
+  Mind the **direction**: for the current default `google/gemini-3.7-flash`
+  OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
+  no `max_tokens`, so `16000` **lowers** the effective cap, it does not raise it.
+  It is still well above a page's content — measured 2026-09-07, the largest
+  transcription recovered from the committed e2e run logs is 6,443 chars (~1.6k output
+  tokens), and both Gemini and the prior Qwen default have *produced gradeable
+  output* at 16000 in `dev/try-ocr-compare.ts` (that script reads only
+  `choices[0].message` and `usage`, so it cannot itself observe a cap). Treat the
+  figure as a dated bound, not a proof: of 455 calls, 219 are excluded by the
+  harness's 14-day capture strip and 126 have a recoverable transcription size,
+  so it is measured over those 126 (median 1,573 chars); both models are
+  represented, the current default's own 36 measured calls topping out at 4,940
+  chars (~1.2k tokens); and reasoning tokens draw on this same budget (the
+  current model is reasoning-capable and reasoning is not disabled), so a
+  reasoning-heavy read could reach 16000 before the page is done. Re-derive by
+  scanning `eval/runlogs/e2e/**` for the `full length N chars` marker — **not**
+  with `make e2e-transcribe-failures`, which reports reachability, not sizes.
+  A cap that binds is **visible** (`truncated`,
+  §6.2), never silent.
 - The OCR **prompt is baked into the tool**, not passed by the caller —
   reuse the `image-reader.md` protocol so behavior is identical to today's
   subagent. `lookingFor` is appended as the optional pointer directive.
@@ -666,6 +707,42 @@ the condition to re-check on.
 Parse `choices[0].message.content` → `transcription`. Derive `found` by
 looking for the FOUND/NOT FOUND marker the prompt asks the model to emit.
 Guard against empty content (→ error per §5.6).
+
+**Output-cap truncation.** Read `choices[0].finish_reason` **and**
+`choices[0].native_finish_reason`. OpenRouter is OpenAI-compatible and returns
+them per choice: `"length"` on an output-token cap (**measured** — see
+`dev/probe-ocr-finish-reason.ts`), and `"stop"` as the non-cap value, which is
+the OpenAI-compatible contract **inferred rather than measured on a full page**,
+since the probe captured no complete-page read. A capped read usually carries the
+partial content it got before the cut, so without this it passes as an ordinary
+success and the caller cannot tell a half-read census page from a whole one.
+
+- Truncated when `finish_reason` **or** `native_finish_reason` matches a cap
+  marker — `"length"` or `"MAX_TOKENS"`, matched **case-insensitively** — → set
+  `truncated: true` and a tool-voiced `truncationNotice` (§5.5). The measured
+  default (`google/gemini-3.7-flash`) normalizes its cap onto the top-level
+  `finish_reason: "length"` and *also* reports `native_finish_reason:
+  "MAX_TOKENS"`; the second field and the loose casing are **insurance** for a
+  model (reachable via the `openRouterModel` override) that does not normalize
+  or spells the marker differently — not a description of the default.
+- **Content present → partial success, not an error:** the tool returns the
+  lines it got and does **not** throw. **Content empty → still throws** (a
+  zero-content read has nothing to return), but the error text names the cap so
+  the caller learns a budget bound rather than an unreadable scan. This keeps the
+  invariant that `truncated: true` never ships beside an empty `transcription`,
+  and it is the case the §5.6 "empty → throw" row governs — the two are
+  consistent, not contradictory.
+- The `transcription` stays **verbatim** — the signal rides the sibling
+  fields, never spliced into the OCR text (that would re-create the
+  prose/OCR blend a truncation notice must never introduce; the
+  `browseBudget.notice` precedent is the same shape).
+- **Suppress `found` on a truncated read.** The FOUND/NOT FOUND marker rides
+  a final line the model never reached, and a target may sit below the cut,
+  so a half-read page must never surface a clean `NOT FOUND` negative.
+- **Out of scope:** a model that stops early on its own
+  (`finish_reason: "stop"` on an unfinished page — no cheap signal, a
+  model-quality problem) and a transport cut mid-body (already thrown by
+  `fetchWithTimeout`, §5.7).
 
 ### 6.3 Model selection
 
@@ -688,20 +765,15 @@ flow. Storage follows the existing per-user config convention exactly:
   `0o600` (already enforced by `saveConfig`).
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
   round-trip the tool drives itself; an API key is a static paste the tool
-  cannot obtain on its own. So provide a minimal write path:
+  cannot obtain on its own. The key is set by the user directly in
+  `~/.familysearch-mcp/config.json` as the `openRouterApiKey` field. It
+  never passes through a tool-call argument, so it never appears in the
+  session transcript.
 
-  **New tool `configure_openrouter({ apiKey, model? })`** → validates the key
-  is **non-empty** (no format/prefix check — OpenRouter's key format is not a
-  stable contract, and a wrong key is caught cleanly at the first
-  `image_transcribe` call via the 401→re-configure path) and calls
-  `saveConfig({ openRouterApiKey, openRouterModel })`. Returns a masked
-  confirmation (`sk-or-…abcd`), never echoes the full key. Flow: `image_transcribe` errors "no key" → Claude asks
-  the user → user pastes → Claude calls `configure_openrouter` → retry.
-
-  **Caveat to document:** the key passes through the tool-call arguments and
-  therefore appears in the session transcript. Acceptable for a user's own
-  key in their own transcript, but note it, mask it in all tool output, and
-  do not log it server-side.
+  **Tool `configure_openrouter({ model? })`** accepts only an optional model
+  slug. It calls `saveConfig({ openRouterModel })`. Flow: `image_transcribe`
+  errors "no key" → Claude tells the user to set `openRouterApiKey` in
+  `config.json` directly → user edits the file → retry.
 
 ### 6.5 Key provisioning across runtimes
 
@@ -714,7 +786,7 @@ own mechanism; the env var (where one exists) is read at the
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
-| **Cowork desktop** | host (`.mcpb`) | the user pastes it → `configure_openrouter` → `saveConfig` |
+| **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly (the `configure_openrouter` tool sets only `openRouterModel`, not the key) |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
 
@@ -840,9 +912,10 @@ on its own; image persistence + the Electron and hosted-web viewers followed.
   skill's prose contract barely changes — it still receives a text
   transcription + extracted-facts list and keeps the NOT-READ→pivot-to-indexes
   behavior. Thread `projectPath` through so the subagent's `image_transcribe`
-  call can stage the JPEG (§8.5). For desktop setup, `configure_openrouter` is
-  available so Claude can prompt for a key when `image_transcribe` errors "no
-  key." Preserve the "reserve image transcription for facts that exist only on
+  call can stage the JPEG (§8.5). For desktop setup, when `image_transcribe`
+  errors "no key" the error directs the user to set `openRouterApiKey` in
+  `~/.familysearch-mcp/config.json` directly; `configure_openrouter` saves
+  only a model slug override. Preserve the "reserve image transcription for facts that exist only on
   the image" guidance. (A Sonnet-5 second-opinion escalation was considered and
   **dropped** — the viewer lets a human verify a cite-worthy read against the
   scan; a user-invoked Opus transcription is parked in §15.9.)
@@ -929,8 +1002,9 @@ module to test.
 
 ### 13.4 `configure_openrouter` unit tests
 
-Saves to config via `saveConfig` (mock it); rejects empty/implausible keys;
-return value is **masked** (never contains the full key).
+Saves model to config via `saveConfig` (mock it); schema has no `apiKey`
+property; `OPENROUTER_API_KEY_MISSING_MESSAGE` names the config file path
+and field, and does not instruct Claude to receive the key via the tool.
 
 ### 13.5 e2e validation gate (the real T13 proof)
 
