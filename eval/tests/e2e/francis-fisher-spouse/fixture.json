@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "easy",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 2, hint-samples.csv row 23, flag adds_spouse, confidence 3). Draft transcribed from an 1895 Australian marriage index entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 2, hint-samples.csv row 23, flag adds_spouse, confidence 3). Resolved 2026-09-09 (issue #2295): TRUE MATCH with the date and place made precise. Confirmed by the Tasmanian marriage registration ark:/61903/1:1:Q279-HRRC (23 February 1895, Hobart) and corroborated by the daughter's birth registration ark:/61903/1:1:Q27M-D67V, which names Alfred George Holding as father and Frances Maria Fisher as mother of the Holding daughter already in the tree. The transcribed index entry is no longer the cited source."
 }
