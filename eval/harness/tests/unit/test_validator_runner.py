@@ -1693,6 +1693,238 @@ def test_creator_not_in_custody_fails_when_author_in_parenthetical():
     assert "County Recorder of Deeds" in (result.error or "")
 
 
+# --- V6: unknown markers must name framework elements only ---------------
+
+def _v6_states(marker_text, field):
+    """State pair for V6 tests.  Places *marker_text* in the given
+    citation_detail *field* of a single source."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "", "where": "FamilySearch.org"},
+    }
+    cd_after = dict(src_before["citation_detail"])
+    cd_after[field] = marker_text
+    src_after = {**src_before, "citation_detail": cd_after}
+
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    return before, after
+
+
+def test_v6_fires_when_marker_is_entire_where():
+    """V6: a marker that IS the entire citation_detail.where value fails —
+    no access point was recorded at all."""
+    before, after = _v6_states("[CREATOR NOT RECORDED]", "where")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "entire" in (result.error or "").lower()
+
+
+def test_v6_passes_when_marker_accompanies_access_point():
+    """V6: a non-custody marker inside `where` alongside a present access
+    point is NOT a position violation — only a bare marker (= entire value)
+    is.  [CREATOR NOT RECORDED] is not a custody keyword, so the content
+    rule also passes."""
+    before, after = _v6_states(
+        "FamilySearch.org ([CREATOR NOT RECORDED])", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_matches_bare_not_recorded():
+    """V6: bare [NOT RECORDED] matches _MARKER_RE (zero chars before NOT).
+    As the entire `where` value it is a position violation."""
+    before, after = _v6_states("[NOT RECORDED]", "where")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "entire" in (result.error or "").lower()
+
+
+def test_v6_passes_bare_not_recorded_inside_where():
+    """V6: bare [NOT RECORDED] inside a longer `where` value is a custody
+    pattern — the element name sits outside the brackets.  Custody markers
+    in `where` are the field working as designed (Edmond ruling)."""
+    before, after = _v6_states(
+        "FamilySearch.org; original repository [NOT RECORDED]", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_passes_custody_marker_in_where_with_access_point():
+    """V6: [PHYSICAL REPOSITORY NOT RECORDED] alongside an access point
+    in `where` is a custody marker — the field working as designed
+    (Edmond ruling).  Exempt from checks 2 + 3."""
+    before, after = _v6_states(
+        "FamilySearch.org ([PHYSICAL REPOSITORY NOT RECORDED])", "where"
+    )
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_fires_on_custody_marker_in_other_field():
+    """V6: [ARCHIVE NOT RECORDED] in citation_detail.who fails — custody
+    keyword, regardless of field position."""
+    before, after = _v6_states("[ARCHIVE NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "custody" in (result.error or "").lower()
+
+
+def test_v6_passes_custody_marker_in_citation_string():
+    """V6: a custody keyword marker in the assembled `citation` string is
+    exempt — citation embeds the where layer, and custody notation there
+    is the field working as designed (Edmond ruling)."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "", "where": "FamilySearch.org"},
+    }
+    src_after = {
+        **src_before,
+        "citation": (
+            "Pennsylvania Department of Health, birth certificate no. 12345; "
+            "FamilySearch.org ([ORIGINAL REPOSITORY NOT RECORDED])"
+        ),
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_v6_fires_on_bare_not_recorded_in_who():
+    """V6: bare [NOT RECORDED] in citation_detail.who names no framework
+    element — the empty-element rule fires.  Proves V6 can still catch
+    defects after the custody exemption scoped checks off `where`."""
+    before, after = _v6_states("[NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is False
+    assert "bare" in (result.error or "").lower()
+
+
+def test_v6_passes_on_framework_marker():
+    """V6: [CREATOR NOT RECORDED] in citation_detail.who is a legitimate
+    framework marker and passes."""
+    before, after = _v6_states("[CREATOR NOT RECORDED]", "who")
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_unknown_markers_framework_only"),
+        None,
+    )
+    assert result is not None, "test_unknown_markers_framework_only did not run"
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
 # --- V10: informant not in who ------------------------------------------
 
 def _v10_states(informant_in_who):
@@ -1786,6 +2018,79 @@ def test_informant_not_in_who_ignores_preexisting_informant():
     assert result.passed is True, (
         f"false positive on pre-existing informant data: {result.error}"
     )
+
+
+def test_informant_not_in_who_ignores_preexisting_citation_informant():
+    """The citation-string arm's novelty guard, which nothing pinned.
+
+    The `who` arm has ignores_preexisting_informant; the citation arm had
+    coverage for firing but none for NOT firing, so removing
+    `citation != before_citation` passed the whole 3200-test suite. Without
+    the guard, any run that leaves an already-'informant' citation untouched
+    is a false positive — the same shape as the mid-research-flynn null run.
+    """
+    src = {
+        "id": "src_004",
+        "citation": "Pennsylvania Department of Health; informant: James Brown",
+        "citation_detail": {"who": "Pennsylvania Department of Health"},
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [dict(src)]  # identical — skill changed nothing
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is True, (
+        f"false positive on a pre-existing citation-string informant: {result.error}"
+    )
+
+
+def test_informant_not_in_who_fires_on_citation_string():
+    """V10: the citation-string arm fires when 'informant' is introduced
+    in the citation field (not citation_detail.who)."""
+    src_before = {
+        "id": "src_001",
+        "citation": "",
+        "citation_detail": {"who": "Pennsylvania Department of Health"},
+        "notes": "Informant is son-in-law James Brown.",
+    }
+    src_after = {
+        **src_before,
+        "citation": "Pennsylvania Department of Health; informant: James Brown",
+    }
+    before = _empty_research_state()
+    before["research_json"]["sources"] = [src_before]
+    after = _empty_research_state()
+    after["research_json"]["sources"] = [src_after]
+
+    results = run_validators(
+        skill="citation",
+        validators_dir=VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter=_CITATION_FRONTMATTER,
+    )
+    result = next(
+        (r for r in results if r.name == "test_informant_not_in_who"), None
+    )
+    assert result is not None, "test_informant_not_in_who did not run"
+    assert result.passed is False
+    assert "citation string" in (result.error or "").lower()
+
+
 # --- text_response plumbing (#1662) ------------------------------------
 #
 # A validator that reads the reply is inert if the harness stops supplying it.
@@ -1979,7 +2284,14 @@ def test_report_and_test_coexist(tmp_path):
 # --- V8: Activated run must produce a response ---------------------------
 
 def test_v8_fires_on_dead_activated_run():
-    """V8: activated=True, num_turns=0, output_tokens=0, short response → fail."""
+    """V8: activated=True, num_turns=0, output_tokens=0, short response → fail.
+
+    Uses skills_invoked=["search-familysearch-wiki"] and
+    test={"skill": "search-familysearch-wiki"} — the state the orchestrator
+    actually produces when a skill activates (derive_activated requires skill
+    in skills_invoked).  The skill under test is the only invoked skill, so
+    the handoff check does not skip.
+    """
     state = _empty_research_state()
     results = run_validators(
         skill="search-familysearch-wiki",
@@ -1992,7 +2304,8 @@ def test_v8_fires_on_dead_activated_run():
         output_tokens=0,
         text_response="Short.",
         aborted_reason=None,
-        skills_invoked=[],
+        skills_invoked=["search-familysearch-wiki"],
+        test={"skill": "search-familysearch-wiki"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None, "test_activated_run_produces_response did not run"
@@ -2034,7 +2347,8 @@ def test_v8_passes_on_long_response_despite_missing_telemetry():
         output_tokens=0,
         text_response="A" * 200,
         aborted_reason=None,
-        skills_invoked=[],
+        skills_invoked=["search-familysearch-wiki"],
+        test={"skill": "search-familysearch-wiki"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
@@ -2061,12 +2375,20 @@ def test_v8_skips_when_not_activated():
     assert "skipped" in (result.error or "").lower()
 
 
-def test_v8_passes_when_skills_invoked():
-    """V8: a run that invoked a sub-skill is not a dead run, even with zero
-    telemetry — skills_invoked is the direct signal."""
+def test_v8_passes_on_handoff_to_another_skill():
+    """V8: a run that handed off to another skill is not a dead run.
+
+    Uses skills_invoked=["search-external-sites", "research-plan"] with
+    test={"skill": "search-external-sites"} — the state the orchestrator
+    produces when a negative test routes correctly.  The handoff check
+    sees {"research-plan"} after subtracting the skill under test, so it
+    returns early.  This is the exact shape of the two
+    ut_search_external_sites_011 corpus runs that the previous guard
+    wrongly failed.
+    """
     state = _empty_research_state()
     results = run_validators(
-        skill="search-familysearch-wiki",
+        skill="search-external-sites",
         validators_dir=VALIDATORS_DIR,
         before_state=state,
         after_state=state,
@@ -2074,9 +2396,10 @@ def test_v8_passes_when_skills_invoked():
         activated=True,
         num_turns=0,
         output_tokens=0,
-        text_response="Short routing announcement.",
+        text_response="Short routing decline.",
         aborted_reason=None,
-        skills_invoked=["citation"],
+        skills_invoked=["search-external-sites", "research-plan"],
+        test={"skill": "search-external-sites"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
