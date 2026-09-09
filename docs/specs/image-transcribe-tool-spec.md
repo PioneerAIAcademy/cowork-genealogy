@@ -371,6 +371,33 @@ consistent across schema, manifest, and skill.)*
   and just get text.
 - All input is camelCase (MCP wire convention).
 
+### 5.3.1 Given-name expansion in `lookingFor`
+
+When `lookingFor` contains a recognized English given name (formal or
+variant), the tool automatically expands it with historical diminutives
+from the bundled variant table (`config/given-name-variants.json`) before
+building the OCR prompt.
+
+- Input: `lookingFor: "Elizabeth Martin"`
+- VLM sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)" by writing exactly FOUND or NOT FOUND`
+
+All variant forms are included (including scribal abbreviations with
+periods) because the VLM reads natural language, not query syntax.
+Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
+and all other variants.
+
+When expansion fires, the response includes a `nameExpansion` field
+(reversing the prior §5.3.1 decision — the genealogist needs to know
+what the VLM was primed with before reading a contested hand):
+
+- `original`: the caller's `lookingFor` string
+- `expanded`: the rewritten prompt the VLM actually saw
+- `expansions`: which formal names were expanded and to which variant
+  forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
+
+This mirrors `fulltext_search`'s `nameExpansion` without
+`variantsInResults`, which has no equivalent for VLM transcription.
+
 ### 5.4 Behavior (pipeline)
 
 1. **Resolve + fetch** the FS distribution image host-side, authed, via the

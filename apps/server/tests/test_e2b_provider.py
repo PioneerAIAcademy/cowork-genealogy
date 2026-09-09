@@ -134,7 +134,7 @@ async def test_create_maps_to_sdk_exactly(provider):
     assert kw["timeout"] == _RUNNING_TIMEOUT_S          # continuous-running backstop kept
     assert kw["api_key"] == "fake-key"
     assert kw["metadata"] == {"user_id": "u1", "model": "claude-sonnet-4-6"}
-    # envs = spec.env + agent env (AGENT_MODE=mock in tests; ANTHROPIC_API_KEY blanked)
+    # envs = spec.env + agent env (AGENT_MODE + MODEL only; key is via secrets file)
     assert kw["envs"]["FOO"] == "bar"
     assert kw["envs"]["AGENT_MODE"] == "mock" and kw["envs"]["MODEL"] == "claude-sonnet-4-6"
     # the in-sandbox WS server was started with a derived per-sandbox secret
