@@ -238,6 +238,18 @@ The script:
   question from the project state and the Notes box, and say on the issue that
   you did.
 
+> **Security: always unpack with the setup script, not plain `unzip`.** The
+> script strips injected config before wiring the skills in: `.claude/`,
+> `.claude.json`, `.mcp.json`, `.gitattributes`, and `.git/` are deleted, and
+> every `CLAUDE.md` at any depth is renamed to `CLAUDE.md.submitted` so it is
+> kept for reproduction but not loaded as instructions. A legitimate feedback
+> zip never contains dotfiles (both walkers skip them), so any of the first
+> five would be injected; `CLAUDE.md` arrives in ordinary submissions but
+> executes as project config if left in place. `.gitattributes` and `.git/`
+> execute through git filters during `git add`, not through Claude Code.
+> If the script prints a "Warning: stripped" or "Note: renamed" line, note it
+> on the issue.
+
 > **Why the snapshot matters — it's the retry mechanism.** The case folder is a
 > *capture*: unlike an e2e fixture, there is no `make e2e-project` to re-seed it
 > from. Running the agent mutates it, so every attempt after the first starts
@@ -332,7 +344,9 @@ responses — check:
     open and work it like any other finding: classify it against the checks
     below, fix what's fixable, and close it only once you have. **Never close on
     the flag alone.** If the Notes are thin, the bundle's
-    `_feedback/session-log.jsonl` transcript has the tool-level detail.
+    `_feedback/session-log.jsonl` transcript has the tool-level detail — and
+    work the agent delegated is in its own file under `_feedback/subagents/`,
+    not in that one, so check there before concluding the agent did nothing.
 - Did `record_search` **return** the second Robert Schuster, and the skill
   ignore him? → a **skill** problem. Continue. ✅ *(This is the case.)*
 - Did the search **never surface** him? → a **tool** problem. Different fix, an
@@ -612,7 +626,11 @@ script first, then `cd` into the resulting directory.
 An empty field is not a broken submission. The dialog requires only the Yes/No
 answer, so `user_prompt` and `agent_did` may both legitimately be blank. When the
 bundle carries `_feedback/session-log.jsonl`, read that instead — it has the
-prompt and the conversation verbatim. Two limits: it is filtered to the `user`
+prompt and the conversation verbatim. Anything the agent delegated to a subagent
+is in a separate file under `_feedback/subagents/` (and, for a session other
+than the newest, under `_feedback/sessions/<session-id>/`), so a main log that
+looks idle for a stretch is usually a subagent working. Two limits: it is
+filtered to the `user`
 and `assistant` turns and scoped to that project's folder, so it is not the whole
 session; and a `_truncation_note` at its head means the log was trimmed, which
 drops the oldest entries and so the prompt first. That file is optional (§6 of the

@@ -11,7 +11,7 @@ import { toArk, arkToUrl } from "./ark.js";
 
 // fetchWithTimeout's budget covers headers and body together, and a full-size
 // page scan at typical throughput needs more than the 30s default to finish
-// streaming. A measured download of one takes ~7s, so 90s is deliberate
+// streaming. The download leg measures p50 1.9s / max 8.0s, so 90s is deliberate
 // headroom — this is the download leg only, and it is budgeted separately
 // from the OCR call it feeds (image-transcribe.ts's OCR_TIMEOUT_MS).
 const IMAGE_FETCH_TIMEOUT_MS = 90_000;

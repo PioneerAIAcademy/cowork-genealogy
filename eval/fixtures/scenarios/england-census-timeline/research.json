@@ -1,0 +1,187 @@
+{
+  "project": {
+    "id": "rp_england_census_timeline",
+    "objective": "Reconstruct the life timeline of William Ashford (b. ~1838, Canterbury, Kent, England; d. 1874) and identify record gaps.",
+    "status": "active",
+    "created": "2026-09-07",
+    "updated": "2026-09-07"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What is the documented life timeline of William Ashford (b. ~1838, Canterbury, Kent, England, d. 1874), and where are the record gaps?",
+      "rationale": "Primary research objective — build a chronology and surface missing expected records.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-09-07",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S1",
+      "citation": "England & Wales civil registration and census, Canterbury, Kent",
+      "citation_detail": {
+        "who": "General Register Office / census enumerator",
+        "what": "England & Wales civil registration and census records",
+        "when_created": "1838-1874",
+        "when_accessed": "2026-09-07",
+        "where": "FamilySearch.org / GRO",
+        "where_within": "Canterbury, Kent, England"
+      },
+      "source_classification": "original",
+      "repository": "General Register Office / FamilySearch",
+      "access_date": "2026-09-07"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:ENG-001",
+      "record_role": "principal",
+      "fact_type": "birth",
+      "value": "born about 1838",
+      "information_quality": "primary",
+      "informant": "Civil registration / census enumerator",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "~1838",
+      "date_certainty": "estimated",
+      "place": "Canterbury, Kent, England",
+      "structured_value": {
+        "year": 1838,
+        "place": "Canterbury, Kent, England"
+      }
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:ENG-002",
+      "record_role": "self",
+      "fact_type": "residence",
+      "value": "enumerated at Canterbury, 1851 census, age 13",
+      "information_quality": "primary",
+      "informant": "Civil registration / census enumerator",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1851",
+      "date_certainty": "exact",
+      "place": "Canterbury, Kent, England",
+      "structured_value": {
+        "year": 1851,
+        "place": "Canterbury, Kent, England"
+      }
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:ENG-003",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married at Canterbury, 1859",
+      "information_quality": "primary",
+      "informant": "Civil registration / census enumerator",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1859",
+      "date_certainty": "exact",
+      "place": "Canterbury, Kent, England",
+      "structured_value": {
+        "year": 1859,
+        "place": "Canterbury, Kent, England"
+      }
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:ENG-004",
+      "record_role": "deceased",
+      "fact_type": "death",
+      "value": "died 1874, Canterbury",
+      "information_quality": "primary",
+      "informant": "Civil registration / census enumerator",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1874",
+      "date_certainty": "exact",
+      "place": "Canterbury, Kent, England",
+      "structured_value": {
+        "year": 1874,
+        "place": "Canterbury, Kent, England"
+      }
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth registration/estimate for William Ashford, Canterbury.",
+      "match_score": null,
+      "created": "2026-09-07",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "1851 census enumeration of William Ashford, Canterbury, age consistent with ~1838 birth.",
+      "match_score": null,
+      "created": "2026-09-07",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage of William Ashford at Canterbury, 1859.",
+      "match_score": null,
+      "created": "2026-09-07",
+      "superseded_by": null
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Death of William Ashford, Canterbury, 1874.",
+      "match_score": null,
+      "created": "2026-09-07",
+      "superseded_by": null
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

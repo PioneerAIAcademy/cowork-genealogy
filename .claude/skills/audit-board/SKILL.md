@@ -695,8 +695,28 @@ print('unassigned in Ready/In Progress/Review:',
       [n for n in _unass if not (onboard[n]=='Ready' and _senior(n))])
 print('  of which senior-pool cards in Ready (expected, not a finding):',
       [n for n in _unass if onboard[n]=='Ready' and _senior(n)])
+
+# `high-priority` — /fill-ready applies it to Ready cards only. Anywhere else
+# it is a filing that slipped past the recipe or a card that moved with it on.
+# The body line is what /fill-ready re-derives against.
+def _hp(n): return any(l['name']=='high-priority' for l in issues[n]['labels'])
+def _lane(n, lane): return any(l['name']==lane for l in issues[n]['labels'])
+hp=[n for n in issues if _hp(n)]
+print('high-priority outside Ready (Ready-only label):',
+      [(n, onboard.get(n)) for n in hp if onboard.get(n)!='Ready'])
+print('high-priority without a `> **High priority (` body line:',
+      [n for n in hp if '> **High priority (' not in (issues[n]['body'] or '')])
+for lane in ('developer','genealogist'):
+    pool=[n for n,s in onboard.items() if s=='Ready' and n in issues
+          and not issues[n]['assignees'] and _lane(n,lane) and not _lane(n,'cross-cutting')]
+    marked=[n for n in pool if _hp(n)]
+    if pool and 2*len(marked) > len(pool):
+        print(f'{lane}: high-priority on {len(marked)}/{len(pool)} unassigned Ready — the ordering says nothing')
 PY
 ```
+
+The `high-priority` lines are reports, not removals — `/fill-ready` owns the
+label and re-derives it on its next run.
 
 Also report **stalled** work: anything in `In Progress` or `Review` whose
 `updatedAt` is more than a week old, with its assignee. In Progress is a promise;
