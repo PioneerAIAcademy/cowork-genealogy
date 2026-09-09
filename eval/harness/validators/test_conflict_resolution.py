@@ -471,9 +471,12 @@ def report_resolution_word_caps(before_state, after_state):
 #      for all of its conflicts, so the arm reduced to "an open identity
 #      conflict exists somewhere in this project".
 #   2. It therefore attached an unrelated (c_001, c_003) pair to 7 of the 8 runs
-#      it flagged -- 14 spurious pair-observations, against 7 real ones -- plus
-#      one identity<->identity pair whose status as a violation nobody had ruled
-#      on.
+#      it flagged. Pair census over the 4 committed logs: 15 observations in
+#      all across 8 runs, of which 7 were matched by the source arm and 8 were
+#      the withdrawn arm's alone -- including one identity<->identity pair whose
+#      status as a violation nobody had ruled on. (An earlier revision of this
+#      comment said 14 spurious; that was arithmetic never redone after the
+#      census, and it contradicted its own next clause.)
 #   3. Its "shared" semantics was pinned by no test: swapping `&` for `|` left
 #      the whole suite green, while the same mutation on the source arm below
 #      reds two tests.
@@ -502,10 +505,13 @@ def _source_of(state: dict) -> dict:
     The isinstance filter is not tidiness. `assertions` is the dependency V3
     itself introduces, and three real shapes raise without it -- `[None]`,
     `["a_001"]` (a bare string) and a list-valued `source_id` (unhashable once
-    it reaches a set). A raise inside a `report_*` GATES, because
-    validator_runner.py's crash path withholds `reporting_only` on purpose,
-    which suppresses the LLM judge for that run -- the outcome tier 2 is chosen
-    to avoid. `_conflict_entries` guards `conflicts` for the same reason.
+    it reaches a set). An UNEXPECTED EXCEPTION inside a `report_*` gates: an
+    `assert` does not, because validator_runner.py's `except AssertionError`
+    branch passes `reporting_only=is_report`, while only its `except Exception`
+    crash branch omits it. So a crash here suppresses the LLM judge for that
+    run -- the outcome tier 2 is chosen to avoid -- even though the check's own
+    findings never do. `_conflict_entries` guards `conflicts` for the same
+    reason.
     """
     out = {}
     for a in state.get("assertions") or []:
@@ -531,25 +537,48 @@ def _sources_for(conflict: dict, source_of: dict) -> set:
     return out
 
 
-def _newly_resolved_conflicts(before: dict, after: dict) -> list[dict]:
-    """Conflicts whose STATUS this run moved to `resolved`.
+# The two ways a run can stand a resolution on a disputed person-link THIS TURN.
+_REPOINT_FIELDS = ("preferred_assertion_id", "competing_assertion_ids")
 
-    Deliberately narrower than V6's `_conflicts_with_changed_analysis`, which
-    counts any change to the five analysis fields -- prose included. Under that
-    population a run that only fixed a typo in the rationale of an
-    already-resolved conflict was reported as having "written status='resolved'",
-    which is false and was caught in review. A new entry arriving already
-    `resolved` counts, since that is the create-and-resolve path V6 documents.
+
+def _resolutions_this_run(before: dict, after: dict) -> list[tuple[dict, str]]:
+    """Conflicts left `resolved` whose resolution this run created or repointed.
+
+    Returns `(conflict, how)` so the message can say which happened, because the
+    two are not the same claim and conflating them was a real defect.
+
+    TWO arms, and the second was missing for one revision:
+
+    - `transition` -- the status moved to `resolved` (or arrived `resolved` on a
+      created entry, which is the create-and-resolve path V6 documents).
+    - `repoint` -- already `resolved` in both states, but this run changed
+      `preferred_assertion_id` or `competing_assertion_ids`, moving the
+      resolution onto different evidence. If that evidence is disputed by an
+      open identity conflict, the run stood a resolution on a disputed
+      person-link this turn just as surely as a fresh resolution would.
+
+    A narrower status-only population shipped briefly and dropped the repoint
+    class entirely. It came from misreading a round-1 review finding: the defect
+    it reported was that the MESSAGE said "was written status='resolved'" on a
+    run that had only reworded prose. That is a wording bug, and narrowing the
+    population was the wrong remedy for it. The wording is fixed instead, and
+    the prose-only case stays silent because reworded prose changes neither arm.
+
+    Latent on the unit corpus -- no unit fixture ships a `resolved` conflict
+    alongside an open identity conflict -- but the shape occurs in real project
+    state: 4 of the 161 committed e2e final states.
     """
     before_by_id = _conflicts_by_id(before)
-    out = []
+    out: list[tuple[dict, str]] = []
     for c in _conflict_entries(after):
         cid = c.get("id")
         if not cid or c.get("status") != "resolved":
             continue
         prev = before_by_id.get(cid)
         if prev is None or prev.get("status") != "resolved":
-            out.append(c)
+            out.append((c, "transition"))
+        elif any(c.get(f) != prev.get(f) for f in _REPOINT_FIELDS):
+            out.append((c, "repoint"))
     return out
 
 
@@ -558,13 +587,22 @@ def report_resolution_precedes_identity(before_state, after_state):
 
     Scope is `conflict_type: "fact"` on the RESOLVED side, which is what
     #1972's V3 heading says ("no `resolved` fact conflict while an open identity
-    conflict covers one of its competing assertions"). The first revision of
-    this PR omitted the gate and was shown in review to fire on
-    ut_conflict_resolution_005, whose own prompt says "Analyze the geographic
-    identity conflict c_003 and resolve it" -- i.e. it reported a
-    prompt-compliant resolution as premature. Latent at the time (all four
-    committed runs of that test write analysis and never touch `status`), which
-    is exactly why it needed catching by argument rather than by a red test.
+    conflict covers one of its competing assertions").
+
+    Stated honestly: on the SHIPPED arm this gate is a measured no-op. It was
+    added because the two-arm revision fired on ut_conflict_resolution_005, whose
+    own prompt says "Analyze the geographic identity conflict c_003 and resolve
+    it" -- but that firing came from the withdrawn blocked-question arm. The
+    source arm cannot reach ut_005 at all: c_003's competing assertion is a_014
+    (src_005) and c_002's is a_001 (src_001), so they share no source. Re-derived
+    with and without the gate: the identical 7 runs and 7 pairs, and ut_005 in
+    neither set.
+
+    Kept anyway, for scope rather than for effect -- it is the rule #1972's
+    heading states, and it makes the check's population say so rather than
+    leaving a reader to infer it from what happens not to fire today. A future
+    fixture in which an identity conflict is resolved over a shared source is
+    exactly where it would start mattering.
 
     Tier 2 by design, on measured grounds:
 
@@ -574,7 +612,9 @@ def report_resolution_precedes_identity(before_state, after_state):
       Correctness 2, Source independence analysis 2, Tool Arguments 2 -- which
       gating would delete.
     - `Resolution completeness` carries a fail branch for this exact ground
-      (rubric.md:31) and scored 3 on 8 of 8 flagged runs. Its CRITERION is not
+      (rubric.md:31) and scored 3 on 7 of 7 runs the SHIPPED arm flags (it was
+      3 on 8 of 8 under the withdrawn two-arm revision -- narrowing the code from
+      8 flags to 7 is what moved this figure). Its CRITERION is not
       dormant, though: it fired twice under `Correctness` 2 (v1_2026-08-27 and
       v1_2026-09-01, ut_006), whose rationales carry rubric.md:31's distinctive
       "person-link" phrasing -- absent from the run's text_response, its
@@ -589,9 +629,10 @@ def report_resolution_precedes_identity(before_state, after_state):
       there is no false positive now, but the rule cannot tell the difference if
       that changes.
 
-    Population is conflicts this run moved to `resolved` (`_newly_resolved_conflicts`),
-    not the whole after-state: scanning everything would report a pre-existing
-    fixture defect as this run's doing.
+    Population is `_resolutions_this_run` -- conflicts left `resolved` whose
+    resolution this run either created or repointed onto different evidence --
+    not the whole after-state, which would report a pre-existing fixture
+    defect as this run's doing.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -608,33 +649,50 @@ def report_resolution_precedes_identity(before_state, after_state):
         return
 
     observations = []
-    for c in _newly_resolved_conflicts(before, after):
+    # Index by position so a duplicate-id state produces a message a reader can
+    # tell apart. Ids are not unique in practice: `validator.ts` accepts a
+    # duplicated `conflicts[].id` (measured: `c_003` duplicated, one `resolved`
+    # and one `unresolved`, validates clean with 0 errors).
+    positions = {id(c): i for i, c in enumerate(_conflict_entries(after))}
+
+    for c, how in _resolutions_this_run(before, after):
         if c.get("conflict_type") != "fact":
             continue
         cid = c.get("id", "?")
         for other in open_identity:
             oid = other.get("id")
-            # `oid == cid` is REACHABLE and this guard is not dead code. An
-            # earlier revision deleted it on the reasoning that the two
-            # populations require opposite `status` values -- true per entry,
-            # false per id, and the guard compares ids. `validator.ts` accepts
-            # DUPLICATE conflict ids (measured: c_003 duplicated with one entry
-            # `resolved` and one `unresolved` validates clean, 0 errors), so one
-            # id can sit in both populations and self-pair.
+            # NO `oid == cid` guard. One shipped for a revision and suppressed a
+            # TRUE POSITIVE: two DISTINCT conflicts that happen to share an id --
+            # one open identity on a_001, one resolved fact on a_002, sharing a
+            # source -- is precisely the violation this check exists to report,
+            # and comparing ids silenced it. Measured: that state went silent
+            # with the guard and fired without it, while an ids-differ control
+            # fired under both.
             #
-            # The deletion also inverted this repo's own rule: "a mutation
-            # removing it left the suite green" proves absent COVERAGE, not
-            # deadness. `test_v3_does_not_self_pair_on_a_duplicated_conflict_id`
-            # is the coverage that was missing.
-            if not oid or oid == cid:
+            # Self-pairing needs object identity, not id equality -- and that can
+            # never fire, because `_resolutions_this_run` requires
+            # status=='resolved' while the open-identity filter requires
+            # 'unresolved' on the same after-state list, so no single entry is in
+            # both. Measured overlap: 0. So no guard is needed, and the residual
+            # concern (a message that reads self-referentially) is a
+            # disambiguation job, handled by the indices above.
+            if not oid:
                 continue
             shared = _sources_for(c, source_of) & _sources_for(other, source_of)
             if not shared:
                 continue
+            acted = (
+                "was moved to status='resolved'"
+                if how == "transition"
+                else "was already resolved and had its resolution repointed "
+                "onto different evidence"
+            )
             observations.append(
-                f"conflicts[{cid}] (a fact conflict) was moved to "
-                f"status='resolved' while conflicts[{oid}] is an unresolved "
-                f"identity conflict over the same source(s) {sorted(shared)}. "
+                f"conflicts[{cid}] (a fact conflict, index "
+                f"{positions.get(id(c), '?')}) {acted} while "
+                f"conflicts[{oid}] (index {positions.get(id(other), '?')}) is an "
+                f"unresolved identity conflict over the same source(s) "
+                f"{sorted(shared)}. "
                 f"Until that identity question is settled the competing "
                 f"assertions are not known to describe one person, so the "
                 f"disagreement is not established as a conflict -- and if the "

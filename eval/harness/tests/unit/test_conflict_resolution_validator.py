@@ -713,7 +713,8 @@ def test_v6_still_fires_when_both_were_already_resolved_and_both_change():
 # ONE arm: a shared `source_id`. A second arm (an intersection of
 # `blocks_question_ids`, transposing #1823 step 2's ruling) shipped in the first
 # revision and was withdrawn under review — it could not discriminate on any
-# committed fixture, attached 14 spurious pair-observations to the 7 real ones,
+# committed fixture, attached 8 spurious pair-observations to the 7 real ones
+# (15 in all across 8 runs),
 # and its "shared" semantics was pinned by no test (`&` -> `|` left the suite
 # green, while the same mutation on the source arm reds two tests below). The
 # validator's own comment carries the measurements.
@@ -811,15 +812,28 @@ def test_v3_does_not_fire_when_the_resolved_conflict_is_not_a_fact_conflict():
     check_identity_first(before, after)
 
 
-def test_v3_does_not_self_pair_on_a_duplicated_conflict_id():
-    """The coverage that was missing when the self-pairing guard was deleted.
+def test_v3_reports_a_real_pair_that_happens_to_share_a_conflict_id():
+    """Two DISTINCT conflicts that collide on an id are still a real violation.
 
-    `validator.ts` accepts DUPLICATE conflict ids — measured: c_003 duplicated
-    with one entry `resolved` and one `unresolved` validates clean with 0
-    errors — so one id can sit in both the resolved population and the
-    open-identity population and pair with itself. The guard compares ids, and
-    "the two populations require opposite statuses" is true per entry and false
-    per id.
+    A previous revision carried an `oid == cid` guard here and asserted silence,
+    on the reasoning that the pair was "c_001 against itself". It is not: these
+    are two separate entries — one open identity on `a_001`, one resolved fact on
+    `a_002` — sharing `src_001`. That is precisely what this check exists to
+    report, and comparing ids suppressed it.
+
+    Reachability is what made the id-comparing form harmful rather than safe: it
+    could only ever fire on a state where a real violation exists, so every case
+    it caught was a true positive being silenced.
+
+    Self-pairing would need object identity, and that can never occur —
+    `_resolutions_this_run` requires `status == "resolved"` while the
+    open-identity filter requires `"unresolved"` on the same after-state list, so
+    no single entry is in both. Measured overlap: 0.
+
+    Not live coverage: `nextResearchId` mints ids as max+1, so no tool can write
+    a duplicate `conflicts[].id`; the state is reachable only by hand or fixture
+    edit. Kept because the id-comparing guard would have been wrong even so, and
+    because the message must stay readable when ids collide — hence the indices.
     """
     dup_open = _identity("c_001", competing_assertion_ids=["a_001"])
     dup_resolved = _v3_resolved("c_001", competing_assertion_ids=["a_002"])
@@ -828,12 +842,12 @@ def test_v3_does_not_self_pair_on_a_duplicated_conflict_id():
         [dup_resolved, dup_open],
         _A,
     )
-    # Silence is the correct outcome: the only candidate pair here is c_001
-    # against itself. Asserted as a non-raise rather than as a filtered message,
-    # and its falsifiability is shown by mutation — deleting the `oid == cid`
-    # guard makes this test raise, which is how the guard was proven reachable
-    # rather than assumed dead.
-    check_identity_first(before, after)
+    with pytest.raises(AssertionError) as e:
+        check_identity_first(before, after)
+    msg = str(e.value)
+    assert "src_001" in msg
+    # Both indices, so a reader can tell the two same-id entries apart.
+    assert "index 0" in msg and "index 1" in msg, msg
 
 
 def test_v3_ignores_a_prose_only_edit_to_an_already_resolved_conflict():
@@ -850,6 +864,71 @@ def test_v3_ignores_a_prose_only_edit_to_an_already_resolved_conflict():
     resolved_after = _v3_resolved("c_001", competing_assertion_ids=["a_002"],
                                   resolution_rationale="the evidence favours Ireland")
     before, after = _v3_states([resolved_before, ident], [resolved_after, ident], _A)
+    check_identity_first(before, after)
+
+
+def test_v3_fires_when_an_already_resolved_conflict_is_repointed_onto_a_disputed_source():
+    """The detection class a status-only population dropped.
+
+    The conflict is `resolved` in both states, so no status transition occurs —
+    but this run moved its `preferred_assertion_id` and `competing_assertion_ids`
+    from `a_014` (src_005) onto `a_002` (src_001), which an open identity
+    conflict disputes. The run stood a resolution on a disputed person-link this
+    turn just as surely as a fresh resolution would.
+
+    A revision shipped with a status-only population and went silent on this. It
+    came from misreading a review finding whose actual defect was the MESSAGE
+    claiming "was written status='resolved'" on a run that had only reworded
+    prose — a wording bug, for which narrowing the population was the wrong
+    remedy.
+
+    Latent on the unit corpus (no unit fixture ships a `resolved` conflict beside
+    an open identity conflict) and present in real project state: 4 of the 161
+    committed e2e final states carry the shape.
+    """
+    ident = _identity("c_002", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_v3_resolved("c_001", competing_assertion_ids=["a_014"],
+                      preferred_assertion_id="a_014"), ident],
+        [_v3_resolved("c_001", competing_assertion_ids=["a_002"],
+                      preferred_assertion_id="a_002"), ident],
+        _A,
+    )
+    with pytest.raises(AssertionError) as e:
+        check_identity_first(before, after)
+    # The message must say which act it is reporting: a repoint is a different
+    # claim from a fresh resolution, and conflating them was the original defect.
+    msg = str(e.value)
+    assert "repointed" in msg, msg
+    assert "was moved to status='resolved'" not in msg, msg
+
+
+def test_v3_says_moved_to_resolved_only_when_the_status_actually_moved():
+    """Polarity for the message arm above."""
+    ident = _identity("c_002", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
+        [_v3_resolved("c_001", competing_assertion_ids=["a_002"]), ident],
+        _A,
+    )
+    with pytest.raises(AssertionError) as e:
+        check_identity_first(before, after)
+    msg = str(e.value)
+    assert "was moved to status='resolved'" in msg, msg
+    assert "repointed" not in msg, msg
+
+
+def test_v3_a_repoint_that_moves_AWAY_from_a_disputed_source_is_clean():
+    """The inverse repoint: same field changes, opposite direction. Firing on
+    this would flag a run that fixed the very problem the check reports."""
+    ident = _identity("c_002", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_v3_resolved("c_001", competing_assertion_ids=["a_002"],
+                      preferred_assertion_id="a_002"), ident],
+        [_v3_resolved("c_001", competing_assertion_ids=["a_014"],
+                      preferred_assertion_id="a_014"), ident],
+        _A,
+    )
     check_identity_first(before, after)
 
 
@@ -916,7 +995,12 @@ def test_v3_clean_when_the_run_wrote_moot_instead_of_resolved():
     ident = _identity("c_002", competing_assertion_ids=["a_001"])
     before, after = _v3_states(
         [_conflict("c_001", competing_assertion_ids=["a_002"]), ident],
+        # `conflict_type="fact"` is load-bearing. Without it the `fact` scope
+        # gate excluded the entry whatever its status, so the test passed on the
+        # missing field rather than on `moot` — measured as a 4-cell matrix in
+        # which `(resolved, no conflict_type)`, the VIOLATING value, also passed.
         [_conflict("c_001", competing_assertion_ids=["a_002"], status="moot",
+                   conflict_type="fact",
                    resolution_rationale="deferred to the identity question"), ident],
         _A,
     )
@@ -928,6 +1012,32 @@ def test_v3_clean_when_the_violation_is_preexisting_and_untouched():
     ident = _identity("c_002", competing_assertion_ids=["a_001"])
     stale = _v3_resolved("c_001", competing_assertion_ids=["a_002"])
     before, after = _v3_states([stale, ident], [dict(stale), ident], _A)
+    check_identity_first(before, after)
+
+
+@pytest.mark.parametrize(
+    "competing",
+    [
+        42,               # int: `.get` on it is fine, but iterating raises TypeError
+        {"a_002": 1},     # dict: iterates KEYS, so it reports iff they match ids
+        "a_002",          # bare string: iterates CHARACTERS — silently wrong, never raises
+    ],
+)
+def test_v3_a_non_list_competing_assertion_ids_neither_raises_nor_misreports(competing):
+    """`_sources_for`'s `isinstance(ids, list)` guard, which nothing pinned.
+
+    Narrowed to the shapes that are actually reachable: `validator.ts` requires
+    `competing_assertion_ids`, so absent and null are rejected at the write
+    boundary, but it does not type-check the value. The three it accepts are
+    above, and the bare string is the dangerous one — it neither raises nor
+    reports, it iterates to characters and yields a confidently wrong answer.
+    """
+    ident = _identity("c_002", competing_assertion_ids=["a_001"])
+    before, after = _v3_states(
+        [_conflict("c_001", competing_assertion_ids=competing), ident],
+        [_v3_resolved("c_001", competing_assertion_ids=competing), ident],
+        _A,
+    )
     check_identity_first(before, after)
 
 
@@ -1098,10 +1208,11 @@ def test_v3_agrees_with_a_second_derivation_over_the_corpus():
 
 
 def test_v3_reports_one_pair_per_flagged_run_not_a_fan_out():
-    """The withdrawn second arm attached 14 spurious pair-observations to the 7
-    real ones — an unrelated (c_001, c_003) pair on 7 of 8 runs — and the
-    run-level count hid it, because a run already flagged for a real pair stays
-    "1 run" however many extra pairs are appended to its message.
+    """The withdrawn second arm attached 8 spurious pair-observations to the 7
+    real ones, 15 in all across 8 runs — an unrelated (c_001, c_003) pair on 7 of
+    those 8, plus one identity<->identity pair — and the run-level count hid it,
+    because a run already flagged for a real pair stays "1 run" however many
+    extra pairs are appended to its message.
 
     So this asserts at OBSERVATION level, which is what a genealogist reads.
     """
