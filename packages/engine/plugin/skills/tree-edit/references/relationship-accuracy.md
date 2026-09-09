@@ -86,14 +86,19 @@ event; the couple relationship is its only correct home.
 
 **The relationship edge needs its own source-ref, separate from the
 fact's** — a `sources` array nested only inside `facts[]` fails
-validation (the edge and each fact are checked independently). A
-marriage record's assertion has `fact_type: "marriage"`, which
-`sourceAssertionId` rejects — for a Couple edge, supply
-`relationship.sources` *and* each fact's own `sources`: `relationship:
-{ type: "Couple", person1, person2, sources: [{ ref: "S5", page }],
-facts: [{ type: "Marriage", date, place, sources: [{ ref: "S5", page
-}] }] }`. Use `sourceAssertionId` only when a `fact_type: "relationship"`
-assertion establishes the edge.
+validation (the edge and each fact are checked independently). Prefer
+`sourceAssertionId`: it accepts any assertion that establishes a link
+between two parties — `relationship`, `marriage`, `parentage`,
+`parentchild` — so a Couple edge is sourced with the marriage assertion
+itself, and the tool resolves the ref and propagates it to an inline
+Couple fact that has none. `sourceAssertionId` resolves `{ ref, quality }` and nothing more, so supply a
+literal `relationship.sources` *and* each fact's own `sources` when no such
+assertion exists **or when you need to record a `page`** (dwelling, family or
+entry number) — the resolver carries no page, and the two are mutually
+exclusive, so a page means the literal form:
+`relationship: { type: "Couple", person1, person2, sources: [{ ref:
+"S5", page }], facts: [{ type: "Marriage", date, place, sources: [{ ref:
+"S5", page }] }] }`.
 
 ## When to create relationships
 
