@@ -28,17 +28,61 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 1, `hint-samples.csv` row 6,
-flag `adds_spouse,adds_birth`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Argentina, Buenos Aires, registros parroquiales, 1635-2017", a 30 August 1859 marriage entry for Pedro Chaves (b. 1836) and Juana Flores (b. 1835), naming his parents as Isidro Chaves and Andrea Guerra and hers as Sebastian Flores and Isabel Rivero.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the 1859 marriage to Juana Flores, plus a `required` finding that the report documents
-the rejection.
+**Resolved: true match.** The hint record — "Argentina, Buenos Aires, registros
+parroquiales, 1635-2017", a 30 August 1859 marriage at Asuncion de Maria
+Santisima, Avellaneda, for Pedro Chaves (b. 1836) and Juana Flores (b. 1835),
+naming his parents Isidro Chaves and Andrea Guerra and hers Sebastian Flores and
+Isabel Rivero (https://familysearch.org/ark:/61903/1:1:QP84-TH55) — does belong
+to Pedro Pablo Chaves (`2761-R34`), and the draft finding is confirmed with one
+correction to the place.
 
-One of the stronger candidates in the batch. The hint's parents for the groom — Isidro Chaves and Andrea Guerra — are exactly the couple the tree already records as Pedro Pablo's parents, and the record's stated birth year (1836) matches the tree's 1 July 1836 christening at Nuestra Señora del Socorro in the same city. The tree records no spouse at all, so nothing competes.
+**What decided it.** Three things, in order of weight.
 
-Two cautions. The tree carries a duplicated father — `Sargento Isidro Chaves` (275H-YL3) and `Isidoro Chaves` (2761-R3H), each paired with an `Andrea Guerra` — so a parent-name match has two ways to succeed and neither is independent. And the hint's collection (Buenos Aires, registros parroquiales, 1635-2017) indexes the same parish books as the tree's existing source (Capital Federal, registros parroquiales, 1640-1978); confirm the marriage entry is new information rather than a re-index of a record already attached.
+1. **The parent pair is unique in the index, not merely matching.** An
+   Argentina-wide search for a Pedro Chaves with father Isidro Chaves *and*
+   mother Andrea Guerra returns only two events: this 1859 marriage, indexed
+   three or four times, and the 1 July 1836 baptism at Nuestra Senora del
+   Socorro, indexed twice (`1:1:XN9Y-ZHZ` and `1:1:XNSL-1LM`, which is why the
+   tree carries a duplicated father). No second Pedro Chaves of that parentage
+   exists in the corpus, so there is no rival candidate the hint could be
+   confusing this Pedro with.
+2. **An independent child baptism places the couple in the right city.**
+   Casildo Chaves, baptised 17 June 1865 at Nuestra Senora de La Merced, Ciudad
+   de Buenos Aires, father Pedro Chaves, mother Juana Flores
+   (https://familysearch.org/ark:/61903/1:1:XN63-7VR). Different collection,
+   different parish, different event type, six years after the marriage. This is
+   the corroboration that does not come from the hint algorithm's own input.
+3. **The stated birth year matches exactly** — the marriage index gives Pedro's
+   birth as 1836, against the tree's 1 July 1836 christening. Year only, with no
+   birthplace on the record, so on its own this is weak; it earns its place only
+   alongside the two points above.
+
+**The draft's own argument was wrong on one point, and it is corrected here.**
+The draft said the birth year matched a christening "in the same city". It does
+not: the christening is Nuestra Senora del Socorro in Buenos Aires City, and the
+hint's marriage is at Avellaneda, in Buenos Aires province across the Riachuelo.
+`expected-findings.json` now names Avellaneda. What bridges the two
+jurisdictions is the 1865 baptism above, not the marriage record.
+
+**Two apparent contradictions, both resolved.** A second index of the same
+couple (https://familysearch.org/ark:/61903/1:1:QJRM-GV8V) dates the marriage
+14 September 1859 at Buenos Aires City rather than 30 August at Avellaneda;
+banns and ceremony, or two parishes recording one union, is the ordinary reading,
+and that index agrees with the christening's city. The same index gives Pedro's
+birthplace as Avellaneda — but it gives Juana the *identical* birthplace, which
+is the signature of an indexer copying the event place into the birthplace field
+rather than a real datum. Neither is treated as evidence against the match.
+
+**What was searched and came up empty.** No marriage was attached to
+`2761-R34` before this hint, and the tree records no spouse and no children, so
+the draft's "re-index of a record already attached" caution cannot apply to a
+marriage entry. `1:1:XFTB-FS4` ("Argentina matrimonios, 1722-1911") carries the
+same parent pair and is very likely a third index of this same marriage; it was
+not opened, because nothing turned on it once the couple was established.
+
+**Not edited, deliberately.** The duplicated father in the tree (`275H-YL3`
+Sargento Isidro Chaves and `2761-R3H` Isidoro Chaves, each with an Andrea
+Guerra) is an artefact of the 1836 baptism being indexed twice. It did not
+affect the call, since the identification rests on the pair being unique rather
+than on which of the two duplicates matched, and `starting-tree.gedcomx.json`
+and `unstripped-tree.gedcomx.json` are left as captured.

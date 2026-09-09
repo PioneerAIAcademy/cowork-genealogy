@@ -1,0 +1,3964 @@
+{
+  "tool": "record_search",
+  "retrieved": "2026-09-09T09:13:08.597Z",
+  "returned_count": 30,
+  "payload": {
+    "query": {
+      "recordCountry": "Argentina",
+      "givenName": "Pedro",
+      "surname": "Chaves",
+      "fatherGivenName": "Isidro",
+      "fatherSurname": "Chaves",
+      "motherGivenName": "Andrea",
+      "motherSurname": "Guerra",
+      "count": 30,
+      "projectPath": "C:\\Users\\KWESI ASANTE\\cowork-genealogy\\eval\\tests\\e2e\\pedro-chaves-spouse"
+    },
+    "totalMatches": 2775,
+    "paginationCappedAt": 4999,
+    "returned": 30,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:XFTB-FS4",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 11.8236,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1520572",
+        "collectionTitle": "Argentina, Marriages, 1722-1911",
+        "collectionUrl": "https://familysearch.org/collections/1520572",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina matrimonios, 1722-1911\"",
+        "recordArk": "ark:/61903/1:2:MG4D-RRS",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10592329567",
+              "ark": "ark:/61903/1:1:XFTB-FS4",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ]
+            },
+            {
+              "id": "p_10592329568",
+              "ark": "ark:/61903/1:1:XFTB-FSH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isidro",
+                  "surname": "Chaves"
+                }
+              ]
+            },
+            {
+              "id": "p_10592329569",
+              "ark": "ark:/61903/1:1:XFTB-FSC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Andrea",
+                  "surname": "Guerra"
+                }
+              ]
+            },
+            {
+              "id": "p_10592329564",
+              "ark": "ark:/61903/1:1:XFTB-FSQ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Juana",
+                  "surname": "Flores"
+                }
+              ]
+            },
+            {
+              "id": "p_10592329565",
+              "ark": "ark:/61903/1:1:XFTB-FS7",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sebastian",
+                  "surname": "Flores"
+                }
+              ]
+            },
+            {
+              "id": "p_10592329566",
+              "ark": "ark:/61903/1:1:XFTB-FSW",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isabel",
+                  "surname": "Rivero"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10592329568",
+              "person2": "p_10592329569"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10592329568",
+              "child": "p_10592329567"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10592329569",
+              "child": "p_10592329567"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10592329567",
+              "person2": "p_10592329564",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "14 Sep 1859",
+                  "standard_date": "14 Sep 1859",
+                  "place": "Avellaneda, Buenos Aires, Argentina",
+                  "standard_place": "Avellaneda, Buenos Aires, Argentina"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10592329565",
+              "child": "p_10592329564"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10592329566",
+              "child": "p_10592329564"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1520572",
+              "title": "Argentina, Marriages, 1722-1911",
+              "url": "https://familysearch.org/collections/1520572"
+            },
+            {
+              "id": "src_r_540617252",
+              "title": "Registro para Pedro Chaves, \"Argentina matrimonios, 1722-1911\"",
+              "citation": "\"Argentina matrimonios, 1722-1911,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:2:MG4D-RRS : 3 February 2020), Registro para Pedro Chaves, 14 Sep 1859; citing , index based upon data collected by the Genealogical Society of Utah, Salt Lake City; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:MG4D-RRS"
+            },
+            {
+              "id": "src_p_p_10592329567",
+              "url": "#p_10592329567"
+            }
+          ],
+          "places": [
+            {
+              "id": "442604",
+              "name": "Avellaneda, Buenos Aires, Argentina",
+              "latitude": -34.6627,
+              "longitude": -58.3663
+            }
+          ]
+        },
+        "primaryId": "p_10592329567",
+        "batchNumber": "M63034-1",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Isidro Chaves"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Andrea Guerra"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QJRM-GV8V",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 11.8236,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1836",
+        "birthPlace": "Avellaneda, Buenos Aires, Argentina",
+        "collectionId": "1972912",
+        "collectionTitle": "Argentina, Buenos Aires, Catholic Church Records, 1635-2017",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1972912",
+        "recordTitle": "Registro para Pedro Chaves y Juana Flores, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+        "recordArk": "ark:/61903/1:2:QKXY-C33V",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_100481110548",
+              "ark": "ark:/61903/1:1:QJRM-GV8V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1836",
+                  "standard_date": "1836",
+                  "place": "Avellaneda, Buenos Aires, Argentina",
+                  "standard_place": "Avellaneda, Buenos Aires, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_100481110551",
+              "ark": "ark:/61903/1:1:QJRM-GV8L",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Flores",
+                  "given": "Juana"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835",
+                  "place": "Avellaneda, Buenos Aires, Argentina",
+                  "standard_place": "Avellaneda, Buenos Aires, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_100481110549",
+              "ark": "ark:/61903/1:1:QJRM-GV8K",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Isidro"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_100481110550",
+              "ark": "ark:/61903/1:1:QJRM-GV82",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Guerra",
+                  "given": "Andrea"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_100481110552",
+              "ark": "ark:/61903/1:1:QJRM-GV8G",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Flores",
+                  "given": "Sebastian"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_100481110553",
+              "ark": "ark:/61903/1:1:QJRM-GV8P",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Rivero",
+                  "given": "Isabel"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_100481110549",
+              "person2": "p_100481110550"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_100481110550",
+              "child": "p_100481110548"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_100481110553",
+              "child": "p_100481110551"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_100481110548",
+              "person2": "p_100481110551",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "14 September 1859",
+                  "standard_date": "14 Sep 1859",
+                  "place": "Buenos Aires City, Argentina",
+                  "standard_place": "Buenos Aires City, Argentina"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_100481110549",
+              "child": "p_100481110548"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_100481110552",
+              "child": "p_100481110551"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_101693315808",
+              "title": "Registro para Pedro Chaves y Juana Flores, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+              "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QJRM-GV8V : Tue Aug 04 01:57:44 UTC 2026), Entry for Pedro Chaves and Juana Flores, 14 September 1859.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QKXY-C33V"
+            },
+            {
+              "id": "sd_c_1972912",
+              "title": "Argentina, Buenos Aires, Catholic Church Records, 1635-2017",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1972912"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP"
+            },
+            {
+              "id": "sd_auto_M9J1-QNK",
+              "title": "Argentina, Buenos Aires, Marriages, from 1727 to 2017"
+            },
+            {
+              "id": "src_p_p_100481110548",
+              "url": "#p_100481110548"
+            }
+          ],
+          "places": [
+            {
+              "id": "442604",
+              "name": "Avellaneda, Buenos Aires, Argentina",
+              "latitude": -34.6627,
+              "longitude": -58.3663
+            },
+            {
+              "id": "5395",
+              "name": "Buenos Aires City, Argentina",
+              "latitude": -34.6,
+              "longitude": -58.45
+            }
+          ]
+        },
+        "primaryId": "p_100481110548",
+        "batchNumber": "M03708-9",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Isidro Chaves"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Andrea Guerra"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP84-TH5K",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 11.8236,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1836",
+        "collectionId": "1972912",
+        "collectionTitle": "Argentina, Buenos Aires, Catholic Church Records, 1635-2017",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1972912",
+        "recordTitle": "Registro para Pedro Chaves y Juana Florez, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+        "recordArk": "ark:/61903/1:2:QR5J-871J",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104520679939",
+              "ark": "ark:/61903/1:1:QP84-TH5K",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1836",
+                  "standard_date": "1836"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679942",
+              "ark": "ark:/61903/1:1:QP84-TH5G",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Juana",
+                  "surname": "Florez"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679940",
+              "ark": "ark:/61903/1:1:QP84-TH52",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isidro",
+                  "surname": "Chaves"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679941",
+              "ark": "ark:/61903/1:1:QP84-TH5L",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Andrea",
+                  "surname": "Guerra"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104520679939",
+              "person2": "p_104520679942",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "30 Aug 1859",
+                  "standard_date": "30 Aug 1859",
+                  "place": "Asunción de María Santísima, Avellaneda, Avellaneda, Buenos Aires, Argentina",
+                  "standard_place": "Avellaneda, Avellaneda, Buenos Aires, Argentina"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104520679941",
+              "child": "p_104520679939"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104520679940",
+              "child": "p_104520679939"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104520679940",
+              "person2": "p_104520679941"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106302272387",
+              "title": "Registro para Pedro Chaves y Juana Florez, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+              "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP84-TH5K : Tue Aug 04 00:21:48 UTC 2026), Entry for Pedro Chaves and Juana Florez, 30 Aug 1859.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QR5J-871J"
+            },
+            {
+              "id": "sd_c_1972912",
+              "title": "Argentina, Buenos Aires, Catholic Church Records, 1635-2017",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1972912"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-XMC"
+            },
+            {
+              "id": "sd_auto_M9J1-QNK",
+              "title": "Argentina, Buenos Aires, Marriages, from 1727 to 2017"
+            },
+            {
+              "id": "src_p_p_104520679939",
+              "url": "#p_104520679939"
+            }
+          ],
+          "places": [
+            {
+              "id": "7071585",
+              "name": "Avellaneda, Avellaneda, Buenos Aires, Argentina",
+              "latitude": -34.6609,
+              "longitude": -58.3671
+            }
+          ]
+        },
+        "primaryId": "p_104520679939",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Isidro Chaves"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Andrea Guerra"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XNSL-1LM",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "01 Jul 1836",
+            "place": "Nuestra Señora del Socorro, Ciudad de Buenos Aires, Capital Federal, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Pablo Chaves",
+        "score": 11.8236,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1974184",
+        "collectionTitle": "Argentina, Capital Federal, Catholic Church Records, 1640-1978",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974184",
+        "recordTitle": "Registro para Pedro Pablo Chaves, \"Argentina, Capital Federal, registros parroquiales, 1640-1978\"",
+        "recordArk": "ark:/61903/1:2:MG41-SPC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10597013730",
+              "ark": "ark:/61903/1:1:XNSL-1LM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro Pablo",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Baptism",
+                  "primary": true,
+                  "date": "01 Jul 1836",
+                  "standard_date": "1 Jul 1836",
+                  "place": "Nuestra Señora del Socorro, Ciudad de Buenos Aires, Capital Federal, Argentina",
+                  "standard_place": "Nuestra Señora del Socorro, Retiro, Comuna 1, Buenos Aires City, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10597013731",
+              "ark": "ark:/61903/1:1:XNSL-1L9",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isidro",
+                  "surname": "Chaves"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10597013732",
+              "ark": "ark:/61903/1:1:XNSL-1LS",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Andrea",
+                  "surname": "Guerra"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10597013731",
+              "child": "p_10597013730"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10597013731",
+              "person2": "p_10597013732"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10597013732",
+              "child": "p_10597013730"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_541055499",
+              "title": "Registro para Pedro Pablo Chaves, \"Argentina, Capital Federal, registros parroquiales, 1640-1978\"",
+              "citation": "\"Argentina, Capital Federal, registros parroquiales, 1640-1978\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XNSL-1LM : Tue Aug 04 02:05:42 UTC 2026), Entry for Pedro Pablo Chaves and Isidro Chaves, 01 Jul 1836.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MG41-SPC"
+            },
+            {
+              "id": "sd_c_1974184",
+              "title": "Argentina, Capital Federal, Catholic Church Records, 1640-1978",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974184"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939D-RX4N-5"
+            },
+            {
+              "id": "sd_auto_M9J1-9KZ",
+              "title": "Argentina, Buenos Aires City, Religious, from 15 August 1635 to 31 October 2015"
+            },
+            {
+              "id": "src_p_p_10597013730",
+              "url": "#p_10597013730"
+            }
+          ],
+          "places": [
+            {
+              "id": "9423143",
+              "name": "Nuestra Señora del Socorro, Retiro, Comuna 1, Buenos Aires City, Argentina",
+              "latitude": -34.5929,
+              "longitude": -58.3797
+            }
+          ]
+        },
+        "primaryId": "p_10597013730",
+        "batchNumber": "G00953-0",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Isidro Chaves"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Andrea Guerra"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QP84-TH55",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 11.8236,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1836",
+        "collectionId": "1972912",
+        "collectionTitle": "Argentina, Buenos Aires, Catholic Church Records, 1635-2017",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1972912",
+        "recordTitle": "Registro para Pedro Chaves y Juana Flores, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+        "recordArk": "ark:/61903/1:2:QR5J-871V",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104520679944",
+              "ark": "ark:/61903/1:1:QP84-TH55",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1836",
+                  "standard_date": "1836"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679948",
+              "ark": "ark:/61903/1:1:QP84-TH5B",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Juana",
+                  "surname": "Flores"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679945",
+              "ark": "ark:/61903/1:1:QP84-TH5R",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isidro",
+                  "surname": "Chaves"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679946",
+              "ark": "ark:/61903/1:1:QP84-TH5T",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Andrea",
+                  "surname": "Guerra"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679947",
+              "ark": "ark:/61903/1:1:QP84-TH5Y",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sebastian",
+                  "surname": "Flores"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104520679943",
+              "ark": "ark:/61903/1:1:QP84-TH5P",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isabel",
+                  "surname": "Rivero"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104520679946",
+              "child": "p_104520679944"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104520679945",
+              "person2": "p_104520679946"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104520679945",
+              "child": "p_104520679944"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104520679943",
+              "child": "p_104520679948"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104520679944",
+              "person2": "p_104520679948",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "30 Aug 1859",
+                  "standard_date": "30 Aug 1859",
+                  "place": "Asunción de María Santísima, Avellaneda, Avellaneda, Buenos Aires, Argentina",
+                  "standard_place": "Avellaneda, Avellaneda, Buenos Aires, Argentina"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104520679947",
+              "child": "p_104520679948"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106302272388",
+              "title": "Registro para Pedro Chaves y Juana Flores, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+              "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP84-TH55 : Tue Aug 04 02:10:07 UTC 2026), Entry for Pedro Chaves and Juana Flores, 30 Aug 1859.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QR5J-871V"
+            },
+            {
+              "id": "sd_c_1972912",
+              "title": "Argentina, Buenos Aires, Catholic Church Records, 1635-2017",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1972912"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-614"
+            },
+            {
+              "id": "sd_auto_M9J1-QNK",
+              "title": "Argentina, Buenos Aires, Marriages, from 1727 to 2017"
+            },
+            {
+              "id": "src_p_p_104520679944",
+              "url": "#p_104520679944"
+            }
+          ],
+          "places": [
+            {
+              "id": "7071585",
+              "name": "Avellaneda, Avellaneda, Buenos Aires, Argentina",
+              "latitude": -34.6609,
+              "longitude": -58.3671
+            }
+          ]
+        },
+        "primaryId": "p_104520679944",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Isidro Chaves"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Andrea Guerra"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XN9Y-ZHZ",
+        "events": [
+          {
+            "type": "Baptism",
+            "date": "01 Jul 1836",
+            "place": "Nuestra Señora del Socorro, Ciudad de Buenos Aires, Capital Federal, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Pablo Chaves",
+        "score": 11.1036005,
+        "confidence": 4,
+        "sex": "Male",
+        "collectionId": "1974184",
+        "collectionTitle": "Argentina, Capital Federal, Catholic Church Records, 1640-1978",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974184",
+        "recordTitle": "Registro para Pedro Pablo Chaves, \"Argentina, Capital Federal, registros parroquiales, 1640-1978\"",
+        "recordArk": "ark:/61903/1:2:MG4V-N9Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10596348250",
+              "ark": "ark:/61903/1:1:XN9Y-ZHZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro Pablo"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Baptism",
+                  "primary": true,
+                  "date": "01 Jul 1836",
+                  "standard_date": "1 Jul 1836",
+                  "place": "Nuestra Señora del Socorro, Ciudad de Buenos Aires, Capital Federal, Argentina",
+                  "standard_place": "Nuestra Señora del Socorro, Retiro, Comuna 1, Buenos Aires City, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10596348251",
+              "ark": "ark:/61903/1:1:XN9Y-ZH8",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Isidoro"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10596348252",
+              "ark": "ark:/61903/1:1:XN9Y-ZHD",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Guerra",
+                  "given": "Andrea"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10596348252",
+              "child": "p_10596348250"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10596348251",
+              "person2": "p_10596348252"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10596348251",
+              "child": "p_10596348250"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_540770457",
+              "title": "Registro para Pedro Pablo Chaves, \"Argentina, Capital Federal, registros parroquiales, 1640-1978\"",
+              "citation": "\"Argentina, Capital Federal, registros parroquiales, 1640-1978\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XN9Y-ZHZ : Tue Aug 04 01:15:24 UTC 2026), Entry for Pedro Pablo Chaves and Isidoro Chaves, 01 Jul 1836.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MG4V-N9Y"
+            },
+            {
+              "id": "sd_c_1974184",
+              "title": "Argentina, Capital Federal, Catholic Church Records, 1640-1978",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974184"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939D-RDBR-3"
+            },
+            {
+              "id": "sd_auto_M9J1-9KZ",
+              "title": "Argentina, Buenos Aires City, Religious, from 15 August 1635 to 31 October 2015"
+            },
+            {
+              "id": "src_p_p_10596348250",
+              "url": "#p_10596348250"
+            }
+          ],
+          "places": [
+            {
+              "id": "9423143",
+              "name": "Nuestra Señora del Socorro, Retiro, Comuna 1, Buenos Aires City, Argentina",
+              "latitude": -34.5929,
+              "longitude": -58.3797
+            }
+          ]
+        },
+        "primaryId": "p_10596348250",
+        "batchNumber": "G00950-2",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Isidoro Chaves"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Andrea Guerra"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:6THQ-SHJ6",
+        "events": [
+          {
+            "type": "MilitaryService",
+            "place": "Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Crisal Chaves",
+        "score": 5.6496005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1900",
+        "birthPlace": "Argentina",
+        "collectionId": "5000280",
+        "collectionTitle": "Argentina, Military Records, 1911-1936",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/5000280",
+        "recordTitle": "Entry for Pedro Crisal Chaves, \"Argentina, Military Records, 1911-1936\"",
+        "recordArk": "ark:/61903/1:2:H751-3PH7",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_303461701723",
+              "ark": "ark:/61903/1:1:6THQ-SHJ6",
+              "gender": "Male",
+              "names": [
+                {
+                  "given": "Pedro Crisal",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MilitaryService",
+                  "primary": true,
+                  "place": "Argentina",
+                  "standard_place": "Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Argentina",
+                  "standard_place": "Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_303461701722",
+              "ark": "ark:/61903/1:1:6THQ-SHJD",
+              "gender": "Male",
+              "names": [
+                {
+                  "surname": "Chávez Ignació"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_303461701722",
+              "child": "p_303461701723"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_179211791945",
+              "title": "Entry for Pedro Crisal Chaves, \"Argentina, Military Records, 1911-1936\"",
+              "citation": "\"Argentina, Military Records, 1911-1936\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6THQ-SHJ6 : Mon Aug 24 18:10:01 UTC 2026), Entry for Chávez Ignació and Pedro Crisal Chaves.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H751-3PH7"
+            },
+            {
+              "id": "sd_c_5000280",
+              "title": "Argentina, Military Records, 1911-1936",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/5000280"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-BQ2S-39BK"
+            },
+            {
+              "id": "sd_auto_M9J1-SDQ",
+              "title": "Argentina, Military Service, from 1437 to 1993"
+            },
+            {
+              "id": "src_p_p_303461701723",
+              "url": "#p_303461701723"
+            }
+          ],
+          "places": [
+            {
+              "id": "164",
+              "name": "Argentina",
+              "latitude": -34,
+              "longitude": -64
+            }
+          ]
+        },
+        "primaryId": "p_303461701723",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Chávez Ignació"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:62X8-3TZW",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Soltero"
+          },
+          {
+            "type": "Census",
+            "date": "1895",
+            "place": "Famaillá, Famaillá, Tucumán, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1895",
+        "birthPlace": "Argentina",
+        "collectionId": "1410078",
+        "collectionTitle": "Argentina, National Census, 1895",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1410078",
+        "recordTitle": "La familia de Pedro Chaves, \"Argentina, censo nacional, 1895\"",
+        "recordArk": "ark:/61903/1:2:H3W2-NZTG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_299239214706",
+              "ark": "ark:/61903/1:1:62X8-3TZW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Soltero"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1895",
+                  "standard_date": "1895",
+                  "place": "Argentina",
+                  "standard_place": "Argentina"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1895",
+                  "standard_date": "1895",
+                  "place": "Famaillá, Famaillá, Tucumán, Argentina",
+                  "standard_place": "Famaillá, Famaillá, Tucumán, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_177309441802",
+              "title": "La familia de Pedro Chaves, \"Argentina, censo nacional, 1895\"",
+              "citation": "\"Argentina, censo nacional, 1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62X8-3TZW : Fri Mar 08 23:49:13 UTC 2024), Entry for Pedro Chaves, 1895.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H3W2-NZTG"
+            },
+            {
+              "id": "sd_c_1410078",
+              "title": "Argentina, National Census, 1895",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1410078"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DRPQ-87K"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_299239214706",
+              "url": "#p_299239214706"
+            }
+          ],
+          "places": [
+            {
+              "id": "164",
+              "name": "Argentina",
+              "latitude": -34,
+              "longitude": -64
+            },
+            {
+              "id": "7073506",
+              "name": "Famaillá, Famaillá, Tucumán, Argentina",
+              "latitude": -27.056,
+              "longitude": -65.4021
+            }
+          ]
+        },
+        "primaryId": "p_299239214706",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MWH6-LWM",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1895",
+            "place": "Mendoza (Población urbana), Mendoza, Mendoza, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1883",
+        "birthPlace": "Mendoza, Argentina",
+        "collectionId": "1410078",
+        "collectionTitle": "Argentina, National Census, 1895",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1410078",
+        "recordTitle": "La familia de Pedro Chaves, \"Argentina, censo nacional, 1895\"",
+        "recordArk": "ark:/61903/1:2:1TD8-V4Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_152650080",
+              "ark": "ark:/61903/1:1:MWH6-LWM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1883",
+                  "standard_date": "1883",
+                  "place": "Mendoza, Argentina",
+                  "standard_place": "Mendoza, Argentina"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1895",
+                  "standard_date": "1895",
+                  "place": "Mendoza (Población urbana), Mendoza, Mendoza, Argentina",
+                  "standard_place": "Mendoza, Capital, Mendoza, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21782833437",
+              "title": "La familia de Pedro Chaves, \"Argentina, censo nacional, 1895\"",
+              "citation": "\"Argentina, censo nacional, 1895\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWH6-LWM : Tue Oct 21 14:48:08 UTC 2025), Entry for Pedro Chaves, 1895.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1TD8-V4Y"
+            },
+            {
+              "id": "sd_c_1410078",
+              "title": "Argentina, National Census, 1895",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1410078"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-STB"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_152650080",
+              "url": "#p_152650080"
+            }
+          ],
+          "places": [
+            {
+              "id": "5391",
+              "name": "Mendoza, Argentina",
+              "latitude": -34.5,
+              "longitude": -68.5
+            },
+            {
+              "id": "7344558",
+              "name": "Mendoza, Capital, Mendoza, Argentina",
+              "latitude": -32.8896,
+              "longitude": -68.8448
+            }
+          ]
+        },
+        "primaryId": "p_152650080",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MWQ9-ZS6",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1855",
+            "place": "Cañuelas, Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Jose Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "birthPlace": "Argentina",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:M7JM-QC3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_149076073",
+              "ark": "ark:/61903/1:1:MWQ9-ZS6",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro Jose"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Cañuelas, Buenos Aires, Argentina",
+                  "standard_place": "Cañuelas, Buenos Aires, Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Argentina",
+                  "standard_place": "Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_135273873",
+              "title": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWQ9-ZS6 : Tue May 27 19:02:09 UTC 2025), Entry for Pedro Jose Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M7JM-QC3"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6783-7PV"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_149076073",
+              "url": "#p_149076073"
+            }
+          ],
+          "places": [
+            {
+              "id": "164",
+              "name": "Argentina",
+              "latitude": -34,
+              "longitude": -64
+            },
+            {
+              "id": "442866",
+              "name": "Cañuelas, Buenos Aires, Argentina",
+              "latitude": -35.0331,
+              "longitude": -58.7337
+            }
+          ]
+        },
+        "primaryId": "p_149076073",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XS8G-WW8F",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "15 Sep 1877",
+            "place": "Santiago del Estero, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Juan Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1791",
+        "collectionId": "1974197",
+        "collectionTitle": "Argentina, Santiago del Estero, Catholic Church Records, 1581-1961",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974197",
+        "recordTitle": "Registro para Juan Pedro Chaves, \"Argentina, Santiago del Estero, registros parroquiales, 1581-1961\"",
+        "recordArk": "ark:/61903/1:2:HHQF-2XWT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307923287745",
+              "ark": "ark:/61903/1:1:XS8G-WW8F",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Juan Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "15 Sep 1877",
+                  "standard_date": "15 Sep 1877",
+                  "place": "Santiago del Estero, Argentina",
+                  "standard_place": "Santiago del Estero, Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1791",
+                  "standard_date": "1791"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307923287746",
+              "ark": "ark:/61903/1:1:XS8G-WW8N",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Santos",
+                  "given": "Magdalena"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307923287745",
+              "person2": "p_307923287746"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180901902806",
+              "title": "Registro para Juan Pedro Chaves, \"Argentina, Santiago del Estero, registros parroquiales, 1581-1961\"",
+              "citation": "\"Argentina, Santiago del Estero, registros parroquiales, 1581-1961\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS8G-WW8F : Mon Jan 27 18:51:03 UTC 2025), Entry for Juan Pedro Chaves and Magdalena Santos, 15 Sep 1877.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HHQF-2XWT"
+            },
+            {
+              "id": "sd_c_1974197",
+              "title": "Argentina, Santiago del Estero, Catholic Church Records, 1581-1961",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974197"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939N-C39K-2"
+            },
+            {
+              "id": "sd_auto_M9J1-ZL2",
+              "title": "Argentina, Santiago del Estero, Deaths, from 1500 to 2021"
+            },
+            {
+              "id": "src_p_p_307923287745",
+              "url": "#p_307923287745"
+            }
+          ],
+          "places": [
+            {
+              "id": "5401",
+              "name": "Santiago del Estero, Argentina",
+              "latitude": -28,
+              "longitude": -63.5
+            }
+          ]
+        },
+        "primaryId": "p_307923287745",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XSZ6-WK4N",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "1864",
+            "place": "Nuestra Señora de la Consolación, Sumampa, Quebrachos, Santiago del Estero, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1784",
+        "collectionId": "1974197",
+        "collectionTitle": "Argentina, Santiago del Estero, Catholic Church Records, 1581-1961",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974197",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Santiago del Estero, registros parroquiales, 1581-1961\"",
+        "recordArk": "ark:/61903/1:2:HH3F-1FJJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_307891709326",
+              "ark": "ark:/61903/1:1:XSZ6-WK4N",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1784",
+                  "standard_date": "1784"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Nuestra Señora de la Consolación, Sumampa, Quebrachos, Santiago del Estero, Argentina",
+                  "standard_place": "Nuestra Señora de la Consolación, Sumampa, Quebrachos, Santiago del Estero, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_307891709327",
+              "ark": "ark:/61903/1:1:XSZ6-WK4J",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Trinidad"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_307891709326",
+              "person2": "p_307891709327"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180877847027",
+              "title": "Registro para Pedro Chaves, \"Argentina, Santiago del Estero, registros parroquiales, 1581-1961\"",
+              "citation": "\"Argentina, Santiago del Estero, registros parroquiales, 1581-1961\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSZ6-WK4N : Mon Jan 20 18:29:37 UTC 2025), Entry for Pedro Chaves and Trinidad, 1864.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:HH3F-1FJJ"
+            },
+            {
+              "id": "sd_c_1974197",
+              "title": "Argentina, Santiago del Estero, Catholic Church Records, 1581-1961",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974197"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9396-ZVZ9-P"
+            },
+            {
+              "id": "sd_auto_M9J1-ZL2",
+              "title": "Argentina, Santiago del Estero, Deaths, from 1500 to 2021"
+            },
+            {
+              "id": "src_p_p_307891709326",
+              "url": "#p_307891709326"
+            }
+          ],
+          "places": [
+            {
+              "id": "9420182",
+              "name": "Nuestra Señora de la Consolación, Sumampa, Quebrachos, Santiago del Estero, Argentina",
+              "latitude": -29.3829,
+              "longitude": -63.4753
+            }
+          ]
+        },
+        "primaryId": "p_307891709326",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MWQ9-ZS4",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1855",
+            "place": "Cañuelas, Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Jose Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "birthPlace": "Argentina",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:M7JM-QHY",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_149076067",
+              "ark": "ark:/61903/1:1:MWQ9-ZS4",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro Jose"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Argentina",
+                  "standard_place": "Argentina"
+                },
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Cañuelas, Buenos Aires, Argentina",
+                  "standard_place": "Cañuelas, Buenos Aires, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_135273867",
+              "title": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWQ9-ZS4 : Tue May 27 19:02:04 UTC 2025), Entry for Pedro Jose Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M7JM-QHY"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6783-7PV"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_149076067",
+              "url": "#p_149076067"
+            }
+          ],
+          "places": [
+            {
+              "id": "164",
+              "name": "Argentina",
+              "latitude": -34,
+              "longitude": -64
+            },
+            {
+              "id": "442866",
+              "name": "Cañuelas, Buenos Aires, Argentina",
+              "latitude": -35.0331,
+              "longitude": -58.7337
+            }
+          ]
+        },
+        "primaryId": "p_149076067",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XMBK-5GPV",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1855",
+            "place": "Ciudad de Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "France",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:H4P6-184K",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_306876458508",
+              "ark": "ark:/61903/1:1:XMBK-5GPV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Francia",
+                  "standard_place": "France"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Ciudad de Buenos Aires, Argentina",
+                  "standard_place": "Buenos Aires City, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_306876458509",
+              "ark": "ark:/61903/1:1:XMBK-5GPK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Juan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Ciudad de Buenos Aires, Argentina",
+                  "standard_place": "Buenos Aires City, Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Francia",
+                  "standard_place": "France"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180633223129",
+              "title": "La familia de Pedro Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XMBK-5GPV : Fri Oct 17 00:55:40 UTC 2025), Entry for Pedro Chaves and Juan Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4P6-184K"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSD8-82WT"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_306876458508",
+              "url": "#p_306876458508"
+            }
+          ],
+          "places": [
+            {
+              "id": "204",
+              "name": "France",
+              "latitude": 46,
+              "longitude": 2
+            },
+            {
+              "id": "5395",
+              "name": "Buenos Aires City, Argentina",
+              "latitude": -34.6,
+              "longitude": -58.45
+            }
+          ]
+        },
+        "primaryId": "p_306876458508",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:615G-1VC1",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1855",
+            "place": "Ciudad de Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Jose Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1853",
+        "birthPlace": "Buenos Aires City, Argentina",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:H4LX-2BSQ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_306052819499",
+              "ark": "ark:/61903/1:1:615G-1VC1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro Jose",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Ciudad de Buenos Aires, Argentina",
+                  "standard_place": "Buenos Aires City, Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1853",
+                  "standard_date": "1853",
+                  "place": "Buenos Aires",
+                  "standard_place": "Buenos Aires City, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180585205264",
+              "title": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:615G-1VC1 : Tue May 27 19:41:56 UTC 2025), Entry for Pedro Jose Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4LX-2BSQ"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSD8-V789-Q"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1575 to 2021"
+            },
+            {
+              "id": "src_p_p_306052819499",
+              "url": "#p_306052819499"
+            }
+          ],
+          "places": [
+            {
+              "id": "5395",
+              "name": "Buenos Aires City, Argentina",
+              "latitude": -34.6,
+              "longitude": -58.45
+            }
+          ]
+        },
+        "primaryId": "p_306052819499",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLYN-XXJF",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "deathDate": "April 1858",
+        "deathPlace": "Rosario, Rosario, Santa Fe, Argentina",
+        "collectionId": "1974196",
+        "collectionTitle": "Argentina, Santa Fe, Catholic Church Records, 1634-2003",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974196",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Santa Fe, registros parroquiales, 1634-2003\"",
+        "recordArk": "ark:/61903/1:2:Q5HY-8ZXL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_103458451125",
+              "ark": "ark:/61903/1:1:QLYN-XXJF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "Apr 1858",
+                  "standard_date": "Apr 1858",
+                  "place": "Nuestra Señora del Rosario, Rosario, Rosario, Santa Fe, Argentina",
+                  "standard_place": "Rosario, Rosario, Santa Fe, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105192576441",
+              "title": "Registro para Pedro Chaves, \"Argentina, Santa Fe, registros parroquiales, 1634-2003\"",
+              "citation": "\"Argentina, Santa Fe, registros parroquiales, 1634-2003\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLYN-XXJF : Tue Dec 09 21:16:11 UTC 2025), Entry for Pedro Chaves, Apr 1858.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q5HY-8ZXL"
+            },
+            {
+              "id": "sd_c_1974196",
+              "title": "Argentina, Santa Fe, Catholic Church Records, 1634-2003",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974196"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9Q97-Y3S1-P1Y"
+            },
+            {
+              "id": "sd_auto_M9J1-9SB",
+              "title": "Argentina, Santa Fe, Deaths, from 18 April 0201 to 2024"
+            },
+            {
+              "id": "src_p_p_103458451125",
+              "url": "#p_103458451125"
+            }
+          ],
+          "places": [
+            {
+              "id": "443074",
+              "name": "Rosario, Rosario, Santa Fe, Argentina",
+              "latitude": -32.9579,
+              "longitude": -60.6928
+            }
+          ]
+        },
+        "primaryId": "p_103458451125",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:68QG-DL3V",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "junio de 1916",
+            "place": "Saladas, Saladas, Corrientes, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "20 October 1900",
+        "collectionId": "1974183",
+        "collectionTitle": "Argentina, Corrientes, Catholic Church Records, 1734-2013",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974183",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Corrientes, registros parroquiales, 1734-2013\"",
+        "recordArk": "ark:/61903/1:2:4BXR-NX5M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292444363008",
+              "ark": "ark:/61903/1:1:68QG-DL3V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Christening",
+                  "primary": true,
+                  "date": "junio de 1916",
+                  "standard_date": "Jun 1916",
+                  "place": "Saladas, Saladas, Corrientes, Argentina",
+                  "standard_place": "Salada, Saladas, Corrientes, Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "date": "20 de octubre de 1900",
+                  "standard_date": "20 Oct 1900"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292444363010",
+              "ark": "ark:/61903/1:1:68QG-DL32",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "D. E",
+                  "surname": "Valdino Cenos"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292444363011",
+              "ark": "ark:/61903/1:1:68QG-DL3L",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Maria M.",
+                  "surname": "Galarza"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292444363009",
+              "ark": "ark:/61903/1:1:68QG-DL3K",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Alejandrina",
+                  "surname": "Chaves"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292444363012",
+              "ark": "ark:/61903/1:1:68QG-DL3G",
+              "gender": "Unknown",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Cenor"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292444363013",
+              "ark": "ark:/61903/1:1:68QG-DL3P",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Eustaquio",
+                  "surname": "Argumano"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Godparent",
+              "person1": "p_292444363010",
+              "person2": "p_292444363008"
+            },
+            {
+              "type": "Godparent",
+              "person1": "p_292444363011",
+              "person2": "p_292444363008"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173862895320",
+              "title": "Registro para Pedro Chaves, \"Argentina, Corrientes, registros parroquiales, 1734-2013\"",
+              "citation": "\"Argentina, Corrientes, registros parroquiales, 1734-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68QG-DL3V : Wed Dec 31 06:26:00 UTC 2025), Entry for Pedro Chaves and Alejandrina Chaves, junio de 1916.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BXR-NX5M"
+            },
+            {
+              "id": "sd_c_1974183",
+              "title": "Argentina, Corrientes, Catholic Church Records, 1734-2013",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974183"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939X-HV9B-51"
+            },
+            {
+              "id": "sd_auto_M9J1-HFD",
+              "title": "Argentina, Corrientes, Religious, from 1734 to 2017"
+            },
+            {
+              "id": "src_p_p_292444363008",
+              "url": "#p_292444363008"
+            }
+          ],
+          "places": [
+            {
+              "id": "3473111",
+              "name": "Salada, Saladas, Corrientes, Argentina",
+              "latitude": -28.2539,
+              "longitude": -58.6234
+            }
+          ]
+        },
+        "primaryId": "p_292444363008",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:62CD-WD13",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "S"
+          },
+          {
+            "type": "Census",
+            "date": "1840",
+            "place": "Córdoba, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "birthDate": "1840",
+        "collectionId": "4475260",
+        "collectionTitle": "Argentina, Córdoba, Censuses, 1778-1874",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/4475260",
+        "recordTitle": "Household of Pedro Chaves, \"Argentina, Córdoba, Censuses, 1778-1874\"",
+        "recordArk": "ark:/61903/1:2:H37Q-9B7B",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_299118593673",
+              "ark": "ark:/61903/1:1:62CD-WD13",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "S"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Córdoba, Argentina",
+                  "standard_place": "Córdoba, Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_177271792378",
+              "title": "Household of Pedro Chaves, \"Argentina, Córdoba, Censuses, 1778-1874\"",
+              "citation": "\"Argentina, Córdoba, Censuses, 1778-1874\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62CD-WD13 : Sat Mar 09 00:55:15 UTC 2024), Entry for Pedro Chaves, 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H37Q-9B7B"
+            },
+            {
+              "id": "sd_c_4475260",
+              "title": "Argentina, Córdoba, Censuses, 1778-1874",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/4475260"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89CC-G3FT"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_299118593673",
+              "url": "#p_299118593673"
+            }
+          ],
+          "places": [
+            {
+              "id": "5382",
+              "name": "Córdoba, Argentina",
+              "latitude": -32.2326,
+              "longitude": -63.5825
+            }
+          ]
+        },
+        "primaryId": "p_299118593673",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:WCNP-N92M",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "Dec 1851"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1821",
+        "deathDate": "15 December 1851",
+        "deathPlace": "Galpon, Metán, Salta, Argentina",
+        "collectionId": "1974193",
+        "collectionTitle": "Argentina, Salta, Catholic Church Records, 1634-1972",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974193",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Salta, registros parroquiales, 1634-1972\"",
+        "recordArk": "ark:/61903/1:2:7PKL-YVW2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_138188863500",
+              "ark": "ark:/61903/1:1:WCNP-N92M",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1821",
+                  "standard_date": "1821"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "15 Dec 1851",
+                  "standard_date": "15 Dec 1851",
+                  "place": "El Galpón, Metán, Salta, Argentina",
+                  "standard_place": "Galpon, Metán, Salta, Argentina"
+                },
+                {
+                  "type": "Burial",
+                  "date": "Dec 1851",
+                  "standard_date": "Dec 1851"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_138188863600",
+              "ark": "ark:/61903/1:1:WCNP-N9PZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Quiroga",
+                  "given": "Trinidad"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_138188863500",
+              "person2": "p_138188863600"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_126596455400",
+              "title": "Registro para Pedro Chaves, \"Argentina, Salta, registros parroquiales, 1634-1972\"",
+              "citation": "\"Argentina, Salta, registros parroquiales, 1634-1972\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WCNP-N92M : Wed Dec 10 16:55:09 UTC 2025), Entry for Pedro Chaves and Trinidad Quiroga, 15 Dec 1851.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:7PKL-YVW2"
+            },
+            {
+              "id": "sd_c_1974193",
+              "title": "Argentina, Salta, Catholic Church Records, 1634-1972",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974193"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939X-CXXQ-8"
+            },
+            {
+              "id": "sd_auto_M9J1-SGZ",
+              "title": "Argentina, Salta, Deaths, from 1726 to 2022"
+            },
+            {
+              "id": "src_p_p_138188863500",
+              "url": "#p_138188863500"
+            }
+          ],
+          "places": [
+            {
+              "id": "7072853",
+              "name": "Galpon, Metán, Salta, Argentina",
+              "latitude": -25.3826,
+              "longitude": -64.654
+            }
+          ]
+        },
+        "primaryId": "p_138188863500",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MWQ9-Z33",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1855",
+            "place": "Cañuelas, Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Jose Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "birthPlace": "Buenos Aires, Argentina",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:M7JM-QCP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_149076093",
+              "ark": "ark:/61903/1:1:MWQ9-Z33",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro Jose",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Bs As Argentina",
+                  "standard_place": "Buenos Aires, Argentina"
+                },
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Cañuelas, Buenos Aires, Argentina",
+                  "standard_place": "Cañuelas, Buenos Aires, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_135273893",
+              "title": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWQ9-Z33 : Tue May 27 19:01:43 UTC 2025), Entry for Pedro Jose Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M7JM-QCP"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6783-WWB"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_149076093",
+              "url": "#p_149076093"
+            }
+          ],
+          "places": [
+            {
+              "id": "442866",
+              "name": "Cañuelas, Buenos Aires, Argentina",
+              "latitude": -35.0331,
+              "longitude": -58.7337
+            },
+            {
+              "id": "5386",
+              "name": "Buenos Aires, Argentina",
+              "latitude": -36.9892,
+              "longitude": -59.9561
+            }
+          ]
+        },
+        "primaryId": "p_149076093",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:61YP-G45D",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1855",
+            "place": "Ciudad de Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Jose Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1853",
+        "birthPlace": "Buenos Aires City, Argentina",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:H4LK-21CV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_306126331032",
+              "ark": "ark:/61903/1:1:61YP-G45D",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro Jose"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Ciudad de Buenos Aires, Argentina",
+                  "standard_place": "Buenos Aires City, Argentina"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1853",
+                  "standard_date": "1853",
+                  "place": "Buenos Aires",
+                  "standard_place": "Buenos Aires City, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180589256388",
+              "title": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:61YP-G45D : Tue May 27 19:39:54 UTC 2025), Entry for Pedro Jose Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4LK-21CV"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSD8-V78W-4"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1575 to 2021"
+            },
+            {
+              "id": "src_p_p_306126331032",
+              "url": "#p_306126331032"
+            }
+          ],
+          "places": [
+            {
+              "id": "5395",
+              "name": "Buenos Aires City, Argentina",
+              "latitude": -34.6,
+              "longitude": -58.45
+            }
+          ]
+        },
+        "primaryId": "p_306126331032",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MWQ9-ZSY",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1855",
+            "place": "Cañuelas, Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Jose Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "birthPlace": "Córdoba, Argentina",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:M7JM-QCJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_149076087",
+              "ark": "ark:/61903/1:1:MWQ9-ZSY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro Jose"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Córdoba Argentina",
+                  "standard_place": "Córdoba, Argentina"
+                },
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Cañuelas, Buenos Aires, Argentina",
+                  "standard_place": "Cañuelas, Buenos Aires, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_135273887",
+              "title": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWQ9-ZSY : Tue May 27 19:01:21 UTC 2025), Entry for Pedro Jose Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M7JM-QCJ"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6783-WWB"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_149076087",
+              "url": "#p_149076087"
+            }
+          ],
+          "places": [
+            {
+              "id": "442866",
+              "name": "Cañuelas, Buenos Aires, Argentina",
+              "latitude": -35.0331,
+              "longitude": -58.7337
+            },
+            {
+              "id": "5382",
+              "name": "Córdoba, Argentina",
+              "latitude": -32.2326,
+              "longitude": -63.5825
+            }
+          ]
+        },
+        "primaryId": "p_149076087",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:MW31-NBR",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Soltero"
+          },
+          {
+            "type": "Residence",
+            "date": "1855",
+            "place": "San Nicolas, Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Female",
+        "birthPlace": "Biscaya",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:M7NB-ZBR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_149028265",
+              "ark": "ark:/61903/1:1:MW31-NBR",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Soltero"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Biscaya"
+                },
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "San Nicolas, Buenos Aires, Argentina",
+                  "standard_place": "San Nicolás, Buenos Aires, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_135225865",
+              "title": "La familia de Pedro Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MW31-NBR : Thu Nov 20 06:06:19 UTC 2025), Entry for Pedro Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M7NB-ZBR"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-DCS9-7CQ"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1596 to 1987"
+            },
+            {
+              "id": "src_p_p_149028265",
+              "url": "#p_149028265"
+            }
+          ],
+          "places": [
+            {
+              "id": "443218",
+              "name": "San Nicolás, Buenos Aires, Argentina",
+              "latitude": -33.3611,
+              "longitude": -60.2227
+            }
+          ]
+        },
+        "primaryId": "p_149028265",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:61YP-G45W",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1855",
+            "place": "Ciudad de Buenos Aires, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Jose Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1805",
+        "birthPlace": "Córdoba, Colombia",
+        "collectionId": "1469065",
+        "collectionTitle": "Argentina, Capital Federal, Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1469065",
+        "recordTitle": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+        "recordArk": "ark:/61903/1:2:H4LK-21CD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_306126331026",
+              "ark": "ark:/61903/1:1:61YP-G45W",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro Jose",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1805",
+                  "standard_date": "1805",
+                  "place": "Cordoba",
+                  "standard_place": "Córdoba, Colombia"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Ciudad de Buenos Aires, Argentina",
+                  "standard_place": "Buenos Aires City, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180589256382",
+              "title": "La familia de Pedro Jose Chaves, \"Argentina, Capital Federal, censo, 1855\"",
+              "citation": "\"Argentina, Capital Federal, censo, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:61YP-G45W : Tue May 27 19:39:56 UTC 2025), Entry for Pedro Jose Chaves, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H4LK-21CD"
+            },
+            {
+              "id": "sd_c_1469065",
+              "title": "Argentina, Capital Federal, Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1469065"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSD8-V78W-4"
+            },
+            {
+              "id": "sd_auto_M9J1-941",
+              "title": "Argentina, Residences, Census, from 1575 to 2021"
+            },
+            {
+              "id": "src_p_p_306126331026",
+              "url": "#p_306126331026"
+            }
+          ],
+          "places": [
+            {
+              "id": "5395",
+              "name": "Buenos Aires City, Argentina",
+              "latitude": -34.6,
+              "longitude": -58.45
+            },
+            {
+              "id": "5768",
+              "name": "Córdoba, Colombia",
+              "latitude": 8.333,
+              "longitude": -75.667
+            }
+          ]
+        },
+        "primaryId": "p_306126331026",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:6LCP-VMM1",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "8 May 1843",
+            "place": "Inmaculada Concepción, Ancasti, Ancasti, Catamarca, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1974178",
+        "collectionTitle": "Argentina, Catamarca, Catholic Church Records, 1724-1971",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974178",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Catamarca, registros parroquiales, 1724-1971\"",
+        "recordArk": "ark:/61903/1:2:H3KD-S4J2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_299856816029",
+              "ark": "ark:/61903/1:1:6LCP-VMM1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "8 May 1843",
+                  "standard_date": "8 May 1843",
+                  "place": "Inmaculada Concepción, Ancasti, Ancasti, Catamarca, Argentina",
+                  "standard_place": "Inmaculada Concepción, Ancasti, Ancasti, Catamarca, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_177618480830",
+              "title": "Registro para Pedro Chaves, \"Argentina, Catamarca, registros parroquiales, 1724-1971\"",
+              "citation": "\"Argentina, Catamarca, registros parroquiales, 1724-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LCP-VMM1 : Thu Dec 11 10:57:03 UTC 2025), Entry for Pedro Chaves, 8 May 1843.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H3KD-S4J2"
+            },
+            {
+              "id": "sd_c_1974178",
+              "title": "Argentina, Catamarca, Catholic Church Records, 1724-1971",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974178"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:9396-CWWT-Y"
+            },
+            {
+              "id": "sd_auto_M9J1-QGV",
+              "title": "Argentina, Catamarca, Deaths, from 1724 to 6 October 2016"
+            },
+            {
+              "id": "src_p_p_299856816029",
+              "url": "#p_299856816029"
+            }
+          ],
+          "places": [
+            {
+              "id": "9420808",
+              "name": "Inmaculada Concepción, Ancasti, Ancasti, Catamarca, Argentina",
+              "latitude": -28.8125,
+              "longitude": -65.50117
+            }
+          ]
+        },
+        "primaryId": "p_299856816029",
+        "relativeTerms": {
+          "father": {
+            "status": "unknown"
+          },
+          "mother": {
+            "status": "unknown"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVR6-4R3V",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1974182",
+        "collectionTitle": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974182",
+        "recordTitle": "Registro para Pedro Chaves y Rosalia Zamora, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+        "recordArk": "ark:/61903/1:2:Q244-T736",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101220241608",
+              "ark": "ark:/61903/1:1:QVR6-4R3V",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101220241609",
+              "ark": "ark:/61903/1:1:QVR6-4R3K",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Rosalia",
+                  "surname": "Zamora"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101220241610",
+              "ark": "ark:/61903/1:1:QVR6-4R32",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Juan",
+                  "surname": "Zamora"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101220241611",
+              "ark": "ark:/61903/1:1:QVR6-4R3L",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ma.",
+                  "surname": "Heredia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_101220241608",
+              "person2": "p_101220241609",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "10 de mayo de 1764",
+                  "standard_date": "10 May 1764",
+                  "place": "Catedral Nuestra Señora de la Asunción, Córdoba, Capital, Córdoba, Argentina",
+                  "standard_place": "Catedral Nuestra Señora de la Asunción, Córdoba, Capital, Córdoba, Argentina"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_101220241611",
+              "child": "p_101220241609"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_101220241610",
+              "child": "p_101220241609"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102236476603",
+              "title": "Registro para Pedro Chaves y Rosalia Zamora, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+              "citation": "\"Argentina, Córdoba, registros parroquiales, 1557-1974\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVR6-4R3V : Tue Jul 08 10:00:45 UTC 2025), Entry for Pedro Chaves and Rosalia Zamora, 10 de mayo de 1764.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q244-T736"
+            },
+            {
+              "id": "sd_c_1974182",
+              "title": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974182"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6LMQ-5Z2"
+            },
+            {
+              "id": "sd_auto_M9J1-8S8",
+              "title": "Argentina, Córdoba, Marriages, from 1081 to 1970"
+            },
+            {
+              "id": "src_p_p_101220241608",
+              "url": "#p_101220241608"
+            }
+          ],
+          "places": [
+            {
+              "id": "9420440",
+              "name": "Catedral Nuestra Señora de la Asunción, Córdoba, Capital, Córdoba, Argentina",
+              "latitude": -31.41672,
+              "longitude": -64.18459
+            }
+          ]
+        },
+        "primaryId": "p_101220241608",
+        "batchNumber": "I11247-8",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2WG-L8KL",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "deathDate": "1806",
+        "deathPlace": "Santa Rosa de Lima, Santa Rosa de Calamuchita, Calamuchita, Córdoba, Argentina",
+        "collectionId": "1974182",
+        "collectionTitle": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974182",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+        "recordArk": "ark:/61903/1:2:QL3N-MBB6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102224197491",
+              "ark": "ark:/61903/1:1:Q2WG-L8KL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1806",
+                  "standard_date": "1806",
+                  "place": "Santa Rosa de Lima, Santa Rosa de Calamuchita, Calamuchita, Córdoba, Argentina",
+                  "standard_place": "Santa Rosa de Lima, Santa Rosa de Calamuchita, Calamuchita, Córdoba, Argentina"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1806",
+                  "standard_date": "1806",
+                  "place": "Santa Rosa de Lima, Santa Rosa de Calamuchita, Calamuchita, Córdoba, Argentina",
+                  "standard_place": "Santa Rosa de Lima, Santa Rosa de Calamuchita, Calamuchita, Córdoba, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102224197498",
+              "ark": "ark:/61903/1:1:Q2WG-L8KB",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Maria",
+                  "surname": "Diaz"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102224197491",
+              "person2": "p_102224197498"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102874886053",
+              "title": "Registro para Pedro Chaves, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+              "citation": "\"Argentina, Córdoba, registros parroquiales, 1557-1974\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2WG-L8KL : Mon Apr 08 21:07:13 UTC 2024), Entry for Pedro Chaves and Maria Diaz, 1806.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL3N-MBB6"
+            },
+            {
+              "id": "sd_c_1974182",
+              "title": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974182"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-61F9-M6Y"
+            },
+            {
+              "id": "sd_auto_M9J1-HPN",
+              "title": "Argentina, Córdoba, Deaths, from 1500 to 2025"
+            },
+            {
+              "id": "src_p_p_102224197491",
+              "url": "#p_102224197491"
+            }
+          ],
+          "places": [
+            {
+              "id": "9420542",
+              "name": "Santa Rosa de Lima, Santa Rosa de Calamuchita, Calamuchita, Córdoba, Argentina",
+              "latitude": -32.0653,
+              "longitude": -64.538
+            }
+          ]
+        },
+        "primaryId": "p_102224197491",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XF59-Y94",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1974182",
+        "collectionTitle": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974182",
+        "recordTitle": "Registro para Pedro Chaves y Rosalia Zamora, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+        "recordArk": "ark:/61903/1:2:9YPG-MVF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10589991337",
+              "ark": "ark:/61903/1:1:XF59-Y94",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10589991338",
+              "ark": "ark:/61903/1:1:XF59-Y9H",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Rosalia",
+                  "surname": "Zamora"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10589991339",
+              "ark": "ark:/61903/1:1:XF59-Y9C",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Juan",
+                  "surname": "Zamora"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10589991340",
+              "ark": "ark:/61903/1:1:XF59-Y9Z",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Maria",
+                  "surname": "Heredia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10589991337",
+              "person2": "p_10589991338",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "1764",
+                  "standard_date": "1764",
+                  "place": "Catedral Nuestra Señora de la Asunción, Córdoba, Capital, Córdoba, Argentina",
+                  "standard_place": "Catedral Nuestra Señora de la Asunción, Córdoba, Capital, Córdoba, Argentina"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10589991339",
+              "child": "p_10589991338"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10589991340",
+              "child": "p_10589991338"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1404324555",
+              "title": "Registro para Pedro Chaves y Rosalia Zamora, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+              "citation": "\"Argentina, Córdoba, registros parroquiales, 1557-1974\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF59-Y94 : Tue Jul 08 10:00:45 UTC 2025), Entry for Pedro Chaves and Rosalia Zamora, 1764.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9YPG-MVF"
+            },
+            {
+              "id": "sd_c_1974182",
+              "title": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974182"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6LMQ-5Z2"
+            },
+            {
+              "id": "sd_auto_M9J1-8S8",
+              "title": "Argentina, Córdoba, Marriages, from 1081 to 1970"
+            },
+            {
+              "id": "src_p_p_10589991337",
+              "url": "#p_10589991337"
+            }
+          ],
+          "places": [
+            {
+              "id": "9420440",
+              "name": "Catedral Nuestra Señora de la Asunción, Córdoba, Capital, Córdoba, Argentina",
+              "latitude": -31.41672,
+              "longitude": -64.18459
+            }
+          ]
+        },
+        "primaryId": "p_10589991337",
+        "batchNumber": "M02995-8",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2WG-J7SK",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "deathDate": "1797",
+        "deathPlace": "Catedral de Nuestra Señora del Carmen, Deán Funes, Ischilín, Córdoba, Argentina",
+        "collectionId": "1974182",
+        "collectionTitle": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974182",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+        "recordArk": "ark:/61903/1:2:QL3F-1FRH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102224083579",
+              "ark": "ark:/61903/1:1:Q2WG-J7SK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Chaves",
+                  "given": "Pedro"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1797",
+                  "standard_date": "1797",
+                  "place": "Catedral de Nuestra Señora del Carmen, Deán Funes, Ischilín, Córdoba, Argentina",
+                  "standard_place": "Catedral de Nuestra Señora del Carmen, Deán Funes, Ischilín, Córdoba, Argentina"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1797",
+                  "standard_date": "1797",
+                  "place": "Catedral de Nuestra Señora del Carmen, Deán Funes, Ischilín, Córdoba, Argentina",
+                  "standard_place": "Catedral de Nuestra Señora del Carmen, Deán Funes, Ischilín, Córdoba, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102224083582",
+              "ark": "ark:/61903/1:1:Q2WG-J7SG",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Martinez",
+                  "given": "Margarita"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102224083579",
+              "person2": "p_102224083582"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102874847258",
+              "title": "Registro para Pedro Chaves, \"Argentina, Córdoba, registros parroquiales, 1557-1974\"",
+              "citation": "\"Argentina, Córdoba, registros parroquiales, 1557-1974\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2WG-J7SK : Wed Dec 10 18:32:58 UTC 2025), Entry for Pedro Chaves and Margarita Martinez, 1797.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL3F-1FRH"
+            },
+            {
+              "id": "sd_c_1974182",
+              "title": "Argentina, Córdoba, Catholic Church Records, 1557-1974",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974182"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6PB9-1YC"
+            },
+            {
+              "id": "sd_auto_M9J1-HPN",
+              "title": "Argentina, Córdoba, Deaths, from 1500 to 2025"
+            },
+            {
+              "id": "src_p_p_102224083579",
+              "url": "#p_102224083579"
+            }
+          ],
+          "places": [
+            {
+              "id": "9418364",
+              "name": "Catedral de Nuestra Señora del Carmen, Deán Funes, Ischilín, Córdoba, Argentina",
+              "latitude": -30.426,
+              "longitude": -64.3527
+            }
+          ]
+        },
+        "primaryId": "p_102224083579",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:62D8-XBNM",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "18 Oct 1892",
+            "place": "Recreo, La Paz, Catamarca, Argentina"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Pedro Chaves",
+        "score": 4.5516005,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1797",
+        "deathDate": "17 October 1892",
+        "collectionId": "1974178",
+        "collectionTitle": "Argentina, Catamarca, Catholic Church Records, 1724-1971",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1974178",
+        "recordTitle": "Registro para Pedro Chaves, \"Argentina, Catamarca, registros parroquiales, 1724-1971\"",
+        "recordArk": "ark:/61903/1:2:H37B-XCB4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_299190913680",
+              "ark": "ark:/61903/1:1:62D8-XBNM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Pedro",
+                  "surname": "Chaves"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1797",
+                  "standard_date": "1797"
+                },
+                {
+                  "type": "Death",
+                  "date": "17 Oct 1892",
+                  "standard_date": "17 Oct 1892"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "18 Oct 1892",
+                  "standard_date": "18 Oct 1892",
+                  "place": "Recreo, La Paz, Catamarca, Argentina",
+                  "standard_place": "Recreo, La Paz, Catamarca, Argentina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_299190913681",
+              "ark": "ark:/61903/1:1:62D8-XBN9",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Isaias",
+                  "surname": "Vega"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_299190913680",
+              "person2": "p_299190913681"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_177291566947",
+              "title": "Registro para Pedro Chaves, \"Argentina, Catamarca, registros parroquiales, 1724-1971\"",
+              "citation": "\"Argentina, Catamarca, registros parroquiales, 1724-1971\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62D8-XBNM : Wed Dec 10 04:26:25 UTC 2025), Entry for Pedro Chaves and Isaias Vega, 18 Oct 1892.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:H37B-XCB4"
+            },
+            {
+              "id": "sd_c_1974178",
+              "title": "Argentina, Catamarca, Catholic Church Records, 1724-1971",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1974178"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939X-H496-RT"
+            },
+            {
+              "id": "sd_auto_M9J1-QGV",
+              "title": "Argentina, Catamarca, Deaths, from 1724 to 6 October 2016"
+            },
+            {
+              "id": "src_p_p_299190913680",
+              "url": "#p_299190913680"
+            }
+          ],
+          "places": [
+            {
+              "id": "7069665",
+              "name": "Recreo, La Paz, Catamarca, Argentina",
+              "latitude": -29.2781,
+              "longitude": -65.0583
+            }
+          ]
+        },
+        "primaryId": "p_299190913680",
+        "relativeTerms": {
+          "father": {
+            "status": "absent"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 1, hint-samples.csv row 6, flags adds_spouse/adds_birth, confidence 3). Draft transcribed from an 1859 Buenos Aires parish marriage entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 1, hint-samples.csv row 6, flags adds_spouse/adds_birth, confidence 3). RESOLVED true match: the 1859 Buenos Aires marriage of Pedro Chaves and Juana Flores belongs to 2761-R34. The parent pair Isidro Chaves + Andrea Guerra is unique in the Argentina index, and a 17 Jun 1865 child baptism at La Merced, Buenos Aires City (1:1:XN63-7VR) names both spouses independently of the hint. Marriage place corrected from Buenos Aires to Avellaneda; see README."
 }
