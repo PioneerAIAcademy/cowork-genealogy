@@ -114,8 +114,15 @@ POST /v1/.../messages {stream?} ─────▶  acquire per-session turn loc
 ```
 
 **Why this is correct on retry without a "drain-owns-the-lock" task:** the in-sandbox
-runner is sequential (it won't read the next `user_msg` until the current turn emits
-`turn_done`). If a sync turn times out (504) and the lock releases, a retry opens a
+runner is sequential (it won't start the next `user_msg`'s turn until the current one
+emits `turn_done`). **That was an assumption this page rested on and the runner did not
+hold**: `serve` dropped a `user_msg` arriving mid-turn with a bare `continue`, while
+`Hub.handle` had already recorded it into the replay history, so the message was in the
+user's transcript and never answered. It is now enforced rather than assumed - the
+message is queued and run in order, bounded by `MAX_QUEUED_TURNS` with an explicit error
+on overflow rather than a silent drop, and pinned by
+`apps/server/tests/test_runner_turn_queue.py`, whose first case fails on the old
+drop-on-busy behaviour. If a sync turn times out (504) and the lock releases, a retry opens a
 *fresh* WS and drains-until-idle — but the prior turn is still emitting frames, so
 there is no idle gap and the drain simply waits the prior turn out before sending.
 The retry therefore never mis-reads the prior turn's trailing frames as its own reply.
