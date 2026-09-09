@@ -609,6 +609,25 @@ than no check at all. The three ways one silently passes here: a grep whose
 pattern excludes its own tree, a `git grep` that skips untracked files, and a
 field-name match that collides with an unrelated key.
 
+**One break is not a proof.** Those three are about the check's *reach*. The
+other way through is the *shape of the input at the site*: unquoted, commented
+out, wrapped in another call, a stringified argument, a `null`, an empty list, a
+missing token, a value that parses to `NaN`. Break it two or three ways, not one.
+Both real: an argument parsing to `NaN`, and a typo'd `--only` matching nothing —
+each made the tool **exit 0 having done nothing**, past a guard added beside it.
+
+**Prove the other direction too.** A guard fails two ways — wrongly blocking
+legitimate work, and wrongly passing the bad thing. Breaking the repo tests only
+the second. Show a legitimate variant the check still accepts (a reflowed line, a
+renamed local, a valid alternate spelling), or you have built something that will
+be `skip`ped within a month. Replaying a check over committed runs tests the
+*first* direction only and cannot test the second at all, because in a replay the
+check is its own ground truth — `eval/harness/e2e/guardrail_shadow_report.py`.
+
+When the bug is the **second** instance of a class already fixed, write one
+shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
+per-line greps for exactly this reason.
+
 ### A measurement that disagrees with belief is re-measured, not reworded
 
 When a recorded measurement contradicts what you believe, re-probe until the two agree.
