@@ -134,6 +134,22 @@ describe("questionStatus — conflicts outrank everything", () => {
     const d = doc({ conflicts: [{ id: "c_003", status: "unresolved", blocks_question_ids: ["q_999"] }] });
     expect(questionStatus(d, question()).openConflictIds).toEqual([]);
   });
+
+  it("a conflict over another question's assertion does not block this one", () => {
+    // The scope guard. `conflictBlocksQuestion` is shared with the completion
+    // gate, which passes the PROJECT-WIDE tied-assertion set; this ladder must
+    // pass only THIS question's. Both are `Set<string>`, so TypeScript cannot
+    // tell them apart and every other vector here passes either way — hand the
+    // wrong set in and `openConflictIds` reports every open conflict in the
+    // project against every question, which is what `project_context` renders.
+    const d = doc({
+      assertions: [{ id: "a_1", extracted_for_question_ids: ["q_999"] }],
+      conflicts: [{ id: "c_004", status: "unresolved", competing_assertion_ids: ["a_1"] }],
+    });
+    const s = questionStatus(d, question());
+    expect(s.openConflictIds).toEqual([]);
+    expect(s.nextStep).not.toMatch(/conflict-resolution/);
+  });
 });
 
 describe("questionStatus — the resolved-with-no-summary case", () => {

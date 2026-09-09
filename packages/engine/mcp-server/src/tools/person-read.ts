@@ -313,19 +313,25 @@ function shapePersons(
     const id = sp.id;
     if (!id) continue;
     const raw = rawById.get(id);
-    const firstName = sp.names?.[0];
+    // The converter already orders names preferred-first (#1318), so mapping
+    // in place preserves the first-position convention. `names` is required
+    // with minItems 1, so a person FS returned without any name still gets the
+    // empty placeholder the living-person stub uses.
+    const names = (sp.names ?? []).map((n) => ({
+      ...(n.id ? { id: n.id } : {}),
+      given: n.given ?? "",
+      surname: n.surname ?? "",
+      ...(n.preferred === true ? { preferred: true as const } : {}),
+      ...(n.type ? { type: n.type } : {}),
+      ...(n.prefix ? { prefix: n.prefix } : {}),
+      ...(n.suffix ? { suffix: n.suffix } : {}),
+    }));
     out.push({
       id,
+      ...(sp.ark ? { ark: sp.ark } : {}),
       gender: sp.gender ?? "Unknown",
       living: raw?.living === true,
-      names: [
-        {
-          given: firstName?.given ?? "",
-          surname: firstName?.surname ?? "",
-          ...(firstName?.prefix ? { prefix: firstName.prefix } : {}),
-          ...(firstName?.suffix ? { suffix: firstName.suffix } : {}),
-        },
-      ],
+      names: names.length > 0 ? names : [{ given: "", surname: "" }],
       ...(sp.facts && sp.facts.length > 0
         ? { facts: sp.facts.filter((f): f is TreeFact => typeof f.type === "string") }
         : {}),
