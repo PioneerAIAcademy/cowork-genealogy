@@ -59,9 +59,10 @@ that shape record creation and survival.
 - **Naming conventions** — Patronymic systems, anglicization of
   immigrant names, and use of middle names all affect how people appear
   in records. Do not assume a woman took her husband's surname at
-  marriage: in much of Scandinavia, Iberia, and elsewhere she keeps her
-  birth surname in records for the whole post-marriage span, so searching
-  the married name for those years finds nothing.
+  marriage: where she kept her birth surname, searching the married name
+  for those years finds nothing. Read the jurisdiction's
+  `{Country}_Naming_Customs` page for its own practice rather than
+  assuming either convention.
 - **Religious record-keeping** — Different denominations kept different
   records at different levels of detail. Some denominations have
   centralized archives; others have records scattered across local
