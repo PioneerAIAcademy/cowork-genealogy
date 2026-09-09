@@ -383,8 +383,8 @@ function checkIsoDate(
  * (docs/deep-dives/conflict-resolution-findings-2026-08-27.md § V5 says
  * `resolved` only). Four shipped sites already treat the pair as jointly
  * terminal, and one of them is this engine instructing the agent:
- * research-append.ts:1402 ("'resolved' and 'moot' both settle a conflict"),
- * research-append.ts:1447-1448 (the completion-gate error says set it to
+ * research-append.ts:1434 ("'resolved' and 'moot' both settle a conflict"),
+ * research-append.ts:1478-1479 (the completion-gate error says set it to
  * "'resolved' … or 'moot'"), research-schema-spec.md:261 and :616, and
  * eval/harness/validators/test_hypothesis_tracking.py:152.
  *
@@ -396,12 +396,22 @@ function checkIsoDate(
  * imprecise one costs nothing downstream.
  *
  * Tightening is NOT a one-entry change, which an earlier version of this comment
- * claimed. It is eleven sites: this constant, three comment sites (this block,
- * the conflicts-loop note, and the proof_summaries block), the shipped error
- * text, the `research_schema-spec.md` row, and the four fixture READMEs. This is
+ * claimed. It is TEN sites: this constant, three comment sites (this block, the
+ * conflicts-loop note, and the proof_summaries block), the shipped error text,
+ * the `research-schema-spec.md` row, and the four fixture READMEs. (Eleven was
+ * the reviewed count and included a hand-copied predicate in the corpus scan;
+ * the `export` below eliminated it, so ten is right.)
+ *
  * `export`ed so `validator.test.ts`'s corpus scan imports it rather than
- * hand-copying the predicate, which removes the only one of those a test guards
- * — and therefore the only one that would fail silently.
+ * hand-copying the predicate. What that buys is a single source of truth, NOT
+ * detection: narrowing this constant to `["resolved"]` leaves that scan green,
+ * because zero shipped fixtures cite a `moot` conflict — the pre-existing
+ * "accepts a citation of a MOOT conflict" test is what catches the narrowing.
+ * An earlier version of this comment claimed the scan was the one site a test
+ * guarded and therefore the one that would fail silently; that was false, and
+ * it was the same class of defect the round was written to fix. The scan's
+ * `moot` half becomes load-bearing only once a fixture cites one; the synthetic
+ * join test alongside it covers that in the meantime.
  */
 export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
 
@@ -1196,10 +1206,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // pre-existing drift that module exists to tolerate.
     //
     // The reason is NOT "only one status can fail, so the text cannot vary" —
-    // that was the first version of this comment and it is false. FIVE document
-    // states reach this error: `unresolved`, an absent `status` key, `null`, a
-    // number, and an out-of-enum string. A status-naming message would differ
-    // across all five.
+    // that was the first version of this comment and it is false. MANY document
+    // states reach this error with one byte-identical message; ten were run
+    // (`unresolved`, absent, `null`, `42`, `"x"`, `true`, `[]`, `{}`, `""`,
+    // `"Resolved"`) and all ten agree. `unresolved`, an absent `status` key,
+    // `null`, a number and an out-of-enum string are EXAMPLES rather than the
+    // count. A status-naming message would differ across them.
     //
     // Which makes the decision MORE load-bearing than a latency argument, not
     // less. `status` absent -> `unresolved` is a strict improvement to the
@@ -1211,6 +1223,33 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // false on an unchanged defect. So the two decisions are coupled, and
     // shipping the dive verbatim with this message would have frozen such a
     // project.
+    // The CONTAINER type, not just the entries. Without this the whole V5 rule
+    // is bypassed by dropping two brackets: measured through the real
+    // `researchAppend` on a project whose `c_001` is unresolved, at
+    // `tier: "not_proved"` so the tier cap is not what answers —
+    //
+    //   ["c_001"]        ok=false   refused by V5, correctly
+    //   "c_001"          ok=true    persisted verbatim, c_001 still unresolved
+    //   "[\"c_001\"]"     ok=true    persisted verbatim
+    //   [123]            ok=false   refused by the entry-type check below
+    //
+    // So the refused write became a legal write, asserting exactly the false
+    // thing V5 exists to forbid. `coerceJsonArg` is applied to `entry` as a
+    // whole (`research-append.ts`) but not to fields inside it, which is why the
+    // JSON-string form survives.
+    //
+    // It also breaks a downstream reader: `ProofSummariesSection.tsx` guards on
+    // `.length > 0` and then calls `.map`, and a bare string has truthy length
+    // while `.map` throws. The sibling `claims` field is guarded this way 38
+    // lines below, so this was a deviation from a local convention rather than a
+    // new idea.
+    if (
+      "resolved_conflict_ids" in ps &&
+      ps.resolved_conflict_ids !== null &&
+      !Array.isArray(ps.resolved_conflict_ids)
+    ) {
+      addError(report, psp, "'resolved_conflict_ids' must be an array");
+    }
     if (Array.isArray(ps.resolved_conflict_ids)) {
       for (const cid of ps.resolved_conflict_ids) {
         if (typeof cid !== "string") {

@@ -263,7 +263,12 @@ describe("validateIntroduced — proof_summaries resolved_conflict_ids (V5)", ()
   // with `questions: []` and the whole V5 block deleted from `validator.ts`,
   // only the third test below reds; the first two pass on the dangling
   // reference. Supplying the question makes every assertion here specific to
-  // V5, and all three then red on that deletion.
+  // V5, and TWO of the three then red on that deletion. The third —
+  // `unresolved -> moot` — asserts a NON-blocking property, so it is
+  // trivially true when no rule exists and no structure could make it red
+  // that way; its falsifiability runs the other direction, recorded on the
+  // test itself. (An earlier version of this line said "all three", inside
+  // the comment that exists to correct a false claim.)
   const q_001 = {
     id: "q_001",
     question: "Who were the parents of John Smith?",
@@ -330,7 +335,7 @@ describe("validateIntroduced — proof_summaries resolved_conflict_ids (V5)", ()
     // error message naming the conflict's LIVE STATUS would produce a different
     // key here, read as newly introduced, and REFUSE the write — while the
     // defect is unchanged and the agent is doing exactly what the engine told
-    // it to (research-append.ts:1447-1448 says set the status to 'resolved' or
+    // it to (research-append.ts:1478-1479 says set the status to 'resolved' or
     // 'moot'). Since `moot` is accepted by V5 the error clears outright, and
     // because the message never embedded the status this also survives a fourth
     // conflict_status value being added later.

@@ -841,8 +841,8 @@ describe("Project Validator", () => {
     it("accepts a citation of a MOOT conflict", async () => {
       // Deliberate deviation from the deep dive's rule text, which says
       // `resolved` only. Four shipped sites treat the pair as jointly terminal,
-      // and one is this engine instructing the agent: research-append.ts:1402
-      // ("'resolved' and 'moot' both settle a conflict") and :1447-1448 (the
+      // and one is this engine instructing the agent: research-append.ts:1434
+      // ("'resolved' and 'moot' both settle a conflict") and :1478-1479 (the
       // completion-gate error says set it to "'resolved' … or 'moot'"). V5's
       // harm is claiming an OPEN conflict is settled; `moot` is terminal, so a
       // `resolved`-only rule would refuse a write the moment an agent follows
@@ -976,6 +976,84 @@ describe("Project Validator", () => {
           .map((e) => e.message)
       );
       expect(messages.size).toBe(2);
+    });
+
+    it.each([
+      ["a bare string", "c_001"],
+      ["a model-serialized array", '["c_001"]'],
+      ["a number", 42],
+      ["an object", { "0": "c_001" }],
+    ])("refuses %s in place of the array", async (_label, value) => {
+      // The CONTAINER type. Without this guard the whole rule was bypassed by
+      // dropping two brackets — a refused write became a legal write asserting
+      // exactly the false thing V5 forbids, with `c_001` still unresolved.
+      // `coerceJsonArg` handles a serialized `entry` but not fields inside it,
+      // which is why the JSON-string form survives to here.
+      const research = withConflictAndSummary("unresolved", value as never);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'resolved_conflict_ids' must be an array")
+        )
+      ).toBe(true);
+    });
+
+    it("reports a null as a required-field error only, not also as a type error", async () => {
+      // The `!== null` clause in the container guard. `checkRequired` already
+      // rejects a null required field, so without it a null produces TWO errors
+      // for one problem — and a duplicated diagnosis is what makes an agent
+      // repair the wrong thing. The sibling `claims` guard excludes null for
+      // the same reason. Removing the clause left the whole suite green until
+      // this test existed.
+      const research = withConflictAndSummary("resolved", null as never);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'resolved_conflict_ids' must be an array")
+        )
+      ).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("resolved_conflict_ids"))
+      ).toBe(true);
+    });
+
+    it("still accepts an empty array", async () => {
+      // Polarity for the guard above: `[]` is the legitimate empty case and the
+      // one four shipped fixtures were corrected TO, so a container check that
+      // rejected it would break the repair this PR makes.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", []),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("holds the join across a synthetic fixture tree, including a moot citation", async () => {
+      // The shipped-fixture scan below has NO detection power over the
+      // `moot` half of `SETTLED_CONFLICT_STATUSES`: zero shipped fixtures cite
+      // a moot conflict, so narrowing the constant to ["resolved"] leaves that
+      // scan green (the pre-existing MOOT test is what catches it). Reviewed and
+      // conceded — so this exercises the join over a synthetic tree that DOES
+      // contain a moot citation, which is what makes the imported constant
+      // load-bearing here rather than decorative.
+      const settled = (status: string) => SETTLED_CONFLICT_STATUSES.has(status);
+      expect(settled("resolved")).toBe(true);
+      expect(settled("moot")).toBe(true);
+      expect(settled("unresolved")).toBe(false);
+
+      for (const [status, shouldBeClean] of [
+        ["resolved", true],
+        ["moot", true],
+        ["unresolved", false],
+      ] as [string, boolean][]) {
+        const result = await validateParsed(
+          withConflictAndSummary(status, ["c_001"]),
+          minimalTree
+        );
+        expect(v5Errors(result).length === 0).toBe(shouldBeClean);
+      }
     });
 
     it("holds across every shipped scenario fixture", async () => {
