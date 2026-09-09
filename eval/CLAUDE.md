@@ -62,6 +62,20 @@ eval/
 - **`harness/harness/versioning.py`** — Run-log filename classification + next-version resolution.
 - **`harness/scripts/check_runlogs.py`** — Invoked by `.github/workflows/check-runlogs.yml`; enforces the three runlog discipline rules (see "GitHub Action rules" below).
 - **`harness/provenance_report.py`** — `make provenance-report [SKILL=<name>]`. Offline scan for external identifiers (ARKs, 5+ digit ids) a skill persisted that no fixture, scenario or user message supplied — the mechanical half of the don't-fabricate rule seven skill bodies state in prose. A **report, not a gate**: triage the hits, since a derived value can land there too. Issue #1667.
+- **`harness/conflict_verdict_report.py`** — `make conflict-verdicts [SKILL=<name>]`.
+  Offline scan for run logs whose own tests reach opposite verdicts on one
+  conflict: grouped by `(scenario, conflict id)`, disagreeing on `status` or
+  `preferred_assertion_id`. The evidence on file is identical in each, so at most
+  one can be right. A **report, not a gate** — which verdict is correct is
+  genealogy, and it is also structurally not a validator, since a validator sees
+  one run and this compares runs *within* a log. It reads the **effective**
+  post-run state (`changed_fields`, else the scenario's starting value); a
+  `changed_fields`-only scan reports zero on a corpus that does contradict
+  itself. Because every way it can break also prints a cheerful zero, a clean
+  scan reports its denominators — groups examined and multi-verdict groups, plus
+  every run log it could not read and every scenario whose fixture could not
+  supply a fallback. `GROUPS EXAMINED: 0` means the scan proves nothing. An
+  unknown `--skill` is an error (exit 2), not an empty clean pass. Issue #1972 V7.
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
 - **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls". A fixture's `response` must be a shape its tool can actually return: the top-level fields are checked against the handler's declared return type by `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts`, so copy the envelope from a sibling fixture for the same tool rather than writing a short form.
