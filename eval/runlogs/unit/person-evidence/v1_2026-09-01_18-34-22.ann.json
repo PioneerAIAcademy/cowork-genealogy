@@ -1,0 +1,286 @@
+{
+ "run_log": "v1_2026-09-01_18-34-22.json",
+ "annotator": "johnpeterbrown@ymail.com",
+ "corrections": [
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "rubric",
+   "dimension_name": "Multi-person awareness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": null
+  },
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "rubric",
+   "dimension_name": "Person minting and connecting edges",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": null
+  },
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "rubric",
+   "dimension_name": "Score discipline",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": null
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "base",
+   "dimension_name": "Correctness",
+   "llm_score": 2,
+   "corrected_score": 3,
+   "comment": "Should be 3. The misattribution is a wording slip, not a reasoning error; the conclusion and tier are both right."
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "rubric",
+   "dimension_name": "Confidence calibration",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct — stated confident declaration true"
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "base",
+   "dimension_name": "Tool Arguments",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct — stated confident declaration true"
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "rubric",
+   "dimension_name": "Multi-person awareness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct — stated confident declaration true"
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "base",
+   "dimension_name": "Tool Arguments",
+   "llm_score": 2,
+   "corrected_score": 2,
+   "comment": "Yes, the agent should have recovered by updating pe_001 with the score obtained"
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "rubric",
+   "dimension_name": "Score discipline",
+   "llm_score": 2,
+   "corrected_score": 2,
+   "comment": "Yes, the skill was expected to call same person for Bridget."
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "base",
+   "dimension_name": "Correctness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "base",
+   "dimension_name": "Completeness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "rubric",
+   "dimension_name": "Confidence calibration",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "rubric",
+   "dimension_name": "Rationale quality",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "rubric",
+   "dimension_name": "Multi-person awareness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_024",
+   "dimension_source": "rubric",
+   "dimension_name": "Person minting and connecting edges",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "base",
+   "dimension_name": "Completeness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "base",
+   "dimension_name": "Tool Arguments",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "rubric",
+   "dimension_name": "Confidence calibration",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "rubric",
+   "dimension_name": "Rationale quality",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "rubric",
+   "dimension_name": "Multi-person awareness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "rubric",
+   "dimension_name": "Person minting and connecting edges",
+   "llm_score": 2,
+   "corrected_score": 3,
+   "comment": "The skill notice they all had synthetic IDs so the FamilySearch quality check did not apply and also warning to was not available. Use it when it available."
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "rubric",
+   "dimension_name": "Score discipline",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "rubric",
+   "dimension_name": "Score discipline",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": "Correct "
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "rubric",
+   "dimension_name": "Person minting and connecting edges",
+   "llm_score": null,
+   "corrected_score": null,
+   "comment": "Correct"
+  },
+  {
+   "test_id": "ut_person_evidence_018",
+   "dimension_source": "base",
+   "dimension_name": "Completeness",
+   "llm_score": 1,
+   "corrected_score": 3,
+   "comment": "Correct the skill created the link and mentioned tree edit should do the merging"
+  },
+  {
+   "test_id": "ut_person_evidence_018",
+   "dimension_source": "base",
+   "dimension_name": "Tool Arguments",
+   "llm_score": 1,
+   "corrected_score": 3,
+   "comment": "The skill correctly created the link and redirected the tree edit."
+  },
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "base",
+   "dimension_name": "Correctness",
+   "llm_score": 2,
+   "corrected_score": 2,
+   "comment": "Agree with the judge."
+  },
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "base",
+   "dimension_name": "Completeness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": null
+  },
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "rubric",
+   "dimension_name": "Confidence calibration",
+   "llm_score": 2,
+   "corrected_score": 2,
+   "comment": "Agree with the judge."
+  },
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "base",
+   "dimension_name": "Tool Arguments",
+   "llm_score": 2,
+   "corrected_score": 2,
+   "comment": "Agree with the judge."
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "base",
+   "dimension_name": "Completeness",
+   "llm_score": 3,
+   "corrected_score": 3,
+   "comment": null
+  },
+  {
+   "test_id": "ut_person_evidence_001",
+   "dimension_source": "rubric",
+   "dimension_name": "Rationale quality",
+   "llm_score": 2,
+   "corrected_score": 3,
+   "comment": "The skill stated confident declaration true"
+  },
+  {
+   "test_id": "ut_person_evidence_025",
+   "dimension_source": "rubric",
+   "dimension_name": "Rationale quality",
+   "llm_score": 2,
+   "corrected_score": 2,
+   "comment": "Agree with the judge."
+  },
+  {
+   "test_id": "ut_person_evidence_018",
+   "dimension_source": "base",
+   "dimension_name": "Correctness",
+   "llm_score": 1,
+   "corrected_score": 3,
+   "comment": "The skill correctly noted and redirected to proof conclusion first."
+  },
+  {
+   "test_id": "ut_person_evidence_021",
+   "dimension_source": "base",
+   "dimension_name": "Correctness",
+   "llm_score": 2,
+   "corrected_score": 3,
+   "comment": "The skill notice they all had synthetic IDs so the FamilySearch quality check did not apply and also warning tool was not available. Use it when it available."
+  }
+ ]
+}
