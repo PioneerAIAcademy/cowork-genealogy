@@ -49,16 +49,19 @@ Different governments, churches, and organizations created different
 types of records at different times. For each jurisdiction and time
 period, determine which of these categories may apply:
 
-- **Civil vital records** — births, marriages, deaths. Note the start
-  date of civil registration (varies widely by jurisdiction).
+- **Civil vital records** — births, marriages, deaths. Take the start
+  date, and the level it applies to, from the
+  `{Jurisdiction}_Vital_Records` page; it varies widely by jurisdiction
+  and by level within one.
 - **Church records** — baptisms, marriages, burials, and
   **confirmations** (which can fall years after the christening and are a
   separate dated event). Often predate civil registration. Identify
   denominations present in the area. The parish also kept records of the
   **poor** — relief lists, parish workhouses, and church-sponsored
   hospitals — which name people who surface in no other church series.
-- **Census records** — federal, state, colonial, or ecclesiastical
-  enumerations.
+- **Census records** — national, regional, colonial, or ecclesiastical
+  enumerations; which of these a jurisdiction ran, and for which years,
+  comes from its `{Jurisdiction}_Census` page.
 - **Probate records** — wills, administrations, guardianships,
   inventories, estate distributions.
 - **Land records** — deeds, grants, patents, tax lists, land entries.
@@ -124,10 +127,12 @@ yet accessible), identify alternatives:
 - DNA evidence supplements documentary gaps
 - City directories place a person at a specific address in the years
   between censuses — for the cities that have them
-- State census records place a person in the off-years between federal
-  censuses — for the states that took them; both a city directory and a
-  state census earn their place when the person cannot be found in the
-  federal census at all
+- A regional or local enumeration places a person in the off-years
+  between the national censuses — for the jurisdictions that took one;
+  both a city directory and an off-year enumeration earn their place when
+  the person cannot be found in the national census at all. Which
+  enumerations a jurisdiction ran, and for which years, comes from its
+  `{Jurisdiction}_Census` page
 
 ## Common pitfalls
 
