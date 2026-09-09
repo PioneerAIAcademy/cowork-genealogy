@@ -682,8 +682,12 @@ Transposing the ruling to a conflict→conflict join was implemented and **withd
 review**, because it could not discriminate: every multi-conflict scenario declares
 `blocks_question_ids: ["q_001"]` for all of its conflicts, so the arm reduced to "an open
 identity conflict exists somewhere", attached 8 spurious pair-observations to the 7 real
-ones, and fired on `ut_conflict_resolution_005` — whose own prompt says to resolve the
-identity conflict it then flagged. A three-disjunct version keyed on
+ones, and **would have fired** on `ut_conflict_resolution_005` — whose own prompt says to
+resolve the identity conflict it then flagged. Latent, and stated as such because a durable
+doc should not overclaim: all four committed runs of that test write analysis and never touch
+`status`, so replaying the two-arm revision over the corpus gives 8 runs and 15 observations
+with `ut_005` absent. No revision has ever actually fired on it; it needed catching by
+argument rather than by a red test. A three-disjunct version keyed on
 `extracted_for_question_ids` yields the same 8 runs, so nothing is lost by waiting for a
 fixture whose conflicts declare *different* blocked questions.
 
