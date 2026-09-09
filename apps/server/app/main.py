@@ -28,7 +28,7 @@ from sqlmodel import Session, select
 from . import auth, feedback, sessions, v1
 from .config import assert_production_config, get_settings
 from .db import get_engine, init_db
-from .models import Project, User
+from .models import FamilySearchToken, Project, User
 from .obs import setup_logging
 from .sandbox import make_provider
 
@@ -50,9 +50,10 @@ async def _revoke_sandboxes(provider) -> None:
         return
     try:
         with Session(get_engine()) as session:
+            provisioned = settings.allowlist | set(settings.api_key_map.values())
             projects = session.exec(
                 select(Project).join(User).where(
-                    User.email.not_in(settings.allowlist),  # type: ignore[union-attr]
+                    User.email.not_in(provisioned),  # type: ignore[union-attr]
                     Project.status == "active",
                 )
             ).all()
@@ -76,6 +77,12 @@ async def _revoke_sandboxes(provider) -> None:
             for project in projects:
                 if project.id in succeeded:
                     project.status = "archived"
+
+            for user_id in {p.user_id for p in projects}:
+                row = session.get(FamilySearchToken, user_id)
+                if row is not None:
+                    session.delete(row)
+
             session.commit()
     except Exception:
         log.warning("Sandbox revocation sweep failed", exc_info=True)
