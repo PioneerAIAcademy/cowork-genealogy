@@ -746,14 +746,12 @@ async def submit_feedback(
             zf.writestr(rel, data)
 
     filename = f"feedback-{submitted_at.replace(':', '-').replace('.', '-')}.zip"
-    envelope: dict[str, str] = {
+    envelope = {
         "timestamp": submitted_at,
         "email": fields["email"],
         "filename": filename,
         "zipBase64": base64.b64encode(buf.getvalue()).decode("ascii"),
     }
-    if settings.feedback_token:
-        envelope["feedbackToken"] = settings.feedback_token
 
     url = settings.feedback_url
     try:
