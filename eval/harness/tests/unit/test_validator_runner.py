@@ -2230,10 +2230,11 @@ def test_report_and_test_coexist(tmp_path):
 def test_v8_fires_on_dead_activated_run():
     """V8: activated=True, num_turns=0, output_tokens=0, short response → fail.
 
-    Uses skills_invoked=["search-familysearch-wiki"] — the state the
-    orchestrator actually produces when a skill activates (derive_activated
-    requires skill in skills_invoked).  No correct_skill overlap, so the
-    routing short-circuit skip does not fire.
+    Uses skills_invoked=["search-familysearch-wiki"] and
+    test={"skill": "search-familysearch-wiki"} — the state the orchestrator
+    actually produces when a skill activates (derive_activated requires skill
+    in skills_invoked).  The skill under test is the only invoked skill, so
+    the handoff check does not skip.
     """
     state = _empty_research_state()
     results = run_validators(
@@ -2248,6 +2249,7 @@ def test_v8_fires_on_dead_activated_run():
         text_response="Short.",
         aborted_reason=None,
         skills_invoked=["search-familysearch-wiki"],
+        test={"skill": "search-familysearch-wiki"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None, "test_activated_run_produces_response did not run"
@@ -2289,7 +2291,8 @@ def test_v8_passes_on_long_response_despite_missing_telemetry():
         output_tokens=0,
         text_response="A" * 200,
         aborted_reason=None,
-        skills_invoked=[],
+        skills_invoked=["search-familysearch-wiki"],
+        test={"skill": "search-familysearch-wiki"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
@@ -2316,12 +2319,20 @@ def test_v8_skips_when_not_activated():
     assert "skipped" in (result.error or "").lower()
 
 
-def test_v8_skips_grade_on_invariant():
-    """V8 skips on a grade_on_invariant negative test — those bypass
-    normal routing, so a dead run is expected and not a defect."""
+def test_v8_passes_on_handoff_to_another_skill():
+    """V8: a run that handed off to another skill is not a dead run.
+
+    Uses skills_invoked=["search-external-sites", "research-plan"] with
+    test={"skill": "search-external-sites"} — the state the orchestrator
+    produces when a negative test routes correctly.  The handoff check
+    sees {"research-plan"} after subtracting the skill under test, so it
+    returns early.  This is the exact shape of the two
+    ut_search_external_sites_011 corpus runs that the previous guard
+    wrongly failed.
+    """
     state = _empty_research_state()
     results = run_validators(
-        skill="search-familysearch-wiki",
+        skill="search-external-sites",
         validators_dir=VALIDATORS_DIR,
         before_state=state,
         after_state=state,
@@ -2329,15 +2340,14 @@ def test_v8_skips_grade_on_invariant():
         activated=True,
         num_turns=0,
         output_tokens=0,
-        text_response="Short.",
+        text_response="Short routing decline.",
         aborted_reason=None,
-        skills_invoked=["search-familysearch-wiki"],
-        test={"type": "negative", "negative": {"grade_on_invariant": True}},
+        skills_invoked=["search-external-sites", "research-plan"],
+        test={"skill": "search-external-sites"},
     )
     result = _named(results, "test_activated_run_produces_response")
     assert result is not None
-    assert result.passed is True  # skip = pass
-    assert "grade_on_invariant" in (result.error or "")
+    assert result.passed is True, f"unexpected failure: {result.error}"
 
 
 # --- Anti-bias constraint (issue #1749) -----------------------------------
