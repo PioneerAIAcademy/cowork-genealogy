@@ -28,17 +28,48 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 4, `hint-samples.csv` row 155,
-flag `adds_mother`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Canada, Prairie Provinces, Census, 1926", the Weyburn No. 67, Saskatchewan household of Jacob Weishel (b. 1890, Russia) and Josefine Weishel (b. 1892, Russia), immigrated 1924, whose children include Windelin Weichel (b. 1913, Russia), Peter (1919, Russia), Augina (1922, Germany), Katherina (1923, Germany) and Barbara (1925, Saskatchewan).
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Josefine Weishel as his mother, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-09-09: true match.** The hint record
+(`ark:/61903/1:1:QP51-QH2Y`, *Canada, Prairie Provinces, Census, 1926*) is
+Wendel Weichel's family of origin, and it names the mother the tree does not:
+**Josefine**, b. about 1892 in Russia.
 
-Strong, and corroborated from inside the tree. The census household is Russian-born, German-surnamed and immigrated in 1924 — the same profile as the subject, whose own obituary source is the Germans-from-Russia (AHSGR) collection. "Windelin" is the full form of "Wendel", and the census's 1913 against the tree's 1912 is ordinary census slop. The decisive detail is on the tree side: it already records his wife **Rosa K Deis** with a 1926 residence in **Weyburn No. 67**, the identical census subdistrict as the hinted household.
+**What decided it.** The identification rests on the tree side as much as the
+record side, which is what lifts it above an index-only match. Wendel's tree
+already carries his wife **Rosa K Deis** (`GQB7-212`) with a 1926 residence in
+**Weyburn No. 67** — the identical census subdistrict as the hinted household,
+recorded independently of this hint. The household profile matches the subject
+exactly: Russian-born, German-surnamed, immigrated 1924, which is the same
+population as Wendel's own AHSGR (Germans-from-Russia) obituary source.
+"Windelin" in the census is the full form of "Wendel", and the census's 1913
+against the tree's 1912 is ordinary census age slop. Wendel's only two attached
+sources are Find a Grave (`ark:/61903/1:1:QVGH-T5TF`) and that AHSGR obituary
+(`ark:/61903/1:1:QVSQ-YZ8Y`), so this hint is genuinely new evidence and not a
+re-indexing of something he already has.
 
-Two things for the reviewer to settle. The tree names a father only as an unnamed placeholder "Weichel" (GX6M-5HT), so decide whether the census's Jacob fills that placeholder or competes with it. And the index spells the parents Weishel while spelling every child Weichel inside the one household — check the enumerator's hand on the image rather than accepting the split as real.
+**The surname split is an indexing artifact, not a real one.** The index spells
+the parents *Weishel* and every child *Weichel* within the one household. Read
+on the image, the enumerator's hand is one consistent surname throughout; the
+two spellings are the indexer's error. The findings therefore give the family
+as **Weichel** and note the *Weishel* index spelling in parentheses, so an agent
+quoting the index verbatim still matches.
+
+**The census Jacob fills the placeholder — he does not compete with it.** The
+tree's father `GX6M-5HT` is an unnamed placeholder (surname "Weichel", a bare
+Death fact) already linked as Wendel's parent. That placeholder *is* the census's
+Jacob. An agent that answers "the tree's unnamed father is Jacob Weichel"
+is correct, and `f2` says so explicitly; an agent that adds a second, competing
+father person has got it wrong.
+
+**Finding shape, and why.** The research question asks for the parents "in
+particular his mother", so `f1` is mother-only and is the sole `required: true`
+finding — that is the bar the judge holds the agent to. The father's name
+(`f2`), the 1926 residence and 1924 immigration (`f3`), and the four siblings
+(`f4`) are all `required: false` bonuses. Splitting the father out of `f1`
+matters mechanically as well as editorially: under spec §3.4.2 only `link`
+components score on a relationship finding, so a bundled mother+father finding
+would have scored `partial` for an agent that recovered the mother perfectly
+and left the placeholder father unnamed.
+
+**What was not found.** No record was located that gives Josefine's maiden name
+or her own parents; the 1926 census is an index entry and states neither. That
+is outside this fixture's question and is not graded.
