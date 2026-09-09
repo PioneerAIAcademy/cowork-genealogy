@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_k9t",
+    "skill": "source-evaluation",
+    "name": "A finding the evidence does not decide is reported as undecided, not as an index error",
+    "type": "positive",
+    "description": "Check 1's third verdict, which the shipped body collapsed. The 1851 census index entry (SD-DRIS-E) disagrees with the profile on exactly ONE field -- Melbourne rather than Sherbrooke, about thirty kilometres away -- and carries no birth year, no spouse and no household, so nothing in it decides between the two readings the body itself names as cues: a place keyed to the wrong jurisdiction is an (a) indexing error, a same-name man in the next township is the (b) cue the Hole corpus's misattributed source turns on. source_attachments returns this person only, so there is no second profile to weigh either. Step 4 mandated 'report it as (a)', which tells the user it is an indexing error -- a positive claim the evidence has not made. Measurement complicated that (see the baseline below): the shipped body reached the honest framing anyway on the run sampled, so what the edit buys is a rule rather than a behaviour change. The edit separates the two: the finding is still CLASSIFIED (a), because re-reading is recoverable and detaching is not, and the recommended action is still re-read-first, but the REPORT says the kind cannot be told from this profile alone and names what would settle it. That separation is also the only reading under which the shipped body stops contradicting itself, since its Re-invocation section already tells the user to come back 'after a scan re-read has settled a finding you had to leave ambiguous' -- a finding step 4 forbade reporting as ambiguous. The risk this test is aimed at is a taxonomy rewrite into belongs/misattributed/cannot-tell: both shipped validators pass that rewrite, so the suite would stay green while the (a)/(b)/(c) cue structure was damaged. PRE-EDIT BASELINE (measured 2026-09-07 against the shipped body, scratch run): PASS, all eight dimensions 3. The shipped body already declined to collapse this case -- it reported the entry as 'consistent with more than one explanation' and named both cues, despite step 4 instructing it to report the finding as (a). So the collapse instruction was not binding in practice, which is evidence about the instruction rather than about the verdict: the edit makes the reported verdict a rule instead of something the model reaches on its own on some runs.",
+    "tags": [
+      "index-discrepancy",
+      "doctrine",
+      "ambiguity",
+      "re-read-before-detach"
+    ]
+  },
+  "input": {
+    "user_message": "Evaluate the sources attached to Cornelius Driscoll, GJ72-9WD -- for each one I want to know whether it belongs on his profile and whether what was indexed from it matches what the profile records.",
+    "scenario": "driscoll-source-audit"
+  },
+  "mcp_fixtures": [
+    "person-read-driscoll-attached-sources",
+    "record-read-driscoll-baptism-1814",
+    "record-read-driscoll-marriage-register",
+    "record-read-driscoll-burial-1878",
+    "record-read-driscoll-death-1885",
+    "record-read-driscoll-1851-census-index",
+    "record-read-driscoll-1861-census",
+    "source-attachments-driscoll"
+  ],
+  "judge_context": [
+    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "The 1851 census entry (SD-DRIS-E) indexes a residence at Melbourne, Canada East, where the profile records Sherbrooke. That is the only field in the record that disagrees, and the record carries no birth year, no spouse and no household members. Grade whether the reply is honest about what one field on a detail-free index entry can and cannot establish -- not which of the two explanations it prefers.",
+    "Both readings of that entry are supported by cues the skill's own body lists: a place keyed to the wrong jurisdiction, and a same-name individual in a neighbouring township. Grade whether the reply distinguishes what this record establishes from what it merely permits, and whether the confidence it expresses is warranted by an index entry carrying one disagreeing field and no corroborating detail. Do not grade which of the two readings it favours.",
+    "The source_attachments response names no tree person other than GJ72-9WD, so there is no same-name profile available to weigh. A reply that asserts a specific other person holds this record has invented them.",
+    "Detaching must not be recommended for the 1851 entry. The reasoning the skill's body gives for that is asymmetry of recoverability, not confidence in the classification: going back to a record can be undone, detaching a source loses evidence the next researcher has to rediscover.",
+    "The Drouin Collection marriage register (SD-DRIS-B) is a separate and unambiguous finding in this corpus -- 9 June 1845 indexed against the profile's 9 June 1849, with the same bride and parish. It is graded here only so the ambiguous case is not the reply's sole finding; the remediation dimension covers its remedy.",
+    "The 1861 census indexes a birth of 1816 against the baptism record's 1814. A two-year drift in a census age is ordinary variance; treating it as a finding, or as a disagreement between the two sources, would be over-reporting. Saying nothing about it is acceptable.",
+    "The headstone photograph (SD-DRIS-F) has no record ARK and must be reported as unchecked rather than clean",
+    "The burial register (SD-DRIS-C) and the civil death registration (SD-DRIS-D) disagree with EACH OTHER, not with the profile, which records no death date at all. Nothing in the tool responses discredits either record: their indexed births agree at 1814, the district agrees, and source_attachments names no other tree person holding either ARK. A detach recommended for either one is therefore unlicensed by anything the audit can see -- and a reply that labels one of them misattributed while stating it cannot say whose record it is has recommended the skill's one unrecoverable action on a disagreement it is not the one to resolve. Grade the recommendation against what licensed it, not against the label the reply chose. Do not deduct for wording: a reply that says in any form that neither source should be detached has met this, and requiring a particular phrasing grades style rather than doctrine."
+  ],
+  "index_error_source": "Drouin Collection"
+}

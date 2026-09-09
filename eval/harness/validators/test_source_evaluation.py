@@ -46,18 +46,143 @@ _DETACH_TERMS = ("detach", "detaching", "detached", "unlink", "unlinking", "unli
 # Death Index — "database, FamilySearch", index-only, no scan — so a correct
 # report must NOT say "re-read the image" there, and SKILL.md says so. A
 # pattern that only matched re-read phrasings would fail that behaviour.
+#
+# WIDENED 2026-09-08 from the run log, not from imagination. On
+# `v1_2026-09-08_14-22-00.json`, `ut_source_evaluation_m8q` failed this guard
+# with a reply that followed the doctrine *better* than the pattern
+# anticipated. It said, of the index-only death index: "there is no scan to
+# open behind this index entry. The source of truth is the underlying
+# Minnesota death certificate", then "Submit a correction to this index entry
+# through FamilySearch's correction process ... locate the original Minnesota
+# death certificate". Every clause of that is the rule, and the pattern matched
+# none of it — it wanted "correction path" (the reply said "correction
+# process"), "correct the index" (the reply said "submit a correction to this
+# index entry"), and "read/check the original" (the reply said "locate the
+# original ... certificate").
+#
+# So the enumeration was the defect. The remedy is one of three moves, and the
+# alternatives below are grouped that way rather than as a flat list of
+# phrasings: go back to the document the index was made from, go back to the
+# underlying document under any verb, or use the index's own correction route.
+# A reply that recommends only detaching still matches nothing here.
 _GO_TO_SOURCE_PATTERN = re.compile(
+    # Re-reading, in any spelling.
     r"re-?read"
-    r"|read the original"
-    r"|check the original"
-    r"|against the original (image|record|page)"
+    # Any verb applied to "the original ..." — the earlier pattern fixed the
+    # verb (read/check) and the noun (image/record/page), so "locate the
+    # original certificate" and "obtain the original register" both missed.
+    r"|the original\s+\w+"
+    # The document the index derives from, named as such.
+    r"|underlying\s+\w+"
+    r"|source of truth"
     r"|go(ing)? back to"
     r"|derive[sd]? from"
     r"|was made from"
-    r"|correction path"
-    r"|correct the index",
+    # FamilySearch's correction route on the index entry itself — the only
+    # remedy available where the collection is index-only and no scan exists.
+    r"|correction (path|process|route)"
+    r"|correct the index"
+    r"|correction to (the|this) index"
+    r"|submit a correction"
+    r"|index correction",
     re.IGNORECASE,
 )
+
+# Identifies a closing summary or recap, which carries SEVERAL sources' remedies
+# in one sentence and so is the wrong unit to judge whole. `_passages` splits one
+# on clause boundaries; it does not skip it. That distinction is the whole point
+# of this constant, and getting it wrong once is why the comment is this long.
+#
+# It exists because of a FALSE POSITIVE: `ut_source_evaluation_r4k` failed the
+# detach guard on a passage that is correct — "**Summary:** One index correction
+# needed (the 1945 death year in the Minnesota Death Index) and one detachment
+# warranted (the 1885 Otter Tail County census, which belongs to an older
+# Christian Hole)." Two sources, two different remedies, each attached to the
+# right one, and blank-line blocks put them in one passage.
+#
+# Sectioning on markdown headings does NOT fix that, which is worth recording so
+# it is not retried: in that reply the summary sits inside the "### No finding —
+# United States Census, 1900" section, so a heading-scoped guard puts the
+# protected name and "detachment" in one section anyway.
+#
+# SKIPPING the recap block was the first fix and it was WRONG — a false negative
+# in the one guard that stops an unrecoverable action, which is strictly worse
+# than the false positive it removed. The skill puts its real recommendation in
+# the recap routinely: 2 of 10 tests in `v1_2026-09-08_15-53-39` did, and
+# "**Conclusion:** Detach the Minnesota Death Index" passed silently. Clause
+# splitting separates the two remedies without dropping either.
+_SUMMARY_LEAD_RE = re.compile(
+    r"^\W{0,4}(summary|recap|in short|in summary|overall|conclusion|"
+    r"bottom line|net)\b",
+    re.IGNORECASE,
+)
+
+_TABLE_ROW_RE = re.compile(r"^\s*\|")
+
+# Clause boundaries inside a recap sentence. A recap reads "correct the death
+# year on X (Finding 1), detach the 1885 census (Finding 2), and the rest are
+# fine" — each remedy is its own clause naming its own source, so splitting
+# here attributes them separately. The `(?<=\))\s*,` arm splits only on a comma
+# that follows a closing paren, which is what separates those parenthesised
+# findings without also splitting a source's own comma'd title ("Minnesota
+# Death Index, 1908-2002").
+_CLAUSE_RE = re.compile(r"(?:;|\s+and\s+|(?<=\))\s*,\s*|\.\s+)")
+
+
+def _passages(text: str) -> list[str]:
+    """Split a report into the units that carry ONE source's remedy.
+
+    The guard's premise is that a passage recommending a detach names the
+    source it is detaching, so co-occurrence within a passage is attribution.
+    Blank-line blocks are a poor unit for that, and the corpus has now produced
+    two different report shapes where they fail — both of them CORRECT reports:
+
+    - A closing recap naming two sources and their two different remedies in
+      one sentence (`ut_source_evaluation_r4k`, `v1_2026-09-08_14-22-00.json`).
+      Handled by `_SUMMARY_LEAD_RE` at the call site.
+    - A per-source verdict TABLE (`ut_source_evaluation_x6b`,
+      `v1_2026-09-08_15-25-07.json`). Markdown tables carry no blank lines, so
+      every row lands in one block: the Minnesota Death Index row read
+      "Belongs, but the indexed death year reads 1954 — correct it to 1945 via
+      the original certificate" and the row below it read "Detach — it is about
+      a different Christian Hole". Exactly right, and flagged.
+
+    A table row is the per-source unit the guard wants, so rows are split out
+    and judged individually. Everything else keeps the blank-line block.
+
+    Three shapes needing bespoke handling, each found inside a paid run, is the
+    signal worth recording: this guard is lexical and attribution is not, so
+    the shape of the report decides whether it is right. Handle a new shape
+    here rather than loosening the rule that fires, and keep `rubric.md`'s
+    Remediation doctrine bars as the judgment-based backstop. **Issue #2382**
+    owns the durable fix — narrowing to object-adjacency so shape stops
+    mattering — and records the measured constraint that passage-scoping
+    `_GO_TO_SOURCE_PATTERN` breaks 23 of 24 committed positive runs.
+    """
+    out: list[str] = []
+    for block in re.split(r"\n\s*\n", text):
+        rows = [ln for ln in block.splitlines() if _TABLE_ROW_RE.match(ln)]
+        if rows:
+            # A table's rows are separately attributed; its prose lead-in (if
+            # any) is still one passage.
+            out.extend(rows)
+            prose = "\n".join(
+                ln for ln in block.splitlines() if not _TABLE_ROW_RE.match(ln)
+            )
+            if prose.strip():
+                out.append(prose)
+        elif _SUMMARY_LEAD_RE.match(block.strip()):
+            # A recap is one sentence carrying several sources' remedies, so
+            # the block is the wrong unit — but SKIPPING it is worse than
+            # judging it whole, because the skill routinely puts its real
+            # recommendation only in the recap. Split on clause boundaries and
+            # judge each clause, so "correct the death index, detach the 1885
+            # census" attributes each remedy to its own source while
+            # "Conclusion: detach the Minnesota Death Index" still fires.
+            out.extend(c for c in _CLAUSE_RE.split(block) if c and c.strip())
+        else:
+            out.append(block)
+    return out
 
 
 def _requires_index_discrepancy(test) -> None:
@@ -118,7 +243,7 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
     )
     hits = [
         block
-        for block in re.split(r"\n\s*\n", text_response)
+        for block in _passages(text_response)
         if protected.lower() in block.lower()
         and any(term in block.lower() for term in _DETACH_TERMS)
     ]
