@@ -66,7 +66,8 @@ is what tells the researcher where to route the search.
 
 ### Land records
 - **Survey system:** [metes and bounds, rectangular survey, other]
-- **Land-distribution jurisdiction:** [state-land or federal-land — decides whether grants/patents are held by the state land office or the federal GLO/BLM]
+- **Land-distribution jurisdiction:** [who granted the land, and which office holds the
+  grants/patents — from the `{Jurisdiction}_Land_and_Property` page, not assumed]
 - **Types:** [deeds, grants, patents, mortgages, tax records, bounties, land acts (e.g., the Homestead Act)]
 - **Date range:** [earliest available]
 - **Where held:** [recorder of deeds, state land office, online?]
@@ -143,9 +144,9 @@ any substitute sources that partially compensate.]
 
 ## Research tips
 - [Jurisdiction-specific advice from wiki articles — cite the source page URL
-  inline per the SKILL.md rule "Cite the FamilySearch Wiki page, not just its title", e.g.
-  "Town clerks recorded vital records from 1639 ([Massachusetts Vital
-  Records](https://www.familysearch.org/en/wiki/Massachusetts_Vital_Records))"]
+  inline per the SKILL.md rule "Cite the FamilySearch Wiki page, not just its title",
+  i.e. the claim, then the returned page title linked to its returned URL. Take the
+  claim from the fetched page; do not carry one over from this template]
 - [Naming conventions or spelling patterns for this area]
 - [Alternative sources when primary records are missing]
 - [Efficient research sequence for this jurisdiction]
