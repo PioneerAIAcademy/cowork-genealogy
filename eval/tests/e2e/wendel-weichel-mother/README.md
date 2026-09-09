@@ -70,6 +70,24 @@ components score on a relationship finding, so a bundled mother+father finding
 would have scored `partial` for an agent that recovered the mother perfectly
 and left the placeholder father unnamed.
 
-**What was not found.** No record was located that gives Josefine's maiden name
-or her own parents; the 1926 census is an index entry and states neither. That
-is outside this fixture's question and is not graded.
+**Her maiden name is Reiss, and her birth date is 7 September 1891.** The
+Find a Grave memorial at Odessa, Saskatchewan (memorial no. 116369692,
+`ark:/61903/1:1:QVGH-T5TC`) records her as **Josephine Reiss Weichel**, b. 7
+September 1891, d. 27 January 1974 — buried in the same plot as Wendel, his
+wife Rose K. Deis Weichel, and Stanley Weichel. "Reiss Weichel" is the Find a
+Grave convention of maiden name followed by married name. `f1` carries the 7
+September 1891 date; the 1926 census's "about 1892" is an enumerator's age
+figure and the weaker of the two.
+
+Note the evidential weight before leaning on it: the Find a Grave *Index* is a
+**derivative** source — FamilySearch's index of a volunteer-submitted memorial,
+whose dates are secondary and whose underlying memorial image has not been
+examined. It is good enough to prefer over a census age, not good enough to
+call the birth date proved. Under spec §3.4.2 a linked person's own birth date
+is a `detail` component and does not score, so an agent that recovers only the
+census's "about 1892" still matches `f1`.
+
+**What has not been found.** No record examined names Josefine's own parents,
+and no European baptismal register for Selz (the Black Sea German colony near
+Odessa the family emigrated from) was reachable through FamilySearch. Both are
+outside this fixture's question and are not graded.

@@ -3,17 +3,18 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Wendel Weichel's mother was Josefine Weichel (indexed 'Weishel'), born about 1892 in Russia.",
+      "description": "Wendel Weichel's mother was Josefine Weichel (indexed 'Weishel'), born 7 September 1891 in Russia.",
       "details": {
         "subject_person": "Wendel Weichel (G8Q5-BJ1)",
         "relation": "mother",
         "target_person": {
           "name": "Josefine Weichel",
-          "birth": "about 1892, Russia"
+          "birth": "7 September 1891, Russia (Find a Grave memorial no. 116369692; the 1926 census indexes her age as about 1892)"
         }
       },
       "supporting_sources": [
-        "Canada, Prairie Provinces, Census, 1926 — household of Jacob and Josefine Weichel (indexed 'Weishel'), Weyburn No. 67, Saskatchewan; ark:/61903/1:1:QP51-QH2Y"
+        "Canada, Prairie Provinces, Census, 1926 — household of Jacob and Josefine Weichel (indexed 'Weishel'), Weyburn No. 67, Saskatchewan; ark:/61903/1:1:QP51-QH2Y",
+        "\"Find a Grave Index,\" FamilySearch, entry for Josephine Reiss Weichel, b. 7 Sep 1891, d. 27 Jan 1974, buried Odessa, Saskatchewan; memorial no. 116369692; ark:/61903/1:1:QVGH-T5TC"
       ],
       "required": true
     },
