@@ -804,20 +804,20 @@ def test_activated_run_produces_response(
 ):
     """An activated run that produced no output is a dead run — fail it.
 
-    Gate on six conditions: activated is True, not aborted, no skills
-    invoked, num_turns == 0, output_tokens == 0, AND text_response shorter
-    than 200 characters. The skills_invoked check is the strongest signal —
-    a run that invoked a skill did real work even when telemetry reports zero
-    (343 of 1945 committed runs report zero telemetry normally). The 200-char
-    floor avoids flagging telemetry-only dropouts where a real response
-    exists.
+    Gate on five conditions: activated is True, not aborted, did not hand
+    off to another skill, num_turns == 0 AND output_tokens == 0, AND
+    text_response shorter than 200 characters. The handoff check skips
+    runs that routed to a different skill (zero telemetry is expected
+    there — the SDK stops after capturing the correct-skill invocation).
+    The 200-char floor avoids flagging telemetry-only dropouts where a
+    real response exists.
     """
     if activated is not True:
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
-    if skills_invoked:
-        return  # a run that invoked a skill is not a dead run
+    if set(skills_invoked or []) - {test.get("skill")}:
+        return  # handed off to another skill — not a dead run
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:

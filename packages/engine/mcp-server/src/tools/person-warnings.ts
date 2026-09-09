@@ -829,6 +829,16 @@ export function childMarriageToMarriage(mob: Mob, cutoff: number): boolean {
 }
 
 /**
+ * A GedcomX `MarriedName`. Compared case-insensitively: the converter emits the
+ * URI-stripped `MarriedName`, but a hand-authored tree.gedcomx.json is only
+ * held to an OPEN enum (`gedcomx_name_type_recommended`), so casing is not
+ * guaranteed.
+ */
+function isMarriedName(type: string | undefined): boolean {
+  return typeof type === "string" && type.toLowerCase() === "marriedname";
+}
+
+/**
  * Java MobWarnings.hasDiffSurname (warnings.java:741).
  *
  * Returns true when the anchor has at least one surname that doesn't match
@@ -849,11 +859,20 @@ export function childMarriageToMarriage(mob: Mob, cutoff: number): boolean {
  * `diffSurnameCount` Integer variant, warnings.java:760, is not ported — the
  * boolean is the only consumer.)
  *
+ * SECOND intentional divergence: `MarriedName` names are excluded. A married
+ * surname is *expected* to differ from the birth surname, so it is evidence of
+ * a marriage rather than of a conflated identity — counting it made the check
+ * fire on every person who recorded one. Excluded before the outlier scan, so
+ * a married surname neither becomes the outlier itself nor casts a same/diff
+ * vote for the surnames that remain. Other legitimately-different types
+ * (`AlsoKnownAs`, `Nickname`) are NOT excluded — see #2002.
+ *
  * Java call sites: `hasDiffSurnameMale` (gated on Male) and
  * `maleRelativesHasDiffSurname` (any male relative).
  */
 export function hasDiffSurname(mob: Mob): boolean {
   const surnames = (mob.getPerson().names ?? [])
+    .filter((n) => !isMarriedName(n.type))
     .map((n) => n.surname)
     .filter((s): s is string => typeof s === "string" && s.length > 0);
   for (let i = 0; i < surnames.length; i++) {
