@@ -371,6 +371,33 @@ consistent across schema, manifest, and skill.)*
   and just get text.
 - All input is camelCase (MCP wire convention).
 
+### 5.3.1 Given-name expansion in `lookingFor`
+
+When `lookingFor` contains a recognized English given name (formal or
+variant), the tool automatically expands it with historical diminutives
+from the bundled variant table (`config/given-name-variants.json`) before
+building the OCR prompt.
+
+- Input: `lookingFor: "Elizabeth Martin"`
+- VLM sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)" by writing exactly FOUND or NOT FOUND`
+
+All variant forms are included (including scribal abbreviations with
+periods) because the VLM reads natural language, not query syntax.
+Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
+and all other variants.
+
+When expansion fires, the response includes a `nameExpansion` field
+(reversing the prior §5.3.1 decision — the genealogist needs to know
+what the VLM was primed with before reading a contested hand):
+
+- `original`: the caller's `lookingFor` string
+- `expanded`: the rewritten prompt the VLM actually saw
+- `expansions`: which formal names were expanded and to which variant
+  forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
+
+This mirrors `fulltext_search`'s `nameExpansion` without
+`variantsInResults`, which has no equivalent for VLM transcription.
+
 ### 5.4 Behavior (pipeline)
 
 1. **Resolve + fetch** the FS distribution image host-side, authed, via the
@@ -459,21 +486,12 @@ inside the e2e harness's 600s inactivity window — and a timeout returns as a
 MCP call at 60s (a client-side ceiling this repo does not set and cannot change
 from the plugin or the `.mcpb` — see `docs/architecture.md`, "Other environment
 differences that bite"), so a Cowork transcription slower than a minute is
-aborted long before either budget above fires. Measured over the committed e2e
-corpus, roughly 10-15% of healthy calls ran past 60s — a floor, since the corpus
-carries no bridge hop, and a range rather than a point because `usage.timeline`
-records no `tool_use_id`: in roughly a dozen of the 28 runs containing a
-transcription, several parallel `image-reader` subagents have a call outstanding
-at once, so per-call durations there cannot be recovered. The range is the
-spread across pairing methods on the runs where exactly one call is outstanding
-(12.5% by the corpus-timeline script from the sizing issue, 15.6% pairing each
-call to its own result). Do not quote a corpus-wide re-run of that script as the
-figure: it reports lower and keeps dropping as the corpus grows — 13 of 144
-(9.0%) at commit `6a32f70d`, lower since — because the run-log retention step in
-commit `b065b687` strips `response_summary` past 14 days, so its errored-call
-filter no longer sees most of the corpus and counts sub-second "no API key"
-failures as healthy transcriptions. The 90/90/180 budgets hold only on the
-paths that honour them — verified over stdio for the harnesses and the hosted
+aborted long before either budget above fires. Measured 2026-09-08 over 59 live
+reads, none ran past 60s (p50 18.7s, p95 42.8s, max 50.1s), so a Cowork
+transcription now usually finishes inside the window — though several
+`image-reader` subagents transcribing at once still stretch the tail past it.
+The 90/90/180 budgets hold only on the paths that honour them — verified over
+stdio for the harnesses and the hosted
 control plane; whether the desktop `.mcpb` is bridged too is unverified, so the
 ceiling may apply to every Cowork session. This is a documented
 environment property, not a tool defect: raising
@@ -483,22 +501,18 @@ in the `image-reader` agent were both weighed against this write-down and droppe
 — the first recovers nothing until a config file is hand-edited, the second costs
 two fresh eval suites (lead decision, 2026-08-17).
 
-**Where 180s comes from.** Measured across every `image_transcribe` call in the
-committed e2e run logs (n=101, matched to its own `tool_result` in
-`usage.timeline`): p50 36s, p90 98s, p95 114s, max 316s. That tail is not the
-steady state — all five calls above 150s belong to the single run that hung
-(`pierre-tullier-son`, 2026-07-27). Excluding it: n=89, p90 79s, p95 98s, max
-167s. The download leg is small enough not to move the split — `image_read`
-runs the same fetch without OCR at a 7.2s maximum, though only 6 such calls
-exist in the corpus — so the tool distribution is the OCR distribution plus
-roughly 7s.
+**Where 180s comes from.** Measured 2026-09-08 by timing the tool directly, one
+call at a time, over 59 images drawn from the committed run logs on the current
+default model (repeat with `dev/try-image-transcribe.ts`): whole call p50 18.7s,
+p90 40.6s, max 50.1s, of which the download leg is p50 1.9s, max 8.0s. So 180s is not a latency budget
+but a hang-catcher — 3.6x the slowest healthy read — and the run logs show what
+it catches: seven calls returned `timed out after 180000ms`, all of them before
+the 2026-08-30 model change.
 
-180s therefore clears every genuine read observed, including the 167s one,
-while still cutting the 190s/208s/286s/316s calls of the run that hung. A 90s
-OCR budget would have failed 5 of the 89 healthy calls (~6%) — turning a slow
-page into a lost one mid-sweep. Re-measure before changing it: the analyzer is
-`eval/harness/e2e/latency_report.py`'s source data (`usage.timeline`), and a
-model change can move the whole distribution.
+Re-measure the same way after any change to `DEFAULT_OPENROUTER_MODEL`. **Do not
+derive it from run-log `usage.timeline` gaps**: those are per SDK message, not
+per tool call, and the figures they gave here (p90 79s, max 167s) were both
+inflated and a model generation stale.
 
 ### 5.8 Browse budget
 

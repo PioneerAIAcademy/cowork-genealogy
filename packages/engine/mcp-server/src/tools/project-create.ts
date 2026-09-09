@@ -37,7 +37,12 @@
 // is today; moving it host-side is a separate change.
 
 import { join } from "path";
-import { atomicWriteBoth, fileExists, formatIssues } from "../utils/project-io.js";
+import {
+  atomicWriteBoth,
+  fileExists,
+  findNestingAncestor,
+  formatIssues,
+} from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
 
 /** The sections a new project starts with, all empty. `researcher_profile` and
@@ -156,6 +161,20 @@ export async function projectCreate(
       );
     }
 
+    // A project cannot come into being inside another project's folder — the
+    // viewer watches one folder, and a write one level down reads to a
+    // tester as lost files (issue #1317 bug 2, issue #1869). Checked after
+    // the two exists-refusals above so a half-present project still gets its
+    // own, more actionable message.
+    const ancestor = await findNestingAncestor(projectPath);
+    if (ancestor) {
+      throw new ProjectCreateError(
+        `${ancestor} is already a research project, and a project cannot be nested inside ` +
+          `one. Create this project outside it, or add to the existing project at ` +
+          `${ancestor} with research_append.`,
+      );
+    }
+
     const tree = {
       persons: Array.isArray(input.tree?.persons) ? input.tree.persons : [],
       relationships: Array.isArray(input.tree?.relationships) ? input.tree.relationships : [],
@@ -236,7 +255,9 @@ export const projectCreateSchema = {
     properties: {
       projectPath: {
         type: "string",
-        description: "Absolute path to the (empty) project directory.",
+        description:
+          "Absolute path to the project directory. Create the project in the folder you " +
+          "were given — never in a subfolder of it.",
       },
       objective: {
         type: "string",
