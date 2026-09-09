@@ -41,6 +41,16 @@ const toolsDir = join(engineRoot, "src", "tools");
 const EXEMPT: Array<{ file: string; enumName: string; why: string }> = [
   { file: "record-search.ts", enumName: "gender", why: "FamilySearch search-API `sex` qualifier, owned upstream" },
   { file: "person-search.ts", enumName: "gender", why: "FamilySearch search-API `sex` qualifier, owned upstream" },
+  {
+    file: "build-external-search-url.ts",
+    enumName: "external_site",
+    why:
+      "deliberately narrower by design, not stale: this tool builds URLs only for the " +
+      "sites it has a per-site template for. `familysearch_web` is the persisted log's " +
+      "catch-all for sites with NO template — real run logs use it for glorecords.blm.gov, " +
+      "arhinet.arhiv.hr, even a raw familysearch.org ARK link — so offering it here would " +
+      "advertise a site value this tool has no template to build",
+  },
 ];
 
 function closedEnums(): Map<string, Set<string>> {

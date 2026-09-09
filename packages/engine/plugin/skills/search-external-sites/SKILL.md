@@ -21,6 +21,7 @@ allowed-tools:
   - external_links_search
   - research_log_append
   - research_append
+  - build_external_search_url
 ---
 
 # Search External Sites
@@ -245,6 +246,11 @@ or census years exist in this `collections_search` result, never in memory.
 
 ### 3. Build the URL
 
+Call `build_external_search_url` to get the URL — never hand-compose one.
+It returns `{ ok: true, url, notes }` or `{ ok: false, reason, errors }`; on
+`ok: false`, surface the errors and fix the inputs rather than retrying
+blindly or hand-writing a URL.
+
 **Case A — a curated URL exists for the target site.**
 
 First, confirm the curated link actually fits the plan item. Compare its
@@ -256,90 +262,41 @@ collection. Either pick a curated link whose `linkText` matches, or, if
 none matches, fall back to Case B and say which record type you were
 looking for.
 
-When the record type matches, use that URL as the base and append your
-search parameters — it already encodes the collection scope (Ancestry URLs
-carry `/search/collections/{id}/`), so don't template the collection ID
-separately:
+When the record type matches, pass that URL as `baseUrl`:
 
 ```
-{returned_url}?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania
+build_external_search_url({
+  site: "ancestry",
+  baseUrl: "<the curated URL>",
+  attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" }
+})
 ```
-
-If the base already has a query string, append with `&` instead of `?`.
 
 **Case B — no curated URL fits (or none for the site).**
 
 Tell the user plainly: "No FamilySearch-curated link for [site] in
-[year window] — using the site-wide search instead." Then build from the
-site-wide template. These search the whole site index, not a scoped
-collection:
+[year window] — using the site-wide search instead." Then call the tool
+without `baseUrl` — it builds the site-wide search, which covers the whole
+site index, not a scoped collection:
 
-#### Ancestry.com
 ```
-https://www.ancestry.com/search/?name={first}_{last}&birth={year}&birthplace={place}&residence={year}_{place}&father={first}_{last}&mother={first}_{last}&spouse={first}_{last}
-```
-- `name` — given and surname, underscore-separated
-- `birth`, `death`, `marriage` — event year
-- `birthplace`, `deathplace` — location string
-- `residence` — year and place, underscore-separated
-- `father`, `mother`, `spouse` — relative names
-
-#### MyHeritage.com
-```
-https://www.myheritage.com/research?action=query&first={first}&last={last}&birth_year={year}&birth_place={place}&marriage_year={year}&marriage_place={place}&death_year={year}&death_place={place}&father_first={first}&father_last={last}&mother_first={first}&mother_last={last}
+build_external_search_url({
+  site: "ancestry",
+  attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" }
+})
 ```
 
-#### FindMyPast.com
-```
-https://www.findmypast.com/search/results?firstname={first}&lastname={last}&yearofbirth={year}&yearofbirth_offset={plus_minus_years}&keywordsplace={place}&keywordsplace_proximity={miles}&eventyear={year}&fatherfirstname={first}&motherfirstname={first}
-```
-- `yearofbirth_offset` is the give-or-take on the birth year (site default 2).
-  **Not** `yearofbirthrange` — that spelling is silently ignored and the search
-  runs at the default window.
-- `keywordsplace_proximity` is the place radius in miles (site default 5).
-- Never emit `sid` — it is browser session state, not a search parameter.
+**Supported `site` values and which `attributes` each one uses:**
 
-#### FindAGrave.com
-```
-https://www.findagrave.com/memorial/search?firstname={first}&lastname={last}&birthyear={year}&deathyear={year}&location={place}
-```
-
-#### Newspapers.com
-```
-https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place={place}
-```
-
-#### Chronicling America (free)
-```
-https://www.loc.gov/collections/chronicling-america/?qs={first}+{last}&dl=page&start_date={start_yyyy}-01-01&end_date={end_yyyy}-12-31&location_state={state}
-```
-- `dl=page` — **required.** Without it the search returns newspaper *titles*
-  from the U.S. Newspaper Directory, not digitised pages, and a title-level nil
-  says nothing about whether the event was reported.
-- `qs` — the search words
-- `start_date`/`end_date` — full `YYYY-MM-DD`, spanning the plan item's whole
-  window. A `date_range` of `1870-1890` is `start_date=1870-01-01` and
-  `end_date=1890-12-31` — never collapse a multi-year window to one year.
-- `location_state` — lowercase state name (`utah`, `new york`)
-- Digitised page coverage runs **1798–1963**, title-by-title and complete for no
-  state — a nil result never means no newspaper covered the event.
-- Target date outside 1798–1963: do not build this URL. Say the page corpus does
-  not reach that period, and route to the state/regional archive for the place
-  (coverage differs) or to a paid site instead.
-- Do **not** use `chroniclingamerica.loc.gov/search/pages/results/` with
-  `andtext`/`date1`/`date2`/`state` — those parameters are ignored, the search
-  runs unscoped, and any nil logged from it is meaningless.
-
-#### State/regional digital newspaper archives (free)
-Utah Digital Newspapers:
-```
-https://newspapers.lib.utah.edu/search?q={first}+{last}
-```
-Use the archive's plain keyword search and put the discriminating terms in `q`.
-**Do not invent facet or date parameters for these archives** — an unrecognized
-parameter is silently ignored or errors the page, and the user lands on a dead
-end believing the search was scoped. Narrow with terms, then say in one line
-which date range they should set in the site's own UI.
+| `site` | Attributes it reads | Notes |
+|--------|---------------------|-------|
+| `ancestry` | `givenName`/`surname`, `birthYear`/`birthPlace`, `deathYear`/`deathPlace`, `marriageYear`, `residenceYear`/`residencePlace`, `father*`/`mother*`/`spouse*` | |
+| `myheritage` | `givenName`/`surname`, `birthYear`/`birthPlace`, `marriageYear`/`marriagePlace`, `deathYear`/`deathPlace`, `father*`/`mother*` | No residence field |
+| `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace`/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) |
+| `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear`/`deathPlace` (falls back to `birthPlace` if no death place) | |
+| `newspapers` | `givenName`/`surname`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window) |
+| `chronicling_america` | `givenName`/`surname`, `searchStartYear`/`searchEndYear`, `usState` | Free. Digitised page coverage runs **1798–1963**, title-by-title and complete for no state — a nil result never means no newspaper covered the event. Target date outside 1798–1963: do not call this site. Say the page corpus does not reach that period, and route to the state/regional archive for the place (coverage differs) or to a paid site instead |
+| `digital_newspaper_archive` | `givenName`/`surname` only | Free. **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
 
 **Parameter strategy** (full guidance in
 `references/search-strategy-external.md`):
@@ -451,7 +408,7 @@ Then present the URL:
 **Search: 1850 Census on Ancestry for Patrick Flynn**
 
 Click this link to search:
-[Ancestry — 1850 Census, Patrick Flynn](https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania)
+[Ancestry — 1850 Census, Patrick Flynn](https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Ireland)
 
 After the page loads:
 1. Scroll to the bottom of the page and back to the top (forces

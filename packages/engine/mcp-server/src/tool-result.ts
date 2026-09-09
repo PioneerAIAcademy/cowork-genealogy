@@ -58,6 +58,7 @@ export const OK_FALSE_IS_FAILURE = [
   "merge_tree_persons",
   "tree_forget",
   "convert_calendar",
+  "build_external_search_url",
   "research_query",
   "project_context",
   "project_create",

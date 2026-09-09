@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 48 tools.
+The MCP server exposes 49 tools.
 
 ### FamilySearch records and places
 
@@ -112,6 +112,7 @@ way project state changes.
 | `person_quality` | Evidence-quality summary for a tree person | None |
 | `rank_search_matches` | Rank search results against a named subject | None |
 | `convert_calendar` | Convert between Julian, Gregorian, and regnal/quaker dates | None |
+| `build_external_search_url` | Build a pre-filled search URL for a supported external genealogy site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, or a state/regional digital newspaper archive) from structured search attributes | None |
 
 ### Reference and context
 
@@ -494,7 +495,7 @@ then narrows the search.
 
 What's shipped:
 
-- **48 MCP tools.** See the tables above for the full catalog, by category:
+- **49 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **28 shipped skills.** Full GPS research cycle from `init-project`
