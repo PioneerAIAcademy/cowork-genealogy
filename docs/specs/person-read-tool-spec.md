@@ -74,17 +74,21 @@ Each person object:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | FamilySearch person ID (e.g., `"KNDX-MKG"`) |
+| `ark` | string | no | Canonical persistent ARK for the tree person (e.g., `"ark:/61903/4:1:KNDX-MKG"`). Lifted from the raw `identifiers["http://gedcomx.org/Persistent"][0]` resolver URL and normalized by `toArk`. Present on every person FamilySearch returns a Persistent identifier for — in practice all of them; omitted entirely when it supplies none |
 | `gender` | string | yes | `"Male"`, `"Female"`, or `"Unknown"` |
 | `living` | boolean | yes | Whether the person is marked as living |
-| `names` | object[] | yes | At least one name |
+| `names` | object[] | yes | Every name FamilySearch holds for the person, preferred-first (see "Names" below). At least one — a person FS returns with no name at all gets a single `{ given: "", surname: "" }` placeholder |
 | `facts` | object[] | no | Life facts (birth, death, etc.). Omitted for living persons with no data. |
 
 **Names:**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `id` | string | no | Name id, passed through when FamilySearch supplies one (`simplifyName`). Absent otherwise |
+| `preferred` | boolean | no | `true` on the name FamilySearch marks preferred, and **only** that name. Present-or-absent, never `false` — the schema pins it to `const: true`, so an unpreferred name omits the key rather than carrying `preferred: false` |
 | `given` | string | yes | Given name(s) (e.g., `"George"`) |
 | `surname` | string | yes | Surname (e.g., `"Washington"`) |
+| `type` | string | no | Name type, URI-stripped (e.g., `"BirthName"`, `"MarriedName"`, `"AlsoKnownAs"`, `"Nickname"`). An **open** enum (`gedcomx_name_type_recommended`) — treat unrecognized values as data, not as errors. Absent when FS supplies no type |
 | `prefix` | string | no | Name prefix (e.g., `"Dr."`, `"Reverend"`) |
 | `suffix` | string | no | Name suffix (e.g., `"Jr."`, `"III"`, `"Esq."`) |
 
@@ -379,13 +383,15 @@ For each person in `response.persons[]`:
 | FS-extended field | Simplified field | Conversion |
 |-------------------|-----------------|------------|
 | `id` | `id` | Copy directly |
+| `identifiers["http://gedcomx.org/Persistent"][0]` | `ark` | Lift the first Persistent identifier and normalize the resolver URL to the canonical `ark:/61903/4:1:<id>` form (`toArk`). Other identifier types are dropped |
 | `living` | `living` | Copy directly |
 | `gender.type` | `gender` | Last segment of URI (e.g., `"Male"`) |
-| `names[].nameForms[0].parts[]` | `names[].given`, `names[].surname`, `names[].prefix`, `names[].suffix` | Extract `Given` → `given`, `Surname` → `surname`, `Prefix` → `prefix`, `Suffix` → `suffix`. Names marked `preferred: true` are stable-reordered to the front, so simplified `names[0]` is the preferred name even when FS lists an alternate first (`gedcomx-convert-spec.md` § "Rule 4") |
+| `names[]` | `names[]` | **All** names are kept, not only the primary one. Per name: `id` and `type` (URI-stripped) pass through, `preferred` is carried only when `true`, and `nameForms[0].parts[]` yields `given` / `surname` / `prefix` / `suffix`. Names marked `preferred: true` are stable-reordered to the front, so simplified `names[0]` is the preferred name even when FS lists an alternate first (`gedcomx-convert-spec.md` § "Rule 4") |
 | `facts[]` | `facts[]` | See fact conversion below |
 
-Strip: `display`, `links`, `sortKey`, `evidence`, `personInfo`,
-`identifiers`, `sources`, `attribution`.
+Strip: `display`, `links`, `sortKey`, `evidence`, `personInfo`, `sources`,
+`attribution`, and every `identifiers` entry except the Persistent one lifted
+to `ark` above.
 
 #### 2. Fact type mapping
 
@@ -429,10 +435,19 @@ Extract from each name's `nameForms[0].parts[]`:
 
 If no Given found, use `""`. If no Surname found, use `""`.
 
-The converter stable-reorders `preferred: true` names to the front, so
-`names[0]` is the preferred name regardless of the order FS returned. A
-consumer reading `names[0]` therefore gets the primary name, not an
-`AlsoKnownAs` alternate.
+**Every name is returned, not just the primary one.** The converter
+stable-reorders `preferred: true` names to the front and preserves the relative
+order within the preferred and non-preferred groups, so `names[0]` is the
+preferred name regardless of the order FamilySearch returned — and `names[1..]`
+are the alternates, each carrying its own `type` and `id`. This matters on live
+data: FamilySearch routinely lists alternates ahead of the primary name, and an
+alternate is frequently an initials-only or surname-less form of the same
+person.
+
+Consumers that want one display name should read `names[0]`. Consumers matching,
+deduplicating or auditing identity must read the whole array — a surname that
+disagrees with `names[0]` is normal (a married name, an `AlsoKnownAs`, a spelling
+variant) and is not on its own evidence of a conflated record.
 
 #### 5. Relationships (when `relatives: true`)
 

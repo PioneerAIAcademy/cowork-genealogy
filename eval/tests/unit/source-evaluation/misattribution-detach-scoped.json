@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_x6b",
+    "skill": "source-evaluation",
+    "name": "A misattributed source is detached and the correctly attached ones are left alone",
+    "type": "positive",
+    "description": "Check 1's whole point, and nothing in the shipped suite exercised it. The 1885 Minnesota State Census (SD-HOLE-C) is about a different Christian Hole -- born 1852 against the profile's 1875, Otter Tail County rather than Polk, with a wife Bergit and three children who appear nowhere in this family -- and it is also attached to KD96-WX7, whose own facts fit the record. Multiple fields disagree at once, which is what separates a misattributed source from a mis-indexed one, and it is the only source in this corpus for which detaching is right. REGRESSION COVER, NOT A GAP: this is expected to pass against the shipped body. The evidence is indirect but specific -- on v1_2026-09-04_21-40-42.json the shipped body already handled this misattribution correctly under a different test, ut_source_evaluation_r4k, which scored Correctness 3 on a rationale naming HOLE-003, the 1852 birth, Otter Tail and the KD96-WX7 attachment. What r4k does not do is require any of that: its judge_context grades the death index, so the misattribution was graded only incidentally, by the rubric dimensions that apply to every positive test. This test makes the expectation explicit. What it guards is the failure mode issue #2222's review notes call the worst plausible wrong PR: a rewrite of step 4's (a)/(b)/(c) taxonomy that damages the misattribution class while both shipped validators stay green, because neither asserts anything about (b). Tagged index-discrepancy and declaring index_error_source per those review notes, so the block-scoped detach guard runs here too -- the pairing this test exists to pin is detach the 1885 census, do NOT detach the death index, and the guard is what checks the second half mechanically.",
+    "tags": [
+      "index-discrepancy",
+      "doctrine",
+      "misattribution",
+      "regression"
+    ]
+  },
+  "input": {
+    "user_message": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me which of them actually belong on his profile.",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail"
+  ],
+  "judge_context": [
+    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "The 1885 Minnesota State Census (SD-HOLE-C) is the one source in this corpus whose record describes a different life: it gives a birth of 1852 against the profile's 1875, a residence in Otter Tail County against the profile's Polk, and a wife and children who are in none of the tool responses for this family. Whether the reply reaches the misattributed classification should be graded on whether it names which fields disagree, not on the wording it uses.",
+    "source_attachments must be called before any detach is recommended -- the skill's body requires it so the recommendation can say where the record does belong rather than only that it does not belong here",
+    "KD96-WX7 is named in the attachments response. Naming that person as the record's true subject is only supported after a person_read of them; the attachment alone proves attachment, not ownership. A reply that reads them and then names them is doing what the body asks; a reply that names them off the attachment alone is not.",
+    "The Minnesota Death Index (SD-HOLE-B) is the index error in this corpus, not a misattribution: the day, month, county and name all match and only the year differs. It must NOT be recommended for detaching. Whether a reply also recommends correcting its index is graded by the remediation dimension; what this test adds is that the two sources get different remedies.",
+    "The 1900 census birth year is two years off the profile. Explaining it as ordinary census variance is correct; classifying it as an error or a misattribution is not. Saying nothing about it is also acceptable.",
+    "The uploaded funeral card (SD-HOLE-D) has no record ARK and must be reported as unchecked, not as clean and not as misattributed"
+  ],
+  "index_error_source": "Minnesota Death Index"
+}
