@@ -31,11 +31,14 @@ from claude_agent_sdk.types import (
     TaskUpdatedMessage,
 )
 
+from _fakes import BufferedFakeClient, attach, turn_events
+
 from app.agent import real_agent
 
-# The SDK's own bound (`claude_agent_sdk/_internal/query.py`), hardcoded there
-# and not an option we can pass — which is why raising it is not a fix.
-SDK_BUFFER = 100
+# The SDK's own bound, modelled by BufferedFakeClient — hardcoded in
+# `claude_agent_sdk/_internal/query.py` and not an option we can pass, which is
+# why raising it is not a fix.
+SDK_BUFFER = BufferedFakeClient.SDK_BUFFER
 POST_TURN = 150  # > SDK_BUFFER, so an undrained stream MUST stall
 
 
@@ -99,70 +102,10 @@ def _result() -> ResultMessage:
     )
 
 
-class BufferedFakeClient:
-    """A fake SDK client with the real one's load-bearing property: ONE stream
-    with a bounded buffer, handing each item to exactly one receiver.
-
-    `put` awaits when the buffer is full, which is precisely what stalls the real
-    transport read loop, and `produced` is how a test observes that it did.
-    """
-
-    def __init__(self, buffer_size: int = SDK_BUFFER) -> None:
-        self._q: asyncio.Queue = asyncio.Queue(maxsize=buffer_size)
-        self.produced = 0
-        self.consumed = 0
-        self.queries: list[str] = []
-        # CONTENTION, not generator lifetime. Counting live generator objects
-        # measured the wrong thing: a cancelled drainer's generator is finalized
-        # a tick later, so the next turn's reader legitimately overlaps it in
-        # EXISTENCE while never competing for an item. What matters is whether
-        # two coroutines are ever suspended on `get()` at once, because that is
-        # when the stream could hand an item to the wrong one.
-        self._waiting = 0
-        self.max_waiting = 0
-
-    async def produce(self, messages) -> None:
-        for m in messages:
-            await self._q.put(m)
-            self.produced += 1
-
-    async def query(self, text: str) -> None:
-        self.queries.append(text)
-
-    async def receive_messages(self):
-        while True:
-            self._waiting += 1
-            self.max_waiting = max(self.max_waiting, self._waiting)
-            try:
-                item = await self._q.get()
-            finally:
-                self._waiting -= 1
-            self.consumed += 1
-            yield item
-
-    async def receive_response(self):
-        async for m in self.receive_messages():
-            yield m
-            if isinstance(m, ResultMessage):
-                return
-
-    async def disconnect(self) -> None:
-        pass
-
-
 def _agent_on(tmp_path, client) -> real_agent.RealAgent:
     agent = real_agent.RealAgent(tmp_path)
-
-    async def _ensure():
-        agent._client = client
-        return client
-
-    agent._ensure_client = _ensure  # type: ignore[assignment]
+    attach(agent, client)
     return agent
-
-
-async def _drive(agent, text) -> list[dict]:
-    return [ev async for ev in agent.handle_turn(text)]
 
 
 @pytest.mark.asyncio
@@ -179,7 +122,7 @@ async def test_post_turn_messages_past_the_buffer_bound_are_consumed(tmp_path):
             + [_task_done("t1")]
         )
     )
-    events = await _drive(agent, "launch the subagents")
+    events = await turn_events(agent, "launch the subagents")
     assert any(e["kind"] == "task_started" for e in events)
 
     # The drainer is what lets the producer past the bound.
@@ -213,12 +156,12 @@ async def test_the_next_turn_loses_none_of_its_own_messages(tmp_path):
             + [_task_done("t1")]
         )
     )
-    await _drive(agent, "turn one")
+    await turn_events(agent, "turn one")
     await asyncio.wait_for(producer, timeout=5)
 
     # Turn two, with the drainer possibly still live.
     second = asyncio.create_task(client.produce([_delta(999), _result()]))
-    events = await asyncio.wait_for(_drive(agent, "turn two"), timeout=5)
+    events = await asyncio.wait_for(turn_events(agent, "turn two"), timeout=5)
     await asyncio.wait_for(second, timeout=5)
 
     assert client.queries == ["turn one", "turn two"]
@@ -240,7 +183,7 @@ async def test_no_drainer_starts_when_no_subagent_is_running(tmp_path):
     client = BufferedFakeClient()
     agent = _agent_on(tmp_path, client)
     producer = asyncio.create_task(client.produce([_result()]))
-    await _drive(agent, "just answer")
+    await turn_events(agent, "just answer")
     await asyncio.wait_for(producer, timeout=5)
     assert agent._drain_task is None
 
@@ -253,7 +196,7 @@ async def test_closing_the_client_stops_the_drainer(tmp_path):
     producer = asyncio.create_task(
         client.produce([_task_started("t1"), _result()] + [_delta(i) for i in range(5)])
     )
-    await _drive(agent, "launch")
+    await turn_events(agent, "launch")
     await asyncio.wait_for(producer, timeout=5)
     assert agent._drain_task is not None
     drain = agent._drain_task
@@ -284,7 +227,7 @@ async def test_without_the_drainer_the_producer_stalls_at_the_bound(tmp_path):
             + [_task_done("t1")]
         )
     )
-    await _drive(agent, "launch the subagents")
+    await turn_events(agent, "launch the subagents")
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(asyncio.shield(producer), timeout=1)
     assert client.produced <= SDK_BUFFER + 2, (
@@ -321,7 +264,7 @@ async def test_a_second_subagent_starting_after_the_first_finishes_keeps_drainin
             + [_task_done("t2", "task-2")]
         )
     )
-    await _drive(agent, "launch two subagents")
+    await turn_events(agent, "launch two subagents")
     await asyncio.wait_for(producer, timeout=5)
 
     assert client.produced == POST_TURN + 5
@@ -349,7 +292,7 @@ async def test_a_killed_subagent_is_cleared_by_task_updated_alone(tmp_path):
     producer = asyncio.create_task(
         client.produce([_task_started("t1", "task-1"), _result()])
     )
-    await _drive(agent, "launch")
+    await turn_events(agent, "launch")
     await asyncio.wait_for(producer, timeout=5)
     assert agent._live_tasks == {"task-1"}
 
@@ -395,7 +338,7 @@ async def test_a_task_without_a_tool_use_id_still_starts_the_drainer(tmp_path):
             + [_delta(i) for i in range(POST_TURN)]
         )
     )
-    await _drive(agent, "launch a task with no tool_use_id")
+    await turn_events(agent, "launch a task with no tool_use_id")
     await asyncio.wait_for(producer, timeout=5)
 
     assert agent._drain_task is not None, "no drainer started, so the fix did not engage"
@@ -427,7 +370,7 @@ async def test_the_handoff_happens_while_a_subagent_is_still_running(tmp_path):
             [_task_started("t1", "task-1"), _result()] + [_delta(i) for i in range(10)]
         )
     )
-    await _drive(agent, "turn one")
+    await turn_events(agent, "turn one")
     await asyncio.wait_for(producer, timeout=5)
     assert agent._drain_task is not None and not agent._drain_task.done(), (
         "the drainer is not live, so this test cannot see the handoff at all"
@@ -435,7 +378,7 @@ async def test_the_handoff_happens_while_a_subagent_is_still_running(tmp_path):
     assert agent._live_tasks == {"task-1"}, "the subagent must still be running"
 
     second = asyncio.create_task(client.produce([_delta(999), _result()]))
-    events = await asyncio.wait_for(_drive(agent, "turn two"), timeout=5)
+    events = await asyncio.wait_for(turn_events(agent, "turn two"), timeout=5)
     await asyncio.wait_for(second, timeout=5)
 
     assert any(e["kind"] == "usage" for e in events), (
