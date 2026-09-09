@@ -23,8 +23,13 @@ export interface PersonReadToolInput {
 }
 
 export interface TreeName {
+  id?: string;
   given: string;
   surname: string;
+  // Schema-side `preferred` is `const: true`, so the flag is present-or-absent
+  // rather than a two-valued boolean.
+  preferred?: true;
+  type?: string;
   prefix?: string;
   suffix?: string;
 }
@@ -44,6 +49,7 @@ export interface TreeFact {
 
 export interface TreePerson {
   id: string;
+  ark?: string;
   gender: string;
   living: boolean;
   names: TreeName[];
