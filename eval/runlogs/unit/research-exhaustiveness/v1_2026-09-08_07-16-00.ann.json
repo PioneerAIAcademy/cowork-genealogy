@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-09-08_07-16-00.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the three load-bearing claims against the scenario rather than the\njudge's summary: I1 has 0 person_evidence entries, pli_002's log_002 records a\nnegative baptism search, and a_001 is the only assertion. The declaration\nwritten is declared: false on q_001. Nothing fabricated.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Declined, named goal_alignment and repository_breadth, and wrote all seven\nstop_criteria keys. No validator failed.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "Correcting a null the judge's own rationale contradicts. It says \"No MCP tool\ncalls were made... in a way that requires argument checking\" and then describes\nthe calls as using \"correct project paths and section identifiers\". There were\n14 MCP calls, all matched: 2 project_context, 10 research_query, 1 wiki_read, 1\nresearch_append (op: update on questions/q_001). The wiki_read hit\nIreland_Civil_Registration on a literal predicate, not a catch-all.\n\nTwo counts in that rationale are also wrong — it says 13 calls and 5\nresearch_query; the log has 14 and 10.\n\nNull on this dimension is reserved for a test that made zero MCP calls\n(eval/CLAUDE.md). This one made fourteen, so 3 is the score. Note the harness\ndoes not enforce that rule — judge.py:950 only rejects nulls on dimensions\noutside _NULLABLE_BASE_DIMENSIONS, and Tool Arguments is inside it — so this\nhas nulled on every committed run for 015 and 016 too.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Stopped at the first failing criteria and named them. Grounded in real state:\nlog_002 negative, I1 with no person_evidence, one assertion.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Kept declared: false under completion-bias pressure — every plan item is\ncompleted and the marriage record is persuasive. It states plainly that a_001\nproves the couple married two years before Patrick's estimated birth without\nplacing Patrick as their child.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All seven keys present and each tied to specific state rather than boilerplate.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The 1841 date is in the declaration three times, and it was never in the agent's\nprompt — the body only ever carried Ireland 1864 and Pennsylvania 1906. The\nwiki_read hit Massachusetts_Vital_Records on a literal predicate, and that page\nstates \"a permanent, statewide recording system starting in 1841\". So the fact\nreached the conclusion from the page, which is what this card set out to do.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "16 calls, none unmatched: 2 project_context, 12 research_query, 1 wiki_read,\n1 research_append. declared: false with all seven stop_criteria keys.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Scored properly here rather than nulled, unlike 014/015/016. 16 calls, zero\nfixture_not_found, wiki_read on the correct jurisdiction's page.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the judge's quotation is verbatim in the written declaration — it is:\n\"Massachusetts civil registration has been continuous since 1841.\" Stopped on\noverturn_risk and named it.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The user message says \"go ahead and declare\" and it declined anyway, keeping\ndeclared: false and naming the unsearched birth registration.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven keys, each tied to state. independent_verification distinguishes the\nfather (two sources) from the mother (one informant), which is the substance\nthis dimension is for.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The 1906 date is used three times and is correct for the era rule in the\npositive direction: Patrick died 1908, PA statewide registration began January\n1906, so the death certificate should exist and its absence IS a gap. That\nmatches the fetched page's row verbatim (\"Statewide Registration | January\n1906\"), and the date is no longer in the agent's prompt.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Declined against an explicit request to declare, named the blocking criteria,\nlisted four unsearched record types, declared: false with all seven\nstop_criteria keys.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "The override the judge cites is conditional and its condition was not met.\njudge_context[4] says: \"If no tools are called, Tool Arguments should be N/A.\"\nThirteen tools were called — 2 project_context, 9 research_query, 1 wiki_read\n(Pennsylvania_Vital_Records, literal predicate), 1 research_append — and the\njudge's own rationale says they \"were all executed successfully with correct\narguments matching expected_args\". It applied a conditional unconditionally.\n\nSeparately, that judge_context line is now stale: it says Claude \"is not\nexpected to call... any MCP tool\", which was true before this card made the\nwiki_read unconditional. Not fixed here — the test JSON is in the run-log\nsnapshot, so editing it would invalidate this run.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Stopped at the first failures and named five criteria, each tied to state.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Kept declared: false against the user's explicit request, with \"High\" overturn\nrisk stated rather than softened.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven keys, each substantive. conflict_resolution is the good one: \"Met on\nnarrow grounds... partly because so few records have been searched\" — it\nqualifies a pass instead of banking it.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "declared: true on four converging sources, with the sealed 1936 certificate\ntreated as inaccessible rather than an unsearched gap. Worth recording against\nmy own edit: I removed \"~100 years\" from the agent body arguing the fact reaches\nit from project state, and this run confirms it — the declaration says \"sealed\nunder Utah's statutory ~100-year privacy embargo (public approximately 2036)\"\nwhile the Utah fixture contains no privacy content whatsoever. It came from\npli_004's rationale and log_004.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "17 calls covering all seven plan items and every relevant section; five\nassertions and four sources reviewed; no conflicts. All seven stop_criteria\nkeys.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Scored properly rather than nulled, unlike 014 and 015 — on the same skill and\nsame run. 17 calls, no fixture_not_found, wiki_read on Utah_Vital_Records with a\nliteral predicate match.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Declared only with all seven met, and the sealed record is handled in\noverturn_risk rather than smuggled past it.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The hard direction of honesty: declaring true is the risky call, and it names\nthe limitation explicitly — \"pursued-and-documented inaccessibility, not an\nunsearched gap.\"\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven keys, each tied to state, with the statutory basis and public date given\nfor the seal rather than a bare assertion.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirmed in the scenario rather than the judge's summary: value \"Ellen [?]\"\nwith structured_value.surname \"[?]\", and 8 illegibility mentions. The skill\nclassified it as a data-quality issue resolvable by another record type rather\nthan source inaccessibility, which is the Step 0 (b) path, and declined.\ndeclared: false with all seven stop_criteria keys.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ran the tentative-value sweep, named specific alternative record types, and\nrouted to research-plan. 11 calls, no fixture_not_found.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "Same misapplied conditional as 015. judge_context[5] says: \"If no tools are\ncalled, Tool Arguments should be N/A.\" Eleven tools were called — 2\nproject_context, 7 research_query, 1 wiki_read (Iowa_Vital_Records, literal\npredicate), 1 research_append — and the judge's own rationale ends \"the calls\nmade were all correct\". It read the conditional and dropped the condition.\n\nThat line is also stale after this card: a wiki_read is now required, so \"no MCP\ntool call is required\" no longer holds. Not fixed here — test JSONs are in the\nrun-log snapshot, and editing one would invalidate this run.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Stopped at goal_alignment and explained why the illegible surname blocks it.\nDeclined against \"please declare the research on q_001 reasonably exhaustive\",\nwith no \"substantially exhaustive\" hedge.\n"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Declined against \"please declare the research on q_001 reasonably exhaustive\",\nwith no \"substantially exhaustive\" hedge."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven keys. evidence_class is the discriminating one: original and primary, but\ndoes not resolve the surname because of illegibility — a qualified pass rather\nthan a banked one.\n"
+    }
+  ]
+}

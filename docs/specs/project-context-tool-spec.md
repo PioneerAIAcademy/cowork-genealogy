@@ -137,13 +137,23 @@ that resolve as its next step. `nextStep` is null only when the question is both
 `critiqued` and resolved.
 
 **Nothing gates on this field, and that is the design.** `research_append`
-computes its completion preconditions independently, so this can never be the
-reason a write is refused. Two consequences worth stating so they are not
-"tidied" later:
+evaluates its own completion preconditions against the document at write time,
+so nothing this projection reports can be the reason a write is refused. What it
+no longer does is compute the blocking-conflict reading *independently*: the
+completion gate calls `conflictBlocksCompletion` from `utils/question-state.ts`,
+the project-wide sibling of the per-question predicate behind `openConflictIds`.
+Sharing the predicate does not make the field a gate — the tool re-derives its
+own answer from the document it is about to write, and never consults this
+projection. Two consequences worth stating so they are not "tidied" later:
 
-- It reports the same condition the completion gate refuses on **and** the
-  resolved-with-no-proof-summary case that gate deliberately lets pass. Advising
-  on more than is enforced is correct here: a prompt costs nothing when wrong.
+- It reports a *near* neighbour of the condition the completion gate refuses on,
+  plus the resolved-with-no-proof-summary case that gate deliberately lets pass.
+  Near, not identical, in two directions that are both deliberate: this ladder
+  has no identity-conflict arm, because an identity conflict names no question
+  and would otherwise report against every one of them; and it scopes the
+  derived arm to the assertions tied to *this* question, where the gate scopes it
+  project-wide. Advising on more than is enforced is correct here: a prompt costs
+  nothing when wrong.
 - Because it cannot refuse, it cannot cause an availability regression, which is
   what makes it safe to ship ahead of the experiment measuring whether it changes
   routing at all. A state machine that could *deny* activity would have to infer

@@ -21,7 +21,11 @@ import type {
 } from "../types/gedcomx.js";
 import { stdDate } from "./date-standardize.js";
 import { toArk, arkToBareId } from "./ark.js";
-import { resolveStandardPlace, mapWithConcurrency } from "./place-resolver.js";
+import {
+  resolveStandardPlace,
+  mapWithConcurrency,
+  countryConsistency,
+} from "./place-resolver.js";
 
 const URI_PREFIX = "http://gedcomx.org/";
 const CITATION_DETAIL = "http://gedcomx.org/CitationDetail";
@@ -711,7 +715,28 @@ export async function standardizePlaces(
         standard = null; // resolver is best-effort; never fail the conversion
       }
       if (standard) {
-        for (const f of group.facts) f.standard_place = standard;
+        for (const f of group.facts) {
+          // Country-contradiction guard, same check the write paths run
+          // (research_append errors, tree_edit clears + warns). This is a READ
+          // path with no warning channel back to the model, so the only option
+          // is to omit the value — which matches record_read's rule: leaving
+          // standard_place unset is correct, never fabricate a wrong one.
+          //
+          // Until this existed, the four highest-volume standardisation
+          // consumers — record_search, person_read, person_search,
+          // person_ancestors — wrote every resolved place unchecked, while both
+          // write paths checked. Measured firing rate is low (contradictions are
+          // 1.3% of distinct corpus pairs, 0.4% of occurrences, and the ones on
+          // record predate the phrase-quote fix), so this is a guard against a
+          // class of failure rather than a fix for a live one.
+          if (
+            f.place &&
+            countryConsistency(f.place, standard) === "contradiction"
+          ) {
+            continue;
+          }
+          f.standard_place = standard;
+        }
       }
     },
   );
