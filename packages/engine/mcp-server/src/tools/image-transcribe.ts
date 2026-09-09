@@ -5,6 +5,7 @@ import {
 } from "../utils/fs-image-fetch.js";
 import { saveSourceImage } from "../utils/image-store.js";
 import { fetchWithTimeout, isFetchTimeout } from "../utils/http.js";
+import { expandLookingFor } from "../utils/name-variants.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
@@ -70,10 +71,11 @@ function recordBrowseAndCheckBudget(
 
 // VLM OCR on a full page scan is the slowest call this server makes, and the
 // budget has to clear a slow-but-genuine read without waiting out a hung one.
-// Across the committed e2e corpus a healthy transcription runs p90 79s / p95
-// 98s with a 167s maximum, and the image download it follows adds ~7s — so
-// 180s clears every real read with margin while still cutting the 190–316s
-// calls of the one run that hung. Sized in the spec, not guessed. This budget
+// Measured 2026-09-08 over 59 live reads on the current default model, the whole
+// call runs p50 18.7s / p90 40.6s / max 50.1s. So 180s is not a latency budget
+// but a hang-catcher, 3.6x the slowest healthy read. Sized in the spec, not
+// guessed — re-measure there after a model change, and never from run-log
+// timelines, which are per SDK message rather than per tool call. This budget
 // holds only where the call is not bridged (the harnesses and the hosted
 // control plane, both verified over stdio): in Cowork the device bridge aborts
 // every MCP call at 60s, so any OCR past a minute is lost there regardless of
@@ -215,7 +217,14 @@ export async function imageTranscribeTool(
     fallbackUrl,
   );
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
-  const prompt = buildOcrPrompt(input.lookingFor);
+  // Expand recognized given names in lookingFor with historical diminutives
+  // (issue #607). The VLM reads this as natural language, so all forms
+  // (including scribal abbreviations with periods) are included.
+  const lookingForExpansion = input.lookingFor
+    ? expandLookingFor(input.lookingFor)
+    : null;
+  const expandedLookingFor = lookingForExpansion?.expanded ?? input.lookingFor;
+  const prompt = buildOcrPrompt(expandedLookingFor);
 
   let response!: Response;
   for (let attempt = 0; ; attempt++) {
@@ -386,6 +395,15 @@ export async function imageTranscribeTool(
     ...(key && !truncated ? { found: parseFound(transcription) } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(browseBudget ? { browseBudget } : {}),
+    ...(lookingForExpansion && input.lookingFor
+      ? {
+          nameExpansion: {
+            original: input.lookingFor,
+            expanded: lookingForExpansion.expanded,
+            expansions: lookingForExpansion.expansions,
+          },
+        }
+      : {}),
     metadata: {
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),

@@ -28,6 +28,17 @@ Kristiansson Hole, Kristian Klausen Hole, the Ringebu Kristian Hole b. 1877, …
 careful agent drops the American surname and matches the **exact birth (2 Oct 1876)
 and baptism (5 Nov 1876) at Ringebu** to the true christening (`ark:/61903/1:1:683F-NTZ9`).
 
+## Bundled captures (`provided-documents/`)
+
+Two 1875 Norwegian census records are committed here to give the harness access to both parents' pre-emigration evidence without a live browser session (issue #2083):
+
+| File | Source | What it shows |
+|------|--------|---------------|
+| `digitalarkivet-census-1875-benjamin-kristofersen-hole.pdf` | Digitalarkivet — Norway, 1875 Census | Household at Stade nordre, Vågå, Oppland. Benjamin Kristofersen Hole (b. 1852, Lesje Hovedsogn), listed as son of Marit Hole, occupation: schoolteacher (Skolelærer), assumed residence: Ringebo (Ringebu). |
+| `digitalarkivet-census-1875-mathea-pedersdatter-ringebu.pdf` | Digitalarkivet — Norway, 1875 Census | Household at Spangrudlien Spangrud søndre, Ringebu. Mathea Pedersdatter (b. 1857, Ringebu), daughter (d) of Peder Pedersen (b. 1812, Ringebu) and Mali Larsdatter (b. 1820, Ringebu). |
+
+Both are authentic records saved from digitalarkivet.no in a credentialed browser. Mathea's entry enumerates her household at Spangrudlien in Ringebu. Benjamin's entry enumerates him at Stade nordre in Vågå, with Ringebu recorded only as his assumed residence (hjemsted) — the administrative home of a schoolteacher working away from his registered municipality. Both corroborate their identities one year before Christian's 5 Nov 1876 christening in Ringebu.
+
 ## What was removed from the starting tree
 
 - Removed both **parents** — Benjamin Khristen Hole and Mattia Pedersdatter

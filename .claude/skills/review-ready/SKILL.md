@@ -31,7 +31,7 @@ code edits, no eval runs, and no board moves — promotion and demotion belong t
 Repo `PioneerAIAcademy/cowork-genealogy`, project **1**.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000
 ```
 
 ## 1. Pick the candidates
@@ -87,7 +87,7 @@ answers this for every candidate at once — this is the whole standing-pool que
 # and are raw untriaged bundles, and reviewing one costs ~110k tokens to learn
 # nothing. `/triage-feedback` drops the label on the way to Backlog, so anything
 # still carrying it has not been triaged and this filter is the whole guard.
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 | jq -r '
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 | jq -r '
   .items[]
   | select(.status == "Ready" and (.assignees | length) == 0
            and ((.labels | index("developer")) or (.labels | index("genealogist")))
