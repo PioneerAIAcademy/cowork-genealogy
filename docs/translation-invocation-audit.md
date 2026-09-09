@@ -18,9 +18,10 @@ enough to check the axis that would.
 ## Provenance
 
 Every figure was computed from the **162 committed e2e run logs** under
-`eval/runlogs/e2e/` and the **138 fixture directories** under
-`eval/tests/e2e/`, as they stood on `main` at commit `f8daba32`. 94 of the 138
-fixtures carry at least one committed run. The scripts that produce every number
+`eval/runlogs/e2e/` and the **137 fixture directories** under
+`eval/tests/e2e/` (the 138th entry is a `.gitkeep`, not a fixture), as they
+stood on `main` at commit `f8daba32`. 94 of the 137 fixtures carry at least one
+committed run. The scripts that produce every number
 below are in **Reproduce**; the reviewer re-runs them (CI cannot check a
 measurement).
 
@@ -87,7 +88,7 @@ last attempt on this card.
 | Every assertion a run wrote, with `record_id` | `run-*.final-research.json` (image-sourced carry a `3:1:` ARK, indexed `1:1:`) |
 | Every run-produced tree fact | `run-*.final-tree.gedcomx.json` diffed against the seed tree |
 | Judge verdict per run | `run-*.json` → `verdict` / `outcome` |
-| The transcription the extractor read | **Only a decoded ≤500-char head**, in `tool_calls[].response_summary` of `image_transcribe` — present on 235 of 455 calls corpus-wide, absent on older runs |
+| The transcription the extractor read | **Only a decoded ≤500-char head**, in `tool_calls[].response_summary` of `image_transcribe` — present on 235 of 455 calls corpus-wide (193 real transcriptions; the other 42 are `{"error":…}` tool-failure payloads, not transcriptions), absent on older runs |
 | The ARK a transcription was for | `image_transcribe`'s `args.ark` — **recorded as `None` on 207 of 221 non-English calls** |
 | Full subagent transcripts / delegation messages | **Not committed** — `subagents[].transcript` is a filename, `*.session.jsonl` is gitignored |
 
@@ -127,6 +128,20 @@ range `January–March 1904`, not a vernacular date, so a precise detector
 excludes it. Six correct renderings in one fixture is not a sample that can
 distinguish "adequate" from "lucky."
 
+**Two cautions for a reader reproducing this axis.** First, the detector is
+**Romance-only**: `VERN` lists Portuguese, Spanish, Italian and French month
+names plus the Iberian `de … de` frame, and nothing Nordic, Germanic,
+West-Slavic, Romanian, Croatian or Latin. Extending it to those families adds
+**no** genuine run-produced vernacular date — the single extra match across the
+non-English corpus is `cruz-corona-ancestry`'s `5 August 1906`, an English-form
+date and a false positive — so the **6** robust facts are the count, not an
+artefact of a narrow regex. Second, those 6 are **seed-subtracted**. A reader
+who instead counts every vernacular-`date` fact across all final trees, without
+subtracting the seed tree, gets **54 facts across 11 fixtures — but 48 of them
+are seeded** (already present in the starting tree, so not run-produced),
+leaving the same **6** run-produced. The larger number measures the fixtures'
+seed data, not what the runs wrote.
+
 **A caveat on reading `standard_date` well-formedness as a quality signal:** a
 month-dropped value like `27 1749` fails `isPerfectStandardDate`
 (`packages/engine/mcp-server/src/utils/fact-helpers.ts`,
@@ -144,10 +159,14 @@ fixture, is the head vernacular, and are the assertions **citing the same
 relationship terms not mistranslated?
 
 **That record-linked read is not doable from the committed logs.** Of the 221
-non-English `image_transcribe` calls, 177 preserved a head; decoding the head's
-JSON, **95 are genuinely vernacular** (Czech `Měsyc a Den, Křtící kněz, Gměno
+non-English `image_transcribe` calls, 177 returned a non-empty head — but **37
+of those are `{"error":…}` tool-failure payloads, not transcriptions**, leaving
+**140 real transcription heads**. Decoding those, **90 are genuinely vernacular**
+(Czech `Měsyc a Den, Křtící kněz, Gměno
 dítěte`; Danish `Døbt, Forældre, Kirkebog`; Swedish `Barsebäck KyrkioBook,
-FÖDDE VIGDE DÖDE`). But only **14 of the 221 calls recorded a real `ark`** (the
+FÖDDE VIGDE DÖDE`) — of the 95 heads whose decoded text carries non-ASCII, 5
+are error payloads whose message text happens to be accented, not vernacular
+records. But only **14 of the 221 calls recorded a real `ark`** (the
 rest are `None`), and only **1** head links to a persisted ARK-bearing
 assertion — **0** of the vernacular heads do. The transcription cannot be tied
 to the assertions it produced, so the consistency check the card specifies has
@@ -162,15 +181,28 @@ looks adequate:
   `Chresten Nielsen`, `Børte Kirstine`, patronymics `Sørensd` / `Christensd`
   preserved rather than anglicised; one assertion honestly flags OCR
   illegibility instead of guessing.
-- `elena-asmundsdotter-origin` (Swedish): `Assmen Nielsson [?] (indexed; likely
-  Asmund Nilsson)` — the vernacular indexed spelling is preserved *with* an
-  explicit normalisation note, not silently translated.
+- `elena-asmundsdotter-origin` (Swedish): the vernacular indexed spelling
+  `Assmen Nielsson` is preserved *with* an explicit normalisation note (`[?] …
+  likely Asmund Nilsson`), not silently translated — but this fixture is
+  **evidence of transcription fidelity only, not of adequate handling.** Its
+  committed grades are `false` on every finding across all three runs; the
+  2026-08-25 annotation records the faithfully-transcribed name attached to the
+  wrong man: "Wrong father asserted and written to the tree: a ParentChild from
+  'Assmen Nielsson' to Elena … The expected father is Asmund Torsson of
+  Henckestorp." Keeping the spelling in original form did not prevent a wrong
+  relationship, so this leg supports "the head was preserved," not "the run
+  handled the record adequately."
 - `anna-findejsova-daughter` (Czech/German): `Maxmilian Michal` / `Michl`,
   `Agnes`, `Anna` — original forms, no mistranslation.
 
 This is three fixtures with a handful of name assertions each, read at the
-fixture level because the record level is unavailable. It is consistent with
-"inline handling is adequate," and it is nowhere near enough to establish it.
+fixture level because the record level is unavailable. On transcription fidelity
+all three keep the head in original form; but as an *adequacy* signal only two
+legs stand (`chresten-nielsen-daughter`, `anna-findejsova-daughter`), since
+`elena-asmundsdotter-origin` graded `false` throughout. Even those two are thin
+— `chresten`'s `f1` is `true` in run 1 and `false` in run 2 — so the read is at
+most consistent with "inline handling is adequate," and it is nowhere near
+enough to establish it.
 
 ## The outcome the data supports
 
@@ -182,8 +214,12 @@ corpus.** Both sub-cases the card names are true, and the second is binding:
 - *The log* is thin on the axis that would actually decide it: the extractor's
   input is preserved only as a ≤500-char head, and the `ark` that would tie that
   head to the assertions it produced is `None` on 207 of 221 non-English calls,
-  with full subagent transcripts uncommitted. 95 vernacular transcriptions are
-  visible and essentially none is checkable against run output.
+  with full subagent transcripts uncommitted. 90 vernacular transcriptions are
+  visible and essentially none is checkable against run output. (A further 37 of
+  the 221 non-English calls returned an `{"error":…}` payload rather than a
+  transcription; that transcribe-failure rate is itself a harness signal for the
+  #2189 card — preserve the input and the link — not a translation-quality
+  signal.)
 
 Per the ruling, that second case is a **harness card** (developer, the shape of
 #2189: preserve the extractor's input and the transcription→assertion link),
@@ -202,7 +238,10 @@ likely one, and this measurement confirms it.
   delegation, and there is no evidence yet that the step is needed.
 - **Not "narrow or retire `translation`."** That deletes a capability over a
   third of the corpus on the same absent evidence, and the fixture-level read,
-  thin as it is, points the other way. #2259's word-list move stays blocked on
+  thin as it is, does not support retirement: on transcription fidelity it rests
+  on two of its three legs (the third, `elena-asmundsdotter-origin`, graded
+  `false` throughout), which is a reason not to act on absent evidence rather
+  than proof the handling is adequate. #2259's word-list move stays blocked on
   this outcome.
 
 ## Limit of this measurement
@@ -282,18 +321,23 @@ def ark_class(rid):
 def ark_id(s):
     m = re.search(r'(3:1:[0-9A-Za-z-]+|1:1:[0-9A-Za-z-]+)', s or ''); return m.group(1) if m else None
 def decode_head(rs):
-    if rs is None: return ''
+    # Returns (is_error, text). is_error is True when the head is an
+    # {"error": ...} tool-failure payload rather than a transcription; those
+    # are failed calls, not preserved vernacular, and must not be counted as
+    # real transcription heads or as vernacular.
+    if rs is None: return (False, '')
     txt = str(rs)
     for _ in range(3):
         try: v = json.loads(txt)
         except Exception: break
         if isinstance(v, list) and v and isinstance(v[0], dict): v = v[0]
         if isinstance(v, dict):
-            if 'transcription' in v: return str(v['transcription'])
+            if 'error' in v: return (True, json.dumps(v, ensure_ascii=False))
+            if 'transcription' in v: return (False, str(v['transcription']))
             if 'text' in v: txt = str(v['text']); continue
-            return json.dumps(v, ensure_ascii=False)
+            return (False, json.dumps(v, ensure_ascii=False))
         txt = str(v)
-    return txt
+    return (False, txt)
 PERFECT = re.compile(r'^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+$')
 VERN = re.compile(r'\b(setembro|outubro|dezembro|janeiro|fevereiro|mar[çc]o|maio|junho|julho|'
     r'agosto|novembro|abril|enero|febrero|marzo|mayo|junio|julio|septiembre|octubre|noviembre|'
@@ -310,7 +354,8 @@ for fx, rj, fr, ft in runs():
             a = t.get('args') or {}; s = str(a.get('skill') or a.get('command') or '').lstrip('/')
             if s: inv[s] += 1
 fixtures = sorted(set(f for f, _, _, _ in runs()))
-print(f'corpus: runs={len(run_files)} fixtures-with-runs={len(fixtures)} dirs={len(list(FIX.iterdir()))}')
+print(f'corpus: runs={len(run_files)} fixtures-with-runs={len(fixtures)} '
+      f'fixture-dirs={sum(1 for p in FIX.iterdir() if p.is_dir())}')
 print(f'invocations: translation={inv["translation"]} record-extraction={inv["record-extraction"]} '
       f'convert-dates={inv["convert-dates"]} historical-context={inv["historical-context"]} '
       f'locality-guide={inv["locality-guide"]} search-records={inv["search-records"]}')
@@ -355,7 +400,22 @@ for g in ('nonEng', 'Eng'):
           f'image={a["ark"]["image"]} indexed={a["ark"]["indexed"]} other={a["ark"]["other"]} verdicts={dict(a["v"])}')
 print(f'machine-axis vernacular-date facts: {dict(vern)} total={sum(vern.values())}')
 
-calls = heads = vh = real = linked = 0
+# Corpus-wide head coverage (the 235/455 line in the provenance table), split
+# into real transcriptions vs {"error": ...} tool-failure payloads.
+cw_calls = cw_heads = cw_real = cw_err = 0
+for fx, rj, fr, ft in runs():
+    for tc in load(rj).get('tool_calls') or []:
+        if 'image_transcribe' not in (tc.get('tool') or ''): continue
+        cw_calls += 1
+        rs = tc.get('response_summary')
+        if not (rs and str(rs).strip()): continue
+        cw_heads += 1
+        if decode_head(rs)[0]: cw_err += 1
+        else: cw_real += 1
+print(f'corpus-wide image_transcribe: calls={cw_calls} heads={cw_heads} '
+      f'real-transcription={cw_real} error-payload={cw_err}')
+
+calls = heads = heads_real = err_heads = vh = vh_real = real = linked = 0
 for fx, rj, fr, ft in runs():
     if grp(fx) != 'nonEng': continue
     seed_a = set(a.get('id') for a in (load(FIX / fx / 'starting-research.json').get('assertions') or [])) if (FIX / fx / 'starting-research.json').exists() else set()
@@ -371,18 +431,26 @@ for fx, rj, fr, ft in runs():
         rs = tc.get('response_summary')
         if not (rs and str(rs).strip()): continue
         heads += 1
-        if NONASCII.search(decode_head(rs)): vh += 1
+        is_err, txt = decode_head(rs)
+        if is_err: err_heads += 1
+        else: heads_real += 1
+        if NONASCII.search(txt):
+            vh += 1
+            if not is_err: vh_real += 1
         ark = (tc.get('args') or {}).get('ark')
         k = ark_id(ark) if (ark and str(ark) != 'None') else None
         if k: real += 1
         if k and by.get(k): linked += 1
-print(f'log-axis: non-English transcribe calls={calls} heads={heads} vernacular-heads={vh} '
+print(f'log-axis (non-English): transcribe calls={calls} heads={heads} '
+      f'real-transcription-heads={heads_real} error-payload-heads={err_heads} '
+      f'vernacular-heads={vh_real} (+{vh - vh_real} accented error payloads) '
       f'real-ark={real} head-linked-to-assertion={linked}')
 ```
 
 The fixture-level Axis-2 read (`n = 3`) is a genealogist's read of the decoded
 heads against each fixture's run-produced name/relationship assertions; the
 material is dumped per fixture by filtering the loop above to one fixture and
-printing `decode_head` alongside the `name` / `relationship` assertions. It is
+printing `decode_head`'s decoded text (its second tuple element) alongside the
+`name` / `relationship` assertions. It is
 recorded as a read, not a script output, because judging "kept in original
 form / not mistranslated" is the judgement the card reserves for a person.
