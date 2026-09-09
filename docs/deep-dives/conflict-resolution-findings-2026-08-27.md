@@ -688,8 +688,15 @@ identity conflict it then flagged. A three-disjunct version keyed on
 fixture whose conflicts declare *different* blocked questions.
 
 So V3 ships on the `source_id` join alone, scoped to a `resolved` **fact** conflict as this
-heading says. Recorded here because #1823 step 3 is the next consumer of "the ruled
-predicate" and would otherwise re-derive this.
+heading says.
+
+**Step 3 has since landed (PR #2334) and confirms this reading.** Its predicate in
+`utils/question-state.ts` joins conflict→question by `blocks_question_ids.includes(qid)` OR
+`competing_assertion_ids` → the assertion's `extracted_for_question_ids` — the three arms the
+ruling named, and **`source_id` is not among them.** Two things follow. The transposable
+disjunct really is the `extracted_for_question_ids` one, as recorded above. And step 3's join
+is conflict→**question** (`includes(qid)`), not an intersection between two conflicts, so the
+withdrawn arm was not a transposition of what step 3 does either — it was a third thing.
 
 ---
 

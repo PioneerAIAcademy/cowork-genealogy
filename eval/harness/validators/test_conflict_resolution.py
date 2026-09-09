@@ -482,13 +482,18 @@ def report_resolution_word_caps(before_state, after_state):
 #      reds two tests.
 #
 # What would make it viable is a fixture whose conflicts declare DIFFERENT
-# `blocks_question_ids`; none exists. Also worth recording for #1823 step 3, the
-# next consumer of "the ruled predicate": the ruling's transposable disjunct is
-# via `competing_assertion_ids` -> the assertion's `extracted_for_question_ids`,
-# not via `blocks_question_ids`, and `source_id` (this arm) is a field the
-# ruling never mentions. Implemented as a three-disjunct conflict->conflict
-# intersection it also yields 8 runs on this corpus, so nothing is lost by
-# waiting for evidence that discriminates.
+# `blocks_question_ids`; none exists.
+#
+# #1823 step 3 has since landed (PR #2334) and settles what "the ruled
+# predicate" is: `utils/question-state.ts` joins conflict->QUESTION by
+# `blocks_question_ids.includes(qid)` OR `competing_assertion_ids` -> the
+# assertion's `extracted_for_question_ids`. So the transposable disjunct is the
+# `extracted_for_question_ids` one, `source_id` (this arm) is a field the ruling
+# never mentions, and the withdrawn arm was not a transposition of step 3 either
+# -- step 3 relates a conflict to a question, not two conflicts to each other.
+# Implemented as a three-disjunct conflict->conflict intersection it also yields
+# 8 runs on this corpus, so nothing is lost by waiting for evidence that
+# discriminates.
 #
 # The dropped alternative from the plan stage, also recorded so it is not
 # re-proposed: keying the join on the source of the *preferred* assertion only.
