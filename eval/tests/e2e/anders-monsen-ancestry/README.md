@@ -100,3 +100,38 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   multi-step search checklist the agent executes before satisficing on an
   alternate (honest, defensible, but off-target) research lead — worth keeping
   in mind before spending more live-run budget chasing a single clean pass.
+- **Runs 6-7 (2026-07-21 08:10 and 23:15)** — both failed; both annotated `f1`
+  partial, `f2` false, proof quality 3. Each identified the right couple through
+  indirect 1801-census evidence but never recovered the marriage date or place.
+  Both annotations concluded the "Norway, Marriages, 1660-1926" entry was
+  "genuinely absent, not a search-quality problem" after 27 and 9 search
+  strategies respectively — **a conclusion the run-8 probe below refutes.** Both
+  recorded `stop_reason: "error"` while still producing a full tree and a
+  committed grade. (Runs 3 and 4 in the narrative above have no committed run
+  logs; the five on disk before run 8 are runs 1, 2, 5, 6 and 7.)
+- **Run 8 (2026-09-09 14:30, `git_sha` 96cadcac5)** — `f1` partial, `f2` false,
+  proof quality 2; `stop_reason: completed`, `compliance: fail`. The first run to
+  recover the exact marriage date. It reached **25 Jun 1786** by a route no prior
+  run took: `image-reader` transcribed a **1963 LDS Family Group Sheet** (ark
+  `3:1:3QSQ-G979-7SPB`) whose submitter cites Hamre parish film 17885. It wrote a
+  `probable` proof summary and encoded the date on the `Couple` relationship,
+  flagging the place as inferred from the source's parish scope rather than
+  stated on the marriage line. Cost $11.58 / 102.9 min — roughly double this
+  fixture's prior mean, the excess spent on a second research loop after
+  `research-exhaustiveness` returned `declared: false`.
+- **What run 8 settled about `f2` (probed live 2026-09-09, after the run):** the
+  expected record is **not** absent, and this closes the "Not yet tried" item
+  above. `record_read ark:/61903/1:1:NW44-PM2` returns it in full — Anders Monsen
+  + Urna Halsteinsdr, Marriage `25 Jun 1786`, Hamre, Hordaland, collection
+  1468080. It is nonetheless unreachable through `record_search`:
+  `collectionId=1468080, givenName=Anders, surname=Monsen, isPrincipal=true,
+  marriageYearFrom=1780, marriageYearTo=1790` returns exactly **4** records
+  (1780 Vardal, 1780 Svanøy, 1782 Selje, 1790 Bø) and the target is not among
+  them — the entire result set is 4, so this is not a ranking or pagination
+  effect. Dropping `isPrincipal` and pinning `marriageYear=1786` returns 19
+  records, every one of them Anders-Monsen-as-parent. Run 5's hypothesis is
+  therefore confirmed and sharpened: **the record's marriage date is not
+  searchable in the index even though `record_read` serves it.** `f2` is not
+  recoverable by any documented search path, which makes it an expected-findings
+  defect rather than an agent miss — do not read future `f2` failures as a
+  search-quality regression.
