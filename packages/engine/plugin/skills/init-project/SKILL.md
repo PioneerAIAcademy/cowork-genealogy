@@ -216,6 +216,15 @@ Record it **only** when the researcher volunteers access unprompted — the ques
 
 ### 5. Pedigree analysis and project summary
 
+**First, call `Skill("check-warnings")` once, naming the subject person's id
+and every imported relative's id from Step 3, and asking it to check all of
+them.** Fold what it returns into the findings below exactly as
+check-warnings frames it — never restate a timeline impossibility as one
+more line on the "Obvious error detection" list below, which is a smaller,
+separate check. `person_quality` will not fire for a synthetic id
+(check-warnings skips it silently); the offline `person_warnings` half
+still runs and still reports.
+
 Analyze imported data before presenting results:
 
 **Minimum information check** — per person: full name (given + surname)? Specific date (not just ~year)? Specific place (county/parish, not just country)?
@@ -264,9 +273,10 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. Build the tree in memory — all persons, relationships, sources (quality: 1).
 4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (from their answers, not defaults) and one per volunteered holding.
-6. Pedigree analysis + summary. Mary Kelly and the children are tree context
-   only — their gaps are noted, not queued. Offer the first research question
-   in plain language.
+6. `Skill("check-warnings")` for I1, Mary Kelly, James, and Margaret. Pedigree
+   analysis + summary, folding in whatever it returns. Mary Kelly and the
+   children are tree context only — their gaps are noted, not queued. Offer
+   the first research question in plain language.
 
 ## Important rules
 
