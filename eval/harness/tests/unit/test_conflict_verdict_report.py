@@ -73,7 +73,7 @@ def scenarios(tmp_path):
     """A scenario whose conflict starts `unresolved` with no preferred assertion.
 
     This is the MINORITY shape repo-wide and the majority within the
-    conflict-resolution suite: measured 2026-09-08 over the 96 scenario fixtures,
+    conflict-resolution suite: measured 2026-09-08 over the 97 scenario fixtures,
     33 of 42 conflicts start `resolved` with a non-null `preferred_assertion_id`
     and only 9 start `unresolved`. An earlier version of this docstring claimed
     the opposite; it was wrong, and the correction matters because it makes
@@ -313,7 +313,7 @@ def _run(output):
         {"tests": ["not a dict"]},
         {"tests": [_test_entry("ut_a", "s_demo", [{"no": "id"}])]},
         {"tests": [_test_entry("ut_a", "s_missing", [_mod("c_001", status="x")])]},
-        # `file_changes: None` is the MAJORITY real shape — 1172 of the 2184 runs
+        # `file_changes: None` is the MAJORITY real shape — 1180 of the 2192 runs
         # across the 134 committed logs, vs 1012 carrying a dict (measured
         # 2026-09-08). `_test_entry` cannot build it, so nothing here covered the
         # single most common input the scan receives.

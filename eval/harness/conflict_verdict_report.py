@@ -27,6 +27,11 @@ where the field was written, and otherwise the value the scenario fixture starte
 with. A reader who implements the issue's "where to look" line verbatim gets a
 clean green scan and concludes the corpus is consistent.
 
+**Every figure in this docstring is dated 2026-09-09 and they move fast** — the
+log count, the null-`file_changes` ratio and the fixture count all shifted twice
+during a single review round as `main` advanced. Re-derive before relying on any
+of them; the shapes they describe are the durable part.
+
 **Re-derive those two numbers rather than quoting them.** Candidate retention
 keeps only the newest 5 per skill, so the three logs carrying that contradiction
 rotate out and the effective count drops to 0 without anything being fixed. The
@@ -330,7 +335,7 @@ def scan_runlog(runlog: dict[str, Any], scenarios_dir: Path = SCENARIOS) -> LogS
                 "scenario": scenario,
                 "conflict_id": cid,
                 "kind": (
-                    # NOT "flip-flopped across its runs": 2184 of 2184
+                    # NOT "flip-flopped across its runs": 2192 of 2192
                     # committed test entries carry exactly one run, so the
                     # multi-`runs[]` route cannot fire. The live route is two
                     # `tests[]` entries sharing one `test_id` — the corruption
