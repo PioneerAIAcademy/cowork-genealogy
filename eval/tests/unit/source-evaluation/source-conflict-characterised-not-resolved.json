@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_v7n",
+    "skill": "source-evaluation",
+    "name": "A conflict the audit discovers is characterised and routed onward, never resolved",
+    "type": "positive",
+    "description": "Check 3, in the form issue #2222's review notes settled: the front-door rule stands, and what the body gains is characterisation. Two attached records bear on a death the profile does NOT record -- a Catholic parish burial on 14 April 1878 (SD-DRIS-C) and a Quebec civil death registration on 2 February 1885 (SD-DRIS-D) -- so neither disagrees with the profile, they disagree with each other by seven years. Both carry an indexed birth of 1814 and the same district, so neither is discredited and misattribution is not the answer. The audit's job is to name both sources, both values, what kind of record each is and what would settle it, while picking no winner, recommending no detach and writing nothing. The shipped body has no per-finding shape for this at all. That did not make the test fail on the run sampled -- it passed -- but it did make the behaviour unstable, which the baseline below records. TWO THINGS THIS TEST DISCRIMINATES, which is why the issue's proposed second check-3 test is folded in here rather than added: the death pair must be characterised, and the 1861 census's 1816 birth against the baptism's 1814 must NOT be -- a two-year census drift is ordinary variance, and a report that characterises both pairs has failed to tell them apart. Note the boundary this does not move: ut_source_evaluation_c5n still routes away, because its user message asks which source to believe, and the front-door rule fires on the incoming request before any tool call. This test's request is an audit; the conflict is something the audit finds. PRE-EDIT BASELINE (measured 2026-09-07 against the shipped body, scratch run): PASS, all dimensions 3, with the run calling the death pair 'a direct source-versus-source conflict'. Read beside ut_source_evaluation_j4s, which ran against the SAME body and the SAME fixtures and instead detached one of the pair as misattributed, the shipped behaviour is unstable rather than correct -- which is what a missing rule looks like, and is the measured case for step 5 gaining a shape for this finding.",
+    "tags": [
+      "index-discrepancy",
+      "doctrine",
+      "source-conflict",
+      "boundary"
+    ]
+  },
+  "input": {
+    "user_message": "Please evaluate the sources attached to Cornelius Driscoll (GJ72-9WD) and report what you find.",
+    "scenario": "driscoll-source-audit"
+  },
+  "mcp_fixtures": [
+    "person-read-driscoll-attached-sources",
+    "record-read-driscoll-baptism-1814",
+    "record-read-driscoll-marriage-register",
+    "record-read-driscoll-burial-1878",
+    "record-read-driscoll-death-1885",
+    "record-read-driscoll-1851-census-index",
+    "record-read-driscoll-1861-census",
+    "source-attachments-driscoll"
+  ],
+  "judge_context": [
+    "Should call person_read with sourceDescriptions to enumerate what is attached, then record_read each source that carries a record ARK",
+    "The profile records no death date. SD-DRIS-C gives a burial of 14 April 1878 with a death that April; SD-DRIS-D registers a death of 2 February 1885. Both carry an indexed birth of 1814 and both name the Sherbrooke district. Grade whether the reply locates the disagreement in the right place -- between the two sources rather than between a source and the profile -- and whether what it reports about each record matches that record's response.",
+    "Deciding which of the two to believe is another workflow's job, and the skill writes nothing. Grade whether the reply leaves the question open and hands it on, rather than which date it would have chosen. A reply that weighs the two record types as evidence and then declines to conclude is doing what the body asks; a reply that announces a death date, or recommends detaching either record, is not.",
+    "Neither death record is discredited by anything in the tool responses: the indexed births agree, the district agrees, and source_attachments names no other tree person holding either ARK. A reply that resolves the disagreement by calling one of them misattributed is asserting something no response supports.",
+    "The 1861 census indexes a birth of 1816 where the baptism record (SD-DRIS-A) gives 1814. Two sources differ here too, but a two-year drift in a census age is ordinary variance in that record type. Whether the reply treats these two pairs the same way is the discrimination this test is for; a report that presents this pair with the same weight as the seven-year death disagreement has not distinguished them. Saying nothing about the census drift is acceptable.",
+    "The Drouin Collection marriage register (SD-DRIS-B) is a source-versus-profile finding, not a source-versus-source one: 9 June 1845 indexed against the profile's 9 June 1849, same day, same month, same bride, same parish. Its remedy is to go back to the original and correct the index, and it must not be recommended for detaching.",
+    "The 1851 census entry (SD-DRIS-E) disagrees with the profile on the township alone and carries nothing else to check. It is a source-versus-profile matter and not part of either source-versus-source pair.",
+    "The headstone photograph (SD-DRIS-F) has no record ARK and must be reported as unchecked rather than clean",
+    "The burial register (SD-DRIS-C) and the civil death registration (SD-DRIS-D) disagree with EACH OTHER, not with the profile, which records no death date at all. Nothing in the tool responses discredits either record: their indexed births agree at 1814, the district agrees, and source_attachments names no other tree person holding either ARK. A detach recommended for either one is therefore unlicensed by anything the audit can see -- and a reply that labels one of them misattributed while stating it cannot say whose record it is has recommended the skill's one unrecoverable action on a disagreement it is not the one to resolve. Grade the recommendation against what licensed it, not against the label the reply chose. Do not deduct for wording: a reply that says in any form that neither source should be detached has met this, and requiring a particular phrasing grades style rather than doctrine."
+  ],
+  "index_error_source": "Drouin Collection"
+}
