@@ -690,4 +690,37 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     expect(prompt).not.toContain("also known as");
     expect(prompt).not.toContain("FOUND or NOT FOUND");
   });
+
+  it("includes nameExpansion in response when expansion fires", async () => {
+    mockOpenRouterOk("Betty Martin, christened 1 November 1812\nFOUND");
+
+    const result = await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Elizabeth Martin",
+    });
+
+    expect(result.nameExpansion).toBeDefined();
+    expect(result.nameExpansion!.original).toBe("Elizabeth Martin");
+    expect(result.nameExpansion!.expanded).toContain("also known as");
+    expect(result.nameExpansion!.expansions).toHaveProperty("Elizabeth");
+  });
+
+  it("omits nameExpansion when no recognized given name", async () => {
+    mockOpenRouterOk("Patrick Flynn, witness\nFOUND");
+
+    const result = await imageTranscribeTool({
+      imageId: "004884748_02613",
+      lookingFor: "Patrick Flynn",
+    });
+
+    expect(result.nameExpansion).toBeUndefined();
+  });
+
+  it("omits nameExpansion when lookingFor is absent", async () => {
+    mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
+
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+
+    expect(result.nameExpansion).toBeUndefined();
+  });
 });

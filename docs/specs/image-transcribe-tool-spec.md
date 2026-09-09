@@ -386,9 +386,16 @@ periods) because the VLM reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
-No change to the response shape — the issue decided no reporting channel
-is needed for `image_transcribe` (unlike `fulltext_search`, which reports
-`nameExpansion`).
+When expansion fires, the response includes a `nameExpansion` field
+(reversing the prior §5.3.1 decision, per review thread #9 on PR #2164):
+
+- `original`: the caller's `lookingFor` string
+- `expanded`: the rewritten prompt the VLM actually saw
+- `expansions`: which formal names were expanded and to which variant
+  forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
+
+This mirrors `fulltext_search`'s `nameExpansion` without
+`variantsInResults`, which has no equivalent for VLM transcription.
 
 ### 5.4 Behavior (pipeline)
 

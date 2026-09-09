@@ -220,9 +220,10 @@ export async function imageTranscribeTool(
   // Expand recognized given names in lookingFor with historical diminutives
   // (issue #607). The VLM reads this as natural language, so all forms
   // (including scribal abbreviations with periods) are included.
-  const expandedLookingFor = input.lookingFor
-    ? (expandLookingFor(input.lookingFor)?.expanded ?? input.lookingFor)
-    : input.lookingFor;
+  const lookingForExpansion = input.lookingFor
+    ? expandLookingFor(input.lookingFor)
+    : null;
+  const expandedLookingFor = lookingForExpansion?.expanded ?? input.lookingFor;
   const prompt = buildOcrPrompt(expandedLookingFor);
 
   let response!: Response;
@@ -394,6 +395,15 @@ export async function imageTranscribeTool(
     ...(key && !truncated ? { found: parseFound(transcription) } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(browseBudget ? { browseBudget } : {}),
+    ...(lookingForExpansion && input.lookingFor
+      ? {
+          nameExpansion: {
+            original: input.lookingFor,
+            expanded: lookingForExpansion.expanded,
+            expansions: lookingForExpansion.expansions,
+          },
+        }
+      : {}),
     metadata: {
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
