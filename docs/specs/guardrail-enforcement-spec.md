@@ -376,6 +376,32 @@ if the rate is low enough that a fail is a signal and not a wall" — zero is no
 "low enough", it is *nobody has seen this detector fire*. Graduating it promotes
 an unexercised predicate to a hard failure.
 
+**Every column above counts firings, and no column could count a miss.** The
+replay is *aimed at* the false-DENY direction — would this check block work that
+was fine — but it does not measure that either, and the distinction matters
+because the two halves are argued from it. Twenty lines above, the tree-side arm
+records the reason: "the gate that would tell those apart is the thing being
+measured, not an input to it." That applies to both directions. In a replay the
+check is its own ground truth: a write it does not recognise as a violation
+is indistinguishable from a write that is correct, and nothing in the committed
+corpus labels violations independently of the detector under test. The
+population leans the same way, since committed run logs are converged states and
+re-run failures are absent, so every rate on this page is a floor.
+
+So this table can establish that a candidate does not over-fire on real work. It
+cannot establish that the candidate catches the class it names — that is
+established the way any guard is, by breaking the thing in several shapes and
+watching it fire (CLAUDE.md, "A new lint must be proven to fail"). A graduation
+argument needs both halves, and only one of them lives here.
+
+**This is in tension with ADR-0011, and the tension is named rather than
+resolved here.** ADR-0011 sets the graduation bar as "replay the gate over the
+committed corpus, then read every refusal it produces and confirm each is a true
+positive", and says in terms that "that is the whole test". This section says
+that is one half. Nothing checks the two against each other, and a spec does not
+overrule an ADR: read the sentence above as an argument for amending ADR-0011,
+not as an amendment. Whoever owns that ADR decides which stands.
+
 **What each check still owes, on two axes.** The predicates are not the open
 question: all three have firing controls in
 `eval/harness/tests/unit/test_skill_invocation.py`, green on every
@@ -1617,6 +1643,85 @@ this section before reopening one.
   for bundles alone would make the two corpora incomparable. Anchoring the window at the spawning call rather than the write
   is a change to `skill_invocation.py` and belongs to whichever measurement
   shows it is needed.
+
+- **Agent postconditions — "this agent must have made this tool call before it
+  returns."** Rejected 2026-09-07 on measurement, not on cost. The mechanism
+  exists and would work: `SubagentStop` with `decision: "block"`, fed by a
+  `PostToolUse` ledger keyed on `agent_id` (absent on the main thread, present
+  inside a subagent), with `tool_input` in the payload so a parameter condition
+  is expressible. It was proposed for two cases and neither survived contact
+  with the corpus.
+
+  **Measured per agent instance**, over the 22 committed e2e runs that carry
+  agent attribution (it shipped in August; before that the rate is 0%, so older
+  runs cannot answer this at all) — measured at `4fc0e7445`, and every figure
+  below moves on the next attributed run:
+
+  | Proposed postcondition | Instances | Violations | True rate could still be |
+  |---|---:|---:|---|
+  | `gps-mentor` must write an `evaluations[]` entry before returning | 31 | **0** | up to ~9.7% |
+  | `image-reader` must call `image_transcribe` before returning | 123 | **0** | up to ~2.4% |
+
+  **This is "not observed", not "does not happen", and the two cases are not
+  equally bounded.** At zero events the 95% upper bound is about 3/n, so the
+  `image-reader` result is tight and the `gps-mentor` one is not — a real 5%
+  verdict-loss rate is entirely consistent with 0 of 31. Two of five agents were
+  tested, on 22 of 161 runs, in the harness rather than production, over
+  committed logs that are converged states. Treat the table as a floor.
+
+  **A fifth item belongs in that list, and it cuts for the postcondition rather
+  than against it.** The same 22 attributed runs carry **12 `general-purpose`
+  subagent instances, 5 of which call a writer tool** — the documented fallback
+  shape, where a namespaced delegation fails to resolve and the model retries as
+  a general-purpose stand-in that binds none of the declared `tools:`. Those 12
+  sit outside both denominators above, because a postcondition keyed on
+  `agent_type` cannot name an agent type the delegation never became. That is
+  precisely why such a postcondition would be worth having; it is also why "0 of
+  31" and "0 of 123" do not cover the population the rule is aimed at.
+
+  The rejection does not rest on the rate. It rests on three things that hold
+  whatever the rate turns out to be: a lost verdict is **caught downstream** by
+  the completion gate as a visible stall rather than silent corruption; the
+  sample **grows on its own** now that attribution has shipped, so no monitoring
+  task is needed to improve it; and the alternative is a plane that fails open
+  and costs a hook invocation per tool call, bought against an unobserved
+  failure. **About 65** more attributed runs bring the `gps-mentor` bound down to
+  the `image-reader` level with nobody doing anything — from this page's own
+  figures: at 31 and 22 instances per run, matching `image-reader`'s 2.4% bound
+  needs n=123, and +30 reaches only 4.1%. Either way nobody has to do anything;
+  the arithmetic is stated because "roughly 30" is one of the three legs this
+  section rejects a detector on.
+
+  **The weaker instrument said otherwise, and was wrong.** Comparing invocation
+  counts to final-state `evaluations[]` counts across the whole corpus suggests
+  18 lost verdicts in 188 invocations (the 18 does not reproduce against 183), and
+  22 runs where `image-reader` ran with
+  no `image_transcribe` anywhere. Both dissolve under per-instance attribution:
+  the first counts re-invocations on one target as losses, and the second is
+  entirely runs from before attribution existed. Cite the per-instance numbers;
+  the count-difference method measures the corpus's age.
+
+  Re-derive by grouping each run log's `tool_calls` on `(agent_id, agent_type)`
+  and asking whether the required tool appears in that instance's calls — skip
+  any run where no call carries an `agent_id`.
+
+  **What would reopen this:** a violation observed per-instance on an attributed
+  run. Not a count difference, and not a `SubagentStop` capability probe — the
+  probe answers whether it *could* be built, which is not the question this
+  section turns on. Stated as a limit rather than as settled: **no probe was
+  run**, and this page names no environment the hook would bind in. In the repo
+  whose ADR-0005 exists because a live probe contradicted upstream threads, that
+  is an assumption, and `SubagentStop` firing only for Task-spawned agents
+  (recorded above) is exactly the kind of thing a probe would settle. No
+  detector was added: on this evidence it would be a row that never fires, and
+  "a zero fire rate is not a licence to graduate" cuts against creating one as
+  much as against promoting one.
+
+  The one case that genuinely has no reachable plane is unchanged and is
+  narrower than the postcondition framing suggested: a **read** performed inside
+  an agent leaves no trace in the project documents, so only run-level
+  attribution sees it, and that is eval-only. It reaches production for nothing
+  today because nothing needs it.
 
 ## 10. Residual risks
 

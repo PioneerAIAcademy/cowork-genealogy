@@ -144,8 +144,9 @@ sites.
 name-indexed. This is the only way to find someone as a witness, executor,
 appraiser, bondsman, heir, or neighbor rather than as the principal of a
 record. It behaves nothing like an indexed search: no fuzzy matching, no
-Soundex, no abbreviation expansion — *Wm* and *William* are separate
-searches. Three rules come from repeated failures:
+Soundex, no abbreviation expansion in `keywords`/`place` — *Wm* and
+*William* are separate `keywords` searches (the `name` field
+auto-expands recognized English given names). Three rules come from repeated failures:
 
 - Search by **name only**, then filter for place. Putting the place in the
   query matches the collection's description, not the document.
