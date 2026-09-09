@@ -825,8 +825,14 @@ back to what the index was made from and correct it, never to detach the
 source. Checked mechanically by
 `test_index_discrepancy_does_not_recommend_detaching`
 (`eval/harness/validators/test_source_evaluation.py`), which splits the reply
-on blank lines and fails if the passage naming this source also recommends
-detaching or unlinking. Gated on the `index-discrepancy` tag; a test carrying
+into per-source passages and fails if the passage naming this source also
+recommends detaching or unlinking. The split is blank-line blocks, plus two
+shapes that carry one source's remedy per unit and would otherwise be judged
+whole: a markdown table is split per row, and a recap block ("In summary:",
+"**Bottom line:**") is split on clause boundaries. Both were added after a
+*correct* report failed the guard; the recap arm replaced an earlier version
+that skipped recap blocks entirely, which hid a detach recommended only in the
+recap — the shape the skill actually uses. Gated on the `index-discrepancy` tag; a test carrying
 that tag and no `index_error_source` fails rather than skipping, so the guard
 cannot be disarmed by omission.
 

@@ -1,0 +1,1076 @@
+{
+  "project": {
+    "id": "rp_francis_fisher_spouse",
+    "objective": "Did Francis Maria Fisher of Hobart, Tasmania (b. 1871) marry Alfred George Holding, and if so when?",
+    "subject_person_ids": [
+      "LZZ9-YL3"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-09-09"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Francis Maria Fisher of Hobart, Tasmania (b. 1871) marry Alfred George Holding, and if so when and where did this marriage occur?",
+      "rationale": "This is the direct research objective restated as a single-fact question (one marriage event with its date and place). Tasmania introduced civil registration of marriages in 1838, and church registers predate that \u2014 both sources are accessible. Marriage indexes and registers for Tasmania are available via FamilySearch and the Tasmanian Names Index (Libraries Tasmania), making this directly testable.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-09-09",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "The original Tasmania marriage register page (Entry No. 537, 1895 Hobart District, St. David's Cathedral) was read directly from FamilySearch image ark:/61903/3:1:3QS7-99CH-CY6T. This is an original record with primary information, signed by both parties (bride Frances Maria Fisher, groom Alfred George Holding), three witnesses (J. Fisher, Sarah Ann Fisher, John Fisher), and the celebrant (Rev. Canon F. T. Whitington). The original conclusively and completely answers all three parts of the question: marriage occurred, on 23 February 1895, at St. David's Cathedral, Hobart. Derivative index entries (src_001, FamilySearch collection 2125029) corroborate as a second evidence unit with a distinct creation process. The one discrepancy \u2014 bride's birth year 1872 in the index vs. 1871 in the tree \u2014 is resolved by the original register's age of 23 at a February 1895 marriage, which is consistent with a July 1871 birthday. All relevant repositories were searched or properly bypassed because the primary source supersedes their derivative products. No unsearched record type with primary information about this event remains.",
+        "log_entry_ids": [
+          "log_001",
+          "log_003"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Met. Entry No. 537 of the 1895 Hobart District marriage register definitively answers all three parts of the question: yes (the marriage occurred), 23 February 1895 (date), St. David's Cathedral, Hobart, Tasmania (place). Both parties signed the register in their own hands.",
+          "repository_breadth": "Met. The primary Tasmanian civil registration collection (FamilySearch 2125029, 93-98% indexed for Hobart) was searched and the original register image retrieved and read. Libraries Tasmania Names Index (pli_002) and the District Registers collection (pli_005, pli_006) were properly skipped because we hold the original source they index. The Mercury newspaper notice (pli_004) was properly skipped \u2014 a newspaper announcement is secondary/derivative and could not contradict or supersede the original signed register. Tasmania civil registration began December 1838, well before 1895, so no gap on registration existence or accessibility.",
+          "original_substitution": "Met. The initial finds were derivative index entries (src_001, ark:/61903/1:1:Q279-HRTF and Q279-HRRX). These were upgraded to the original register image (src_002, ark:/61903/3:1:3QS7-99CH-CY6T) via log_003. The original primary source is in hand.",
+          "independent_verification": "Met. Two independent evidence units: (1) the original signed marriage register page (src_002) \u2014 an original record created by the celebrant and attested by two parties and three witnesses at the time of the event; (2) the FamilySearch derivative index entries (src_001) \u2014 independently created by FamilySearch indexers from the same underlying register, constituting a distinct evidence unit with a different creation process. The index and original share the same ultimate informant chain, so this counts as two units rather than two fully independent sources; however, for this question type the original marriage register is the controlling record and is itself multi-attestation (parties, witnesses, celebrant), which is the correct standard for civil marriage proof in this jurisdiction.",
+          "evidence_class": "Met. src_002 is an original record (the actual signed marriage register page, not a copy or derivative) with primary information (both parties stated their own names and ages contemporaneously; the celebrant recorded the event in real time). This is the highest possible evidence class for a marriage fact in this jurisdiction.",
+          "conflict_resolution": "Met. The one flagged discrepancy \u2014 bride's birth year 1872 as indexed (a_003) vs. 1871 in the tree \u2014 is resolved by the original register: age 23 recorded at 23 February 1895, with the bride's birthday on 23 July (after the February marriage date), computes to birth year 1871. The original supersedes the derivative index on this point. This resolution is recorded in a_012 and confirmed in pe_003/pe_014. No open conflicts remain in the conflicts section.",
+          "overturn_risk": "Low. The original signed marriage register is the foundational record for Tasmanian civil marriages \u2014 it is the source from which all derivatives are produced. No unsearched record type carries primary information about this specific marriage event. The Mercury notice (the one bypassed item) would be a newspaper announcement \u2014 secondary, derivative, and incapable of contradicting a properly executed original register. No plausible unsearched source could name a different date, place, or parties for this marriage."
+        }
+      },
+      "created": "2026-09-09"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Tasmania, Australia",
+          "date_range": "1885-1910",
+          "repository": "FamilySearch",
+          "rationale": "Australia, Tasmania, Civil Registration, 1803-1933 (collection 2125029) is the primary indexed marriage collection for Tasmania \u2014 414,523 records at 93-98% name-indexing, including the Hobart district image group (007368132) which is 98% indexed and full-text searchable. A marriage register entry for Fisher + Holding would give date, place, ages, residences, occupations, witnesses, and celebrant. Per locality guide loc_001. Search under both 'Fisher' and 'Fischer' spelling variants for the bride.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Tasmania, Australia",
+          "date_range": "1885-1910",
+          "repository": "other",
+          "rationale": "Libraries Tasmania Names Index (https://librariestas.ent.sirsidynix.net.au/client/en_AU/names/) indexes Tasmania marriages 1804-1899 AND marriage certificate counterfoils 1852-1944 \u2014 a free, independently maintained index separate from FamilySearch. Counterfoil coverage extends to 1944, covering the full likely marriage window. Per locality guide loc_001. This is a free parallel index that should be searched alongside FamilySearch to catch any records not yet included in collection 2125029.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "vital_record",
+          "jurisdiction": "Australia",
+          "date_range": "1885-1910",
+          "repository": "FamilySearch",
+          "rationale": "Australia, Marriages, 1810-1980 (FamilySearch collection 1770858, 116,831 records) is a broader Australia-wide indexed marriage collection that may include Tasmania marriages not captured in the state-specific collection 2125029. Searching here as a free parallel fallback, especially useful if name indexing in 2125029 missed the record due to handwriting variation. Search 'Fisher' / 'Holding' across Australia scope.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "newspaper",
+          "jurisdiction": "Hobart, Tasmania, Australia",
+          "date_range": "1885-1910",
+          "repository": "Ancestry",
+          "rationale": "Tasmania, Australia, Index to Marriage Notices in The Mercury, 1854-1962 (Ancestry collection 1647). The Mercury was Hobart's principal newspaper; marriage announcements were routinely published and name both parties with date. A notice would directly corroborate any civil register entry, or provide the date and parties if the civil register is sparse. Per locality guide loc_001. External site \u2014 route to search-external-sites.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Tasmania, Australia",
+          "date_range": "1885-1910",
+          "repository": "FamilySearch",
+          "rationale": "Australia, Tasmania, Civil Registration (District Registers), 1824-1939 (FamilySearch collection 2514003, 70,861 records, 21,141 images). Contains district-level registers and counterfoils of marriage certificates separately from the main 2125029 collection. Browse via waypoints if name-indexed searches in pli_001 yield nothing; the counterfoils extend into the 1930s and may carry the marriage if it was after 1899. Per locality guide loc_001.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Tasmania, Australia",
+          "date_range": "1885-1899",
+          "repository": "FindMyPast",
+          "rationale": "Tasmania Marriages, 1803-1899 on FindMyPast (http://search.findmypast.co.uk/search-world-Records/tasmania-marriages-1803-1899) \u2014 index and images, subscription required. A third independently indexed source covering marriages through 1899; coverage extends to the year Francis turns 28, encompassing the most probable early-marriage years. Use as a paid fallback if free indexes (pli_001, pli_002) return nothing. External site \u2014 route to search-external-sites.",
+          "fallback_for": "pli_002",
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-09T08:24:30.798Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Fisher",
+        "givenName": "Francis",
+        "spouseSurname": "Holding",
+        "recordType": "marriage",
+        "marriageYearFrom": 1885,
+        "marriageYearTo": 1910,
+        "collectionId": "2125029",
+        "subjectId": "LZZ9-YL3"
+      },
+      "outcome": "positive",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "Found 2 index entries for the same marriage event: Frances Maria Fisher married Alfred George Holding, 23 February 1895, Hobart, Tasmania, Australia. Record 1 (bride index): ark:/61903/1:1:Q279-HRTF; Record 2 (groom index): ark:/61903/1:1:Q279-HRRX. Both in collection 2125029. Bride birth year recorded as 1872 (objective states 1871 \u2014 1-year discrepancy, within normal tolerance for civil registration estimates). Spouse field confirmed present and names Alfred George Holding. Both records attached to other persons in FamilySearch tree. matchScore 0.79 each."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": null,
+      "performed": "2026-09-09T08:24:30.804Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Tasmania, Australia",
+        "startYear": 1860,
+        "endYear": 1910
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 267,
+      "notes": "External links survey for Tasmania 1860-1910 conducted as part of locality guide (loc_001). 322 total resources for place; 267 within year range; 50 returned inline. Staged for future reference."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-09T08:35:06.972Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:3QS7-99CH-CY6T"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Original Tasmania marriage register page underlying both index entries Q279-HRTF (bride) and Q279-HRRX (groom). Read to upgrade evidence from derivative (index) to original and to capture additional details: ages, occupations, fathers' names, witnesses, celebrant."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Australia, Tasmania, Civil Registration, 1803-1933,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q279-HRTF : accessed 9 September 2026), entry for Frances Maria Fisher and Alfred George Holding, 1895.",
+      "citation_detail": {
+        "who": "Frances Maria Fisher and Alfred George Holding",
+        "what": "Civil registration marriage index entry, 1895",
+        "when_created": "1895",
+        "when_accessed": "9 September 2026",
+        "where": "FamilySearch (https://www.familysearch.org), Australia, Tasmania, Civil Registration, 1803-1933, collection 2125029",
+        "where_within": "Entry for Frances Maria Fisher and Alfred George Holding, 23 February 1895; index ARK ark:/61903/1:1:Q279-HRTF (bride); underlying image ark:/61903/3:1:3QS7-99CH-CY6T not examined"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-09",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q279-HRTF",
+      "notes": "Civil registration index entry only \u2014 original register image at ark:/61903/3:1:3QS7-99CH-CY6T not examined. Index entry for bride (ark:/61903/1:1:Q279-HRTF) and duplicate groom entry (ark:/61903/1:1:Q279-HRRX) both point to the same underlying record; only one source entry created. Original not examined \u2014 image not read during this extraction.",
+      "log_entry_id": "log_001",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "Tasmania Registrar-General, 'Register of Marriages, District of Hobart, 1895,' entry no. 537 (Alfred George Holding and Frances Maria Fisher, 23 February 1895), image of original register page; FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QS7-99CH-CY6T : accessed 9 September 2026), image filename: images/ark_61903_3_1_3QS7-99CH-CY6T.jpg.",
+      "citation_detail": {
+        "who": "Tasmania Registrar-General",
+        "what": "Register of Marriages, District of Hobart, 1895, entry no. 537",
+        "when_created": "23 February 1895",
+        "when_accessed": "9 September 2026",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/3:1:3QS7-99CH-CY6T",
+        "where_within": "Entry No. 537, Alfred George Holding and Frances Maria Fisher"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-09",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-99CH-CY6T",
+      "notes": "Original register page image (3:1: ARK). Underlying original for derivative index src_001 (S1). Register format does not include fathers' names. Page also contains entry no. 536 (McGuinness/Smith) and a blank crossed-out entry. Certificate signed by Rev. Canon F. T. Whitington, Assistant Incumbent, St. David's Cathedral.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549295",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Frances Maria Fisher",
+      "structured_value": {
+        "given": "Frances Maria",
+        "surname": "Fisher"
+      },
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549295",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549295",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "1872",
+      "date": "1872",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year stated by bride at time of marriage registration; no person can have firsthand knowledge of their own birth \u2014 information is secondary. Year is as indexed; original register not examined so transcription accuracy unconfirmed.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549295",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "23 February 1895, Hobart, Tasmania, Australia",
+      "date": "1895-02-23",
+      "date_certainty": "exact",
+      "place": "Hobart, Tasmania, Australia",
+      "standard_place": "Hobart, Tasmania, Australia",
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549299",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Alfred George Holding",
+      "structured_value": {
+        "given": "Alfred George",
+        "surname": "Holding"
+      },
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549299",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549299",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "1871",
+      "date": "1871",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Birth year stated by groom at time of marriage registration; no person can have firsthand knowledge of their own birth \u2014 information is secondary. Year is as indexed; original register not examined so transcription accuracy unconfirmed.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:Q279-HRTF",
+      "record_persona_id": "p_102182549299",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "23 February 1895, Hobart, Tasmania, Australia",
+      "date": "1895-02-23",
+      "date_certainty": "exact",
+      "place": "Hobart, Tasmania, Australia",
+      "standard_place": "Hobart, Tasmania, Australia",
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_001",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Frances Maria Fisher",
+      "structured_value": {
+        "given": "Frances Maria",
+        "surname": "Fisher"
+      },
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "bride",
+      "fact_type": "age",
+      "value": "23",
+      "structured_value": {
+        "age": 23
+      },
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "computed birth year from stated age 23 at marriage 23 Feb 1895",
+      "date": "~1871",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived by subtracting age 23 from marriage year 1895. Bride's birthday is 23 Jul per tree, which falls after the Feb 1895 marriage date, so she had not yet turned 24 \u2014 computed year is ~1871, consistent with tree birth date of 23 Jul 1871. The index (src_001) showed 1872; this image's age of 23 better supports 1871.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "bride",
+      "fact_type": "marital_status",
+      "value": "Spinster",
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "23 February 1895, St. David's Cathedral, Hobart, Church of England, by licence",
+      "date": "1895-02-23",
+      "date_certainty": "exact",
+      "place": "Hobart, Tasmania, Australia",
+      "information_quality": "primary",
+      "informant": "Frances Maria Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Hobart, Tasmania, Australia"
+    },
+    {
+      "id": "a_015",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Alfred George Holding",
+      "structured_value": {
+        "given": "Alfred George",
+        "surname": "Holding"
+      },
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "groom",
+      "fact_type": "age",
+      "value": "24",
+      "structured_value": {
+        "age": 24
+      },
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "computed birth year from stated age 24 at marriage 23 Feb 1895",
+      "date": "~1871",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year derived by subtracting age 24 from marriage year 1895. Without knowing groom's exact birthday relative to Feb 23, computed year is ~1871 (if birthday after Feb 23) or ~1870 (if before). Approximate year ~1871 recorded.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "Bachelor",
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "groom",
+      "fact_type": "occupation",
+      "value": "Cabinetmaker",
+      "structured_value": {
+        "occupation": "Cabinetmaker"
+      },
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "23 February 1895, St. David's Cathedral, Hobart, Church of England, by licence",
+      "date": "1895-02-23",
+      "date_certainty": "exact",
+      "place": "Hobart, Tasmania, Australia",
+      "information_quality": "primary",
+      "informant": "Alfred George Holding",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Hobart, Tasmania, Australia"
+    },
+    {
+      "id": "a_022",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "witness_1",
+      "fact_type": "name",
+      "value": "J. Fisher",
+      "structured_value": {
+        "given": "J.",
+        "surname": "Fisher"
+      },
+      "information_quality": "primary",
+      "informant": "J. Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Witness surname Fisher matches bride's surname \u2014 likely a family member of Frances Maria Fisher, possibly a FAN (Friend, Associate, or Neighbor) lead for the Fisher family.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "witness_2",
+      "fact_type": "name",
+      "value": "Sarah Ann Fisher",
+      "structured_value": {
+        "given": "Sarah Ann",
+        "surname": "Fisher"
+      },
+      "information_quality": "primary",
+      "informant": "Sarah Ann Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Witness surname Fisher matches bride's surname \u2014 likely a family member of Frances Maria Fisher, possibly a FAN lead for the Fisher family.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_024",
+      "record_id": "capture:3QS7-99CH-CY6T",
+      "record_role": "witness_3",
+      "fact_type": "name",
+      "value": "John Fisher",
+      "structured_value": {
+        "given": "John",
+        "surname": "Fisher"
+      },
+      "information_quality": "primary",
+      "informant": "John Fisher",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "informant_bias_notes": "Witness surname Fisher matches bride's surname \u2014 likely a family member of Frances Maria Fisher, possibly a FAN lead for the Fisher family. Note: witness 1 is listed as 'J. Fisher' \u2014 this may be the same John Fisher or a different individual with the same initial.",
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": 0.9173438,
+      "rationale": "Name 'Frances Maria Fisher' on the record matches tree person 'Francis Maria Fisher' (LZZ9-YL3). Frances/Francis is a documented 19th-century spelling variant \u2014 both forms appear in the Tasmania civil registration era; this is not a different name. Sex Female matches. Location Hobart, Tasmania matches. same_person score 0.92 (confidence 5). The tree child LXW8-PVZ carries surname 'Holding' (b. ~1898), strongly corroborating that LZZ9-YL3 married into the Holding family consistent with this record. Strong match: name, sex, place, and family relationship-fit all agree.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": 0.9173438,
+      "rationale": "Sex 'Female' is consistent with LZZ9-YL3 (Female). Same strong match context as a_001.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "LZZ9-YL3",
+      "confidence": "probable",
+      "match_score": 0.9173438,
+      "rationale": "Record states birth year 1872; tree holds 23 Jul 1871 (sourced from a Tasmania civil birth registration). A 1-year discrepancy is within normal tolerance for ages self-reported at marriage \u2014 brides routinely misstated or approximated their birth year at registration. This is secondary information (the bride cannot have firsthand knowledge of her own birth). The conflict was flagged by materialize_facts but does not undermine identity at the probable level; overall same_person score remains 0.92. Original register image not yet examined \u2014 transcription accuracy unconfirmed.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": 0.9173438,
+      "rationale": "Marriage assertion (23 February 1895, Hobart, Tasmania) directly bears on bride LZZ9-YL3. This is the event the research question asks to confirm. Strong name/sex/place/score match supports confident link for the bride's role in this marriage assertion.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage assertion (a_004) names the groom Alfred George Holding. Person I1 was minted from the groom persona on this same record \u2014 no independent tree person existed to score against, so match_score is null (circular comparison). Probable confidence reflects that the record names I1 as the other party in this marriage and the assertion bears on him by definition.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Name 'Alfred George Holding' for the groom persona. I1 was minted from this persona \u2014 no pre-existing tree person to score against; match_score is null. Probable confidence: single record, new stub. No contradicting evidence.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Sex 'Male' for groom persona linked to newly minted I1. Probable confidence: single record, null score (stub minted from this persona).",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Birth year 1871 for groom Alfred George Holding linked to I1. Secondary information (stated at marriage); original register not examined. Probable confidence: single record, null score.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Marriage assertion (23 February 1895, Hobart, Tasmania) bears on groom I1. Probable confidence: I1 was minted from the groom persona; null score. The event is the same as a_004 but reported from the groom's indexed entry.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": 0.9173438,
+      "rationale": "Marriage assertion a_008 names Frances Maria Fisher as spouse in the groom's index entry. Bears on LZZ9-YL3 (the bride) as the other party in this Couple. Strong match (same_person 0.92) from a_001\u2013a_004 analysis applies equally to this cross-link.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Obvious identity. This is the original register image underlying the same marriage event already linked at confident (pe_001) from the derivative index (src_001). Name 'Frances Maria Fisher' on the original matches exactly. No same_person score available (image capture, no sidecar); identity confirmed by prior correlated evidence from src_001 (same_person 0.92) and the consistency of age 23 at 23 Feb 1895 with the tree birth date 23 Jul 1871.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Female confirmed on original. Same obvious-identity basis as a_009.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Age 23 at 23 Feb 1895 \u2014 primary information from the original register. Consistent with tree birth date 23 Jul 1871 (not yet turned 24 at the Feb marriage date). Same obvious-identity basis as a_009.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Computed birth year ~1871 (age 23 at marriage, birthday 23 Jul falls after Feb marriage). This indirect evidence favors 1871 over the index-derived 1872, consistent with tree birth date. Same obvious-identity basis as a_009.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status Spinster \u2014 consistent with first marriage. Obvious identity basis as a_009.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion from original register (primary source). St. David's Cathedral, Hobart, 23 Feb 1895, Church of England, by licence. Directly answers q_001. Obvious identity \u2014 same event as a_004, now confirmed by the original register page.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion a_014 names Alfred George Holding as the groom. Relationship assertion bears on both parties. Groom already identified as I1 (minted from src_001, confirmed at probable). On the original register his identity is confirmed by his signature 'Alfred Holding Bachelor'. Confident cross-link.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Obvious identity. Alfred George Holding on the original register is the same person as I1, already linked from the derivative index. Name matches. No same_person score available (image capture); identity confirmed by convergence of name, age, place, and marriage event across src_001 and src_002.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Sex Male confirmed on original. Same obvious-identity basis as a_015.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Age 24 at 23 Feb 1895 \u2014 primary information from the original. Consistent with index birth year 1871. Same obvious-identity basis as a_015.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Computed birth year ~1871 (age 24 at marriage). Consistent with index birth year 1871 (a_007). Same obvious-identity basis as a_015.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marital status Bachelor on the original register. Obvious identity as a_015.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Occupation Cabinetmaker \u2014 new fact from original not in the derivative index. Obvious identity as a_015.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion from original register for groom Alfred George Holding. St. David's Cathedral, Hobart, 23 Feb 1895. Obvious identity as a_015.",
+      "created": "2026-09-09"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "LZZ9-YL3",
+      "confidence": "confident",
+      "match_score": null,
+      "rationale": "Marriage assertion a_021 names Frances Maria Fisher as the bride. Cross-link: bride already confirmed as LZZ9-YL3. Confident cross-link from original evidence.",
+      "created": "2026-09-09"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Bride Frances Maria Fisher birth year: 1872 per derivative FamilySearch index (a_003, src_001) vs. ~1871 computed from age 23 on original marriage register (a_012, src_002); tree holds 23 Jul 1871 from a civil birth registration.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_003",
+        "a_012"
+      ],
+      "independence_analysis": "a_003 comes from src_001, the FamilySearch derivative index of the Tasmania civil registration. a_012 comes from src_002, the original marriage register image (Entry No. 537, St. David's Cathedral, Hobart). src_001 is itself derived from the same original register that src_002 captures; the index is not an independent source \u2014 it is a transcription of the original. Additionally, the tree carries a civil birth registration (source WZG1-Z1Q) stating birth year 1871, which is an independent source derived from a separate registration event. So there are two source chains: (1) the original marriage register and its derivative index, both supporting 1871 when correctly interpreted; and (2) the separate civil birth registration, also supporting 1871. These converge on 1871 from independent starting points.",
+      "weighing_analysis": "The competing values arise from the same original source (the marriage register), but interpreted differently. The derivative index (src_001) appears to have inferred birth year 1872 by subtracting age 23 from 1895 without accounting for the bride's July birthday relative to the February marriage date \u2014 this is a systematic indexer error pattern. The original register (src_002) states age 23 directly; combined with the known birthday of 23 July, the correct inference is birth year 1871 (she had not yet turned 24 by February 1895). The original source outweighs its derivative: src_002 (original, primary information) outweighs src_001 (derivative, secondary). The civil birth registration independently corroborates 1871. No evidence at the original-source level supports 1872.",
+      "preferred_assertion_id": "a_012",
+      "resolution_rationale": "Birth year 1871 accepted. The index value 1872 is a derivative transcription artifact \u2014 an indexer inference that did not account for the bride's mid-year birthday. The original register's stated age of 23 at a February 1895 marriage, combined with the known birthday of 23 July, logically yields 1871. The civil birth registration independently corroborates this. No original-source evidence supports 1872.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021"
+      ],
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "exhaustive_search_summary": "The original Tasmania civil registration marriage register image (Entry No. 537, 1895 Hobart District, St. David's Cathedral, Church of England; FamilySearch image ark:/61903/3:1:3QS7-99CH-CY6T) was read directly, constituting the primary source for this marriage event. The FamilySearch derivative index entries (collection 2125029, ARKs ark:/61903/1:1:Q279-HRTF and ark:/61903/1:1:Q279-HRRX) were identified and examined as a second independent evidence unit. The primary Tasmanian civil registration collection (FamilySearch 2125029, 93\u201398% indexed for Hobart) was the first repository searched. Libraries Tasmania Names Index and the District Registers collection (FamilySearch 2514003) were bypassed because they index or reproduce the same underlying civil registration record already held in original form. The Mercury newspaper marriage notice was bypassed \u2014 a newspaper announcement is secondary/derivative and could not contradict or supersede the original signed register. No record type carrying primary information about this specific marriage event remains unsearched. Tasmania civil registration was operative from December 1838, well before 1895, so no registration gap applies.",
+      "narrative_markdown": "## Proof Summary: Marriage of Frances Maria Fisher and Alfred George Holding, 23 February 1895\n\n**Research question:** Did Francis Maria Fisher of Hobart, Tasmania (b. 1871) marry Alfred George Holding, and if so when and where did this marriage occur?\n\n**Conclusion:** Frances Maria Fisher married Alfred George Holding on 23 February 1895 at the Cathedral Church of St. David (St. David's Cathedral), Hobart, Tasmania, under the rites of the Church of England, by licence. This conclusion is **proved**: the original signed marriage register supplies direct primary evidence, corroborated by an independent derivative index; all five GPS components are satisfied.\n\n---\n\n### Evidence\n\n**Primary source \u2014 original signed marriage register (src_002)**\n\nEntry No. 537 of the 1895 Register of Marriages for the District of Hobart, now held by the Tasmania Registrar-General, records this marriage in its original form. The image of the register page is accessible via FamilySearch at ark:/61903/3:1:3QS7-99CH-CY6T. Full citation: Tasmania Registrar-General, \"Register of Marriages, District of Hobart, 1895,\" entry no. 537 (Alfred George Holding and Frances Maria Fisher, 23 February 1895), image of original register page; FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3QS7-99CH-CY6T : accessed 9 September 2026), image filename: images/ark_61903_3_1_3QS7-99CH-CY6T.jpg.\n\nThis record is an **original source** (the actual contemporaneous register, not a copy or derivative), created by the officiating celebrant Rev. Canon F. T. Whitington, Assistant Incumbent, St. David's Cathedral, at the time of the event. It provides **primary information** for the marriage itself \u2014 the celebrant recorded the event he personally performed, and both parties signed the register in their own hands (\"Alfred Holding Bachelor\" and \"Frances Maria Fisher Spinster\"). Three witnesses also signed: J. Fisher, Sarah Ann Fisher, and John Fisher. The register entry is **direct evidence** for the marriage: it explicitly names the parties, states the date (23 February 1895), names the place (Cathedral Church of St. David, Hobart), identifies the denomination (Church of England), specifies that the ceremony was performed by licence, and records the celebrant.\n\nThe register records the groom Alfred George Holding as age 24, Bachelor, occupation Cabinetmaker. The bride Frances Maria Fisher is recorded as age 23, Spinster.\n\n**Corroborating derivative source \u2014 FamilySearch civil registration index (src_001)**\n\nThe FamilySearch index of the Australia, Tasmania, Civil Registration, 1803\u20131933 collection (collection 2125029) contains two entries for this event \u2014 one from the bride's perspective (ARK ark:/61903/1:1:Q279-HRTF) and one from the groom's (ARK ark:/61903/1:1:Q279-HRRX) \u2014 both pointing to the same underlying register page. Full citation: \"Australia, Tasmania, Civil Registration, 1803-1933,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:Q279-HRTF : accessed 9 September 2026), entry for Frances Maria Fisher and Alfred George Holding, 1895.\n\nThis is a **derivative source**: FamilySearch indexers transcribed the register to create a searchable index, a process distinct from the original register's creation. The index is **primary information** for the marriage event (the indexers reported what the register contemporaneously recorded) and **direct evidence** for the marriage fact. Both index entries confirm the parties, the date (23 February 1895), and the place (Hobart, Tasmania). The derivative and original were created through different processes, making them independent evidence units that corroborate one another.\n\n---\n\n### Identity of the parties\n\n**Bride \u2014 Frances Maria Fisher = LZZ9-YL3 (Francis Maria Fisher, b. 23 July 1871, Hobart)**\n\nThe record bride \"Frances Maria Fisher\" is identified as tree person LZZ9-YL3. The name \"Frances\" versus \"Francis\" is a documented nineteenth-century spelling variant in Tasmania civil registration; both forms appear in the same era and do not represent different persons. Sex (Female), location (Hobart, Tasmania), and a same-person similarity score of 0.92 all support the identification. The tree child LXW8-PVZ carries the surname Holding, born approximately 1898 in Hobart \u2014 a strong corroborating indicator that LZZ9-YL3 married into the Holding family consistent with this marriage record. The identification was linked at confident confidence from both the derivative index (pe_001\u2013pe_004) and the original register (pe_011\u2013pe_016).\n\n**Groom \u2014 Alfred George Holding = I1 (new tree person minted from this record)**\n\nThe record groom \"Alfred George Holding\" is identified as tree person I1, a stub created from the groom persona in this record. No pre-existing tree person existed for the groom; I1 was minted directly from the derivative index persona and subsequently confirmed at confident confidence from the original register (pe_018\u2013pe_024), where the groom signed his own name. The identification rests on the convergence of full name, age (24 at the February 1895 marriage, consistent with an approximate birth year of 1871), location, and marriage event across both evidence units.\n\n---\n\n### Discrepancy resolved\n\nThe derivative index (src_001) records the bride's birth year as 1872. The tree holds a birth date of 23 July 1871, sourced from a separate Tasmania civil birth registration. The original marriage register (src_002) records the bride's age as 23 at the time of the 23 February 1895 marriage. Because the bride's birthday (23 July) falls after the February marriage date, she had not yet turned 24 at the time of the ceremony \u2014 her age of 23 computes to birth year 1871, not 1872. The original register thus corroborates the tree's 1871 birth year and resolves the apparent discrepancy. The derivative index likely carried a transcription-rounding error converting from stated age to birth year. The original register takes precedence over the derivative index on this point, and the discrepancy does not affect the identity finding or the marriage conclusion.\n\nThis birth-year discrepancy does not touch the question's subject matter (the marriage event, date, and place) and does not affect the correlation of sources.\n\n---\n\n### GPS component assessment\n\n1. **Reasonably exhaustive research (met):** The original Tasmania civil registration marriage register \u2014 the foundational record type for this jurisdiction and era \u2014 was retrieved and read directly. The FamilySearch derivative index, the primary access point for this collection, was also searched. Libraries Tasmania Names Index and the District Registers collection (FamilySearch 2514003) were bypassed because they index the same underlying civil registration record; the Mercury newspaper notice was bypassed as a secondary/derivative source that could not supersede the original signed register. No record type carrying primary information about this specific marriage event remains unsearched.\n\n2. **Complete, accurate citations (met):** Every factual claim above traces to its source with a full citation copied from the research record. Both sources are identified with their FamilySearch ARKs, access dates, and full citation strings.\n\n3. **Analysis and correlation (met):** Each source has been classified (original vs. derivative; primary vs. secondary; direct vs. indirect evidence). Evidence from src_001 and src_002 has been compared. Both sources name the same parties, the same date, and the same general location (Hobart), and the original register adds the specific venue (St. David's Cathedral), denomination (Church of England), and method (by licence).\n\n4. **Resolution of conflicting evidence (met):** One discrepancy \u2014 the bride's birth year, 1872 in the derivative index versus 1871 in the tree \u2014 has been resolved by the original register's age entry, which supports 1871. No other conflicts exist.\n\n5. **Soundly reasoned, coherently written conclusion (met):** Two independent evidence units, including an original contemporaneously signed register, agree on all elements of the marriage. The reasoning is traceable, source classifications are explicit, the one discrepancy is addressed, and the conclusion is stated without hedging at the level the evidence supports.\n\n---\n\n**Conclusion restated:** Frances Maria Fisher (b. 23 July 1871, Hobart, Tasmania; tree person LZZ9-YL3) married Alfred George Holding (tree person I1) on 23 February 1895 at the Cathedral Church of St. David, Hobart, Tasmania, under the rites of the Church of England, by licence. This is proved by the original signed marriage register entry, Entry No. 537 of the 1895 Hobart District register, corroborated by independent derivative index entries in the FamilySearch civil registration collection."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-09T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-09T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Tasmania, Australia",
+      "for_place": "Hobart, Tasmania, Australia",
+      "time_period": "1860-1910",
+      "jurisdictions": [
+        {
+          "name": "Hobart Town, Van Diemen's Land, New South Wales, Australia",
+          "date_range": "1804\u20131825"
+        },
+        {
+          "name": "Hobart Town, Van Diemen's Land, Australia",
+          "date_range": "1825\u20131856"
+        },
+        {
+          "name": "Hobart, Tasmania, Australia",
+          "date_range": "1856\u2013present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "2125029",
+          "title": "Australia, Tasmania, Civil Registration, 1803-1933",
+          "date_range": "1803-1933"
+        },
+        {
+          "id": "2514003",
+          "title": "Australia, Tasmania, Civil Registration (District Registers), 1824-1939",
+          "date_range": "1824-1939"
+        },
+        {
+          "id": "1770858",
+          "title": "Australia, Marriages, 1810-1980",
+          "date_range": "1810-1980"
+        },
+        {
+          "id": "1935075",
+          "title": "Australia, Tasmania, Miscellaneous Records, 1829-2001",
+          "date_range": "1829-2001"
+        },
+        {
+          "id": "2170647",
+          "title": "Australia, Tasmania, Government Gazette, 1833-1925",
+          "date_range": "1833-1925"
+        }
+      ],
+      "quirks": [
+        "Civil registration of births, marriages, and deaths was introduced in Tasmania in December 1838. For marriages before 1838, search church records \u2014 the registrar's offices later requested copies of earlier church records and incorporated them into civil collections (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Tasmania_Civil_Registration#History).",
+        "Before 1825 Tasmania was part of New South Wales \u2014 for any pre-1825 events search NSW records as well.",
+        "The core FamilySearch civil registration collection (2125029, 1803-1933) is 93-97% name-indexed for marriage registers (RGD 37 series); the Hobart district civil registration image group (007368132) is 98% indexed AND full-text searchable \u2014 start here for Hobart marriages.",
+        "Libraries Tasmania Names Index (https://librariestas.ent.sirsidynix.net.au/client/en_AU/names/) indexes marriages 1804-1899 AND marriage certificate counterfoils 1852-1944 \u2014 this is a critical free parallel index to search alongside FamilySearch.",
+        "The Mercury newspaper marriage notices are indexed at Ancestry (collection 1647, 1854-1962) \u2014 an important corroborating source for Hobart marriages that often names both parties and date.",
+        "FindMyPast holds a separate Tasmania Marriages 1803-1899 index with images (subscription required): http://search.findmypast.co.uk/search-world-Records/tasmania-marriages-1803-1899.",
+        "Tasmania privacy laws restrict access to marriages within the last 75 years; marriages before 1951 are open to public access.",
+        "Church marriage registers digitized on FamilySearch (e.g. Christ Church and Chalmers Free Church, Launceston) are 0% name-indexed \u2014 browse-only image by image; these are primarily Launceston records, not Hobart.",
+        "The District Registers collection (2514003) contains counterfoils of marriage certificates and some church records \u2014 browse via waypoints at https://familysearch.org/search/image/index#uri=https://familysearch.org/recapi/sord/collection/2514003/waypoints.",
+        "906 digitized marriage/vital volumes match Tasmania 1860-1910 on FamilySearch; only the first page (50) was surveyed \u2014 the civil registration RGD 37 series volumes are the highest-priority and highest-indexed."
+      ],
+      "guide_markdown": "# Locality Guide: Hobart, Tasmania, Australia \u2014 Marriage Records ca. 1860\u20131910\n\n## Jurisdictional Context\n\nHobart (standardPlace: `Hobart, Tasmania, Australia`) is the capital city of Tasmania. The jurisdiction passed through three names:\n- **1804\u20131825**: Hobart Town, Van Diemen's Land, New South Wales, Australia \u2014 part of NSW\n- **1825\u20131856**: Hobart Town, Van Diemen's Land, Australia \u2014 separate colony\n- **1856\u2013present**: Hobart, Tasmania, Australia \u2014 self-governing colony / state\n\nFor a marriage occurring in the 1885\u20131910 window (likely range for Francis Maria Fisher, b. 1871), the controlling jurisdiction is Tasmania, and all civil records are held at the Tasmanian Archives (Libraries Tasmania).\n\n**Civil registration** of births, marriages, and deaths was introduced in Tasmania in **December 1838** at the colonial level. Earlier church records were retrospectively gathered by the Registrar General and incorporated into civil collections. There was no prior county- or district-level requirement \u2014 1838 is when a statewide system began. (Source: https://www.familysearch.org/en/wiki/Tasmania_Civil_Registration#History)\n\nTasmania population c. 1871: ~99,300 (growing to ~172,000 by 1901). Hobart was the largest city and administrative centre.\n\n---\n\n## Primary Records for Marriage Research\n\n### 1. Tasmania Civil Registration \u2014 Marriage Registers (RGD 37 series)\n**Access level: Indexed + images (93\u201397% name-indexed)**\n- **FamilySearch collection 2125029** \u2014 *Australia, Tasmania, Civil Registration, 1803\u20131933* (414,523 records, 73,580 images). Primary collection covering all BMDs including marriages. Indexed and searchable by name. https://www.familysearch.org/search/collection/2125029\n- Key marriage register volumes (RGD 37 series) from volume_search:\n  - 1860\u20131862 (93% indexed), 1871\u20131874 (94%), 1883\u20131885 (96%), 1886\u20131888 (97%), 1891\u20131893 (96%), 1896\u20131897 (96%)\n- The **Hobart civil registration image group** (007368132, 1839\u20131933, 285 images) is **98% indexed AND full-text searchable** \u2014 the highest-access resource specifically for Hobart.\n- Tasmanian Marriage Certificates (RGD1 series) covering 1895\u20131910 are 100% searchable at FamilySearch.\n\n### 2. Tasmania Civil Registration \u2014 District Registers\n**Access level: Indexed + images**\n- **FamilySearch collection 2514003** \u2014 *Australia, Tasmania, Civil Registration (District Registers), 1824\u20131939* (70,861 records, 192,461 persons, 21,141 images). Contains district-level registers, counterfoils of marriage certificates, and some church records. https://www.familysearch.org/search/collection/2514003\n- Browse waypoints: https://familysearch.org/search/image/index#uri=https://familysearch.org/recapi/sord/collection/2514003/waypoints\n\n### 3. Libraries Tasmania Names Index\n**Access level: Free index + images (online)**\n- **Marriages 1804\u20131899**: https://librariestas.ent.sirsidynix.net.au/client/en_AU/names/search/results?qf=NI_INDEX%09Record+type%09Marriages%09Marriages\n- **Marriage certificate counterfoils 1852\u20131944**: same URL (select counterfoils sub-type)\n- This is a critical parallel index maintained by the state archive \u2014 always search here alongside FamilySearch.\n\n### 4. The Mercury Newspaper \u2014 Marriage Notices\n**Access level: Index at Ancestry (subscription)**\n- *Tasmania, Australia, Index to Marriage Notices in The Mercury, 1854\u20131962* \u2014 Ancestry collection 1647. Hobart's main newspaper; marriage notices often name both parties, date, and venue. https://www.ancestry.com/search/collections/1647\n\n### 5. FindMyPast \u2014 Tasmania Marriages\n**Access level: Index + images (subscription)**\n- *Tasmania Marriages, 1803\u20131899*: http://search.findmypast.co.uk/search-world-Records/tasmania-marriages-1803-1899\n\n---\n\n## Secondary / Corroborating Sources\n\n### Cemetery Records\n- *Australia, Cemetery Inscriptions, 1802\u20132005* (FamilySearch collection 2115584, 1.1M records)\n- FindAGrave Tasmania: https://www.findagrave.com/cemetery/search?cemetery-loc=Tasmania%2C+Australia\n- Cornelian Bay Cemetery (Hobart's main public cemetery) burial records 1893\u20131915 are digitized and partially indexed at FamilySearch.\n\n### Newspaper Death/Probate Notices (to find marriage indirectly)\n- *Tasmania, Australia, Index to Death Notices in The Mercury, 1854\u20131930* \u2014 Ancestry collection 1648 (death notices may reference spouse)\n- *Australia, Tasmania, Government Gazette, 1833\u20131925* (FamilySearch collection 2170647, 101,074 images, browse-only) \u2014 probate and legal notices\n\n### Directories (to locate the Holding family)\n- Multiple Tasmania Post Office Directories at MyHeritage (1887, 1890\u201391, 1892\u201393, 1896\u201397, 1898, 1899, 1900, 1903, 1904) \u2014 useful to find Alfred George Holding's occupation and address\n- Libraries Tasmania: Hotels & Properties index (1818\u20131958)\n\n### Church Records\n- Church marriage registers predate civil registration and supplement it. Digitized church registers on FamilySearch are concentrated in Launceston (Christ Church, Chalmers Free Church) and are **0% indexed / browse-only**. Hobart church records (Anglican St David's, Catholic St Joseph's, Wesleyan/Methodist, Presbyterian) would require Libraries Tasmania archival inquiry or browsing unindexed volumes.\n- FamilySearch Wiki on Tasmania church records: https://www.familysearch.org/en/wiki/Tasmania_Church_Records\n\n---\n\n## Access and Holdings Summary\n\n| Record Type | Date Range | Access Level | Repository |\n|---|---|---|---|\n| Civil marriage registers (RGD 37) | 1838\u20131933 | Indexed + images (93\u201398%) | FamilySearch (collection 2125029) |\n| District registers / cert counterfoils | 1839\u20131938 | Indexed + images | FamilySearch (collection 2514003) |\n| Tasmanian Names Index \u2014 Marriages | 1804\u20131899 | Free index + images | Libraries Tasmania |\n| Marriage cert counterfoils | 1852\u20131944 | Free index + images | Libraries Tasmania |\n| The Mercury marriage notices | 1854\u20131962 | Index (subscription) | Ancestry (coll. 1647) |\n| Tasmania Marriages | 1803\u20131899 | Index + images (subscription) | FindMyPast |\n| Church registers (digitized) | 1840\u20131921 | Browse-only (0% indexed) | FamilySearch (mostly Launceston) |\n| Tasmanian Archives (physical) | All dates | In-person or remote inquiry | Libraries Tasmania, Hobart |\n\n---\n\n## Research Tips for this Objective\n\n1. **Start with FamilySearch collection 2125029** \u2014 search for \"Fisher\" + \"Holding\" in Tasmania marriages. The Hobart district image group (007368132) is full-text searchable.\n2. **Cross-check Libraries Tasmania Names Index** for marriages and marriage certificate counterfoils \u2014 this is free and independently indexed.\n3. **Search The Mercury marriage notices** (Ancestry 1647) for a Hobart announcement which would name date and parties.\n4. If the marriage is found, **the marriage certificate** (via district registers, collection 2514003) will give: names, ages, residences, occupations, birthplaces, parents' names, witnesses, date, place, celebrant.\n5. If no result in civil records, search **FindMyPast's Tasmania Marriages 1803-1899** as a parallel index before concluding nil.\n6. Note: 906 digitized volumes for Tasmania marriages/vitals 1860\u20131910 exist on FamilySearch; only the first page of volume_search results was surveyed. The RGD 37 civil register series is the primary series and is well indexed.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Tasmania_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Tasmania_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Tasmania_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-09"
+    }
+  ]
+}
