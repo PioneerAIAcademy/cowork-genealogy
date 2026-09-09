@@ -1125,13 +1125,17 @@ before — in Cowork, the one environment the closure was built for. Every test
 was green, including the one named "matches every tool the guard script itself
 denies", which restated the three raw-write tool names inline instead of reading
 them from the script. The matcher is now
-`Write|Edit|NotebookEdit|.*device_commit_files` — `.*`-prefixed so it binds
-under an anchored full match as well as a substring search, and against both the
-bare and the `mcp__remote-devices__`-namespaced spelling — and
-`tests/packaging/plugin-hooks.test.ts` derives the expected tool set from
-`guard_project_files.py`'s own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`,
-hard-erroring if either constant is renamed rather than silently checking
-nothing. **The general rule: a guardrail's matcher is part of the guardrail.**
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append` — `.*`-prefixed on the
+namespaced arms so they bind under an anchored full match as well as a substring
+search, and against both the bare and the `mcp__remote-devices__`-namespaced
+spelling — and `tests/packaging/plugin-hooks.test.ts` derives the expected tool
+set from the script's own constants, hard-erroring if one is renamed rather than
+silently checking nothing. **Three** sources, not two: `FILE_WRITE_TOOLS`,
+`DEVICE_WRITE_TOOLS`, and — since the caller-ownership rules shipped —
+`research_append`, required whenever `OWNED_SECTIONS` is non-empty
+(`ownerRoutedTools` in that test). The `.*research_append` arm is what carries
+§4's two caller rows, so it is part of the guardrail on exactly the same
+footing. **The general rule: a guardrail's matcher is part of the guardrail.**
 Widening a predicate without widening what reaches it is a no-op that tests
 cannot see.
 

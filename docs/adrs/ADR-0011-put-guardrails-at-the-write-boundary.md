@@ -337,13 +337,22 @@ measured rather than argued.
    omitted deliberately and the write landed (issue #1509);
    `device_commit_files` was omitted by accident, which left the route open
    after all three predicate copies had been taught to deny it. The matcher is
-   now `Write|Edit|NotebookEdit|.*device_commit_files`, and a packaging test
-   derives the expected set from the guard script instead of restating it.
+   now `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`, and a
+   packaging test derives the expected set from the guard script instead of
+   restating it — including the `research_append` arm, which the caller-ownership
+   rules added and which is required whenever `OWNED_SECTIONS` is non-empty.
 4. **Coverage is per-boundary, never global.** A writer-tool check binds only
    for callers who use the writer tool; a hook binds only for the tool names it
    matches, and only where the hook loads. The plugin hook is the one that
-   reaches Cowork (see the plugin-hooks section of `CLAUDE.md`); the unit eval
-   harness carries no protected-file rule at all (issue #1493).
+   reaches Cowork (see the plugin-hooks section of `CLAUDE.md`). The unit eval
+   harness is no longer bare, which this item used to claim: `context_policy.py`'s
+   `protected_file_denial` loads the shipped `guard_project_files.py` and calls
+   its own `protected_target` — an import, not a copy — wired through
+   `skill_runner.py`'s `pretool_hook`, and that plane calls `owner_denied` too.
+   What is still missing everywhere but the hosted path is not the *rule* but the
+   *binding*: whether a runtime loads `hooks.json` at all. `make hook-smoke`
+   measures that for the hosted SDK loader; Cowork has no instrument but a live
+   session.
 
 ## Rulings that generalize
 
