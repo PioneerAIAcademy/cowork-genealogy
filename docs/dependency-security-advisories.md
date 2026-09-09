@@ -4,7 +4,8 @@ Tracking note for `pnpm audit` / `npm audit` findings across the repo's three JS
 dependency trees (root pnpm workspace, `packages/engine/mcp-server` npm,
 `eval/app` npm). Re-run the audits after any dependency bump and update this file.
 
-Last reviewed: **2026-09-08**.
+Last reviewed: **2026-09-09** (root pnpm workspace and `eval/app`). The engine tree
+was last reviewed 2026-09-08 and is unchanged since; see #2352.
 
 **Reachability, once, up front.** Every finding below except `fast-uri` lives in a
 **devDependency** — dev tooling (eslint, vite/vitest, electron-builder,
@@ -29,18 +30,6 @@ reasoning above does not cover it. Treat `electron` findings as shipping.
 `extract-zip` as production because `@electron-toolkit/utils` — a real production
 dependency of `apps/electron` — peer-depends on `electron`, which declares
 `extract-zip`. `pnpm why --prod -r extract-zip` prints that path.
-
-**Always pass `-r`.** Without it, `pnpm why --prod` inspects only the root package,
-which declares no `dependencies`, so it returns nothing for **everything** and reads
-exactly like proof that a package is dev-only. The control is decisive:
-`pnpm why --prod react` returns nothing while `apps/web` declares react as a production
-dependency. An earlier revision of this file used the bare form to argue the audit
-over-reported `extract-zip`; @clack391 refuted it on #2274. The audit was right and the
-bare `why` was the broken instrument.
-
-The "Reachability, once, up front" paragraph above still carries that bare-`why` claim.
-@DallanQ ruled on 2026-09-09 (#2352) that this file stays the mechanism and that
-paragraph gets re-derived, so it is left for that pass rather than patched here.
 
 ## Fixed
 
@@ -84,15 +73,19 @@ paragraph gets re-derived, so it is left for that pass rather than patched here.
   **Revisit when** the server grows an HTTP/SSE transport, which would make hono
   reachable for the first time.
 
-- **electron** (2 HIGH + 3 MODERATE: context-isolation bypass, sandboxed-iframe
-  `allow-popups` bypass, DevTools JS injection, `shell.openPath` validation bypass,
-  redirect followed into a local file) — `apps/electron`, 39.8.5. **Fixed 2026-09-08:
-  39.8.5 → 39.8.10.** Every one of the five is patched inside the 39.8.x line, so this
-  is a patch bump, not the five-major jump to 44 that `npm view electron version`
-  suggests — check the patch line before assuming a major is required. These ship (see
-  the electron exception above), which is why they were the priority in this pass.
-  Cleared 15 of the workspace's 16 `--prod` findings; the diff is one `package.json`
-  line plus the lockfile.
+- **electron** — `apps/electron`, 39.8.5. **Fixed 2026-09-08: 39.8.5 → 39.8.10.**
+  **15 advisories, 3 HIGH / 10 MODERATE / 2 LOW**, all published 2026-08-05 and all
+  patched inside the 39.8.x line — so this is a patch bump, not the five-major jump to
+  44 that `npm view electron version` suggests. Check the patch line before assuming a
+  major is required. The three HIGH are `GHSA-h7rp-cf8h-j98x` (context-isolation bypass
+  via `Function.prototype.bind` hijack), `GHSA-9f4c-93c8-jc8g` (sandboxed iframe bypasses
+  the `allow-popups` restriction) and `GHSA-v3j7-r9gq-3gjw` (custom protocol with
+  `supportFetchAPI` but not `corsEnabled`). Worth naming one of the MODERATEs because it
+  is this app's own pattern: `GHSA-ff2p-hmqr-hxm4`, contextBridge object copy honors
+  prototype setters — `apps/electron/src/preload/index.ts` exposes its bridge with
+  `contextBridge.exposeInMainWorld('api', …)`, which is exactly the shape it names.
+  These ship (see the electron exception above), which is why they led this pass. The
+  diff is one `package.json` line plus the lockfile.
 
 - **@xmldom/xmldom** (MODERATE), **browserslist** (HIGH), **fast-uri** (HIGH ×4),
   **js-yaml** (HIGH), **nanoid** (HIGH GHSA-2v37-7h3g-55p8) — root pnpm workspace,
@@ -101,13 +94,37 @@ paragraph gets re-derived, so it is left for that pass rather than patched here.
 
       pnpm update --recursive --lockfile-only @xmldom/xmldom browserslist esbuild fast-uri js-yaml nanoid
 
-  Took the full workspace audit from 11 findings to 2. `esbuild` was included in the
-  command and did **not** move — it is out of range behind vite (see its entry below),
-  which is the deferral holding rather than the command failing.
+  Took the full workspace audit from 11 to 2. `esbuild` did not move on that command
+  and was cleared separately, below.
 
-- **nanoid** (HIGH GHSA-2v37-7h3g-55p8) — `eval/app`, `<3.3.18`. **Fixed 2026-09-08**
-  with `npm audit fix --package-lock-only`; lockfile only, `package.json` untouched.
-  That tree is now clean on both `--omit=dev` and the full audit.
+- **esbuild** (LOW, GHSA-g7r4-m6w7-qqqr) — root pnpm workspace. **Fixed 2026-09-09**,
+  and its deferral below is withdrawn. That deferral said clearing it needed a vite 7→8
+  migration across three packages. It did not: `vite@7.3.6` already satisfies the
+  declared `^7.2.6` and declares `esbuild: ^0.27.0 || ^0.28.0`, which admits the 0.28.1
+  patch. `pnpm update --recursive --lockfile-only --no-save vite esbuild` moves it to
+  0.28.2 with **no `package.json` change in any workspace package** — `--no-save` is
+  load-bearing, since without it the command rewrites `vite` in two manifests. Found by
+  @clack391 on #2343; the stated reason had gone stale rather than being wrong when
+  written.
+
+- **`eval/app`** — **Fixed 2026-09-08**, then **again 2026-09-09**. The first pass was
+  `npm audit fix --package-lock-only` and cleared five packages, not the one originally
+  recorded here: `nanoid` (HIGH GHSA-2v37-7h3g-55p8), `brace-expansion`, `browserslist`,
+  `baseline-browser-mapping` and `postcss-selector-parser`.
+
+  That claim went stale within hours. Five advisories published 2026-09-08 between 20:46
+  and 21:25 UTC — the Next.js pair `GHSA-p293-qw3h-jr36` / `GHSA-2xp9-vwfh-vxw4` plus
+  `sharp` — landed after the commit. Cleared 2026-09-09 by `next` → 15.5.25 and the
+  `sharp` override → `^0.35.4`, plus `npm update --package-lock-only js-yaml vitest`
+  (without which the full audit still reports three). Both audits now report
+  `found 0 vulnerabilities`; `tsc` clean, 20 files / 226 tests, `next build` green.
+
+  Neither Next.js advisory was reachable here — there is no `images` block in
+  `next.config.mjs`, so remote URLs are refused at the allowlist gate and `formats`
+  defaults to webp; there is no `public/`; and `next/image` is used nowhere. Fixed
+  because it is two lines and this file exists to record a clean audit, not because
+  anything was exposed. **This entry is the argument for #2352:** the tree was clean and
+  documented as clean, and was neither eight hours later.
 
 - **tar** (CRITICAL GHSA-23hp-3jrh-7fpw + HIGH GHSA-8x88-c5mf-7j5w + 3 MODERATE),
   **postcss** (HIGH GHSA-r28c-9q8g-f849, source-map path traversal),
@@ -170,6 +187,14 @@ paragraph gets re-derived, so it is left for that pass rather than patched here.
 
 ## Deferred / no clean fix
 
+- **vitest** and **@vitest/mocker** (MODERATE ×2) — root pnpm workspace, dev-only,
+  patched at `>=4.1.11`. **Deferred 2026-09-09.** `packages/viewer-ui`, `apps/web` and
+  `apps/electron` all declare `^3.2.4`, so the fix is a **3 → 4 major** across three
+  packages rather than a lockfile refresh — the shape the withdrawn `esbuild` entry
+  only appeared to have. `packages/engine/mcp-server` and `eval/app` already declare
+  `^4.1.10` and are unaffected.
+  **Revisit when** someone takes the vitest 4 migration, or a 3.x backport publishes.
+
 - **extract-zip** (HIGH, unvalidated symlink path traversal) — root pnpm workspace,
   `2.0.1`, pulled by `electron` itself (both 39.8.5 and 39.8.10 declare
   `extract-zip: ^2.0.1`). **Deferred 2026-09-08 — no patch exists.** npm reports
@@ -199,6 +224,13 @@ paragraph gets re-derived, so it is left for that pass rather than patched here.
   **Revisit when** a 1.x/2.x backport is published, or when eslint/electron-builder
   move to a minimatch that depends on `brace-expansion@^5`.
 
+
+  **Stale as of 2026-09-09 — no longer flagged.** GHSA-mh99-v99m-4gvg now carries four
+  ranges with per-line patches (1.1.17 / 2.1.3 / 3.0.3 / 5.0.8), so the "single range,
+  stays flagged forever" reading no longer holds. The advisory's ranges changed at
+  19:37 UTC on 2026-07-31, two and a half hours after this entry was committed, so it
+  was accurate when written. `pnpm audit` reports zero `brace-expansion` rows today.
+  Left in place for #2352 to fold into Fixed rather than half-rewritten here.
 - **tmp** (HIGH GHSA-ph9p-34f9-6g65 + LOW GHSA-52f5-9888-hmc6, symlink /
   path-traversal write) — `packages/engine/mcp-server` only, via
   `@anthropic-ai/mcpb` → `@inquirer/prompts` → `@inquirer/editor` →
@@ -216,14 +248,11 @@ paragraph gets re-derived, so it is left for that pass rather than patched here.
   **Revisit when** `@anthropic-ai/mcpb` publishes a release that bumps the
   `@inquirer`/`tmp` chain.
 
-- **esbuild** (LOW, GHSA-g7r4-m6w7-qqqr, dev-server arbitrary file read,
-  **Windows only**) — root pnpm workspace, bundled by `vite@7.3.5`. **Deferred.**
-  Affects only the running dev server on Windows; `vite@7.3.5` pins
-  `esbuild@^0.27.0` and the patch is 0.28.1, out of range. Clearing it needs a
-  vite 7 → 8 migration across `apps/web`, `packages/viewer-ui` and
-  `apps/electron` (vite 8 drops the esbuild dependency for rolldown) — a real
-  migration, not a dep bump, for near-zero security gain.
-  **Revisit when** the workspace moves to vite 8 for unrelated reasons.
+- **esbuild** — **withdrawn 2026-09-09, see the Fixed entry above.** This entry said
+  clearing it needed a vite 7→8 migration across three packages. `vite@7.3.6` already
+  admits the 0.28.1 patch inside the declared `^7.2.6`, so it was a lockfile refresh.
+  Kept as a record because the reason was accurate when written and went stale, which is
+  the failure mode #2352 is about.
 
 ## Automated dependency updates
 
