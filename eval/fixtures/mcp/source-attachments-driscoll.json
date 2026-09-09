@@ -1,0 +1,68 @@
+{
+  "tool": "source_attachments",
+  "description": "Attachment check for every ARK on Cornelius Driscoll's profile (GJ72-9WD). Each one comes back attached to this person and to NOBODY else, which is load-bearing twice over. For SD-DRIS-E, the undecidable 1851 census entry, it removes the one piece of evidence that could break the tie: there is no same-name profile in the next township to weigh, so the kind genuinely cannot be told from this profile alone and the honest report says so. For the death pair (SD-DRIS-C and SD-DRIS-D) it forecloses reading either as misattributed — nobody else holds them. Naming a second tree person here would oblige a `person_read` fixture for them as well: `person-read-hole-wx7-otter-tail.json` was added to the Hole corpus for exactly that reason after a scratch run called `source_attachments`, was handed another person id, read them, and hit `fixture_not_found` for a Tool Arguments 2. This response names nobody else, so no follow-on read is reachable. The `~` uris predicate matches whatever ARK form the skill passes and whichever subset it asks about.",
+  "args": {
+    "uris": "~DRIS-"
+  },
+  "response": {
+    "attachments": {
+      "ark:/61903/1:1:DRIS-001": [
+        {
+          "personId": "GJ72-9WD",
+          "tags": [
+            "Name",
+            "Christening"
+          ]
+        }
+      ],
+      "ark:/61903/1:1:DRIS-002": [
+        {
+          "personId": "GJ72-9WD",
+          "tags": [
+            "Name",
+            "Marriage"
+          ]
+        }
+      ],
+      "ark:/61903/1:1:DRIS-003": [
+        {
+          "personId": "GJ72-9WD",
+          "tags": [
+            "Name",
+            "Burial",
+            "Death"
+          ]
+        }
+      ],
+      "ark:/61903/1:1:DRIS-004": [
+        {
+          "personId": "GJ72-9WD",
+          "tags": [
+            "Name",
+            "Death"
+          ]
+        }
+      ],
+      "ark:/61903/1:1:DRIS-005": [
+        {
+          "personId": "GJ72-9WD",
+          "tags": [
+            "Name",
+            "Residence"
+          ]
+        }
+      ],
+      "ark:/61903/1:1:DRIS-006": [
+        {
+          "personId": "GJ72-9WD",
+          "tags": [
+            "Name",
+            "Birth",
+            "Residence"
+          ]
+        }
+      ]
+    },
+    "unattached": []
+  }
+}
