@@ -1,15 +1,16 @@
 {
   "tool": "person_read",
-  "description": "FamilySearch tree person read for Patrick Flynn WITH relatives and source descriptions — the only init-project fixture that exercises the relationship import, the FAN rule, and the multi-person re-ID to local I/N/F/R/S ids. Wife Mary Kelly, children James and Margaret; no parents, because the parents are the research target. Names and relationships arrive without ids, per simplified-gedcomx-spec.md §3 — the caller mints them. Facts carry both tool-emitted sidecars (`standard_place`, `standard_date`), neither a string copy of its raw field. One source description carries a `notes` array: person_read emits it, TREE_SOURCE_FIELDS rejects it, so a verbatim copy into the tree fails the project_create write and dropping the whole source to dodge that is the wrong fix.",
+  "description": "FamilySearch tree person read for Patrick Flynn WITH relatives and source descriptions — the only init-project fixture that exercises the relationship import, the FAN rule, and the multi-person re-ID to local I/N/F/R/S ids. Wife Mary Kelly, children James and Margaret; no parents, because the parents are the research target. Names and relationships arrive without ids, per simplified-gedcomx-spec.md §3 — the caller mints them. Each person does carry an `ark` and each name a `preferred: true`, which person_read always emits: the ark is the only field surviving the re-ID that still points at the FamilySearch person, so dropping it during the copy leaves every tree person unlinked. Facts carry both tool-emitted sidecars (`standard_place`, `standard_date`), neither a string copy of its raw field. One source description carries a `notes` array: person_read emits it, TREE_SOURCE_FIELDS rejects it, so a verbatim copy into the tree fails the project_create write and dropping the whole source to dodge that is the wrong fix.",
   "args": { "personId": "LZNY-BRF", "relatives": true, "sourceDescriptions": true },
   "response": {
     "persons": [
       {
         "id": "LZNY-BRF",
+        "ark": "ark:/61903/4:1:LZNY-BRF",
         "gender": "Male",
         "living": false,
         "names": [
-          { "given": "Patrick", "surname": "Flynn" }
+          { "preferred": true, "given": "Patrick", "surname": "Flynn" }
         ],
         "facts": [
           {
@@ -30,10 +31,11 @@
       },
       {
         "id": "LZNY-K2M",
+        "ark": "ark:/61903/4:1:LZNY-K2M",
         "gender": "Female",
         "living": false,
         "names": [
-          { "given": "Mary", "surname": "Kelly" }
+          { "preferred": true, "given": "Mary", "surname": "Kelly" }
         ],
         "facts": [
           {
@@ -47,10 +49,11 @@
       },
       {
         "id": "LZNY-P7Q",
+        "ark": "ark:/61903/4:1:LZNY-P7Q",
         "gender": "Male",
         "living": false,
         "names": [
-          { "given": "James", "surname": "Flynn" }
+          { "preferred": true, "given": "James", "surname": "Flynn" }
         ],
         "facts": [
           {
@@ -64,10 +67,11 @@
       },
       {
         "id": "LZNY-R4T",
+        "ark": "ark:/61903/4:1:LZNY-R4T",
         "gender": "Female",
         "living": false,
         "names": [
-          { "given": "Margaret", "surname": "Flynn" }
+          { "preferred": true, "given": "Margaret", "surname": "Flynn" }
         ],
         "facts": [
           {
