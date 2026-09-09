@@ -38,6 +38,7 @@ there.
 | `make harness-test` | `scripts\windows\harness-test.bat` | Eval harness tests (pytest) |
 | `make harness-lint` | `scripts\windows\harness-lint.bat` | Harness ruff check |
 | `make agent-smoke` | `scripts\windows\agent-smoke.bat` | Plugin agent registration + dead-stub abort smoke test |
+| `make hook-smoke` | `scripts\windows\hook-smoke.bat` | Live probe: does the plugin's `PreToolUse` hook actually bind in the hosted SDK loader? (issue #1160) |
 | `make deploy-status` | `scripts\windows\deploy-status.bat` | Health-check the deployed control plane |
 
 Pass parameters as environment variables, the same names the make targets use:

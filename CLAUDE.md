@@ -313,6 +313,15 @@ entitled to make. `scripts/package-plugin.mjs`'s `INCLUDE` list must carry
 `"hooks"` or the directory never ships, which looks identical to the runtime
 refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
+**After changing anything under `hooks/`, run `make hook-smoke`.**
+`plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
+proves a runtime *binds* it, and because the script must never raise, a hook that
+stopped binding is indistinguishable from one with no opinion — no error, no log,
+no red test. It is a live billed probe (two short sessions), hard-errors without a
+key, and no CI job runs it. It covers the **hosted** loader only: Cowork is a
+different loader, so "binds in both" above is measured on one side and inferred on
+the other, and the Cowork side stays on the `nothing-checks` register.
+
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a
 superset — so no allow-list can deny the *main thread* a tool one of its

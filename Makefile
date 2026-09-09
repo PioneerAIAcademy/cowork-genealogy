@@ -373,6 +373,30 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: hook-smoke
+hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? (issue #1160; 2 short sessions)
+	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
+	# BINDING -- whether a runtime reads hooks/hooks.json, matches a real tool
+	# call, shells the command and blocks. Nothing else checks that, in any
+	# tier, and the failure is silent: the script's contract is "never raise,
+	# fall through to allowing the call", so a hook that stops binding looks
+	# exactly like a hook with no opinion.
+	#
+	# Provokes a main-thread research_append on proof_summaries -- the arm with
+	# no redundant copy in the hosted path -- clears the SDK-side hook so the
+	# deny is attributable, and requires the guard script's own reason text.
+	# Arm B re-runs the turn with hooks/ removed; if that denies too, the run is
+	# VOID rather than green.
+	#
+	# A pass proves the HOSTED loader binds. Cowork is a different loader,
+	# reachable only by a human in a live session, so issue #1160 stays on the
+	# nothing-checks register either way. Hard-errors without a key rather than
+	# skipping -- agent-smoke's exit-0 skip is how an unrunnable check reads as
+	# a passing one.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_hook_binding.py
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test

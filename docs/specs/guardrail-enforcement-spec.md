@@ -148,7 +148,7 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
-| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
+| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
@@ -159,7 +159,7 @@ depends on another shipping first.
 | §5 | Plan-item non-emptiness | engine (validator) — so Cowork, hosted, both harnesses | a `plans[]` entry whose `items` is `[]` or not an array. `research.schema.json` has always said `type: array, minItems: 1`; `validateResearch` required only the key, so an empty plan passed the runtime enforcer and failed nothing but the eval harness's jsonschema pass | **enforcing** (since 2026-09-01; measured at 9a0eb98e5, **8 of 295** `plans` append ops in the committed corpus send `items: []`, and each is the *second* half of a retry loop — the shell was sent with `items` absent, refused for a missing field, then re-sent with `[]`. The two calls are observed; the refusal and acceptance between them are deduced, since run logs record no tool responses) |
 | §5 | Misrouted plan items name their cause | engine (MCP tool) — so Cowork, hosted, both harnesses | a `plan_items` **append** op writing into a plan other than the one its own call created, leaving that plan empty — whether the other plan pre-existed (the hard-coded-`pl_001` misroute) or was created by the same call (a forgotten sibling, which needs the opposite fix and gets a different sentence). Adds **no** refusal — the call was already refused by the row above, or by `items` being required — it replaces a message naming the symptom with one naming the cause, because the previous message drove the model to `"items": []` and that then validated | **enforcing** (since 2026-09-01; fires on **6** corpus `plans` append ops, measured at 9a0eb98e5 — both halves of the retry loop in each of three unit runs, where nine item ops carry a hard-coded `pl_001`, a **completed** plan for another question, while the plan the same call created ends empty. That is exactly the corruption this arm exists to stop, committed to the corpus, so it is the arm's strongest evidence rather than a gap. It is a derivable **floor**, not a total: the assigned `pl_` id is only recoverable where a scenario fixture seeds the plan ids. The arm still adds no refusal — every call it catches is one the row above or the required-field check already refused — so it changes the message, not the outcome — but no check observes whether the new message actually breaks the loop, and none can outside a paid eval run) |
 | n/a | Malformed element reported, not thrown | engine (validator) — so Cowork, hosted, both harnesses, and `validate_research_schema` | a `null` or primitive element in any document array, and a primitive in a required-object field. `checkRequired` tests `field in obj` and `in` THROWS on null and on every primitive, so one stray element took `validateParsed` down with `TypeError: Cannot use 'in' operator` — and because every writer tool validates the whole document, every one of them failed with a message naming no field and no fix, while the read-only reporter crashed instead of saying what to repair. Guarded at the 20 array loops, at **four** further sites outside them that a loop-by-loop patch missed (three dereferences in `person-id-refs.ts`, reached from the cross-file pass, and the cross-file `sources` ref), and at **four** required-object fields — `exhaustive_declaration`, `external_site` and `citation_detail`, whose `typeof X === "object" && X !== null` opening skipped a primitive silently, plus `researcher_profile`, whose `typeof rp !== "object"` opening caught a string and missed `[]`. The four missed cross-file sites are why the tests enumerate every section rather than sampling one. **Arrays are treated differently on the two halves, deliberately:** an array ELEMENT is left alone (`in` does not throw on one, so re-shaping its messages would be an unrelated change riding on a crash fix), while an array in a required-object FIELD is refused, and refused once rather than once per missing key | **enforcing** (since 2026-09-01; reachable by hand edit or a truncated write, and the one persisted itemless plan in the committed corpus arrived exactly that way, from a run that made zero MCP tool calls) |
-| §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload) |
+| §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
 > 2026-08-15: in Cowork with a connected folder the lockdown never fires, because
@@ -1324,6 +1324,77 @@ change: the parity test forces all three shipping copies to protect the *same*
 set, so a hosted-only entry needs a per-path protected-set design first. Tracked
 as separate follow-up work; the unit-harness rule stands
 on its own.
+
+### 6.4 What proves the hook BINDS — `make hook-smoke`
+
+Everything above specifies what the hook *decides*. Two separable
+things could be checked, and until this landed only one was:
+
+| | Checked by |
+|---|---|
+| The guard script's **decisions** — given a `Write` on `research.json`, does `guard_project_files.py` deny? | `plugin-hooks.test.ts` (runs the real script as a subprocess), `test_write_lockdown_parity.py` (three copies, one vector set), `test_write_lockdown.py`, `test_e2e_tree_block.py` |
+| The hook's **binding** — does a runtime read `hooks/hooks.json`, match a real tool call, shell the command, parse `hookSpecificOutput.permissionDecision` and block? | `make hook-smoke`, for the hosted SDK loader only |
+
+**The gap was silent by construction.** §6's own rule is that the script must
+never raise and every failure path falls through to allowing the call. So a hook
+that stops binding is indistinguishable from a hook with no opinion: no error, no
+log, no red test, just an unguarded `research.json`.
+
+The three design questions this target's card left to the implementer, answered:
+
+**1. What the target is.** `make hook-smoke` →
+`apps/server/dev/probe_hook_binding.py`. It lives in `dev/` beside
+`probe_agent_binding.py`, not in `apps/server/tests/`, because it is a live
+billed probe rather than a check — the same reason `probe-agent-binding` is not a
+test. It calls the **real** `real_agent.build_options` against a temp copy of the
+shipped plugin and mutates only the object that returns; a probe that assembles
+its own `plugins=[…]` dict would prove that *some* plugin directory loads hooks,
+which is precisely the assumption that was disproved for agents, where SDK
+plugin loading registered them only under a namespaced name while every
+delegation used the bare one.
+
+**2. What it provokes: a main-thread `research_append` on `proof_summaries`.**
+Not a raw `Write` to `research.json`, which is the weakest available probe —
+§6.1 measured that in Cowork with a connected folder `Write` cannot reach the
+user's files at all. `proof_summaries` routing has **no redundant copy in the
+hosted path** (`real_agent._pretool_hook` implements only
+`direct_project_file_write`), so it is the arm whose binding failure is invisible
+everywhere else. The main thread carries no `agent_id` key, so `owner_denied`
+reads `caller == ""` and denies.
+
+**3. Whether the e2e orchestrator should load the plugin: NO, not decided here.**
+That option deletes one of the three copies §6 rules must stay, which was
+declined (closed not-planned) and would drop `IMPLEMENTATIONS` in
+`test_write_lockdown_parity.py` from three to two. Reopening it is a separate ask
+to amend §6, not a call the implementer makes. So binding stays a target someone
+runs, not a standing signal.
+
+**Attribution is not optional, and is enforced three ways.** A deny on its own
+proves nothing — it could come from the SDK-side `_pretool_hook` or from
+`research_append`'s own validation.
+
+- `options.hooks` is **cleared** on the returned object, so the SDK-side hook is
+  out of the picture for the probe's duration.
+- The expected reason text is **imported** from the shipped guard script and
+  formatted (`OWNER_REASON`, `OWNED_SECTIONS`), never pasted into the probe. A
+  reword of the deny text therefore cannot make the probe silently report
+  NOT_BOUND.
+- **Arm B** re-runs the same turn against a plugin copy with `hooks/` removed. If
+  the deny text appears there too, the run reports VOID rather than letting arm A
+  be read.
+
+**The confound ruled out first.** The hook command is `python3
+${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py`. A negative could be `python3`
+missing from PATH or the script erroring rather than the loader failing to bind,
+so a preflight runs the script directly with a synthetic payload and requires a
+deny back; a packaging problem reports as VOID (preflight), never as "does not
+bind". The preflight was proven to fail four ways — script absent, script always
+allowing, script exiting non-zero, script printing non-JSON.
+
+**What a pass does not prove.** The hosted SDK loader is not Cowork's loader, and
+Cowork is where this hook is the *only* guardrail. Per `docs/architecture.md`
+§9.4, no CI job can verify binding in any environment. **The Cowork gap stays on
+the `nothing-checks` register whatever this target reports.**
 
 ## 7. Caller-attributed recency check (shadow mode)
 
