@@ -30,6 +30,7 @@ import pytest
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
+    bare_tool_name,
 )
 
 
@@ -1228,4 +1229,77 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
         "Skill('convert-dates') before delegating. Narrating the problem "
         "in prose is not resolving it. "
         f"skills_invoked={skills_invoked}"
+    )
+
+
+# --- Batch progress narration (issue #1998, candidate 3) ---------------
+#
+# The rubric CANNOT carry this check. `eval/tests/unit/record-extraction/
+# rubric.md` scores every dimension on the persisted assertion/source fields
+# and says so twice - "not on how the chat response narrates them" and
+# "Narrative style, verbosity, and presentation are never grounds for a
+# deduction". That is a deliberate calibration choice, not an oversight, so
+# the guard for a narration rule has to be deterministic and live here.
+
+_POSITION_RE = re.compile(r"(?<!\d)(\d{1,3})\s*(?:of|/)\s*(\d{1,3})(?!\d)", re.IGNORECASE)
+
+
+def _records_extracted(tool_calls):
+    """Records extracted this run, counted by the per-record write.
+
+    SKILL.md delegates once per record and the agent writes the source and
+    its assertions in one composite `extraction_append`, so the call count is
+    the record count. `bare_tool_name` because a run records the call under
+    whichever of the three server spellings the session resolved.
+    """
+    return sum(
+        1
+        for c in (tool_calls or [])
+        if bare_tool_name(c.get("tool") or "") == "extraction_append"
+    )
+
+
+def test_a_multi_record_batch_announces_each_record_position(
+    text_response, tool_calls, test
+):
+    """Every record in a batch is announced with its position before its turn.
+
+    SKILL.md "Per-record delegation": state the count once, then name each
+    record and its position before invoking the agent for it.
+
+    A document costs ~136 seconds and 81.9% of that is model reasoning inside
+    the subagent, so the silence falls INSIDE each extraction rather than
+    between them - and `record-extractor.md` is deliberately mute ("Work
+    silently ... the caller handles presentation"). A ten-document batch is
+    therefore ~23 minutes during which the router is the only thing that can
+    speak, which is why a tester read a working run as a hang (#1998).
+
+    Gated on two or more records because a single-record run has no position
+    to report. That gate leaves the check live rather than dormant: 5 of 31
+    tests in `v1_2026-09-08_17-39-37` extracted two or more (one extracted
+    three), and `ut_record_extraction_006`, `_007` and `_017` do so in all
+    five committed run logs.
+
+    The denominator is accepted at `>= n` rather than `== n`: announcing "1 of
+    3" and then failing to extract the third record is a different defect, and
+    this validator should not also fail for it.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests extract records")
+
+    n = _records_extracted(tool_calls)
+    if n < 2:
+        pytest.skip("not a batch - fewer than two records extracted")
+
+    announced = {
+        int(k)
+        for k, total in _POSITION_RE.findall(text_response or "")
+        if int(total) >= n
+    }
+    missing = sorted(set(range(1, n + 1)) - announced)
+    assert len(announced) >= n, (
+        f"{n} records were extracted but only {len(announced)} carried a "
+        f"position marker in the narration (missing {missing}). At ~136s per "
+        f"document an unannounced record is silence the user cannot "
+        f"distinguish from a hang - say '2 of {n}' before delegating it."
     )
