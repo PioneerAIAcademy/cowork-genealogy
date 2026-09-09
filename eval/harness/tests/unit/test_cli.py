@@ -1761,3 +1761,189 @@ def test_abort_storm_breaker_does_not_trip_on_cap_aborts(
 
     # 5. All 5 tests were submitted.
     assert counter["n"] == 5
+
+
+def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
+    tmp_path, monkeypatch, capsys
+):
+    """The behaviour #2192 is actually about, and the one nothing covered.
+
+    Review of #2326 showed the whole suite stayed green with the quota stop
+    mutated out (`if False and reason == QUOTA_ABORT_REASON`) — the two tests
+    that existed asserted only constant membership, so `quota_stop`, the
+    scratch gate and the exit-3 path were all unexercised.
+
+    ONE quota abort is decisive, unlike the breaker's 4-abort/20% threshold:
+    the seat's limit is deterministic until it resets, so every test still to
+    run would abort the same way.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    n_tests = 10
+    for i in range(n_tests):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        # Two clean passes, then the seat's quota refuses. One is enough.
+        if counter["n"] <= 2:
+            return _stub_log(spec.id, spec.skill, "pass")
+        return _stub_log(
+            spec.id, spec.skill, "aborted",
+            aborted_reason=run_tests.QUOTA_ABORT_REASON,
+        )
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    # Stub the releasable write, as the sibling discriminator does. Without it
+    # `_stub_log` fails `write_run_log`'s schema validation the moment the quota
+    # stop is mutated out, so the test reds on a jsonschema ValidationError at
+    # the `main()` call and NONE of the five assertions below ever runs — it
+    # would be proving the stub is thin, not that the suite stopped.
+    def fake_write_run_log(log, *, runlogs_root, filename, **kwargs):
+        out = Path(runlogs_root) / "unit" / "skill-a" / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}", encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write_run_log)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    out_dir = runlogs / "unit" / "skill-a"
+    combined = capsys.readouterr()
+
+    # 1. Execution failure, not a corpus one.
+    assert rc == 3
+
+    # 2. No releasable v{N} — a quota-cut run must never become a candidate.
+    assert list(out_dir.glob("v*.json")) == [], \
+        "a quota abort must NOT mint a releasable run log"
+
+    # 3. The completed tests are kept, not thrown away.
+    assert len(list(out_dir.glob("scratch_*.json"))) == 1
+
+    # 4. Submission stopped — the whole point. Without the quota stop the
+    #    suite runs all 10.
+    assert counter["n"] < n_tests, \
+        "a quota abort must stop the suite submitting further tests"
+
+    # 5. The operator is told why, in the seat's own terms.
+    assert "quota" in (combined.out + combined.err).lower()
+
+
+def test_a_transient_abort_alone_still_mints_a_releasable_log(
+    tmp_path, monkeypatch, capsys
+):
+    """The discriminator for the test above.
+
+    One `error` abort is below the breaker's floor and is NOT a quota, so
+    submission continues to the end. Without this, the quota test would still
+    pass if the harness stopped on *any* abort, and the new branch would be
+    proving nothing.
+
+    Asserts submission only, not the run log: minting a releasable `v{N}` sends
+    `_stub_log` through `write_run_log`'s schema validation, which the stub is
+    too thin to satisfy. That is a fixture limitation rather than a behaviour,
+    and it is why the breaker test never mints one either.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    n_tests = 5
+    for i in range(n_tests):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        if counter["n"] == 1:
+            return _stub_log(
+                spec.id, spec.skill, "aborted", aborted_reason="error"
+            )
+        return _stub_log(spec.id, spec.skill, "pass")
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    # The releasable write is stubbed rather than exercised: `_stub_log` is too
+    # thin for `write_run_log`'s schema validation, which is a fixture limit,
+    # not a behaviour. Recording that it was REACHED is the discriminating
+    # fact — the quota path returns before it.
+    minted: list = []
+
+    def fake_write_run_log(log, *, runlogs_root, filename, **kwargs):
+        minted.append(filename)
+        return Path(runlogs_root) / filename
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write_run_log)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+    capsys.readouterr()
+
+    assert counter["n"] == n_tests, "a lone transient abort must not stop the suite"
+    assert minted, "a lone transient abort still reaches the releasable write"
+    assert rc == 3  # still an execution abort, just not a quota one

@@ -8,8 +8,11 @@ Last reviewed: **2026-09-08**.
 
 **Reachability, once, up front.** Every finding below except `fast-uri` lives in a
 **devDependency** — dev tooling (eslint, vite/vitest, electron-builder,
-`@anthropic-ai/mcpb`) or the internal-only Eval CRUD UI. `pnpm why --prod` returns
-*nothing* for every vulnerable package in the workspace. The `.mcpb` is built with
+`@anthropic-ai/mcpb`) or the internal-only Eval CRUD UI. Check reachability with
+`pnpm why --prod -r <pkg>` — **without `-r` the command inspects only the root
+package, which declares no dependencies, so it returns nothing for everything**
+(`pnpm why --prod react` is silent even though `apps/web` depends on it). The
+`.mcpb` is built with
 `npm ci --omit=dev` (`scripts/build-mcpb.mjs`), so dev-tree findings never reach
 **that** artifact. Weigh fix churn against that before treating a HIGH as urgent.
 
@@ -22,21 +25,22 @@ packages the runtime at whatever the installed `electron` resolves to. So an adv
 against `electron` reaches every installed Research Viewer, and the `npm ci --omit=dev`
 reasoning above does not cover it. Treat `electron` findings as shipping.
 
-**Use `pnpm why --prod -r`, never `pnpm why --prod`.** Without `-r` the command inspects
-only the root package, which declares no `dependencies`, so it returns nothing for
-**everything** and reads exactly like proof that a package is dev-only. Control:
-`pnpm why --prod react` returns nothing while `apps/web` declares react as a production
-dependency. An earlier revision of this file used the bare form to argue that
-`pnpm audit --prod` over-reported `extract-zip`; @clack391 refuted that on #2274. With
-`-r`, `extract-zip` is genuinely production (`apps/electron` → `@electron-toolkit/utils`
-→ `electron` peer → `extract-zip`), so `pnpm audit --prod` was right and the bare
-`why` was the broken instrument.
+**`pnpm audit --prod` reaches through peer edges, and was right here.** It flags
+`extract-zip` as production because `@electron-toolkit/utils` — a real production
+dependency of `apps/electron` — peer-depends on `electron`, which declares
+`extract-zip`. `pnpm why --prod -r extract-zip` prints that path.
 
-That makes the "Reachability, once, up front" paragraph above unreliable where it says
-`pnpm why --prod` returns nothing for every vulnerable package: the command returns
-nothing regardless. @DallanQ ruled on 2026-09-09 (#2352) that this file stays the
-mechanism and that paragraph gets re-derived, so it is deliberately left for that pass
-rather than patched here.
+**Always pass `-r`.** Without it, `pnpm why --prod` inspects only the root package,
+which declares no `dependencies`, so it returns nothing for **everything** and reads
+exactly like proof that a package is dev-only. The control is decisive:
+`pnpm why --prod react` returns nothing while `apps/web` declares react as a production
+dependency. An earlier revision of this file used the bare form to argue the audit
+over-reported `extract-zip`; @clack391 refuted it on #2274. The audit was right and the
+bare `why` was the broken instrument.
+
+The "Reachability, once, up front" paragraph above still carries that bare-`why` claim.
+@DallanQ ruled on 2026-09-09 (#2352) that this file stays the mechanism and that
+paragraph gets re-derived, so it is left for that pass rather than patched here.
 
 ## Fixed
 

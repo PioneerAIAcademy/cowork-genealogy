@@ -19,6 +19,8 @@ command:
 - Which issues merge, which stay independent, which close as duplicates
 - Promotion into Ready, and what loses a swap
 - Lane labels, `reviewed`, `cluster:*`, board hygiene
+- `high-priority` — approving `fill-ready`'s proposed adds and removes, and
+  applying it by hand (criterion 4, "a lead's call"; Dallan may too)
 - Standup topics, replies, and who work goes to
 - Paid eval runs — he holds the same budget as Dallan
 - The roster
