@@ -1471,6 +1471,42 @@ def test_summary_ignores_non_judge_warning_kinds():
         assert k in run_tests._JUDGE_WARNING_KINDS
 
 
+#: Non-warning ``"kind": "..."`` literals in the harness: the tool-call match
+#: vocabulary (mock_mcp's ``matched.kind``). Excluded so the scan below can glob
+#: EVERY harness file — closing the file-blindness of the retired two-file
+#: scan — without tripping on these. The guardrail-shadow kinds are built from
+#: constants (``"kind": SOME_KIND``), so the literal regex never sees them.
+_NON_WARNING_KIND_LITERALS = {"none", "predicate", "queue", "queue_reused", "live"}
+
+
+def test_every_literal_warning_kind_in_the_harness_is_registered():
+    """A forgotten registration must fail in pytest, for free — not mid-run.
+
+    The `_build_warnings` chokepoint validates every kind by value, but only once
+    the emit path actually executes (a live run, for `harness_node_timeout`); when
+    it fires there it raises out to `fut.result()` and stops the whole suite
+    (`harness_error` / `stop_submitting`), discarding the paid in-flight test.
+    This is the cheap first line: it catches the common literal case statically,
+    across every file, so the runtime raise stays a backstop."""
+    import re as _re
+    from pathlib import Path as _P
+    from harness.warning_kinds import WARNING_KIND_SIDES
+
+    harness_dir = _P(__file__).resolve().parents[2] / "harness"
+    emitted: set[str] = set()
+    for f in harness_dir.glob("*.py"):
+        emitted |= set(
+            _re.findall(r'"kind": "([a-z_]+)"', f.read_text(encoding="utf-8"))
+        )
+
+    unregistered = emitted - set(WARNING_KIND_SIDES) - _NON_WARNING_KIND_LITERALS
+    assert not unregistered, (
+        f"literal warning kind(s) not in harness/warning_kinds.py: "
+        f"{sorted(unregistered)}. Add each to WARNING_KIND_SIDES (or, if it is a "
+        f"non-warning 'kind', to _NON_WARNING_KIND_LITERALS)."
+    )
+
+
 def test_summary_count_matches_the_names_it_shows(capsys):
     """One test tripping the same kind twice is one test, not two. The
     headline counted occurrences while the list deduped, so it read as two

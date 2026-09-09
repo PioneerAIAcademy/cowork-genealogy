@@ -755,9 +755,28 @@ def test_node_timeout_is_recorded_and_surfaced_as_warning(tmp_path, monkeypatch)
     live = [c for c in call_log if c["tool"].endswith("research_append")]
     assert live, "research_append call not recorded in the call log"
     errors = live[-1]["response"].get("errors") or []
-    assert any(mock_mcp.NODE_EVAL_TIMEOUT_MARKER in e for e in errors), errors
+    assert any(mock_mcp.NODE_EVAL_TIMEOUT_PATTERN.search(e) for e in errors), errors
 
     warnings = _build_warnings(call_log)
     timeout_warnings = [w for w in warnings if w["kind"] == "harness_node_timeout"]
     assert len(timeout_warnings) == 1, [w["kind"] for w in warnings]
     assert any("research_append" in t for t in timeout_warnings[0]["tools"])
+
+
+def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
+    """The engine's fetchWithTimeout says '...ms'; subprocess.TimeoutExpired says
+    'seconds'. Only the latter is a harness flake. A real upstream FamilySearch
+    timeout, folded into the same {ok: false} shape by a network-calling live
+    tool, must NOT be excused with 'do not grade the recovery as a skill error' —
+    that would hide a genuine failure behind a harness excuse."""
+    upstream = {
+        "tool": "mcp__genealogy__research_append",
+        "args": {},
+        "matched": {"kind": "live", "index": None},
+        "response": {
+            "ok": False,
+            "errors": ["research_append: Request to https://x timed out after 30000ms."],
+        },
+    }
+    warnings = _build_warnings([upstream])
+    assert not any(w["kind"] == "harness_node_timeout" for w in warnings)

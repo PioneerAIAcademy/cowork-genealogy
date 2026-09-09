@@ -33,7 +33,7 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
-from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_MARKER
+from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN
 from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
@@ -1102,8 +1102,9 @@ def _response_hit_node_timeout(response: Any) -> bool:
 
     A tripped node subprocess lands in the tool's failure envelope
     (`ok: false` / `valid: false`) with the `subprocess.TimeoutExpired` string
-    in `errors`/`message`. Keyed on the failure flag AND the sentinel so a
-    tool's own error prose can't false-trip it.
+    in `errors`/`message`. Keyed on the failure flag AND the seconds-anchored
+    pattern so neither a tool's own error prose nor an upstream `...ms` fetch
+    timeout false-trips it (see NODE_EVAL_TIMEOUT_PATTERN).
     """
     if not isinstance(response, dict):
         return False
@@ -1116,7 +1117,7 @@ def _response_hit_node_timeout(response: Any) -> bool:
     message = response.get("message")
     if isinstance(message, str):
         texts.append(message)
-    return any(NODE_EVAL_TIMEOUT_MARKER in t for t in texts)
+    return any(NODE_EVAL_TIMEOUT_PATTERN.search(t) for t in texts)
 
 
 # Judge dimensions whose subject is checked deterministically by the

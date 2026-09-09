@@ -69,6 +69,7 @@ Current live tools:
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -211,12 +212,18 @@ _PERMISSIVE_SCHEMA: dict[str, Any] = {
 NODE_EVAL_TIMEOUT_DEFAULT = 30
 NODE_EVAL_TIMEOUT_LONG = 60
 
-#: Stable fragment of ``subprocess.TimeoutExpired.__str__`` ("Command '...'
-#: timed out after N seconds"). A tripped node subprocess in a live tool lands
-#: in that tool's ``{ok: false, errors: [...]}`` via the handler's
+#: Matches ``subprocess.TimeoutExpired.__str__`` ("Command '...' timed out after
+#: N seconds") and ONLY that. A tripped node subprocess in a live tool lands in
+#: that tool's ``{ok: false, errors: [...]}`` via the handler's
 #: ``except Exception``, so ``orchestrator._build_warnings`` scans a recorded
-#: live-tool response for this marker to surface the flake as a warning (#2025).
-NODE_EVAL_TIMEOUT_MARKER = "timed out after"
+#: live-tool response for this pattern to surface the flake as a warning (#2025).
+#: The ``seconds`` anchor is load-bearing: the engine's ``fetchWithTimeout``
+#: throws ``Request to <url> timed out after 30000ms.`` on a real upstream
+#: timeout, which a network-calling live tool would fold into the same
+#: ``{ok: false}`` shape — a bare ``"timed out after"`` marker would then excuse
+#: a genuine FamilySearch failure as a harness flake. Python says seconds, JS
+#: says ms; the anchor separates them.
+NODE_EVAL_TIMEOUT_PATTERN = re.compile(r"timed out after [\d.]+ seconds")
 
 
 def _run_node_eval(
