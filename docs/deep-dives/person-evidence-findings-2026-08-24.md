@@ -476,6 +476,17 @@ unsourced `add_person` for record-derived people.
 > not on names and she is record-derived, not a hypothesis stub. Then link per
 > Step 4.
 
+> **Superseded 2026-09-07, before this was ever applied.** #1895's engine half
+> landed: `materialize_facts` now has a named-party arm that mints exactly this
+> person and *enforces* the resolved ref rather than asking the caller to write
+> one, which is the outcome the reviewer preferred when this wording was
+> accepted as the interim. Whoever buys the next `person-evidence` run should
+> retire the carve-out in favour of that call — condition 1 at the top of this
+> file ("Retired entirely if #1895 lands first") — and **not** apply the
+> hand-written `sources` wording above, which now carries a typo and wrong-ref
+> path the tool does not. The paragraph is kept as the record of what was
+> accepted on 2026-08-24.
+
 **Why deferred.** It edits `SKILL.md`, so it flips the run-log snapshot and buys
 a paid eval run; it cannot take `eval-cosmetic-skip`, which is for
 behaviour-neutral edits only. The lead chose to let it ride the run

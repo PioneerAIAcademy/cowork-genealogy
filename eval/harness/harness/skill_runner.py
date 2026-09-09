@@ -34,6 +34,7 @@ from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
     HookMatcher,
+    RateLimitEvent,
     ResultMessage,
     TextBlock,
     ToolUseBlock,
@@ -267,6 +268,84 @@ def builtin_call_record(
     return record
 
 
+# A subscription quota is deterministic until the seat's window resets, so it is
+# NOT transient: retrying burns attempts in seconds against a limit that clears
+# in hours, and the suite then ships an ungraded test as a real result. Kept out
+# of `_ALWAYS_RETRYABLE_ABORTS` (orchestrator) and `_TRANSIENT_ABORT_REASONS`
+# (run_tests) deliberately — membership in either restores the retry or feeds
+# the abort-storm breaker's ratio arithmetic.
+QUOTA_ABORT_REASON = "quota_exhausted"
+
+# Display prose, localized to the seat and CLI-version-dependent. Observed once,
+# in eval/runlogs/unit/convert-dates/v1_2026-09-01_14-32-09.json:
+#   "You've hit your limit · resets 4pm (Africa/Lagos)"
+# It is the LAST resort, never the primary predicate — the structured signals in
+# `_quota_evidence` are checked first. This exists only so a quota that emits
+# none of them is still caught rather than retried three times.
+# Subscription prose only. `"rate limit"` is deliberately NOT here: it matches
+# Anthropic's own 429 body text, which in `api_key` mode is a per-minute org
+# limit that clears in under a minute — see the predicate note below.
+_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit")
+
+
+def _looks_like_quota(
+    signals: dict[str, Any],
+    error_text: str | None,
+    response_text: str | None = None,
+) -> bool:
+    """True when this run ended on the SEAT'S SUBSCRIPTION limit, not a blip.
+
+    Only one signal classifies, and the choice is deliberate. `RateLimitEvent`
+    carries a `rate_limit_type` whose every literal is a subscription window —
+    `five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`, `overage` —
+    so `status == "rejected"` cannot be produced by a per-minute API limit.
+
+    `api_error_status == 429` and `assistant_error == "rate_limit"` are captured
+    as EVIDENCE but do not classify, because either can come from a per-minute
+    org limit in `api_key` mode, which this repo twice calls transient
+    (`harness/auth.py:151`, `harness/judge.py`). Treating one as a quota would
+    stop the suite and discard a whole paid `make eval-skill` slot over a limit
+    that had already cleared — a worse failure than the retry this change
+    exists to remove, and one this PR briefly introduced (review of #2326).
+
+    The asymmetry is the argument: a false positive throws away a paid run; a
+    false negative merely returns the old three-retry behaviour. Recall is not
+    worth that trade here.
+
+    Which structured signal a real subscription quota actually emits remains
+    UNVERIFIED — one cannot be forced on demand. Whichever signals fire are
+    recorded in `runs[].error` on any run that aborts, so the next occurrence
+    settles it from the run log without another paid suite. A healthy run
+    persists none of them: `_format_quota_evidence` drops the None ones and
+    `error` is assigned on failure paths only.
+    """
+    if signals.get("rate_limit_status") == "rejected":
+        return True
+    # Both text sources. The one occurrence in the corpus
+    # (convert-dates/v1_2026-09-01_14-32-09.json, ut_convert_dates_012) has
+    # `error: null` and carries the prose in `output.text_response`, so a
+    # fallback that reads only the SDK's error text misses the very case it
+    # was written for and the run is retried three times anyway.
+    text = f"{error_text or ''}\n{response_text or ''}".lower()
+    return any(marker in text for marker in _QUOTA_TEXT_MARKERS)
+
+
+def _format_quota_evidence(signals: dict[str, Any], error_text: str | None) -> str:
+    """The SDK's own error text, plus whichever structured signals fired.
+
+    `error` is the run's only free-form field (`{"type": ["string","null"]}`),
+    and the run object is `additionalProperties: false`, so this is where the
+    evidence goes without widening the schema past the `error` key itself. The
+    verbatim SDK text stays first so nothing is lost by the annotation.
+    """
+    fired = {k: v for k, v in signals.items() if v is not None}
+    base = error_text or ""
+    if not fired:
+        return base
+    detail = " ".join(f"{k}={v}" for k, v in sorted(fired.items()))
+    return f"{base} [rate-limit signals: {detail}]".strip()
+
+
 @dataclass
 class SkillRunResult:
     text_response: str
@@ -409,7 +488,7 @@ async def run_skill(
     # execution), so we deny the sub-skill launch and stop the run instead
     # of paying for the routed-to skill's full workload. The loop reads
     # this after consuming to force a clean (non-aborted) termination.
-    routing_resolved = {"v": False}
+    routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
     # the negative-test short-circuit above: that one DENIES AND STOPS, because
@@ -453,6 +532,7 @@ async def run_skill(
                 # the routed-to skill's (often very expensive) execution.
                 if skill_name in _short_circuit:
                     routing_resolved["v"] = True
+                    routing_resolved["tool_use_id"] = tool_use_id
                     return {
                         "hookSpecificOutput": {
                             "hookEventName": "PreToolUse",
@@ -611,6 +691,25 @@ async def run_skill(
     # in the orchestrator depends on it (`_is_zero_progress_timeout`).
     # A mutable holder because the nested consumer rebinds `usage` wholesale.
     turns_seen: dict[str, int] = {"n": 0}
+    # Set on the routing short-circuit path when no ResultMessage arrived, so
+    # output_tokens: 0 there is legible as "no real count exists" rather than
+    # "the skill used no tokens" (issue #2189). A mutable holder, not read
+    # straight off routing_resolved["v"]: guarded on `usage` being empty at
+    # the point it is set, so a genuine trailing ResultMessage (raced ahead of
+    # the flag becoming visible) is never mistaken for one that never arrived.
+    no_result_message_flag: dict[str, bool] = {"v": False}
+    # Rate-limit evidence, collected from all three places the SDK offers it and
+    # recorded whether or not any fired. Every key stays present-but-None on a
+    # healthy run so a future occurrence shows which signals a real subscription
+    # quota actually emits — that question is currently unverified and cannot be
+    # settled by forcing a quota on demand.
+    rate_limit_signals: dict[str, Any] = {
+        "api_error_status": None,
+        "assistant_error": None,
+        "rate_limit_status": None,
+        "resets_at": None,
+        "rate_limit_type": None,
+    }
     aborted_reason: str | None = None
     error: str | None = None
     # The query() async generator, hoisted so the finally below can close it
@@ -638,8 +737,23 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
-            if isinstance(message, AssistantMessage):
+            if isinstance(message, RateLimitEvent):
+                # The CLI emits this whenever rate-limit state transitions. It
+                # is in the SDK's Message union and streamed straight past this
+                # loop until now — `status == "rejected"` is the limit actually
+                # being hit, as opposed to `allowed_warning` approaching it.
+                info = message.rate_limit_info
+                rate_limit_signals["rate_limit_status"] = getattr(info, "status", None)
+                rate_limit_signals["resets_at"] = getattr(info, "resets_at", None)
+                rate_limit_signals["rate_limit_type"] = getattr(
+                    info, "rate_limit_type", None
+                )
+            elif isinstance(message, AssistantMessage):
                 turns_seen["n"] += 1
+                # One of the AssistantMessageError literals; "rate_limit" is the
+                # one that matters here. Absent on a healthy turn.
+                if getattr(message, "error", None):
+                    rate_limit_signals["assistant_error"] = message.error
                 # Collected per-turn, not appended to text_chunks block by
                 # block: multiple TextBlocks in one AssistantMessage are the
                 # same utterance, but two different AssistantMessages are two
@@ -647,15 +761,25 @@ async def run_skill(
                 # 1,267 of 1,674 texted runs carried a word-final ./!/?/`
                 # against a capital with no boundary between them).
                 turn_text_parts: list[str] = []
+                # True when THIS message carries the ToolUseBlock the hook
+                # denied for routing. Checking message CONTENT rather than
+                # the routing_resolved["v"] flag alone is what makes the stop
+                # point exact: the flag can already be true by the time a
+                # LATER message (the model reacting to the denial) streams
+                # in, and stopping on "whatever arrives next" would record
+                # that reaction as the skill's own turns and text (review of
+                # #2189, round 2).
+                routed_call_seen = False
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         turn_text_parts.append(block.text)
-                    elif isinstance(block, ToolUseBlock) and block.name.startswith(
-                        "mcp__"
-                    ):
-                        attempted_mcp_calls.append(
-                            {"tool": block.name, "args": dict(block.input or {})}
-                        )
+                    elif isinstance(block, ToolUseBlock):
+                        if block.id == routing_resolved["tool_use_id"]:
+                            routed_call_seen = True
+                        if block.name.startswith("mcp__"):
+                            attempted_mcp_calls.append(
+                                {"tool": block.name, "args": dict(block.input or {})}
+                            )
                 if turn_text_parts:
                     text_chunks.append("".join(turn_text_parts))
                 # Per-turn input-token cap, post-hoc: the SDK exposes usage
@@ -669,6 +793,46 @@ async def run_skill(
                     )
                     if turn_input > max_input_tokens_per_turn:
                         raise _LimitExceeded("max_input_tokens_per_turn")
+                if routed_call_seen:
+                    # Negative-test routing short-circuit: the hook denied the
+                    # correct-skill launch the instant it saw the ToolUseBlock
+                    # above and set routing_resolved. The SDK does NOT honor
+                    # the hook's `continue_: False` to end the run (it just
+                    # retries other tools), so we stop consuming here — the
+                    # routing verdict is already captured in skills_invoked.
+                    #
+                    # A quota rejection can arrive as a RateLimitEvent BEFORE
+                    # this message — rate_limit_signals is already populated
+                    # in that case — and the classification below normally
+                    # only runs from a ResultMessage, which this path never
+                    # reaches. Check it here too: #2192's whole point is that
+                    # the suite must stop submitting once a real subscription
+                    # quota is hit, and it can only do that off
+                    # aborted_reason, so a quota that happens to coincide with
+                    # a routing short-circuit must not go undetected.
+                    if aborted_reason is None and _looks_like_quota(
+                        rate_limit_signals, None, "".join(text_chunks)
+                    ):
+                        aborted_reason = QUOTA_ABORT_REASON
+                        error = _format_quota_evidence(rate_limit_signals, None)
+                    # No ResultMessage will arrive on this path in the common
+                    # case (the downstream skill never launched), so `usage`
+                    # never gets its SDK-reported fields — UNLESS one already
+                    # arrived from an earlier iteration before the flag became
+                    # visible here, guarded against by checking `usage` is
+                    # still empty before touching it, so a genuine
+                    # ResultMessage's real num_turns is never overwritten by
+                    # the manufactured count below. turns_seen counts every
+                    # AssistantMessage regardless of exit path, the same
+                    # counter the wall-clock-timeout path below uses for the
+                    # identical reason. output_tokens has no real answer
+                    # either way pre-ResultMessage; no_result_message_flag
+                    # says so instead of leaving a fabricated 0
+                    # indistinguishable from "the skill used no tokens."
+                    if not usage:
+                        usage["num_turns"] = turns_seen["n"]
+                        no_result_message_flag["v"] = True
+                    return
             elif isinstance(message, ResultMessage):
                 usage = {
                     "duration_ms": message.duration_ms,
@@ -689,41 +853,49 @@ async def run_skill(
                     # nowhere in `usage`. See orchestrator._skill_tokens.
                     "model_usage": message.model_usage,
                 }
+                rate_limit_signals["api_error_status"] = getattr(
+                    message, "api_error_status", None
+                )
                 if message.is_error:
-                    error = message.result or message.stop_reason
                     # ResultMessage.is_error is the SDK's signal for "the
                     # session ended in a recoverable API/auth/rate-limit
                     # failure." Treat it as an abort so the run doesn't
                     # get scored against the empty/partial output that
                     # landed before the failure.
+                    #
+                    # Split the rate-limit case back out of that bucket: a
+                    # quota is NOT recoverable on this suite's timescale, and
+                    # bucketing it under "error" retried it three times in
+                    # seconds and then shipped the run as releasable (#2192).
+                    error = _format_quota_evidence(
+                        rate_limit_signals, message.result or message.stop_reason
+                    )
                     if aborted_reason is None:
-                        aborted_reason = "error"
+                        aborted_reason = (
+                            QUOTA_ABORT_REASON
+                            if _looks_like_quota(
+                                rate_limit_signals,
+                                message.result or message.stop_reason,
+                                "".join(text_chunks),
+                            )
+                            else "error"
+                        )
                 if message.stop_reason == "max_turns":
                     aborted_reason = "max_turns"
-            # Negative-test routing short-circuit: the hook denied the
-            # correct-skill launch and set this flag. The SDK does NOT honor
-            # the hook's `continue_: False` to end the run (it just retries
-            # other tools), so we stop consuming here — the routing verdict
-            # is already captured in skills_invoked. This is the early-exit
-            # the hook's stopReason alone can't deliver. Checked AFTER the
-            # message-type branches above (not before, which was issue
-            # #2189's defect): the flag is set by the hook as a side effect of
-            # dispatching the very tool call carried in THIS message, so
-            # checking first dropped that message's own text/tool-use content
-            # — the hand-off narration the routing test's judge_context asks
-            # for was silently lost in most runs.
-            if routing_resolved["v"]:
-                # No ResultMessage will ever arrive on this path (the
-                # downstream skill never launched), so `usage` never gets its
-                # SDK-reported fields. num_turns has a real answer already —
-                # turns_seen counts every AssistantMessage regardless of exit
-                # path, the same counter the wall-clock-timeout path below
-                # uses for the identical reason. output_tokens has no real
-                # answer (no partial token count exists pre-ResultMessage);
-                # no_result_message says so instead of leaving a fabricated 0
-                # indistinguishable from "the skill used no tokens."
-                usage["num_turns"] = turns_seen["n"]
-                return
+            # No catch-all fallback here on purpose: routing_resolved["v"]
+            # can already be true on the very first iteration (set during
+            # hook-driving, before any message is delivered), so a check keyed
+            # on the flag alone — checked every iteration regardless of
+            # message type — fires on whatever happens to arrive first, not
+            # on the message that actually carries the routed tool_use_id.
+            # Measured: a RateLimitEvent arriving before the routed
+            # AssistantMessage tripped exactly that, returning at
+            # turns_seen["n"] == 0 before the hand-off message was ever
+            # processed. The AssistantMessage branch above is the only
+            # correct stop point; if the routed id never appears in any
+            # AssistantMessage we see, the loop simply keeps consuming until
+            # the stream ends naturally (StopAsyncIteration, a cap, or a
+            # timeout already handle that case).
 
     start = time.perf_counter()
     try:
@@ -779,7 +951,13 @@ async def run_skill(
     # failure. The SDK may surface the hook-initiated stop as an error/abort
     # on the trailing ResultMessage, so clear any such state and keep the
     # run clean. The downstream skill never ran; that's the whole point.
-    if routing_resolved["v"]:
+    #
+    # Exempt a genuine subscription-quota classification from that clearing:
+    # #2192 depends on aborted_reason surviving so the suite-level breaker can
+    # see it and stop submitting. A real quota rejection is real regardless of
+    # whether routing also happened to resolve on the same run — clearing it
+    # here would silently discard the one signal that decision is made from.
+    if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON:
         aborted_reason = None
         error = None
 
@@ -804,5 +982,5 @@ async def run_skill(
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
         builtin_tool_calls=builtin_tool_calls,
-        no_result_message=routing_resolved["v"],
+        no_result_message=no_result_message_flag["v"],
     )

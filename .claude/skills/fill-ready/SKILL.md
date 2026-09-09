@@ -1,6 +1,6 @@
 ---
 name: fill-ready
-description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
+description: Use when the lead wants the day's work chosen off the cowork-genealogy kanban board — "what should the team work on today", "fill the Ready column", "review the backlog", "groom the board", "what should I take on", or a bare "/fill-ready". The follow-on to triage-standup, which files new issues into Backlog; this skill decides which of them the team starts. Ranks the Backlog against the two committed milestones and holds Ready at two standing depths — ~10 unassigned developer tasks and ~10 unassigned genealogist tasks, each ten a mix of senior and junior work — promoting only what is unblocked and swapping a lower-ranked item back when a pool is at target. Routes by seniority before priority: a senior item ranks in its lane's pool alongside the junior work, and the lead takes no issues at all. Work above the junior pools splits three ways and the split decides who can start — `needs-decision` (one answer from the lead unblocks it, so it is excluded from ranking until he answers, and the work behind it is often junior), `senior` (hard regardless, ranked into its lane's pool and picked up by a senior), and logistics (unlabelled, anyone once cleared). The one thing that arrives pre-assigned is a `cross-cutting` item, which the lead hands to a named person and which counts toward no pool target. Holds each skill's eval slot to one item at a time, since two changes to one skill's snapshot cannot share a paid run. Gates every issue it moves through review-ready before promoting — both pools. Applies and removes the `high-priority` label on Ready cards from four criteria it re-derives every run — a soft "take this first" for whoever picks from the menu, never a filing label. Labels, splits, and grooms; verifies claims against the repo first. Proposes, then applies only what the lead approves; never starts the work.
 allowed-tools:
   - Read
   - Bash
@@ -28,7 +28,7 @@ PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
 # Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86
 # Done 98236657 / Not planned c44314b0 — both terminal, closed issues only; never promote out of one
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000
 ```
 
 Each item carries `id` (the item id you need to move it), `content.number`,
@@ -54,6 +54,12 @@ Two labels carry the routing:
 |---|---|
 | `developer` | Lints, CI, validators, harness/Python, MCP tools, refactors, tooling bugs — anything with a mechanical pass/fail |
 | `genealogist` | Fixture adjudication, run-log annotation, record research, doctrine prose, prepared doctrine questions |
+
+**`high-priority` is a picker signal, not routing.** It tells whoever is scanning
+Ready *take this before any other card in your lane* — a soft ordering, not an
+interrupt. It is applied only to cards in Ready and is yours alone to add and
+remove: § 5 "Mark the high-priority cards". It is never a filing label, so one
+sitting anywhere but Ready is a hygiene finding, not a ranking input.
 
 **The `feedback` label means untriaged, and nothing else.** An issue labelled
 `feedback` is a raw user bug report, filed automatically into the **Feedback**
@@ -122,14 +128,21 @@ today, and one lane can be short of eligible senior items through no fault of
 the ranking. Report the mix; do not swap a card out to hit a number.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1500 \
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 \
   | jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0
       and ((.labels|index("cross-cutting"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
-                     senior: map(select((index("developer")) and index("senior")))|length },
+                     senior: map(select((index("developer")) and index("senior")))|length,
+                     high_priority: map(select((index("developer")) and index("high-priority")))|length },
         genealogist: { total: map(select(index("genealogist")))|length,
-                       senior: map(select((index("genealogist")) and index("senior")))|length } }'
+                       senior: map(select((index("genealogist")) and index("senior")))|length,
+                       high_priority: map(select((index("genealogist")) and index("high-priority")))|length } }'
 ```
+
+**Report the `high-priority` share of each pool from the same numbers** —
+labelled over total, per lane. There is no cap, and the share is never a swap
+trigger; but when it passes half in a lane the ordering says nothing to a picker,
+and that sentence goes in the report.
 
 Count each pool **separately** — an item's label decides which target it counts
 against, and a pool at 16 while the other sits at 8 is invisible in a combined
@@ -518,7 +531,7 @@ lines, so it is only ever as good as they are — a missing line means an item
 simply does not appear.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -628,7 +641,7 @@ every open PR (the only input here that is not self-reported), and the `**Touche
 line of every open issue in **Ready, In Progress or Review** — not Review and PRs alone.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -783,6 +796,55 @@ same workflow files it into the Feedback column, where `/triage-feedback` moves
 it to Not planned or to Backlog, dropping the `feedback` label on the way. It
 reaches you as an ordinary issue and is promoted with this move like any other.)
 
+### Mark the high-priority cards
+
+After the promotions above, and over every card **in Ready** — nowhere else; the
+signal means something only to someone scanning the menu — decide which carry
+`high-priority`. A card qualifies on **any one**
+of four criteria. Effort is never one.
+
+1. **Critical path.** It gates a milestone and its honest lead time is longer
+   than the slack computed above — the same item the previous section already
+   sends to the top of its pool.
+2. **Live harm shipping now.** Heuristic 1: silent corruption, a wrong conclusion
+   reaching a user, a guardrail hole in a production path.
+3. **Holds a contended skill slot.** Three or more other open issues name the
+   same skill, agent or unit-test directory in their `Touches:` line. Read it
+   off the slot map already built for Gate 4 — do not run a fresh query.
+   Finishing this card is what releases them.
+4. **A lead's call.** Applied by hand by Richard or Dallan, and never proposed
+   for removal here — only by hand.
+
+**Every application writes one line into the body**, directly below any
+`> **Reviewed …**` line and above the body proper, naming the criterion and the
+date. It is what tells the next run — and the picker — why the card is marked:
+
+```
+> **High priority (2026-09-08):** critical path — gates Beta; ~5 wks lead vs 8 wks slack.
+> **High priority (2026-09-08):** live harm — <one clause>.
+> **High priority (2026-09-08):** holds <skill> — #N, #M, #K waiting.
+> **High priority (2026-09-08):** lead: <login>.
+```
+
+**Re-derive criteria 1–3 every run.** A labelled card whose criterion has lapsed
+— the waiting issues merged or closed, the slack recovered, the harm fixed
+upstream — or that has left Ready, gets a proposed `--remove-label high-priority`
+and the body line deleted in the same write. A card whose line reads `lead:` is
+left alone. A card whose criterion changed gets the line rewritten.
+
+Propose additions, removals and rewrites together in the report (Output shape,
+1c), each with its criterion, and apply only what is approved:
+
+```sh
+# add — the body line always goes in the same write as the label
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label high-priority
+gh issue view <N> --repo PioneerAIAcademy/cowork-genealogy --json body -q .body > /tmp/body.md
+# insert `> **High priority (<date>):** <criterion> — <clause>.` below any `> **Reviewed` line, then:
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file /tmp/body.md
+# remove — same shape, deleting the line
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --remove-label high-priority
+```
+
 **Gate every issue you are moving into Ready through `/review-ready` before you
 promote it — both pools, not just `developer`, and not just the ones you
 rank as junior.** Your seniority test above is a pre-filter read off the issue
@@ -898,7 +960,7 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
                  | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 1500 \
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 \
   | jq -r '.items[] | select((.labels|index("senior"))
       and (.status|IN("Backlog","Ready","In Progress","Review")))
     | "\(.status)\t\(if (.assignees|length)==0 then "unassigned" else "assigned" end)\t#\(.content.number)\t\([.labels[]|select(.=="reviewed" or .=="needs-decision" or .=="icebox")]|join(","))"' | sort
@@ -1076,6 +1138,12 @@ list it does not appear in. Add state when it matters.
    junior-blocked / junior-after-a-decision / senior, and whether the junior pool
    is about to run dry. Add the arrival-vs-closure line for the last four weeks,
    flagged if arrival has led for three.
+1c. **High-priority cards** — every card carrying the label, with its criterion;
+   proposed additions, each with its criterion and the body line you will write;
+   proposed removals, each with the criterion that lapsed or the column it left; and the
+   per-lane share from section 1, with the sentence when a lane passes half.
+   `lead:` cards are listed, never proposed for removal. A picker reads the
+   label, not this report, so this is the only place the reasoning is visible.
 2. **Splits** — anything you broke in two, and which half is going to Ready. Skip
    the heading if you split nothing.
 3. **Promote to Ready** — a table: issue, the **impact clause** (what right

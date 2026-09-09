@@ -249,12 +249,14 @@
                 "sdk_stream_silence",
                 "not_runnable",
                 "unmatched_tool_call",
-                "error"
+                "error",
+                "quota_exhausted"
               ]
             },
             { "type": "null" }
           ]
         },
+        "error": { "type": ["string", "null"] },
         "duration_ms": { "type": "number", "minimum": 0, "description": "Harness wall-clock around the SDK message-consume loop (skill execution only)." },
         "duration_api_ms": { "type": "number", "minimum": 0, "description": "SDK-reported API/network time (ResultMessage.duration_api_ms). duration_ms - duration_api_ms approximates local overhead; small here with large duration_ms signals an upstream stall. 0 on aborts without a ResultMessage. Optional (absent in pre-instrumentation run logs)." },
         "num_turns": { "type": "integer", "minimum": 0, "description": "SDK-reported turn count (ResultMessage.num_turns). 0 on aborts without a ResultMessage. Optional." },

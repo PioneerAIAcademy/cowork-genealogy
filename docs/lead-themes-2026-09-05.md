@@ -3,6 +3,9 @@
 **Written:** 2026-09-05. **Revised:** 2026-09-07 — re-measured against the raw
 SDK session transcripts, against a live probe, and against every cited issue's
 comment thread. One headline figure was wrong, two themes collapsed.
+**Second 09-07 pass:** Theme 3's class list was refuted by a shipped gate and now
+carries the bridge between its two classes; Theme 4 (guards) is new, and the
+hosted theme renumbered to 5.
 **Source:** all open Backlog issues, read in full, measurements over the 161
 committed e2e run logs on `main`, 11 raw session transcripts, and one live
 probe on Claude Code 2.1.263.
@@ -249,7 +252,7 @@ Issue #1837's rate re-derives higher on today's corpus — 84 of 148 runs (57%)
 under the definition "any writer tool called with relationship data, and no
 `person_warnings` call anywhere in the run." Either way it is about half.
 
-**The two classes have different ceilings, and the general ruling must say which
+**The classes have different ceilings, and the general ruling must say which
 class an issue is in:**
 
 - **Decidable from the project documents alone** → a writer-tool precondition,
@@ -258,18 +261,187 @@ class an issue is in:**
 - **Requires observing that a skill ran** → no precondition can reach it.
   Nothing observes skill completion — the same argument that already made the
   caller-attributed recency check permanently shadow-only. Issue #1852 is this
-  shape.
+  shape *as written*, but see the bridge below before accepting that.
+- **Bridgeable: require the step to deposit its output, then gate on the
+  output.** A rule that looks like the second class becomes the first when the
+  step is made to write a durable artifact, because the artifact is a project
+  document. **This is shipped, not theoretical.** The mentor gate in
+  `research-append.ts` refuses `project.status = "completed"` while any proof
+  summary backing a resolved question lacks a `proof-critique` entry in
+  `evaluations[]` — a pure foreign-key join over data already in memory,
+  snapshotted pre-call so a batch cannot append the verdict and consume it in
+  the same write. It never observes that `gps-mentor` ran; it observes what
+  `gps-mentor` left behind.
+
+  The arc is the whole argument of this theme, walked to the end on one rule:
+  `research/SKILL.md` has carried "verify BOTH gates, in order — do not write
+  `completed` until both hold" since **PR #811** (merged 2026-07-23; the prose
+  landed in `ee088b964`), and **29 of 128 completed runs in the committed corpus
+  reached `completed` with an uncritiqued summary anyway** — the 23% headline.
+
+  **The blend is the wrong instrument, and it flatters this theme's own thesis.**
+  Date-split over the same 128 runs, re-derived 2026-09-08 over the 161 committed
+  run logs:
+
+  | window | rate |
+  |---|---|
+  | before the prose existed | 23/70 = 32.9% |
+  | prose stated, nothing enforcing | 6/53 = 11.3% |
+  | precondition live (2026-08-17 on) | 0/5 = 0% |
+
+  **23 of the 29 violations predate the prose.** So "prose stated it, measurement
+  killed it" *understates* what prose did — the rate fell by two thirds once the
+  sentence existed — and "the precondition is what closed it" rests on n=5, whose
+  3/n bound is 60%, the same rule of three this document applies to the
+  postconditions table. The direction is monotonic and survives; the number and
+  the attribution do not. This is the trap this theme names twice elsewhere: the
+  corpus's age wearing a finding's clothes.
+
+  Re-derive: for each `eval/runlogs/e2e/*/run-*.final-research.json` with
+  `project.status == "completed"`, flag it when some `proof_summaries[]` entry
+  whose `question_id` names a question that is `resolved` has no `evaluations[]`
+  entry with `focus: "proof-critique"`, a matching `target_id`, and a null
+  `superseded_by`; bucket by the date in the filename.
+
+  So the second class is smaller than it looks. The test is not "can we observe
+  the skill" — it is **"is there a later write we can gate, and can the step be
+  made to leave something behind."** Issue #1852 has both: a conflict is written,
+  and a question resolution follows it, so calling it structurally unreachable is
+  unproven. That conclusion is not contested: the lead already ruled on #1852 on
+  2026-09-01 (the blocker is gone, and an acceptance criterion for the conversion
+  followed on 2026-09-02). The point stands with more support than "unproven"
+  claims for it — what remains is to stop citing it as the unreachable case.
 
 A reference implementation cited against a case it structurally cannot cover
-will discredit the mechanism. Four issues are stalled asking for that mechanism
-one at a time: **issues #2182, #2184, #2086, #2108** (two of the four unruled).
+will discredit the mechanism — and so will one that declares a case unreachable
+when a shipped gate already reaches its shape. Four issues are stalled asking
+for that mechanism one at a time: **issues #2182, #2184, #2086, #2108**. All
+four now carry a lead ruling dated 2026-09-07 with the `needs-decision` label
+removed (13:28, 14:42, 13:29 and 14:18 UTC), every one of them before this
+branch's first commit — so what they are stalled on is the mechanism, not a
+decision.
 
 **Highest delegation leverage on the board** — a general precondition mechanism
 converts a large class of stalled doctrine work into ordinary developer tasks.
 
 ---
 
-## Theme 4 — Hosted / control plane
+## Theme 4 — Our guards are proven on one shape, in one direction, and only where the output is a document
+
+**Urgency: high, and it rises the moment Theme 3 is ruled.** Theme 3's answer is
+"build preconditions." This theme is the ceiling on that answer: nothing here can
+currently tell a working gate from a decorative one.
+
+*Provenance: the first two sections below were raised by a new developer reading
+the repo cold (2026-09-07). Both were checked against the code and both hold. The
+third is this pass's own finding, from checking the first two.*
+
+### One shape is not a proof
+
+CLAUDE.md's new-lint rule — break the repo, watch the check fail — is right and
+stays. But its three named ways a check silently passes are all about the check's
+**reach**: a grep pattern that excludes its own tree, a `git grep` that skips
+untracked files, a field-name match that collides with an unrelated key. None is
+about the **shape of the input at the site**, which is the other way through:
+unquoted, commented out, wrapped, a stringified argument, a null, a missing
+token.
+
+The rule as written asks for one broken shape — the one its author already had in
+mind. That is the weakest possible proof, and it reads as a strong one, which is
+CLAUDE.md's own "worse than no check" argument turned back on the rule.
+
+Two instances, both found by review rather than by a guard, in two PRs merged 59
+minutes apart — `ba73881ad` (PR #2042) fixed the `--only`/`--variants` filter and
+PR #2044 the rest. CLAUDE.md's version of this rule names no PR and is accurate
+as written:
+
+- `--limit abc` parsed to `NaN`, selected zero images, and **exited 0 having done
+  nothing**.
+- `--only` / `--variants` were plain `includes()` filters, so a typo ran nothing,
+  exited 0, and still made a paid ground-truth call.
+
+The encoding lint became an AST lint for the same reason: greps failed on shape,
+not on reach — a compliant call whose `encoding=` sat on a later physical line,
+and a bare offender inside a multi-line call.
+
+### A guard fails in two directions, and the graduation instrument sees one
+
+A guard can wrongly block legitimate work, and it can wrongly let the bad thing
+through. Break-then-restore tests one bad shape and one good tree — a single
+point in each direction, not a proof in either.
+
+The sharper problem is the instrument that decides whether a guardrail ships.
+`eval/harness/e2e/guardrail_shadow_report.py` replays a shadow check across the
+committed corpus, and ADR-0011 names it *"the instrument that produces a
+satisfying-shape rate before a graduation."* **In a replay the guard is both the
+detector and the ground truth.** It can count what it would have blocked; it has
+no term at all for what it would have missed. Read the shadow-to-graduate table
+in `guardrail-enforcement-spec.md` with that in mind — every column counts
+firings, and none could report a miss.
+
+The population is pre-filtered the same way. This document's own Caveats already
+say committed run logs are converged states, so runs that failed and were re-run
+are absent — which is why every compliance rate here is stated as a floor. The
+same filter applies to a shadow replay.
+
+Related, and unwritten for guards: when a bug turns out to be the second instance
+of a class already fixed, the remedy is one shared guard, not a second one-off.
+"Code reuse" in CLAUDE.md covers implementation; "redundant guards are
+untestable" is a different rule. The `encoding="utf-8"` AST lint is the nearest
+shipped instance, and it is worth stating precisely rather than as a count:
+CLAUDE.md justifies it on a grep being **wrong in both directions** — a per-line
+grep false-flags a compliant call whose `encoding=` sits on a later physical
+line, and a file-level grep misses a bare offender inside a multi-line call. It
+replaced a grep that could not be made right, not a tally of three checks, and
+its add-commit deleted no grep check.
+
+### Coverage is shaped by section, not by agent — and two agents have no gate at all
+
+There is no general mechanism to check an agent's output, and the reason is
+structural rather than an omission. `docs/specs/schemas/ownership.json` states it
+of the only plane that binds in every environment: a writer-tool precondition is
+**caller-agnostic** — *"it constrains the WRITE, never who made it."* So a gate
+can only ever be "check this section," never "check this agent." The eight
+`*Invariants` functions in `research-append.ts` are keyed on sections, and agent
+coverage is whatever falls out of which section an agent happens to write. The
+one plane that can discriminate by caller is the `PreToolUse` hook, which fails
+open and is claimed by two rows. Nothing reads the manifest at runtime; it is
+kept in step by review.
+
+The consequence: **an agent whose deliverable is a return summary has nothing to
+gate.** Of five plugin agents, three write documents and are covered
+incidentally — `gps-mentor` (`evaluations[]`), `proof-conclusion`
+(`proof_summaries`, plus `proofSummaryInvariants`), `research-exhaustiveness`
+(`exhaustive_declaration`). Two have **no gate on the deliverable that carries
+the failure**, and they are where the worst measured failures sit. "Not covered
+at all" would overstate it for `record-extractor`, which writes `sources` and
+`assertions` under ownership rows; what is ungated is its identity assessment,
+which the bullet below states correctly:
+
+- **`record-extractor`'s identity assessments go in its return summary by
+  design** — `extraction_append` refuses the `person_evidence` section, which is
+  the correct fix for the write and leaves the judgement unauditable. That is the
+  lane that produced *"a fabricated identity link carrying a match score no tool
+  had computed."*
+- **`image-reader`'s transcription is returned as text.** The image-transcribe
+  spec's own §4.6 closes on "Nothing checks a transcription against its scan"
+  (line 318 of 1123 — it is that section's last line, not the document's).
+
+And what coverage exists checks **existence or shape, never judgement**. The
+mentor gate asks whether a `proof-critique` verdict is on record. Nothing
+anywhere asks whether the verdict is any good.
+
+**First action: both halves are done in this PR.** The input-shape requirement is
+in CLAUDE.md ("One break is not a proof" and "Prove the other direction too"),
+and `guardrail_shadow_report.py` now carries the written admission that it has no
+false-pass term, in its docstring and beside the graduation table. Left as
+pending, this line invites `/fill-ready` to file two finished tasks. The third
+section is a design question and belongs with the Theme 3 ruling, since it bounds
+what that ruling can promise.
+
+---
+
+## Theme 5 — Hosted / control plane
 
 **Urgency: medium, with one urgent item. Delegable in principle, thin in practice.**
 
@@ -357,14 +529,21 @@ the lead can accept the blast radius.
 2. **Fix the judge** (Theme 2) — issues #2191 and #2057 specifically. It gates
    every *quality* claim, though not the token accounting in Theme 1, which can
    proceed in parallel.
-3. **Rule once on preconditions-vs-prose** (Theme 3), naming the two classes,
-   with a reference implementation. Unblocks ~40 issues.
+3. **Rule once on preconditions-vs-prose** (Theme 3), naming the classes and the
+   bridge, with a reference implementation. Unblocks ~40 issues. Read Theme 4's
+   third section first — it bounds what the ruling can promise, because no gate
+   can reach an agent whose deliverable is a return summary.
 4. **Drain `needs-decision`** — 18 open items, excluded from ranking until
    answered, and the work behind them is often junior-sized. `/make-decisions`
    is cheap and converts lead time into other people's PRs at the best available
    ratio.
 
-Theme 4 is delegable after issue #1915. The two collapsed themes need owners,
+Theme 4's first two sections are junior-sized and need no ruling: put the
+input-shape requirement into the new-lint rule, and either give
+`guardrail_shadow_report.py` a false-pass term or write down that it has none.
+Do them before the Theme 3 ruling multiplies the number of gates.
+
+Theme 5 is delegable after issue #1915. The two collapsed themes need owners,
 not rulings — except issue #1335, which needs re-pricing first.
 
 ---

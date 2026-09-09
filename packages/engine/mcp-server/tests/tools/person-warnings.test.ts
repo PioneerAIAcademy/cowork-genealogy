@@ -1932,6 +1932,76 @@ describe("hasDiffSurname predicate", () => {
     };
     expect(hasDiffSurname(new Mob(tree, "I1"))).toBe(false);
   });
+
+  // #2002: a MarriedName surname is expected to differ from the birth
+  // surname, so it must not read as a conflated-identity signal.
+  // Eugenia Elvira Morgan, recorded with her McElwee married name.
+  function buildWithNames(
+    names: Array<{ surname: string; type?: string }>,
+  ): Mob {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: names.map((n, i) => ({
+            id: `N${i + 1}`,
+            given: "Eugenia Elvira",
+            surname: n.surname,
+            ...(n.type ? { type: n.type } : {}),
+          })),
+        },
+      ],
+      relationships: [],
+    };
+    return new Mob(tree, "I1");
+  }
+
+  it("ignores a MarriedName surname (Morgan birth / McElwee married)", () => {
+    expect(
+      hasDiffSurname(
+        buildWithNames([
+          { surname: "Morgan", type: "BirthName" },
+          { surname: "McElwee", type: "MarriedName" },
+        ]),
+      ),
+    ).toBe(false);
+  });
+
+  it("fires on the same two surnames when neither is a MarriedName", () => {
+    // Control for the test above — nameSimilarity("Morgan","McElwee") is 0.14,
+    // so the outlier scan does fire here. The type is what suppresses it.
+    expect(
+      hasDiffSurname(
+        buildWithNames([{ surname: "Morgan" }, { surname: "McElwee" }]),
+      ),
+    ).toBe(true);
+  });
+
+  it("matches the MarriedName type case-insensitively", () => {
+    expect(
+      hasDiffSurname(
+        buildWithNames([
+          { surname: "Morgan", type: "BirthName" },
+          { surname: "McElwee", type: "marriedname" },
+        ]),
+      ),
+    ).toBe(false);
+  });
+
+  it("still flags a genuine outlier alongside a MarriedName", () => {
+    // Dropping McElwee leaves Morgan vs Jones, which remain dissimilar — the
+    // exclusion must not disable the check for the surnames that survive it.
+    expect(
+      hasDiffSurname(
+        buildWithNames([
+          { surname: "Morgan", type: "BirthName" },
+          { surname: "McElwee", type: "MarriedName" },
+          { surname: "Jones" },
+        ]),
+      ),
+    ).toBe(true);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────

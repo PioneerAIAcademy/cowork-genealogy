@@ -374,7 +374,10 @@ Free-text places with no `normalized` value are left without a
 `standard_place` by the pure converter. The async wrapper
 `toSimplifiedStandardized` fills them by resolving `place` through
 `place_search` (network) — deduping identical strings, resolving ≤8 in
-parallel, best-effort (never throws, leaves the field empty on failure). Tools
+parallel, best-effort (never throws, leaves the field empty on failure).
+A resolved value is also omitted when `countryConsistency(place, resolved)`
+returns `contradiction`: this is a read path with no warning channel to the
+model, so an unset field is the only honest outcome. Tools
 that return facts to the model call `toSimplifiedStandardized` (single doc) or
 run `standardizePlaces` over the flattened facts of a multi-result response
 (`record_search` / `person_search`). The pure `toSimplified` remains for

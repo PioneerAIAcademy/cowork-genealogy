@@ -88,6 +88,15 @@ class SingleRun:
     output: dict[str, Any]
     validators: ValidatorResult
     judge: JudgeResult
+    # The SDK's error string for a run that aborted, plus whichever rate-limit
+    # signals fired (`skill_runner._format_quota_evidence`). Optional, and
+    # `["string", "null"]` in the schema rather than required — putting it in
+    # `required` would invalidate every already-committed run log. Before this
+    # field existed the only trace of *why* a run aborted was inside
+    # `output.text_response`, which is not anywhere a reader looks: a
+    # subscription quota sat there unread while the PR that shipped the run
+    # described it as an SDK error (#2192).
+    error: str | None = None
     # --- Timing instrumentation (all optional; default 0/None so the
     # _aborted_entry path and existing test constructors keep working). ---
     # SDK-reported API/network time for the skill run (ResultMessage
@@ -390,6 +399,9 @@ def assemble_test_entry(
             "run_id": f"run_{test_id}_{timestamp_for_run_id}_{i}",
             "outcome": r.outcome,
             "aborted_reason": r.aborted_reason,
+            # This serializer is explicit, not `asdict` — adding the dataclass
+            # field alone persists nothing and no test notices.
+            "error": r.error,
             "duration_ms": r.duration_ms,
             "duration_api_ms": r.duration_api_ms,
             "num_turns": r.num_turns,

@@ -13,9 +13,14 @@
  * **Per question, never per project.** A project holds N questions at N states
  * simultaneously; any single project-wide phase is wrong on arrival.
  *
- * **This is advisory. Nothing gates on it.** The gates in `research_append`
- * compute their own preconditions independently. This function exists to tell
- * the router what is outstanding — a routing signal, not a refusal — because a
+ * **The state ladder is advisory. Nothing gates on it.** `state`, `nextStep`
+ * and `openConflictIds` are a routing signal, never a refusal — no write is
+ * refused because of anything this function returns. What changed: the
+ * blocking-conflict predicate below is now *shared* with the completion gate in
+ * `research_append`, which calls `conflictBlocksCompletion` rather than keeping
+ * a third copy of the same reading. The gate still computes its own
+ * preconditions; it no longer computes this one independently. This function
+ * exists to tell the router what is outstanding — because a
  * call made without ever invoking the owning skill scores markedly worse than
  * one made after that skill's body was evicted from context, so getting the
  * skill invoked at all is the larger lever. Keeping it advisory is deliberate:
@@ -45,6 +50,134 @@ export interface QuestionStatus {
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
 
+/** Does `conflict` compete over any assertion in `assertionIds`?
+ *
+ *  The arm both consumers share. A conflict names the assertions that compete;
+ *  whether that bears on a question is decided by which assertion ids the
+ *  caller puts in the set — one question's, or every question's. */
+const disputesAssertion = (conflict: any, assertionIds: ReadonlySet<string>): boolean =>
+  arr(conflict?.competing_assertion_ids).some((id: string) => assertionIds.has(id));
+
+/** An identity conflict, flagged by a non-empty `identity_question` STRING.
+ *
+ *  The schema types the field as the question's *text* (`string | null`), never
+ *  a boolean, so the completion gate's original `=== true` was unsatisfiable
+ *  dead code and an unresolved identity conflict slipped past whenever
+ *  `blocks_question_ids` was empty too.
+ *
+ *  Says nothing about `status` — the callers that care check it themselves, and
+ *  the gate's refusal message needs this reading on a snapshot entry `applyOne`
+ *  has already mutated to `resolved`.
+ *
+ *  Deliberately NOT an arm of `conflictBlocksQuestion`: an identity conflict
+ *  names no question, so folding it in there would report one unrelated
+ *  conflict as open against every question in the project. */
+export function isIdentityConflict(conflict: any): boolean {
+  return (
+    typeof conflict?.identity_question === "string" && conflict.identity_question.trim() !== ""
+  );
+}
+
+/** Does an unresolved `conflict` block `questionId`?
+ *
+ *  Per-question, and used by the advisory ladder below. `questionAssertionIds`
+ *  must be the assertions tied to THIS question — passing a project-wide set
+ *  here silently widens `openConflictIds` to every question, which the unit
+ *  suite pins. */
+export function conflictBlocksQuestion(
+  conflict: any,
+  questionId: string,
+  questionAssertionIds: ReadonlySet<string>,
+): boolean {
+  if (conflict?.status !== "unresolved") return false;
+  return (
+    arr(conflict?.blocks_question_ids).includes(questionId) ||
+    disputesAssertion(conflict, questionAssertionIds)
+  );
+}
+
+/** Assertion ids some question claims — `extracted_for_question_ids` non-empty.
+ *
+ *  The project-wide counterpart of one question's assertion set, and the scope
+ *  `conflictBlocksCompletion` derives its link from. The question id is not
+ *  checked against `questions[]`: nothing reference-checks
+ *  `extracted_for_question_ids`, and a dangling id blocking is the safer
+ *  direction than a dangling id going unseen (0 such refs across the corpus). */
+export function questionTiedAssertionIds(research: any): Set<string> {
+  return new Set(
+    arr(research?.assertions)
+      .filter((a) => arr(a?.extracted_for_question_ids).length > 0)
+      .map((a) => a?.id)
+      .filter((id): id is string => typeof id === "string"),
+  );
+}
+
+/** Does an unresolved `conflict` block *any* question — the completion gate's
+ *  predicate, project-wide.
+ *
+ *  Three arms, and the third is why this exists. `blocks_question_ids` and
+ *  `identity_question` are the declared links, and 42 of the 75 conflicts in
+ *  the committed e2e corpus carry neither, so a gate reading only those two is
+ *  blind to 56% of them. The third arm derives the link from the evidence: a
+ *  conflict competing over an assertion some question was built on bears on
+ *  that question whether or not the agent wrote the link down.
+ *
+ *  Not narrowed to *unresolved* questions on purpose — a conflict bearing on an
+ *  already-concluded question still means that conclusion rests on unresolved
+ *  evidence. `resolved` and `moot` both settle a conflict. */
+export function conflictBlocksCompletion(
+  conflict: any,
+  tiedAssertionIds: ReadonlySet<string>,
+): boolean {
+  if (conflict?.status !== "unresolved") return false;
+  return (
+    arr(conflict?.blocks_question_ids).length > 0 ||
+    isIdentityConflict(conflict) ||
+    disputesAssertion(conflict, tiedAssertionIds)
+  );
+}
+
+/** Why `conflict` blocks completion, in the gate's refusal message.
+ *
+ *  A derived link is *inferred* rather than declared, so a refusal that named
+ *  only the conflict id would leave the agent with no way to see what it is
+ *  about — ADR-0011's "a gate PR owes an actionable error". Reads `research`
+ *  live, and never `status`, so it still explains a snapshot entry this batch
+ *  has since resolved. */
+export function whyConflictBlocksCompletion(conflict: any, research: any): string {
+  const reasons: string[] = [];
+  // Every arm that fired, in the predicate's own order, not just the first.
+  // Reporting one would drop the named questions from a conflict that both
+  // names them and carries an identity_question.
+  const blocks = arr(conflict?.blocks_question_ids);
+  if (blocks.length > 0) reasons.push(`blocks ${blocks.join(", ")}`);
+  // Names the FIELD, not the conflict type: the two disagree exactly when a
+  // functionally-identity conflict was typed `fact`, which is the case worth
+  // telling the caller about.
+  if (isIdentityConflict(conflict)) reasons.push("identity_question set");
+  for (const id of arr(conflict?.competing_assertion_ids)) {
+    // EVERY assertion carrying this id, not the first: `disputesAssertion`
+    // tests a set built from all of them, so a document with a duplicated id
+    // whose later copy is the tied one blocks — and taking `find`'s first hit
+    // would then explain a real refusal as "unresolved".
+    const questions = arr(research?.assertions)
+      .filter((a) => a?.id === id)
+      .flatMap((a) => arr(a?.extracted_for_question_ids));
+    if (questions.length > 0) {
+      reasons.push(`disputes ${id}, which ${[...new Set(questions)].join(", ")} relies on`);
+      // One tied assertion, deliberately, even when the conflict disputes
+      // several. The message exists to make the refusal actionable, and the
+      // action is the same for all of them — run conflict-resolution on this
+      // conflict — so naming every one lengthens an error the caller reads
+      // under failure without changing what it does next. The conflict id is
+      // the handle; the assertion is there to show the link that was inferred
+      // rather than declared.
+      break;
+    }
+  }
+  return reasons.length > 0 ? reasons.join("; ") : "unresolved";
+}
+
 /**
  * The state of one question plus the step it is waiting on.
  *
@@ -73,12 +206,7 @@ export function questionStatus(research: any, question: any): QuestionStatus {
   );
 
   const openConflictIds = arr(research?.conflicts)
-    .filter(
-      (c) =>
-        c?.status === "unresolved" &&
-        (arr(c?.blocks_question_ids).includes(qid) ||
-          arr(c?.competing_assertion_ids).some((id: string) => assertionIds.has(id))),
-    )
+    .filter((c) => conflictBlocksQuestion(c, qid, assertionIds))
     .map((c) => c?.id)
     .filter((id): id is string => typeof id === "string");
 

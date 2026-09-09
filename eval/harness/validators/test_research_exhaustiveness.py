@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import bare_tool_name
+
 
 # --- Helpers ---------------------------------------------------------
 
@@ -162,3 +164,40 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
         if prev.get("status") != "exhaustive_declared" and q.get("status") == "exhaustive_declared":
             bad.append(f"{qid}: status set to exhaustive_declared when decline expected")
     assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)
+
+
+# --- The registration start date is fetched, not carried as prose ----------
+
+def test_fetches_registration_start_date(tool_calls, test):
+    """The agent must READ the jurisdiction's registration start date.
+
+    Issue #2257 / ADR-0012 removed the two hardcoded facts (Ireland 1864,
+    Pennsylvania 1906) from the agent body and replaced them with a `wiki_read`
+    named unconditionally in `## 1. Gather evidence`. Nothing else proves the
+    fetch happened: the judge grades the conclusion, and a conclusion reached
+    from the model's own memory of a start date is indistinguishable from one
+    read off the page.
+
+    Gated off two populations that never reach Step 1, measured on
+    v1_2026-09-08_06-48-40 where this check failed all three:
+
+    - the four near-miss negatives (ut_002/_007/_008/_011) route away before the
+      agent is spawned, so they make no MCP calls at all;
+    - a run that correctly returns at a Step 0 precondition — `refuse-in-progress`
+      (an in-flight plan item) and `already-declared` ("stop before any other
+      check") — never reaches `## 1. Gather evidence`, so it owes no fetch.
+      ut_005 made 4 calls and ut_006 made 5, both correctly.
+
+    Demanding the fetch from those is a defect in this check, not in the agent.
+    """
+    tags = test.get("tags") or []
+    if "near-miss" in tags:
+        pytest.skip("negative routing test — the agent is never spawned")
+    if "refuse-in-progress" in tags or "already-declared" in tags:
+        pytest.skip("returns at a Step 0 precondition — Step 1 is never reached")
+    called = [bare_tool_name(c.get("tool", "")) for c in (tool_calls or [])]
+    assert "wiki_read" in called, (
+        "the agent did not fetch the jurisdiction's registration start date — "
+        "no wiki_read call. `## 1. Gather evidence` names it unconditionally. "
+        f"Tools called: {sorted(set(called)) or 'none'}"
+    )
