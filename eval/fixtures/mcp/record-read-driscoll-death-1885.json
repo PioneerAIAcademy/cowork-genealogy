@@ -1,0 +1,54 @@
+{
+  "tool": "record_read",
+  "description": "The Quebec civil death registration attached to Cornelius Driscoll (GJ72-9WD) as SD-DRIS-D, and the other half of this corpus's source-vs-source conflict. It registers a death on 2 February 1885 in the Sherbrooke district, with an indexed birth of 1814 — the same birth year, the same district and the same name as SD-DRIS-C (record-read-driscoll-burial-1878), which has him buried on 14 April 1878. Read together the two are irreconcilable and neither is discredited: a civil registration and a parish burial register both state their dates exactly, so this is not variance, and nothing in either record places it outside this man's life. This is the disagreement the audit must characterise — name both sources, both values, what kind of record each is, and what would settle it — while picking no winner and recommending no detach. Weighing them is the conflict workflow's job, and this skill writes nothing.",
+  "args": {
+    "recordId": "~DRIS-004"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Cornelius",
+            "surname": "Driscoll",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Death",
+            "date": "2 February 1885",
+            "place": "Sherbrooke, Quebec, Canada"
+          },
+          {
+            "id": "F2",
+            "type": "Birth",
+            "date": "1814",
+            "place": "Ireland"
+          }
+        ],
+        "ark": "ark:/61903/1:1:DRIS-004",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Quebec, Civil Registration Deaths, 1867-1900"
+          }
+        ]
+      }
+    ],
+    "places": [],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Quebec, Civil Registration Deaths, 1867-1900",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:DRIS-004"
+      }
+    ]
+  }
+}
