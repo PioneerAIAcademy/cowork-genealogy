@@ -40,6 +40,20 @@ and pass verdicts, and the `locality-guide`/`search-records` invocation tallies.
 The non-English group, the machine axis, the log axis, the population split, and
 the outcome are unchanged.
 
+**That is the general shape, so the figures below are pinned rather than
+chased.** A run committed after `f8daba32` moves a bounded set and nothing else:
+the corpus total, its own language group's row, and the per-skill invocation
+tallies — plus, when that fixture had no prior run, the fixtures-with-runs count
+and that group's share of the population split. One such run landed between the
+pin and this document's merge (`francis-fisher-spouse`, a first run of an
+**English-dominant** fixture, #2295 via #2368), so a reviewer who runs the
+scripts at the merge commit rather than at `f8daba32` should expect **163** runs
+over **95** fixtures-with-runs, **58** English-dominant fixtures at 109 runs /
+980 facts / 6,232 assertions / 67 pass, corpus-wide `image_transcribe` **456**
+calls / 236 heads / 194 real / 42 error, and `record-extraction` **129** /
+`search-records` **208** / `locality-guide` **77**. The **36** non-English
+fixtures every finding here rests on, both axes, and the outcome are unchanged.
+
 ## The premise still holds: zero invocations, and the corpus needs it
 
 `translation` has **0** `Skill` invocations across the 162 runs. So do
@@ -132,12 +146,18 @@ distinguish "adequate" from "lucky."
 **Romance-only**: `VERN` lists Portuguese, Spanish, Italian and French month
 names plus the Iberian `de … de` frame, and nothing Nordic, Germanic,
 West-Slavic, Romanian, Croatian or Latin. Extending it to those families adds
-**no** genuine run-produced vernacular date — the single extra match across the
-non-English corpus is `cruz-corona-ancestry`'s `5 August 1906`, an English-form
-date and a false positive — so the **6** robust facts are the count, not an
-artefact of a narrow regex. Second, those 6 are **seed-subtracted**. A reader
-who instead counts every vernacular-`date` fact across all final trees, without
-subtracting the seed tree, gets **54 facts across 11 fixtures — but 48 of them
+**no** genuine run-produced vernacular date, and it was checked in both
+directions: the spellings that *differ* from English (`marts`, `mai`, `juni`,
+`augusti`, `März`, `srpen`, `Septembris`, `siječanj` …) add **zero** matches,
+while the five spellings *identical* to English (`april`, `august`, `september`,
+`november`, `december`) add **six**, every one an English-form date and therefore
+a false positive: `23 December 1883` and `31 December 1883`
+(`birkeland-death-1883`), `5 August 1906` (`cruz-corona-ancestry`),
+`28 September 1810` twice (`elisabetha-sugecz-parents`) and `27 April 1884`
+(`susanna-szljacsan-spouse`). The table's **6** is the count, not an artefact of
+a narrow regex. Second, those 6 are **seed-subtracted**. A reader who instead
+counts every vernacular-`date` fact across all final trees, without subtracting
+the seed tree, gets **54 facts across 11 fixtures — but 48 of them
 are seeded** (already present in the starting tree, so not run-produced),
 leaving the same **6** run-produced. The larger number measures the fixtures'
 seed data, not what the runs wrote.
@@ -174,8 +194,9 @@ no population.
 
 **Fixture-level fallback read (n = 3 fixtures), reported for what it is.** Where
 the head and the run-produced name/relationship assertions are both visible in
-the same fixture — even without record-level linkage — the inline handling
-looks adequate:
+the same fixture — even without record-level linkage — the vernacular text
+itself survives into the assertions; whether the run then used it correctly is a
+separate question, and on one of the three it did not:
 
 - `chresten-nielsen-daughter` (Danish): names kept in original form —
   `Chresten Nielsen`, `Børte Kirstine`, patronymics `Sørensd` / `Christensd`
@@ -289,8 +310,9 @@ for s in sorted(os.listdir('packages/engine/plugin/skills')):
 
 **Everything else** — corpus size, the population split (with the stated country
 set), the run-produced fact/assertion/verdict split per group, Axis 1 (vernacular
-dates and their `standard_date`), and Axis 2 (head coverage, how many decode to
-vernacular, how many carry a real `ark`, how many link to a persisted assertion):
+dates and their `standard_date`), the detector-coverage probe behind the Axis-1
+caution, and Axis 2 (head coverage, how many decode to vernacular, how many
+carry a real `ark`, how many link to a persisted assertion):
 
 ```python
 import json, glob, re, pathlib, collections, sys
@@ -445,6 +467,33 @@ print(f'log-axis (non-English): transcribe calls={calls} heads={heads} '
       f'real-transcription-heads={heads_real} error-payload-heads={err_heads} '
       f'vernacular-heads={vh_real} (+{vh - vh_real} accented error payloads) '
       f'real-ark={real} head-linked-to-assertion={linked}')
+
+# Detector coverage, both directions (the Axis-1 caution): extending the
+# Romance-only VERN to the other families adds no genuine vernacular date.
+# Spellings that DIFFER from English add nothing; the five identical to English
+# add only English-form dates, which is what makes the 6 above robust.
+DIFFERS = (r'januar|februar|marts|mars|maj|mai|juni|juin|juli|ao[uû]t|januari|februari|augusti|'
+    r'oktober|J[aä]nner|M[aä]rz|Dezember|leden|ledna|[uú]nor|b[rř]ezen|duben|kv[eě]ten|[cč]erven|'
+    r'[cč]ervenec|srpen|z[aá][rř][ií]|[rř][ií]jen|listopad|prosinec|ianuarie|martie|aprilie|iunie|'
+    r'iulie|septembrie|octombrie|noiembrie|decembrie|si[jJ]e[cč]anj|velja[cč]a|o[zž]ujak|travanj|'
+    r'svibanj|lipanj|srpanj|kolovoz|rujan|studeni|prosinac|Januarii|Februarii|Martii|Aprilis|Maii|'
+    r'Junii|Julii|Augusti|Septembris|Octobris|Novembris|Decembris')
+IDENTICAL = r'april|august|september|november|december'
+def extra(ext):
+    pat = re.compile(r'\b(?:' + ext + r')\b', re.I); out = []
+    for fx, rj, fr, ft in runs():
+        if grp(fx) != 'nonEng' or not pathlib.Path(ft).exists(): continue
+        st = FIX / fx / 'starting-tree.gedcomx.json'
+        seed = set(i for i, _ in tree_facts(load(st))) if st.exists() else set()
+        for i, f in tree_facts(load(ft)):
+            if i in seed: continue
+            d = str(f.get('date') or '')
+            if VERN.search(d) or (IBER.search(d) and re.search(r'\d', d)): continue
+            if pat.search(d): out.append((fx, f.get('type'), d))
+    return out
+print(f'detector coverage: differs-from-English adds={len(extra(DIFFERS))} '
+      f'identical-to-English adds={len(extra(IDENTICAL))}')
+for e in extra(IDENTICAL): print(f'  false positive {e}')
 ```
 
 The fixture-level Axis-2 read (`n = 3`) is a genealogist's read of the decoded
