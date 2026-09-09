@@ -82,25 +82,28 @@ function recordBrowseAndCheckBudget(
 // see docs/architecture.md "Other environment differences that bite".
 const OCR_TIMEOUT_MS = 180_000;
 
-// Explicit output-token budget. Setting it makes the cap OURS and the
-// truncation case reproducible. Note the DIRECTION: for the current default
-// google/gemini-3.7-flash OpenRouter's /api/v1/models reports
-// top_provider.max_completion_tokens = 65536 and we previously sent no
-// `max_tokens`, so 16000 LOWERS the effective cap rather than raising it. It is
-// still well above a page's content. Measured 2026-09-07 over the committed e2e
-// run logs: of 455 image_transcribe calls, 219 are excluded by the harness's
-// 14-day capture strip and 126 have a transcription size recoverable from the
-// `full length N chars` marker (or an unelided summary). Over those 126 the
-// largest is 6,443 chars (~1.6k output tokens), median 1,573; under the current
-// default specifically, 36 calls with a max of 4,940 chars (~1.2k tokens).
-// Re-derive by scanning eval/runlogs/e2e/** for that marker — NOT with
-// `make e2e-transcribe-failures`, which reports reachability, not sizes.
-// Treat it as a dated bound, not a proof: reasoning tokens draw on this SAME
-// budget (Gemini is reasoning-capable and reasoning is not disabled), so a
-// reasoning-heavy read could reach 16000 before the page ends.
-// A cap that does bind surfaces as `truncated` (detection reads finish_reason
-// AND native_finish_reason, case-insensitively), so it is visible, never silent.
-export const OCR_MAX_TOKENS = 16000;
+// Explicit output-token budget. Setting it makes the cap OURS (the provider
+// default varies per model and shifts under us) and the truncation case
+// reproducible. For the current default google/gemini-3.7-flash OpenRouter's
+// /api/v1/models reports top_provider.max_completion_tokens = 65536, and the
+// tool previously sent none, so any explicit value we pick lowers the ceiling.
+//
+// 32000 is chosen from a live measurement (2026-09-09) at temperature 0 on the
+// shipped model. Four dense scans — including the exact 1880 Leominster census
+// that generated this feature's alpha feedback — all completed (finish "stop"),
+// none capped, at max_tokens 16000. But the budget's real consumer is REASONING
+// tokens, which draw on this same budget and cannot be disabled ("Reasoning is
+// mandatory for this endpoint" — dev/probe-ocr-reasoning.ts): the densest scan
+// (spriggs, 2.3 MB) spent 9,061 completion tokens (5,505 of them reasoning) —
+// 57% of 16000 — so a ~1.8x denser page would have capped at 16000. Gemini
+// generates ~150 tok/s (9,061 tokens in 60s), so the 180s OCR timeout
+// (OCR_TIMEOUT_MS) admits ~27,000 tokens before it aborts. 32000 therefore
+// clears the densest reads that 16000 would clip and sits just past that ~27k
+// timeout ceiling; 64000 was rejected because no read can reach it before the
+// timeout fires, so it buys nothing. A cap that does still bind surfaces as
+// `truncated` (detection reads finish_reason AND native_finish_reason,
+// case-insensitively), so it is visible, never silent.
+export const OCR_MAX_TOKENS = 32000;
 
 // One retry, transport failures only. Measured over the committed e2e corpus,
 // 24 of 175 classifiable calls (14%) died at the transport with no socket code

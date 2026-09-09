@@ -644,32 +644,32 @@ the condition to re-check on.
     ]
   }],
   "temperature": 0,
-  "max_tokens": 16000,                         // OCR_MAX_TOKENS — see below
+  "max_tokens": 32000,                         // OCR_MAX_TOKENS — see below
   "provider": { "data_collection": "deny" }   // privacy — see §11
 }
 ```
 
 - `temperature: 0` — OCR is not a creative task.
 - `max_tokens` (`OCR_MAX_TOKENS`, `image-transcribe.ts`) is set **explicitly**.
-  Setting it makes the cap ours and the truncation case (§6.2) reproducible.
-  Mind the **direction**: for the current default `google/gemini-3.7-flash`
-  OpenRouter reports a 65536 max-completion ceiling and the tool previously sent
-  no `max_tokens`, so `16000` **lowers** the effective cap, it does not raise it.
-  It is still well above a page's content — measured 2026-09-07, the largest
-  transcription recovered from the committed e2e run logs is 6,443 chars (~1.6k output
-  tokens), and both Gemini and the prior Qwen default have *produced gradeable
-  output* at 16000 in `dev/try-ocr-compare.ts` (that script reads only
-  `choices[0].message` and `usage`, so it cannot itself observe a cap). Treat the
-  figure as a dated bound, not a proof: of 455 calls, 219 are excluded by the
-  harness's 14-day capture strip and 126 have a recoverable transcription size,
-  so it is measured over those 126 (median 1,573 chars); both models are
-  represented, the current default's own 36 measured calls topping out at 4,940
-  chars (~1.2k tokens); and reasoning tokens draw on this same budget (the
-  current model is reasoning-capable and reasoning is not disabled), so a
-  reasoning-heavy read could reach 16000 before the page is done. Re-derive by
-  scanning `eval/runlogs/e2e/**` for the `full length N chars` marker — **not**
-  with `make e2e-transcribe-failures`, which reports reachability, not sizes.
-  A cap that binds is **visible** (`truncated`,
+  Setting it makes the cap ours (the provider default varies per model and
+  shifts under us) and the truncation case (§6.2) reproducible. For the current
+  default `google/gemini-3.7-flash` OpenRouter reports a 65536 max-completion
+  ceiling and the tool previously sent none, so any explicit value lowers the
+  ceiling. **32000** is chosen from a live measurement (2026-09-09, temperature
+  0, shipped model): four dense scans — including the exact 1880 Leominster
+  census page that generated this feature's alpha feedback — all completed
+  (`finish_reason: "stop"`), none capped, at 16000. The budget's real consumer is
+  **reasoning** tokens, which draw on the same budget and cannot be disabled
+  ("Reasoning is mandatory for this endpoint" — `dev/probe-ocr-reasoning.ts`):
+  the densest scan spent 9,061 completion tokens (5,505 reasoning) — 57% of
+  16000 — so a ~1.8x denser page would have capped there. Gemini generates
+  ~150 tok/s, so the 180s `OCR_TIMEOUT_MS` admits ~27,000 tokens before it
+  aborts; 32000 clears the densest reads that 16000 would clip and sits just past
+  that timeout ceiling, and 64000 was rejected because no read can reach it
+  before the timeout fires. (Content itself is small — the largest transcription
+  recovered from the committed e2e run logs is 6,443 chars ≈ ~1.6k output tokens,
+  over the 126 of 455 calls with a recoverable size; reasoning, not content, is
+  what approaches the cap.) A cap that still binds is **visible** (`truncated`,
   §6.2), never silent.
 - The OCR **prompt is baked into the tool**, not passed by the caller —
   reuse the `image-reader.md` protocol so behavior is identical to today's

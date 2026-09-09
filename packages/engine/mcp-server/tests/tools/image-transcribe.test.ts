@@ -255,7 +255,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     await imageTranscribeTool({ imageId: "004884748_02613" });
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(init.body as string);
-    expect(body.max_tokens).toBe(16000);
+    expect(body.max_tokens).toBe(32000);
   });
 
   it("catches a cap that a provider surfaces only under native_finish_reason (MAX_TOKENS)", async () => {
