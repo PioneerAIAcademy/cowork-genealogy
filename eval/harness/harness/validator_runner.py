@@ -34,6 +34,19 @@ class ValidatorRunResult:
     passed: bool
     error: str | None
     reporting_only: bool = False  # tier-2 report_* functions (issue #1749)
+    # A validator that raised pytest.skip() did not apply to this state and
+    # never executed its assertions. It stays `passed=True` — a validator that
+    # does not apply must not fail a test — but a skip is NOT evidence the
+    # thing it checks holds, and `passed` alone cannot tell the two apart.
+    # `outcome` is the field that can; keep it the discriminator rather than
+    # re-deriving one from the `error` prose.
+    skipped: bool = False
+
+    @property
+    def outcome(self) -> str:
+        if not self.passed:
+            return "failed"
+        return "skipped" if self.skipped else "passed"
 
 
 def run_validators(
@@ -234,13 +247,22 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
             )
         except Skipped as e:
             # pytest.skip() raises Skipped (a BaseException subclass). Treat
-            # it as "validator did not apply" → passed with reason captured.
+            # it as "validator did not apply" → non-gating, with the reason
+            # captured and `outcome` recording that nothing was checked.
+            #
+            # The "skipped: " prefix on `error` is retained deliberately. It is
+            # the ONLY way to identify a skip in the run logs committed before
+            # `outcome` existed, so dropping it would make every corpus-wide
+            # count need two detection rules instead of one fallback. This is
+            # the single site that constructs a skip result, so the prefix and
+            # the flag cannot drift apart in harness-produced data.
             out.append(
                 ValidatorRunResult(
                     name=attr_name,
                     passed=True,
                     error=f"skipped: {e}",
                     reporting_only=is_report,
+                    skipped=True,
                 )
             )
         except Exception as e:  # noqa: BLE001 — validator bug, surface verbatim
@@ -263,7 +285,12 @@ def all_passed(results: list[ValidatorRunResult]) -> bool:
 
 def as_dicts(results: list[ValidatorRunResult]) -> list[dict[str, Any]]:
     return [
-        {"name": r.name, "passed": r.passed, "error": r.error}
+        {
+            "name": r.name,
+            "passed": r.passed,
+            "error": r.error,
+            "outcome": r.outcome,
+        }
         for r in results
         if not r.reporting_only
     ]
