@@ -31,6 +31,7 @@ from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
 )
+from validators_lib import new_section_entries as _new_section_entries
 
 
 # Ownership enforcement is centralised in test_universal.py, driven by
@@ -1240,32 +1241,56 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 # deduction". That is a deliberate calibration choice, not an oversight, so
 # the guard for a narration rule has to be deterministic and live here.
 
-_POSITION_RE = re.compile(r"(?<!\d)(\d{1,3})\s*(?:of|/)\s*(\d{1,3})(?!\d)", re.IGNORECASE)
+# A position marker must be ANCHORED - preceded by a word or followed by a
+# colon. A bare `N/M` or `N of M` is not enough, because this skill narrates
+# ratios constantly and every one of them would read as a marker:
+# `record_person_matches` returns `confidence 4/5`, ages appear as `~48/45`,
+# roles as `child_1/2/3`, US dates as `9/14/1880`, fractional ages as
+# `Age 5/12`, enumeration districts as `district 12/3` - and, the one that
+# matters most for a genealogy tool, `2 of 3 children survived` is ordinary
+# census mortality prose. Measured on `v1_2026-09-09_17-11-04`: under the
+# unanchored pattern all four "passing" runs passed on exactly these
+# accidents (#2390 review).
+_POSITION_RE = re.compile(
+    r"(?:\b(?:record|document|doc|item|page|file|extracting)\s+)(\d{1,3})\s*(?:of|/)\s*(\d{1,3})\b"
+    r"|(?<![\w/])(\d{1,3})\s*(?:of|/)\s*(\d{1,3})\s*:",
+    re.IGNORECASE,
+)
 
 
 def _records_extracted(before_state, after_state):
     """Records extracted this run, counted by the sources they created.
 
     NOT by counting `extraction_append` calls. That was the first version and
-    it was wrong: `ut_record_extraction_006` and `_007` in
-    `v1_2026-09-09_16-38-08` each made TWO append calls against ONE `Agent`
-    delegation, and the two calls are identical - same source title, same op
-    count. They are a retry. Counting calls scored a compliant single-record
-    run as a two-record batch and failed it.
+    it was wrong: on the discarded run of 2026-09-09, two tests each made TWO
+    append calls against ONE `Agent` delegation, with the two calls identical
+    - same source title, same op count. They are a retry. Counting calls
+    scored a compliant single-record run as a two-record batch and failed it.
 
     One record creates one source, so the new-source count is the record
     count. `Agent` delegations would be the most direct signal but
     `builtin_tool_calls` is not among the fixtures the harness exposes here.
     """
-    before = (before_state or {}).get("research_json") or {}
-    after = (after_state or {}).get("research_json") or {}
-    before_ids = {s.get("id") for s in (before.get("sources") or [])}
-    return sum(
-        1 for s in (after.get("sources") or []) if s.get("id") not in before_ids
-    )
+    return len(_new_section_entries(before_state, after_state, "sources"))
 
 
-def test_a_multi_record_batch_announces_each_record_position(
+def _announced_positions(text_response, n):
+    """Positions announced in the narration, as ints.
+
+    A marker whose denominator is BELOW `n` is not counted: "1 of 2" in a
+    three-record run names a batch that is not the one being run. Above `n` is
+    accepted - announcing three and extracting two is a dropped record, a
+    different defect this check should not also fail for.
+    """
+    found = set()
+    for m in _POSITION_RE.finditer(text_response or ""):
+        k, total = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        if int(total) >= n:
+            found.add(int(k))
+    return found
+
+
+def report_a_multi_record_batch_announces_each_record_position(
     text_response, before_state, after_state, test
 ):
     """Each record extracted is announced with its position before its turn.
@@ -1280,24 +1305,23 @@ def test_a_multi_record_batch_announces_each_record_position(
     thing that can speak during it, which is why a tester read a working run
     as a hang (#1998).
 
-    **Gated at one record, not two, and that is deliberate.** The batch this
-    card describes does not exist in the unit corpus: counting DISTINCT source
-    titles across all five committed run logs, 0 of 153 runs extracted more
-    than one record - 133 extracted exactly one and 20 extracted none. A
-    two-record gate is therefore dormant forever, which is the "reads as
-    coverage" failure this file's own #1950 sibling exists to prevent. At one
-    record the check is live and discriminating: on
-    `v1_2026-09-09_16-38-08`, 24 of the 28 extracting runs carried a marker
-    and 4 did not (`_013`, `_023`, `_028`, `_029` narrate their setup steps
-    and never state a count).
+    **`report_`, not `test_`, and deliberately so.** The rule it checks lives
+    in `record-extraction/SKILL.md` on PR #2391, not in this branch. A
+    `test_`-prefixed validator gates the run outcome
+    (`validator_runner.py`/`orchestrator.py`), so merging this first would fail
+    128 of the 132 gated runs in the committed corpus against a rule nobody has
+    been given (#2390 review). Reporting-only is correct under either merge
+    order. Promote it to `test_` once #2391 has landed and the body states the
+    rule.
 
-    Verifying the batch case needs a multi-record test in
+    **Gated at one record, not two.** The batch this card describes does not
+    exist in the unit corpus: 0 of 152 runs across the committed logs extracted
+    more than one record. A two-record gate is dormant forever, which is the
+    "reads as coverage" failure the sibling #1950 work exists to prevent.
+
+    Verifying the real batch case needs a multi-record test in
     `eval/tests/unit/record-extraction/`, which is genealogist-authored, sits
     inside the run-log snapshot, and is its own card.
-
-    The denominator is accepted at `>= n` rather than `== n`: announcing "1 of
-    3" and then failing to extract the third record is a different defect, and
-    this validator should not also fail for it.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests extract records")
@@ -1306,15 +1330,10 @@ def test_a_multi_record_batch_announces_each_record_position(
     if n < 1:
         pytest.skip("no record extracted - nothing to announce")
 
-    announced = {
-        int(k)
-        for k, total in _POSITION_RE.findall(text_response or "")
-        if int(total) >= n
-    }
-    missing = sorted(set(range(1, n + 1)) - announced)
-    assert len(announced) >= n, (
-        f"{n} record(s) extracted, but only {len(announced)} carried a "
-        f"position marker in the narration (missing {missing}). At ~136s per "
-        f"document an unannounced record is silence the user cannot "
-        f"distinguish from a hang - say '1 of {n}' before delegating it."
+    missing = sorted(set(range(1, n + 1)) - _announced_positions(text_response, n))
+    assert not missing, (
+        f"{n} record(s) extracted, but position(s) {missing} were never "
+        f"announced in the narration. At ~136s per document an unannounced "
+        f"record is silence the user cannot distinguish from a hang - say "
+        f"'1 of {n}: <record>' before delegating it."
     )
