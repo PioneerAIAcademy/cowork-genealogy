@@ -6,7 +6,7 @@ import { tmpdir } from "os";
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { validateGedcomx } from "../../src/validation/validator.js";
-import type { ValidationReport } from "../../src/validation/validator.js";
+import { createReport } from "../../src/validation/types.js";
 
 /**
  * `primary: false` clears the flag; it is never stored.
@@ -26,8 +26,6 @@ import type { ValidationReport } from "../../src/validation/validator.js";
  * four conflicting Birth facts with one still primary — and 0 across the 97
  * scenario fixtures, which is why only a constructed test had ever reached it.
  */
-
-const newReport = (): ValidationReport => ({ errors: [], warnings: [] });
 
 const minimalResearch = {
   project: {
@@ -125,7 +123,7 @@ describe("primary: false clears the flag", () => {
       factId: "F1",
       fact: { primary: false },
     });
-    const report = newReport();
+    const report = createReport();
     validateGedcomx(await readTree(), report);
     expect(report.errors, JSON.stringify(report.errors)).toEqual([]);
   });
@@ -217,7 +215,7 @@ describe("primary: false clears the flag", () => {
     // tool-boundary translation has stopped being load-bearing.
     const tree = onePrimaryBirth();
     (tree.persons[0].facts[0] as any).primary = false;
-    const report = newReport();
+    const report = createReport();
     validateGedcomx(tree, report);
     expect(report.errors.length).toBeGreaterThan(0);
     expect(JSON.stringify(report.errors)).toContain("primary");
