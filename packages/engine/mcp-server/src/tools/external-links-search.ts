@@ -80,6 +80,12 @@ async function fetchPage(
         "This usually means a User-Agent block — check that the MCP server is running an unmodified build."
     );
   }
+  if (res.status === 429) {
+    throw new Error(
+      "FamilySearch rate limit reached and did not clear within the retry budget. " +
+        "Wait 60 seconds and retry once. If it persists, surface this to the user."
+    );
+  }
   if (!res.ok) {
     throw new Error(
       `FamilySearch external-links API error: ${res.status} ${res.statusText}.`

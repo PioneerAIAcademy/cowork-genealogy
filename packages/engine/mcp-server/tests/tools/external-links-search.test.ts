@@ -280,11 +280,11 @@ describe("externalLinksSearchTool — error handling", () => {
     ).rejects.toThrow(/403 Forbidden/i);
   });
 
-  it("throws on 429 after retry exhaustion", async () => {
+  it("throws on 429 with rate-limit message after retry exhaustion", async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 429));
     await expect(
       externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(/429/);
+    ).rejects.toThrow(/Wait 60 seconds/i);
   });
 
   it("throws on 5xx (503) after retry exhaustion", async () => {

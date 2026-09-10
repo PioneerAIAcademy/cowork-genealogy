@@ -289,8 +289,8 @@ describe("recordReadTool", () => {
     );
   });
 
-  // 10. Error: 429 → retried then returned, falls through to generic !res.ok
-  it("throws on 429 after retry exhaustion", async () => {
+  // 10. Error: 429 → retried then returned, hits dedicated rate-limit branch
+  it("throws on 429 with rate-limit message after retry exhaustion", async () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 429,
@@ -299,7 +299,7 @@ describe("recordReadTool", () => {
       headers: new Headers(),
     });
     await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
-      /429/,
+      /rate limit/,
     );
   });
 

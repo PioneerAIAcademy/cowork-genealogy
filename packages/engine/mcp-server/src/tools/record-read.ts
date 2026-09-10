@@ -124,6 +124,12 @@ export async function recordReadTool(
       `Record ${entityId} was not found in FamilySearch historical records.`,
     );
   }
+  if (res.status === 429) {
+    throw new Error(
+      "FamilySearch rate limit reached and did not clear within the retry budget. " +
+        "Wait a minute and try again.",
+    );
+  }
   if (!res.ok) {
     throw new Error(`FamilySearch recapi error: ${res.status}`);
   }
