@@ -128,3 +128,36 @@ def test_the_backlog_is_bounded_and_says_so_rather_than_dropping_silently():
         "the backlog overflowed and nothing told the user; that is the silent drop "
         "this fix exists to remove, moved to a higher message number"
     )
+
+
+def test_a_stop_discards_the_backlog_it_was_pressed_on():
+    """Stop means stop. A person who queued a message and then pressed Stop does
+    not want it starting on its own a moment later.
+
+    `serve` clears `pending` in the interrupt branch, and every other test in
+    this file passes with that line deleted - the queue simply drains after the
+    cancellation instead. So this is the only thing standing between a refactor
+    and a message the user cancelled being answered anyway.
+    """
+    agent = SlowAgent(per_turn=0.10)
+
+    async def drive():
+        incoming: asyncio.Queue = asyncio.Queue()
+        events: list[dict] = []
+        task = asyncio.create_task(serve(agent, incoming, events.append))
+        await incoming.put({"type": "user_msg", "text": "first"})
+        await asyncio.sleep(0.01)
+        await incoming.put({"type": "user_msg", "text": "second"})  # queues behind first
+        await asyncio.sleep(0.01)
+        await incoming.put({"type": "interrupt"})                   # the user presses Stop
+        await asyncio.sleep(1.0)
+        await incoming.put(None)
+        await asyncio.wait_for(task, 5)
+        return events
+
+    asyncio.run(drive())
+
+    assert "second" not in agent.turns, (
+        "a message queued before Stop was answered after it; the interrupt must "
+        f"discard the backlog, but the agent ran {agent.turns}"
+    )
