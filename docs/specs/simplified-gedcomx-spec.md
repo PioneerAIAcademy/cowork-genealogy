@@ -397,6 +397,13 @@ fact of a vital type lands, so a pre-existing flag keeps asserting a concluded
 value while the conflict is open (10 such persons across the committed e2e final
 trees, measured 2026-09-10). On `add_fact` it means "add this without a primary"
 and leaves any existing primary of that type alone; it never clears the type.
+**A later merge undoes it.** `mergeFacts` (`src/utils/merge-gedcomx.ts`) re-marks
+the most complete fact of every vital type unconditionally, so a person whose
+primary was cleared comes out of `merge_tree_persons` — or out of folding a
+FamilySearch candidate document — with the flag restored, and a vital type that
+never had one gains it. Clear it again after a merge. Gating that re-mark on the
+group having had a primary is the durable fix and is not done here.
+
 `preferred` on names has the same shape and no equivalent, because nothing has
 needed one.
 

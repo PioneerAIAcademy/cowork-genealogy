@@ -232,6 +232,18 @@ function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: st
  */
 const FACT_STRING_FIELDS = ["date", "standard_date", "place", "standard_place", "value"] as const;
 function requireFactShape(fact: SimplifiedFact, op: string): void {
+  // `primary` carries an instruction, so a near-miss spelling must not be
+  // assigned and left for the document validator: its message is "omit it
+  // rather than setting false", which is the one action that leaves a stale
+  // flag exactly where it was. Caught here because every fact path calls this.
+  const flag = (fact as Record<string, unknown>).primary;
+  if (flag !== undefined && typeof flag !== "boolean") {
+    const got = flag === null ? "null" : Array.isArray(flag) ? "an array" : `a ${typeof flag}`;
+    throw new TreeEditError(
+      `${op}: fact \`primary\` must be the boolean true or false, got ${got} — ` +
+        "`true` makes it the primary of its type, `false` clears the flag",
+    );
+  }
   for (const field of FACT_STRING_FIELDS) {
     const v = (fact as Record<string, unknown>)[field];
     if (v !== undefined && typeof v !== "string") {
@@ -243,6 +255,19 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
       );
     }
   }
+}
+
+/**
+ * `primary: false` is an INSTRUCTION, never a stored value. The persisted schema
+ * pins the flag to `const: true` (omit-when-false, for token count —
+ * simplified-gedcomx-spec §6), so the key is dropped before the write and the
+ * document stays conformant. See clearPrimaryOfType's note.
+ *
+ * Every path that authors a NEW fact calls this. `update_fact` does not: it
+ * deletes the flag from the EXISTING fact rather than from the incoming patch.
+ */
+function stripClearedPrimary(fact: SimplifiedFact): void {
+  if (fact.primary === false) delete fact.primary;
 }
 
 // ─── delta-scoped mandatory-ref guard (tree-materialization-spec §6, §8) ─────
@@ -356,11 +381,7 @@ async function applyOperation(
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
-      // `primary: false` is an INSTRUCTION, never a stored value. The persisted
-      // schema pins the flag to `const: true` (omit-when-false, for token count
-      // — simplified-gedcomx-spec §6), so the key is dropped here and the
-      // document stays conformant. See clearPrimaryOfType's note.
-      if (fact.primary === false) delete fact.primary;
+      stripClearedPrimary(fact);
       assertNodeHasRef(fact, "the added fact", "add_fact");
       await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
@@ -489,6 +510,7 @@ async function applyOperation(
         for (const f of person.facts) {
           if (f.id) throw new TreeEditError("add_person facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_person");
+          stripClearedPrimary(f);
           assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
           await maybeResolvePlace(f, f.standard_place !== undefined);
@@ -562,6 +584,7 @@ async function applyOperation(
         for (const f of rel.facts) {
           if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_relationship");
+          stripClearedPrimary(f);
           // A Couple fact (e.g. Marriage) with no ref of its own inherits the
           // edge's resolved ref — but ONLY when that ref came from
           // `sourceAssertionId` (the marriage record IS typically the source
