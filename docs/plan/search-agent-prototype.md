@@ -96,6 +96,10 @@ carrying. Everything below is out on that test, not because it is unimportant.
 a crash — the queue redelivers and the
 SDK resumes from the transcript, which already contains the completed work.
 Progress is monotone, so the ceiling is a *forced checkpoint*, not a failure.
+Measured on Beanstalk 2026-09-11 (D3): sqsd cuts the POST at exactly `InactivityTimeout`,
+tells the worker nothing, and lets the message return only when `VisibilityTimeout`
+lapses — so the checkpoint costs `VisibilityTimeout − InactivityTimeout` of dead time,
+and the shim's container kill is what the worker side needs on top.
 
 This is why no explicit checkpointing at `Skill`/`Agent` boundaries is needed.
 Earlier drafts of this plan had one; it was solving a problem resume already solves.
@@ -792,11 +796,25 @@ without whichever Bedrock refuses.
   `inactivity_timeout` behaviour, the 512 MB source-bundle cap and the
   `.ebextensions` prefix rule — the platform constraints that shape the step model and
   that docker-compose cannot show. Not the full AWS deploy, which stays cut.
-  **Bundle built 2026-09-11 (PR #2455, `apps/server/proto/eb-worker-probe/`): a stdlib
-  WSGI worker that logs the sqsd headers and sleeps 1500 s, the worker-tier sqsd
-  options, aws-CLI-only deploy and teardown scripts with a dry run. Not deployed: the
-  account has never run Beanstalk, so the two standard roles must be created first
-  (the bundle's README has the one-time IAM steps).**
+  **Done 2026-09-11 (PR #2455, `apps/server/proto/eb-worker-probe/`; deployed in
+  `us-east-1` on a t3.micro, Ready in 4.5 minutes, torn down after).** What sqsd
+  3.0.5 actually does: it POSTs `/` as `application/json` with `X-Aws-Sqsd-Msgid`,
+  `-Receive-Count`, `-First-Received-At`, `-Sent-At`, `-Queue`, `-Path` and
+  `-Sender-Id` (a message attribute was not forwarded as an `-Attr-` header, n=1). A
+  1500 s handler under `InactivityTimeout` 1800 completed: one delivery, 200, queue
+  empty. Under `InactivityTimeout` 300 sqsd cut the connection at exactly 300 s
+  (`socket-err … Errno::ETIMEDOUT - 300.003`; nginx logged 499), **the worker was never
+  told** — it found the peer gone only when it wrote its reply at 1500 s — and sqsd did
+  **not** release the message: it stayed invisible and came back exactly 2100 s after
+  its first receive, as receive 2 with `First-Received-At` preserved. So the dead time after a forced checkpoint is
+  `VisibilityTimeout − InactivityTimeout`, five minutes at 2100/1800; set the visibility
+  timeout just above the ceiling. The worker tier always creates a dead-letter queue
+  and `MaxRetries` governs it, so "no redrive policy" is not available there. A
+  configuration-only `update-environment` took 78 s, restarted sqsd and left the app
+  process running. API option settings override the same option in `.ebextensions`.
+  nginx sits between sqsd and the app with a 60 s `proxy_read_timeout`; the bundle's
+  `.platform` override to 36000 s was required, or nginx cuts first. The 512 MB bundle
+  cap and the `.ebextensions/*.config` rule are documented and were not exercised.
 - **D3** docker-compose skeleton: postgres, **elasticmq** (SQS API — not RabbitMQ,
   whose semantics differ and whose client code you would throw away), **minio**, and
   an **sqsd shim**. **Run the shim as its own compose service with the docker socket
@@ -824,7 +842,10 @@ without whichever Bedrock refuses.
   table and a Postgres client in the shim, all of it serving an automated assertion this
   plan no longer makes.
   Write the Postgres schema. Set `VisibilityTimeout` well above the step ceiling, and
-  **configure no redrive policy at all.** `ChangeMessageVisibility` does not reset the
+  **configure no redrive policy at all** (on Beanstalk that choice does not exist — the
+  worker tier creates a dead-letter queue and `MaxRetries` governs it, measured
+  2026-09-11 — so the compose stack honours it and production sizes `MaxRetries`).
+  `ChangeMessageVisibility` does not reset the
   receive count, so a container restart burns several receives on the requeue arm alone,
   and sizing `maxReceiveCount` against "two or three forced checkpoints" would
   dead-letter a legitimately long turn. **With no redrive policy a message that fails on every delivery
@@ -1132,7 +1153,8 @@ source-grouping fix, whose real cost is a paid eval slot rather than engineer ti
 happens to it. That is the cheapest way to retire the sqsd contract, the
 `inactivity_timeout` behaviour, the source-bundle cap and the `.ebextensions` prefix
 rule — the constraints that shape the step model and that docker-compose cannot show.
-It is not the full AWS deploy, which stays cut.
+It is not the full AWS deploy, which stays cut. **Done 2026-09-11; the measurements are
+under D3.**
 
 **What absorbs a probe failure.** (P1 passed on 2026-09-10, so neither fallback is
 needed; kept for the record.) P1 has **two** fallbacks and they cost very differently. The first — checkpoint at
