@@ -550,7 +550,11 @@ def _certainty_upgrades(text: str, names: set[str]) -> list[tuple[str, str]]:
         for m in re.finditer(
             _CERTAINTY + r"[\s,:;—–-]*" + re.escape(name) + r"\b", text, re.I
         ):
-            start = max(0, text.rfind(".", 0, m.start()) + 1)
+            # Clamped to end no more than 200 chars AFTER the match, not 200
+            # from the sentence start: a long run-up otherwise eats the evidence.
+            # One real hit today (v1_2026-08-19_15-24-31 / ut_006) ended
+            # "…the informant was almost certainly T".
+            start = max(0, text.rfind(".", 0, m.start()) + 1, m.end() - 200)
             end = text.find(".", m.end())
             # `end != -1`, not `end > 0`: `find` returns -1 on not-found, and
             # `> 0` also rejects a legitimate period at index 0. Unreachable
@@ -645,7 +649,15 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
         for field, txt in texts.items():
             for name, span in _certainty_upgrades(txt, set(names)):
                 observations.append(
-                    f"conflicts[{cid}] {field} asserts '{name}' with certainty, "
+                    # "attaches a certainty marker to" rather than "asserts":
+                    # 13 of the 15 corpus matches are DISJUNCTIVE ("almost
+                    # certainly Thomas Flynn or his wife"), so the prose names no
+                    # single person — it keeps the record's two-person
+                    # disjunction and raises the confidence on it. "asserts
+                    # 'Thomas Flynn'" told a genealogist the run named someone it
+                    # did not name. Both singular matches are in the reply text.
+                    f"conflicts[{cid}] {field} attaches a certainty marker to "
+                    f"'{name}', "
                     f"but the record names that informant only under a hedge: "
                     f"informant is \"{names[name]}\". An undetermined informant "
                     f"cannot be the ground of a resolution. Quoted: “{span[:200]}”"

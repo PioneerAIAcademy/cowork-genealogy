@@ -883,7 +883,7 @@ def test_v4_reports_one_observation_per_upgrade_not_two():
     scan of the same field would break.
     """
     msg = _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
-    assert msg.count("asserts 'Thomas Flynn'") == 1, msg
+    assert msg.count("attaches a certainty marker to 'Thomas Flynn'") == 1, msg
 
 
 def test_v4_fires_on_a_bare_certainty_marker_too():
@@ -1016,7 +1016,11 @@ def _independently_v4_hits():
     notperson = _re.compile(r"\b(WPA|Graves Registration|Registration Worker|"
                             r"Death Certificate|Census|Household Member|"
                             r"Unknown Informant|Bureau|Vital Records)\b", _re.I)
-    mark = r"(?:almost certainly|undoubtedly|definitely|certainly)"
+    # `\b` at both ends, matching the validator. Without it the derivation
+    # agrees with the validator as it was BEFORE the anchoring landed, so the
+    # agreement test could not see the fix at all — measured: removing both
+    # anchors from the validator left this test green.
+    mark = r"\b(?:almost certainly|undoubtedly|definitely|certainly)"
 
     out = set()
     for path in _CORPUS:
@@ -1054,8 +1058,13 @@ def _independently_v4_hits():
                     if not isinstance(a, dict) or a.get("id") is None:
                         continue
                     after[a["id"]] = dict(a)
-                    if {"weighing_analysis", "resolution_rationale"} & set(a):
-                        wrote.add(a["id"])
+                    # EVERY created conflict, prose keys or not —
+                    # `_conflicts_written` counts a new entry via `prev is None`
+                    # regardless. Gating on the prose keys made the derivation
+                    # silent where the validator fires (measured: a created
+                    # conflict with no prose keys and the upgrade in the reply
+                    # text).
+                    wrote.add(a["id"])
                 for cid in wrote:
                     c = after.get(cid) or {}
                     names = set()
@@ -1081,7 +1090,8 @@ def _independently_v4_hits():
                              str((r.get("output") or {}).get("text_response") or "")]
                     for txt in texts:
                         for nm in names:
-                            if _re.search(mark + r"[\s,:;—–-]*" + _re.escape(nm), txt, _re.I):
+                            if _re.search(mark + r"[\s,:;—–-]*" + _re.escape(nm)
+                                          + r"\b", txt, _re.I):
                                 out.add((Path(path).name, t["test_id"]))
     return out
 
@@ -1121,7 +1131,7 @@ def test_v4_reports_the_reply_text_as_well_as_the_persisted_fields():
     fields = {"weighing_analysis": 0, "resolution_rationale": 0, "the reply text": 0}
     for _, _, msg in _replay_v4():
         for f in fields:
-            fields[f] += msg.count(f" {f} asserts '")
+            fields[f] += msg.count(f" {f} attaches a certainty marker to '")
     assert all(v > 0 for v in fields.values()), (
         f"V4 reported nothing from at least one field: {fields}"
     )
@@ -1290,7 +1300,7 @@ def test_v4_observations_are_newline_separated():
             "",
         )
     msg = str(e.value)
-    assert msg.count("asserts 'Thomas Flynn'") == 2, msg
+    assert msg.count("attaches a certainty marker to 'Thomas Flynn'") == 2, msg
     assert "\n" in msg, f"observations are not newline-separated:\n{msg}"
 
 
@@ -1317,3 +1327,120 @@ def test_v4_the_certainty_pattern_is_anchored_at_both_ends():
     # deliberately permissive there.
     _fires(*_v4_states(inf, after_prose="It was almost certainly Mary Ann Sullivan."))
     _fires(*_v4_states(inf, after_prose="It was almost certainly Mary Ann."))
+
+
+@pytest.fixture
+def v4_synthetic_corpus(tmp_path, monkeypatch):
+    """Point BOTH `_replay_v4` and `_independently_v4_hits` at a corpus we build.
+
+    They read the module globals `_CORPUS` and `_REPO`, so redirecting those is
+    what makes the agreement assertion able to see the anchoring. An earlier
+    version of this test called the VALIDATOR's own `_certainty_upgrades` helper
+    instead — which tested the validator twice and pinned the derivation not at
+    all: three mutations to the derivation (both `\b` and the created-conflict
+    gate) left the whole suite green.
+    """
+    mod = sys.modules[__name__]  # this module; pytest does not import it by name
+
+    scen = tmp_path / "eval" / "fixtures" / "scenarios" / "s_demo"
+    scen.mkdir(parents=True)
+    (scen / "research.json").write_text(
+        json.dumps({
+            "conflicts": [{"id": "c_001", "status": "unresolved",
+                           "conflict_type": "fact",
+                           "competing_assertion_ids": ["a_002"],
+                           "weighing_analysis": None,
+                           "resolution_rationale": None}],
+            "assertions": [{"id": "a_002", "source_id": "src_001",
+                            "informant": _HEDGED_INFORMANT,
+                            "information_quality": "indeterminate"}],
+        }),
+        encoding="utf-8",
+    )
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    monkeypatch.setattr(mod, "_REPO", tmp_path)
+    return logs, scen
+
+
+def _v4_log(path, *, prose=None, reply="", created=False):
+    diff = {"conflicts": {}}
+    entry = {"id": "c_001", "changed_fields": {}}
+    if created:
+        # A NEW id, not one the fixture already holds — `_replay_v4` correctly
+        # skips an `added` entry whose id is already present, so reusing c_001
+        # made this row test nothing.
+        diff["conflicts"]["added"] = [{"id": "c_new", "status": "resolved",
+                                       "conflict_type": "fact",
+                                       "competing_assertion_ids": ["a_002"]}]
+    else:
+        entry["changed_fields"]["weighing_analysis"] = {"before": None, "after": prose}
+        diff["conflicts"]["modified"] = [entry]
+    path.write_text(json.dumps({"tests": [{
+        "test_id": "ut_probe", "scenario": "s_demo", "outcome": "pass",
+        "runs": [{"output": {"text_response": reply,
+                             "file_changes": {"research.json": {"diff": diff}}}}],
+    }]}), encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "label,kwargs,should_fire",
+    [
+        ("control: the plain upgrade",
+         dict(prose="It was almost certainly Thomas Flynn."), True),
+        ("control: no certainty marker",
+         dict(prose="It was probably Thomas Flynn."), False),
+        ("certainly inside uncertainly",
+         dict(prose="Reported uncertainly Thomas Flynn was there."), False),
+        ("a name extended by a letter",
+         dict(prose="It was almost certainly Thomas Flynne."), False),
+        ("created conflict, upgrade in the REPLY",
+         dict(created=True, reply="It was almost certainly Thomas Flynn."), True),
+    ],
+)
+def test_v4_the_second_derivation_matches_the_validator(
+    v4_synthetic_corpus, monkeypatch, label, kwargs, should_fire
+):
+    """Drives the REAL replay and the REAL derivation over the same corpus.
+
+    The corpus-agreement test above cannot see the anchoring — measured:
+    removing both `\b` from the validator left it green, because the derivation
+    used the unanchored form and so agreed with the validator as it was BEFORE
+    the fix. Had the corpus rotated in one of these shapes it would have
+    reddened pointing at the wrong side.
+
+    The created-conflict row is the other half: `_conflicts_written` counts a new
+    entry via `prev is None` regardless of prose keys, and the derivation used to
+    gate on those keys.
+    """
+    mod = sys.modules[__name__]  # this module; pytest does not import it by name
+
+    logs, _ = v4_synthetic_corpus
+    log = logs / "v1_2026-01-01_00-00-00.json"
+    _v4_log(log, **kwargs)
+    monkeypatch.setattr(mod, "_CORPUS", [str(log)])
+
+    fired = {(n, t) for n, t, _ in mod._replay_v4()}
+    derived = mod._independently_v4_hits()
+    assert bool(fired) is should_fire, f"validator disagreed on {label!r}"
+    assert fired == derived, (
+        f"validator and derivation disagree on {label!r}: "
+        f"validator={sorted(fired)} derivation={sorted(derived)}"
+    )
+
+
+def test_v4_the_quoted_span_always_contains_the_phrase_it_accuses():
+    """`span[:200]` counted from the SENTENCE start, so a long run-up ate the
+    evidence — one real hit ended "…the informant was almost certainly T".
+    The window is now clamped to end no more than 200 chars after the match."""
+    runup = ("The 1850 census enumerator visited the dwelling on a Tuesday in "
+             "August and recorded every member of the household in turn, working "
+             "down the page from the head of family, and when he reached the "
+             "five-year-old child he wrote Ireland because the informant was "
+             "almost certainly Thomas Flynn or his wife.")
+    assert len(runup) > 200
+    msg = _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=runup))
+    quoted = msg.split("Quoted:", 1)[1]
+    assert "almost certainly Thomas Flynn" in quoted, quoted
+
+
