@@ -209,7 +209,7 @@ What it says:
 | skill | episodes | calls in them | calls/episode | skill entered / its tools used |
 |---|---:|---:|---:|---|
 | search-full-text | 12 | 839 | **69.9** | 12 runs / 58 |
-| search-images | 8 | 443 | **55.4** | 8 runs / 124 |
+| search-images | 8 | 443 | **55.4** | 8 runs / 25 (`image_search`) |
 | search-records | 208 | 7,398 | 35.6 | — |
 | person-evidence | 158 | 5,465 | 34.6 | — |
 | proof-conclusion | 98 | 2,064 | 21.1 | — |
@@ -217,11 +217,23 @@ What it says:
 | question-selection | 252 | 1,310 | 5.2 | — |
 
   **The two densest steps in the system are the two that score lowest on resident
-  mass, and for the same reason: the orchestrator does not enter them.** 46 runs
-  search full text without the skill; 116 do image work without it. Their cards are
-  therefore ordered behind routing — issue #1860 for full text, and issue #2121
-  re-scoped 2026-09-10 to route before it converts — not shelved. Episode
-  attribution credits the last-launched skill, the same bias the phase split
+  mass**, so a low score is not a verdict on a card. Their reasons differ, and only
+  the first is a routing gap:
+
+  - **`search-full-text` has no routing row at all.** `fulltext_search` runs 305
+    times in 58 runs while the skill is entered in 12, and only 72 of those calls
+    fall inside its own episodes — 112 land in `search-records`, whose body names
+    full text as the next step and then refuses to route there. Issue #1860 rules
+    that it gets a row; that lands before issue #2120's conversion.
+  - **`search-images` already has a row** — digitized-but-unindexed sets, or
+    indexed and full-text exhausted. Its low entry count is a narrow cue being
+    rarely met, not an unreachable skill. What is left is one question worth a
+    read: 27 of 47 `image_search` calls land outside the skill, in 18 runs.
+    `volume_search`'s 240 calls are **not** evidence of bypass — 100 are
+    `locality-guide` and 50 `research-plan` doing planning-time survey — and
+    `image_transcribe`'s 456 are the `image-reader` delegation any caller may make.
+
+  Episode attribution credits the last-launched skill, the same bias the phase split
   carries.
 - **`init-project` cannot be priced from this corpus at all.** `project_create` is
   called **0 times in 163 runs** — every fixture ships a seeded project — so its
