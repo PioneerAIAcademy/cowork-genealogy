@@ -792,6 +792,11 @@ without whichever Bedrock refuses.
   `inactivity_timeout` behaviour, the 512 MB source-bundle cap and the
   `.ebextensions` prefix rule — the platform constraints that shape the step model and
   that docker-compose cannot show. Not the full AWS deploy, which stays cut.
+  **Bundle built 2026-09-11 (PR #2455, `apps/server/proto/eb-worker-probe/`): a stdlib
+  WSGI worker that logs the sqsd headers and sleeps 1500 s, the worker-tier sqsd
+  options, aws-CLI-only deploy and teardown scripts with a dry run. Not deployed: the
+  account has never run Beanstalk, so the two standard roles must be created first
+  (the bundle's README has the one-time IAM steps).**
 - **D3** docker-compose skeleton: postgres, **elasticmq** (SQS API — not RabbitMQ,
   whose semantics differ and whose client code you would throw away), **minio**, and
   an **sqsd shim**. **Run the shim as its own compose service with the docker socket
@@ -829,6 +834,14 @@ without whichever Bedrock refuses.
   every delivery. A production
   deployment needs a redrive policy sized on receive counts, not on forced checkpoints. **Pin the step ceiling to 1800 s** and treat it as immovable:
   AWS permits 1–36,000 s, and leaving it open makes this a demo rather than a test.
+  **Done 2026-09-11 (PR #2455).** Five services under `apps/server/proto/`; `make
+  proto-smoke` passes all four cases (ok, fail with 5/10/20 s backoff, worker crash and
+  restart, a 60 s turn under a 15 s ceiling override killed and redelivered); 46 offline
+  tests pin the topology. One finding the real build keeps: a shim that exits mid
+  long-poll leaves the receive open, and the next message sits invisible for the full
+  visibility timeout — the shim drains on SIGTERM, requeues what the poll delivered,
+  and `stop_grace_period` is pinned above the poll. The schema written here carries no
+  `committed_batches`.
 - **D4–5** `ProjectStore` interface + `FsProjectStore` + close the filesystem leaks +
   the import lint. **The port is 11 files, not 48 tools** — eleven modules import
   `fs`: four are leaks in tool files that should route through the utils
