@@ -50,6 +50,8 @@ Full tag catalog: `references/warning-checks.md`.
 
 **The same silent handoff applies to an audit of the attached sources** ("are the sources on this profile right?", "is anything mis-indexed?"). That asks whether each attached record belongs to this person and whether what was indexed from it is correct — which needs the sources read, and neither of your tools reads one. **Invoke the `source-evaluation` skill right away as your first and only action, write no reply of your own, and do not call `person_warnings` or `person_quality`.**
 
+**The same silent handoff applies to a structural integrity or well-formedness check** ("is research.json valid?", "are all required fields filled in?", "does the data validate?", "make sure the file is well-formed"). That is schema validation, not a warnings check. **Invoke the `validate-schema` skill right away as your first and only action, write no reply of your own, and do not call `person_warnings` or `person_quality`.**
+
 Warnings are about a *single person's own data* violating physical/biological/temporal limits (death before birth, impossible ages, burial before death). Only run the steps below when the request is genuinely that.
 
 ### 1. Identify the person(s) to check
@@ -92,6 +94,8 @@ For each warning, report:
 **Special case -- `hasAgeRangeGreaterThan120`:** A lifespan exceeding 120 years has two common causes: a wrong vital date and two individuals' records merged into one profile. Always mention both possibilities when reporting this warning -- recommend verifying the vital dates against their original sources and flag the identity-confusion reading as a second candidate. Do not frame this as a date-error-only problem.
 
 **Special case -- `hasEventAfterDeath1`:** This tag has three legitimate causes. Do NOT default to identity confusion just because the severity is `contradiction`. The corrective action depends on the source type, which this skill cannot determine -- the source must be inspected first.
+
+**Do not name specific dates, death years, event years, source types, or source descriptions** unless the tool's response included them. The tool returns only `factIds` and a generic `message` -- it does not supply the date of the late-dated event, the date of death, or any source description. Any date or source detail you cite must come from the tool's response, not from reading `tree.gedcomx.json`. Citing tree-derived details violates the re-derive prohibition in Important rules.
 
 The three causes, with cues and recommended actions:
 
