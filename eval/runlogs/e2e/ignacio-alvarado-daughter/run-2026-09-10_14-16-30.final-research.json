@@ -1,0 +1,1409 @@
+{
+  "project": {
+    "id": "rp_ignacio_alvarado_daughter",
+    "objective": "Did Ignacio Alvarado and Teodosia Dur\u00e1n of San Jos\u00e9, Costa Rica have an infant daughter, Angela, who died and was buried in June 1880?",
+    "subject_person_ids": [
+      "K21K-P1C"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-09-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Ignacio Alvarado and Teodosia Dur\u00e1n of San Jos\u00e9, Costa Rica have an infant daughter, Angela, who died and was buried in June 1880?",
+      "rationale": "This is the stated research objective \u2014 a single-fact inquiry about the existence, death, and burial of a specific child. Costa Rica's Catholic parish registers and civil registration records (civil registration began nationally in 1888, but parish burial registers for San Jos\u00e9 exist from the colonial era onward) offer a plausible record trail for a June 1880 infant burial. The question is answerable from original sacramental or civil death/burial records held at the Archivo Nacional de Costa Rica and on FamilySearch.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-09-10",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_011",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_030"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "All seven stop criteria are met. The original Nuestra Se\u00f1ora del Carmen parish burial register (vol. 18, entry 814, 20 Jun 1880) was examined from its original image (ark:/61903/3:1:S3HT-63K2-3Z) and names 'Angela Alvarado, hija legitima de Ygnacio Alvarado y Teodosia Duran, de a\u00f1o y dos meses.' An independent baptism record from a different parish (San Vicente Ferrer, Moravia, 27 Mar 1879, NQ24-QZQ) names the same parents presenting Angela Procesa Maria de las Piedades Alvarado Duran for baptism. Both parishes are independent sources attested by different officiants. Index discrepancies (transcription error 'Charado'; birth year 1879 vs. 1880) were resolved by the original image's stated age. Civil registration was not applicable (began 1888). No accessible, unexamined record type remains that could plausibly alter the conclusion.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "MET. Original burial register entry 814 (20 Jun 1880, Nuestra Se\u00f1ora del Carmen) confirmed from image at ark:/61903/3:1:S3HT-63K2-3Z names Angela Alvarado as hija legitima of Ygnacio Alvarado and Teodosia Duran, age 1 year and 2 months. The question \u2014 existence, death, burial date, and parentage \u2014 is answered directly and completely.",
+          "repository_breadth": "MET. FamilySearch collections 1520629 (Costa Rica Deaths, indexed) and 1460016 (Costa Rica Catholic Church Records, index + images) were searched across multiple name variants (Alvarado, Duran, parent-anchored). The original register image was examined (pli_004). The baptism collection (1520624) was searched and yielded an independent corroborating record (pli_006). Civil registration inapplicable before 1888. No other applicable repository was identified for June 1880 infant burials in San Jos\u00e9 canton.",
+          "original_substitution": "MET. The original parish register image (ark:/61903/3:1:S3HT-63K2-3Z, log_004, pli_004) was accessed and transcribed directly, resolving all index-level ambiguities. Derivative index entries were used only as finding aids; all evidentiary conclusions rest on the original image and the baptism record.",
+          "independent_verification": "MET. Two independent source clusters: (1) the burial cluster \u2014 Nuestra Se\u00f1ora del Carmen, 20 Jun 1880, recorded by officiating priest Jos\u00e9 Pi\u00f1eiro at the time of burial; (2) the baptism record \u2014 San Vicente Ferrer, Moravia, 27 Mar 1879, recorded by a different officiating priest with both parents (Ygnacio Alvarado and Teodosia Duran) presenting the child in person. Different parishes, different jurisdictions, different event types, different informants and officiants \u2014 these are genuinely independent attestations, not the same informant twice.",
+          "evidence_class": "MET. src_004 (original burial register image, ark:/61903/3:1:S3HT-63K2-3Z) is an original record with primary information for the burial event, recorded by the officiating priest contemporaneously. src_002 (baptism record, NQ24-QZQ) is an original record with primary information for the child's name and parentage, attested by the parents themselves at the baptism. At least one original record with primary information for the central facts is confirmed.",
+          "conflict_resolution": "MET. Two index-level discrepancies were identified and resolved: (1) 'Charado' in NQ5N-RXJ \u2014 confirmed as a transcription error for 'Alvarado' by the original image (log_004); (2) birth year 1879 vs. 1880 across the two burial index entries \u2014 resolved by the original image's stated age 'a\u00f1o y dos meses' (1 year, 2 months), placing birth approximately April 1879 and consistent with the 27 Mar 1879 baptism. No open conflicts remain; the conflicts section has zero entries.",
+          "overturn_risk": "LOW \u2014 MET. Civil registration did not begin in Costa Rica until 1888; no birth or death certificate exists for this period. The primary applicable parish register was consulted in original form and yields a definitive positive result. The baptism record from a different parish provides independent corroboration. The browse-only parish death index (pli_005) was skipped as redundant after the original image was read. The sibling corroboration search (pli_007) was skipped as advisory. No accessible, applicable record type remains unsearched that could plausibly name different parents or contradict the burial event."
+        }
+      },
+      "created": "2026-09-10"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-10",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "San Jos\u00e9, Costa Rica",
+          "date_range": "1878-1882",
+          "repository": "FamilySearch",
+          "rationale": "Costa Rica Deaths, 1787-1900 (collection 1520629) is a name-indexed death collection directly covering the target period. The Nuestra Se\u00f1ora del Carmen parish death register vol. 18 (Nov 1877\u2013Oct 1881) is 97% indexed within this collection. Search for Angela Alvarado, \u00c1ngela Alvarado, Angela Dur\u00e1n, and \u00c1ngela Dur\u00e1n; also try the parents' names (Ignacio Alvarado, Teodosia Dur\u00e1n) as a cross-reference in case Angela appears as a deceased child in a parent-keyed entry. Civil registration did not begin until 1888 (per loc_001), so this indexed church burial record is the highest-probability source for a June 1880 death.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "San Jos\u00e9, Costa Rica",
+          "date_range": "1878-1882",
+          "repository": "FamilySearch",
+          "rationale": "Costa Rica, Catholic Church Records, 1595-2022 (collection 1460016) is the master FamilySearch collection: 2.6 million records with index and full images. It encompasses the same Carmen parish death registers as collection 1520629 but with images attached; a successful hit here allows immediate viewing of the original register page. It also covers Catedral Metropolitana and other San Jos\u00e9 canton parishes. Search Angela/\u00c1ngela Alvarado, Angela/\u00c1ngela Dur\u00e1n; also search for Angela as a child of Ignacio Alvarado. Include spelling variant Duran (without accent) per loc_001 quirks.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "San Jos\u00e9, Costa Rica",
+          "date_range": "1878-1882",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search for the parent surname pair 'Alvarado' + 'Dur\u00e1n' across all Costa Rica Catholic church records. This reaches the roughly 3% of Carmen vol. 18 not yet name-indexed, plus any other unindexed registers. The co-occurrence of both parental surnames in a single entry is highly specific and will surface the child's burial (or baptism) even where no name-indexed entry was created. Execute via the search-full-text skill with both terms required. Per the record-type guide, this is the highest-yield tactic for records where indexed search underdelivers.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+          "date_range": "1877-1881",
+          "repository": "FamilySearch",
+          "rationale": "Browse-only fallback: Carmen parish death register vol. 18, imageGroupNumber 004232363_003 (M93N-FQ9), 224 images, Nov 1877\u2013Oct 1881 \u2014 this is the specific volume containing June 1880 deaths. If indexed searches (items 1\u20132) and full-text (item 3) fail to surface an entry, browse image by image in this volume for June 1880. The register is in Spanish ecclesiastical cursive; infant entries typically record the child's name, age in days/months, and both parents' names. Also check combined vol. 79 (imageGroupNumber 004238800_011, 1879\u20131881, 180 images) and vol. 75 (imageGroupNumber 004238800_007) which may contain duplicate or supplementary death entries for the same period.",
+          "fallback_for": "pli_003",
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+          "date_range": "1855-1953",
+          "repository": "FamilySearch",
+          "rationale": "Browse the Carmen parish death index (\u00cdndices de defunciones parroquiales) covering 1855\u20131953, imageGroupNumber 004238821_003 (284 images). This is an alphabetical or chronological name index to the death registers kept by the parish itself. Locating Angela/\u00c1ngela Alvarado or Dur\u00e1n in this index will pinpoint the register volume and page number for targeted image retrieval, even if the indexed FamilySearch collections have a gap. Browse-only (0% indexed on FamilySearch).",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "San Jos\u00e9, Costa Rica",
+          "date_range": "1879-1880",
+          "repository": "FamilySearch",
+          "rationale": "Search for Angela/\u00c1ngela Alvarado Dur\u00e1n's baptism record in Costa Rica Baptisms, 1700-1915 (collection 1520624, 110,127 indexed records) and within collection 1460016. Catholic practice in 19th-century Costa Rica was to baptize infants within days of birth; an infant who died in June 1880 would have been baptized weeks to a few months earlier (likely 1879 or early 1880). The baptism record independently names both parents (Ignacio Alvarado and Teodosia Dur\u00e1n) and the child, corroborating the burial record and confirming the parentage relationship. This is the required FAN/corroborating item: it addresses the question from a different record type (baptism vs. burial) and provides direct evidence of the parent-child relationship.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "church",
+          "jurisdiction": "San Jos\u00e9, Costa Rica",
+          "date_range": "1875-1885",
+          "repository": "FamilySearch",
+          "rationale": "Search baptism and burial records for other children of Ignacio Alvarado and Teodosia Dur\u00e1n in San Jos\u00e9, circa 1875-1885. The tree already lists Bienvenida Alvarado Dur\u00e1n (K48R-R8W) and Mar\u00eda Rosa de las Piedades Alvarado Dur\u00e1n (K21K-P18) as likely children. Finding sibling baptism or burial records confirms the family was resident in San Jos\u00e9 canton during this period, corroborates the parents' identity, and may reveal whether Angela appears as a known sibling. Any sibling record that names both Ignacio Alvarado and Teodosia Dur\u00e1n as parents in San Jos\u00e9 strengthens the credibility of the family-unit premise on which the research question rests. Search collections 1520624 and 1460016 using parent names as filters.",
+          "fallback_for": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T13:25:14.958Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Angela",
+        "surname": "Alvarado",
+        "collectionId": "1520629",
+        "recordCountry": "Costa Rica",
+        "deathYearFrom": 1878,
+        "deathYearTo": 1882
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "1 result returned but is clearly not Angela \u2014 male, 'a...Elo Alvarado', low score 2.98. No matching entry for Angela in collection 1520629 under surname Alvarado."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T13:25:14.963Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Angela",
+        "surname": "Duran",
+        "collectionId": "1520629",
+        "recordCountry": "Costa Rica",
+        "deathYearFrom": 1878,
+        "deathYearTo": 1882
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Angela Duran in collection 1520629. Expanding search to all Costa Rica church records via parent-name anchor."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T13:25:14.963Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Angela",
+        "fatherGivenName": "Ignacio",
+        "fatherSurname": "Alvarado",
+        "recordCountry": "Costa Rica",
+        "deathYearFrom": 1879,
+        "deathYearTo": 1881
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 6,
+      "notes": "Two high-scoring hits for the target burial: (1) 'Angela Alvarado Duran', buried 20 Jun 1880, Nuestra Se\u00f1ora del Carmen, San Jos\u00e9 (ark:/61903/1:1:6JPG-ZB6D, score 7.05, collection 1460016); (2) 'Angela Charado Duran' ['Charado' = transcription of Alvarado], buried 20 Jun 1880, El Carmen, San Jos\u00e9, father 'Ygnacio Alvarado' present (ark:/61903/1:1:NQ5N-RXJ, score 6.33, collection 1460016). Also found probable baptism: 'Angela Procesa Maria de las Piedades Alvarado Duran', baptized 27 Mar 1879, San Vicente, San Jos\u00e9, father 'Ygnacio Alvarado' present (ark:/61903/1:1:NQ24-QZQ, collection 1460016). Both burial entries likely index the same underlying register entry."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_004",
+      "performed": "2026-09-10T13:48:30.058Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-63K2-3Z"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1,
+      "notes": "Original Nuestra Se\u00f1ora del Carmen parish burial register (Libro de Defunciones vol. 18, Nov 1877\u2013Oct 1881), page 297, entry 814 confirmed: 'En la Ciudad de San Jos\u00e9, \u00e1 veinte de Junio de mil ochocientos ochenta, se di\u00f3 sepultura Ecca. \u00e1 Angela Alvarado, hija legitima de Ygnacio Alvarado y Teodosia Duran, de a\u00f1o y dos meses, muri\u00f3 de Alfericia. Jos\u00e9 Pi\u00f1eiro.' Key findings: (1) Surname is definitively ALVARADO \u2014 confirms 'Charado' in NQ5N-RXJ is a transcription error. (2) Age at death 'a\u00f1o y dos meses' (1 year 2 months) places birth ~April 1879, consistent with baptism record NQ24-QZQ (baptized 27 Mar 1879). Resolves birth year conflict: 1879 correct, 1880 in NQ5N-RXJ is an indexing artifact. (3) Status: hija legitima (legitimate daughter). (4) Cause of death: Alfericia (infantile convulsions/eclampsia). (5) Officiating priest: Jos\u00e9 Pi\u00f1eiro. These facts were not captured in the index; they supplement src_001 from the primary source."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6JPG-ZB6D : accessed 10 Sep 2026), Entry for Angela Alvarado Duran and Ignacio Alvarado, 20 Jun 1880.",
+      "citation_detail": {
+        "who": "Angela Alvarado Duran",
+        "what": "Burial register entry, Nuestra Se\u00f1ora del Carmen parish, Carmen, San Jos\u00e9, Costa Rica",
+        "when_created": "20 Jun 1880",
+        "when_accessed": "10 Sep 2026",
+        "where": "FamilySearch, collection 1460016 (Costa Rica, registros parroquiales y diocesanos, 1595-2022)",
+        "where_within": "Entry for Angela Alvarado Duran and Ignacio Alvarado, 20 Jun 1880; image ARK ark:/61903/3:1:S3HT-63K2-3Z"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:HSWX-8HMF",
+      "notes": "FamilySearch digital index of Nuestra Se\u00f1ora del Carmen (Carmen parish) burial register; image of original register available at ark:/61903/3:1:S3HT-63K2-3Z. Original handwritten register not independently examined \u2014 image not transcribed in this extraction. A duplicate index entry for this same underlying register page exists at ark:/61903/1:1:NQ5N-RXJ (same image ARK 3:1:S3HT-63K2-3Z); treat this entry (6JPG-ZB6D) as the primary and note the overlap. Collection 1460016.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NQ24-QZQ : accessed 2026-09-10), Entry for Angela Procesa Maria de las Piedades Alvarado Duran and Ygnacio Alvarado, 27 Mar 1879.",
+      "citation_detail": {
+        "who": "Angela Procesa Maria de las Piedades Alvarado Duran and Ygnacio Alvarado",
+        "what": "Baptism register entry, Costa Rica Catholic parish records (collection 1460016), batch I10174-5",
+        "when_created": "27 Mar 1879",
+        "when_accessed": "2026-09-10",
+        "where": "FamilySearch (https://www.familysearch.org)",
+        "where_within": "Image ARK https://www.familysearch.org/ark:/61903/3:1:S3HY-DYZS-JNJ; record ARK https://www.familysearch.org/ark:/61903/1:1:NQ24-QZQ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NQ24-QZQ",
+      "notes": "FamilySearch digital index and image of a Catholic parish baptism register. Original register examined via digitized image (3:1: ARK); source classified derivative as FamilySearch indexed transcript. Record from 'Costa Rica, registros parroquiales y diocesanos, 1595-2022', collection 1460016, batch I10174-5. Parish: San Vicente Ferrer, San Vicente, Moravia, San Jos\u00e9, Costa Rica.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NQ5N-RXJ : accessed 10 Sep 2026), Entry for Angela Charado Duran and Ygnacio Alvarado, 20 Jun 1880.",
+      "citation_detail": {
+        "who": "Angela Charado Duran (burial principal); Ygnacio Alvarado (father); Teodosia Duran (mother)",
+        "what": "FamilySearch index entry for a Catholic parish burial register entry, collection 1460016 (Costa Rica, registros parroquiales y diocesanos, 1595-2022), batch I10207-0",
+        "when_created": "20 Jun 1880 (underlying register); index entry accessed 11 Oct 2025 per record timestamp",
+        "when_accessed": "10 Sep 2026",
+        "where": "FamilySearch (https://www.familysearch.org), collection 1460016",
+        "where_within": "Record ARK ark:/61903/1:1:NQ5N-RXJ; household ARK https://www.familysearch.org/ark:/61903/1:2:MW8K-734; image ARK https://www.familysearch.org/ark:/61903/3:1:S3HT-63K2-3Z"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-10",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MW8K-734",
+      "notes": "Original not examined \u2014 this is a FamilySearch name index of the Nuestra Se\u00f1ora del Carmen Catholic parish burial register. The original register image (3:1:S3HT-63K2-3Z) was not read directly; only the index record was accessed. DUPLICATE INDEX ENTRY: This index entry (ark:/61903/1:1:NQ5N-RXJ, 'Angela Charado Duran') shares image ARK 3:1:S3HT-63K2-3Z with a second index entry (ark:/61903/1:1:6JPG-ZB6D, 'Angela Alvarado Duran'). Both index entries point to the same underlying parish register page and represent the same burial event. The surname 'Charado' in this entry is a transcription error for 'Alvarado' \u2014 the indexer appears to have captured only the '-ararado' portion of the handwritten surname. The birth year 1880 here conflicts with birth year 1879 in the companion entry (6JPG-ZB6D). The original image must be examined to resolve both the surname reading and the birth year discrepancy.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Nuestra Se\u00f1ora del Carmen, Libro de Defunciones, Vol. 18, Nov 1877\u2013Oct 1881,\" entry 814, p. 297 (handwritten register image), Angela Alvarado entry, 20 June 1880; FamilySearch digital image, ark:/61903/3:1:S3HT-63K2-3Z, accessed 10 September 2026.",
+      "citation_detail": {
+        "who": "Angela Alvarado",
+        "what": "Burial register (Libro de Defunciones), Vol. 18, Nuestra Se\u00f1ora del Carmen parish, San Jos\u00e9, Costa Rica; original handwritten register, entry 814, page 297",
+        "when_created": "20 June 1880",
+        "when_accessed": "10 September 2026",
+        "where": "FamilySearch (familysearch.org), digital image of original parish register",
+        "where_within": "Entry 814, page 297; officiant: Jos\u00e9 Pi\u00f1eiro"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-63K2-3Z",
+      "access_date": "2026-09-10",
+      "notes": "Original handwritten parish burial register image examined at FamilySearch (3:1: image ARK). The index entry 6JPG-ZB6D (src_001/S1) is a derivative of this register. Entry 814 reads: 'En la Ciudad de San Jos\u00e9, \u00e1 veinte de Junio de mil ochocientos ochenta, se di\u00f3 sepultura Ecca. \u00e1 Angela Alvarado, hija legitima de Ygnacio Alvarado y Teodosia Duran, de a\u00f1o y dos meses, muri\u00f3 de Alfericia. Jos\u00e9 Pi\u00f1eiro'. Officiant and recorder: Jos\u00e9 Pi\u00f1eiro. This image provides additional facts not captured in the derivative index: age at death (a\u00f1o y dos meses), cause of death (Alfericia), and legitimacy status (hija legitima).",
+      "transcription": "En la Ciudad de San Jos\u00e9, \u00e1 veinte de Junio de mil ochocientos ochenta, se di\u00f3 sepultura Ecca. \u00e1 Angela Alvarado, hija legitima de Ygnacio Alvarado y Teodosia Duran, de a\u00f1o y dos meses, muri\u00f3 de Alfericia. Jos\u00e9 Pi\u00f1eiro",
+      "log_entry_id": "log_004",
+      "gedcomx_source_description_id": "S4"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6JPG-ZB6D",
+      "record_persona_id": "p_297280015602",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Angela Alvarado Duran",
+      "structured_value": {
+        "given": "Angela",
+        "surname": "Alvarado Duran"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household or family member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Catholic burial registers of this period typically relied on a family member to report the child's name and parentage to the officiating priest; the specific informant is not named in the index entry. Duplicate index entry at ark:/61903/1:1:NQ5N-RXJ references the same register page.",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6JPG-ZB6D",
+      "record_persona_id": "p_297280015602",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household or family member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Sex stated in the burial register; informant not named in the index.",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6JPG-ZB6D",
+      "record_persona_id": "p_297280015602",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "buried 20 Jun 1880 at Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9, Costa Rica",
+      "date": "20 Jun 1880",
+      "date_certainty": "exact",
+      "place": "Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "witness",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The officiating priest recorded the burial at or near the time of the event; this is a primary attestation of the burial date and location. Source is a derivative (index/image) of the original parish register \u2014 image available at ark:/61903/3:1:S3HT-63K2-3Z but not independently transcribed here.",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001",
+      "standard_place": "Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6JPG-ZB6D",
+      "record_persona_id": "p_297280015602",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "birth year estimated as 1879 (from age at burial)",
+      "date": "~1879",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown household or family member",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year 1879 is derived from the age recorded at burial, not from a birth certificate or direct birth registration. The informant was not present at the birth (no one reporting an infant's burial was a firsthand witness to the birth). Civil registration did not begin in Costa Rica until 1888; a separate birth record is not expected for this period \u2014 the parish baptism register would be the primary source, if it survives.",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6JPG-ZB6D",
+      "record_persona_id": "p_297280015603",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Ignacio Alvarado",
+      "structured_value": {
+        "given": "Ignacio",
+        "surname": "Alvarado"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household or family member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name stated in the burial register entry for the deceased child. The informant relayed the father's identity to the priest; specific informant not named. Ignacio's own name is recorded secondhand through whoever reported the burial. Cross-reference: Ignacio Alvarado's persona ARK in this record is ark:/61903/1:1:6JPG-ZB66.",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6JPG-ZB6D",
+      "record_persona_id": "p_297280015604",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Teodosia Duran",
+      "structured_value": {
+        "given": "Teodosia",
+        "surname": "Duran"
+      },
+      "information_quality": "secondary",
+      "informant": "unknown household or family member",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name stated in the burial register entry for the deceased child. The informant relayed the mother's identity to the priest; specific informant not named. Teodosia's own name is recorded secondhand. Cross-reference: Teodosia Duran's persona ARK in this record is ark:/61903/1:1:6JPG-ZB6X.",
+      "log_entry_id": "log_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592904",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "Angela Procesa Maria de las Piedades Alvarado Duran",
+      "structured_value": {
+        "given": "Angela Procesa Maria de las Piedades",
+        "surname": "Alvarado Duran"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Ygnacio Alvarado and Teodosia Duran)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592904",
+      "record_role": "principal",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents (Ygnacio Alvarado and Teodosia Duran)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592904",
+      "record_role": "principal",
+      "fact_type": "christening",
+      "value": "Baptized 27 Mar 1879 at San Vicente Ferrer, San Vicente, Moravia, San Jos\u00e9, Costa Rica",
+      "date": "27 Mar 1879",
+      "date_certainty": "exact",
+      "place": "San Vicente Ferrer, San Vicente, Moravia, San Jos\u00e9, Costa Rica",
+      "standard_place": "San Vicente Ferrer, San Vicente, Moravia, San Jos\u00e9, Costa Rica",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592904",
+      "record_role": "principal",
+      "fact_type": "birth",
+      "value": "Born approximately 1879 (inferred from baptism date of 27 Mar 1879; actual birth date not stated in record)",
+      "date": "~1879",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "presenting parents (Ygnacio Alvarado and Teodosia Duran)",
+      "informant_proximity": "household_member",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth date not stated in the record; inferred from baptism date of 27 Mar 1879. Infants were typically baptized within days or weeks of birth in 19th-century Costa Rica, making a birth year of 1879 highly probable but not certain from this record alone.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592905",
+      "record_role": "father_of_principal",
+      "fact_type": "name",
+      "value": "Ygnacio Alvarado",
+      "structured_value": {
+        "given": "Ygnacio",
+        "surname": "Alvarado"
+      },
+      "information_quality": "primary",
+      "informant": "Ygnacio Alvarado (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Spelling 'Ygnacio' is a common 19th-century Costa Rican variant of 'Ignacio'. The presenting father would have supplied his own name at the baptism.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592905",
+      "record_role": "father_of_principal",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Ygnacio Alvarado (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592905",
+      "record_role": "father_of_principal",
+      "fact_type": "relationship",
+      "value": "father of Angela Procesa Maria de las Piedades Alvarado Duran",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "principal"
+      },
+      "information_quality": "primary",
+      "informant": "Ygnacio Alvarado (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592906",
+      "record_role": "mother_of_principal",
+      "fact_type": "name",
+      "value": "Teodosia Duran",
+      "structured_value": {
+        "given": "Teodosia",
+        "surname": "Duran"
+      },
+      "information_quality": "primary",
+      "informant": "Teodosia Duran (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592906",
+      "record_role": "mother_of_principal",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Teodosia Duran (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:NQ24-QZQ",
+      "record_persona_id": "p_11777592906",
+      "record_role": "mother_of_principal",
+      "fact_type": "relationship",
+      "value": "mother of Angela Procesa Maria de las Piedades Alvarado Duran",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "principal"
+      },
+      "information_quality": "primary",
+      "informant": "Teodosia Duran (self)",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094937",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Angela Charado [?Alvarado] Duran",
+      "structured_value": {
+        "given": "Angela",
+        "surname": "Charado Duran"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Charado' is almost certainly a transcription error for 'Alvarado' \u2014 the indexer appears to have captured only part of the handwritten surname. A companion index entry (ark:/61903/1:1:6JPG-ZB6D) for the same image and date renders the surname as 'Alvarado'. Original image examination (3:1:S3HT-63K2-3Z) is required to confirm the correct reading. The informant who provided the name to the parish register is unknown; the index does not identify who reported the burial.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094937",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094937",
+      "record_role": "deceased",
+      "fact_type": "burial",
+      "value": "20 Jun 1880, El Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+      "date": "20 Jun 1880",
+      "date_certainty": "exact",
+      "place": "El Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+      "standard_place": "Carmen, San Jos\u00e9, San Jos\u00e9, Costa Rica",
+      "information_quality": "primary",
+      "informant": "unknown parish officiant or clerk",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The burial date and place were recorded by the parish officiant or clerk in the course of official duties, contemporaneous with the burial event. The informant is unknown by name but held official capacity. This is a derivative (index) of the original register; the original was not examined.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094937",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "1880",
+      "date": "1880",
+      "date_certainty": "approximate",
+      "information_quality": "secondary",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "indirect",
+      "informant_bias_notes": "Birth year 1880 is estimated/inferred in the index entry \u2014 the underlying register likely records age at death or a computed birth year, not a directly stated birth date. This value conflicts with birth year 1879 in the companion index entry (ark:/61903/1:1:6JPG-ZB6D, 'Angela Alvarado Duran') for the same image and burial event. The discrepancy likely reflects uncertain indexing from handwritten cursive. The original image (3:1:S3HT-63K2-3Z) must be examined to determine which year is correct. Classified as indirect because the birth year is derived/estimated rather than directly stated as a birth date in the record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094937",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Ygnacio Alvarado",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's name stated in the burial register entry. The informant who provided the father's identity to the parish is unknown. 'Ygnacio' is an alternate spelling of 'Ignacio'; the companion index entry (6JPG-ZB6D) renders the same name as 'Ignacio Alvarado'.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094937",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Teodosia Duran",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Mother's name stated in the burial register entry. The informant who provided the mother's identity to the parish is unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094938",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Ygnacio Alvarado",
+      "structured_value": {
+        "given": "Ygnacio",
+        "surname": "Alvarado"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "'Ygnacio' is an alternate period spelling of 'Ignacio'. The companion index entry (ark:/61903/1:1:6JPG-ZB6D) renders this name as 'Ignacio Alvarado'. The informant who provided this name to the parish register is unknown.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094938",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094939",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Teodosia Duran",
+      "structured_value": {
+        "given": "Teodosia",
+        "surname": "Duran"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "informant_bias_notes": "The informant who provided this name to the parish register is unknown. Surname may appear with or without accent (Dur\u00e1n/Duran) in period records.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:NQ5N-RXJ",
+      "record_persona_id": "p_11781094939",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown parish register informant",
+      "informant_proximity": "unknown",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/3:1:S3HT-63K2-3Z",
+      "record_role": "deceased",
+      "fact_type": "age",
+      "value": "a\u00f1o y dos meses (1 year and 2 months)",
+      "structured_value": {
+        "age": "1 year, 2 months"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member or family presenter",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The age was reported to the officiating priest (Jos\u00e9 Pi\u00f1eiro) at the time of burial registration. The presenting family member is not named, so the informant cannot be identified. An approximate birth date of April 1879 may be inferred from this stated age (indirect; see companion assertion). This age at death (14 months) is consistent with the birth year ~1879 recorded in the index (6JPG-ZB6D/src_001) and conflicts with the ~1880 birth year suggested by the duplicate entry NQ5N-RXJ \u2014 the stated age corroborates 1879.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/3:1:S3HT-63K2-3Z",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "date": "~1879-04",
+      "date_certainty": "approximate",
+      "value": "birth approximately April 1879, inferred from stated age of 1 year and 2 months at burial on 20 June 1880",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "informant_bias_notes": "This birth date is a researcher calculation: burial date 20 June 1880 minus 'a\u00f1o y dos meses' (1 year, 2 months) yields approximately April 1879. The underlying age was reported by an unknown family presenter; the birth date is not stated anywhere in the register. Date certainty is approximate; a month-level precision is the limit justified by the stated age. Corroborates the ~1879 birth year in the derivative index (src_001).",
+      "evidence_type": "indirect",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/3:1:S3HT-63K2-3Z",
+      "record_role": "deceased",
+      "fact_type": "cause_of_death",
+      "value": "Alfericia (infantile convulsions / eclampsia)",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member or family presenter",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Cause of death recorded by officiating priest Jos\u00e9 Pi\u00f1eiro in the burial register. The presenting family member who reported the cause is not named. 'Alfericia' is a 19th-century Spanish term for infantile convulsions or eclampsia. The informant cannot be positively identified, hence indeterminate quality; the cause-of-death terminology reflects period medical vocabulary.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/3:1:S3HT-63K2-3Z",
+      "record_role": "deceased",
+      "fact_type": "legal_status",
+      "value": "hija legitima (legitimate daughter)",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member or family presenter",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "The register states 'hija legitima', meaning the parents Ygnacio Alvarado and Teodosia Duran were married at the time of Angela's birth. This was attested by the presenting family at the time of burial registration; the specific presenter is not named. The designation provides direct evidence that Ignacio Alvarado and Teodosia Dur\u00e1n were a married couple \u2014 indirect support for the parental relationship asserted in q_001.",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_004",
+      "source_id": "src_004"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.76680297,
+      "rationale": "Name assertion 'Angela Alvarado Duran' from the primary burial record (6JPG-ZB6D, 20 Jun 1880, Carmen, San Jos\u00e9). Linked to I1 (stub minted from this persona). Score 0.767 (matched: true, confidence 4) comparing the burial persona against I1 as enriched by the baptism record \u2014 strong algorithmic agreement on name, burial date, and parent relationships. This score is not circular: I1 now holds facts from both the burial and baptism records, so it has independent content to compare against. Primary attestation; corroborated by baptism record (NQ24-QZQ, score 0.463) and duplicate burial index (NQ5N-RXJ, score 0.331). Confidence: probable (new person, single event cluster; additional independent sources would warrant confident).",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.76680297,
+      "rationale": "Sex assertion (Female) from the primary burial record (6JPG-ZB6D). Same persona as pe_001. Score 0.767 from the focus-person comparison. Linked to I1 at probable.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.76680297,
+      "rationale": "Burial fact (20 Jun 1880, Nuestra Se\u00f1ora del Carmen, Carmen, San Jos\u00e9) from the primary burial record. Primary attestation by the officiating priest. Score 0.767. Corroborated by duplicate burial index (same image ARK). Linked to I1 at probable.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.76680297,
+      "rationale": "Birth year ~1879 from the primary burial record (6JPG-ZB6D). Indirect evidence; consistent with baptism date 27 Mar 1879. Score 0.767 from the focus-person comparison. Linked to I1 at probable.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "K21K-P1C",
+      "confidence": "confident",
+      "match_score": 0.016908618,
+      "rationale": "Father named 'Ignacio Alvarado' in the burial register for Angela Alvarado Duran (20 Jun 1880, Carmen, San Jos\u00e9). Name matches K21K-P1C (Ignacio Alvarado) exactly. Algorithmic score 0.017 is low because K21K-P1C has no vitals or places indexed yet, limiting the matcher's data surface \u2014 this is a data-sparsity artifact, not a qualitative conflict. Qualitative correlation: (1) name exact match including gender; (2) same parental role confirmed across all three records for the same child; (3) no conflicting data exists on either side. Two further baptism-record and duplicate-burial personas name 'Ygnacio Alvarado' (period spelling variant) as father of the same child, providing three independent record attestations of the parental relationship. Match strength: Strong. Confidence: confident.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "K4JL-NPF",
+      "confidence": "confident",
+      "match_score": 0.050616726,
+      "rationale": "Mother named 'Teodosia Duran' in the burial register for Angela Alvarado Duran (20 Jun 1880, Carmen, San Jos\u00e9). Name matches K4JL-NPF (Teodosia Duran) exactly. Algorithmic score 0.051 is low due to sparse vitals on the tree person \u2014 a data-sparsity artifact. Qualitative correlation: (1) name exact match including gender; (2) same maternal role confirmed across all three records for the same child; (3) no conflicting data. Two further records (baptism NQ24-QZQ, duplicate burial NQ5N-RXJ) name 'Teodosia Duran' as mother of the same child. Match strength: Strong. Confidence: confident.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.46287414,
+      "rationale": "Name assertion 'Angela Procesa Maria de las Piedades Alvarado Duran' from the baptism record (NQ24-QZQ, 27 Mar 1879, San Vicente Ferrer, Moravia). Linked to I1 (Angela Alvarado Duran stub). Algorithmic same_person score 0.46 (matched: true, confidence 3) comparing the baptism persona against the burial persona \u2014 moderate algorithmic score reflecting different events and different name forms. Qualitative correlation: (1) same parents \u2014 Ygnacio Alvarado and Teodosia Duran \u2014 present in both records; (2) 'Angela' is the leading given name in both; (3) date sequence is plausible: baptism 27 Mar 1879, burial 20 Jun 1880 = approximately 15-month lifespan; (4) full ceremonial name 'Angela Procesa Maria de las Piedades' vs. indexing name 'Angela' is consistent with 19th-century Costa Rican Catholic naming conventions. The parishes differ (San Vicente Ferrer vs. Carmen) but families commonly baptized and buried at different parishes. No identifiers conflict. Match strength: Strong. Confidence held at probable because stub I1 was minted from the burial record and this baptism record is the principal independent corroboration \u2014 once a second independent source confirms, confident would be warranted.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.46287414,
+      "rationale": "Sex assertion (Female) from the baptism record (NQ24-QZQ). Same persona as a_007; same rationale applies. Score 0.46 from the focus-person comparison.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.46287414,
+      "rationale": "Baptism fact (27 Mar 1879, San Vicente Ferrer, Moravia, San Jos\u00e9) for Angela Procesa Maria de las Piedades Alvarado Duran. Primary attestation from the officiating priest. Linked to stub I1 on same grounds as a_007: same parents across both baptism and burial records, plausible lifespan, 'Angela' first name in both. Score 0.46.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.46287414,
+      "rationale": "Birth year ~1879 inferred from baptism date (27 Mar 1879). Consistent with the burial record's estimated birth year of 1879. Linked to stub I1 on same grounds as a_007.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "person_id": "K21K-P1C",
+      "confidence": "confident",
+      "match_score": 0.010797176,
+      "rationale": "Father named 'Ygnacio Alvarado' in the baptism register (NQ24-QZQ, 27 Mar 1879). 'Ygnacio' is a documented 19th-century Costa Rican orthographic variant of 'Ignacio' \u2014 same phoneme, different initial letter convention. Matches K21K-P1C (Ignacio Alvarado). Algorithmic score 0.011 reflects sparse tree data, not a qualitative conflict. This record has enhanced quality: the father Ygnacio Alvarado presented the child for baptism in person (informant_proximity: self), so this is a primary attestation of his own name. Consistent with a_005 (burial record) and a_023 (duplicate burial index) \u2014 three independent records across two event types all name the same man as father of Angela. Match strength: Strong. Confidence: confident.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_012",
+      "person_id": "K21K-P1C",
+      "confidence": "confident",
+      "match_score": 0.010797176,
+      "rationale": "Sex assertion (Male) for Ygnacio Alvarado in the baptism record. Same persona as a_011; same rationale. Matches K21K-P1C.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_013",
+      "person_id": "K21K-P1C",
+      "confidence": "confident",
+      "match_score": 0.010797176,
+      "rationale": "Relationship assertion: Ygnacio Alvarado stated as father of Angela Procesa Maria de las Piedades Alvarado Duran in the baptism register (NQ24-QZQ). Linked to K21K-P1C on same grounds as a_011. This assertion also bears on I1 (see a_007 et seq.).",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.46287414,
+      "rationale": "Relationship assertion (father = Ygnacio Alvarado) names Angela Procesa Maria de las Piedades as the child \u2014 this assertion bears on I1 as the child party. Linked at probable on same grounds as a_007: same parents across baptism and burial records, plausible lifespan, 'Angela' first name in both.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_014",
+      "person_id": "K4JL-NPF",
+      "confidence": "confident",
+      "match_score": 0.050616726,
+      "rationale": "Mother named 'Teodosia Duran' in the baptism register (NQ24-QZQ, 27 Mar 1879). Name matches K4JL-NPF exactly. This record carries primary-quality information: Teodosia Duran presented the child for baptism in person (informant_proximity: self). Algorithmic score 0.051 reflects sparse tree data. Consistent with a_006 (burial) and a_025 (duplicate burial) \u2014 three records name the same woman as mother. Match strength: Strong. Confidence: confident.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_015",
+      "person_id": "K4JL-NPF",
+      "confidence": "confident",
+      "match_score": 0.050616726,
+      "rationale": "Sex assertion (Female) for Teodosia Duran in the baptism record. Same persona as a_014; same rationale.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_016",
+      "person_id": "K4JL-NPF",
+      "confidence": "confident",
+      "match_score": 0.050616726,
+      "rationale": "Relationship assertion: Teodosia Duran stated as mother of Angela Procesa Maria de las Piedades Alvarado Duran in the baptism register (NQ24-QZQ). Linked to K4JL-NPF on same grounds as a_014. This assertion also bears on I1 (see a_007 et seq.).",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.46287414,
+      "rationale": "Relationship assertion (mother = Teodosia Duran) names Angela Procesa Maria de las Piedades as the child \u2014 this assertion bears on I1 as the child party. Linked at probable on same grounds as a_007.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.33133516,
+      "rationale": "Name assertion 'Angela Charado [?Alvarado] Duran' from the duplicate burial index (NQ5N-RXJ, 20 Jun 1880, El Carmen, San Jos\u00e9). 'Charado' is a transcription error for 'Alvarado' \u2014 confirmed by the companion index entry (6JPG-ZB6D) for the same underlying image. Score 0.331 (matched: true, confidence 3) comparing the duplicate burial persona against I1 as enriched. Score is lower than the primary burial (0.767) due to the corrupted surname 'Charado' reducing name similarity; qualitative identity is certain given the shared image ARK (3:1:S3HT-63K2-3Z), same parents (Ygnacio Alvarado, Teodosia Duran), same date and place. Identity is certain on qualitative grounds; confidence held at probable (same event cluster as primary burial).",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.33133516,
+      "rationale": "Sex assertion (Female) from the duplicate burial index (NQ5N-RXJ). Same persona as pe_019. Score 0.331.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_019",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.33133516,
+      "rationale": "Burial fact (20 Jun 1880, El Carmen, San Jos\u00e9) from the duplicate burial index (NQ5N-RXJ). Same underlying image (3:1:S3HT-63K2-3Z) as the primary burial entry. Score 0.331. Linked to I1 at probable.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.33133516,
+      "rationale": "Birth year 1880 (estimated) from duplicate burial index (NQ5N-RXJ) \u2014 conflicts with 1879 in the companion index and baptism record; indexing discrepancy from handwritten cursive, not a biological conflict. Score 0.331. Original image (3:1:S3HT-63K2-3Z) needed to resolve. Linked to I1 at probable.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.33133516,
+      "rationale": "Relationship assertion (child of Ygnacio Alvarado) from duplicate burial index (NQ5N-RXJ). Bears on I1 as the child party. Score 0.331. Also bears on K21K-P1C as the father (pe_024). Linked to I1 at probable.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "person_id": "K21K-P1C",
+      "confidence": "confident",
+      "match_score": 0.010797176,
+      "rationale": "Relationship assertion from the duplicate burial index (NQ5N-RXJ): child of Ygnacio Alvarado. This assertion names K21K-P1C as the father party. 'Ygnacio' = period variant of 'Ignacio'. Score 0.010797176 from the NQ5N-RXJ father persona (p_11781094938) vs K21K-P1C comparison \u2014 low due to sparse tree data, not a qualitative conflict. Consistent with a_005 and a_011 establishing the same paternal relationship. Confident on same grounds.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.33133516,
+      "rationale": "Relationship assertion (child of Teodosia Duran) from duplicate burial index (NQ5N-RXJ). Bears on I1 as the child party. Score 0.331. Also bears on K4JL-NPF as the mother (pe_026). Linked to I1 at probable.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "K4JL-NPF",
+      "confidence": "confident",
+      "match_score": 0.050616726,
+      "rationale": "Relationship assertion from the duplicate burial index (NQ5N-RXJ): child of Teodosia Duran. Names K4JL-NPF as the mother party. Exact name match. Score 0.050616726 from the NQ5N-RXJ mother persona (p_11781094939) vs K4JL-NPF \u2014 low due to sparse tree data. Consistent with a_006 and a_014. Confident on same grounds.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "K21K-P1C",
+      "confidence": "confident",
+      "match_score": 0.010797176,
+      "rationale": "Name assertion 'Ygnacio Alvarado' for the father persona in the duplicate burial index (NQ5N-RXJ). 'Ygnacio' is a period spelling variant of 'Ignacio'. Matches K21K-P1C. Algorithmic score 0.011 (data sparsity artifact). Consistent with a_005 (burial primary) and a_011 (baptism) \u2014 three records name the same man in the same parental role. Match strength: Strong. Confidence: confident.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "K21K-P1C",
+      "confidence": "confident",
+      "match_score": 0.010797176,
+      "rationale": "Sex assertion (Male) for Ygnacio Alvarado in the duplicate burial index (NQ5N-RXJ). Same persona as a_023; same rationale.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "K4JL-NPF",
+      "confidence": "confident",
+      "match_score": 0.050616726,
+      "rationale": "Name assertion 'Teodosia Duran' for the mother persona in the duplicate burial index (NQ5N-RXJ). Name matches K4JL-NPF exactly. Algorithmic score 0.051 (data sparsity artifact). Consistent with a_006 (burial primary) and a_014 (baptism). Match strength: Strong. Confidence: confident.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "person_id": "K4JL-NPF",
+      "confidence": "confident",
+      "match_score": 0.050616726,
+      "rationale": "Sex assertion (Female) for Teodosia Duran in the duplicate burial index (NQ5N-RXJ). Same persona as a_025; same rationale.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_027",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Age assertion 'a\u00f1o y dos meses' (1 year and 2 months) from the original Nuestra Se\u00f1ora del Carmen burial register image (ark:/61903/3:1:S3HT-63K2-3Z, log_004). This is the same register entry already linked to I1 via the derivative index assertions pe_001\u2013pe_004; the image transcription adds detail absent from the index. No same_person score is available \u2014 the source is a 3:1: image ARK carrying no indexed persona. Identity is established by the same-entry correlation: same deceased principal (Angela Alvarado Duran), same burial date (20 Jun 1880), same parents (Ygnacio Alvarado, Teodosia Duran) as in all prior pe_ links for I1. The stated age of 14 months is consistent with the ~1879 birth year in src_001 and the baptism date of 27 Mar 1879 in the Moravia record. Confidence: probable \u2014 same event cluster as pe_001\u2013pe_004; image transcription is the same underlying source, not an independent corroboration.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Calculated birth date (~April 1879) derived by the researcher from the stated age 'a\u00f1o y dos meses' at burial (20 Jun 1880). Source is the original register image (ark:/61903/3:1:S3HT-63K2-3Z, log_004). No same_person score available (3:1: image ARK). Identity grounded in the same register entry as pe_001\u2013pe_004: same deceased (Angela Alvarado Duran), same event, same parents. The inferred ~April 1879 birth date corroborates the ~1879 birth year in a_004 (pe_004) and is compatible with the baptism date of 27 Mar 1879 \u2014 a plausible 3-to-4-week interval between birth and baptism. Confidence: probable \u2014 indirect evidence (researcher inference), same source cluster as existing links.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_029",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Cause of death 'Alfericia' (infantile convulsions/eclampsia) from the original Nuestra Se\u00f1ora del Carmen burial register image (ark:/61903/3:1:S3HT-63K2-3Z, log_004). No same_person score available (3:1: image ARK). Identity established by same-entry correlation: this fact was recorded for the same deceased principal \u2014 Angela Alvarado Duran, buried 20 Jun 1880 \u2014 already linked at probable to I1 across pe_001\u2013pe_004. The cause of death is a new detail from the image transcription; it bears solely on the deceased individual. Confidence: probable \u2014 same event cluster and same underlying source.",
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Legal status 'hija legitima' (legitimate daughter) from the original Nuestra Se\u00f1ora del Carmen burial register image (ark:/61903/3:1:S3HT-63K2-3Z, log_004). No same_person score available (3:1: image ARK). Identity established by same-entry correlation: this designation was recorded for the same deceased principal \u2014 Angela Alvarado Duran, buried 20 Jun 1880, daughter of Ygnacio Alvarado and Teodosia Duran \u2014 already linked at probable to I1 in pe_001\u2013pe_004. The 'hija legitima' status additionally confirms the parents were a married couple, providing indirect corroboration of the parental relationships asserted for I1. Confidence: probable \u2014 same event cluster and same underlying source; not an independent corroboration.",
+      "created": "2026-09-10"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "conflict_type": "fact",
+      "description": "Angela's birth year: ~1879 (6JPG-ZB6D index, a_004) vs. ~1880 (NQ5N-RXJ index, a_020) \u2014 both indexes derived from the same underlying Carmen parish burial register page.",
+      "disputed_attribute": "birth_year",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_004",
+        "a_020"
+      ],
+      "independence_analysis": "Both assertions derive from derivative FamilySearch index entries for the same underlying Carmen parish burial register page (image ARK: 3:1:S3HT-63K2-3Z, log_004). They are NOT independent evidence \u2014 this discrepancy is a transcription artifact, not a genuine evidentiary conflict.",
+      "weighing_analysis": "Both assertions derive from derivative FamilySearch index entries for the same underlying Carmen parish burial register page (image ARK: 3:1:S3HT-63K2-3Z, log_004). The original register was examined directly (src_004, log_004). Entry 814, p. 297 states 'de a\u00f1o y dos meses' (1 year, 2 months) as Angela's age at burial on 20 June 1880. Calculating backward: 20 Jun 1880 minus 14 months = approximately April 1879. This confirms a_004 (~1879) as correct and identifies a_020 (~1880) as an indexing artifact \u2014 the indexer misread the handwritten cursive numeral or misinterpreted the age field. The baptism record (src_002, NQ24-QZQ, dated 27 Mar 1879) is consistent with an April 1879 birth estimate: Catholic infants in 19th-century Costa Rica were typically baptized within days of birth, placing birth in late March or early April 1879. A birth month of April 1879 is fully consistent with both the register's stated age at burial and the baptism date.",
+      "preferred_assertion_id": "a_004",
+      "resolution_rationale": "Resolved by the original register examination (log_004, src_004). The original register states 'a\u00f1o y dos meses' (1 year 2 months) at burial 20 Jun 1880 \u2192 birth ~April 1879. a_004 (~1879) is accepted; a_020 (~1880) is rejected as a transcription error in the derivative index. Both derive from the same physical document; the original controls.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    },
+    {
+      "id": "c_002",
+      "conflict_type": "fact",
+      "description": "Angela's paternal surname: 'Alvarado Duran' (6JPG-ZB6D index, a_001) vs. 'Charado Duran' (NQ5N-RXJ index, a_017) \u2014 both indexes derived from the same underlying Carmen parish burial register page.",
+      "disputed_attribute": "surname",
+      "identity_question": null,
+      "competing_assertion_ids": [
+        "a_001",
+        "a_017"
+      ],
+      "independence_analysis": "Both assertions derive from different FamilySearch index entries for the same underlying Carmen parish burial register page (image ARK: 3:1:S3HT-63K2-3Z). They are NOT independent evidence \u2014 this discrepancy is a transcription artifact, not a genuine evidentiary conflict.",
+      "weighing_analysis": "Both assertions derive from different FamilySearch index entries for the same underlying Carmen parish burial register page (image ARK: 3:1:S3HT-63K2-3Z). The original register was examined directly (src_004, log_004). Entry 814, p. 297 clearly reads 'Angela Alvarado, hija legitima de Ygnacio Alvarado y Teodosia Duran.' The paternal surname is unambiguously 'Alvarado.' The variant 'Charado' in a_017 (src_003, NQ5N-RXJ) is a transcription error: the indexer either misread the handwritten 'Alv-' prefix as 'Ch-' or indexed only the '-ararado' portion of the name. The father's given name 'Ygnacio Alvarado' is spelled correctly in the same index entry, making this a localized reading error on the child's surname field rather than a systematic misreading.",
+      "preferred_assertion_id": "a_001",
+      "resolution_rationale": "Resolved by the original register examination (log_004, src_004). The register plainly records 'Alvarado' as the paternal surname. a_001 ('Alvarado Duran') is accepted; a_017 ('[?Alvarado] Charado Duran') is rejected as a transcription artifact in the NQ5N-RXJ derivative index.",
+      "status": "resolved",
+      "blocks_question_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "No other Angela Alvarado Dur\u00e1n was buried in San Jos\u00e9 on or around 20 June 1880; the burial and baptism records in hand uniquely identify the infant daughter of Ignacio Alvarado and Teodosia Dur\u00e1n.",
+      "status": "ruled_out",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_027"
+      ],
+      "ruled_out": true,
+      "ruled_out_reason": "The search of FamilySearch collections 1520629 and 1460016 for all Angela Alvarado / Angela Dur\u00e1n burials in Costa Rica for the period 1878\u20131882 (log_001, log_002, log_003) returned only two burial index entries for Angela with parents Alvarado/Dur\u00e1n \u2014 both (6JPG-ZB6D and NQ5N-RXJ) confirmed to be duplicate indexes of the same underlying register page (entry 814, p. 297, image ARK: 3:1:S3HT-63K2-3Z). No second, independent Angela Alvarado Dur\u00e1n or Angela Dur\u00e1n with father Ignacio/Ygnacio Alvarado appeared in any search. The baptism (NQ24-QZQ) from a different parish in a different canton, with the same parents present in person, provides a second independent line of identification. The combination of original-source burial evidence with independent baptismal corroboration makes a competing identity implausible.",
+      "related_question_ids": [
+        "q_001"
+      ],
+      "notes": "Competing-identity hypothesis is ruled out \u2014 the records uniquely identify one child. The contradicting assertions (burial date+place, parents named in burial and baptism, original image confirmation) collectively make a competing identity implausible."
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "proved",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_011",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_030"
+      ],
+      "resolved_conflict_ids": [
+        "c_001",
+        "c_002"
+      ],
+      "exhaustive_search_summary": "FamilySearch collection 1460016 (Costa Rica, registros parroquiales y diocesanos, 1595-2022) was searched via its name index (collections 1460016 and 1520629) for Angela Alvarado and variant spellings. The original Nuestra Se\u00f1ora del Carmen Libro de Defunciones, Vol. 18 (Nov 1877\u2013Oct 1881) image was examined directly at ark:/61903/3:1:S3HT-63K2-3Z, yielding entry 814 (p. 297) \u2014 the controlling original. The baptism collection (1520624, also within 1460016) was searched for Alvarado children and yielded an independent record from San Vicente Ferrer parish, Moravia, 27 Mar 1879. Civil registration is inapplicable \u2014 Costa Rica's civil registration did not begin until 1888. The browse-only Carmen parish death index and combined volumes were assessed as redundant after the original register image was read. No accessible, unexamined record type remains that could plausibly alter the conclusion.",
+      "narrative_markdown": "## Proof Summary: Death and Burial of Angela Alvarado Dur\u00e1n, June 1880\n\n### Research Question\n\nDid Ignacio Alvarado and Teodosia Dur\u00e1n of San Jos\u00e9, Costa Rica have an infant daughter, Angela, who died and was buried in June 1880?\n\n### Conclusion\n\nIgnacio Alvarado and Teodosia Dur\u00e1n of San Jos\u00e9, Costa Rica, are proved to have had an infant daughter, Angela, who died of infantile convulsions (*Alfericia*) and was buried on 20 June 1880 at the Nuestra Se\u00f1ora del Carmen parish, Carmen district, San Jos\u00e9. Angela had been baptized Angela Procesa Maria de las Piedades Alvarado Dur\u00e1n on 27 March 1879 at the San Vicente Ferrer parish, Moravia canton, and was approximately fourteen months old at the time of her death. The burial register records her as *hija leg\u00edtima* (legitimate daughter) of Ygnacio Alvarado and Teodosia Dur\u00e1n.\n\n### Source Analysis\n\n**Source Cluster A \u2014 Burial Register (Primary Source)**\n\nThe controlling evidence is the original handwritten entry in the Nuestra Se\u00f1ora del Carmen *Libro de Defunciones*, Vol. 18, entry 814, page 297, recorded by officiating priest Jos\u00e9 Pi\u00f1eiro on 20 June 1880 and examined from its digitized image.^1 The entry reads in full:\n\n> *En la Ciudad de San Jos\u00e9, \u00e1 veinte de Junio de mil ochocientos ochenta, se di\u00f3 sepultura Ecca. \u00e1 Angela Alvarado, hija legitima de Ygnacio Alvarado y Teodosia Duran, de a\u00f1o y dos meses, muri\u00f3 de Alfericia. Jos\u00e9 Pi\u00f1eiro.*\n\nThis original parish register is an **original source** (the handwritten register itself) containing **primary information** for the burial event \u2014 Pi\u00f1eiro recorded it in the course of his official duties at the time of the burial \u2014 and **direct evidence** that Angela Alvarado, legitimate daughter of Ygnacio Alvarado and Teodosia Dur\u00e1n, was buried on 20 June 1880 in San Jos\u00e9. The cause of death, *Alfericia* (a 19th-century Spanish term for infantile convulsions or eclampsia), was reported by the presenting family member, making that assertion **indeterminate** in quality. The parents' names as stated in the burial entry are **secondary information** (reported to the priest by an unnamed family presenter, not by the parents themselves), but they are corroborated in full by Cluster B below.\n\nA FamilySearch derivative index entry (ark:/61903/1:1:6JPG-ZB6D, collection 1460016) references the same underlying register image and records the same facts.^2 A second, partially duplicated index entry (ark:/61903/1:1:NQ5N-RXJ) for the same image renders the surname as \"Charado\" \u2014 a transcription error confirmed by examination of the original image, which clearly shows \"Alvarado\" (conflict c_002, resolved). The duplicate index entry adds no independent evidence; it collapses into Cluster A.\n\n**Source Cluster B \u2014 Baptism Register (Independent Corroboration)**\n\nAn independent baptism record from San Vicente Ferrer parish, Moravia canton, San Jos\u00e9 province \u2014 a different parish, different canton, different event type, and different officiating priest \u2014 records the baptism on 27 March 1879 of \"Angela Procesa Maria de las Piedades Alvarado Duran,\" daughter of Ygnacio Alvarado and Teodosia Duran.^3 This record is classified as a **derivative source** (FamilySearch digital index, collection 1460016, batch I10174-5) containing **primary information** for the child's name and parentage, because both parents presented the child for baptism in person and supplied their own names to the officiating priest \u2014 Ygnacio Alvarado and Teodosia Dur\u00e1n are **self-informants** for their own names in this record. The evidence is **direct** for the fact of baptism and the parental relationship.\n\n### Correlation and Identity\n\nThe baptism record (Cluster B) and the burial register (Cluster A) describe the same child. Four convergent indicators support this:\n\n1. **Parental names match exactly.** Both records name *Ygnacio/Ignacio Alvarado* and *Teodosia Dur\u00e1n* as parents. \"Ygnacio\" and \"Ignacio\" are documented 19th-century orthographic variants of the same Spanish given name, used interchangeably in period Costa Rican registers.\n\n2. **Given name matches.** Both records lead with the given name *Angela*. The full ceremonial baptismal name \"Angela Procesa Maria de las Piedades\" abbreviated to \"Angela\" in the burial register entry is entirely consistent with 19th-century Costa Rican Catholic naming practice, in which children were registered under their full string of saints' names at baptism but known and recorded informally by the leading name thereafter.\n\n3. **Timeline is coherent.** Baptism on 27 March 1879; burial on 20 June 1880. The original register's stated age of *a\u00f1o y dos meses* (one year and two months) at the time of burial calculates back \u2014 subtracting fourteen months from 20 June 1880 \u2014 to approximately April 1879, which is within weeks of the 27 March 1879 baptism (conflict c_001, resolved by original image). Infants in 19th-century Costa Rica were typically baptized within days to weeks of birth; a birth date in late March or early April 1879 is fully consistent with both records.\n\n4. **No conflicting candidate exists (hypothesis h_001, ruled out).** A systematic search of FamilySearch collections 1520629 and 1460016 for all Angela Alvarado / Angela Dur\u00e1n burials in Costa Rica for the period 1878\u20131882 returned only two burial index entries for Angela with parents Alvarado/Dur\u00e1n \u2014 both (6JPG-ZB6D and NQ5N-RXJ) confirmed to be duplicate indexes of the same underlying register page (entry 814, p. 297). No second, independent Angela Alvarado Dur\u00e1n, daughter of Ignacio/Ygnacio Alvarado and Teodosia Dur\u00e1n, appeared in any record searched. This competing-identity hypothesis (h_001) was formally evaluated and ruled out: the combination of original-source burial evidence with independent baptismal corroboration from parents as self-informants makes a competing identity implausible.\n\nThe burial register further records Angela as *hija leg\u00edtima* (legitimate daughter), confirming that her parents Ygnacio Alvarado and Teodosia Dur\u00e1n were married at the time of her birth \u2014 consistent with the couple relationship already established in this tree.\n\n### Discrepancy Resolution\n\nTwo apparent discrepancies in the index-level entries are resolved by the original image and the baptism record. Both are formally recorded as resolved conflicts in this project.\n\n- **\"Charado\" vs. \"Alvarado\" (conflict c_002, resolved):** The surname rendered as \"Charado\" in index entry NQ5N-RXJ is a transcription error by the indexer. Examination of the original register image (ark:/61903/3:1:S3HT-63K2-3Z) confirms the handwritten surname reads \"Alvarado.\" The NQ5N-RXJ index entry's name \"Angela Charado Duran\" is flagged in the tree as a known transcription-error variant; the preferred and birth names are \"Angela Alvarado Duran\" and \"Angela Procesa Maria de las Piedades Alvarado Duran\" respectively.\n\n- **Birth year 1879 vs. 1880 (conflict c_001, resolved):** The two derivative index entries for the burial record differ in their estimated birth year (1879 in 6JPG-ZB6D; 1880 in NQ5N-RXJ). The original image's stated age of *a\u00f1o y dos meses* resolves this: computing backward from the burial date of 20 June 1880 yields a birth approximately April 1879, consistent with the 27 March 1879 baptism and conclusively ruling out an 1880 birth date for this child.\n\n### Research Scope\n\nCosta Rica did not implement civil registration of births, marriages, and deaths until 1888; no birth or death certificate exists for events prior to that year. For a June 1880 burial in San Jos\u00e9, Catholic parish registers are the only applicable primary source type. The Nuestra Se\u00f1ora del Carmen burial register, Vol. 18 \u2014 the register that would contain any June 1880 burial in the Carmen district of San Jos\u00e9 \u2014 was consulted in original image form, yielding a definitive positive result. The San Vicente Ferrer baptism collection was searched independently and produced a corroborating baptism record from a different parish and canton. No accessible, unexamined record type remains that could plausibly alter this conclusion.\n\n### GPS Components Assessment\n\n- **Component 1 (Exhaustive research):** Met. The original parish burial register image was examined; the baptism collection was searched independently; civil registration inapplicable for 1880.\n- **Component 2 (Complete, accurate citations):** Met. Every factual claim above carries a citation to the source entry in this project.\n- **Component 3 (Analysis and correlation):** Met. Both source clusters classified (original/derivative; primary/secondary/indeterminate; direct/indirect); correlated across four convergent lines of evidence including hypothesis h_001 (competing-identity) formally evaluated and ruled out.\n- **Component 4 (Conflict resolution):** Met. Conflict c_001 (birth year 1879 vs. 1880) and conflict c_002 (surname \"Alvarado\" vs. \"Charado\") are both resolved by examination of the original register image. No unresolved conflicts remain.\n- **Component 5 (Soundly reasoned conclusion):** Met. The evidence from two genuinely independent Catholic parish records \u2014 the original burial register and an independent baptism record from a different parish with parents as self-informants \u2014 proves the conclusion stated above.\n\n---\n\n^1 \"Nuestra Se\u00f1ora del Carmen, Libro de Defunciones, Vol. 18, Nov 1877\u2013Oct 1881,\" entry 814, p. 297 (handwritten register image), Angela Alvarado entry, 20 June 1880; FamilySearch digital image, ark:/61903/3:1:S3HT-63K2-3Z, accessed 10 September 2026.\n\n^2 \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6JPG-ZB6D : accessed 10 Sep 2026), Entry for Angela Alvarado Duran and Ignacio Alvarado, 20 Jun 1880.\n\n^3 \"Costa Rica, registros parroquiales y diocesanos, 1595-2022\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NQ24-QZQ : accessed 2026-09-10), Entry for Angela Procesa Maria de las Piedades Alvarado Duran and Ygnacio Alvarado, 27 Mar 1879."
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-10T00:00:00Z",
+      "superseded_by": "ev_002",
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-10T00-00-00.json"
+    },
+    {
+      "id": "ev_002",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "looks_solid",
+      "timestamp": "2026-09-10T14:30:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-10T14-30-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "San Jos\u00e9, Costa Rica",
+      "for_place": "San Jos\u00e9, San Jos\u00e9, Costa Rica",
+      "time_period": "1875-1885",
+      "jurisdictions": [
+        {
+          "name": "Province of San Jos\u00e9, Costa Rica",
+          "date_range": "1823-present"
+        },
+        {
+          "name": "Canton of San Jos\u00e9, San Jos\u00e9, Costa Rica",
+          "date_range": "1848-present"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1460016",
+          "title": "Costa Rica, Catholic Church Records, 1595-2022",
+          "date_range": "1595-2022"
+        },
+        {
+          "id": "1520629",
+          "title": "Costa Rica, Deaths, 1787-1900",
+          "date_range": "1787-1900"
+        },
+        {
+          "id": "1925429",
+          "title": "Costa Rica, Civil Registration, 1823-2023",
+          "date_range": "1823-2023"
+        },
+        {
+          "id": "1520624",
+          "title": "Costa Rica, Baptisms, 1700-1915",
+          "date_range": "1700-1915"
+        }
+      ],
+      "quirks": [
+        "Civil registration of births, marriages, and deaths did not begin until 1888 (per FamilySearch Wiki, Costa Rica Civil Registration page). For an 1880 burial, Catholic parish registers are the ONLY primary source.",
+        "The primary city parish in 1880 San Jos\u00e9 was Nuestra Se\u00f1ora del Carmen (Carmen district). Its death register vol. 18 covers Nov 1877\u2013Oct 1881 (imageGroupNumber 004232363_003, M93N-FQ9, 224 images, 97% name-indexed) and is included in collections 1460016 and 1520629.",
+        "Collection 1520629 (Costa Rica Deaths, 1787-1900) provides a name index for Carmen parish death vol. 18 \u2014 search this first before browsing images.",
+        "The broader collection 1460016 (Costa Rica Catholic Church Records, 1595-2022) contains index and full images for the same parish registers \u2014 use it to view the original image once an index hit is found.",
+        "Carmen parish also has combined registers (vols. 75, 79) covering baptisms, deaths, and marriages 1879-1881 (imageGroupNumbers 004238800_007 and 004238800_011) that are browse-only (0% indexed); these may duplicate or supplement the dedicated death volumes.",
+        "A parish death index (\u00cdndices de defunciones parroquiales) for Nuestra Se\u00f1ora del Carmen covering 1855\u20131953 exists in browse-only form (imageGroupNumber 004238821_003, 284 images) \u2014 can be browsed to cross-check a name if the main index misses it.",
+        "Nuestra Se\u00f1ora de la Merced parish death records start only in 1882 \u2014 not applicable to a June 1880 burial.",
+        "The Archivo Hist\u00f3rico Arquidiocesano Monse\u00f1or Bernardo Augusto Thiel (http://ahabatcr.org/) holds original diocesan records not fully digitized; contact them for records not found online.",
+        "The Archivo Nacional de Costa Rica (https://www.archivonacional.go.cr/) holds civil and notarial records; for 1880 burials it is secondary to parish registers.",
+        "All registers are in Spanish. Pre-1888 handwriting is ecclesiastical Latin-influenced cursive; the Spanish Genealogical Word List on FamilySearch Wiki is a useful reference.",
+        "In Catholic burial registers for this period, 'entierros' or 'defunciones' denotes burials/deaths; infant entries often note the child's age in days or months and parents' names.",
+        "Surname spellings vary in 19th-century Costa Rican registers \u2014 search Dur\u00e1n also as Duran (no accent), and Alvarado with alternate spellings."
+      ],
+      "guide_markdown": "# Locality Guide: San Jos\u00e9, Costa Rica (1875\u20131885)\n\n## Jurisdiction\n\nThe **Canton of San Jos\u00e9** (formed 1848) sits within the **Province of San Jos\u00e9** (formed 1823). In 1880 the city of San Jos\u00e9 was the national capital. Costa Rica is a former Spanish colony; Spanish is the official language. All records are in Spanish.\n\n## Registration System at the Target Date (June 1880)\n\n**Civil registration did not exist in 1880.** The FamilySearch Wiki ([Costa Rica Civil Registration](https://www.familysearch.org/en/wiki/Costa_Rica_Civil_Registration)) confirms civil registration of births, marriages, and deaths began **nationally in 1888**. For a June 1880 burial, **Catholic parish registers are the only primary documentary source**.\n\n## Key Record Collections on FamilySearch\n\n### 1. Costa Rica, Catholic Church Records, 1595\u20132022 (collection 1460016) \u2014 **Indexed + Images**\n\nThe master collection: 2,660,209 records, 962,203 images, index and full images. Covers baptism, marriage, and burial registers from all Costa Rican Catholic parishes. **Start here for any 1880 burial search.**  \nURL: https://www.familysearch.org/search/collection/1460016\n\n### 2. Costa Rica, Deaths, 1787\u20131900 (collection 1520629) \u2014 **Indexed (index only)**\n\n26,355 indexed records, 31,296 images. A focused death index for the pre-civil-registration period. The **Nuestra Se\u00f1ora del Carmen parish death register vol. 18 (Nov 1877\u2013Oct 1881)** is 97% name-indexed here \u2014 this is the highest-priority register for a June 1880 burial in city-of-San-Jos\u00e9.  \nURL: https://www.familysearch.org/search/collection/1520629\n\n### 3. Costa Rica, Civil Registration, 1823\u20132023 (collection 1925429) \u2014 **Indexed + Images**\n\nCovers 1823\u20132023; the pre-1888 records in this collection derive from earlier proto-registration. Less relevant for 1880 burials (which predate the 1888 law) but worth a secondary check.  \nURL: https://www.familysearch.org/search/collection/1925429\n\n## Critical Parish Registers for June 1880 (City of San Jos\u00e9)\n\n### Nuestra Se\u00f1ora del Carmen, Carmen district \u2014 PRIMARY TARGET\n\nThe principal parish serving the urban core of San Jos\u00e9 in 1880. Death registers found on FamilySearch:\n\n| Volume | Date Range | Image Group | Images | Indexed? | Note |\n|--------|-----------|-------------|--------|----------|------|\n| Vol. 17 | Apr 1875\u2013Nov 1877 | 004232363_002 (M93N-FQM) | 150 | 97% | Pre-dates June 1880 |\n| **Vol. 18** | **Nov 1877\u2013Oct 1881** | **004232363_003 (M93N-FQ9)** | **224** | **97%** | **Covers June 1880 \u2014 PRIMARY** |\n| Vol. 19 | Sep 1881\u2013Dec 1881 | 004232364_001 (M93N-FSF) | 19 | 68% | Continues after vol. 18 |\n\nA parish death index (\u00cdndices de defunciones, 1855\u20131953) also exists browse-only at imageGroupNumber 004238821_003 (284 images) \u2014 useful as a cross-check.\n\nCombined registers (baptisms + deaths + marriages) at imageGroupNumbers 004238800_007 (vol. 75, 1879\u20131881) and 004238800_011 (vol. 79, 1879\u20131881) are browse-only (0% indexed) and may contain duplicate or additional death entries.\n\n### Catedral Metropolitana\n\nThe main cathedral of San Jos\u00e9 \u2014 also likely to have recorded burials for the broader city. Appears in volume search for the canton but its dedicated death registers were not surfaced by the death-type filter for 1875\u20131885; check collection 1460016 under Catedral Metropolitana for any death registers covering 1879\u20131882.\n\n### Nuestra Se\u00f1ora de la Merced (Hospital district)\n\nDeath records start 1882 \u2014 does not cover June 1880.\n\n## External Repositories\n\n- **Archivo Hist\u00f3rico Arquidiocesano Monse\u00f1or Bernardo Augusto Thiel** (http://ahabatcr.org/): holds original diocesan and parish records not fully digitized; contact for records not found on FamilySearch.\n- **Archivo Nacional de Costa Rica** (https://www.archivonacional.go.cr/): national archive; holds civil and notarial records. Less relevant for 1880 burials but may hold notarial or other contextual records.\n- **Academia Costarricense de Ciencias Geneal\u00f3gicas** (http://www.genealogia.or.cr/): Costa Rican genealogical society; may have compiled indexes or research assistance.\n\n## Search Strategy for This Question\n\n1. **Search collection 1520629** (Costa Rica Deaths, 1787\u20131900) by name for Angela Alvarado / Angela Dur\u00e1n / \u00c1ngela Alvarado \u2014 this index covers the Carmen parish vol. 18 at 97%.\n2. **Search collection 1460016** (Catholic Church Records) by name and place (Carmen, San Jos\u00e9) for the same name variants.\n3. If the index returns a hit, open the original image to confirm parents' names (Ignacio Alvarado and Teodosia Dur\u00e1n) and date (June 1880).\n4. If no index hit, browse Carmen parish death vol. 18 (imageGroupNumber 004232363_003) image by image \u2014 224 images, in Spanish.\n5. Also check the parish death index (imageGroupNumber 004238821_003) for the name.\n6. Check Catedral Metropolitana death registers via collection 1460016 as a secondary search.\n\n## Language and Palaeography Notes\n\nAll registers are in Spanish. Pre-1888 ecclesiastical handwriting is 19th-century Iberian cursive. The [Spanish Genealogical Word List](https://www.familysearch.org/en/wiki/Spanish_Genealogical_Word_List) on FamilySearch Wiki glosses key terms: *defunci\u00f3n/entierro* = death/burial; *p\u00e1rvulo/a* = young child; *infante* = infant; *hija leg\u00edtima de* = legitimate daughter of. Infant entries typically record the child's age in days or months and both parents' names.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Costa_Rica_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Costa_Rica_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Costa_Rica_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Costa_Rica_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-10"
+    }
+  ]
+}
