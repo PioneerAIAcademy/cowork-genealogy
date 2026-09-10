@@ -65,11 +65,19 @@ class FakeSDKClient:
     async def disconnect(self) -> None:
         self.disconnected = True
 
-    async def interrupt(self) -> bool:
-        """True, so `serve` does not also cancel the turn task — the contract
-        `RealAgent.interrupt` reports for a live client."""
+    async def interrupt(self) -> None:
+        """Returns None, matching the real SDK's `interrupt() -> None`.
+
+        NOT True. `RealAgent.interrupt` returns True UNCONDITIONALLY for a
+        live client, and `test_real_agent_interrupt_forwards_to_the_sdk_client`
+        exists to pin exactly that. A fake that returns True answers the
+        question the test asks, so the assertion passes even against
+        `return bool(await self._client.interrupt())` - which would make every
+        Stop also cancel the turn task, because `runner.serve` does
+        `handled = bool(await agent.interrupt())`. Caught in review round 2:
+        the first version of this file returned True and disarmed that test.
+        """
         self.interrupted = True
-        return True
 
     async def query(self, text: str) -> None:
         self.queries.append(text)

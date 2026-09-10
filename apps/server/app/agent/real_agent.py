@@ -228,7 +228,13 @@ _PRETOOL_MATCHER = "|".join(
         # Anchored, so a search cannot bind a tool that merely CONTAINS one of
         # these names. Three constants, not two.
         "^(" + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS)) + ")$",
-        *(f".*{t}" for t in DEVICE_WRITE_TOOLS),
+        # Trailing `$`: the tail is compared WHOLE. Without it the pattern also
+        # bound `*device_commit_files_v2` spellings, which this hook can deny
+        # nothing about - the last 8 over-matches of the 136 spellings measured
+        # in review. The parity suite already declares `_v2` a name that must not
+        # match. `.`, `*` and `$` all keep the pattern outside the CLI's
+        # literal-list charsets, so the regex branch still applies.
+        *(f".*{t}$" for t in DEVICE_WRITE_TOOLS),
     )
 )
 
@@ -236,7 +242,7 @@ _PRETOOL_MATCHER = "|".join(
 #
 # Unset, the effective value is the CLI's own default, and that default IS
 # findable — an earlier version of this comment said it was not, named the wrong
-# CLI (2.1.258; the SDK pinned in uv.lock bundles 2.1.220, as lines 102 and 443
+# CLI (2.1.258; the SDK pinned in uv.lock bundles 2.1.220, as lines 102 and 492
 # already say) and cited two literals that are not hook timeouts. Corrected in
 # review by reading the PreToolUse executor itself out of the binary:
 #
@@ -886,6 +892,13 @@ class RealAgent:
         throws can't leave a half-dead client cached for the next turn."""
         # Before the client goes: the drainer is reading its stream.
         await self._stop_drain()
+        # And the task state goes with it. The old client's subagents can never
+        # emit on the new client's stream, so a surviving id is a phantom that
+        # no terminal message will ever clear - the exact failure the
+        # TaskUpdatedMessage arm was added to prevent, on a path that arm cannot
+        # reach. Raised in review round 2 (item 5).
+        self._tasks.clear()
+        self._live_tasks.clear()
         client, self._client, self._client_key = self._client, None, None
         if client is None:
             return
@@ -1140,5 +1153,24 @@ class RealAgent:
         # And on the path that genuinely does abandon the generator, nothing
         # closes the client — `_close_client` has exactly one production caller,
         # the key-rotation rebuild in `_ensure_client`.
-        if self._live_tasks and self._client is not None:
+        # NOT gated on `self._live_tasks`, and that is the round-2 fix.
+        #
+        # Sampling liveness ONCE to decide whether to start is the last remnant
+        # of the pattern removed from the loop above, and it fails in both
+        # orderings. A terminal `task_updated` arriving INSIDE the turn clears
+        # the set before this line runs, so no drainer starts while that
+        # subagent's notification and deltas are still queued; measured on the
+        # bounded fake, `produced=103 of 154` against `154 of 154` once the
+        # condition is dropped. A `TaskStartedMessage` arriving AFTER the
+        # `ResultMessage` has the same shape from the other side: `101 of 152`.
+        # Both are the #1915 wedge, and what they strand is the completion prose
+        # the issue is about.
+        #
+        # So the lifetime belongs entirely to `_stop_drain`: start unconditionally
+        # while a client exists, and let the handoff end it. A drainer with
+        # nothing to read costs one idle task awaiting a stream, and every path
+        # that reads the stream hands it off first. The property to assert is
+        # that the drainer is always handed off, never that it is sometimes not
+        # started.
+        if self._client is not None:
             self._drain_task = asyncio.create_task(self._drain_background(self._client))

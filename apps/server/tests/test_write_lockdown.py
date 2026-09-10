@@ -179,7 +179,7 @@ def test_the_matcher_tracks_the_deny_arm_constants(tmp_path, monkeypatch):
     expected = "|".join(
         (
             "^(" + "|".join((*file_tools, *exfil_tools)) + ")$",
-            *(f".*{t}" for t in device_tools),
+            *(f".*{t}$" for t in device_tools),
         )
     )
     assert real_agent._PRETOOL_MATCHER == expected, (
@@ -324,11 +324,17 @@ def _tool_names_the_hook_keys_on() -> tuple[set[str], set[str]]:
                 callee = getattr(real_agent, node.func.id, None)
                 if not inspect.isfunction(callee):
                     continue
+                params = list(inspect.signature(callee).parameters)
                 for pos, arg in enumerate(node.args):
-                    if isinstance(arg, ast.Name) and arg.id == var:
-                        params = list(inspect.signature(callee).parameters)
-                        if pos < len(params):
-                            queue.append((callee, params[pos]))
+                    if isinstance(arg, ast.Name) and arg.id == var and pos < len(params):
+                        queue.append((callee, params[pos]))
+                # KEYWORD arguments too. Reading only `node.args` left
+                # `_helper(name=tool_name)` unwalked, so a real deny arm behind
+                # such a call was inert with this file green (review round 2,
+                # item 7).
+                for kw in node.keywords:
+                    if isinstance(kw.value, ast.Name) and kw.value.id == var and kw.arg:
+                        queue.append((callee, kw.arg))
     return names, {k.split(":", 1)[0] for k in visited}
 
 
@@ -343,9 +349,20 @@ def test_the_matcher_binds_every_tool_name_the_hook_compares_against():
     matcher would have left that security guard inert. A guard whose detection
     depends on guessing the next author's input shape is not a guard.
 
-    So this reads the hook's own SOURCE for every tool name it keys on and
-    requires the matcher to bind each one. A new arm is caught whether or not
-    anyone here can build a payload that triggers it.
+    So this reads the hook's own SOURCE for the tool names it keys on and
+    requires the matcher to bind each one, whether or not anyone here can build
+    a payload that triggers the arm.
+
+    WHAT IT DOES NOT REACH, stated because the earlier wording said "every tool
+    name the hook keys a decision on" and that is stronger than what runs. The
+    call-follower requires the argument to be the tracked `ast.Name`, so
+    `t = tool_name; _helper(t)` is invisible to it - an alias breaks the chain.
+    Positional AND keyword arguments are both walked now; a name computed at
+    runtime is reachable by no source reading at all. The asymmetry against
+    `_mentions`, which deliberately accepts a TRANSFORMED tool name on either
+    side of a comparison, is real and left as is: widening the follower to track
+    assignments is a dataflow analysis, and the behavioural arm below is the
+    right backstop for what neither reading can see.
     """
     names, functions = _tool_names_the_hook_keys_on()
 
@@ -434,10 +451,16 @@ async def test_the_matcher_covers_every_tool_the_hook_can_deny():
 # KillBash and EditNotebook. This hook denies nothing about any of them, and a
 # starved callback failing a call it could never refuse is the exact failure
 # issue #1915 is about.
+# Each of these is a REAL tool in the bundled CLI, verified by counting
+# occurrences in the binary (2.1.220): NotebookEdit 20, MultiEdit 9,
+# TodoWrite 18, BashOutput 19, KillBash 5. An earlier version of this list
+# carried `EditNotebook`, which has ZERO occurrences - the row still fired when
+# the matcher was un-anchored, so it was not inert, but it stood for no real
+# over-match risk. Dropped in review round 2 (item 8) rather than left as a
+# name that looks like evidence and is not.
 BINDS_BUT_CANNOT_BE_DENIED = [
     "TodoWrite",     # contains "Write"
     "MultiEdit",     # contains "Edit"
-    "EditNotebook",  # contains "Edit"
     "BashOutput",    # contains "Bash"
     "KillBash",      # contains "Bash"
 ]

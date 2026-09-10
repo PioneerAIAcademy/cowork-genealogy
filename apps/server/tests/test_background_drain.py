@@ -178,14 +178,34 @@ async def test_the_next_turn_loses_none_of_its_own_messages(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_no_drainer_starts_when_no_subagent_is_running(tmp_path):
-    """A plain turn must not leave a background task behind."""
+async def test_a_plain_turn_starts_a_drainer_and_the_next_turn_hands_it_off(tmp_path):
+    """A turn with no subagent still starts a drainer, and that is deliberate.
+
+    REPLACES test_no_drainer_starts_when_no_subagent_is_running, which asserted
+    the opposite. Gating the START on the liveness set failed in both orderings
+    (see test_a_terminal_task_updated_inside_the_turn_still_starts_a_drainer),
+    so the drainer now starts whenever a client exists.
+
+    The property that matters is not "sometimes not started" but "always handed
+    off": an idle drainer costs one task awaiting a stream, and every path about
+    to read the stream calls `_stop_drain` first. So this asserts the handoff
+    rather than the absence.
+    """
     client = BufferedFakeClient()
     agent = _agent_on(tmp_path, client)
     producer = asyncio.create_task(client.produce([_result()]))
     await turn_events(agent, "just answer")
     await asyncio.wait_for(producer, timeout=5)
-    assert agent._drain_task is None
+    assert agent._drain_task is not None, "the drainer is no longer started unconditionally"
+
+    second = asyncio.create_task(client.produce([_delta(1), _result()]))
+    events = await asyncio.wait_for(turn_events(agent, "again"), timeout=5)
+    await asyncio.wait_for(second, timeout=5)
+    assert any(e["kind"] == "usage" for e in events), (
+        "turn two never saw its ResultMessage, so the idle drainer was not handed off"
+    )
+    assert client.max_waiting == 1
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
 
 
 @pytest.mark.asyncio
@@ -389,3 +409,172 @@ async def test_the_handoff_happens_while_a_subagent_is_still_running(tmp_path):
         "two coroutines were suspended on the stream at once; the handoff did not happen"
     )
 
+
+
+@pytest.mark.asyncio
+async def test_a_terminal_task_updated_inside_the_turn_still_starts_a_drainer(tmp_path):
+    """The round-2 blocker, from both sides.
+
+    Gating the drainer's START on the liveness set reads a signal that is
+    legitimately empty at turn end in two orderings, and both strand the
+    completion prose issue #1915 is about:
+
+      * a terminal `task_updated` arriving INSIDE the turn clears the set before
+        the start gate runs, while that subagent's notification and deltas are
+        still queued. Measured before the fix: produced=103 of 154.
+      * a `TaskStartedMessage` arriving AFTER the `ResultMessage` is the same
+        failure from the other side: produced=101 of 152.
+
+    The SDK documents a mechanism for the first: a task stopped via `TaskStop`
+    reports `status="killed"` on `task_updated` with the notification "sometimes
+    suppressed", so stopping a subagent mid-turn lands a terminal update inside
+    the turn.
+    """
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+    messages = (
+        [_task_started("t1", "task-1"), _task_updated("task-1", "killed"), _result()]
+        + [_delta(i) for i in range(POST_TURN)]
+        + [_task_done("t1", "task-1")]
+    )
+    producer = asyncio.create_task(client.produce(messages))
+    await turn_events(agent, "launch then stop it")
+    await asyncio.wait_for(producer, timeout=5)
+
+    assert agent._drain_task is not None, (
+        "no drainer started: the terminal task_updated emptied the liveness set "
+        "before the start gate ran"
+    )
+    assert client.consumed == client.produced == len(messages), (
+        "the producer stalled at the buffer bound with the drainer never started"
+    )
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
+
+
+@pytest.mark.asyncio
+async def test_a_task_started_after_the_result_message_still_starts_a_drainer(tmp_path):
+    """The sibling ordering of the test above, and the one round 1 also had."""
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+    messages = [_result(), _task_started("t1", "task-1")] + [_delta(i) for i in range(POST_TURN)]
+    producer = asyncio.create_task(client.produce(messages))
+    await turn_events(agent, "go")
+    await asyncio.wait_for(producer, timeout=5)
+
+    assert agent._drain_task is not None
+    assert client.consumed == client.produced == len(messages)
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
+
+
+@pytest.mark.asyncio
+async def test_stop_drain_does_not_swallow_a_cancellation_aimed_at_its_caller(tmp_path):
+    """`_stop_drain` must let the CALLER's cancellation propagate.
+
+    Round-1 review item 6, which shipped without a guard. The old arm was a bare
+    `except asyncio.CancelledError: pass`, which cannot tell the task it just
+    cancelled ending from this coroutine being cancelled. `serve` cancels
+    `turn_task` when `interrupt()` raises and on stdin EOF, so a swallowed
+    cancellation means `_run_turn` never emits `(stopped)` and the turn runs on
+    into `client.query(text)`.
+
+    The shape: hold the drainer's teardown open, enter `_stop_drain`, then cancel
+    the coroutine awaiting it. Nothing after the await may run.
+    """
+    class SlowTeardownClient(BufferedFakeClient):
+        async def receive_messages(self):
+            try:
+                async for item in super().receive_messages():
+                    yield item
+            finally:
+                await asyncio.sleep(0.25)  # hold the gather open
+
+    client = SlowTeardownClient()
+    agent = _agent_on(tmp_path, client)
+    producer = asyncio.create_task(
+        client.produce([_task_started("t1", "task-1"), _result()] + [_delta(i) for i in range(3)])
+    )
+    await turn_events(agent, "launch")
+    await asyncio.wait_for(producer, timeout=5)
+    assert agent._drain_task is not None and not agent._drain_task.done()
+
+    reached_after_await = []
+
+    async def caller():
+        await agent._stop_drain()
+        reached_after_await.append("ran past the handoff")
+
+    task = asyncio.create_task(caller())
+    await asyncio.sleep(0.05)          # let it enter the gather
+    task.cancel()
+    outcome = await asyncio.gather(task, return_exceptions=True)
+
+    assert isinstance(outcome[0], asyncio.CancelledError), (
+        "_stop_drain swallowed a cancellation aimed at its caller, so the turn "
+        "would run on past the handoff"
+    )
+    assert not reached_after_await, "code after the handoff ran despite the cancellation"
+
+
+@pytest.mark.asyncio
+async def test_one_unmappable_message_does_not_end_draining(tmp_path, monkeypatch):
+    """Round-1 review item 9, which also shipped without a guard.
+
+    The `except Exception` used to sit OUTSIDE the `async for`, so a single
+    `map_message` failure exited the loop for good and the producer stalled at
+    the buffer bound until the next turn ended - which is the window the wedge
+    lived in. Measured before the fix: produced=103 of 154.
+    """
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+    real_map = real_agent.map_message
+    state = {"n": 0}
+
+    def flaky(message, tool_names, tasks=None, live=None):
+        state["n"] += 1
+        if state["n"] == 4:                      # one bad message, mid-drain
+            raise ValueError("unmappable message")
+        return real_map(message, tool_names, tasks, live)
+
+    monkeypatch.setattr(real_agent, "map_message", flaky)
+
+    messages = (
+        [_task_started("t1", "task-1"), _result()]
+        + [_delta(i) for i in range(POST_TURN)]
+        + [_task_done("t1", "task-1")]
+    )
+    producer = asyncio.create_task(client.produce(messages))
+    await turn_events(agent, "launch")
+    await asyncio.wait_for(producer, timeout=5)
+
+    assert state["n"] > 4, "the flaky message was never reached"
+    assert client.consumed == client.produced == len(messages), (
+        "draining stopped at the first unmappable message and the producer stalled"
+    )
+    await asyncio.wait_for(agent._stop_drain(), timeout=5)
+
+
+@pytest.mark.asyncio
+async def test_a_client_rebuild_clears_the_task_state(tmp_path):
+    """Round-2 review item 5: a key rotation must not leave a phantom task id.
+
+    `_close_client` cleared `_client` and `_client_key` and neither task dict.
+    The old client's subagents can never emit on the new client's stream, so a
+    surviving id is a phantom no terminal message will ever clear - the exact
+    failure the TaskUpdatedMessage arm was added to prevent, on a path that arm
+    cannot reach.
+    """
+    client = BufferedFakeClient()
+    agent = _agent_on(tmp_path, client)
+    producer = asyncio.create_task(
+        client.produce([_task_started("t1", "task-1"), _result()] + [_delta(i) for i in range(3)])
+    )
+    await turn_events(agent, "launch")
+    await asyncio.wait_for(producer, timeout=5)
+    assert agent._live_tasks == {"task-1"} and agent._tasks
+
+    await asyncio.wait_for(agent._close_client(), timeout=5)
+
+    assert agent._live_tasks == set(), (
+        "a task id survived the client rebuild, so a later turn tracks a phantom"
+    )
+    assert agent._tasks == {}, "the attribution map survived the client rebuild"

@@ -656,15 +656,32 @@ Per `docs/specs/sandbox-provider-spec.md`. Key points for this spec:
   - **Discarded, after an operator log line.** Delivering these events to the
     browser was considered and deferred: it would extend the change into
     `runner.py`, `sandbox_server.py`, the WS replay buffer and `apps/web`, and
-    reopen the one-`turn_done`-per-turn contract that `test_runner_interrupt.py`
-    pins. The user-visible half is owned separately and stays open: a wedged
+    reopen the one-`turn_done`-per-turn contract that `_run_turn` owns. That
+    contract is real - `_run_turn` emits it unconditionally at the end and its
+    own docstring says "exactly one" - but no test pins it:
+    `test_runner_interrupt.py` asserts `events[-1] == {"kind": "turn_done"}`
+    three times, which is "ends with", and carries no count assertion. The user-visible half is owned separately and stays open: a wedged
     session and a finished turn look identical in the status line, and the event
     mapper drops `is_error`. So the post-turn subagent prose is still not shown —
     a known, owned gap rather than an oversight.
 
-  The in-process signal for "subagents still running" is `RealAgent._tasks`,
-  filled on `TaskStartedMessage` and popped on `TaskNotificationMessage`, not the
-  SDK's private `_inflight_tasks`.
+  The in-process signal for "subagents still running" is
+  `RealAgent._live_tasks`, a set of `task_id` - not the SDK's private
+  `_inflight_tasks`, and not `_tasks`, which is a separate `tool_use_id` ->
+  label map used only for attribution. The split is deliberate:
+  `TaskStartedMessage.tool_use_id` is `str | None`, so keying liveness on it
+  meant a Task without one registered nothing and no drainer started, while
+  `task_id` is a required `str`.
+  It is filled on `TaskStartedMessage` and cleared on a terminal status from
+  **either** a `TaskNotificationMessage` or a `TaskUpdatedMessage` - the SDK
+  states a terminal state can arrive only on the latter, with the notification
+  "sometimes suppressed", so a task stopped via `TaskStop` reports
+  `status="killed"` there and nowhere else.
+  **It does not gate the drainer's START.** That gate was removed: the set is
+  legitimately empty at turn end when a terminal update lands inside the turn,
+  or when a `TaskStartedMessage` lands after the `ResultMessage`, and both
+  orderings stranded the post-turn messages this section is about. The drainer
+  starts whenever a client exists and `_stop_drain` owns its lifetime.
 
   **No CI job reaches this path.** `apps/server/tests/test_background_drain.py`
   asserts at unit scale that more than `max_buffer_size` post-`ResultMessage`
