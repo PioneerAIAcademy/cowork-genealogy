@@ -106,11 +106,13 @@ async function matchById(
   // this place" (issue #2130).
   if (body.links?.["not-found"]) {
     throw new Error(
-      `FamilySearch has no ${cfg.collection === "tree" ? "record persona" : "tree person"} ` +
-        `at ${queryArk}. The id is well-formed but names nothing, so this is NOT ` +
-        `"no matches found" — re-check the id you passed. For a record persona use the ` +
-        `recordId/ARK from the search result or record_read, never the results sidecar's ` +
-        `internal p_… persona id.`,
+      `FamilySearch has no ${humanId(cfg)} at ${queryArk}. The id is well-formed ` +
+        `but names nothing, so this is NOT "no matches found" — re-check the id ` +
+        `you passed.` +
+        (cfg.expectedPrefix === "1:1:"
+          ? ` For a record persona use the recordId/ARK from the search result or ` +
+            `record_read, never the results sidecar's internal p_… persona id.`
+          : ``),
     );
   }
 
@@ -126,6 +128,14 @@ async function matchById(
     updated: body.updated ?? "",
     matches,
   };
+}
+
+// What the caller PASSES, which is `expectedPrefix` — not `collection`, which is
+// the side being searched. They agree only for the two cross-collection tools,
+// so keying an error message on `collection` names the wrong entity for
+// `person_person_matches` and `record_record_matches`.
+function humanId(cfg: MatchByIdConfig): string {
+  return cfg.expectedPrefix === "4:1:" ? "tree person" : "record persona";
 }
 
 function normalizeId(raw: string, cfg: MatchByIdConfig): string {
@@ -149,9 +159,8 @@ function normalizeId(raw: string, cfg: MatchByIdConfig): string {
     const [, prefixCore, pid] = arkMatch;
     const prefix = `${prefixCore}:` as MatchArkType;
     if (prefix !== cfg.expectedPrefix) {
-      const human = cfg.expectedPrefix === "4:1:" ? "tree person" : "record persona";
       throw new Error(
-        `Expected a ${human} ARK (ark:/61903/${cfg.expectedPrefix}...) ` +
+        `Expected a ${humanId(cfg)} ARK (ark:/61903/${cfg.expectedPrefix}...) ` +
           `but received ${prefix}. Did you mean ${cfg.siblingTool}?`,
       );
     }

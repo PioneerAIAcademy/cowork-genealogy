@@ -177,6 +177,38 @@ describe("Input validation", () => {
     ).rejects.toThrow(/no record persona at ark:\/61903\/1:1:ZZZZ-ZZZZ/);
   });
 
+  it.each([
+    ["record_person_matches", recordPersonMatches, "record persona", true],
+    ["person_record_matches", personRecordMatches, "tree person", false],
+    ["person_person_matches", personPersonMatches, "tree person", false],
+    ["record_record_matches", recordRecordMatches, "record persona", true],
+  ] as const)(
+    "%s names the id the CALLER passed, not the side being searched",
+    async (_tool, fn, human, expectsPersonaAdvice) => {
+      // The noun follows `expectedPrefix`, not `collection`. Keying it on
+      // `collection` is right for the two cross-collection tools and inverted
+      // for the two same-collection ones, so a test covering only
+      // `record_person_matches` cannot see the difference. Telling
+      // `person_person_matches` its tree PID is not a "record persona" sends
+      // the agent to fetch a record ARK, which the same tool then refuses.
+      mockJson({
+        entries: [],
+        results: 0,
+        title: "t",
+        updated: "1970-01-01T00:00:00.001Z",
+        links: { "not-found": { href: "x" } },
+      });
+      const err = await fn({ id: "ZZZZ-ZZZZ" }).then(
+        () => null,
+        (e: Error) => e,
+      );
+      expect(err?.message).toContain(`has no ${human} at`);
+      // The `p_…` warning is about the results sidecar's record personas, so
+      // it must not be handed to a caller who passed a tree PID.
+      expect(/p_… persona id/.test(err?.message ?? "")).toBe(expectsPersonaAdvice);
+    },
+  );
+
   it("does NOT throw on a genuine zero — same empty body, no not-found link", async () => {
     // The other direction, and the one that decides whether this gate is
     // usable: a persona that really has no matches must still return 0, not an

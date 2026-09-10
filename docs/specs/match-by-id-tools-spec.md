@@ -66,7 +66,12 @@ Examples that all resolve to `ark:/61903/4:1:KNDX-MKG` inside
   whitespace
 
 Normalization is `toArk` (`src/utils/ark.ts`), the same helper the rest of the
-engine uses, rather than a second URL-shape regex maintained here.
+engine uses, rather than a second URL-shape regex maintained here. It matches
+the ARK token anywhere in the string, so the list above is a set of examples and
+not the accepted set: anything *containing* a canonical `ark:/61903/<n:n>:<pid>`
+resolves, a non-FamilySearch host included. Only the token is kept — the prefix
+and pid are re-parsed and the ARK reassembled — so the surrounding text never
+reaches the request.
 
 **A malformed id still errors, and must.** The results sidecar's internal
 persona id (`p_293161675629`) is the shape that produced every `Unrecognized id`
