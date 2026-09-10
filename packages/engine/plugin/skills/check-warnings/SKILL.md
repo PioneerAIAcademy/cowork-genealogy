@@ -42,7 +42,7 @@ Full tag catalog: `references/warning-checks.md`.
 
 ## Steps
 
-**Before anything — is this a warnings task?** If the user is describing a **disagreement between two or more sources** about the same fact (e.g. "one census says Ireland, the death cert says County Cork — flag that mismatch"), that is a **source conflict, not a warning**, and it is **not this skill's job**. **Hand it off silently:**
+**Before anything — is this a warnings task?** If the user is describing a **disagreement between two or more sources** about the same fact (e.g. "one census says County Galway, the death cert says County Clare — flag that mismatch"), that is a **source conflict, not a warning**, and it is **not this skill's job**. **Hand it off silently:**
 
 - **Invoke the `conflict-resolution` skill right away** (the Skill tool) as your first and only action, and let *it* produce the response for the user.
 - **Write no reply of your own** — no preamble, no explanation, no summary. The handoff runs behind the scenes; conflict-resolution owns the answer the user sees.

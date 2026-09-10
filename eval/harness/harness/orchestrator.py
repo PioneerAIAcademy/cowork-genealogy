@@ -573,6 +573,11 @@ async def _execute_single_run(
             # the declaration the validator reads a legal hand-off as a
             # violation (issue #1012).
             "execution": spec.execution,
+            # Also threaded in: `user_message` (from input.user_message), so
+            # validators can verify whether a figure in the response was
+            # supplied by the user rather than derived from a tool call.
+            # Used by report_unsourced_year_in_response (issue #1965 V2).
+            "user_message": spec.raw.get("input", {}).get("user_message", ""),
         },
     )
     validators_passed = compute_validators_passed(
