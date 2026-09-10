@@ -257,10 +257,13 @@ Four reasons, in the order they carry weight:
   different — the same shape as a failed wiki call, where the agent gets an
   actionable error and quietly ships a thinner answer. This ruling therefore
   depends on refusals being **counted**, not on a user complaining. The hosted
-  feedback bundle already carries the full transcript with tool results, and
-  issue #1558 is the machinery to run detectors over it. Until something reads
-  them, treat silence as the absence of a measurement, not as evidence the gates
-  are right.
+  feedback bundle already carries the full transcript with tool results, and the
+  machinery to run detectors over it landed 2026-08-25 (issue #1558):
+  `guardrail_shadow_report.py --feedback-dir`, over a hand-collected bundle
+  corpus. It is run by hand, and what it counts is detector firings — for one
+  family that equals a refusal count, and there is still no general count of gate
+  refusals in production. So silence continues to mean nobody looked, not that
+  the gates are right.
 
 **The two tiers still classify; they no longer imply a mechanism.** Integrity
 gates — schema validity, the raw-write lockdown — are the ones whose violation
@@ -503,10 +506,11 @@ out and the test watched to fail.
 > gate rather than as a general mechanism. Conservative scoping would also need
 > teeth beyond review at that point.
 >
-> Or refusal counting lands (issue #1558) and shows a gate refusing at a rate
-> nobody can account for — the same trigger reached by measurement instead of by
-> a complaint, which is the route that does not depend on a researcher noticing
-> something invisible to them.
+> Or refusal counting lands — a general one, across gates, in production; the
+> bundle reader that issue #1558 shipped is per-detector and hand-run — and shows
+> a gate refusing at a rate nobody can account for. That is the same trigger
+> reached by measurement instead of by a complaint, which is the route that does
+> not depend on a researcher noticing something invisible to them.
 >
 > Or a platform mechanism arrives that keeps a rule binding across a whole
 > session without a tool call (the "constraint pinning" class of mitigation that
