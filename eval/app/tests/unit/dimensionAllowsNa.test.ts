@@ -2,7 +2,7 @@
  * Tests for dimensionAllowsNa (lib/types.ts) — decides when the annotation
  * score picker offers the N/A (null) option.
  *
- * Two independent reasons N/A is available:
+ * Three independent reasons N/A is available:
  *
  *  1. The judge scored null — the reviewer must be able to agree (any source).
  *  2. The dimension is a rubric dimension — the judge can score a rubric

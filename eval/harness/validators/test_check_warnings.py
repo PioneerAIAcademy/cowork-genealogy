@@ -85,6 +85,15 @@ def report_no_fs_quality_mention_without_call(tool_calls, text_response, test):
     Skipped on negative tests: the skill body does not run so no quality call
     is expected by design.
 
+    Matched per sentence, on co-occurrence of "familysearch" and "quality",
+    rather than on the adjacent phrase "familysearch quality". Once the
+    person_quality check above has returned, ANY pairing of the two in one
+    sentence is a violation, so the loose match has nothing to false-positive
+    on — while the adjacent-phrase form missed every real paraphrase the
+    committed logs contain ("no FamilySearch quality score as ... has a local
+    project ID" matches either way, but "quality score from FamilySearch" and
+    "FamilySearch's quality" do not match the phrase form).
+
     Two silent-wrong traps to avoid:
     - tool_calls is pre-resolved as the run's output; reading test["tool_calls"]
       always returns [] and makes every run look applicable.
@@ -106,35 +115,46 @@ def report_no_fs_quality_mention_without_call(tool_calls, text_response, test):
     if has_quality_call:
         return  # quality call happened — any mention is legitimate
 
-    if _re.search(r"familysearch\s+quality", response, _re.IGNORECASE):
-        raise AssertionError(
-            "the response mentions FamilySearch quality but person_quality was "
-            "never called — SKILL.md forbids any mention (standalone note, "
-            "'not available' remark, or routing narration) when the id is "
-            "synthetic and the tool was skipped"
-        )
+    for sentence in _re.split(r"(?<=[.!?;:])\s+|\n+", response):
+        low = sentence.lower()
+        if "familysearch" in low and "quality" in low:
+            raise AssertionError(
+                "the response mentions FamilySearch quality but person_quality "
+                "was never called — SKILL.md forbids any mention (standalone "
+                "note, 'not available' remark, or routing narration) when the "
+                f"id is synthetic and the tool was skipped: {sentence.strip()!r}"
+            )
 
 
 # --- V2: No unsourced 4-digit year in the response ---
 
 def report_unsourced_year_in_response(tool_calls, text_response, test):
-    """V2: every 4-digit year in the response must come from a resolved tool
-    fixture response or from the user's own message. No arithmetic or tree
-    knowledge the tool never returned.
+    """V2: every 4-digit year in the response must come from a tool response
+    the run actually received, or from the user's own message. No arithmetic or
+    tree knowledge the tool never returned.
 
-    Tier 2 — reports, never gates. Resolution path for each tool call:
-      tool_calls[].response_fixture -> eval/fixtures/mcp/<name>.json -> .response
-    Live tool calls (response_fixture beginning 'live:') are skipped — they
-    have no fixture file and must not be treated as contributing nothing.
+    Tier 2 — reports, never gates.
+
+    Reads `tool_calls[].response` — the response the mock actually returned and
+    recorded (`mock_mcp.py`, all five `call_log.append` sites). Do NOT resolve
+    `response_fixture` to a file under `eval/fixtures/mcp/` instead: the mock
+    ENRICHES a fixture response after selecting it and before logging it, and
+    `live`/`none` calls have no fixture file at all, so the fixture path cannot
+    reproduce what the skill saw. `orchestrator._tool_call_entry` documents this
+    and is why the run log keeps those responses.
 
     Skipped on negative tests: the skill body does not run so produces no
     figures of its own.
+
+    Known looseness (acceptable at tier 2): the year pattern also matches
+    4-digit non-years (record counts, ids), and membership is a substring test,
+    so `1850` is considered sourced if the source text contains `18501`. Both
+    err toward silence rather than a false observation.
 
     Shape copied from test_universal.report_unbacked_validation_claim.
     """
     import json as _json
     import re as _re
-    from pathlib import Path as _Path
 
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
@@ -146,7 +166,8 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
     if not years:
         return  # no 4-digit years in response
 
-    # Collect all text the skill was legitimately given
+    # Everything the skill was legitimately given: the user's message plus
+    # every tool response the run received.
     source_texts: list[str] = []
 
     # user_message is threaded into test by the orchestrator (issue #1965)
@@ -154,29 +175,18 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
     if user_message:
         source_texts.append(user_message)
 
-    fixtures_dir = _Path(__file__).parent.parent.parent / "fixtures" / "mcp"
     for call in (tool_calls or []):
-        rf = call.get("response_fixture") or ""
-        if not rf or rf.startswith("live:"):
+        if "response" not in call:
             continue
-        fixture_path = fixtures_dir / f"{rf}.json"
-        if not fixture_path.exists():
-            continue
-        try:
-            data = _json.loads(fixture_path.read_text(encoding="utf-8"))
-            response_val = data.get("response")
-            if response_val is not None:
-                source_texts.append(_json.dumps(response_val))
-        except Exception:
-            continue
+        source_texts.append(_json.dumps(call.get("response"), default=str))
 
     all_source = " ".join(source_texts)
     unsourced = sorted(y for y in years if y not in all_source)
     if unsourced:
         raise AssertionError(
             f"the response contains {unsourced} — 4-digit year(s) absent from "
-            "every resolved fixture response and the user's message; SKILL.md "
-            "forbids citing figures the tool never returned"
+            "every tool response this run received and from the user's "
+            "message; SKILL.md forbids citing figures the tool never returned"
         )
 
 
