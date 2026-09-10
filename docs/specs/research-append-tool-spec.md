@@ -945,7 +945,7 @@ The lane is therefore the *tool*, and the extractor's frontmatter simply omits
 `research_append`. **The omission is the whole mechanism.** This spec used to say
 the opposite — that a deny is enforced under
 `permission_mode="bypassPermissions"` and "an omission alone is not." Probed
-2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` both bind, and
 a tool merely omitted from `tools:` is absent from the agent exactly as a denied
 one is. The agent carried a `disallowedTools:` deny alongside the omission for
