@@ -13,7 +13,7 @@ were ruled 2026-09-07, the last two unruled cards were ruled 2026-09-10, and the
 Theme 3 sits in Backlog with no assignee.
 **Second 2026-09-10 pass:** Theme 2 turned the same corner. Five of its seven
 headline cards carry rulings, issue #2212 is closed, and none of the twelve is
-assigned. Ten of them collapse into two mechanisms — issue #2427 and a rewritten
+picked up. Ten of them collapse into two mechanisms — issue #2427 and a rewritten
 issue #2234, each investigated against the code and each carrying a correction to
 the card that motivated it. A third, issue #2426, was filed and closed the same
 day on its own measurement; what survives it is recorded under Theme 2 so it is
@@ -307,8 +307,7 @@ into #2110 on 2026-09-07. Its symptom did not reproduce on the 09-07 run
 (`ut_research_plan_wzk` passed, no `fixture_not_found`); the gap on disk is real
 but it no longer owns a red.
 
-**Every one of these cards is unassigned.** Two are in Ready and the rest in
-Backlog.
+**Nobody has picked any of these up.** Two are in Ready and the rest in Backlog.
 
 **Correction to the 09-05 draft: this does not gate Theme 1.** The draft's header
 said it did; its own action list correctly put instrumentation first. Resolve in
@@ -349,6 +348,22 @@ The recommendation is structural, not lexical: a separate `judge-brief.md` that
 the slot reads, so an absent brief renders empty instead of leaking a README
 written for a human. A `## Setup` heading cannot work — 50 of 96 READMEs have no
 `##` heading at all, and a missing heading yields an empty slot with nothing red.
+
+**Split 2026-09-10.** #2427 keeps the mechanism — the slot, provenance framing on
+every slot, splitting the negative framing's machine lines from the test
+author's, and the acceptance regrade. **Issue #2437** takes the 96 briefs, in the
+genealogist lane, because that half is prose judgement about what each scenario
+may tell a grader and it would otherwise bury four Python functions under a
+96-file review. The guard — every scenario referenced by a test has a brief —
+lands with #2437, since it cannot go green until the sweep finishes.
+
+The split forces one design call that neither card had to make while they were
+one: the mechanism ships before any brief exists, so a literal "absent brief
+renders empty" empties the slot for all 96 scenarios at once. Fall back to the
+README while a brief is missing, **count the fallbacks visibly**, and make
+removing the fallback the sweep's last step. An invisible fallback becomes
+permanent — the same failure as `rule2b_judge_prompt`, warn-only and dark long
+enough to ship a regression green.
 
 **Issue #2426 — split the run-log snapshot into skill-side and judge-side —
 was filed and closed the same day, not planned (lead ruling 2026-09-10).** It is
@@ -778,11 +793,13 @@ the lead can accept the blast radius.
    token accounting in Theme 1, which can proceed in parallel. As of 2026-09-10
    the order is settled and nothing is assigned: **issue #2057** first (harness
    code, no paid run, and it grades 110 runs that today carry nothing), then
-   **#2191**'s regrade target, then **#2427**. Ninety-three of 96 scenario
-   READMEs hand the grader the answer — the largest single defect in the theme,
-   and the one whose acceptance check is cheap enough to retire itself if the
-   leak turns out not to be load-bearing. Issue #2234 runs beside all of it: it
-   needs no paid run and no eval slot.
+   **#2191**'s regrade target, then **#2427** and the sweep it splits off,
+   **#2437**. Ninety-three of 96 scenario READMEs hand the grader the answer —
+   the largest single defect in the theme, and the one whose acceptance check is
+   cheap enough to retire itself if the leak turns out not to be load-bearing.
+   Issue #2234 runs beside all of it: it needs no paid run and no eval slot,
+   which makes it the one card here anyone can pick up today without waiting on
+   another.
 3. ~~**Rule once on preconditions-vs-prose**~~ — **done.** ADR-0011 carries the
    classes, the reference implementation and (2026-09-10) the bridge, so a gate
    author who reaches "not decidable from the documents" is now asked whether the
