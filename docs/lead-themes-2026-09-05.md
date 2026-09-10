@@ -301,13 +301,15 @@ called six of the seven below "genuinely unruled," and that is now false:
 | #2110 | two collections-search fixtures contradict each other on collection 1999196 | **Ruled 2026-09-09** — both serve `personCount: 0`; the validator is unchanged |
 | #1687 | a fixture README states the verdict and the judge reads it in full | Unruled |
 | #2234 | the annotation UI appends comments, silently fails to save, and can write to the wrong test | Unruled |
+| #1790 | tree-edit's only merge test grades against a rule its `judge_context` asserts, and no merge ever completes in it | **Ruled 2026-08-23 and again 2026-09-10** — authorize the write by tool identity; PR #2442 is the free half |
 
 Also issues #1605, #1442, #2196 (**Ready**), and #2212 — which is **closed**, merged
 into #2110 on 2026-09-07. Its symptom did not reproduce on the 09-07 run
 (`ut_research_plan_wzk` passed, no `fixture_not_found`); the gap on disk is real
 but it no longer owns a red.
 
-**Nobody has picked any of these up.** Two are in Ready and the rest in Backlog.
+**Nobody has picked any of these up**, except #1790, which is half built. Two are
+in Ready and the rest in Backlog.
 
 **Correction to the 09-05 draft: this does not gate Theme 1.** The draft's header
 said it did; its own action list correctly put instrumentation first. Resolve in
@@ -435,6 +437,17 @@ nests a block per cycle, and the header snapshots the score at copy time.
   whoever implements ruling item 2 deletes a true sentence for a false reason.
   The real defect on that card is the **scoring imperative** — "Judges MUST score
   Merge correctness as `pass`" — not a phantom rule.
+
+  Re-ruled 2026-09-10 once the manifest's two fields were separated: **`callers`
+  is enforced and `writerTools` was read by nothing**, so the 2026-08-23 ruling's
+  "add the tool to the four rows" was a documentation edit with no effect.
+  PR #2442 makes the field real — a section diff is authorized by the calling
+  skill *or* by a declared writer tool whose own id permutation explains the
+  whole delta. Rejected: adding `skill:tree-edit` to `callers`, which grants the
+  section by any path and reopens the failure the `person_evidence` row names.
+  The source-vs-manifest guard that shipped with it **found a fifth section on
+  day one** — `proof_summaries` carries person refs, is enforced on the unit
+  plane, and listed only `research_append`.
 - **The annotation corpus is clean.** 0 of 5119 corrections name a test absent
   from their run log, 0 carry an `llm_score` disagreeing with the sibling run
   log, 0 run logs hold a duplicate test id. So mode 3 has not silently corrupted
