@@ -17,6 +17,7 @@ import html
 import logging
 import re
 import secrets
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
@@ -59,7 +60,7 @@ def cookie_secure() -> bool:
 
 
 def set_session_cookie(response: Response, user_id: str) -> None:
-    token = _serializer().dumps({"uid": user_id})
+    token = _serializer().dumps({"uid": user_id, "iat": int(time.time())})
     response.set_cookie(
         COOKIE_NAME, token, max_age=COOKIE_MAX_AGE, httponly=True,
         samesite="lax", secure=cookie_secure(), path="/",
@@ -83,11 +84,18 @@ def _upsert_user(session: Session, email: str, familysearch_id: str | None = Non
         session.add(user)
         session.commit()
         session.refresh(user)
-    elif familysearch_id and not user.familysearch_id:
-        user.familysearch_id = familysearch_id
-        session.add(user)
-        session.commit()
-        session.refresh(user)
+    else:
+        dirty = False
+        if familysearch_id and not user.familysearch_id:
+            user.familysearch_id = familysearch_id
+            dirty = True
+        if user.sessions_revoked_at is not None:
+            user.sessions_revoked_at = None
+            dirty = True
+        if dirty:
+            session.add(user)
+            session.commit()
+            session.refresh(user)
     return user
 
 
@@ -181,6 +189,12 @@ def get_current_user(
     user = session.get(User, data.get("uid"))
     if user is None:
         raise HTTPException(status_code=401, detail="Unknown user")
+    if user.sessions_revoked_at is not None:
+        revoked_ts = user.sessions_revoked_at.replace(tzinfo=timezone.utc) \
+            if user.sessions_revoked_at.tzinfo is None else user.sessions_revoked_at
+        iat = data.get("iat", 0)
+        if iat <= int(revoked_ts.timestamp()):
+            raise HTTPException(status_code=401, detail="Session revoked")
     if get_settings().familysearch_configured and not _is_allowed(session, user.email):
         raise HTTPException(status_code=403, detail="Account removed from allowlist")
     return user
@@ -271,7 +285,22 @@ def dev_login(
 
 
 @router.post("/logout")
-def logout(response: Response) -> dict:
+def logout(
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_session),
+) -> dict:
+    token = request.cookies.get(COOKIE_NAME)
+    if token:
+        try:
+            data = _serializer().loads(token, max_age=COOKIE_MAX_AGE)
+            user = session.get(User, data.get("uid"))
+            if user is not None:
+                user.sessions_revoked_at = utcnow()
+                session.add(user)
+                session.commit()
+        except BadSignature:
+            pass
     clear_session_cookie(response)
     return {"ok": True}
 
