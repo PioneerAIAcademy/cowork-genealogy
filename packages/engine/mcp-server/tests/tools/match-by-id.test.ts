@@ -127,6 +127,44 @@ describe("Input validation", () => {
     await expect(personRecordMatches({ id: "not a pid" })).rejects.toThrow(/Unrecognized id/);
   });
 
+  // The id arrives in whatever spelling the caller happens to hold: a plain
+  // PID, a canonical ARK, a bare type-prefixed id off a sidecar, or a URL
+  // copied off a FamilySearch page. Only the first two used to be accepted.
+  it.each([
+    ["plain PID", "QPTX-TMQ2"],
+    ["canonical ARK", "ark:/61903/1:1:QPTX-TMQ2"],
+    ["bare type-prefixed id", "1:1:QPTX-TMQ2"],
+    ["resolver URL", "https://familysearch.org/ark:/61903/1:1:QPTX-TMQ2"],
+    ["resolver URL with www.", "https://www.familysearch.org/ark:/61903/1:1:QPTX-TMQ2"],
+    ["http resolver URL", "http://www.familysearch.org/ark:/61903/1:1:QPTX-TMQ2"],
+    ["surrounding whitespace", "  ark:/61903/1:1:QPTX-TMQ2  "],
+  ])("accepts a record persona id as a %s", async (_label, id) => {
+    mockJson(EMPTY_BODY);
+    await recordPersonMatches({ id });
+    // Every spelling must reach the SAME upstream id — the point of the
+    // normalization is that the caller's spelling stops being observable.
+    const url = new URL(mockFetch.mock.calls[0][0]);
+    expect(url.searchParams.get("id")).toBe("ark:/61903/1:1:QPTX-TMQ2");
+  });
+
+  it("still rejects the results sidecar's internal persona id", async () => {
+    // `p_293161675629` is the shape that produced every `Unrecognized id`
+    // failure in the corpus. Accepting it would be wrong, not lenient:
+    // FamilySearch validates the PID's check character and answers 400 for an
+    // id it did not assign, so this must fail here rather than one hop later.
+    await expect(
+      recordPersonMatches({ id: "p_293161675629" }),
+    ).rejects.toThrow(/Unrecognized id/);
+  });
+
+  it("still rejects a sibling-collection ARK given in URL form", async () => {
+    // Widening the accepted spellings must not widen the accepted COLLECTION —
+    // a 4:1: tree ARK handed to a record tool keeps its sibling-tool hint.
+    await expect(
+      recordPersonMatches({ id: "https://www.familysearch.org/ark:/61903/4:1:KNDX-MKG" }),
+    ).rejects.toThrow(/person_person_matches/);
+  });
+
   it("rejects out-of-range minConfidence", async () => {
     await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 0 })).rejects.toThrow(/minConfidence/);
     await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 6 })).rejects.toThrow(/minConfidence/);

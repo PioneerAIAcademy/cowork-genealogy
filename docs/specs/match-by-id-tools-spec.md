@@ -58,7 +58,22 @@ Examples that all resolve to `ark:/61903/4:1:KNDX-MKG` inside
 
 - `"KNDX-MKG"`
 - `"ark:/61903/4:1:KNDX-MKG"`
+- `"4:1:KNDX-MKG"` — the bare type-prefixed form
 - `"https://familysearch.org/ark:/61903/4:1:KNDX-MKG"`
+- `"https://www.familysearch.org/ark:/61903/4:1:KNDX-MKG"` — the form
+  FamilySearch's own pages emit, and the form `arkToUrl` produces
+- the `http://` variants of both, and any of the above with surrounding
+  whitespace
+
+Normalization is `toArk` (`src/utils/ark.ts`), the same helper the rest of the
+engine uses, rather than a second URL-shape regex maintained here.
+
+**A value that is not a FamilySearch-assigned id still errors, and must.** The
+results sidecar's internal persona id (`p_293161675629`) is the shape that
+produced every `Unrecognized id` failure in the corpus, and accepting it here
+would only move the failure one hop: FamilySearch validates the pid's check
+character and answers `400` for an id it did not assign. The id that works
+travels to the caller as the record's ARK.
 
 Examples that **error** inside `person_record_matches` (which expects a
 tree person):
@@ -109,14 +124,29 @@ LLM-facing tool. We default to **20** and clamp to `[1, 50]`.
 
 - `includeFlags` — when populated, surfaces per-match boolean flags on
   `matchInfo[]` (e.g. `hasFourOrMorePeople`, `addsOtherFact`) that
-  would be useful to a `tree-edit` skill. We don't expose it yet:
-  with the team's shared internal-dev token, sending `includeFlags=true`
-  silently returns `{"entries": []}` for every call we tested,
-  including the exact shape that works on Richard's account. The
-  divergence is the OAuth scope/permission set on the token, not the
-  param itself. Worth revisiting once we know what unlocks it. Sending
-  `none`/`false`/omitted behave identically (server default `none`);
-  `all`/`person` return `400 Bad Request`.
+  would be useful to a `tree-edit` skill. We don't expose it: on this
+  token, `includeFlags=true` returns a **degenerate empty feed** for every
+  call tested, including the exact shape that returned flags on a
+  teammate's account on 2026-05-27. Sending `none`/`false`/omitted behave
+  identically (server default `none`); `all`/`person` return `400 Bad
+  Request`.
+
+  **It is not a filter on entries.** A genuine zero keeps the full envelope
+  (`title`, `updated`, `links`, `results`); the flag response carries none of
+  it, and under `Accept: application/atom+xml` the server returns an entirely
+  empty `<feed/>`. The server is constructing an empty feed, which also rules
+  out serialization and content negotiation.
+
+  **The cause is not decidable from our side, and the OAuth-scope explanation
+  this section used to assert is not one we can state.** `SCOPES` in
+  `src/auth/config.ts` is the single string `offline_access` for every token
+  this codebase mints (`src/auth/login.ts` passes it verbatim), and the access
+  token is opaque rather than a JWT, so there is no per-user scope difference
+  here to point at and nothing checkable client-side. Roughly 35 requests
+  across both collections, every status/count/minConfidence permutation, ARK
+  and bare-pid, and five `Accept` types never once returned a populated flag
+  set. Settling this needs FamilySearch, not another probe from us — do not
+  spend a session re-probing it.
 
 ---
 
@@ -242,7 +272,8 @@ re-implement token logic.
 
 ## What NOT to do
 
-- Don't send `includeFlags=true` — silent empty-response bug.
+- Don't send `includeFlags=true` — it returns a degenerate empty feed on this
+  token, for reasons not decidable from our side.
 - Don't accept arbitrary ARK prefixes (e.g. `1:2:` record sources,
   `3:1:` images) — only `1:1:` and `4:1:`.
 - Don't omit `status` — the upstream default is `Pending` only, which
@@ -282,8 +313,10 @@ tools. Skill wiring is downstream work.
     each of the other three uses the right (collection, prefix) combo.
   - URL construction: every required + default query param appears
     exactly once in the URL; `status[]` repeats correctly.
-  - `includeFlags` is NEVER part of the URL (it would trigger the
-    upstream bug).
+  - `includeFlags` is NEVER part of the URL (it returns the empty feed
+    described under "What we deliberately don't expose").
+  - Every accepted id spelling reaches the same upstream `id` param, and a
+    sidecar-internal `p_…` id is still refused.
   - Happy-path parsing of a populated entry (`status` URI → lowercase,
     `id` URL → pid + ark + arkType, `matchInfo[0].collection`).
   - `includeSummary=true` passes through `content.gedcomx` as `summary`.

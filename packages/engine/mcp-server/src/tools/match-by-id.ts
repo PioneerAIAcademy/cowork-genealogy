@@ -22,7 +22,13 @@ const STATUS_URI_TO_LOWER: Record<string, MatchStatus> = {
   "http://familysearch.org/v1/Rejected": "rejected",
 };
 const PID_RE = /^[A-Z0-9]{3,5}-[A-Z0-9]{3,5}$/;
-const ARK_RE = /^(?:https:\/\/familysearch\.org\/)?ark:\/61903\/(\d:\d):([A-Z0-9-]+)$/;
+// Matches the CANONICAL ark form only. Every other spelling — a resolver URL
+// with or without `www.`, http or https, a bare `1:1:QPTX-TMQ2` — is reduced to
+// this form by `toArk` before the test, rather than being enumerated here a
+// second time. The hand-rolled alternation this replaced knew only
+// `https://familysearch.org/`, so it rejected the `www.` URL FamilySearch's own
+// pages emit and `arkToUrl` produces.
+const ARK_RE = /^ark:\/61903\/(\d:\d):([A-Z0-9-]+)$/;
 const ENTRY_ARK_RE = /ark:\/61903\/(\d:\d):([A-Z0-9-]+)/;
 
 interface MatchByIdConfig {
@@ -46,10 +52,20 @@ async function matchById(
   url.searchParams.set("includeSummary", includeSummary ? "true" : "false");
   url.searchParams.set("count", String(count));
   for (const s of status) url.searchParams.append("status", s);
-  // NOTE: includeFlags is deliberately omitted for now. With the team's
-  // shared internal-dev token, every includeFlags=true call returns an
-  // empty entries[]. Other team members with different OAuth scopes do
-  // get populated responses with per-match flags. See spec for details.
+  // NOTE: includeFlags is deliberately omitted. On this token every
+  // `includeFlags=true` call returns a degenerate empty feed — not a filtered
+  // result set: a genuine zero keeps the envelope (title/updated/links/results),
+  // and the flag response has none of it, so the server is constructing an empty
+  // feed rather than dropping entries. Reproduced across both collections, every
+  // status/count/minConfidence permutation, ARK and bare-pid, and several Accept
+  // types. One team member's account returned populated flags on 2026-05-27.
+  //
+  // The cause is NOT decidable from our side, and the OAuth-scope explanation
+  // this comment used to assert is not one we can even state: `SCOPES` in
+  // `auth/config.ts` is the single string `offline_access` for every token this
+  // codebase mints, and the access token is opaque, so there is no per-user
+  // scope difference here to point at. Settling it needs FamilySearch, not
+  // another probe from us.
 
   const token = await getValidToken();
 
@@ -100,7 +116,13 @@ function normalizeId(raw: string, cfg: MatchByIdConfig): string {
     throw new Error(`${cfg.toolName} requires a non-empty id (e.g. "KNDX-MKG").`);
   }
   const id = raw.trim();
-  const arkMatch = id.match(ARK_RE);
+  // `toArk` returns its input unchanged when no ARK can be derived, so a plain
+  // PID falls through to PID_RE below and a non-id like the results sidecar's
+  // `p_293161675629` still reaches the throw. That rejection is CORRECT and must
+  // stay: FamilySearch validates the PID's check character and answers 400 for a
+  // minted id, so accepting the sidecar's internal persona id here would only
+  // move the failure one hop later.
+  const arkMatch = toArk(id).match(ARK_RE);
   if (arkMatch) {
     const [, prefixCore, pid] = arkMatch;
     const prefix = `${prefixCore}:` as MatchArkType;
