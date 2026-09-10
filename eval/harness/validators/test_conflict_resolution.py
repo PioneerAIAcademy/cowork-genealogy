@@ -473,7 +473,16 @@ _HEDGE_WORDS = re.compile(r"\b(unknown|possibly|likely|most likely)\b", re.I)
 # the alternation tries `certainly` (fails) then `almost certainly` (matches)
 # under either order. A mutation reversing the order left the whole suite green,
 # which is what exposed the claim.
-_CERTAINTY = r"(?:almost certainly|undoubtedly|definitely|certainly)"
+# `\b` at BOTH ends, and both were measured firing before it was added:
+#   hedged "Mary Ann", prose "almost certainly Mary Anne Sullivan"  -> reported
+#     (a plausibly different woman)
+#   prose "reported uncertainly Mary Ann was present"               -> reported
+#     (`certainly` matched inside `uncertainly`)
+# Latent — the whole corpus yields one distinct hedged name (`Thomas Flynn`) and
+# zero instances of either shape across 51 runs. The trailing `\b` deliberately
+# still allows a surname to be ADDED ("almost certainly Mary Ann Sullivan", the
+# same woman), which is correct; only the Ann/Anne substitution stops.
+_CERTAINTY = r"\b(?:almost certainly|undoubtedly|definitely|certainly)"
 
 # A name is only "the informant's name" if a hedge sits in ITS OWN segment.
 # Without this, "James Brown (son-in-law); the census informant is unknown"
@@ -539,7 +548,7 @@ def _certainty_upgrades(text: str, names: set[str]) -> list[tuple[str, str]]:
     found = []
     for name in sorted(names):
         for m in re.finditer(
-            _CERTAINTY + r"[\s,:;—–-]*" + re.escape(name), text, re.I
+            _CERTAINTY + r"[\s,:;—–-]*" + re.escape(name) + r"\b", text, re.I
         ):
             start = max(0, text.rfind(".", 0, m.start()) + 1)
             end = text.find(".", m.end())
@@ -601,10 +610,18 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
                 continue
             hedged = _hedged_informant_names(a.get("informant"))
             # `information_quality: "indeterminate"` is a hedge in its own right
-            # per the spec, but it supplies no name -- so it can only widen what
-            # the informant string already offers. A no-op on today's corpus
-            # (0 assertions carry it with an unhedged name), stated because the
-            # spec names it.
+            # per the spec, and it is NOT a no-op. It supplies no name of its
+            # own, but it lifts the segment scoping, which is the only thing
+            # that reaches a name sitting in a hedge-free parenthetical. It
+            # supplies 4 of the 11 flagged runs on today's corpus. Removing it
+            # reds test_v4_the_indeterminate_arm_is_load_bearing_not_a_no_op.
+            #
+            # An earlier version of this comment called it a no-op, reasoning
+            # from a true premise (no assertion pairs `indeterminate` with a
+            # name that carries no hedge word anywhere in the string) to a false
+            # conclusion. The cost was specific: someone trimming dead code
+            # deletes the branch, two tests red, and the comment tells them the
+            # tests are wrong.
             inf = a.get("information_quality")
             if inf == "indeterminate" and isinstance(a.get("informant"), str):
                 # isinstance is load-bearing: a `str()` here turned a dict

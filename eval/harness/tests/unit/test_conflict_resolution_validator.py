@@ -1292,3 +1292,28 @@ def test_v4_observations_are_newline_separated():
     msg = str(e.value)
     assert msg.count("asserts 'Thomas Flynn'") == 2, msg
     assert "\n" in msg, f"observations are not newline-separated:\n{msg}"
+
+
+def test_v4_the_certainty_pattern_is_anchored_at_both_ends():
+    """Neither end was anchored, and both shapes fired before `\\b` was added.
+
+    Latent — the whole corpus yields one distinct hedged name (`Thomas Flynn`)
+    and zero instances of either shape across 51 runs — so this is pinned by
+    argument rather than by a corpus hit.
+    """
+    inf = "Unknown household member (likely Mary Ann or wife)"
+
+    # A DIFFERENT woman: hedged "Mary Ann", prose "Mary Anne".
+    check_certainty_upgrade(
+        *_v4_states(inf, after_prose="It was almost certainly Mary Anne Sullivan."), "")
+
+    # `certainly` inside `uncertainly` — plausible genealogy prose.
+    check_certainty_upgrade(
+        *_v4_states(inf,
+                    after_prose="The informant reported uncertainly Mary Ann was present."), "")
+
+    # PAIRED, so neither clean case can rest on the check being inert. The same
+    # woman with a surname ADDED must still fire — the trailing `\\b` is
+    # deliberately permissive there.
+    _fires(*_v4_states(inf, after_prose="It was almost certainly Mary Ann Sullivan."))
+    _fires(*_v4_states(inf, after_prose="It was almost certainly Mary Ann."))
