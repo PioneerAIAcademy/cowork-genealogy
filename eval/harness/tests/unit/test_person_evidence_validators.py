@@ -728,3 +728,24 @@ def test_stub_rejects_add_person_used_alongside_materialize_facts():
 
 def test_stub_rejects_a_mint_with_no_tool_call_at_all():
     assert _stub_verdict(_SOURCED, []) is False
+
+
+def test_stub_accepts_a_tree_edit_that_merely_mentions_add_person():
+    """False-fail guard. The first version matched "add_person" anywhere in the
+    serialized args, so an unrelated tree_edit whose text happens to contain the
+    word was refused. A check that blocks correct work is worse than the gap."""
+    mentions = [
+        {"tool": "mcp__genealogy__tree_edit",
+         "args": {"operation": "add_fact",
+                  "fact": {"type": "Occupation", "value": "clerk (not via add_person)"}}},
+    ]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + mentions) is True
+
+
+def test_stub_still_catches_add_person_inside_a_BATCH():
+    """The batch form is how this skill is told to write, so the check has to
+    see into `ops[]` rather than only the flat call."""
+    batched = [{"tool": "mcp__genealogy__tree_edit",
+                "args": {"ops": [{"operation": "add_relationship"},
+                                 {"operation": "add_person", "person": {"gender": "Female"}}]}}]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + batched) is False

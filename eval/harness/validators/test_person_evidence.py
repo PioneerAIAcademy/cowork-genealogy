@@ -367,10 +367,21 @@ def test_stub_person_created_and_linked(before_state, after_state, tool_calls, t
     minted_by_materialize = any(
         "materialize_facts" in str(tc.get("tool") or "") for tc in (tool_calls or [])
     )
+    # Read the `operation` field, never a substring of the serialized args: a
+    # blob match flags any call whose text happens to contain "add_person"
+    # (a rationale, a note, a name), which is a guard that refuses correct work.
+    def _ops_of(args: dict) -> list[dict]:
+        batch = args.get("ops")
+        return [o for o in batch if isinstance(o, dict)] if isinstance(batch, list) else [args]
+
     add_person_ops = [
-        tc for tc in (tool_calls or [])
+        tc
+        for tc in (tool_calls or [])
         if "tree_edit" in str(tc.get("tool") or "")
-        and "add_person" in json.dumps(tc.get("args") or {})
+        and any(
+            str(op.get("operation") or "") == "add_person"
+            for op in _ops_of(tc.get("args") or {})
+        )
     ]
     assert minted_by_materialize and not add_person_ops, (
         "a record-derived person must be minted with materialize_facts, which "
