@@ -1444,3 +1444,35 @@ def test_v4_the_quoted_span_always_contains_the_phrase_it_accuses():
     assert "almost certainly Thomas Flynn" in quoted, quoted
 
 
+
+
+def test_v4_the_quote_does_not_end_at_the_name_it_accuses():
+    """The two truncations must not land on the same spot.
+
+    `_certainty_upgrades` bounds the run-up and the message then applies
+    `span[:200]`. With both set to 200 they coincide and everything after the
+    marker is dropped — measured on `ut_conflict_resolution_006`'s
+    `resolution_rationale`: a 295-char span with 95 chars after the match, all 95
+    cut, shipping "…the informant was almost certainly Thomas Flynn" where the
+    rationale says "almost certainly Thomas Flynn OR HIS WIFE".
+
+    That is the same defect the "attaches a certainty marker to" wording was
+    changed to stop — an observation showing the run naming one person when it
+    named two — arriving by a different route.
+    """
+    # A run-up long enough to force the clamp, with the disjunction after.
+    prose = (
+        "The 1850 census schedule was recorded by an enumerator who visited the "
+        "Thomas Flynn household roughly five years after Patrick's estimated "
+        "1845 birth, working down the page from the head of family through each "
+        "member in turn; the informant was almost certainly Thomas Flynn or his "
+        "wife, the two adults responsible for the household."
+    )
+    msg = _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=prose))
+    quoted = msg.split("Quoted:", 1)[1]
+    assert "almost certainly Thomas Flynn" in quoted, quoted
+    # The tail is the point: it is what shows the prose named TWO people.
+    assert "or his wife" in quoted, (
+        "the quote stops at the accused name, so it shows the run naming one "
+        f"person when it named two:\n{quoted}"
+    )

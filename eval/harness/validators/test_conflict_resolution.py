@@ -511,11 +511,17 @@ _V4_TEXT_FIELDS = ("weighing_analysis", "resolution_rationale")
 def _hedged_informant_names(informant: object) -> set[str]:
     """Personal names an `informant` string mentions only under a hedge.
 
-    Two known limitations, stated rather than hidden:
+    Three known limitations, stated rather than hidden:
 
     - SINGLE-WORD names are missed. "Unknown informant (likely Bridget
       herself...)" yields nothing, so "almost certainly Bridget" is a false
       negative. Admitting lone capitalised tokens would match ordinary words.
+    - COMPOUND SURNAMES are missed or mangled. The pattern cannot span an
+      internal capital, an apostrophe, a hyphen or a lowercase particle, so
+      "likely Patrick McDonald" and "likely Johan van der Berg" yield nothing,
+      and "likely Anne-Marie Dupont" yields "Marie Dupont". 1 of the 673 fixture
+      informants carries such a name (Rev. Michael O'Connor); it is unhedged, so
+      nothing is missed today.
     - The name can be the research SUBJECT. "Unknown -- most likely Patrick
       Flynn as head of household" yields Patrick Flynn, who is the subject of
       mid-research-flynn-merge-pending. Strict adjacency below mitigates it.
@@ -550,11 +556,22 @@ def _certainty_upgrades(text: str, names: set[str]) -> list[tuple[str, str]]:
         for m in re.finditer(
             _CERTAINTY + r"[\s,:;—–-]*" + re.escape(name) + r"\b", text, re.I
         ):
-            # Clamped to end no more than 200 chars AFTER the match, not 200
-            # from the sentence start: a long run-up otherwise eats the evidence.
-            # One real hit today (v1_2026-08-19_15-24-31 / ut_006) ended
-            # "…the informant was almost certainly T".
-            start = max(0, text.rfind(".", 0, m.start()) + 1, m.end() - 200)
+            # 120, not 200, and the difference is the whole point. The message
+            # applies `span[:200]`, so a 200-char run-up allowance lands on the
+            # SAME spot and drops everything after the marker.
+            #
+            # Measured on ut_conflict_resolution_006's resolution_rationale
+            # (v1_2026-08-19_15-24-31): the span is 295 chars with 95 after the
+            # match, and all 95 were cut, shipping
+            #   "…the informant was almost certainly Thomas Flynn"
+            # where the rationale says "almost certainly Thomas Flynn OR HIS
+            # WIFE". So the observation showed the run naming one person when it
+            # named two — exactly what the "attaches a certainty marker to"
+            # wording was changed to stop. It also opened mid-word, same cause.
+            #
+            # Leaving room between the two limits is what keeps the accused
+            # phrase and its tail inside the quote.
+            start = max(0, text.rfind(".", 0, m.start()) + 1, m.end() - 120)
             end = text.find(".", m.end())
             # `end != -1`, not `end > 0`: `find` returns -1 on not-found, and
             # `> 0` also rejects a legitimate period at index 0. Unreachable
@@ -572,7 +589,7 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
     is what this reports.
 
     Tier 2, and V4 cannot be gating even in principle: this arm reads PROSE. A
-    failing tier-1 validator suppresses the LLM judge (orchestrator.py:607), and
+    failing tier-1 validator suppresses the LLM judge (orchestrator.py:609), and
     the grader is the only thing that can read whether the upgrade was justified.
     `Evidence weighing` and `Resolution completeness` scored 3 on all 28 runs
     where either was graded -- neither has ever discriminated -- which is both
