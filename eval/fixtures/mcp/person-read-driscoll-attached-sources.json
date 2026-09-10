@@ -1,0 +1,99 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Cornelius Driscoll (GJ72-9WD) WITH source descriptions, for the source-evaluation skill. Seven attached sources cover the three situations the shipped Hole corpus does not. DRIS-001 (Catholic parish baptism, with images) states 12 March 1814 at Skibbereen against the profile's '1814, Ireland' - a difference in PRECISION, not in value: the precise date falls inside the vague one, so the source refines the conclusion rather than contradicting it. DRIS-002 (Drouin marriage register, with images) indexes the marriage as 9 June 1845 against the profile's 9 June 1849 - same day, same month, same bride, same parish, one digit out on a record whose date is exact, so it is this corpus's genuine index error and the source `index_error_source` protects (as the substring \"Drouin Collection\", which no other source here shares). DRIS-003 (Catholic parish burial) and DRIS-004 (Quebec civil death registration) both bear on a death the profile does NOT record, and they disagree with each other by seven years - buried 14 April 1878 against died 2 February 1885. Both carry an indexed birth of 1814, so neither is the wrong man; that indexed birth is how this corpus expresses a stated age at death, since no fixture in the repo uses an Age fact type. DRIS-005 (1851 census, index only) disagrees on ONE field, the township, and carries no birth year, no household and no spouse, so it is genuinely undecidable between a place keyed to the wrong jurisdiction and a same-name man in the next township - the ambiguous case that must not be collapsed. DRIS-006 (1861 census) indexes a birth of 1816, about two years off the baptism's 1814: ordinary census variance, and a deliberate NON-finding both against the profile and as a source-vs-source pair. SD-DRIS-F is a contributor upload with no record ARK and must be reported unchecked rather than clean. Internal ids (P1/N1/F1/S1) recur across the record fixtures exactly as they do in the Hole corpus, because that is how the tool numbers them. Scenario: driscoll-source-audit.",
+  "args": {
+    "personId": "GJ72-9WD",
+    "sourceDescriptions": true
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "GJ72-9WD",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          {
+            "given": "Cornelius",
+            "surname": "Driscoll"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1814",
+            "standard_date": "1814",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          },
+          {
+            "type": "Marriage",
+            "date": "9 June 1849",
+            "standard_date": "9 Jun 1849",
+            "place": "Sherbrooke, Canada East",
+            "standard_place": "Sherbrooke, Quebec, Canada"
+          },
+          {
+            "type": "Residence",
+            "date": "1861",
+            "standard_date": "1861",
+            "place": "Sherbrooke, Canada East",
+            "standard_place": "Sherbrooke, Quebec, Canada"
+          },
+          {
+            "type": "Burial",
+            "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada",
+            "standard_place": "Sherbrooke, Quebec, Canada"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "SD-DRIS-A",
+        "title": "Cornelius Driscoll, \"Ireland, Catholic Parish Registers, 1655-1915\"",
+        "citation": "\"Ireland, Catholic Parish Registers, 1655-1915\", database with images, FamilySearch, baptism of Cornelius Driscoll, 12 March 1814, Skibbereen, Co. Cork.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-001"
+      },
+      {
+        "id": "SD-DRIS-B",
+        "title": "Cornelius Driscoll, \"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\"",
+        "citation": "\"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\", database with images, FamilySearch, marriage of Cornelius Driscoll and Margaret Hayes, St. Patrick's, Sherbrooke.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-002"
+      },
+      {
+        "id": "SD-DRIS-C",
+        "title": "Cornelius Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\" — burial",
+        "citation": "\"Quebec, Catholic Parish Registers, 1621-1979\", database with images, FamilySearch, burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-003"
+      },
+      {
+        "id": "SD-DRIS-D",
+        "title": "Cornelius Driscoll, \"Quebec, Civil Registration Deaths, 1867-1900\"",
+        "citation": "\"Quebec, Civil Registration Deaths, 1867-1900\", database, FamilySearch, entry for Cornelius Driscoll, Sherbrooke district.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-004"
+      },
+      {
+        "id": "SD-DRIS-E",
+        "title": "Cornelius Driscoll, \"Census of Canada East, 1851\"",
+        "citation": "\"Census of Canada East, 1851\", database, FamilySearch, entry for Cornelius Driscoll, Canada East.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-005"
+      },
+      {
+        "id": "SD-DRIS-F",
+        "title": "Driscoll headstone photograph, St. Patrick's Cemetery (uploaded memory)",
+        "citation": "Photograph of the Driscoll headstone, St. Patrick's Cemetery, Sherbrooke; digital image uploaded by a FamilySearch contributor.",
+        "url": "https://ancestors.familysearch.org/en/GJ72-9WD/memories",
+        "notes": [
+          "Contributor upload; no indexed record behind it."
+        ]
+      },
+      {
+        "id": "SD-DRIS-G",
+        "title": "Cornelius Driscoll, \"Census of Canada, 1861\"",
+        "citation": "\"Census of Canada, 1861\", database with images, FamilySearch, entry for Cornelius Driscoll, Sherbrooke, Canada East.",
+        "url": "https://familysearch.org/ark:/61903/1:1:DRIS-006"
+      }
+    ]
+  }
+}
