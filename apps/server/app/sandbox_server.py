@@ -217,6 +217,13 @@ class Hub:
                     print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
                 except UnicodeEncodeError:
                     pass
+            if kind == "turn_start":
+                # A QUEUED turn is starting. Hold the busy gate across the
+                # backlog: `turn_done` fires once per TURN, not once per
+                # backlog, so clearing on it left the UI idle while messages
+                # were still waiting - and the client's busy gate is what is
+                # supposed to stop a backlog forming.
+                self._turn_active = True
             if kind == "turn_done":
                 self._turn_active = False
             await self.broadcast(msg)

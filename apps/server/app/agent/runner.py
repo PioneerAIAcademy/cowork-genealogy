@@ -120,8 +120,24 @@ async def serve(agent, incoming: "asyncio.Queue", emit) -> None:
     turn_task: asyncio.Task | None = None
     pending: list[str] = []
 
-    def _start(text: str) -> None:
+    def _start(text: str, *, queued: bool = False) -> None:
         nonlocal turn_task
+        if queued:
+            # A QUEUED turn announces itself, and the first turn does not.
+            #
+            # Without this, the only frames a turn produces are the agent's own
+            # plus the terminal `turn_done`, so between turn N's `turn_done` and
+            # turn N+1's first frame there is a silence the length of a full SDK
+            # round trip. Two things read that silence as "idle":
+            #   * `_drain_replay` (app/v1.py) returns after _DRAIN_IDLE of quiet,
+            #     so a 504 retry could send inside the gap and then read the
+            #     QUEUED turn's `turn_done` as its own reply.
+            #   * `sandbox_server` clears `_turn_active` on every `turn_done`, so
+            #     the UI went idle while messages were still queued - and the
+            #     client's busy gate is what is supposed to stop a backlog
+            #     forming in the first place.
+            # The first turn needs no announcement: its sender already knows.
+            emit({"kind": "turn_start", "queued": True})
         turn_task = asyncio.create_task(_run_turn(agent, text, emit))
         # Wakes this loop when the turn ends, which is what lets a queued message
         # start without `serve` having to poll or block on the turn (it must stay
@@ -136,7 +152,7 @@ async def serve(agent, incoming: "asyncio.Queue", emit) -> None:
         mtype = msg.get("type")
         if mtype == _TURN_FINISHED:
             if pending and (turn_task is None or turn_task.done()):
-                _start(pending.pop(0))
+                _start(pending.pop(0), queued=True)
         elif mtype == "user_msg":
             text = msg.get("text", "")
             if turn_task and not turn_task.done():

@@ -623,6 +623,11 @@ class RealAgent:
     async def _close_client(self) -> None:
         """Drop the live client. State is cleared FIRST so a disconnect that
         throws can't leave a half-dead client cached for the next turn."""
+        # The respawn flag goes with the client. Left set, a close from any path
+        # other than the abandoned-stream one costs the NEXT turn a redundant
+        # rebuild, which makes the flag mean "maybe dirty" rather than "dirty".
+        # Harmless but untrue; raised in review.
+        self._stream_dirty = False
         client, self._client, self._client_key = self._client, None, None
         if client is None:
             return

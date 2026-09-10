@@ -418,3 +418,56 @@ def test_an_agent_exit_keeps_the_retry_framing_and_drops_the_exit_code():
     assert statuses and "-9" not in statuses[-1]["message"]
     # The turn is unstuck either way, or the UI spins forever.
     assert hub._turn_active is False
+
+
+def test_a_queued_turn_start_holds_the_busy_gate_across_the_backlog():
+    """`turn_done` fires once per TURN, not once per backlog.
+
+    Clearing `_turn_active` on it left the UI idle while messages were still
+    queued, and the client's busy gate is what is supposed to stop a backlog
+    forming in the first place - so a user who saw idle would keep sending.
+    A queued turn's `turn_start` re-arms the gate. Issue #2062, review round 1.
+    """
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    def ev(kind, **extra):
+        return json.dumps({"type": "agent_event", "event": {"kind": kind, **extra}})
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    q: asyncio.Queue = asyncio.Queue()
+    # Turn one ends, then a queued turn announces itself and ends.
+    q.put_nowait(ev("turn_done"))
+    q.put_nowait(ev("turn_start", queued=True))
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, FakeProc()))
+    assert hub._turn_active is True, (
+        "the queued turn's turn_start did not re-arm the busy gate, so the UI "
+        "reports idle while a turn is running"
+    )
+
+
+def test_the_gate_still_clears_once_the_last_queued_turn_is_done():
+    """The converse, so the arm above cannot be satisfied by never clearing."""
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    def ev(kind, **extra):
+        return json.dumps({"type": "agent_event", "event": {"kind": kind, **extra}})
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(ev("turn_done"))
+    q.put_nowait(ev("turn_start", queued=True))
+    q.put_nowait(ev("turn_done"))
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, FakeProc()))
+    assert hub._turn_active is False

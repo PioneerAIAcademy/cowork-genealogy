@@ -123,9 +123,37 @@ message is queued and run in order, bounded by `MAX_QUEUED_TURNS` with an explic
 on overflow rather than a silent drop, and pinned by
 `apps/server/tests/test_runner_turn_queue.py`, whose first case fails on the old
 drop-on-busy behaviour. If a sync turn times out (504) and the lock releases, a retry opens a
-*fresh* WS and drains-until-idle — but the prior turn is still emitting frames, so
-there is no idle gap and the drain simply waits the prior turn out before sending.
-The retry therefore never mis-reads the prior turn's trailing frames as its own reply.
+*fresh* WS and drains before sending.
+
+**Drain-until-idle was not enough once turns queue, and this page said it was.**
+The claim used to be that "the prior turn is still emitting frames, so there is
+no idle gap". A queued turn breaks it: it emits `turn_start` and then goes quiet
+for a full SDK round trip before its first real frame, so a drain that returns on
+quiet can return *inside* a running turn, send its message behind it, and read
+that turn's `turn_done` as its own reply. That is exactly the mis-attribution
+this paragraph exists to rule out, and the queue introduced it.
+
+So the drain is turn-aware rather than idle-aware: `turn_start` marks a turn in
+flight, its `turn_done` clears it, and the quiet timer only ends the drain while
+nothing is running (`_drain_replay`, `app/v1.py`, bounded by `_DRAIN_MAX` so a
+wedged agent cannot hang it). Pinned by
+`apps/server/tests/test_v1_drain.py::test_the_drain_waits_out_a_turn_that_started_while_it_was_draining`,
+which fails on a drain that returns during the quiet stretch. Only then does the
+retry never mis-read another turn's frames as its own reply.
+
+**`turn_start` (`{"kind": "turn_start", "queued": true}`)** is emitted when a
+QUEUED turn begins, and not for the turn its sender just asked for. Two consumers
+need it: the drain above, and the client's busy gate - `turn_done` fires once per
+*turn*, not once per backlog, so a client that goes idle on it would report idle
+while messages were still waiting and invite the user to send more.
+`sandbox_server` re-arms `_turn_active` on it.
+
+**A stop discards the backlog.** `interrupt` clears every queued message before
+cancelling the running turn, so messages sent while the agent was busy are
+dropped rather than answered after the stop. This is externally visible and a
+REST client reasoning from this page would not otherwise expect it: "Stop means
+stop" applies to what the user queued, not only to what is running. Pinned by
+`test_a_stop_discards_the_backlog_it_was_pressed_on`.
 
 ## API contract (`/v1`, bearer-only)
 

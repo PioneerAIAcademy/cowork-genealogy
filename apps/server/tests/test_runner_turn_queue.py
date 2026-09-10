@@ -161,3 +161,44 @@ def test_a_stop_discards_the_backlog_it_was_pressed_on():
         "a message queued before Stop was answered after it; the interrupt must "
         f"discard the backlog, but the agent ran {agent.turns}"
     )
+
+
+def test_a_queued_turn_announces_itself_and_the_first_turn_does_not():
+    """A queued turn emits `turn_start`; the turn its sender just asked for does not.
+
+    WHY THIS MATTERS beyond tidiness. Without it a turn's only frames are the
+    agent's own plus the terminal `turn_done`, so between turn N's `turn_done`
+    and turn N+1's first frame there is a silence the length of a full SDK round
+    trip - and two consumers read that silence as "idle":
+
+      * `app/v1.py::_drain_replay` returns after `_DRAIN_IDLE` of quiet, so a 504
+        retry could send inside the gap and then read the QUEUED turn's
+        `turn_done` as its own reply.
+      * `sandbox_server` clears `_turn_active` on every `turn_done`, so the UI
+        went idle while messages were still queued.
+
+    The first turn needs no announcement: its sender already knows it sent it.
+    """
+    agent = SlowAgent()
+    events = asyncio.run(_drive(agent, ["first", "second", "third"]))
+    starts = [e for e in events if e.get("kind") == "turn_start"]
+
+    assert _answered(events) == ["first", "second", "third"]
+    assert len(starts) == 2, (
+        f"expected one turn_start per QUEUED turn (2 of 3), got {len(starts)}"
+    )
+    assert all(e.get("queued") is True for e in starts)
+
+    # Ordering is the property the consumers rely on: each queued turn's
+    # announcement lands after the previous turn's turn_done, closing the gap.
+    kinds = [e.get("kind") for e in events if e.get("kind") in ("turn_start", "turn_done")]
+    assert kinds == ["turn_done", "turn_start", "turn_done", "turn_start", "turn_done"], kinds
+
+
+def test_a_lone_turn_emits_no_turn_start():
+    """The single-turn case, so the arm above cannot be satisfied by emitting
+    `turn_start` unconditionally."""
+    agent = SlowAgent()
+    events = asyncio.run(_drive(agent, ["only"]))
+    assert _answered(events) == ["only"]
+    assert [e for e in events if e.get("kind") == "turn_start"] == []
