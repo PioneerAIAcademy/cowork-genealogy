@@ -404,7 +404,11 @@ def _normalise_path(value: str, *, cwd: str) -> str:
     any prefix test. A relative path is resolved against `cwd` (Grep/Glob
     accept one; Read documents `file_path` as absolute but is normalised the
     same way rather than trusting the model). A leading `~` expands to the
-    home directory so a `~/.claude/...` spelling matches `config_root`.
+    home directory so a `~/.claude/...` spelling matches `config_root`. The
+    comparison in `project_read_denied` runs on `realpath`s of the result so both
+    spellings of a symlinked workspace compare equal: macOS hands out `/var/folders/...` while the model reads
+    `/private/var/folders/...`, and the first P2 run (2026-09-10) allowed every project
+    read because the two never prefix-matched.
     """
     text = str(value).replace("\\", "/")
     if text.startswith("~"):
@@ -412,6 +416,12 @@ def _normalise_path(value: str, *, cwd: str) -> str:
     if not (text.startswith("/") or re.match(r"^[A-Za-z]:/", text)):
         text = cwd.replace("\\", "/").rstrip("/") + "/" + text
     return posixpath.normpath(text)
+
+
+def _real(path: str) -> str:
+    """`path` with symlinks resolved, forward-slashed — for comparison only; the
+    recorded path stays the model's own spelling."""
+    return os.path.realpath(path).replace("\\", "/")
 
 
 def _under(path: str, root: str) -> bool:
@@ -471,17 +481,18 @@ def project_read_denied(
         return None
     root = _normalise_path(str(project_root), cwd=cwd_s)
     spill_root = _normalise_path(str(config_root), cwd=cwd_s) + "/projects"
-    if _under(target, spill_root):
-        rest = target[len(spill_root):].strip("/").split("/")
+    t_r, root_r, spill_r = _real(target), _real(root), _real(spill_root)
+    if _under(t_r, spill_r):
+        rest = t_r[len(spill_r):].strip("/").split("/")
         if "tool-results" in rest:
             return None
-    if not _under(target, root) or _under(target, root + "/.claude"):
+    if not _under(t_r, root_r) or _under(t_r, root_r + "/.claude"):
         return None
-    rel = target[len(root):].strip("/") or "the project root"
+    rel = t_r[len(root_r):].strip("/") or "the project root"
     return (
         f"{tool_name} on {rel} is disabled in this run — the project folder is "
         "not readable directly. Read it through the MCP tools instead: "
-        f"{_project_read_route(target, root)}."
+        f"{_project_read_route(t_r, root_r)}."
     )
 
 

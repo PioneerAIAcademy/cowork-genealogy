@@ -9,6 +9,7 @@ is reachable only from a paid e2e run.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -115,6 +116,21 @@ def test_etc_hosts_is_allowed():
 
 def test_absolute_grep_outside_the_project_is_allowed():
     assert denied("Grep", {"pattern": "x", "path": "/usr/share/dict"}) is None
+
+
+@pytest.mark.skipif(os.name == "nt", reason="symlink creation needs a privilege on Windows")
+def test_symlinked_workspace_is_denied_under_either_spelling(tmp_path):
+    # macOS hands out the workspace as /var/folders/... while the model reads
+    # /private/var/folders/...; the first P2 run (2026-09-10) allowed every
+    # project read because the two spellings never prefix-matched.
+    real = tmp_path / "real"
+    real.mkdir()
+    (real / "research.json").write_text("{}", encoding="utf-8")
+    link = tmp_path / "link"
+    link.symlink_to(real, target_is_directory=True)
+    assert denied("Read", {"file_path": str(real / "research.json")}, cwd=str(link), root=str(link)) is not None
+    assert denied("Read", {"file_path": str(link / "research.json")}, cwd=str(real), root=str(real)) is not None
+    assert denied("Glob", {"pattern": "*.json"}, cwd=str(link), root=str(real)) is not None
 
 
 def test_a_sibling_tempdir_with_the_root_as_prefix_is_allowed():
