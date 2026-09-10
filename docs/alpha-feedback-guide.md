@@ -238,6 +238,18 @@ The script:
   question from the project state and the Notes box, and say on the issue that
   you did.
 
+> **Security: always unpack with the setup script, not plain `unzip`.** The
+> script strips injected config before wiring the skills in: `.claude/`,
+> `.claude.json`, `.mcp.json`, `.gitattributes`, and `.git/` are deleted, and
+> every `CLAUDE.md` at any depth is renamed to `CLAUDE.md.submitted` so it is
+> kept for reproduction but not loaded as instructions. A legitimate feedback
+> zip never contains dotfiles (both walkers skip them), so any of the first
+> five would be injected; `CLAUDE.md` arrives in ordinary submissions but
+> executes as project config if left in place. `.gitattributes` and `.git/`
+> execute through git filters during `git add`, not through Claude Code.
+> If the script prints a "Warning: stripped" or "Note: renamed" line, note it
+> on the issue.
+
 > **Why the snapshot matters — it's the retry mechanism.** The case folder is a
 > *capture*: unlike an e2e fixture, there is no `make e2e-project` to re-seed it
 > from. Running the agent mutates it, so every attempt after the first starts
