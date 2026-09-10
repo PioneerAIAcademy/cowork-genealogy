@@ -53,7 +53,12 @@ Four further christenings to the same couple in the same register carry the
 same grandparent set: Juan Bautista 1844 (`ark:/61903/1:1:664D-BN3Y`), Lucio
 José 1850 (`ark:/61903/1:1:664X-T9CT`), Santiago Nicasio 1853
 (`ark:/61903/1:1:664F-K5Y6`), Martín José Sotero 1856
-(`ark:/61903/1:1:66H2-BVGK`). The father's surname is garbled differently in
+(`ark:/61903/1:1:66H2-BVGK`). A sixth sibling sits in the separate
+"España, bautismos, 1502-1940" index rather than this register and carries the
+same grandparent set: Miguel Francisco Crisanto Goni Goni, chr. 25 Oct 1858
+(`ark:/61903/1:1:H6WT-W93Z`), naming Juan and Martina Urtasun with Santiago and
+Maria Bautista Itcea. It was surfaced by the e2e agent's own run, not by this
+adjudication. The father's surname is garbled differently in
 several of them — "Gonz" in 1845, "Gómez" in 1844, "Ju? José Goni" in 1850 —
 so a surname mismatch in this run of entries is a transcription artefact of
 one hand, not evidence of a second family. The 1844 entry was read
