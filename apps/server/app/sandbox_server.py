@@ -251,7 +251,18 @@ class Hub:
                 "text": "The agent stopped unexpectedly. Nothing you did caused "
                         "this — send another message to restart it, and report "
                         "it if it keeps happening."}})
-            await self.broadcast({"type": "agent_event", "event": {"kind": "turn_done"}})
+            # _record as well as broadcast, or history keeps a `turn_start`
+            # whose `turn_done` exists nowhere. `turn_start` is not in
+            # TRANSIENT_KINDS, so it IS replayed on every reconnect, and
+            # `_history` is never cleared -- only trimmed at _HISTORY_MAX. A
+            # v1 drain counts the orphan as a turn in flight, never sees it
+            # close, and runs to its own ceiling on every later call until 1000
+            # events push the frame out. `broadcast` does not touch `_record`,
+            # and this is the one turn_done that does not come through the
+            # runner's recorded path (runner.py:73 is the sole other source).
+            _turn_done = {"type": "agent_event", "event": {"kind": "turn_done"}}
+            await self.broadcast(_turn_done)
+            self._record(_turn_done)
             await self.broadcast({"type": "status", "state": "chat_error",
                                   "message": "the agent stopped unexpectedly"})
 

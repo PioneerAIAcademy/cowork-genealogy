@@ -57,7 +57,14 @@ _DRAIN_IDLE = 0.5
 # Outer bound on _drain_replay. Reached only when a turn is in flight and stays
 # quiet, which a wedged agent can do; without it the drain would wait forever
 # rather than let the caller's own turn timeout report the problem.
-_DRAIN_MAX = 120.0
+# Strictly smaller than v1_turn_timeout_seconds (120), so no drain state can
+# consume a caller's entire budget: at 120 an orphaned `turn_start` in the
+# replay made the drain eat the whole turn timeout and the request 504 without
+# ever sending its message. The orphan is fixed at its source
+# (sandbox_server.py records the synthetic turn_done now); this keeps any future
+# orphan cheap rather than fatal. Same name and value as PR #2349 uses for the
+# same function, so the two land without a conflict.
+_DRAIN_MAX = 30.0
 # SSE heartbeat interval: emit a comment if no frame arrives within this window so
 # proxies don't drop a long-running stream.
 _HEARTBEAT_S = 15.0

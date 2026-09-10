@@ -420,6 +420,61 @@ def test_an_agent_exit_keeps_the_retry_framing_and_drops_the_exit_code():
     assert hub._turn_active is False
 
 
+def test_a_crashed_runners_synthetic_turn_done_enters_history():
+    """The synthetic `turn_done` on agent exit must be RECORDED, not only
+    broadcast, or every later reconnect replays an unbalanced `turn_start`.
+
+    Three facts composed into a wedge that persists rather than self-corrects:
+
+    * `turn_start` is not in `TRANSIENT_KINDS`, so it IS recorded and replayed.
+    * `_history` is never cleared, only trimmed at `_HISTORY_MAX` (1000). And
+      `_record` trims from the FRONT, so a `turn_start` is always evicted before
+      its own `turn_done` - the survivable orphan is a `turn_done`, which the v1
+      drain already clamps. The crash path was the only producer of the other
+      orphan, and it was the one path that skipped `_record`.
+    * The v1 drain counts `turn_start` as a turn in flight and waits for a
+      `turn_done` that exists nowhere, so it ran to its own ceiling on every
+      later sync call until 1000 events pushed the frame out.
+
+    `broadcast` does not touch `_record`, which is why "the user saw it" was not
+    the same as "history has it".
+    """
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return -9
+
+    hub = ss.Hub()
+    proc = FakeProc()
+    hub._proc = proc
+    hub._turn_active = True
+    sent = _broadcasts(hub)
+
+    # A turn was in flight when the runner died: its turn_start is in history.
+    start = {"type": "agent_event", "event": {"kind": "turn_start", "queued": True}}
+    hub._record(start)
+
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, proc))
+
+    kinds = [
+        m["event"].get("kind") for m in hub._history
+        if m.get("type") == "agent_event"
+    ]
+    assert kinds.count("turn_start") == kinds.count("turn_done"), (
+        f"history is unbalanced: {kinds}. A reconnect replays a turn_start whose "
+        f"turn_done exists nowhere, and the v1 drain waits it out to its ceiling "
+        f"on every later call."
+    )
+    # And the user still saw it: recording must be in ADDITION to broadcasting.
+    assert any(
+        m.get("type") == "agent_event" and m["event"].get("kind") == "turn_done"
+        for m in sent
+    ), "the terminal frame stopped reaching live clients"
+
+
 def test_a_queued_turn_start_holds_the_busy_gate_across_the_backlog():
     """`turn_done` fires once per TURN, not once per backlog.
 
