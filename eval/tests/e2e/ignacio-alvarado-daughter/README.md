@@ -43,7 +43,13 @@ inference. *Hija legitima* means the parents were married. And *de año y dos
 meses* puts her birth about April 1879 — the "1880" in the hint index
 (`ark:/61903/1:1:NQ5N-RXJ`) is the indexer's, not the register's; a second
 indexing of the same image (`ark:/61903/1:1:6JPG-ZB6D`) reads the year as 1879
-and the surname as "Alvarado Duran".
+and the surname as "Alvarado Duran". The age phrase was read off the image
+rather than taken from the index, and the page supplies its own control: the
+same scribe, in the same hand within a few entries, writes *"de año y seis
+meses"* at no. 813 (the identical *año y … meses* construction) and *"de dos
+años, seis meses"* at no. 810 and *"de dos años"* at no. 817. The two readings
+that would overturn the correction are therefore both present on the page for
+comparison, and neither resembles no. 814.
 
 **The independent corroboration** is her own baptism:
 `ark:/61903/1:1:NQ24-QZQ`, Angela Procesa Maria de las Piedades Alvarado Duran,
