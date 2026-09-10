@@ -107,6 +107,16 @@ error noted. The tree fact was never re-synced to the assertion during the run.
 Immigration place is not a graded component of any finding, so this does not
 affect the run's grade.
 
+It is left uncorrected deliberately. Josefine exists only as local person `I1`
+in this run's `tree.gedcomx.json` — the agent created her, and she carries no
+FamilySearch PID, so there is no upstream tree fact to re-sync (nor any tool
+here that writes to FamilySearch: `tree_edit` and `tree_correct` write the
+project file only). The one place the stale value survives is the frozen run
+artifact under `eval/runlogs/e2e/`, and editing that would misrepresent what
+the run produced — the `.ann.json` beside it is a blind human grade of exactly
+those outputs. The corrected place lives in `a_011`, which is where a reader
+should take it from.
+
 **What has not been found.** No record examined names Josefine's own parents,
 and no European baptismal register for Selz (the Black Sea German colony near
 Odessa the family emigrated from) was reachable through FamilySearch. Both are
