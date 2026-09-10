@@ -312,7 +312,9 @@ Being straight with you, so you don't waste time:
   retry from scratch.
 - **Living people:** please don't enter information about anyone living. Nothing
   is encrypted yet.
-- **Sessions are private to you.** No sharing or collaboration.
+- **No sharing or collaboration yet.** A session is yours to work in; you can't
+  invite anyone into it. Your project folder stays on your machine — we read it
+  only when you send us feedback, and FamilySearch may read what you send.
 
 ---
 

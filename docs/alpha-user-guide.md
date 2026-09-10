@@ -207,7 +207,11 @@ Being straight with you, so you don't waste time:
 - **You can't reset a project.** To start over, create a new session.
 - **Living people:** please don't enter information about anyone living. Nothing
   is encrypted yet.
-- **Sessions are private to you.** No sharing or collaboration.
+- **We can read your sessions, and so may FamilySearch.** We use them to fix
+  bugs and to improve the research. Treat anything you put here the way you'd
+  treat something you're about to upload to FamilySearch.
+- **No sharing or collaboration yet.** A session is yours to work in; you can't
+  invite anyone into it.
 
 ---
 
