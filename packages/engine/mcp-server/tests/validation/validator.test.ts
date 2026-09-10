@@ -1019,6 +1019,85 @@ describe("Project Validator", () => {
       ).toBe(true);
     });
 
+    it("reports an ABSENT key as a required-field error only, not also a type error", async () => {
+      // The `"resolved_conflict_ids" in ps` clause, which nothing tested:
+      // deleting it left all 247 validation tests green while an absent key
+      // produced BOTH `missing required field` and `must be an array` for one
+      // problem. Same double diagnosis the `null` case above prevents, on the
+      // twin case — and a duplicated diagnosis is what makes an agent repair
+      // the wrong thing.
+      const research = withConflictAndSummary("resolved", []);
+      delete (research.proof_summaries[0] as Record<string, unknown>)
+        .resolved_conflict_ids;
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      const mentions = result.errors.filter((e) =>
+        e.message.includes("resolved_conflict_ids")
+      );
+      expect(mentions).toHaveLength(1);
+      expect(mentions[0].message).not.toContain("must be an array");
+    });
+
+    it("embeds the offending value in the container message", async () => {
+      // `errorKey` is the normalized path PLUS the message, so a STATIC message
+      // keys identically before and after — which demotes a change from one
+      // non-array to a DIFFERENT non-array as pre-existing and writes it.
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", "c_001" as never),
+        minimalTree
+      );
+      const msg = result.errors.find((e) =>
+        e.message.includes("'resolved_conflict_ids' must be an array")
+      )?.message;
+      expect(msg).toContain('"c_001"');
+    });
+
+    it.each([
+      // The first three messages name the field; the dangling one comes from
+      // the shared `checkRefExists`, whose house style names the REF TYPE
+      // ("assertion" vs "conflict") rather than the field. That is what
+      // disambiguates the two id-bearing arrays that sit at the same path, so
+      // it is matched as-is rather than reworded — the sibling
+      // `resolved_conflict_ids` dangling case is asserted the same way 200
+      // lines above.
+      ["a bare string", "a_001", "'supporting_assertion_ids' must be an array"],
+      ["an array-like object", { "0": "a_001" }, "'supporting_assertion_ids' must be an array"],
+      ["a non-string entry", [42], "supporting_assertion_ids contains a non-string entry"],
+      ["a dangling reference", ["a_999"], "references assertion 'a_999' which does not exist"],
+    ])(
+      "gives supporting_assertion_ids the same guards: %s",
+      async (_label, value, expected) => {
+        // The class recurs, not the field. Measured before this: all four were
+        // ACCEPTED and persisted with no error at all — and the dangling case is
+        // the same shape V5 exists to remove, on the sibling field, feeding the
+        // same reader that guards `.length > 0` then calls `.map`.
+        const research = withConflictAndSummary("resolved", []);
+        (research.proof_summaries[0] as Record<string, unknown>)
+          .supporting_assertion_ids = value;
+        const result = await validateParsed(research, minimalTree);
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.message.includes(expected))).toBe(true);
+      }
+    );
+
+    it("still accepts a valid supporting_assertion_ids and an empty one", async () => {
+      // Polarity for the four above, and the case 36 shipped fixtures are in.
+      for (const value of [[], undefined]) {
+        const research = withConflictAndSummary("resolved", []);
+        if (value === undefined) {
+          (research.proof_summaries[0] as Record<string, unknown>)
+            .supporting_assertion_ids = [];
+        } else {
+          (research.proof_summaries[0] as Record<string, unknown>)
+            .supporting_assertion_ids = value;
+        }
+        const result = await validateParsed(research, minimalTree);
+        expect(
+          result.errors.some((e) => e.message.includes("supporting_assertion_ids"))
+        ).toBe(false);
+      }
+    });
+
     it("still accepts an empty array", async () => {
       // Polarity for the guard above: `[]` is the legitimate empty case and the
       // one four shipped fixtures were corrected TO, so a container check that

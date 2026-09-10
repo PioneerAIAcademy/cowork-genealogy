@@ -1248,8 +1248,64 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       ps.resolved_conflict_ids !== null &&
       !Array.isArray(ps.resolved_conflict_ids)
     ) {
-      addError(report, psp, "'resolved_conflict_ids' must be an array");
+      // The value is embedded for the same reason the entry check below embeds
+      // its own: `errorKey` is the normalized path PLUS the message, so a
+      // static message keys identically before and after, and a change from one
+      // non-array to a DIFFERENT non-array is demoted as pre-existing and
+      // written. Measured: `"c_001"` -> `"c_002"`, `-> 42` and
+      // `-> '["c_002"]'` all persisted under a static message and are refused
+      // with the value in it, while an unchanged value stays tolerated so there
+      // is no self-inflicted freeze.
+      addError(
+        report,
+        psp,
+        `'resolved_conflict_ids' must be an array (got ` +
+          `${JSON.stringify(ps.resolved_conflict_ids)})`
+      );
     }
+    // `supporting_assertion_ids` gets the SAME THREE checks, because the class
+    // is what recurs rather than the field: every array-typed field on a proof
+    // summary needs a container-type guard, an entry-type check, and a
+    // referential check where it holds ids — each embedding the offending value.
+    //
+    // It had none of the three. Measured through the real `researchAppend`
+    // before this: `"a_001"`, `{0:"a_001"}`, `["a_999"]` (dangling) and `[42]`
+    // were ALL accepted and persisted, with no error at all. The dangling case
+    // is the one that matters — it is the same shape V5 exists to remove, on
+    // the sibling field, feeding the same reader (`ProofSummariesSection.tsx`
+    // guards `.length > 0` then calls `.map`).
+    //
+    // Zero shipped documents break: two independent scans put it at 185-186
+    // documents carrying the field and 2,123-2,131 references, with zero
+    // dangling, non-string or non-array. That is what makes it a fix here
+    // rather than a card.
+    if (
+      "supporting_assertion_ids" in ps &&
+      ps.supporting_assertion_ids !== null &&
+      !Array.isArray(ps.supporting_assertion_ids)
+    ) {
+      addError(
+        report,
+        psp,
+        `'supporting_assertion_ids' must be an array (got ` +
+          `${JSON.stringify(ps.supporting_assertion_ids)})`
+      );
+    }
+    if (Array.isArray(ps.supporting_assertion_ids)) {
+      for (const aid of ps.supporting_assertion_ids) {
+        if (typeof aid !== "string") {
+          addError(
+            report,
+            psp,
+            `supporting_assertion_ids contains a non-string entry ` +
+              `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
+          );
+          continue;
+        }
+        checkRefExists(aid, ids.assertions, "assertion", psp, report);
+      }
+    }
+
     if (Array.isArray(ps.resolved_conflict_ids)) {
       for (const cid of ps.resolved_conflict_ids) {
         if (typeof cid !== "string") {
