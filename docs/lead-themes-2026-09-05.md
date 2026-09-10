@@ -301,7 +301,7 @@ called six of the seven below "genuinely unruled," and that is now false:
 | #2110 | two collections-search fixtures contradict each other on collection 1999196 | **Ruled 2026-09-09** — both serve `personCount: 0`; the validator is unchanged |
 | #1687 | a fixture README states the verdict and the judge reads it in full | Unruled |
 | #2234 | the annotation UI appends comments, silently fails to save, and can write to the wrong test | Unruled |
-| #1790 | tree-edit's only merge test grades against a rule its `judge_context` asserts, and no merge ever completes in it | **Ruled 2026-08-23 and again 2026-09-10** — authorize the write by tool identity; PR #2442 is the free half |
+| #1790 | tree-edit's only merge test grades against a rule its `judge_context` asserts, and no merge ever completes in it | **Ruled 2026-08-23 and twice on 2026-09-10** — authorize the write by tool identity (PR #2442), and let a skill clear a stale `primary` flag (PR #2446). What is left needs a paid `tree-edit` run |
 
 Also issues #1605, #1442, #2196 (**Ready**), and #2212 — which is **closed**, merged
 into #2110 on 2026-09-07. Its symptom did not reproduce on the 09-07 run
@@ -448,6 +448,16 @@ nests a block per cycle, and the header snapshots the score at copy time.
   The source-vs-manifest guard that shipped with it **found a fifth section on
   day one** — `proof_summaries` carries person refs, is enforced on the unit
   plane, and listed only `research_append`.
+
+  The card's absorbed issue #1813 half was ruled the same day on the same test:
+  **if the state is only reachable the way the test reaches it the test is bad,
+  otherwise fix the tool.** It is reachable — 10 persons across 9 e2e final trees
+  carry a vital type with two facts and a stale `primary`, against 0 across the
+  97 scenario fixtures, and the path is `materialize_facts`, which never sets
+  `primary` and surfaces the conflict. Not merges: `mergeFacts` already clears
+  and re-marks. PR #2446 makes `primary: false` an instruction at the tool
+  boundary rather than a stored value, so the omit-when-false convention and the
+  schema are both untouched.
 - **The annotation corpus is clean.** 0 of 5119 corrections name a test absent
   from their run log, 0 carry an `llm_score` disagreeing with the sibling run
   log, 0 run logs hold a duplicate test id. So mode 3 has not silently corrupted
