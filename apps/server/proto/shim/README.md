@@ -1,6 +1,6 @@
 # sqsd shim (D3)
 
-Stands in for Elastic Beanstalk's sqsd: long-polls the `turns` queue, POSTs each message body to `WORKER_URL` with the sqsd headers (`X-Aws-Sqsd-Msgid`, `-Queue`, `-First-Received-At`, `-Receive-Count`, `Content-Type: application/json`), keeps `HTTP_CONNECTIONS` POSTs in flight, and acts on each outcome per `decide.py` (pure; tests in `apps/server/tests/test_proto_decide.py`):
+Stands in for Elastic Beanstalk's sqsd: long-polls the `turns` queue, POSTs each message body to `WORKER_URL` with the sqsd headers sqsd 3.0.5 was measured sending on Beanstalk on 2026-09-11 (`X-Aws-Sqsd-Msgid`, `-Queue`, `-First-Received-At`, `-Sent-At`, `-Receive-Count`, `-Path`, `Content-Type: application/json`; sqsd also sends `-Sender-Id`, which has no meaning here), keeps `HTTP_CONNECTIONS` POSTs in flight, and acts on each outcome per `decide.py` (pure; tests in `apps/server/tests/test_proto_decide.py`):
 
 - **2xx → `DeleteMessage`.**
 - **Connection-level failure** (refused, reset, read timeout) **→ `ChangeMessageVisibility(0)`** after `REQUEUE_PAUSE_S`; on a **read timeout** it first kills `WORKER_CONTAINER` over the docker socket **and starts it again** — `docker kill` counts as a manual stop, so `restart: unless-stopped` never brings it back on its own (probed 2026-09-11).
@@ -11,3 +11,5 @@ Stands in for Elastic Beanstalk's sqsd: long-polls the `turns` queue, POSTs each
 Every decision is one JSON line on stdout — `{"ev":"post","msgid","turn_id","receive_count","status"|"error","elapsed_ms","action":"delete"|"requeue"|"requeue_backoff","backoff_s","killed_worker"}` — read with `docker compose -f apps/server/proto/docker-compose.yml logs shim`.
 
 Env: `QUEUE_URL` (required; the SQS endpoint is its scheme+host unless `SQS_ENDPOINT_URL` is set — credentials/region default to dummies elasticmq accepts), `WORKER_URL`, `WORKER_CONTAINER`, `HTTP_CONNECTIONS` (2), `READ_TIMEOUT_S` (1800, the step ceiling), `CONNECT_TIMEOUT_S` (5), `BACKOFF_BASE_S` (5), `BACKOFF_MAX_S` (300), `REQUEUE_PAUSE_S` (1), `STOP_GRACE_S` (30).
+
+What real sqsd does that this shim compensates for (measured 2026-09-11): it cuts a POST at exactly `InactivityTimeout`, tells the worker nothing, and lets the message return only when `VisibilityTimeout` lapses — so the dead time after a forced checkpoint is `VisibilityTimeout − InactivityTimeout`. The shim's container kill plus `ChangeMessageVisibility(0)` is the local stand-in for both halves.

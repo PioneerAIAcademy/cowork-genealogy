@@ -153,6 +153,10 @@ def handle(sqs, msg: dict) -> None:
         "X-Aws-Sqsd-Queue": QUEUE_NAME,
         "X-Aws-Sqsd-First-Received-At": iso_utc(attrs.get("ApproximateFirstReceiveTimestamp")),
         "X-Aws-Sqsd-Receive-Count": str(receive_count),
+        # sqsd 3.0.5 also sends these two (measured on Beanstalk 2026-09-11); it did
+        # not forward message attributes as X-Aws-Sqsd-Attr-* headers (n=1).
+        "X-Aws-Sqsd-Sent-At": iso_utc(str(int(time.time() * 1000))),
+        "X-Aws-Sqsd-Path": urlparse(WORKER_URL).path or "/",
     }
 
     status: int | None = None
