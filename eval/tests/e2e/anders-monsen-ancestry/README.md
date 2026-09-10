@@ -89,10 +89,12 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   marriage question and a separate `probable` conclusion for a self-added
   census-based question — good GPS-compliant behavior, just not the fixture's
   expected findings.
-- **Not yet tried:** dropping the marriage-year filter entirely on the
-  principal-only fallback search (relying on collection + place +
-  `rank_search_matches`'s own biographical scoring instead of a numeric year
-  range) — the likely next refinement if this fixture is revisited.
+- **Tried in run 8's probe (2026-09-09); was "not yet tried" until then:**
+  dropping the marriage-year filter entirely on the principal-only fallback
+  search (relying on collection + place + `rank_search_matches`'s own
+  biographical scoring instead of a numeric year range). It returns **165** hits
+  and does **not** reach the target — see the run-8 probe bullet below. This is
+  no longer an open refinement.
 - **Pattern across runs 3-5:** each attempt correctly exercised *some* piece of
   the accumulated guidance but not all of it in the same pass, and each miss had
   a different, well-evidenced proximate cause. This looks less like one
@@ -105,14 +107,21 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   indirect 1801-census evidence but never recovered the marriage date or place.
   Both annotations concluded the "Norway, Marriages, 1660-1926" entry was
   "genuinely absent, not a search-quality problem" after 27 and 9 search
-  strategies respectively — **a conclusion the run-8 probe below refutes.** Both
+  strategies respectively — **a conclusion the run-8 probe below half-vindicates
+  and half-corrects**: they were right that no search reaches it (the record's
+  personas are not in that collection's search index today), but wrong that it
+  is "absent" — `record_read` returns it in full, and run 1 reached it through
+  `record_search` in July. Their operational advice was sound; their
+  explanation was not. Both
   recorded `stop_reason: "error"` while still producing a full tree and a
   committed grade. (Runs 3 and 4 in the narrative above have no committed run
   logs; the five on disk before run 8 are runs 1, 2, 5, 6 and 7.)
 - **Run 8 (2026-09-09 14:30, `git_sha` 96cadcac5)** — `f1` partial, `f2` false,
-  proof quality 2; `stop_reason: completed`, `compliance: fail`. The first run to
-  recover the exact marriage date. It reached **25 Jun 1786** by a route no prior
-  run took: `image-reader` transcribed a **1963 LDS Family Group Sheet** (ark
+  proof quality 2; `stop_reason: completed`, `compliance: fail`. The first run
+  **since run 1** to recover the marriage date, and the first to reach it from a
+  source **other than the index record** (run 1 recovered both date and place
+  from the index record itself and graded `f1` true). It reached **25 Jun 1786**
+  by a route no prior run took: `image-reader` transcribed a **1963 LDS Family Group Sheet** (ark
   `3:1:3QSQ-G979-7SPB`) whose submitter cites Hamre parish film 17885. It wrote a
   `probable` proof summary and encoded the date on the `Couple` relationship,
   flagging the place as inferred from the source's parish scope rather than
@@ -135,7 +144,11 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   `marriageYear 1786-1786` (19 hits, all Anders-Monsen-as-*parent*);
   `isPrincipal` + `1780-1790` (4); `isPrincipal` + `1770-1800` (10, with and
   without run 1's two extra params); `isPrincipal` + `marriagePlace=Hamre`
-  (50, target not in top 5); `isPrincipal` + `marriagePlace=Hamre` +
+  (**82** — re-pulled in full during review on 2026-09-10, which also corrects
+  this line's original "50, target not in top 5": **all 82 were read and the
+  target is absent from every one**, and three of the 82 sit in the *same Hamre
+  extraction batch* as the target's own sibling entries, so the batch is indexed
+  and this one persona is not); `isPrincipal` + `marriagePlace=Hamre` +
   `1770-1800` (**0**); and the previously "not yet tried" principal-only with
   **no** year filter at all (165 hits). Most telling: the bride's own exact
   indexed name from `record_read`, `Urna Halsteinsdr`, returns **0** in
