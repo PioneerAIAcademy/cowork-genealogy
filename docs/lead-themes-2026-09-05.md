@@ -8,8 +8,9 @@ carries the bridge between its two classes; Theme 4 (guards) is new, and the
 hosted theme renumbered to 5.
 **2026-09-10 pass:** Theme 3's decision half is done — ADR-0011 carries the
 ruling and now the bridge, the four issues that were waiting on the mechanism
-were ruled 2026-09-07, and the `needs-decision` queue is empty. No gate has been
-built: every card named in Theme 3 sits in Backlog with no assignee.
+were ruled 2026-09-07, the last two unruled cards were ruled 2026-09-10, and the
+`needs-decision` queue is empty. No gate has been built: every open card named in
+Theme 3 sits in Backlog with no assignee.
 **Source:** all open Backlog issues, read in full, measurements over the 161
 committed e2e run logs on `main`, 11 raw session transcripts, and one live
 probe on Claude Code 2.1.263.
@@ -245,17 +246,18 @@ git log --since="90 days ago" --format='%an' -- eval/harness/judge | sort | uniq
 **Urgency: high, and what it is waiting on has changed (2026-09-10). The
 decision exists** — ADR-0011 carries the layer map, the decision procedure, the
 bridge and the promotion table, and the four issues that were queued behind the
-mechanism were ruled 2026-09-07. **What has not happened is a build.** Every card
-below is in Backlog, unassigned. Gates are shipping from other cards — the
+mechanism were ruled 2026-09-07, and issues #1837 and #1624 on 2026-09-10.
+**What has not happened is a build.** Every open card below is in Backlog,
+unassigned. Gates are shipping from other cards — the
 conflict blocking-link derivation, the empty-plan refusal, the relationship
 source-ref mint — so the mechanism is in use; it has not reached this list.
 
 | Issue | Evidence | Ruled? |
 |---|---|---|
-| #1837 | 58 of 156 runs wrote a relationship without ever calling `person_warnings`, the cheapest guardrail in the system | No |
+| #1837 | 58 of 156 runs wrote a relationship without ever calling `person_warnings`, the cheapest guardrail in the system | Ruled 2026-09-10 — ship as designed; the gate recomputes `person_warnings` predicates only, and the place-resolution class rides on issue #1907 |
 | #1852 | 47 of 56 runs that wrote a conflict never invoked `conflict-resolution` | Acceptance criterion set 2026-09-02 |
 | #2030 | Three measured runs ordered the plan identically despite the rule, varying their own wording between runs | Ruled 2026-08-31 |
-| #1624 | Wrong grandparents attached across two independent fix attempts | Comment 2026-09-07 |
+| #1624 | Wrong grandparents attached across two independent fix attempts | Closed 2026-09-10 — the `same_person` half is issue #1731, the mechanical half re-filed as a `person_evidence` precondition, issue #2409 |
 | #2230 | Byte-identical validator failure in 2 of 5 committed run logs | Ruled 2026-09-07 — refuse delta-scoped in every writer, `project_create` stamps a default import source, the healer backfills |
 
 Issue #1837's rate re-derives higher on today's corpus — 84 of 148 runs (57%)
