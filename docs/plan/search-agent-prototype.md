@@ -1,8 +1,8 @@
 # Search Agent prototype — hosted architecture, one month
 
 **Status:** IN PROGRESS — P1 and the three D1–2 probes measured 2026-09-10 (PR #2406)
-and P3's feature-parity half measured, all folded in below; P2's harness landed and
-its two runs are pending; the build continues on the re-decide branch · plan of 2026-09-09 ·
+and P3's feature-parity half measured, all folded in below; P2's harness landed, its control
+ran, and its treatment arm awaits a re-run; the build continues on the re-decide branch · plan of 2026-09-09 ·
 adversarially reviewed twenty-five rounds (`plan-critic`), then **cut**: the review
 loop's own output — a turn-lock protocol, a five-arm shim and a ceiling guard with its
 proof — grew to a third of the document and generated a blocking finding every round it
@@ -504,7 +504,15 @@ conversation.*
 
 **Harness half landed 2026-09-10 (PR #2406):** `--deny-shell` and `--deny-project-reads`
 on the e2e harness, exposed as `DENY_SHELL=1 DENY_PROJECT_READS=1` on `make e2e-run`,
-with the predicate below and 32 unit tests. The two billed runs are pending.
+with the predicate below and 41 unit tests. **Runs 2026-09-10:** the control arm
+(shell denied, no predicate) came back fail / recall 0.0 / proof quality 2 at $7.79 and
+54 minutes, against the July baseline's pass / 1.0 / 2 — the fixture has drifted, which
+is why the same-day control exists. The first treatment arm was **void**: it recorded
+zero path denials while reading `research.json` twice, because macOS hands the harness
+its workspace as `/var/folders/...` and the model reads `/private/var/folders/...`. The
+predicate now compares `realpath`s (PR #2406); the treatment arm needs one re-run. Both
+arms also saw `Read` of a `tool-results` spill file fail and the agent recover through
+`Grep` on the same file — pre-existing, with or without the predicate.
 
 Run one fixture on the **current** stack with `Bash` denied and `Read`/`Grep`/`Glob`
 restricted by the path predicate below, and compare the judge verdict against a
@@ -543,6 +551,8 @@ the sidecars" cannot hold, because **sidecars live inside it** (`join(projectPat
   matches nothing and strands every spill read.
 - A `Grep`/`Glob` call with no `path` means the project root and is denied; the corpus
   has 80 such `Glob` calls.
+- Compare `realpath`s, never spellings: a symlinked workspace (`/var/folders` versus
+  `/private/var/folders` on macOS) voided the first run.
 
 **The plugin is a separate read-only root only in the prototype's container layout.**
 On the current stack the e2e harness stages all 28 skills *inside* the project — of the
