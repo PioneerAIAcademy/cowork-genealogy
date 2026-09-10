@@ -1095,9 +1095,9 @@ saying not to fire it — so a break surfaces at release time rather than in a g
 carries Node 22, the pinned npm and the engine `npm ci`, and appending keeps the step
 required without a ruleset edit. Break it two ways before merging — a malformed
 `manifest.json`, which `mcpb validate` reds, and a `<` in one SKILL.md description, which
-the plugin packager reds — and confirm it is green on a clean tree. Under an hour. It is
-*not* currently on the `nothing-checks` register — file it with
-that label in the same PR, or the gap stays invisible to anyone reading the register.
+the plugin packager reds — and confirm it is green on a clean tree. Under an hour. No register
+entry: the fix lands in the same PR, and the `nothing-checks` register is for gaps
+that stay open.
 **New dependencies go in with npm, not pnpm** — the engine is negated out of the
 workspace and both artifacts install from its npm lockfile.
 
