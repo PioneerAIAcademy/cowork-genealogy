@@ -1,0 +1,130 @@
+# D3 compose skeleton for the search-agent prototype
+# (docs/plan/search-agent-prototype.md, "Week 1" D3). Throwaway scaffolding by the
+# plan's own words; ./sql and the shim's decide() are what the real build keeps.
+#
+# Topology the plan pins, and why it is written down: the shim is its OWN service
+# with the docker socket mounted, separate from the worker. A step-ceiling kill of
+# the worker must not take the shim down with it (nothing would then issue
+# ChangeMessageVisibility(0)), and a whole-container loss must still redeliver.
+# Fixed container_names (proto-*) so the shim's kill target is a stable string.
+#
+# Host ports: postgres 5434 (5433 belongs to the P1 probe's p1-postgres), minio
+# 9000/9001, elasticmq 9324 (SQS) / 9325 (stats). The worker is reachable inside
+# the compose network only.
+#
+# Offline shape checks: apps/server/tests/test_proto_config.py.
+name: proto
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: proto-postgres
+    environment:
+      POSTGRES_DB: proto
+      POSTGRES_PASSWORD: proto
+    ports:
+      - "5434:5432"
+    volumes:
+      # initdb runs ./sql/*.sql in name order on an EMPTY data dir only, which is why
+      # proto-down drops the volume (`down -v`) - the next up re-applies the schema.
+      - ./sql:/docker-entrypoint-initdb.d:ro
+      - proto-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d proto"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: proto-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: proto
+      MINIO_ROOT_PASSWORD: protoproto
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - proto-minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # One-shot: creates the `projects` bucket, then exits 0.
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    container_name: proto-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc alias set proto http://minio:9000 proto protoproto
+        && mc mb --ignore-existing proto/projects
+    restart: "no"
+
+  elasticmq:
+    image: softwaremill/elasticmq-native:1.7.1
+    container_name: proto-elasticmq
+    ports:
+      - "9324:9324"
+      - "9325:9325"
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 'http://localhost:9324/?Action=ListQueues' >/dev/null"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  worker:
+    build: ./worker
+    container_name: proto-worker
+    # D14 kills this container on a ceiling overrun (and the D3 `crash` turn exits it);
+    # every subsequent redelivery needs a worker to POST to.
+    restart: unless-stopped
+    environment:
+      PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  shim:
+    build: ./shim
+    container_name: proto-shim
+    restart: unless-stopped
+    # On SIGTERM the shim lets its in-flight long poll (up to 20 s) return, hands
+    # back anything that poll delivered, and waits for in-flight POSTs, all inside
+    # STOP_GRACE_S; this must cover that budget or compose SIGKILLs it at 10 s and
+    # the orphaned poll swallows the next message for the whole visibility timeout.
+    stop_grace_period: 30s
+    volumes:
+      # Read-write on purpose: killing the worker is a POST to the engine API.
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # The shim derives the SQS endpoint from this URL and supplies its own dummy
+      # credentials; elasticmq ignores them.
+      QUEUE_URL: http://elasticmq:9324/000000000000/turns
+      WORKER_URL: http://worker:8080/turn
+      WORKER_CONTAINER: proto-worker
+      HTTP_CONNECTIONS: "2"
+      # The step ceiling, pinned. docker-compose.ceiling.yml lowers it for the
+      # smoke's ceiling case and changes nothing else.
+      READ_TIMEOUT_S: "1800"
+      BACKOFF_BASE_S: "5"
+      BACKOFF_MAX_S: "300"
+    depends_on:
+      worker:
+        condition: service_healthy
+      elasticmq:
+        condition: service_healthy
+
+volumes:
+  proto-pgdata:
+  proto-minio:

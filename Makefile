@@ -373,6 +373,40 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+# ── Search-agent prototype: D3 compose skeleton (apps/server/proto/) ─────
+# postgres :5434 (5433 is the P1 probe's p1-postgres), minio :9000/:9001,
+# elasticmq :9324, plus the worker stub and the sqsd shim built from ./worker
+# and ./shim. Plan: docs/plan/search-agent-prototype.md, "Week 1" D3.
+# proto-up waits in a second call that names the long-running services only:
+# `up --wait` on the whole stack exits 1 the moment the minio-init one-shot
+# exits 0 (Compose v5.1.4) and abandons the wait before the worker is healthy.
+PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
+
+.PHONY: proto-up
+proto-up: ## D3 prototype: build + start postgres/minio/elasticmq/worker/shim and wait for health
+	$(PROTO_COMPOSE) up -d --build
+	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
+
+.PHONY: proto-down
+proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-applies on the next up)
+	$(PROTO_COMPOSE) down -v
+
+.PHONY: proto-logs
+proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
+	$(PROTO_COMPOSE) logs -f $(SERVICE)
+
+.PHONY: proto-send
+proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS="--behaviour ok"
+	cd apps/server && uv run python proto/enqueue.py $(ARGS)
+
+.PHONY: proto-smoke
+proto-smoke: proto-up ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
+	cd apps/server && uv run python proto/smoke.py
+
+.PHONY: proto-test
+proto-test: ## D3 offline tests: compose/conf/schema shape + the shim's pure decide()
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
