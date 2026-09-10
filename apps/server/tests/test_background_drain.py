@@ -305,7 +305,7 @@ async def test_a_killed_subagent_is_cleared_by_task_updated_alone(tmp_path):
     suppressed". `map_message` handled TaskStarted/Progress/Notification only,
     so a killed subagent stayed in the tracking set forever and every later turn
     spawned a drainer for a phantom. Harmless while that set was attribution
-    labels; load-bearing once it gates the drainer.
+    labels; now the operator log's count of what is still running.
     """
     client = BufferedFakeClient()
     agent = _agent_on(tmp_path, client)
@@ -361,7 +361,14 @@ async def test_a_task_without_a_tool_use_id_still_starts_the_drainer(tmp_path):
     await turn_events(agent, "launch a task with no tool_use_id")
     await asyncio.wait_for(producer, timeout=5)
 
-    assert agent._drain_task is not None, "no drainer started, so the fix did not engage"
+    # `_drain_task is not None` was here and could not fail: the drainer now
+    # starts on `self._client is not None`, so it is unconditionally true and
+    # the tool_use_id mutation this test exists to forbid sailed past it.
+    # Liveness is the thing keyed on task_id, so liveness is what to assert.
+    assert agent._live_tasks == {"task-1"}, (
+        "liveness is keyed on the optional tool_use_id, so a Task without "
+        "one registers nothing"
+    )
     assert agent._tasks == {}, "nothing to attribute to, which is the accepted cost"
     assert client.consumed == client.produced == POST_TURN + 2
     await asyncio.wait_for(agent._stop_drain(), timeout=5)

@@ -601,7 +601,7 @@ def map_message(
         # active ids must clear on a terminal status from EITHER message. Without
         # this arm a killed subagent stayed in the liveness set forever and every
         # later turn spawned a drainer for a phantom. Harmless while the set was
-        # only attribution labels; load-bearing now that it gates the drainer.
+        # only attribution labels; still useful as the operator log's count.
         #
         # `status` and `patch["status"]` are both read because the dataclass
         # carries the field while the CLI reports it inside the patch, and

@@ -1149,7 +1149,7 @@ predicate reads — `_FILE_WRITE_TOOLS`, `_EXFIL_GUARD_TOOLS` and
 `DEVICE_WRITE_TOOLS` — so the divergence above cannot recur by restatement. It
 comes out as:
 
-    ^(Write|Edit|NotebookEdit|Bash)$|.*device_commit_files
+    ^(Write|Edit|NotebookEdit|Bash)$|.*device_commit_files$
 
 Two corrections to what this paragraph said before review, both worth stating
 because the wrong version is the sort a reader would trust: the derivation named
