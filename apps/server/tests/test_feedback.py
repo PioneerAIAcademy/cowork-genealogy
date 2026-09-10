@@ -285,12 +285,21 @@ def test_missing_living_flag_counts_as_living():
     assert _person(tree, "P3")["facts"] == []
 
 
-def test_redacted_tree_leaks_no_living_name_date_or_ark():
+def test_no_bundle_entry_leaks_a_living_name_date_or_ark():
+    # Scans EVERY file the redaction returns, not just tree.gedcomx.json.
+    # _redact_living matches by exact name, so any OTHER unredacted tree copy
+    # that reaches the walk (a stray .bak, a snapshot, a future readable dump)
+    # ships living names/dates untouched. Mirror of the electron guard behind
+    # issue #2333: the .bak writer that produced exactly such a copy is gone,
+    # and this fails if one ever reappears.
     _, _, files = _redact_tree(_TREE)
-    raw = files["tree.gedcomx.json"].decode("utf-8")
-    for leak in ("Jane Marie", "Bobby", "3 March 1985", "Riverside, CA", "SECRET"):
-        assert leak not in raw
-    assert "Reuben Spencer" in raw  # the deceased subject survives
+    assert files
+    for name, buf in files.items():
+        raw = buf.decode("utf-8")
+        for leak in ("Jane Marie", "Bobby", "3 March 1985", "Riverside, CA", "SECRET"):
+            assert leak not in raw, f"{leak} leaked into {name}"
+    # the deceased subject still ships in the bundle
+    assert "Reuben Spencer" in files["tree.gedcomx.json"].decode("utf-8")
 
 
 def test_couple_facts_cleared_only_when_an_endpoint_is_living():
