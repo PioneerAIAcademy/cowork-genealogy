@@ -15,11 +15,14 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-09-05 (a ruling that generalizes is promoted into this
-  file as part of closing its issue — "Rulings that generalize" below; the
-  satisfiability bar is inspection rather than a rate, and the 1.2% precedent
-  quoted on the board is corrected to 2.9%. Previously 2026-08-31, when a direct
-  `Agent` spawn of a paired agent became the sanctioned in-loop route)
+- **Last updated:** 2026-09-10 (the bridge — a rule that appears to require
+  observing that a step *ran* becomes decidable once the step is made to deposit
+  its output — is written into the decision procedure and into "Rulings that
+  generalize". Previously 2026-09-05, when a ruling that generalizes began being
+  promoted into this file as part of closing its issue, the satisfiability bar
+  became inspection rather than a rate, and the 1.2% precedent quoted on the
+  board was corrected to 2.9%; and 2026-08-31, when a direct `Agent` spawn of a
+  paired agent became the sanctioned in-loop route)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -115,6 +118,17 @@ Concretely, this is a placement question with six answers — **the layer map**:
 4. Only judgeable over a whole run? → **harness validator**, labelled eval-only.
 5. Needed at call time but unenforceable? → **tool description**.
 6. Otherwise → **prose, labelled as guidance rather than as a rule.**
+
+**Before answering step 1 "no", try the bridge.** A rule that appears to require
+observing that a step *ran* returns to step 1 the moment the step is made to
+leave a durable artifact, because the artifact is a project document. The shipped
+instance is the mentor gate in `research_append`: it never observes that
+`gps-mentor` ran, only that a `proof-critique` verdict backing each resolved
+question's summary is on record — a foreign-key join over data already in memory.
+So the test is not *"can we see the skill run"*, which nothing in production can.
+It is **"is there a later write to gate, and can the step be made to leave
+something behind."** Ask it before classifying a rule as unreachable; the class
+that is genuinely out of reach is smaller than it looks.
 
 ### Reaching a paired agent: the route is free, the guarantee is not
 
@@ -243,10 +257,13 @@ Four reasons, in the order they carry weight:
   different — the same shape as a failed wiki call, where the agent gets an
   actionable error and quietly ships a thinner answer. This ruling therefore
   depends on refusals being **counted**, not on a user complaining. The hosted
-  feedback bundle already carries the full transcript with tool results, and
-  issue #1558 is the machinery to run detectors over it. Until something reads
-  them, treat silence as the absence of a measurement, not as evidence the gates
-  are right.
+  feedback bundle already carries the full transcript with tool results, and the
+  machinery to run detectors over it landed 2026-08-25 (issue #1558):
+  `guardrail_shadow_report.py --feedback-dir`, over a hand-collected bundle
+  corpus. It is run by hand, and what it counts is detector firings — for one
+  family that equals a refusal count, and there is still no general count of gate
+  refusals in production. So silence continues to mean nobody looked, not that
+  the gates are right.
 
 **The two tiers still classify; they no longer imply a mechanism.** Integrity
 gates — schema validity, the raw-write lockdown — are the ones whose violation
@@ -371,6 +388,8 @@ issues are already closed, each carrying rulings at that level of decay.
 | **An accepted false-deny cost is a legitimate reason to ship**, when it is stated and the refusals inspect clean. A gate need not be perfect to be correct. | limit 1 balancing | 2026-09-02 | #2030 |
 | **A gate ships with no override mechanism** until a false deny is observed in the field. | every gate | 2026-08-24 | this ADR, "Overridable or not" |
 | **Snapshot when the precondition must be satisfied by someone else; read live when it is the same author's own prior step.** | every gate | — | this ADR, "Snapshot or live" |
+| **Coverage follows the artifact, not the agent.** A writer-tool precondition constrains the write, never who made it, so a gate is always "check this section" and never "check this agent". An agent's judgement that never reaches a project document is advice — gate whoever writes it down, or accept it and record what would reopen the question. | reading a gap as "this agent is uncovered" | 2026-09-10 | `docs/specs/schemas/ownership.json`; `record-extractor`'s identity assessment, gated at the `person_evidence` write (#1731, #2409) |
+| **The bridge: require the step to deposit its output, then gate on the output.** A rule that seems to need "did this step run" becomes a step-1 rule when the step must leave a durable artifact — the gate reads the artifact, never the call history. | placement, before calling a rule unreachable | 2026-09-10 | this ADR, "The decision procedure"; the mentor gate in `research_append` |
 
 **Promoting one.** When a ruling's reasoning would apply to a gate other than
 the one it was made on, add a row here in the PR that closes the issue, and link
@@ -487,10 +506,11 @@ out and the test watched to fail.
 > gate rather than as a general mechanism. Conservative scoping would also need
 > teeth beyond review at that point.
 >
-> Or refusal counting lands (issue #1558) and shows a gate refusing at a rate
-> nobody can account for — the same trigger reached by measurement instead of by
-> a complaint, which is the route that does not depend on a researcher noticing
-> something invisible to them.
+> Or refusal counting lands — a general one, across gates, in production; the
+> bundle reader that issue #1558 shipped is per-detector and hand-run — and shows
+> a gate refusing at a rate nobody can account for. That is the same trigger
+> reached by measurement instead of by a complaint, which is the route that does
+> not depend on a researcher noticing something invisible to them.
 >
 > Or a platform mechanism arrives that keeps a rule binding across a whole
 > session without a tool call (the "constraint pinning" class of mitigation that
