@@ -7,6 +7,18 @@ dependency trees (root pnpm workspace, `packages/engine/mcp-server` npm,
 Last reviewed: **2026-09-09** (root pnpm workspace and `eval/app`). The engine tree
 was last reviewed 2026-09-08 and is unchanged since; see #2352.
 
+> **This file is the mechanism, by decision.** @DallanQ ruled on 2026-09-09 (#2352)
+> that no CI job will audit any dependency tree: failing the build, warning without
+> failing, and a scheduled run that files an issue were each considered and rejected.
+> The gap stays on the `nothing-checks` register as an **accepted** one, which makes
+> re-running the audits after any dependency bump and updating this file the only thing
+> standing between a new advisory and a shipped artifact.
+>
+> **The paragraph below is known to be partly wrong and is #2352's to re-derive.** Its
+> "every finding below except `fast-uri` lives in a devDependency" half no longer holds
+> — see the `electron` note underneath it — and #2352 owns the refresh rather than this
+> PR patching around it.
+
 **Reachability, once, up front.** Every finding below except `fast-uri` lives in a
 **devDependency** — dev tooling (eslint, vite/vitest, electron-builder,
 `@anthropic-ai/mcpb`) or the internal-only Eval CRUD UI. Check reachability with
@@ -108,9 +120,12 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   written.
 
 - **`eval/app`** — **Fixed 2026-09-08**, then **again 2026-09-09**. The first pass was
-  `npm audit fix --package-lock-only` and cleared five packages, not the one originally
-  recorded here: `nanoid` (HIGH GHSA-2v37-7h3g-55p8), `brace-expansion`, `browserslist`,
-  `baseline-browser-mapping` and `postcss-selector-parser`.
+  `npm audit fix --package-lock-only` and cleared **four** flagged packages, not the one
+  originally recorded here: `nanoid` (HIGH GHSA-2v37-7h3g-55p8), `brace-expansion`,
+  `browserslist` (two advisories) and `postcss-selector-parser`.
+  `baseline-browser-mapping` moved in the same pass but was not among them — its
+  advisory only entered the reviewed feed at 20:41 that evening, after the audit that
+  flagged the four.
 
   That claim went stale within hours. Five advisories published 2026-09-08 between 20:46
   and 21:25 UTC — the Next.js pair `GHSA-p293-qw3h-jr36` / `GHSA-2xp9-vwfh-vxw4` plus
@@ -119,11 +134,19 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   (without which the full audit still reports three). Both audits now report
   `found 0 vulnerabilities`; `tsc` clean, 20 files / 226 tests, `next build` green.
 
-  Neither Next.js advisory was reachable here — there is no `images` block in
+  Neither was exposed, but the two need separate reasons and an earlier revision of
+  this entry gave only one. **`GHSA-2xp9-vwfh-vxw4`** is the Image Optimization / AVIF
+  path, and the image argument disposes of it: there is no `images` block in
   `next.config.mjs`, so remote URLs are refused at the allowlist gate and `formats`
-  defaults to webp; there is no `public/`; and `next/image` is used nowhere. Fixed
-  because it is two lines and this file exists to record a clean audit, not because
-  anything was exposed. **This entry is the argument for #2352:** the tree was clean and
+  defaults to webp; there is no `public/`; and `next/image` is used nowhere.
+  **`GHSA-p293-qw3h-jr36` is not an image bug** — it is unauthenticated RCE on
+  *windows-hosted* servers, App Router included, with no documented workaround, and
+  `eval/app` is App Router and is launched on Windows by `eval/Start.bat`. What limits
+  it is the host and the reach, neither of which the image argument touches: it needs a
+  Windows filesystem, both npm scripts bind `--hostname 127.0.0.1`, and `middleware.ts`
+  403s any non-loopback `Host` on `/api/:path*`. Fixed because it is two lines and this
+  file exists to record a clean audit — but "not reachable" has to be argued per
+  advisory, not once per bump. **This entry is the argument for #2352:** the tree was clean and
   documented as clean, and was neither eight hours later.
 
 - **tar** (CRITICAL GHSA-23hp-3jrh-7fpw + HIGH GHSA-8x88-c5mf-7j5w + 3 MODERATE),
@@ -192,7 +215,12 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   `apps/electron` all declare `^3.2.4`, so the fix is a **3 → 4 major** across three
   packages rather than a lockfile refresh — the shape the withdrawn `esbuild` entry
   only appeared to have. `packages/engine/mcp-server` and `eval/app` already declare
-  `^4.1.10` and are unaffected.
+  `^4.1.10`, but **the engine is affected and its fix is a refresh, not a major**:
+  `packages/engine/mcp-server`'s lockfile pins **4.1.10**, inside the vulnerable range,
+  and `npm update --package-lock-only vitest` clears it there with no `package.json`
+  change. `eval/app` is clear because this PR moved it to 4.1.11, not because of what it
+  declares. Reading a declared range as though it were the resolved version is the
+  mistake that produced the original wording here.
   **Revisit when** someone takes the vitest 4 migration, or a 3.x backport publishes.
 
 - **extract-zip** (HIGH, unvalidated symlink path traversal) — root pnpm workspace,
@@ -251,8 +279,13 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 - **esbuild** — **withdrawn 2026-09-09, see the Fixed entry above.** This entry said
   clearing it needed a vite 7→8 migration across three packages. `vite@7.3.6` already
   admits the 0.28.1 patch inside the declared `^7.2.6`, so it was a lockfile refresh.
-  Kept as a record because the reason was accurate when written and went stale, which is
-  the failure mode #2352 is about.
+  Kept as a record, but **not** as an example of a reason going stale — it was wrong
+  when written. On 2026-07-31, `esbuild@0.28.1` (published 2026-06-11) and `vite@7.3.6`
+  (2026-06-25) both already existed, `apps/web` and `apps/electron` already declared
+  `^7.2.6`, and nothing pinned vite to 7.3.5, so the same one-line refresh would have
+  cleared it that day. **The check that catches this is the dependency's publish date
+  against the entry's own commit date**, which is cheap and was never run. #2352's
+  re-derive should apply it to every entry here.
 
 ## Automated dependency updates
 
