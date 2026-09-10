@@ -185,7 +185,7 @@ def compute_signal(
         )
 
     # Coverage gap: a dimension the baseline graded that the candidate did NOT
-    # (the candidate test aborted or the judge was skipped). `candidate=None`
+    # (the candidate test aborted, the judge was skipped, or a validator failed - which is graded but excluded from the modal). `candidate=None`
     # can't be a "regression" score-wise, but it means we can't confirm the
     # result on that test — so it must block LOOKS GOOD, not pass silently.
     def _has_gap(rows: list[DimRow]) -> bool:

@@ -1172,7 +1172,12 @@ def test_judge_skipped_doesnt_override_aborted():
 
 def test_judge_skipped_doesnt_override_validator_fail():
     """When validators failed, that's the load-bearing signal — don't
-    'fix it' to fail via judge_skipped (which is also True in this case)."""
+    'fix it' to fail via judge_skipped.
+
+    This test passes `judge_skipped=True` explicitly. It used to be that a
+    validator failure implied it, so the two arrived together and either could
+    have produced the `fail`; since #2057 they are independent and only the
+    validator branch can, which is what this pins."""
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
@@ -1852,9 +1857,11 @@ def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
 # A negative fixture with a non-empty `correct_skill` and NO
 # `grade_on_invariant`. That second condition is load-bearing and easy to get
 # wrong: `grade_on_invariant` is the FIRST guard in
-# flag_routing_negative_judge_fail, so both search-wikipedia negatives (which
-# carry it) are exempt from the coercion and would make this test pass for the
-# wrong reason. 81 of the committed negative fixtures qualify; this one is
+# flag_routing_negative_judge_fail, so both search-wikipedia negatives (both
+# of the ones with a non-empty correct_skill carry it; the third is
+# out-of-scope with `correct_skill: []`) are exempt from the coercion and would
+# make this test pass for the wrong reason. 81 of the committed negative
+# fixtures qualify; this one is
 # picked because its scenario exists and OrchestratorPaths resolves it.
 NEGATIVE_TEST_PATH = (
     REPO_ROOT / "eval/tests/unit/check-warnings/negative-project-status.json"
@@ -1940,7 +1947,16 @@ def test_a_failing_gating_validator_no_longer_skips_the_judge(tmp_path, monkeypa
 def test_an_abort_still_skips_the_judge(tmp_path, monkeypatch):
     """The abort guard is the half of the gate that stays. #2057 removed only
     the `validators_passed` conjunct; an aborted run has no transcript worth
-    grading and paying for one is the cost the original gate existed to avoid."""
+    grading and paying for one is the cost the original gate existed to avoid.
+
+    COUNT THE CALLS. Asserting `skipped is True` and `dimensions == []` does
+    NOT pin this: `orchestrator.py:634`'s `except Exception` turns any raise
+    from the judge into exactly that shape, so a fake judge that raises looks
+    identical to a judge never called. This test shipped once in that form and
+    passed with the gate replaced by `if True:` while the judge ran. The call
+    counter and `error is None` are the only things that tell a real skip from
+    a swallowed call, and the diff's own runlog.py comment says as much: a
+    nonzero duration_ms beside `skipped: true` is a normal shape."""
     spec = load_test(WIKI_TEST_PATH)
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
@@ -1953,20 +1969,36 @@ def test_an_abort_still_skips_the_judge(tmp_path, monkeypatch):
             aborted_reason="wall_clock_cap",
         )
 
-    def exploding_judge(**kwargs):
+    calls: list = []
+
+    def counting_judge(**kwargs):
+        calls.append(kwargs)
         raise AssertionError("the judge must not be called on an aborted run")
 
     monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
     monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
-    monkeypatch.setattr(orchestrator, "_run_judge", exploding_judge)
+    monkeypatch.setattr(orchestrator, "_run_judge", counting_judge)
 
     entry = asyncio.run(_run_one_test_async(
         spec=spec, auth=auth, paths=paths,
         model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
         timestamp="2026-09-10_00-00-00",
     ))
-    assert entry["runs"][0]["judge"]["skipped"] is True
-    assert entry["runs"][0]["judge"]["dimensions"] == []
+    assert not calls, (
+        f"the judge was called {len(calls)}x on an aborted run; the abort guard "
+        f"is gone and the raise was swallowed by orchestrator's except Exception"
+    )
+    judge = entry["runs"][0]["judge"]
+    assert judge["skipped"] is True
+    assert judge["dimensions"] == []
+    assert judge.get("error") is None, (
+        "a genuine skip records no error; an error here means the judge WAS "
+        "called and its exception was swallowed into the skipped shape"
+    )
+    assert not judge.get("duration_ms"), (
+        "duration_ms is set on every attempted branch, so a nonzero value here "
+        "is a judge call that happened"
+    )
 
 
 def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):

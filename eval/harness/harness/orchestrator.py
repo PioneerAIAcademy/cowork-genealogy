@@ -1203,10 +1203,17 @@ def flag_routing_negative_judge_fail(
     comment), and two ut_citation_003 runs. On those the 1 names a real defect
     that the `pass` outcome already hides. The score still goes to null there;
     what preserves the signal is the warning above plus
-    `review_sample.is_mandatory`'s third trigger, not the dimension. Gating the
-    coercion on empty output would fix the over-fire and is NOT done here
-    because #2196 fixes the signature explicitly; it is a lead call, and the
-    numbers above are the evidence for making it.
+    `review_sample.is_mandatory`'s third trigger, not the dimension.
+
+    **Do not "fix" this by gating on empty output.** That is the gate
+    unit-test-spec.md §5.10 forbids, on evidence that still applies: 4 of the
+    old floor's overrides had an empty `text_response` and zero turns, but so
+    did 6 of its 20 confirmations, so an empty-output gate would have fired on
+    10 cells and been wrong on 6. It would suppress this over-fire and keep
+    coercing the confirmations whose output happened to be empty, which is not
+    a clean fix - it trades a measurable 4 for an unmeasured 6. The signature
+    is #2196's, deliberately. Tracked as issue #2443, whose first step is
+    adjudicating those 4 runs rather than changing this function.
 
     **This is not the deleted floor.** The floor rewrote a 1 to a 2 — a claim
     that the skill did better than the judge said. N/A is a refusal to grade a
@@ -1303,7 +1310,10 @@ def flag_routing_negative_judge_fail(
                     ),
                     "name": dd["name"],
                     "score": dd.get("score"),
-                    "rationale": dd.get("rationale"),
+                    # `or ""` deliberately: this field is the only durable record of
+                    # the judge's reasoning, and a null here is indistinguishable
+                    # from "the judge said nothing" to whoever reads the log.
+                    "rationale": dd.get("rationale") or "",
                 })
             # Rewrite the rationale as well as the score, following
             # apply_deterministic_deference and coerced_tool_arguments_to_na. A

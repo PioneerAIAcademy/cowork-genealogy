@@ -312,8 +312,9 @@ export type RunInvocation = 'skill' | 'test' | 'tag';
  * candidate pruning destroys the annotation history it would otherwise be
  * derived from.
  *
- * `tests` has no fixed length — the harness adds every test that failed or
- * scored a 1 or 2 on any dimension to the five it chooses.
+ * `tests` has no fixed length — the harness adds every test that failed,
+ * scored a 1 or 2 on any dimension, or carries a
+ * `coerced_routing_negative_to_na` warning, to the five it chooses.
  */
 export interface ReviewSample {
   tests: string[];

@@ -1630,7 +1630,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 2. **Prompt caching for batched skill runs.** When running 15 tests for one skill, the SKILL.md + references (~5-10K tokens) is identical across all tests. With prompt caching, cached input tokens cost 90% less. The harness structures prompts so cacheable content (skill prompt) comes first and test-specific content (scenario state, user message) comes last.
 
-3. **Judge every non-aborted run.** Grading a structurally-failed run is what makes it diagnosable; it costs ~$0.0135 per validator-failing run, and validator-failing runs are ~5% of the committed corpus (109 of 2131, measured 2026-09-10).
+3. **Judge every non-aborted run.** Grading a structurally-failed run is what makes it diagnosable; it costs ~$0.0135 per validator-failing run. 114 of the 2131 committed runs failed a validator; the 109 of those that are non-aborted are the newly-judged, cost-bearing set (5.1%, measured 2026-09-10).
 
 4. **Input trimming is deferred to a later version.** The earlier draft of this spec proposed trimming `research.json` to only the sections each skill reads. v1 sends the full scenario files unchanged — this matches what Cowork does in production and removes a class of bugs where a skill behaves differently in eval because trimming hid state. Re-evaluate trimming if `cached_input_tokens` rates fall below target and per-run costs prove materially higher than estimated.
 
