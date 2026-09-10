@@ -53,15 +53,14 @@ two spellings are the indexer's error. The findings therefore give the family
 as **Weichel** and note the *Weishel* index spelling in parentheses, so an agent
 quoting the index verbatim still matches.
 
-The household schedule spans two images, cited here so the reading above can be
-checked: `ark:/61903/3:1:3Q9M-C395-G92G-2` and
-`ark:/61903/3:1:3Q9M-C395-G9GQ-F`. Both are the original 1926 census schedule
+The household schedule image is `ark:/61903/3:1:3Q9M-C395-G92G-2`, cited here
+so the reading above can be checked. That is the original 1926 census schedule
 for Weyburn No. 67; the index entries the fixture hands the agent
 (`ark:/61903/1:1:QP51-QH2Y`, Wendel's person entry) and the household record
 the graded run cited (`ark:/61903/1:2:QTM1-JBYT`) are FamilySearch's indexed
-transcript of those pages, not the pages themselves. An agent is not expected
-to open the images — no finding scores on the surname spelling — but a reviewer
-checking the artifact claim needs them.
+transcript of that page, not the page itself. An agent is not expected to open
+the image — no finding scores on the surname spelling — but a reviewer checking
+the artifact claim needs it.
 
 **The census Jacob fills the placeholder — he does not compete with it.** The
 tree's father `GX6M-5HT` is an unnamed placeholder (surname "Weichel", a bare
