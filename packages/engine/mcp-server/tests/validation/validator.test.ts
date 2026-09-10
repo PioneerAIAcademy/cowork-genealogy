@@ -1082,22 +1082,48 @@ describe("Project Validator", () => {
       }
     );
 
-    it("still accepts a valid supporting_assertion_ids and an empty one", async () => {
-      // Polarity for the four above, and the case 36 shipped fixtures are in.
-      for (const value of [[], undefined]) {
-        const research = withConflictAndSummary("resolved", []);
-        if (value === undefined) {
-          (research.proof_summaries[0] as Record<string, unknown>)
-            .supporting_assertion_ids = [];
-        } else {
-          (research.proof_summaries[0] as Record<string, unknown>)
-            .supporting_assertion_ids = value;
-        }
-        const result = await validateParsed(research, minimalTree);
-        expect(
-          result.errors.some((e) => e.message.includes("supporting_assertion_ids"))
-        ).toBe(false);
-      }
+    it.each([
+      ["a NON-EMPTY array of existing ids", ["a_001"]],
+      ["an empty array", []],
+    ])("still accepts %s", async (_label, value) => {
+      // Polarity for the four negative cases above.
+      //
+      // An earlier version of this looped over `[[], undefined]` and assigned
+      // `[]` in BOTH branches, so the non-empty case — which is what 36 shipped
+      // fixtures actually carry — was never exercised, while the comment
+      // claimed it was. Third instance in this PR family of a comment asserting
+      // coverage a test does not have, so the non-empty row is explicit and
+      // supplies a real assertion for the referential check to resolve.
+      const research = withConflictAndSummary("resolved", []);
+      (research as Record<string, unknown>).assertions = [
+        {
+          id: "a_001",
+          source_id: "src_001",
+          record_id: "test",
+          record_role: "principal",
+          fact_type: "birth",
+          value: "1850",
+          information_quality: "primary",
+          informant: "self",
+          informant_proximity: "self",
+          evidence_type: "direct",
+          extracted_for_question_ids: [],
+        },
+      ];
+      (research.proof_summaries[0] as Record<string, unknown>)
+        .supporting_assertion_ids = value;
+      const result = await validateParsed(research, minimalTree);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("supporting_assertion_ids")
+        )
+      ).toBe(false);
+      // And the referential check must not have flagged the id either — the
+      // failure this row exists to rule out is a valid id being reported as
+      // dangling.
+      expect(
+        result.errors.some((e) => e.message.includes("references assertion 'a_001'"))
+      ).toBe(false);
     });
 
     it("still accepts an empty array", async () => {
