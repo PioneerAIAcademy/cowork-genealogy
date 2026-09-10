@@ -366,12 +366,33 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	# agent and check whether a harmless tool call actually landed, read off
 	# the tool_result rather than the agent's own prose.
 	#
-	# Answered 2026-08-30 (Claude Code 2.1.251, SDK 0.2.128): BOTH bind, so a
+	# Answered 2026-08-30 (Claude Code 2.1.220, SDK 0.2.128): BOTH bind, so a
 	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
 	# moves, or before adding a deny on the strength of it binding.
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
+
+.PHONY: probe-p1-resume
+probe-p1-resume: $(ENGINE_BUILD) ## P1 cross-process resume probe (docker postgres + 2 billed turns): make probe-p1-resume VARIANT=clean|mid-delegation|mid-model-call|forced
+	docker start p1-postgres >/dev/null 2>&1 || docker run -d --name p1-postgres -e POSTGRES_PASSWORD=p1 -e POSTGRES_DB=p1 -p 5433:5432 postgres:16-alpine >/dev/null
+	@for i in $$(seq 1 60); do docker exec p1-postgres pg_isready -U postgres >/dev/null 2>&1 && break; sleep 0.5; done
+	@docker exec p1-postgres pg_isready -U postgres >/dev/null 2>&1 || { echo "p1-postgres is not accepting connections after 30s"; exit 1; }
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.kill_resume --variant $(or $(VARIANT),clean)
+
+.PHONY: probe-bash-deny
+probe-bash-deny: $(ENGINE_BUILD) ## D1–2 probe: is disallowed_tools=["Bash",…] a pool removal or a call-time refusal under the prototype option set? (3 short billed sessions)
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_bash_deny
+
+.PHONY: probe-registration
+probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn image-reader by that name? (1 billed session + 1 subagent turn)
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_registration
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
