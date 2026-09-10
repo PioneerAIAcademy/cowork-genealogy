@@ -11,8 +11,9 @@
 // A lane expressed as prose loses to a caller that prompts against it, and a
 // lane expressed as a tool PARAMETER is forgeable by the caller. A lane
 // expressed as tool identity is not: the agent's `tools:` frontmatter simply
-// omits the broad writer, so there is no call it can emit. See
-// docs/plan/person-evidence-append-tool-plan.md §D1-D2.
+// omits the broad writer, so there is no call it can emit. The durable record
+// of that reasoning is ADR-0011, "Put a guardrail that must hold at the write
+// boundary"; the plan doc this used to cite was deleted when the work shipped.
 //
 // The restriction is passed as a second function argument to `researchAppend`,
 // NOT as a field on the tool input — see `ResearchAppendOptions` for why that
