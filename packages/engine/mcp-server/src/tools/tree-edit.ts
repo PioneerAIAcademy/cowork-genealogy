@@ -281,7 +281,15 @@ function assertNodeHasRef(
   }
 }
 
-/** Remove the `primary` flag from the holder's other facts of the same type. */
+/** Remove the `primary` flag from the holder's other facts of the same type.
+ *
+ *  Fires only as a side effect of designating a REPLACEMENT primary, so it can
+ *  move the flag but never retire it. Clearing without a replacement is
+ *  `primary: false` on add_fact/update_fact, which is the state a newly-surfaced
+ *  conflict needs: `materialize_facts` never sets `primary` and surfaces a
+ *  conflict when a second vital fact lands, so a pre-existing flag would
+ *  otherwise keep asserting a concluded value the evidence no longer supports
+ *  (10 such persons across the committed e2e final trees, 2026-09-10). */
 function clearPrimaryOfType(holder: FactHolder, type: string | undefined, exceptId: string | undefined): void {
   for (const f of holder.facts ?? []) {
     if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
@@ -348,6 +356,11 @@ async function applyOperation(
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
+      // `primary: false` is an INSTRUCTION, never a stored value. The persisted
+      // schema pins the flag to `const: true` (omit-when-false, for token count
+      // — simplified-gedcomx-spec §6), so the key is dropped here and the
+      // document stays conformant. See clearPrimaryOfType's note.
+      if (fact.primary === false) delete fact.primary;
       assertNodeHasRef(fact, "the added fact", "add_fact");
       await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
@@ -372,6 +385,15 @@ async function applyOperation(
       const factHadRef = hasNonNullRef(existing);
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
+        // `primary: false` clears the flag rather than storing a false — the
+        // only way to reach "this type has no concluded value" while a conflict
+        // is open. Assigning it would fail the document validator, whose own
+        // message ("omit it rather than setting false") is advice no op could
+        // follow until this existed.
+        if (k === "primary" && v === false) {
+          delete (existing as any).primary;
+          continue;
+        }
         (existing as any)[k] = v;
       }
       if (factHadRef && !hasNonNullRef(existing)) {
@@ -814,7 +836,8 @@ export const treeEditSchema = {
         description:
           "The fact to add (full, no id). date/standard_date/place/" +
           "standard_place/value are plain strings (date: \"2 October 1876\"), never nested objects. " +
-          "Set `primary: true` to make it the primary of its type.",
+          "Set `primary: true` to make it the primary of its type; `primary: false` " +
+          "adds it without one, leaving any existing primary of that type alone.",
       },
       name: {
         type: "object",
