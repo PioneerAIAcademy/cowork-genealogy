@@ -364,7 +364,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub — except the party a relationship/marriage assertion NAMES but gives no persona (materialize_facts's named-party form, tree-materialization-spec.md section 4.6), where a sourced name is the whole of what the record supports and the mandatory ref still binds. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else.",
+      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub — except the party a relationship/marriage assertion NAMES but gives no persona (materialize_facts's named-party form, tree-materialization-spec.md section 4.6), where a sourced name is the whole of what the record supports and the mandatory ref still binds. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else. tree-edit may CLEAR `primary` (`primary: false`, never stored) to retire a concluded value while a conflict is open; it may not set one.",
       "failure": "This file is the upload target. An unsourced person written here is uploaded to FamilySearch as fact.",
       "remedy": "Mint through person-evidence with the record's facts attached; correct through tree-edit; conclude through proof-conclusion.",
       "override": "none"
