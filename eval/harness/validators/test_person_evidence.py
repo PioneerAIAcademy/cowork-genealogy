@@ -364,23 +364,26 @@ def test_stub_person_created_and_linked(before_state, after_state, tool_calls, t
     # what makes the provenance enforced rather than asserted. Either arm
     # counts: the persona form for a party with its own persona on the record,
     # the named-party form for one the record only names.
-    minted_by_materialize = any(
-        "materialize_facts" in str(tc.get("tool") or "") for tc in (tool_calls or [])
-    )
+    materialize_ops = [
+        op
+        for tc in (tool_calls or [])
+        if "materialize_facts" in str(tc.get("tool") or "")
+        for op in _ops_arg(tc.get("args") or {})
+    ]
+    minted_by_materialize = bool(materialize_ops)
     # Read the `operation` field, never a substring of the serialized args: a
     # blob match flags any call whose text happens to contain "add_person"
     # (a rationale, a note, a name), which is a guard that refuses correct work.
-    def _ops_of(args: dict) -> list[dict]:
-        batch = args.get("ops")
-        return [o for o in batch if isinstance(o, dict)] if isinstance(batch, list) else [args]
-
+    # `_ops_arg` is the shared normalizer, and it also recovers a STRINGIFIED
+    # `ops` — a shape its docstring records as real rather than hypothetical,
+    # and one a hand-rolled `isinstance(list)` check silently misses.
     add_person_ops = [
         tc
         for tc in (tool_calls or [])
         if "tree_edit" in str(tc.get("tool") or "")
         and any(
             str(op.get("operation") or "") == "add_person"
-            for op in _ops_of(tc.get("args") or {})
+            for op in _ops_arg(tc.get("args") or {})
         )
     ]
     assert minted_by_materialize and not add_person_ops, (
@@ -396,19 +399,28 @@ def test_stub_person_created_and_linked(before_state, after_state, tool_calls, t
         "and nothing checks against the assertion."
     )
 
-    # Belt and braces: whatever minted her, every name carries a real ref.
-    for pid in {e.get("person_id") for e in linked_to_new}:
-        person = next((p for p in after_t.get("persons", []) if p.get("id") == pid), None)
-        for name in (person or {}).get("names") or []:
-            refs = [
-                s.get("ref")
-                for s in (name.get("sources") or [])
-                if isinstance(s, dict) and str(s.get("ref") or "").strip()
-            ]
-            assert refs, (
-                f"new stub person {pid} carries a name with no source-ref "
-                f"({name.get('given')!r} {name.get('surname')!r})."
-            )
+    # On a fixture tagged `named-party`, the mint must use THAT arm. Without
+    # this the check cannot tell branch 3 from branch 2, so the one behaviour
+    # this whole change introduces would go unverified by anything except a
+    # human reading a transcript.
+    if "named-party" in (test.get("tags") or []):
+        named_party_ops = [
+            op for op in materialize_ops
+            if str(op.get("assertionId") or "") and str(op.get("relatedRole") or "")
+        ]
+        assert named_party_ops, (
+            "this fixture names a party the record gives no persona, so the mint must use "
+            "materialize_facts's NAMED-PARTY form ({ assertionId, relatedRole, name }). "
+            f"materialize_facts ops seen: {materialize_ops}. The persona form "
+            "({ recordId, recordRole }) is the right call only when that role HAS a persona "
+            "on the record carrying something to materialize."
+        )
+
+    # No after-state ref sweep here. tree-materialization-spec section 6 keeps
+    # `tree_edit add_name` deliberately ref-tolerant, so a legitimate ref-less
+    # name added later would fail a check the spec beside it permits. The call
+    # assertion above is the real guarantee: materialize_facts resolves the ref
+    # or refuses, so a mint that went through it cannot lack one.
 
     a_005 = _assertions_by_id(after_r).get("a_005")
     if _persona_reachable(after_r, a_005):
@@ -603,9 +615,11 @@ def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
     return pairs
 
 
-def _materialize_ops(args: dict) -> list[dict]:
-    """The op dicts a `materialize_facts` call carries, tolerating a stringified
-    `ops`.
+def _ops_arg(args: dict) -> list[dict]:
+    """The op dicts a batched tool call carries, tolerating a stringified `ops`.
+
+    Shared by the `materialize_facts` coverage check and the `tree_edit`
+    add_person check; both take the same `ops`-or-flat argument shape.
 
     The tool itself recovers that shape via `coerceJsonArg`, and the mock records
     the raw model args, so `ops` reaching a validator as a JSON string is real,
@@ -881,7 +895,7 @@ def test_matched_persona_is_materialized_onto_its_person(
     ]
     named = set()
     for args in materialize_args:
-        for op in _materialize_ops(args):
+        for op in _ops_arg(args):
             # A named-party op (`assertionId`) writes a sourced NAME and never a
             # fact, so it cannot discharge a demand whose message is "the pe_
             # link landed and the facts did not". Counting it would let this

@@ -603,11 +603,17 @@ function applyNamedPartyOp(
   // not give the persona anything to write, so it re-created the same dead end,
   // and it broke idempotency (the first call mints the person, so the second
   // call refuses itself).
-  const siblingCanMint = siblings.some((a: any) => {
-    const ft = String(a.fact_type ?? "").toLowerCase();
-    if (a.evidence_type === "negative") return false;
-    return NAME_TYPES.has(ft) || GENDER_TYPES.has(ft) || !SKIP_TYPES.has(ft);
-  });
+  // A NAME assertion specifically, not merely "something to materialize". The
+  // persona arm refuses to mint a person it cannot name, so a persona carrying
+  // only a gender or only a birth is not a better alternative: steering there
+  // errors, and this arm refusing sends the caller back to the call that just
+  // failed. That left the party writable by neither arm, which is the failure
+  // this whole arm exists to remove. Live shape: a head_of_household persona
+  // of [birth, birth] with no name.
+  const siblingCanMint = siblings.some(
+    (a: any) =>
+      a.evidence_type !== "negative" && NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()),
+  );
   if (siblings.length > 0 && siblingCanMint) {
     const personIdHint = str(op.personId) !== undefined ? `personId: '${str(op.personId)}', ` : "";
     throw new MaterializeFactsError(

@@ -1717,4 +1717,60 @@ describe("materialize_facts", () => {
       expect(f.type).not.toMatch(/[Pp]arent/);
     }
   });
+
+  it("(53) a sibling persona with no NAME assertion does not block the named-party arm", async () => {
+    // The writable-by-neither-arm gap this closes: siblingCanMint used to accept
+    // a persona carrying only a gender or only a fact, but the persona arm
+    // refuses to mint a person it cannot name. Steering there errored, this arm
+    // refused and pointed back at it, and add_person is prohibited for a
+    // record-derived person, so nothing could write her.
+    for (const sibling of [
+      assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "gender", value: "Female" }),
+      assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1820" }),
+    ]) {
+      await writeProject(
+        tree(),
+        research({
+          sources: [S1],
+          assertions: [
+            assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+            sibling,
+          ],
+        }),
+      );
+      const r = single(
+        await materializeFacts({
+          projectPath: dir,
+          assertionId: "a_001",
+          relatedRole: "bride",
+          name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+      expect(r.ok, String(sibling.fact_type)).toBe(true);
+      if (!r.ok) continue;
+      expect(r.namesAdded).toBe(1);
+    }
+
+    // But a sibling WITH a name still blocks it: the persona arm does better there.
+    await writeProject(
+      tree(),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+          assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "name", value: "Mary Doyle" }),
+        ],
+      }),
+    );
+    const blocked = single(
+      await materializeFacts({
+        projectPath: dir,
+        assertionId: "a_001",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.errors[0]).toContain("already has its own persona");
+  });
 });

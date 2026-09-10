@@ -526,19 +526,27 @@ the groom's marriage register). Take the first that applies:
 
 1. **Already in the tree** — link to that `personId` (Step 4), do not mint. To
    add the record's spelling of her name, carry that `personId` into 2 or 3.
-2. **That role has a persona on this record carrying a name, a gender, or any
-   fact other than `relationship`/`marriage`/`parentage`/`parentchild`/`age`** —
+2. **That role has a persona on this record carrying a non-negative name,
+   gender, or any fact other than
+   `relationship`/`marriage`/`parentage`/`parentchild`/`age`** —
    `materialize_facts({ personId?, recordId, recordRole })`. Gender comes from
    her `gender`/`sex` assertions; absent one it is `Unknown`.
 3. **Otherwise** — `materialize_facts({ assertionId, relatedRole,
    name: { given, surname }, gender?, nameType?, personId? })`. `assertionId`
    is the `relationship`/`marriage`/`parentage`/`parentchild` assertion naming
-   her; `relatedRole` is her role, not the persona's. Give `given` and
-   `surname` separately; `surname: ""` when the record gives none. Give
-   `nameType` (`"BirthName"`/`"MarriedName"`) only when the record settles it.
+   her; `relatedRole` is her role, not the persona's, spelled **exactly as that
+   record spells it** in `record_role` (`father_of_bride`, not "the bride's
+   father"): the check that catches a wrong branch is an exact match, so a
+   paraphrase slips past it and mints a duplicate. Read her name from the
+   assertion's `structured_value` if it carries one, else from its `value`
+   prose, else `record_read` the record. Give `given` and `surname`
+   separately; `surname: ""` when the record gives none. Give `nameType`
+   (`"BirthName"`/`"MarriedName"`) only when the record settles it. If no
+   usable name is recoverable, do not mint: link what you can and say so.
 
-Never `tree_edit add_person` for a person the record names. Pick 3 where 2
-applied and the tool refuses, naming the `{ recordId, recordRole }` to use.
+Never `tree_edit add_person` for a person the record names. If you pick 3
+where 2 applied, the tool refuses and names the `{ recordId, recordRole }` to
+use instead.
 
 **Stub person rules:**
 - Then create the `pe_` entry (Step 4) linking the assertion to the

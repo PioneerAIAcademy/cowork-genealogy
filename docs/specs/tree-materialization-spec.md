@@ -401,8 +401,12 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   `record_role`, and that vocabulary is open: the corpus spells the same party
   `bride` (16) and `wife` (3), and head-of-household as `head_of_household`
   (63), `head` (5), `self` (2) and `principal` (13). A spelling disagreement
-  makes the guard **miss**, and the result is the name-only shell it exists to
-  prevent. What makes that acceptable is the direction of the failure: a miss
+  makes the guard **miss**, and the result is worse than the name-only shell it
+  was written for: a paraphrased `relatedRole` (`"birth mother"` for a record
+  that says `mother`) mints a **duplicate person**, sourced and plausible.
+  Callers are instructed to spell the role exactly as the record does, which is
+  what makes the check fire; the check cannot enforce that itself, because both
+  sides are free text. What makes that acceptable is the direction of the failure: a miss
   degrades to exactly the behaviour this arm would have had without the guard,
   and the write still carries an enforced ref, whereas a false refusal blocks
   correct work outright. The arm's **guarantee** is the ref (§4.6's opening);
