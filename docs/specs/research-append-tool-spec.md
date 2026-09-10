@@ -437,17 +437,19 @@ already reports those). Ops without a `log_entry_id` are untouched here.
 **Staging-gap rejection.** Distinct from the matrix above: a
 `record_search` or `fulltext_search` log entry that *returned results* but staged
 no sidecar (`results_ref: null`) rejects the whole `assertions` append and points
-the caller to re-run the search **with** `projectPath`, then re-append. The loss
-it prevents differs by producer. For `record_search` the un-staged sidecar is the
-persona document D2 auto-fills `record_persona_id` from, so proceeding would null
-out identity. For the **persona-less producers** (`fulltext_search`,
-`external_links_search`) there is no persona to lose — the rejection preserves the
+the caller to re-run the search **with** `projectPath`, then re-append. The gate
+covers those two producers only (`producerTools`). The loss it prevents differs by
+producer. For `record_search` the un-staged sidecar is the persona document D2
+auto-fills `record_persona_id` from, so proceeding would null out identity. For
+`fulltext_search` there is no persona to lose — the rejection preserves the
 **retained transcript and the `record_id` canonicalization** (the `id`-keyed
 canonical form above), not a persona; making persona auto-fill work for full-text
-was measured and rejected. Legitimate sidecar-less entries
+was measured and rejected. `external_links_search` is likewise persona-less but is
+**not** covered by this rejection: a results-bearing `external_links_search` entry
+with no sidecar is not rejected here. Legitimate sidecar-less entries
 (`record_read`/PDF/image/pasted, and nil/negative searches) do not trip it. (The
 shipped rejection message still frames the loss as `record_persona_id` even for
-the persona-less producers; correcting that wording is an engine-lane follow-up.)
+`fulltext_search`; correcting that wording is an engine-lane follow-up.)
 
 ### 3.6 `standard_place` levers — resolution, echo, country guard
 
