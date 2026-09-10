@@ -66,6 +66,26 @@ const onePrimaryBirth = () => ({
   sources: [{ id: "S1", title: "A source" }],
 });
 
+/** Two unrelated persons — the shape `add_relationship` needs. */
+const twoPersons = () => ({
+  persons: [
+    {
+      id: "I1",
+      gender: "Male",
+      names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+      facts: [],
+    },
+    {
+      id: "I2",
+      gender: "Female",
+      names: [{ id: "N2", given: "Mary", surname: "Jones", preferred: true }],
+      facts: [],
+    },
+  ],
+  relationships: [],
+  sources: [{ id: "S1", title: "A source" }],
+});
+
 describe("primary: false clears the flag", () => {
   let dir: string;
   beforeEach(async () => {
@@ -219,5 +239,71 @@ describe("primary: false clears the flag", () => {
     validateGedcomx(tree, report);
     expect(report.errors.length).toBeGreaterThan(0);
     expect(JSON.stringify(report.errors)).toContain("primary");
+  });
+
+  // ─── the other two fact-write paths, and the near-miss spellings ───
+
+  it("add_person clears the flag on its inline facts", async () => {
+    // The strip lived only on add_fact/update_fact, so the two ops that write
+    // inline facts failed the whole batch on the document validator's "omit it
+    // rather than setting false" — advice that leaves a stale flag exactly
+    // where it was, from a tool description promising `primary: false` works.
+    await writeProject(onePrimaryBirth());
+    const res: any = await treeEdit({
+      projectPath: dir,
+      operation: "add_person",
+      person: {
+        gender: "Female",
+        names: [{ given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ type: "Birth", date: "1852", primary: false, sources: [{ ref: "S1" }] }],
+      },
+    } as never);
+    expect(res.ok, JSON.stringify(res.errors)).toBe(true);
+    const tree = await readTree();
+    expect(tree.persons.at(-1).facts[0]).not.toHaveProperty("primary");
+    const report = createReport();
+    validateGedcomx(tree, report);
+    expect(report.errors).toEqual([]);
+  });
+
+  it("add_relationship clears the flag on its Couple facts", async () => {
+    await writeProject(twoPersons());
+    const res: any = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S1" }],
+        facts: [{ type: "Marriage", date: "1870", primary: false, sources: [{ ref: "S1" }] }],
+      },
+    } as never);
+    expect(res.ok, JSON.stringify(res.errors)).toBe(true);
+    const tree = await readTree();
+    expect(tree.relationships.at(-1).facts[0]).not.toHaveProperty("primary");
+    const report = createReport();
+    validateGedcomx(tree, report);
+    expect(report.errors).toEqual([]);
+  });
+
+  it.each([
+    ["the string \"false\"", "false"],
+    ["null", null],
+    ["the number 0", 0],
+  ])("refuses primary given as %s, naming the boolean", async (_label, value) => {
+    // These fell past the `=== false` arm, were assigned to the fact, and died
+    // at the document validator saying "omit it rather than setting false" —
+    // the one instruction that does NOT retire a stale flag. The error must
+    // name the fix instead.
+    await writeProject(onePrimaryBirth());
+    const res: any = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1900", primary: value, sources: [{ ref: "S1" }] },
+    } as never).catch((e: Error) => ({ ok: false, errors: [e.message] }));
+    expect(res.ok).toBe(false);
+    expect(res.errors.join(" ")).toMatch(/`primary` must be the boolean true or false/);
   });
 });
