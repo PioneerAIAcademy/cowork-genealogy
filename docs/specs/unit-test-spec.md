@@ -880,6 +880,12 @@ For each confusable pair, create tests from both directions: a test in skill A's
 - An **allowlist** would tax the behaviour the rule exists to encourage. Backfilling a reciprocal touches a second skill's test directory, which invalidates that skill's run-log snapshot and so costs a full re-run plus a fresh annotation. Requiring it of every description-widening PR prices routine routing work out of reach.
 - A **count threshold** — "the number may only fall" — is silently wrong. Remove one edge and add another and the total is unchanged, so the graph can rot while CI stays green. Any future promotion to blocking must therefore compare the edge **set**, never its size, and should follow a triage of which unbacked edges are deliberate one-directional near-misses rather than precede one.
 
+### Fixture authoring constraint: do not quote the skill body
+
+**A negative test whose `user_message` is a near-verbatim quote of a sentence in the skill under test's `SKILL.md` cannot distinguish learned routing from recall.** If the skill body says "e.g. 'one census says Ireland, the death cert says County Cork — flag that mismatch'" and the fixture's `user_message` is "One census says he was born in Ireland, the death cert says County Cork — flag that mismatch", the model may route correctly simply because it recognises the sentence it read one turn earlier in its own instructions — not because it has learned the routing rule. A pass on such a fixture proves nothing.
+
+The fix is to use a concrete example that is **not** quoted from the skill body. For a routing-boundary test, the example should be drawn from the same category as the one in `SKILL.md` but must be a different instance (e.g. if the body uses one pair of county names, the fixture uses a different pair). Leave a comment in the test's `description` naming this constraint when the example was deliberately chosen to differ from the body's. This rule was added after `ut_check_warnings_011` was found to quote `SKILL.md:43` verbatim.
+
 ### Activation: the `activated` field
 
 For each run, the harness computes a derived boolean `output.activated` per the rules below. This single field replaces the ad-hoc references to skills_invoked / file writes / tool calls scattered through grading logic. Section 7's outcome formulas reference `activated`; the rules live here once.
@@ -1253,6 +1259,33 @@ Validators are split into three tiers:
   - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
 - **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
 
+**A skip is recorded as its own outcome, not as a pass.** A validator that calls
+`pytest.skip()` did not apply to this state and executed no assertion. It stays
+non-gating — a validator that does not apply must never fail a test — but the run
+log records `outcome: "skipped"` beside `passed: true`, because the two are not
+the same claim and most of the corpus is the second one: **18,220 of the 48,704
+validator results in the 131 committed unit run logs are skips** (measured
+2026-09-11 over `eval/runlogs/unit/*/v1_*.json`), against 185
+failures, and 178 of the 214 distinct validators have never once failed — 176
+that ran and never failed, plus 2 that never ran at all. A green
+`validators.passed` is therefore compatible with almost nothing having run.
+**Count coverage off `outcome`, never off `passed`.**
+
+This is an instrument, not a gate — it is what makes a skip countable, and no
+outcome depends on it. The one place vacuity decides a verdict is a
+`negative.grade_on_invariant` test, whose whole result rests on its
+deterministic validators; that is gated **at load time** by `runnability.py`
+matching the test's tags against the validator file's gate tags, and does not
+want a second runtime check beside it. Replayed over the committed corpus a
+runtime check fires on nothing the load-time gate does not already refuse:
+1 of the 71 `grade_on_invariant` runs was vacuous
+(`search-wikipedia/v1_2026-06-23_16-05-24`, `ut_search_wikipedia_007`, all 15
+validators skipped). That run predates `test_no_wiki_no_write`, the tag-gated
+validator added 2026-07-29; nothing has been vacuous since. The load-time gate
+proves a validator *gates on* the test's tags, never that it *executes*, so a
+tag-gated validator carrying a second, state-dependent skip could still go
+vacuous — none does today, and nothing checks for one.
+
 ### Conventions
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
@@ -1503,7 +1536,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "name": "string (validator function name, e.g. test_log_append_only)",
             "passed": "boolean",
-            "error": "string or null (assertion error message when failed)"
+            "error": "string or null (assertion error message when failed; skip reason when skipped)",
+            "outcome": "passed | failed | skipped — what the validator DID. A skip carries passed:true and is non-gating, so `passed` alone cannot tell 'the property holds' from 'nothing looked'. Absent on run logs written before this field; read those by testing `error` for a leading \"skipped: \""
           }
         ]
       },
