@@ -31,13 +31,17 @@ else:
 
 
 def init_db() -> None:
+    """Bootstrap schema + sync allowlist."""
     SQLModel.metadata.create_all(_engine)
-    # Seed the allowlist from config (idempotent).
+    if not _settings.allowlist:
+        return
     with Session(_engine) as session:
-        existing = {e.email for e in session.exec(select(AllowedEmail)).all()}
+        existing = {e.email: e for e in session.exec(select(AllowedEmail)).all()}
         for email in _settings.allowlist:
             if email not in existing:
                 session.add(AllowedEmail(email=email))
+        for email in set(existing) - _settings.allowlist:
+            session.delete(existing[email])
         session.commit()
 
 
