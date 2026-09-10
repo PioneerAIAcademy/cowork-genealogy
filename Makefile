@@ -394,6 +394,12 @@ probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents regist
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python -m dev.p1.probe_registration
 
+.PHONY: probe-bedrock-parity
+probe-bedrock-parity: $(ENGINE_BUILD) ## P3 probe: tool search, 1h cache TTL, interleaved thinking, 1M beta and context_management on Bedrock direct vs first-party (4 billed sessions, ~8 min; SKIP_WAIT=1 for a smoke): make probe-bedrock-parity [OUT=dir]
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_bedrock_parity $(if $(OUT),--out $(OUT)) $(if $(filter 1 true yes on,$(SKIP_WAIT)),--skip-wait,)
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
@@ -568,6 +574,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
 	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
 	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
+	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
+	#   DENY_PROJECT_READS 1                             (default off; P2 — deny Read/Grep/Glob of the project folder)
 	# A/B these to find what clears a runaway-thinking subagent freeze
 	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
@@ -576,7 +584,7 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# run's `compliance` is not comparable to a shadow run's (the blocked write
 	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death

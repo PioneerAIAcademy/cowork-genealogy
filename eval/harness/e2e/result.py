@@ -177,8 +177,8 @@ class E2eResult:
     tags: dict[str, str] = field(default_factory=dict)
 
     # Tool calls the PreToolUse hook denied. Each entry is
-    # {tool, args, blocked_by}; the name predates the second and third
-    # reasons, so read `blocked_by` rather than assuming a tree read:
+    # {tool, args, blocked_by}; the name predates every reason but the
+    # first, so read `blocked_by` rather than assuming a tree read:
     #
     #   "tree"    — reading the answer off the live tree (person_read /
     #               person_search / person_ancestors are disabled in e2e runs,
@@ -186,6 +186,11 @@ class E2eResult:
     #               research; the verdict is still earned from records, but
     #               it's worth a reviewer's eye.
     #   "fixture" — blocked by the fixture's own `blocked_tools`.
+    #   "shell"   — `--deny-shell` refused Bash/PowerShell (P2, opt-in). The
+    #               entry also carries `reason`.
+    #   "path"    — `--deny-project-reads` refused a Read/Grep/Glob of the
+    #               project folder (P2, opt-in). The entry also carries the
+    #               resolved `path` and `reason`.
     #
     # In every case the call was denied, so nothing executed — but it DOES
     # reach `tool_calls` (32 of the 33 denials in the committed corpus have a
