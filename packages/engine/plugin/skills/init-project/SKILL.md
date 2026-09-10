@@ -220,14 +220,15 @@ Record it **only** when the researcher volunteers access unprompted — the ques
 
 ### 5. Pedigree analysis and project summary
 
-**First, call `Skill("check-warnings")` once, naming the subject person's id
-and every imported relative's id from Step 3, and asking it to check all of
-them.** Fold what it returns into the findings below exactly as
-check-warnings frames it — never restate a timeline impossibility as one
-more line on the "Obvious error detection" list below, which is a smaller,
-separate check. `person_quality` will not fire for a synthetic id
-(check-warnings skips it silently); the offline `person_warnings` half
-still runs and still reports.
+**First, call `Skill("check-warnings")` once, naming the subject and every
+imported relative by their LOCAL tree id from Step 3 (`I1`, `I2`… — never
+the FamilySearch PID or `ark`, even when the tree summary below lists both),
+and asking it to check all of them.** Fold what it returns into the findings
+below exactly as check-warnings frames it — never restate a timeline
+impossibility as one more line on the "Obvious error detection" list below,
+which is a smaller, separate check. `person_quality` will not fire for a
+local id (check-warnings skips it silently); the offline `person_warnings`
+half still runs and still reports.
 
 Analyze imported data before presenting results:
 
