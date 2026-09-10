@@ -13,9 +13,11 @@ were ruled 2026-09-07, the last two unruled cards were ruled 2026-09-10, and the
 Theme 3 sits in Backlog with no assignee.
 **Second 2026-09-10 pass:** Theme 2 turned the same corner. Five of its seven
 headline cards carry rulings, issue #2212 is closed, and none of the twelve is
-assigned. Ten of them collapse into three mechanisms, filed that day as issues
-#2427 and #2426 and a rewritten #2234 — each investigated against the code, and
-each carrying a correction to the card that motivated it.
+assigned. Ten of them collapse into two mechanisms — issue #2427 and a rewritten
+issue #2234, each investigated against the code and each carrying a correction to
+the card that motivated it. A third, issue #2426, was filed and closed the same
+day on its own measurement; what survives it is recorded under Theme 2 so it is
+not re-derived.
 **Source:** all open Backlog issues, read in full, measurements over the 161
 committed e2e run logs on `main`, 11 raw session transcripts, and one live
 probe on Claude Code 2.1.263.
@@ -348,27 +350,50 @@ the slot reads, so an absent brief renders empty instead of leaking a README
 written for a human. A `## Setup` heading cannot work — 50 of 96 READMEs have no
 `##` heading at all, and a missing heading yields an empty slot with nothing red.
 
-**Issue #2426 — split the run-log snapshot into skill-side and judge-side.**
-`build_snapshot` embeds `rubric.md`, the scenario README and each test's
-`judge_context` — none of which the skill can see; `workspace.py` stages only
-`research.json`, `tree.gedcomx.json` and `results/`. So a sentence only the
-grader reads is priced like a behaviour change. The merge gate this actually
-removes is one row of three: `rubric.md` and `judge_context` block on rules 2
-and 3, the scenario README rides a fixture arm that is warn-only, and the
-assembly code in `orchestrator.py` / `judge.py` fires nothing at all. The
-satisfaction is `make judge-regrade` (issue #2191's ruled deliverable), which
-must **re-render the prompt from disk**, not replay a stored one, or a
-judge-side edit certifies as a no-op. Blocked on #2191.
+**Issue #2426 — split the run-log snapshot into skill-side and judge-side —
+was filed and closed the same day, not planned (lead ruling 2026-09-10).** It is
+recorded here because the investigation behind it produced three facts that
+outlive it and that the next person to reach for this idea will otherwise
+re-derive.
 
-**Prove that on the rendered prompt hash, never on the scores.**
-`JUDGE_TEMPERATURE = 0.0` is greedy decoding, not a determinism guarantee, so
-"an unchanged tree reproduces the stored scores" passes just as happily when a
-stored prompt is being replayed. A no-model dry-run over the renderer separates
-them, and is cheap enough to live in `make harness-test`: an unchanged tree
-renders byte-identically twice; one character into a `rubric.md` moves every
-prompt hash for that skill; one scenario brief moves the hash for exactly the
-tests referencing it; and a `SKILL.md` edit moves **no** prompt hash — the break
-a per-directory predicate survives at step two and fails here.
+Its premise was sound: `build_snapshot` embeds `rubric.md`, the scenario README
+and each test's `judge_context`, none of which the skill can see —
+`workspace.py` stages only `research.json`, `tree.gedcomx.json` and `results/`.
+Its own measurement killed it. **1 of 1009 PR-level commits since 2026-06-01
+changed a judge-side file with no skill-side file**, and 122 changed both. The
+queue it would have served is three ruled prose deletions, which do not carry a
+17-file change. The honest counter — the gate is what makes judge-side edits
+expensive, so 1-in-1009 may be measuring suppression rather than demand — is an
+argument, and reopening needs a measurement.
+
+What survives it:
+
+- **`make judge-regrade` was never this card's**, it is issue #2191's ruled
+  deliverable. Everything that actually needed a regrade still has one: issue
+  #2427's acceptance check, issue #2057's 110 ungraded runs, and #2191's own
+  need to price a candidate prompt.
+- **The merge gate was one row of three.** `rubric.md` and a test's
+  `judge_context` block on rules 2 and 3; the scenario README matches
+  `FIXTURE_PATH_RE` and lands in `fixture_touched_skills`, which
+  `check_runlogs.py` keeps "in a set separate from `touched_skills` so it never
+  feeds the blocking rules" — **warn-only** since issue #1094. The assembly code
+  in `orchestrator.py` / `judge.py` fires nothing at all. So the 96-file sweep
+  was never gated, and any cost quoted for it is discipline, not CI.
+- **`rubric_hash` is named as a run-log field in four places in
+  `unit-test-spec.md` and exists in no schema, no module and no run log.** Live
+  spec drift; delete it from the spec, since nothing will build it now.
+
+And one requirement that transferred to #2427 rather than dying: a regrade
+substitutes for a re-run only if it **re-renders the prompt from disk** rather
+than replaying a stored one. **Prove that on the rendered prompt hash, never on
+the scores.** `JUDGE_TEMPERATURE = 0.0` is greedy decoding, not a determinism
+guarantee, so "an unchanged tree reproduces the stored scores" passes just as
+happily when a stored prompt is being replayed. A no-model dry-run over the
+renderer separates them, and is cheap enough to live in `make harness-test`: an
+unchanged tree renders byte-identically twice; one character into a `rubric.md`
+moves every prompt hash for that skill; one scenario brief moves the hash for
+exactly the tests referencing it; and a `SKILL.md` edit moves **no** prompt hash
+— the break a per-directory predicate survives at step two and fails here.
 
 Found while checking it: **`rubric_hash` is named as a run-log field in four
 places in `unit-test-spec.md` and exists in no schema, no module and no run log.**
@@ -416,26 +441,22 @@ nests a block per cycle, and the header snapshots the score at copy time.
   dimensions creates rule-3 annotation debt on the next PR touching
   person-evidence and search-records.
 
-### The honest case against #2426
+### What the sweep is actually worth
 
-**Exactly 1 of 1009 PR-level commits since 2026-06-01 changed a judge-side file
-with no skill-side file; 122 changed both.** History does not support the split.
-The case rests entirely on queued work — #1913's ruled rubric deletion, #2191's
-suggested clause deletion, #1790's `judge_context` rewrite, and above all
-#2427's 96-file sweep, which is now the largest single item in it.
+The corrected reading, now that the snapshot split is dead: **the 96-file sweep
+was never gated by CI**, so no cost quoted for it is a merge gate. What it buys
+is honesty about the corpus. Once a scenario brief changes, every committed judge
+score for the tests referencing it was measured against different input, and a
+regrade under issue #2191 is what makes those scores describe the current inputs
+again — cheaply, and in the same run that produces the acceptance evidence.
 
-Read the endogeneity before dismissing it: the gate is what makes judge-side
-edits expensive, so history cannot measure demand it has been suppressing. But
-that is an argument, not a measurement, and "not planned" is a clean exit if the
-sweep is not funded. **The two cards stand or fall together, and #2427 is the one
-that carries the payload.** Sequencing without it: #2426 alone buys three ruled
-prose deletions.
-
-One correction to the money framing: editing a scenario README is **warn-only**
-today — `rule2_fixture_touched` never blocks, and only `judge_context` and
-`rubric.md` edits gate CI. So the sweep's cost is not a merge gate. The real
-argument is that once the brief changes, every committed judge score was measured
-against different input, and only a regrade makes the corpus honest again.
+The acceptance check is the part worth protecting: regrade the
+`flynn-record-matching` and `christian-hole-quality` runs, README against brief,
+and accept only when no dimension moves on a run where the skill did the work
+**and** at least one moves down on a run the corpus already flags as thin.
+**If nothing moves either way, the leak was not load-bearing and the sweep should
+not be paid for.** That is a finding, not a failure, and it is the cheapest thing
+in this theme that could retire a card.
 
 ---
 
@@ -757,10 +778,11 @@ the lead can accept the blast radius.
    token accounting in Theme 1, which can proceed in parallel. As of 2026-09-10
    the order is settled and nothing is assigned: **issue #2057** first (harness
    code, no paid run, and it grades 110 runs that today carry nothing), then
-   **#2191**'s regrade target, then **#2427** — which is the card that decides
-   whether **#2426** is worth building at all. Ninety-three of 96 scenario
-   READMEs hand the grader the answer; that is the largest single defect in the
-   theme and the only one whose fix pays for the snapshot split.
+   **#2191**'s regrade target, then **#2427**. Ninety-three of 96 scenario
+   READMEs hand the grader the answer — the largest single defect in the theme,
+   and the one whose acceptance check is cheap enough to retire itself if the
+   leak turns out not to be load-bearing. Issue #2234 runs beside all of it: it
+   needs no paid run and no eval slot.
 3. ~~**Rule once on preconditions-vs-prose**~~ — **done.** ADR-0011 carries the
    classes, the reference implementation and (2026-09-10) the bridge, so a gate
    author who reaches "not decidable from the documents" is now asked whether the
