@@ -116,6 +116,28 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
   exit 1
 fi
 
+# --- Strip Claude Code config that may have been injected into the zip ---
+# Legitimate feedback zips never contain dotfiles (both walkers skip entries
+# starting with "."), so .claude/, .claude.json, and .mcp.json in the zip are
+# either hand-crafted or from an unexpected source. Remove them so the script's
+# own fresh .claude/ (with repo-symlinked skills only) is the sole config
+# Claude Code reads.
+for injected in .claude .claude.json .mcp.json .gitattributes .git; do
+  if [[ -e "$DEST_DIR/$injected" ]]; then
+    echo "Warning: stripped $injected from the zip (not expected in a feedback submission)."
+    rm -rf "$DEST_DIR/$injected"
+  fi
+done
+# CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and they
+# walk recursively, so one can arrive at any depth. Claude Code loads a subtree
+# CLAUDE.md when it reads files in that subtree, and the triage workflow reads
+# results/. Rename rather than delete: the triager keeps the content for
+# reproduction, but it no longer executes as config.
+while IFS= read -r -d '' f; do
+  echo "Note: renamed ${f#"$DEST_DIR"/} to ${f#"$DEST_DIR"/}.submitted so it is not loaded as instructions."
+  mv "$f" "$f.submitted"
+done < <(find "$DEST_DIR" -type f -name CLAUDE.md -print0)
+
 # --- Write .feedback-repo-root ---
 echo "$REPO_ROOT" > "$DEST_DIR/.feedback-repo-root"
 

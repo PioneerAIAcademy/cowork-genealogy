@@ -9,7 +9,7 @@ when handling nil results.
 |---|---|
 | Uncommon surname or given name, uncertain spelling/dates, new locality | **"Less is more"** — that name only, filter after |
 | Extremely common surname or given name (Smith, Johnson, John, Mary), high confidence in details | **"Kitchen sink"** — multiple required terms |
-| FTS specifically (no fuzzy matching, no abbreviation expansion) | **Default to "less is more"** — every extra term risks missing variant transcriptions |
+| FTS `keywords`/`place` (no fuzzy matching, no abbreviation expansion; `name` auto-expands given names) | **Default to "less is more"** — every extra term risks missing variant transcriptions |
 
 Start broad, check hit count, narrow iteratively with filters.
 

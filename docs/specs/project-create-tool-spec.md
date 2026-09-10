@@ -102,6 +102,7 @@ from a real one, while an absent one has a working fallback in every skill.
 | Condition | Reason |
 |---|---|
 | Either file already exists | Create, never upsert. Overwriting destroys an audit trail that cannot be reconstructed, and a caller wanting to add to a project already has the writer tools |
+| An ancestor of `projectPath` already holds `research.json` | The Electron viewer watches one folder; a project created one level down inside another reads to a tester as lost files between sessions. Names the ancestor and points at `research_append` as the way to add to it instead. Checked AFTER the exists-refusals above, so a half-present project at `projectPath` itself keeps its own, more actionable message even when its own parent also holds a project |
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
@@ -112,6 +113,27 @@ the write ahead of the validation and watching two cases go red.
 
 ## 5. What this does not solve
 
+- **A picked folder with nothing above it, where the agent creates the project
+  one level down anyway.** The ancestor rule in §4 is filesystem-derived: it
+  can only see a divergence where an ancestor already holds `research.json`.
+  It cannot see the other half of the same divergence — the case
+  `formatNestedPicker` (`apps/electron/src/main/watcher.ts`) was shipped for,
+  where the folder the user picked in the viewer holds nothing yet, and
+  the agent creates the project in a subfolder of it regardless. Nothing
+  filesystem-derived can distinguish that subfolder from a legitimate new
+  project one level down inside a folder that happens to hold other files —
+  there is no ancestor to refuse against. This takes ADR-0011's row 5 (tool
+  description: needed at the moment of the call, no predicate can enforce
+  it): the `projectPath` description in §4 states the rule directly ("create
+  the project in the folder you were given — never in a subfolder of it").
+  Chosen over a second card so both halves of one divergence ship together
+  (lead, 2026-08-31) — the alternative left the case live while a second
+  card waited its own review cycle, for one sentence with no file added to
+  the blast radius and no run log invalidated. **Accepted cost:** ADR-0011
+  already records tool-description strength as unmeasured, and this adds no
+  new measurement — there is no instrument for "did the model read and obey
+  this sentence," only for the filesystem-derived half in §4, which the unit
+  tests in §6 cover.
 - **Standalone work in an unseeded folder still loses data.** A
   `research_log_append` into a directory with no project still fails. That is the
   ergonomics half of the original report, and it is deliberately not addressed
@@ -136,6 +158,13 @@ the write ahead of the validation and watching two cases go red.
 > `packages/engine/mcp-server/tests/tools/project-create.test.ts` — the refusals,
 > the atomic no-write-on-failure property, and that neither `researcher_profile`
 > nor `known_holdings` is invented.
+
+> `packages/engine/mcp-server/tests/utils/project-io.test.ts` —
+> `findNestingAncestor`'s predicate: no ancestor, an ancestor one level up, an
+> ancestor several levels up returning the nearest one, `projectPath` not yet
+> existing, the walk terminating at the filesystem root, and the candidate's
+> own `research.json` not counting as its own ancestor (the walk starts at
+> `projectPath`'s *parent*, never `projectPath` itself).
 
 > `packages/engine/mcp-server/tests/packaging/manifest.test.ts` and
 > `readme-catalog.test.ts` — the tool is registered, dispatched, listed in the

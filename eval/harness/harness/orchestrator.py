@@ -33,6 +33,8 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
+from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN
+from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
     JudgeResult,
@@ -696,6 +698,7 @@ async def _execute_single_run(
     return SingleRun(
         outcome=outcome,
         aborted_reason=result.aborted_reason,
+        error=result.error,
         duration_ms=result.duration_ms,
         duration_api_ms=skill_duration_api_ms,
         num_turns=skill_num_turns,
@@ -1059,7 +1062,62 @@ def _build_warnings(
             "observation": obs_text,
         })
 
+    # Harness node-subprocess timeout (#2025). A live tool whose compiled-code
+    # bridge trips the node timeout returns a write/validation failure the skill
+    # then has to recover from — a harness flake, not a skill defect, and one
+    # that otherwise lives only inside a `response` string nobody greps. Scan the
+    # recorded live-tool responses for the sentinel and surface it as a warning
+    # so the next occurrence is legible in run.output.warnings. Gated on a live
+    # match reporting failure so a tool's own error prose can't false-trip it.
+    timed_out_tools = sorted({
+        c["tool"]
+        for c in tool_calls
+        if (c.get("matched") or {}).get("kind") == "live"
+        and _response_hit_node_timeout(c.get("response"))
+    })
+    if timed_out_tools:
+        warnings.append({
+            "kind": "harness_node_timeout",
+            "advisory": (
+                f"{len(timed_out_tools)} live MCP tool(s) hit the harness "
+                f"node-subprocess timeout ({NODE_EVAL_TIMEOUT_LONG}s) and returned a "
+                "write/validation failure the skill then had to recover from — a "
+                "harness flake, not a skill defect (#2025). Do not grade the "
+                f"recovery as a skill error. Tools: {timed_out_tools}."
+            ),
+            "tools": timed_out_tools,
+        })
+
+    # Single chokepoint: every output.warnings entry — this function's own, the
+    # judge's (folded in via judge_warnings), and any built elsewhere and folded
+    # in — is the return value of this call. Validate each kind by value against
+    # the registry so an unregistered kind fails loudly on first emission from
+    # ANY file, literal or const, rather than silently printing nowhere (#2025).
+    validate_warning_kinds(warnings)
     return warnings
+
+
+def _response_hit_node_timeout(response: Any) -> bool:
+    """Whether a recorded live-tool response is a node-subprocess timeout (#2025).
+
+    A tripped node subprocess lands in the tool's failure envelope
+    (`ok: false` / `valid: false`) with the `subprocess.TimeoutExpired` string
+    in `errors`/`message`. Keyed on the failure flag AND the seconds-anchored
+    pattern so neither a tool's own error prose nor an upstream `...ms` fetch
+    timeout false-trips it (see NODE_EVAL_TIMEOUT_PATTERN).
+    """
+    if not isinstance(response, dict):
+        return False
+    if response.get("ok") is not False and response.get("valid") is not False:
+        return False
+    texts: list[str] = []
+    errs = response.get("errors")
+    if isinstance(errs, list):
+        texts.extend(str(e) for e in errs)
+    message = response.get("message")
+    if isinstance(message, str):
+        texts.append(message)
+    return any(NODE_EVAL_TIMEOUT_PATTERN.search(t) for t in texts)
 
 
 # Judge dimensions whose subject is checked deterministically by the

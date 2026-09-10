@@ -2,6 +2,8 @@
 
 from types import SimpleNamespace
 
+import pytest
+
 from harness.loader import load_test_from_dict
 from harness.orchestrator import (
     _summarize_changes,
@@ -14,6 +16,62 @@ from harness.orchestrator import (
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
 )
+from harness.warning_kinds import (
+    HARNESS_WARNING_KINDS,
+    JUDGE_WARNING_KINDS,
+    WARNING_KIND_SIDES,
+    UnregisteredWarningKind,
+    validate_warning_kinds,
+)
+
+
+# --- output.warnings kind registry: the guard's own coverage (#2025) ---------
+#
+# The old guard reconstructed "which kinds exist" by regex-scanning a hardcoded
+# two-file list for `"kind": "<literal>"`. Both assumptions were bypassable and
+# each silently reintroduced the dark-warning bug: a kind emitted from a third
+# file, and a kind built from a const/f-string. These pin the structural
+# closure — validation at the single `_build_warnings` chokepoint, by value.
+
+
+def test_build_warnings_rejects_kind_emitted_from_any_producer():
+    """FAILURE MODE 1 (third emission site). judge_warnings is the fold path by
+    which every *other* producer's warnings enter output.warnings — judge.py, the
+    routing flag, or a hypothetical new file. An unregistered kind arriving that
+    way must be rejected at the chokepoint, no matter which file built it."""
+    with pytest.raises(UnregisteredWarningKind):
+        _build_warnings([], judge_warnings=[{"kind": "kind_from_a_third_file"}])
+
+
+def test_warning_kind_validation_is_by_value_not_source_form():
+    """FAILURE MODE 2 (non-literal kind). Validation keys on the string VALUE,
+    so a kind built from a const/f-string is caught identically to a literal —
+    the exact case the regex scan missed (and that guardrail_shadow already builds
+    that way)."""
+    built = "".join(["not_", "registered"])  # not a source literal
+    with pytest.raises(UnregisteredWarningKind):
+        validate_warning_kinds([{"kind": built}])
+
+    # And a REGISTERED kind built the same non-literal way passes — proving the
+    # check is about registration, not source form.
+    ok = "".join(["prose_", "observation"])
+    validate_warning_kinds([{"kind": ok}])  # does not raise
+
+
+def test_build_warnings_accepts_every_registered_kind():
+    """Each registered kind survives the chokepoint — so validation never rejects
+    a real warning, and the registry is proven to cover the live set."""
+    for kind in WARNING_KIND_SIDES:
+        assert _build_warnings([], judge_warnings=[{"kind": kind}]) == [{"kind": kind}]
+
+
+def test_registry_partition_is_sane():
+    """Judge and harness sides partition the registry with no overlap and no
+    third side — a misclassified kind (wrong side) is a human-reviewable error
+    this makes visible."""
+    assert JUDGE_WARNING_KINDS.isdisjoint(HARNESS_WARNING_KINDS)
+    assert JUDGE_WARNING_KINDS | HARNESS_WARNING_KINDS == set(WARNING_KIND_SIDES)
+    assert set(WARNING_KIND_SIDES.values()) <= {"judge", "harness"}
 
 
 # --- Skill-tool contract drift -----------------------------------------
@@ -1683,4 +1741,57 @@ def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monke
         "run_validators' test dict; "
         "test_index_discrepancy_does_not_recommend_detaching asserts "
         "nothing on every run"
+    )
+
+
+def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
+    """The second hop of the serializer trap (#2192, review of #2326).
+
+    `runlog.py` persists `SingleRun.error`, and a test covers that. But the
+    value only ever gets ONTO `SingleRun` via `error=result.error` in
+    `_execute_single_run`, and deleting that line left the entire 3313-test
+    suite green — the persistence test builds `SingleRun(error=…)` by hand, so
+    it proves the serializer and nothing about the wiring.
+
+    This drives the real path: a `SkillRunResult` carrying an error goes in,
+    and the assembled entry must carry it out. Deleting `error=result.error`
+    reds this and only this.
+    """
+    import asyncio
+
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    quota_error = (
+        "You've hit your limit [rate-limit signals: rate_limit_status=rejected "
+        "resets_at=1757260800]"
+    )
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        return SkillRunResult(
+            text_response="",
+            skills_invoked=[],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={},
+            aborted_reason="quota_exhausted",
+            error=quota_error,
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-08_10-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["aborted_reason"] == "quota_exhausted"
+    assert run["error"] == quota_error, (
+        "the SDK's error string must reach the committed run entry — this is "
+        "the only place a reader can see WHY a run aborted"
     )

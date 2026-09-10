@@ -27,7 +27,8 @@ class Settings(BaseSettings):
     default_model: str = "claude-sonnet-4-6"
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
-    # ANTHROPIC_API_KEY, which the Agent SDK reads from the sandbox env — this
+    # ANTHROPIC_API_KEY, which is written into the sandbox by
+    # agent_secrets.write_secrets on every connect — this
     # is written into the sandbox's ~/.familysearch-mcp/config.json on connect
     # (fs_oauth.write_config, sessions.create_project). See
     # docs/specs/image-transcribe-tool-spec.md §6.5.

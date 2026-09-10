@@ -3,6 +3,14 @@
 **Written:** 2026-09-05. **Revised:** 2026-09-07 — re-measured against the raw
 SDK session transcripts, against a live probe, and against every cited issue's
 comment thread. One headline figure was wrong, two themes collapsed.
+**Second 09-07 pass:** Theme 3's class list was refuted by a shipped gate and now
+carries the bridge between its two classes; Theme 4 (guards) is new, and the
+hosted theme renumbered to 5.
+**2026-09-10 pass:** Theme 3's decision half is done — ADR-0011 carries the
+ruling and now the bridge, the four issues that were waiting on the mechanism
+were ruled 2026-09-07, the last two unruled cards were ruled 2026-09-10, and the
+`needs-decision` queue is empty. No gate has been built: every open card named in
+Theme 3 sits in Backlog with no assignee.
 **Source:** all open Backlog issues, read in full, measurements over the 161
 committed e2e run logs on `main`, 11 raw session transcripts, and one live
 probe on Claude Code 2.1.263.
@@ -141,20 +149,101 @@ canaries at bytes 119 / 9,020 / 18,552 / 21,003 / 34,078 / 44,115 — **all six
 came back**. An `Agent()` call contributes only its description; the whole agent
 listing is ~2,100 tokens.
 
-So `search-records` (60,807 bytes ≈ **15,200 tokens**, invoked in 157/161 runs)
-and `person-evidence` (42,797 ≈ **10,700**, 137/161) are resident main-thread
-mass every run. Pairing is what removes it, and it is already shipping:
-`research-exhaustiveness` is now a 5,127-byte skill with a 21,001-byte agent,
-`proof-conclusion` a 4,755-byte skill with a 50,143-byte agent.
+So `search-records` (60,807 bytes ≈ **15,200 tokens**, invoked in 159 of the 163
+runs committed by 2026-09-10) is resident main-thread mass in almost every run.
+Pairing is what removes it, and it keeps shipping: `research-exhaustiveness` is a
+5,064-byte skill with a 22,028-byte agent, `proof-conclusion` a 4,755-byte skill
+with a 53,424-byte agent, and `person-evidence` — 42,797 bytes resident when this
+document was written — landed as a 2,937-byte skill with a 55,326-byte agent on
+2026-09-09.
 
-The board holds 8 conversion cards, 8 effort-floor cards, plus issue #2243
-(`search-records`, the biggest body of all) and issue #1852. What it does not
-hold is the measurement that says which conversions pay. Issue #1136
-(lead-held, `icebox`, 9 lead comments) tunes model and effort without it.
+The board holds 7 open conversion cards of the 8 filed (issue #2119 closed —
+`search-external-sites` cannot be an agent), 8 effort-floor cards, plus issue
+#2243 (`search-records`, the biggest body of all), issue #2410
+(`record-extraction`, which a pair conversion cannot reach either) and issue
+#1852. What it did not hold was the measurement that says which conversions pay.
+That is the table below. Issue #1136 (lead-held, `icebox`, 9 lead comments) tunes
+model and effort, and should be priced against it: a cheaper model applied to
+15,200 tokens of resident skill body saves less than removing the body.
 
-**First action:** rank pair conversions by `bytes × invocation rate`. That puts
-`search-records` and `person-evidence` first, and it is a morning's work over
-data already committed.
+**Measured 2026-09-10** over the 163 committed run logs, `SKILL.md` bytes ×
+the fraction of runs that `Skill()`-invoked the skill:
+
+| skill | SKILL.md | agent | runs invoked | bytes × rate | card |
+|---|---:|---:|---:|---:|---|
+| search-records | 60,807 | — | 159/163 | **59,314** | issue #2243, blocked on #2123 |
+| research-plan | 30,265 | — | 162/163 | **30,079** | issue #2116 |
+| question-selection | 17,042 | — | 162/163 | **16,937** | issue #2115 |
+| record-extraction | 15,482 | — | 114/163 | **10,827** | issue #2410 |
+| locality-guide | 20,751 | — | 72/163 | 9,166 | issue #2117 |
+| search-external-sites | 31,537 | — | 26/163 | 5,030 | issue #2119, closed — cannot be an agent |
+| check-warnings | 21,022 | — | 36/163 | 4,642 | issue #2118 |
+| research-exhaustiveness | 5,064 | 22,028 | 95/163 | 2,951 | done |
+| proof-conclusion | 4,755 | 53,424 | 93/163 | 2,712 | done |
+| person-evidence | 2,937 | 55,326 | 139/163 | 2,504 | done |
+| research | 29,622 | — | 10/163 | 1,817 | — |
+| conflict-resolution | 26,505 | — | 9/163 | 1,463 | issue #1852 |
+| search-full-text | 17,214 | — | 12/163 | 1,267 | issue #2120 |
+| search-images | 15,087 | — | 8/163 | 740 | issue #2121 |
+| init-project | 26,120 | — | 4/163 | 640 | issue #2122 |
+
+Thirteen further skills score **zero** — `citation` (31,665 bytes), `timeline`
+(21,833), `hypothesis-tracking`, `project-status` and the rest are never
+`Skill()`-invoked in this corpus. Read that as the harness, not as disuse: the
+e2e corpus is autonomous-only, and those are the user-invoked skills.
+
+What it says:
+
+- **The top three are 106K of the 115K on the board**, and `search-records`
+  alone is more than half of it. Unblocking issue #2123 is the highest-value
+  move in this theme.
+- **`record-extraction` was fourth and had no card** — filed as issue #2410. A
+  pair conversion cannot reach it: it is already a router delegating to
+  `record-extractor` and `image-reader`, and agents cannot nest agents. Same
+  class of blocker as the one that closed issue #2119, different mechanism.
+- **A low score is not a reason to shelve a card — resident mass is half the
+  payoff.** The other half is what a step costs *when it runs*, and only an agent
+  can be tuned there: `model:` and `effort:` are inert on a skill. Measured over
+  the same 163 logs, tool calls per skill episode:
+
+| skill | episodes | calls in them | calls/episode | skill entered / its tools used |
+|---|---:|---:|---:|---|
+| search-full-text | 12 | 839 | **69.9** | 12 runs / 58 |
+| search-images | 8 | 443 | **55.4** | 8 runs / 25 (`image_search`) |
+| search-records | 208 | 7,398 | 35.6 | — |
+| person-evidence | 158 | 5,465 | 34.6 | — |
+| proof-conclusion | 98 | 2,064 | 21.1 | — |
+| init-project | 4 | 68 | 17.0 | — |
+| question-selection | 252 | 1,310 | 5.2 | — |
+
+  **The two densest steps in the system are the two that score lowest on resident
+  mass**, so a low score is not a verdict on a card. Their reasons differ, and only
+  the first is a routing gap:
+
+  - **`search-full-text` has no routing row at all.** `fulltext_search` runs 305
+    times in 58 runs while the skill is entered in 12, and only 72 of those calls
+    fall inside its own episodes — 112 land in `search-records`, whose body names
+    full text as the next step and then refuses to route there. Issue #1860 rules
+    that it gets a row; that lands before issue #2120's conversion.
+  - **`search-images` already has a row** — digitized-but-unindexed sets, or
+    indexed and full-text exhausted. Its low entry count is a narrow cue being
+    rarely met, not an unreachable skill. What is left is one question worth a
+    read: 27 of 47 `image_search` calls land outside the skill, in 18 runs.
+    `volume_search`'s 240 calls are **not** evidence of bypass — 100 are
+    `locality-guide` and 50 `research-plan` doing planning-time survey — and
+    `image_transcribe`'s 456 are the `image-reader` delegation any caller may make.
+
+  Episode attribution credits the last-launched skill, the same bias the phase split
+  carries.
+- **`init-project` cannot be priced from this corpus at all.** `project_create` is
+  called **0 times in 163 runs** — every fixture ships a seeded project — so its
+  640 measures the harness, not the skill. In production it runs once per project,
+  with a 26,120-byte body, in the session that forms the researcher's first
+  impression.
+- **Issue #1852 is funded on its guardrail argument**, never on cost: 47 of the 56
+  runs that write a conflict never invoke it.
+- The `person-evidence` conversion did what it promised: 42,797 resident bytes
+  down to 2,937.
 
 Two corrections to the 09-05 issue notes: issue #1157 is **not** iceboxed — the
 lead reopened it 2026-08-31 with a `Touches:` line after building the
@@ -235,21 +324,28 @@ git log --since="90 days ago" --format='%an' -- eval/harness/judge | sort | uniq
 
 ## Theme 3 — Prose does not bind, and there is no general replacement
 
-**Urgency: high. ~40 issues queue behind one decision that does not exist.**
+**Urgency: high, and what it is waiting on has changed (2026-09-10). The
+decision exists** — ADR-0011 carries the layer map, the decision procedure, the
+bridge and the promotion table, and the four issues that were queued behind the
+mechanism were ruled 2026-09-07, and issues #1837 and #1624 on 2026-09-10.
+**What has not happened is a build.** Every open card below is in Backlog,
+unassigned. Gates are shipping from other cards — the
+conflict blocking-link derivation, the empty-plan refusal, the relationship
+source-ref mint — so the mechanism is in use; it has not reached this list.
 
 | Issue | Evidence | Ruled? |
 |---|---|---|
-| #1837 | 58 of 156 runs wrote a relationship without ever calling `person_warnings`, the cheapest guardrail in the system | No |
+| #1837 | 58 of 156 runs wrote a relationship without ever calling `person_warnings`, the cheapest guardrail in the system | Ruled 2026-09-10 — ship as designed; the gate recomputes `person_warnings` predicates only, and the place-resolution class rides on issue #1907 |
 | #1852 | 47 of 56 runs that wrote a conflict never invoked `conflict-resolution` | Acceptance criterion set 2026-09-02 |
 | #2030 | Three measured runs ordered the plan identically despite the rule, varying their own wording between runs | Ruled 2026-08-31 |
-| #1624 | Wrong grandparents attached across two independent fix attempts | Comment 2026-09-07 |
-| #2230 | Byte-identical validator failure in 2 of 5 committed run logs | No |
+| #1624 | Wrong grandparents attached across two independent fix attempts | Closed 2026-09-10 — the `same_person` half is issue #1731, the mechanical half re-filed as a `person_evidence` precondition, issue #2409 |
+| #2230 | Byte-identical validator failure in 2 of 5 committed run logs | Ruled 2026-09-07 — refuse delta-scoped in every writer, `project_create` stamps a default import source, the healer backfills |
 
 Issue #1837's rate re-derives higher on today's corpus — 84 of 148 runs (57%)
 under the definition "any writer tool called with relationship data, and no
 `person_warnings` call anywhere in the run." Either way it is about half.
 
-**The two classes have different ceilings, and the general ruling must say which
+**The classes have different ceilings, and the general ruling must say which
 class an issue is in:**
 
 - **Decidable from the project documents alone** → a writer-tool precondition,
@@ -258,18 +354,204 @@ class an issue is in:**
 - **Requires observing that a skill ran** → no precondition can reach it.
   Nothing observes skill completion — the same argument that already made the
   caller-attributed recency check permanently shadow-only. Issue #1852 is this
-  shape.
+  shape *as written*, but see the bridge below before accepting that.
+- **Bridgeable: require the step to deposit its output, then gate on the
+  output.** A rule that looks like the second class becomes the first when the
+  step is made to write a durable artifact, because the artifact is a project
+  document. **This is shipped, not theoretical.** The mentor gate in
+  `research-append.ts` refuses `project.status = "completed"` while any proof
+  summary backing a resolved question lacks a `proof-critique` entry in
+  `evaluations[]` — a pure foreign-key join over data already in memory,
+  snapshotted pre-call so a batch cannot append the verdict and consume it in
+  the same write. It never observes that `gps-mentor` ran; it observes what
+  `gps-mentor` left behind.
+
+  The arc is the whole argument of this theme, walked to the end on one rule:
+  `research/SKILL.md` has carried "verify BOTH gates, in order — do not write
+  `completed` until both hold" since **PR #811** (merged 2026-07-23; the prose
+  landed in `ee088b964`), and **29 of 128 completed runs in the committed corpus
+  reached `completed` with an uncritiqued summary anyway** — the 23% headline.
+
+  **The blend is the wrong instrument, and it flatters this theme's own thesis.**
+  Date-split over the same 128 runs, re-derived 2026-09-08 over the 161 committed
+  run logs:
+
+  | window | rate |
+  |---|---|
+  | before the prose existed | 23/70 = 32.9% |
+  | prose stated, nothing enforcing | 6/53 = 11.3% |
+  | precondition live (2026-08-17 on) | 0/5 = 0% |
+
+  **23 of the 29 violations predate the prose.** So "prose stated it, measurement
+  killed it" *understates* what prose did — the rate fell by two thirds once the
+  sentence existed — and "the precondition is what closed it" rests on n=5, whose
+  3/n bound is 60%, the same rule of three this document applies to the
+  postconditions table. The direction is monotonic and survives; the number and
+  the attribution do not. This is the trap this theme names twice elsewhere: the
+  corpus's age wearing a finding's clothes.
+
+  Re-derive: for each `eval/runlogs/e2e/*/run-*.final-research.json` with
+  `project.status == "completed"`, flag it when some `proof_summaries[]` entry
+  whose `question_id` names a question that is `resolved` has no `evaluations[]`
+  entry with `focus: "proof-critique"`, a matching `target_id`, and a null
+  `superseded_by`; bucket by the date in the filename.
+
+  So the second class is smaller than it looks. The test is not "can we observe
+  the skill" — it is **"is there a later write we can gate, and can the step be
+  made to leave something behind."** Issue #1852 has both: a conflict is written,
+  and a question resolution follows it, so calling it structurally unreachable is
+  unproven. That conclusion is not contested: the lead already ruled on #1852 on
+  2026-09-01 (the blocker is gone, and an acceptance criterion for the conversion
+  followed on 2026-09-02). The point stands with more support than "unproven"
+  claims for it — what remains is to stop citing it as the unreachable case.
 
 A reference implementation cited against a case it structurally cannot cover
-will discredit the mechanism. Four issues are stalled asking for that mechanism
-one at a time: **issues #2182, #2184, #2086, #2108** (two of the four unruled).
+will discredit the mechanism — and so will one that declares a case unreachable
+when a shipped gate already reaches its shape. Four issues are stalled asking
+for that mechanism one at a time: **issues #2182, #2184, #2086, #2108**. All
+four now carry a lead ruling dated 2026-09-07 with the `needs-decision` label
+removed (13:28, 14:42, 13:29 and 14:18 UTC), every one of them before this
+branch's first commit — so what they were stalled on is the mechanism, not a
+decision. **As of 2026-09-10 the mechanism question is settled too**: each ruling
+names what to build, and all four sit in Backlog with no assignee. Issue #2184 is
+the one exception, ruled *not yet* — no `source_ids` on plan items until issue
+#2077's supersede op shows the `revision_note` link is insufficient.
 
 **Highest delegation leverage on the board** — a general precondition mechanism
 converts a large class of stalled doctrine work into ordinary developer tasks.
 
 ---
 
-## Theme 4 — Hosted / control plane
+## Theme 4 — Our guards are proven on one shape, in one direction, and only where the output is a document
+
+**Urgency: high, and it rises the moment Theme 3 is ruled.** Theme 3's answer is
+"build preconditions." This theme is the ceiling on that answer: nothing here can
+currently tell a working gate from a decorative one.
+
+*Provenance: the first two sections below were raised by a new developer reading
+the repo cold (2026-09-07). Both were checked against the code and both hold. The
+third is this pass's own finding, from checking the first two.*
+
+### One shape is not a proof
+
+CLAUDE.md's new-lint rule — break the repo, watch the check fail — is right and
+stays. But its three named ways a check silently passes are all about the check's
+**reach**: a grep pattern that excludes its own tree, a `git grep` that skips
+untracked files, a field-name match that collides with an unrelated key. None is
+about the **shape of the input at the site**, which is the other way through:
+unquoted, commented out, wrapped, a stringified argument, a null, a missing
+token.
+
+The rule as written asks for one broken shape — the one its author already had in
+mind. That is the weakest possible proof, and it reads as a strong one, which is
+CLAUDE.md's own "worse than no check" argument turned back on the rule.
+
+Two instances, both found by review rather than by a guard, in two PRs merged 59
+minutes apart — `ba73881ad` (PR #2042) fixed the `--only`/`--variants` filter and
+PR #2044 the rest. CLAUDE.md's version of this rule names no PR and is accurate
+as written:
+
+- `--limit abc` parsed to `NaN`, selected zero images, and **exited 0 having done
+  nothing**.
+- `--only` / `--variants` were plain `includes()` filters, so a typo ran nothing,
+  exited 0, and still made a paid ground-truth call.
+
+The encoding lint became an AST lint for the same reason: greps failed on shape,
+not on reach — a compliant call whose `encoding=` sat on a later physical line,
+and a bare offender inside a multi-line call.
+
+### A guard fails in two directions, and the graduation instrument sees one
+
+A guard can wrongly block legitimate work, and it can wrongly let the bad thing
+through. Break-then-restore tests one bad shape and one good tree — a single
+point in each direction, not a proof in either.
+
+The sharper problem is the instrument that decides whether a guardrail ships.
+`eval/harness/e2e/guardrail_shadow_report.py` replays a shadow check across the
+committed corpus, and ADR-0011 names it *"the instrument that produces a
+satisfying-shape rate before a graduation."* **In a replay the guard is both the
+detector and the ground truth.** It can count what it would have blocked; it has
+no term at all for what it would have missed. Read the shadow-to-graduate table
+in `guardrail-enforcement-spec.md` with that in mind — every column counts
+firings, and none could report a miss.
+
+The population is pre-filtered the same way. This document's own Caveats already
+say committed run logs are converged states, so runs that failed and were re-run
+are absent — which is why every compliance rate here is stated as a floor. The
+same filter applies to a shadow replay.
+
+Related, and unwritten for guards: when a bug turns out to be the second instance
+of a class already fixed, the remedy is one shared guard, not a second one-off.
+"Code reuse" in CLAUDE.md covers implementation; "redundant guards are
+untestable" is a different rule. The `encoding="utf-8"` AST lint is the nearest
+shipped instance, and it is worth stating precisely rather than as a count:
+CLAUDE.md justifies it on a grep being **wrong in both directions** — a per-line
+grep false-flags a compliant call whose `encoding=` sits on a later physical
+line, and a file-level grep misses a bare offender inside a multi-line call. It
+replaced a grep that could not be made right, not a tally of three checks, and
+its add-commit deleted no grep check.
+
+### Coverage is shaped by section, not by agent — and two agents have no gate at all
+
+There is no general mechanism to check an agent's output, and the reason is
+structural rather than an omission. `docs/specs/schemas/ownership.json` states it
+of the only plane that binds in every environment: a writer-tool precondition is
+**caller-agnostic** — *"it constrains the WRITE, never who made it."* So a gate
+can only ever be "check this section," never "check this agent." The eight
+`*Invariants` functions in `research-append.ts` are keyed on sections, and agent
+coverage is whatever falls out of which section an agent happens to write. The
+one plane that can discriminate by caller is the `PreToolUse` hook, which fails
+open and is claimed by two rows. Nothing reads the manifest at runtime; it is
+kept in step by review.
+
+The consequence: **an agent whose deliverable is a return summary has nothing to
+gate.** Of five plugin agents, three write documents and are covered
+incidentally — `gps-mentor` (`evaluations[]`), `proof-conclusion`
+(`proof_summaries`, plus `proofSummaryInvariants`), `research-exhaustiveness`
+(`exhaustive_declaration`). Two have **no gate on the deliverable that carries
+the failure**, and they are where the worst measured failures sit. "Not covered
+at all" would overstate it for `record-extractor`, which writes `sources` and
+`assertions` under ownership rows; what is ungated is its identity assessment,
+which the bullet below states correctly:
+
+- **`record-extractor`'s identity assessments go in its return summary by
+  design** — `extraction_append` refuses the `person_evidence` section, which is
+  the correct fix for the write and leaves the judgement unauditable. That is the
+  lane that produced *"a fabricated identity link carrying a match score no tool
+  had computed."* **Ruled 2026-09-10: accepted, because the write it feeds is
+  already gated.** The harm is the link, not the summary, and the link is
+  `person_evidence` in `research_append` — issue #1731 has the tool record its
+  own `same_person` score, so a `match_score` is checked against a call that
+  happened, and issue #2409 refuses a confident link contradicting a documented
+  surname. That is the bridge applied to this lane: a covered write reached from
+  an uncovered summary.
+- **`image-reader`'s transcription is returned as text.** The image-transcribe
+  spec's own transcription section closes on "Nothing checks a transcription
+  against its scan". **Ruled 2026-09-10: accepted and recorded in that spec, not
+  gated.** The bridge buys existence, not fidelity — a persisted transcript
+  proves a page was read and says nothing about whether the words match it — and
+  an existence gate would police a failure the corpus does not contain (0 of 123
+  attributed `image-reader` instances returned without calling
+  `image_transcribe`). Fidelity needs a second read, which is the Opus arm that
+  was built and retired on a three-way OCR benchmark. What reopens it: a
+  confident-garbage instance in a graded run or a feedback bundle, per instance.
+
+And what coverage exists checks **existence or shape, never judgement**. The
+mentor gate asks whether a `proof-critique` verdict is on record. Nothing
+anywhere asks whether the verdict is any good.
+
+**First action: both halves are done in this PR.** The input-shape requirement is
+in CLAUDE.md ("One break is not a proof" and "Prove the other direction too"),
+and `guardrail_shadow_report.py` now carries the written admission that it has no
+false-pass term, in its docstring and beside the graduation table. Left as
+pending, this line invites `/fill-ready` to file two finished tasks. The third
+section was a design question belonging with the Theme 3 ruling; it was ruled
+2026-09-10, above, and the general half is now a row in ADR-0011: **coverage
+follows the artifact, not the agent.**
+
+---
+
+## Theme 5 — Hosted / control plane
 
 **Urgency: medium, with one urgent item. Delegable in principle, thin in practice.**
 
@@ -357,14 +639,22 @@ the lead can accept the blast radius.
 2. **Fix the judge** (Theme 2) — issues #2191 and #2057 specifically. It gates
    every *quality* claim, though not the token accounting in Theme 1, which can
    proceed in parallel.
-3. **Rule once on preconditions-vs-prose** (Theme 3), naming the two classes,
-   with a reference implementation. Unblocks ~40 issues.
-4. **Drain `needs-decision`** — 18 open items, excluded from ranking until
-   answered, and the work behind them is often junior-sized. `/make-decisions`
-   is cheap and converts lead time into other people's PRs at the best available
-   ratio.
+3. ~~**Rule once on preconditions-vs-prose**~~ — **done.** ADR-0011 carries the
+   classes, the reference implementation and (2026-09-10) the bridge, so a gate
+   author who reaches "not decidable from the documents" is now asked whether the
+   step can be made to deposit its output before falling through to prose. Theme
+   4's third section still bounds what the ruling can promise: no gate can reach
+   an agent whose deliverable is a return summary.
+4. ~~**Drain `needs-decision`**~~ — **done: 0 open as of 2026-09-10**, from 18.
+   The queue refills, and `/make-decisions` is cheap: it converts lead time into
+   other people's PRs at the best available ratio.
 
-Theme 4 is delegable after issue #1915. The two collapsed themes need owners,
+Theme 4's first two sections are junior-sized and need no ruling: put the
+input-shape requirement into the new-lint rule, and either give
+`guardrail_shadow_report.py` a false-pass term or write down that it has none.
+Do them before the Theme 3 ruling multiplies the number of gates.
+
+Theme 5 is delegable after issue #1915. The two collapsed themes need owners,
 not rulings — except issue #1335, which needs re-pricing first.
 
 ---
@@ -427,5 +717,6 @@ PY
 - **The corpus is not production** (`docs/architecture.md`, "What nothing
   checks") and runs at lower concurrency than a hosted session. Its dates skew
   hard to July 2026 (132 of 161 runs).
-- The board moves: 48 tools now, not 46; 28 skills, not 27; 18 open
-  `needs-decision`, not 19.
+- The board moves: 48 tools now, not 46; 28 skills, not 27; `needs-decision`
+  was 19 open when this document was written, 18 at the 09-07 pass, and 0 on
+  2026-09-10.

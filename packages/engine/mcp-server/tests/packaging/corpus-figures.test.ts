@@ -200,7 +200,9 @@ describe("the specs' corpus claims survive main moving", () => {
       // Scoped to the misroute arm. "never fires" also describes the raw-write
       // lockdown and a caller rule elsewhere in these files, and flagging those
       // would make this guard a nuisance nobody keeps.
-      const ABSENCE = /(fires on 0\b|fires on none|never fires|0 of \d+)/gi;
+      // `the rate is 0%` added: the postconditions work states an absence that
+      // way, and none of the other four spellings reached it.
+      const ABSENCE = /(fires on 0\b|fires on none|never fires|0 of \d+|the rate is 0%)/gi;
       for (const m of flat.matchAll(ABSENCE)) {
         const around = flat.slice(Math.max(0, m.index! - 220), m.index! + 220);
         if (/misroute|misrouted|plans append ops|plan_items op/i.test(around)) {
@@ -231,8 +233,14 @@ describe("the specs' corpus claims survive main moving", () => {
     // still yield the same four matches and no false positive, and the
     // interposed-words case (`3,466 of 7,238 write units (47%)`) stays out
     // because the paren must follow the second number directly.
+    // The third alternative reaches a per-instance table's DENOMINATOR, which
+    // the first two do not: the postconditions table states its figures as bare
+    // cells ("31", "0") that no low-noise regex can match, but the prose above
+    // it always names the population it measured over. Without this the whole
+    // table's `measured at` stamp was voluntary — removing the sha left this
+    // file at 4 passed, where a reader assumes the stamp is guarded.
     const FIGURE =
-      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plans append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)/gi;
+      /\b(?:of|fires on) [\d,]{1,7} (?:corpus )?plans append ops|\b[\d,]{1,7} of [\d,]{1,7} \(\d+(?:\.\d+)?%\)|\bover (?:the )?[\d,]{1,7} committed e2e runs\b/gi;
     const STAMP = /measured at [0-9a-f]{7,40}\b/i;
     const missing: string[] = [];
     for (const [rel, text] of Object.entries(specText)) {

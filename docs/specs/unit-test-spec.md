@@ -825,8 +825,14 @@ back to what the index was made from and correct it, never to detach the
 source. Checked mechanically by
 `test_index_discrepancy_does_not_recommend_detaching`
 (`eval/harness/validators/test_source_evaluation.py`), which splits the reply
-on blank lines and fails if the passage naming this source also recommends
-detaching or unlinking. Gated on the `index-discrepancy` tag; a test carrying
+into per-source passages and fails if the passage naming this source also
+recommends detaching or unlinking. The split is blank-line blocks, plus two
+shapes that carry one source's remedy per unit and would otherwise be judged
+whole: a markdown table is split per row, and a recap block ("In summary:",
+"**Bottom line:**") is split on clause boundaries. Both were added after a
+*correct* report failed the guard; the recap arm replaced an earlier version
+that skipped recap blocks entirely, which hid a detach recommended only in the
+recap — the shape the skill actually uses. Gated on the `index-discrepancy` tag; a test carrying
 that tag and no `index_error_source` fails rather than skipping, so the guard
 cannot be disarmed by omission.
 
@@ -1291,7 +1297,8 @@ def report_example_pattern(text_response):
 - `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).
 - `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort.
 - `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort.
-- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"error"`). `None` when the run completed normally.
+- `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
+- `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate).
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
@@ -1430,7 +1437,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "run_index": "number (0-based)",
       "run_id": "string (run_<test_id>_<timestamp>_<run_index>)",
       "outcome": "string (pass | partial | fail | aborted)",
-      "aborted_reason": "string or null (limit name, `not_runnable`, or `unmatched_tool_call` when outcome is aborted; null otherwise)",
+      "aborted_reason": "string or null (limit name, `not_runnable`, `unmatched_tool_call`, or `quota_exhausted` when outcome is aborted; null otherwise)",
+      "error": "string or null (the SDK's error string plus any rate-limit signals; optional, absent in run logs written before it existed)",
       "duration_ms": "number",
       "input_tokens": "number",
       "cached_input_tokens": "number",
@@ -1596,7 +1604,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
 - **Tool call repetition.** A fixture has no usage limit — it fires on every call whose `args` match its predicate (Section 3.2). A skill that calls a tool repeatedly with the same arguments therefore receives a copy of the same response each time. The judge sees every tool call in `runs[].output.tool_calls`, including repeats — tool-usage rubric dimensions (Section 7) should consider call-count plausibility ("did the skill make ~the right number of calls for the task?") rather than assuming each call returned new data.
-- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `sdk_stream_silence` (the per-message watchdog in `skill_runner` fired because no SDK message arrived within `sdk_message_silence_seconds`, indicating an upstream stall mid-generation; the orchestrator retries this reason like `error`), `not_runnable` (Section 9 runnability gate), `unmatched_tool_call` (Section 15 — the skill called a tool no fixture covers), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
+- **`runs[].aborted_reason`** — one of `max_turns`, `max_wall_clock_seconds`, `max_tool_calls`, `max_input_tokens_per_turn`, `sdk_stream_silence` (the per-message watchdog in `skill_runner` fired because no SDK message arrived within `sdk_message_silence_seconds`, indicating an upstream stall mid-generation; the orchestrator retries this reason like `error`), `not_runnable` (Section 9 runnability gate), `unmatched_tool_call` (Section 15 — the skill called a tool no fixture covers), `quota_exhausted` (the seat's subscription limit refused the call), or `error` (the SDK or harness raised an uncaught exception during skill execution). Null when the run was not aborted.
+- **`quota_exhausted` is split out of `error` because it is not transient.** The limit is deterministic until the seat's window resets, so retrying spends attempts in seconds against something that clears in hours. It is deliberately absent from both `_ALWAYS_RETRYABLE_ABORTS` (orchestrator) and `_TRANSIENT_ABORT_REASONS` (run_tests) — membership in either would restore the retry or feed the abort-storm breaker's ratio arithmetic. One such abort stops the suite submitting new tests and promotes what finished to a `scratch_` log, so no releasable `v{N}` is minted from a run a quota cut short. Classified from one structured signal — `RateLimitEvent.rate_limit_info.status == "rejected"`, the only one that cannot come from a per-minute API limit, since every `RateLimitType` literal is a subscription window — with a text match on the CLI's display string as a documented last resort. `ResultMessage.api_error_status` and `AssistantMessage.error == "rate_limit"` are recorded as evidence but do not classify: in `api_key` mode either can be an org per-minute limit this repo treats as transient (`harness/auth.py`, `harness/judge.py`), and misreading one discards a whole paid run. **No CI job can produce a real subscription quota**, so a green suite proves the classifier's branch, not that the predicate matches a live quota — whichever signals fire are recorded in `runs[].error` on any run that aborts, so the next occurrence settles which one fires. A healthy run persists none of them — `error` is set on failure paths only.
+- **`runs[].error`** (str | None, optional) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. Optional rather than required, so already-committed run logs stay valid. Before it existed the only trace of *why* a run aborted was inside `output.text_response`, which is not anywhere a reader looks: a subscription quota sat there unread while the PR that shipped the run described it as an SDK error.
 - **`runs[].validators.passed`** — top-level boolean per run for at-a-glance status.
 - **`runs[].judge.skipped`** — true when validators failed in this run *or* the run was aborted. When skipped, `dimensions` is an empty array and `judge_cost_usd` is 0.
 - **`totals.skill_cost_usd` + `totals.judge_cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently.
@@ -2227,8 +2237,8 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 Validators in `eval/harness/validators/` fall into three tiers:
 
-- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating. All citation-specific validators (V5, V10) are gating.
-- **Reporting** (not yet built) — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. The mechanism is tracked as Group M of the citation deep-dive validators.
+- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating. In `test_citation.py` the gating `test_*` functions are V5, V6, and the persisted/literal halves of V3, V4 and V10; the five `report_*` functions — the response halves of V3, V4 and V10, plus V11 and V12 — are tier-2 and never gate.
+- **Reporting** — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. A reporting-only check is a `report_*` function (not `test_*`); the runner tags its result with `reporting_only=True`. Observations reach the judge via the `{harness_observations}` prompt section and are recorded in `output.warnings[]` as `prose_observation` entries.
 - **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
 
 This three-tier system was decided against two alternatives: making every check gate (brittle — a prose regex reds a correct run and the judge never sees it), and dropping prose checks entirely (loses the finding). Only structured-field checks may gate.
@@ -2236,7 +2246,7 @@ This three-tier system was decided against two alternatives: making every check 
 | Validator | Path | Scope |
 |-----------|------|-------|
 | Universal | `eval/harness/validators/test_universal.py` | All skills. Checks: schema structure, enum values, ID prefixes, ID referential integrity, full reference integrity (dangling/cross-file/cycles, via the compiled TS `validateParsed`), duplicate tree IDs, append-only log, no-delete enforcement, write-then-validate (V1 — skills declaring `validate_research_schema`), tool allowlist (advisory). |
-| Citation | `eval/harness/validators/test_citation.py` | One skill. Checks: no new source entries, source classification preservation, creator-not-in-custody (V5), informant-not-in-who (V10). |
+| Citation | `eval/harness/validators/test_citation.py` | One skill. Checks: no new source entries, source classification preservation, creator-not-in-custody (V5), unknown-marker vocabulary (V6), informant-not-in-who (V10). |
 | Conflict-resolution | `eval/harness/validators/test_conflict_resolution.py` | One skill. Checks: fact conflicts have ≥2 competing assertions, resolved conflicts have required fields, preferred assertion is in competing list. |
 
 The table is illustrative, not exhaustive — most skills have a `test_<skill>.py` file with skill-specific validators. Use the existing files as templates when writing validators for other skills.

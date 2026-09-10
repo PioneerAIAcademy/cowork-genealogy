@@ -220,10 +220,10 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **5** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The five agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`proof-conclusion` and `research-exhaustiveness`.
+The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`proof-conclusion`, `research-exhaustiveness` and `person-evidence`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -538,7 +538,7 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
@@ -1607,8 +1607,8 @@ Other environment differences that bite:
   register the server over stdio and are **not** capped (committed e2e run
   logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
   past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
-  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
-  spec's Timeout budget section for why it is a range, not a point), but
+  budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
+  60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
   budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
   above the ceiling too. **No automated check reaches this** — neither harness
@@ -1938,6 +1938,7 @@ something already decided. The live register is the board:
 
 ```sh
 gh issue list --state open --label needs-decision   # blocked on one answer from the lead
+gh issue list --state open --label high-priority    # take these first in your lane (soft ordering; /fill-ready owns it)
 ```
 
 That label — not `senior`, which is work that stays hard after every question is

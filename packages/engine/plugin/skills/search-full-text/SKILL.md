@@ -49,9 +49,9 @@ This skill uses one search tool:
 FTS and indexed search are completely different systems:
 
 - **What's searched:** Raw transcript text, not structured name/date/place fields.
-- **No fuzzy matching.** Exact text only — no nicknames, phonetic variants, or Soundex.
-- **No abbreviation expansion.** Must search Wm and William separately.
-- **Default is OR** — at least one term must appear. Always use `+` to require terms.
+- **No fuzzy matching** in `keywords` and `place` fields. Exact text only — no nicknames, phonetic variants, or Soundex. The `name` field auto-expands recognized English given names with historical diminutives.
+- **No abbreviation expansion** in `keywords` and `place` fields. The `name` field auto-expands (e.g. Elizabeth also matches Betty, Bess, Eliza).
+- **Default is OR** — at least one term must appear. Always use `+` to require terms in `keywords`.
 - **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
 
 FTS results are derivative sources (original → image → AI transcript,
@@ -85,7 +85,7 @@ Read `references/search-strategies.md` for the full strategy catalog.
 
 | Research goal | Query approach |
 |---|---|
-| Find person as witness/appraiser/heir | `+Surname` in Name field, place filter after |
+| Find person as witness/appraiser/heir | `Surname` in Name field (no `+` — it disables auto-expansion), place filter after |
 | Find person in narrative records | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
 | Compound surname parentage (Iberian `Paterno Materno`) | `+PaternalSurname +MaternalSurname` co-occurrence — **never** as one phrase (see step 4 rules) |
@@ -96,8 +96,10 @@ Read `references/search-strategies.md` for the full strategy catalog.
 Read `references/query-syntax.md` for operator details and wildcards.
 
 **Critical rules:**
-- **Always use `+` to require terms.** Default is OR, which returns
-  millions of irrelevant results.
+- **Always use `+` to require terms in `keywords`.** Default is OR,
+  which returns millions of irrelevant results. Do NOT use `+` in the
+  `name` field — it disables auto-expansion of diminutives, and terms
+  are already required by `m.queryRequireDefault`.
 - **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
   `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
   call for a query — whether as `keywords` text or a structured
@@ -127,8 +129,9 @@ Read `references/query-syntax.md` for operator details and wildcards.
   paternal surname and the mother with the maternal, so the words are
   on **different people and not adjacent**. See `references/query-syntax.md`
   for escalation once the mother's fuller form is known.
-- **Abbreviations must be searched explicitly.** FTS does not
-  auto-expand (Wm/William, Thos/Thomas). Run separate queries.
+- **Abbreviations must be searched explicitly** in `keywords` and
+  `place` fields. FTS does not auto-expand (Wm/William, Thos/Thomas)
+  there. The `name` field auto-expands recognized English given names.
 - **Mine prior records for known surname variants before querying.**
   Scan existing `research.json` assertions and log entries for the
   target surname. If prior records show a transcription variant,
@@ -164,11 +167,11 @@ to retain them — you never serialize the payload yourself.
 response comes back with a `staged.resultsRef` you hand to `research_log_append`.
 If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`,
 re-run the identical query **with** `projectPath` and log **that** staged re-run,
-so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search
-entry can't feed extraction — `record_persona_id` is auto-filled from the
-sidecar, and `research_append` rejects an assertions append against a
-sidecar-less search — so **re-stage before any handoff to extraction**. A
-missing handle is a reason to re-run and re-log, never a reason to skip logging.
+so the entry gets its sidecar. Why the sidecar matters: a full-text search that
+returned results but staged no sidecar can't feed extraction — `research_append`
+rejects an assertions append against it — so **re-stage before any handoff to
+extraction**. A missing handle is a reason to re-run and re-log, never a reason
+to skip logging.
 If a `stagingError` persists across one retry, surface it to the user. (A nil
 search correctly has no `staged.resultsRef` — nothing was found to retain; that
 is expected.)

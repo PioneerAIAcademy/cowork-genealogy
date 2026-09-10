@@ -11,6 +11,7 @@ _HARNESS_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_HARNESS_ROOT))
 
 import run_tests  # noqa: E402
+from harness.warning_kinds import HARNESS_WARNING_KINDS, JUDGE_WARNING_KINDS  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -1447,52 +1448,62 @@ def test_summary_reads_warnings_off_the_real_entry(tmp_path, monkeypatch, capsys
 
 
 def test_summary_ignores_non_judge_warning_kinds():
-    """`output.warnings` is a shared list. orchestrator._build_warnings also
-    puts `unread_skill_call`, `missing_tool_usage_dimension` and
-    `uncovered_tool_call` in it — none of which is the judge misbehaving.
-    Tallying those under a "Judge rule violations" header would report a
-    routine unmatched tool call as a judge fault."""
-    assert "unread_skill_call" not in run_tests._JUDGE_WARNING_KINDS
-    assert "missing_tool_usage_dimension" not in run_tests._JUDGE_WARNING_KINDS
-    assert "uncovered_tool_call" not in run_tests._JUDGE_WARNING_KINDS
+    """`output.warnings` is a shared list. Harness-side advisories
+    (`unread_skill_call`, `uncovered_tool_call`, `harness_node_timeout`, …) are
+    not the judge misbehaving; tallying them under "Judge rule violations" would
+    report a routine unmatched tool call as a judge fault.
 
-    # And every judge-warning kind either file emits IS in the set, or it prints
-    # nowhere — which is the state this whole section exists to end.
-    #
-    # BOTH files, not just judge.py. Scanning judge.py alone is how the routing
-    # warning stayed dark for its entire life: it was emitted from
-    # orchestrator.py, so this guard never read the line that declared it and
-    # passed green the whole time. A guard that cannot see the file where the
-    # bug lives is not a guard.
-    from pathlib import Path as _P
+    The summary's tally list is now DERIVED from the `warning_kinds` registry —
+    not a regex scan of a hardcoded file list — so it is `is`-identical to the
+    registry's judge side and cannot drift from it. That closes the failure the
+    old scan could not: a kind emitted from an unscanned file, or built from a
+    const, went untallied and dark. Both are now caught at the `_build_warnings`
+    chokepoint (see test_orchestrator.py), so this test only pins the
+    classification, not the discovery."""
+    assert run_tests._JUDGE_WARNING_KINDS is JUDGE_WARNING_KINDS
+    # Harness-side kinds are excluded from the judge tally...
+    assert HARNESS_WARNING_KINDS.isdisjoint(run_tests._JUDGE_WARNING_KINDS)
+    for k in ("unread_skill_call", "uncovered_tool_call", "harness_node_timeout"):
+        assert k in HARNESS_WARNING_KINDS
+        assert k not in run_tests._JUDGE_WARNING_KINDS
+    # ...and the judge-side kinds are all tallied.
+    for k in ("routing_negative_judge_fail", "dropped_unknown_rubric_dimension"):
+        assert k in run_tests._JUDGE_WARNING_KINDS
+
+
+#: Non-warning ``"kind": "..."`` literals in the harness: the tool-call match
+#: vocabulary (mock_mcp's ``matched.kind``). Excluded so the scan below can glob
+#: EVERY harness file — closing the file-blindness of the retired two-file
+#: scan — without tripping on these. The guardrail-shadow kinds are built from
+#: constants (``"kind": SOME_KIND``), so the literal regex never sees them.
+_NON_WARNING_KIND_LITERALS = {"none", "predicate", "queue", "queue_reused", "live"}
+
+
+def test_every_literal_warning_kind_in_the_harness_is_registered():
+    """A forgotten registration must fail in pytest, for free — not mid-run.
+
+    The `_build_warnings` chokepoint validates every kind by value, but only once
+    the emit path actually executes (a live run, for `harness_node_timeout`); when
+    it fires there it raises out to `fut.result()` and stops the whole suite
+    (`harness_error` / `stop_submitting`), discarding the paid in-flight test.
+    This is the cheap first line: it catches the common literal case statically,
+    across every file, so the runtime raise stays a backstop."""
     import re as _re
+    from pathlib import Path as _P
+    from harness.warning_kinds import WARNING_KIND_SIDES
 
     harness_dir = _P(__file__).resolve().parents[2] / "harness"
     emitted: set[str] = set()
-    for name in ("judge.py", "orchestrator.py"):
+    for f in harness_dir.glob("*.py"):
         emitted |= set(
-            _re.findall(
-                r'"kind": "([a-z_]+)"',
-                (harness_dir / name).read_text(encoding="utf-8"),
-            )
+            _re.findall(r'"kind": "([a-z_]+)"', f.read_text(encoding="utf-8"))
         )
 
-    # orchestrator.py emits both classes. These three are harness-side
-    # advisories about the skill or the fixtures, asserted above to be OUT of
-    # the set; everything else either file emits is a judge warning and must be
-    # IN it. Listing them here rather than filtering by call site is deliberate:
-    # a NEW orchestrator kind fails this test until someone classifies it, which
-    # is the decision that was skipped last time.
-    harness_side = {
-        "unread_skill_call",
-        "missing_tool_usage_dimension",
-        "uncovered_tool_call",
-        "prose_observation",  # tier-2 report_* findings (issue #1749)
-    }
-    judge_side = emitted - harness_side
-    assert judge_side <= run_tests._JUDGE_WARNING_KINDS, (
-        f"judge/orchestrator emit warning kind(s) the summary will never print: "
-        f"{sorted(judge_side - run_tests._JUDGE_WARNING_KINDS)}"
+    unregistered = emitted - set(WARNING_KIND_SIDES) - _NON_WARNING_KIND_LITERALS
+    assert not unregistered, (
+        f"literal warning kind(s) not in harness/warning_kinds.py: "
+        f"{sorted(unregistered)}. Add each to WARNING_KIND_SIDES (or, if it is a "
+        f"non-warning 'kind', to _NON_WARNING_KIND_LITERALS)."
     )
 
 
@@ -1761,3 +1772,189 @@ def test_abort_storm_breaker_does_not_trip_on_cap_aborts(
 
     # 5. All 5 tests were submitted.
     assert counter["n"] == 5
+
+
+def test_one_quota_abort_stops_the_suite_and_writes_scratch_not_release(
+    tmp_path, monkeypatch, capsys
+):
+    """The behaviour #2192 is actually about, and the one nothing covered.
+
+    Review of #2326 showed the whole suite stayed green with the quota stop
+    mutated out (`if False and reason == QUOTA_ABORT_REASON`) — the two tests
+    that existed asserted only constant membership, so `quota_stop`, the
+    scratch gate and the exit-3 path were all unexercised.
+
+    ONE quota abort is decisive, unlike the breaker's 4-abort/20% threshold:
+    the seat's limit is deterministic until it resets, so every test still to
+    run would abort the same way.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    n_tests = 10
+    for i in range(n_tests):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        # Two clean passes, then the seat's quota refuses. One is enough.
+        if counter["n"] <= 2:
+            return _stub_log(spec.id, spec.skill, "pass")
+        return _stub_log(
+            spec.id, spec.skill, "aborted",
+            aborted_reason=run_tests.QUOTA_ABORT_REASON,
+        )
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    # Stub the releasable write, as the sibling discriminator does. Without it
+    # `_stub_log` fails `write_run_log`'s schema validation the moment the quota
+    # stop is mutated out, so the test reds on a jsonschema ValidationError at
+    # the `main()` call and NONE of the five assertions below ever runs — it
+    # would be proving the stub is thin, not that the suite stopped.
+    def fake_write_run_log(log, *, runlogs_root, filename, **kwargs):
+        out = Path(runlogs_root) / "unit" / "skill-a" / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}", encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write_run_log)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+
+    out_dir = runlogs / "unit" / "skill-a"
+    combined = capsys.readouterr()
+
+    # 1. Execution failure, not a corpus one.
+    assert rc == 3
+
+    # 2. No releasable v{N} — a quota-cut run must never become a candidate.
+    assert list(out_dir.glob("v*.json")) == [], \
+        "a quota abort must NOT mint a releasable run log"
+
+    # 3. The completed tests are kept, not thrown away.
+    assert len(list(out_dir.glob("scratch_*.json"))) == 1
+
+    # 4. Submission stopped — the whole point. Without the quota stop the
+    #    suite runs all 10.
+    assert counter["n"] < n_tests, \
+        "a quota abort must stop the suite submitting further tests"
+
+    # 5. The operator is told why, in the seat's own terms.
+    assert "quota" in (combined.out + combined.err).lower()
+
+
+def test_a_transient_abort_alone_still_mints_a_releasable_log(
+    tmp_path, monkeypatch, capsys
+):
+    """The discriminator for the test above.
+
+    One `error` abort is below the breaker's floor and is NOT a quota, so
+    submission continues to the end. Without this, the quota test would still
+    pass if the harness stopped on *any* abort, and the new branch would be
+    proving nothing.
+
+    Asserts submission only, not the run log: minting a releasable `v{N}` sends
+    `_stub_log` through `write_run_log`'s schema validation, which the stub is
+    too thin to satisfy. That is a fixture limitation rather than a behaviour,
+    and it is why the breaker test never mints one either.
+    """
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    n_tests = 5
+    for i in range(n_tests):
+        (skill_dir / f"t{i}.json").write_text(json.dumps({
+            "test": {"id": f"ut_a_{i:03d}", "skill": "skill-a", "name": "n",
+                      "type": "positive", "description": "x", "tags": []},
+            "input": {"user_message": "m", "scenario": None},
+            "judge_context": [],
+        }), encoding="utf-8")
+
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    counter = {"n": 0}
+
+    def fake_run(spec, **kwargs):
+        counter["n"] += 1
+        if counter["n"] == 1:
+            return _stub_log(
+                spec.id, spec.skill, "aborted", aborted_reason="error"
+            )
+        return _stub_log(spec.id, spec.skill, "pass")
+
+    def fake_partial_write(log, *, runlogs_root, skill, timestamp):
+        out = Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"n_tests": len(log["tests"])}), encoding="utf-8")
+        return out
+
+    # The releasable write is stubbed rather than exercised: `_stub_log` is too
+    # thin for `write_run_log`'s schema validation, which is a fixture limit,
+    # not a behaviour. Recording that it was REACHED is the discriminating
+    # fact — the quota path returns before it.
+    minted: list = []
+
+    def fake_write_run_log(log, *, runlogs_root, filename, **kwargs):
+        minted.append(filename)
+        return Path(runlogs_root) / filename
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_partial_runlog", fake_partial_write)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write_run_log)
+
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root),
+        "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+    capsys.readouterr()
+
+    assert counter["n"] == n_tests, "a lone transient abort must not stop the suite"
+    assert minted, "a lone transient abort still reaches the releasable write"
+    assert rc == 3  # still an execution abort, just not a quota one

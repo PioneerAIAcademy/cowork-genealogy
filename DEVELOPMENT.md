@@ -200,6 +200,10 @@ gh issue create --label developer|genealogist [--label icebox] \
 …"
 ```
 
+- **Never `--label high-priority`.** That label is a picker signal — *take this
+  before other cards in your lane* — applied to Ready cards by `/fill-ready`
+  from criteria it re-derives every run, and never at filing. If the item is
+  urgent, say so in the body; the next `/fill-ready` decides.
 - **Pick the label by who does the work.** `developer` for anything with a
   mechanical pass/fail (lints, CI, validators, harness/Python, MCP tools,
   refactors, tooling bugs). `genealogist` for fixture adjudication, run-log

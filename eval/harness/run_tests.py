@@ -60,9 +60,10 @@ from harness.runlog import (
     write_partial_runlog,
     write_run_log,
 )
-from harness.skill_runner import DEFAULT_MODEL
+from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
 from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
+from harness.warning_kinds import JUDGE_WARNING_KINDS
 from harness.versioning import (
     DEFAULT_KEEP_CANDIDATES,
     ann_filename_for,
@@ -492,27 +493,17 @@ def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
 
 #: Warning kinds about the JUDGE — either the judge breaking one of its own
 #: prompt rules (`judge._extract_dimensions`) or a judge score the harness wants
-#: a human to re-read (`orchestrator.flag_routing_negative_judge_fail`). Both
-#: files emit into this class; it is not judge.py's alone.
+#: a human to re-read (`orchestrator.flag_routing_negative_judge_fail`). Tallied
+#: under "Judge rule violations"; the harness-side advisories `output.warnings`
+#: also carries (`unread_skill_call`, `uncovered_tool_call`, `harness_node_timeout`,
+#: …) are about the skill/fixtures/harness, not the judge, and are not tallied.
 #:
-#: `output.warnings` also carries harness-side advisories from
-#: `orchestrator._build_warnings` (`unread_skill_call`,
-#: `missing_tool_usage_dimension`, `uncovered_tool_call`) which are about the
-#: skill or the fixtures, not the judge; those are deliberately not tallied here.
-#:
-#: A new judge-warning kind in EITHER file must be added here too, or it prints
-#: nowhere — which is the state this whole section exists to end, and which is
-#: exactly what happened to the routing warning: it was emitted from
-#: orchestrator.py, the guard scanned only judge.py, and it printed nowhere for
-#: its entire life. `test_summary_ignores_non_judge_warning_kinds` now scans
-#: both.
-_JUDGE_WARNING_KINDS = frozenset({
-    "dropped_unknown_rubric_dimension",
-    "dropped_unknown_base_dimension",
-    "dropped_duplicate_dimension",
-    "coerced_tool_arguments_to_na",
-    "routing_negative_judge_fail",
-})
+#: DERIVED from `harness/warning_kinds.py`, the single source of truth — not a
+#: hand-kept second copy. This is what the old regex-scan guard could not
+#: guarantee: a new kind that prints nowhere is now impossible in two ways — the
+#: registry validates every emitted kind at the `_build_warnings` chokepoint, and
+#: the summary's tally list is this same registry, so the two cannot drift.
+_JUDGE_WARNING_KINDS = JUDGE_WARNING_KINDS
 
 
 def _print_summary(rows: list[dict]) -> None:
@@ -866,6 +857,10 @@ def main(argv: list[str] | None = None) -> int:
     interrupted = False
     transient_abort_count = 0
     breaker_tripped = False
+    # Set once by the first quota abort. Separate from `breaker_tripped` because
+    # the breaker is a ratio over *transient* aborts and a quota is neither
+    # transient nor a storm — one is decisive.
+    quota_stop = False
     total = len(specs)
     done_n = 0
 
@@ -1048,6 +1043,29 @@ def main(argv: list[str] | None = None) -> int:
                             saw_corpus_issue = True
                         else:
                             saw_exec_abort = True
+                            # A subscription quota is seat-wide and deterministic
+                            # until the reset, so every test still to run would
+                            # abort the same way. Stop submitting and take the
+                            # same path the #1600 breaker takes: the completed
+                            # tests are promoted to a scratch log and no
+                            # releasable v{N} is minted. Deliberately NOT the
+                            # breaker itself — that counts transient aborts and
+                            # needs 4-of-20%; one quota is enough, and counting
+                            # it as transient would also restore the retry.
+                            if reason == QUOTA_ABORT_REASON and not quota_stop:
+                                quota_stop = True
+                                stop_submitting = True
+                                print(
+                                    f"\n  ! subscription quota reached on "
+                                    f"{entry.get('test_id', '?')} — not starting "
+                                    f"more tests. The seat's limit is "
+                                    f"deterministic until it resets, so the rest "
+                                    f"of the suite would abort the same way.\n"
+                                    f"    Keeping the tests that finished; no "
+                                    f"releasable run log will be written.",
+                                    file=sys.stderr,
+                                    flush=True,
+                                )
                             if (
                                 not args.no_abort_breaker
                                 and not breaker_tripped
@@ -1193,6 +1211,12 @@ def main(argv: list[str] | None = None) -> int:
             f"Abort-storm breaker: {transient_abort_count} transient aborts in "
             f"{done_n} tests — keeping the tests that finished."
         )
+    if quota_stop:
+        print(
+            "Subscription quota reached — keeping the tests that finished. "
+            "Re-run after the seat's limit resets; the run log is scratch, not "
+            "a releasable candidate."
+        )
 
     _print_timing_report(list(results_by_index.values()), elapsed_total)
     _print_summary(rows)
@@ -1207,7 +1231,7 @@ def main(argv: list[str] | None = None) -> int:
     # operator watching a crashed suite sit there presses Ctrl-C and sets both
     # — and "the harness broke" is the more actionable of the two facts. This
     # also preserves the pre-#943 code, which returned 1 for that state.
-    if interrupted or harness_error is not None or breaker_tripped:
+    if interrupted or harness_error is not None or breaker_tripped or quota_stop:
         promoted = False
         for skill, pp in partial_paths.items():
             if pp.exists():
@@ -1218,7 +1242,7 @@ def main(argv: list[str] | None = None) -> int:
             print("  (no tests finished — nothing to save)")
         if harness_error is not None:
             return 1
-        if breaker_tripped:
+        if breaker_tripped or quota_stop:
             return 3
         return 130  # interrupted
 

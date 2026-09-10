@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
+import { mkdtemp, writeFile, readFile, rm, access, mkdir } from "fs/promises";
+import { realpathSync } from "node:fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { projectCreate } from "../../src/tools/project-create.js";
@@ -203,6 +204,68 @@ describe("project_create", () => {
       expect(await exists(missing)).toBe(false);
     },
   );
+
+  // ── A project cannot nest inside another (issue #1869) ──────────────────
+
+  it("refuses when an ancestor directory already holds a project, naming it, and writes NEITHER file", async () => {
+    // The viewer watches one folder; a project created one level down inside
+    // an existing project reads to a tester as lost files between sessions
+    // (issue #1317 bug 2). This is the durable fix: refuse at create time.
+    await writeFile(join(dir, "research.json"), '{"project":{"objective":"existing"}}');
+    await writeFile(join(dir, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
+    const sub = join(dir, "sub-project");
+    const r = await projectCreate({ projectPath: sub, objective: "a nested objective" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toContain(realpathSync.native(dir));
+    expect(msg).toMatch(/already a research project/);
+    expect(msg).toMatch(/cannot be nested/);
+    expect(msg).toMatch(/research_append/);
+    expect(await exists("research.json")).toBe(true); // the ANCESTOR's file, untouched
+    await expect(access(join(sub, "research.json"))).rejects.toThrow();
+    await expect(access(join(sub, "tree.gedcomx.json"))).rejects.toThrow();
+  });
+
+  it("refuses several levels down too, naming the nearest ancestor", async () => {
+    await writeFile(join(dir, "research.json"), '{"project":{"objective":"existing"}}');
+    await writeFile(join(dir, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
+    const deep = join(dir, "a", "b", "c");
+    const r = await projectCreate({ projectPath: deep, objective: "a nested objective" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/already a research project/);
+    await expect(access(join(deep, "research.json"))).rejects.toThrow();
+  });
+
+  it("a half-present project still gets its OWN message, not the nesting one", async () => {
+    // The ancestor check runs after the two exists-refusals, so a half-present
+    // project at projectPath itself keeps its own, more actionable message
+    // even when ITS OWN parent also happens to hold a project.
+    await writeFile(join(dir, "research.json"), '{"project":{"objective":"outer"}}');
+    await writeFile(join(dir, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
+    const sub = join(dir, "sub-project");
+    await mkdir(sub, { recursive: true });
+    await writeFile(join(sub, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
+    const r = await projectCreate({ projectPath: sub, objective: "a nested objective" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/research\.json/);
+    expect(msg).toMatch(/restore/i);
+    expect(msg).not.toMatch(/already a research project/);
+  });
+
+  it("a sibling project — nobody's descendant — is unaffected", async () => {
+    const first = join(dir, "project-a");
+    const second = join(dir, "project-b");
+    await mkdir(first, { recursive: true });
+    const r1 = await projectCreate({ projectPath: first, objective: "first project" });
+    expect(r1.ok).toBe(true);
+
+    const r2 = await projectCreate({ projectPath: second, objective: "second project" });
+    expect(r2.ok).toBe(true);
+  });
 
   // ── An objective is not optional ─────────────────────────────────────────
 
