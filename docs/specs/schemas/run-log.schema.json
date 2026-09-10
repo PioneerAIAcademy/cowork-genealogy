@@ -502,7 +502,7 @@
             { "enum": [1, 2, 3] },
             { "type": "null" }
           ],
-          "description": "1=fail, 2=partial, 3=pass. Null = N/A: the Tool Arguments base dimension when a test makes zero MCP tool calls, any rubric dimension the fixture never exercised, and Correctness/Completeness on a correctly-routed negative test, where the harness truncates the transcript at the hand-off and coerces the judge's 1 (coerced_routing_negative_to_na)."
+          "description": "1=fail, 2=partial, 3=pass. Null = N/A: the Tool Arguments base dimension when a test makes zero MCP tool calls, any rubric dimension the fixture never exercised, and Correctness/Completeness on a correctly-routed negative test, where the harness usually truncates the transcript at the hand-off and coerces the judge's 1 (coerced_routing_negative_to_na)."
         },
         "rationale": { "type": "string" }
       }

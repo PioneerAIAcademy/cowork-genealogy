@@ -210,8 +210,9 @@ def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
     A dimension may have score=None (N/A): the Tool Arguments base
     dimension on a run with zero MCP tool calls, any rubric dimension the
     fixture never exercised, and since #2196 Correctness/Completeness on a
-    correctly-routed negative test, where the harness truncates the
-    transcript at the hand-off. All-None buckets aggregate to None; mixed
+    correctly-routed negative test, where the harness usually truncates the
+    transcript at the hand-off (measured: not on 4 of the 50 runs it fires
+    on, where the 1 is real - see flag_routing_negative_judge_fail). All-None buckets aggregate to None; mixed
     buckets fall back to standard modal logic with None ranking above pass
     so a real score wins any tie.
 

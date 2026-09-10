@@ -178,7 +178,7 @@ def _routing_dims(correctness=1, completeness=1):
 
 
 def test_judge_fail_on_correctly_routed_negative_is_coerced_to_na():
-    """#2196: the 1 becomes null, because it grades a truncated transcript.
+    """#2196: the 1 becomes null, because it usually grades a truncated transcript.
 
     Not the floor coming back. The floor rewrote 1 -> 2, a claim the skill did
     better than the judge said; replaying its guards over the 121 committed run
