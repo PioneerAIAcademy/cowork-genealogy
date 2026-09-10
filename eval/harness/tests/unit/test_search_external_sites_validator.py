@@ -22,18 +22,29 @@ the persisted snake_case document. The mapping (from
 gives a V2 that never fires on anything, and no other test in the repo would
 notice.
 
-**Shapes are reduced inline, not read from run logs.** Candidate retention keeps
-only the newest five per skill (`eval/CLAUDE.md`, "Retention"), so a test that
-reads a run-log path ages out and starts erroring. Provenance instead:
+**Shapes are reduced inline.** An earlier draft justified that by saying a
+path-reading test "ages out" under the newest-five retention. That reasoning is
+wrong: `test_conflict_resolution_validator.py:61` globs `v1_*.json` and has
+survived rotation fine, because a glob picks up whichever logs are present.
+The real reason is thinner — six of the seven have no corpus instance to reduce
+*from*, so a replay would assert only that they stay quiet.
 
-- V3's bad shape (`results_examined: 2` logged `negative`) is the corpus's most
-  common violation — 9 of 48 `external_links_search` entries, six tests, four of
-  the five run logs.
-- V7's bad shape (a plan item appended, then `pli_007` set `skipped`) is
-  `ut_search_external_sites_013` in `v1_2026-08-20_22-45-06`, recurring on the
-  dive branch's `v1_2026-08-27_00-08-56`. Roughly two runs in five.
-- V2, V4 and V6 have no corpus instance yet — they guard rules the skill states
-  and nothing enforced, so their bad shapes are constructed from the rule.
+Measured 2026-09-10 across the 80 runs in the five logs this branch commits,
+reading `file_changes["research.json"].diff.log.added`:
+
+- V3's bad shape (`results_examined > 0` logged non-positive) is the only one
+  the corpus currently reproduces — **4 of 66 `external_links_search` entries,
+  three tests (`_002`, `_005`, `_006`), three of the five logs.** #1950's own
+  census said 9 of 48; the corpus turned over, so that is stale, not invented.
+- **The other six fire on zero of those 80 runs.** V2, V4 and V6 guard rules
+  the skill states that nothing enforced. V7 previously cited two run logs at
+  "roughly two runs in five" — both have since been pruned by the newest-five
+  retention described above, so the claim is no longer checkable and is not
+  repeated. V7b and V8 have never had a committed instance.
+
+Their bad shapes are therefore constructed from the rule, not reduced from a
+run. That is the honest position: nothing in CI executes these against a real
+run, so a reader learns their true firing rate only here.
 """
 
 from __future__ import annotations
@@ -48,9 +59,9 @@ sys.path.insert(0, str(_HARNESS))
 sys.path.insert(0, str(_HARNESS / "validators"))  # validators_lib, the module
 
 from test_search_external_sites import (  # noqa: E402
+    report_no_plan_item_status_written_when_no_entry_names_one as check_v6,
     test_curated_links_fetch_with_results_is_not_logged_as_nil as check_v3,
     test_log_entries_do_not_carry_each_others_fields as check_v2,
-    test_no_plan_item_status_written_when_no_entry_names_one as check_v6,
     test_plan_items_are_updated_never_appended as check_v7,
     test_the_log_is_append_only as check_v8,
     test_the_url_logged_is_the_url_presented as check_v4,
@@ -159,7 +170,8 @@ def test_v2_treats_explicit_null_as_not_carrying():
 
 
 def test_v3_fires_on_the_corpus_shape():
-    """9 of 48 entries: `results_examined: 2` logged `outcome: negative`."""
+    """The corpus shape: `results_examined > 0` logged non-positive. 4 of 66
+    entries, three tests, three of five logs (measured 2026-09-10)."""
     before, after = _states(
         after_log=[_links_entry(results_examined=2, outcome="negative")]
     )
@@ -201,6 +213,35 @@ def test_v4_ignores_an_entry_with_no_url():
     entry = _site_entry(external_site={"site": "ancestry", "capture_received": False})
     before, after = _states(after_log=[entry])
     check_v4(before, after, "no link here", POSITIVE)
+
+
+def test_v4_skips_a_capture_arrival_entry():
+    """SKILL.md:439 — when a capture comes back the skill appends a NEW entry
+    re-logging the step-4 URL, and that reply analyses the PDF rather than
+    presenting a link. The schema requires `url_generated` on it regardless,
+    so without the skip this reads as a URL logged but never shown."""
+    entry = _site_entry(
+        external_site={"site": "ancestry", "url_generated": URL, "capture_received": True}
+    )
+    before, after = _states(after_log=[entry])
+    check_v4(before, after, "The capture shows a 1850 household of six.", POSITIVE)
+
+
+def test_v4_skips_a_no_access_entry():
+    """SKILL.md:584 — the no-access entry logs `outcome: "error"` and its reply
+    asks whether to skip the site, so it presents no link either."""
+    before, after = _states(after_log=[_site_entry(outcome="error")])
+    check_v4(before, after, "You have no Ancestry access — skip this site?", POSITIVE)
+
+
+def test_v4_still_fires_on_a_negative_outcome_that_hides_the_url():
+    """The boundary that must NOT widen. Scoping the skip on
+    `outcome != "partial"` would swallow this: the autonomous-defer path logs
+    `negative` and DOES present the URL, where V4 holds on 10 of 10 committed
+    runs. Only capture-arrival and no-access are exempt."""
+    before, after = _states(after_log=[_site_entry(outcome="negative")])
+    with pytest.raises(AssertionError, match="not in\n?.*the reply|never presented"):
+        check_v4(before, after, "Deferring this search for now.", POSITIVE)
 
 
 # --- V6: no plan status when no entry names a plan item ----------------

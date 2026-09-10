@@ -330,8 +330,12 @@ def test_curated_links_fetch_with_results_is_not_logged_as_nil(
     relevant" - sends them to a wider year window. Collapsing the two loses that
     distinction permanently in the audit trail.
 
-    Nine of the 48 external_links_search entries in the committed corpus do
-    this, across six tests and four of the five run logs (#1950).
+    Measured 2026-09-10 against the five run logs this branch commits, reading
+    `file_changes["research.json"].diff.log.added`: **4 of 66
+    external_links_search entries, across three tests
+    (ut_search_external_sites_002, _005, _006) and three of the five logs.**
+    Issue #1950's own census said 9 of 48; the corpus has since turned over,
+    so that figure is stale rather than wrong. Re-derive rather than reword.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
@@ -371,7 +375,18 @@ def test_the_url_logged_is_the_url_presented(
     reply = text_response or ""
     errors = []
     for entry in _new_external_entries(before_state, after_state, "external_site"):
-        url = (entry.get("external_site") or {}).get("url_generated")
+        detail = entry.get("external_site") or {}
+        # Step 6 appends a NEW entry that re-logs the step-4 URL without
+        # presenting it: the capture-arrival entry (SKILL.md:439), whose reply
+        # analyses the returned PDF, and the no-access entry (SKILL.md:584,
+        # outcome "error"), whose reply asks whether to skip the site. The
+        # schema requires url_generated on both, so without this they read as
+        # a URL logged but never shown. Not scoped on outcome == "partial"
+        # instead: the autonomous-defer path logs "negative" and DOES present
+        # the URL, where this holds on 10 of 10 committed runs (#2345 review).
+        if detail.get("capture_received") is True or entry.get("outcome") == "error":
+            continue
+        url = detail.get("url_generated")
         if not isinstance(url, str) or not url.strip():
             continue  # shape is test_url_generation_log_entry_shape's job
         if url not in reply:
@@ -382,16 +397,25 @@ def test_the_url_logged_is_the_url_presented(
     assert not errors, "URL logged but never presented:\n  - " + "\n  - ".join(errors)
 
 
-def test_no_plan_item_status_written_when_no_entry_names_one(
+def report_no_plan_item_status_written_when_no_entry_names_one(
     before_state, after_state, test
 ):
     """V6. When every new log entry has plan_item_id null, no plan item's status
     may change.
 
-    SKILL.md step 7 sets a status only on a turn that names or unambiguously
-    targets a plan item; when nothing is named, the restraint IS the behaviour.
-    The rubric's Log-entry dimension names this in its fail bullet and has
-    scored 3 on all 58 gradings, so it is not currently checking it.
+    **Reporting-only, deliberately: SKILL.md does not state this rule.** An
+    earlier draft claimed step 7 sets a status only on a turn that names a plan
+    item. It does not — `planItemId` appears twice in the 605-line body,
+    :387 and :418, both as the template literal `"<pli_XXX or null>"`, and
+    step 7 at :541 keys the status write on `planId` and the `entryId`, not on
+    the log entry. The schema puts no description on `plan_item_id` either.
+    Nine of nine corpus runs that moved a status did also write
+    `plan_item_id`, but that is model habit, not a contract (#2345 review).
+
+    Gating on a rule the shipped skill never states would fail runs for
+    behaviour nobody asked for. Landing the rule in SKILL.md first would need
+    a paid run and belongs with the URL-tool work on issue #1980; until then
+    this observes and the judge decides.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
@@ -426,11 +450,14 @@ def test_plan_items_are_updated_never_appended(before_state, after_state, test):
     finished - a manufactured item marked `skipped` reads downstream as an
     avenue considered and closed (#1226, with the item invented as well).
 
-    Reproducing on main: v1_2026-08-20_22-45-06.json,
-    ut_search_external_sites_013 appends a plan item and then updates pli_007 to
-    `skipped`; it recurs on the dive branch's v1_2026-08-27_00-08-56 with two
-    appends. Roughly two runs in five, so one green run is not evidence the
-    guard is unnecessary.
+    **No committed run reproduces this today — measured 0 across all 80 runs
+    in the five logs on this branch (2026-09-10).** An earlier draft cited
+    v1_2026-08-20_22-45-06 and v1_2026-08-27_00-08-56 at "roughly two runs in
+    five"; both have since been pruned by the newest-five retention this file
+    describes above, so that claim can no longer be checked from anything
+    committed and is not repeated here. The guard stays because the defect it
+    describes is real when it happens (#1226, where the item was invented as
+    well), not because the corpus currently shows it.
 
     Deliberately NOT assert_only_writes_to_sections(owned={"log","plans"}),
     which the issue originally specified: that permits ANY write to `plans`,
