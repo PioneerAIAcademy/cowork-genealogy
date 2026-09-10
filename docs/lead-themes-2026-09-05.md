@@ -452,9 +452,10 @@ nests a block per cycle, and the header snapshots the score at copy time.
   Merge correctness as `pass`" — not a phantom rule.
 
   Re-ruled 2026-09-10 once the manifest's two fields were separated: **`callers`
-  is enforced and `writerTools` fed no authorization decision** (it is read, at
-  `ownership-manifest.test.ts:123` and `:201` — both lints on the declaration,
-  neither on any write), so the 2026-08-23 ruling's
+  is enforced and `writerTools` fed no authorization decision** (it is read, by
+  `ownership-manifest.test.ts`'s "carries every required field, non-empty" and
+  "resolves every writer tool to a registered tool name" — both lints on the
+  declaration, neither on any write), so the 2026-08-23 ruling's
   "add the tool to the four rows" was a documentation edit with no effect.
   PR #2442 makes the field real — a section diff is authorized by the calling
   skill *or* by a declared writer tool whose own id permutation explains the
