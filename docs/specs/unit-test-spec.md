@@ -1259,6 +1259,28 @@ Validators are split into three tiers:
   - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
 - **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
 
+**A skip is recorded as its own outcome, not as a pass.** A validator that calls
+`pytest.skip()` did not apply to this state and executed no assertion. It stays
+non-gating — a validator that does not apply must never fail a test — but the run
+log records `outcome: "skipped"` beside `passed: true`, because the two are not
+the same claim and most of the corpus is the second one: **18,220 of the 48,704
+validator results in the 131 committed unit run logs are skips**, against 185
+failures, and 176 of the 214 distinct validators have never once failed. A green
+`validators.passed` is therefore compatible with almost nothing having run.
+**Count coverage off `outcome`, never off `passed`.**
+
+This is an instrument, not a gate — it is what makes a skip countable, and no
+outcome depends on it. The one place vacuity decides a verdict is a
+`negative.grade_on_invariant` test, whose whole result rests on its
+deterministic validators; that is gated **at load time** by `runnability.py`
+matching the test's tags against the validator file's gate tags, and does not
+want a second runtime check beside it. Replayed over the committed corpus a
+runtime check fires on nothing the load-time gate does not already refuse:
+1 of the 71 `grade_on_invariant` runs was vacuous
+(`search-wikipedia/v1_2026-06-23_16-05-24`, `ut_search_wikipedia_007`, all 15
+validators skipped), and no validator gated on any of that test's tags, so the
+load-time gate covers it.
+
 ### Conventions
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
@@ -1509,7 +1531,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
           {
             "name": "string (validator function name, e.g. test_log_append_only)",
             "passed": "boolean",
-            "error": "string or null (assertion error message when failed)"
+            "error": "string or null (assertion error message when failed; skip reason when skipped)",
+            "outcome": "passed | failed | skipped — what the validator DID. A skip carries passed:true and is non-gating, so `passed` alone cannot tell 'the property holds' from 'nothing looked'. Absent on run logs written before this field; read those by testing `error` for a leading \"skipped: \""
           }
         ]
       },

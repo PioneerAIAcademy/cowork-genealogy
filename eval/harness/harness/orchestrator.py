@@ -1510,8 +1510,14 @@ def _compute_outcome(
         # refuse-new-source), the skill may or may not fire, but no run
         # may harm state, and the validator is what enforces that. The
         # invariant must be backed by a tag-gated validator that actually
-        # runs; a `grade_on_invariant` test with no such validator passes
-        # vacuously (see docs/specs/unit-test-spec.md).
+        # runs; a `grade_on_invariant` test with no such validator would pass
+        # vacuously, which `runnability.py` blocks at load time by matching the
+        # test's tags against the validator file's gate tags. Do not add a
+        # second, runtime check of the same thing here — replayed over the
+        # committed corpus it fires on nothing the load-time gate does not
+        # already refuse (measured 2026-09-10: 1 of 71 `grade_on_invariant`
+        # runs was vacuous, `search-wikipedia/v1_2026-06-23_16-05-24`, and no
+        # validator gated on any of its tags, so the load-time gate covers it).
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in
