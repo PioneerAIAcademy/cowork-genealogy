@@ -149,20 +149,64 @@ canaries at bytes 119 / 9,020 / 18,552 / 21,003 / 34,078 / 44,115 — **all six
 came back**. An `Agent()` call contributes only its description; the whole agent
 listing is ~2,100 tokens.
 
-So `search-records` (60,807 bytes ≈ **15,200 tokens**, invoked in 157/161 runs)
-and `person-evidence` (42,797 ≈ **10,700**, 137/161) are resident main-thread
-mass every run. Pairing is what removes it, and it is already shipping:
-`research-exhaustiveness` is now a 5,127-byte skill with a 21,001-byte agent,
-`proof-conclusion` a 4,755-byte skill with a 50,143-byte agent.
+So `search-records` (60,807 bytes ≈ **15,200 tokens**, invoked in 159 of the 163
+runs committed by 2026-09-10) is resident main-thread mass in almost every run.
+Pairing is what removes it, and it keeps shipping: `research-exhaustiveness` is a
+5,064-byte skill with a 22,028-byte agent, `proof-conclusion` a 4,755-byte skill
+with a 53,424-byte agent, and `person-evidence` — 42,797 bytes resident when this
+document was written — landed as a 2,937-byte skill with a 55,326-byte agent on
+2026-09-09.
 
-The board holds 8 conversion cards, 8 effort-floor cards, plus issue #2243
-(`search-records`, the biggest body of all) and issue #1852. What it does not
-hold is the measurement that says which conversions pay. Issue #1136
-(lead-held, `icebox`, 9 lead comments) tunes model and effort without it.
+The board holds 7 open conversion cards of the 8 filed (issue #2119 closed —
+`search-external-sites` cannot be an agent), 8 effort-floor cards, plus issue
+#2243 (`search-records`, the biggest body of all), issue #2410
+(`record-extraction`, which a pair conversion cannot reach either) and issue
+#1852. What it did not hold was the measurement that says which conversions pay.
+That is the table below. Issue #1136 (lead-held, `icebox`, 9 lead comments) tunes
+model and effort, and should be priced against it: a cheaper model applied to
+15,200 tokens of resident skill body saves less than removing the body.
 
-**First action:** rank pair conversions by `bytes × invocation rate`. That puts
-`search-records` and `person-evidence` first, and it is a morning's work over
-data already committed.
+**Measured 2026-09-10** over the 163 committed run logs, `SKILL.md` bytes ×
+the fraction of runs that `Skill()`-invoked the skill:
+
+| skill | SKILL.md | agent | runs invoked | bytes × rate | card |
+|---|---:|---:|---:|---:|---|
+| search-records | 60,807 | — | 159/163 | **59,314** | issue #2243, blocked on #2123 |
+| research-plan | 30,265 | — | 162/163 | **30,079** | issue #2116 |
+| question-selection | 17,042 | — | 162/163 | **16,937** | issue #2115 |
+| record-extraction | 15,482 | — | 114/163 | **10,827** | issue #2410 |
+| locality-guide | 20,751 | — | 72/163 | 9,166 | issue #2117 |
+| search-external-sites | 31,537 | — | 26/163 | 5,030 | issue #2119, closed — cannot be an agent |
+| check-warnings | 21,022 | — | 36/163 | 4,642 | issue #2118 |
+| research-exhaustiveness | 5,064 | 22,028 | 95/163 | 2,951 | done |
+| proof-conclusion | 4,755 | 53,424 | 93/163 | 2,712 | done |
+| person-evidence | 2,937 | 55,326 | 139/163 | 2,504 | done |
+| research | 29,622 | — | 10/163 | 1,817 | — |
+| conflict-resolution | 26,505 | — | 9/163 | 1,463 | issue #1852 |
+| search-full-text | 17,214 | — | 12/163 | 1,267 | issue #2120 |
+| search-images | 15,087 | — | 8/163 | 740 | issue #2121 |
+| init-project | 26,120 | — | 4/163 | 640 | issue #2122 |
+
+Thirteen further skills score **zero** — `citation` (31,665 bytes), `timeline`
+(21,833), `hypothesis-tracking`, `project-status` and the rest are never
+`Skill()`-invoked in this corpus. Read that as the harness, not as disuse: the
+e2e corpus is autonomous-only, and those are the user-invoked skills.
+
+What it says:
+
+- **The top three are 106K of the 115K on the board**, and `search-records`
+  alone is more than half of it. Unblocking issue #2123 is the highest-value
+  move in this theme.
+- **`record-extraction` was fourth and had no card** — filed as issue #2410. A
+  pair conversion cannot reach it: it is already a router delegating to
+  `record-extractor` and `image-reader`, and agents cannot nest agents. Same
+  class of blocker as the one that closed issue #2119, different mechanism.
+- **Four funded cards buy almost nothing** — `search-full-text`, `search-images`,
+  `init-project` and `conflict-resolution` are all under 1,500. Issue #1852 is a
+  guardrail conversion and is funded on that argument, never on cost; the other
+  three are close to free to leave alone.
+- The `person-evidence` conversion did what it promised: 42,797 resident bytes
+  down to 2,937.
 
 Two corrections to the 09-05 issue notes: issue #1157 is **not** iceboxed — the
 lead reopened it 2026-08-31 with a `Touches:` line after building the
@@ -437,10 +481,23 @@ which the bullet below states correctly:
   design** — `extraction_append` refuses the `person_evidence` section, which is
   the correct fix for the write and leaves the judgement unauditable. That is the
   lane that produced *"a fabricated identity link carrying a match score no tool
-  had computed."*
+  had computed."* **Ruled 2026-09-10: accepted, because the write it feeds is
+  already gated.** The harm is the link, not the summary, and the link is
+  `person_evidence` in `research_append` — issue #1731 has the tool record its
+  own `same_person` score, so a `match_score` is checked against a call that
+  happened, and issue #2409 refuses a confident link contradicting a documented
+  surname. That is the bridge applied to this lane: a covered write reached from
+  an uncovered summary.
 - **`image-reader`'s transcription is returned as text.** The image-transcribe
-  spec's own §4.6 closes on "Nothing checks a transcription against its scan"
-  (line 318 of 1123 — it is that section's last line, not the document's).
+  spec's own transcription section closes on "Nothing checks a transcription
+  against its scan". **Ruled 2026-09-10: accepted and recorded in that spec, not
+  gated.** The bridge buys existence, not fidelity — a persisted transcript
+  proves a page was read and says nothing about whether the words match it — and
+  an existence gate would police a failure the corpus does not contain (0 of 123
+  attributed `image-reader` instances returned without calling
+  `image_transcribe`). Fidelity needs a second read, which is the Opus arm that
+  was built and retired on a three-way OCR benchmark. What reopens it: a
+  confident-garbage instance in a graded run or a feedback bundle, per instance.
 
 And what coverage exists checks **existence or shape, never judgement**. The
 mentor gate asks whether a `proof-critique` verdict is on record. Nothing
@@ -451,8 +508,9 @@ in CLAUDE.md ("One break is not a proof" and "Prove the other direction too"),
 and `guardrail_shadow_report.py` now carries the written admission that it has no
 false-pass term, in its docstring and beside the graduation table. Left as
 pending, this line invites `/fill-ready` to file two finished tasks. The third
-section is a design question and belongs with the Theme 3 ruling, since it bounds
-what that ruling can promise.
+section was a design question belonging with the Theme 3 ruling; it was ruled
+2026-09-10, above, and the general half is now a row in ADR-0011: **coverage
+follows the artifact, not the agent.**
 
 ---
 
