@@ -1258,8 +1258,10 @@ Validators are split into three tiers:
 non-gating — a validator that does not apply must never fail a test — but the run
 log records `outcome: "skipped"` beside `passed: true`, because the two are not
 the same claim and most of the corpus is the second one: **18,220 of the 48,704
-validator results in the 131 committed unit run logs are skips**, against 185
-failures, and 176 of the 214 distinct validators have never once failed. A green
+validator results in the 131 committed unit run logs are skips** (measured
+2026-09-11 over `eval/runlogs/unit/*/v1_*.json`), against 185
+failures, and 178 of the 214 distinct validators have never once failed — 176
+that ran and never failed, plus 2 that never ran at all. A green
 `validators.passed` is therefore compatible with almost nothing having run.
 **Count coverage off `outcome`, never off `passed`.**
 
@@ -1272,8 +1274,11 @@ want a second runtime check beside it. Replayed over the committed corpus a
 runtime check fires on nothing the load-time gate does not already refuse:
 1 of the 71 `grade_on_invariant` runs was vacuous
 (`search-wikipedia/v1_2026-06-23_16-05-24`, `ut_search_wikipedia_007`, all 15
-validators skipped), and no validator gated on any of that test's tags, so the
-load-time gate covers it.
+validators skipped). That run predates `test_no_wiki_no_write`, the tag-gated
+validator added 2026-07-29; nothing has been vacuous since. The load-time gate
+proves a validator *gates on* the test's tags, never that it *executes*, so a
+tag-gated validator carrying a second, state-dependent skip could still go
+vacuous — none does today, and nothing checks for one.
 
 ### Conventions
 

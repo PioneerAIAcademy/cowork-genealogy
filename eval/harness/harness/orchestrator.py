@@ -1452,10 +1452,14 @@ def _compute_outcome(
         # vacuously, which `runnability.py` blocks at load time by matching the
         # test's tags against the validator file's gate tags. Do not add a
         # second, runtime check of the same thing here — replayed over the
-        # committed corpus it fires on nothing the load-time gate does not
-        # already refuse (measured 2026-09-10: 1 of 71 `grade_on_invariant`
-        # runs was vacuous, `search-wikipedia/v1_2026-06-23_16-05-24`, and no
-        # validator gated on any of its tags, so the load-time gate covers it).
+        # committed corpus it fires on one run, already fixed (measured
+        # 2026-09-10: 1 of 71 `grade_on_invariant` runs was vacuous,
+        # `search-wikipedia/v1_2026-06-23_16-05-24`, which predates
+        # `test_no_wiki_no_write`, the tag-gated validator added 2026-07-29).
+        # Note what the load-time gate does and does not prove: that a
+        # validator GATES ON the test's tags, never that it EXECUTES. A
+        # tag-gated validator with a second, state-dependent skip could still
+        # go vacuous. None does today, and nothing checks for one.
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in
