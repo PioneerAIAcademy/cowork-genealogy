@@ -97,6 +97,23 @@ async function matchById(
     throw new Error("FamilySearch match API returned an unexpected response body.");
   }
 
+  // An id the service cannot resolve answers 200 with `entries: []` and
+  // `results: 0` — byte-identical to a persona that genuinely has no matches,
+  // except for this link. Reporting it as zero matches would hand the agent
+  // "nothing is attached to this record" when the truth is "you asked about a
+  // record that does not exist", and the two lead to opposite research
+  // decisions. Same failure shape as a wiki outage recorded as "no page for
+  // this place" (issue #2130).
+  if (body.links?.["not-found"]) {
+    throw new Error(
+      `FamilySearch has no ${cfg.collection === "tree" ? "record persona" : "tree person"} ` +
+        `at ${queryArk}. The id is well-formed but names nothing, so this is NOT ` +
+        `"no matches found" — re-check the id you passed. For a record persona use the ` +
+        `recordId/ARK from the search result or record_read, never the results sidecar's ` +
+        `internal p_… persona id.`,
+    );
+  }
+
   const matches = body.entries
     .map(simplifyEntry)
     .filter((m): m is MatchByIdMatch => m !== null);
@@ -119,9 +136,14 @@ function normalizeId(raw: string, cfg: MatchByIdConfig): string {
   // `toArk` returns its input unchanged when no ARK can be derived, so a plain
   // PID falls through to PID_RE below and a non-id like the results sidecar's
   // `p_293161675629` still reaches the throw. That rejection is CORRECT and must
-  // stay: FamilySearch validates the PID's check character and answers 400 for a
-  // minted id, so accepting the sidecar's internal persona id here would only
-  // move the failure one hop later.
+  // stay. The upstream check is on FORM, not on existence: a well-formed id the
+  // service never assigned answers 200 (with the `not-found` link handled
+  // below), while a malformed one answers 400. The form rule is a character set
+  // — `XXXX-XXXX`, uppercase, digits 1-9 and consonants, with `0` and the vowels
+  // `AEIOU` excluded at every position; there is NO check character (measured:
+  // varying a real pid's last character over all 36 alphanumerics accepts 30 and
+  // rejects exactly `0AEIOU`). `p_…` is malformed on several counts, so passing
+  // it through would buy a 400 instead of this readable message.
   const arkMatch = toArk(id).match(ARK_RE);
   if (arkMatch) {
     const [, prefixCore, pid] = arkMatch;
