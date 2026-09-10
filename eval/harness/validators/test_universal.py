@@ -470,6 +470,16 @@ def _merge_remap(tool_calls) -> dict[str, str]:
     for call in tool_calls or []:
         if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "merge_tree_persons":
             continue
+        # A merge that did not succeed wrote nothing, so it explains no delta.
+        # Requiring `ok is True` rather than rejecting `ok is False` is what makes
+        # this right on the unit plane: `merge_tree_persons` is not in LIVE_TOOLS
+        # and no fixture declares it, so a call there returns
+        # `{"error": "fixture_not_found"}` with no `ok` key at all. Reading that
+        # as an authorization would let a skill call the merge, watch it fail,
+        # hand-write the permutation with `research_append`, and be waved through
+        # by the one plane that guards the section.
+        if (call.get("response") or {}).get("ok") is not True:
+            continue
         for pair in (call.get("args") or {}).get("merges") or []:
             if isinstance(pair, (list, tuple)) and len(pair) == 2:
                 survivor, collapsed = pair
@@ -478,36 +488,43 @@ def _merge_remap(tool_calls) -> dict[str, str]:
     return remap
 
 
-def _apply_remap(value, remap: dict[str, str]):
-    """Substitute every collapsed id for its survivor, anywhere in the structure."""
+def _remap_collapsing(value, remap: dict[str, str]):
+    """Substitute collapsed ids, dropping ONLY the repeats the substitution made.
+
+    Merging B into A turns `subject_person_ids: [A, B]` into `[A]`, so the
+    remapped before-state must collapse `[A, A]` back to `[A]` or a legitimate
+    merge would be refused. It must NOT dedupe generally: deduping both sides
+    erases every pre-existing repeat from the comparison, so a delta that is
+    only `["I5", "I5", "I7"] -> ["I5", "I7"]` reads as "explained" by a merge
+    over ids that appear nowhere in the section.
+
+    An element is dropped only when its image is already present AND that
+    presence involves the substitution — either this element was remapped, or
+    the occurrence already in `out` got there by being remapped. Both
+    orderings therefore collapse (`[A, B]` and `[B, A]` alike), while a repeat
+    that predates the merge survives on both sides and breaks the comparison,
+    which is what it should do.
+
+    Only lists of plain strings collapse — `person_evidence[]` entries stay
+    distinct objects even when two come to share a `person_id`.
+    """
     if isinstance(value, str):
         return remap.get(value, value)
     if isinstance(value, list):
-        return [_apply_remap(v, remap) for v in value]
-    if isinstance(value, dict):
-        return {k: _apply_remap(v, remap) for k, v in value.items()}
-    return value
-
-
-def _dedupe_id_lists(value):
-    """Collapse repeats in lists of plain strings, order-preserving.
-
-    Merging B into A turns `subject_person_ids: [A, B]` into `[A]`, so a naive
-    remap of the before-state yields `[A, A]`. Only lists whose every element is
-    a string are deduped — `person_evidence[]` entries stay distinct objects even
-    when two of them come to share a `person_id`.
-    """
-    if isinstance(value, list):
         if value and all(isinstance(v, str) for v in value):
-            seen, out = set(), []
+            out: list[str] = []
+            from_remap: set[str] = set()
             for v in value:
-                if v not in seen:
-                    seen.add(v)
-                    out.append(v)
+                nv = remap.get(v, v)
+                if nv in out and (v in remap or nv in from_remap):
+                    continue
+                if v in remap:
+                    from_remap.add(nv)
+                out.append(nv)
             return out
-        return [_dedupe_id_lists(v) for v in value]
+        return [_remap_collapsing(v, remap) for v in value]
     if isinstance(value, dict):
-        return {k: _dedupe_id_lists(v) for k, v in value.items()}
+        return {k: _remap_collapsing(v, remap) for k, v in value.items()}
     return value
 
 
@@ -521,8 +538,7 @@ def _explained_by_merge(before_section, after_section, remap: dict[str, str]) ->
     """
     if not remap:
         return False
-    remapped = _dedupe_id_lists(_apply_remap(before_section, remap))
-    return remapped == _dedupe_id_lists(after_section)
+    return _remap_collapsing(before_section, remap) == after_section
 
 
 def test_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):

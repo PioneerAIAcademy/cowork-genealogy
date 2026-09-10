@@ -255,18 +255,45 @@ describe("ownership manifest — every name resolves", () => {
       join(mcpRoot, "src", "validation", "person-id-refs.ts"),
       "utf8",
     );
-    // Quoted literals only: the interface's `field: PersonIdRefField;` is
-    // unquoted and must not be read as a section name.
+    // Two readings that must agree. The quoted `field:` literals are what the
+    // walker demonstrably yields; `PersonIdRefField` is what it is ALLOWED to
+    // yield, and every yield site is typed against it. Scraping only the
+    // literals misses a field yielded through a variable — `field: HYP` where
+    // `const HYP: PersonIdRefField = "hypotheses"` — which type-checks, adds a
+    // sixth section, and leaves this guard green. Requiring the two sets to
+    // match is what makes the literal scrape trustworthy rather than a subset.
     const fields = [...walker.matchAll(/\bfield:\s*"([a-z_]+)"/g)].map((m) => m[1]);
+    const union = [
+      ...(walker.match(/export type PersonIdRefField =([^;]+);/)?.[1] ?? "").matchAll(
+        /"([a-z_]+)"/g,
+      ),
+    ].map((m) => m[1]);
+
     expect(
       fields.length,
       "no `field: \"...\"` literals found in person-id-refs.ts — the walker was " +
         "restructured and this guard is now reading nothing, which passes silently",
     ).toBeGreaterThan(0);
+    expect(
+      union.length,
+      "could not read the `PersonIdRefField` union from person-id-refs.ts — the " +
+        "guard's second reading is now empty and cannot disagree with the first",
+    ).toBeGreaterThan(0);
+    expect(
+      union.filter((f) => !fields.includes(f)).sort(),
+      "`PersonIdRefField` names a field no `field: \"...\"` literal yields — the " +
+        "walker reaches it through a variable, so the literal scrape below is " +
+        "reading a subset of what the tool actually writes",
+    ).toEqual([]);
+    expect(
+      fields.filter((f) => !union.includes(f)).sort(),
+      "a `field:` literal is not in the `PersonIdRefField` union — one of the two " +
+        "readings is stale",
+    ).toEqual([]);
 
     // The walker names the FIELD; `subject_person_ids` lives inside `project`.
     const sectionOf = (f: string) => (f === "subject_person_ids" ? "project" : f);
-    const written = new Set(fields.map(sectionOf));
+    const written = new Set(union.map(sectionOf));
 
     const declared = new Set(
       rows

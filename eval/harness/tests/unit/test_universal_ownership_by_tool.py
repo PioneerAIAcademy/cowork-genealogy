@@ -215,3 +215,82 @@ def test_ordinary_violation_still_fails_with_a_merge_call_present():
     with pytest.raises(AssertionError) as e:
         check_research(before, after, {"name": "timeline"}, POSITIVE, tool_calls=[merge_call()])
     assert "person_evidence" in str(e.value)
+
+
+# ── a merge only explains a delta it actually made ──
+
+
+def test_a_merge_that_did_not_succeed_explains_nothing():
+    """`ok: false` — the tool refused, so the skill wrote this permutation itself."""
+    before = research([SURVIVOR, COLLAPSED])
+    after = research([SURVIVOR])
+    call = merge_call()
+    call["response"] = {"ok": False}
+    with pytest.raises(AssertionError):
+        check_research(before, after, TREE_EDIT, POSITIVE, tool_calls=[call])
+
+
+def test_a_merge_the_harness_never_ran_explains_nothing():
+    """The shape this actually takes on the unit plane today.
+
+    `merge_tree_persons` is not in `LIVE_TOOLS` and no fixture declares it, so a
+    call returns `{"error": "fixture_not_found"}` — no `ok` key at all. Reading
+    an absent `ok` as success would authorize precisely the run this plane
+    exists to catch: call the merge, watch it do nothing, then hand-write the
+    repointing with `research_append`.
+    """
+    before = research([SURVIVOR, COLLAPSED])
+    after = research([SURVIVOR])
+    call = merge_call()
+    call["response"] = {"error": "fixture_not_found", "tool": "merge_tree_persons"}
+    with pytest.raises(AssertionError):
+        check_research(before, after, TREE_EDIT, POSITIVE, tool_calls=[call])
+
+
+# ── the substitution may collapse its own repeats, and no others ──
+
+
+def test_a_pre_existing_duplicate_is_not_laundered_by_an_unrelated_merge():
+    """Deduping BOTH sides erases every pre-existing repeat from the comparison.
+
+    A delta that is only `[I5, I5, I7] -> [I5, I7]` then reads as "explained" by
+    a merge over ids that appear nowhere in the section — the skill tidied a
+    list it does not own and the merge call laundered it.
+    """
+    before = research(["I5", "I5", "I7"])
+    after = research(["I5", "I7"])
+    with pytest.raises(AssertionError):
+        check_research(
+            before, after, TREE_EDIT, POSITIVE,
+            tool_calls=[merge_call(pairs=(("I91", "I90"),))],
+        )
+
+
+def test_a_duplicate_inserted_is_not_laundered_either():
+    before = research(["I5", "I7"])
+    after = research(["I5", "I7", "I7"])
+    with pytest.raises(AssertionError):
+        check_research(
+            before, after, TREE_EDIT, POSITIVE,
+            tool_calls=[merge_call(pairs=(("I91", "I90"),))],
+        )
+
+
+@pytest.mark.parametrize(
+    "before_ids",
+    [
+        pytest.param([SURVIVOR, COLLAPSED], id="survivor-first"),
+        pytest.param([COLLAPSED, SURVIVOR], id="collapsed-first"),
+    ],
+)
+def test_the_merge_s_own_repeat_collapses_in_either_order(before_ids):
+    """The other direction: a real merge must pass whichever order the ids sit in.
+
+    A rule that only drops a repeat when the CURRENT element was remapped gets
+    `[survivor, collapsed]` right and refuses `[collapsed, survivor]`, which is
+    a false deny on a legitimate merge.
+    """
+    check_research(
+        research(before_ids), research([SURVIVOR]), TREE_EDIT, POSITIVE,
+        tool_calls=[merge_call()],
+    )
