@@ -352,10 +352,23 @@ written for a human. A `## Setup` heading cannot work — 50 of 96 READMEs have 
 `build_snapshot` embeds `rubric.md`, the scenario README and each test's
 `judge_context` — none of which the skill can see; `workspace.py` stages only
 `research.json`, `tree.gedcomx.json` and `results/`. So a sentence only the
-grader reads is priced like a behaviour change. The satisfaction is
-`make judge-regrade` (issue #2191's ruled deliverable), which must **re-render
-the prompt from disk**, not replay a stored one, or a judge-side edit certifies
-as a no-op. Blocked on #2191.
+grader reads is priced like a behaviour change. The merge gate this actually
+removes is one row of three: `rubric.md` and `judge_context` block on rules 2
+and 3, the scenario README rides a fixture arm that is warn-only, and the
+assembly code in `orchestrator.py` / `judge.py` fires nothing at all. The
+satisfaction is `make judge-regrade` (issue #2191's ruled deliverable), which
+must **re-render the prompt from disk**, not replay a stored one, or a
+judge-side edit certifies as a no-op. Blocked on #2191.
+
+**Prove that on the rendered prompt hash, never on the scores.**
+`JUDGE_TEMPERATURE = 0.0` is greedy decoding, not a determinism guarantee, so
+"an unchanged tree reproduces the stored scores" passes just as happily when a
+stored prompt is being replayed. A no-model dry-run over the renderer separates
+them, and is cheap enough to live in `make harness-test`: an unchanged tree
+renders byte-identically twice; one character into a `rubric.md` moves every
+prompt hash for that skill; one scenario brief moves the hash for exactly the
+tests referencing it; and a `SKILL.md` edit moves **no** prompt hash — the break
+a per-directory predicate survives at step two and fails here.
 
 Found while checking it: **`rubric_hash` is named as a run-log field in four
 places in `unit-test-spec.md` and exists in no schema, no module and no run log.**
