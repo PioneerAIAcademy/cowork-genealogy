@@ -947,8 +947,8 @@ export const materializeFactsSchema = {
     "NAMED PARTY — for a person the record names only INSIDE another persona's " +
     "link-establishing assertion (`relationship`, `marriage`, `parentage` or " +
     "`parentchild`, case-insensitive): a bride named in the groom's marriage " +
-    "register. She has no record_role and no " +
-    "name assertion of her own, so there is no persona to pass. Call " +
+    "register. She has no persona of her own to pass, or has one that carries " +
+    "nothing this tool would write. Call " +
     "`{ projectPath, assertionId, relatedRole, name: { given, surname }, gender?, " +
     "personId? }` (or the same fields as an `ops` element) instead of " +
     "recordId/recordRole — supplying both forms in one op is rejected. You supply " +
@@ -967,9 +967,8 @@ export const materializeFactsSchema = {
     "The marriage event still belongs on the Couple via tree_edit " +
     "add_relationship, and the edge itself via add_relationship's " +
     "sourceAssertionId. Unlike tree_edit add_person, whose name path is " +
-    "ref-tolerant, this arm cannot leave her without a source. If a skill you are " +
-    "running still instructs add_person for this case, follow the skill — it is " +
-    "being updated separately.",
+    "ref-tolerant, this arm cannot leave her without a source, which is why it is " +
+    "the correct mint for a person the record names.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -1066,6 +1065,7 @@ export const materializeFactsSchema = {
               },
             },
             gender: { type: "string" },
+            nameType: { type: "string" },
           },
         },
       },

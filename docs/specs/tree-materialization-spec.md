@@ -588,14 +588,19 @@ Where the guard does **not** fire:
   `materialize_facts`" was simply not true of her. §4.6 gives her one, and it
   enforces the ref.
 
-  **The exemption's safety argument is not yet restored, and saying so is the
-  point of this paragraph.** A ref-enforcing path now exists; person-evidence
-  still routes her through `tree_edit add_person`, because retiring that
-  carve-out is a change to skill prose and buys a paid eval run this engine
-  change did not. Until that lands, the sentence above describes what the tools
-  *can* do, not what the pipeline *does*. Treat the exemption as covering
-  hypothesis, oral and manual stubs **plus** one known record-derived leak that
-  is tracked and closing.
+  **The exemption's safety argument is restored.** A record-derived person
+  named inside another persona's assertion now has a ref-enforcing path, and
+  `person-evidence` uses it: it mints such a party through `materialize_facts`
+  (the persona form when that role has its own persona on the record, the
+  named-party form when it does not) and no longer reaches for `tree_edit
+  add_person`. So the sentence above holds as written again: the names this
+  exemption tolerates are hypothesis, oral and manual stubs, and the
+  record-derived ones come through `materialize_facts`, which enforces a
+  resolved ref on every name it authors. An eval-harness validator asserts the
+  minting CALL was `materialize_facts` on the two `stub-creation` fixtures, so
+  the routing is checked deterministically rather than only by a judge; that is
+  a harness check over two fixtures, not an engine-side guard, and `tree_edit`'s
+  name path stays ref-tolerant by the exemption above.
 
 Consequences:
 

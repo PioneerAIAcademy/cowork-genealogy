@@ -302,7 +302,7 @@ def test_low_score_variant_still_links(before_state, after_state, test):
 
 # --- Tag-gated: stub-person creation -------------------------------
 
-def test_stub_person_created_and_linked(before_state, after_state, test):
+def test_stub_person_created_and_linked(before_state, after_state, tool_calls, test):
     """Tag-gated (stub-creation): when an assertion's persona matches no
     existing tree person, person-evidence must mint a NEW stub person in
     tree.gedcomx.json and link a_005 to it — not force a bad match onto an
@@ -348,6 +348,57 @@ def test_stub_person_created_and_linked(before_state, after_state, test):
     # failed `ut_person_evidence_022` in v1_2026-08-27_12-36-32 for doing the
     # right thing (it scored the pairing at 0.79 after the writer tool's
     # reachability warning pointed it at the sidecar).
+    # ...and it must have been MINTED BY materialize_facts, not hand-built.
+    #
+    # Checking the after-state for "a name with some ref" is not enough, and
+    # the weaker version of this check was defeated in review: `tree_edit
+    # add_person` applies `assertNodeHasRef` to inline FACTS only, so it copies
+    # a caller-supplied `names[].sources` through untouched. A hand-written
+    # `sources: [{ ref: "S1" }]` naming the wrong record therefore passed,
+    # which is "remembered, not enforced" — the precise thing
+    # tree-materialization-spec section 6 exists to eliminate, sailing through
+    # the guard meant to catch it.
+    #
+    # So assert on the CALL. materialize_facts resolves the ref from the
+    # assertion's own source_id and refuses the write without one, which is
+    # what makes the provenance enforced rather than asserted. Either arm
+    # counts: the persona form for a party with its own persona on the record,
+    # the named-party form for one the record only names.
+    minted_by_materialize = any(
+        "materialize_facts" in str(tc.get("tool") or "") for tc in (tool_calls or [])
+    )
+    add_person_ops = [
+        tc for tc in (tool_calls or [])
+        if "tree_edit" in str(tc.get("tool") or "")
+        and "add_person" in json.dumps(tc.get("args") or {})
+    ]
+    assert minted_by_materialize and not add_person_ops, (
+        "a record-derived person must be minted with materialize_facts, which "
+        "resolves the source-ref from the assertion's own source_id and refuses "
+        "the write without it: the persona form ({ recordId, recordRole }) when "
+        "that party has its own persona on the record, the named-party form "
+        "({ assertionId, relatedRole, name }) when the record only names her. "
+        f"materialize_facts called: {minted_by_materialize}; "
+        f"tree_edit add_person calls: {len(add_person_ops)}. add_person enforces "
+        "no ref on NAMES (assertNodeHasRef covers inline facts only), so it "
+        "leaves her provenance-less, or carries a ref the caller typed by hand "
+        "and nothing checks against the assertion."
+    )
+
+    # Belt and braces: whatever minted her, every name carries a real ref.
+    for pid in {e.get("person_id") for e in linked_to_new}:
+        person = next((p for p in after_t.get("persons", []) if p.get("id") == pid), None)
+        for name in (person or {}).get("names") or []:
+            refs = [
+                s.get("ref")
+                for s in (name.get("sources") or [])
+                if isinstance(s, dict) and str(s.get("ref") or "").strip()
+            ]
+            assert refs, (
+                f"new stub person {pid} carries a name with no source-ref "
+                f"({name.get('given')!r} {name.get('surname')!r})."
+            )
+
     a_005 = _assertions_by_id(after_r).get("a_005")
     if _persona_reachable(after_r, a_005):
         pytest.skip(
@@ -367,7 +418,6 @@ def test_stub_person_created_and_linked(before_state, after_state, test):
         assert person and person.get("gender") and person.get("names"), (
             f"new stub person {pid} must have a gender and at least one name"
         )
-
 
 # --- Tag-gated: audit / review-only makes no writes ----------------
 
