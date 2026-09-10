@@ -1,14 +1,14 @@
 {
-  "run_log": "v1_2026-09-04_09-01-41.json",
-  "annotator": "edesonchristopher@gmail.com",
+  "run_log": "v1_2026-09-10_21-29-20.json",
+  "annotator": "dallan@quass.org",
   "corrections": [
     {
       "test_id": "ut_record_extraction_023",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The model incorrectly generated negative assertions for inherently absent fields and misclassified evidence types in the summary table."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_record_extraction_023",
@@ -29,6 +29,14 @@
     {
       "test_id": "ut_record_extraction_023",
       "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_023",
+      "dimension_source": "rubric",
       "dimension_name": "Informant identification",
       "llm_score": 3,
       "corrected_score": 3,
@@ -37,18 +45,18 @@
     {
       "test_id": "ut_record_extraction_023",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The extraction violates atomicity by generating meta-assertions for absent fields rather than focusing strictly on stated facts."
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_record_extraction_023",
       "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The summary table incorrectly labeled evidence types, contradicting the accurate persisted assertions and the provided context."
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     },
     {
       "test_id": "ut_record_extraction_013",
@@ -85,6 +93,14 @@
     {
       "test_id": "ut_record_extraction_013",
       "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_013",
+      "dimension_source": "rubric",
       "dimension_name": "Evidence type accuracy",
       "llm_score": 3,
       "corrected_score": 3,
@@ -93,13 +109,21 @@
     {
       "test_id": "ut_record_extraction_013",
       "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_020",
+      "test_id": "ut_record_extraction_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -107,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_020",
+      "test_id": "ut_record_extraction_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_020",
+      "test_id": "ut_record_extraction_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -123,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_020",
+      "test_id": "ut_record_extraction_014",
       "dimension_source": "rubric",
       "dimension_name": "Assertion atomicity",
       "llm_score": 3,
@@ -131,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_020",
+      "test_id": "ut_record_extraction_014",
       "dimension_source": "rubric",
       "dimension_name": "Informant identification",
       "llm_score": 3,
@@ -139,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_020",
+      "test_id": "ut_record_extraction_014",
       "dimension_source": "rubric",
       "dimension_name": "Evidence type accuracy",
       "llm_score": 3,
@@ -147,111 +171,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_031",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_031",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_031",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_031",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_031",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_031",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
+      "test_id": "ut_record_extraction_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The model incorrectly classified explicitly stated birth years as indirect evidence instead of direct."
+      "comment": "it shouldn't call search-images anyway - we need to fix this"
     },
     {
-      "test_id": "ut_record_extraction_028",
+      "test_id": "ut_record_extraction_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_028",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The explicitly stated birth years were incorrectly classified as indirect instead of direct evidence."
+      "comment": "it shouldn't read images anyway - we need to fix this"
     },
     {
-      "test_id": "ut_record_extraction_021",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_record_extraction_016",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -259,7 +195,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_record_extraction_016",
       "dimension_source": "rubric",
       "dimension_name": "Assertion atomicity",
       "llm_score": 3,
@@ -267,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_record_extraction_016",
       "dimension_source": "rubric",
       "dimension_name": "Informant identification",
       "llm_score": 3,
@@ -275,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_record_extraction_016",
       "dimension_source": "rubric",
       "dimension_name": "Evidence type accuracy",
       "llm_score": 3,
@@ -283,57 +219,121 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_021",
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "we need to handle locality-specific extraction idiosyncrasies by reading from fs-wiki"
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "seems not super important"
+    },
+    {
+      "test_id": "ut_record_extraction_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "The model explicitly violated instructions by fabricating negative assertions for blank parental fields."
+      "comment": "need to look into this"
     },
     {
-      "test_id": "ut_record_extraction_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_010",
+      "test_id": "ut_record_extraction_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "need to look into this"
     },
     {
-      "test_id": "ut_record_extraction_010",
+      "test_id": "ut_record_extraction_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "need to look into this"
     },
     {
-      "test_id": "ut_record_extraction_010",
+      "test_id": "ut_record_extraction_007",
       "dimension_source": "rubric",
       "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -344,15 +344,7 @@
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "The model completely failed to generate a response or invoke the required skill to handle the reclassification request."
-    },
-    {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The user's request was entirely ignored as the model produced no output and took no action."
+      "comment": "should be N/A but not an option"
     },
     {
       "test_id": "ut_record_extraction_011",
@@ -363,7 +355,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_030",
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "should be N/A but not an option"
+    },
+    {
+      "test_id": "ut_record_extraction_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -371,7 +371,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_030",
+      "test_id": "ut_record_extraction_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -379,87 +379,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_030",
+      "test_id": "ut_record_extraction_012",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_030",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The model incorrectly assigned the index compiler as the informant for parent names and used contradictory evidence classifications."
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The model incorrectly identified the index compiler, rather than the spouses themselves, as the informant for the parents' names."
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The model incorrectly classified parent names as direct evidence while simultaneously listing the informant as unknown."
-    },
-    {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_record_extraction_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -467,7 +395,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_record_extraction_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -475,7 +403,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_record_extraction_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_010",
       "dimension_source": "rubric",
       "dimension_name": "Assertion atomicity",
       "llm_score": 3,
@@ -483,15 +419,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The model successfully recovered from an initial validation error by creating a new log entry and retrying the extraction."
-    },
-    {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_record_extraction_010",
       "dimension_source": "rubric",
       "dimension_name": "Informant identification",
       "llm_score": 3,
@@ -499,7 +427,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_007",
+      "test_id": "ut_record_extraction_010",
       "dimension_source": "rubric",
       "dimension_name": "Evidence type accuracy",
       "llm_score": 3,
@@ -507,52 +435,124 @@
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_record_extraction_010",
       "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_record_extraction_021",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The model failed to execute the required image-confirmation tool call despite narrating the need for it."
+      "comment": "I think we may need to relax secondary and allow primary for indexes, but I will let others decide."
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_record_extraction_021",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The model completely omitted the explicitly required image search or delegation tool call."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_record_extraction_016",
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
       "dimension_source": "rubric",
       "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The model improperly assigned unknown informants for the parents' facts instead of inferring the presenting household member."
+      "comment": "agreed"
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "we need to improve our rules (make them clearer)"
+    },
+    {
+      "test_id": "ut_record_extraction_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     }
   ]
 }
