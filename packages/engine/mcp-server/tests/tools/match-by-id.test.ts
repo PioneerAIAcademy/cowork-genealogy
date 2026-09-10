@@ -157,6 +157,42 @@ describe("Input validation", () => {
     ).rejects.toThrow(/Unrecognized id/);
   });
 
+  it("throws when the response carries a not-found link", async () => {
+    // An id the service cannot resolve answers 200 with an empty `entries` —
+    // identical to a genuine zero except for this link. Reporting it as
+    // "no matches" would turn a bad id into a research finding.
+    mockJson({
+      entries: [],
+      results: 0,
+      title: "Matches for ark:/61903/1:1:ZZZZ-ZZZZ",
+      updated: "1970-01-01T00:00:00.001Z",
+      links: {
+        "not-found": { href: "https://familysearch.org/ark:/61903/1:1:ZZZZ-ZZZZ" },
+        "target-system": { href: "hr" },
+        self: { href: "/match-ws/match/matches" },
+      },
+    });
+    await expect(
+      recordPersonMatches({ id: "ZZZZ-ZZZZ" }),
+    ).rejects.toThrow(/no record persona at ark:\/61903\/1:1:ZZZZ-ZZZZ/);
+  });
+
+  it("does NOT throw on a genuine zero — same empty body, no not-found link", async () => {
+    // The other direction, and the one that decides whether this gate is
+    // usable: a persona that really has no matches must still return 0, not an
+    // error. The two bodies differ ONLY in `links`.
+    mockJson({
+      entries: [],
+      results: 0,
+      title: "Matches for ark:/61903/1:1:QPTX-TMQ2",
+      updated: "2025-03-11T17:10:44.970Z",
+      links: { self: { href: "/match-ws/match/matches" } },
+    });
+    const result = await recordPersonMatches({ id: "QPTX-TMQ2" });
+    expect(result.resultCount).toBe(0);
+    expect(result.matches).toEqual([]);
+  });
+
   it("still rejects a sibling-collection ARK given in URL form", async () => {
     // Widening the accepted spellings must not widen the accepted COLLECTION —
     // a 4:1: tree ARK handed to a record tool keeps its sibling-tool hint.

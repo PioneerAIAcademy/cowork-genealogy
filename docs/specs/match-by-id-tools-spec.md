@@ -68,12 +68,25 @@ Examples that all resolve to `ark:/61903/4:1:KNDX-MKG` inside
 Normalization is `toArk` (`src/utils/ark.ts`), the same helper the rest of the
 engine uses, rather than a second URL-shape regex maintained here.
 
-**A value that is not a FamilySearch-assigned id still errors, and must.** The
-results sidecar's internal persona id (`p_293161675629`) is the shape that
-produced every `Unrecognized id` failure in the corpus, and accepting it here
-would only move the failure one hop: FamilySearch validates the pid's check
-character and answers `400` for an id it did not assign. The id that works
-travels to the caller as the record's ARK.
+**A malformed id still errors, and must.** The results sidecar's internal
+persona id (`p_293161675629`) is the shape that produced every `Unrecognized id`
+failure in the corpus, and accepting it here would only move the failure one hop
+— upstream answers `400` for it. The id that works travels to the caller as the
+record's ARK.
+
+**The STATUS CODE turns on form alone, and the form rule is a character set with
+no check character** (measured 2026-09-10,
+`dev/probe-match-not-found.ts`). A pid is `XXXX-XXXX`, uppercase, drawn from
+digits `1-9` and consonants — `0` and the vowels `A E I O U` are excluded at
+every position. Varying a real pid's last character across all 36 alphanumerics
+accepts **30** and rejects exactly `0 A E I O U`; a vowel in position 1, 3 or 6
+each returns 400, as does a lowercase id.
+
+So `ark:/61903/1:1:ZZZZ-ZZZZ` — well-formed, never assigned to anything —
+answers **200**, while `…:AAAA-AAAA` answers **400** because `A` is a vowel, not
+because of a checksum. A well-formed id is accepted whether or not it names a
+real persona, and the service reports the difference in the body rather than the
+status. See "Unresolvable ids" below, which is why that matters.
 
 Examples that **error** inside `person_record_matches` (which expects a
 tree person):
@@ -119,6 +132,30 @@ keeps responses compact.
 
 Result page size. FS API default is 5 — too small for a useful
 LLM-facing tool. We default to **20** and clamp to `[1, 50]`.
+
+### Unresolvable ids
+
+**A well-formed id the service cannot resolve is reported as an error, not as
+zero matches.** Upstream answers `200` in both cases and the two bodies are
+otherwise identical — same `title`, `entries: []`, `results: 0`. The only
+explicit discriminator is a `not-found` entry in `links` (an epoch `updated` of
+`1970-01-01T00:00:00.001Z` is a second tell; the link is the one the tool keys
+on). Measured 2026-09-10:
+
+| | genuine zero | unresolvable id |
+|---|---|---|
+| `entries` / `results` | `[]` / 0 | `[]` / 0 |
+| `title` | `Matches for <ark>` | `Matches for <ark>` |
+| `links` | `self` | `not-found`, `target-system`, `self` |
+| `updated` | real timestamp | epoch |
+
+Collapsing the two would hand the agent "nothing is attached to this record"
+when the truth is "you asked about a record that does not exist" — opposite
+research decisions from the same output. It is the failure shape of an outage
+recorded as an absence: the same one that lets a failed wiki lookup persist as
+"the wiki has no page for this place".
+
+Reproduce with `dev/probe-match-not-found.ts`.
 
 ### What we deliberately don't expose
 
@@ -253,6 +290,7 @@ Mapped output:
 | Upstream 401                             | Re-throws as "FamilySearch match API rejected the request: 401 Unauthorized. Call the login tool to authenticate." |
 | Upstream 400 (bad ARK)                   | Re-throws as "FamilySearch rejected the id `<value>` as a malformed ARK."                     |
 | Upstream non-2xx                         | Re-throws as "FamilySearch match API error: `<status> <statusText>`."                         |
+| Upstream 200 carrying a `not-found` link | Throws "FamilySearch has no record persona / tree person at `<ark>` …" — see "Unresolvable ids" |
 | Network error                            | Re-throws as "Could not reach FamilySearch match API: `<message>`."                           |
 | Response not JSON / missing entries      | Throws "FamilySearch match API returned an unexpected response body."                          |
 
