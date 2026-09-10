@@ -45,6 +45,13 @@ export interface ImageTranscribeResult {
     /** The advisory the caller should act on (pivot to indexed search). */
     notice: string;
   };
+  /** Present when `lookingFor` contained a recognized given name and
+   *  expansion fired. Tells the caller what the VLM was primed with. */
+  nameExpansion?: {
+    original: string;
+    expanded: string;
+    expansions: Record<string, string[]>;
+  };
   metadata: {
     imageId?: string;
     ark?: string;

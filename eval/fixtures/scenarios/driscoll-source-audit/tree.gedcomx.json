@@ -1,0 +1,32 @@
+{
+  "persons": [
+    {
+      "id": "GJ72-9WD",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Cornelius", "surname": "Driscoll", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "primary": true, "date": "1814", "place": "Ireland" },
+        { "id": "F2", "type": "Marriage", "date": "1849-06-09", "place": "Sherbrooke, Canada East" },
+        { "id": "F3", "type": "Residence", "date": "1861", "place": "Sherbrooke, Canada East" },
+        { "id": "F4", "type": "Burial", "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada" }
+      ]
+    },
+    {
+      "id": "GJ72-9WF",
+      "gender": "Female",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Margaret", "surname": "Hayes", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F5", "type": "Birth", "primary": true, "date": "1822", "place": "Ireland" },
+        { "id": "F6", "type": "Marriage", "date": "1849-06-09", "place": "Sherbrooke, Canada East" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "R1", "type": "Couple", "person1": "GJ72-9WD", "person2": "GJ72-9WF" }
+  ],
+  "sources": []
+}

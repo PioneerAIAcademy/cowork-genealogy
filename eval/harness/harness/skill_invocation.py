@@ -1026,6 +1026,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # hook routes `exhaustive_declaration.declared: true` to this agent, so
         # every legitimate declaration now arrives from it.
         "research-exhaustiveness",
+        # Same shape again, section-scoped, for identity links (issue #1853):
+        # the hook routes the whole `person_evidence` section to this agent, so
+        # every legitimate link now arrives from it.
+        "person-evidence",
     }
 )
 
