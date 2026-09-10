@@ -87,15 +87,6 @@ call the birth date proved. Under spec §3.4.2 a linked person's own birth date
 is a `detail` component and does not score, so an agent that recovers only the
 census's "about 1892" still matches `f1`.
 
-**Two ARKs, one document.** `ark:/61903/1:1:QP51-QH2Y` is Wendel's *person
-index entry* for the 1926 census; `ark:/61903/1:2:QTM1-JBYT` is the *household
-page image* the entry sits on. Same underlying document, two different ARK
-addresses (`1:1:` person, `1:2:` page). `expected-findings.json` cites the
-hint's own ark, the `1:1:` form, because that is what the fixture hands the
-agent; the graded run's `research.json` captured the `1:2:` page-image ark,
-because that is what the agent read the household from. An agent citing either
-form has cited this record — neither is a miss.
-
 **Immigration place corrected post-run.** The Immigration fact on the mother
 carried the indexed destination "Wellburn, Thames Centre, Middlesex, Ontario,
 Canada". That is a transcription error: the original manifest image
