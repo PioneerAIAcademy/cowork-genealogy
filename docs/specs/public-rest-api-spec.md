@@ -318,5 +318,5 @@ Runs fully on mocks (`agent_mode=mock`, `sandbox=local`).
 - `apps/server/app/auth.py` — `get_api_client` bearer dependency
 - `apps/server/app/sessions.py` — `create_project(...)` + `_owned`
 - `apps/server/app/models.py` — `Project.turn_locked_at` (the DB lock column)
-- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds` / `v1_turn_lock_stale_seconds`
+- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds` / `v1_stream_idle_seconds` / `v1_turn_lock_stale_seconds`
 - `apps/server/app/main.py` — register `v1.router` + the `/v1` error envelope handlers

@@ -54,6 +54,16 @@ router = APIRouter(prefix="/v1", tags=["public-api"])
 # Seconds of silence that marks the end of the in-sandbox snapshot/history replay
 # burst (so we don't read replayed frames as the new turn's reply).
 _DRAIN_IDLE = 0.5
+# Whole-drain ceiling. _DRAIN_IDLE bounds one recv; nothing bounded the LOOP, so
+# a socket that always has a frame ready never goes idle and the drain never
+# returns. Reachable without a bug on either path: the streaming cap abandons a
+# still-running agent after v1_stream_idle_seconds of silence, and the next
+# message on that session reconnects and drains -- if the agent resumed
+# producing meanwhile, the drain spins while holding the turn lock, which is the
+# wedge this card exists to remove. Well inside v1_turn_timeout_seconds (120) so
+# no drain can consume a caller's whole budget. Same name and value as PR #2371
+# uses, so the two land without a conflict.
+_DRAIN_MAX = 30.0
 # SSE heartbeat interval: emit a comment if no frame arrives within this window so
 # proxies don't drop a long-running stream.
 _HEARTBEAT_S = 15.0
@@ -222,11 +232,28 @@ def _is_liveness(raw: str) -> bool:
 
 async def _drain_replay(ws) -> None:
     """Consume the snapshot/history replay burst, stopping once the socket has been
-    idle for _DRAIN_IDLE. A cancelled recv leaves any buffered frame for the next
-    recv, so no live-turn frame is lost."""
+    idle for _DRAIN_IDLE or _DRAIN_MAX has elapsed. A cancelled recv leaves any
+    buffered frame for the next recv, so no live-turn frame is lost.
+
+    The ceiling is bounded HERE rather than at the call sites because there are
+    two of them and the second is easy to miss: `_collect_sync` drains at :238
+    and only then sets its `deadline`, so `v1_turn_timeout_seconds` never
+    covered its drain at all. A per-site wrapper would have left the sync path,
+    which is the default, still unbounded.
+    """
+    deadline = time.monotonic() + _DRAIN_MAX
     while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return
+        # The wait is clipped to whatever is left of the ceiling, so a timeout
+        # means EITHER the socket went idle for a full _DRAIN_IDLE or the
+        # ceiling ran out. Both are "stop draining", so neither needs its own
+        # branch -- an earlier version distinguished them and no mutation of
+        # that branch could be made to fail a test, because the loop top
+        # returns on the next pass regardless.
         try:
-            await asyncio.wait_for(ws.recv(), timeout=_DRAIN_IDLE)
+            await asyncio.wait_for(ws.recv(), timeout=min(_DRAIN_IDLE, remaining))
         except asyncio.TimeoutError:
             return
         except websockets.ConnectionClosed:

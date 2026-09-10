@@ -8,6 +8,7 @@ Keys come from conftest's API_KEYS:
 """
 import asyncio
 import json
+import time
 from datetime import timedelta
 
 import pytest
@@ -393,8 +394,6 @@ def test_a_live_ping_loop_does_not_break_a_healthy_stream_turn(monkeypatch):
     `_is_liveness` is made ping-blind. This test's job is narrower and real: the
     no-false-positive direction, with the loop switched on.
     """
-    import os
-
     from app.config import get_settings
 
     # 1.0, which is 2x `_DRAIN_IDLE`, and the margin is deliberate rather than
@@ -407,10 +406,6 @@ def test_a_live_ping_loop_does_not_break_a_healthy_stream_turn(monkeypatch):
     # waiting for a slower machine - and the platform this card is about is the
     # slow one. Recorded in the spec: any future heartbeat speed-up has a floor.
     monkeypatch.setenv("WS_HEARTBEAT_INTERVAL", "1.0")
-    assert os.environ.get("WS_HEARTBEAT_INTERVAL") == "1.0", (
-        "the heartbeat interval was not set, so this test would run against the "
-        "15s default and exercise no heartbeat at all"
-    )
     monkeypatch.setattr(get_settings(), "v1_stream_idle_seconds", 60)
     with TestClient(app) as client:
         sid = _create(client)
@@ -477,3 +472,101 @@ def test_delete_releases_sandbox_and_404s_after():
         # Gone: a follow-up message 404s.
         r2 = client.post(f"/v1/sessions/{sid}/messages", json={"message": "again"}, headers=K)
         assert r2.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_drain_replay_returns_on_a_socket_that_is_never_idle(monkeypatch):
+    """`_drain_replay` must stop on a ceiling, not only on silence.
+
+    `_DRAIN_IDLE` bounds ONE `recv`; nothing bounded the loop. A socket with a
+    frame always ready never times out, so the drain never returned. Both call
+    sites are reachable in that state without a bug: the streaming cap abandons
+    a still-running agent after `v1_stream_idle_seconds` of silence, and the
+    next message on that session reconnects and drains -- if the agent resumed
+    producing meanwhile, the drain spins while holding the turn lock.
+
+    The sync path is the worse of the two and is why the bound lives inside the
+    function rather than at the call site: `_collect_sync` drains BEFORE setting
+    its `deadline`, so `v1_turn_timeout_seconds` never covered its drain.
+
+    Scaled `_DRAIN_MAX` so the test costs a fraction of a second.
+
+    THE FRAME LIMIT IS THE ASSERTION, not the elapsed-time check. An outer
+    `asyncio.wait_for` does NOT rescue this: without the ceiling the loop is a
+    tight cycle of immediately-returning coroutines, which never yields long
+    enough for an outer timeout to fire, so removing the ceiling HANGS the test
+    rather than failing it. Verified by doing exactly that -- the run had to be
+    killed at 10 minutes. A hang reads as a stuck CI job, not a red test, so the
+    fake raises once it has served more frames than any bounded drain could ask
+    for, which turns the break into a deterministic failure.
+    """
+    from app import v1
+
+    monkeypatch.setattr(v1, "_DRAIN_MAX", 0.3)
+
+    class NeverIdle:
+        """Always has a frame ready, so `recv` never times out.
+
+        Sleeps a beat per frame so the event loop turns over (a fake that never
+        awaits starves everything else), and refuses to serve more than `limit`,
+        which is ~15x what a 0.3s ceiling at 0.01s/frame can consume.
+        """
+
+        def __init__(self, limit: int = 500):
+            self.recvs = 0
+            self.limit = limit
+
+        async def recv(self):
+            self.recvs += 1
+            if self.recvs > self.limit:
+                raise AssertionError(
+                    f"_drain_replay consumed {self.recvs} frames without "
+                    f"returning: the loop is unbounded, so a socket that is "
+                    f"never idle wedges the turn"
+                )
+            await asyncio.sleep(0.01)
+            return json.dumps({"type": "agent_event", "event": {"kind": "text_delta"}})
+
+    ws = NeverIdle()
+    started = time.monotonic()
+    await v1._drain_replay(ws)
+    elapsed = time.monotonic() - started
+
+    assert ws.recvs > 1, "the fake socket was barely read, so this proves nothing"
+    assert elapsed < 2.0, (
+        f"the drain ran {elapsed:.2f}s against a socket that is never idle; "
+        f"_DRAIN_MAX did not bound the loop"
+    )
+
+
+@pytest.mark.asyncio
+async def test_drain_replay_still_returns_on_silence_well_inside_the_ceiling():
+    """The ceiling must not become the ONLY way out.
+
+    Without this, setting `_DRAIN_MAX` to 0 would satisfy the test above and
+    break the drain entirely: every reconnect would send its turn before
+    consuming the replay burst, and the caller would read history as live
+    output. This is the direction that pins `_DRAIN_IDLE` still works.
+    """
+    from app import v1
+
+    class TwoFramesThenIdle:
+        def __init__(self):
+            self.recvs = 0
+
+        async def recv(self):
+            self.recvs += 1
+            if self.recvs <= 2:
+                return json.dumps({"type": "agent_event", "event": {"kind": "text_delta"}})
+            await asyncio.sleep(3600)  # silence: the idle timer must fire
+
+    ws = TwoFramesThenIdle()
+    started = time.monotonic()
+    await asyncio.wait_for(v1._drain_replay(ws), timeout=5.0)
+    elapsed = time.monotonic() - started
+
+    assert ws.recvs == 3, f"expected 2 frames then one silent recv, got {ws.recvs}"
+    assert elapsed < v1._DRAIN_MAX, (
+        f"returned after {elapsed:.2f}s, i.e. on the {v1._DRAIN_MAX}s ceiling "
+        f"rather than the {v1._DRAIN_IDLE}s idle timer"
+    )
