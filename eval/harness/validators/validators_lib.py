@@ -175,11 +175,16 @@ def new_section_entries(
     """
     before = before_state.get("research_json") or {}
     after = after_state.get("research_json") or {}
+    # `or []`, not `.get(section, [])`: an explicit `"log": null` satisfies the
+    # default and then raises TypeError on iteration. Pre-existing in the four
+    # copies this helper replaced, and it fires on 0 of 2131 committed runs, so
+    # it is hardening rather than a fix — but the section is now caller-supplied,
+    # which widens the set of shapes that reach here.
     before_ids = {
-        e.get("id") for e in before.get(section, []) if isinstance(e, dict)
+        e.get("id") for e in (before.get(section) or []) if isinstance(e, dict)
     }
     return [
-        e for e in after.get(section, [])
+        e for e in (after.get(section) or [])
         if isinstance(e, dict) and e.get("id") not in before_ids
     ]
 

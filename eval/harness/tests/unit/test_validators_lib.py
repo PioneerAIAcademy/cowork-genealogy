@@ -18,6 +18,8 @@ from validators_lib import (  # noqa: E402
     assert_log_append_only,
     assert_no_section_deletions,
     assert_only_writes_to_sections,
+    new_log_entries,
+    new_section_entries,
 )
 
 
@@ -167,3 +169,54 @@ def test_log_append_only_fails_when_entry_deleted():
     after = {"log": [{"id": "log_1"}]}
     with pytest.raises(AssertionError, match="deleted"):
         assert_log_append_only(before, after)
+
+
+# --- new_section_entries / new_log_entries -----------------------------
+#
+# `new_log_entries` had no coverage here at all before #2390, despite four
+# validator files depending on it. It is now a one-line alias for the general
+# form, so both are exercised together.
+
+
+def _wrap(section, entries):
+    return {"research_json": {section: entries}}
+
+
+def test_new_section_entries_returns_only_what_is_new():
+    before = _wrap("sources", [{"id": "src_001"}])
+    after = _wrap("sources", [{"id": "src_001"}, {"id": "src_002"}])
+    assert [e["id"] for e in new_section_entries(before, after, "sources")] == ["src_002"]
+
+
+def test_new_section_entries_skips_non_dict_entries():
+    """The guard the fifth hand-rolled copy had dropped."""
+    before = _wrap("log", [{"id": "log_1"}, "junk"])
+    after = _wrap("log", [{"id": "log_1"}, "junk", {"id": "log_2"}])
+    assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_2"]
+
+
+def test_new_section_entries_tolerates_an_explicit_null_section():
+    """`"log": null` satisfies a `.get(section, [])` default and then raises
+    TypeError on iteration. Pre-existing in the four copies this helper
+    replaced, and it fires on 0 of 2131 committed runs — hardened because the
+    section is now caller-supplied, which widens the shapes that reach here."""
+    before = _wrap("log", None)
+    after = _wrap("log", [{"id": "log_1"}])
+    assert [e["id"] for e in new_section_entries(before, after, "log")] == ["log_1"]
+
+
+def test_new_section_entries_tolerates_a_missing_research_json():
+    assert new_section_entries({}, {}, "log") == []
+
+
+def test_new_log_entries_is_the_log_section_of_the_general_form():
+    before = _wrap("log", [{"id": "log_1"}])
+    after = _wrap("log", [{"id": "log_1"}, {"id": "log_2"}])
+    assert new_log_entries(before, after) == new_section_entries(before, after, "log")
+
+
+def test_new_log_entries_does_not_see_other_sections():
+    """A sources write must not read as a new log entry."""
+    before = _wrap("log", [])
+    after = {"research_json": {"log": [], "sources": [{"id": "src_001"}]}}
+    assert new_log_entries(before, after) == []
