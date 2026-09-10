@@ -18,7 +18,8 @@
       ],
       "writerTools": [
         "project_create",
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit"
@@ -53,7 +54,8 @@
         "skill:init-project"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [],
       "notes": "Recorded as unowned while the only writer was init-project's raw file write, on a measurement taken over the e2e corpus — where init-project never runs, because every fixture starts from an existing project. The unit corpus does exercise it. Now routed through `research_append` with the rest of project creation. Not enforceable on the unit plane: the section is outside the diff set that plane iterates.",
@@ -207,7 +209,8 @@
         "skill:person-evidence"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit",
@@ -267,7 +270,8 @@
         "skill:timeline"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit"
@@ -286,7 +290,8 @@
         "skill:proof-conclusion"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit",
