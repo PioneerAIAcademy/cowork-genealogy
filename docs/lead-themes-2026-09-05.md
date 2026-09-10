@@ -6,6 +6,10 @@ comment thread. One headline figure was wrong, two themes collapsed.
 **Second 09-07 pass:** Theme 3's class list was refuted by a shipped gate and now
 carries the bridge between its two classes; Theme 4 (guards) is new, and the
 hosted theme renumbered to 5.
+**2026-09-10 pass:** Theme 3's decision half is done — ADR-0011 carries the
+ruling and now the bridge, the four issues that were waiting on the mechanism
+were ruled 2026-09-07, and the `needs-decision` queue is empty. No gate has been
+built: every card named in Theme 3 sits in Backlog with no assignee.
 **Source:** all open Backlog issues, read in full, measurements over the 161
 committed e2e run logs on `main`, 11 raw session transcripts, and one live
 probe on Claude Code 2.1.263.
@@ -238,7 +242,13 @@ git log --since="90 days ago" --format='%an' -- eval/harness/judge | sort | uniq
 
 ## Theme 3 — Prose does not bind, and there is no general replacement
 
-**Urgency: high. ~40 issues queue behind one decision that does not exist.**
+**Urgency: high, and what it is waiting on has changed (2026-09-10). The
+decision exists** — ADR-0011 carries the layer map, the decision procedure, the
+bridge and the promotion table, and the four issues that were queued behind the
+mechanism were ruled 2026-09-07. **What has not happened is a build.** Every card
+below is in Backlog, unassigned. Gates are shipping from other cards — the
+conflict blocking-link derivation, the empty-plan refusal, the relationship
+source-ref mint — so the mechanism is in use; it has not reached this list.
 
 | Issue | Evidence | Ruled? |
 |---|---|---|
@@ -246,7 +256,7 @@ git log --since="90 days ago" --format='%an' -- eval/harness/judge | sort | uniq
 | #1852 | 47 of 56 runs that wrote a conflict never invoked `conflict-resolution` | Acceptance criterion set 2026-09-02 |
 | #2030 | Three measured runs ordered the plan identically despite the rule, varying their own wording between runs | Ruled 2026-08-31 |
 | #1624 | Wrong grandparents attached across two independent fix attempts | Comment 2026-09-07 |
-| #2230 | Byte-identical validator failure in 2 of 5 committed run logs | No |
+| #2230 | Byte-identical validator failure in 2 of 5 committed run logs | Ruled 2026-09-07 — refuse delta-scoped in every writer, `project_create` stamps a default import source, the healer backfills |
 
 Issue #1837's rate re-derives higher on today's corpus — 84 of 148 runs (57%)
 under the definition "any writer tool called with relationship data, and no
@@ -318,8 +328,11 @@ when a shipped gate already reaches its shape. Four issues are stalled asking
 for that mechanism one at a time: **issues #2182, #2184, #2086, #2108**. All
 four now carry a lead ruling dated 2026-09-07 with the `needs-decision` label
 removed (13:28, 14:42, 13:29 and 14:18 UTC), every one of them before this
-branch's first commit — so what they are stalled on is the mechanism, not a
-decision.
+branch's first commit — so what they were stalled on is the mechanism, not a
+decision. **As of 2026-09-10 the mechanism question is settled too**: each ruling
+names what to build, and all four sit in Backlog with no assignee. Issue #2184 is
+the one exception, ruled *not yet* — no `source_ids` on plan items until issue
+#2077's supersede op shows the `revision_note` link is insufficient.
 
 **Highest delegation leverage on the board** — a general precondition mechanism
 converts a large class of stalled doctrine work into ordinary developer tasks.
@@ -529,14 +542,15 @@ the lead can accept the blast radius.
 2. **Fix the judge** (Theme 2) — issues #2191 and #2057 specifically. It gates
    every *quality* claim, though not the token accounting in Theme 1, which can
    proceed in parallel.
-3. **Rule once on preconditions-vs-prose** (Theme 3), naming the classes and the
-   bridge, with a reference implementation. Unblocks ~40 issues. Read Theme 4's
-   third section first — it bounds what the ruling can promise, because no gate
-   can reach an agent whose deliverable is a return summary.
-4. **Drain `needs-decision`** — 18 open items, excluded from ranking until
-   answered, and the work behind them is often junior-sized. `/make-decisions`
-   is cheap and converts lead time into other people's PRs at the best available
-   ratio.
+3. ~~**Rule once on preconditions-vs-prose**~~ — **done.** ADR-0011 carries the
+   classes, the reference implementation and (2026-09-10) the bridge, so a gate
+   author who reaches "not decidable from the documents" is now asked whether the
+   step can be made to deposit its output before falling through to prose. Theme
+   4's third section still bounds what the ruling can promise: no gate can reach
+   an agent whose deliverable is a return summary.
+4. ~~**Drain `needs-decision`**~~ — **done: 0 open as of 2026-09-10**, from 18.
+   The queue refills, and `/make-decisions` is cheap: it converts lead time into
+   other people's PRs at the best available ratio.
 
 Theme 4's first two sections are junior-sized and need no ruling: put the
 input-shape requirement into the new-lint rule, and either give
@@ -606,5 +620,6 @@ PY
 - **The corpus is not production** (`docs/architecture.md`, "What nothing
   checks") and runs at lower concurrency than a hosted session. Its dates skew
   hard to July 2026 (132 of 161 runs).
-- The board moves: 48 tools now, not 46; 28 skills, not 27; 18 open
-  `needs-decision`, not 19.
+- The board moves: 48 tools now, not 46; 28 skills, not 27; `needs-decision`
+  was 19 open when this document was written, 18 at the 09-07 pass, and 0 on
+  2026-09-10.
