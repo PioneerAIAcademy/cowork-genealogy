@@ -6,9 +6,12 @@ loop's own output — a turn-lock protocol, a five-arm shim and a ceiling guard 
 proof — grew to a third of the document and generated a blocking finding every round it
 existed, while the architecture and risk sections did not move a word. It failed the
 scoping test below and was deleted, every load-bearing figure
-re-derived from the committed corpus at `e18d99b10`.
+re-derived from the committed corpus at `e18d99b10`. Re-checked against `main` on
+2026-09-10 before the build starts: the counts that moved since `e18d99b10` (agents,
+`fs` importers, vitest files), one that was a miscount (`getValidToken` call sites) and the
+probe-readiness corrections are folded in below.
 
-**Owner:** Dallan. **Timebox:** ~23 working days, solo; a few days' overrun accepted.
+**Owner:** Dallan. **Timebox:** ~23.5 working days, solo; a few days' overrun accepted.
 **Goal:** prove the risky half of the proposed FamilySearch architecture before
 FamilySearch commits to it, and produce measurements nobody currently has.
 **Becomes:** the basis of the real two-backend implementation. The engine work is
@@ -138,7 +141,13 @@ The 1 s poll reads events after a cursor plus the activity row.
 narration or the thinking — which is the whole argument. (It *does* fire on delegated
 calls: the shipped hook routes by caller identity off `agent_id`/`agent_type` in the
 payload. An earlier draft said otherwise, which contradicted both D15 and acceptance
-criterion 3.)
+criterion 3.) Two `PreToolUse` hooks sit on P1's session. The shipped plugin hook's
+matcher is `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`, so it
+never fires on `extraction_append` — the call P1 kills on. The hosted `_pretool_hook`
+the driver inherits from `build_options` has no matcher, fires on every tool including
+that one, and allows it. P1's delegation evidence comes from the SDK stream's
+`parent_tool_use_id`, not from either hook; the prototype's own deny-and-log hook at
+D15 matches every tool the way the hosted one does today.
 
 ### Session store keying, and why `cwd` is pinned
 
@@ -151,7 +160,8 @@ need. Carry project scope in the store's constructor, not in the key.
 
 **Pin `cwd` to a constant path in every worker (`/project`) anyway, but not for the
 prompt cache — that reason is measured false.** On a resumed turn, production-shaped
-(real plugin, five agents, stdio MCP, tool search on), same-cwd and different-cwd both
+(real plugin, the five agents then present, stdio MCP, tool search on), same-cwd and
+different-cwd both
 gave `cache_read = 17854`, delta 0. The cwd literal sits in the env block *after* the
 cached breakpoint, in a ~12k tail that is rewritten every turn regardless. The real
 reasons to pin it are duller: **the CLI refuses to spawn if cwd does not exist**, and
@@ -191,8 +201,14 @@ This is an inherited implementation artifact — sensible on a laptop, where loc
 the durable store and the adapter is the secondary copy. **The CLI version comes from the SDK wheel** — `_find_cli` prefers the
 bundled binary over PATH, and SDK 0.2.128 bundles Claude Code **2.1.220**. Pin the pair
 as 2.1.220 / 0.2.128 and record it from `_cli_version.__cli_version__` at worker start.
-That is a downgrade from the 2.1.251 the repo's `tools:`-omission measurement names, so
-`make probe-agent-binding` is required at D1–2.
+**It is not a downgrade.** The 2026-08-30 `tools:`-omission measurement ran through
+`make probe-agent-binding` on the `apps/server` venv, whose SDK already bundled 2.1.220
+and whose `build_options` sets no `cli_path`, so it already ran on 2.1.220; the `2.1.251`
+the repo records is the PATH `claude --version`, which the SDK never spawns. Re-run
+`make probe-agent-binding` at D1–2 with the version and the resolved CLI path printed,
+then correct the eight citations in seven files — the probe docstring, `Makefile`,
+`CLAUDE.md`, `docs/architecture.md`, ADR-0004, `docs/specs/research-append-tool-spec.md`
+and two in `tests/packaging/agent-tool-names.test.ts`; `git grep 2\.1\.251` is the list.
 
 **A second silent-loss mode with the same signature.** The batcher matches on path: if
 the CLI's `CLAUDE_CONFIG_DIR` differs from the parent's, every frame is dropped with a
@@ -267,7 +283,8 @@ behind a new front door.
 An async-local store is less code, but at n=1 a call site that never establishes the
 context is indistinguishable from one that does — it just works, and stays wrong until
 there are two patrons. An explicit parameter makes every unscoped call a **compile
-error** at all 19 call sites across 16 files. That is the difference between a
+error** at all 16 call sites in 16 files (an earlier draft's 19 counted three comment
+lines). That is the difference between a
 prototype that reduces uncertainty and one that hides it. About a day rather than
 half. `loadConfig()`, `getWikiApiUrl()` and `getOpenRouterApiKey()` have the same shape
 and move with it.
@@ -313,9 +330,10 @@ every round it existed. It belongs in code with tests, not in prose.
 
 ---
 
-## Before Monday — 30 minutes; two of the three have lead times
+## Before Monday — 30 minutes; the quota request and the two emails have lead times
 
-1. **Bedrock model access form** in the personal AWS account. Granted on submission.
+1. **Bedrock model access** in the personal AWS account — **done 2026-09-10**: a
+   one-token `converse` on `us.anthropic.claude-sonnet-4-6` in `us-east-1` returned.
 2. **Service Quotas increase request** for Claude input TPM. Takes days. A single
    session runs ~166k tokens/min against a 2M TPM default, so 50 concurrent
    sessions is not a default-quota workload.
@@ -336,17 +354,39 @@ a second reason a full AWS deploy is out of scope.
 
 ### P1. Cross-process resume (days 1–2) — **no fallback exists; this gates everything**
 
-P1 runs **against a throwaway store** — a bare `docker run postgres` plus minio and a
-~60-line `SessionStore`, not the D3 compose skeleton or the D9–10 adapter, neither of
-which exists yet. To reach a delegated `extraction_append` it needs a **scripted
-single-record turn against a one-record fixture**; build that here and D15 reuses it.
-Budget its model cost alongside P2's $7.35.
+P1 runs **against a throwaway store** — a bare `docker run postgres` and a ~60-line
+psycopg `SessionStore`, not the D3 compose skeleton or the D9–10 adapter, neither of
+which exists yet. No minio: store entries are opaque JSON dicts that fit `jsonb`, and
+the `apps/server` venv has psycopg but no S3 client. Define `list_subkeys` on the store
+class itself — the SDK detects optional methods by comparing against the Protocol
+default, so a store that inherits it never has its subagent transcripts materialized —
+and pass it through the SDK's own `run_session_store_conformance` before a token is
+spent. To reach a delegated `extraction_append` it needs a **scripted single-record
+turn against a one-record fixture**; build that here and D15 reuses it. The driver is
+`probe_agent_binding.py`'s `run_arm` under the prototype-set switch added at D1–2
+(`agents=`, `setting_sources=[]`, `plugins=[…]`) — not the hosted set, which stages
+agents into a writable project and reopens the parent-`CLAUDE.md` leak — with
+`session_store` and `session_store_flush="eager"` added. Model cost is single-digit
+dollars: a one-record turn is a fraction of a $7 full run.
+
+**None of the live probes this plan cites as settled — the key-blind store resuming
+with subagent transcripts, the read-only `CLAUDE_CONFIG_DIR` writing zero frames, the
+`setting_sources` leak — is in the repo.** P1 starts from zero committed evidence, and
+each lands in `apps/server/dev/` as it is re-run.
 
 Four variants, all resuming in a *different process* from that store:
 clean handoff between turns; SIGKILL mid-delegation; SIGKILL mid-model-call; and — for
 the re-issue-vs-re-decide measurement below, which a timed kill cannot reliably produce
-— a **forced** stop, using a debug-env branch in the current engine that sleeps inside
-`extraction_append` while the harness kills the process group.
+— a **forced** stop, using a debug-env branch in the current engine that sleeps before
+the commit while the harness kills the process group. `extraction_append` has no body
+to sleep in — it is a one-line delegation to `researchAppend` — so the branch lives in
+`research-append.ts`, keyed on the tool name it was called under, and the variable
+reaches only the node child through the MCP server's `env`. Launch the driver from the
+harness with `Popen(..., start_new_session=True)`: the SDK spawns the CLI in the
+driver's process group, so a `killpg` on that group takes the driver and the CLI
+without taking the harness. Expect the timed kills to miss:
+the delegated write is a few seconds inside a one- to two-minute turn, and a miss is
+not a failure.
 
 Seven pass criteria, plus one measurement that sets a branch:
 
@@ -408,12 +448,10 @@ Seven pass criteria, plus one measurement that sets a branch:
   byte-identically is the same coin this branch has just called against. Record it as an
   open question, not a retained benefit. **So on a re-decide answer the branch is to
   cut, not to keep:** drop the batch ledger from D6–8, the ledger exercise from D15 and
-  the HTTP re-run from D16 — about a day and a half back, schedule ~21.5 — and replace criterion 6
+  the HTTP re-run from D16 — about a day and a half back, schedule ~22 — and replace criterion 6
   with P1's measurement reported as a finding. **Criterion 4 is unaffected** — it reads
-  logged durations, never the ledger. Spending two days on a mechanism whose
-  only remaining benefit is unmeasured fails this plan's own scoping test. Criterion 6
-  is then restated as a measured finding, and D15/D16 become measurement rather than
-  acceptance. Finding that on day 2 is what makes the cut available; finding it at D15 means the
+  logged durations, never the ledger. Spending a day and a half on a mechanism whose
+  only remaining benefit is unmeasured fails this plan's own scoping test. Finding that on day 2 is what makes the cut available; finding it at D15 means the
   ledger day and the dispatch extraction are already spent.
 - The resumed message list is accepted — i.e. a transcript ending on a `tool_use`
   block with no matching `tool_result` does not get rejected.
@@ -433,11 +471,26 @@ continuity is lost, research is not. Cheaper to build than the transcript round-
 and arguably the stronger ARB answer: *what we guarantee is the research, not the
 conversation.*
 
-### P2. Does removing the filesystem cost research quality? (day 2, unattended, $7.35)
+### P2. Does removing the filesystem cost research quality? (day 2, unattended, ~$8)
 
 Run one fixture on the **current** stack with `Bash` denied and `Read`/`Grep`/`Glob`
-restricted by the path predicate below, and compare the judge verdict against that
-fixture's committed result.
+restricted by the path predicate below, and compare the judge verdict against a
+**same-day control run** with the same `Bash` deny and no path predicate — not against
+the committed result, which predates weeks of skill and judge edits on every candidate
+fixture, so a delta against it is not attributable to the predicate. About $4 a run on
+rejnic-burial.
+
+**`Bash` is only partly denied on the e2e path today.** The orchestrator passes no
+`disallowed_tools`; under `dontAsk` the harness's CLI refuses any command outside its
+read-only classifier (seven corpus denials: `python -c`, heredoc writes, `claude mcp
+list`) and auto-approves the rest — the corpus carries an executed
+`ls <ws>/research.json`. Closing that read-only gap is a half-hour build item for P2,
+not a toggle; the only whole-tool deny in the repo is the unit harness's
+`DISALLOWED_BACKSTOP`, and the e2e `pretool_hook` is the per-call prior art. Pick a
+fixture with no `provided-documents/` directory (rejnic-burial, anders-monsen-ancestry,
+spriggs-parents-1898 qualify): a fixture that
+ships captures tells the agent to `Read` them, and the predicate would deny that and
+manufacture a failure.
 
 **Deny by path predicate, not by tool name, and state the predicate as globs.** A
 blanket `Read` deny is wrong in both directions — the corpus contains substantial reads
@@ -452,7 +505,11 @@ the sidecars" cannot hold, because **sidecars live inside it** (`join(projectPat
   and the tree models a strictly weaker condition than the design creates, so the probe
   would pass while the real run breaks.
 - **allow** `<project>/.claude/skills/**/references/**` and
-  `$CLAUDE_CONFIG_DIR/projects/**/tool-results/**`
+  `$CLAUDE_CONFIG_DIR/projects/**/tool-results/**`, with the root defaulting to
+  `~/.claude` — the harness never sets `CLAUDE_CONFIG_DIR`, so taken literally the glob
+  matches nothing and strands every spill read.
+- A `Grep`/`Glob` call with no `path` means the project root and is denied; the corpus
+  has 80 such `Glob` calls.
 
 **The plugin is a separate read-only root only in the prototype's container layout.**
 On the current stack the e2e harness stages all 28 skills *inside* the project — of the
@@ -468,7 +525,10 @@ and **zero** corpus paths contain `claude-resume`. That tree only exists on a *r
 turn, which is a prototype-only shape. Allow-listing `$TMPDIR/claude-resume-*` during
 P2 would match nothing, deny every spill read, and strand the agent — manufacturing the
 exact failure this predicate exists to avoid. The `claude-resume-*` glob belongs only
-in the prototype's own predicate.
+in the prototype's own predicate. And the current stack's CLI is **2.1.139** (the
+harness SDK 0.1.81 bundles and prefers it; no committed runlog carries a CLI version),
+so the spill behaviour P2 measures is 2.1.139's, not the pinned 2.1.220's, and the
+write-up says so.
 
 **Three** read classes disappear with the project directory. **Two of them have no MCP
 tool at all** — `evaluations[].file_path` verdict bodies and `<project>/uploads/**`.
@@ -523,14 +583,14 @@ second pass criterion — and not something a read tool can restore. If a path p
 `$TMPDIR/claude-resume-*/**/tool-results/**` — not `$CLAUDE_CONFIG_DIR`, which receives
 nothing on a resumed turn.
 
-**Pass:** judge verdict within noise of the committed result, and the agent does not
+**Pass:** judge verdict within noise of the same-day control, and the agent does not
 strand itself on a spill file. **If it fails:** `sidecar_read` (already scheduled at
 D6–8) does not answer it — the tool covers verdict bodies and text uploads, not the
 spill. Re-scope from whichever dimension regressed. The site list below is kept because
 D6–8 references it: the tool file, `tool-schemas.ts`,
 an `index.ts` arm, `manifest.json`, a `dev/try-*.ts` smoke script, a `docs/specs/`
 entry, a `README.md` catalog row, **both of `README.md`'s stated tool counts**, and
-`tests/tools/sidecar-read.test.ts` — the 124 vitest files are this plan's regression
+`tests/tools/sidecar-read.test.ts` — the 126 vitest files are this plan's regression
 gate, so a tool without one erodes it. (`docs/architecture.md` also names an
 `eval/fixtures/mcp/` fixture if a *skill* calls the tool; none does here — only the
 `gps-mentor` agent — so state that rather than leaving it open.) The packaging suite enforces the schema, the
@@ -553,24 +613,51 @@ from the tool server. The spill stays a *measured* outcome, not a restored capab
 
 **Moved forward, and the gate removed.** This is the second unknown that can invalidate
 build work, and its old placement at day 16 meant discovering it after everything was
-built against it. It needs only the CLI, the plugin and the engine — all of which exist
-today — and not the store, the queue or the web tier. Its old gate ("on the quota
-answer") does not bind either: one session at the measured rate sits well inside a
-default TPM allowance. Only the concurrency/quota half stays at D16.
+built against it. It needs the CLI, the plugin, the engine and an `ANTHROPIC_MODEL` set
+to a Bedrock inference-profile id — not the store, the queue or the web tier. (Under
+`CLAUDE_CODE_USE_BEDROCK` the CLI already resolves its own default to a region-prefixed
+Bedrock id, Opus 5, so the pin is what selects Sonnet 4.6 for the cost figures, not what
+makes Bedrock run. Pin the full id, never the `sonnet` alias, which resolves to Sonnet 4.5
+on Bedrock. P3 sets it for its own run; D9–10 pins the same id in the worker env.)
+Its old gate ("on the quota answer") does not bind either: one session at the measured
+rate sits well inside a default TPM allowance. Only the concurrency/quota half stays at
+D16. **Access is already granted**: on 2026-09-10 a one-token `converse` on
+`us.anthropic.claude-sonnet-4-6` in `us-east-1` returned, so no form stands between P3
+and its run.
 
-**Go/no-go:** if tool search or the 1-hour cache TTL is unavailable on Bedrock direct,
-the prototype runs on the Anthropic API and the Bedrock answer becomes a **written
-finding** rather than a build target. That is a better outcome than a green prototype
-measured on a path production will not use.
+**Go/no-go:** if Bedrock rejects the tool-search beta or does not honour the 1-hour TTL
+with the flag below set, the prototype runs on the Anthropic API and the Bedrock answer
+becomes a **written finding** rather than a build target. That is a better outcome than
+a green prototype measured on a path production will not use.
 
-Claude Code strips features when the provider is Bedrock. Confirm against the pinned
-CLI which of these survive, and whether the engine still works without them:
-interleaved thinking, the 1M-context beta, **tool search** (on in production today,
-and `ToolSearch` is the third most-called tool in the corpus), and server-side
-context management (named twice in the architecture document as the mitigation for
-conversation growth). Record whether the **1-hour** prompt-cache TTL is honoured —
-96% of cache-creation tokens in the corpus are 1 h writes, and the 4.6× cost multiplier
-rests on it.
+**Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
+body betas, and whether the engine survives a refusal. The first is settled by reading the
+pinned CLI and confirmed from its debug log, never measured against Bedrock; the other
+three are measured.**
+Server-side context management (named twice in the architecture document as the
+mitigation for conversation growth) is off on Bedrock in 2.1.220 by the CLI's own gate
+— the beta is pushed only for first-party-class providers, and the env switch that
+would enable it is dead code. The generic `ANTHROPIC_BETAS` override does force it onto
+the wire, as a header plus a `context_management` body field, and nothing shows Bedrock
+accepting it — confirm the gate from the CLI's debug log, do not measure it, and do not
+set that override in the worker env. The 1-hour prompt-cache TTL on Bedrock is **opt-in
+behind `ENABLE_PROMPT_CACHING_1H_BEDROCK`**;
+the OAuth allow-list that gives first-party SDK sessions 1 h never applies there, and the
+extended-cache-ttl header is never sent. A default-env run reports "unavailable" when
+the answer is "behind a flag", so run both arms, and the D9–10 worker env carries the
+flag. Only a second turn after a wait longer than five minutes proves the TTL is
+*honoured* rather than echoed: expect `cache_read_input_tokens > 0` under the flag and
+near zero without it. 96% of cache-creation tokens in the corpus are 1 h writes, and the
+4.6× cost multiplier rests on it.
+
+The last two are real measurements. The CLI does not strip features on Bedrock; it
+moves interleaved thinking, the 1M-context beta and **tool search** (on in production
+today, and `ToolSearch` is the third most-called tool in the corpus) out of the
+`anthropic-beta` header and into `body.anthropic_beta`, and the tool-search gate has no
+Bedrock arm at all. What is open is whether Bedrock *accepts* those body betas for the
+chosen model. Read the wire list off the CLI's own debug log (`extra_args`'s
+`debug-file`) rather than inferring it, and record whether the engine still works
+without whichever Bedrock refuses.
 
 ---
 
@@ -581,14 +668,21 @@ rests on it.
 - **D1–2** P1, four variants including the forced stop: seven assertions plus the
   re-issue-vs-re-decide measurement. Go/no-go on the seven.
 - **D1–2 (parallel)** The agent/skill registration probe: `plugins=[…]` **and**
-  `agents={…}` **and** `setting_sources=[]` together — five agents resolving under
-  which spelling, and all 28 skills resolving. Twenty minutes, and it belongs here by
+  `agents={…}` **and** `setting_sources=[]` together — six agents resolving under
+  which spelling, and all 28 skills resolving. A zero-token handshake on 2026-09-10
+  already showed this option set registers all six under both the bare and the
+  `genealogy-research:` spellings, and all 28 skills as `genealogy-research:<skill>`
+  entries under `commands` — there is no `skills` key, and agent entries carry `name`,
+  `description` and `model`, never `tools` or `prompt`, so the handshake cannot show
+  what an agent binds. What remains is one billed delegation by bare name to show
+  the bare entry spawns, and landing the frontmatter-to-`AgentDefinition` parser under
+  `apps/server/dev/`. An hour, and it belongs here by
   the plan's own logic for moving P3: it needs only the CLI, the plugin and the engine,
-  and it can invalidate build work. `setting_sources=[]` alongside `plugins=[…]` is a
-  combination nothing in this repo has ever run, and its failure mode is not an options
-  tweak — it forces either staging skills inside `/project` (contradicting the empty
-  read-only cwd and criterion 3) or `setting_sources=["project"]` (reopening the
-  parent-`CLAUDE.md` leak). Discovering that at D15 puts D9–D14 on a wrong option set.
+  and it can invalidate build work. Before the handshake, `setting_sources=[]` alongside
+  `plugins=[…]` was a combination nothing in this repo had run, and its failure mode
+  would have forced either staging skills inside `/project` or
+  `setting_sources=["project"]`; the handshake retires that, and what is left is the
+  billed delegation and the parser.
 - **D1–2 (parallel)** Confirm `disallowed_tools=["Bash"]` actually denies under
   `bypassPermissions` on the pinned pair. Record the result in the write-up. **Do not
   widen `_KNOWN_GOOD_SDK_RANGE`** in the harness: `eval/harness/pyproject.toml` caps it
@@ -600,22 +694,28 @@ rests on it.
   attempt still logs a `Bash` call, which would red the criterion even though the
   mechanism worked.
   **Run
-  `make probe-agent-binding` here too, not at D15** — `docs/architecture.md` requires it
-  whenever the CLI or SDK moves, and by this plan's own reasoning for hoisting the
-  registration probe, discovering a binding failure at D15 puts D9–D14 on a wrong
-  option set. **The CLI is pinned by the SDK wheel, not by what you install.**
+  `make probe-agent-binding` here too, not at D15** — not because `docs/architecture.md`'s
+  CLI-or-SDK-moves rule binds (nothing moves; see D15), but by this plan's own reasoning
+  for hoisting the registration probe: discovering a binding failure at D15 puts D9–D14
+  on a wrong option set. **The CLI is pinned by the SDK wheel, not by what you install.**
   `_find_cli` returns the bundled binary before any PATH lookup, and SDK 0.2.128 bundles
   **Claude Code 2.1.220** — so the pinned pair is 2.1.220 / 0.2.128, installing 2.1.251
   in the worker container is a no-op, and overriding it needs
   `ClaudeAgentOptions.cli_path`. Record the version at worker start from
   `claude_agent_sdk._cli_version.__cli_version__`, never from `claude --version`, which
-  reads a system binary the SDK never spawns. This is a downgrade from the number
-  `CLAUDE.md` records, which is exactly why `make probe-agent-binding` at D1–2 is
-  required rather than optional.
-- **D1–2 (parallel)** P3's feature-parity half, ungated — tool search, the 1-hour
-  cache TTL, context management on Bedrock direct. Its own go/no-go: if either is
-  unavailable, the prototype runs on the Anthropic API and Bedrock becomes a written
-  finding. Taking it here is what lets D16 be cut without losing the answer.
+  reads a system binary the SDK never spawns — and is where the repo's `2.1.251` came
+  from. The 2026-08-30 run already spawned 2.1.220, so this re-run records the version
+  correctly rather than re-measuring after a downgrade: add the print, then fix the eight
+  citations. The probe as shipped measures the hosted option set (`stage_plugin_agents`
+  plus `setting_sources=["project"]`); add a switch so its six arms also run against the
+  prototype's (`agents=`, `setting_sources=[]`, `plugins=[…]`), which is the set D9–D14
+  run on.
+- **D1–2 (parallel)** P3's feature-parity half, ungated — tool search, and the 1-hour
+  cache TTL under both flag arms; context management is confirmed off from the debug log,
+  not measured. Its own go/no-go: if Bedrock rejects the tool-search beta or does not
+  honour the 1-hour TTL under the flag, the prototype runs on the Anthropic API and
+  Bedrock becomes a written finding. Taking it here is what lets D16 be cut without
+  losing the answer.
 - **D2** P2 in parallel, unattended.
 - **D3 (half day)** Standalone Beanstalk worker probe in the personal AWS
   account: a hello-world worker that sleeps 25 minutes. Answers the sqsd contract,
@@ -660,24 +760,36 @@ rests on it.
   deployment needs a redrive policy sized on receive counts, not on forced checkpoints. **Pin the step ceiling to 1800 s** and treat it as immovable:
   AWS permits 1–36,000 s, and leaving it open makes this a demo rather than a test.
 - **D4–5** `ProjectStore` interface + `FsProjectStore` + close the filesystem leaks +
-  the import lint. **The port is 10 files, not 48 tools** — only ten modules import
-  `fs`, and four of those are leaks in tool files that should route through the utils.
-  Move today's bodies verbatim behind the interface; that keeps all 124 vitest files
+  the import lint. **The port is 11 files, not 48 tools** — eleven modules import
+  `fs`: four are leaks in tool files that should route through the utils
+  (`person-warnings`, `rank-search-matches`, `research-append`, `research-log-append`),
+  four are utils (`image-store`, `name-variants`, `project-io`, `results-staging`), two
+  are auth, and the eleventh is the validator. `name-variants.ts` reads a bundled data
+  file, not project state, and sits on the lint's exemption list beside `auth/config.ts`.
+  Move today's bodies verbatim behind the interface; that keeps all 126 vitest files
   green as the regression gate for everything after.
   **`ProjectStore` exposes a transaction scope** — `withTransaction(fn)` — because the
   Postgres advisory lock on D6–8 requires the read, the validate and the write to share
   one connection. Designing it in on D4–5 is free; retrofitting it on D6–8 is not.
-  **`src/validation/validator.ts` is the tenth module and needs naming explicitly.**
+  **`src/validation/validator.ts` is the eleventh module and needs naming explicitly.**
   It imports `readFile, readdir` and resolves `research.json`, `tree.gedcomx.json` and
   every `results/` sidecar off `projectPath`. On the Postgres backend it would read
   files that do not exist, and `validate_research_schema` runs on every writer path —
   so a missed port here fails every write, not one tool. Give `validateProject` a
   store-backed reader, and name it in the lint's exemption list either way.
 - **D5** the auth seam: `getValidToken(subject)` type change. The edit surface is
-  larger than the `src/` count suggests — 41 further hits across `dev/` and `tests/`,
-  all inside `tsconfig.typecheck.json`, which `pretest` runs, so a red typecheck
-  blocks `npm test` and with it the regression gate this plan leans on. Budget the
-  full day and re-cost if `dev/` turns out to be the bulk.
+  larger than the `src/` count suggests — 33 further invocations in 27 files across
+  `dev/` and `tests/` (the `vi.mock` stubs in `tests/` stay type-valid under a parameter
+  addition), all inside `tsconfig.typecheck.json`, which `pretest` runs, so a red
+  typecheck blocks `npm test` and with it the regression gate this plan leans on. Budget
+  the full day and re-cost if `dev/` turns out to be the bulk.
+  **Sequencing against open PRs (as of 2026-09-10):** the validator port collides with
+  PR #2354 (the settled-conflict validator rule), the auth seam with PR #2338
+  (`fetchWithRetry` at every network call site — 13 of the 16 token call-site files),
+  the D6–8 dispatch extraction and tool counts with PR #2397 (the external-search-URL
+  tool), and the worker loop and D15's `map_message` edit with PRs #2371 and #2348 on
+  `real_agent.py`. None is merge-ready; rebase after they land or get a ruling before
+  starting the day.
 
 ### Week 2 — the durable core
 
@@ -746,7 +858,8 @@ rests on it.
   MCP server process" as the residual, which stops being true for the Postgres
   backend. A live tool has a live spec; state both backends and where the ledger does
   and does not apply.
-  Also here: **`sidecar_read`, a day and a half** (see P2) — the 49th tool, serving
+  Also here: **`sidecar_read`, a day and a half** (see P2) — the 49th tool, or the 50th if
+  the open PR adding `build_external_search_url` lands first, serving
   `evaluations[].file_path` verdict bodies and **text** uploads under
   `<project>/uploads/**`. Image uploads are not restored — uploads are arbitrary bytes
   and the image tools take an `imageId`/`ark`, never a path — so photographed documents
@@ -778,9 +891,10 @@ rests on it.
   makes "progress is monotone" true rather than assumed. **Pin
   `claude-agent-sdk==0.2.128` as well as the CLI**, since the flush default is
   SDK-side.
-  **Pin `ANTHROPIC_MODEL` and `CLAUDE_CODE_USE_BEDROCK` explicitly here**, not at D16:
+  **Pin `ANTHROPIC_MODEL`, `CLAUDE_CODE_USE_BEDROCK` and `ENABLE_PROMPT_CACHING_1H_BEDROCK`
+  explicitly here**, not at D16:
   unpinned defaults to Opus and every cost figure reported is wrong by several-fold,
-  and the model pin belongs with the worker loop, which is where the first billed cost
+  and the model pin belongs with the worker loop, which is where the first worker cost
   figures come from. Raise `max_buffer_size`. **Treat `system/mirror_error` as fatal** — the SDK drops
   that batch permanently, and its "local disk is durable anyway" reasoning stops
   being true when local disk dies with the worker.
@@ -821,15 +935,17 @@ rests on it.
   The counterpart test — the one that stops the ledger being built receipt-time — is
   the reject → repair → identical-retry regression replayed from the three corpus runs
   named in days 6–8, and it needs no live agent at all.
-- **D15** **Pass the five agents via `agents=`, and stop calling `stage_plugin_agents` from
+- **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
-  Probed live: all five real bodies register under **bare** names with `plugins=[]` and
-  `setting_sources=[]`, `tools:` binds in both directions (a granted tool fires, an
+  Probed live with the five bodies then present: all register under **bare** names with
+  `plugins=[]` and `setting_sources=[]` (the 2026-09-10 handshake re-showed all six
+  under `plugins=[…]`), `tools:` binds in both directions (a granted tool fires, an
   omitted one never appears), and a bogus entry still produces the verbatim
   "would be spawned with zero tools — refusing". `AgentDefinition`s travel on the
   `initialize` request and never touch disk, so the whole staging risk is deleted
   rather than asserted against — and the check becomes a `get_server_info()` startup
-  precondition, before a token is billed. Twenty minutes instead of an hour.
+  precondition, before a token is billed — six bare names under `agents`, 28
+  `genealogy-research:<skill>` entries under `commands`. Twenty minutes instead of an hour.
   (`agent-<id>.meta.json` records the `agentType` the runtime actually resolved, if a
   runtime assertion is still wanted.)
   **The registration probe moved to D1–2** (see Week 1) — the live probe above ran with
@@ -846,7 +962,8 @@ rests on it.
   hosted-control-plane change with a test surface. `CLAUDE.md` requires
   `make agent-smoke` when the hosted agent's configuration changes, and
   `docs/architecture.md` requires `make probe-agent-binding` when the CLI or SDK
-  moves — which this plan does. `probe-agent-binding` runs at D1–2 (see Week 1);
+  moves — nothing moves here; the D1–2 re-run is for the version print and the
+  prototype option-set switch. `probe-agent-binding` runs at D1–2 (see Week 1);
   `agent-smoke` runs here.
   **Deny-and-log via a prototype-only `PreToolUse` hook passed on the worker's
   `ClaudeAgentOptions` (`hooks=`)**, logging every tool call to Postgres so the
@@ -882,7 +999,8 @@ rests on it.
 ### Week 4 — prove it and write it up
 
 - **D16** Swap the tool server to Streamable HTTP **first**, then the transport smoke
-  over **45** tools — running it before the swap exercises stdio and leaves the day's
+  over every tool but the four auth exclusions — running it before the swap exercises
+  stdio and leaves the day's
   actual change with no tool-level coverage, including `project_create` and
   `tree_forget`, which nothing else reaches. The four exclusions: `login` and `logout` write
   `tokens.json`, which the container layout omits; `configure_openrouter` calls
@@ -895,15 +1013,16 @@ rests on it.
   production-shaped mechanism. **Same hang-after-commit mechanism as D15** — it is
   transport-agnostic, so the only thing that changes is where `turn_id` comes from, it
   reuses D15's harness (~1 hour, not free), and the same conditionality applies: on a
-  re-decide answer this is a measurement, not a gate. Then P3's quota/concurrency half.
-  (The model pin sits at D9–10, with the worker loop, because that is where the first
-  billed cost figures come from.)
+  re-decide answer the ledger is already cut and this goes with it. Then P3's
+  quota/concurrency half. (The model pin sits at D9–10, with the worker loop, because
+  that is where the first worker cost figures come from.)
 - **D17** Real run, driven **interactively** (not `--autonomous`), killed **while a delegated
   `extraction_append` is in flight inside `@plugin:record-extractor`** — which puts a
-  delegation in flight, the only thing criterion 1 requires. `record-extraction` is one of only five skills whose SKILL.md names an
-  agent; **`person-evidence` names none**, so an earlier draft that timed the kill by
-  "person-evidence is running" would have landed on the main thread and passed
-  criterion 1 without ever materializing a subagent transcript. **Assert P1's `list_subkeys` criterion here too:** the
+  delegation in flight, the only thing criterion 1 requires. Six skills name an agent, and `person-evidence` has delegated to its own since
+  2026-09-01 — but only `record-extraction`'s delegation puts `extraction_append` in
+  flight, so time the kill on that one. An earlier draft timed it by "person-evidence is
+  running", which at the time ran on the main thread; today it delegates, but not
+  through `extraction_append`, so it still cannot time this kill. **Assert P1's `list_subkeys` criterion here too:** the
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is not proven
   here — a *timed* kill cannot test it (see D15) — it is proven by D15's ledger exercise
   and re-run over HTTP at D16. This is FamilySearch question 1. Iterate.
@@ -913,15 +1032,17 @@ rests on it.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
 - **D20** Write-up.
 
-**Runs ~23 days, and a few days over is acceptable (lead's call, 2026-09-09).** The
+**Runs ~23.5 days, and a few days over is acceptable (lead's call, 2026-09-09).** The
 arithmetic on top of the original 20, and it sums: **+0.5** the ledger (half a day → a
 day, for nine writer tools plus the dispatch extraction), **+1** the auth seam (the
 `getValidToken(subject)` type change, which no day previously carried), **+1.5**
 `sidecar_read` — the tool plus the `gps-mentor` and `research/SKILL.md` body
 rewrites the five packaging tests gate, **+0.5** the Beanstalk worker probe, **+0.5** the
-D15 ledger exercise (gated on P1). The ceiling guard, its `ceiling_kills` table and its
-two-direction proof are **cut**, returning about a day.
-**The D-labels above are the original 20 slots**, so the added 3 days push the end
+D15 ledger exercise (gated on P1), **+0.5** the D1–2 probe growth folded in on
+2026-09-10 (the registration probe's parser and billed delegation, P2's `Bash` deny,
+the binding probe's prototype-set switch, P3's second TTL arm). The ceiling guard, its
+`ceiling_kills` table and its two-direction proof are **cut**, returning about a day.
+**The D-labels above are the original 20 slots**, so the added 3.5 days push the end
 date out rather than renumbering: the real run lands nearer D20 than D17, and the
 write-up after it. **The auth day is scheduled at D5**, alongside the store seam it belongs with.
 
@@ -942,17 +1063,17 @@ It is not the full AWS deploy, which stays cut.
 If cross-process resume fails outright, the research document becomes the durable unit
 and the transcript stops being persisted, which restructures D9–10, D14, D15 and D16 and
 changes acceptance criteria 1 and 6. Budget it as a re-plan, not a slip, and treat P1's
-day-1 answer as the fork in the whole month. P2 failing means re-scoping rather than building. So with
+day-2 answer as the fork in the whole month. P2 failing means re-scoping rather than building. So with
 `sidecar_read` scheduled rather than contingent, the reserve is the accepted overrun,
 not a cut. If two probes fire, the overrun grows before anything is
 cut — that is the trade the lead has already accepted.
 
 **Cut order if it goes badly wrong**, rather than as the plan: **D16's transport swap
 only** — P3's quota/concurrency half stays, the latter being the
-sole prototype-side measurement of R2 and the reason the quota request is a
-Before-Monday item. Cheapest to defer once the store seam is clean, and its
+only prototype-side measurement of R2's throughput half and the reason the quota
+request is a Before-Monday item. Cheapest to defer once the store seam is clean, and its
 real teeth are ELB ceilings that do not exist locally — but cutting it also loses the
-45-tool transport smoke (the only thing reaching `project_create` and `tree_forget`)
+transport smoke (the only thing reaching `project_create` and `tree_forget`)
 and the header-path proof of `turn_id`, which D6–8 calls the production-shaped
 mechanism — **and acceptance criterion 6 then reads as proved on stdio only, with the
 header path recorded as untested.** Cut it knowing that. Then D18's second measurement run, keeping the
@@ -964,12 +1085,18 @@ smaller one with a make target.
 ## Standing rules
 
 **The prototype is a second entrypoint, never a replacement.** `src/index.ts` keeps
-stdio and all 49 tools including `login`/`logout`/`auth_status`/`configure_openrouter`,
+stdio and every tool — 49 with `sidecar_read`, 50 if PR #2397 lands first — including
+`login`/`logout`/`auth_status`/`configure_openrouter`,
 which are the only way a desktop `.mcpb` user authenticates. Neither shipped artifact
 is built by any CI job — `mcpb` appears in the workflows exactly once, in a comment
 saying not to fire it — so a break surfaces at release time rather than in a green PR.
-**Add `make mcpb && make plugin` as build-only PR steps before the store refactor
-starts.** Under an hour. It is *not* currently on the `nothing-checks` register — file it with
+**Append `make mcpb && make plugin` as a step to the required `vitest` job in
+`.github/workflows/engine-tests.yml` before the store refactor starts.** That job already
+carries Node 22, the pinned npm and the engine `npm ci`, and appending keeps the step
+required without a ruleset edit. Break it two ways before merging — a malformed
+`manifest.json`, which `mcpb validate` reds, and a `<` in one SKILL.md description, which
+the plugin packager reds — and confirm it is green on a clean tree. Under an hour. It is
+*not* currently on the `nothing-checks` register — file it with
 that label in the same PR, or the gap stays invisible to anyone reading the register.
 **New dependencies go in with npm, not pnpm** — the engine is negated out of the
 workspace and both artifacts install from its npm lockfile.
@@ -979,11 +1106,13 @@ write path rots silently, because nothing in CI runs it.
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the
-store, the three util modules and auth. Per the repo rule, break it three ways
+store, the four util modules, auth and `validation/validator.ts`. Per the repo rule,
+break it three ways
 before committing — an unquoted import, one inside a multi-line import list, and one
 via `require` — then show it still accepts a legitimate variant such as a reflowed
 import. That proves *no tool can reach the filesystem*; porting 48 tools proves 48
-separate existentials. Pair it with one script that calls all 45 through the
+separate existentials. Pair it with one script that calls every non-auth tool through
+the
 transport once, which is the only thing that covers `project_create` and
 `tree_forget` — the corpus never calls either.
 
@@ -1006,10 +1135,11 @@ the `request.params.name === "…"` chain in `src/index.ts` to detect dispatch d
 its own comment says a refactor to a lookup map *should* fail it — so the D6–8 dispatch
 extraction red-lines the suite D4–5 calls the regression gate. Rewrite those tests
 against the handler table, or take the parenthetical option and wrap the nine arms in
-place, leaving the if-chain intact. The manifest test also fails on the 49th
-tool (`sidecar_read`); `readme-catalog.test.ts` fires twice on it — every registered
+place, leaving the if-chain intact. The manifest test also fails on the
+`sidecar_read` addition; `readme-catalog.test.ts` fires twice on it — every registered
 tool must appear in `README.md`, and the stated count must match reality; `README.md`
-states it **twice** ("48 tools" and "48 MCP tools") and both become 49 — and five more fire on the `gps-mentor.md` and
+states it **twice** ("48 tools" and "48 MCP tools") and both move by one (48→49, or
+49→50 if PR #2397 lands first); five more fire on the `gps-mentor.md` and
 `research/SKILL.md` body rewrites rather than on the dispatch or manifest change:
 `agent-tool-names`, `agent-delegation-framing`, `gps-mentor-craft-doctrine`,
 `skill-name-resolution` and `doc-links`; the agent-tool-names test is a permission snapshot that fails on *any* change
@@ -1049,8 +1179,8 @@ delegations (record extraction, image transcription), driven in a browser:
 everything:**
 
 5. **Removing the project directory costs no measurable research quality**: the judge
-   verdict is within noise of the fixture's committed result, and the agent does not
-   strand itself on a spill file. Proved by P2 at D2 **on the current stack** — not the
+   verdict is within noise of a same-day control run on the same stack, and the agent
+   does not strand itself on a spill file. Proved by P2 at D2 **on the current stack** — not the
    prototype, and not the D17 run.
 6. **The D15 ledger exercise (stdio, `turn_id` env-sourced) and the D16 re-run (HTTP,
    `turn_id` header-sourced).** A turn killed after a writer's ledger row committed
@@ -1092,7 +1222,9 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell?
-5. Does it run on Bedrock direct, with tool search on, and does caching hit?
+5. Does it run on Bedrock direct, with tool search on, and does caching hit at 1 h —
+   with the finding that server-side context management is off there by the CLI's own
+   gate.
 6. How much turn-level idempotency you get free from a commit-time batch ledger, and
    precisely where it stops — at the model re-deciding, which no content key we
    measured can reach.
@@ -1121,8 +1253,10 @@ loop — the entire engine. Unreachable here because the gateway does not exist 
 **R2 — Prompt-cache health, which is also the throughput ceiling.** One risk, not two.
 Cache reads are exempt from the Bedrock token quota; cache writes and uncached input
 are not, so **the quota requirement is roughly a 20× function of cache health.** 96% of
-cache-creation tokens in the corpus are 1-hour writes; Claude Code is reported to pin
-5 minutes on Bedrock; the gateway may not pass the header at all. Degraded caching
+cache-creation tokens in the corpus are 1-hour writes; in 2.1.220 the 1-hour TTL on Bedrock is
+opt-in behind `ENABLE_PROMPT_CACHING_1H_BEDROCK` and the extended-cache-ttl header is
+never sent there; the gateway may strip the 1 h `cache_control` ttl the flag adds to
+the request. Degraded caching
 costs both the 4.6× on session price and the stated 50/150/500 concurrency targets.
 P3 tests this on Bedrock direct only — never through the gateway.
 *Owner: FS AI Platform. Closes with the same email.*
@@ -1188,7 +1322,8 @@ The 60 s tool-server ELB against four tool budgets (OCR 180 s, image fetch 90 s,
 wiki and collections 60 s each); CAS/TARS entitlement; the programmatic API's grant
 problem; PRIA; the InfoSec MCP review; the Church AI Working Group; production
 telemetry; database migrations; DR and `us-east-1` only; deletion crossing a backup
-boundary; the `.mcpb` and Cowork artifacts, which no CI job builds; the eval harness
+boundary; the `.mcpb` and Cowork artifacts, which no CI job builds until the
+engine-tests step above lands; the eval harness
 continuing to emulate production; the OCR provider and the record-custodian terms;
 idle-session billing.
 
@@ -1207,6 +1342,10 @@ idle-session billing.
   cannot see the threat.** Bedrock Guardrails does not evaluate tool results, tool
   definitions, or tool-call arguments — which is every vector the document names
   (transcribed images, record full text, fetched wiki pages, patron uploads).
+- **Server-side context management, named twice as the conversation-growth
+  mitigation, is off on Bedrock in the pinned CLI.** The beta is pushed only for
+  first-party-class providers; the document needs a different mitigation on that path
+  or a gateway that supplies one.
 - **The 14.7% "reads its own conversation transcript" row is mislabelled.** It is the
   CLI's oversized-tool-output spill: 739 reads, 11.8% of the 6,247 filesystem
   operations, in 66 of 161 runs (separator-normalised). That is a runtime mechanism, not passive storage, and
@@ -1221,7 +1360,9 @@ All from the committed corpus at `eval/runlogs/e2e/`, **measured at `e18d99b10`*
 hex-shaped stamp near a figure in those specs only, and does not cover `docs/plan/`). 161 run logs across 94 fixtures; 51 carry the three-element timeline
 that makes sub-run segmentation possible. Re-derive with a timeline parse over
 `usage.timeline` plus `usage.continue_nudges`; **the derivation scripts must land in
-`dev/` with this change, not in a session scratchpad a reviewer cannot reach.**
+`dev/` with this change, not in a session scratchpad a reviewer cannot reach.** Counts
+that are not corpus figures were re-taken against `main` on 2026-09-10: agents,
+`fs` importers and vitest files moved; the `getValidToken` 19 turned out to be grep lines, not calls.
 
 | Measure | Value |
 |---|---|
