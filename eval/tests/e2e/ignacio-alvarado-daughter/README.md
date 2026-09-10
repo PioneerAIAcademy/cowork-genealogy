@@ -66,6 +66,27 @@ on familysearch.org** — merging would redirect one PID and invalidate the
 snapshot that `snapshot --check` audits, and the ambiguity is part of what the
 fixture measures.
 
+**The father-identity question, and why it does not weaken the match.** The
+hint's father persona (`ark:/61903/1:1:NQ5N-RXV`) matches four tree persons,
+and `K21K-P1C` is not the top one: FamilySearch ranks `K2BX-QFF` at confidence
+5 / 0.996 and `K21K-P1C` at confidence 3 / 0.745 — which is the "confidence 3"
+the sampling CSV recorded. That ranking is an artifact of a bare persona. The
+burial entry gives the father a name and nothing else — no dates, no places —
+so the matcher has almost nothing to score. All four candidates are duplicate
+records of one man, each created from a different indexed entry and carrying
+that entry's spelling: `K21K-P1C` (Ignacio Alvarado, holding María Rosa,
+chr. 5 Jun 1889), `K2BX-QFF` (Ygnacio Alvarado, Maclovia, chr. 10 Mar 1891),
+`K2B4-P75` (Ygnacio Albarado, Oliba Monica, chr. 5 May 1885) and `GPH8-7RX`
+(Ignacio Alvarado). `GPH8-7RX` settles it: it is a Couple with **`K4JL-NPF`**,
+the identical wife PID `K21K-P1C` is married to — two father records on one
+wife record. Alvarado/Albarado and Ignacio/Ygnacio vary with the record exactly
+as Teodosia/Teodora/Teodocia/Todocia do; the same burial image yields "Ygnacio"
+in one indexing (`NQ5N-RXV`) and "Ignacio" in the other (`6JPG-ZB66`). The link
+that actually carries weight runs through the tree's own child rather than the
+empty father persona: `NQV5-DP1`, the father on María Rosa's 5 Jun 1889 entry,
+matches `K21K-P1C` at 0.9999994, and María Rosa is `K21K-P1H`. None of these
+duplicates were merged, for the same snapshot reason as the Durán pair.
+
 **The tree's 1876 birth year for her is impossible** and does not need the
 duplicate to fall. This couple baptizes children at El Carmen in 1881, 1885,
 1886, 1889, 1891, 1893 and 1895 and buries infants there in 1880 and 1884; a
