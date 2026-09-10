@@ -45,7 +45,8 @@ def _suite(n, **kw):
 
 
 def test_zero_dimension_tests_are_not_sampled():
-    """A test whose judge was skipped has no dimensions, so rule 3 would demand
+    """A test with no AGGREGATED dimensions -- aborted, judge raised, or a
+    validator failed and its scores excluded -- has rule 3 demand
     zero corrections for it — sampling one wastes a slot. All such tests in the
     corpus failed or aborted, which is what `is_mandatory` matches, so without
     this filter the mandatory slot is biased toward tests with nothing to
@@ -713,9 +714,16 @@ def test_the_third_trigger_returns_exactly_what_coercion_removes():
         f"coercion moved the sampled-id set for {len(moved_samples)} run log(s): "
         f"{moved_samples[:5]}"
     )
-    assert kept_by_trigger >= 40, (
-        f"only {kept_by_trigger} tests are kept mandatory by the third trigger. "
-        f"Measured 49 of {touched} affected entries on 2026-09-10. A number near "
-        f"zero means the trigger is not doing the work it was added for, and the "
-        f"two assertions above would pass anyway."
+    # RELATIVE to the population this run actually found, not a hard floor. A
+    # hard 40 against a measured 49 does not survive routine use: every full
+    # skill run prunes to the newest 5 candidates, and four `make eval-skill
+    # SKILL=timeline` runs take it to 39 and red the suite with no code change.
+    # The population can only shrink, never grow -- _simulate_coercion counts
+    # entries carrying the RETIRED warning kind, and every log written after
+    # this lands carries the new one.
+    assert kept_by_trigger >= touched - 1, (
+        f"only {kept_by_trigger} of {touched} affected entries are kept mandatory "
+        f"by the third trigger (49 of 50 on 2026-09-10). A number near zero means "
+        f"the trigger is not doing the work it was added for, and the two "
+        f"assertions above would pass anyway."
     )

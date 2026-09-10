@@ -483,7 +483,7 @@
           "items": { "$ref": "#/$defs/judge_dimension" }
         },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
-        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 when the judge was skipped. Optional (absent in pre-instrumentation run logs)." },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 only when no judge call was attempted (an aborted run); a judge that raised records wall-clock here, so a nonzero value beside `skipped: true` is normal. Optional (absent in pre-instrumentation run logs)." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },

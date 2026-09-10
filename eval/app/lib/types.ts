@@ -116,7 +116,9 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // three guards reopened it for the third case.
   const known = new Set(log.tests.map((t) => t.test_id));
   for (const id of ids) if (!known.has(id)) return null;
-  // A sample naming only tests whose judge was skipped would require nothing —
+  // A sample naming only tests with no aggregated dimensions would require
+  // nothing (aborted, judge raised, or a validator failed and its scores were
+  // excluded from the modal) —
   // and this also covers an EMPTY sample, since `.some()` over no ids is false.
   // An explicit `ids.size === 0` guard was tried here and was unreachable: it
   // left its own test unable to fail, the same way three redundant guards did
