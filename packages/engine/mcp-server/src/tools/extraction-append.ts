@@ -12,8 +12,8 @@
 // lane expressed as a tool PARAMETER is forgeable by the caller. A lane
 // expressed as tool identity is not: the agent's `tools:` frontmatter simply
 // omits the broad writer, so there is no call it can emit. The durable record
-// of that reasoning is ADR-0011, "Put a guardrail that must hold at the write
-// boundary"; the plan doc this used to cite was deleted when the work shipped.
+// of that reasoning is ADR-0006, "Restrict capability by tool identity, not by
+// prompt or parameter", whose `Applies to:` names this file.
 //
 // The restriction is passed as a second function argument to `researchAppend`,
 // NOT as a field on the tool input — see `ResearchAppendOptions` for why that
