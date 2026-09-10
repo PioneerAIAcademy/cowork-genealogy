@@ -1,0 +1,19 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Exact birth date 22 November 1910 and place La Unión de Isidoro Montes de Oca, Guerrero recovered and written as a primary fact from the 1910 civil birth registration. Full municipality name used — equivalent to La Unión, Montes de Oca in the expected finding.",
+    "f2": "Father–child link established via ParentChild relationship (I3 → PID-TODO). Sóstenes Cruz identified by name across both sources. Father's own birth details (27 November 1882, Coahuayutla, Guerrero) not recorded in the tree — the core finding is the relationship, not the father's biography. Independently corroborated by sibling Primitivo's 1935 Guerrero civil marriage record naming the same parents.",
+    "f3": "Mother–child link established via ParentChild relationship (I1 → PID-TODO). Apolinar Corona identified with birth ~1881 in Guerrero (state-level only; Coahuayutla not specified in tree). Alternate name 'Maria Apolinar Corona Mercado' absent. Core relationship and birth year match the expected finding.",
+    "f4": "Bonus finding. Paternal grandparents (Jesús Cruz / Donaciana Basurto) not recovered — no person records or relationships for this generation in the tree.",
+    "f5": "Bonus finding. Maternal grandparents (Miguel Corona / Jesús Mercado) not recovered — no person records or relationships for this generation in the tree."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140"
+}
