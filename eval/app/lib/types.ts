@@ -87,6 +87,27 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  *     null-vs-3 "disagreement" that is really just a UI gap.
  *  2. It is a nullable base dimension (Tool Arguments) — the reviewer may
  *     set *or override to* N/A even when the judge emitted a 1/2/3.
+ *  3. The run log says this test's dimensions DO NOT GATE its outcome
+ *     (`dimensions_gate_outcome: false`, i.e. a `routing` or `invariant`
+ *     test). An N/A there asserts nothing about pass/fail, and the reviewer
+ *     needs it to correct a diagnostic `1` that graded a field the harness
+ *     blanked at the hand-off.
+ *
+ * Case 3 exists because cases 1 and 2 cover only run logs written AFTER the
+ * N/A coercion shipped, where the judge score is already `null` and case 1
+ * lights the button on its own. On an ALREADY-COMMITTED log the score is a
+ * recorded `1`, so no case matched and the button never appeared — which made
+ * the re-grade issue #2375 exists to perform impossible to enter, the CRUD UI
+ * being the only sanctioned writer of a unit `.ann.json`. That is not
+ * hypothetical: an annotator hit it on `ut_record_extraction_011` and both
+ * cells went in as `corrected_score: 1`, adding the corpus damage #2375 is
+ * meant to repair.
+ *
+ * `dimensionsGateOutcome` is REQUIRED rather than optional on purpose. A
+ * defaulted parameter would let a future call site omit it and silently lose
+ * case 3 again, which is exactly how this gap shipped. Pass `undefined`
+ * explicitly for a pre-sampling log that records no gating field; `undefined`
+ * is not `false`, so it does not widen anything.
  */
 /**
  * The tests a run log's annotation must cover, or `null` for "all of them".
@@ -203,10 +224,12 @@ export function dimensionAllowsNa(
   source: DimensionSource,
   name: string,
   judgeScore: Score,
+  dimensionsGateOutcome: boolean | undefined,
 ): boolean {
   return (
     judgeScore === null ||
-    (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name))
+    (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name)) ||
+    dimensionsGateOutcome === false
   );
 }
 
@@ -292,6 +315,15 @@ export interface TestEntry {
   mcp_fixtures: string[];
   outcome: TestOutcome;
   flaky: boolean;
+  /** What decided this test's outcome. Optional: absent from the schema's
+   *  `required` and from every run log written before it shipped. */
+  grading_mode?: 'dimensions' | 'invariant' | 'routing';
+  /** Whether the judge dimensions could change this outcome for a test that ran
+   *  to completion. FALSE on `invariant` and `routing` tests, where routing or a
+   *  tag-gated validator decides and the dimensions are diagnostic only. It
+   *  describes the test's grading DESIGN, so an aborted entry still says how the
+   *  test would have been graded. Optional, as above. */
+  dimensions_gate_outcome?: boolean;
   outcome_summary: {
     per_run_outcomes: Array<'pass' | 'partial' | 'fail' | 'aborted'>;
     aggregated_dimensions: RunLogDimension[];

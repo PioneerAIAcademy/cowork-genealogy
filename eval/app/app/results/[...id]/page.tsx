@@ -320,6 +320,7 @@ const DimensionRow = memo(function DimensionRow({
   judgeRationale,
   correction,
   owesComments,
+  dimensionsGateOutcome,
   onUpdate,
   onFocus,
   onBlur,
@@ -329,6 +330,11 @@ const DimensionRow = memo(function DimensionRow({
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
+  /** From the run log's `dimensions_gate_outcome`. `false` means routing or a
+   *  tag-gated validator decided this test, so an N/A here asserts nothing
+   *  about pass/fail and the picker must offer it even on a recorded 1.
+   *  `undefined` on a run log written before the field shipped. */
+  dimensionsGateOutcome: boolean | undefined;
   /** This test is in a TRUSTED review sample, so every reviewed dimension of it
    *  needs a comment unless it is a confirmed pass or N/A. False on a
    *  pre-sampling run log, where CI asks for no comments at all. */
@@ -374,7 +380,12 @@ const DimensionRow = memo(function DimensionRow({
     !draft.trim() &&
     !confirmedPass &&
     (owesComments || disagrees);
-  const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
+  const allowNa = dimensionAllowsNa(
+    dim.source,
+    dim.name,
+    dim.score,
+    dimensionsGateOutcome,
+  );
 
   const setScore = (s: ScoreOrNull) => {
     onUpdate({
@@ -711,6 +722,23 @@ function GradesPane({
         </Group>
       ) : null}
 
+      {entry.dimensions_gate_outcome === false ? (
+        <Alert color="blue" variant="light" title="Dimensions are diagnostic on this test">
+          <Text size="xs">
+            {entry.grading_mode === 'invariant'
+              ? 'grading_mode: invariant — a tag-gated validator decided this outcome.'
+              : entry.grading_mode === 'routing'
+                ? 'grading_mode: routing — which skill fired decided this outcome.'
+                : 'Something other than these scores decided this outcome.'}{' '}
+            The scores below did not change it. A `1` here is a diagnostic
+            signal, not a failure, and it may be a dimension the harness
+            truncated at the hand-off: N/A is offered on every row for that
+            reason. Read the judge&apos;s rationale before agreeing with a
+            score.
+          </Text>
+        </Alert>
+      ) : null}
+
       <Stack gap="xs" style={{ flex: 1 }}>
         {dims.map((d) => {
           const key = `${entry.test_id}|${d.source}|${d.name}`;
@@ -723,6 +751,7 @@ function GradesPane({
               dim={d}
               judgeRationale={d.rationale}
               correction={correctionsByKey.get(key)}
+              dimensionsGateOutcome={entry.dimensions_gate_outcome}
               onUpdate={onSetCorrection}
               onFocus={onDimensionFocus}
               onBlur={onDimensionBlur}
