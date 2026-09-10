@@ -1,17 +1,20 @@
 # Search Agent prototype — hosted architecture, one month
 
-**Status:** UNBUILT — plan for review before implementation · 2026-09-09 ·
+**Status:** IN PROGRESS — P1 and the three D1–2 probes measured 2026-09-10 (PR #2406)
+and folded in below; P2 and P3's feature-parity half still open; the build continues
+on the re-decide branch · plan of 2026-09-09 ·
 adversarially reviewed twenty-five rounds (`plan-critic`), then **cut**: the review
 loop's own output — a turn-lock protocol, a five-arm shim and a ceiling guard with its
 proof — grew to a third of the document and generated a blocking finding every round it
 existed, while the architecture and risk sections did not move a word. It failed the
 scoping test below and was deleted, every load-bearing figure
 re-derived from the committed corpus at `e18d99b10`. Re-checked against `main` on
-2026-09-10 before the build starts: the counts that moved since `e18d99b10` (agents,
+the morning of 2026-09-10, before the build started: the counts that moved since
+`e18d99b10` (agents,
 `fs` importers, vitest files), one that was a miscount (`getValidToken` call sites) and the
 probe-readiness corrections are folded in below.
 
-**Owner:** Dallan. **Timebox:** ~23.5 working days, solo; a few days' overrun accepted.
+**Owner:** Dallan. **Timebox:** ~22 working days, solo; a few days' overrun accepted.
 **Goal:** prove the risky half of the proposed FamilySearch architecture before
 FamilySearch commits to it, and produce measurements nobody currently has.
 **Becomes:** the basis of the real two-backend implementation. The engine work is
@@ -47,16 +50,18 @@ carrying. Everything below is out on that test, not because it is unimportant.
 - Multi-patron token custody (the seam is built; the custody is not).
 - Opaque session tokens in place of a live FamilySearch grant on every hop. Known
   pattern, no unknowns — fails the scoping test.
-- **Content-level assertion deduplication.** Turn-scoped *batch* identity is built
-  instead (days 6–8), which folds a byte-identical re-emission of a writer call. What
+- **Content-level assertion deduplication.** Turn-scoped *batch* identity was to be
+  built instead (days 6–8) and was cut on 2026-09-10 when P1 measured re-decide; it
+  would have folded a byte-identical re-emission of a writer call. What
   neither covers is the model **re-deciding** — rephrasing the same claim on resume —
   and that stays open. Measured against the committed corpus, the best content key
   (record + role + persona + fact type + value + date + place) **would refuse 0 of
   8,171** assertions when compared against the *pre-call* document — 26 pairs do
   collide, but all 26 were written inside a single call, which a pre-call snapshot
   cannot see — while matching **0 of 86** assertions in the only available re-decide
-  proxy (9 records extracted twice within one run, under different log entries). It is safe, and it does not work; there is no measured band where it is the
-  thing that saves you. The residual risk is the one worth stating: in this domain a
+  proxy (9 records extracted twice within one run, under different log entries). It is safe, and on the corpus it does not work; P1's forced kill (2026-09-10) is the
+  one measured band where it would have matched — 17 of 20 ops — and the three
+  rephrased values still get through. The residual risk is the one worth stating: in this domain a
   duplicated assertion reads as *independent corroboration*, so a re-decided
   duplicate could still inflate a proof conclusion.
 - **Skill output files.** `search-wikipedia` and `search-familysearch-wiki` both
@@ -121,6 +126,8 @@ No token streaming. `map_message()` already produces exactly the right events �
 `text`, `thinking`, `tool_use` with a human-readable summary, `tool_result`,
 `task_started`, `task_progress`, `task_done` — and **subagent turns arrive on the
 same stream** tagged with `parent_tool_use_id` and labelled with the agent's name.
+Complete messages only: partial stream deltas carry no `parent_tool_use_id` (measured
+2026-09-10, 545 stream events, none tagged), so per-subagent progress keys on messages.
 Keep its event vocabulary; the only field added is `tool_use_id` on `tool_result` (see
 D15), and otherwise change only where its output goes. That edit lands in
 `apps/server/app/agent/real_agent.py`, is additive, and leaves the hosted UI alone —
@@ -204,11 +211,11 @@ as 2.1.220 / 0.2.128 and record it from `_cli_version.__cli_version__` at worker
 **It is not a downgrade.** The 2026-08-30 `tools:`-omission measurement ran through
 `make probe-agent-binding` on the `apps/server` venv, whose SDK already bundled 2.1.220
 and whose `build_options` sets no `cli_path`, so it already ran on 2.1.220; the `2.1.251`
-the repo records is the PATH `claude --version`, which the SDK never spawns. Re-run
-`make probe-agent-binding` at D1–2 with the version and the resolved CLI path printed,
-then correct the eight citations in seven files — the probe docstring, `Makefile`,
-`CLAUDE.md`, `docs/architecture.md`, ADR-0004, `docs/specs/research-append-tool-spec.md`
-and two in `tests/packaging/agent-tool-names.test.ts`; `git grep 2\.1\.251` is the list.
+the repo recorded was the PATH `claude --version`, which the SDK never spawns. Re-run
+2026-09-10 with the version and the resolved CLI path printed (2.1.220); the eight
+citations in seven files — the probe docstring, `Makefile`, `CLAUDE.md`,
+`docs/architecture.md`, ADR-0004, `docs/specs/research-append-tool-spec.md` and two in
+`tests/packaging/agent-tool-names.test.ts` — are corrected in PR #2406.
 
 **A second silent-loss mode with the same signature.** The batcher matches on path: if
 the CLI's `CLAUDE_CONFIG_DIR` differs from the parent's, every frame is dropped with a
@@ -371,14 +378,15 @@ dollars: a one-record turn is a fraction of a $7 full run.
 
 **None of the live probes this plan cites as settled — the key-blind store resuming
 with subagent transcripts, the read-only `CLAUDE_CONFIG_DIR` writing zero frames, the
-`setting_sources` leak — is in the repo.** P1 starts from zero committed evidence, and
-each lands in `apps/server/dev/` as it is re-run.
+`setting_sources` leak — is in the repo.** P1 started from zero committed evidence; what was
+re-run lands under `apps/server/dev/p1/` in PR #2406.
 
-Four variants, all resuming in a *different process* from that store:
+Five variants, all resuming in a *different process* from that store:
 clean handoff between turns; SIGKILL mid-delegation; SIGKILL mid-model-call; and — for
 the re-issue-vs-re-decide measurement below, which a timed kill cannot reliably produce
-— a **forced** stop, using a debug-env branch in the current engine that sleeps before
-the commit while the harness kills the process group. `extraction_append` has no body
+— a **forced** stop in two arms, using a debug-env branch in the current engine that
+sleeps before the commit, or holds the response after it, while the harness kills the
+process group. `extraction_append` has no body
 to sleep in — it is a one-line delegation to `researchAppend` — so the branch lives in
 `research-append.ts`, keyed on the tool name it was called under, and the variable
 reaches only the node child through the MCP server's `env`. Launch the driver from the
@@ -387,6 +395,25 @@ driver's process group, so a `killpg` on that group takes the driver and the CLI
 without taking the harness. Expect the timed kills to miss:
 the delegated write is a few seconds inside a one- to two-minute turn, and a miss is
 not a failure.
+
+**Measured 2026-09-10 (PR #2406; evidence under `~/.cache/cowork-genealogy/p1/`).** All
+five variants — clean handoff, forced kill before the commit, forced kill after the
+commit, mid-delegation, mid-model-call — passed every criterion below: a fresh process
+loaded every frame from Postgres, materialized the subagent transcript through
+`list_subkeys`, and continued the same session; zero mirror warnings under eager flush;
+$0.65–$1 a run, each resume in a fresh process with an empty `CLAUDE_CONFIG_DIR`.
+**The branch answer is re-decide.** The resumed main thread recognized
+its completed calls (it did not re-write the research log) but did not continue the
+in-flight delegation: it re-delegated to a new subagent, whose `extraction_append`
+hashed differently — 17 of the 20 ops value-identical (the source op and 16 of the 19
+assertions), three derived birth values rephrased, and the source entry's title and
+notes reworded. Resume granularity is therefore the main-thread
+tool call; a delegation in flight is redone, its cost lost and its result not. Killed
+*after* the commit instead, the resumed turn read the project state and issued no
+second write: 19 assertions before and after. The duplicate risk named under "Content-level
+assertion deduplication" above did not materialise at n=1; on the before-commit arm a
+content key would have matched the 17 value-identical ops and missed the three
+rephrased ones.
 
 Seven pass criteria, plus one measurement that sets a branch:
 
@@ -431,7 +458,7 @@ Seven pass criteria, plus one measurement that sets a branch:
   evidence points the wrong way: the content key matched **0 of 86** in the re-decide
   proxy.
   Use the forced variant above — P1 cannot borrow D15's mechanism, which polls
-  `committed_batches`, a table that does not exist until D6–8.
+  `committed_batches`, a table that was to land at D6–8 and is now cut.
   **Precondition before the hash comparison is readable:**
   assert the pre-kill subagent transcript's last entry is the `extraction_append`
   `tool_use` with no matching `tool_result`. A timed kill will not reliably produce that
@@ -452,7 +479,9 @@ Seven pass criteria, plus one measurement that sets a branch:
   with P1's measurement reported as a finding. **Criterion 4 is unaffected** — it reads
   logged durations, never the ledger. Spending a day and a half on a mechanism whose
   only remaining benefit is unmeasured fails this plan's own scoping test. Finding that on day 2 is what makes the cut available; finding it at D15 means the
-  ledger day and the dispatch extraction are already spent.
+  ledger day and the dispatch extraction are already spent. **Taken 2026-09-10:
+  re-decide.** The ledger, the D15 exercise and the D16 re-run are cut; criterion 6 is
+  the measurement above.
 - The resumed message list is accepted — i.e. a transcript ending on a `tool_use`
   block with no matching `tool_result` does not get rejected.
 
@@ -665,8 +694,9 @@ without whichever Bedrock refuses.
 
 ### Week 1 — probe and seam
 
-- **D1–2** P1, four variants including the forced stop: seven assertions plus the
-  re-issue-vs-re-decide measurement. Go/no-go on the seven.
+- **D1–2** P1, five variants including the forced stop in both arms: seven assertions
+  plus the re-issue-vs-re-decide measurement. Go/no-go on the seven. **Done 2026-09-10:
+  all five passed, branch re-decide** (see P1).
 - **D1–2 (parallel)** The agent/skill registration probe: `plugins=[…]` **and**
   `agents={…}` **and** `setting_sources=[]` together — six agents resolving under
   which spelling, and all 28 skills resolving. A zero-token handshake on 2026-09-10
@@ -674,15 +704,15 @@ without whichever Bedrock refuses.
   `genealogy-research:` spellings, and all 28 skills as `genealogy-research:<skill>`
   entries under `commands` — there is no `skills` key, and agent entries carry `name`,
   `description` and `model`, never `tools` or `prompt`, so the handshake cannot show
-  what an agent binds. What remains is one billed delegation by bare name to show
-  the bare entry spawns, and landing the frontmatter-to-`AgentDefinition` parser under
-  `apps/server/dev/`. An hour, and it belongs here by
+  what an agent binds. **Done 2026-09-10:** `image-reader`, delegated to by bare name
+  under `agents=`, replied PONG (`make probe-registration`, $0.13); the loader lives at
+  `apps/server/dev/p1/plugin_agents.py`. The probe belongs here by
   the plan's own logic for moving P3: it needs only the CLI, the plugin and the engine,
   and it can invalidate build work. Before the handshake, `setting_sources=[]` alongside
   `plugins=[…]` was a combination nothing in this repo had run, and its failure mode
   would have forced either staging skills inside `/project` or
-  `setting_sources=["project"]`; the handshake retires that, and what is left is the
-  billed delegation and the parser.
+  `setting_sources=["project"]`; the handshake retired that, and the billed
+  delegation and the parser closed it.
 - **D1–2 (parallel)** Confirm `disallowed_tools=["Bash"]` actually denies under
   `bypassPermissions` on the pinned pair. Record the result in the write-up. **Do not
   widen `_KNOWN_GOOD_SDK_RANGE`** in the harness: `eval/harness/pyproject.toml` caps it
@@ -692,7 +722,9 @@ without whichever Bedrock refuses.
   it denies** — whether `Bash` is removed from the advertised pool or refused at call
   time. Criterion 3 reads differently under each: under a call-time deny a blocked shell
   attempt still logs a `Bash` call, which would red the criterion even though the
-  mechanism worked.
+  mechanism worked. **Measured 2026-09-10: pool removal** — `Bash` is absent from the
+  init tools list under `disallowed_tools`, and the call-denied arm emitted no `Bash`
+  call (`make probe-bash-deny`, three sessions, $0.23).
   **Run
   `make probe-agent-binding` here too, not at D15** — not because `docs/architecture.md`'s
   CLI-or-SDK-moves rule binds (nothing moves; see D15), but by this plan's own reasoning
@@ -709,7 +741,9 @@ without whichever Bedrock refuses.
   citations. The probe as shipped measures the hosted option set (`stage_plugin_agents`
   plus `setting_sources=["project"]`); add a switch so its six arms also run against the
   prototype's (`agents=`, `setting_sources=[]`, `plugins=[…]`), which is the set D9–D14
-  run on.
+  run on. **Done 2026-09-10:** twelve arms, hosted and prototype identical — control
+  CALLED, deny and omit BLOCKED, tool search off and on — with the version printed as
+  2.1.220; the eight citations are corrected in PR #2406.
 - **D1–2 (parallel)** P3's feature-parity half, ungated — tool search, and the 1-hour
   cache TTL under both flag arms; context management is confirmed off from the debug log,
   not measured. Its own go/no-go: if Bedrock rejects the tool-search beta or does not
@@ -786,7 +820,7 @@ without whichever Bedrock refuses.
   **Sequencing against open PRs (as of 2026-09-10):** the validator port collides with
   PR #2354 (the settled-conflict validator rule), the auth seam with PR #2338
   (`fetchWithRetry` at every network call site — 13 of the 16 token call-site files),
-  the D6–8 dispatch extraction and tool counts with PR #2397 (the external-search-URL
+  the D6–8 tool counts with PR #2397 (the external-search-URL
   tool), and the worker loop and D15's `map_message` edit with PRs #2371 and #2348 on
   `real_agent.py`. None is merge-ready; rebase after they land or get a ruling before
   starting the day.
@@ -797,7 +831,8 @@ without whichever Bedrock refuses.
   Postgres, not an S3 LIST** — staging sits on the return path of the most-called
   tool. **`pg_advisory_xact_lock` on the project id** in the Postgres backend (see
   Locking above); the file backend keeps its in-process mutex.
-  Plus the **turn-scoped batch ledger**:
+  **The turn-scoped batch ledger — cut 2026-09-10 (P1 measured re-decide); kept for
+  the record through "measurably near zero":**
   `committed_batches(project_id, turn_id, tool_name, args_hash, applied_at, result_json)`
   with a unique index on the first four, written **inside the document write's
   transaction** and therefore under the same advisory lock. `ProjectStore` gains
@@ -856,8 +891,7 @@ without whichever Bedrock refuses.
   **Update `docs/specs/research-append-tool-spec.md`'s Concurrency section** in the
   same change: it documents the in-process mutex and records "binds only within one
   MCP server process" as the residual, which stops being true for the Postgres
-  backend. A live tool has a live spec; state both backends and where the ledger does
-  and does not apply.
+  backend. A live tool has a live spec; state both backends.
   Also here: **`sidecar_read`, a day and a half** (see P2) — the 49th tool, or the 50th if
   the open PR adding `build_external_search_url` lands first, serving
   `evaluations[].file_path` verdict bodies and **text** uploads under
@@ -866,15 +900,15 @@ without whichever Bedrock refuses.
   stay out of the prototype unless `image_transcribe` gains an upload key. `gps-mentor` reads `evaluations/` itself, so the site list
   includes granting it the tool in `packages/engine/plugin/agents/gps-mentor.md` in
   **all three server spellings**, which trips the `AGENT_PERMISSIONS` snapshot in
-  `tests/packaging/agent-tool-names.test.ts` — one of the nine packaging stops named below.
+  `tests/packaging/agent-tool-names.test.ts` — one of the eight packaging stops named below.
   **And the grant alone is inert:** `gps-mentor.md` still instructs `Read` for a
   verdict body in two places, and `docs/specs/gps-mentor-agent-spec.md` repeats it in
   four. Both bodies must change, which puts five packaging tests in scope —
   `agent-tool-names`, `agent-delegation-framing`, `gps-mentor-craft-doctrine`,
   `skill-name-resolution` and `doc-links` (there is no per-agent unit suite; `eval/tests/unit/`
   holds skill directories only).
-  **The ledger is a day, not half** — the dispatch extraction above is the bulk of it. No schema
-  change: the ledger is store state, not a `research.json` section, which keeps it off
+  **The ledger was a day, not half** — the dispatch extraction above was the bulk of it,
+  and is cut with it. No schema change: the ledger was store state, not a `research.json` section, which keeps it off
   the four-site + `packages/schema` + `ownership.json` blast radius.
 - **D9–10** Worker loop + `SessionStore` adapter + transcript hydrate/checkpoint.
   Pin `cwd`. **Do not set a per-session `CLAUDE_CONFIG_DIR` — the SDK discards it.**
@@ -922,19 +956,12 @@ without whichever Bedrock refuses.
   service and survives to issue `ChangeMessageVisibility(0)`. Not `kill -9` on the
   worker PID, which orphans the `claude` child, which keeps
   running and makes the test pass for the wrong reason.
-  **The mock cannot carry the ledger assertions.** `mock_agent.py` writes
-  `research.json` with `write_text` and emits synthetic `tool_use` events; it never
-  calls the MCP server, so there is no tool result to compare and the batch ledger is
-  never consulted. Making it issue real `research_append` calls through the tool server
-  is more than the "~30 lines to fake a delegation" quoted above, so **the mock carries
-  completion only**, and the byte-identical tool-result and
-  assertion-count checks live at the **end of D15**, on the stdio configuration, where
-  the window can be forced. Without
-  that split, criterion 6 passes vacuously against a mock that never calls the tool
-  server, and the whole batch ledger ships untested.
-  The counterpart test — the one that stops the ledger being built receipt-time — is
-  the reject → repair → identical-retry regression replayed from the three corpus runs
-  named in days 6–8, and it needs no live agent at all.
+  **The mock carries completion only** — `mock_agent.py` writes `research.json` with
+  `write_text` and emits synthetic `tool_use` events; it never calls the MCP server.
+  The byte-identical tool-result and assertion-count checks that were to sit at the
+  end of D15, and their receipt-time counterpart test, are cut (2026-09-10, P1:
+  re-decide); the counterpart was the reject → repair → identical-retry regression
+  replayed from the three corpus runs named in days 6–8, which needed no live agent.
 - **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
   Probed live with the five bodies then present: all register under **bare** names with
@@ -979,9 +1006,9 @@ without whichever Bedrock refuses.
   duration) and read them in the run output. No automated ceiling assertion, no
   `ceiling_kills` table, no two-direction proof — see the step model for why that
   scaffolding was cut.
-  **Closing item, half a day: the ledger exercise, on the stdio configuration** — and
-  **only if P1 came back "re-issues byte-identically"**; on a re-decide answer the ledger
-  is already cut and this goes with it.
+  **Cut 2026-09-10 (P1: re-decide) — the closing half-day was the ledger exercise on
+  the stdio configuration, gated on P1 coming back "re-issues byte-identically"; kept
+  for the record:**
   **Mechanism: hang after commit.** A debug-env branch in the tool server holds the
   `extraction_append` response open once the `committed_batches` insert has committed;
   the harness kills the **worker container** (a bare `kill -9` on the worker PID orphans
@@ -994,8 +1021,8 @@ without whichever Bedrock refuses.
   research run. Assert the `committed_batches` row exists, `tryClaimBatch` hit exactly
   once on the resumed turn, no assertion id was allocated twice, and the replayed result
   is byte-identical to the first — the ledger's stated contract, asserted nowhere else.
-  It must precede the D16 swap; D16 re-runs it over HTTP, where `turn_id` comes from the
-  session header instead of the environment.
+  It was to precede the D16 swap, which was to re-run it over HTTP with `turn_id` from
+  the session header instead of the environment.
 ### Week 4 — prove it and write it up
 
 - **D16** Swap the tool server to Streamable HTTP **first**, then the transport smoke
@@ -1008,14 +1035,12 @@ without whichever Bedrock refuses.
   answer cleanly, but is excluded with the other auth tools. Name all four as expected
   exclusions or the run comes back red for the wrong reason. **P3's feature-parity
   half was taken at D1–2, so the Bedrock answer survives the swap being cut.**
-  Then re-run the ledger assertion **over HTTP, with `turn_id` on the session header**
-  — D15's stdio pass does not cover the header path, which D6–8 names as the
-  production-shaped mechanism. **Same hang-after-commit mechanism as D15** — it is
-  transport-agnostic, so the only thing that changes is where `turn_id` comes from, it
-  reuses D15's harness (~1 hour, not free), and the same conditionality applies: on a
-  re-decide answer the ledger is already cut and this goes with it. Then P3's
-  quota/concurrency half. (The model pin sits at D9–10, with the worker loop, because
-  that is where the first worker cost figures come from.)
+  **Cut 2026-09-10 (P1: re-decide):** the ledger assertion re-run over HTTP with
+  `turn_id` on the session header — the header-path proof D6–8 named as the
+  production-shaped mechanism, same hang-after-commit mechanism as D15, about an hour
+  on D15's harness — goes with the ledger. Then P3's quota/concurrency half. (The model
+  pin sits at D9–10, with the worker loop, because that is where the first worker cost
+  figures come from.)
 - **D17** Real run, driven **interactively** (not `--autonomous`), killed **while a delegated
   `extraction_append` is in flight inside `@plugin:record-extractor`** — which puts a
   delegation in flight, the only thing criterion 1 requires. Six skills name an agent, and `person-evidence` has delegated to its own since
@@ -1023,26 +1048,28 @@ without whichever Bedrock refuses.
   flight, so time the kill on that one. An earlier draft timed it by "person-evidence is
   running", which at the time ran on the main thread; today it delegates, but not
   through `extraction_append`, so it still cannot time this kill. **Assert P1's `list_subkeys` criterion here too:** the
-  resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is not proven
-  here — a *timed* kill cannot test it (see D15) — it is proven by D15's ledger exercise
-  and re-run over HTTP at D16. This is FamilySearch question 1. Iterate.
+  resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
+  recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
 - **D20** Write-up.
 
-**Runs ~23.5 days, and a few days over is acceptable (lead's call, 2026-09-09).** The
+**Runs ~22 days after the 2026-09-10 cut, and a few days over is acceptable (lead's
+call, 2026-09-09).** The
 arithmetic on top of the original 20, and it sums: **+0.5** the ledger (half a day → a
 day, for nine writer tools plus the dispatch extraction), **+1** the auth seam (the
 `getValidToken(subject)` type change, which no day previously carried), **+1.5**
 `sidecar_read` — the tool plus the `gps-mentor` and `research/SKILL.md` body
 rewrites the five packaging tests gate, **+0.5** the Beanstalk worker probe, **+0.5** the
-D15 ledger exercise (gated on P1), **+0.5** the D1–2 probe growth folded in on
+D15 ledger exercise (cut below), **+0.5** the D1–2 probe growth folded in on
 2026-09-10 (the registration probe's parser and billed delegation, P2's `Bash` deny,
 the binding probe's prototype-set switch, P3's second TTL arm). The ceiling guard, its
 `ceiling_kills` table and its two-direction proof are **cut**, returning about a day.
-**The D-labels above are the original 20 slots**, so the added 3.5 days push the end
+**On the re-decide answer (2026-09-10) the ledger day, the D15 exercise and the D16
+re-run are cut, −1.5.**
+**The D-labels above are the original 20 slots**, so the net added 2 days push the end
 date out rather than renumbering: the real run lands nearer D20 than D17, and the
 write-up after it. **The auth day is scheduled at D5**, alongside the store seam it belongs with.
 
@@ -1058,7 +1085,8 @@ happens to it. That is the cheapest way to retire the sqsd contract, the
 rule — the constraints that shape the step model and that docker-compose cannot show.
 It is not the full AWS deploy, which stays cut.
 
-**What absorbs a probe failure.** P1 has **two** fallbacks and they cost very differently. The first — checkpoint at
+**What absorbs a probe failure.** (P1 passed on 2026-09-10, so neither fallback is
+needed; kept for the record.) P1 has **two** fallbacks and they cost very differently. The first — checkpoint at
 `Skill`/`Agent` launch — is about a day. **The second is not a day: it is a re-scope.**
 If cross-process resume fails outright, the research document becomes the durable unit
 and the transcript stops being persisted, which restructures D9–10, D14, D15 and D16 and
@@ -1074,9 +1102,9 @@ only prototype-side measurement of R2's throughput half and the reason the quota
 request is a Before-Monday item. Cheapest to defer once the store seam is clean, and its
 real teeth are ELB ceilings that do not exist locally — but cutting it also loses the
 transport smoke (the only thing reaching `project_create` and `tree_forget`)
-and the header-path proof of `turn_id`, which D6–8 calls the production-shaped
-mechanism — **and acceptance criterion 6 then reads as proved on stdio only, with the
-header path recorded as untested.** Cut it knowing that. Then D18's second measurement run, keeping the
+and the header-path proof of `turn_id`, which D6–8 called the production-shaped
+mechanism — though that proof was the ledger re-run, cut with the ledger on
+2026-09-10, so what the swap still carries is the smoke. Cut it knowing that. Then D18's second measurement run, keeping the
 quality eyeball. **Never D19–20** — a prototype nobody can re-run is worth less than a
 smaller one with a make target.
 
@@ -1129,13 +1157,10 @@ failure this prototype exists to avoid. One patron, one grant, for now. The naiv
 alternative is not an error but silent cross-patron impersonation: patron B's refresh
 overwrites patron A's token file and A then acts as B.
 
-**Expect the packaging tests to stop you nine times** (seven test files, two of which
-fire twice). `manifest.test.ts` AST-matches
-the `request.params.name === "…"` chain in `src/index.ts` to detect dispatch drift, and
-its own comment says a refactor to a lookup map *should* fail it — so the D6–8 dispatch
-extraction red-lines the suite D4–5 calls the regression gate. Rewrite those tests
-against the handler table, or take the parenthetical option and wrap the nine arms in
-place, leaving the if-chain intact. The manifest test also fails on the
+**Expect the packaging tests to stop you eight times** (seven test files, one of which
+fires twice). `manifest.test.ts` AST-matches the `request.params.name === "…"` chain in
+`src/index.ts` to detect dispatch drift — the D6–8 dispatch extraction that would have
+red-lined it went with the ledger on 2026-09-10 — and fails on the
 `sidecar_read` addition; `readme-catalog.test.ts` fires twice on it — every registered
 tool must appear in `README.md`, and the stated count must match reality; `README.md`
 states it **twice** ("48 tools" and "48 MCP tools") and both move by one (48→49, or
@@ -1157,9 +1182,9 @@ delegations (record extraction, image transcription), driven in a browser:
 3. The deny-and-log query returns **zero `Bash` calls that executed and zero
    project-file reads that the hook allowed**. Under pool removal that is zero `Bash`
    rows; under a call-time deny it is zero `Bash` rows whose result is not a permission
-   refusal — **which of the two applies is what the D1–2 probe records**, so do not
-   assert pool removal here. Refused attempts are reported as a separate count alongside
-   the denied reads. The logging needs the **tool input path** as well as the decision:
+   refusal — **measured 2026-09-10: pool removal**, so it is zero `Bash` rows. Under pool removal
+   there are no refused `Bash` attempts to count; the denied reads are reported as a
+   separate count. The logging needs the **tool input path** as well as the decision:
    "project-file read" cannot be classified without it, and reads of
    `/opt/genealogy/plugin/**/references/**` are allowed and expected — denied *attempts* are logged, expected, and reported as a
    separate count. The prototype's own hook is what denies project-file reads, so a
@@ -1167,8 +1192,8 @@ delegations (record extraction, image transcription), driven in a browser:
    the agent to read `researcher_profile.narration_guidance` from `research.json`, two
    say to read it outright, and every project tool takes `projectPath` as a required
    input, so the model always holds the path. Counting attempts would red the criterion
-   while the boundary held — the same attempt-vs-success distinction the plan already
-   draws for the `Bash` half at D1–2, carried across — i.e. the *agent* reached no shell and no project state on disk. The runtime's own
+   while the boundary held — the attempt-vs-success distinction the plan drew for the
+   `Bash` half before D1–2 measured pool removal, carried across — i.e. the *agent* reached no shell and no project state on disk. The runtime's own
    tmpfs writes are expected and are not research data.
 4. **Tool-call durations were logged and read.** No call ran unbounded. This is an
    observation, not an automated gate — the longest call in the corpus is 844 s against
@@ -1188,22 +1213,21 @@ everything:**
    `(project_id, turn_id, tool, args_hash)` exists (the unique index forecloses a
    second), `tryClaimBatch` hit exactly once on the resumed turn, no assertion id
    allocated twice, and the replayed call's result byte-identical to the first.
-   **Conditional on P1's re-issue-vs-re-decide measurement:** if the resumed turn re-decides rather than
-   re-issuing byte-identically, this is a measured finding, not an acceptance
-   criterion.
+   **Measured 2026-09-10: the resumed turn re-decides**, so this is a finding, not an
+   acceptance criterion — the ledger is cut and the measurement is recorded under P1.
 
 **The go/no-go rule, which the criteria alone do not supply.** Three of the six carry
 structural asterisks: criterion 5 is proved on the *current* stack at D2, criterion 4 is
-an observation rather than a gate, and criterion 6 is conditional on P1's day-2
-re-issue-vs-re-decide answer — which this plan's own evidence (the content key matched
-0 of 86 in the re-decide proxy) expects to go the wrong way. So the plan can finish
+an observation rather than a gate, and criterion 6 became a finding on day 2 —
+re-decide, as this plan's own evidence (the content key matched 0 of 86 in the
+re-decide proxy) expected. So the plan can finish
 3-of-6 fully met without anything saying whether that is a pass.
 
 It is. **Criteria 1, 2 and 3 are the go/no-go**: a killed turn resumes, nothing is lost,
 and the agent reached no shell and no project state. Those three are what license the
 sentence this prototype exists to write — *if the prototype works, the full solution will
 work*. Criterion 4 is a tripwire, 5 is a quality check on a different stack, and 6 is a
-measurement whose branch is decided on day 2. **Report each of the six with the
+measurement whose branch was decided on day 2: re-decide. **Report each of the six with the
 configuration that proved it**, and do not let a green 4/5/6 stand in for a red 1/2/3.
 
 Reproducible via `make proto-demo`.
@@ -1216,7 +1240,8 @@ Cutting the AWS deploy makes the deliverable stronger. FamilySearch has thousand
 Beanstalk deployments and **zero** measurements of the six things this produces:
 
 1. Does the Agent SDK resume across processes from an external store, including
-   subagent transcripts, when killed mid-delegation?
+   subagent transcripts, when killed mid-delegation? **Yes — measured 2026-09-10; the
+   delegation itself is redone, not resumed.**
 2. Does the prompt cache survive that resume, and what happens when the queue gap
    exceeds the TTL? (Their blocker worth 4.6×, answered with a number.)
 3. Where can you actually checkpoint? Answered with the segment distribution rather
@@ -1225,9 +1250,11 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
 5. Does it run on Bedrock direct, with tool search on, and does caching hit at 1 h —
    with the finding that server-side context management is off there by the CLI's own
    gate.
-6. How much turn-level idempotency you get free from a commit-time batch ledger, and
-   precisely where it stops — at the model re-deciding, which no content key we
-   measured can reach.
+6. How much turn-level idempotency a commit-time batch ledger buys: **none the model
+   does not already provide** (measured 2026-09-10, n=1) — on resume it re-decides, so
+   nothing folds byte-identically, and after a committed write it read the document
+   and wrote nothing; a content key would have matched 17 of the 20 re-issued ops and
+   missed the three rephrased ones.
 
 Frame it as: *we built the risky half and measured it; the Beanstalk half is the part
 FamilySearch already knows how to do.*
