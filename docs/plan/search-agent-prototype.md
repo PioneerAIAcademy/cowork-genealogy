@@ -1,8 +1,7 @@
 # Search Agent prototype — hosted architecture, one month
 
 **Status:** IN PROGRESS — P1 and the three D1–2 probes measured 2026-09-10 (PR #2406)
-and P3's feature-parity half measured, all folded in below; P2's harness landed, its control
-ran, and its treatment arm awaits a re-run; the build continues on the re-decide branch · plan of 2026-09-09 ·
+and P3's feature-parity half measured, all folded in below; P2 measured at n=3; the build continues on the re-decide branch · plan of 2026-09-09 ·
 adversarially reviewed twenty-five rounds (`plan-critic`), then **cut**: the review
 loop's own output — a turn-lock protocol, a five-arm shim and a ceiling guard with its
 proof — grew to a third of the document and generated a blocking finding every round it
@@ -504,15 +503,23 @@ conversation.*
 
 **Harness half landed 2026-09-10 (PR #2406):** `--deny-shell` and `--deny-project-reads`
 on the e2e harness, exposed as `DENY_SHELL=1 DENY_PROJECT_READS=1` on `make e2e-run`,
-with the predicate below and 41 unit tests. **Runs 2026-09-10:** the control arm
-(shell denied, no predicate) came back fail / recall 0.0 / proof quality 2 at $7.79 and
-54 minutes, against the July baseline's pass / 1.0 / 2 — the fixture has drifted, which
-is why the same-day control exists. The first treatment arm was **void**: it recorded
-zero path denials while reading `research.json` twice, because macOS hands the harness
-its workspace as `/var/folders/...` and the model reads `/private/var/folders/...`. The
-predicate now compares `realpath`s (PR #2406); the treatment arm needs one re-run. Both
-arms also saw `Read` of a `tool-results` spill file fail and the agent recover through
-`Grep` on the same file — pre-existing, with or without the predicate.
+with the predicate below and 41 unit tests. **Measured 2026-09-10 on rejnic-burial,
+three valid runs, all with the shell denied:** the control (no predicate) came back
+fail / recall 0.0 / proof quality 2 at $7.79 and 54 minutes; the treatment (predicate
+on), twice: pass / 1.0 / 2 at $7.20 and 44 minutes, with three reads denied
+(`research.json`, the tree, a `check-warnings` file) and the agent continuing through
+`research_query`, and fail / 0.0 / 2 at $10.11 and 71 minutes with no file read
+attempted. The July baseline was pass / 1.0 / 2. The verdict tracks whether a run
+searches the FamilySearch Find a Grave index, which one treatment run did and neither
+of the others; proof quality is 2 in all three. **Criterion 5 holds at n=3: no
+measurable quality cost from removing project reads, and no run stranded on a spill
+file** (two spill reads succeeded under the predicate; a spill `Read` failed and the
+agent recovered through `Grep` in both unfixed arms, with or without the predicate). A
+first treatment arm was void: it recorded zero path denials while reading
+`research.json` twice, because macOS hands the harness its workspace as
+`/var/folders/...` and the model reads `/private/var/folders/...`; the predicate now
+compares `realpath`s (PR #2406). The runlogs stay out of the corpus: they carry the deny
+flags, and the e2e panel would read the last of them as the fixture's state.
 
 Run one fixture on the **current** stack with `Bash` denied and `Read`/`Grep`/`Glob`
 restricted by the path predicate below, and compare the judge verdict against a
@@ -1235,7 +1242,7 @@ everything:**
 5. **Removing the project directory costs no measurable research quality**: the judge
    verdict is within noise of a same-day control run on the same stack, and the agent
    does not strand itself on a spill file. Proved by P2 at D2 **on the current stack** — not the
-   prototype, and not the D17 run.
+   prototype, and not the D17 run. **Measured 2026-09-10: holds at n=3** (see P2).
 6. **The D15 ledger exercise (stdio, `turn_id` env-sourced) and the D16 re-run (HTTP,
    `turn_id` header-sourced).** A turn killed after a writer's ledger row committed
    resumes without repeating the write: the `committed_batches` row for that
@@ -1275,7 +1282,9 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
    exceeds the TTL? (Their blocker worth 4.6×, answered with a number.)
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
-4. What does an oversized tool result do with no shell?
+4. What does an oversized tool result do with no shell? **Measured 2026-09-10 on the
+   current stack: the agent `Read`s or `Grep`s the spill file; when `Read` of it fails it
+   recovers through `Grep`, and it did not strand in any of four runs.**
 5. Does it run on Bedrock direct, with tool search on, and does caching hit at 1 h?
    **Yes — measured 2026-09-10: tool search deferred, the 1 h TTL honoured behind its
    flag, interleaved thinking and the 1M context accepted; server-side context
