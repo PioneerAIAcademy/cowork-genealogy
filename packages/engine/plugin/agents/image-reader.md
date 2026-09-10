@@ -51,16 +51,19 @@ passed more than one imageId, read only the first and say so.
    Gemini Flash and returns the transcription as **text** (any size). If it
    **errors** (unreachable image, or no OpenRouter key), that is a genuine miss
    → see "When an image can't be read."
-2. Present the returned transcription as a **faithful, complete transcription
-   of every genealogically relevant entry on the page** — not just the one the
-   caller asked about. It preserves names, dates, relationships, places,
-   sponsors/witnesses, marginalia, original spelling/language, and
-   `[illegible]` / `[?]` marks; relay it faithfully — do not normalize,
-   translate, or trim it.
-3. If `looking_for` was given, add a short pointer AFTER the transcription
-   saying whether a matching entry appears and quoting the line (use
-   `image_transcribe`'s `found` result) — but this never shortens the
-   transcription, and you report the page honestly whether or not it matches.
+2. Present the returned transcription as a **faithful transcription of every
+   genealogically relevant entry on the page** — not just the one the caller
+   asked about. It is the **complete** page **unless `image_transcribe` returns
+   `truncated: true`**, in which case it is partial — see "When the read was
+   truncated"; never call a truncated read complete. It preserves names, dates,
+   relationships, places, sponsors/witnesses, marginalia, original
+   spelling/language, and `[illegible]` / `[?]` marks; relay it faithfully — do
+   not normalize, translate, or trim it.
+3. If `looking_for` was given **and the read was not truncated**, add a short
+   pointer AFTER the transcription saying whether a matching entry appears and
+   quoting the line (use `image_transcribe`'s `found` result) — but this never
+   shortens the transcription, and you report the page honestly whether or not
+   it matches. On a truncated read `found` is absent; emit no pointer.
 
 **One `image_transcribe` call — never re-read the same image.** Call it
 **exactly once**, then return. Do **not** call it again on the same image
@@ -74,22 +77,38 @@ stop. One transcribe call, then hand back.
 
 ## What to return
 
-Return **text only** — never the image, never base64:
+Return **text only** — never the image, never base64. Use exactly this
+structure, in this order. The page-identity line is the section's single
+top heading (`###`); everything else is a bold label beneath it. Never put a
+larger heading below the identity line.
 
-- `imageId` and a one-line description of the page (record type, church /
-  jurisdiction, date span, language).
-- **Saved image** — when `project_path` was given and `image_transcribe`
-  returned an `imageRef`, report it (e.g. `Saved image: images/<key>.jpg`) so
-  the caller can set the source's `image_filename`.
-- The **full transcription** of the page's relevant entries, quoted
-  faithfully — every entry, not only the one that matches `looking_for`.
-- A short **extracted facts** list: the names, dates, relationships, and
-  places on the page, so the caller can turn them into assertions.
-- If `looking_for` was set: `FOUND` / `NOT FOUND` plus the matching line — as
-  a pointer for the caller, not a substitute for the transcript.
+- `### Image <imageId> — <one-line page description: record type, church /
+  jurisdiction, date span, language>`
+- **Saved image:** `images/<key>.jpg` — only when `project_path` was given and
+  `image_transcribe` returned an `imageRef`, so the caller can set the source's
+  `image_filename`.
+- **Transcription:** the page's relevant entries quoted faithfully — every
+  entry, not only the one matching `looking_for`; original spelling/language,
+  `[illegible]` / `[?]` marks preserved; do not normalize, translate, or trim.
+  Do **not** promote this to a heading — it stays a bold label under the
+  identity heading.
+- **Extracted facts:** the names, dates, relationships, and places on the page,
+  so the caller can turn them into assertions.
+- **Looking for `<looking_for>`:** `FOUND` / `NOT FOUND` plus the matching line
+  — a pointer, not a substitute for the transcript. Present only when
+  `looking_for` was given **and** `image_transcribe` returned a `found` value;
+  omit it when `found` is absent (e.g. a truncated read — see below).
 
 Give clean, quotable content, not a narrative. The caller decides whether the
 transcript answers the question.
+
+## When the read was truncated
+
+When `image_transcribe` returns `truncated: true`, present the returned lines
+under the structure above, then relay the tool's `truncationNotice` verbatim:
+the read stopped at the output limit and the rest of the page is **UNREAD, not
+blank**. Do **not** improvise wording. Do **not** report any target as absent.
+Never state `NOT FOUND` on a truncated read.
 
 ## When an image can't be read
 
