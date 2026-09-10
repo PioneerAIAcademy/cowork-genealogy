@@ -48,6 +48,10 @@ WARNING_KIND_SIDES: dict[str, str] = {
     "dropped_unknown_rubric_dimension": "judge",
     "coerced_tool_arguments_to_na": "judge",
     "routing_negative_judge_fail": "judge",
+    # Retired as an EMIT kind by #2196 — the coercion below supersedes it and
+    # fires on the identical condition, so emitting both would double-tally one
+    # cell. The row stays because 100 committed run logs carry the kind.
+    "coerced_routing_negative_to_na": "judge",
     # --- harness-side (advisories about skill / fixtures / harness) ---
     "unread_skill_call": "harness",
     "missing_tool_usage_dimension": "harness",

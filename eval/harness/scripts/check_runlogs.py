@@ -16,7 +16,8 @@ docs/plan/eval-runlog-versioning.md §C6:
     Rule 3   the same run log's .ann.json has corrections for every
              (test_id, dimension_source, dimension_name) triple of the tests
              named in its `review_sample` (3 rotation + 1 targeted + 1
-             random, plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by
+             random, plus every test that failed, scored a 1 or 2 on any dimension, or
+             carries a coerced_routing_negative_to_na warning, so the count varies by
              run), each carrying a
              comment unless it is a confirmed pass. A run log with no
              `review_sample` owes every dimension of every test. An edited

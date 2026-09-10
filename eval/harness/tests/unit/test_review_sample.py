@@ -4,6 +4,7 @@ import math
 
 from harness.review_sample import (
     is_gradeable,
+    is_mandatory,
     select_review_sample,
     zero_dimension_test_ids,
 )
@@ -477,3 +478,98 @@ def test_the_targeted_degradation_skips_a_test_the_mandatory_slot_takes():
     assert "ut_003" in got, "the mandatory slot must still take it"
     assert "ut_004" in got, "the degraded slot must spend on a non-mandatory test"
     assert len(got) == 6
+
+
+# --- Third mandatory trigger: a coerced routing-negative cell (#2196) --------
+
+
+def _coerced_entry(test_id="ut_c_001", *, kind="coerced_routing_negative_to_na"):
+    """A test whose only signal is the coercion warning.
+
+    Deliberately the hardest shape for `is_mandatory` to catch: outcome `pass`
+    (routing decided it), and every dimension null or 3 — so neither of the two
+    original triggers fires. This is exactly what coercion manufactures.
+    """
+    entry = _test_entry(
+        test_id,
+        test_type="negative",
+        outcome="pass",
+        dims=[
+            _dim("Correctness", score=None, rationale="[coerced-to-na] ..."),
+            _dim("Completeness", score=None, rationale="[coerced-to-na] ..."),
+            _dim("Tool Arguments", score=None, rationale="no calls"),
+        ],
+    )
+    entry["runs"] = [{
+        "validators": {"passed": True, "results": []},
+        "output": {"warnings": [{
+            "kind": kind,
+            "advisory": "judge scored Correctness 1 ...; coerced to null",
+            "name": "Correctness",
+            "score": 1,
+            "rationale": "did nothing",
+        }]},
+    }]
+    return entry
+
+
+def test_a_coerced_routing_negative_is_mandatory():
+    """Without this trigger the coercion silently deletes the highest-
+    correction-rate class in the corpus from human review.
+
+    `is_mandatory`'s first trigger keys on `score in (1, 2)` and the second on a
+    non-pass outcome. Coercion turns the diagnostic 1 into null — neither 1 nor
+    2 — on a test whose outcome is `pass` by design. So both original triggers
+    go blind on exactly the cells measured at a 17.28% (14/81) correction rate,
+    against 4.28% for gating tests with a 1 or 2.
+    """
+    assert is_mandatory(_coerced_entry()) is True
+
+
+def test_the_third_trigger_is_specific_to_its_own_kind():
+    """A different warning kind must not make a test mandatory — otherwise the
+    trigger is really 'any warning at all' and would drag in every
+    prose_observation and uncovered_tool_call in the corpus."""
+    assert is_mandatory(_coerced_entry(kind="prose_observation")) is False
+    assert is_mandatory(_coerced_entry(kind="uncovered_tool_call")) is False
+
+
+def test_is_mandatory_survives_entries_with_no_runs_or_no_output():
+    """The read must be defensive at every level, not a subscript chain.
+
+    Warnings live at `entry["runs"][i]["output"]["warnings"]`, and there is no
+    `entry["output"]`. But a test entry has no `runs` key at all until a run is
+    recorded, and this file's own `_test_entry` builds run dicts as
+    `{"validators": {...}}` with no `output` key. A literal
+    `entry["runs"][i]["output"]["warnings"]` KeyErrors across most of this file.
+    """
+    no_runs = _test_entry("ut_c_002", dims=[_dim(score=3)])
+    assert "runs" not in no_runs
+    assert is_mandatory(no_runs) is False
+
+    no_output = _test_entry("ut_c_003", dims=[_dim(score=3)], validators=[])
+    assert "output" not in no_output["runs"][0]
+    assert is_mandatory(no_output) is False
+
+    empty_runs = _test_entry("ut_c_004", dims=[_dim(score=3)])
+    empty_runs["runs"] = []
+    assert is_mandatory(empty_runs) is False
+
+    null_output = _test_entry("ut_c_005", dims=[_dim(score=3)])
+    null_output["runs"] = [{"output": None}, {"output": {"warnings": None}}]
+    assert is_mandatory(null_output) is False
+
+
+def test_a_coerced_test_still_reaches_the_sample():
+    """The trigger is worthless if `is_gradeable` filters the test out first.
+
+    Every slot in `select_review_sample` draws from `[t for t in tests if
+    is_gradeable(t)]`, and `is_gradeable` is `bool(aggregated_dimensions)`. A
+    coerced entry's dimensions are present with null scores, so the array is
+    non-empty and it survives the filter — unlike a validator-failing entry,
+    whose aggregate #2057 deliberately leaves empty.
+    """
+    coerced = _coerced_entry("ut_c_010")
+    assert is_gradeable(coerced) is True
+    sample = select_review_sample(tests=[coerced] + _suite(4), seed=0)
+    assert "ut_c_010" in sample["tests"], sample["tests"]

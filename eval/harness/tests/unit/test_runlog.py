@@ -599,3 +599,99 @@ def test_a_run_log_without_the_new_fields_still_validates():
             del run["cache_creation_input_tokens"]
             del run["model_usage"]
     validate_run_log(log)
+
+
+def test_aggregate_excludes_a_validator_failing_run(): 
+    """#2057: a validator-failing run is GRADED but stays out of the modal.
+
+    This is the load-bearing test for the `or not r.validators.passed` disjunct,
+    and it has to be synthetic. Over the 131 committed run logs, ZERO runs have
+    `validators.passed is False` together with `judge.skipped is False` — because
+    the behaviour that produces that shape is the one this PR introduces. So a
+    dump-and-diff of `aggregate_dimensions` over committed data is empty whether
+    the guard is the intended one, `or False`, or absent; it proves no
+    regression and nothing about the guard.
+
+    The flip is what makes it a test rather than an assertion: with the odd run
+    excluded the modal is the other two runs' 3, and toggling that one run's
+    `validators.passed` to True must MOVE the modal to 1 (ties resolve down).
+    """
+    def _r(score, validators_passed):
+        return SingleRun(
+            outcome="pass", aborted_reason=None, duration_ms=0,
+            input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+            output={"text_response": "", "activated": True, "skills_invoked": [],
+                    "tool_calls": [], "files_created": []},
+            validators=ValidatorResult(passed=validators_passed, results=[]),
+            judge=JudgeResult(
+                skipped=False,
+                dimensions=[{"source": "base", "name": "Correctness",
+                             "score": score, "rationale": "x"}],
+                judge_cost_usd=0.0,
+            ),
+        )
+
+    # Two clean runs at 3, one validator-failing run at 1. The failing run is
+    # graded (skipped=False, dimensions present) and must not reach the modal.
+    excluded = aggregate_dimensions([_r(3, True), _r(3, True), _r(1, False)])
+    assert [d["score"] for d in excluded] == [3], (
+        "a validator-failing run's scores must stay out of aggregated_dimensions"
+    )
+
+    # THE FLIP. Same three runs, same dimensions, only validators.passed moves.
+    # 3, 3, 1 with all three counted is a 2-1 modal for 3 — so to prove the
+    # guard is what excluded it, the flipped case must differ. Use 3, 1, 1.
+    moved = aggregate_dimensions([_r(3, True), _r(1, True), _r(1, True)])
+    assert [d["score"] for d in moved] == [1], (
+        "sanity: with every run counted the modal follows the majority"
+    )
+    still_excluded = aggregate_dimensions([_r(3, True), _r(1, True), _r(1, False)])
+    assert [d["score"] for d in still_excluded] == [1], (
+        "3 vs 1 is a tie once the failing run is dropped, and ties resolve down"
+    )
+
+
+def test_aggregate_excludes_a_validator_failing_run_even_when_it_is_the_only_run():
+    """The single-run case, which is the ONLY shape the committed corpus has:
+    2131 of 2131 test entries carry exactly one run, so modal-across-runs never
+    actually runs on real data. A lone validator-failing run must produce an
+    empty aggregate — which is what keeps `review_sample.is_gradeable` excluding
+    it and what keeps every committed baseline where it was."""
+    run = SingleRun(
+        outcome="fail", aborted_reason=None, duration_ms=0,
+        input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+        output={"text_response": "", "activated": True, "skills_invoked": [],
+                "tool_calls": [], "files_created": []},
+        validators=ValidatorResult(passed=False, results=[]),
+        judge=JudgeResult(
+            skipped=False,
+            dimensions=[{"source": "base", "name": "Correctness", "score": 1,
+                         "rationale": "graded for diagnosis"}],
+            judge_cost_usd=0.0,
+        ),
+    )
+    assert run.judge.dimensions, "the run IS graded — that is #2057"
+    assert aggregate_dimensions([run]) == [], "but it is not in the aggregate"
+
+
+def test_aggregate_still_counts_a_run_whose_validators_are_unknown():
+    """`validators.passed` is `None` (not False) on paths where validators never
+    ran to a verdict — `_aborted_entry` builds exactly that
+    (`ValidatorResult(passed=None, ...)`, used at test_runlog.py:126,155). A
+    truthiness guard would silently drop those too. This pins that the disjunct
+    keys on a real failure, and it is the one case where `not passed` and
+    `passed is False` disagree."""
+    run = SingleRun(
+        outcome="pass", aborted_reason=None, duration_ms=0,
+        input_tokens=0, cached_input_tokens=0, output_tokens=0, skill_cost_usd=0.0,
+        output={"text_response": "", "activated": True, "skills_invoked": [],
+                "tool_calls": [], "files_created": []},
+        validators=ValidatorResult(passed=None, results=[]),
+        judge=JudgeResult(
+            skipped=False,
+            dimensions=[{"source": "base", "name": "Correctness", "score": 3,
+                         "rationale": "x"}],
+            judge_cost_usd=0.0,
+        ),
+    )
+    assert [d["score"] for d in aggregate_dimensions([run])] == [3]

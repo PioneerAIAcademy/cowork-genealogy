@@ -606,7 +606,7 @@ async def _execute_single_run(
     # so these are folded into the SKILL-level `output.warnings` instead,
     # via _build_warnings below, alongside its other advisory kinds.
     judge_dimension_warnings: list[dict[str, Any]] = []
-    if validators_passed and result.aborted_reason is None:
+    if result.aborted_reason is None:
         _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
@@ -1177,7 +1177,26 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
 def flag_routing_negative_judge_fail(
     dimensions, *, spec, activated, skills_invoked, warnings=None
 ):
-    """Report a judge FAIL on a correctly-routed negative test. Change no score.
+    """Coerce a judge FAIL on a correctly-routed negative test to N/A (#2196).
+
+    On this signature the harness stops the run the instant the right skill
+    fires, so the judge is handed an empty transcript and still asked to grade
+    Correctness and Completeness. A `1` there grades a blank field. Since the
+    2026-09-02 ruling those two dimensions are coerced from 1 to `None` and the
+    original score and rationale are preserved in an `output.warnings[]` entry,
+    following `judge.py`'s `coerced_tool_arguments_to_na`.
+
+    **This is not the deleted floor.** The floor rewrote a 1 to a 2 — a claim
+    that the skill did better than the judge said. N/A is a refusal to grade a
+    field the harness left blank, and routing alone still decides these tests
+    (`_compute_outcome`). A `2` is left alone, which keeps `is_mandatory`'s
+    first trigger working on it unchanged.
+
+    The old `routing_negative_judge_fail` warning is NOT also emitted: it fires
+    on the identical condition, so a cell would be tallied twice, and its
+    advisory ("read it before overriding it") is about a score that no longer
+    exists once it is null. Its guidance is carried into the advisory below and
+    its registry row stays, because committed run logs carry the kind.
 
     This used to FLOOR Correctness/Completeness from 1 to 2 here, on the theory
     that the judge was grading the routed-to skill's execution rather than
@@ -1211,9 +1230,12 @@ def flag_routing_negative_judge_fail(
     work inline (a real defect this suite would otherwise miss) or the judge
     misreading a clean decline.
 
-    Returns `dimensions` unmodified; appends to `warnings` when given. No-op
-    unless the test is negative with a non-empty `correct_skill`, the skill under
-    test did not activate, and an accepted skill is in `skills_invoked`.
+    Mutates matching dimensions in place (score -> None, rationale prefixed) and
+    appends to `warnings` when given; the rewritten rationale names the original
+    score, so a caller that passes no warnings list still leaves a trace. Never
+    raises. No-op unless the test is negative with a non-empty `correct_skill`,
+    the skill under test did not activate, and an accepted skill is in
+    `skills_invoked`.
     """
     if not dimensions:
         return dimensions
@@ -1238,21 +1260,38 @@ def flag_routing_negative_judge_fail(
         return dimensions
     for dd in dimensions:
         if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
+            # Append BEFORE mutating: the warning is the only place the judge's
+            # original score and reasoning survive intact.
             if warnings is not None:
                 warnings.append({
-                    "kind": "routing_negative_judge_fail",
+                    "kind": "coerced_routing_negative_to_na",
                     "advisory": (
                         f"judge scored {dd['name']} 1 on a negative test whose "
-                        f"outcome is decided by routing. Across the committed "
-                        f"corpus a human confirmed this 1 in 20 of 24 such "
-                        f"cells, so read it before overriding it: if the skill "
-                        f"under test carried out its own task inline, the 1 is "
-                        f"right and the routing pass is hiding a real defect."
+                        f"outcome is decided by routing, and whose transcript "
+                        f"the harness truncated at the hand-off; coerced to "
+                        f"null. Across the committed corpus a human confirmed "
+                        f"this 1 in 20 of 24 such cells, so read it before "
+                        f"confirming the N/A: if the skill under test carried "
+                        f"out its own task inline, the 1 is right and the "
+                        f"routing pass is hiding a real defect."
                     ),
                     "name": dd["name"],
                     "score": dd.get("score"),
-                    "rationale": dd.get("rationale") or "",
+                    "rationale": dd.get("rationale"),
                 })
+            # Rewrite the rationale as well as the score, following
+            # apply_deterministic_deference and coerced_tool_arguments_to_na. A
+            # null sitting beside a rationale still arguing the skill failed
+            # reads as a harness bug to whoever opens the run log, and the CRUD
+            # UI never surfaces output.warnings.
+            orig = dd.get("rationale") or ""
+            dd["rationale"] = (
+                f"[coerced-to-na] the harness truncated this negative test's "
+                f"transcript at the hand-off, so {dd['name']} grades a blank "
+                f"field and is N/A; the judge's 1 was coerced to null. "
+                f"Original judge rationale: {orig}"
+            )
+            dd["score"] = None
     return dimensions
 
 
@@ -1436,8 +1475,11 @@ def _compute_outcome(
 ) -> str:
     """v1 per-run outcome per spec §7.
 
-    `judge_skipped` is True iff the judge layer didn't grade (validators
-    failed OR judge raised an error). For positive tests, when validators
+    `judge_skipped` is True iff the judge layer didn't grade. Since #2057
+    that means an aborted run or a judge that raised — a validator failure
+    no longer skips the judge, and `if not validators_passed: return "fail"`
+    below runs AHEAD of every `judge_skipped` branch, so the outcome is
+    unchanged by that. For positive tests, when validators
     passed but the judge was still skipped, that's a judge-crash path —
     the run can't be scored as pass because spec §7 says pass requires
     "every judge dimension scored pass" and zero dimensions can't satisfy

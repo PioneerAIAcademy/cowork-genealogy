@@ -177,13 +177,15 @@ def _routing_dims(correctness=1, completeness=1):
     ]
 
 
-def test_judge_fail_on_correctly_routed_negative_is_reported_not_floored():
-    """The behaviour change: scores are left exactly as the judge set them.
+def test_judge_fail_on_correctly_routed_negative_is_coerced_to_na():
+    """#2196: the 1 becomes null, because it grades a truncated transcript.
 
-    This used to floor 1 -> 2. Replaying the floor's own guards over the 121
-    committed run logs, a human confirmed the judge's 1 on 20 of the 24
-    floor-eligible cells, so the floor overrode a correct grade far more often
-    than a wrong one."""
+    Not the floor coming back. The floor rewrote 1 -> 2, a claim the skill did
+    better than the judge said; replaying its guards over the 121 committed run
+    logs, a human confirmed the judge's 1 on 20 of 24 floor-eligible cells, so
+    it overrode a correct grade more often than a wrong one. N/A instead refuses
+    to grade a field the harness blanked, and routing alone still decides the
+    outcome."""
     dims = _routing_dims()
     warnings: list = []
     flag_routing_negative_judge_fail(
@@ -193,14 +195,56 @@ def test_judge_fail_on_correctly_routed_negative_is_reported_not_floored():
         skills_invoked=["search-records"],
         warnings=warnings,
     )
-    assert [d["score"] for d in dims] == [1, 1, None]
+    assert [d["score"] for d in dims] == [None, None, None]
     # Assert the RATIONALE too: a score-only assertion could not catch a
-    # reintroduced floor that rewrote the text but happened to keep the 1.
-    assert dims[0]["rationale"] == "No such routing occurred"
+    # coercion that dropped the score without saying why, which is what makes
+    # this class of defect untrendable.
+    assert dims[0]["rationale"].startswith("[coerced-to-na]")
+    assert "No such routing occurred" in dims[0]["rationale"], (
+        "the original judge rationale must survive inside the rewritten one"
+    )
+    # ONE warning per coerced cell, not two: the retired
+    # routing_negative_judge_fail fired on the identical condition, so emitting
+    # both would tally one cell under two kinds in the CLI summary.
     assert [w["kind"] for w in warnings] == [
-        "routing_negative_judge_fail",
-        "routing_negative_judge_fail",
+        "coerced_routing_negative_to_na",
+        "coerced_routing_negative_to_na",
     ]
+
+
+def test_coercion_leaves_a_partial_alone():
+    """Only a 1 is coerced. A 2 stays a 2, which is what keeps
+    `review_sample.is_mandatory`'s first trigger (`score in (1, 2)`) working on
+    it unchanged — without this the coercion would swallow the partials too and
+    the third trigger would be carrying a class it was not measured on."""
+    dims = _routing_dims(correctness=2, completeness=2)
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [2, 2, None]
+    assert warnings == []
+    assert dims[0]["rationale"] == "No such routing occurred"
+
+
+def test_coercion_still_coerces_without_a_warnings_list():
+    """`warnings` is optional on this signature. The score change is the
+    contract now, so it must not be silently conditional on a caller passing a
+    list — and the rewritten rationale names the original score, so a caller
+    with no list still leaves a trace."""
+    dims = _routing_dims()
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+    )
+    assert [d["score"] for d in dims] == [None, None, None]
+    assert "the judge's 1 was coerced to null" in dims[0]["rationale"]
 
 
 def test_reported_warning_carries_the_judge_score_and_rationale():
@@ -1794,4 +1838,190 @@ def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
     assert run["error"] == quota_error, (
         "the SDK's error string must reach the committed run entry — this is "
         "the only place a reader can see WHY a run aborted"
+    )
+
+
+# --- #2057: a failing validator no longer skips the judge --------------------
+#
+# The gate is in `_execute_single_run`, NOT in `_compute_outcome`. A test that
+# calls `_compute_outcome(validators_passed=False, judge_skipped=False)` passes
+# before and after this change and proves nothing, because
+# `if not validators_passed: return "fail"` runs ahead of every judge_skipped
+# branch. These drive the real path.
+
+# A negative fixture with a non-empty `correct_skill` and NO
+# `grade_on_invariant`. That second condition is load-bearing and easy to get
+# wrong: `grade_on_invariant` is the FIRST guard in
+# flag_routing_negative_judge_fail, so both search-wikipedia negatives (which
+# carry it) are exempt from the coercion and would make this test pass for the
+# wrong reason. 81 of the committed negative fixtures qualify; this one is
+# picked because its scenario exists and OrchestratorPaths resolves it.
+NEGATIVE_TEST_PATH = (
+    REPO_ROOT / "eval/tests/unit/check-warnings/negative-project-status.json"
+)
+
+
+def _failing_gating_validator():
+    from harness.validator_runner import ValidatorRunResult
+    return [ValidatorRunResult(
+        name="test_no_out_of_lane_section_writes",
+        passed=False,
+        error="wrote localities, which research-plan does not own",
+        reporting_only=False,
+    )]
+
+
+def _judge_returning(dims):
+    from harness.judge import JudgeOutput
+
+    def fake(**kwargs):
+        return JudgeOutput(
+            dimensions=[dict(d) for d in dims],
+            cost_usd=0.0, input_tokens=0, cached_input_tokens=0,
+            output_tokens=0, prompt_hash="stub-hash",
+        )
+    return fake
+
+
+def test_a_failing_gating_validator_no_longer_skips_the_judge(tmp_path, monkeypatch):
+    """#2057: the judge grades every non-aborted run.
+
+    Before this change a single failing validator zeroed the judge for the whole
+    run, so dimensions with nothing to do with the failure went unscored. That
+    is why feedback #1772 could not be turned into a regression test: across
+    three paid runs an ownership failure meant Sequencing Logic and Jurisdiction
+    Accuracy were never graded — they did not fail, they never ran.
+
+    The outcome must still be `fail`: `_compute_outcome`'s
+    `if not validators_passed: return "fail"` runs AHEAD of the judge_skipped
+    branch, which is the ordering that keeps a defective run from grading green.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done", skills_invoked=["search-wikipedia"],
+            tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: _failing_gating_validator())
+    monkeypatch.setattr(orchestrator, "_run_judge", _judge_returning([
+        {"source": "base", "name": "Correctness", "score": 3, "rationale": "fine"},
+    ]))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["validators"]["passed"] is False, "the validator must actually have failed"
+    assert run["judge"]["skipped"] is False, (
+        "a failing validator must no longer skip the judge (#2057)"
+    )
+    assert run["judge"]["dimensions"], "the graded dimensions must reach the run log"
+    assert entry["outcome"] == "fail", (
+        "grading a structurally-failed run must not turn it green — "
+        "_compute_outcome's validators_passed check runs first"
+    )
+    # The whole point of #2057: the diagnosis is per-run, and deliberately NOT
+    # in the modal aggregate, so no committed baseline shifts.
+    assert entry["outcome_summary"]["aggregated_dimensions"] == [], (
+        "a validator-failing run stays out of aggregated_dimensions (#2057)"
+    )
+
+
+def test_an_abort_still_skips_the_judge(tmp_path, monkeypatch):
+    """The abort guard is the half of the gate that stays. #2057 removed only
+    the `validators_passed` conjunct; an aborted run has no transcript worth
+    grading and paying for one is the cost the original gate existed to avoid."""
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+            aborted_reason="wall_clock_cap",
+        )
+
+    def exploding_judge(**kwargs):
+        raise AssertionError("the judge must not be called on an aborted run")
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    monkeypatch.setattr(orchestrator, "_run_judge", exploding_judge)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+    assert entry["runs"][0]["judge"]["skipped"] is True
+    assert entry["runs"][0]["judge"]["dimensions"] == []
+
+
+def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):
+    """THE INTERACTION between #2057 and #2196, which neither issue states.
+
+    `flag_routing_negative_judge_fail` is called at orchestrator.py:668, OUTSIDE
+    the judge gate — its only protection is `if not dimensions`. Before #2057 a
+    validator-failing run had zero dimensions, so the coercion silently no-opped
+    on this whole class. The moment the judge runs on those runs, the coercion
+    fires on them for the first time.
+
+    Zero committed runs have this shape (measured 2026-09-10: 0 validator-failing
+    non-activated negative runs), and exactly one negative-test run in the corpus
+    fails a validator at all — escaping only because its `activated` is true. So
+    this is one fixture away from live and a unit test is the only thing that
+    covers it.
+    """
+    spec = load_test(NEGATIVE_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        # Correctly routed: the skill under test declined, the accepted skill ran.
+        return SkillRunResult(
+            text_response="", skills_invoked=["project-status"],
+            tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: _failing_gating_validator())
+    monkeypatch.setattr(orchestrator, "_run_judge", _judge_returning([
+        {"source": "base", "name": "Correctness", "score": 1, "rationale": "did nothing"},
+        {"source": "base", "name": "Completeness", "score": 1, "rationale": "empty"},
+    ]))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["validators"]["passed"] is False
+    assert run["judge"]["skipped"] is False, "#2057 opened the gate"
+    scores = {d["name"]: d["score"] for d in run["judge"]["dimensions"]}
+    assert scores == {"Correctness": None, "Completeness": None}, (
+        "#2196's coercion must fire on a validator-failing run once #2057 lets "
+        "the judge grade it — this is the interaction"
+    )
+    kinds = [w["kind"] for w in run["output"]["warnings"]]
+    assert kinds.count("coerced_routing_negative_to_na") == 2, kinds
+    # And it must survive _build_warnings' registry validation rather than
+    # raising UnregisteredWarningKind, which is what an unregistered kind does.
+    assert "routing_negative_judge_fail" not in kinds, (
+        "the retired kind must not be emitted alongside its replacement"
     )
