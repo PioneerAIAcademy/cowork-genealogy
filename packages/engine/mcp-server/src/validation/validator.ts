@@ -1240,9 +1240,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     //
     // It also breaks a downstream reader: `ProofSummariesSection.tsx` guards on
     // `.length > 0` and then calls `.map`, and a bare string has truthy length
-    // while `.map` throws. The sibling `claims` field is guarded this way 38
-    // lines below, so this was a deviation from a local convention rather than a
-    // new idea.
+    // while `.map` throws. The sibling `claims` field is guarded the
+    // same way further down this same block (85 lines by `addError`), so this
+    // was a deviation from a local convention rather than a new idea. Two
+    // earlier versions of this sentence said 38 and then 1347 — the first
+    // matched no anchor, the second came from a shell variable that silently
+    // evaluated to empty. A line count is a poor thing to cite in a file this
+    // merge-prone; the field name is the durable half.
     if (
       "resolved_conflict_ids" in ps &&
       ps.resolved_conflict_ids !== null &&

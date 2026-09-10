@@ -881,10 +881,12 @@ describe("Project Validator", () => {
       // suite passed while the freeze was re-introduced, since dropping one of
       // two citations shifts the survivor's index.
       //
-      // Five document states reach this error. `introduced-errors.ts` keys on
-      // the normalized path plus the message, so if any pair of them produces
-      // different text, a project transitioning between them has its unchanged
-      // defect read as newly introduced and its write refused.
+      // MANY document states reach this error with one byte-identical message —
+      // ten were run and all ten agree, so the four below are examples rather
+      // than a count. `introduced-errors.ts` keys on the normalized path plus
+      // the message, so if any pair of them produced different text, a project
+      // transitioning between them would have its unchanged defect read as
+      // newly introduced and its write refused.
       const states: unknown[] = ["unresolved", null, 42, "not_a_status"];
       const messages = new Set<string>();
       for (const st of states) {
@@ -1110,13 +1112,14 @@ describe("Project Validator", () => {
     });
 
     it("holds the join across a synthetic fixture tree, including a moot citation", async () => {
-      // The shipped-fixture scan below has NO detection power over the
-      // `moot` half of `SETTLED_CONFLICT_STATUSES`: zero shipped fixtures cite
-      // a moot conflict, so narrowing the constant to ["resolved"] leaves that
-      // scan green (the pre-existing MOOT test is what catches it). Reviewed and
-      // conceded — so this exercises the join over a synthetic tree that DOES
-      // contain a moot citation, which is what makes the imported constant
-      // load-bearing here rather than decorative.
+      // A SECOND EXPRESSION of assertions this describe already makes, not the
+      // thing that makes the imported constant load-bearing — reviewed and
+      // conceded. Every mutation that breaks the `moot` half also reds the
+      // pre-existing "accepts a citation of a MOOT conflict" test at the same
+      // time, so this adds no marginal detection, and its three `validateParsed`
+      // calls duplicate three tests above with the same helper and tree. Kept
+      // because it states the whole matrix in one place; delete it freely if
+      // that is not worth the duplication.
       const settled = (status: string) => SETTLED_CONFLICT_STATUSES.has(status);
       expect(settled("resolved")).toBe(true);
       expect(settled("moot")).toBe(true);
@@ -1155,10 +1158,14 @@ describe("Project Validator", () => {
         const rp = join(scenarios, name, "research.json");
         if (!existsSync(rp)) continue;
         const research = JSON.parse(readFileSync(rp, "utf-8"));
-        // Imported rather than hand-copied. A local `["resolved","moot"]` was
-        // the only one of the eleven sites a tightening must touch that a test
-        // guards — so the copy would have gone green against a narrowed
-        // implementation, which is the drift this scan exists to catch.
+        // Imported rather than hand-copied, for a single source of truth — NOT
+        // for detection. An earlier version of this comment called the copy
+        // "the only one of the eleven sites a tightening must touch that a test
+        // guards"; both halves were wrong. It is ten sites (the import removed
+        // the eleventh), and narrowing the constant to `["resolved"]` leaves
+        // this scan GREEN, because zero shipped fixtures cite a `moot`
+        // conflict — the "accepts a citation of a MOOT conflict" test is what
+        // catches that. See the docblock on SETTLED_CONFLICT_STATUSES.
         const settled = new Set(
           (research.conflicts ?? [])
             .filter((c: any) => SETTLED_CONFLICT_STATUSES.has(c?.status))
