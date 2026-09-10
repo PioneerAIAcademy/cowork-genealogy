@@ -195,8 +195,13 @@ export function dimensionAllowsNa(
   name: string,
   judgeScore: Score,
 ): boolean {
+  // N/A is always available on rubric dimensions regardless of the judge score:
+  // the judge can score a rubric dimension 3 on a fixture that never exercised
+  // it, and the reviewer must be able to correct that to null. Base dimensions
+  // are narrower — only null (must agree) or the declared nullable set.
   return (
     judgeScore === null ||
+    source === 'rubric' ||
     (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name))
   );
 }
