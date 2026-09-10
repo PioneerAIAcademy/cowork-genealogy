@@ -1,6 +1,6 @@
 {
   "id": "creszentia-haas-birth",
-  "name": "Creszentia Haas — birth and christening (May 1835, Lichtental, Baden)",
+  "name": "Creszentia Haas — birth and christening (May 1830, Durbach, Baden)",
   "genre": "record-hint",
   "source_pid": "9DZX-B29",
   "captured": "2026-09-07",
@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 3, hint-samples.csv row 45, flags adds_birth/adds_christening, confidence 3). Draft transcribed from a Baden Catholic christening index entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 3, hint-samples.csv row 45, flags adds_birth/adds_christening, confidence 3). Resolved 2026-09-10: the hint (ark:/61903/1:1:NJB1-3BM, 25/26 May 1835 Lichtental, parents Mathias Haas and M. Anna Steinel) is a FALSE match and is carried as a polarity:avoid finding. The real answer is a birth of 28 May 1830 and christening of 29 May 1830 at Durbach, Amt Offenburg, Baden, to Mathias Haas and Maria Anna Schmieder, attested in two independent collections and corroborated by the couple's 1859 Durbach marriage entry for the same daughter. Adjudication is index-level: both Freiburg register images return 403. See README.md \"Notes for reviewers\"."
 }
