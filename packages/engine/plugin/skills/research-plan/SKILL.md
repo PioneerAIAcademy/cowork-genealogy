@@ -447,7 +447,9 @@ research_append({
 - `jurisdiction`: Human-readable place description
 - `date_range`: Target period (e.g., "1875-1890", "1850")
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
-  NARA, state_archives, county_courthouse, other
+  NARA, state_archives, county_courthouse, other. These are examples,
+  not a closed list — name the actual repository rather than forcing it
+  to `other`.
 - `rationale`: Why this record set for this question — what it could
   reveal and why it's worth searching. "Because it exists" is insufficient.
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
