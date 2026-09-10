@@ -49,10 +49,11 @@
  *   50-candidate sidecar is 100 calls — point it at a small sidecar first.
  *
  *   NOTE on feedback bundles: a submitted bundle ships `tree.gedcomx.json`
- *   with living people redacted and the unredacted tree beside it as
- *   `tree.gedcomx.json.bak`. Copy the .bak over the redacted file before
- *   probing, or the subject's own name/facts may be blanked and arm B will
- *   understate.
+ *   with living people redacted, so a living subject's own name/facts may be
+ *   blanked and arm B will understate. Point --tree at an unredacted copy of
+ *   the tree if you have one. (Older bundles also carried an unredacted
+ *   `tree.gedcomx.json.bak`; the writer that produced it has been removed, so
+ *   new bundles no longer include one.)
  */
 
 import { readFile, readdir, stat } from "fs/promises";

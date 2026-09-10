@@ -336,15 +336,26 @@ describe('buildFeedbackZip — living-person redaction', () => {
     expect(p3.facts).toEqual([])
   })
 
-  it('never leaks a redacted name or date anywhere in the bundled tree', async () => {
+  it('never leaks a redacted name or date in ANY bundle entry — not just tree.gedcomx.json', async () => {
+    // Scans every file in the zip, not one. The exact-name redaction only
+    // covers tree.gedcomx.json / starting-tree.gedcomx.json, so any OTHER
+    // unredacted tree copy that reaches the walk (a stray .bak, a snapshot, a
+    // future tool's readable dump) ships living names/dates untouched. This is
+    // the guard behind issue #2333: the .bak writer that produced exactly such
+    // a copy was deleted, and this test fails if one ever reappears.
     const zip = await JSZip.loadAsync(
       Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
     )
-    const raw = await zip.file('tree.gedcomx.json')!.async('string')
-    for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
-      expect(raw).not.toContain(leak)
+    const entries = Object.values(zip.files).filter((f) => !f.dir)
+    expect(entries.length).toBeGreaterThan(0)
+    for (const entry of entries) {
+      const raw = await entry.async('string')
+      for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
+        expect(raw, `${leak} leaked into ${entry.name}`).not.toContain(leak)
+      }
     }
-    expect(raw).toContain('Reuben Spencer') // the deceased subject survives
+    // The deceased subject still ships in the bundle.
+    expect(await zip.file('tree.gedcomx.json')!.async('string')).toContain('Reuben Spencer')
   })
 
   it('clears Couple facts touching a living person, keeps the rest', async () => {

@@ -8,7 +8,7 @@
 // here as independently unit-tested utils rather than being reimplemented per
 // tool. Spec: docs/specs/validate-project-refactor-spec.md §10.
 
-import { writeFile, readFile, rename, mkdir, unlink, copyFile, access, stat } from "fs/promises";
+import { writeFile, readFile, rename, mkdir, unlink, access, stat } from "fs/promises";
 import { realpathSync } from "node:fs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { dirname, join, resolve, relative, isAbsolute } from "path";
@@ -328,20 +328,6 @@ export async function fileExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-/**
- * Copy `path` to `path.bak` if it exists — a one-deep backup before an
- * irreversible overwrite (the merge and tree-edit tools call this; the
- * append-only writers do not). No-op when `path` doesn't exist yet.
- */
-export async function backupIfExists(path: string): Promise<void> {
-  try {
-    await access(path);
-  } catch {
-    return;
-  }
-  await copyFile(path, `${path}.bak`);
 }
 
 /**

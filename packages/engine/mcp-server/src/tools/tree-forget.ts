@@ -969,9 +969,9 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
 
     // Snapshot the pre-removal tree — but only if there isn't one already, so
     // the restore point keeps pointing at the ORIGINAL rather than at an
-    // already-forgotten intermediate (spec §5). No `.bak`: backupIfExists would
-    // write a non-dot-prefixed copy of the answer, which is the one thing the
-    // dot-prefix exists to prevent.
+    // already-forgotten intermediate (spec §5). The restore file is
+    // dot-prefixed so the feedback bundler skips it: a non-dot-prefixed copy
+    // of the answer is the one thing the dot-prefix exists to prevent.
     const restorePath = join(projectPath, RESTORE_FILE);
     if (!(await fileExists(restorePath))) {
       await atomicWriteJson(restorePath, original);
