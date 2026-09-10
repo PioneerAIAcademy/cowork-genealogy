@@ -65,6 +65,9 @@ const EVIDENCE_SURFACES = [
   // predate `measured-figures.json` and are exempted by name; any NEW figure in that
   // spec must now trace.
   "docs/specs/person-search-tool-spec.md",
+  // The fulltext spec. Has zero FIGURE-pattern matches today (verified before
+  // adding). Section J's verdicts guard the place-search claim at line 48.
+  "docs/specs/fulltext-search-tool-spec.md",
 ];
 
 /**
@@ -540,6 +543,28 @@ describe("measured figures stay traceable to the probe artifact", () => {
       mustNotSay:
         /tolerates year-silent records|keeps (?:year-silent|undated) records|tolerates silence|no direction was measured|not a reliable way to include or exclude undated|what it does to undated records is not established|(?:year range|unqualified range|indexed year)[^.\n]{0,80}\bnot established\b/i,
       why: "the index places every persona in time; do not say an unqualified range keeps year-silent/undated records, nor that its treatment of undated records is unmeasured",
+    },
+    {
+      // Section J measured q.recordPlace against a discriminating document
+      // (transcript says Virginia, metadata says Alabama). q.recordPlace=Virginia
+      // returned 0; q.recordPlace=Alabama found it. So q.recordPlace searches
+      // metadata only. Guard against prose that claims it searches transcripts.
+      verdict: "J.verdict:q.recordPlace searches",
+      activeWhen: /^metadata only$/,
+      mustNotSay:
+        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.]{0,40}(?:transcript|full[- ]?text|document text)|place[^.]{0,40}(?:searches|matches)[^.]{0,40}(?:transcript|both)/i,
+      why: "section J measured q.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
+    },
+    {
+      // Same section. f.recordPlace1=10,Virginia returned 0 (transcript-only
+      // place); f.recordPlace1=10,Alabama found it (metadata place). Metadata
+      // only — same as q.recordPlace. The spec already says this ("matches
+      // against collection metadata"); guard against contradiction.
+      verdict: "J.verdict:f.recordPlace searches",
+      activeWhen: /^metadata only$/,
+      mustNotSay:
+        /f\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.]{0,40}(?:transcript|full[- ]?text|document text)/i,
+      why: "section J measured f.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
     },
   ];
 
