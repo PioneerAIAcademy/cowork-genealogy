@@ -47,6 +47,7 @@ from harness.ownership import (
     RESEARCH_JSON,
     TREE_GEDCOMX_JSON,
     writer_sets,
+    writer_tool_sets,
 )
 from harness.schema_validator import (
     validate_research_json,
@@ -443,7 +444,88 @@ def _only_project_updated_changed(before: dict, after: dict) -> bool:
     return bp_copy == ap_copy and bp.get("updated") != ap.get("updated")
 
 
-def test_ownership_table(before_state, after_state, skill_frontmatter, test):
+
+def _bare_tool_name(tool: str) -> str:
+    """`mcp__genealogy__merge_tree_persons` -> `merge_tree_persons`.
+
+    The server prefix is chosen by whoever registers the MCP server and is not
+    stable across environments (CLAUDE.md, "Dual-spelled tool names"), so match
+    on the last segment rather than on any one spelling.
+    """
+    return tool.rsplit("__", 1)[-1] if tool else ""
+
+
+def _tools_called(tool_calls) -> set[str]:
+    return {_bare_tool_name(c.get("tool", "")) for c in (tool_calls or []) if isinstance(c, dict)}
+
+
+def _merge_remap(tool_calls) -> dict[str, str]:
+    """`collapsedId -> survivorId` accumulated over every merge call in the run.
+
+    `merge_tree_persons` takes `merges: [[survivorId, collapsedId], ...]`. An id
+    may not be both a survivor and a collapsed id (the tool rejects chains), so
+    the pairs compose into a flat mapping.
+    """
+    remap: dict[str, str] = {}
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "merge_tree_persons":
+            continue
+        for pair in (call.get("args") or {}).get("merges") or []:
+            if isinstance(pair, (list, tuple)) and len(pair) == 2:
+                survivor, collapsed = pair
+                if isinstance(survivor, str) and isinstance(collapsed, str):
+                    remap[collapsed] = survivor
+    return remap
+
+
+def _apply_remap(value, remap: dict[str, str]):
+    """Substitute every collapsed id for its survivor, anywhere in the structure."""
+    if isinstance(value, str):
+        return remap.get(value, value)
+    if isinstance(value, list):
+        return [_apply_remap(v, remap) for v in value]
+    if isinstance(value, dict):
+        return {k: _apply_remap(v, remap) for k, v in value.items()}
+    return value
+
+
+def _dedupe_id_lists(value):
+    """Collapse repeats in lists of plain strings, order-preserving.
+
+    Merging B into A turns `subject_person_ids: [A, B]` into `[A]`, so a naive
+    remap of the before-state yields `[A, A]`. Only lists whose every element is
+    a string are deduped — `person_evidence[]` entries stay distinct objects even
+    when two of them come to share a `person_id`.
+    """
+    if isinstance(value, list):
+        if value and all(isinstance(v, str) for v in value):
+            seen, out = set(), []
+            for v in value:
+                if v not in seen:
+                    seen.add(v)
+                    out.append(v)
+            return out
+        return [_dedupe_id_lists(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _dedupe_id_lists(v) for k, v in value.items()}
+    return value
+
+
+def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
+    """True when the section's whole delta is the merge's id permutation.
+
+    Deliberately exact: the remapped before-state must equal the after-state.
+    A run that merges *and* also edits the section on its own fails, because the
+    extra edit survives the substitution and breaks the comparison. That is the
+    false-pass this authorization path would otherwise open.
+    """
+    if not remap:
+        return False
+    remapped = _dedupe_id_lists(_apply_remap(before_section, remap))
+    return remapped == _dedupe_id_lists(after_section)
+
+
+def test_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
     """Universal: skill may only modify research.json sections it owns.
 
     Driven by the ownership manifest's research.json rows. A skill modifying a
@@ -453,6 +535,23 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     The skill name is read from skill_frontmatter["name"]. If the
     frontmatter is missing a name, we skip rather than fail (caller
     error, not a skill defect).
+
+    **Two authorization paths.** A section diff is allowed when the calling
+    skill is in the section's `callers`, OR when the run called a tool the
+    section's `writerTools` names and the whole delta is explained by that
+    tool's write. Ownership is expressed at skill granularity, but a merge is a
+    tool-granular operation: `merge_tree_persons` repoints every reference to a
+    collapsed person in one atomic write, and the skill that calls it is never
+    an owner of the four sections it touches. Widening `callers` instead would
+    grant that skill the section by *any* path, including a direct
+    `research_append` — strictly more than the merge needs, and it reopens the
+    failure the `person_evidence` row names.
+
+    Scoped to research.json. `test_tree_ownership_table` does NOT take this
+    path: the tree rows already list `merge_tree_persons` among their
+    `writerTools` *and* name tree-edit a caller, so the clause would authorize
+    nothing there that is not already authorized, while silently widening
+    `materialize_facts` and `tree_forget` to callers that have never asked.
 
     Skipped on negative tests: the skill under test is supposed to
     decline, so any research.json change was made by the routed-to
@@ -477,6 +576,9 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
         pytest.skip("skill_frontmatter has no `name` field")
 
     owners = writer_sets(RESEARCH_JSON)
+    writer_tools = writer_tool_sets(RESEARCH_JSON)
+    called = _tools_called(tool_calls)
+    remap = _merge_remap(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
     for section in modified:
@@ -485,6 +587,14 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
             # If the only delta inside `project` is that timestamp, don't
             # flag it as an ownership violation.
             if section == "project" and _only_project_updated_changed(before, after):
+                continue
+            # Authorized by tool identity: a declared writer tool ran and the
+            # whole delta is that tool's write. Anything the substitution does
+            # not explain still fails, so a run cannot launder an unrelated
+            # edit through a merge call.
+            if "merge_tree_persons" in (writer_tools.get(section) or set()) and (
+                "merge_tree_persons" in called
+            ) and _explained_by_merge(before.get(section), after.get(section), remap):
                 continue
             unauthorized.append(section)
 
