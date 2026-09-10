@@ -31,7 +31,7 @@ match strength.
 **Resolved 2026-09-09: true match.** The hint record
 (`ark:/61903/1:1:QP51-QH2Y`, *Canada, Prairie Provinces, Census, 1926*) is
 Wendel Weichel's family of origin, and it names the mother the tree does not:
-**Josefine**, b. about 1892 in Russia.
+**Josefine**, b. 7 September 1891 in Russia.
 
 **What decided it.** The identification rests on the tree side as much as the
 record side, which is what lifts it above an index-only match. Wendel's tree
@@ -86,6 +86,25 @@ examined. It is good enough to prefer over a census age, not good enough to
 call the birth date proved. Under spec §3.4.2 a linked person's own birth date
 is a `detail` component and does not score, so an agent that recovers only the
 census's "about 1892" still matches `f1`.
+
+**Two ARKs, one document.** `ark:/61903/1:1:QP51-QH2Y` is Wendel's *person
+index entry* for the 1926 census; `ark:/61903/1:2:QTM1-JBYT` is the *household
+page image* the entry sits on. Same underlying document, two different ARK
+addresses (`1:1:` person, `1:2:` page). `expected-findings.json` cites the
+hint's own ark, the `1:1:` form, because that is what the fixture hands the
+agent; the graded run's `research.json` captured the `1:2:` page-image ark,
+because that is what the agent read the household from. An agent citing either
+form has cited this record — neither is a miss.
+
+**Immigration place corrected post-run.** The Immigration fact on the mother
+carried the indexed destination "Wellburn, Thames Centre, Middlesex, Ontario,
+Canada". That is a transcription error: the original manifest image
+(`ark:/61903/3:1:3Q9M-C34W-PRCN`) reads "Odessa, Sask.", and the
+`research.json` assertion `a_011` already records the corrected place —
+**Odessa, Francis No. 127, Saskatchewan, Canada** — with the transcription
+error noted. The tree fact was never re-synced to the assertion during the run.
+Immigration place is not a graded component of any finding, so this does not
+affect the run's grade.
 
 **What has not been found.** No record examined names Josefine's own parents,
 and no European baptismal register for Selz (the Black Sea German colony near
