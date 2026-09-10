@@ -1,8 +1,8 @@
 # Search Agent prototype — hosted architecture, one month
 
 **Status:** IN PROGRESS — P1 and the three D1–2 probes measured 2026-09-10 (PR #2406)
-and folded in below; P2 and P3's feature-parity half still open; the build continues
-on the re-decide branch · plan of 2026-09-09 ·
+and P3's feature-parity half measured, all folded in below; P2's harness landed and
+its two runs are pending; the build continues on the re-decide branch · plan of 2026-09-09 ·
 adversarially reviewed twenty-five rounds (`plan-critic`), then **cut**: the review
 loop's own output — a turn-lock protocol, a five-arm shim and a ceiling guard with its
 proof — grew to a third of the document and generated a blocking finding every round it
@@ -502,6 +502,10 @@ conversation.*
 
 ### P2. Does removing the filesystem cost research quality? (day 2, unattended, ~$8)
 
+**Harness half landed 2026-09-10 (PR #2406):** `--deny-shell` and `--deny-project-reads`
+on the e2e harness, exposed as `DENY_SHELL=1 DENY_PROJECT_READS=1` on `make e2e-run`,
+with the predicate below and 32 unit tests. The two billed runs are pending.
+
 Run one fixture on the **current** stack with `Bash` denied and `Read`/`Grep`/`Glob`
 restricted by the path predicate below, and compare the judge verdict against a
 **same-day control run** with the same `Bash` deny and no path predicate — not against
@@ -659,6 +663,18 @@ with the flag below set, the prototype runs on the Anthropic API and the Bedrock
 becomes a **written finding** rather than a build target. That is a better outcome than
 a green prototype measured on a path production will not use.
 
+**Measured 2026-09-10 (PR #2406, `make probe-bedrock-parity`, four arms, $0.99): the
+go/no-go passes and Bedrock stays the build target.** Tool search is on and deferred on
+Bedrock direct (`ToolSearch` in the init tools, MCP names absent, called once per arm,
+`convert_calendar` reached). The 1-hour TTL is honoured behind the flag: the 1h arm
+wrote 29,114 tokens as 1h cache and re-read all 29,114 seven minutes later, while the
+default arm re-read only the 11,994-token shared prefix. Interleaved thinking appeared on
+every Bedrock arm. The 1M context is accepted through the `[1m]` model suffix
+(`contextWindow` 1,000,000, the beta re-sent in `body.anthropic_beta`). Server-side
+context management is on the wire for the first-party control only, never on Bedrock,
+which confirms the gate above. Wire facts come from the CLI's own debug log, which
+records betas only at `CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose`.
+
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
 pinned CLI and confirmed from its debug log, never measured against Bedrock; the other
@@ -749,8 +765,11 @@ without whichever Bedrock refuses.
   not measured. Its own go/no-go: if Bedrock rejects the tool-search beta or does not
   honour the 1-hour TTL under the flag, the prototype runs on the Anthropic API and
   Bedrock becomes a written finding. Taking it here is what lets D16 be cut without
-  losing the answer.
-- **D2** P2 in parallel, unattended.
+  losing the answer. **Done 2026-09-10:** every question answered in Bedrock's favour
+  (see P3); Bedrock stays the build target.
+- **D2** P2 in parallel, unattended. **Harness ready 2026-09-10** (PR #2406:
+  `DENY_SHELL=1 DENY_PROJECT_READS=1` on `make e2e-run`, 32 unit tests); the two runs
+  are pending.
 - **D3 (half day)** Standalone Beanstalk worker probe in the personal AWS
   account: a hello-world worker that sleeps 25 minutes. Answers the sqsd contract,
   `inactivity_timeout` behaviour, the 512 MB source-bundle cap and the
@@ -1247,9 +1266,10 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell?
-5. Does it run on Bedrock direct, with tool search on, and does caching hit at 1 h —
-   with the finding that server-side context management is off there by the CLI's own
-   gate.
+5. Does it run on Bedrock direct, with tool search on, and does caching hit at 1 h?
+   **Yes — measured 2026-09-10: tool search deferred, the 1 h TTL honoured behind its
+   flag, interleaved thinking and the 1M context accepted; server-side context
+   management is off there by the CLI's own gate.**
 6. How much turn-level idempotency a commit-time batch ledger buys: **none the model
    does not already provide** (measured 2026-09-10, n=1) — on resume it re-decides, so
    nothing folds byte-identically, and after a committed write it read the document
@@ -1285,7 +1305,8 @@ opt-in behind `ENABLE_PROMPT_CACHING_1H_BEDROCK` and the extended-cache-ttl head
 never sent there; the gateway may strip the 1 h `cache_control` ttl the flag adds to
 the request. Degraded caching
 costs both the 4.6× on session price and the stated 50/150/500 concurrency targets.
-P3 tests this on Bedrock direct only — never through the gateway.
+P3 tests this on Bedrock direct only — never through the gateway — and on 2026-09-10
+measured the 1 h TTL honoured there behind the flag.
 *Owner: FS AI Platform. Closes with the same email.*
 
 **R3 — SSE through the FamilySearch edge.** Zero FamilySearch pages mention
