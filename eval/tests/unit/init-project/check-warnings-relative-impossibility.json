@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_init_project_q7b",
+    "skill": "init-project",
+    "name": "Invoke check-warnings on every imported relative and relay a split-point finding",
+    "type": "positive",
+    "description": "Issue #1827: init-project must call Skill(\"check-warnings\") on the subject and every imported relative after project_create, and fold what it returns into the pedigree-analysis findings using check-warnings' own possible-identity-conflation framing -- never flattened into a plain correctable error on the Obvious error detection list. The flagged fixture returns a wife, Bridget Doyle, whose own record carries a genuine timeline impossibility (Death 1875, Residence 1880) on a NON-subject relative, so the test can grade both that check-warnings was actually launched (stubbed, via skills_invoked) and that its canned finding was relayed with split-point framing rather than reworded into a bare fact-correction.",
+    "tags": ["initialization", "familysearch", "check-warnings", "identity-conflation", "relatives", "delegation"]
+  },
+  "input": {
+    "user_message": "Start a new research project to identify the origins of Thomas Doyle, born around 1830 in Ireland and died 1895 in Northumberland County, Pennsylvania. His FamilySearch person ID is MKVT-7XR.",
+    "scenario": null
+  },
+  "mcp_fixtures": ["person-read-doyle-relative-impossibility"],
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "check-warnings",
+        "response": "Checked I1 (Thomas Doyle), I2 (Bridget Doyle), I3 (John Doyle), I4 (Kate Doyle). person_warnings ran for all four (all local ids -- person_quality did not run for any of them, FamilySearch's online quality check was not available in this environment). One finding: I2 (Bridget Doyle) carries hasEventAfterDeath1 -- her Death fact is dated 1875, but her Residence fact (1880 census, Coal Township) is dated four years later, a genuine timeline impossibility on her own record. Two explanations fit: the 1880 household belongs to a different Bridget Doyle, or the 1875 death date is wrong. This is not a posthumous mention -- the 1880 record is a Residence fact describing her directly, not a reference to her by someone else's record. Recommend the researcher build a timeline for I2 and check household continuity (spouse, children, neighbors) across the 1875 death record and the 1880 census entry before treating either date as settled. No other findings on I1, I3, or I4."
+      }
+    ]
+  },
+  "judge_context": [
+    "Should call `Skill(\"check-warnings\")` exactly once, after `project_create` succeeds and before the pedigree-analysis summary is presented, naming the subject (I1, Thomas Doyle) and every imported relative (Bridget Doyle, John Doyle, Kate Doyle) so check-warnings has concrete person ids to check. This is stubbed via `execution.stub_skills` -- score on whether the skill actually launched it (visible in `skills_invoked`), not on the canned response's content.",
+    "The stubbed check-warnings response reports a genuine hasEventAfterDeath1 finding on Bridget Doyle (the wife, not the subject): a Residence fact four years after her recorded Death. Init-project's final summary must relay this using check-warnings' own framing -- a possible identity conflation / split-point signal, with two explanations (the 1880 record may belong to a different same-name person, or the 1875 death date may be wrong) -- and must NOT flatten it into a plain 'error: event after death' line on the 'Obvious error detection' list, which is a separate, smaller check per SKILL.md.",
+    "Should NOT restate any identity-conflation heuristics, the timeline-impossibility-as-split-point reasoning, the posthumous-mention exception, or the clustered-warnings escalation rules in its own prose -- that doctrine belongs to check-warnings; init-project only relays what check-warnings returned. A response that reasons about the split-point question itself, rather than attributing that reasoning to check-warnings' finding, is doing check-warnings' job for it.",
+    "Do not score down for `person_quality` never firing on any of the four people -- all are synthetic local ids (I1-I4), and check-warnings' own doctrine skips `person_quality` silently for a non-FamilySearch-PID-shaped id. Only the offline `person_warnings` half is expected to have run.",
+    "Should still build the complete tree per the normal Step 3 rules regardless of the check-warnings finding -- Thomas, Bridget, John, Kate, the Couple relationship with its Marriage fact, all four ParentChild relationships, and both source descriptions all reach tree.gedcomx.json with quality: 1 refs. The check-warnings finding is presented alongside the summary, not a reason to omit or alter what was imported.",
+    "Bridget Doyle's Death (1875) and Residence (1880) facts must both be carried through with their standard_date/standard_place sidecars exactly as the fixture returned them -- init-project must not 'fix' or drop either fact because check-warnings flagged them as inconsistent."
+  ]
+}
