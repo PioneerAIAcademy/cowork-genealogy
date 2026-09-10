@@ -104,6 +104,15 @@ the starting tree is unsourced: `sources: []` at the top level and zero
 attached sources on all five persons, re-confirmed against the live tree at
 adjudication time.
 
+**Review.** Adjudicated and signed off by Emruthwill (genealogist), 2026-09-10,
+against the register images rather than the index: the burial page
+(`ark:/61903/3:1:S3HT-63K2-3Z`, entry 814) for the age phrase and the stated
+parentage, the baptism page (`ark:/61903/3:1:S3HY-DYZS-JNJ`) for the 27 Mar 1879
+entry, and the christening page (`ark:/61903/3:1:S3HT-69BQ-SRL`) for the single
+entry behind both `NQV5-DPB` and `6ZPT-KTZR`. The father-identity question was
+raised in review rather than found in drafting, and is answered in the paragraph
+above.
+
 **Searched and empty.** No marriage record for the couple surfaced in "Costa
 Rica, registros parroquiales y diocesanos, 1595-2022" (collection `1460016`)
 across 1860–1875; the *hija legitima* wording is what establishes the marriage.
