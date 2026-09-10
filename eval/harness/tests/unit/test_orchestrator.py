@@ -2025,3 +2025,99 @@ def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):
     assert "routing_negative_judge_fail" not in kinds, (
         "the retired kind must not be emitted alongside its replacement"
     )
+
+
+# A record-extraction fixture that declares expected_classifications.
+# record-extraction is the only skill that declares them, so it is the only
+# skill on which apply_deterministic_deference can fire at all.
+CLASSIFICATION_TEST_PATH = (
+    REPO_ROOT / "eval/tests/unit/record-extraction/burial-index-dates-direct.json"
+)
+
+
+def test_deterministic_deference_reaches_a_validator_failing_run(tmp_path, monkeypatch):
+    """THE SECOND INTERACTION, which I missed on my own first pass.
+
+    `apply_deterministic_deference` (orchestrator.py:659) has the same shape as
+    the routing coercion: it runs OUTSIDE the judge gate, guarded only by
+    `if not has_expected_classifications or not dimensions`. So before #2057 a
+    validator-failing run had zero dimensions and it no-opped; now it floors
+    classification dimensions 1 -> 2 and rewrites their rationales on such runs
+    for the first time.
+
+    Unlike the coercion interaction this one IS reachable on committed data:
+    2 runs (`ut_record_extraction_g4k`, `ut_record_extraction_017`) have a
+    failing gating validator together with a PASSING
+    `test_expected_classifications`, so this fires on the next re-run of that
+    suite rather than hypothetically.
+
+    Note the two validator results below are the whole point: one gating
+    validator fails (so #2057's gate is what lets the judge run) while
+    `test_expected_classifications` passes (so deference applies). A test with
+    only the failure would not exercise deference at all.
+    """
+    from harness.validator_runner import ValidatorRunResult
+
+    spec = load_test(CLASSIFICATION_TEST_PATH)
+    assert spec.raw.get("expected_classifications"), (
+        "fixture must declare expected_classifications or deference cannot fire"
+    )
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="extracted", skills_invoked=["record-extraction"],
+            tool_calls=[], duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    def fake_run_validators(**kw):
+        return [
+            ValidatorRunResult(
+                name="test_no_out_of_lane_section_writes", passed=False,
+                error="wrote a section it does not own", reporting_only=False,
+            ),
+            ValidatorRunResult(
+                name="test_expected_classifications", passed=True,
+                error=None, reporting_only=False,
+            ),
+        ]
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "_run_judge", _judge_returning([
+        {"source": "base", "name": "Correctness", "score": 3, "rationale": "ok"},
+        # Must be a member of _CLASSIFICATION_DIMENSIONS or deference cannot
+        # fire and this test would pass for the wrong reason.
+        {"source": "rubric", "name": "Evidence type accuracy", "score": 1,
+         "rationale": "judge disagrees with the declared classifications"},
+        {"source": "rubric", "name": "Informant identification", "score": 2,
+         "rationale": "a 2 must be left alone by deference"},
+    ]))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-10_00-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["validators"]["passed"] is False, "a gating validator must have failed"
+    assert run["judge"]["skipped"] is False, "#2057 is what lets deference see anything"
+    dims = {d["name"]: d for d in run["judge"]["dimensions"]}
+    assert dims["Evidence type accuracy"]["score"] == 2, (
+        "deference must floor the classification 1 to 2 on a validator-failing "
+        "run now that the judge grades it - this is the second post-gate mutator"
+    )
+    assert dims["Evidence type accuracy"]["rationale"].startswith(
+        "[deterministic-deference]"
+    )
+    assert dims["Informant identification"]["score"] == 2, (
+        "deference floors only a 1; a 2 must be untouched"
+    )
+    assert not dims["Informant identification"]["rationale"].startswith(
+        "[deterministic-deference]"
+    )
+    assert entry["outcome"] == "fail", "the validator failure still decides the outcome"

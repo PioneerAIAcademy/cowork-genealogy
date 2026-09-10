@@ -46,7 +46,14 @@ export interface UnitTestFile {
 }
 
 export type DimensionSource = 'base' | 'rubric';
-/** 1 = fail, 2 = partial, 3 = pass, null = N/A (Tool Arguments only). */
+/**
+ * 1 = fail, 2 = partial, 3 = pass, null = N/A.
+ *
+ * N/A comes from three places: Tool Arguments on a run with zero MCP tool
+ * calls, any rubric dimension the fixture never exercised, and
+ * Correctness/Completeness coerced by the harness on a correctly-routed
+ * negative test (`coerced_routing_negative_to_na`).
+ */
 export type Score = 1 | 2 | 3 | null;
 
 /**
@@ -84,9 +91,9 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
 /**
  * The tests a run log's annotation must cover, or `null` for "all of them".
  *
- * Variable length: five chosen picks plus every test that failed or scored a 1 or
- * 2 on any dimension, so a run with a low score anywhere exceeds 5. Never assume
- * a fixed size here.
+ * Variable length: five chosen picks plus every test that failed, scored a 1 or
+ * 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning, so
+ * a run with a low score anywhere exceeds 5. Never assume a fixed size here.
  *
  * A run log written before sampling shipped — every committed one today — has
  * no `review_sample` and keeps the original every-dimension rule. Keep this the

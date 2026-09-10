@@ -72,9 +72,12 @@ class JudgeResult:
     cached_input_tokens: int = 0
     output_tokens: int = 0
     # Wall-clock of the judge LLM call (perf_counter around _run_judge).
-    # 0.0 when the judge was skipped, which since #2057 means only an
-    # aborted run or a judge that raised — a validator failure no longer
-    # skips the judge.
+    # 0.0 only on the branch that never attempted a judge call, which since
+    # #2057 means an aborted run alone - a validator failure no longer skips
+    # the judge. A judge that RAISED still records wall-clock here, because
+    # orchestrator sets this on every attempted branch including
+    # `except JudgeError`; `skipped: true` beside a nonzero duration_ms is
+    # therefore a normal shape, not a contradiction.
     duration_ms: float = 0.0
 
 

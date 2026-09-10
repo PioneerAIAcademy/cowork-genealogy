@@ -601,20 +601,23 @@ def test_a_run_log_without_the_new_fields_still_validates():
     validate_run_log(log)
 
 
-def test_aggregate_excludes_a_validator_failing_run(): 
+def test_aggregate_excludes_a_validator_failing_run():
     """#2057: a validator-failing run is GRADED but stays out of the modal.
 
-    This is the load-bearing test for the `or not r.validators.passed` disjunct,
-    and it has to be synthetic. Over the 131 committed run logs, ZERO runs have
-    `validators.passed is False` together with `judge.skipped is False` — because
+    Load-bearing test for the `r.validators.passed is False` disjunct, and it
+    has to be synthetic. Over the 131 committed run logs, ZERO runs have
+    `validators.passed is False` together with `judge.skipped is False`, because
     the behaviour that produces that shape is the one this PR introduces. So a
     dump-and-diff of `aggregate_dimensions` over committed data is empty whether
-    the guard is the intended one, `or False`, or absent; it proves no
-    regression and nothing about the guard.
+    the guard is the intended one, `or False`, or absent.
 
-    The flip is what makes it a test rather than an assertion: with the odd run
-    excluded the modal is the other two runs' 3, and toggling that one run's
-    `validators.passed` to True must MOVE the modal to 1 (ties resolve down).
+    **THE ARITHMETIC IS THE TEST, and getting it wrong makes this vacuous.**
+    The excluded run's score must be the MAJORITY, or the modal lands on the
+    same value with and without the guard and the assertion pins nothing. This
+    test shipped once in that broken form: `(3,pass),(3,pass),(1,fail)` gives 3
+    either way (2-1 modal), and `(3,pass),(1,pass),(1,fail)` gives 1 either way.
+    Both looked like flips and neither was one. `(3,pass),(1,fail),(1,fail)` is
+    the shape that discriminates: 3 with the guard, 1 without.
     """
     def _r(score, validators_passed):
         return SingleRun(
@@ -631,23 +634,22 @@ def test_aggregate_excludes_a_validator_failing_run():
             ),
         )
 
-    # Two clean runs at 3, one validator-failing run at 1. The failing run is
-    # graded (skipped=False, dimensions present) and must not reach the modal.
-    excluded = aggregate_dimensions([_r(3, True), _r(3, True), _r(1, False)])
+    # ONE clean run at 3, TWO validator-failing runs at 1. Dropping the failures
+    # leaves a lone 3; counting them makes 1 the 2-1 majority. So the guard is
+    # the only thing that can produce 3 here.
+    excluded = aggregate_dimensions([_r(3, True), _r(1, False), _r(1, False)])
     assert [d["score"] for d in excluded] == [3], (
-        "a validator-failing run's scores must stay out of aggregated_dimensions"
+        "a validator-failing run's scores must stay out of aggregated_dimensions; "
+        "getting 1 here means the guard is not excluding them"
     )
 
-    # THE FLIP. Same three runs, same dimensions, only validators.passed moves.
-    # 3, 3, 1 with all three counted is a 2-1 modal for 3 — so to prove the
-    # guard is what excluded it, the flipped case must differ. Use 3, 1, 1.
+    # THE FLIP. Identical dimensions, only validators.passed moves. This is what
+    # makes the assertion above a test: the same three scores must aggregate
+    # DIFFERENTLY once the two failing runs are allowed in.
     moved = aggregate_dimensions([_r(3, True), _r(1, True), _r(1, True)])
     assert [d["score"] for d in moved] == [1], (
-        "sanity: with every run counted the modal follows the majority"
-    )
-    still_excluded = aggregate_dimensions([_r(3, True), _r(1, True), _r(1, False)])
-    assert [d["score"] for d in still_excluded] == [1], (
-        "3 vs 1 is a tie once the failing run is dropped, and ties resolve down"
+        "with every run counted the modal follows the 2-1 majority, so the "
+        "excluded case above cannot be explained by the modal logic alone"
     )
 
 

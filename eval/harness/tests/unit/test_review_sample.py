@@ -571,5 +571,151 @@ def test_a_coerced_test_still_reaches_the_sample():
     """
     coerced = _coerced_entry("ut_c_010")
     assert is_gradeable(coerced) is True
-    sample = select_review_sample(tests=[coerced] + _suite(4), seed=0)
+    # 30 clean tests, not 4. With only 5 eligible tests against 3+1+1 slots every
+    # test is sampled whatever is_mandatory says, so the membership assertion
+    # below would hold with the third trigger deleted. That is how this test
+    # first shipped. 30 makes the chosen slots a minority of the pool, so the
+    # coerced test can only be there via the mandatory slot.
+    pool = [coerced] + _suite(30)
+    sample = select_review_sample(tests=pool, seed=0)
+    assert len(sample["tests"]) < len(pool), (
+        "the pool must be bigger than the sample or membership proves nothing"
+    )
     assert "ut_c_010" in sample["tests"], sample["tests"]
+
+    # And the control: with the warning renamed away it drops out of the sample.
+    import copy
+    unflagged = copy.deepcopy(coerced)
+    for r in unflagged["runs"]:
+        for w in r["output"]["warnings"]:
+            w["kind"] = "prose_observation"
+    assert is_mandatory(unflagged) is False
+    sample2 = select_review_sample(tests=[unflagged] + _suite(30), seed=0)
+    assert "ut_c_010" not in sample2["tests"], (
+        "without the coercion warning the test must NOT be pulled in by the "
+        "mandatory slot - otherwise the assertion above is about pool size, "
+        "not about the trigger"
+    )
+
+
+# --- The corpus replay: #2196's own acceptance requirement -------------------
+#
+# The card is explicit: "The acceptance check must fail on `main` against real
+# data, not a hand-built dict." Every other test in this file builds a dict, and
+# on committed data the third trigger fires ZERO times (no run log carries a
+# coerced_routing_negative_to_na warning yet, because nothing emitted one before
+# this change). So without this replay nothing distinguishes a correct third
+# trigger from one that never fires at all.
+
+
+def _committed_unit_logs():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[3] / "runlogs" / "unit"
+    if not root.is_dir():  # pragma: no cover - layout guard
+        return []
+    return sorted(p for p in root.glob("*/*.json") if not p.name.endswith(".ann.json"))
+
+
+def _simulate_coercion(entry):
+    """Apply this PR's coercion to a COMMITTED test entry.
+
+    Wherever a run carries the retired `routing_negative_judge_fail` warning,
+    rewrite that warning to the new kind and null the matching dimension scores
+    (per-run and aggregated), which is exactly what
+    `orchestrator.flag_routing_negative_judge_fail` now does at run time.
+    """
+    import copy
+    e = copy.deepcopy(entry)
+    touched = False
+    for r in e.get("runs") or []:
+        ws = (r.get("output") or {}).get("warnings") or []
+        names = {w.get("name") for w in ws if w.get("kind") == "routing_negative_judge_fail"}
+        if not names:
+            continue
+        touched = True
+        for w in ws:
+            if w.get("kind") == "routing_negative_judge_fail":
+                w["kind"] = "coerced_routing_negative_to_na"
+        for d in (r.get("judge") or {}).get("dimensions") or []:
+            if d.get("name") in names and d.get("score") == 1:
+                d["score"] = None
+        for d in (e.get("outcome_summary") or {}).get("aggregated_dimensions") or []:
+            if d.get("name") in names and d.get("score") == 1:
+                d["score"] = None
+    return e, touched
+
+
+def _strip_the_new_kind(entry):
+    """The same entry with the coercion warning renamed away, i.e. what the
+    corpus would look like if the third trigger did not exist."""
+    import copy
+    e = copy.deepcopy(entry)
+    for r in e.get("runs") or []:
+        for w in ((r.get("output") or {}).get("warnings") or []):
+            if w.get("kind") == "coerced_routing_negative_to_na":
+                w["kind"] = "__not_a_registered_kind__"
+    return e
+
+
+def test_the_third_trigger_returns_exactly_what_coercion_removes():
+    """Over every committed unit run log: coercion must not shrink the set of
+    tests a human is required to read.
+
+    Three assertions, and the third is the one that stops this being vacuous:
+    the mandatory total must be unchanged, no sampled-id set may move, and a
+    meaningful number of tests must be kept mandatory BY THIS TRIGGER
+    SPECIFICALLY — verified by renaming the warning away and watching them drop
+    out. A trigger that keeps nothing would satisfy the first two on its own.
+    """
+    import json
+    logs = _committed_unit_logs()
+    assert logs, "no committed unit run logs found - the replay would be vacuous"
+
+    touched = kept_by_trigger = 0
+    mand_before = mand_after = 0
+    moved_samples = []
+
+    for path in logs:
+        d = json.loads(path.read_text(encoding="utf-8"))
+        tests = d.get("tests") or []
+        if not tests:
+            continue
+        coerced, flags = [], []
+        for t in tests:
+            c, hit = _simulate_coercion(t)
+            coerced.append(c); flags.append(hit)
+        touched += sum(flags)
+
+        mand_before += sum(1 for t in tests if is_gradeable(t) and is_mandatory(t))
+        mand_after += sum(1 for t in coerced if is_gradeable(t) and is_mandatory(t))
+
+        for c, hit in zip(coerced, flags):
+            if hit and is_gradeable(c) and is_mandatory(c) \
+                    and not is_mandatory(_strip_the_new_kind(c)):
+                kept_by_trigger += 1
+
+        if d.get("review_sample") is not None:
+            seed = d["review_sample"].get("seed", 0)
+            b = select_review_sample(tests=tests, prior_sample=None, seed=seed)
+            a = select_review_sample(tests=coerced, prior_sample=None, seed=seed)
+            if set(b["tests"]) != set(a["tests"]):
+                moved_samples.append(path.name)
+
+    assert touched > 0, (
+        "the replay found no test entry carrying routing_negative_judge_fail, so "
+        "it exercises nothing - re-check the corpus before trusting a green here"
+    )
+    assert mand_after == mand_before, (
+        f"coercion changed how many tests a human must read: "
+        f"{mand_before} -> {mand_after}"
+    )
+    assert not moved_samples, (
+        f"coercion moved the sampled-id set for {len(moved_samples)} run log(s): "
+        f"{moved_samples[:5]}"
+    )
+    assert kept_by_trigger >= 40, (
+        f"only {kept_by_trigger} tests are kept mandatory by the third trigger. "
+        f"Measured 49 of {touched} affected entries on 2026-09-10. A number near "
+        f"zero means the trigger is not doing the work it was added for, and the "
+        f"two assertions above would pass anyway."
+    )

@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import random
 from typing import Any
+from harness.warning_kinds import iter_run_warnings
 
 
 N_ROTATION = 3
@@ -77,11 +78,7 @@ def _carries_warning(entry: dict[str, Any], kind: str) -> bool:
     entry has no `runs` key at all until a run is recorded, and `_test_entry` in
     tests/unit/test_review_sample.py builds run dicts with no `output` key.
     """
-    return any(
-        w.get("kind") == kind
-        for r in (entry.get("runs") or [])
-        for w in ((r.get("output") or {}).get("warnings") or [])
-    )
+    return any(w.get("kind") == kind for w in iter_run_warnings(entry))
 
 
 def is_gradeable(entry: dict[str, Any]) -> bool:
@@ -119,8 +116,8 @@ def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
 def is_mandatory(entry: dict[str, Any]) -> bool:
     """A test a human must read this run, whatever the other three slots picked.
 
-    Three triggers. The first two are measured over the 102 committed run logs
-    that carry a `review_sample`:
+    Three triggers. The first two were measured over the 102 committed run logs
+    that carried a `review_sample` when they landed (115 as of 2026-09-10):
 
     - **A dimension scored 1 or 2.** 131 of the 216 tests carrying one were
       never sampled, so nobody read them; 65 of 102 runs shipped with at least

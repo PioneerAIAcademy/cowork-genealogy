@@ -29,7 +29,7 @@ so `.endswith("wiki_search")` cleanly targets only the FS-wiki tool.
 Deliberately NOT enforced here — the closing-message brevity rule (SKILL.md
 step 5, "Keep it brief"). It is violated in 59 of 59 file-saving runs across
 five committed run logs, so landing it as an assertion would fail every
-positive test at once and, because a failing validator skips the judge
+positive test at once and, because a failing validator fails the test outright
 (`_compute_outcome`: `if not validators_passed: return "fail"`), would also
 destroy the dimension scores that diagnose the skill. It stays on #1755 until
 the file-visibility fix removes the incentive to recite the file into chat.
@@ -67,7 +67,8 @@ def _expected_file(test) -> str | None:
     carried `slug-normalization` (it exercises slug normalisation), so a
     prefix scan resolved its expected file to `normalization.md` while the
     test writes `census-records.md` — silently turning a green test red, and
-    with it the judge (a failing validator skips grading entirely). Verified
+    with it the test (a failing validator fails it outright; the judge still
+        grades, for diagnosis only). Verified
     against both committed run logs: 11 tests matched, that one did not.
 
     `search-wikipedia` has four more of the same shape — `slug-simple`,

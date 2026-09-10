@@ -662,9 +662,16 @@ async def _execute_single_run(
         has_expected_classifications=bool(spec.raw.get("expected_classifications")),
     )
 
-    # A judge FAIL on a correctly-routed negative test is REPORTED, not floored:
-    # the corpus says the judge is usually right (20 of 24 human-confirmed), and
-    # these dimensions never gated the outcome anyway.
+    # A judge FAIL on a correctly-routed negative test is COERCED to N/A (#2196):
+    # routing already decided the outcome, so these dimensions never gated it,
+    # and the judge was grading a transcript the harness usually truncated at
+    # the hand-off. NOT floored to 2 - that shipped once and the corpus refuted
+    # it (20 of 24 cells human-confirmed at 1). The original score and rationale
+    # survive in output.warnings, which is what keeps the 1 trendable.
+    #
+    # Runs unconditionally, OUTSIDE the judge gate above, and before #2057 that
+    # was invisible: a validator-failing run had no dimensions, so this
+    # no-opped on the whole class. It now fires there too.
     flag_routing_negative_judge_fail(
         judge_result.dimensions,
         spec=spec,
@@ -1179,12 +1186,27 @@ def flag_routing_negative_judge_fail(
 ):
     """Coerce a judge FAIL on a correctly-routed negative test to N/A (#2196).
 
-    On this signature the harness stops the run the instant the right skill
-    fires, so the judge is handed an empty transcript and still asked to grade
-    Correctness and Completeness. A `1` there grades a blank field. Since the
-    2026-09-02 ruling those two dimensions are coerced from 1 to `None` and the
-    original score and rationale are preserved in an `output.warnings[]` entry,
-    following `judge.py`'s `coerced_tool_arguments_to_na`.
+    On this signature the harness usually stops the run the instant the right
+    skill fires, so the judge is handed a truncated transcript and still asked
+    to grade Correctness and Completeness. Since the 2026-09-02 ruling those two
+    dimensions are coerced from 1 to `None` and the original score and rationale
+    are preserved in an `output.warnings[]` entry, following `judge.py`'s
+    `coerced_tool_arguments_to_na`.
+
+    **"Usually" is measured, and the exception matters.** The coercion fires on
+    the routing signature alone and does NOT check whether the run produced
+    anything, per #2196's stated signature. On 4 of the 50 runs it fires on in
+    the committed corpus the skill under test HAD produced real output before
+    routing: ut_timeline_008 (1355 chars, extraction_append x2 + research_log
+    _append, judge rationale "extracting 11 new assertions"), ut_person_evidence
+    _003 (710 chars, 4 calls, and its 1 is HUMAN-CONFIRMED with a written
+    comment), and two ut_citation_003 runs. On those the 1 names a real defect
+    that the `pass` outcome already hides. The score still goes to null there;
+    what preserves the signal is the warning above plus
+    `review_sample.is_mandatory`'s third trigger, not the dimension. Gating the
+    coercion on empty output would fix the over-fire and is NOT done here
+    because #2196 fixes the signature explicitly; it is a lead call, and the
+    numbers above are the evidence for making it.
 
     **This is not the deleted floor.** The floor rewrote a 1 to a 2 — a claim
     that the skill did better than the judge said. N/A is a refusal to grade a
@@ -1267,13 +1289,17 @@ def flag_routing_negative_judge_fail(
                     "kind": "coerced_routing_negative_to_na",
                     "advisory": (
                         f"judge scored {dd['name']} 1 on a negative test whose "
-                        f"outcome is decided by routing, and whose transcript "
-                        f"the harness truncated at the hand-off; coerced to "
-                        f"null. Across the committed corpus a human confirmed "
-                        f"this 1 in 20 of 24 such cells, so read it before "
-                        f"confirming the N/A: if the skill under test carried "
-                        f"out its own task inline, the 1 is right and the "
-                        f"routing pass is hiding a real defect."
+                        f"outcome is decided by routing; coerced to null. "
+                        f"Across the committed corpus a human confirmed this 1 "
+                        f"in 20 of 24 such cells, so read it before confirming "
+                        f"the N/A: if the skill under test carried out its own "
+                        f"task inline, the 1 is right and the routing pass is "
+                        f"hiding a real defect. The coercion does NOT check "
+                        f"whether the run produced output, and on 4 of the 50 "
+                        f"runs it fires on in the committed corpus it did "
+                        f"(ut_timeline_008 wrote 11 assertions via "
+                        f"extraction_append; ut_person_evidence_003's 1 is "
+                        f"human-confirmed)."
                     ),
                     "name": dd["name"],
                     "score": dd.get("score"),
@@ -1286,9 +1312,13 @@ def flag_routing_negative_judge_fail(
             # UI never surfaces output.warnings.
             orig = dd.get("rationale") or ""
             dd["rationale"] = (
-                f"[coerced-to-na] the harness truncated this negative test's "
-                f"transcript at the hand-off, so {dd['name']} grades a blank "
-                f"field and is N/A; the judge's 1 was coerced to null. "
+                f"[coerced-to-na] this is a correctly-routed negative test, whose "
+                f"outcome is decided by routing alone, so {dd['name']} is N/A and "
+                f"the judge's 1 was coerced to null. READ THE ORIGINAL BELOW "
+                f"BEFORE CONFIRMING THE N/A: on 4 of the 50 runs in the committed "
+                f"corpus the skill under test produced real output first (up to "
+                f"1355 chars and 5 tool calls, including writes), and there a 1 "
+                f"names a genuine defect the routing pass hides. "
                 f"Original judge rationale: {orig}"
             )
             dd["score"] = None

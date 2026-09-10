@@ -314,7 +314,7 @@ has nothing to compare to.
 Now read the **sampled** tests and correct the judge. The sidebar marks the
 rest `not sampled` — a handful of tests per run get reviewed, not all of them,
 and the Release button only waits on those. Five are chosen for you, and **every
-test that failed — or scored a 1 or 2 on any dimension — is added**, so a run
+test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning is added**, so a run
 with a low score anywhere is more than five. The UI pre-fills every dimension with
 the judge's score, so there are two separate things to do:
 
