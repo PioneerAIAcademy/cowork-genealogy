@@ -38,10 +38,13 @@ Two entries exist for this couple, eleven working days apart, and they are two
 document types rather than a conflict:
 
 - **30 August 1859** — the *información matrimonial*, the premarital
-  examination, page 193 entry no. 51
-  (https://familysearch.org/ark:/61903/1:1:QP84-TH55).
-- **14 September 1859** — the marriage itself, folio 77 entry no. 55
-  (https://familysearch.org/ark:/61903/1:1:QJRM-GV8V).
+  examination, entry no. 51, pages 193–194. Index
+  https://familysearch.org/ark:/61903/1:1:QP84-TH55; images
+  `ark:/61903/3:1:9Q97-YSRZ-XMC` (opens the acta on p. 193 and carries the
+  groom's declaration) and `ark:/61903/3:1:9Q97-YSRZ-614` (closes it on p. 194).
+- **14 September 1859** — the marriage itself, folio 77 entry no. 55. Index
+  https://familysearch.org/ark:/61903/1:1:QJRM-GV8V; image
+  `ark:/61903/3:1:9Q97-YSRZ-GWP`.
 
 Both are at the Parroquia de Nuestra Señora de la Asunción, **Barracas al Sud**,
 which is the historic name of **Avellaneda**, in Buenos Aires *province* across
@@ -58,6 +61,12 @@ from the page images, not the indexes:
 |---|---|---|---|
 | Father | Ysidro Chaves | Ysidro Chaves, *finado* | Ysidro Chaves, *finado*, 65, natural de la Provincia de San Luis |
 | Mother | Andrea Guerra | Andrea Guerra | Andrea Guerra, 60, nativa de Buenos Ayres |
+| Index | `1:1:XN9Y-ZHZ`, `1:1:XNSL-1LM` | `1:1:QP84-TH55` | `1:1:QJRM-GV8V` |
+| Image | `3:1:939D-RDBR-3`, `3:1:939D-RX4N-5` (pp. 456–457) | `3:1:9Q97-YSRZ-XMC` (p. 193), `3:1:9Q97-YSRZ-614` (p. 194) | `3:1:9Q97-YSRZ-GWP` (f. 77) |
+
+Each image ark above resolves under `https://familysearch.org/ark:/61903/`. The
+baptism's two image arks are **the same opening filmed twice**, not two
+different pages, which is why that one baptism carries two index entries.
 
 The register's own words for the groom: *hijo legitimo del finado D.n Ysidro
 Chaves, de edad de sesenta y cinco años, natural de la Provincia de San Luis, y
@@ -117,7 +126,8 @@ record-hint genre.
 
 The marriage register yields facts the tree does not hold and this finding does
 not claim: the father's origin (Provincia de San Luis), both parents' ages and
-the mother's Buenos Aires birth, the couple's residence in Barracas, and that
-the bride's parents Sebastian Flores and Isabel Rivero were both deceased by
-1859 with stated ages. The finding is scoped to the marriage, which is what the
-research question asks.
+the mother's Buenos Aires birth, the couple's residence in Barracas, and the
+stated ages of the bride's parents (Sebastian Flores 38, Isabel Rivero 30).
+That they were both deceased by 1859 **is** asserted, in the finding's
+`details.target_person.parents`, so it is not on this list. The finding is
+scoped to the marriage, which is what the research question asks.
