@@ -201,10 +201,35 @@ What it says:
   pair conversion cannot reach it: it is already a router delegating to
   `record-extractor` and `image-reader`, and agents cannot nest agents. Same
   class of blocker as the one that closed issue #2119, different mechanism.
-- **Four funded cards buy almost nothing** — `search-full-text`, `search-images`,
-  `init-project` and `conflict-resolution` are all under 1,500. Issue #1852 is a
-  guardrail conversion and is funded on that argument, never on cost; the other
-  three are close to free to leave alone.
+- **A low score is not a reason to shelve a card — resident mass is half the
+  payoff.** The other half is what a step costs *when it runs*, and only an agent
+  can be tuned there: `model:` and `effort:` are inert on a skill. Measured over
+  the same 163 logs, tool calls per skill episode:
+
+| skill | episodes | calls in them | calls/episode | skill entered / its tools used |
+|---|---:|---:|---:|---|
+| search-full-text | 12 | 839 | **69.9** | 12 runs / 58 |
+| search-images | 8 | 443 | **55.4** | 8 runs / 124 |
+| search-records | 208 | 7,398 | 35.6 | — |
+| person-evidence | 158 | 5,465 | 34.6 | — |
+| proof-conclusion | 98 | 2,064 | 21.1 | — |
+| init-project | 4 | 68 | 17.0 | — |
+| question-selection | 252 | 1,310 | 5.2 | — |
+
+  **The two densest steps in the system are the two that score lowest on resident
+  mass, and for the same reason: the orchestrator does not enter them.** 46 runs
+  search full text without the skill; 116 do image work without it. Their cards are
+  therefore ordered behind routing — issue #1860 for full text, and issue #2121
+  re-scoped 2026-09-10 to route before it converts — not shelved. Episode
+  attribution credits the last-launched skill, the same bias the phase split
+  carries.
+- **`init-project` cannot be priced from this corpus at all.** `project_create` is
+  called **0 times in 163 runs** — every fixture ships a seeded project — so its
+  640 measures the harness, not the skill. In production it runs once per project,
+  with a 26,120-byte body, in the session that forms the researcher's first
+  impression.
+- **Issue #1852 is funded on its guardrail argument**, never on cost: 47 of the 56
+  runs that write a conflict never invoke it.
 - The `person-evidence` conversion did what it promised: 42,797 resident bytes
   down to 2,937.
 
