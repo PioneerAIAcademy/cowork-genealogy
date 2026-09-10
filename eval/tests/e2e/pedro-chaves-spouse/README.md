@@ -128,6 +128,13 @@ The marriage register yields facts the tree does not hold and this finding does
 not claim: the father's origin (Provincia de San Luis), both parents' ages and
 the mother's Buenos Aires birth, the couple's residence in Barracas, and the
 stated ages of the bride's parents (Sebastian Flores 38, Isabel Rivero 30).
+**Those two are ages at death, not ages in 1859.** Both are entered under
+*los finados*, and this register writes a dead parent's age that way: entry
+no. 54 on the same opening reads *fallecida a la edad de cincuenta y cinco
+años*. The same sentence in entry 55 distinguishes the two cases — Ysidro is
+*del finado* at 65, while Andrea carries 60 and is not marked dead
+(*ambos domiciliados en Barracas*). Read as 1859 ages they would be
+impossible: Isabel at 30 would have been 6 when Juana was born.
 That they were both deceased by 1859 **is** asserted, in the finding's
 `details.target_person.parents`, so it is not on this list. The finding is
 scoped to the marriage, which is what the research question asks.
