@@ -11,6 +11,8 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from _fakes import FakeSDKClient
+
 from app.agent import real_agent
 from app.agent_secrets import secrets_bytes
 from app.config import get_settings
@@ -72,22 +74,10 @@ def test_secrets_path_agrees_with_the_control_plane_constant():
 
 # ── live-client rotation ─────────────────────────────────────────
 
-class _FakeClient:
-    """Stands in for ClaudeSDKClient: records connect/disconnect only."""
-
-    instances: list["_FakeClient"] = []
-
-    def __init__(self, options=None):
-        self.options = options
-        self.connected = False
-        self.disconnected = False
-        _FakeClient.instances.append(self)
-
-    async def connect(self):
-        self.connected = True
-
-    async def disconnect(self):
-        self.disconnected = True
+class _FakeClient(FakeSDKClient):
+    """The shared stand-in (tests/_fakes.py), subclassed so `instances` is this
+    file's own registry and so the two `monkeypatch.setattr` calls below land on
+    a class no other file uses."""
 
 
 @pytest.fixture
