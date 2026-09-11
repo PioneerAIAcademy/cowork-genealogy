@@ -127,18 +127,20 @@ against "Open every invocation with `project_context`".
 
 ### Claims refuted while designing the acquisition seam, 2026-09-11
 
-Figures are over the 498 committed e2e run logs, which are autonomous-only.
-Caller attribution (`tool_calls[].agent_type`) is recorded in only **27** of
-them, so every attributed figure below is over those 27. The control in the same
-runs is `extraction_append`, which only `record-extractor` can call: 124
+Figures are over the **169** committed e2e run logs at `b0950e003`, which are
+autonomous-only. (`eval/runlogs/e2e` holds three files per run — the log, the
+final research and the final tree — so 169 runs is 507 files; a count of files
+understates every rate threefold.) Caller attribution
+(`tool_calls[].agent_type`) is recorded in only **30** of the runs, so every
+attributed figure below is over those 30. The control in the same runs is
+`extraction_append`, which only `record-extractor` can call: 145
 record-extractor / 10 general-purpose / 3 main-thread — attribution is working
 there, not missing.
 
 | claim | Why it was wrong |
 |---|---|
-| **Delegating an image read to `image-reader` keeps base64 out of the caller's context** — stated in both `record-extraction` and `search-images` as the reason the delegation is mandatory | `image_transcribe` fetches the scan host-side, OCRs it through a hosted VLM and returns **text**. No bytes cross the MCP transport whoever calls it, so the subagent isolates nothing the tool does not already isolate. The rationale describes `image_read`, which returns inline base64 — and that tool has been declared by no agent and no skill since `image-reader-opus` was retired (issue #2013), while two skill bodies still spend prose forbidding it by name
-and the orchestrator's routing table still names it as how images get read. Its membership in the harness's `SUBAGENT_ONLY_TOOLS` is correct and unrelated: that deny exists for the tool, not for a caller that no longer exists |
-| **A `MUST delegate` sentence in a skill body decides who calls a tool** | In the 27 attributed runs `image_transcribe` was called **128 times by `image-reader` and 75 times from the main thread** — 37% bypass, against a body that says "Do not call `image_read` yourself", mandates the delegation in bold, and calls reporting a miss without an attempt "a completeness failure." What binds is the grant: `allowed-tools` is additive, both production paths hold every advertised tool, and nothing denies the main thread this one. Corpus-wide the tool runs 459 times across 74 of 498 runs, median 2 per run, max 81 |
+| **Delegating an image read to `image-reader` keeps base64 out of the caller's context** — stated in both `record-extraction` and `search-images` as the reason the delegation is mandatory | `image_transcribe` fetches the scan host-side, OCRs it through a hosted VLM and returns **text**. No bytes cross the MCP transport whoever calls it, so the subagent isolates nothing the tool does not already isolate. The rationale describes `image_read`, which returns inline base64 — and that tool has been declared by no agent and no skill since `image-reader-opus` was retired (issue #2013), while two skill bodies still spend prose forbidding it by name and the orchestrator's routing table still names it as how images get read. Its membership in the harness's `SUBAGENT_ONLY_TOOLS` is correct and unrelated: that deny exists for the tool, not for a caller that no longer exists |
+| **A `MUST delegate` sentence in a skill body decides who calls a tool** | In the 30 attributed runs `image_transcribe` was called **128 times by `image-reader` and 75 times from the main thread** — 37% bypass, against a body that says "Do not call `image_read` yourself", mandates the delegation in bold, and calls reporting a miss without an attempt "a completeness failure." What binds is the grant: `allowed-tools` is additive, both production paths hold every advertised tool, and nothing denies the main thread this one. Corpus-wide it runs 459 times across 53 of the 169 runs, median 2 per run, max 81 |
 | **The image-acquisition paths are three paths needing one owner** | They are one call with three input spellings. An image ARK and an Image Group Number already resolve through a single function inside `image_transcribe`, and an uploaded image file is the same call with a third input form (issue #2048). The split that matters is **host-fetchable vs model-read**: the only medium genuinely outside the artifact channel was the PDF, because nothing in the engine reads one — which is why issue #2489 adds a PDF reader instead of a fourth acquisition path |
 
 ## The `same_person` write-boundary gate: six constraints any design must satisfy
