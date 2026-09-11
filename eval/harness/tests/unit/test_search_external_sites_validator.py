@@ -390,3 +390,45 @@ def test_v6_is_tier_2_and_cannot_gate_a_run():
         "V6 is gating the run. It reports on a rule SKILL.md does not state "
         "(#2345 review) — it must stay `report_`-prefixed."
     )
+
+
+NEGATIVE = {"type": "negative", "tags": []}
+
+
+@pytest.mark.parametrize(
+    "name,check",
+    [
+        ("V2", check_v2),
+        ("V3", check_v3),
+        ("V4", check_v4),
+        ("V6", check_v6),
+        ("V7", check_v7),
+        ("V7b", check_v7b),
+    ],
+)
+def test_every_positive_gated_validator_skips_a_negative(name, check):
+    """The `type != "positive"` gate is load-bearing and nothing asserted it.
+
+    V7 and V7b run on `ut_search_external_sites_011` and `_012`, both
+    `grade_on_invariant` negatives where the validator IS the grade, and their
+    correct routes are exactly what those two forbid: research-plan appends a
+    plan item and writes `questions`, record-extraction writes `sources` and
+    `assertions` (this file says so itself, at the route-away validator). The
+    gate is what keeps them off those runs - and deleting it from every
+    validator here left the whole suite green, which is the shape this module's
+    own header calls out: green forever, reading as coverage.
+
+    One shared arm rather than a V7-only one, because the gate is the same line
+    in six places and the next one added will have it too.
+    """
+    before, after = _states(
+        after_log=[_links_entry(plan_item_id=None), _site_entry(plan_item_id=None)],
+        before_items=[_item(status="planned")],
+        after_items=[_item("pli_099", status="skipped"), _item(status="completed")],
+    )
+    after["research_json"]["sources"] = [{"id": "src_001", "title": "invented"}]
+    after["research_json"]["questions"] = [{"id": "q_002", "text": "invented"}]
+    # V4 alone takes `text_response` between the states and the test dict.
+    args = (before, after, "", NEGATIVE) if name == "V4" else (before, after, NEGATIVE)
+    with pytest.raises(pytest.skip.Exception, match="only positive tests"):
+        check(*args)
