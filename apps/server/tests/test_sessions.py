@@ -148,8 +148,8 @@ def test_logout_revokes_all_sessions():
 
 
 def test_login_after_revocation_works():
-    """A fresh login after logout clears sessions_revoked_at, so the new
-    cookie works immediately."""
+    """A fresh login after logout works immediately: the new cookie's iat is
+    strictly greater than the revocation stamp, which is never cleared."""
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "relogin@example.com"})
         client.post("/auth/logout")

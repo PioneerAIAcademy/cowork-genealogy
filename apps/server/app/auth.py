@@ -294,6 +294,8 @@ def logout(
                 session.commit()
         except BadSignature:
             pass
+        except Exception:
+            logger.warning("Session revocation failed on logout", exc_info=True)
     clear_session_cookie(response)
     return {"ok": True}
 
