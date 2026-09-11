@@ -53,6 +53,7 @@ const CONCURRENCY = 6;
 
 type Category =
   | "US census"
+  | "US death"
   | "England parish"
   | "Scandinavian church book"
   | "Scandinavian marriage index";
@@ -72,6 +73,13 @@ const ARKS: Ark[] = [
   { id: "68Q3-5SGC", category: "Scandinavian church book", note: "Norway, Church Books, 1797-1958 (Birkeland baptism)" },
   { id: "NW44-PM2", category: "Scandinavian marriage index", note: "Norway, Marriages, 1660-1926 (Urna/Anders)" },
   { id: "9XKT-M2P", category: "Scandinavian church book", note: "Norway, Church Books, 1815-1930 (Anders)" },
+  // Added 2026-09-11 (#1908 phase 1b): real ARKs proven live-resolved in committed 2026-09 e2e runs;
+  // place strings noted are from run-log summaries and are confirmed by this probe when run.
+  { id: "MPXD-MZC", category: "US census", note: "US census, single-segment place 'North Dakota' (spriggs-parents-1898 e2e)" },
+  { id: "M9VJ-V1R", category: "US census", note: "US census, multi-segment 'Grand Forks, ..., North Dakota' (spriggs-parents-1898 e2e; single-vs-multi contrast with MPXD-MZC)" },
+  { id: "QL3R-C5SR", category: "England parish", note: "England parish baptism, West Bromwich, Staffordshire (hannah-earnest-children e2e)" },
+  { id: "8YMV-R76Z", category: "Scandinavian church book", note: "Norway, vernacular place 'Hamre, Hordaland, Norge' (anders-monsen-ancestry e2e)" },
+  { id: "Q5SZ-J9LG", category: "US death", note: "US death record, 'Milwaukee, Wisconsin' (heinrich-dewus-children-death e2e)" },
 ];
 
 type Consistency = "ok" | "contradiction" | "unverifiable" | "no-resolve";
