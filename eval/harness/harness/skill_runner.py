@@ -778,7 +778,13 @@ async def run_skill(
                     if isinstance(block, TextBlock):
                         turn_text_parts.append(block.text)
                     elif isinstance(block, ToolUseBlock):
-                        if block.id == routing_resolved["tool_use_id"]:
+                        if block.id == routing_resolved["tool_use_id"] or (
+                            routing_resolved["v"]
+                            and routing_resolved["tool_use_id"] is None
+                            and block.name == "Skill"
+                            and read_skill_tool_input(dict(block.input or {}))[0]
+                            in _short_circuit
+                        ):
                             routed_call_seen = True
                         if block.name.startswith("mcp__"):
                             attempted_mcp_calls.append(
@@ -898,26 +904,27 @@ async def run_skill(
             # message was ever processed. The AssistantMessage branch above
             # is the only correct stop point for a run that has one.
             #
-            # Fallback for the one case the exact stop point cannot cover:
-            # the hook's tool_use_id is `str | None` on the SDK's own hook
-            # request type, so there may be no id to key on. Checked AFTER
-            # the message is processed (never at the top of the loop, which
-            # is the dropped-hand-off bug), and only when the id is absent,
-            # so the RateLimitEvent misfire cannot come back.
-            if routing_resolved["v"] and routing_resolved["tool_use_id"] is None:
-                if not usage:
-                    usage["num_turns"] = turns_seen["n"]
-                    no_result_message_flag["v"] = True
-                return
+            # The hook's tool_use_id is `str | None` on the SDK's own hook
+            # request type (read with `.get()`), so there can in principle be
+            # no id to key on. That case is covered inside the
+            # AssistantMessage branch above too — by matching the
+            # ToolUseBlock's own Skill name against `_short_circuit` when the
+            # id is absent, not by a second flag-only check after the message
+            # is processed. A flag-only check here, even gated on the id
+            # being absent, still fires on whichever message arrives first
+            # once the flag is set (e.g. an earlier RateLimitEvent), dropping
+            # the hand-off exactly like the bug this PR fixes — reproduced
+            # and removed during review (round 3).
+            #
             # The two remaining orderings — the hand-off consumed before the
             # hook runs, or the routed ToolUseBlock never appearing on the
             # stream at all — are accepted rather than closed: closing them
             # with a flag check would bring back the dropped-hand-off bug
             # this PR fixes, since the flag can be true before the hand-off
-            # message is ever processed. When neither this fallback nor the
-            # AssistantMessage branch above fires, the loop keeps consuming
-            # until the stream ends naturally (StopAsyncIteration, a cap, or
-            # a timeout already handle that case).
+            # message is ever processed. When routed_call_seen never fires,
+            # the loop keeps consuming until the stream ends naturally
+            # (StopAsyncIteration, a cap, or a timeout already handle that
+            # case).
 
     start = time.perf_counter()
     try:

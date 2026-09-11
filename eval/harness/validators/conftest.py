@@ -149,7 +149,7 @@ def attempted_mcp_calls() -> list:
 
 @pytest.fixture
 def text_response() -> str:
-    """Every assistant turn's text, not the final reply alone — turns joined
+    r"""Every assistant turn's text, not the final reply alone — turns joined
     with "\n\n", blocks within one turn with no separator.
 
     Empty is the right standalone default for the same reason the lists above

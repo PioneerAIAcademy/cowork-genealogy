@@ -862,6 +862,50 @@ def test_a_message_after_the_denied_handoff_is_not_counted_when_the_hook_gets_no
     assert result.usage.get("num_turns") == 1
 
 
+def test_a_rate_limit_event_before_the_handoff_does_not_drop_it_when_the_hook_gets_no_id(
+    tmp_path, monkeypatch
+):
+    """Combines the two id-absent risks the previous fallback conflated
+    (review of #2189, round 3). With `tool_use_id=None`, the deleted fallback
+    fired on whichever message arrived first once the flag was up — for a
+    RateLimitEvent arriving before the hand-off, that was the RateLimitEvent
+    itself, returning with `text_response=""` and `num_turns=0` before the
+    hand-off message was ever processed. The fix matches the hand-off's own
+    Skill ToolUseBlock against `_short_circuit` by name (not by id, which is
+    None), inside the AssistantMessage branch — a RateLimitEvent has no such
+    branch to fire from, so it cannot short-circuit the loop on its own."""
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+    early = _rate_limit_event("allowed")
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook, hook_inputs, [early, handoff_message], hook_tool_use_id=None
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            routing_short_circuit_skills={"record-extraction"},
+        )
+    )
+
+    assert "Routing this to record-extraction." in result.text_response, (
+        "the hand-off was dropped — the RateLimitEvent-first ordering "
+        "reintroduced the bug this PR fixes"
+    )
+    assert result.usage.get("num_turns") == 1
+
+
 def test_a_turn_boundary_separates_two_assistant_messages(tmp_path, monkeypatch):
     """A closing turn's text must not run together with an earlier turn's
     text — the run-together-boundary half of #2189 (measured at 4a6cfad44

@@ -1,4 +1,4 @@
-"""Universal validators that run on every test, regardless of skill.
+r"""Universal validators that run on every test, regardless of skill.
 
 These check structural correctness of the output files against
 the research schema spec (docs/specs/research-schema-spec.md).
