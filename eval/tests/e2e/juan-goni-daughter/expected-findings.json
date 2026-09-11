@@ -14,7 +14,11 @@
         }
       },
       "supporting_sources": [
-        "Spain, Marriages, 1565-1950 — entry for Francisco Casimiro Yriarte, 1872, naming the bride's parents Juan Jose and Francisca Goñi"
+        "Spain, Marriages, 1565-1950 — entry for Francisco Casimiro Yriarte, 10 Sep 1872, Elizondo, naming the bride's parents Juan Jose and Francisca Goñi: ark:/61903/1:1:C9D5-X6W2 (the bride's own persona on that entry is ark:/61903/1:1:C9D5-X63Z). The index gives the father as a bare \"Juan Jose\" with no surname, so this entry alone does not identify him.",
+        "The record that identifies the father — España, registros parroquiales y diocesanos, 1307-2005: christening of Martina Eulalia, 10 Dec 1845, Elizondo, parents Juan José [Goñi, indexed \"Gonz\"] and Francisca Goñi, paternal grandparents Juan and Martina Urtasun, maternal grandparents Santiago and María Bautista Ytzea: ark:/61903/1:1:664D-73X6. Those four grandparents are the same set carried by the tree's own source for the known daughter Engracia Ygnacia (Juan and Martina Urta; Santiago and María Bautista Yteca): ark:/61903/1:1:664F-CCKG.",
+        "Four further Elizondo christenings to the same couple, carrying the same grandparent set and independent of the hint record: Juan Bautista 11 Jun 1844 ark:/61903/1:1:664D-BN3Y; Lucio José 3 Mar 1850 ark:/61903/1:1:664X-T9CT; Santiago Nicasio 12 Oct 1853 ark:/61903/1:1:664F-K5Y6; Martín José Sotero chr. 1856 ark:/61903/1:1:66H2-BVGK",
+        "The marriage's issue — christening of Juana Tomasa Iriarte Goni, 22 Aug 1873, Elizondo, naming her mother Martina Eulalia Goñi and that mother's parents Juan José and Francisca Goñi: ark:/61903/1:1:H6WW-Z5T2 (re-indexed from the same register page as ark:/61903/1:1:66H2-K9PB)",
+        "The source already on the tree, \"Juan Jose in entry for Juan Bautista Apezteguia\", is a different daughter's marriage — Engracia Ygnacia Goñi to Juan Bautista Apezteguia, 13 May 1873, Elizondo: ark:/61903/1:1:C9DL-1Z2M. It is not a re-indexing of the 1872 hint."
       ],
       "required": true
     }
