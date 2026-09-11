@@ -284,7 +284,8 @@ project convention:
 |-----------|------------------|
 | `startYear`/`endYear` provided but non-numeric | Throw: `"startYear and endYear must be numeric when provided. Re-read the tool's input schema and retry with corrected arguments."` |
 | `endYear < startYear` (both provided) | Throw: `"endYear must be greater than or equal to startYear. Re-read the tool's input schema and retry with corrected arguments."` |
-| HTTP 403 / 429 | Throw: `"FamilySearch rejected the request (status N). This usually means rate limiting or a User-Agent block. Wait 60 seconds and retry once. If it persists, surface this to the user."` |
+| HTTP 403 | Throw: `"FamilySearch rejected the request (status 403). This usually means a User-Agent block by the WAF — check that the MCP server is running an unmodified build."` |
+| HTTP 429 | Retried by `fetchWithRetry` (up to 3 attempts, 10s budget). If still 429 after exhaustion, throw: `"FamilySearch rate limit reached and did not clear within the retry budget. Wait 60 seconds and retry once. If it persists, surface this to the user."` |
 | Other non-2xx | Throw: `"FamilySearch returned N. Treat this as a transient error and retry once before giving up."` |
 | Invalid JSON in response | Throw: `"FamilySearch returned a response that was not valid JSON. Retry once; if it persists, surface this to the user."` |
 | Empty page mid-pagination | Stop the internal loop. Return what we have. |

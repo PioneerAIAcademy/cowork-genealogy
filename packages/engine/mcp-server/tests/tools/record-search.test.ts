@@ -544,7 +544,7 @@ describe("recordSearchTool error propagation", () => {
       headers: new Headers(),
     });
     await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /429/
+      /rate limit/
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });

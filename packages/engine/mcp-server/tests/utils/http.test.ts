@@ -298,17 +298,25 @@ describe("fetchWithRetry", () => {
   });
 
   it("does not start new attempts after budget is exhausted", async () => {
-    // With attempts=1, only one fetch is made regardless of budget.
-    mockFetch.mockResolvedValue(mockResponse(429));
+    // Mock a slow-enough 429 that consuming the budget on the first retry
+    // prevents a third attempt.  With attempts=3 and a tiny budget, the
+    // budget — not the attempt cap — is what stops the loop.
+    mockFetch.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve(mockResponse(429)), 50),
+        ),
+    );
 
     const res = await fetchWithRetry("https://example.com", {}, 1000, {
-      budgetMs: 5000,
-      attempts: 1,
+      budgetMs: 80,
+      attempts: 3,
       baseMs: 1,
     });
 
     expect(res.status).toBe(429);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    // Budget expires before the third attempt can start.
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   it("throws when Retry-After exceeds remaining budget", async () => {

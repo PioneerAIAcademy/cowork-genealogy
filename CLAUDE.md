@@ -717,7 +717,7 @@ Where to look first:
   Use `fetchWithRetry` for new call sites; `fetchWithTimeout` is still
   exported for the handful of excluded sites that manage their own retry or
   carry timeouts too long for the budget (`image_transcribe` 180s,
-  `fs-image-fetch` 90s, `place-api`/`place-resolver`). Node's global `fetch`
+  `fs-image-fetch` 90s, `place-api`, `match-engine`). Node's global `fetch`
   never times out on its own; a stalled upstream connection
   (FamilySearch/Imperva, the wiki-query-api sidecar, OpenRouter) hangs the
   call forever otherwise. This file is the only one allowed to call the global

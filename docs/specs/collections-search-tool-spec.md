@@ -271,9 +271,12 @@ due to access restrictions).
 
 ## Timeout
 
-`COLLECTIONS_TIMEOUT_MS` = **60s**, passed as `fetchWithTimeout`'s third
-argument, rather than the shared 30s default. The cold path is one un-retried
-`count=5000` request whose budget has to cover a large body streaming in full.
+`COLLECTIONS_TIMEOUT_MS` = **60s**, passed as `fetchWithRetry`'s third
+argument, rather than the shared 30s default. The call is retried by
+`fetchWithRetry` (up to 3 attempts, 10s budget), but a 60s timeout exhausts the
+budget on the first attempt, so timeouts are effectively single-attempt. The
+cold path is one `count=5000` request whose budget has to cover a large body
+streaming in full.
 Across the committed e2e run logs, 2 of 51 calls ran past 30s, at 33s and 36s —
 slow successes today, hard failures at the default. Re-measure rather than
 re-guess if the catalog grows; the method is in

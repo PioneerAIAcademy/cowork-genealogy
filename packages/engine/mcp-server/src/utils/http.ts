@@ -120,7 +120,9 @@ export async function fetchWithTimeout(
 /** HTTP statuses worth retrying: throttling and transient server faults. */
 export const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 
-// Cap: 10 seconds total for all retry attempts + sleeps. Chosen so every
+// Cap: 10 seconds for retry sleeps and for any attempt after the first,
+// whose timeout is clamped to what remains. Total wall clock stays
+// under timeoutMs + budget. Chosen so every
 // tool's existing per-attempt timeout stays valid inside the Cowork bridge's
 // 60s abort window. Configurable per call and in tests via `budgetMs`.
 export const DEFAULT_RETRY_BUDGET_MS = 10_000;
@@ -185,7 +187,11 @@ export async function fetchWithRetry(
 
     let response: Response;
     try {
-      response = await fetchWithTimeout(url, init, timeoutMs);
+      const attemptTimeout =
+        attempt === 0
+          ? timeoutMs
+          : Math.min(timeoutMs, Math.max(0, deadline - Date.now()));
+      response = await fetchWithTimeout(url, init, attemptTimeout);
     } catch (err) {
       // Network error or per-attempt timeout — retryable.
       lastErr = err;

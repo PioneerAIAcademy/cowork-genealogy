@@ -941,6 +941,12 @@ export async function recordSearchTool(
         `FamilySearch search rejected the query (400 ${response.statusText}).`
       );
     }
+    if (response.status === 429) {
+      throw new Error(
+        "FamilySearch rate limit reached and did not clear within the retry budget. " +
+          "Wait a minute and try again.",
+      );
+    }
     throw new Error(
       `FamilySearch search API error: ${response.status} ${response.statusText}`
     );
