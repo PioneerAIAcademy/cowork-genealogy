@@ -142,9 +142,10 @@ def test_builtin_call_record_truncates_long_arguments():
 def test_builtin_call_record_does_not_truncate_the_agent_prompt():
     """Issue #2189/#2020: the Agent tool's `prompt` is the delegation contract
     between a routing skill and its agent, not a Read/Grep/Write argument —
-    200 chars keeps a greeting and drops the contract. Measured on the five
-    committed record-extraction run logs: 100 of 103 Agent prompts were
-    exactly 200 characters long."""
+    200 chars keeps a greeting and drops the contract. Measured at 4a6cfad44
+    over the five committed record-extraction run logs
+    (`git ls-files eval/runlogs/unit/record-extraction`, no `.ann.json`): 143
+    of 145 Agent prompts were exactly 200 characters long."""
     from harness.skill_runner import builtin_call_record, BUILTIN_ARG_TRUNCATE
 
     record = builtin_call_record(
@@ -165,7 +166,7 @@ class _HookDrivingStream:
     """An async message stream that first drives the registered PreToolUse hook
     with scripted inputs, then yields its messages so run_skill completes."""
 
-    def __init__(self, hook, hook_inputs, messages, returns=None):
+    def __init__(self, hook, hook_inputs, messages, returns=None, hook_tool_use_id="tool-use-id"):
         self._hook = hook
         self._hook_inputs = hook_inputs
         self._messages = messages
@@ -175,6 +176,11 @@ class _HookDrivingStream:
         # visible in the return value, so a test asserting on the deny needs
         # this; widened rather than copied (issue #2022 review).
         self._returns = returns
+        # The SDK's own hook request type carries `tool_use_id: str | None` —
+        # defaults to the fixed id every other test in this file keys its
+        # ToolUseBlock on, but a test proving the tool_use_id-absent fallback
+        # needs to drive the hook with None instead (review of #2189, round 4).
+        self._hook_tool_use_id = hook_tool_use_id
 
     def __aiter__(self):
         return self
@@ -183,7 +189,7 @@ class _HookDrivingStream:
         if not self._started:
             self._started = True
             for inp in self._hook_inputs:
-                out = await self._hook(inp, "tool-use-id", None)
+                out = await self._hook(inp, self._hook_tool_use_id, None)
                 if self._returns is not None:
                     self._returns.append(out)
         if self._i >= len(self._messages):
@@ -810,11 +816,59 @@ def test_a_message_after_the_denied_handoff_is_not_counted(tmp_path, monkeypatch
     assert result.usage.get("num_turns") == 1
 
 
+def test_a_message_after_the_denied_handoff_is_not_counted_when_the_hook_gets_no_id(
+    tmp_path, monkeypatch
+):
+    """The exact stop point (`block.id == routing_resolved["tool_use_id"]`)
+    cannot fire when the SDK gives the hook `tool_use_id=None` — the SDK's own
+    hook request type is `str | None`, so there is no id to match against.
+    Without a fallback for this case the model's reaction to the denial keeps
+    being consumed and counted, exactly the defect
+    `test_a_message_after_the_denied_handoff_is_not_counted` proves is fixed
+    for the has-an-id case (review of #2189, round 4). The fallback is gated
+    on the id being absent, so it cannot reintroduce the flag-only misfire a
+    plain `routing_resolved["v"]` check had — that check fired before the
+    hand-off message itself was processed, dropping it entirely."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+    reaction = AssistantMessage(
+        content=[TextBlock(text="Let me try a different approach.")], model="stub"
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook, hook_inputs, [handoff_message, reaction], hook_tool_use_id=None
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            routing_short_circuit_skills={"record-extraction"},
+        )
+    )
+
+    assert "Routing this to record-extraction." in result.text_response
+    assert "Let me try a different approach." not in result.text_response
+    assert result.usage.get("num_turns") == 1
+
+
 def test_a_turn_boundary_separates_two_assistant_messages(tmp_path, monkeypatch):
     """A closing turn's text must not run together with an earlier turn's
-    text — the run-together-boundary half of #2189 (1,267 of 1,674 texted
-    runs in the corpus carried one), measured across ordinary runs generally,
-    not specific to the routing short-circuit (which stops consuming after
+    text — the run-together-boundary half of #2189 (measured at 4a6cfad44
+    over every committed run log under eval/runlogs/unit/, no `.ann.json`:
+    1,385 of 1,755 texted runs in the corpus carried one), measured across
+    ordinary runs generally, not specific to the routing short-circuit
+    (which stops consuming after
     its one hand-off message and never reaches a second turn at all)."""
     import asyncio
     from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
@@ -854,6 +908,35 @@ def test_a_turn_boundary_separates_two_assistant_messages(tmp_path, monkeypatch)
     naive = "Checking the census index." + "Found the record."
     assert result.text_response != naive
     assert "census index.\n\nFound the record." in result.text_response
+
+
+def test_two_text_blocks_in_one_turn_are_not_split(tmp_path, monkeypatch):
+    """One utterance delivered as two TextBlocks is one turn — no `\n\n`
+    between them. Reverting the per-turn grouping to
+    `text_chunks.extend(turn_text_parts)` leaves every other test green."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    one_turn = AssistantMessage(
+        content=[TextBlock(text="Found the record"), TextBlock(text=" in the index.")],
+        model="stub",
+    )
+
+    async def fake_query(*, prompt, options):
+        yield one_turn
+        yield ResultMessage(subtype="result", duration_ms=1, duration_api_ms=1,
+                            is_error=False, num_turns=1, session_id="S1")
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(sr.run_skill(
+        user_message="go", workspace=tmp_path, fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    ))
+
+    assert result.text_response == "Found the record in the index."
 
 
 def test_num_turns_is_real_not_a_manufactured_zero_on_short_circuit(tmp_path, monkeypatch):

@@ -223,9 +223,11 @@ BUILTIN_ARG_TRUNCATE = 200
 # Write/Edit-shaped argument; it was applied uniformly to every built-in
 # argument instead, which also cut the Agent tool's `prompt` — the delegation
 # contract between a routing skill and its agent — to 200 characters. Measured
-# on the five committed record-extraction run logs: 100 of 103 Agent prompts
-# were exactly 200 characters long. record-extraction/SKILL.md's prohibitions
-# that live only in that message (never frame the delegation as a "fix"; never
+# at 4a6cfad44 over the five committed record-extraction run logs
+# (`git ls-files eval/runlogs/unit/record-extraction`, no `.ann.json`): 143 of
+# 145 Agent prompts were exactly 200 characters long.
+# record-extraction/SKILL.md's prohibitions that live only in that message
+# (never frame the delegation as a "fix"; never
 # instruct identity-confidence assignment; pass project_path; phrase
 # looking_for as a search key; carry recordId/logId/open question ids) were
 # consequently unauditable from any committed run log.
@@ -758,8 +760,10 @@ async def run_skill(
                 # block: multiple TextBlocks in one AssistantMessage are the
                 # same utterance, but two different AssistantMessages are two
                 # different turns and must not run together (issue #2189 —
-                # 1,267 of 1,674 texted runs carried a word-final ./!/?/`
-                # against a capital with no boundary between them).
+                # measured at 4a6cfad44 over every committed run log under
+                # eval/runlogs/unit/ (`git ls-files`, no `.ann.json`): 1,385
+                # of 1,755 texted runs carried a word-final ./!/?/` against a
+                # capital with no boundary between them).
                 turn_text_parts: list[str] = []
                 # True when THIS message carries the ToolUseBlock the hook
                 # denied for routing. Checking message CONTENT rather than
@@ -882,20 +886,38 @@ async def run_skill(
                         )
                 if message.stop_reason == "max_turns":
                     aborted_reason = "max_turns"
-            # No catch-all fallback here on purpose: routing_resolved["v"]
-            # can already be true on the very first iteration (set during
-            # hook-driving, before any message is delivered), so a check keyed
-            # on the flag alone — checked every iteration regardless of
-            # message type — fires on whatever happens to arrive first, not
-            # on the message that actually carries the routed tool_use_id.
-            # Measured: a RateLimitEvent arriving before the routed
-            # AssistantMessage tripped exactly that, returning at
-            # turns_seen["n"] == 0 before the hand-off message was ever
-            # processed. The AssistantMessage branch above is the only
-            # correct stop point; if the routed id never appears in any
-            # AssistantMessage we see, the loop simply keeps consuming until
-            # the stream ends naturally (StopAsyncIteration, a cap, or a
-            # timeout already handle that case).
+            # No catch-all fallback keyed on routing_resolved["v"] alone, on
+            # purpose: that flag can already be true on the very first
+            # iteration (set during hook-driving, before any message is
+            # delivered), so a check keyed on the flag alone — checked every
+            # iteration regardless of message type — fires on whatever
+            # happens to arrive first, not on the message that actually
+            # carries the routed tool_use_id. Measured: a RateLimitEvent
+            # arriving before the routed AssistantMessage tripped exactly
+            # that, returning at turns_seen["n"] == 0 before the hand-off
+            # message was ever processed. The AssistantMessage branch above
+            # is the only correct stop point for a run that has one.
+            #
+            # Fallback for the one case the exact stop point cannot cover:
+            # the hook's tool_use_id is `str | None` on the SDK's own hook
+            # request type, so there may be no id to key on. Checked AFTER
+            # the message is processed (never at the top of the loop, which
+            # is the dropped-hand-off bug), and only when the id is absent,
+            # so the RateLimitEvent misfire cannot come back.
+            if routing_resolved["v"] and routing_resolved["tool_use_id"] is None:
+                if not usage:
+                    usage["num_turns"] = turns_seen["n"]
+                    no_result_message_flag["v"] = True
+                return
+            # The two remaining orderings — the hand-off consumed before the
+            # hook runs, or the routed ToolUseBlock never appearing on the
+            # stream at all — are accepted rather than closed: closing them
+            # with a flag check would bring back the dropped-hand-off bug
+            # this PR fixes, since the flag can be true before the hand-off
+            # message is ever processed. When neither this fallback nor the
+            # AssistantMessage branch above fires, the loop keeps consuming
+            # until the stream ends naturally (StopAsyncIteration, a cap, or
+            # a timeout already handle that case).
 
     start = time.perf_counter()
     try:
