@@ -28,19 +28,69 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 6, `hint-samples.csv` row 230,
-flag `adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Spain, Marriages, 1565-1950", an 1872 marriage entry for Francisco Casimiro Yriarte of Elizondo (son of Pedro Angel and Tomasa Yribarren) and Martina Eulalia Goñi of Elizondo, naming the bride's parents as Juan Jose and Francisca Goñi.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Martina Eulalia Goñi as his daughter, plus a `required` finding that the report documents
-the rejection.
+**Resolved: true match.** Martina Eulalia Goñi was a daughter of Juan José
+Goñi and Francisca de Goñi, and she married Francisco Casimiro Yriarte at
+Elizondo on 10 Sep 1872.
 
-Strong on the parent pair. The bride's parents in the record — "Juan Jose" and "Francisca Goñi" — match the tree couple exactly, and the tree's one known daughter, Engracia Ygnacia Goñi, was christened at Elizondo in 1840, the same parish as the hinted marriage. A second daughter marrying there in 1872 fits the family without straining anything.
+The 1872 marriage index (`ark:/61903/1:1:C9D5-X6W2`) does **not** carry the
+call on its own, and a resolution resting on it would not be safe: it gives
+the bride's father as a bare "Juan Jose" with no surname, and Goñi is a common
+Baztán surname. What decides it is Martina Eulalia's own christening —
+10 Dec 1845, Elizondo, in "España, registros parroquiales y diocesanos,
+1307-2005" (`ark:/61903/1:1:664D-73X6`), the same collection the tree already
+cites for the known daughter Engracia Ygnacia. That collection indexes
+**grandparents**, so the comparison is on four names rather than two:
 
-Two cautions. The index gives the bride's father as a bare "Juan Jose" with no surname at all, and Goñi is a common Baztán surname — a same-parish namesake couple is the failure mode to rule out, not a remote possibility. And the tree already carries a source titled "Juan Jose in entry for Juan Bautista Apezteguia, Spain, Marriages": establish whether that is a *different* daughter's marriage already accounted for, or the same event indexed twice.
+| | Martina Eulalia, chr. 1845 | Engracia Ygnacia, chr. 1840 (`ark:/61903/1:1:664F-CCKG`) |
+|---|---|---|
+| Father | Juan José, indexed "Gonz" | Juan José Goñi |
+| Mother | Francisca Goñi | de Francisca Goñi |
+| Paternal grandparents | Juan and Martina Urtasun | Juan and Martina Urta |
+| Maternal grandparents | Santiago and María Bautista Ytzea | Santiago and María Bautista Yteca |
+| Godmother | Engracia Goni | Engracia Goni |
 
-Note for the corpus: the batch CSV labels this row Cuba, but the person and the record are Navarrese throughout. Nothing about the research is Cuban.
+Four further christenings to the same couple in the same register carry the
+same grandparent set: Juan Bautista 1844 (`ark:/61903/1:1:664D-BN3Y`), Lucio
+José 1850 (`ark:/61903/1:1:664X-T9CT`), Santiago Nicasio 1853
+(`ark:/61903/1:1:664F-K5Y6`), Martín José Sotero 1856
+(`ark:/61903/1:1:66H2-BVGK`). A sixth sibling sits in the separate
+"España, bautismos, 1502-1940" index rather than this register and carries the
+same grandparent set: Miguel Francisco Crisanto Goni Goni, chr. 25 Oct 1858
+(`ark:/61903/1:1:H6WT-W93Z`), naming Juan and Martina Urtasun with Santiago and
+Maria Bautista Itcea. It was surfaced by the e2e agent's own run, not by this
+adjudication. The father's surname is garbled differently in
+several of them — "Gonz" in 1845, "Gómez" in 1844, "Ju? José Goni" in 1850 —
+so a surname mismatch in this run of entries is a transcription artefact of
+one hand, not evidence of a second family. The 1844 entry was read
+specifically to test the namesake hypothesis, since a genuine second "Juan
+José + Francisca" couple at Elizondo would surface there; its grandparents are
+the same couple's, so it is another son, and no namesake couple appeared in
+the register at all.
+
+Ages and sequence hold: born Dec 1845, married Sep 1872 at 26, first child
+Juana Tomasa christened 22 Aug 1873 at Elizondo
+(`ark:/61903/1:1:H6WW-Z5T2`, re-indexed as `ark:/61903/1:1:66H2-K9PB`), whose
+entry again names the mother's parents as Juan José and Francisca Goñi. She is
+named for her paternal grandmother, Martina Urtasun, as the Baztán naming
+pattern predicts.
+
+The caution about the tree's existing "Juan Jose in entry for Juan Bautista
+Apezteguia" source is settled and is **not** a duplicate of the hint: that is
+Engracia Ygnacia's own marriage, 13 May 1873 to Juan Bautista Apezteguia
+(`ark:/61903/1:1:C9DL-1Z2M`) — a date the live tree carries on Engracia's own
+Couple relationship. Different daughter, different groom, different year. The
+four Apezteguia-Goni baptisms on the tree person are that marriage's children.
+
+Search note for anyone re-deriving this: the 1845 christening cannot be found
+by searching the surname "Goñi", because this collection indexes the couple's
+children with a **given name only** and no surname (Engracia Ignacia, Juan
+Bautista, Martina Eulalia, Lucio José, Santiago Nicasio, Martín José Sotero
+are all indexed surname-less). It surfaces on a parent-name search — father
+"Juan José", mother "Francisca Goñi", place Elizondo, collection 1784529.
+
+Note for the corpus: the batch CSV labels this row Cuba, and so does the live
+tree — Engracia Ygnacia's Birth fact carries `standard_place` "Elizondo, La
+Habana, Cuba" while her Christening carries "Elizondo, Baztan, Nafarroa,
+Spain". That is the tree's own bad standardization and is left alone here. The
+person and the records are Navarrese throughout; nothing about the research is
+Cuban.
