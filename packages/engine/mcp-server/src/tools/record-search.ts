@@ -947,6 +947,13 @@ export async function recordSearchTool(
           "Wait a minute and try again.",
       );
     }
+    if (response.status >= 500) {
+      throw new Error(
+        `FamilySearch record search did not complete after retries ` +
+          `(FamilySearch search API error: ${response.status} ${response.statusText}). ` +
+          `This is a transient failure, NOT an empty result — coverage is unknown.`
+      );
+    }
     throw new Error(
       `FamilySearch search API error: ${response.status} ${response.statusText}`
     );

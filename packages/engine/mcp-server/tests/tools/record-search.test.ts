@@ -530,7 +530,7 @@ describe("recordSearchTool error propagation", () => {
       headers: new Headers(),
     });
     await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /503/
+      /coverage is unknown/
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
