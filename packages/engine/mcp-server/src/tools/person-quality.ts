@@ -7,7 +7,7 @@
 
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { renderIssueSentence } from "./person-quality-templates.js";
 import type {
   FSCategoryScore,
@@ -70,7 +70,7 @@ async function fetchScores(
   personId: string,
 ): Promise<FSQualityResponse> {
   for (let attempt = 1; attempt <= CALC_MAX_ATTEMPTS; attempt++) {
-    const res = await fetchWithTimeout(url, {
+    const res = await fetchWithRetry(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         "User-Agent": BROWSER_USER_AGENT,
