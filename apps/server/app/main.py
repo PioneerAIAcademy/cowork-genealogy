@@ -20,11 +20,72 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+import asyncio
+import logging
+
+from sqlmodel import Session, select
+
 from . import auth, feedback, sessions, v1
 from .config import assert_production_config, get_settings
-from .db import init_db
+from .db import get_engine, init_db
+from .models import FamilySearchToken, Project, User
 from .obs import setup_logging
 from .sandbox import make_provider
+
+log = logging.getLogger(__name__)
+
+_REVOKE_TIMEOUT = 30.0
+
+
+async def _revoke_sandboxes(provider) -> None:
+    """Destroy active sandboxes belonging to users not on the current allowlist.
+
+    Computed fresh each boot so a failed prior attempt is retried automatically.
+    Only runs when FamilySearch OAuth is the login gate (same condition as the
+    per-request allowlist check in auth.py). Best-effort: DB or provider errors
+    are logged, never crash startup.
+    """
+    settings = get_settings()
+    if not settings.familysearch_configured or not settings.allowlist:
+        return
+    try:
+        with Session(get_engine()) as session:
+            provisioned = settings.allowlist | set(settings.api_key_map.values())
+            projects = session.exec(
+                select(Project).join(User).where(
+                    User.email.not_in(provisioned),  # type: ignore[union-attr]
+                    Project.status == "active",
+                )
+            ).all()
+            if not projects:
+                return
+
+            succeeded: set[str] = set()
+
+            async def _delete_one(project: Project) -> None:
+                try:
+                    await asyncio.wait_for(
+                        provider.delete(project.sandbox_id), timeout=_REVOKE_TIMEOUT
+                    )
+                    succeeded.add(project.id)
+                    log.info("Revoked sandbox %s for de-provisioned user", project.sandbox_id)
+                except Exception:
+                    log.warning("Failed to revoke sandbox %s", project.sandbox_id, exc_info=True)
+
+            await asyncio.gather(*(_delete_one(p) for p in projects))
+
+            for project in projects:
+                if project.id in succeeded:
+                    project.status = "archived"
+
+            for user_id in {p.user_id for p in projects}:
+                row = session.get(FamilySearchToken, user_id)
+                if row is not None:
+                    session.delete(row)
+
+            session.commit()
+    except Exception:
+        log.warning("Sandbox revocation sweep failed", exc_info=True)
 
 
 @asynccontextmanager
@@ -36,6 +97,7 @@ async def lifespan(app: FastAPI):
     setup_logging()
     init_db()
     app.state.provider = make_provider()
+    await _revoke_sandboxes(app.state.provider)
     try:
         yield
     finally:

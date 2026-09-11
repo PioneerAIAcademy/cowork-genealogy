@@ -16,6 +16,7 @@ import {
   addError,
   addWarning,
   isValid,
+  isObject,
 } from "./types.js";
 import { isInsideProject } from "../utils/project-io.js";
 import {
@@ -30,6 +31,7 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
+import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -75,6 +77,27 @@ const CLOSED_ENUMS = {
   ]),
 };
 
+// Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
+// enforce (#1711 review follow-up) that a proof_summary's scalar `tier` is
+// never anything but the strongest of its `claims[].proof_tier` values — the
+// spec states this as a rule, but nothing checked it, and a scalar that
+// silently disagrees with its own claims is exactly the failure mode #1711
+// was raised to close.
+// A Map, not a plain object: `PROOF_TIER_RANK["constructor"]` on an object
+// literal returns Object.prototype.constructor — a function, not undefined — so
+// a model-supplied `proof_tier: "constructor"` passed the `!== undefined` guard,
+// made Math.max return NaN, and silently switched the scalar check below off for
+// the whole summary. That is CLAUDE.md's third silent-pass mode (a field-name
+// match colliding with an unrelated key). The Python table this mirrors
+// (test_proof_conclusion.py `_TIER_RANK`) is safe because it uses .get(k, -1).
+export const PROOF_TIER_RANK = new Map<string, number>([
+  ["disproved", 0],
+  ["not_proved", 1],
+  ["possible", 2],
+  ["probable", 3],
+  ["proved", 4],
+]);
+
 const SELECTION_BASIS_VALUES = new Set([
   "timeline_gap", "unresolved_conflict", "fan_pivot", "hypothesis_test",
   "objective_decomposition", "new_evidence", "record_found_incidentally",
@@ -93,6 +116,10 @@ const DATE_CERTAINTY_TIMELINE = new Set([
 const EXTERNAL_SITE_VALUES = new Set([
   "ancestry", "myheritage", "findmypast", "familysearch_web",
   "findagrave", "newspapers",
+  // Free to search, but bot-protected against automated fetch, so they run the
+  // same click-capture loop as the paid sites. `digital_newspaper_archive` is
+  // the bucket for state/regional archives; which one is in `url_generated`.
+  "chronicling_america", "digital_newspaper_archive",
 ]);
 
 /**
@@ -262,6 +289,49 @@ function checkRequired(
   }
 }
 
+/**
+ * A required-object FIELD holding something that is not an object.
+ *
+ * The three call sites below all opened with
+ * `if (typeof X === "object" && X !== null)`, which is correct about not
+ * crashing and silent about everything else: a primitive in the slot skipped
+ * the whole block, so `exhaustive_declaration: "yes"` validated clean while
+ * `research.schema.json` requires an object. Absent and null are left alone —
+ * `checkRequired` owns those and reports them already, and re-reporting here
+ * would double every message.
+ */
+function checkObjectField(value: unknown, path: string, field: string, report: ValidationReport): void {
+  if (value === undefined || value === null) return; // checkRequired's job
+  if (!isObject(value) || Array.isArray(value)) {
+    addError(report, path, `${field} must be an object — got ${Array.isArray(value) ? "array" : typeof value}`);
+  }
+}
+
+/**
+ * A document array element that can be validated at all: an object.
+ *
+ * `checkRequired` tests `field in obj`, and `in` THROWS on null, undefined and
+ * every primitive — so a single stray `null` anywhere in one of these arrays
+ * (`plans: [null]`, a hand edit, a truncated write) took down `validateParsed`
+ * with `TypeError: Cannot use 'in' operator to search for 'id' in null` instead
+ * of reporting an error. That matters because every writer tool validates the
+ * whole document: one bad element made all of them fail with a message naming
+ * no field and no fix, and `validate_research_schema` crashed rather than
+ * telling the user what to repair.
+ *
+ * Arrays are deliberately NOT rejected here. `typeof [] === "object"` and `in`
+ * does not throw on one, so an array element keeps the behaviour it has today
+ * (its required fields report as missing) — this closes the crash, and does not
+ * quietly re-shape unrelated messages.
+ *
+ * Returns false when the caller should report-and-skip the element.
+ */
+function isObjectEntry(value: unknown, path: string, report: ValidationReport): boolean {
+  if (isObject(value)) return true;
+  addError(report, path, `must be an object — got ${value === null ? "null" : typeof value}`);
+  return false;
+}
+
 function checkIdPrefix(
   objId: any,
   expectedPrefix: string,
@@ -304,6 +374,46 @@ function checkIsoDate(
     addError(report, path, `'${field}' must be an ISO date (YYYY-MM-DD), got '${value}'`);
   }
 }
+
+/**
+ * The conflict statuses that count as SETTLED for
+ * `proof_summaries[].resolved_conflict_ids` (issue #1972 V5).
+ *
+ * `moot` is included, which deviates from the deep dive's rule text
+ * (docs/deep-dives/conflict-resolution-findings-2026-08-27.md § V5 says
+ * `resolved` only). Four shipped sites already treat the pair as jointly
+ * terminal, and one of them is this engine instructing the agent:
+ * research-append.ts:1434 ("'resolved' and 'moot' both settle a conflict"),
+ * research-append.ts:1478-1479 (the completion-gate error says set it to
+ * "'resolved' … or 'moot'"), research-schema-spec.md:261 and :616, and
+ * eval/harness/validators/test_hypothesis_tracking.py:152.
+ *
+ * The harm V5 names is a proof summary claiming an OPEN conflict is settled.
+ * `moot` is not open, so the harm does not reach it — while a `resolved`-only
+ * rule would refuse a write the moment an agent follows the instruction above,
+ * with no field anywhere to record that a moot conflict was accounted for.
+ * Rejecting a legitimate citation costs a blocked write; permitting a slightly
+ * imprecise one costs nothing downstream.
+ *
+ * Tightening is NOT a one-entry change, which an earlier version of this comment
+ * claimed. It is TEN sites: this constant, three comment sites (this block, the
+ * conflicts-loop note, and the proof_summaries block), the shipped error text,
+ * the `research-schema-spec.md` row, and the four fixture READMEs. (Eleven was
+ * the reviewed count and included a hand-copied predicate in the corpus scan;
+ * the `export` below eliminated it, so ten is right.)
+ *
+ * `export`ed so `validator.test.ts`'s corpus scan imports it rather than
+ * hand-copying the predicate. What that buys is a single source of truth, NOT
+ * detection: narrowing this constant to `["resolved"]` leaves that scan green,
+ * because zero shipped fixtures cite a `moot` conflict — the pre-existing
+ * "accepts a citation of a MOOT conflict" test is what catches the narrowing.
+ * An earlier version of this comment claimed the scan was the one site a test
+ * guarded and therefore the one that would fail silently; that was false, and
+ * it was the same class of defect the round was written to fix. The scan's
+ * `moot` half becomes load-bearing only once a fixture cites one; the synthetic
+ * join test alongside it covers that in the meantime.
+ */
+export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
 
 function checkRefExists(
   refId: string,
@@ -356,6 +466,13 @@ interface ResearchIds {
   assertions: Set<string>;
   person_evidence: Set<string>;
   conflicts: Set<string>;
+  /**
+   * Conflicts in a terminal state — `resolved` or `moot`. Separate from
+   * `conflicts` because `proof_summaries[].resolved_conflict_ids` must reference
+   * a conflict that both EXISTS and is settled, and `checkRefExists` only
+   * answers the first half (issue #1972 V5).
+   */
+  settled_conflicts: Set<string>;
   hypotheses: Set<string>;
   timelines: Set<string>;
   proof_summaries: Set<string>;
@@ -480,7 +597,13 @@ export const RESEARCH_SHAPES = {
   proof_summary: new Set([
     "id", "question_id", "tier", "vehicle", "supporting_assertion_ids",
     "resolved_conflict_ids", "exhaustive_search_summary",
-    "narrative_markdown",
+    "narrative_markdown", "claims",
+  ]),
+  proof_claim: new Set([
+    "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+  ]),
+  proof_claim_relationship: new Set([
+    "type", "parent", "child",
   ]),
   evaluation_entry: new Set([
     "id", "focus", "target_id", "target_type", "verdict", "file_path",
@@ -505,6 +628,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     assertions: new Set(),
     person_evidence: new Set(),
     conflicts: new Set(),
+    settled_conflicts: new Set(),
     hypotheses: new Set(),
     timelines: new Set(),
     proof_summaries: new Set(),
@@ -547,8 +671,15 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const rp = data.researcher_profile;
   if (rp !== null && rp !== undefined) {
     const rpPath = `${path}/researcher_profile`;
-    if (typeof rp !== "object") {
-      addError(report, rpPath, "researcher_profile must be an object");
+    // `typeof rp !== "object"` catches a string or a number and MISSES `[]`,
+    // which is the array arm `checkObjectField` exists to add — the class this
+    // helper closes was still open at this one site.
+    if (!isObject(rp) || Array.isArray(rp)) {
+      addError(
+        report,
+        rpPath,
+        `researcher_profile must be an object — got ${Array.isArray(rp) ? "array" : typeof rp}`,
+      );
     } else {
       checkAllowedKeys(rp, RESEARCH_SHAPES.researcher_profile, "researcher_profile objects", rpPath, report);
       if ("experience_level" in rp && rp.experience_level !== null) {
@@ -586,6 +717,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       for (let i = 0; i < holdings.length; i++) {
         const kh = holdings[i];
         const khPath = `${path}/known_holdings[${i}]`;
+        if (!isObjectEntry(kh, khPath, report)) continue;
         checkRequired(kh, [
           "id", "holding_type", "description", "confidence", "promoted", "created",
         ], khPath, report, NULLABLE_FIELDS);
@@ -616,6 +748,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
     const qp = `${path}/questions[${i}]`;
+    if (!isObjectEntry(q, qp, report)) continue;
     checkRequired(q, [
       "id", "question", "rationale", "selection_basis", "priority",
       "status", "depends_on", "unblocks", "created", "resolved",
@@ -641,7 +774,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
     // Exhaustive declaration
     const ed = q.exhaustive_declaration;
-    if (typeof ed === "object" && ed !== null) {
+    checkObjectField(ed, `${qp}/exhaustive_declaration`, "exhaustive_declaration", report);
+    if (isObject(ed) && !Array.isArray(ed)) {
       checkRequired(ed, ["declared", "log_entry_ids"], `${qp}/exhaustive_declaration`, report, NULLABLE_FIELDS);
       checkAllowedKeys(ed, RESEARCH_SHAPES.exhaustive_declaration, "exhaustive_declaration objects", `${qp}/exhaustive_declaration`, report);
       if (ed.declared && (!ed.log_entry_ids || ed.log_entry_ids.length === 0)) {
@@ -701,6 +835,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < plans.length; i++) {
     const pl = plans[i];
     const pp = `${path}/plans[${i}]`;
+    if (!isObjectEntry(pl, pp, report)) continue;
     checkRequired(pl, ["id", "question_id", "status", "created", "items"], pp, report, NULLABLE_FIELDS);
     checkAllowedKeys(pl, RESEARCH_SHAPES.plan, "plans", pp, report);
     if ("id" in pl) {
@@ -715,10 +850,45 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     checkIsoDate(pl, "created", pp, report);
 
+    // `items` is required (above), an ARRAY, and NON-EMPTY. Only the first of
+    // those three was enforced here, while `research.schema.json`
+    // (`$defs/plan.items`: `type: array`, `minItems: 1`), its `packages/schema`
+    // mirror, and `research-schema-spec.md` ("At least one plan item") all
+    // state the other two. TWO of the four enforcers had drifted: this one,
+    // and `packages/schema`'s TS mirror, which typed `items` as `PlanItem[]`,
+    // which is why only the eval harness's jsonschema pass ever saw an empty
+    // plan and production shipped it to the viewer unchecked.
+    //
+    // An empty plan is what the write path produced when a batch's plan_items
+    // ops named a DIFFERENT plan than the one the batch created: the items
+    // landed elsewhere and the new plan ended with nothing. `research_append`
+    // names that cause itself (`emptyCreatedPlanErrors`); this is the
+    // document-level backstop, and it is also what a hand edit hits.
+    // `pl.items !== null` only: `checkRequired` reports a null required field,
+    // so excluding null avoids a doubled complaint. An explicitly-`undefined`
+    // key is NOT excluded — `checkRequired` tests `field in obj` and then
+    // `=== null`, so a present-but-undefined `items` slipped both checks and
+    // reported nothing at all. Unreachable through JSON, reachable from code.
+    if ("items" in pl && pl.items !== null && !Array.isArray(pl.items)) {
+      addError(
+        report,
+        `${pp}/items`,
+        `must be an array of plan items — got ${typeof pl.items}.`,
+      );
+    } else if (Array.isArray(pl.items) && pl.items.length === 0) {
+      addError(
+        report,
+        `${pp}/items`,
+        "is empty — a plan carries at least one plan item. Append the items in the same call: " +
+          "one 'plan_items' op per item, each carrying this plan's id.",
+      );
+    }
+
     const items = Array.isArray(pl.items) ? pl.items : [];
     for (let j = 0; j < items.length; j++) {
       const item = items[j];
       const ip = `${pp}/items[${j}]`;
+      if (!isObjectEntry(item, ip, report)) continue;
       checkRequired(item, [
         "id", "sequence", "record_type", "jurisdiction",
         "date_range", "repository", "rationale", "fallback_for", "status",
@@ -739,6 +909,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < log.length; i++) {
     const entry = log[i];
     const lp = `${path}/log[${i}]`;
+    if (!isObjectEntry(entry, lp, report)) continue;
     checkRequired(entry, [
       "id", "plan_item_id", "performed", "tool", "query",
       "outcome", "results_examined", "external_site",
@@ -768,7 +939,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (entry.tool === "external_site" && ext === null) {
       addError(report, lp, "tool is 'external_site' but external_site object is null");
     }
-    if (typeof ext === "object" && ext !== null) {
+    checkObjectField(ext, `${lp}/external_site`, "external_site", report);
+    if (isObject(ext) && !Array.isArray(ext)) {
       checkRequired(ext, ["site", "url_generated", "capture_received"], `${lp}/external_site`, report, NULLABLE_FIELDS);
       checkAllowedKeys(ext, RESEARCH_SHAPES.external_site_detail, "external_site objects", `${lp}/external_site`, report);
       if ("site" in ext && !EXTERNAL_SITE_VALUES.has(ext.site)) {
@@ -782,6 +954,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < sources.length; i++) {
     const src = sources[i];
     const sp = `${path}/sources[${i}]`;
+    if (!isObjectEntry(src, sp, report)) continue;
     checkRequired(src, [
       "id", "gedcomx_source_description_id", "citation",
       "citation_detail", "source_classification", "repository",
@@ -801,7 +974,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
 
     const cd = src.citation_detail;
-    if (typeof cd === "object" && cd !== null) {
+    checkObjectField(cd, `${sp}/citation_detail`, "citation_detail", report);
+    if (isObject(cd) && !Array.isArray(cd)) {
       checkRequired(cd, ["who", "what", "when_created", "when_accessed", "where", "where_within"],
                    `${sp}/citation_detail`, report, NULLABLE_FIELDS);
       checkAllowedKeys(cd, RESEARCH_SHAPES.citation_detail, "citation_detail objects", `${sp}/citation_detail`, report);
@@ -813,6 +987,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < assertions.length; i++) {
     const a = assertions[i];
     const ap = `${path}/assertions[${i}]`;
+    if (!isObjectEntry(a, ap, report)) continue;
     checkRequired(a, [
       "id", "source_id", "record_id", "record_role", "fact_type",
       "value", "information_quality", "informant", "informant_proximity",
@@ -856,6 +1031,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < personEvidence.length; i++) {
     const pe = personEvidence[i];
     const pp = `${path}/person_evidence[${i}]`;
+    if (!isObjectEntry(pe, pp, report)) continue;
     checkRequired(pe, [
       "id", "assertion_id", "person_id", "confidence",
       "rationale", "created",
@@ -879,6 +1055,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < conflicts.length; i++) {
     const c = conflicts[i];
     const cp = `${path}/conflicts[${i}]`;
+    if (!isObjectEntry(c, cp, report)) continue;
     checkRequired(c, [
       "id", "conflict_type", "description", "competing_assertion_ids",
       "status", "blocks_question_ids",
@@ -893,6 +1070,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("status" in c) {
       checkEnum(c.status, "conflict_status", cp, report);
+      // Collected here, and read by the proof_summaries block below. Safe
+      // because validateResearch is a single sequential pass and conflicts
+      // precede proof_summaries in it.
+      if (SETTLED_CONFLICT_STATUSES.has(c.status) && typeof c.id === "string") {
+        ids.settled_conflicts.add(c.id);
+      }
     }
 
     const ct = c.conflict_type;
@@ -924,6 +1107,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < hypotheses.length; i++) {
     const h = hypotheses[i];
     const hp = `${path}/hypotheses[${i}]`;
+    if (!isObjectEntry(h, hp, report)) continue;
     checkRequired(h, [
       "id", "claim", "status", "supporting_assertion_ids",
       "contradicting_assertion_ids", "ruled_out", "related_question_ids",
@@ -946,6 +1130,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < timelines.length; i++) {
     const t = timelines[i];
     const tp = `${path}/timelines[${i}]`;
+    if (!isObjectEntry(t, tp, report)) continue;
     checkRequired(t, [
       "id", "label", "person_ids", "generated", "events", "gaps",
     ], tp, report, NULLABLE_FIELDS);
@@ -959,6 +1144,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     for (let j = 0; j < events.length; j++) {
       const ev = events[j];
       const ep = `${tp}/events[${j}]`;
+      if (!isObjectEntry(ev, ep, report)) continue;
       checkRequired(ev, ["date", "date_certainty", "event_type", "description", "assertion_ids"], ep, report, NULLABLE_FIELDS);
       checkAllowedKeys(ev, RESEARCH_SHAPES.timeline_event, "timeline events", ep, report);
       if ("date_certainty" in ev && !DATE_CERTAINTY_TIMELINE.has(ev.date_certainty)) {
@@ -971,6 +1157,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     for (let j = 0; j < gaps.length; j++) {
       const gap = gaps[j];
       const gp = `${tp}/gaps[${j}]`;
+      if (!isObjectEntry(gap, gp, report)) continue;
       checkRequired(gap, ["start", "end", "expected_events", "severity"], gp, report, NULLABLE_FIELDS);
       checkAllowedKeys(gap, RESEARCH_SHAPES.timeline_gap, "timeline gaps", gp, report);
       if ("severity" in gap) {
@@ -985,6 +1172,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   for (let i = 0; i < proofSummaries.length; i++) {
     const ps = proofSummaries[i];
     const psp = `${path}/proof_summaries[${i}]`;
+    if (!isObjectEntry(ps, psp, report)) continue;
     checkRequired(ps, [
       "id", "question_id", "tier", "vehicle",
       "supporting_assertion_ids", "resolved_conflict_ids",
@@ -1003,6 +1191,213 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
+    }
+
+    // resolved_conflict_ids -> conflicts[].id, and that conflict must be
+    // SETTLED (issue #1972 V5, labelled nothing-checks). Before this, the field
+    // was checked for presence and shape only, so a proof summary could claim
+    // an open conflict was settled and no tool, schema or eval check could see
+    // it — the state four shipped fixtures were in.
+    //
+    // The message deliberately does NOT name the conflict's live status.
+    // `introduced-errors.ts`'s diff key is the normalized path PLUS the message
+    // text, so a varying message makes an unchanged defect read as newly
+    // introduced and refuses the write — a self-inflicted freeze on exactly the
+    // pre-existing drift that module exists to tolerate.
+    //
+    // The reason is NOT "only one status can fail, so the text cannot vary" —
+    // that was the first version of this comment and it is false. MANY document
+    // states reach this error with one byte-identical message; ten were run
+    // (`unresolved`, absent, `null`, `42`, `"x"`, `true`, `[]`, `{}`, `""`,
+    // `"Resolved"`) and all ten agree. `unresolved`, an absent `status` key,
+    // `null`, a number and an out-of-enum string are EXAMPLES rather than the
+    // count. A status-naming message would differ across them.
+    //
+    // Which makes the decision MORE load-bearing than a latency argument, not
+    // less. `status` absent -> `unresolved` is a strict improvement to the
+    // document, and it returns `valid: true` only because the message is
+    // status-free. Measured both ways: embedding the status alone reds the
+    // message test; embedding it AND dropping `moot` — the deep dive's rule
+    // text plus a naturally informative message — reds
+    // introduced-errors.test.ts's `unresolved -> moot` test, where `valid` goes
+    // false on an unchanged defect. So the two decisions are coupled, and
+    // shipping the dive verbatim with this message would have frozen such a
+    // project.
+    // The CONTAINER type, not just the entries. Without this the whole V5 rule
+    // is bypassed by dropping two brackets: measured through the real
+    // `researchAppend` on a project whose `c_001` is unresolved, at
+    // `tier: "not_proved"` so the tier cap is not what answers —
+    //
+    //   ["c_001"]        ok=false   refused by V5, correctly
+    //   "c_001"          ok=true    persisted verbatim, c_001 still unresolved
+    //   "[\"c_001\"]"     ok=true    persisted verbatim
+    //   [123]            ok=false   refused by the entry-type check below
+    //
+    // So the refused write became a legal write, asserting exactly the false
+    // thing V5 exists to forbid. `coerceJsonArg` is applied to `entry` as a
+    // whole (`research-append.ts`) but not to fields inside it, which is why the
+    // JSON-string form survives.
+    //
+    // It also breaks a downstream reader: `ProofSummariesSection.tsx` guards on
+    // `.length > 0` and then calls `.map`, and a bare string has truthy length
+    // while `.map` throws. The sibling `claims` field is guarded the
+    // same way further down this same block (85 lines by `addError`), so this
+    // was a deviation from a local convention rather than a new idea. Two
+    // earlier versions of this sentence said 38 and then 1347 — the first
+    // matched no anchor, the second came from a shell variable that silently
+    // evaluated to empty. A line count is a poor thing to cite in a file this
+    // merge-prone; the field name is the durable half.
+    if (
+      "resolved_conflict_ids" in ps &&
+      ps.resolved_conflict_ids !== null &&
+      !Array.isArray(ps.resolved_conflict_ids)
+    ) {
+      // The value is embedded for the same reason the entry check below embeds
+      // its own: `errorKey` is the normalized path PLUS the message, so a
+      // static message keys identically before and after, and a change from one
+      // non-array to a DIFFERENT non-array is demoted as pre-existing and
+      // written. Measured: `"c_001"` -> `"c_002"`, `-> 42` and
+      // `-> '["c_002"]'` all persisted under a static message and are refused
+      // with the value in it, while an unchanged value stays tolerated so there
+      // is no self-inflicted freeze.
+      addError(
+        report,
+        psp,
+        `'resolved_conflict_ids' must be an array (got ` +
+          `${JSON.stringify(ps.resolved_conflict_ids)})`
+      );
+    }
+    // `supporting_assertion_ids` gets the SAME THREE checks, because the class
+    // is what recurs rather than the field: every array-typed field on a proof
+    // summary needs a container-type guard, an entry-type check, and a
+    // referential check where it holds ids — each embedding the offending value.
+    //
+    // It had none of the three. Measured through the real `researchAppend`
+    // before this: `"a_001"`, `{0:"a_001"}`, `["a_999"]` (dangling) and `[42]`
+    // were ALL accepted and persisted, with no error at all. The dangling case
+    // is the one that matters — it is the same shape V5 exists to remove, on
+    // the sibling field, feeding the same reader (`ProofSummariesSection.tsx`
+    // guards `.length > 0` then calls `.map`).
+    //
+    // Zero shipped documents break: two independent scans put it at 185-186
+    // documents carrying the field and 2,123-2,131 references, with zero
+    // dangling, non-string or non-array. That is what makes it a fix here
+    // rather than a card.
+    if (
+      "supporting_assertion_ids" in ps &&
+      ps.supporting_assertion_ids !== null &&
+      !Array.isArray(ps.supporting_assertion_ids)
+    ) {
+      addError(
+        report,
+        psp,
+        `'supporting_assertion_ids' must be an array (got ` +
+          `${JSON.stringify(ps.supporting_assertion_ids)})`
+      );
+    }
+    if (Array.isArray(ps.supporting_assertion_ids)) {
+      for (const aid of ps.supporting_assertion_ids) {
+        if (typeof aid !== "string") {
+          addError(
+            report,
+            psp,
+            `supporting_assertion_ids contains a non-string entry ` +
+              `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
+          );
+          continue;
+        }
+        checkRefExists(aid, ids.assertions, "assertion", psp, report);
+      }
+    }
+
+    if (Array.isArray(ps.resolved_conflict_ids)) {
+      for (const cid of ps.resolved_conflict_ids) {
+        if (typeof cid !== "string") {
+          // Previously a silent skip. Both schema trees declare an array of
+          // `^c_` strings and the runtime validator does not load them, so
+          // `[123]`, `[null]` and `[{...}]` added no error anywhere — measured
+          // as a delta against an otherwise-valid document. This is the
+          // cheapest place to close that.
+          addError(
+            report,
+            psp,
+            `resolved_conflict_ids contains a non-string entry ` +
+              `(${JSON.stringify(cid)}); every entry must be a 'c_' conflict id`
+          );
+          continue;
+        }
+        if (!ids.conflicts.has(cid)) {
+          checkRefExists(cid, ids.conflicts, "conflict", psp, report);
+        } else if (!ids.settled_conflicts.has(cid)) {
+          addError(
+            report,
+            psp,
+            `resolved_conflict_ids references conflict '${cid}' which is not ` +
+              `settled ('resolved' or 'moot' required); settle it first, or ` +
+              `have the citation removed before re-opening it, ` +
+              `proof-conclusion owns resolved_conflict_ids`
+          );
+        }
+      }
+    }
+
+    // Per-claim tier breakdown (optional, additive). Nothing walked into a
+    // nested object inside proof_summary before this: without this loop an
+    // arbitrary string in claims[].proof_tier would pass validation and the
+    // tree-encoding gate would then read it.
+    if (ps.claims !== undefined && ps.claims !== null) {
+      const claims = Array.isArray(ps.claims) ? ps.claims : [];
+      if (!Array.isArray(ps.claims)) {
+        addError(report, psp, "'claims' must be an array");
+      }
+      const seenClaimLabels = new Set<string>();
+      let maxClaimRank = -1;
+      for (let j = 0; j < claims.length; j++) {
+        const claim = claims[j];
+        const clp = `${psp}/claims[${j}]`;
+        // Same guard the other 21 element loops carry: `checkRequired` tests
+        // `field in obj`, and `in` throws on null and every primitive. Without
+        // it a stray `claims: [null]` from LLM output fails every writer tool
+        // with a TypeError naming no field instead of a repairable error.
+        if (!isObjectEntry(claim, clp, report)) continue;
+        checkRequired(claim, [
+          "claim", "proof_tier", "supporting_assertion_ids", "relationship",
+        ], clp, report, NULLABLE_FIELDS);
+        checkAllowedKeys(claim, RESEARCH_SHAPES.proof_claim, "proof_summaries claims", clp, report);
+        if (claim && typeof claim === "object" && "claim" in claim && typeof claim.claim === "string") {
+          if (seenClaimLabels.has(claim.claim)) {
+            addError(report, clp, `duplicate claim label '${claim.claim}' — claims[] entries must be uniquely named (the eval validator and viewer both look one up by this label)`);
+          }
+          seenClaimLabels.add(claim.claim);
+        }
+        if (claim && typeof claim === "object" && "proof_tier" in claim) {
+          checkEnum(claim.proof_tier, "proof_tier", clp, report);
+          const rank = PROOF_TIER_RANK.get(claim.proof_tier);
+          if (rank !== undefined) maxClaimRank = Math.max(maxClaimRank, rank);
+        }
+        if (claim && typeof claim === "object" && "relationship" in claim && claim.relationship) {
+          const rel = claim.relationship;
+          const relp = `${clp}/relationship`;
+          if (!isObjectEntry(rel, relp, report)) continue;
+          checkRequired(rel, ["type", "parent", "child"], relp, report, NULLABLE_FIELDS);
+          checkAllowedKeys(rel, RESEARCH_SHAPES.proof_claim_relationship, "proof_claim relationship", relp, report);
+          if (rel && typeof rel === "object" && "type" in rel && rel.type !== "ParentChild") {
+            addError(report, relp, `relationship.type must be 'ParentChild', got '${rel.type}'`);
+          }
+        }
+      }
+      // The scalar must carry the STRONGER of the per-claim tiers (spec §7) —
+      // never the weaker, and never anything the claims themselves don't
+      // support. Checked only once every claim's own tier is a recognized
+      // enum value, so one bad claim doesn't cascade into a confusing second
+      // error here on top of the one already reported above.
+      if (maxClaimRank >= 0 && typeof ps.tier === "string") {
+        const scalarRank = PROOF_TIER_RANK.get(ps.tier);
+        if (scalarRank !== undefined && scalarRank !== maxClaimRank) {
+          const strongest = [...PROOF_TIER_RANK].find(([, r]) => r === maxClaimRank)?.[0];
+          addError(report, psp, `tier '${ps.tier}' does not match the stronger of claims[].proof_tier ('${strongest}') — the scalar must carry the strongest per-claim tier`);
+        }
+      }
     }
   }
 
@@ -1032,6 +1427,7 @@ function validateEvaluations(
   for (let i = 0; i < evaluations.length; i++) {
     const ev = evaluations[i];
     const ep = `${path}/evaluations[${i}]`;
+    if (!isObjectEntry(ev, ep, report)) continue;
 
     checkRequired(ev, [
       "id", "focus", "target_id", "target_type", "verdict",
@@ -1100,6 +1496,7 @@ function validateLocalities(
   for (let i = 0; i < localities.length; i++) {
     const loc = localities[i];
     const lp = `${path}/localities[${i}]`;
+    if (!isObjectEntry(loc, lp, report)) continue;
     checkRequired(
       loc,
       ["id", "place", "pages_read", "source", "created"],
@@ -1271,6 +1668,7 @@ export function validateGedcomx(
   for (let i = 0; i < sources.length; i++) {
     const src = sources[i];
     const sp = `${path}/sources[${i}]`;
+    if (!isObjectEntry(src, sp, report)) continue;
     checkRequired(src, ["id", "title"], sp, report, NULLABLE_FIELDS);
     if (src && typeof src === "object") {
       for (const key of Object.keys(src)) {
@@ -1296,6 +1694,7 @@ export function validateGedcomx(
   for (let i = 0; i < persons.length; i++) {
     const person = persons[i];
     const pp = `${path}/persons[${i}]`;
+    if (!isObjectEntry(person, pp, report)) continue;
     checkRequired(person, ["id", "gender", "names"], pp, report, NULLABLE_FIELDS);
     checkAllowedKeys(person, TREE_PERSON_FIELDS, "persons", pp, report);
     checkTreeStrings(person, ["ark"], pp, report);
@@ -1316,6 +1715,7 @@ export function validateGedcomx(
     for (let j = 0; j < names.length; j++) {
       const name = names[j];
       const np = `${pp}/names[${j}]`;
+      if (!isObjectEntry(name, np, report)) continue;
       checkRequired(name, ["id", "given", "surname"], np, report, NULLABLE_FIELDS);
       checkAllowedKeys(name, TREE_NAME_FIELDS, "names", np, report);
       checkTrueFlag(name, "preferred", np, report);
@@ -1338,6 +1738,7 @@ export function validateGedcomx(
   for (let i = 0; i < relationships.length; i++) {
     const rel = relationships[i];
     const rp = `${path}/relationships[${i}]`;
+    if (!isObjectEntry(rel, rp, report)) continue;
     checkRequired(rel, ["id", "type"], rp, report, NULLABLE_FIELDS);
     if ("type" in rel) {
       checkEnum(rel.type, "relationship_type", rp, report);
@@ -1469,6 +1870,10 @@ function validateCrossFile(
   const sources = Array.isArray(research.sources) ? research.sources : [];
   for (let i = 0; i < sources.length; i++) {
     const src = sources[i];
+    // A malformed element yields no cross-file ref: validateResearch already
+    // reported its shape, and dereferencing it here threw, taking the whole
+    // cross-file pass down with it.
+    if (!isObject(src)) continue;
     const ref = src.gedcomx_source_description_id;
     if (ref && !gedcomxSourceIds.has(ref)) {
       addError(
@@ -1480,9 +1885,10 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings). The set of fields walked here is shared with
-  // the merge_tree_persons remap via PERSON_ID_REF_FIELDS so the two cannot
-  // drift; the walker preserves this check's original order and messages.
+  // timelines, known_holdings, proof_summaries[].claims[].relationship). The
+  // set of fields walked here is shared with the merge_tree_persons remap via
+  // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
+  // check's original order and messages.
   for (const ref of iteratePersonIdRefs(research)) {
     if (!gedcomxPersonIds.has(ref.pid)) {
       addError(report, ref.path, ref.message);
@@ -1605,6 +2011,21 @@ async function validateSidecars(
 
     if (!entry.results_ref) {
       addError(report, ap, `has record_persona_id but its log entry '${logId}' has no sidecar (results_ref is null)`);
+      continue;
+    }
+
+    // A non-persona producer (fulltext_search, external_links_search) stages a
+    // sidecar but no GedcomX personas, so a record_persona_id on such an
+    // assertion is invalid regardless of record_id. Say why, rather than the
+    // misleading "does not match any result's recordId" the recordId-only match
+    // produced for these sidecars — they key on `id`, never `recordId` (#2038).
+    if (!PERSONA_BEARING_PRODUCERS.has(entry.tool)) {
+      addError(
+        report,
+        ap,
+        `record_persona_id must be null — log entry '${logId}' is ${entry.tool}-sourced, ` +
+          "and full-text / external-link results carry transcript text, names and places but no GedcomX personas",
+      );
       continue;
     }
 

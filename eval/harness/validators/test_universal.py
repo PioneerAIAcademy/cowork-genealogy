@@ -38,6 +38,7 @@ treated as "not applicable to this state" — recorded as passed with a
 skip marker, not as a failure.
 """
 
+import re
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,7 @@ from harness.ownership import (
     RESEARCH_JSON,
     TREE_GEDCOMX_JSON,
     writer_sets,
+    writer_tool_sets,
 )
 from harness.schema_validator import (
     validate_research_json,
@@ -442,7 +444,104 @@ def _only_project_updated_changed(before: dict, after: dict) -> bool:
     return bp_copy == ap_copy and bp.get("updated") != ap.get("updated")
 
 
-def test_ownership_table(before_state, after_state, skill_frontmatter, test):
+
+def _bare_tool_name(tool: str) -> str:
+    """`mcp__genealogy__merge_tree_persons` -> `merge_tree_persons`.
+
+    The server prefix is chosen by whoever registers the MCP server and is not
+    stable across environments (CLAUDE.md, "Dual-spelled tool names"), so match
+    on the last segment rather than on any one spelling.
+    """
+    return tool.rsplit("__", 1)[-1] if tool else ""
+
+
+def _tools_called(tool_calls) -> set[str]:
+    return {_bare_tool_name(c.get("tool", "")) for c in (tool_calls or []) if isinstance(c, dict)}
+
+
+def _merge_remap(tool_calls) -> dict[str, str]:
+    """`collapsedId -> survivorId` accumulated over every merge call in the run.
+
+    `merge_tree_persons` takes `merges: [[survivorId, collapsedId], ...]`. An id
+    may not be both a survivor and a collapsed id (the tool rejects chains), so
+    the pairs compose into a flat mapping.
+    """
+    remap: dict[str, str] = {}
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "merge_tree_persons":
+            continue
+        # A merge that did not succeed wrote nothing, so it explains no delta.
+        # Requiring `ok is True` rather than rejecting `ok is False` is what makes
+        # this right on the unit plane: `merge_tree_persons` is not in LIVE_TOOLS
+        # and no fixture declares it, so a call there returns
+        # `{"error": "fixture_not_found"}` with no `ok` key at all. Reading that
+        # as an authorization would let a skill call the merge, watch it fail,
+        # hand-write the permutation with `research_append`, and be waved through
+        # by the one plane that guards the section.
+        if (call.get("response") or {}).get("ok") is not True:
+            continue
+        for pair in (call.get("args") or {}).get("merges") or []:
+            if isinstance(pair, (list, tuple)) and len(pair) == 2:
+                survivor, collapsed = pair
+                if isinstance(survivor, str) and isinstance(collapsed, str):
+                    remap[collapsed] = survivor
+    return remap
+
+
+def _remap_collapsing(value, remap: dict[str, str]):
+    """Substitute collapsed ids, dropping ONLY the repeats the substitution made.
+
+    Merging B into A turns `subject_person_ids: [A, B]` into `[A]`, so the
+    remapped before-state must collapse `[A, A]` back to `[A]` or a legitimate
+    merge would be refused. It must NOT dedupe generally: deduping both sides
+    erases every pre-existing repeat from the comparison, so a delta that is
+    only `["I5", "I5", "I7"] -> ["I5", "I7"]` reads as "explained" by a merge
+    over ids that appear nowhere in the section.
+
+    An element is dropped only when its image is already present AND that
+    presence involves the substitution — either this element was remapped, or
+    the occurrence already in `out` got there by being remapped. Both
+    orderings therefore collapse (`[A, B]` and `[B, A]` alike), while a repeat
+    that predates the merge survives on both sides and breaks the comparison,
+    which is what it should do.
+
+    Only lists of plain strings collapse — `person_evidence[]` entries stay
+    distinct objects even when two come to share a `person_id`.
+    """
+    if isinstance(value, str):
+        return remap.get(value, value)
+    if isinstance(value, list):
+        if value and all(isinstance(v, str) for v in value):
+            out: list[str] = []
+            from_remap: set[str] = set()
+            for v in value:
+                nv = remap.get(v, v)
+                if nv in out and (v in remap or nv in from_remap):
+                    continue
+                if v in remap:
+                    from_remap.add(nv)
+                out.append(nv)
+            return out
+        return [_remap_collapsing(v, remap) for v in value]
+    if isinstance(value, dict):
+        return {k: _remap_collapsing(v, remap) for k, v in value.items()}
+    return value
+
+
+def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
+    """True when the section's whole delta is the merge's id permutation.
+
+    Deliberately exact: the remapped before-state must equal the after-state.
+    A run that merges *and* also edits the section on its own fails, because the
+    extra edit survives the substitution and breaks the comparison. That is the
+    false-pass this authorization path would otherwise open.
+    """
+    if not remap:
+        return False
+    return _remap_collapsing(before_section, remap) == after_section
+
+
+def test_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
     """Universal: skill may only modify research.json sections it owns.
 
     Driven by the ownership manifest's research.json rows. A skill modifying a
@@ -452,6 +551,23 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
     The skill name is read from skill_frontmatter["name"]. If the
     frontmatter is missing a name, we skip rather than fail (caller
     error, not a skill defect).
+
+    **Two authorization paths.** A section diff is allowed when the calling
+    skill is in the section's `callers`, OR when the run called a tool the
+    section's `writerTools` names and the whole delta is explained by that
+    tool's write. Ownership is expressed at skill granularity, but a merge is a
+    tool-granular operation: `merge_tree_persons` repoints every reference to a
+    collapsed person in one atomic write, and the skill that calls it is never
+    an owner of the four sections it touches. Widening `callers` instead would
+    grant that skill the section by *any* path, including a direct
+    `research_append` — strictly more than the merge needs, and it reopens the
+    failure the `person_evidence` row names.
+
+    Scoped to research.json. `test_tree_ownership_table` does NOT take this
+    path: the tree rows already list `merge_tree_persons` among their
+    `writerTools` *and* name tree-edit a caller, so the clause would authorize
+    nothing there that is not already authorized, while silently widening
+    `materialize_facts` and `tree_forget` to callers that have never asked.
 
     Skipped on negative tests: the skill under test is supposed to
     decline, so any research.json change was made by the routed-to
@@ -476,6 +592,9 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
         pytest.skip("skill_frontmatter has no `name` field")
 
     owners = writer_sets(RESEARCH_JSON)
+    writer_tools = writer_tool_sets(RESEARCH_JSON)
+    called = _tools_called(tool_calls)
+    remap = _merge_remap(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
     for section in modified:
@@ -484,6 +603,14 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test):
             # If the only delta inside `project` is that timestamp, don't
             # flag it as an ownership violation.
             if section == "project" and _only_project_updated_changed(before, after):
+                continue
+            # Authorized by tool identity: a declared writer tool ran and the
+            # whole delta is that tool's write. Anything the substitution does
+            # not explain still fails, so a run cannot launder an unrelated
+            # edit through a merge call.
+            if "merge_tree_persons" in (writer_tools.get(section) or set()) and (
+                "merge_tree_persons" in called
+            ) and _explained_by_merge(before.get(section), after.get(section), remap):
                 continue
             unauthorized.append(section)
 
@@ -803,20 +930,20 @@ def test_activated_run_produces_response(
 ):
     """An activated run that produced no output is a dead run — fail it.
 
-    Gate on six conditions: activated is True, not aborted, no skills
-    invoked, num_turns == 0, output_tokens == 0, AND text_response shorter
-    than 200 characters. The skills_invoked check is the strongest signal —
-    a run that invoked a skill did real work even when telemetry reports zero
-    (343 of 1945 committed runs report zero telemetry normally). The 200-char
-    floor avoids flagging telemetry-only dropouts where a real response
-    exists.
+    Gate on five conditions: activated is True, not aborted, did not hand
+    off to another skill, num_turns == 0 AND output_tokens == 0, AND
+    text_response shorter than 200 characters. The handoff check skips
+    runs that routed to a different skill (zero telemetry is expected
+    there — the SDK stops after capturing the correct-skill invocation).
+    The 200-char floor avoids flagging telemetry-only dropouts where a
+    real response exists.
     """
     if activated is not True:
         pytest.skip("skill did not activate")
     if aborted_reason is not None:
         pytest.skip("run was aborted — already flagged separately")
-    if skills_invoked:
-        return  # a run that invoked a skill is not a dead run
+    if set(skills_invoked or []) - {test.get("skill")}:
+        return  # handed off to another skill — not a dead run
     if num_turns != 0 or output_tokens != 0:
         return  # telemetry shows work happened
     if len(text_response or "") >= 200:
@@ -996,4 +1123,212 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
         f"Route writes to research.json / tree.gedcomx.json through the writer "
         f"tools (research_append, research_log_append, tree_edit, tree_correct), "
         f"which validate before persisting."
+    )
+
+
+def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
+    """No `research_append` op reached a section its caller does not own.
+
+    Two rules, both from the SHIPPED hook: `routed` — a section reserved to an
+    owning agent, reached by someone else; `out_of_lane` — a known agent reaching
+    outside the sections its own skill is a declared caller for. Plus
+    `declaration`, a routed claim.
+
+    This is the unit tier's half of a rule that already binds in Cowork, the
+    hosted path and the e2e harness. Until issue #2022 this plane called the
+    predicate NOWHERE, and `docs/specs/guardrail-enforcement-spec.md` said so
+    outright.
+
+    What that absence cost is PREVENTION, not detection. The universal
+    `test_ownership_table` already catches an out-of-lane write after the fact —
+    both committed runs that wrote `conflicts` failed on it. What it cannot do is
+    stop the write landing: once the conflict is cleared, `research_append`'s own
+    preconditions correctly see nothing unresolved and correctly allow a tier, so
+    the chain completes before any validator runs.
+
+    This check also reaches two cases the manifest one cannot: it keys on the
+    calling AGENT rather than the skill's frontmatter name, and it runs on
+    negative tests, which the manifest check skips.
+
+    Deterministic, like `test_no_main_thread_subagent_only_calls` and
+    `test_no_raw_writes_to_protected_files`, and failing for the same reason:
+    a run that recovers after a deny must not grade clean, or the gap is
+    invisible again. The hook blocks the call, so it never reaches `tool_calls`
+    — this list is the only place the attempt is visible. Empty is healthy.
+    """
+    if not blocked_owned_section_writes:
+        return
+
+    offending = sorted(
+        {
+            f"{c.get('caller') or '<main thread>'} → {c.get('section', '?')} "
+            f"[{c.get('rule', '?')}]"
+            for c in blocked_owned_section_writes
+        }
+    )
+    # Only mention the batch when one of the denied calls actually carried
+    # sibling ops. Said unconditionally it reads as though ops were lost on a
+    # one-op call, where there were none to lose.
+    batched = any(
+        len(((c.get("args") or {}).get("ops")) or []) > 1
+        for c in blocked_owned_section_writes
+    )
+    batch_note = (
+        " The deny is per CALL, not per op: every other op in the same "
+        "research_append batch was refused with it."
+        if batched
+        else ""
+    )
+    raise AssertionError(
+        f"research_append op(s) to a section the caller does not own, denied by "
+        f"the hook ({len(blocked_owned_section_writes)} call(s)): "
+        f"{'; '.join(offending)}. Route the write through the owning skill, or "
+        f"stay inside this agent's declared lane "
+        f"(docs/specs/schemas/ownership.json).{batch_note}"
+    )
+
+
+# --- Parent-child age plausibility (write-time gate) ------------------
+#
+# Bounds reused verbatim from packages/engine/mcp-server/src/tools/
+# person-warnings.ts (earliestChildBirthToBirth12, earliestChildBirthToBirthMale14,
+# latestChildBirthToBirth80) rather than invented here. Known gap this inherits
+# rather than papers over: person-warnings.ts has no female-specific LOWER bound
+# (only general <=12, male-specific <=14), so a mother's age-14 birth -- the exact
+# age in issue #1642 Finding 2's motivating bug (jimmie-jewel-neal/
+# run-2026-07-31_13-02-13, the Wood-family adoption) -- is not caught by either
+# lower bound. That is a separate open question for person-warnings.ts's own
+# coverage, not something this validator papers over.
+#
+# _PARENT_AGE_UPPER_FEMALE (45, person-warnings.ts's latestChildBirthToBirthFemale45)
+# is deliberately NOT enforced here -- chesworthrm review, issue #1642. It was live
+# briefly and measured against the full repo: 3 committed, non-exempt relationships
+# (anders-monsen-ancestry R2, mccarley-spouse R23/R25 -- mothers aged 46-51) would
+# fail it with no way for any skill to comply. relationship.notes[] is fully
+# specified (docs/specs/simplified-gedcomx-spec.md SS4.2) and already in
+# tree-shape.ts's allow-lists, so tree_edit accepts it at write time -- but no
+# skill is ever told to write it, and adding that instruction to the seven callers
+# that can create a ParentChild/Couple edge is real cross-skill work with its own
+# paid re-run per skill touched, not something to scatter into this PR. Issue #1837
+# proposes the better fix -- a tree_edit write-time precondition instead of
+# per-skill prose, since the age computation needs nothing the tool doesn't already
+# have in hand. Restore this bound once #1837 lands.
+
+_PARENT_AGE_LOWER_GENERAL = 12
+_PARENT_AGE_LOWER_MALE = 14
+_PARENT_AGE_UPPER_GENERAL = 80
+
+_UNCERTAINTY_MARKERS = (
+    r"needs?-?review",
+    r"speculative",
+    r"uncertain",
+    r"infer",
+    r"unconfirmed",
+    r"possible\s+namesake",
+    r"not\s+(?:yet\s+)?confirmed",
+    r"tentative",
+)
+
+
+def _birth_year_and_gender(tree, person_id):
+    """(birth year, gender) for a tree person, or (None, gender) if no dated
+    birth-like fact is found. Reads Birth/Christening/Baptism, in that order
+    of preference, taking the first 4-digit year in the fact's `standard_date`,
+    falling back to `date`."""
+    for p in (tree.get("persons") or []):
+        if p.get("id") != person_id:
+            continue
+        gender = p.get("gender")
+        for fact_type in ("Birth", "Christening", "Baptism"):
+            for f in (p.get("facts") or []):
+                if f.get("type") != fact_type:
+                    continue
+                raw = f.get("standard_date") or f.get("date")
+                if not isinstance(raw, str):
+                    continue
+                m = re.search(r"\b(1[0-9]{3}|20[0-9]{2})\b", raw)
+                if m:
+                    return int(m.group(0)), gender
+        return None, gender
+    return None, None
+
+
+def test_parent_child_age_plausibility_flagged(before_state, after_state):
+    """Universal: a new ParentChild relationship implying an implausible
+    parent age at the child's birth must carry an uncertainty note.
+
+    Issue #1642 Finding 2 (mercyokum): jimmie-jewel-neal run
+    2026-07-31_13-02-13 adopted a same-surname Wood household as Martha's
+    birth family with an implied parent age of 14 at the child's birth, no
+    needs-review marker, after the run's own mid-session gps-mentor check had
+    already disproved a different wrong Wood lineage. Not scoped to
+    search-records specifically -- this checks the write (tree.gedcomx.json),
+    wherever it came from (record-extraction, tree-edit, merge_tree_persons),
+    matching the "research.json / tree.gedcomx.json... after-state" shape of
+    mercyokum's own validator request.
+
+    Detection primitive reused, not reinvented: the age bounds are a subset of
+    what packages/engine/mcp-server/src/tools/person-warnings.ts already treats
+    as implausible for `check-warnings` (earliestChildBirthToBirth12 / Male14,
+    latestChildBirthToBirth80) -- see the module comment above for the coverage
+    gaps this inherits (no female-specific lower bound) or deliberately does not
+    enforce yet (Female45 upper bound, dropped pending issue #1837).
+
+    A relationship this flags must carry a `notes[]` entry using inference/
+    uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as
+    test_pre1880_census_structure_marked_inferred's marker check, applied to
+    the tree side rather than the search log.
+    """
+    before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
+        "tree_gedcomx"
+    )
+    after_tree = after_state.get("tree_gedcomx_json") or after_state.get(
+        "tree_gedcomx"
+    )
+    if before_tree is None or after_tree is None:
+        pytest.skip("missing tree.gedcomx.json for diff")
+    before_relationships = before_tree.get("relationships") or []
+    before_ids = set()
+    for r in before_relationships:
+        before_ids.add(r.get("id"))
+    after_relationships = after_tree.get("relationships") or []
+    new_rels = []
+    for r in after_relationships:
+        if r.get("type") != "ParentChild":
+            continue
+        if r.get("id") in before_ids:
+            continue
+        new_rels.append(r)
+    if not new_rels:
+        pytest.skip("no new ParentChild relationships")
+    offenders = []
+    for rel in new_rels:
+        parent_year, parent_gender = _birth_year_and_gender(after_tree, rel.get("parent"))
+        child_year, _ = _birth_year_and_gender(after_tree, rel.get("child"))
+        if parent_year is None or child_year is None:
+            continue
+        age = child_year - parent_year
+        too_young_general = age <= _PARENT_AGE_LOWER_GENERAL
+        too_young_male = parent_gender == "Male" and age <= _PARENT_AGE_LOWER_MALE
+        too_old_general = age >= _PARENT_AGE_UPPER_GENERAL
+        implausible = too_young_general or too_young_male or too_old_general
+        if not implausible:
+            continue
+        rel_notes = rel.get("notes") or []
+        notes = " ".join(rel_notes)
+        flagged = False
+        for pattern in _UNCERTAINTY_MARKERS:
+            if re.search(pattern, notes, re.IGNORECASE):
+                flagged = True
+        if flagged:
+            continue
+        offenders.append((rel.get("id"), rel.get("parent"), rel.get("child"), age, notes))
+    messages = []
+    for rid, pid, cid, age, notes in offenders:
+        messages.append(f"{rid}: parent {pid} age {age} at child {cid}'s birth (notes={notes!r})")
+    assert not offenders, (
+        "new ParentChild relationship(s) imply an implausible parent age at "
+        "the child's birth with no uncertainty note (issue #1642 Finding 2) -- "
+        "flag needs-review/speculative before writing a plain link: "
+        + "; ".join(messages)
     )

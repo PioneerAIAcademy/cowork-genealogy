@@ -13,7 +13,7 @@ Env (injected at sandbox create / by LocalProvider):
   WS_TOKEN_SECRET  per-sandbox HMAC secret; clients present a signed token at
                    handshake (?token=<exp>.<hmac>). Empty disables auth (dev).
   PROJECT_DIR      project dir (default /project)
-  AGENT_MODE, MODEL, ANTHROPIC_API_KEY, HOME, ENGINE_MCP_BUILD, ENGINE_PLUGIN_DIR
+  AGENT_MODE, MODEL, HOME, ENGINE_MCP_BUILD, ENGINE_PLUGIN_DIR
                    passed straight through to agent_runner (this process's env).
 """
 from __future__ import annotations
@@ -391,6 +391,12 @@ class Hub:
 
 
 async def main() -> None:
+    # The house pattern (`eval/harness/e2e/author.py`). A Windows console defaults
+    # to cp1252 and dies on the arrows and box glyphs this module prints; the team
+    # it is written for is on Windows. Guarded by test_encoding_lint.py.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     hub = Hub()
     async with serve(hub.handle, "0.0.0.0", PORT):
         print(f"{_ts()} sandbox_server listening on :{PORT}", flush=True)

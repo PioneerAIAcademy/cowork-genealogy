@@ -86,6 +86,29 @@ async function fetchChildren(
   return (await response.json()) as ChildrenNamesResponse;
 }
 
+/**
+ * Keep only the values that are actually image IDs.
+ *
+ * `ChildrenNamesResponse` is asserted from `response.json()`, not checked, and
+ * the endpoint does not always honour it: observed live 2026-08-25 on group
+ * `M9SW-1CG` returning its full 164 keys with `null` as the value of one of
+ * them (image `004514823_00672`). Unfiltered, that null reached the caller as
+ * an image ID *and* took the real image off the list, so the page could not be
+ * browsed at all. `dropped` is what tells the caller the response was defective
+ * — it is the retry trigger below, since a defective value is not recoverable
+ * from the response itself.
+ */
+function usableImageIds(data: ChildrenNamesResponse): {
+  imageIds: string[];
+  dropped: number;
+} {
+  const values = Object.values(data as Record<string, unknown>);
+  const imageIds = values.filter(
+    (value): value is string => typeof value === "string" && value.length > 0
+  );
+  return { imageIds, dropped: values.length - imageIds.length };
+}
+
 export async function imageSearchTool(
   input: ImageSearchInput
 ): Promise<ImageSearchResult> {
@@ -95,9 +118,33 @@ export async function imageSearchTool(
 
   const token = await getValidToken();
   const groupId = await resolveGroupId(input.imageGroupNumber, token);
-  const data = await fetchChildren(groupId, token);
-  const imageIds = Object.values(data).sort();
-  return { imageIds };
+
+  let best = usableImageIds(await fetchChildren(groupId, token));
+
+  // One re-request when the response was defective. The same group returned a
+  // complete set on every other call, so a retry is what recovers the lost
+  // image rather than silently serving a list one page short. Bounded to a
+  // single extra call, and it can only ever improve the result: a retry that
+  // is defective too, or that fails outright with a 500/401/timeout, leaves
+  // `best` standing rather than failing a browse the caller can still mostly
+  // use. Usable IDs are the primary comparison and `dropped` only breaks a
+  // tie, so a clean-but-shorter retry can never displace a longer one.
+  if (best.dropped > 0) {
+    try {
+      const retry = usableImageIds(await fetchChildren(groupId, token));
+      if (
+        retry.imageIds.length > best.imageIds.length ||
+        (retry.imageIds.length === best.imageIds.length &&
+          retry.dropped < best.dropped)
+      ) {
+        best = retry;
+      }
+    } catch {
+      // Keep `best` — a failed retry must not lose a usable browse list.
+    }
+  }
+
+  return { imageIds: best.imageIds.sort() };
 }
 
 export const imageSearchSchema = {

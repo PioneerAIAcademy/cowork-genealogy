@@ -277,6 +277,48 @@ async function fileState(path: string): Promise<"present" | "absent" | "unreadab
 }
 
 /**
+ * Walk from `projectPath`'s PARENT up to the filesystem root, returning the
+ * first ancestor directory holding `research.json` — the project a new
+ * project at `projectPath` would end up nested inside. `null` when no
+ * ancestor holds one.
+ *
+ * Each candidate ancestor is realpath'd as the walk reaches it — not once at
+ * the start, on `projectPath` itself. `projectPath` normally doesn't exist
+ * yet (this runs before `project_create` writes anything), so realpath'ing
+ * it always throws and falls back to the raw resolved form; canonicalizing
+ * the *ancestors* instead is what actually matters, since this value is
+ * returned to the caller in the refusal message and compared against real
+ * paths, not just used internally. `fileState`'s `access()` already resolves
+ * symlinks in every path component regardless of canonicalization, so that
+ * is not what realpath buys here — what it buys is the *reported* path: on
+ * Windows, a temp path with an 8.3-shortened component (e.g. a username with
+ * a space) would otherwise surface the short form in the error message
+ * instead of the one the user actually navigated to.
+ *
+ * Treats "unreadable" the same as "present" (only a clean ENOENT counts as
+ * absent), matching `classifyProjectPath`'s posture: a `research.json` that
+ * exists but cannot be read (a permissions issue, a restrictive mount) still
+ * makes that ancestor a project, not an empty folder to nest inside.
+ */
+export async function findNestingAncestor(projectPath: string): Promise<string | null> {
+  let dir = dirname(resolve(projectPath));
+  for (;;) {
+    let real = dir;
+    try {
+      real = realpathSync.native(dir);
+    } catch {
+      // Not created yet; compare lexically and keep walking.
+    }
+    if ((await fileState(join(real, "research.json"))) !== "absent") {
+      return real;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return null; // reached the filesystem root
+    dir = parent;
+  }
+}
+
+/**
  * Read and parse one of the project's JSON documents.
  *
  * Throws:

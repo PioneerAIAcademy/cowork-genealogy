@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "description": "Ignacio Alvarado and Teodosia Durán had an infant daughter, Angela, born and buried in 1880 at El Carmen, San José, Costa Rica.",
+      "details": {
+        "subject_person": "Ignacio Alvarado (K21K-P1C)",
+        "relation": "child",
+        "target_person": {
+          "name": "Angela Alvarado Durán",
+          "birth": "1880",
+          "burial": "20 June 1880, El Carmen, San José, Costa Rica"
+        }
+      },
+      "supporting_sources": [
+        "Costa Rica, registros parroquiales y diocesanos, 1595-2022 — burial entry for Angela Charado Duran, 20 Jun 1880, naming parents Ygnacio Alvarado and Teodosia Duran"
+      ],
+      "required": true
+    }
+  ]
+}

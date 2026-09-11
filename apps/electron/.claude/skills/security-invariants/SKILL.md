@@ -102,6 +102,7 @@ The allowed IPC channels (update this list when adding new ones):
 |---------|-----------|---------|
 | `open-file` | invoke | File open dialog with validation |
 | `open-external` | invoke | HTTPS-only URL opener |
+| `open-familysearch` | invoke | Constrained opener for links the UI advertises as FamilySearch (#1018). Reduces the input to an FS identifier and rebuilds the URL from a compile-time base, so no caller-supplied host reaches `shell.openExternal`; an unresolvable value opens nothing. Policy in `src/main/external-link.ts` |
 | `get-version` | invoke | App version string |
 | `project:select-folder` | invoke | Folder picker dialog (rejects a folder with no `research.json`) |
 | `project:get-state` | invoke | Current watcher state (cached; no file I/O) |
@@ -125,10 +126,11 @@ channels come from a hardcoded filename→channel map, not a computed name).
 The renderer is untrusted. Every IPC handler in the main process must validate
 its inputs before acting on them.
 
-Check `src/main/index.ts` for each `ipcMain.handle`:
+Check `src/main/index.ts` for each `ipcMain.handle` — **and `src/main/external-link.ts`**, which registers `open-familysearch` in its own module so its policy is reachable from a test (nothing can import `index.ts` in one). A handler is not unregistered just because it is absent from `index.ts`:
 
 - [ ] `open-file`: file dialog filters (JSON/MD only), null byte check, extension whitelist, 50MB size limit
 - [ ] `open-external`: type check (`typeof url !== 'string'`), URL parse, HTTPS-only protocol check
+- [ ] `open-familysearch`: input reduced to an FS identifier by `resolveFamilySearchTarget`; the outbound URL is built from a constant base, never from the caller's host, and never via `new URL(value, base)` (which resolves `//evil.example/x` to a foreign origin). Non-strings, empty values and unmatched shapes open nothing
 - [ ] `project:select-folder`: uses `dialog.showOpenDialog` with `openDirectory` property (no user-supplied path)
 - [ ] `project:get-state`: returns cached data only, no file I/O on user input
 

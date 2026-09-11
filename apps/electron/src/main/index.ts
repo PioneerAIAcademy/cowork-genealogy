@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, session, dialog } from 'electron'
+import { registerExternalLinkHandlers } from './external-link'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'node:fs/promises'
@@ -90,6 +91,11 @@ function setupIPC(): void {
     return { filePath, content, ext }
   })
 
+  // The constrained sibling of `open-external` (#1018). Its policy lives in its
+  // own module so it is reachable from a test — nothing can import this file in
+  // one (module-scope `app.whenReady()`, an unresolvable `?asset` import).
+  registerExternalLinkHandlers(ipcMain)
+
   ipcMain.handle('open-external', async (_e, url: string) => {
     if (typeof url !== 'string') return
     try {
@@ -180,9 +186,15 @@ function setupIPC(): void {
   })
 
   ipcMain.handle('session:get-log', async () => {
+    // A summary, not the transcripts. The renderer only asks "is there anything,
+    // and how big" — shipping every subagent transcript across the IPC boundary
+    // to answer that would serialize megabytes for two numbers.
     const state = getCurrentState()
-    if (!state.folderPath) return { entries: [], sizeBytes: 0 }
-    return readSessionLog(state.folderPath)
+    if (!state.folderPath) return { hasSessionLog: false, sizeBytes: 0 }
+    const log = await readSessionLog(state.folderPath)
+    // The SET, not just the main log: the dialog disables its toggle off this
+    // and prints "(none found)", while the value it submits stays true.
+    return { hasSessionLog: log.files.length > 0, sizeBytes: log.sizeBytes }
   })
 
   ipcMain.handle('project:get-state', () => {

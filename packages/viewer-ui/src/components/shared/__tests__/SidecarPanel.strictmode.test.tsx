@@ -28,6 +28,7 @@ function makeTransport(): ResearchTransport {
     subscribe: () => () => {},
     readSidecar: async () => ({ raw: JSON.stringify(payload), mtime: 100 }),
     openExternal: () => {},
+    openFamilySearch: () => {},
     submitFeedback: async () => ({ ok: true })
   }
 }

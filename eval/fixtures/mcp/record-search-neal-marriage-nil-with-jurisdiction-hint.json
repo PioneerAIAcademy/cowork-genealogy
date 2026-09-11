@@ -1,0 +1,33 @@
+{
+  "tool": "record_search",
+  "description": "A marriage search for Jesse Neal scoped to Union County, South Carolina (the wrong jurisdiction, per plan item pli_001) returns zero matches plus a jurisdictionHints block naming his Arkansas birthplace as the top candidate. Hand-authored for ut_search_records_jurisdiction_hint (issue #1642 Finding 1) -- no committed run captured a real jurisdictionHints payload to crib from.",
+  "args": {
+    "surname": "Neal",
+    "recordType": "marriage"
+  },
+  "response": {
+    "query": {
+      "surname": "Neal",
+      "recordType": "marriage",
+      "recordCountry": "United States"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": [],
+    "jurisdictionHints": {
+      "searchedPlace": "Union County, South Carolina",
+      "candidates": [
+        {
+          "place": "Yell County, Arkansas",
+          "earliestYear": 1857,
+          "whose": "I1",
+          "fromFact": "Birth"
+        }
+      ],
+      "note": "This marriage search did not find the subject in the place searched. A marriage is filed where the wedding happened, not where the couple later lived, and a couple usually married BEFORE they migrated. Listed below are other places these people are on record as having been. Search these before concluding no marriage record exists. These are places to LOOK, not evidence of anything."
+    }
+  }
+}

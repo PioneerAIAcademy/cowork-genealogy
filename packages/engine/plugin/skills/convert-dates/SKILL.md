@@ -58,6 +58,10 @@ regime (jurisdiction, era, calendar in force) from the tables below,
 decide which corrections the user actually asked for, and request
 exactly those.
 
+If the date is already expressed in the calendar the user asked about —
+no jurisdiction's transition applies to it — say so directly and skip
+the call. `corrections` must always name at least one real conversion.
+
 ```
 convert_calendar({
   date: { year, month?, day?, doubleYear? },
@@ -78,12 +82,20 @@ If it returns `{ ok: false, errors }`, surface the error and the
 missing input to the user — fix the input or the regime choice and
 call again. Do not fall back to hand arithmetic.
 
+**One rejection reason needs its own presentation rule, not just an
+error surfaced:** a Julian date before 15 October 1582, where the
+Gregorian calendar did not yet exist anywhere. On that rejection, do
+not present a "Gregorian date" field at all — not even the original
+date held "unchanged". Give the date once, as recorded, labelled
+Julian / Old Style. A proleptic Gregorian alignment may be offered
+only if explicitly labelled proleptic or hypothetical.
+
 **Present the result** in step-by-step form: original date and system
 (`original`), the rule applied (`applied[].rule`, plus
 `applied[].offsetDays` on a day shift), and the converted date
-(`converted`). Example: "14 September 1582 (Julian) +10 days =
-24 September 1582 (Gregorian)". Always preserve both the original
-and converted forms.
+(`converted`). Example: "10 June 1650 (Julian, England) +10 days =
+20 June 1650 (Gregorian)". When the tool returns a converted date,
+always preserve both the original and converted forms.
 
 ## Calendar regime tables
 

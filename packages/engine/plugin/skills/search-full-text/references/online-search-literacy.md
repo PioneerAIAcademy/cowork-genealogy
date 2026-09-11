@@ -9,7 +9,7 @@ when handling nil results.
 |---|---|
 | Uncommon surname or given name, uncertain spelling/dates, new locality | **"Less is more"** — that name only, filter after |
 | Extremely common surname or given name (Smith, Johnson, John, Mary), high confidence in details | **"Kitchen sink"** — multiple required terms |
-| FTS specifically (no fuzzy matching, no abbreviation expansion) | **Default to "less is more"** — every extra term risks missing variant transcriptions |
+| FTS `keywords`/`place` (no fuzzy matching, no abbreviation expansion; `name` auto-expands given names) | **Default to "less is more"** — every extra term risks missing variant transcriptions |
 
 Start broad, check hit count, narrow iteratively with filters.
 
@@ -21,7 +21,7 @@ Before searching, answer these:
    description — titles can mislead about geographic/temporal scope.
 2. **Is this an index or original records?** FTS searches AI
    transcripts (derivative). The chain is: original → image → AI
-   transcript → search snippet.
+   transcript → triage stubs (`highlightTerms`, `names`, etc.).
 3. **What coverage exists?** ~6,665 FTS-searchable collections as of
    mid-2026. Not all FamilySearch collections are included.
 4. **Known limitations?** English-language records from Americas/UK/
@@ -54,7 +54,7 @@ After exhausting variants:
 ## Derivative Source Awareness
 
 ```
-Original (handwritten) → Image → AI transcript → Search snippet
+Original (handwritten) → Image → AI transcript → Triage stubs
 ```
 
 Each step introduces errors. Professional standards require working

@@ -1,0 +1,550 @@
+{
+  "run_log": "v1_2026-09-08_16-13-16.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked routing target. User asked to extract assertions from a deed, that's record-extraction's job, not search-full-text. Skill declined without activating. Correct boundary."
+    },
+    {
+      "test_id": "ut_search_full_text_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Decline-and-route is the complete correct behavior for this negative test. No search was attempted, no tools called. The routing to record-extraction is the right destination."
+    },
+    {
+      "test_id": "ut_search_full_text_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls made, skill declined before calling anything. N/A is correct."
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked all five queries and their nil results against the fixture. Coverage-gap reasoning is sound, src_006 (Thomas Flynn's will) was already found via indexed search, confirming the records exist but aren't in FTS. No fabrication."
+    },
+    {
+      "test_id": "ut_search_full_text_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five queries hit the documented cap, covering executor, will-naming, and boilerplate angles with both wildcard (Fl?n*) and plain (Flynn) spelling. Plan item pli_006 correctly marked completed. All requirements met."
+    },
+    {
+      "test_id": "ut_search_full_text_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All fulltext_search calls used valid keyword syntax. research_log_append batches recorded outcome: negative with resultsExamined: 0. research_append updated pli_006 status. recordPlace1=Pennsylvania applied only on the 5th call, correct post-search filter sequencing."
+    },
+    {
+      "test_id": "ut_search_full_text_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified operator usage: + for required terms, ? and * for wildcards, phrase quoting for 'Last Will and Testament'. First two calls unscoped. Place filter applied only after four unfiltered zeros. Correct post-search-filter pattern."
+    },
+    {
+      "test_id": "ut_search_full_text_002",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Direct subject search for Patrick Flynn in probate. No FAN expansion expected or required per rubric. Skill stayed on target."
+    },
+    {
+      "test_id": "ut_search_full_text_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is the test that exercises this dimension. All five nil results logged with exact keywords, intent angle, and resultsExamined=0. Final entry documents the coverage-gap hypothesis with specific reasoning about Schuylkill County probate transcription. Strong exhaustiveness support."
+    },
+    {
+      "test_id": "ut_search_full_text_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All searches nil nothing to triage. Correct pass per rubric definition."
+    },
+    {
+      "test_id": "ut_search_full_text_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked routing target. User asked for 1880 census by name and place, that's a structured indexed search belonging to search-records (fuzzy matching, Soundex). search-full-text does exact text matching only. Correct decline."
+    },
+    {
+      "test_id": "ut_search_full_text_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing to search-records is the complete correct behavior. Structured person-attribute census query is search-records' domain, not full-text search."
+    },
+    {
+      "test_id": "ut_search_full_text_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tools called, skill declined before invoking anything. N/A is correct."
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked all three records against fixture data. Parents correctly identified as Juan de Naveda (father) and Maria de Somarriba Gonzalez (mother). Claims about 1833 baptism, 1834 death, and 1843 marriage all trace to the fixture. No fabrication."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Search executed, three records triaged, parents identified with cross-record corroboration, log entry written, plan item completed. All requirements met."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "keywords: +Naveda +Somarriba matches expected args. No collectionId passed (correct per test override). research_log_append and research_append args well-formed. No fixture_not_found."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Key test for Iberian surname handling. Skill correctly decomposed compound surname into co-occurrence (+Naveda +Somarriba) rather than adjacent phrase. Critical because father carries one surname and mother the other, never adjacent\nin parents' own records. First call unscoped."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Direct subject search, find the parents. No FAN expansion expected per rubric. Skill executed the requested search correctly."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three results positive, nothing to grade per rubric. Correct pass."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Triaged all three records from stub fields: names, highlightTerms, recordPlace, recordDate. Recognized the coherent parentage cluster across baptism, death, and marriage records. Deferred to image verification. Did not reference stripped\ntextDocument."
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked both searches against fixture. Same 1878 deed returned for both Thomas and Patrick Flynn. Highlight terms confirm witness capacity. Correctly framed as FAN evidence, not direct parentage proof. No fabrication."
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both names searched separately, both results logged (log_006 and log_007), comprehensive triage provided, next steps outlined. All requirements from the prompt met."
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Thomas +Flynn and +Patrick +Flynn match expected args (~Flynn). research_log_append batch correctly structured with stagedResultsRef for both entries. No fixture_not_found."
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both queries used correct + operators, unscoped first calls with no place/date/record-type filters. Canonical spelling returned the expected record. Correct protocol."
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Prompt called for witness search, skill correctly framed the 1878 deed as community-network FAN evidence (geographic/temporal co-presence in Branch Township) supporting the parent-child hypothesis indirectly. Did not overclaim as direct proof."
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both searches returned positive results, nothing to grade per rubric. Correct pass."
+    },
+    {
+      "test_id": "ut_search_full_text_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Triage used stub fields only: names, highlightTerms (Flynn, witness, witnesses), recordPlace, recordDate.\nDeferred full verification to record-extraction. Did not reference stripped textDocument."
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

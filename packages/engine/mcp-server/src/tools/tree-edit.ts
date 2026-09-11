@@ -39,7 +39,7 @@ import {
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import { resolveSourceRef } from "../utils/source-ref-resolver.js";
+import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
 export type TreeEditOperation =
   | "add_fact"
@@ -104,10 +104,11 @@ export interface TreeEditOp {
   /** Auto-resolve standard_place when a place is set (default true). */
   resolveStandardPlace?: boolean;
   /** add_relationship only: resolve the edge's (and any inline Couple fact's)
-   *  source-ref from this research.json `relationship`-type assertion instead
-   *  of supplying a literal `relationship.sources` — mirrors
-   *  materialize_facts's resolver (tree-materialization-spec §8). Mutually
-   *  exclusive with a literal ref on `relationship`. */
+   *  source-ref from this research.json assertion — a `relationship` or
+   *  `marriage` type (RELATIONSHIP_ESTABLISHING_TYPES) — instead of supplying a
+   *  literal `relationship.sources`; mirrors materialize_facts's resolver
+   *  (tree-materialization-spec §8). Mutually exclusive with a literal ref on
+   *  `relationship`. */
   sourceAssertionId?: string;
 }
 
@@ -230,6 +231,18 @@ function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: st
  */
 const FACT_STRING_FIELDS = ["date", "standard_date", "place", "standard_place", "value"] as const;
 function requireFactShape(fact: SimplifiedFact, op: string): void {
+  // `primary` carries an instruction, so a near-miss spelling must not be
+  // assigned and left for the document validator: its message is "omit it
+  // rather than setting false", which is the one action that leaves a stale
+  // flag exactly where it was. Caught here because every fact path calls this.
+  const flag = (fact as Record<string, unknown>).primary;
+  if (flag !== undefined && typeof flag !== "boolean") {
+    const got = flag === null ? "null" : Array.isArray(flag) ? "an array" : `a ${typeof flag}`;
+    throw new TreeEditError(
+      `${op}: fact \`primary\` must be the boolean true or false, got ${got} — ` +
+        "`true` makes it the primary of its type, `false` clears the flag",
+    );
+  }
   for (const field of FACT_STRING_FIELDS) {
     const v = (fact as Record<string, unknown>)[field];
     if (v !== undefined && typeof v !== "string") {
@@ -241,6 +254,19 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
       );
     }
   }
+}
+
+/**
+ * `primary: false` is an INSTRUCTION, never a stored value. The persisted schema
+ * pins the flag to `const: true` (omit-when-false, for token count —
+ * simplified-gedcomx-spec §6), so the key is dropped before the write and the
+ * document stays conformant. See clearPrimaryOfType's note.
+ *
+ * Every path that authors a NEW fact calls this. `update_fact` does not: it
+ * deletes the flag from the EXISTING fact rather than from the incoming patch.
+ */
+function stripClearedPrimary(fact: SimplifiedFact): void {
+  if (fact.primary === false) delete fact.primary;
 }
 
 // ─── delta-scoped mandatory-ref guard (tree-materialization-spec §6, §8) ─────
@@ -279,7 +305,15 @@ function assertNodeHasRef(
   }
 }
 
-/** Remove the `primary` flag from the holder's other facts of the same type. */
+/** Remove the `primary` flag from the holder's other facts of the same type.
+ *
+ *  Fires only as a side effect of designating a REPLACEMENT primary, so it can
+ *  move the flag but never retire it. Clearing without a replacement is
+ *  `primary: false` on add_fact/update_fact, which is the state a newly-surfaced
+ *  conflict needs: `materialize_facts` never sets `primary` and surfaces a
+ *  conflict when a second vital fact lands, so a pre-existing flag would
+ *  otherwise keep asserting a concluded value the evidence no longer supports
+ *  (10 such persons across the committed e2e final trees, 2026-09-10). */
 function clearPrimaryOfType(holder: FactHolder, type: string | undefined, exceptId: string | undefined): void {
   for (const f of holder.facts ?? []) {
     if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
@@ -346,6 +380,7 @@ async function applyOperation(
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
+      stripClearedPrimary(fact);
       assertNodeHasRef(fact, "the added fact", "add_fact");
       await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
@@ -370,6 +405,15 @@ async function applyOperation(
       const factHadRef = hasNonNullRef(existing);
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
+        // `primary: false` clears the flag rather than storing a false — the
+        // only way to reach "this type has no concluded value" while a conflict
+        // is open. Assigning it would fail the document validator, whose own
+        // message ("omit it rather than setting false") is advice no op could
+        // follow until this existed.
+        if (k === "primary" && v === false) {
+          delete (existing as any).primary;
+          continue;
+        }
         (existing as any)[k] = v;
       }
       if (factHadRef && !hasNonNullRef(existing)) {
@@ -465,6 +509,7 @@ async function applyOperation(
         for (const f of person.facts) {
           if (f.id) throw new TreeEditError("add_person facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_person");
+          stripClearedPrimary(f);
           assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
           await maybeResolvePlace(f, f.standard_place !== undefined);
@@ -481,11 +526,12 @@ async function applyOperation(
       if (input.relationship.id) throw new TreeEditError("add_relationship `relationship` must not carry an id");
       const rel: SimplifiedRelationship = { ...input.relationship, id: nextId(tree, "R") };
 
-      // Resolve the edge's source-ref from a research.json `relationship`-type
-      // assertion instead of requiring the caller to hand-walk the provenance
-      // chain (tree-materialization-spec §8: "the same resolver
-      // materialize_facts uses"). A literal `relationship.sources` alongside
-      // it is rejected as ambiguous — pick one.
+      // Resolve the edge's source-ref from a research.json relationship-
+      // establishing assertion (`relationship` or `marriage`) instead of
+      // requiring the caller to hand-walk the provenance chain
+      // (tree-materialization-spec §8: "the same resolver materialize_facts
+      // uses"). A literal `relationship.sources` alongside it is rejected as
+      // ambiguous — pick one.
       if (input.sourceAssertionId !== undefined) {
         if (hasNonNullRef(rel)) {
           throw new TreeEditError(
@@ -500,11 +546,18 @@ async function applyOperation(
             `add_relationship: sourceAssertionId '${input.sourceAssertionId}' not found in research.json assertions`,
           );
         }
-        if (assertion.fact_type !== "relationship") {
+        // `marriage` counts as relationship-establishing: a marriage register is
+        // exactly the assertion that establishes a Couple, and it is the type the
+        // commonest Couple edge carries. Excluding it made this tool's own
+        // instruction — and materialize_facts's — impossible to follow for that
+        // edge, since a marriage assertion was the "same assertion" both told the
+        // caller to source it with.
+        if (!isRelationshipEstablishing(assertion.fact_type)) {
           throw new TreeEditError(
             `add_relationship: sourceAssertionId '${input.sourceAssertionId}' is a '${assertion.fact_type}' ` +
-              "assertion, not a 'relationship' assertion — the edge's provenance must come from the " +
-              "relationship-establishing assertion",
+              "assertion, which establishes no link between two parties — the edge's provenance " +
+              "must come from a relationship-establishing assertion ('relationship', 'marriage', " +
+              "'parentage', 'parentchild'; case-insensitive)",
           );
         }
         rel.sources = [resolveRelationshipRef(assertion, research, tree)];
@@ -530,6 +583,7 @@ async function applyOperation(
         for (const f of rel.facts) {
           if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_relationship");
+          stripClearedPrimary(f);
           // A Couple fact (e.g. Marriage) with no ref of its own inherits the
           // edge's resolved ref — but ONLY when that ref came from
           // `sourceAssertionId` (the marriage record IS typically the source
@@ -742,8 +796,11 @@ export const treeEditSchema = {
     "duplicate persons (this tool never deletes a person).\n" +
     "\n" +
     "add_relationship requires a non-null source-ref on the edge. Prefer " +
-    "`sourceAssertionId` (the research.json `relationship`-type assertion this " +
-    "edge comes from) over a literal `relationship.sources` — the tool resolves " +
+    "`sourceAssertionId` (the research.json assertion this edge comes from — any " +
+    "that establishes a link between two parties: relationship, marriage, parentage " +
+    "or parentchild. A marriage register is what establishes a Couple, so source a " +
+    "Couple edge with the marriage assertion itself) over a " +
+    "literal `relationship.sources` — the tool resolves " +
     "assertion.source_id -> research source -> tree S-entry itself (the same " +
     "resolver materialize_facts uses), so you never hand-walk the chain. Any inline " +
     "Couple fact (e.g. Marriage) with no ref of its own inherits the same resolved " +
@@ -799,7 +856,8 @@ export const treeEditSchema = {
         description:
           "The fact to add (full, no id). date/standard_date/place/" +
           "standard_place/value are plain strings (date: \"2 October 1876\"), never nested objects. " +
-          "Set `primary: true` to make it the primary of its type.",
+          "Set `primary: true` to make it the primary of its type; `primary: false` " +
+          "adds it without one, leaving any existing primary of that type alone.",
       },
       name: {
         type: "object",
@@ -818,10 +876,12 @@ export const treeEditSchema = {
       sourceAssertionId: {
         type: "string",
         description:
-          "add_relationship only: the research.json `relationship`-type assertion this edge comes " +
-          "from. The tool resolves its source-ref itself (assertion.source_id -> research source -> " +
-          "tree S-entry) instead of you supplying a literal `relationship.sources` — mutually " +
-          "exclusive with one.",
+          "add_relationship only: the research.json assertion this edge comes from — any type " +
+          "that establishes a link between two parties (relationship, marriage, parentage, " +
+          "parentchild; a Couple edge is sourced with the marriage assertion itself). The tool " +
+          "resolves its source-ref itself (assertion.source_id -> " +
+          "research source -> tree S-entry) instead of you supplying a literal " +
+          "`relationship.sources` — mutually exclusive with one.",
       },
       source: {
         type: "object",

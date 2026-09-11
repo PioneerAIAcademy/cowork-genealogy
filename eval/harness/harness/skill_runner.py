@@ -34,6 +34,7 @@ from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
     HookMatcher,
+    RateLimitEvent,
     ResultMessage,
     TextBlock,
     ToolUseBlock,
@@ -42,6 +43,8 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    owned_section_denial,
+    owner_denied,
     protected_file_denial,
     subagent_only_denial,
     subagent_only_violation,
@@ -251,6 +254,84 @@ def builtin_call_record(
     return record
 
 
+# A subscription quota is deterministic until the seat's window resets, so it is
+# NOT transient: retrying burns attempts in seconds against a limit that clears
+# in hours, and the suite then ships an ungraded test as a real result. Kept out
+# of `_ALWAYS_RETRYABLE_ABORTS` (orchestrator) and `_TRANSIENT_ABORT_REASONS`
+# (run_tests) deliberately — membership in either restores the retry or feeds
+# the abort-storm breaker's ratio arithmetic.
+QUOTA_ABORT_REASON = "quota_exhausted"
+
+# Display prose, localized to the seat and CLI-version-dependent. Observed once,
+# in eval/runlogs/unit/convert-dates/v1_2026-09-01_14-32-09.json:
+#   "You've hit your limit · resets 4pm (Africa/Lagos)"
+# It is the LAST resort, never the primary predicate — the structured signals in
+# `_quota_evidence` are checked first. This exists only so a quota that emits
+# none of them is still caught rather than retried three times.
+# Subscription prose only. `"rate limit"` is deliberately NOT here: it matches
+# Anthropic's own 429 body text, which in `api_key` mode is a per-minute org
+# limit that clears in under a minute — see the predicate note below.
+_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit")
+
+
+def _looks_like_quota(
+    signals: dict[str, Any],
+    error_text: str | None,
+    response_text: str | None = None,
+) -> bool:
+    """True when this run ended on the SEAT'S SUBSCRIPTION limit, not a blip.
+
+    Only one signal classifies, and the choice is deliberate. `RateLimitEvent`
+    carries a `rate_limit_type` whose every literal is a subscription window —
+    `five_hour`, `seven_day`, `seven_day_opus`, `seven_day_sonnet`, `overage` —
+    so `status == "rejected"` cannot be produced by a per-minute API limit.
+
+    `api_error_status == 429` and `assistant_error == "rate_limit"` are captured
+    as EVIDENCE but do not classify, because either can come from a per-minute
+    org limit in `api_key` mode, which this repo twice calls transient
+    (`harness/auth.py:151`, `harness/judge.py`). Treating one as a quota would
+    stop the suite and discard a whole paid `make eval-skill` slot over a limit
+    that had already cleared — a worse failure than the retry this change
+    exists to remove, and one this PR briefly introduced (review of #2326).
+
+    The asymmetry is the argument: a false positive throws away a paid run; a
+    false negative merely returns the old three-retry behaviour. Recall is not
+    worth that trade here.
+
+    Which structured signal a real subscription quota actually emits remains
+    UNVERIFIED — one cannot be forced on demand. Whichever signals fire are
+    recorded in `runs[].error` on any run that aborts, so the next occurrence
+    settles it from the run log without another paid suite. A healthy run
+    persists none of them: `_format_quota_evidence` drops the None ones and
+    `error` is assigned on failure paths only.
+    """
+    if signals.get("rate_limit_status") == "rejected":
+        return True
+    # Both text sources. The one occurrence in the corpus
+    # (convert-dates/v1_2026-09-01_14-32-09.json, ut_convert_dates_012) has
+    # `error: null` and carries the prose in `output.text_response`, so a
+    # fallback that reads only the SDK's error text misses the very case it
+    # was written for and the run is retried three times anyway.
+    text = f"{error_text or ''}\n{response_text or ''}".lower()
+    return any(marker in text for marker in _QUOTA_TEXT_MARKERS)
+
+
+def _format_quota_evidence(signals: dict[str, Any], error_text: str | None) -> str:
+    """The SDK's own error text, plus whichever structured signals fired.
+
+    `error` is the run's only free-form field (`{"type": ["string","null"]}`),
+    and the run object is `additionalProperties: false`, so this is where the
+    evidence goes without widening the schema past the `error` key itself. The
+    verbatim SDK text stays first so nothing is lost by the annotation.
+    """
+    fired = {k: v for k, v in signals.items() if v is not None}
+    base = error_text or ""
+    if not fired:
+        return base
+    detail = " ".join(f"{k}={v}" for k, v in sorted(fired.items()))
+    return f"{base} [rate-limit signals: {detail}]".strip()
+
+
 @dataclass
 class SkillRunResult:
     text_response: str
@@ -291,6 +372,28 @@ class SkillRunResult:
     # attempt is visible, and the universal validator asserts it stays empty
     # (issue #1493).
     blocked_protected_writes: list[dict[str, Any]] = field(default_factory=list)
+    # `research_append` ops the SHIPPED ownership rule refuses — a section routed
+    # to an owning agent reached by someone else, a routed claim, or a known agent
+    # reaching outside its own lane — as {"tool", "args", "section", "rule",
+    # "caller"} (see harness.context_policy.owner_denied). Empty is the healthy
+    # case, and the universal validator asserts that.
+    #
+    # Until issue #2022 this plane called the predicate NOWHERE, while the e2e
+    # orchestrator, Cowork and the hosted path all bound it.
+    #
+    # What that absence cost is PREVENTION, not detection -- the earlier claim
+    # here, that runs graded clean while writing `conflicts`, is refuted by the
+    # run logs: the passing runs never wrote the section, and both runs that did
+    # failed on the existing universal `test_ownership_table` (@chesworthrm).
+    # What that check cannot do is stop the write landing. Once `conflicts` is
+    # cleared, `research_append`'s own `conflictedSourceInvariants` correctly
+    # sees nothing unresolved and correctly allows a tier, so the chain completes
+    # before any validator runs.
+    #
+    # It also reaches two cases the manifest check cannot: it keys on the calling
+    # AGENT rather than the skill's frontmatter name (test_universal.py:475), and
+    # it runs on negative tests, which test_universal.py:464 skips.
+    blocked_owned_section_writes: list[dict[str, Any]] = field(default_factory=list)
     # One entry per Skill call whose input carried the skill name under no key
     # this harness reads, holding that input's actual keys. Non-empty means the
     # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
@@ -379,6 +482,7 @@ async def run_skill(
     blocked_context_calls: list[dict[str, Any]] = []
     # Raw writes to a protected project file, denied by the hook below.
     blocked_protected_writes: list[dict[str, Any]] = []
+    blocked_owned_section_writes: list[dict[str, Any]] = []
     # Skill calls whose name we couldn't read (see read_skill_tool_input).
     unread_skill_calls: list[list[str]] = []
     # Every built-in (non-MCP) tool call, for telemetry only — see
@@ -461,6 +565,46 @@ async def run_skill(
                 }
             )
             return protected_denial
+        # Section-ownership lockdown: deny a `research_append` op the SHIPPED
+        # ownership rule refuses — reached through `context_policy`'s re-export of
+        # the hook's own predicate, never a second copy of the maps (a copy of
+        # this rule drifted once already; see
+        # test_no_unregistered_copy_of_the_lockdown_exists).
+        #
+        # This plane called the predicate nowhere until issue #2022, while the e2e
+        # orchestrator, Cowork and the hosted path all bound it. What that cost is
+        # PREVENTION, not detection: the universal test_ownership_table already
+        # fails such a run after the fact, but cannot stop the write landing (see
+        # the field's own comment above). Checked BEFORE the
+        # max_tool_calls counter for the same reason as the two blocks above: a
+        # denied call never executes, so it must not consume the budget.
+        #
+        # The decision (which arm, and the caller identity) lives in the
+        # unit-tested predicate; the payload text comes from
+        # `owned_section_denial`, which branches on `rule` rather than on the
+        # shape of the section string — a `declaration` denial carries a dotted
+        # `section.field` that keys neither owner map.
+        # isinstance-guarded for consistency with the two neighbours: the shipped
+        # hook checks this before calling owner_denied, and protected_file_denial
+        # above guards it internally. A truthy non-dict raises inside the
+        # predicate. Not shown to be reachable — the SDK catches the exception
+        # rather than killing the run — so this is consistency, not a bug fix.
+        raw_input = input_data.get("tool_input")
+        denied = owner_denied(
+            tool_name, raw_input if isinstance(raw_input, dict) else {}, input_data
+        )
+        if denied is not None:
+            section, rule, caller = denied
+            blocked_owned_section_writes.append(
+                {
+                    "tool": tool_name,
+                    "args": dict(input_data.get("tool_input") or {}),
+                    "section": section,
+                    "rule": rule,
+                    "caller": caller,
+                }
+            )
+            return owned_section_denial(denied)
         # Count MCP tool calls toward max_tool_calls. Block over-limit calls
         # with a permission deny so the SDK doesn't actually execute them; the
         # outer loop reads tool_call_count after the iteration ends and sets
@@ -525,6 +669,18 @@ async def run_skill(
     # in the orchestrator depends on it (`_is_zero_progress_timeout`).
     # A mutable holder because the nested consumer rebinds `usage` wholesale.
     turns_seen: dict[str, int] = {"n": 0}
+    # Rate-limit evidence, collected from all three places the SDK offers it and
+    # recorded whether or not any fired. Every key stays present-but-None on a
+    # healthy run so a future occurrence shows which signals a real subscription
+    # quota actually emits — that question is currently unverified and cannot be
+    # settled by forcing a quota on demand.
+    rate_limit_signals: dict[str, Any] = {
+        "api_error_status": None,
+        "assistant_error": None,
+        "rate_limit_status": None,
+        "resets_at": None,
+        "rate_limit_type": None,
+    }
     aborted_reason: str | None = None
     error: str | None = None
     # The query() async generator, hoisted so the finally below can close it
@@ -560,8 +716,23 @@ async def run_skill(
             # the hook's stopReason alone can't deliver.
             if routing_resolved["v"]:
                 return
-            if isinstance(message, AssistantMessage):
+            if isinstance(message, RateLimitEvent):
+                # The CLI emits this whenever rate-limit state transitions. It
+                # is in the SDK's Message union and streamed straight past this
+                # loop until now — `status == "rejected"` is the limit actually
+                # being hit, as opposed to `allowed_warning` approaching it.
+                info = message.rate_limit_info
+                rate_limit_signals["rate_limit_status"] = getattr(info, "status", None)
+                rate_limit_signals["resets_at"] = getattr(info, "resets_at", None)
+                rate_limit_signals["rate_limit_type"] = getattr(
+                    info, "rate_limit_type", None
+                )
+            elif isinstance(message, AssistantMessage):
                 turns_seen["n"] += 1
+                # One of the AssistantMessageError literals; "rate_limit" is the
+                # one that matters here. Absent on a healthy turn.
+                if getattr(message, "error", None):
+                    rate_limit_signals["assistant_error"] = message.error
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         text_chunks.append(block.text)
@@ -602,15 +773,33 @@ async def run_skill(
                     # nowhere in `usage`. See orchestrator._skill_tokens.
                     "model_usage": message.model_usage,
                 }
+                rate_limit_signals["api_error_status"] = getattr(
+                    message, "api_error_status", None
+                )
                 if message.is_error:
-                    error = message.result or message.stop_reason
                     # ResultMessage.is_error is the SDK's signal for "the
                     # session ended in a recoverable API/auth/rate-limit
                     # failure." Treat it as an abort so the run doesn't
                     # get scored against the empty/partial output that
                     # landed before the failure.
+                    #
+                    # Split the rate-limit case back out of that bucket: a
+                    # quota is NOT recoverable on this suite's timescale, and
+                    # bucketing it under "error" retried it three times in
+                    # seconds and then shipped the run as releasable (#2192).
+                    error = _format_quota_evidence(
+                        rate_limit_signals, message.result or message.stop_reason
+                    )
                     if aborted_reason is None:
-                        aborted_reason = "error"
+                        aborted_reason = (
+                            QUOTA_ABORT_REASON
+                            if _looks_like_quota(
+                                rate_limit_signals,
+                                message.result or message.stop_reason,
+                                "".join(text_chunks),
+                            )
+                            else "error"
+                        )
                 if message.stop_reason == "max_turns":
                     aborted_reason = "max_turns"
 
@@ -684,6 +873,7 @@ async def run_skill(
         error=error,
         attempted_mcp_calls=attempted_mcp_calls,
         blocked_context_calls=blocked_context_calls,
+        blocked_owned_section_writes=blocked_owned_section_writes,
         blocked_protected_writes=blocked_protected_writes,
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,

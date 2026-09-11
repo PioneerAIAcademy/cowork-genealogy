@@ -18,6 +18,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { runlogsUnitDir } from './paths';
 import { atomicWriteText } from './fs/atomic';
+import { resolveWithin } from './fs/safe-path';
 import { annFilenameFor, classify } from './versioning';
 import type { RunLogFile } from './types';
 
@@ -33,9 +34,9 @@ export async function releaseRunLog(runLogId: string): Promise<ReleaseResult> {
     throw new Error(`invalid run log id: ${runLogId}`);
   }
   const filename = `${rest.join('/')}.json`;
-  const dir = path.join(runlogsUnitDir(), skill);
-  const fromPath = path.join(dir, filename);
-  const fromAnnPath = path.join(dir, annFilenameFor(filename));
+  const dir = resolveWithin(runlogsUnitDir(), skill);
+  const fromPath = resolveWithin(dir, filename);
+  const fromAnnPath = resolveWithin(dir, annFilenameFor(filename));
 
   const c = classify(filename);
   if (c.kind !== 'candidate' || c.version == null) {
@@ -51,8 +52,8 @@ export async function releaseRunLog(runLogId: string): Promise<ReleaseResult> {
 
   const toFilename = `v${c.version}.json`;
   const toAnnFilename = `v${c.version}.ann.json`;
-  const toPath = path.join(dir, toFilename);
-  const toAnnPath = path.join(dir, toAnnFilename);
+  const toPath = resolveWithin(dir, toFilename);
+  const toAnnPath = resolveWithin(dir, toAnnFilename);
 
   try {
     await fs.access(toPath);
@@ -106,9 +107,12 @@ export async function deleteCandidate(runLogId: string): Promise<void> {
   if (c.kind === 'released') {
     throw new Error(`cannot delete released run log: ${filename}`);
   }
-  const dir = path.join(runlogsUnitDir(), skill);
-  const filePath = path.join(dir, filename);
-  const annPath = path.join(dir, annFilenameFor(filename));
+  // Both `skill` and `filename` come from catch-all URL segments and reach
+  // `fs.rm`. Contained before either removal — a delete needs the check more
+  // than a read does, because it leaves nothing to diagnose from afterwards.
+  const dir = resolveWithin(runlogsUnitDir(), skill);
+  const filePath = resolveWithin(dir, filename);
+  const annPath = resolveWithin(dir, annFilenameFor(filename));
   await fs.rm(filePath, { force: true });
   await fs.rm(annPath, { force: true });
 }

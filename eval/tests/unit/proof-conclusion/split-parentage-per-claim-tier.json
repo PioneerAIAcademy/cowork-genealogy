@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_022",
+    "skill": "proof-conclusion",
+    "name": "Write a per-claim tier breakdown for a parentage question with unequal evidence",
+    "type": "positive",
+    "description": "Write a GPS proof conclusion for q_001 (parentage). Paternity (Thomas Flynn, I2) is strongly supported — three independent original sources converging on `probable`, identical to the base Flynn scenario. Maternity (Bridget Flynn, I3) rests on a single 1870 census record and a `pe_007` match_score of 0.0002, supporting only `possible`. The skill must write a per-claim `claims[]` breakdown (#1711) rather than a single scalar tier, and must encode only the paternal ParentChild relationship in the tree — the maternal one stays off until it clears `probable`.",
+    "tags": [
+      "proof",
+      "parentage",
+      "probable",
+      "possible",
+      "GPS-step-5",
+      "per-claim-tier-split"
+    ]
+  },
+  "input": {
+    "user_message": "Write the proof conclusion for the parentage question.",
+    "scenario": "flynn-split-parentage-tiers"
+  },
+  "judge_context": [
+    "Should write a `claims[]` breakdown on the proof_summaries entry with (at least) a `paternity` claim at `probable` and a `maternity` claim at `possible`, each carrying its own `supporting_assertion_ids` and a `relationship` naming the tree endpoint it concludes",
+    "The scalar `tier` should read `probable` — the stronger of the two per-claim tiers, per research-schema-spec.md §7 — not `possible`",
+    "The narrative should explain why paternity and maternity differ: three independent original sources for paternity vs. a single weakly-identified 1870 census record and a near-zero same-person match score for maternity — and should not claim the maternal identification is more solid than it is",
+    "Should NOT write the maternal ParentChild relationship (Bridget I3 → Patrick I1) into tree.gedcomx.json — a `possible` claim stays off the tree even when the scalar tier is `probable`",
+    "Should write the paternal ParentChild relationship (Thomas I2 → Patrick I1) into tree.gedcomx.json",
+    "Should NOT split the question into separate paternity/maternity questions — this stays one question per the #1711 ruling"
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 60,
+    "sdk_message_silence_seconds": 300
+  }
+}

@@ -33,6 +33,8 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
+from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN
+from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
     JudgeResult,
@@ -538,6 +540,7 @@ async def _execute_single_run(
         tool_calls=result.tool_calls,
         blocked_context_calls=result.blocked_context_calls,
         blocked_protected_writes=result.blocked_protected_writes,
+        blocked_owned_section_writes=result.blocked_owned_section_writes,
         attempted_mcp_calls=result.attempted_mcp_calls,
         skill_frontmatter=skill_frontmatter,
         skills_invoked=result.skills_invoked,
@@ -554,12 +557,29 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
+            # Also threaded in: `refinement_targets`, the assertion ids a
+            # classification-refinement test expects updated in place —
+            # deterministic ground truth for
+            # test_refinement_preserves_extraction_fields_and_avoids_duplication
+            # (issue #2021, F12; unit-test-spec.md's `refinement_targets`).
+            "refinement_targets": spec.raw.get("refinement_targets", []),
+            # Also threaded in: `index_error_source`, the one attached source a
+            # doctrine test declares to be an indexing error — deterministic
+            # ground truth for
+            # test_index_discrepancy_does_not_recommend_detaching
+            # (issue #1606; unit-test-spec.md § 5.12 `index_error_source`).
+            "index_error_source": spec.raw.get("index_error_source"),
             # Also threaded in: `execution`, so test_tool_allowlist can widen
             # by the same `run_skills` rule the session allowlist used. A
             # callee's calls land in this run's tool_calls log, and without
             # the declaration the validator reads a legal hand-off as a
             # violation (issue #1012).
             "execution": spec.execution,
+            # Also threaded in: `user_message` (from input.user_message), so
+            # validators can verify whether a figure in the response was
+            # supplied by the user rather than derived from a tool call.
+            # Used by report_unsourced_year_in_response (issue #1965 V2).
+            "user_message": spec.raw.get("input", {}).get("user_message", ""),
         },
     )
     validators_passed = compute_validators_passed(
@@ -683,6 +703,7 @@ async def _execute_single_run(
     return SingleRun(
         outcome=outcome,
         aborted_reason=result.aborted_reason,
+        error=result.error,
         duration_ms=result.duration_ms,
         duration_api_ms=skill_duration_api_ms,
         num_turns=skill_num_turns,
@@ -1046,7 +1067,62 @@ def _build_warnings(
             "observation": obs_text,
         })
 
+    # Harness node-subprocess timeout (#2025). A live tool whose compiled-code
+    # bridge trips the node timeout returns a write/validation failure the skill
+    # then has to recover from — a harness flake, not a skill defect, and one
+    # that otherwise lives only inside a `response` string nobody greps. Scan the
+    # recorded live-tool responses for the sentinel and surface it as a warning
+    # so the next occurrence is legible in run.output.warnings. Gated on a live
+    # match reporting failure so a tool's own error prose can't false-trip it.
+    timed_out_tools = sorted({
+        c["tool"]
+        for c in tool_calls
+        if (c.get("matched") or {}).get("kind") == "live"
+        and _response_hit_node_timeout(c.get("response"))
+    })
+    if timed_out_tools:
+        warnings.append({
+            "kind": "harness_node_timeout",
+            "advisory": (
+                f"{len(timed_out_tools)} live MCP tool(s) hit the harness "
+                f"node-subprocess timeout ({NODE_EVAL_TIMEOUT_LONG}s) and returned a "
+                "write/validation failure the skill then had to recover from — a "
+                "harness flake, not a skill defect (#2025). Do not grade the "
+                f"recovery as a skill error. Tools: {timed_out_tools}."
+            ),
+            "tools": timed_out_tools,
+        })
+
+    # Single chokepoint: every output.warnings entry — this function's own, the
+    # judge's (folded in via judge_warnings), and any built elsewhere and folded
+    # in — is the return value of this call. Validate each kind by value against
+    # the registry so an unregistered kind fails loudly on first emission from
+    # ANY file, literal or const, rather than silently printing nowhere (#2025).
+    validate_warning_kinds(warnings)
     return warnings
+
+
+def _response_hit_node_timeout(response: Any) -> bool:
+    """Whether a recorded live-tool response is a node-subprocess timeout (#2025).
+
+    A tripped node subprocess lands in the tool's failure envelope
+    (`ok: false` / `valid: false`) with the `subprocess.TimeoutExpired` string
+    in `errors`/`message`. Keyed on the failure flag AND the seconds-anchored
+    pattern so neither a tool's own error prose nor an upstream `...ms` fetch
+    timeout false-trips it (see NODE_EVAL_TIMEOUT_PATTERN).
+    """
+    if not isinstance(response, dict):
+        return False
+    if response.get("ok") is not False and response.get("valid") is not False:
+        return False
+    texts: list[str] = []
+    errs = response.get("errors")
+    if isinstance(errs, list):
+        texts.extend(str(e) for e in errs)
+    message = response.get("message")
+    if isinstance(message, str):
+        texts.append(message)
+    return any(NODE_EVAL_TIMEOUT_PATTERN.search(t) for t in texts)
 
 
 # Judge dimensions whose subject is checked deterministically by the
@@ -1434,8 +1510,18 @@ def _compute_outcome(
         # refuse-new-source), the skill may or may not fire, but no run
         # may harm state, and the validator is what enforces that. The
         # invariant must be backed by a tag-gated validator that actually
-        # runs; a `grade_on_invariant` test with no such validator passes
-        # vacuously (see docs/specs/unit-test-spec.md).
+        # runs; a `grade_on_invariant` test with no such validator would pass
+        # vacuously, which `runnability.py` blocks at load time by matching the
+        # test's tags against the validator file's gate tags. Do not add a
+        # second, runtime check of the same thing here — replayed over the
+        # committed corpus it fires on one run, already fixed (measured
+        # 2026-09-10: 1 of 71 `grade_on_invariant` runs was vacuous,
+        # `search-wikipedia/v1_2026-06-23_16-05-24`, which predates
+        # `test_no_wiki_no_write`, the tag-gated validator added 2026-07-29).
+        # Note what the load-time gate does and does not prove: that a
+        # validator GATES ON the test's tags, never that it EXECUTES. A
+        # tag-gated validator with a second, state-dependent skip could still
+        # go vacuous. None does today, and nothing checks for one.
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in
@@ -1701,6 +1787,93 @@ def _summarize_before_state_sources(sources: Any) -> dict[str, Any]:
     }
 
 
+def _resolve_assertion(
+    assertion_id: Any, index: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Resolve one assertion id to the compact value the judge needs.
+
+    A conflict stores ids; the judge grades a claim (a URL parameter, a
+    narrated place) against the *value* those ids carry, never against the id
+    itself. So resolve `preferred_assertion_id` / `competing_assertion_ids`
+    through `assertions[]` to the fields that decide a grade. A referenced id
+    absent from `assertions[]` (dangling ref — they exist in fixtures) renders
+    as `_unresolved` rather than crashing the whole before-state render.
+    """
+    a = index.get(assertion_id)
+    if a is None:
+        return {"id": assertion_id, "_unresolved": True}
+    return {
+        k: a[k]
+        for k in ("id", "fact_type", "value", "structured_value", "place", "date")
+        if k in a
+    }
+
+
+# Heavy per-conflict prose the prompt-size budget may drop (never the ids or
+# the resolved values, which are what make a "no conflict on file" claim
+# checkable).
+_CONFLICT_HEAVY_FIELDS = (
+    "independence_analysis",
+    "weighing_analysis",
+    "resolution_rationale",
+    "description",
+)
+
+
+def _summarize_before_state_conflicts(
+    conflicts: Any, assertions: Any
+) -> dict[str, Any]:
+    """Summarize the conflicts on file before the skill ran, resolving each
+    conflict's assertion references to their values.
+
+    Same discipline as `_summarize_before_state_sources`: the COMPLETE id list
+    is the ground truth for a "no conflict on file" existence check and is never
+    clipped; the per-conflict `detail` carries the resolved preferred/competing
+    values (what a grade actually turns on) plus the structural fields, and the
+    heavy prose (`_CONFLICT_HEAVY_FIELDS`) is what the caller's size budget trims.
+
+    Not the verdict: the resolved values are handed over and the rubric decides,
+    exactly as the sources block hands over ids without asserting groundedness.
+    A rendered conflict makes an "encoded X, no conflict on file" claim checkable
+    against what was actually contested (#1902 / #1956).
+    """
+    items = conflicts if isinstance(conflicts, list) else []
+    assertion_list = assertions if isinstance(assertions, list) else []
+    index = {
+        a["id"]: a
+        for a in assertion_list
+        if isinstance(a, dict) and a.get("id")
+    }
+    ids = [c["id"] for c in items if isinstance(c, dict) and c.get("id")]
+
+    detail: list[dict[str, Any]] = []
+    for c in items:
+        if not isinstance(c, dict):
+            continue
+        entry: dict[str, Any] = {
+            "id": c.get("id"),
+            "conflict_type": c.get("conflict_type"),
+            "status": c.get("status"),
+            "disputed_attribute": c.get("disputed_attribute"),
+            "identity_question": c.get("identity_question"),
+            "preferred": _resolve_assertion(c.get("preferred_assertion_id"), index)
+            if c.get("preferred_assertion_id")
+            else None,
+            "competing": [
+                _resolve_assertion(cid, index)
+                for cid in (c.get("competing_assertion_ids") or [])
+            ],
+        }
+        for k in _CONFLICT_HEAVY_FIELDS:
+            if c.get(k):
+                entry[k] = _summarize_response(
+                    c[k], string_max=_BEFORE_STATE_STRING_MAX
+                )
+        detail.append(entry)
+
+    return {"count": len(items), "all_ids": ids, "detail": detail}
+
+
 def _detail_ids(summary: dict[str, Any]) -> list[str]:
     """Ids positionally aligned with `summary["detail"]`, for naming drops.
 
@@ -1717,8 +1890,8 @@ def _detail_ids(summary: dict[str, Any]) -> list[str]:
 
 
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
-    """Render the source entries that existed BEFORE the skill ran, so the
-    judge can mechanically check "not on file" / "fabricated" claims.
+    """Render the sources and conflicts that existed BEFORE the skill ran, so
+    the judge can mechanically check "not on file" / "fabricated" claims.
 
     The judge has produced fabrication-class citation failures — asserting
     that on-file source text was absent or invented — when it had no view of
@@ -1741,8 +1914,28 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     tree = before_snapshot.get("tree_gedcomx_json")
     research_sources = research.get("sources") if isinstance(research, dict) else None
     tree_sources = tree.get("sources") if isinstance(tree, dict) else None
+    conflicts = research.get("conflicts") if isinstance(research, dict) else None
+    assertions = research.get("assertions") if isinstance(research, dict) else None
 
     labelled: list[tuple[str, dict[str, Any]]] = []
+    if conflicts:
+        # Rendered FIRST, ahead of the source blocks. Same shape
+        # ({count, all_ids, detail}) as a sources block, so it flows through the
+        # id-section and the shared-budget detail loop below unchanged. Order is
+        # deliberate: the shared _BEFORE_STATE_MAX_CHARS budget is spent in list
+        # order, so putting conflicts first means their resolved preferred/
+        # competing values — the grounding evidence a "no conflict on file" claim
+        # turns on — win the budget over source-citation detail. Source *ids* stay
+        # complete in the id-section regardless (never clipped), so a dropped
+        # source keeps its existence check; only its heavy detail yields, and the
+        # omission note already reads correctly for that case.
+        labelled.append(
+            (
+                "research.json conflicts on file before this run (c_ ids; "
+                "preferred/competing assertions resolved to their values)",
+                _summarize_before_state_conflicts(conflicts, assertions),
+            )
+        )
     if research_sources:
         labelled.append(
             (
@@ -1773,7 +1966,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     ]
     id_section = "\n\n".join(id_blocks)
 
-    # heavy per-source detail after — this is what the prompt-size cap trims.
+    # heavy per-entry detail after — this is what the prompt-size cap trims.
     #
     # Drop whole sources rather than slicing the rendered string. A raw
     # `[:budget]` cut lands mid-object, so the last source renders half-written
@@ -1798,7 +1991,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     dropped: list[str] = []
     remaining = budget
     for label, summary in labelled:
-        header = f"{label} — per-source detail (heavy fields truncated):\n"
+        header = f"{label} — per-entry detail (heavy fields truncated):\n"
         kept: list[Any] = []
         for entry, sid in zip(summary["detail"], _detail_ids(summary)):
             candidate = json.dumps(kept + [entry], ensure_ascii=False, indent=2)
@@ -1813,7 +2006,7 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     detail_section = "\n\n".join(detail_blocks)
     if dropped:
         detail_section += (
-            f"\n\n[per-source detail omitted for prompt size: "
+            f"\n\n[per-entry detail omitted for prompt size: "
             f"{', '.join(dropped)}. Their ids ARE listed above and they WERE on "
             f"file — the absence of their detail here is a harness size limit, "
             f"not evidence that they are missing or fabricated.]"

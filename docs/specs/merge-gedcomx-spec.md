@@ -274,6 +274,7 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
   researchRefsUpdated: {               // Mode 2 only; absent/zero for Mode 1
     subject_person_ids: number, person_evidence: number,
     timelines: number, known_holdings: number,
+    proof_summaries: number,
   },
   validation: { valid: true, warnings: string[] },
 }
@@ -521,7 +522,9 @@ Tool-level (wrappers over the pure core):
   assigned ids.
 - **Within-tree persistence** — both files written; `research.json` person-id refs
   (`subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`,
-  `known_holdings.relates_to_person_ids`) repointed collapsed → survivor;
+  `known_holdings.relates_to_person_ids`,
+  `proof_summaries[].claims[].relationship.parent`/`.child`) repointed
+  collapsed → survivor;
   `researchRefsUpdated` counts match.
 - **Validate-before-persist** — a merge that would produce an invalid project
   writes **nothing** and returns `{ ok: false, errors }`.
@@ -557,7 +560,8 @@ Tool-level (wrappers over the pure core):
 - **`merge_tree_persons` (Mode 2) remaps `research.json`.** The collapsed id `B`
   is an existing tree person `research.json` may reference. Repoint every person-id
   reference `B → A`: `project.subject_person_ids`, `person_evidence[].person_id`,
-  `timelines[].person_ids`, and `known_holdings[].relates_to_person_ids`. This set
+  `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`, and
+  `proof_summaries[].claims[].relationship.parent`/`.child`. This set
   is exactly `validateCrossFile`'s person-id checks in
   `src/validation/validator.ts` and **must stay in sync with it** — extract the
   field list as one shared constant (e.g. `PERSON_ID_REF_FIELDS`) consumed by

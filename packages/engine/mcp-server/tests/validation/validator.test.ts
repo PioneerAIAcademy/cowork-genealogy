@@ -13,9 +13,12 @@ import { fileURLToPath } from "url";
 import {
   validateProject,
   validateParsed,
+  PROOF_TIER_RANK,
+  VALIDATOR_ENUMS,
   RESEARCH_SHAPES,
   ID_PREFIXES,
   ISO_DATE_PATTERN,
+  SETTLED_CONFLICT_STATUSES,
 } from "../../src/validation/validator.js";
 
 describe("Project Validator", () => {
@@ -524,7 +527,23 @@ describe("Project Validator", () => {
             question_id: "q_001",
             status: "active",
             created: "July 2026",
-            items: [],
+            // One real item. This fixture asserts `valid === false` for the
+            // PROSE DATES it plants; an empty items array would add an
+            // unrelated error and let the test pass even with every date check
+            // removed.
+            items: [
+              {
+                id: "pli_001",
+                sequence: 1,
+                record_type: "census",
+                jurisdiction: "Schuylkill County, Pennsylvania",
+                date_range: "1850-1860",
+                repository: "FamilySearch",
+                rationale: "Household reconstruction",
+                fallback_for: null,
+                status: "planned",
+              },
+            ],
           },
         ],
         sources: [isoSource()],
@@ -597,7 +616,21 @@ describe("Project Validator", () => {
             question_id: "q_001",
             status: "active",
             created: "2026-07-13",
-            items: [],
+            // One real item: a plan carries at least one (research.schema.json
+            // `$defs/plan.items.minItems`), which the validator now enforces.
+            items: [
+              {
+                id: "pli_001",
+                sequence: 1,
+                record_type: "census",
+                jurisdiction: "Schuylkill County, Pennsylvania",
+                date_range: "1850-1860",
+                repository: "FamilySearch",
+                rationale: "Household reconstruction",
+                fallback_for: null,
+                status: "planned",
+              },
+            ],
           },
         ],
         sources: [isoSource()],
@@ -714,6 +747,466 @@ describe("Project Validator", () => {
           e.message.includes("not found in tree.gedcomx.json persons")
         )
       ).toBe(true);
+    });
+
+    // #1711 follow-up (review finding): claims[].relationship.parent/child were
+    // not registered in person-id-refs.ts, so a dangling reference here
+    // validated clean and merge_tree_persons never remapped it either.
+    it("reports a proof_summaries claim's relationship referencing a non-existent person", async () => {
+      const research = {
+        ...minimalResearch,
+        proof_summaries: [
+          {
+            id: "ps_001",
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: [],
+            resolved_conflict_ids: [],
+            exhaustive_search_summary: "Test",
+            narrative_markdown: "Test",
+            claims: [
+              {
+                claim: "paternity",
+                proof_tier: "probable",
+                supporting_assertion_ids: [],
+                relationship: { type: "ParentChild", parent: "NONEXISTENT", child: "I1" },
+              },
+            ],
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("relationship.parent 'NONEXISTENT' not found in tree.gedcomx.json persons")
+        )
+      ).toBe(true);
+    });
+  });
+
+  // --- issue #1972 V5 -------------------------------------------------------
+  //
+  // `proof_summaries[].resolved_conflict_ids` was checked for presence and
+  // shape only, so a proof summary could claim an open conflict was settled and
+  // no tool, schema or eval check could see it. Four shipped scenario fixtures
+  // were in exactly that state. Labelled `nothing-checks`.
+  describe("proof_summaries resolved_conflict_ids -> conflicts[].status (V5)", () => {
+    function withConflictAndSummary(status: string | undefined, refs: string[]) {
+      const conflicts =
+        status === undefined
+          ? []
+          : [
+              {
+                id: "c_001",
+                conflict_type: "fact",
+                description: "Birth year conflict",
+                competing_assertion_ids: ["a_001", "a_002"],
+                status,
+                blocks_question_ids: [],
+                disputed_attribute: "birth_date",
+              },
+            ];
+      return {
+        ...minimalResearch,
+        conflicts,
+        proof_summaries: [
+          {
+            id: "ps_001",
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: [],
+            resolved_conflict_ids: refs,
+            exhaustive_search_summary: "Test",
+            narrative_markdown: "Test",
+          },
+        ],
+      };
+    }
+
+    const v5Errors = (r: { errors: { message: string }[] }) =>
+      r.errors.filter((e) => e.message.includes("resolved_conflict_ids"));
+
+    it("accepts a citation of a resolved conflict", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("accepts a citation of a MOOT conflict", async () => {
+      // Deliberate deviation from the deep dive's rule text, which says
+      // `resolved` only. Four shipped sites treat the pair as jointly terminal,
+      // and one is this engine instructing the agent: research-append.ts:1434
+      // ("'resolved' and 'moot' both settle a conflict") and :1478-1479 (the
+      // completion-gate error says set it to "'resolved' … or 'moot'"). V5's
+      // harm is claiming an OPEN conflict is settled; `moot` is terminal, so a
+      // `resolved`-only rule would refuse a write the moment an agent follows
+      // that instruction, with nowhere to record the moot conflict.
+      const result = await validateParsed(
+        withConflictAndSummary("moot", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("accepts an empty resolved_conflict_ids", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", []),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("reports a citation of an unresolved conflict, naming the conflict", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      expect(result.valid).toBe(false);
+      const errs = v5Errors(result);
+      expect(errs).toHaveLength(1);
+      expect(errs[0].message).toContain("'c_001'");
+      expect(errs[0].message).toContain("not settled");
+    });
+
+    it("emits a byte-identical message for every state that reaches the error", async () => {
+      // The property, not one forbidden token. A previous version asserted only
+      // that the string "unresolved" was absent, which review defeated by
+      // making the message vary with the ARRAY INDEX instead — the whole engine
+      // suite passed while the freeze was re-introduced, since dropping one of
+      // two citations shifts the survivor's index.
+      //
+      // MANY document states reach this error with one byte-identical message —
+      // ten were run and all ten agree, so the four below are examples rather
+      // than a count. `introduced-errors.ts` keys on the normalized path plus
+      // the message, so if any pair of them produced different text, a project
+      // transitioning between them would have its unchanged defect read as
+      // newly introduced and its write refused.
+      const states: unknown[] = ["unresolved", null, 42, "not_a_status"];
+      const messages = new Set<string>();
+      for (const st of states) {
+        const research = withConflictAndSummary(st as string, ["c_001"]);
+        messages.add(v5Errors(await validateParsed(research, minimalTree))[0]?.message);
+      }
+      // ...and the fifth: `status` absent entirely.
+      const noStatus = withConflictAndSummary("unresolved", ["c_001"]);
+      delete (noStatus.conflicts[0] as any).status;
+      messages.add(v5Errors(await validateParsed(noStatus, minimalTree))[0]?.message);
+
+      expect(messages.size).toBe(1);
+      expect([...messages][0]).toContain("'c_001'");
+
+      // And it must not vary with position: two citations vs one must give the
+      // survivor the same text.
+      const two = withConflictAndSummary("unresolved", ["c_000_first", "c_001"]);
+      const shifted = v5Errors(await validateParsed(two, minimalTree)).find((e) =>
+        e.message.includes("'c_001'")
+      );
+      expect(shifted?.message).toBe([...messages][0]);
+    });
+
+    it("names the remedy and the order, because the order is inverted", async () => {
+      // Two independently correct guards compose into a dead end: re-opening a
+      // conflict that a proof summary cites is refused, and `research_append`'s
+      // ownership routing gives conflict-resolution no move from inside its own
+      // lane (it may not touch `proof_summaries`, and a combined batch is denied
+      // op-by-op). The only compliant sequence is inverted relative to the
+      // causal order — proof-conclusion prunes the citation FIRST, then
+      // conflict-resolution re-opens — and it is documented nowhere else.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      const msg = v5Errors(result)[0].message;
+      expect(msg).toContain("settle it first");
+      expect(msg).toContain("before re-opening it");
+      expect(msg).toContain("proof-conclusion owns");
+    });
+
+    it("reports a non-string entry rather than skipping it", async () => {
+      // Pre-existing gap this closes: both schema trees declare an array of
+      // `^c_` strings and the runtime validator does not load them, so a
+      // non-string entry added no error anywhere.
+      const research = withConflictAndSummary("resolved", [42 as unknown as string]);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(v5Errors(result)[0].message).toContain("non-string entry");
+    });
+
+    it("keeps a legacy assertion that the live status is absent", async () => {
+      // Load-bearing, and the subtlest thing here. `introduced-errors.ts`'s
+      // diff key is the normalized path PLUS the message text, so a message
+      // that varies with the conflict's status makes an UNCHANGED defect read
+      // as newly introduced and refuses the write — a self-inflicted freeze on
+      // the pre-existing drift that module exists to tolerate. The paired
+      // behavioural proof is the unresolved -> moot test in
+      // introduced-errors.test.ts.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)[0].message).not.toContain("unresolved");
+    });
+
+    it("reports a citation of a conflict that does not exist", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", ["c_404"]),
+        minimalTree
+      );
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("references conflict 'c_404' which does not exist")
+        )
+      ).toBe(true);
+    });
+
+    it("reports each bad id separately, with distinct messages", async () => {
+      // Distinctness is what `introduced-errors.ts` keys on: two bad ids
+      // collapsing to one message would make fixing one of them read as "still
+      // pre-existing" and leave the other tolerated forever.
+      const research = withConflictAndSummary("unresolved", ["c_001", "c_404"]);
+      const result = await validateParsed(research, minimalTree);
+      const messages = new Set(
+        result.errors
+          .filter((e) => /c_001|c_404/.test(e.message))
+          .map((e) => e.message)
+      );
+      expect(messages.size).toBe(2);
+    });
+
+    it.each([
+      ["a bare string", "c_001"],
+      ["a model-serialized array", '["c_001"]'],
+      ["a number", 42],
+      ["an object", { "0": "c_001" }],
+    ])("refuses %s in place of the array", async (_label, value) => {
+      // The CONTAINER type. Without this guard the whole rule was bypassed by
+      // dropping two brackets — a refused write became a legal write asserting
+      // exactly the false thing V5 forbids, with `c_001` still unresolved.
+      // `coerceJsonArg` handles a serialized `entry` but not fields inside it,
+      // which is why the JSON-string form survives to here.
+      const research = withConflictAndSummary("unresolved", value as never);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'resolved_conflict_ids' must be an array")
+        )
+      ).toBe(true);
+    });
+
+    it("reports a null as a required-field error only, not also as a type error", async () => {
+      // The `!== null` clause in the container guard. `checkRequired` already
+      // rejects a null required field, so without it a null produces TWO errors
+      // for one problem — and a duplicated diagnosis is what makes an agent
+      // repair the wrong thing. The sibling `claims` guard excludes null for
+      // the same reason. Removing the clause left the whole suite green until
+      // this test existed.
+      const research = withConflictAndSummary("resolved", null as never);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'resolved_conflict_ids' must be an array")
+        )
+      ).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("resolved_conflict_ids"))
+      ).toBe(true);
+    });
+
+    it("reports an ABSENT key as a required-field error only, not also a type error", async () => {
+      // The `"resolved_conflict_ids" in ps` clause, which nothing tested:
+      // deleting it left all 247 validation tests green while an absent key
+      // produced BOTH `missing required field` and `must be an array` for one
+      // problem. Same double diagnosis the `null` case above prevents, on the
+      // twin case — and a duplicated diagnosis is what makes an agent repair
+      // the wrong thing.
+      const research = withConflictAndSummary("resolved", []);
+      delete (research.proof_summaries[0] as Record<string, unknown>)
+        .resolved_conflict_ids;
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      const mentions = result.errors.filter((e) =>
+        e.message.includes("resolved_conflict_ids")
+      );
+      expect(mentions).toHaveLength(1);
+      expect(mentions[0].message).not.toContain("must be an array");
+    });
+
+    it("embeds the offending value in the container message", async () => {
+      // `errorKey` is the normalized path PLUS the message, so a STATIC message
+      // keys identically before and after — which demotes a change from one
+      // non-array to a DIFFERENT non-array as pre-existing and writes it.
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", "c_001" as never),
+        minimalTree
+      );
+      const msg = result.errors.find((e) =>
+        e.message.includes("'resolved_conflict_ids' must be an array")
+      )?.message;
+      expect(msg).toContain('"c_001"');
+    });
+
+    it.each([
+      // The first three messages name the field; the dangling one comes from
+      // the shared `checkRefExists`, whose house style names the REF TYPE
+      // ("assertion" vs "conflict") rather than the field. That is what
+      // disambiguates the two id-bearing arrays that sit at the same path, so
+      // it is matched as-is rather than reworded — the sibling
+      // `resolved_conflict_ids` dangling case is asserted the same way 200
+      // lines above.
+      ["a bare string", "a_001", "'supporting_assertion_ids' must be an array"],
+      ["an array-like object", { "0": "a_001" }, "'supporting_assertion_ids' must be an array"],
+      ["a non-string entry", [42], "supporting_assertion_ids contains a non-string entry"],
+      ["a dangling reference", ["a_999"], "references assertion 'a_999' which does not exist"],
+    ])(
+      "gives supporting_assertion_ids the same guards: %s",
+      async (_label, value, expected) => {
+        // The class recurs, not the field. Measured before this: all four were
+        // ACCEPTED and persisted with no error at all — and the dangling case is
+        // the same shape V5 exists to remove, on the sibling field, feeding the
+        // same reader that guards `.length > 0` then calls `.map`.
+        const research = withConflictAndSummary("resolved", []);
+        (research.proof_summaries[0] as Record<string, unknown>)
+          .supporting_assertion_ids = value;
+        const result = await validateParsed(research, minimalTree);
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.message.includes(expected))).toBe(true);
+      }
+    );
+
+    it.each([
+      ["a NON-EMPTY array of existing ids", ["a_001"]],
+      ["an empty array", []],
+    ])("still accepts %s", async (_label, value) => {
+      // Polarity for the four negative cases above.
+      //
+      // An earlier version of this looped over `[[], undefined]` and assigned
+      // `[]` in BOTH branches, so the non-empty case — which is what 36 shipped
+      // fixtures actually carry — was never exercised, while the comment
+      // claimed it was. Third instance in this PR family of a comment asserting
+      // coverage a test does not have, so the non-empty row is explicit and
+      // supplies a real assertion for the referential check to resolve.
+      const research = withConflictAndSummary("resolved", []);
+      (research as Record<string, unknown>).assertions = [
+        {
+          id: "a_001",
+          source_id: "src_001",
+          record_id: "test",
+          record_role: "principal",
+          fact_type: "birth",
+          value: "1850",
+          information_quality: "primary",
+          informant: "self",
+          informant_proximity: "self",
+          evidence_type: "direct",
+          extracted_for_question_ids: [],
+        },
+      ];
+      (research.proof_summaries[0] as Record<string, unknown>)
+        .supporting_assertion_ids = value;
+      const result = await validateParsed(research, minimalTree);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("supporting_assertion_ids")
+        )
+      ).toBe(false);
+      // And the referential check must not have flagged the id either — the
+      // failure this row exists to rule out is a valid id being reported as
+      // dangling.
+      expect(
+        result.errors.some((e) => e.message.includes("references assertion 'a_001'"))
+      ).toBe(false);
+    });
+
+    it("still accepts an empty array", async () => {
+      // Polarity for the guard above: `[]` is the legitimate empty case and the
+      // one four shipped fixtures were corrected TO, so a container check that
+      // rejected it would break the repair this PR makes.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", []),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("holds the join across a synthetic fixture tree, including a moot citation", async () => {
+      // A SECOND EXPRESSION of assertions this describe already makes, not the
+      // thing that makes the imported constant load-bearing — reviewed and
+      // conceded. Every mutation that breaks the `moot` half also reds the
+      // pre-existing "accepts a citation of a MOOT conflict" test at the same
+      // time, so this adds no marginal detection, and its three `validateParsed`
+      // calls duplicate three tests above with the same helper and tree. Kept
+      // because it states the whole matrix in one place; delete it freely if
+      // that is not worth the duplication.
+      const settled = (status: string) => SETTLED_CONFLICT_STATUSES.has(status);
+      expect(settled("resolved")).toBe(true);
+      expect(settled("moot")).toBe(true);
+      expect(settled("unresolved")).toBe(false);
+
+      for (const [status, shouldBeClean] of [
+        ["resolved", true],
+        ["moot", true],
+        ["unresolved", false],
+      ] as [string, boolean][]) {
+        const result = await validateParsed(
+          withConflictAndSummary(status, ["c_001"]),
+          minimalTree
+        );
+        expect(v5Errors(result).length === 0).toBe(shouldBeClean);
+      }
+    });
+
+    it("holds across every shipped scenario fixture", async () => {
+      // Scoped to the V5 join ON PURPOSE, not full validation: seven fixtures
+      // exist to FAIL validation (mid-research-flynn-bad-id-prefix,
+      // -dangling-ref, -bad-enum, -missing-field, -cross-file, -broken-fk-refs,
+      // -broken-fk), driven by `intentionally_invalid: true` tests, so a
+      // full-validation scan would red on landing.
+      //
+      // A scan rather than four hand-written cases so a FIFTH fixture
+      // acquiring the fault is caught. Four carried it when V5 landed:
+      // flynn-with-birthplace-conflict, flynn-multi-conflict,
+      // flynn-identity-geographic and flynn-unresolved-conflict — one more than
+      // the deep dive predicted.
+      const here = dirname(fileURLToPath(import.meta.url));
+      const scenarios = join(here, "..", "..", "..", "..", "..", "eval", "fixtures", "scenarios");
+      const { readdirSync, existsSync } = await import("fs");
+      const offenders: string[] = [];
+      for (const name of readdirSync(scenarios)) {
+        const rp = join(scenarios, name, "research.json");
+        if (!existsSync(rp)) continue;
+        const research = JSON.parse(readFileSync(rp, "utf-8"));
+        // Imported rather than hand-copied, for a single source of truth — NOT
+        // for detection. An earlier version of this comment called the copy
+        // "the only one of the eleven sites a tightening must touch that a test
+        // guards"; both halves were wrong. It is ten sites (the import removed
+        // the eleventh), and narrowing the constant to `["resolved"]` leaves
+        // this scan GREEN, because zero shipped fixtures cite a `moot`
+        // conflict — the "accepts a citation of a MOOT conflict" test is what
+        // catches that. See the docblock on SETTLED_CONFLICT_STATUSES.
+        const settled = new Set(
+          (research.conflicts ?? [])
+            .filter((c: any) => SETTLED_CONFLICT_STATUSES.has(c?.status))
+            .map((c: any) => c?.id)
+        );
+        const known = new Set((research.conflicts ?? []).map((c: any) => c?.id));
+        for (const ps of research.proof_summaries ?? []) {
+          for (const cid of ps?.resolved_conflict_ids ?? []) {
+            if (!known.has(cid) || !settled.has(cid)) {
+              offenders.push(`${name}: ${ps.id} -> ${cid}`);
+            }
+          }
+        }
+      }
+      expect(offenders).toEqual([]);
     });
   });
 
@@ -1373,6 +1866,40 @@ describe("Project Validator", () => {
       const result = await validateProject(testDir);
       expect(result.errors.some((e) => e.message.includes("does not match any result's recordId"))).toBe(true);
     });
+
+    it("D5: rejects a record_persona_id on a fulltext_search-sourced assertion with a named error (#2038)", async () => {
+      const research = {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "fulltext_search", query: {}, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json", external_site: null },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/3:1:S3HT-XYZ", record_role: "principal", record_persona_id: "PERSON1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", evidence_type: "direct", extracted_for_question_ids: [], log_entry_id: "log_001" },
+        ],
+      };
+      // A fulltext result: `id`-keyed, no recordId, no gedcomx.
+      const sidecar = {
+        log_id: "log_001", tool: "fulltext_search", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        payload: { results: [{ id: "ark:/61903/3:1:S3HT-XYZ" }] },
+      };
+      const tree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+      await writeProject(research, tree);
+      await mkdir(join(testDir, "results"));
+      await writeFile(join(testDir, "results/log_001.json"), JSON.stringify(sidecar));
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      // The named reason, not the misleading "does not match any result's recordId".
+      expect(
+        result.errors.some(
+          (e) => e.message.includes("record_persona_id must be null") && e.message.includes("fulltext_search-sourced"),
+        ),
+      ).toBe(true);
+      expect(result.errors.some((e) => e.message.includes("does not match any result's recordId"))).toBe(false);
+    });
   });
 
   describe("Evaluations", () => {
@@ -1665,6 +2192,10 @@ describe("Research closed shapes", () => {
   const maximalTree = {
     persons: [
       { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] },
+      // I2/I3 back the proof_summaries claims[].relationship fixtures below —
+      // #1711's person-id-refs follow-up checks those endpoints exist.
+      { id: "I2", gender: "Male", names: [{ id: "N2", given: "Robert", surname: "Smith" }] },
+      { id: "I3", gender: "Female", names: [{ id: "N3", given: "Mary", surname: "Smith" }] },
     ],
     relationships: [],
     sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
@@ -1922,6 +2453,14 @@ describe("Research closed shapes", () => {
           resolved_conflict_ids: [],
           exhaustive_search_summary: "Census and vital records searched",
           narrative_markdown: "## Findings\nProbable.",
+          claims: [
+            {
+              claim: "paternity",
+              proof_tier: "probable",
+              supporting_assertion_ids: ["a_001"],
+              relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+            },
+          ],
         },
       ],
       evaluations: [
@@ -2011,6 +2550,11 @@ describe("Research closed shapes", () => {
     { site: "timeline events", plant: (r) => (r.timelines[0].events[0].zz_extra = true) },
     { site: "timeline gaps", plant: (r) => (r.timelines[0].gaps[0].zz_extra = true) },
     { site: "proof_summaries", plant: (r) => (r.proof_summaries[0].zz_extra = true) },
+    { site: "proof_summaries claims", plant: (r) => (r.proof_summaries[0].claims[0].zz_extra = true) },
+    {
+      site: "proof_claim relationship",
+      plant: (r) => (r.proof_summaries[0].claims[0].relationship.zz_extra = true),
+    },
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
     { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
   ];
@@ -2030,6 +2574,246 @@ describe("Research closed shapes", () => {
       ).toBe(true);
     });
   }
+
+  // #1711 — per-claim tier breakdown on proof_summaries[].claims. Optional
+  // and additive; these pin the write-time enforcement the task-reviewer
+  // flagged as missing (nothing walked into a nested object here before).
+  describe("proof_summaries[].claims (#1711 per-claim tiers)", () => {
+    it("accepts a proof_summaries entry with a valid claims[] breakdown", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "maternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("behaves exactly as before when claims is absent (no regression on the default path)", async () => {
+      const research = maximalResearch();
+      delete research.proof_summaries[0].claims;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("reports a non-object claims[] element instead of throwing", async () => {
+      // `checkRequired` tests `field in obj` and `in` throws on null and every
+      // primitive — the reason the other 21 element loops call isObjectEntry.
+      // claims[] is filled from LLM output and validateParsed gates every
+      // writer tool, so a throw here fails them all with no repairable message.
+      for (const bad of [null, "paternity", 42]) {
+        const research = maximalResearch();
+        research.proof_summaries[0].claims = [bad];
+        const result = await validateParsed(research, maximalTree);
+        expect(result.valid).toBe(false);
+        expect(
+          result.errors.some(
+            (e) => e.path === "research.json/proof_summaries[0]/claims[0]"
+          )
+        ).toBe(true);
+      }
+    });
+
+    it("reports a non-object claims[].relationship instead of throwing", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].relationship = "I2";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]/relationship"
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a scalar tier stronger than every per-claim tier", async () => {
+      // The `!==` in the scalar check has two arms. Dropping this one (making it
+      // `<`) left the whole suite green, and it is the arm the orchestrator's
+      // `tier >= probable` routing actually leans on.
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "proved";
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes(
+              "tier 'proved' does not match the stronger of claims[].proof_tier ('probable')"
+            )
+        )
+      ).toBe(true);
+    });
+
+    it("a prototype key cannot pose as a tier rank", async () => {
+      // PROOF_TIER_RANK was an object literal, so `["constructor"]` returned a
+      // function rather than undefined, Math.max went NaN, and the scalar check
+      // silently stopped running for the whole summary.
+      expect(PROOF_TIER_RANK.get("constructor")).toBeUndefined();
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible";
+      research.proof_summaries[0].claims = [
+        {
+          claim: "poison",
+          proof_tier: "constructor",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: [],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("does not match the stronger of claims[].proof_tier")
+        )
+      ).toBe(true);
+    });
+
+    it("PROOF_TIER_RANK ranks every proof_tier enum value", () => {
+      expect(new Set(PROOF_TIER_RANK.keys())).toEqual(
+        new Set(VALIDATOR_ENUMS.proof_tier)
+      );
+    });
+
+    it("rejects a claims[] entry with an invalid proof_tier value", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].proof_tier = "very_confident";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]" &&
+            e.message.includes("'very_confident' is not a valid proof_tier")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a claims[].relationship.type other than 'ParentChild'", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims[0].relationship.type = "Couple";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]/relationship" &&
+            e.message.includes("relationship.type must be 'ParentChild'")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a claims[] entry missing a required field", async () => {
+      const research = maximalResearch();
+      delete research.proof_summaries[0].claims[0].supporting_assertion_ids;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[0]" &&
+            e.message.includes("missing required field 'supporting_assertion_ids'")
+        )
+      ).toBe(true);
+    });
+
+    // Review follow-up (#1711): nothing enforced these two invariants, though
+    // the eval validator looks a claim up by its `claim` label (first match
+    // silently wins on a duplicate) and the viewer keys its list by the same
+    // label — both assume uniqueness the schema never required.
+    it("rejects two claims[] entries sharing the same claim label", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "paternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]/claims[1]" &&
+            e.message.includes("duplicate claim label 'paternity'")
+        )
+      ).toBe(true);
+    });
+
+    // The scalar must carry the STRONGER per-claim tier (research-schema-spec
+    // §7) — this is the exact invariant the _018 review episode showed only
+    // living in agent prose, with nothing catching a scalar that disagrees
+    // with its own claims.
+    it("rejects a scalar tier that doesn't match the stronger per-claim tier", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible"; // claims[0] is "probable"
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/proof_summaries[0]" &&
+            e.message.includes("tier 'possible' does not match the stronger of claims[].proof_tier ('probable')")
+        )
+      ).toBe(true);
+    });
+
+    it("accepts a scalar tier that correctly matches the stronger of two differing claims", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].claims = [
+        {
+          claim: "paternity",
+          proof_tier: "probable",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I2", child: "I1" },
+        },
+        {
+          claim: "maternity",
+          proof_tier: "possible",
+          supporting_assertion_ids: ["a_001"],
+          relationship: { type: "ParentChild", parent: "I3", child: "I1" },
+        },
+      ];
+      research.proof_summaries[0].tier = "probable"; // the stronger of the two
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+  });
 
   it("RESEARCH_SHAPES mirrors research.schema.json exactly (drift guard)", () => {
     const here = dirname(fileURLToPath(import.meta.url));
@@ -2062,6 +2846,8 @@ describe("Research closed shapes", () => {
       timeline_event: schema.$defs.timeline_event,
       timeline_gap: schema.$defs.timeline_gap,
       proof_summary: schema.$defs.proof_summary,
+      proof_claim: schema.$defs.proof_claim,
+      proof_claim_relationship: schema.$defs.proof_claim_relationship,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
     };
@@ -2163,6 +2949,276 @@ describe("ISO_DATE_PATTERN mirrors the iso_date $def", () => {
 // ops put a string here, and 39 of the 154 persisted declared questions carry
 // one — 25% of the corpus holding a shape research.schema.json has always
 // forbidden, with nothing checking.
+describe("a malformed element is reported, never thrown", () => {
+  /**
+   * `checkRequired` tests `field in obj`, and `in` throws on null, undefined
+   * and every primitive. A single stray element anywhere in one of these arrays
+   * took `validateParsed` down with `TypeError: Cannot use 'in' operator to
+   * search for 'id' in null` — and because every writer tool validates the
+   * whole document, one bad element made every one of them fail with a message
+   * naming no field and no fix, while `validate_research_schema` crashed
+   * instead of telling the user what to repair. Reachable by hand edit, which
+   * is how the one invalid plan in the committed corpus got there.
+   */
+  const doc = () => ({
+    project: { id: "rp_001", objective: "o", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+    questions: [
+      {
+        id: "q_001", question: "Q?", rationale: "r", selection_basis: "timeline_gap", priority: "high",
+        status: "open", depends_on: [], unblocks: [], created: "2026-01-01", resolved: null,
+        resolution_assertion_ids: [],
+        exhaustive_declaration: { declared: false, log_entry_ids: [], justification: null, stop_criteria: null },
+      },
+    ],
+    plans: [], log: [], sources: [], assertions: [], person_evidence: [],
+    conflicts: [], hypotheses: [], timelines: [], proof_summaries: [], evaluations: [],
+  }) as any;
+  const bareTree = { persons: [], relationships: [], sources: [] } as any;
+
+  // Every research array that holds objects. The three tree arrays get their
+  // own loop below. Listed
+  // rather than derived, so adding a section without a guard shows up here.
+  const ARRAYS = [
+    "questions", "plans", "log", "sources", "assertions", "person_evidence",
+    "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
+    "known_holdings", "localities",
+  ];
+
+  for (const section of ARRAYS) {
+    for (const [label, bad] of [["null", null], ["a string", "x"], ["a number", 7]] as Array<[string, unknown]>) {
+      it(`reports ${label} in ${section} instead of throwing`, async () => {
+        const research = doc();
+        research[section] = [bad];
+        const result = await validateParsed(research, bareTree); // must not throw
+        expect(result.valid).toBe(false);
+        const own = result.errors.filter((e) => e.path === `research.json/${section}[0]`);
+        expect(own.map((e) => e.message)).toEqual([
+          `must be an object — got ${bad === null ? "null" : typeof bad}`,
+        ]);
+      });
+    }
+  }
+
+  for (const section of ["persons", "relationships", "sources"]) {
+    it(`reports null in tree ${section} instead of throwing`, async () => {
+      const tree = { persons: [], relationships: [], sources: [] } as any;
+      tree[section] = [null];
+      const result = await validateParsed(doc(), tree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) => e.path === `tree.gedcomx.json/${section}[0]` && e.message.includes("must be an object"),
+        ),
+      ).toBe(true);
+    });
+  }
+
+  it("reports a nested plan item and timeline event too", async () => {
+    const research = doc();
+    research.plans = [
+      { id: "pl_001", question_id: "q_001", status: "active", created: "2026-01-01", items: [null] },
+    ];
+    research.timelines = [
+      { id: "tl_001", label: "L", person_ids: [], generated: "2026-01-01", events: ["x"], gaps: [] },
+    ];
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    const paths = result.errors.map((e) => e.path);
+    expect(paths).toContain("research.json/plans[0]/items[0]");
+    expect(paths).toContain("research.json/timelines[0]/events[0]");
+  });
+
+  it("leaves an ARRAY element alone, keeping today's messages", async () => {
+    // typeof [] === "object" and `in` does not throw on one, so an array
+    // element was never part of the crash. Re-shaping its messages would be an
+    // unrelated behaviour change riding along on a crash fix.
+    const research = doc();
+    research.plans = [[]];
+    const result = await validateParsed(research, bareTree);
+    expect(result.errors.some((e) => e.message.includes("must be an object"))).toBe(false);
+    expect(result.errors.some((e) => e.message.includes("missing required field"))).toBe(true);
+  });
+
+  it("reports an ARRAY in a required-object field exactly once, not three times", async () => {
+    // `typeof [] === "object"` and `[] !== null`, so an array ENTERED the block
+    // and collected a missing-field error per required key on top of the type
+    // error. The helper's docstring excludes null and undefined to avoid
+    // doubling; arrays needed the same treatment.
+    const research = doc();
+    research.questions[0].exhaustive_declaration = [];
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    const own = result.errors.filter((e) => e.path.includes("exhaustive_declaration"));
+    expect(own.map((e) => e.message)).toEqual([
+      "exhaustive_declaration must be an object — got array",
+    ]);
+  });
+
+  it("reports researcher_profile: [] — the fourth slot, which the array arm missed", async () => {
+    // This site opened `typeof rp !== "object"`, which catches a string and
+    // MISSES `[]`, so the schema-invalid array validated clean while the three
+    // sibling slots were being fixed one screen below.
+    const research = doc();
+    research.researcher_profile = [];
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    const own = result.errors.filter((e) => e.path.endsWith("/researcher_profile"));
+    expect(own.map((e) => e.message)).toEqual([
+      "researcher_profile must be an object — got array",
+    ]);
+  });
+
+  it("reports a required-object FIELD holding a primitive, which passed silently", async () => {
+    // The other half: `if (typeof X === "object" && X !== null)` skipped the
+    // whole block for a primitive, so this validated clean.
+    const research = doc();
+    research.questions[0].exhaustive_declaration = "yes";
+    const result = await validateParsed(research, bareTree);
+    expect(result.valid).toBe(false);
+    expect(
+      result.errors.some(
+        (e) =>
+          e.path === "research.json/questions[0]/exhaustive_declaration" &&
+          e.message === "exhaustive_declaration must be an object — got string",
+      ),
+    ).toBe(true);
+  });
+
+  it("does NOT double-report an absent or null object field", async () => {
+    // checkRequired owns those; re-reporting would double every message.
+    const research = doc();
+    research.questions[0].exhaustive_declaration = null;
+    const result = await validateParsed(research, bareTree);
+    const own = result.errors.filter((e) => e.path.includes("exhaustive_declaration"));
+    expect(own.filter((e) => e.message.includes("must be an object"))).toEqual([]);
+  });
+});
+
+describe("a plan carries at least one item", () => {
+  /**
+   * `research.schema.json` `$defs/plan.items` is `type: array, minItems: 1`, its
+   * `packages/schema` mirror says the same, and `research-schema-spec.md` says
+   * "At least one plan item". `validateResearch` required the KEY and iterated
+   * whatever was there, so an empty plan passed the runtime enforcer and failed
+   * only the eval harness's jsonschema pass — the write path persisted one and
+   * the viewer and `packages/schema` readers got it unchecked.
+   */
+  function researchWithPlanItems(items: unknown): any {
+    return {
+      project: {
+        id: "rp_001",
+        objective: "Find John Smith's parents",
+        status: "active",
+        created: "2026-01-01",
+        updated: "2026-01-02",
+      },
+      questions: [
+        {
+          id: "q_001",
+          question: "Who were the parents of John Smith?",
+          rationale: "Timeline gap before 1850",
+          selection_basis: "timeline_gap",
+          priority: "high",
+          status: "open",
+          depends_on: [],
+          unblocks: [],
+          created: "2026-01-01",
+          resolved: null,
+          resolution_assertion_ids: [],
+          exhaustive_declaration: {
+            declared: false,
+            log_entry_ids: [],
+            justification: null,
+            stop_criteria: null,
+          },
+        },
+      ],
+      plans: [{ id: "pl_001", question_id: "q_001", status: "active", created: "2026-01-01", items }],
+      log: [],
+      sources: [],
+      assertions: [],
+      person_evidence: [],
+      conflicts: [],
+      hypotheses: [],
+      timelines: [],
+      proof_summaries: [],
+      evaluations: [],
+    };
+  }
+  const tree = {
+    persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+    relationships: [],
+    sources: [],
+  };
+  const oneItem = () => [
+    {
+      id: "pli_001",
+      sequence: 1,
+      record_type: "census",
+      jurisdiction: "Schuylkill County, Pennsylvania",
+      date_range: "1850-1860",
+      repository: "FamilySearch",
+      rationale: "Household reconstruction",
+      fallback_for: null,
+      status: "planned",
+    },
+  ];
+  const itemsErrors = (r: { errors: Array<{ path: string; message: string }> }) =>
+    r.errors.filter((e) => e.path === "research.json/plans[0]/items");
+
+  it("rejects an empty items array — the shape research_append persisted", async () => {
+    const result = await validateParsed(researchWithPlanItems([]), tree);
+    expect(result.valid).toBe(false);
+    const errs = itemsErrors(result);
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toMatch(/is empty — a plan carries at least one plan item/);
+    // The refusal names the call shape that satisfies it, so a caller reading
+    // only this string does not reach for `"items": []` again.
+    expect(errs[0].message).toMatch(/one 'plan_items' op per item, each carrying this plan's id/);
+  });
+
+  it("rejects a non-array items — `type: array` was unenforced on the same field", async () => {
+    const result = await validateParsed(researchWithPlanItems({ pli_001: "census" }), tree);
+    expect(result.valid).toBe(false);
+    const errs = itemsErrors(result);
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toMatch(/must be an array of plan items — got object/);
+  });
+
+  it("reports a present-but-undefined items exactly once", async () => {
+    // `checkRequired` tests `field in obj` then `=== null`, so this shape
+    // reported NOTHING before: not missing, not null, not a bad type.
+    // Unreachable through JSON.parse, reachable from any code path that builds
+    // the entry in memory.
+    const research = researchWithPlanItems(undefined);
+    expect("items" in research.plans[0]).toBe(true);
+    const result = await validateParsed(research, tree);
+    expect(result.valid).toBe(false);
+    const errs = result.errors.filter((e) => e.path.startsWith("research.json/plans[0]"));
+    expect(errs).toHaveLength(1);
+    expect(errs[0].message).toMatch(/must be an array of plan items — got undefined/);
+  });
+
+  it("accepts a plan with one item (control)", async () => {
+    const result = await validateParsed(researchWithPlanItems(oneItem()), tree);
+    expect(itemsErrors(result)).toEqual([]);
+    expect(result.valid).toBe(true);
+  });
+
+  it("still reports a MISSING items key, and only once", async () => {
+    // The pre-existing `checkRequired` arm. Both corpus instances of the bug
+    // start here: `items` absent on the shell, refused with "missing required
+    // field", and the retry answers with `"items": []`.
+    const research = researchWithPlanItems([]);
+    delete research.plans[0].items;
+    const result = await validateParsed(research, tree);
+    expect(result.valid).toBe(false);
+    const missing = result.errors.filter((e) => e.message.includes("missing required field 'items'"));
+    expect(missing).toHaveLength(1);
+    expect(itemsErrors(result)).toEqual([]); // no doubled-up complaint
+  });
+});
+
 describe("stop_criteria type guard (#1834)", () => {
   function researchWithStopCriteria(stopCriteria: unknown): any {
     return {

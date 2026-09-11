@@ -97,11 +97,15 @@ const EXAMPLES: Record<string, string> = {
   }
 }`,
 
+  // No "items" here on purpose: it is REQUIRED and non-empty, and the
+  // `plan_items` ops in the same call are what create it. This example said
+  // `"items": []`, which is the shape a caller refused for a missing `items`
+  // then copied — and which validates in no schema. `exampleFor` renders this
+  // shell inside the batched call, never alone.
   plans: `{
   "question_id": "q_002",
   "status": "active",
-  "created": "2026-07-18",
-  "items": []
+  "created": "2026-07-18"
 }`,
 
   plan_items: `{
@@ -149,12 +153,23 @@ const EXAMPLES: Record<string, string> = {
   "gaps": []
 }`,
 
+  // `resolved_conflict_ids` is `[]` in both proof-summary examples ON PURPOSE.
+  // The `conflicts` example above ships `status: "unresolved"` — correct, since
+  // creating a conflict is identification rather than resolution — and `c_001`
+  // appears in no settled example anywhere in this file. Citing it here taught
+  // an agent to write an unresolved conflict and then cite it as resolved,
+  // which `validator.ts` now refuses (#1972 V5) — and these strings are printed
+  // inside that very refusal, so the example handed back an instance of the
+  // thing just rejected. `[]` is the shape that matches this file's own
+  // conflict example. Do not re-add an id here without also adding a settled
+  // conflict example whose `preferred_assertion_id` and `resolution_rationale`
+  // match it.
   proof_summaries: `{
   "question_id": "q_002",
   "tier": "probable",
   "vehicle": "summary",
   "supporting_assertion_ids": ["a_013", "a_025"],
-  "resolved_conflict_ids": ["c_001"],
+  "resolved_conflict_ids": [],
   "exhaustive_search_summary": "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
   "narrative_markdown": "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father..."
 }`,
@@ -224,6 +239,40 @@ const PROJECT_EXAMPLE = `research_append({
 })`;
 
 /**
+ * The `plans` append, as the batched call `research-plan/SKILL.md` prescribes:
+ * the shell, then one `plan_items` op per item carrying the id the tool will
+ * assign the shell. Built from `EXAMPLES.plans` + `EXAMPLES.plan_items` rather
+ * than a third literal, so a schema drift in either is caught once.
+ */
+function plansBatchExample(): string {
+  const indent = (text: string, pad: string) => text.split("\n").join(`\n${pad}`);
+  return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  ops: [
+    // Op #1 — the plan shell. Omit "id" AND "items": the tool assigns the id,
+    // and the item ops below create the items. An EMPTY items array is not the
+    // way to satisfy a missing-items refusal — an itemless plan is invalid.
+    {
+      section: "plans",
+      op: "append",
+      entry: ${indent(EXAMPLES.plans, "      ")}
+    },
+    // Ops #2…N — one per plan item, in sequence order. planId is the id the
+    // tool assigns op #1: (highest existing pl_ in research.json) + 1,
+    // zero-padded to 3. Predict it — pl_001/pl_002 existing makes this pl_003.
+    // A hard-coded "pl_001" appends your items to another question's plan and
+    // leaves the plan you just created empty.
+    {
+      section: "plan_items",
+      op: "append",
+      planId: "pl_003",
+      entry: ${indent(EXAMPLES.plan_items, "      ")}
+    }
+  ]
+})`;
+}
+
+/**
  * A worked `research_append` call for `section`, or null when the section has
  * no example. `op` selects the call shape (`plan_items` needs a `planId`).
  */
@@ -242,12 +291,27 @@ export function exampleFor(
   fieldsNamed: readonly string[] = [],
 ): string | null {
   if (section === "project") return PROJECT_EXAMPLE;
+  // A `plans` append is never legal alone: `items` is required and non-empty,
+  // and the plan shell omits it, so the item ops that fill it belong in the
+  // SAME call. Rendering the shell on its own taught a call the tool refuses.
+  // Composed from the two registry entries so the packaging test still checks
+  // both halves against the schema.
+  if (section === "plans" && op === "append") return plansBatchExample();
   // hasOwn, not a bare index: `section` is LLM-supplied, and `constructor`
   // indexes out `Object`, which is truthy — so `!entry` lets it through and the
   // `entry.split` below throws a TypeError out of the rejection path.
   const entry = Object.hasOwn(EXAMPLES, section) ? EXAMPLES[section] : undefined;
   if (!entry) return null;
-  const planId = section === "plan_items" ? `\n  planId: "pl_001",` : "";
+  // `pl_001` was hard-coded here, which is the one literal
+  // `research-plan/SKILL.md` says never to hard-code: in an ongoing project it
+  // attaches the items to another question's plan. The append form teaches the
+  // prediction rule; the update form needs an id that already exists.
+  const planId =
+    section === "plan_items"
+      ? op === "update"
+        ? `\n  planId: "<the pl_ id of the plan holding this item>",`
+        : `\n  planId: "<the pl_ id of the plan this item belongs to — when the same call creates that plan, (highest existing pl_) + 1>",`
+      : "";
   // A source append must either reference an S entry that already exists in the
   // tree or create one in the same call. The composite form is the norm, so the
   // example teaches it rather than a bare id that would be rejected.
@@ -302,6 +366,44 @@ export function exampleFor(
   op: "update",${planId}
   entryId: "<existing-id>",
   fields: { /* only the fields you are changing */ }
+})`;
+  }
+  // A caller refused for writing an unrecognized/malformed `claims[]` entry
+  // (#1711's per-claim tier breakdown) gets a worked body showing the shape,
+  // rather than the base single-claim example below, which never mentions
+  // `claims` at all. Mirrors the `questions`+`exhaustive_declaration` branch
+  // above: swap in a different worked body for the same section+op when a
+  // specific field was named in the failing call. `tier` here is the
+  // stronger of the two per-claim tiers (probable, over maternity's
+  // possible) — see research-schema-spec.md §7 for why.
+  if (section === "proof_summaries" && fieldsNamed.includes("claims")) {
+    return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "append",
+  entry: {
+    question_id: "q_002",
+    tier: "probable",
+    vehicle: "summary",
+    supporting_assertion_ids: ["a_013", "a_025"],
+    resolved_conflict_ids: [],
+    exhaustive_search_summary: "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
+    narrative_markdown: "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father...",
+    claims: [
+      {
+        claim: "paternity",
+        proof_tier: "probable",
+        supporting_assertion_ids: ["a_013"],
+        relationship: { type: "ParentChild", parent: "I2", child: "I1" }
+      },
+      {
+        claim: "maternity",
+        proof_tier: "possible",
+        supporting_assertion_ids: ["a_025"],
+        relationship: { type: "ParentChild", parent: "I3", child: "I1" }
+      }
+    ]
+  }
 })`;
   }
   return `research_append({

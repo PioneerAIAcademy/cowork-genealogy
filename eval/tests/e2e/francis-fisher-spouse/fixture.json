@@ -1,0 +1,19 @@
+{
+  "id": "francis-fisher-spouse",
+  "name": "Francis Maria Fisher — husband Alfred George Holding (m. 1895)",
+  "genre": "record-hint",
+  "source_pid": "LZZ9-YL3",
+  "captured": "2026-09-07",
+  "researcher_question": "Did Francis Maria Fisher of Hobart, Tasmania (b. 1871) marry Alfred George Holding, and if so when?",
+  "tags": {
+    "question_type": "spouse",
+    "era": "1890s",
+    "geography": "AU-TAS"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "easy",
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 2, hint-samples.csv row 23, flag adds_spouse, confidence 3). Resolved 2026-09-09 (issue #2295): TRUE MATCH with the date and place made precise. Confirmed by the Tasmanian marriage registration ark:/61903/1:1:Q279-HRRC (23 February 1895, Hobart) and corroborated by the daughter's birth registration ark:/61903/1:1:Q27M-D67V, which names Alfred George Holding as father and Frances Maria Fisher as mother of the Holding daughter already in the tree. The transcribed index entry is no longer the cited source."
+}

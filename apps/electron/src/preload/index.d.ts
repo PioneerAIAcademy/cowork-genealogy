@@ -8,6 +8,7 @@ export interface ProjectFile {
 export interface AppAPI {
   openFile: () => Promise<{ filePath: string; content: string; ext: string } | null>
   openExternal: (url: string) => Promise<void>
+  openFamilySearch: (value: string) => Promise<void>
   getVersion: () => Promise<string>
   onResearchUpdated: (callback: (data: unknown) => void) => void
   onGedcomxUpdated: (callback: (data: unknown) => void) => void
@@ -15,7 +16,7 @@ export interface AppAPI {
   onFolderNotice: (callback: (message: string) => void) => void
   onSidecarUpdated: (callback: (event: { logId: string; mtime: number }) => void) => void
   removeAllWatchListeners: () => void
-  getSessionLog: () => Promise<{ entries: unknown[]; sizeBytes: number }>
+  getSessionLog: () => Promise<{ hasSessionLog: boolean; sizeBytes: number }>
   selectFolder: () => Promise<string | null>
   getState: () => Promise<{
     folderPath: string | null

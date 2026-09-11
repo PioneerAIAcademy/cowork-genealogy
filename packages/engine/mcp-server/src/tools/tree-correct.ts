@@ -97,7 +97,9 @@ export const treeCorrectSchema = {
         description:
           "update_fact: the fields to set (id immutable). date/standard_date/place/" +
           "standard_place/value are plain strings (date: \"2 October 1876\"), never nested objects. " +
-          "Set `primary: true` to make it the primary of its type.",
+          "Set `primary: true` to make it the primary of its type, or `primary: false` " +
+          "to clear it — the only way to leave a vital type with no concluded value " +
+          "while a conflict is open.",
       },
       name: {
         type: "object",

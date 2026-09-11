@@ -34,8 +34,8 @@ tells you which one you have.
 
 ## 2. Capture-time guarantees
 
-Two things are true of every bundle *before* it leaves the tester's machine or
-sandbox. Both are the producer's job, not the triager's.
+Three things are true of every bundle *before* it leaves the tester's machine or
+sandbox. All are the producer's job, not the triager's.
 
 ### 2.1 Living-person redaction
 
@@ -77,9 +77,10 @@ a leak test asserting no redacted name, date, place or ark survives anywhere in
 the bundled tree.
 
 **Scope.** This covers `tree.gedcomx.json` — the structured, high-density store
-of person data. It does not scrub free text in `research.json`, `results/`, or
-the session transcript. That is accepted: researchers work on deceased people,
-and agent narration does not reach a committed test.
+of person data. It does not scrub *person* data out of free text in
+`research.json`, `results/`, or the transcripts. That is accepted: researchers
+work on deceased people, and agent narration does not reach a committed test.
+API keys in those places are a separate pass — §2.3.
 
 ### 2.2 The session transcript
 
@@ -87,6 +88,51 @@ The bundle carries the Claude Code session JSONL at
 `_feedback/session-log.jsonl`. It holds the narration, full tool I/O, and the
 agent's reasoning that the persisted project files do not — for diagnosing
 *why* the agent did something, it is the highest-value file in the bundle.
+
+Work the agent delegated to a subagent is **not** in that file. Claude Code
+writes each subagent its own transcript, and the bundle carries them at
+`_feedback/subagents/agent-*.jsonl`, each with an `agent-*.meta.json` naming
+the parent `Agent` call that spawned it; a session other than the newest ships
+under `_feedback/sessions/<session-id>/` with its own parent log beside it. Two
+guardrail owner arms do their protected write from inside a subagent, so a
+consumer reading only the main log cannot tell a clean session from an unseen
+one. Layout, the rejected merge, and the no-`agentType`-filter rule:
+`apps/electron/docs/feedback-json-spec.md` §6.
+
+### 2.3 API-key redaction
+
+A tester who pasted an OpenRouter or Anthropic key into the chat has it in the
+transcript, and one who typed it into the feedback dialog has it in their
+free-text answers. Both used to ship in the clear. Redaction happens at
+**capture** time for the same reason as §2.1: the Drive folder is shared, and a
+key that reaches it is already disclosed.
+
+Implemented as `_redact_api_keys` / `_redact_api_keys_str`
+(`apps/server/app/feedback.py`) and `redactApiKeys`
+(`apps/electron/src/main/feedback.ts`). Three token shapes are replaced with
+`[REDACTED_API_KEY]`: `sk-ant-…`, `sk-or-…`, and any `sk-` token of 40+
+characters. The rule:
+
+- **Every member of the transcript set, not just the main log.** The redaction
+  call sits inside the `admit` helper that charges each transcript to the shared
+  size budget, so the active parent log, a grouped session's parent, every
+  subagent transcript, and every `agent-*.meta.json` all pass through it. A
+  per-call-site redaction is the shape that lets the *next* member of the set
+  ship a key, which is exactly how the subagent transcripts of §2.2 would have
+  shipped one.
+- **Charged to the budget after redaction**, so `sessionLogSize` /
+  `session_log_size` is the number of bytes that actually leave. The
+  replacement is never longer than the token it replaces, so redaction cannot
+  push a transcript over the cap.
+- The five free-text feedback fields (`userPrompt`, `agentDid`,
+  `agentShouldHave`, `correctAnswer`, `notes`) are redacted at normalization
+  time, before they reach either `FEEDBACK.md` or `feedback.json`.
+- Like §2.1 this is a filter, not a validator: it never fails a submission.
+
+Tests: `test_session_log_redacts_api_keys_in_every_member_of_the_set`
+(`apps/server/tests/test_feedback.py`) and its named mirror in
+`apps/electron/src/main/__tests__/feedback.test.ts`, both of which plant a key
+in the parent, the child, and the child's meta.
 
 ## 3. The case directory contract
 
@@ -104,6 +150,7 @@ Given a zip, the setup script MUST:
 | 4 | Append `.claude/` to the case's `.gitignore`, preserving any existing entries, creating the file if absent. |
 | 5 | `git init` and make exactly one commit titled **`imported`**. |
 | 6 | Create `.claude/skills/` as a **real directory** (never a symlink) holding one symlink per skill — every skill in `packages/engine/plugin/skills/` and every dev skill in the repo's `.claude/skills/`. Symlinks mean a `SKILL.md` edit takes effect on the next run with no rebuild, which is what makes the fix loop cheap. |
+| 8 | Strip injected config files (`.claude/`, `.claude.json`, `.mcp.json`, `.gitattributes`, `.git/`) and rename every `CLAUDE.md` at any depth to `CLAUDE.md.submitted`. The strip runs after the completeness check but before `.gitignore`, `git init`, and the script's own `.claude/`. |
 | 7 | Print the tester's `user_prompt` verbatim, for first paste. The submission dialog does not require that box, so it may legitimately be empty. **Neither script handles that case yet**: the `.sh` falls through to "see feedback.json (user_prompt field)", pointing at the empty field, and the `.bat` prints the heading and both rules with nothing between them. Until that lands, a triager who sees either should read `_feedback/session-log.jsonl` instead, remembering that a trimmed log drops its oldest entries and so the prompt first. |
 
 Ordering matters: the marker and `.gitignore` are written **before** the commit

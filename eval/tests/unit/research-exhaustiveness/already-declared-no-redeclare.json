@@ -8,7 +8,11 @@
     "name": "Report existing declaration instead of re-declaring",
     "type": "positive",
     "description": "q_001 in flynn-resolved already has exhaustive_declaration.declared set to true with full stop_criteria populated. The SKILL.md says: 'If exhaustive_declaration.declared is already true, do not re-declare. Report the existing declaration and suggest proof-conclusion instead.' The skill must report the existing declaration and point the user to proof-conclusion.",
-    "tags": ["research-exhaustiveness", "already-declared", "re-invocation"]
+    "tags": [
+      "research-exhaustiveness",
+      "already-declared",
+      "re-invocation"
+    ]
   },
   "input": {
     "user_message": "Is the research on the parentage question exhaustive? Can you check q_001's exhaustive declaration status?",
@@ -21,5 +25,8 @@
     "Claude must NOT re-write the exhaustive_declaration — the existing one should remain unchanged.",
     "Since no changes are being made to research.json, calling validate_research_schema is not required. If Claude does call it and the tool returns an infrastructure error, that should not count against Tool Arguments — the data is valid, the tool infrastructure may have issues.",
     "Tool Arguments: a report-only response makes no MCP call, and the harness already records this dimension as N/A when a run makes zero calls. Grade it only on the arguments of calls that were actually made."
+  ],
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
   ]
 }

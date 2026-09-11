@@ -11,7 +11,10 @@ description: Invoke for FamilySearch full-text search (FTS) — immediately
   documents. FamilySearch document images only. Exclude external sites like
   Ancestry or Newspapers.com (use search-external-sites), structured
   indexed search by name/date/place (use search-records), and planning what
-  to search (use research-plan).
+  to search (use research-plan). Do NOT use to scope a new project or
+  propose opening questions with no plan item yet (use question-selection),
+  or when the user has a record in hand wanting extraction (use
+  record-extraction).
 allowed-tools:
   - fulltext_search
   - source_attachments
@@ -46,13 +49,13 @@ This skill uses one search tool:
 FTS and indexed search are completely different systems:
 
 - **What's searched:** Raw transcript text, not structured name/date/place fields.
-- **No fuzzy matching.** Exact text only — no nicknames, phonetic variants, or Soundex.
-- **No abbreviation expansion.** Must search Wm and William separately.
-- **Default is OR** — at least one term must appear. Always use `+` to require terms.
+- **No fuzzy matching** in `keywords` and `place` fields. Exact text only — no nicknames, phonetic variants, or Soundex. The `name` field auto-expands recognized English given names with historical diminutives.
+- **No abbreviation expansion** in `keywords` and `place` fields. The `name` field auto-expands (e.g. Elizabeth also matches Betty, Bess, Eliza).
+- **Default is OR** — at least one term must appear. Always use `+` to require terms in `keywords`.
 - **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs).
 
-FTS results are derivative sources (original → image → AI transcript →
-textDocument, ~10% error rate). **Always verify against the original image.**
+FTS results are derivative sources (original → image → AI transcript,
+~10% error rate). **Always verify against the original image.**
 
 ## Steps
 
@@ -82,7 +85,7 @@ Read `references/search-strategies.md` for the full strategy catalog.
 
 | Research goal | Query approach |
 |---|---|
-| Find person as witness/appraiser/heir | `+Surname` in Name field, place filter after |
+| Find person as witness/appraiser/heir | `Surname` in Name field (no `+` — it disables auto-expansion), place filter after |
 | Find person in narrative records | `+GivenName +Surname` in Keywords, place filter after |
 | FAN cluster search | `+TargetSurname +AssociateSurname` in Keywords |
 | Compound surname parentage (Iberian `Paterno Materno`) | `+PaternalSurname +MaternalSurname` co-occurrence — **never** as one phrase (see step 4 rules) |
@@ -93,14 +96,24 @@ Read `references/search-strategies.md` for the full strategy catalog.
 Read `references/query-syntax.md` for operator details and wildcards.
 
 **Critical rules:**
-- **Always use `+` to require terms.** Default is OR, which returns
-  millions of irrelevant results.
+- **Always use `+` to require terms in `keywords`.** Default is OR,
+  which returns millions of irrelevant results. Do NOT use `+` in the
+  `name` field — it disables auto-expansion of diminutives, and terms
+  are already required by `m.queryRequireDefault`.
 - **Search by name only first.** Do NOT send `recordPlace0/1/2/3`,
   `yearFrom`/`yearTo`, or `recordType` on the first `fulltext_search`
   call for a query — whether as `keywords` text or a structured
-  argument, both count as "the initial query." See
-  `references/query-syntax.md`'s "Filters (post-search)" section for
-  why, and the decision ladder below for when to add them.
+  argument, both count as "the initial query." **This holds even when
+  the user's own request phrases the place in the same sentence as the
+  person** — "find X as a witness in Schuylkill County, Pennsylvania"
+  is still an unscoped first call (`keywords: "+X +witness"`, no
+  `recordPlace*`); the place is a post-search filter to add on a later
+  call, not part of the request's wording to carry into the first one.
+  The log entry for that first call is unscoped too (step 7) — do not
+  resolve the temptation to include the place by adding it to the call
+  instead of dropping it from the log. See `references/query-syntax.md`'s
+  "Filters (post-search)" section for why, and the decision ladder below
+  for when to add them.
 - **Do NOT scope a full-text search to a record `collectionId`.** The
   FTS corpus is partitioned into its own auto-generated collections;
   a `collectionId` guessed from `record_search` (or from a collections
@@ -116,8 +129,9 @@ Read `references/query-syntax.md` for operator details and wildcards.
   paternal surname and the mother with the maternal, so the words are
   on **different people and not adjacent**. See `references/query-syntax.md`
   for escalation once the mother's fuller form is known.
-- **Abbreviations must be searched explicitly.** FTS does not
-  auto-expand (Wm/William, Thos/Thomas). Run separate queries.
+- **Abbreviations must be searched explicitly** in `keywords` and
+  `place` fields. FTS does not auto-expand (Wm/William, Thos/Thomas)
+  there. The `name` field auto-expands recognized English given names.
 - **Mine prior records for known surname variants before querying.**
   Scan existing `research.json` assertions and log entries for the
   target surname. If prior records show a transcription variant,
@@ -153,11 +167,11 @@ to retain them — you never serialize the payload yourself.
 response comes back with a `staged.resultsRef` you hand to `research_log_append`.
 If you omitted `projectPath` (no `staged.resultsRef`) or hit a `stagingError`,
 re-run the identical query **with** `projectPath` and log **that** staged re-run,
-so the entry gets its sidecar. Why the sidecar matters: a sidecar-less search
-entry can't feed extraction — `record_persona_id` is auto-filled from the
-sidecar, and `research_append` rejects an assertions append against a
-sidecar-less search — so **re-stage before any handoff to extraction**. A
-missing handle is a reason to re-run and re-log, never a reason to skip logging.
+so the entry gets its sidecar. Why the sidecar matters: a full-text search that
+returned results but staged no sidecar can't feed extraction — `research_append`
+rejects an assertions append against it — so **re-stage before any handoff to
+extraction**. A missing handle is a reason to re-run and re-log, never a reason
+to skip logging.
 If a `stagingError` persists across one retry, surface it to the user. (A nil
 search correctly has no `staged.resultsRef` — nothing was found to retain; that
 is expected.)
@@ -204,10 +218,14 @@ attachment status. Let the user confirm which records to examine.
 ### 7. Retain results and write the log entry
 
 **Every search gets a log entry — no exceptions.** Call
-`research_log_append` once per search. Record only a filter the call actually
-sent — even when an unsent filter matches the locality under research, and even
-when the response echoes one back. The tool echoes your own request; an echoed
-key you did not send is not a filter you applied:
+`research_log_append` once per search. **`query` must mirror exactly the
+arguments the `fulltext_search` call actually sent.** Record only a filter
+the call actually sent — never add one the call itself omitted, even one
+the user mentioned, one a later call will add, or one that matches the
+locality under research; and never one merely because the response echoes
+it back — the tool echoes your own request, so an echoed key you did not
+send is not a filter you applied. An unscoped first call (step 4) logs an
+unscoped `query`; a filter only appears once it is actually sent in a call:
 
 ```
 research_log_append({
@@ -247,7 +265,14 @@ Set `completed` (search executed) or `skipped` (unnecessary).
 **Never complete a different plan item because an unrelated ad-hoc
 search touched the same research question** — e.g. a witness-search
 or tree-ID lookup does not complete a probate/will item; only that
-item's own search does.
+item's own search does. **This includes a name collision**: finding a
+person who shares a name with a different plan item's target does not
+complete that item — a cross-reference witness search for "Thomas
+Flynn" does not complete a plan item asking for Thomas Flynn's own
+probate record. Before attaching a `planItemId` to a log entry (step 7)
+or marking one `completed`, check that the search's own record type and
+purpose match that specific plan item's `record_type`/rationale, not
+just that a name matches.
 
 ### 9. Handle nil results
 
@@ -277,12 +302,20 @@ When a search returns no results:
 
 Suggest sub-searches for named non-target persons (witnesses,
 executors, appraisers), distinctive landmarks, and slaveholder-enslaved
-name pairs. See `references/search-strategies.md` for triggers.
+name pairs. See `references/search-strategies.md` for triggers. **Log
+these as their own ad-hoc entries (`planItemId: null`)** unless a plan
+item specifically asks for that person's own record — a cross-reference
+person sharing a name with a different plan item's target is a name
+collision, not a match (step 8).
 
 ### 11. Pass records to extraction
 
-For each promising record, invoke record-extraction to process it.
-FTS results include transcript text — pass this context along.
+For each promising record, invoke record-extraction to process it. Always
+pass the result's `id` (the record's ARK) — it is what record-extraction
+needs to reach the record. Staging strips the full transcript, so pass what
+survives — `names`/`places`/`dates`, `title`, `recordType`, `recordPlace`,
+`highlightTerms` — as triage context; record-extraction reads the source
+image itself for the transcript.
 
 ### 12. Present results
 

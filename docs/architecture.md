@@ -143,6 +143,7 @@ routing surface — find your task, then open that ADR.
 | [0009](adrs/ADR-0009-refuted-agent-design-claims.md) | Keep a standing ledger of refuted agent-design claims | propose a `same_person` write-boundary discriminator · propose "routing as a tool" as the fix for a routing failure · quote a compliance rate, violation count or cost figure from an older write-up · vet an issue whose premise is one of those rows |
 | [0010](adrs/ADR-0010-record-structural-bets-in-a-ledger.md) | Record every structural bet in one ledger, and treat only a researched rejection as a bar | run `/find-big-wins` · wonder what happened to a structural idea that was proposed and never filed · want a `docs/ideas/` folder or anywhere else to park ideas · cite a ledger row against a new proposal · re-propose an idea the ledger says was rejected |
 | [0011](adrs/ADR-0011-put-guardrails-at-the-write-boundary.md) | Put a guardrail that must hold at the write boundary, not in skill prose | answer a compliance failure by strengthening a `SKILL.md` sentence · decide where a new "this must always hold" rule lives · design a completion gate, a write invariant, or a lockdown · argue a boundary check would be too strict to ship · convert a skill into a skill-agent pair · route the orchestrator to a paired agent |
+| [0012](adrs/ADR-0012-read-locality-and-record-type-guidance-from-the-wiki.md) | Read locality and record-type guidance from the FamilySearch wiki at runtime; never restate it in the plugin | write a per-country or per-record-type rule into a prompt · author a reference guide for a country's records · fold a skill's `references/` into an agent body · notice a shipped rule assumes the US federal census |
 
 Conventions, and how to add one: [`docs/adrs/README.md`](adrs/README.md).
 Not yet written: state and the writer/projection tools, self-contained agent
@@ -219,10 +220,10 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **5** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The five agents are `gps-mentor`, `record-extractor`, `image-reader`,
-`proof-conclusion` and `research-exhaustiveness`.
+The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+`proof-conclusion`, `research-exhaustiveness` and `person-evidence`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -346,13 +347,21 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-19 of the 27 skills carry a `references/` folder, loaded on demand, in-session,
+19 of the 28 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
-**A reference is loaded only if its own `SKILL.md` names it** — or if a
-reference the body names links on to it. Nothing lists a `references/` folder at
-runtime, so a file neither route reaches is unreachable: it costs no prompt
-tokens and carries every byte of the drift risk.
+**A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
+a reference the body names links on to it. Nothing lists a `references/` folder at
+runtime, so a file neither route reaches is never loaded on purpose: in the normal
+path it costs no prompt tokens, while carrying every byte of the drift risk.
+
+Both halves of that are claims about the normal path, not about reach. **An
+unnamed file is not out of reach.** Both environments put every skill's
+`references/` folder in front of a session — the harness copies each skill
+directory into the workspace's `.claude/skills/`, and the Cowork `.zip` ships the
+whole plugin — so a model that globs can read any of them, unreviewed. Measured,
+not theorised: `ut_convert_dates_012` globbed `**/*`, read three files on that
+test's exemption list, and one of them changed its answer.
 
 `tests/packaging/skill-reference-reachability.test.ts` enforces that, and is
 where the still-unreached files are listed. Its exemption list **only shrinks** —
@@ -363,10 +372,13 @@ it carries a measured reason per file, which a grep cannot.
 
 The same test pins the other direction: **a `SKILL.md` naming a `references/`
 file that is not on disk fails CI too**, since the agent is then told to read
-something it cannot open. One is exempt — `project-status` names
-`output-formats.md` twice as the render source for both its summaries, and that
-file has never existed in this repo. Writing it decides what the skill outputs,
-which is a content call owing a paid eval run rather than a mechanical fix.
+something it cannot open. **Nothing is exempt from this half** — its exemption
+list is empty, so a dangling pointer fails outright. The one entry it ever
+carried was `project-status` naming a render source for both its summaries that
+had never existed in this repo; both pointers were deleted rather than the file
+written, because `SKILL.md` already states what each summary must carry and
+`rubric.md` grades them on that coverage and on being distinct from each other,
+so there was no layout contract to lose.
 
 **Reachable is not read, and what gates it is the skill's reference-manifest
 block — not the file, and not the strength of the wording.** A file listed in the
@@ -458,9 +470,9 @@ Three families are duplicated today, and only one is lint-guarded:
 | `validation-protocol.md` | 2 | **2** | **none** |
 | `research-log-protocol.md` | 1 | 1 | **none** |
 
-The last two were 11 and 3 until the unreachable copies were deleted. Nine
+The last two were 11 and 3 until the unnamed copies were deleted. Nine
 `validation-protocol.md` copies and two `research-log-protocol.md` copies were
-named by no `SKILL.md`, so no session could load them; three of the nine also
+named by no `SKILL.md`, so nothing loaded them deliberately; three of the nine also
 carried the retired "run `validate_research_schema` after writing" doctrine, and
 four named a `check-warnings` trigger their skill cannot reach — it writes
 `questions` or `plans`, never `assertions` or `person_evidence`. The two
@@ -489,7 +501,8 @@ lists, and the test asserts that too.
 > `validation-protocol.md` largely restates rules `research_append`'s error
 > contract already enforces at write time, and a rule the tool rejects can be one
 > sentence. **Before adding a copy, say why in the PR — and name it in the
-> `SKILL.md`, or you are shipping a file nothing can read.**
+> `SKILL.md`, or you are shipping a file nothing loads on purpose — and that a
+> globbing model can still read, unreviewed.**
 
 ### 3.4 Agent bodies are self-contained — do not split them
 
@@ -525,7 +538,7 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion` + `research-exhaustiveness` → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
 | **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
@@ -686,8 +699,10 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
 > which **blocks the PR** unless the newest full-skill run log's snapshot matches
 > your branch and its `.ann.json` carries a correction for every dimension of
-> each **sampled** test — the tests named in the run log's `review_sample` (5
-> per run). A run log without that field, which is every one written before
+> each **sampled** test — the tests named in the run log's `review_sample`
+> (3 rotation + 1 targeted + 1 random, plus every test that failed or scored a 1 or 2 on any dimension, so the
+> count varies by run).
+> A run log without that field, which is every one written before
 > sampling shipped, still owes every dimension of every test.
 > Annotations are written **only** through the CRUD UI (`make
 > eval-ui`); hand-writing them is forbidden. A behavior-neutral edit can instead
@@ -1293,7 +1308,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-26 of the 27 skills carry a `**Narration:**` line — 22 of them as the first line
+26 of the 28 skills carry a `**Narration:**` line — 22 of them as the first line
 of the body, the other four further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1319,7 +1334,7 @@ outside this list and outside every check.)*
 | 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
 | 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
-| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches |
+| 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |
 | 8 | the `SKILL.md` of whichever skill must populate it | **nothing** |
@@ -1592,8 +1607,8 @@ Other environment differences that bite:
   register the server over stdio and are **not** capped (committed e2e run
   logs carry `image_transcribe`'s own 180s timeout as a result, so calls ran
   past 60s there). `image_transcribe`'s `OCR_TIMEOUT_MS = 180s` is the first
-  budget this bites (roughly 10-15% of healthy calls exceed 60s — see the
-  spec's Timeout budget section for why it is a range, not a point), but
+  budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
+  60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
   budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
   above the ceiling too. **No automated check reaches this** — neither harness
@@ -1701,10 +1716,10 @@ lead you to them:**
 
 - **Unit** (`eval/tests/unit/<skill>/`) — mocked MCP fixtures, a per-skill
   `rubric.md`, a deterministic validator per skill, an LLM judge, snapshot-hashed
-  run logs, and negative routing tests across 26 skill suites. **433** committed
+  run logs, and negative routing tests across 27 skill suites. **446** committed
   test definitions (`make eval-inventory`) — one JSON file per test under
-  `eval/tests/unit/` — and across the 26 live suites the latest run log per suite
-  totals **433 rows, 379 passing (88%)**. Those two numbers count different things
+  `eval/tests/unit/` — and across the 27 live suites the latest run log per suite
+  totals **446 rows, 389 passing (87%)**. Those two numbers count different things
   and can diverge in either direction: a test defined after its suite's last run
   has no row, and a row survives for a test since deleted. Both numbers are facts
   about the snapshots — not an identity, so re-derive rather than quoting them.
@@ -1715,7 +1730,11 @@ lead you to them:**
   agreement **offline** rather than inferring it from expensive live runs. Three
   axes: `verdict` (genealogical), `compliance` (guardrail), and
   `outcome` (the gate) — so a run whose answer is right but whose audit trail was
-  not earned **fails**.
+  not earned **fails**. The tier is sampled on a **fixed four-fixture panel**,
+  filed one issue per run by `/file-e2e-panel` (on demand, not on a cadence) and
+  read by `make e2e-panel`: the fixtures are held constant because fixture difficulty
+  varies enough that a changing mix, not a changing system, would explain most of
+  any month-to-month move.
 
 ### 9.4 What nothing checks
 
@@ -1894,7 +1913,7 @@ re-run until it comes back green (`docs/skill-lifecycle.md` carries the
 symptom-to-fix table). Because the pin also makes the `flaky` flag dead by
 construction, catching one is on you: re-run a suspect test with
 `run_tests.py --test <id> --runlogs-root <tmp>` and fix whatever differs.
-94 of the 433 definitions are **negative** tests that exist to prove
+97 of the 446 definitions are **negative** tests that exist to prove
 a skill does *not* trigger; add one whenever you widen a description — and add
 its **reciprocal** in the other skill's directory, since a negative test pins one
 direction of a routing pair only and the fix that stops A over-triggering is
@@ -1919,6 +1938,7 @@ something already decided. The live register is the board:
 
 ```sh
 gh issue list --state open --label needs-decision   # blocked on one answer from the lead
+gh issue list --state open --label high-priority    # take these first in your lane (soft ordering; /fill-ready owns it)
 ```
 
 That label — not `senior`, which is work that stays hard after every question is

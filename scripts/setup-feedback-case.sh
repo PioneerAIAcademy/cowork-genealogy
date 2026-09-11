@@ -79,8 +79,64 @@ if [[ -e "$DEST_DIR" ]] && [[ -n "$(ls -A "$DEST_DIR" 2>/dev/null || true)" ]]; 
 fi
 
 # --- Unzip ---
+# unzip exits 1 for warnings that still extracted everything, and a zip
+# submitted from Windows stores backslash path separators — exactly such a
+# warning ("appears to use backslashes as path separators"). Under `set -e`
+# that aborted here on every win32 submission, after extraction but before the
+# marker file, the git baseline and the skill symlinks, and with no output at
+# all. Fail only on a real error (>= 2).
+#
+# But exit 1 is NOT only that warning: Info-ZIP returns it equally for
+# "zipfiles where one or more files was skipped due to unsupported compression
+# method or encryption with an unknown password". Accepting 1 blind would let a
+# partially-extracted case through to the git baseline and the symlinks with no
+# error at all, so the contents are verified below rather than inferred from the
+# exit code.
 mkdir -p "$DEST_DIR"
-unzip -q "$ZIP_PATH" -d "$DEST_DIR"
+UNZIP_STATUS=0
+unzip -q "$ZIP_PATH" -d "$DEST_DIR" || UNZIP_STATUS=$?
+if [[ "$UNZIP_STATUS" -ge 2 ]]; then
+  echo "Error: unzip failed (exit $UNZIP_STATUS): $ZIP_PATH" >&2
+  exit 1
+fi
+
+# --- Verify the bundle actually landed ---
+# apps/electron/docs/feedback-json-spec.md guarantees all three in every
+# submission: the two project files at the zip root, and the report.
+MISSING=()
+for required in research.json tree.gedcomx.json _feedback/feedback.json; do
+  [[ -f "$DEST_DIR/$required" ]] || MISSING+=("$required")
+done
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  echo "Error: extraction incomplete — missing: ${MISSING[*]}" >&2
+  if [[ "$UNZIP_STATUS" -eq 1 ]]; then
+    echo "unzip exited 1, which also covers members skipped for an unsupported" >&2
+    echo "compression method or unknown password. Re-download the zip." >&2
+  fi
+  exit 1
+fi
+
+# --- Strip Claude Code config that may have been injected into the zip ---
+# Legitimate feedback zips never contain dotfiles (both walkers skip entries
+# starting with "."), so .claude/, .claude.json, and .mcp.json in the zip are
+# either hand-crafted or from an unexpected source. Remove them so the script's
+# own fresh .claude/ (with repo-symlinked skills only) is the sole config
+# Claude Code reads.
+for injected in .claude .claude.json .mcp.json .gitattributes .git; do
+  if [[ -e "$DEST_DIR/$injected" ]]; then
+    echo "Warning: stripped $injected from the zip (not expected in a feedback submission)."
+    rm -rf "$DEST_DIR/$injected"
+  fi
+done
+# CLAUDE.md is NOT a dotfile, so the walkers ship it deliberately and they
+# walk recursively, so one can arrive at any depth. Claude Code loads a subtree
+# CLAUDE.md when it reads files in that subtree, and the triage workflow reads
+# results/. Rename rather than delete: the triager keeps the content for
+# reproduction, but it no longer executes as config.
+while IFS= read -r -d '' f; do
+  echo "Note: renamed ${f#"$DEST_DIR"/} to ${f#"$DEST_DIR"/}.submitted so it is not loaded as instructions."
+  mv "$f" "$f.submitted"
+done < <(find "$DEST_DIR" -type f -name CLAUDE.md -print0)
 
 # --- Write .feedback-repo-root ---
 echo "$REPO_ROOT" > "$DEST_DIR/.feedback-repo-root"

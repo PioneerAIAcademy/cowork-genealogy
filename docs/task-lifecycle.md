@@ -21,6 +21,19 @@ Say which one in your PR description.
 
 ---
 
+## Pick a card
+
+Ready is a self-serve menu, two pools (`developer`, `genealogist`), and the
+`senior` label says which cards are not yours. One more label orders the rest:
+**take a `high-priority` card in your lane before any other.** It is a soft
+ordering — finish what you have started; do not drop it for one. The card's
+body opens with a `> **High priority (date):**` line saying why (critical path
+to a milestone, live harm, a skill slot three or more issues wait on, or a
+lead's call).
+`/fill-ready` applies and removes the label; nobody files with it.
+
+---
+
 ## Ask early
 
 **When you aren't confident, ask a senior. At any step, about anything.** A
@@ -366,10 +379,10 @@ Three rules can each hold a green, approved PR. Check them in this order:
   believing the request, and clear a dead one with
   `gh api -X DELETE /repos/{owner}/{repo}/pulls/{n}/requested_reviewers -f 'team_reviewers[]=<team>'`.
   This works only for a team the current file no longer claims. While
-  `require_code_owner_review` is on, the same call against a team CODEOWNERS
-  *does* still mandate returns HTTP 200 and does nothing — no error, and the team
-  is still listed on a fresh read (verified three ways, 2026-08-11). Re-read the
-  PR before believing the 200.
+  `require_code_owner_review` is on, the same call against a team **still
+  mandated by CODEOWNERS returns HTTP 200 and does nothing** — no error, and the
+  team is still listed on a fresh read (verified three ways, 2026-08-11). Re-read
+  the PR before believing the 200.
 
 ---
 

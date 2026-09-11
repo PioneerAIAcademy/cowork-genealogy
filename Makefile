@@ -425,9 +425,16 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	# `make eval-skill` processes at once; concurrent SDK subprocesses SIGKILL.
 	#
 	# CONCURRENCY is optional: how many tests run in parallel. Omit it to let
-	# the harness pick a RAM-aware default (~1 per 2 GiB, floor 4, cap 8 — a
-	# 16 GiB machine resolves to 8). Override for a bigger box or tighter API
-	# rate limits, e.g. make eval-skill SKILL=tree-edit CONCURRENCY=8.
+	# the harness pick a RAM-aware default (~1 per 2 GiB of RAM the OS reports,
+	# floor 1, cap 8 — the kernel always reports under the nominal figure, so a
+	# nominal 8 GiB box reports about 7.7 and resolves to 3, a 16 GiB one about
+	# 15.4 and resolves to 7). Override for a bigger box or tighter API rate
+	# limits, e.g. CONCURRENCY=8 — or CONCURRENCY=1 on a small box, where the
+	# RAM-derived default still SIGKILLs.
+	# The floor is 1, not 4: it exists only to forbid 0 and must not override
+	# the RAM measurement upward (#1026, `_MIN_AUTO_CONCURRENCY` in
+	# run_tests.py). This comment said "floor 4" until 2026-09-07 and sent a
+	# plan out with the wrong number.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
 	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
 
@@ -619,12 +626,46 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
+.PHONY: e2e-panel
+e2e-panel: ## Standing e2e panel — each fixture's last run and its run count in the window: make e2e-panel | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# The scoreboard for the standing panel that /file-e2e-panel files. Per
+	# fixture: its last run and how many days ago, plus its count over SINCE,
+	# which defaults to 28 days rather than the usual 14 because the panel's
+	# unit of comparison is the month. No other reader prints runs per fixture
+	# per window — e2e-corpus's concentration block counts violations, not runs
+	# — which is why the panel's own acceptance check needs this one.
+	#
+	# Deliberately not anchored to a calendar week: the panel is filed whenever
+	# the lead runs the skill, so "did it run this ISO week" would answer a
+	# question the cadence does not ask.
+	#
+	# Every fixture at zero is a legitimate report (nobody ran the panel in a
+	# while) and exits 0; only an unknown TEST= slug exits 1.
+	cd eval/harness && uv run python -m e2e.panel_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: eval-inventory
 eval-inventory: ## Six corpus counts (unit tests/suites, e2e fixtures/runs/costed, specs), each by its predicate: make eval-inventory
 	# Pure analysis over committed files — no live run, no API. Reproduces the
 	# counts that drift in docs/architecture.md §9.1/§9.3, each defined by a
 	# printed predicate rather than a hand count (issue #1484 c).
 	cd eval/harness && uv run python -m e2e.inventory
+
+.PHONY: e2e-provided-docs-coverage
+e2e-provided-docs-coverage: ## External-repo capture-coverage gap report (issue #2083): which fixtures skip non-FS primary items but ship no bundled capture
+	# Pure analysis over committed .final-research.json sidecars — no live run,
+	# no API.  Re-derives the skip table from the issue and lists every fixture
+	# where the provided-documents/ mechanism could close the gap but hasn't.
+	#
+	# Exit code:  0 = no gap fixtures (all external-skip fixtures have captures)
+	#             1 = at least one fixture has external skips and zero captures
+	#
+	# A capture must be a real page saved from the real site by a human in a
+	# credentialed browser — never synthesized (issue #2083 "The failure mode
+	# this task is exposed to").  This report flags the gap; closing it is
+	# manual capture-authoring work.
+	cd eval/harness && uv run python -m e2e.provided_docs_coverage
 
 .PHONY: e2e-agent-tools
 e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over committed e2e runs (issue #1085): make e2e-agent-tools | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
@@ -676,12 +717,12 @@ e2e-skill-episodes: ## Per-skill episode fingerprint over committed runs (issue 
 
 .PHONY: e2e-nudges
 e2e-nudges: ## Where /research yields mid-loop, over committed e2e runs (issue #1104): make e2e-nudges | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
-	# Pure analysis, no API: reads committed run JSONs and their .transcript.md
-	# siblings. Reports each continue-nudge with the seam it sits on and whether
-	# the agent named its next step before yielding -- the move research/SKILL.md
-	# forbids. Unions both sources on purpose: `narration` replaced the
-	# transcript in #1238, so today it covers 2 of 145 runs while the transcripts
-	# hold 20 of the 23 events. Reading only one silently reports a fraction.
+	# Pure analysis, no API: reads committed run JSONs. Reports each
+	# continue-nudge with the seam it sits on and whether the agent named its
+	# next step before yielding -- the move research/SKILL.md forbids.
+	# `narration` replaced transcripts in #1238; committed .transcript.md files
+	# were removed in PR #2204 (zombie re-lands from stale-base merges).
+	# The transcript fallback code path is retained for local copies only.
 	cd eval/harness && uv run python -m e2e.nudge_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
@@ -767,6 +808,17 @@ provenance-report: ## Identifiers a skill persisted that no input supplied: make
 	# Triage the hits before acting — a derived value and a punctuation-carrying
 	# ARK both land here. See issue #1667.
 	cd eval/harness && uv run python -m provenance_report $(if $(SKILL),--skill $(SKILL),)
+
+.PHONY: conflict-verdicts
+conflict-verdicts: ## Run logs whose own tests reach opposite verdicts on one conflict: make conflict-verdicts [SKILL=<name>]
+	# Offline, no API calls. Two tests writing one conflict cannot both be right:
+	# the evidence on file is identical in each. Which verdict is correct is a
+	# genealogist's call, so this reports and never gates. Issue #1972 V7.
+	#
+	# Reads the EFFECTIVE post-run state (changed_fields, else the scenario's
+	# starting value). A changed_fields-only scan reports zero on a corpus that
+	# does contradict itself — that gap is the finding, and is why this exists.
+	cd eval/harness && uv run python -m conflict_verdict_report $(if $(SKILL),--skill $(SKILL),)
 
 .PHONY: skill-latency
 skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-latency (all) | SKILL=<name> [VS_PREV=1] | BEFORE=a.json AFTER=b.json [SINCE=all|N|YYYY-MM-DD]

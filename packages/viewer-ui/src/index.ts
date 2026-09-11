@@ -15,7 +15,8 @@ export type {
   IndexEntry
 } from './contexts/ResearchDataContext'
 
-export { setOpenExternal, openExternal } from './lib/external'
+export { setOpenExternal, openExternal, setOpenFamilySearch, openFamilySearch } from './lib/external'
+export { resolveFamilySearchTarget } from './lib/familysearch-url'
 
 export type {
   ResearchTransport,

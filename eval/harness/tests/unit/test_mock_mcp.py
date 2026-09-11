@@ -8,11 +8,13 @@ e2e test.
 import asyncio
 import json
 import re
+import subprocess
 import tempfile
 from pathlib import Path
 
 import pytest
 
+from harness import mock_mcp
 from harness.fixtures import InvalidFixtureError
 from harness.mock_mcp import (
     LIVE_TOOLS,
@@ -25,10 +27,15 @@ from harness.mock_mcp import (
     _tool_envelope,
     create_mock_server,
 )
+from harness.orchestrator import _build_warnings
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FIXTURES_DIR = REPO_ROOT / "eval/fixtures/mcp"
+BUILD_TOOLS = REPO_ROOT / "packages/engine/mcp-server/build/tools"
+BUILD_SCHEMAS_JS = (
+    REPO_ROOT / "packages/engine/mcp-server/build/tool-schemas.js"
+)
 COMPACTOR_JS = (
     REPO_ROOT / "packages/engine/mcp-server/build/utils/staged-compaction.js"
 )
@@ -42,6 +49,60 @@ def _extract_response_dict(handler_result):
 def _invoke(tools_by_name, tool_name: str, args: dict):
     """Invoke a mock tool handler directly, bypassing the SDK transport."""
     return asyncio.run(tools_by_name[tool_name].handler(args))
+
+
+def _seed_project(tmp_path):
+    """A minimal project with one tree person, enough for person_warnings."""
+    (tmp_path / "research.json").write_text(
+        json.dumps({"project": {"id": "rp_x"}, "questions": []}), encoding="utf-8"
+    )
+    (tmp_path / "tree.gedcomx.json").write_text(
+        json.dumps(
+            {
+                "persons": [
+                    {"id": "I1", "names": [{"full_text": "Test Person"}], "facts": []}
+                ],
+                "relationships": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_person_warnings_runs_live_when_no_fixture_declared(tmp_path):
+    """The bug this closes: `person_warnings` was fixture-backed only, and no
+    person-evidence test declares a `person-warnings-*` fixture, so every call
+    in every committed person-evidence run log since August reported the tool
+    missing. The skill launched; the impossibility check never ran. It computes
+    every tag from the workspace tree and holds zero `getValidToken` calls, so
+    a live handler is both possible and more faithful than a canned answer.
+    """
+    _seed_project(tmp_path)
+    server, call_log, tools_by_name = create_mock_server(
+        [], FIXTURES_DIR, workspace=tmp_path
+    )
+    assert "person_warnings" in tools_by_name
+    body = _extract_response_dict(_invoke(tools_by_name, "person_warnings", {"personId": "I1"}))
+    assert "warningCount" in body, f"expected a real computation, got {body}"
+
+
+def test_a_declared_fixture_beats_the_live_handler(tmp_path):
+    """`person_warnings` is the only tool in both LIVE_TOOLS and the fixture
+    corpus. The check-warnings suite drives it from fixtures tuned to specific
+    tag combinations, so the test's own declaration must win — otherwise going
+    live for everyone else would silently retune that suite. Registering both
+    would define the name twice and the second would shadow the first, so the
+    live loop skips what the fixtures already cover.
+    """
+    _seed_project(tmp_path)
+    server, call_log, tools_by_name = create_mock_server(
+        ["person-warnings-early-marriage"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "person_warnings", {"personId": "I1"}))
+    issues = [w.get("issueType") for w in body.get("warnings") or []]
+    assert "hasEarlyMarriage14" in issues, (
+        f"the canned fixture must win over the live handler; got {issues}"
+    )
 
 
 def test_returns_fixture_response_for_known_tool():
@@ -415,6 +476,45 @@ def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path)
     assert "ranked" not in body
 
 
+@pytest.mark.requires_engine_build
+def test_fulltext_search_strips_textDocument_once_staged(tmp_path):
+    """Mirrors fulltext_search.ts's own strip (issue #1826): once staging
+    succeeds, the inline textDocument must not reach the agent — the fixture's
+    canned response carries it unconditionally (pre-strip upstream shape), so
+    the mock must strip it the same way the real tool does.
+
+    Skips when the build is absent, like the record_search staging tests
+    above: staging runs through the COMPILED stager, so with no build
+    `staged` is never set and this fails for an environmental reason rather
+    than a real one."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "fulltext_search",
+        {"keywords": "+Flynn", "projectPath": str(tmp_path)},
+    )
+    body = _extract_response_dict(result)
+    assert body.get("staged"), "test assumes staging succeeded — check the build"
+    assert "textDocument" not in body["results"][0]
+    # The remaining triage stubs survive the strip.
+    assert body["results"][0].get("names")
+    assert body["results"][0].get("highlightTerms")
+
+
+def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
+    """No projectPath -> nothing staged -> nothing to strip (matches the real
+    tool's `if (out.staged)` guard — never strips an un-staged search)."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn"})
+    body = _extract_response_dict(result)
+    assert "staged" not in body
+    assert "textDocument" in body["results"][0]
+
+
 # --- Returned-failure visibility (mirrors src/tool-result.ts) ------------------
 #
 # The production dispatch marks a returned `{ok: false}` as `isError`; this
@@ -624,3 +724,113 @@ def test_mapping_failure_response_does_not_get_the_negative_log_note(tmp_path):
     assert body["totalMatches"] == 812
     assert body["results"] == []
     assert "nilSearchNeedsLog" not in body
+
+
+# --- Node-subprocess timeout budget + visibility (#2025) --------------------
+#
+# The mock caps every `node --input-type=module --eval` subprocess. Under
+# concurrency a live writer tool (a genealogist's `research_append` /
+# `extraction_append` batch) occasionally trips a too-tight cap, the model sees
+# a write failure and recovers by splitting the batch, and the run is then
+# graded down for the recovery. These pin (a) the raised cap on the workspace-
+# I/O paths vs the default on the graceful catalog probe, and (b) that a trip
+# is surfaced as a run-log warning instead of living only inside a response
+# string nobody greps.
+
+
+class _NodeEvalSpy:
+    """Stand-in for `_run_node_eval` recording the timeout each call was given.
+
+    Signature default mirrors the real function so a caller that omits `timeout`
+    (the catalog probe) records the default, and one that passes the raised
+    budget (a writer) records that — the contrast is the assertion.
+    """
+
+    def __init__(self, stdout: str = "{}", raise_timeout: bool = False):
+        self.timeouts: list[int] = []
+        self._stdout = stdout
+        self._raise = raise_timeout
+
+    def __call__(self, script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT):
+        self.timeouts.append(timeout)
+        if self._raise:
+            raise subprocess.TimeoutExpired(cmd=["node"], timeout=timeout)
+        return subprocess.CompletedProcess(
+            args=["node"], returncode=0, stdout=self._stdout, stderr=""
+        )
+
+
+@pytest.mark.skipif(
+    not (BUILD_TOOLS / "research-append.js").exists(),
+    reason="engine build required for the live research_append handler",
+)
+def test_live_writer_handler_uses_long_node_timeout(tmp_path, monkeypatch):
+    """A live writer's node subprocess gets NODE_EVAL_TIMEOUT_LONG, not the default."""
+    spy = _NodeEvalSpy(stdout='{"ok": true}')
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", spy)
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    # Isolate the handler call from any catalog-probe call during server setup.
+    spy.timeouts.clear()
+    _invoke(
+        tools_by_name,
+        "research_append",
+        {"projectPath": str(tmp_path), "section": "assertions", "entries": []},
+    )
+    assert spy.timeouts == [mock_mcp.NODE_EVAL_TIMEOUT_LONG]
+
+
+@pytest.mark.skipif(
+    not BUILD_SCHEMAS_JS.exists(),
+    reason="engine build required for the catalog probe",
+)
+def test_catalog_probe_uses_default_node_timeout(monkeypatch):
+    """The catalog probe degrades gracefully and stays on the fast default (#2025)."""
+    spy = _NodeEvalSpy(stdout="[]")
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", spy)
+    mock_mcp._load_build_tool_catalog_uncached()
+    assert spy.timeouts == [mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT]
+
+
+@pytest.mark.skipif(
+    not (BUILD_TOOLS / "research-append.js").exists(),
+    reason="engine build required for the live research_append handler",
+)
+def test_node_timeout_is_recorded_and_surfaced_as_warning(tmp_path, monkeypatch):
+    """A tripped node subprocess lands in the live response AND a run-log warning."""
+    spy = _NodeEvalSpy(raise_timeout=True)
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", spy)
+    _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    _invoke(
+        tools_by_name,
+        "research_append",
+        {"projectPath": str(tmp_path), "section": "assertions", "entries": []},
+    )
+
+    live = [c for c in call_log if c["tool"].endswith("research_append")]
+    assert live, "research_append call not recorded in the call log"
+    errors = live[-1]["response"].get("errors") or []
+    assert any(mock_mcp.NODE_EVAL_TIMEOUT_PATTERN.search(e) for e in errors), errors
+
+    warnings = _build_warnings(call_log)
+    timeout_warnings = [w for w in warnings if w["kind"] == "harness_node_timeout"]
+    assert len(timeout_warnings) == 1, [w["kind"] for w in warnings]
+    assert any("research_append" in t for t in timeout_warnings[0]["tools"])
+
+
+def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
+    """The engine's fetchWithTimeout says '...ms'; subprocess.TimeoutExpired says
+    'seconds'. Only the latter is a harness flake. A real upstream FamilySearch
+    timeout, folded into the same {ok: false} shape by a network-calling live
+    tool, must NOT be excused with 'do not grade the recovery as a skill error' —
+    that would hide a genuine failure behind a harness excuse."""
+    upstream = {
+        "tool": "mcp__genealogy__research_append",
+        "args": {},
+        "matched": {"kind": "live", "index": None},
+        "response": {
+            "ok": False,
+            "errors": ["research_append: Request to https://x timed out after 30000ms."],
+        },
+    }
+    warnings = _build_warnings([upstream])
+    assert not any(w["kind"] == "harness_node_timeout" for w in warnings)

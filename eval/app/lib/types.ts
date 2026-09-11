@@ -84,6 +84,10 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
 /**
  * The tests a run log's annotation must cover, or `null` for "all of them".
  *
+ * Variable length: five chosen picks plus every test that failed or scored a 1 or
+ * 2 on any dimension, so a run with a low score anywhere exceeds 5. Never assume
+ * a fixed size here.
+ *
  * A run log written before sampling shipped — every committed one today — has
  * no `review_sample` and keeps the original every-dimension rule. Keep this the
  * single definition: a private second copy in `lib/fs/runlogs.ts` is exactly
@@ -191,8 +195,13 @@ export function dimensionAllowsNa(
   name: string,
   judgeScore: Score,
 ): boolean {
+  // N/A is always available on rubric dimensions regardless of the judge score:
+  // the judge can score a rubric dimension 3 on a fixture that never exercised
+  // it, and the reviewer must be able to correct that to null. Base dimensions
+  // are narrower — only null (must agree) or the declared nullable set.
   return (
     judgeScore === null ||
+    source === 'rubric' ||
     (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name))
   );
 }
@@ -300,6 +309,9 @@ export type RunInvocation = 'skill' | 'test' | 'tag';
  * `review_sample.py`; `cursor` is the rotation state, carried here because
  * candidate pruning destroys the annotation history it would otherwise be
  * derived from.
+ *
+ * `tests` has no fixed length — the harness adds every test that failed or
+ * scored a 1 or 2 on any dimension to the five it chooses.
  */
 export interface ReviewSample {
   tests: string[];
