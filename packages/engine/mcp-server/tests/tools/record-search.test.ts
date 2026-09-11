@@ -137,8 +137,8 @@ describe("recordSearchTool happy path", () => {
 
     expect(result.totalMatches).toBe(432);
     expect(result.returned).toBe(1);
-    expect(result.results[0].recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
-    expect(result.results[0].personName).toBe("Abraham Lincoln");
+    expect(result.results![0].recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
+    expect(result.results![0].personName).toBe("Abraham Lincoln");
     expect(result.paginationCappedAt).toBe(4999);
   });
 
@@ -634,7 +634,7 @@ describe("recordSearchTool response shape", () => {
       })
     );
     const result = await recordSearchTool({ surname: "Doe" });
-    const r = result.results[0];
+    const r = result.results![0];
     expect(r.personName).toBe("John Doe");
     expect(r.sex).toBe("Male");
     expect(r.birthDate).toBe("1880");
@@ -648,7 +648,7 @@ describe("recordSearchTool response shape", () => {
       makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] })
     );
     const result = await recordSearchTool({ surname: "Lincoln" });
-    const matches = result.results[0].treeMatches;
+    const matches = result.results![0].treeMatches;
     expect(matches).toEqual([
       { treePersonId: "GQWZ-GPX", stars: 5 },
       { treePersonId: "GQWZ-AAA", stars: 3 },
@@ -978,9 +978,9 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     // opt-in flag); the flat stub survives for triage.
     expect(out.staged).toBeTruthy();
     expect(out.results).toHaveLength(1);
-    expect(out.results[0].gedcomx).toBeUndefined();
-    expect(out.results[0].recordId).toBeTruthy();
-    expect(out.results[0].primaryId).toBe("p_1");
+    expect(out.results![0].gedcomx).toBeUndefined();
+    expect(out.results![0].recordId).toBeTruthy();
+    expect(out.results![0].primaryId).toBe("p_1");
   });
 
   it("slims the inline stub when staged: no collectionUrl, no empty treeMatches, title hoisted", async () => {
@@ -989,7 +989,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
 
     expect(out.staged).toBeTruthy();
-    const r = out.results[0];
+    const r = out.results![0];
     // Derivable / repeated fields are gone from the INLINE projection.
     expect(r.collectionUrl).toBeUndefined();
     expect(r.collectionTitle).toBeUndefined();
@@ -1062,19 +1062,19 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     );
 
     const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
-    expect(out.results[0].treeMatches).toBeUndefined();
+    expect(out.results![0].treeMatches).toBeUndefined();
   });
 
   it("leaves the staged sidecar at full fidelity even though the inline copy is slimmed", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
     const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir });
-    expect(out.results[0].collectionUrl).toBeUndefined();
+    expect(out.results![0].collectionUrl).toBeUndefined();
 
     const staged = JSON.parse(
       await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
     );
-    const row = staged.payload.results[0];
+    const row = staged.payload.results![0];
     // The sidecar is what rank_search_matches, record_read and the viewer read.
     expect(row.gedcomx).toBeTruthy();
     expect(row.collectionUrl).toBeTruthy();
@@ -1094,7 +1094,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.staged).toBeNull();
     expect(out.stagingError).toBeTruthy();
     // Never strip when nothing was retained to re-read from.
-    expect(out.results[0].gedcomx).toBeDefined();
+    expect(out.results![0].gedcomx).toBeDefined();
   });
 
   it("keeps inline gedcomx for an exploratory search with no projectPath", async () => {
@@ -1106,7 +1106,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     });
 
     expect(out.staged).toBeUndefined();
-    expect(out.results[0].gedcomx).toBeDefined();
+    expect(out.results![0].gedcomx).toBeDefined();
   });
 });
 
@@ -1726,12 +1726,12 @@ describe("#1324 relativeTerms", () => {
       surname: "Sugecz",
       fatherGivenName: "Wm.",
     });
-    expect(withTerm.results[0].relativeTerms).toEqual({
+    expect(withTerm.results![0].relativeTerms).toEqual({
       father: { status: "present", name: "Wm. Neal" },
     });
 
     const withoutTerm = await recordSearchTool({ surname: "Sugecz" });
-    expect(withoutTerm.results[0].relativeTerms).toBeUndefined();
+    expect(withoutTerm.results![0].relativeTerms).toBeUndefined();
 
     // An `*Exact` boolean alone sends no q.fatherGivenName, so no father
     // constraint was applied and there is nothing to report on.
@@ -1739,7 +1739,7 @@ describe("#1324 relativeTerms", () => {
       surname: "Sugecz",
       fatherGivenNameExact: true,
     });
-    expect(exactOnly.results[0].relativeTerms).toBeUndefined();
+    expect(exactOnly.results![0].relativeTerms).toBeUndefined();
   });
 
   it("50. resolves `other` by name match against co-people on the record", async () => {
@@ -1752,7 +1752,7 @@ describe("#1324 relativeTerms", () => {
       otherGivenName: "Anna",
       otherSurname: "Kovacs",
     });
-    expect(result.results[0].relativeTerms).toEqual({
+    expect(result.results![0].relativeTerms).toEqual({
       father: { status: "present", name: "Wm. Neal" },
       other: { status: "present", name: "Anna Kovacs" },
     });
@@ -1812,15 +1812,15 @@ describe("#1324 relativeTerms", () => {
         projectPath: dir,
       });
 
-      expect(result.results[0].gedcomx).toBeUndefined();
-      expect(result.results[0].relativeTerms).toEqual({
+      expect(result.results![0].gedcomx).toBeUndefined();
+      expect(result.results![0].relativeTerms).toEqual({
         father: { status: "present", name: "Wm. Neal" },
       });
 
       const staged = JSON.parse(
         await readFile(join(dir, result.staged!.resultsRef), "utf-8"),
       );
-      expect(staged.payload.results[0].relativeTerms).toEqual({
+      expect(staged.payload.results![0].relativeTerms).toEqual({
         father: { status: "present", name: "Wm. Neal" },
       });
     } finally {
@@ -1916,15 +1916,15 @@ describe("#1592 batchNumber on results", () => {
       // gedcomx is stripped inline — if the batch lived only in there, the
       // enumeration loop would work solely in unlogged exploratory searches.
       expect(out.staged).toBeTruthy();
-      expect(out.results[0].gedcomx).toBeUndefined();
-      expect(out.results[0].batchNumber).toBe("M01048-5");
+      expect(out.results![0].gedcomx).toBeUndefined();
+      expect(out.results![0].batchNumber).toBe("M01048-5");
 
       // …and it reaches the sidecar the viewer and rank_search_matches read.
       const ref = out.staged!.resultsRef;
       const staged = JSON.parse(
         await readFile(join(dir, ref.replace(/^\.\//, "")), "utf-8"),
       );
-      expect(staged.payload.results[0].batchNumber).toBe("M01048-5");
+      expect(staged.payload.results![0].batchNumber).toBe("M01048-5");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

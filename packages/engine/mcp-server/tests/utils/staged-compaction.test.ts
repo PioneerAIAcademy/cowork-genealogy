@@ -50,7 +50,7 @@ function fullRecordSearchResponse(): RecordSearchToolResponse {
 describe("compactStagedRecordSearch", () => {
   it("strips, hoists and de-duplicates on a full response", () => {
     const out = compactStagedRecordSearch(fullRecordSearchResponse());
-    const row = out.results[0];
+    const row = out.results![0];
 
     expect(row.gedcomx).toBeUndefined();
     expect(row.collectionUrl).toBeUndefined();
@@ -118,9 +118,9 @@ describe("compactStagedFulltextSearch", () => {
     } as unknown as FulltextSearchResponse;
 
     const out = compactStagedFulltextSearch(full);
-    expect(out.results[0].textDocument).toBeUndefined();
+    expect(out.results![0].textDocument).toBeUndefined();
     // The triage stubs survive — this is what search-full-text reads.
-    expect(out.results[0].title).toBe("Deed Book A");
+    expect(out.results![0].title).toBe("Deed Book A");
   });
 
   it("is idempotent — a second pass changes nothing", () => {
