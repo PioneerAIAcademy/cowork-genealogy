@@ -1419,11 +1419,13 @@ def test_as_dicts_shape():
     items = [
         ValidatorRunResult(name="a", passed=True, error=None),
         ValidatorRunResult(name="b", passed=False, error="boom"),
+        ValidatorRunResult(name="c", passed=True, error="skipped: nope", skipped=True),
     ]
     out = as_dicts(items)
     assert out == [
-        {"name": "a", "passed": True, "error": None},
-        {"name": "b", "passed": False, "error": "boom"},
+        {"name": "a", "passed": True, "error": None, "outcome": "passed"},
+        {"name": "b", "passed": False, "error": "boom", "outcome": "failed"},
+        {"name": "c", "passed": True, "error": "skipped: nope", "outcome": "skipped"},
     ]
 
 
@@ -3001,3 +3003,76 @@ def test_v12_passes_when_fewer_than_three_labels():
     result = _named(results, "report_no_framework_walkthrough")
     assert result is not None
     assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+# --- a skip is not a pass (three-state outcome) ---------------------------
+
+
+def test_skip_records_outcome_skipped_while_staying_non_gating(tmp_path):
+    """End to end through a real `pytest.skip()`, not a hand-built dataclass.
+
+    Both halves matter. `passed` must stay True — a validator that does not
+    apply may not fail a test — and `outcome` must say `skipped`, because
+    `passed` alone cannot distinguish "the property holds" from "nothing
+    looked". Across the committed unit corpus 18,220 of 48,704 recorded
+    results are skips, so that distinction covers most of the apparatus.
+    """
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "import pytest\n"
+        "def test_does_not_apply(before_state):\n"
+        "    pytest.skip('not this scenario')\n"
+        "def test_really_runs(before_state):\n"
+        "    assert True\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    by_name = {r.name: r for r in results}
+
+    skipped = by_name["test_does_not_apply"]
+    assert skipped.passed is True, "a skip must not fail the test"
+    assert skipped.skipped is True
+    assert skipped.outcome == "skipped"
+
+    # The other direction: a validator that genuinely ran is not mislabelled.
+    ran = by_name["test_really_runs"]
+    assert ran.passed is True and ran.skipped is False
+    assert ran.outcome == "passed"
+
+
+def test_skip_reason_keeps_its_prefix_for_pre_outcome_run_logs(tmp_path):
+    """`outcome` is absent from every run log committed before it existed, so
+    the "skipped: " prefix stays the fallback a corpus-wide count reads. If
+    this ever changes, every such count needs two rules instead of one."""
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "import pytest\n"
+        "def test_x(before_state):\n"
+        "    pytest.skip('no research.json in output')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    assert results[0].error == "skipped: no research.json in output"
+
+
+def test_a_failing_validator_is_not_recorded_as_skipped(tmp_path):
+    """The third state must not swallow the second."""
+    v = tmp_path / "test_universal.py"
+    v.write_text(
+        "def test_x(before_state):\n"
+        "    assert False, 'intentional'\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="x", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+    )
+    assert results[0].passed is False
+    assert results[0].skipped is False
+    assert results[0].outcome == "failed"
