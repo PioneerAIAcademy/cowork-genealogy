@@ -701,6 +701,18 @@ Where to look first:
   the single source for app config. New provider keys go on
   `AppConfig` in `src/types/auth.ts`, not into env vars or
   ad-hoc files.
+- **`src/store/`** — `ProjectStore` is the only way to read or write project
+  state (`research.json`, `tree.gedcomx.json`, `results/`, `images/`). Tools
+  reach it through `src/utils/project-io.ts` (`readProjectJson`,
+  `atomicWriteJson(projectPath, ref, obj)`, `withProjectLock`),
+  `results-staging.ts` and `image-store.ts`, or call `getProjectStore()` for a
+  raw read; refs are project-relative, never absolute paths. The desktop and
+  both harnesses run `FsProjectStore`; a hosted deployment installs another
+  backend with `setProjectStore()` and no tool changes. **No module outside
+  `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
+  reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
+  also fails when an exemption stops being needed. A second backend runs
+  `tests/store/conformance.ts`.
 - **`src/types/`** — shared API response and tool I/O types live
   here. If a second tool touches the same upstream API, put the
   response shape here so both stay in sync.
