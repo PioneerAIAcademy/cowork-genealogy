@@ -673,12 +673,24 @@ def test_missing_living_flag_counts_as_living():
     assert _person(tree, "P3")["facts"] == []
 
 
-def test_redacted_tree_leaks_no_living_name_date_or_ark():
+def test_no_bundle_entry_leaks_a_living_name_date_or_ark():
+    # Scans EVERY file the redaction returns, not just tree.gedcomx.json, so
+    # exact-name redaction is verified across whatever the bundle contains
+    # rather than one named file. NOTE: this helper stages only research.json +
+    # tree.gedcomx.json, so the scan does not by itself exercise a stray
+    # unredacted copy — the guard that no writer *produces* one lives in the
+    # engine tests (project-io's dot-prefixed-temp assertion and each writer's
+    # `.bak`-absent assertion, issue #2333). What this adds is that IF a future
+    # fixture or producer ever puts a second readable tree copy in the bundle,
+    # an every-entry scan catches it where a one-file assertion would not.
     _, _, files = _redact_tree(_TREE)
-    raw = files["tree.gedcomx.json"].decode("utf-8")
-    for leak in ("Jane Marie", "Bobby", "3 March 1985", "Riverside, CA", "SECRET"):
-        assert leak not in raw
-    assert "Reuben Spencer" in raw  # the deceased subject survives
+    assert files
+    for name, buf in files.items():
+        raw = buf.decode("utf-8")
+        for leak in ("Jane Marie", "Bobby", "3 March 1985", "Riverside, CA", "SECRET"):
+            assert leak not in raw, f"{leak} leaked into {name}"
+    # the deceased subject still ships in the bundle
+    assert "Reuben Spencer" in files["tree.gedcomx.json"].decode("utf-8")
 
 
 def test_couple_facts_cleared_only_when_an_endpoint_is_living():
