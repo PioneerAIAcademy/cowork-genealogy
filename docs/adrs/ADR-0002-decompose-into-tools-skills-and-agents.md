@@ -61,9 +61,13 @@ reasoning that produced it.
 ### A skill that fronts an agent is a front door, not a layer
 
 Three skills exist only to front an agent — to let a user invoke it without
-knowing the agent's name, and to give it a unit-eval suite. `/research` reaches the agent **directly**, so the skill is not
-on every route, and a rule stated only in the skill body is off during
-production research.
+knowing the agent's name, and to give it a unit-eval suite. The orchestrator
+reaches the agent **directly** even where `research/SKILL.md`'s routing table
+still names the skill: both committed runs that postdate the `proof-conclusion`
+pair spawned the agent and called the skill zero times. So the skill is not on
+every route, and a rule stated only in the skill body is off during production
+research — measured on two runs, and unmeasured for the other pairs
+(`docs/skill-to-agent-pair-conversion.md`, "What is still open").
 
 Everything load-bearing therefore goes in the agent, and the routing skill
 carries only five things: frontmatter, the narration line, resolution of the
