@@ -4,12 +4,15 @@
 > propose "routing as a tool" as the fix for a routing failure · quote a
 > compliance rate, a violation count, or a cost figure from an older write-up ·
 > argue that skill `model:` pins are an eval/production fidelity gap · argue the
-> unit harness would deny the router `research_append` · vet an issue whose
-> premise is one of the rows below.
+> unit harness would deny the router `research_append` · cite the base64
+> rationale for delegating an image read · assume a `MUST delegate` sentence
+> decides who calls a tool · vet an issue whose premise is one of the rows below.
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09
-- **Last updated:** 2026-08-31 (added the issue #1344 section — four claims about
+- **Last updated:** 2026-09-11 (added the acquisition-seam section — three
+  claims refuted while deciding where image reading belongs). Previously
+  2026-08-31 (added the issue #1344 section — four claims about
   `gps-mentor`'s never-called wiki tools, including the two tidy explanations a
   reader is likeliest to reach for). Previously 2026-08-30 (the compliance-rate
   row's anachronism clause withdrawn; constraint 6's fire-rate figure annotated
@@ -20,7 +23,7 @@
 - **Superseded by:** —
 - **Applies to:** `.claude/agents/task-reviewer.md`, `.claude/skills/review-ready/SKILL.md`, `docs/specs/guardrail-enforcement-spec.md`, `docs/architecture.md` — *linted; keep current*
 - **Related:** ADR-0002, ADR-0003, ADR-0004, ADR-0006; issues #1006, #1012,
-  #1015, #702, #941, #1084, #1085, #1253, #1344
+  #1015, #702, #941, #1084, #1085, #1253, #1344, #2489, #2490
 
 ## Context
 
@@ -121,6 +124,22 @@ same frontmatter block that spells the wiki pair under all three prefixes), and
 attributed `Read` calls open `research.json` against "Do not open
 `research.json`", and only 26 of 82 tool-using captures call `project_context`
 against "Open every invocation with `project_context`".
+
+### Claims refuted while designing the acquisition seam, 2026-09-11
+
+Figures are over the 498 committed e2e run logs, which are autonomous-only.
+Caller attribution (`tool_calls[].agent_type`) is recorded in only **27** of
+them, so every attributed figure below is over those 27. The control in the same
+runs is `extraction_append`, which only `record-extractor` can call: 124
+record-extractor / 10 general-purpose / 3 main-thread — attribution is working
+there, not missing.
+
+| claim | Why it was wrong |
+|---|---|
+| **Delegating an image read to `image-reader` keeps base64 out of the caller's context** — stated in both `record-extraction` and `search-images` as the reason the delegation is mandatory | `image_transcribe` fetches the scan host-side, OCRs it through a hosted VLM and returns **text**. No bytes cross the MCP transport whoever calls it, so the subagent isolates nothing the tool does not already isolate. The rationale describes `image_read`, which returns inline base64 — and that tool has been declared by no agent and no skill since `image-reader-opus` was retired (issue #2013), while two skill bodies still spend prose forbidding it by name
+and the orchestrator's routing table still names it as how images get read. Its membership in the harness's `SUBAGENT_ONLY_TOOLS` is correct and unrelated: that deny exists for the tool, not for a caller that no longer exists |
+| **A `MUST delegate` sentence in a skill body decides who calls a tool** | In the 27 attributed runs `image_transcribe` was called **128 times by `image-reader` and 75 times from the main thread** — 37% bypass, against a body that says "Do not call `image_read` yourself", mandates the delegation in bold, and calls reporting a miss without an attempt "a completeness failure." What binds is the grant: `allowed-tools` is additive, both production paths hold every advertised tool, and nothing denies the main thread this one. Corpus-wide the tool runs 459 times across 74 of 498 runs, median 2 per run, max 81 |
+| **The image-acquisition paths are three paths needing one owner** | They are one call with three input spellings. An image ARK and an Image Group Number already resolve through a single function inside `image_transcribe`, and an uploaded image file is the same call with a third input form (issue #2048). The split that matters is **host-fetchable vs model-read**: the only medium genuinely outside the artifact channel was the PDF, because nothing in the engine reads one — which is why issue #2489 adds a PDF reader instead of a fourth acquisition path |
 
 ## The `same_person` write-boundary gate: six constraints any design must satisfy
 
