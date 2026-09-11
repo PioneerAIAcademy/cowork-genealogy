@@ -30,7 +30,6 @@ import {
 import {
   atomicWriteJson,
   atomicWriteBoth,
-  backupIfExists,
   isInsideProject,
   readProjectJson,
   formatIssues,
@@ -2678,7 +2677,6 @@ export async function researchAppend(
       const researchPath = join(projectPath, "research.json");
       if (prep.treeMutated) {
         const treePath = join(projectPath, "tree.gedcomx.json");
-        await backupIfExists(treePath); // one-deep .bak, same semantics as every tree writer
         await atomicWriteBoth([
           { path: treePath, data: tree }, // tree first —
           { path: researchPath, data: research }, // — then research (commit order)

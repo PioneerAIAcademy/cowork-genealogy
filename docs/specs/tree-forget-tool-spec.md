@@ -392,10 +392,10 @@ Three properties are load-bearing:
   agent's file browsing and the feedback bundler skip dot-prefixed entries, so
   the restore point cannot be picked up by accident. SKILL.md additionally
   forbids reading it.
-- **No `.bak`.** Unlike `tree_edit`, this tool does **not** call
-  `backupIfExists`. That would write `tree.gedcomx.json.bak` — same content, but
-  *not* dot-prefixed, so it would be exactly the readable copy of the answer the
-  dot-prefix exists to prevent.
+- **No `.bak`.** This tool writes no `tree.gedcomx.json.bak` — that would be a
+  non-dot-prefixed, readable copy of the answer, exactly what the dot-prefixed
+  restore file exists to avoid. (No tree writer creates a `.bak` any more — the
+  writer was removed for leaking unredacted trees into feedback bundles.)
 - **Written once, never overwritten.** If `.tree-before-forget.gedcomx.json`
   already exists, it is left alone and the run proceeds. The restore point
   therefore always refers to the **original** tree, not to an

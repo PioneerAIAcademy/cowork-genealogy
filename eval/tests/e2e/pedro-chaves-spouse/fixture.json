@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 1, hint-samples.csv row 6, flags adds_spouse/adds_birth, confidence 3). Draft transcribed from an 1859 Buenos Aires parish marriage entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 1, hint-samples.csv row 6, flags adds_spouse/adds_birth, confidence 3). RESOLVED true match, adjudicated from the register images rather than the indexes: three original pages (the 1836 Socorro baptism, the 1859 informacion matrimonial and the 1859 marriage register) all name the groom's parents as Ysidro Chaves and Andrea Guerra. Marriage date corrected to 14 Sep 1859 (30 Aug is the informacion matrimonial) and the place to Barracas al Sud, now Avellaneda, in Buenos Aires province. See README for the transcription traps on both pages."
 }

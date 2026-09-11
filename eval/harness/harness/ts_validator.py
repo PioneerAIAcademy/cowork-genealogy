@@ -65,6 +65,14 @@ def validate_parsed(research: Any, tree: Any) -> list[str] | None:
     if not _VALIDATOR_JS.exists():
         return None
 
+    # Same node-subprocess workload and concurrency as mock_mcp's live tools, and
+    # a strictly worse consequence on a trip: a timeout here returns a non-empty
+    # error list that fails test_project_files_pass_full_validation, and a failed
+    # validator skips the whole judge (#2057), so the test is ungraded rather than
+    # one dimension downgraded. Route through the same raised budget (#2025).
+    # Imported inside the function to keep this module's import top stdlib-only.
+    from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG
+
     vjs = str(_VALIDATOR_JS).replace("\\", "/").replace("'", "\\'")
     # Node ESM needs a file:// URL for absolute imports on Windows; a bare
     # drive-letter path fails with ERR_UNSUPPORTED_ESM_URL_SCHEME.
@@ -78,7 +86,7 @@ def validate_parsed(research: Any, tree: Any) -> list[str] | None:
             capture_output=True,
             text=True,
             encoding="utf-8",
-            timeout=30,
+            timeout=NODE_EVAL_TIMEOUT_LONG,
         )
     except FileNotFoundError:
         # `node` is not installed -> the bridge cannot run at all -> skip, like a
