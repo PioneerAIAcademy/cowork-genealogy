@@ -579,37 +579,19 @@ function applyNamedPartyOp(
   const siblings = (Array.isArray(research.assertions) ? research.assertions : []).filter(
     (a: any) => a && a.record_id === recordId && normNamePart(String(a.record_role ?? "")) === wanted,
   );
-  // Refuse ONLY when the call being steered to would actually succeed. A
-  // persona exists whenever ANY assertion carries the role, but the persona arm
-  // can only MINT one that has a name assertion to build a name from — and in a
-  // mirrored marriage register both parties' personas carry nothing but the
-  // `marriage` assertion. Refusing there left the party writable by neither arm,
-  // which is worse than the name-only shell the refusal exists to prevent. So
-  // the guard fires only when the persona arm can do the better job: the
-  // persona has a name to mint from, or the target person already exists and
-  // the persona arm would enrich it rather than mint.
-  // The guard is only a valid steer when the persona arm would actually WRITE
-  // something for this party. Having a `record_role` does not mean that: in a
-  // mirrored marriage register both parties have a persona and each carries
-  // nothing but the `marriage` assertion, which SKIP_TYPES drops — so the
-  // persona call returns ok:true and writes nothing, and refusing here would
-  // leave the party writable by neither arm. So the test is "does that persona
-  // have an assertion this tool would materialize": a name, a gender, or any
-  // fact that is not skipped and not negative evidence.
+  // Refuse ONLY when the persona arm could actually MINT this party, which
+  // means the persona carries a non-negative NAME assertion: the arm refuses to
+  // mint a person it cannot name, so steering a gender-only or birth-only
+  // persona there errors, and this arm refusing would send the caller back to
+  // the call that just failed. That is the writable-by-neither-arm dead end
+  // this whole arm exists to remove. Live shape: a `bride` persona of
+  // [birth, marriage] with no name; 57 such personas in the scenario corpus.
   //
   // Deliberately NOT part of this test: whether the target person already
-  // exists. An earlier version added that as a second condition, reasoning that
-  // the persona arm would enrich rather than mint — but an existing person does
-  // not give the persona anything to write, so it re-created the same dead end,
-  // and it broke idempotency (the first call mints the person, so the second
-  // call refuses itself).
-  // A NAME assertion specifically, not merely "something to materialize". The
-  // persona arm refuses to mint a person it cannot name, so a persona carrying
-  // only a gender or only a birth is not a better alternative: steering there
-  // errors, and this arm refusing sends the caller back to the call that just
-  // failed. That left the party writable by neither arm, which is the failure
-  // this whole arm exists to remove. Live shape: a head_of_household persona
-  // of [birth, birth] with no name.
+  // exists. An earlier version added that as a second condition, reasoning the
+  // persona arm would enrich rather than mint. But an existing person gives the
+  // persona nothing to write, so it re-created the same dead end, and it broke
+  // idempotency (the first call mints the person, so the second refuses itself).
   const siblingCanMint = siblings.some(
     (a: any) =>
       a.evidence_type !== "negative" && NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()),

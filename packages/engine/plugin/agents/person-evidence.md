@@ -526,10 +526,12 @@ the groom's marriage register). Take the first that applies:
 
 1. **Already in the tree** — link to that `personId` (Step 4), do not mint. To
    add the record's spelling of her name, carry that `personId` into 2 or 3.
-2. **That role has a persona on this record carrying a non-negative name,
-   gender, or any fact other than
-   `relationship`/`marriage`/`parentage`/`parentchild`/`age`** —
-   `materialize_facts({ personId?, recordId, recordRole })`. Gender comes from
+2. **That role has a persona on this record** —
+   `materialize_facts({ personId?, recordId, recordRole })`. When you are
+   MINTING her (no `personId` from 1), that persona must carry a non-negative
+   `name` assertion: the persona arm refuses to mint a person it cannot name,
+   so a persona carrying only a gender, a birth, or other facts goes to 3.
+   Enriching an existing `personId` needs no name assertion. Gender comes from
    her `gender`/`sex` assertions; absent one it is `Unknown`.
 3. **Otherwise** — `materialize_facts({ assertionId, relatedRole,
    name: { given, surname }, gender?, nameType?, personId? })`. `assertionId`
