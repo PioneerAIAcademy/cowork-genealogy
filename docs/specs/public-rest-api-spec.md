@@ -146,7 +146,7 @@ fall through to FastAPI's defaults.
   FS tools. Only `access_token` is required; `expires_in` defaults to 3600s.
 - **Include `refresh_token`** (OAuth `offline_access`) for any session that may outlive
   the access token: FS access tokens last ~1h, so a multi-hour session needs it. The
-  token is self-refreshed **in-sandbox** by the engine's `getValidToken()` — the same
+  token is self-refreshed **in-sandbox** by the engine's `getValidToken(principal)` — the same
   mechanism the browser path relies on — so a single create-time injection suffices for
   the life of the sandbox. Without a refresh token the session works only until the
   access token expires. The token is injected straight into the sandbox and is **not**

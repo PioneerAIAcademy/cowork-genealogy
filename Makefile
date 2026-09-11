@@ -377,6 +377,10 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
 
+.PHONY: engine-smoke-stdio
+engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and call every offline tool once (no FamilySearch login needed)
+	cd $(ENGINE_DIR) && npx tsx dev/smoke-stdio.ts
+
 # $(ENGINE_BUILD) is a real prerequisite here, not a convenience. The mock MCP
 # server (eval/harness/harness/mock_mcp.py) shells out to the COMPILED build/
 # for its live tool handlers and for the production tool catalog, so part of

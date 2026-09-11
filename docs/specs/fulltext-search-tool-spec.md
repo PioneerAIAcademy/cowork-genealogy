@@ -12,7 +12,7 @@ Wraps the endpoint:
 `GET https://www.familysearch.org/service/search/fulltext/search`
 
 Requires authentication (OAuth tokens via the `login` tool). Uses the
-same auth flow as the existing `search` tool (`getValidToken()` from
+same auth flow as the existing `search` tool (`getValidToken(principal)` from
 `src/auth/refresh.ts`).
 
 ### Why a separate tool
@@ -329,7 +329,7 @@ verify against the original image, not an inability to reach it.
 
 ## Auth
 
-Uses `getValidToken()` from `src/auth/refresh.ts` — same as the
+Uses `getValidToken(principal)` from `src/auth/refresh.ts` — same as the
 existing `search` tool. Requires the `BROWSER_USER_AGENT` from
 `src/constants.ts` (Imperva WAF requirement). When `nlQuery` is set, an
 additional `X-FS-Feature-Tag: search_naturalLanguageSupport` header is sent

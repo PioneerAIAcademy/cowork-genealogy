@@ -79,7 +79,7 @@ Example:
 | 5xx from API | Throw: `"wiki-query-api error: {status}"` |
 | Network failure | Throw: `"Could not reach wiki-query-api at {url}. Is the server running?"` |
 
-Match the LLM-instruction error pattern used by `getValidToken()` in
+Match the LLM-instruction error pattern used by `getValidToken(principal)` in
 `src/auth/refresh.ts` — error messages must tell Claude what to do next.
 
 ### Timeout
@@ -159,10 +159,10 @@ wikiApiUrl?: string;
 
 ### `packages/engine/mcp-server/src/auth/config.ts`
 
-Add a `getWikiApiUrl()` helper modeled on `getClientId()`:
+Add a `getWikiApiUrl(principal)` helper modeled on `getClientId()`:
 
 ```typescript
-export async function getWikiApiUrl(): Promise<string>
+export async function getWikiApiUrl(principal): Promise<string>
 ```
 
 Throws an LLM-instruction error if the field is missing. This is the

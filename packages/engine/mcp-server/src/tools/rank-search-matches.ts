@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getProjectStore } from "../store/project-store.js";
 import { getValidToken } from "../auth/refresh.js";
 import { scorePair } from "../utils/match-engine.js";
@@ -36,6 +37,7 @@ interface ScoredCandidate {
 
 export async function rankSearchMatches(
   input: RankSearchMatchesInput,
+  principal: Principal,
 ): Promise<RankSearchMatchesResult> {
   const { projectPath, stagedResultsRef, subjectId } = input;
 
@@ -62,7 +64,7 @@ export async function rankSearchMatches(
   }
 
   // ── 3. Score every candidate (one token, bounded fan-out, retried) ─────────
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const scored = await mapWithConcurrency(
     results,
     SCORE_CONCURRENCY,
@@ -134,7 +136,7 @@ export async function rankSearchMatches(
     .map((s, i) => toStub(s, i + 1));
 
   if (input.checkAttachments && matches.length > 0) {
-    await applyAttachments(matches, subjectId);
+    await applyAttachments(matches, subjectId, principal);
   }
 
   const out: RankSearchMatchesResult = {
@@ -495,10 +497,11 @@ async function appendScoreLog(
 async function applyAttachments(
   matches: RankedMatch[],
   subjectId: string,
+  principal: Principal,
 ): Promise<void> {
   const uris = matches.map((m) => m.recordId);
   try {
-    const att = await sourceAttachmentsTool({ uris });
+    const att = await sourceAttachmentsTool({ uris }, principal);
     for (const stub of matches) {
       const persons = att.attachments[stub.recordId] ?? [];
       // subjectId is the tree person's FamilySearch PID; source_attachments

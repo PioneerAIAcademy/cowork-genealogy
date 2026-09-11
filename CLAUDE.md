@@ -470,9 +470,18 @@ module — do not re-implement token plumbing. To see which tools those are toda
 
 Four rules hold across the module:
 
-- **`getValidToken()` (`refresh.ts`) is the single entry point.** It loads
+- **`getValidToken(principal)` (`refresh.ts`) is the single entry point.** It loads
   tokens, auto-refreshes if expired, and throws an LLM-instruction error
   ("Call the login tool to authenticate.") when there is no valid session.
+  **Every credential and per-user-config read takes a `Principal`**
+  (`src/auth/principal.ts`) — `LOCAL` for the one-user-per-process desktop and
+  harness path, a bearer carrying the request's token and config for a hosted
+  entrypoint — so the tool entry points that need one take it as their last
+  parameter and the stdio dispatcher binds `LOCAL` once. A call site that
+  never establishes it does not compile; never route around this with a
+  module-level or async-local default, which is the cross-patron
+  impersonation the parameter exists to prevent. A bearer never refreshes and
+  never touches `~/.familysearch-mcp` (`tests/auth/principal.test.ts` pins it).
 - **The bundled `config/familysearch.json` is the sole source of the FS client
   ID** — no env-var fallback, no per-user override. A missing or corrupt file
   throws an installation-framed error, not an LLM-actionable one: it ships with
@@ -498,17 +507,17 @@ Two distinct config sources:
    `loadConfig` / `saveConfig` read and write the per-user JSON.
    **Do not** introduce env-var fallbacks — the files are the sole
    sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
-   and are read via `loadConfig()`.
+   and are read via `loadConfig(principal)`.
 
 Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
+| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl(principal)` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
-| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
+| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the
@@ -691,11 +700,11 @@ module instead.
 
 Where to look first:
 
-- **`src/auth/`** — `getValidToken()` is the only correct way to
+- **`src/auth/`** — `getValidToken(principal)` is the only correct way to
   read a FamilySearch access token. Don't re-implement token
   loading, expiry checks, or refresh. The same applies to anything
   else here (PKCE, config loading, token storage).
-- **`src/auth/config.ts`** — `loadConfig()` / `getClientId()` is
+- **`src/auth/config.ts`** — `loadConfig(principal)` / `getClientId()` is
   the single source for app config. New provider keys go on
   `AppConfig` in `src/types/auth.ts`, not into env vars or
   ad-hoc files.

@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import {
@@ -876,7 +877,8 @@ export function mapEntry(
 }
 
 export async function recordSearchTool(
-  input: RecordSearchInput
+  input: RecordSearchInput,
+  principal: Principal
 ): Promise<RecordSearchToolResponse> {
   validateInput(input);
 
@@ -886,11 +888,11 @@ export async function recordSearchTool(
   }
   const paired = applyAltNameAutoPair(normalizedInput);
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const url = buildSearchUrl(paired);
 
   // #1316 / #2054: fetchWithRetry wraps fetchWithTimeout with automatic retry
-  // of transient failures (429/5xx, network errors, timeouts). getValidToken()
+  // of transient failures (429/5xx, network errors, timeouts). getValidToken(principal)
   // stays outside the retry so an auth failure surfaces immediately.
   let response: Response;
   try {
@@ -1104,12 +1106,15 @@ export async function recordSearchTool(
   // no partial-failure state.
   if (out.staged && input.subjectId && input.projectPath) {
     try {
-      out.ranked = await rankSearchMatches({
-        projectPath: input.projectPath,
-        stagedResultsRef: out.staged.resultsRef,
-        subjectId: input.subjectId,
-        checkAttachments: true,
-      });
+      out.ranked = await rankSearchMatches(
+        {
+          projectPath: input.projectPath,
+          stagedResultsRef: out.staged.resultsRef,
+          subjectId: input.subjectId,
+          checkAttachments: true,
+        },
+        principal,
+      );
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
     }
