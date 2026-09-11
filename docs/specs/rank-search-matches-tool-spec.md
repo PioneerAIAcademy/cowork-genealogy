@@ -7,8 +7,9 @@ score** against the research subject, replacing FamilySearch's unreliable search
 ranker with its authoritative person matcher. It reads the host-side staged
 results file, scores **every** staged candidate against the subject with the
 `matchTwoExamples` engine (the same one `same_person` uses), writes the full
-score set to a calibration log, and returns the **top 10 by match score** as
-compact, gedcomx-free stubs.
+score set to a calibration log, and returns **every scored candidate, ordered
+by match score**, as compact, gedcomx-free stubs. `top` narrows that only when
+the caller asks.
 
 It exists to fix two coupled failures of the raw search flow, both confirmed on
 live FamilySearch data (see **Design notes**):
@@ -78,7 +79,7 @@ needs-review band; it does not accept/reject. (Design notes, guardrails.)
 | `projectPath` | string | yes | Absolute path to the active project directory. |
 | `stagedResultsRef` | string | yes | The `staged.resultsRef` handle from `record_search` (`results/.staging/<uuid>.json`). A finalized `results/<log_id>.json` ref is also accepted. |
 | `subjectId` | string | yes | A `persons[].id` in the project's `tree.gedcomx.json` — the research subject to match against. |
-| `top` | number | no | How many top-ranked stubs to return. **Default 10.** Fixed count, not a score threshold (a good threshold is not yet known — see the score log). |
+| `top` | number | no | Cap on how many top-ranked stubs to return. **Omit for every scored candidate**, which is the default. A fixed count, not a score threshold (a good threshold is not yet known — see the score log). |
 | `checkAttachments` | boolean | no | Default `false`. When `true`, fold one batch `source_attachments` call in host-side to set `attachedToSubject` / `attachedToOther` on the returned stubs. |
 
 `subjectId`, `projectPath`, `stagedResultsRef` are camelCase (MCP wire
@@ -157,8 +158,8 @@ snake_case envelope it reads.
    `source_attachments({ uris: recordIds })`; map `attachedToSubject` /
    `attachedToOther` onto the stubs. (Deriving `attachedToSubject` needs the
    local-`subjectId`→FamilySearch-PID mapping — see Owner decisions.)
-7. **Return** the top `top` (default 10) stubs (below). Bulk gedcomx is never in
-   the return.
+7. **Return** every scored stub (below), or the first `top` when the caller
+   supplied one. Bulk gedcomx is never in the return.
 
 ## Score log (calibration)
 
@@ -240,13 +241,19 @@ Sorted by `matchScore` descending; no gedcomx.
       },
       "batchNumber": "M01048-5"    // only when the record traces to an extraction batch
     }
-    // … up to `top` (default 10)
+    // … one per scored candidate (or the first `top`, when given)
   ]
 }
 ```
 
-Each stub is ~150 bytes. Returning the top 10 keeps the model-facing payload
-small while the full scored set lives in the score log and the staged file.
+The stub also carries `events`, `collectionId`, `recordTitle` and
+`treeMatches`, so that `ranked` REPLACES the inline `results` block on a
+subject-named `record_search` rather than shipping beside it. Measured at 50
+rows: the old shape (50 inline rows + a 10-stub `ranked`) is 34,147 bytes, the
+new one (50 enriched stubs, no `results`) is 32,585 — 4.6% smaller. The saving
+is the deduplication, not the stub being lean: an enriched stub is 645 bytes
+against a full row's 607. The full scored set still lives in the score log and
+the staged file.
 
 ### `relativeTerms` — carried, and called out; never scored
 
@@ -309,7 +316,7 @@ it is matched on `labelId`.
 
 Standard `allToolSchemas` entry. `name: "rank_search_matches"`, description
 summarizing "re-rank staged record_search results by match score against a tree
-subject; returns the top-N matches." `inputSchema` with the five Input fields;
+subject; returns every scored candidate." `inputSchema` with the five Input fields;
 `projectPath`, `stagedResultsRef`, `subjectId` required. `additionalProperties:
 false`.
 
@@ -413,9 +420,10 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
   second death index FS ranked 15th.
 - **Surface for review, not accept/reject (guardrail 1).** A *different*
   same-name/same-state person scored 0.716 — inside the match band. No single
-  threshold cleanly separates, which is why v1 returns a fixed **top 10** for the
-  skill to confirm, and why the score log exists (to choose a threshold from
-  real data later).
+  threshold cleanly separates, which is why the tool returns **every scored
+  candidate ordered by score** for the skill to confirm rather than cutting the
+  pool itself, and why the score log exists (to choose a threshold from real
+  data later).
 - **Sparse records are low-signal (guardrail 2).** Dateless stubs scored
   unstably (0.086 vs 0.668 on a middle-initial difference); the skill must not
   treat a low score on a thin record as a definitive non-match.
@@ -426,8 +434,9 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 
 ## Owner decisions (deferred)
 
-1. **Threshold** — intentionally none in v1 (fixed top-10). Set later from
-   `results/match-scores.jsonl`.
+1. **Threshold** — intentionally none, and no host-side cut either: every
+   scored candidate is returned, ordered. Set a threshold later
+   from `results/match-scores.jsonl`.
 2. **`checkAttachments` in v1** — needs a local-`subjectId`→FS-PID map
    (`source_attachments` keys on entity PIDs). Build now or defer to the existing
    separate `source_attachments` call.

@@ -282,6 +282,151 @@ def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
     assert body["ranked"]["matches"], "the test's own rank fixture supplies the matches"
 
 
+@pytest.mark.requires_engine_build
+def test_record_search_drops_inline_results_when_ranked_replaces_them(tmp_path):
+    """`ranked` replaces the inline rows rather than shipping beside them (#1212).
+
+    The mock must send the shape production sends: a mock that keeps `results`
+    grades triage against a payload the agent never receives, which is the
+    #1826/#2009 failure the post-staging-path rule exists to prevent.
+
+    The verdict comes from the compiled `dropInlineResultsWhenRanked`, so this
+    also pins that the mock is calling it rather than restating the condition.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert body.get("staged"), "staging must still happen"
+    assert body["ranked"]["matches"], "fixture must supply a usable ranking"
+    assert body["ranked"].get("subjectResolvable") is not False
+    assert "results" not in body, (
+        "ranked carries these rows; shipping `results` too is the duplication "
+        "#1212 removed"
+    )
+    # The rows are still reachable — dropped from the inline block, not lost.
+    assert body.get("staged"), "the sidecar still holds the full-fidelity rows"
+
+
+@pytest.mark.requires_engine_build
+def test_dropped_results_do_not_take_the_triage_fields_with_them(tmp_path):
+    """The rank fixtures are lean; `results` is not. Dropping one without
+    projecting the other hands the agent strictly less than production sends.
+
+    Caught by a real eval run, not by reasoning: `ut_search_records_014`
+    regressed pass -> fail because the household `events` the skill needs for
+    the Step-4 age cross-check lived only on the dropped `results` row. All 16
+    committed rank fixtures are lean, because they were authored when `ranked`
+    shipped ALONGSIDE `results`.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert body.get("staged"), "staging must still happen"
+    assert "results" not in body, "precondition: this fixture pair drops results"
+
+    # The fixture's own stubs carry none of these; they must arrive by
+    # projection from the rows that were dropped.
+    carried = [
+        m
+        for m in body["ranked"]["matches"]
+        if any(k in m for k in ("events", "collectionId", "recordTitle", "treeMatches"))
+    ]
+    assert carried, (
+        "every triage field vanished with `results` — the agent is being graded "
+        "on less than production would send it"
+    )
+
+
+@pytest.mark.requires_engine_build
+def test_record_search_keeps_inline_results_on_a_scoreable_no_match(tmp_path):
+    """The arm a length-only drop condition gets wrong (#1212).
+
+    `subjectResolvable: false` with POPULATED matches means "the subject is
+    scoreable and nothing in this pool matches it" — the rows exist but every
+    score sits at or below the degenerate floor. Dropping `results` here would
+    leave the agent holding search order wearing match scores, which is the
+    silent degradation the withheld branch exists to refuse.
+
+    The mock must reproduce that, or no unit eval can ever grade the skill's
+    response to a genuine negative against the payload production sends.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-pool-has-no-match"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert body.get("staged"), "staging must still happen"
+    assert body["ranked"]["subjectResolvable"] is False
+    assert body["ranked"]["matches"], "this branch returns the matches, unlike the withheld one"
+    assert body.get("results"), (
+        "a ranking the caller must not triage on does not replace the inline "
+        "rows — dropping them here hands back search order wearing match scores"
+    )
+
+
+def test_record_search_keeps_inline_results_when_no_ranking_is_folded(tmp_path):
+    """No rank fixture -> no `ranked` -> `results` must survive untouched.
+
+    The complement of the test above, and the arm that fails if the drop is
+    ever made unconditional on a subject being named.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert "ranked" not in body
+    assert body.get("results"), "with no ranking, the inline rows are all there is"
+
+
 def test_record_search_omits_ranked_without_subject(tmp_path):
     """No subjectId means no ranking — the same shape the real tool returns."""
     server, call_log, tools_by_name = create_mock_server(

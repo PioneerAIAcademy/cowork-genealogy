@@ -26,7 +26,7 @@ deterministic backstop. *none* = nothing checks it.
 | 9 | Must not set plan-item status to `completed` from this skill. | Step 6 | none |
 | 10 | Must not offer extraction as a next step for a needs-review/disqualified match — "not even as a question." | Step 4 | judge (Result triage / rubric.md) |
 | 11 | Must not report a disqualified record's parents/spouse/children as findings. | Step 4 | judge |
-| 12 | Must not stop after dismissing the top candidate — triage the full ranked top 10 before moving on. | Step 4 | judge |
+| 12 | Must not stop after dismissing the top candidate — triage the full ranked set before moving on. | Step 4 | judge |
 | 13 | Must write "consistent with," never "confirming," when `relativeTerms` is `absent`/`unknown`. | Step 4 | judge |
 | 14 | Must cite `matchScore`, never a raw stub's `score` — different numbers. | Step 4 | none |
 | 15 | Must actually call `Skill("search-external-sites")` (not narrate it) once 3+ FamilySearch variants nil on an important plan item. | Step 8.7 | guard, tag-gated (`test_escalates_to_external_sites_after_fs_exhaustion`, `familysearch-exhausted`) |

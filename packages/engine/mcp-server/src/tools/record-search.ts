@@ -43,7 +43,10 @@ import {
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
 } from "../utils/results-staging.js";
-import { compactStagedRecordSearch } from "../utils/staged-compaction.js";
+import {
+  compactStagedRecordSearch,
+  dropInlineResultsWhenRanked,
+} from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { withRetry } from "../utils/place-resolver.js";
 import { fetchWithTimeout } from "../utils/http.js";
@@ -153,7 +156,10 @@ const KIN_GROUPS: KinGroup[] = [
  *  session therefore paid for deep pools it never triaged.
  *
  *  Coupling the default to `subjectId` makes the pair inseparable by
- *  construction: a deep pool is only fetched when something will cut it back.
+ *  construction: a deep pool is only fetched when something will order it and
+ *  score every row. Since #1212 ranking no longer CUTS the pool back — it
+ *  returns every scored candidate — so `count` is what bounds the response,
+ *  and `top` is the caller's opt-in if they want fewer.
  *  See docs/plan/research-performance-2026-07-27.md §5.3. */
 export function defaultCount(input: RecordSearchInput): number {
   return input.subjectId && input.projectPath ? 50 : 20;
@@ -209,9 +215,11 @@ export function validateInput(input: RecordSearchInput): void {
       throw new Error("offset must be non-negative.");
     }
   }
-  // Ranking active (subjectId supplied) justifies a deep pool: the re-ranker
-  // cuts it back host-side, so the model never sees 50 raw stubs. Without
-  // ranking a deep pool is pure context waste, so the default stays 20. See
+  // Ranking active (subjectId supplied) justifies a deep pool: every row comes
+  // back scored and ordered, so the model never triages 50 raw stubs by hand.
+  // (It is not cut back host-side — since #1212 ranking returns every scored
+  // candidate.) Without ranking a deep pool is pure context waste, so the
+  // default stays 20. See
   // docs/plan/research-performance-2026-07-27.md §5.3 — the two are coupled.
   const count = input.count ?? defaultCount(input);
   const offset = input.offset ?? 0;
@@ -1134,10 +1142,20 @@ export async function recordSearchTool(
         stagedResultsRef: out.staged.resultsRef,
         subjectId: input.subjectId,
         checkAttachments: true,
+        // Forwarded, not defaulted: omitted means every scored candidate
+        // (#1212). Passing a default here would reinstate the host-side cap
+        // this change removed, one layer up.
+        ...(input.top !== undefined ? { top: input.top } : {}),
       });
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
     }
+    // Same rows, two shapes, on every subject-named search until now.
+    // Outside the try/catch because a failure to drop is not a ranking failure
+    // and must not be reported as one. Note this is not what protects `results`
+    // when ranking throws — `out.ranked` is simply never assigned on that path,
+    // so the drop no-ops wherever it sits.
+    dropInlineResultsWhenRanked(out);
   }
 
   // A nil marriage search is a prompt, not a finding. Same reasoning as the
@@ -1354,7 +1372,8 @@ export const recordSearchToolSchema = {
       isPrincipal: { type: "boolean", description: "Filter by the searched person's role in the record. `true` returns only records where the matched person is the principal subject (e.g., the deceased on a death certificate, the bride/groom on a marriage). `false` returns only records where the matched person is mentioned but is not the principal (e.g., as a parent, witness, sibling). Pick by intent, do not default to omitting. Records ABOUT a person (their own birth/marriage/death) take `true` — a heavy filter, which is the point: it drops incidental mentions. Finding a relative THROUGH a person you already know is `false` — the response does not mark who the principal is, so `record_read` a hit and read its `persons`/`relationships` for the relative. It matches on the known person's own name, where `fatherGivenName`/`spouseGivenName` match on the target's indexed relative fields. Omit to return both." },
 
       subjectId: { type: "string", description: "A `persons[].id` from the project's tree.gedcomx.json (e.g. `\"I1\"`). Supply it together with `projectPath` and the tool ALSO ranks the results against that subject with FamilySearch's own matcher and returns them under `ranked` — match-scored, attachment-checked, best first. This replaces a separate `rank_search_matches` call. Supply it for any search where you know which tree person you are looking for, which is nearly all of them. Ranking never fails the search: on a ranking error you still get `results`, plus `rankingError`. Omit it only when the search is not about a specific tree person (a broad survey, or a person not yet in the tree)." },
-      count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — ranking cuts a deep pool back host-side, so fetching one is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
+      count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — every row comes back scored and ordered, so fetching a deep pool is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
+      top: { type: "number", description: "Cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful with `subjectId` and `projectPath`, since ranking does not otherwise run." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
       projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: results come back inline at full fidelity but nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },

@@ -5,6 +5,9 @@
 // docs/specs/rank-search-matches-tool-spec.md.
 
 import type { RelativeTerms } from "./relative-terms.js";
+// Type-only, so the cycle with record-search.ts (which imports
+// RankSearchMatchesResult from here) is erased at compile time.
+import type { RecordSearchEvent, TreeMatch } from "./record-search.js";
 
 export interface RankSearchMatchesInput {
   /** Absolute path to the active project directory. */
@@ -20,7 +23,7 @@ export interface RankSearchMatchesInput {
    * to match every staged candidate against.
    */
   subjectId: string;
-  /** How many top-ranked stubs to return. Default 10. */
+  /** How many top-ranked stubs to return. Defaults to every scored candidate (#1212). */
   top?: number;
   /**
    * When true, fold one batch `source_attachments` call in host-side to set
@@ -65,6 +68,18 @@ export interface RankedMatch {
    *  those hits as relative-confirmed, which is why it has to reach the stub
    *  (#1324). */
   relativeTerms?: RelativeTerms;
+  /** Carried verbatim from the staged row. `ranked` replaces the inline
+   *  `results` block on a subject-named search, so a field that only ever lived
+   *  there would vanish from the dominant call shape. `events` and
+   *  `collectionId` are named by #1212; `recordTitle` and `treeMatches` are the
+   *  two it missed. FamilySearch's own `score`/`confidence` are deliberately
+   *  NOT carried — `matchScore` supersedes them and shipping both invites
+   *  triage on the weaker number. Enforced by the parity guard in
+   *  tests/packaging/ranked-stub-parity.test.ts. */
+  events?: RecordSearchEvent[];
+  collectionId?: string;
+  recordTitle?: string;
+  treeMatches?: TreeMatch[];
   /** The extraction batch this record came out of, carried verbatim from the
    *  staged row. Present only on records that trace to one. When a search names
    *  a `subjectId` the caller reads `ranked`, not `results`, so without this the
@@ -76,7 +91,7 @@ export interface RankSearchMatchesResult {
   subjectId: string;
   /** Candidates scored (full staged set). */
   scoredCount: number;
-  /** min(top, scoredCount). */
+  /** scoredCount, or min(top, scoredCount) when `top` is given. */
   returnedCount: number;
   /** Pairs whose FS call kept failing (kept, matchScore null). */
   scoringErrors: number;

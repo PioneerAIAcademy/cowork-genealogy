@@ -17,8 +17,6 @@ import type {
 /** Match-score fan-out concurrency (deliberately higher than same_person's
  *  conservative PAIR_CONCURRENCY=5; confirmed with the matchTwoExamples dev). */
 const SCORE_CONCURRENCY = 10;
-/** Default number of top-ranked stubs returned. */
-const DEFAULT_TOP = 10;
 /** A subject whose every score sits at or below this floor is unresolvable. */
 const DEGENERATE_FLOOR = 0.01;
 /** Append-only calibration log; a `.jsonl` name stays clear of the results
@@ -128,11 +126,16 @@ export async function rankSearchMatches(
   );
   const subjectTooThin = subject.discriminatingFacts === 0;
 
-  // ── 6+7. Build the top-`top` stubs; fold in attachments if requested ───────
-  const top = input.top ?? DEFAULT_TOP;
-  const matches: RankedMatch[] = scored
-    .slice(0, top)
-    .map((s, i) => toStub(s, i + 1));
+  // ── 6+7. Build the stubs; fold in attachments if requested ────────────────
+  // Every scored candidate, not a fixed top-N (#1212). `top` narrows only when
+  // the caller asks for it: a host-side cap that discards rows the caller paid
+  // to search and score is the caller's decision, not this tool's. `ranked`
+  // replaces the inline `results` block on a subject-named search, so a row
+  // dropped here is a row the caller cannot see at all.
+  const matches: RankedMatch[] =
+    input.top === undefined
+      ? scored.map((s, i) => toStub(s, i + 1))
+      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1));
 
   if (input.checkAttachments && matches.length > 0) {
     await applyAttachments(matches, subjectId);
@@ -441,6 +444,16 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   // nothing to add. Unlike `relativeTerms` this gets no advisory note — a batch
   // number is a lookup key for the next search, not a caveat on this score.
   if (r.batchNumber) stub.batchNumber = r.batchNumber;
+  // Carried verbatim because `ranked` now replaces the inline `results` block
+  // (#1212). `events` and `collectionId` are the two the issue named;
+  // `recordTitle` and `treeMatches` are the two it missed — `treeMatches` is
+  // advertised in record_search's own tool description, so dropping it would
+  // regress the dominant call shape. FamilySearch's `score`/`confidence` are
+  // deliberately not carried: `matchScore` supersedes them.
+  if (r.events && r.events.length > 0) stub.events = r.events;
+  if (r.collectionId) stub.collectionId = r.collectionId;
+  if (r.recordTitle) stub.recordTitle = r.recordTitle;
+  if (r.treeMatches && r.treeMatches.length > 0) stub.treeMatches = r.treeMatches;
   if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
   // Candidate-side thinness — reported alongside the score so a caller can see
   // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different
@@ -524,7 +537,7 @@ export const rankSearchMatchesSchema = {
     "subject, replacing FamilySearch's unreliable search ranker with its " +
     "authoritative person matcher. Reads the host-side staged results (from a " +
     "`record_search` that returned a `staged.resultsRef`), scores every " +
-    "candidate against the subject person, and returns the top-N compact stubs " +
+    "candidate against the subject person, and returns every scored candidate " +
     "sorted by match score — no bulk gedcomx crosses the wire. Treat the result " +
     "as a REVIEW SURFACE (confirm with role/age cross-checks), not an " +
     "accept/reject. When `subjectResolvable` is false, READ THE `diagnostic` " +
@@ -562,8 +575,9 @@ export const rankSearchMatchesSchema = {
       top: {
         type: "number",
         description:
-          "How many top-ranked stubs to return. Default 10. A fixed count, not " +
-          "a score threshold.",
+          "Optional cap on how many top-ranked stubs to return. Omit to get " +
+          "every scored candidate, which is the default. A fixed count, not a " +
+          "score threshold.",
       },
       checkAttachments: {
         type: "boolean",

@@ -414,8 +414,17 @@ _STAGED_COMPACTORS: dict[str, str] = {
 
 
 def _stage_and_compact_search_results(
-    workspace: Path, tool_name: str, response: dict[str, Any]
-) -> tuple[dict[str, Any] | None, dict[str, Any], list[dict[str, Any]]]:
+    workspace: Path,
+    tool_name: str,
+    response: dict[str, Any],
+    ranked: dict[str, Any] | None = None,
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any],
+    list[dict[str, Any]],
+    bool,
+    dict[str, Any] | None,
+]:
     """Stage a mocked search response and apply the tool's own post-staging
     compaction, both by calling the compiled build.
 
@@ -431,11 +440,23 @@ def _stage_and_compact_search_results(
     in the compacted shape passes through unchanged. The third element is the staged
     backlog read before this call staged anything — handles, not a count, because
     the note names the refs (empty when unavailable).
+
+    The fourth element says whether production would drop the inline `results`
+    block because `ranked` replaces it (#1212). `ranked` is passed IN rather than
+    folded afterwards so the decision is made by the compiled
+    `dropInlineResultsWhenRanked` inside the process already running — a second
+    node process per search is the cost #2025 warns about, and a Python
+    restatement of the condition is what eval/CLAUDE.md forbids. The condition is
+    subtle enough to be worth not restating: `ranked` present with populated
+    `matches` is NOT sufficient, because the scoreable-subject/no-match branch
+    populates `matches` while telling the caller not to triage on them. The
+    caller applies the drop so this function keeps owning staging alone and the
+    response's key order stays where it was.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not stager_js.exists():
-        return None, response, []
+        return None, response, [], False, ranked
 
     def _url(p: Path) -> str:
         posix = str(p).replace("\\", "/").replace("'", "\\'")
@@ -449,10 +470,37 @@ def _stage_and_compact_search_results(
         compact_import = ""
         compact_call = ""
 
+    if ranked is not None and compactor_js.exists():
+        compact_import += (
+            "import { dropInlineResultsWhenRanked, projectRowFieldsOntoRanked }"
+            f" from '{_url(compactor_js)}';"
+        )
+        # The rank fixtures are hand-written and lean: they were authored when
+        # `ranked` shipped ALONGSIDE `results` and could afford to omit the
+        # triage fields. Production builds each stub FROM the row, so it never
+        # has that gap. Projecting the row fields on before the drop is what
+        # keeps the mock serving production's shape rather than strictly less
+        # than it — without this, every test that drops `results` grades the
+        # skill's triage on data production would really have sent.
+        drop_probe = (
+            " let dropResults = false;"
+            " let rankedOut = input.ranked;"
+            " if (r && input.ranked) {"
+            "   rankedOut = projectRowFieldsOntoRanked("
+            "     input.ranked, input.response.results ?? []);"
+            "   const probe = { ...input.response, ranked: rankedOut };"
+            "   dropInlineResultsWhenRanked(probe);"
+            "   dropResults = probe.results === undefined;"
+            " }"
+        )
+    else:
+        drop_probe = " const dropResults = false; const rankedOut = input.ranked;"
+
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
         "tool": tool_name,
         "response": response,
+        "ranked": ranked,
     }
     script = (
         f"import {{ stageSearchResults, unloggedStagedSearches }} from '{_url(stager_js)}';"
@@ -464,21 +512,30 @@ def _stage_and_compact_search_results(
         " const unlogged = await unloggedStagedSearches(input.projectPath);"
         " const r = await stageSearchResults(input);"
         f"{compact_call}"
-        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response }));"
+        # Production's own rule, run on a throwaway copy carrying the `ranked`
+        # this call will fold in. Only the verdict crosses back.
+        f"{drop_probe}"
+        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response, dropResults, ranked: rankedOut }));"
     )
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
         out = proc.stdout.strip()
         if not out:
-            return None, response, []
+            return None, response, [], False, ranked
         parsed = json.loads(out)
         unlogged = parsed.get("unlogged") or []
         staged = parsed.get("staged")  # StagedHandle, or null -> None
         if staged is None:
-            return None, response, unlogged
-        return staged, parsed.get("response", response), unlogged
+            return None, response, unlogged, False, ranked
+        return (
+            staged,
+            parsed.get("response", response),
+            unlogged,
+            bool(parsed.get("dropResults")),
+            parsed.get("ranked", ranked),
+        )
     except Exception:
-        return None, response, []
+        return None, response, [], False, ranked, ranked
 
 
 def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
@@ -624,6 +681,18 @@ def create_mock_server(
             # calling the compiled build, so the agent is graded on the shape
             # production actually sends. Only when projectPath was passed and
             # results came back; nil searches retain nothing and compact nothing.
+            # Resolved BEFORE staging so the single node process below can ask
+            # production's own `dropInlineResultsWhenRanked` whether `results`
+            # survives this ranking. Only the match depends on `args`, so moving
+            # it earlier changes nothing about which fixture is chosen.
+            _rank_resp: dict[str, Any] | None = None
+            if _name == "record_search" and args.get("subjectId") and "error" not in response:
+                for predicate, _candidate_rank, _src in _rank_predicated:
+                    if matches(predicate, args):
+                        _rank_resp = _candidate_rank
+                        break
+
+            _drop_results = False
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -632,8 +701,14 @@ def create_mock_server(
                 and isinstance(response.get("results"), list)
                 and response.get("results")
             ):
-                staged, response, _unlogged_staged = _stage_and_compact_search_results(
-                    _workspace, _name, response
+                (
+                    staged,
+                    response,
+                    _unlogged_staged,
+                    _drop_results,
+                    _rank_resp,
+                ) = _stage_and_compact_search_results(
+                    _workspace, _name, response, ranked=_rank_resp
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
@@ -660,11 +735,16 @@ def create_mock_server(
                 and args.get("subjectId")
                 and "error" not in response
                 and response.get("staged")
+                and _rank_resp is not None
             ):
-                for predicate, rank_resp, _src in _rank_predicated:
-                    if matches(predicate, args):
-                        response = {**response, "ranked": rank_resp}
-                        break
+                response = {**response, "ranked": _rank_resp}
+                # `ranked` replaces the inline rows rather than duplicating them
+                # (#1212). The verdict came from the compiled
+                # `dropInlineResultsWhenRanked` above, not from a condition
+                # restated here — a mock that serves a field production strips
+                # grades triage against a shape production never sends.
+                if _drop_results:
+                    response.pop("results", None)
 
             # The complement of the block above: when the caller gave a
             # projectPath but named no subject, the real record_search says so
