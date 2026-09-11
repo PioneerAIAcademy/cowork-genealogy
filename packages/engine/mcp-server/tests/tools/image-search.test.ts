@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -40,7 +41,7 @@ afterEach(() => {
 it("split form: uses last _ segment as groupId, skips apid lookup", async () => {
   mockFetch.mockResolvedValueOnce(okChildren());
 
-  await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" });
+  await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL);
 
   expect(mockFetch).toHaveBeenCalledTimes(1);
   const url = mockFetch.mock.calls[0][0] as string;
@@ -53,7 +54,7 @@ it("bare form: calls apid endpoint, then children/names with the apid", async ()
     .mockResolvedValueOnce(okApid("TH-1942-27199-5790-22"))
     .mockResolvedValueOnce(okChildren());
 
-  await imageSearchTool({ imageGroupNumber: "007621224" });
+  await imageSearchTool({ imageGroupNumber: "007621224" }, LOCAL);
 
   expect(mockFetch).toHaveBeenCalledTimes(2);
   const apidUrl = mockFetch.mock.calls[0][0] as string;
@@ -72,7 +73,7 @@ it("reads apid body as plain text and trims whitespace", async () => {
     )
     .mockResolvedValueOnce(okChildren());
 
-  await imageSearchTool({ imageGroupNumber: "007621224" });
+  await imageSearchTool({ imageGroupNumber: "007621224" }, LOCAL);
 
   const childrenUrl = mockFetch.mock.calls[1][0] as string;
   expect(childrenUrl).toContain(
@@ -92,7 +93,7 @@ it("returns imageId values sorted ascending", async () => {
 
   const result = await imageSearchTool({
     imageGroupNumber: "007621224_005_M99P-2TQ",
-  });
+  }, LOCAL);
 
   expect(result.imageIds).toEqual([
     "004884748_02613",
@@ -104,7 +105,7 @@ it("returns imageId values sorted ascending", async () => {
 // Test 5 — throws when imageGroupNumber is missing
 it("throws when imageGroupNumber is missing", async () => {
   await expect(
-    imageSearchTool({ imageGroupNumber: "" })
+    imageSearchTool({ imageGroupNumber: "" }, LOCAL)
   ).rejects.toThrow("image_search requires an imageGroupNumber.");
   expect(mockFetch).not.toHaveBeenCalled();
 });
@@ -118,7 +119,7 @@ it("throws when apid lookup returns non-OK", async () => {
   });
 
   await expect(
-    imageSearchTool({ imageGroupNumber: "007621224" })
+    imageSearchTool({ imageGroupNumber: "007621224" }, LOCAL)
   ).rejects.toThrow(
     "Could not resolve image group number 007621224 to an image group."
   );
@@ -130,7 +131,7 @@ it("returns empty imageIds for an empty {} response", async () => {
 
   const result = await imageSearchTool({
     imageGroupNumber: "007621224_005_M99P-2TQ",
-  });
+  }, LOCAL);
 
   expect(result.imageIds).toEqual([]);
 });
@@ -144,7 +145,7 @@ it("throws auth error when not authenticated", async () => {
   );
 
   await expect(
-    imageSearchTool({ imageGroupNumber: "007621224" })
+    imageSearchTool({ imageGroupNumber: "007621224" }, LOCAL)
   ).rejects.toThrow(/not logged in/);
   expect(mockFetch).not.toHaveBeenCalled();
 });
@@ -158,7 +159,7 @@ it("throws on 401 with re-login guidance", async () => {
   });
 
   await expect(
-    imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" })
+    imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL)
   ).rejects.toThrow(
     "FamilySearch session not accepted; call the login tool to re-authenticate."
   );
@@ -169,7 +170,7 @@ it("throws on network error", async () => {
   mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
   await expect(
-    imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" })
+    imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL)
   ).rejects.toThrow(
     "Could not reach FamilySearch image search API: ECONNREFUSED."
   );
@@ -179,7 +180,7 @@ it("throws on network error", async () => {
 it("sends correct headers on children/names call", async () => {
   mockFetch.mockResolvedValueOnce(okChildren());
 
-  await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" });
+  await imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" }, LOCAL);
 
   const init = mockFetch.mock.calls[0][1] as RequestInit;
   const hdrs = init.headers as Record<string, string>;
@@ -221,7 +222,7 @@ it("drops non-string values instead of emitting them as image IDs", async () => 
 
   const result = await imageSearchTool({
     imageGroupNumber: "004514823_003_M9SW-1CG",
-  });
+  }, LOCAL);
 
   expect(result.imageIds).not.toContain(null);
   expect(result.imageIds.every((id) => typeof id === "string")).toBe(true);
@@ -235,7 +236,7 @@ it("re-requests once on a defective response and recovers the dropped image", as
 
   const result = await imageSearchTool({
     imageGroupNumber: "004514823_003_M9SW-1CG",
-  });
+  }, LOCAL);
 
   expect(mockFetch).toHaveBeenCalledTimes(2);
   expect(result.imageIds).toEqual([
@@ -249,7 +250,7 @@ it("re-requests once on a defective response and recovers the dropped image", as
 it("does not re-request when the first response is clean", async () => {
   mockFetch.mockResolvedValueOnce(okChildren(REPAIRED_CHILDREN));
 
-  await imageSearchTool({ imageGroupNumber: "004514823_003_M9SW-1CG" });
+  await imageSearchTool({ imageGroupNumber: "004514823_003_M9SW-1CG" }, LOCAL);
 
   expect(mockFetch).toHaveBeenCalledTimes(1);
 });
@@ -262,7 +263,7 @@ it("returns the surviving IDs when the retry is also defective", async () => {
 
   const result = await imageSearchTool({
     imageGroupNumber: "004514823_003_M9SW-1CG",
-  });
+  }, LOCAL);
 
   expect(result.imageIds).toEqual([
     "004514823_00671",
@@ -283,7 +284,7 @@ it("keeps the surviving IDs when the retry rejects", async () => {
 
   const result = await imageSearchTool({
     imageGroupNumber: "004514823_003_M9SW-1CG",
-  });
+  }, LOCAL);
 
   expect(result.imageIds).toEqual([
     "004514823_00671",
@@ -306,7 +307,7 @@ it("keeps the surviving IDs when the retry returns a server error", async () => 
 
   const result = await imageSearchTool({
     imageGroupNumber: "004514823_003_M9SW-1CG",
-  });
+  }, LOCAL);
 
   expect(result.imageIds).toEqual([
     "004514823_00671",
@@ -336,7 +337,7 @@ it("does not let a clean but shorter retry displace more usable IDs", async () =
 
   const result = await imageSearchTool({
     imageGroupNumber: "004514823_003_M9SW-1CG",
-  });
+  }, LOCAL);
 
   expect(result.imageIds).toEqual([
     "004514823_00671",

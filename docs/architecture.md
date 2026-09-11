@@ -660,7 +660,7 @@ Architecturally:
   differences that bite"), so any budget above it is honoured only on the
   stdio paths (harnesses and hosted, both verified) and silently truncated in
   Cowork. Size a raise from the measured e2e corpus, not by guessing.
-- **Reuse before you write:** `getValidToken()` for auth (never re-implement
+- **Reuse before you write:** `getValidToken(principal)` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
   FS sits behind Imperva and **403s non-browser UAs**.

@@ -18,7 +18,7 @@ collections_search({ standardPlace })  →  lists collections (with their ids)
 collection_read({ id })                →  full detail for one collection   ← this tool
 ```
 
-Requires authentication (OAuth) — the same `getValidToken()` path every
+Requires authentication (OAuth) — the same `getValidToken(principal)` path every
 authenticated tool uses.
 
 ## Endpoint
@@ -85,7 +85,7 @@ export const collectionReadToolSchema = {
 
 ## Authentication
 
-Required. `getValidToken()` (see `packages/engine/mcp-server/src/auth/`) loads/refreshes the
+Required. `getValidToken(principal)` (see `packages/engine/mcp-server/src/auth/`) loads/refreshes the
 OAuth token and throws the login-instruction error when no valid session
 exists.
 
@@ -105,7 +105,7 @@ only `documents[*]` where `textType === "html"`.
 | 404 from upstream | Throw: `"No FamilySearch collection found with id \"{id}\". Use collections_search({ standardPlace: ... }) to list available collections."` |
 | Other non-OK status | Throw: `"FamilySearch collection detail API error: {status} {statusText}"` |
 | Malformed JSON | Throw: `"FamilySearch collection detail API returned malformed response."` |
-| Not authenticated | `getValidToken()` throws the login-instruction error before any fetch. |
+| Not authenticated | `getValidToken(principal)` throws the login-instruction error before any fetch. |
 
 ## Files
 

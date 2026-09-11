@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -110,13 +111,14 @@ function usableImageIds(data: ChildrenNamesResponse): {
 }
 
 export async function imageSearchTool(
-  input: ImageSearchInput
+  input: ImageSearchInput,
+  principal: Principal
 ): Promise<ImageSearchResult> {
   if (!input.imageGroupNumber) {
     throw new Error("image_search requires an imageGroupNumber.");
   }
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const groupId = await resolveGroupId(input.imageGroupNumber, token);
 
   let best = usableImageIds(await fetchChildren(groupId, token));
