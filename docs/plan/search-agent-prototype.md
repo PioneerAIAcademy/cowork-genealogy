@@ -1,7 +1,9 @@
 # Search Agent prototype — hosted architecture, one month
 
-**Status:** IN PROGRESS — P1 and the three D1–2 probes measured 2026-09-10 (PR #2406)
-and P3's feature-parity half measured, all folded in below; P2 measured at n=3; the build continues on the re-decide branch · plan of 2026-09-09 ·
+**Status:** IN PROGRESS — P1, the three D1–2 probes, P3 and P2 measured 2026-09-10 (PR
+#2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); FamilySearch's
+gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
+measured the same day; the build continues on the re-decide branch · plan of 2026-09-09 ·
 adversarially reviewed twenty-five rounds (`plan-critic`), then **cut**: the review
 loop's own output — a turn-lock protocol, a five-arm shim and a ceiling guard with its
 proof — grew to a third of the document and generated a blocking finding every round it
@@ -707,15 +709,33 @@ read from upstream source at the pinned tag; one curl against integ settles it, 
 miss is a three-line route addition. So the SDK runs unmodified with
 `ANTHROPIC_BASE_URL` at the gateway and `CLAUDE_CODE_USE_BEDROCK` unset. On that path
 the CLI believes it is talking to Anthropic, so none of the Bedrock stripping above
-applies — **but the CLI's own tool-search gate turns tool search off for any base URL
-other than `api.anthropic.com`** (read off 2.1.220 on 2026-09-10), and what
-Messages→Converse loses is the open question: the cache TTL (R2), tool-name rewriting,
-the thinking and beta headers, `count_tokens` (falls to passthrough).
-**P3b (one hour, cents):** run the CLI with `ANTHROPIC_BASE_URL` pointed at a local
-passthrough proxy to `api.anthropic.com` and record whether `ToolSearch` is in the
-init tools and the MCP names deferred, the first-call token delta if the 49 schemas
-are eager-loaded, and what goes out on the wire — `cache_control` ttl values and the
-extended-cache-ttl beta (the gateway drops the ttl; the proxy shows what it receives).
+applies — and the CLI's own tool-search gate for a foreign base URL, read off 2.1.220 on
+2026-09-10 as "off unless the host is `api.anthropic.com`", turned out on measurement to
+fire **only when `ENABLE_TOOL_SEARCH` is unset**, which neither the prototype set nor
+the hosted set leaves unset. What Messages→Converse loses is the open question: the
+cache TTL (R2), tool-name rewriting, the thinking and beta headers, `count_tokens`
+(falls to passthrough).
+**P3b — measured 2026-09-11 (`make probe-gateway-path`, five arms through a local
+passthrough proxy to `api.anthropic.com`, $0.86; code in PR #2406).** With
+`ENABLE_TOOL_SEARCH=true` behind a non-Anthropic base URL, tool search is on: 26 init
+tools as on first-party, `ToolSearch` present, no MCP name eager, first-call tokens
+within 14 of the control. With it unset the gate fires as the code says: 73 tools in
+the init list, 48 MCP names eager, the first call 71,524 tokens against 28,722 (+149%),
+the arm 2.2× the control's cost. `_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL=1` is the
+CLI's own escape and also works. On the wire the prototype set sends no `cache_control`
+ttl (the API's 5-minute default) and no extended-cache-ttl beta; with
+`ENABLE_PROMPT_CACHING_1H=1` every block carries `ttl: "1h"`, the beta is sent, and
+usage reports the writes as 1 h — on an API key that flag is the only way to 1 h, since
+the OAuth allow-list default never applies. **What a Messages gateway must pass
+through for parity, read off eleven proxied calls:** the `advanced-tool-use-2025-11-20`
+beta and the `tool_reference` content blocks tool search re-injects; `cache_control.ttl`
+with the extended-cache-ttl beta if we set the flag (moot through this gateway, which
+drops the ttl); the seven betas every call carries (advisor-tool, claude-code,
+context-management, effort, interleaved-thinking, prompt-caching-scope,
+thinking-token-count); a second model ID — every session opens with one
+`claude-haiku-4-5-20251001` call for the session title — and a `HEAD /api/hello` with
+no auth header. The proxy shows what the CLI sends, not what agentgateway keeps: that
+half is one curl against integ.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
@@ -735,7 +755,9 @@ the answer is "behind a flag", so run both arms, and the D9–10 worker env carr
 flag. Only a second turn after a wait longer than five minutes proves the TTL is
 *honoured* rather than echoed: expect `cache_read_input_tokens > 0` under the flag and
 near zero without it. 96% of cache-creation tokens in the corpus are 1 h writes, and the
-4.6× cost multiplier rests on it.
+4.6× cost multiplier rests on it — but see the corpus cache-window measurement under
+R2: on the autonomous corpus a 5-minute TTL loses 0.4–0.5% of cache reads and is a net
+saving, because the 1 h write rate the corpus paid is 1.6× the 5-minute rate.
 
 The last two are real measurements. The CLI does not strip features on Bedrock; it
 moves interleaved thinking, the 1M-context beta and **tool search** (on in production
@@ -902,6 +924,15 @@ without whichever Bedrock refuses.
   files that do not exist, and `validate_research_schema` runs on every writer path —
   so a missed port here fails every write, not one tool. Give `validateProject` a
   store-backed reader, and name it in the lint's exemption list either way.
+  **Done 2026-09-11 (PR #2495).** `src/store/`: a twelve-method `ProjectStore` keyed on
+  `(projectPath, ref)` with `withTransaction`, and `FsProjectStore` carrying the bodies
+  verbatim; the utils delegate; `atomicWriteJson`, `atomicWriteBoth` and `fileExists`
+  take a project-relative ref (18 call sites in 7 tools, each a compile error until
+  ported); the validator reads through the store rather than sitting on the exemption
+  list, so the lint exempts four files, not eleven — the store, the two auth files and
+  the bundled-data reader — and fails when an exemption stops being needed. A 16-case
+  conformance suite waits for the next backend. All 129 vitest files green at the time
+  (3,307 tests).
 - **D5** the auth seam: `getValidToken(subject)` type change. The edit surface is
   larger than the `src/` count suggests — 33 further invocations in 27 files across
   `dev/` and `tests/` (the `vi.mock` stubs in `tests/` stay type-valid under a parameter
@@ -918,6 +949,15 @@ without whichever Bedrock refuses.
   merged, so D4–5 start from current `main` with no ruling needed; PR #2397 (tool
   count 49→50) and PR #2371 (mid-turn `user_msg` queueing in the runner) are still
   open and collide only with D6–8 and D13–15.
+  **Done 2026-09-11 (PR #2495).** Named `principal`, not `subject` — "subject" is the
+  research subject everywhere in the code. `getValidToken(principal)`, the config
+  getters and `saveConfig` take it; 27 tool entry points take it last; `src/index.ts`
+  binds `LOCAL` once per request; a bearer principal is used as given, never refreshed,
+  never persisted, and turns the four desktop session tools into answers. The re-cost
+  warning came true in `tests/`, not `dev/`: 636 call sites in 83 files took the
+  argument by codemod and typecheck caught the six the codemod missed. A stdio smoke
+  (`make engine-smoke-stdio`) now drives the built server through the dispatch chain
+  no vitest imports, including `project_create` and `tree_forget`.
 
 ### Week 2 — the durable core
 
@@ -1348,7 +1388,10 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
 2. Does the prompt cache survive that resume, and what happens when the queue gap
    exceeds the TTL? (Their blocker worth 4.6×, answered with a number.) On the
    gateway path the TTL is five minutes whatever the client asks for (R2), so the
-   number to carry is the corpus-derived cost of a five-minute window.
+   number to carry is the corpus-derived cost of a five-minute window: **measured
+   2026-09-11 over 148 runs — 0.4–0.5% of cache reads become writes, $20–23 on $1,298
+   of runs, and because the corpus paid the 1 h write rate the 5-minute window is a net
+   saving of about $115; human think time between turns is not in the corpus.**
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell? **Measured 2026-09-10 on the
@@ -1359,8 +1402,9 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
    flag, interleaved thinking and the 1M context accepted; server-side context
    management is off there by the CLI's own gate.** Production is not Bedrock direct
    but the Messages-compatible gateway (answered 2026-09-11), where the 1 h TTL is
-   dropped and tool search is gated off by the CLI for a foreign base URL — P3b
-   measures that path.
+   dropped; P3b measured that path 2026-09-11: tool search stays on because the CLI's
+   gate fires only with `ENABLE_TOOL_SEARCH` unset, which our option set never leaves
+   unset, and the parity list a Messages gateway must pass is written down under P3.
 6. How much turn-level idempotency a commit-time batch ledger buys: **none the model
    does not already provide** (measured 2026-09-10, n=1) — on resume it re-decides, so
    nothing folds byte-identically, and after a committed write it read the document
@@ -1385,12 +1429,14 @@ compatible (agentgateway v1.4.1, `POST /bedrock/v1/messages`, Messages→Convers
 ways including streaming and errors), so the SDK runs unmodified with
 `ANTHROPIC_BASE_URL` at the gateway. Read from upstream source at the pinned tag rather
 than the deployed binary; one curl against integ confirms it, and a miss is a
-three-line `ai.routes` addition. What replaces the risk is smaller and ours to
-measure: the CLI's tool-search gate is off for a non-`api.anthropic.com` base URL
-(P3b), and Messages→Converse may lose tool-name rewriting, the thinking/beta headers
-and `count_tokens`. Native `bedrock-runtime` is not a client surface, so the
-prototype's Bedrock-direct results (P3) describe the model, not the production path.
-*Owner: us, P3b plus one curl when integ access exists.*
+three-line `ai.routes` addition. What replaces the risk is smaller: the CLI's
+tool-search gate for a foreign base URL, measured 2026-09-11 (P3b), fires only with
+`ENABLE_TOOL_SEARCH` unset and our option set pins it on, so tool search survives the
+gateway from the client's side; what Messages→Converse keeps of the
+`advanced-tool-use` beta, the `tool_reference` blocks, the seven other betas, the haiku
+title call and `count_tokens` is the curl against integ. Native `bedrock-runtime` is
+not a client surface, so the prototype's Bedrock-direct results (P3) describe the
+model, not the production path. *Owner: us, one curl when integ access exists.*
 
 **R2 — Prompt-cache health, which is also the throughput ceiling. SHARPENED 2026-09-11,
 not closed.** Caching works through the gateway; the 1-hour TTL does not survive it.
@@ -1400,13 +1446,22 @@ Bedrock honours 1 h on Converse at all is unconfirmed (P3 measured it honoured o
 InvokeModel path the CLI uses, behind the flag). Cache points are inserted and
 `cacheRead`/`cacheWriteInputTokens` come back, but Converse usage has no 5m/1h split,
 so the 96% figure cannot be reproduced on that path — say so before it becomes
-unverifiable. Two measurements are ours: the cost of a five-minute window, derivable
-from the committed corpus (treat any cache read more than 300 s after the previous
-model call as a write; the inter-call gap is median 2.6 s, p99 148 s, so the loss is
-between turns and in the tail — and human think time between turns is not in the
-autonomous corpus at all); and the shared cap of four cache points, inserted system →
-messages → tools, where with 49 tools the tool-definition point is the one dropped —
-measure, do not assume. A TTL can be carried upstream (FS has pushed to agentgateway
+unverifiable. Two measurements are ours. The cost of a five-minute window, **measured
+2026-09-11 over the committed corpus (`make e2e-cache-window SINCE=all`, PR #2406):
+148 runs; a call whose same-thread gap to the previous call exceeds 300 s has its read
+re-priced as a 5-minute write; main-thread gaps over 300 s are median 0 per run, p90 2,
+max 4, in 63 of 148 runs, none over 1,800 s; 0.4–0.5% of cache reads become writes,
+$20–23 against $1,298 of runs (1.5–1.7%), per run median $0 / p90 $0.41–0.55 / max
+$1.01. And because the corpus paid the 1 h write rate (6.00 against 3.75 per Mtok),
+re-pricing its writes saves $133, so on this corpus the 5-minute window is a net saving
+of about $115.** The number the 4.6× rests on is therefore not the TTL. What the corpus
+cannot size is a patron's think time between turns — a turn arriving more than five
+minutes after the last model call re-writes the whole context at the write rate, about
+$0.11 per 30k tokens, growing with context length. The second measurement is still
+open: the shared cap of four cache points, inserted system → messages → tools, where
+with 49 tools the tool-definition point is the one dropped — the CLI sends three (two
+on the system prompt, one on the last user message; P3b), so measure the fourth, do
+not assume. A TTL can be carried upstream (FS has pushed to agentgateway
 before) once Bedrock is shown to honour it in a sandbox account; the help-research team
 has the same question open and places Converse `cachePoint` blocks directly.
 Throughput: by design we own it — the gateway assumes `tap-gateway-invoke` in our
