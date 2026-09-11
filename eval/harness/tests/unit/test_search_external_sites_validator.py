@@ -349,3 +349,44 @@ def test_v8_quiet_when_entries_are_only_appended():
         before_log=[prior], after_log=[prior, _links_entry("log_002"), _site_entry("log_003")]
     )
     check_v8(before, after, POSITIVE)
+
+
+def test_v6_is_tier_2_and_cannot_gate_a_run():
+    """V6's demotion is a property of the NAME, and nothing else asserted it.
+
+    `validator_runner` decides the tier from the `report_` prefix alone
+    (`is_report = attr_name.startswith("report_")`), and the V6 cases above call
+    the function directly, so they pin its logic but never its tier. Re-promoting
+    it to `test_` would make it gate every run on a rule `SKILL.md` does not
+    state - the #2345 review finding that demoted it - and the only thing
+    standing in the way is that this module imports it by name.
+
+    So assert the property the review asked for rather than the spelling: run it
+    through the harness and require `reporting_only`.
+    """
+    from harness.validator_runner import run_validators
+
+    before, after = _states(
+        after_log=[_links_entry(plan_item_id=None), _site_entry(plan_item_id=None)],
+        before_items=[_item(status="planned")],
+        after_items=[_item(status="completed")],
+    )
+    results = run_validators(
+        skill="search-external-sites",
+        validators_dir=Path(__file__).resolve().parents[2] / "validators",
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        skill_frontmatter={"name": "search-external-sites"},
+        test=POSITIVE,
+    )
+    v6 = next(
+        (r for r in results
+         if r.name == "report_no_plan_item_status_written_when_no_entry_names_one"),
+        None,
+    )
+    assert v6 is not None, "V6 did not run; the harness did not collect it"
+    assert v6.reporting_only is True, (
+        "V6 is gating the run. It reports on a rule SKILL.md does not state "
+        "(#2345 review) — it must stay `report_`-prefixed."
+    )
