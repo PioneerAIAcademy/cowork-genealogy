@@ -26,6 +26,13 @@
   margin-bottom: var(--spacing-xs);
 }
 
+.partialBadge {
+  color: var(--text-warning, #b45309);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .fieldValue {
   font-size: 13px;
   color: var(--text-primary);

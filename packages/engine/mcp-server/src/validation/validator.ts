@@ -555,7 +555,8 @@ export const RESEARCH_SHAPES = {
   source: new Set([
     "id", "gedcomx_source_description_id", "citation", "citation_detail",
     "source_classification", "repository", "access_date", "url",
-    "url_archived", "notes", "transcription", "image_filename", "log_entry_id",
+    "url_archived", "notes", "transcription", "transcription_truncated",
+    "image_filename", "log_entry_id",
   ]),
   citation_detail: new Set([
     "who", "what", "when_created", "when_accessed", "where", "where_within",
