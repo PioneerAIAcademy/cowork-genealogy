@@ -3,7 +3,7 @@ dev-login (local, no allowlist) → create sample session → list → resume �
 delete. Also asserts the sample seed lands real project files on the sandbox FS.
 """
 from fastapi.testclient import TestClient
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.config import get_settings
 from app.db import get_engine
@@ -138,7 +138,7 @@ def test_logout_revokes_all_sessions():
 
     with Session(get_engine()) as s:
         u = s.exec(
-            __import__("sqlmodel").select(User).where(
+            select(User).where(
                 User.email == "revoke-logout@example.com"
             )
         ).first()
@@ -161,7 +161,7 @@ def test_login_after_revocation_works():
 
     with Session(get_engine()) as s:
         u = s.exec(
-            __import__("sqlmodel").select(User).where(
+            select(User).where(
                 User.email == "relogin@example.com"
             )
         ).first()
@@ -180,7 +180,7 @@ def test_pre_feature_cookie_rejected_after_revocation():
 
         with Session(get_engine()) as s:
             user = s.exec(
-                __import__("sqlmodel").select(User).where(
+                select(User).where(
                     User.email == "legacy-cookie@example.com"
                 )
             ).first()
@@ -218,7 +218,12 @@ def test_api_key_request_does_not_undo_revocation(monkeypatch):
         client.post("/auth/logout")
 
         with TestClient(app) as api_client:
-            api_client.get("/api/sessions", headers={"Authorization": "Bearer sk_dual"})
+            r = api_client.delete(
+                "/v1/sessions/prj_nonexistent",
+                headers={"Authorization": "Bearer sk_dual"},
+            )
+            assert r.status_code == 404, \
+                f"bearer dependency did not run: {r.status_code} {r.text}"
 
         with TestClient(app, cookies={"wb_session": stolen}) as thief:
             r = thief.get("/auth/me")
@@ -227,7 +232,7 @@ def test_api_key_request_does_not_undo_revocation(monkeypatch):
 
     with Session(get_engine()) as s:
         u = s.exec(
-            __import__("sqlmodel").select(User).where(User.email == email)
+            select(User).where(User.email == email)
         ).first()
         if u:
             s.delete(u)
