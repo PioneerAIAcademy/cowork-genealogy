@@ -1259,17 +1259,19 @@ smaller one with a make target.
 **The prototype is a second entrypoint, never a replacement.** `src/index.ts` keeps
 stdio and every tool — 49 with `sidecar_read`, 50 if PR #2397 lands first — including
 `login`/`logout`/`auth_status`/`configure_openrouter`,
-which are the only way a desktop `.mcpb` user authenticates. Neither shipped artifact
-is built by any CI job — `mcpb` appears in the workflows exactly once, in a comment
-saying not to fire it — so a break surfaces at release time rather than in a green PR.
-**Append `make mcpb && make plugin` as a step to the required `vitest` job in
-`.github/workflows/engine-tests.yml` before the store refactor starts.** That job already
-carries Node 22, the pinned npm and the engine `npm ci`, and appending keeps the step
-required without a ruleset edit. Break it two ways before merging — a malformed
-`manifest.json`, which `mcpb validate` reds, and a `<` in one SKILL.md description, which
-the plugin packager reds — and confirm it is green on a clean tree. Under an hour. No register
-entry: the fix lands in the same PR, and the `nothing-checks` register is for gaps
-that stay open.
+which are the only way a desktop `.mcpb` user authenticates. Until PR #2405 no shipped
+artifact was built by any CI job — `mcpb` appeared in the workflows exactly once, in a
+comment saying not to fire it — so a break surfaced at release time rather than in a
+green PR. **Done (PR #2405): `make mcpb && ./scripts/verify-mcpb.sh && make plugin` is a
+step of the required `vitest` job in `.github/workflows/engine-tests.yml`.** That job
+already carries Node 22, the pinned npm and the engine `npm ci`, so appending kept the
+step required without a ruleset edit; it takes 11 s. The verify line is the half that
+counts — it boots the packed server and diffs `tools/list` against the manifest, while
+the plugin's frontmatter gate was already red under the runlogs check. Broken three ways
+before merging (a malformed `manifest.json`, a manifest tool the packed server does not
+serve, a `<` in one SKILL.md description) and green on a clean tree. No register entry:
+the fix landed in the same PR, and the `nothing-checks` register is for gaps that stay
+open. The E2B sandbox image is still built by no CI job.
 **New dependencies go in with npm, not pnpm** — the engine is negated out of the
 workspace and both artifacts install from its npm lockfile.
 
@@ -1604,8 +1606,8 @@ The 60 s tool-server ELB against four tool budgets (OCR 180 s, image fetch 90 s,
 wiki and collections 60 s each); CAS/TARS entitlement; the programmatic API's grant
 problem; PRIA; the InfoSec MCP review; the Church AI Working Group; production
 telemetry; database migrations; DR and `us-east-1` only; deletion crossing a backup
-boundary; the `.mcpb` and Cowork artifacts, which no CI job builds until the
-engine-tests step above lands; the eval harness
+boundary; the E2B sandbox image, which no CI job builds (the `.mcpb` and the plugin
+`.zip` are built and the `.mcpb` verified on every PR since PR #2405); the eval harness
 continuing to emulate production; the OCR provider and the record-custodian terms;
 idle-session billing.
 
