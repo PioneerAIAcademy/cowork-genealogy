@@ -133,7 +133,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14469],
+  ["record_search", 14661],
   ["person_search", 5003],
 ];
 

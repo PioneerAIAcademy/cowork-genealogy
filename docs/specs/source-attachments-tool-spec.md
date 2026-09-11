@@ -219,9 +219,45 @@ Only `entityId` (as `personId`) and `tags` are kept. All other fields
 |-----------|----------|
 | Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
 | Empty `uris` array | Throw: `"uris array must not be empty."` |
+| More than 100 URIs | Chunked into 100-URI POSTs and merged; never surfaced to the caller. See the cap below. |
 | 401 Unauthorized | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | 403 Forbidden (WAF) | Throw: `"FamilySearch attachments blocked by WAF. The User-Agent header was rejected."` |
 | Other non-OK status | Throw: `"FamilySearch attachments API error: {status} {statusText}."` |
+
+---
+
+## Request cap: 100 URIs per POST
+
+FamilySearch rejects a batch over **100** outright. Measured live 2026-09-11
+with `dev/probe-attachment-batch-size.ts` over a 200-ARK pool in one session:
+100 URIs returns `200`, 101 returns `400`. The service names the limit itself:
+
+```
+[400.002] LimitException: Limit Exceeded 100
+  at AttachmentsServiceImpl.validateASR(AttachmentsServiceImpl.java:113)
+```
+
+Three properties of that failure make it worth stating here rather than
+leaving to a caller:
+
+- **The 400 body is an HTML error page, not JSON**, so a caller parsing the
+  response gets nothing useful.
+- **The count that matters is the DEDUPLICATED resolver-URL count**, which is
+  what the tool sends — not the caller's input length.
+- **`rank_search_matches` swallows attachment failures by design**
+  (`applyAttachments`, so a degraded attachment lookup cannot fail a ranking).
+  An over-cap batch there would therefore leave `attachedToSubject` /
+  `attachedToOther` unset on *every* candidate — the response reads "nothing is
+  attached to anyone," which is a plausible wrong answer rather than an error.
+
+So the tool chunks at the cap and merges the maps. `record_search` caps `count`
+at 100 and `rank_search_matches` returns every scored candidate, so the
+worst case sits exactly on the limit — correct only by a coincidence of two
+unrelated constants. Chunking makes it correct by construction, and fixes >100
+for every other caller.
+
+**Re-measure before raising anything that feeds this.** The cap is not in
+FamilySearch's published docs; it was found by probing, and it can move.
 
 ---
 

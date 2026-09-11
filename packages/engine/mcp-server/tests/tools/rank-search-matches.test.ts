@@ -826,4 +826,137 @@ describe("rank_search_matches", () => {
 
     expect(out.matches[0].relativeTerms).toBeUndefined();
   });
+
+  // ─── #1212: return every scored candidate, not a fixed top-10 ─────────────
+
+  /** `n` scorable candidates, descending score, so rank order is predictable. */
+  async function stageN(n: number): Promise<string> {
+    return stage(
+      Array.from({ length: n }, (_, i) =>
+        candidate({
+          recordId: `ark:/61903/1:1:POOL-${String(i).padStart(3, "0")}`,
+          primaryId: `pool${i}`,
+          personName: `Cand ${i}`,
+        }),
+      ),
+    );
+  }
+
+  function scoreByIndex() {
+    // Descending with index, all well above DEGENERATE_FLOOR so the pool is
+    // genuinely rankable and `subjectResolvable` stays true.
+    scorePairMock.mockImplementation(async (_g1, id1: string) => {
+      const i = Number(String(id1).replace("pool", ""));
+      return scoreResult(0.99 - i * 0.001, 6);
+    });
+  }
+
+  it("returns every scored candidate when `top` is omitted, past the old cap of 10", async () => {
+    await writeTree();
+    const ref = await stageN(12);
+    scoreByIndex();
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    // 12, not 10: the pool must exceed the retired default or this cannot fail.
+    expect(out.scoredCount).toBe(12);
+    expect(out.returnedCount).toBe(12);
+    expect(out.matches).toHaveLength(12);
+    // Ranks stay dense and 1-based across the whole pool, not just the first 10.
+    expect(out.matches.map((m) => m.matchRank)).toEqual(
+      Array.from({ length: 12 }, (_, i) => i + 1),
+    );
+  });
+
+  it("`top` still narrows when the caller asks (regression guard, green on revert)", async () => {
+    await writeTree();
+    const ref = await stageN(12);
+    scoreByIndex();
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+      top: 3,
+    });
+
+    expect(out.scoredCount).toBe(12);
+    expect(out.returnedCount).toBe(3);
+  });
+
+  it("carries the four triage fields that let `ranked` replace the inline rows", async () => {
+    await writeTree();
+    const ref = await stage([
+      {
+        ...candidate({ recordId: "ark:/61903/1:1:RICH-001", primaryId: "p1" }),
+        events: [{ type: "Birth", date: "1850", place: "Ohio" }],
+        collectionId: "2000123",
+        recordTitle: "Ohio Births and Christenings",
+        treeMatches: [{ id: "KWZZ-XYZ", name: "A B" }],
+      },
+    ]);
+    scorePairMock.mockImplementation(async () => scoreResult(0.9, 7));
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    const m = out.matches[0];
+    expect(m.events).toEqual([{ type: "Birth", date: "1850", place: "Ohio" }]);
+    expect(m.collectionId).toBe("2000123");
+    expect(m.recordTitle).toBe("Ohio Births and Christenings");
+    expect(m.treeMatches).toEqual([{ id: "KWZZ-XYZ", name: "A B" }]);
+    // FamilySearch's own relevance is deliberately NOT carried — matchScore
+    // supersedes it, and shipping both invites triage on the weaker number.
+    expect(m).not.toHaveProperty("score");
+    expect(m).not.toHaveProperty("confidence");
+  });
+
+  it("omits the triage fields rather than shipping empty ones", async () => {
+    await writeTree();
+    // candidate() defaults events/treeMatches to [] — the compaction elsewhere
+    // strips empties, and an empty array here would be bytes saying "none".
+    const ref = await stageN(1);
+    scoreByIndex();
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    expect(out.matches[0]).not.toHaveProperty("events");
+    expect(out.matches[0]).not.toHaveProperty("treeMatches");
+  });
+
+  it("the relative-term note counts the whole returned pool, not the old top-10", async () => {
+    await writeTree();
+    const ref = await stage(
+      Array.from({ length: 12 }, (_, i) => ({
+        ...candidate({
+          recordId: `ark:/61903/1:1:REL-${String(i).padStart(3, "0")}`,
+          primaryId: `pool${i}`,
+        }),
+        relativeTerms: { father: { status: "absent" } },
+      })),
+    );
+    scoreByIndex();
+
+    const out = await rankSearchMatches({
+      projectPath: dir,
+      stagedResultsRef: ref,
+      subjectId: SUBJECT_ID,
+    });
+
+    // Denominator follows the returned count; "of the 10" would be a lie now.
+    expect(out.relativeTermNote).toMatch(/\b12\b/);
+    expect(out.relativeTermNote).not.toMatch(/\b10\b/);
+  });
+
 });

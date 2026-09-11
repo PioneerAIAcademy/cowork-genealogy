@@ -12,23 +12,19 @@ import type {
 const URL =
   "https://www.familysearch.org/service/tree/links/sources/attachments";
 
-export async function sourceAttachmentsTool(
-  input: SourceAttachmentsInput,
-): Promise<SourceAttachmentsResult> {
-  if (!Array.isArray(input.uris) || input.uris.length === 0) {
-    throw new Error("uris array must not be empty.");
-  }
+/**
+ * FamilySearch caps this endpoint at 100 URIs per POST. Measured live
+ * 2026-09-11 (dev/probe-attachment-batch-size.ts): 100 returns 200, 101
+ * returns `400.002 LimitException: Limit Exceeded 100`. The cap is not in
+ * the API docs, and the 400 is an HTML error page rather than JSON.
+ */
+export const ATTACHMENTS_URI_CAP = 100;
 
-  const token = await getValidToken();
-
-  // Callers pass ARKs (canonical `ark:/61903/...`, the form record_search and
-  // fulltext_search now emit) or full resolver URLs. The attachments API keys
-  // on resolver URLs, so expand each input; keep the original→URL mapping so
-  // the response can be re-keyed to the caller's input string.
-  const urlByInput = new Map<string, string>();
-  for (const uri of input.uris) urlByInput.set(uri, arkToUrl(uri));
-  const apiUris = [...new Set(urlByInput.values())];
-
+/** One POST. Callers must keep `apiUris` at or under the cap. */
+async function fetchAttachmentMap(
+  apiUris: string[],
+  token: string,
+): Promise<SourceAttachmentsApiResponse["attachedSourcesMap"]> {
   let response: Response;
   try {
     response = await fetchWithTimeout(URL, {
@@ -83,6 +79,37 @@ export async function sourceAttachmentsTool(
 
   const data = (await response.json()) as SourceAttachmentsApiResponse;
   const map = data.attachedSourcesMap ?? {};
+  return map;
+}
+
+export async function sourceAttachmentsTool(
+  input: SourceAttachmentsInput,
+): Promise<SourceAttachmentsResult> {
+  if (!Array.isArray(input.uris) || input.uris.length === 0) {
+    throw new Error("uris array must not be empty.");
+  }
+
+  const token = await getValidToken();
+
+  // Callers pass ARKs (canonical `ark:/61903/...`, the form record_search and
+  // fulltext_search now emit) or full resolver URLs. The attachments API keys
+  // on resolver URLs, so expand each input; keep the original→URL mapping so
+  // the response can be re-keyed to the caller's input string.
+  const urlByInput = new Map<string, string>();
+  for (const uri of input.uris) urlByInput.set(uri, arkToUrl(uri));
+  const apiUris = [...new Set(urlByInput.values())];
+
+  // Chunked because FamilySearch rejects a batch over ATTACHMENTS_URI_CAP
+  // outright (400, HTML body). record_search caps `count` at 100 and
+  // rank_search_matches now sends every scored candidate (#1212), so the
+  // worst case sits exactly on the cap — correct only by a coincidence of
+  // two unrelated constants. Chunking here makes it correct by
+  // construction, and fixes >100 for every other caller too.
+  const map: SourceAttachmentsApiResponse["attachedSourcesMap"] = {};
+  for (let i = 0; i < apiUris.length; i += ATTACHMENTS_URI_CAP) {
+    const chunk = apiUris.slice(i, i + ATTACHMENTS_URI_CAP);
+    Object.assign(map, await fetchAttachmentMap(chunk, token));
+  }
 
   const attachments: Record<string, AttachedPerson[]> = {};
   const unattached: string[] = [];

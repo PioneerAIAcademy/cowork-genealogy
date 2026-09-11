@@ -68,7 +68,7 @@ export function compactStagedRecordSearch(
   out: RecordSearchToolResponse,
 ): RecordSearchToolResponse {
   const collections: Record<string, string> = {};
-  for (const r of out.results) {
+  for (const r of out.results ?? []) {
     delete r.gedcomx;
 
     // Derivable from collectionId; nothing reads it off the inline stub.
@@ -132,6 +132,41 @@ export function compactStagedFulltextSearch(
 ): FulltextSearchResponse {
   for (const r of out.results) {
     delete r.textDocument;
+  }
+  return out;
+}
+
+/**
+ * Drop the inline `results` block when `ranked` already carries the same rows
+ * in a usable form (#1212).
+ *
+ * Separate from `compactStagedRecordSearch` because that runs BEFORE ranking
+ * (record-search.ts stages and compacts, then ranks), so it has no `ranked` to
+ * gate on. Exported rather than inlined at the call site because the eval mock
+ * mirrors this path: a transformation that lives only in record-search.ts gets
+ * re-implemented in mock_mcp.py and drifts (eval/CLAUDE.md, "post-staging
+ * path"; #1826, #2009).
+ *
+ * The condition is POSITIVE and two-part, and both parts are load-bearing:
+ *
+ *   - `matches` non-empty — `ranked` is absent when ranking never ran (no
+ *     staged ref / no subject / no projectPath) and when it threw
+ *     (`rankingError`), and `matches` is EMPTY when a thin subject made the
+ *     ranking meaningless and it was withheld.
+ *   - `subjectResolvable !== false` — the scoreable-subject/genuine-no-match
+ *     branch leaves `matches` POPULATED while telling the caller not to triage
+ *     on it. Dropping `results` there would hand back rows scoring at or below
+ *     the degenerate floor as though they were a ranking, which is the exact
+ *     silent degradation the withheld branch exists to refuse.
+ *
+ * Mutates and returns `out`.
+ */
+export function dropInlineResultsWhenRanked(
+  out: RecordSearchToolResponse,
+): RecordSearchToolResponse {
+  const ranked = out.ranked;
+  if (ranked && ranked.matches.length > 0 && ranked.subjectResolvable !== false) {
+    delete out.results;
   }
   return out;
 }
