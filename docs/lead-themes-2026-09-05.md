@@ -11,6 +11,13 @@ ruling and now the bridge, the four issues that were waiting on the mechanism
 were ruled 2026-09-07, the last two unruled cards were ruled 2026-09-10, and the
 `needs-decision` queue is empty. No gate has been built: every open card named in
 Theme 3 sits in Backlog with no assignee.
+**Second 2026-09-10 pass:** Theme 2 turned the same corner. Five of its seven
+headline cards carry rulings, issue #2212 is closed, and ten of the twelve are
+unassigned. Ten of them collapse into two mechanisms — issue #2427 and a rewritten
+issue #2234, each investigated against the code and each carrying a correction to
+the card that motivated it. A third, issue #2426, was filed and closed the same
+day on its own measurement; what survives it is recorded under Theme 2 so it is
+not re-derived.
 **Source:** all open Backlog issues, read in full, measurements over the 161
 committed e2e run logs on `main`, 11 raw session transcripts, and one live
 probe on Claude Code 2.1.263.
@@ -278,39 +285,44 @@ delivered whole at invocation.
 
 ## Theme 2 — Nothing can tell whether a change worked
 
-**Urgency: highest. It does not gate Theme 1, and that matters.**
+**Urgency: highest. It does not gate Theme 1, and that matters. As of 2026-09-10
+what is left is a build, not a decision** — the same turn Theme 3 took, three days
+later.
 
-The grading apparatus is unreliable in ways that are documented and, unusually
-for this board, **genuinely unruled** — six of the seven below carry no lead
-comment at all:
+The grading apparatus is unreliable in ways that are documented. The 09-05 draft
+called six of the seven below "genuinely unruled," and that is now false:
 
-- **issue #2191** — the judge does not obey rules written in its own prompt and
-  rubric, and nothing measures a prompt edit. *No ruling.*
-- **issue #2057** — one failing validator skips the *entire* judge, leaving
-  every judged dimension ungraded on an unrelated failure. *No ruling.*
-- **issue #1687** — a fixture README states the verdict and the judge reads it
-  in full: an answer key handed to the grader. *No ruling.*
-- **issue #2234** — the annotation UI appends comments, silently fails to save,
-  and can write to the wrong test. Annotations *are* the calibration corpus and
-  the UI is the only sanctioned writer, so there is no workaround. *No ruling.*
-- **issue #2190** — negative-test framing ignores `grade_on_invariant`. *No ruling.*
-- **issue #2212** — no place-search Georgia fixture. *No ruling.*
-- **issue #1790** — an invented `OWNERSHIP_TABLE` in a merge test's
-  `judge_context`. *Ruled 2026-08-23; sequencing blocker cleared 2026-09-07.*
+| Issue | What it is | Status |
+|---|---|---|
+| #2191 | the judge does not obey rules written in its own prompt and rubric, and nothing measures a prompt edit | **Ruled 2026-09-09** — instrument only, `prompt.md` untouched; rule 2b blocks and only a fresh `make eval-skill` run clears it; `make judge-regrade` is the card's other deliverable |
+| #2057 | one failing validator skips the *entire* judge, leaving every judged dimension ungraded on an unrelated failure | **Ruled 2026-09-07** — judge every non-aborted run; defective runs graded for diagnosis, excluded from the modal. **Ready** |
+| #2190 | negative-test framing ignores `grade_on_invariant`, and on four tests tells the judge the skill should route to itself | **Ruled 2026-09-07** — surface the judge's 1, do not soften the framing |
+| #1913 | a research-plan rubric dimension scored 3 in 67 of 67 and every axis is already deterministic | **Ruled 2026-09-09** — delete the dimension |
+| #2110 | two collections-search fixtures contradict each other on collection 1999196 | **Ruled 2026-09-09** — both serve `personCount: 0`; the validator is unchanged |
+| #1687 | a fixture README states the verdict and the judge reads it in full | Unruled |
+| #2234 | the annotation UI appends comments, silently fails to save, and can write to the wrong test | Unruled |
+| #1790 | tree-edit's only merge test grades against a rule its `judge_context` asserts, and no merge ever completes in it | **Ruled 2026-08-23 and twice on 2026-09-10** — authorize the write by tool identity (PR #2442), and let a skill clear a stale `primary` flag (PR #2446). What is left needs a paid `tree-edit` run |
 
-Also issues #1913, #2196, #2110, #1442, #1605.
+Also issues #1605, #1442, #2196 (**Ready**), and #2212 — which is **closed**, merged
+into #2110 on 2026-09-07. Its symptom did not reproduce on the 09-07 run
+(`ut_research_plan_wzk` passed, no `fixture_not_found`); the gap on disk is real
+but it no longer owns a red.
 
-**Correction to the 09-05 draft: this does not gate Theme 1.** The draft's
-header said it did; its own action list correctly put instrumentation first.
-Resolve in favour of the action list. Context attribution, request counts and
-cost decomposition are **token accounting** — no number in Theme 1 passed
-through a judge. The judge gates only the second, later question: *did removing
-the overhead hurt research quality?* Theme 1 can run at full speed now, in
-parallel.
+**Ten of the twelve are unassigned.** Issues #2057 and #2196 are Praise-Enato's
+and sit in Review behind PR #2444, which is not a draft and carries
+CHANGES_REQUESTED; issue #1790 is half built behind PR #2442. The rest are in
+Backlog, and none is in Ready.
 
-**Why it is still first among equals.** Theme 3 records three cases of a fix
-that did not bind. With the judge in this state the team cannot distinguish "the
-fix did not work" from "the grader did not see it."
+**Correction to the 09-05 draft: this does not gate Theme 1.** The draft's header
+said it did; its own action list correctly put instrumentation first. Resolve in
+favour of the action list. Context attribution, request counts and cost
+decomposition are **token accounting** — no number in Theme 1 passed through a
+judge. The judge gates only the second, later question: *did removing the
+overhead hurt research quality?* Theme 1 can run at full speed now, in parallel.
+
+**Why it is still first among equals.** Theme 3 records three cases of a fix that
+did not bind. With the judge in this state the team cannot distinguish "the fix
+did not work" from "the grader did not see it."
 
 **Bench depth:** `eval/harness/judge/` took **12 commits from 6 authors in 90
 days, 7 of them the lead's** — five of the other authors have one commit each.
@@ -319,6 +331,193 @@ The path has its own CODEOWNERS line precisely because nothing else covered it.
 ```sh
 git log --since="90 days ago" --format='%an' -- eval/harness/judge | sort | uniq -c | sort -rn
 ```
+
+### Three general fixes, filed 2026-09-10
+
+Investigated against the code rather than inferred from the cards. Ten of the
+twelve issues above collapse into three mechanisms.
+
+**Issue #2427 — the judge prompt is assembled from unlabelled human prose, and
+93 of 96 scenario READMEs state the verdict.** The anchor card. Eleven slots feed
+the judge prompt; three carry static text the skill cannot see, and none of the
+three is labelled with where it came from. All 96 scenario READMEs were read:
+three are clean. **Far more than eight are *titled* with the answer** — the
+malformed-fixture family alone is ten (`-bad-enum`, `-bad-id-prefix`,
+`-bad-sidecar`, `-broken-fk`, `-broken-fk-refs`, `-cross-file`, `-dangling-ref`,
+`-missing-field`, `-stale-plan`, `-typo`), and `census-household-absent-spouse`
+names in its directory the very absence its own README insists the scenario
+"**never states**". The worst read as neutral state —
+`ma-birth-record-unsearched` names the record the test exists to see whether the
+skill finds; six `mid-research-flynn-*` malformed-fixture READMEs give the
+expected validator error verbatim (a seventh, `-with-evaluation`, states a
+*pass*: "valid, 0 errors"). `mid-research-flynn` reaches 134 tests across 21
+skills. Subsumes the general half of #1687, #2190 and #2191's tool-call-slot
+finding.
+
+The recommendation is structural, not lexical: a separate `judge-brief.md` that
+the slot reads, so an absent brief renders empty instead of leaking a README
+written for a human. A `## Setup` heading cannot work — 50 of 96 READMEs have no
+`##` heading at all, and a missing heading yields an empty slot with nothing red.
+
+**Split 2026-09-10.** #2427 keeps the mechanism — the slot, provenance framing on
+every slot, splitting the negative framing's machine lines from the test
+author's, and the acceptance regrade. **Issue #2437** takes the 96 briefs, in the
+genealogist lane, because that half is prose judgement about what each scenario
+may tell a grader and it would otherwise bury four Python functions under a
+96-file review. The guard — every scenario referenced by a test has a brief —
+lands with #2437, since it cannot go green until the sweep finishes.
+
+The split forces one design call that neither card had to make while they were
+one: the mechanism ships before any brief exists, so a literal "absent brief
+renders empty" empties the slot for all 96 scenarios at once. Fall back to the
+README while a brief is missing, **count the fallbacks visibly**, and make
+removing the fallback the sweep's last step. An invisible fallback becomes
+permanent — the same failure as `rule2b_judge_prompt`, warn-only and dark long
+enough to ship a regression green.
+
+**Issue #2426 — split the run-log snapshot into skill-side and judge-side —
+was filed and closed the same day, not planned (lead ruling 2026-09-10).** It is
+recorded here because the investigation behind it produced three facts that
+outlive it and that the next person to reach for this idea will otherwise
+re-derive.
+
+Its premise was sound: `build_snapshot` embeds `rubric.md`, the scenario README
+and each test's `judge_context`, none of which the skill can see —
+`workspace.py` stages only `research.json`, `tree.gedcomx.json` and `results/`.
+Its own measurement killed it. **1 of 1009 PR-level commits since 2026-06-01
+changed a judge-side file with no skill-side file**, and 122 changed both. The
+queue it would have served is three ruled prose deletions, which do not carry a
+17-file change. The honest counter — the gate is what makes judge-side edits
+expensive, so 1-in-1009 may be measuring suppression rather than demand — is an
+argument, and reopening needs a measurement.
+
+What survives it:
+
+- **`make judge-regrade` was never this card's**, it is issue #2191's ruled
+  deliverable. Everything that actually needed a regrade still has one: issue
+  #2427's acceptance check, issue #2057's 110 ungraded runs, and #2191's own
+  need to price a candidate prompt.
+- **The merge gate was one row of three.** `rubric.md` and a test's
+  `judge_context` block on rules 2 and 3; the scenario README matches
+  `FIXTURE_PATH_RE` and lands in `fixture_touched_skills`, which
+  `check_runlogs.py` keeps "in a set separate from `touched_skills` so it never
+  feeds the blocking rules" — **warn-only** since issue #1094. The assembly code
+  in `orchestrator.py` / `judge.py` fires no runlog-discipline rule (it is still
+  covered by blocking pytest — `.github/workflows/eval-harness-tests.yml` matches
+  `^eval/harness/`, and 10 `render_prompt` tests pin it). So the 96-file sweep
+  was never gated, and any cost quoted for it is discipline, not CI.
+- **`rubric_hash` is named as a run-log field in four places in
+  `unit-test-spec.md` and exists in no schema, no module and no run log.** Live
+  spec drift; delete it from the spec, since nothing will build it now.
+
+And one requirement that transferred to #2427 rather than dying: a regrade
+substitutes for a re-run only if it **re-renders the prompt from disk** rather
+than replaying a stored one. **Prove that on the rendered prompt hash, never on
+the scores.** `JUDGE_TEMPERATURE = 0.0` is greedy decoding, not a determinism
+guarantee, so "an unchanged tree reproduces the stored scores" passes just as
+happily when a stored prompt is being replayed. A no-model dry-run over the
+renderer separates them, and is cheap enough to live in `make harness-test`: an
+unchanged tree renders byte-identically twice; one character into a `rubric.md`
+moves every prompt hash for that skill; one scenario brief moves the hash for
+exactly the tests referencing it; and a `SKILL.md` edit moves **no** prompt hash
+— the break a per-directory predicate survives at step two and fails here.
+
+Found while checking it: **`rubric_hash` is named as a run-log field in four
+places in `unit-test-spec.md` and exists in no schema, no module and no run log.**
+Half of this card is live spec drift.
+
+**Issue #2234 — the eval app's write path** (rewritten, not re-filed). Three
+failure modes, three distinct causes, none of them the filesystem layer, which is
+correct. Mode 2: `DimensionRow`'s unmount cleanup clears the 500 ms commit timer
+without committing, so switching tests inside 500 ms discards the edit silently.
+Mode 3: `focusedDim` is cleared on the score picker's blur, and a focused element
+removed from the DOM fires no blur — so the `1`/`2`/`3` shortcut writes to the
+test you just left. Mode 1 is not a save bug at all: `buildPrComment` embeds the
+box's current text at its own trailing `Junior:` slot, so copy → paste → copy
+nests a block per cycle, and the header snapshots the score at copy time.
+
+### What the investigation corrected
+
+- **Issue #1790's premise is false, and the 2026-08-23 ruling rests on it.** The
+  `OWNERSHIP_TABLE` is not invented — it is `docs/specs/schemas/ownership.json`,
+  loaded by `eval/harness/harness/ownership.py` and frozen in
+  `test_ownership_manifest.py`. The three mappings the `judge_context` quotes are
+  correct. Outside that test (`eval/tests/unit/tree-edit/person-merge-stub-into-fs-person.json`)
+  the bare token appears only in `docs/specs/unit-test-spec-v2.md` and as an echo
+  of the same test in one committed run log — the earlier "three other places"
+  counted this document and that echo. mercyokum
+  said so on 2026-08-24 and the body still carries the original wording, so
+  whoever implements ruling item 2 deletes a true sentence for a false reason.
+  The real defect on that card is the **scoring imperative** — "Judges MUST score
+  Merge correctness as `pass`" — not a phantom rule.
+
+  Re-ruled 2026-09-10 once the manifest's two fields were separated: **`callers`
+  is enforced and `writerTools` fed no authorization decision** (it is read, by
+  `ownership-manifest.test.ts`'s "carries every required field, non-empty" and
+  "resolves every writer tool to a registered tool name" — both lints on the
+  declaration, neither on any write), so the 2026-08-23 ruling's
+  "add the tool to the four rows" was a documentation edit with no effect.
+  PR #2442 makes the field real — a section diff is authorized by the calling
+  skill *or* by a declared writer tool whose own id permutation explains the
+  whole delta. Rejected: adding `skill:tree-edit` to `callers`, which grants the
+  section by any path and reopens the failure the `person_evidence` row names.
+  The source-vs-manifest guard in PR #2442 — still open — **found a fifth section
+  on day one** — `proof_summaries` carries person refs, is enforced on the unit
+  plane, and listed only `research_append`.
+
+  The card's absorbed issue #1813 half was ruled the same day on the same test:
+  **if the state is only reachable the way the test reaches it the test is bad,
+  otherwise fix the tool.** It is reachable — 10 persons across 9 e2e final trees
+  carry a vital type with two facts and a stale `primary`, against 0 across the
+  97 scenario fixtures, and the path is `materialize_facts`, which never sets
+  `primary` and surfaces the conflict. Not merges: `mergeFacts` already clears
+  and re-marks. PR #2446 makes `primary: false` an instruction at the tool
+  boundary rather than a stored value, so the omit-when-false convention and the
+  schema are both untouched.
+- **The annotation corpus is clean.** 0 of 5153 corrections name a test absent
+  from their run log, 0 carry an `llm_score` disagreeing with the sibling run
+  log, 0 run logs hold a duplicate test id. So mode 3 has not silently corrupted
+  the ground truth under #2191's, #2196's and #2190's confirmation counts. Six
+  corrections across three files carry an incoherent embedded header, including
+  the 1743-character one that #2234 said had been cleaned before commit — **it is
+  on main.**
+- **A lexical guard over judge-visible prose fails in both directions, measured
+  twice.** Over the annotation corpus, all 6 comments naming a foreign test id
+  are legitimate cross-references. Over the READMEs, the modal verdict pattern
+  fires on 79 of 96, misses 16 of the 17 it does not match, and false-flags
+  `driscoll-source-audit` — the one deliberately clean file — because it names
+  the rule it complies with. The repo has already run this experiment:
+  `check_rubric_tool_drift.py` is a lexical lint over this exact prose — **81
+  warnings** on 2026-09-11 (`python3 eval/harness/scripts/check_rubric_tool_drift.py`;
+  the 68 figure counted only the `rubric.md` + `judge_context` subset, the other
+  13 are agent bodies), warn-only. The "about 20% genuine" share is inherited
+  from the script's own 2026-07-30 docstring and has never been re-measured.
+- **Issue #2057's ~90 is 109 of 2131 runs (5.1%)** on 2026-09-11, all of them
+  retroactively gradeable once a regrade target exists. That is the
+  validator-caused subset: 133 runs skip the judge in total, of which 16 were
+  aborted (nothing to grade) and **8 are judge API/parse failures, which the
+  09-07 ruling does not recover** — so "all retroactively gradeable" is true of
+  the 109, not of every skip. Consequence nobody has
+  costed: those tests are already named in `review_sample`, so filling in their
+  dimensions creates rule-3 annotation debt on the next PR touching
+  person-evidence and search-records.
+
+### What the sweep is actually worth
+
+The corrected reading, now that the snapshot split is dead: **the 96-file sweep
+was never gated by CI**, so no cost quoted for it is a merge gate. What it buys
+is honesty about the corpus. Once a scenario brief changes, every committed judge
+score for the tests referencing it was measured against different input, and a
+regrade under issue #2191 is what makes those scores describe the current inputs
+again — cheaply, and in the same run that produces the acceptance evidence.
+
+The acceptance check is the part worth protecting: regrade the
+`flynn-record-matching` and `christian-hole-quality` runs, README against brief,
+and accept only when no dimension moves on a run where the skill did the work
+**and** at least one moves down on a run the corpus already flags as thin.
+**If nothing moves either way, the leak was not load-bearing and the sweep should
+not be paid for.** That is a finding, not a failure, and it is the cheapest thing
+in this theme that could retire a card.
 
 ---
 
@@ -636,9 +835,18 @@ the lead can accept the blast radius.
    `search-records` and `person-evidence` first, runs over committed data, and
    precedes spending on issue #1136 — a cheaper model applied to 15,200 tokens
    of resident skill body saves less than removing the body.
-2. **Fix the judge** (Theme 2) — issues #2191 and #2057 specifically. It gates
-   every *quality* claim, though not the token accounting in Theme 1, which can
-   proceed in parallel.
+2. **Fix the judge** (Theme 2). It gates every *quality* claim, though not the
+   token accounting in Theme 1, which can proceed in parallel. As of 2026-09-10
+   the order is settled: **issue #2057** is already in review as PR #2444 — land
+   that first (harness code, no paid run, and it grades 109 runs that today
+   carry nothing), then
+   **#2191**'s regrade target, then **#2427** and the sweep it splits off,
+   **#2437**. Ninety-three of 96 scenario READMEs hand the grader the answer —
+   the largest single defect in the theme, and the one whose acceptance check is
+   cheap enough to retire itself if the leak turns out not to be load-bearing.
+   Issue #2234 runs beside all of it: it needs no paid run and no eval slot,
+   which makes it the one card here anyone can pick up today without waiting on
+   another.
 3. ~~**Rule once on preconditions-vs-prose**~~ — **done.** ADR-0011 carries the
    classes, the reference implementation and (2026-09-10) the bridge, so a gate
    author who reaches "not decidable from the documents" is now asked whether the
