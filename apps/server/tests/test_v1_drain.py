@@ -103,3 +103,32 @@ def test_an_unbalanced_turn_done_does_not_wedge_the_drain():
         (0.0, _frame("text", text="trailing")),
     ])
     asyncio.run(asyncio.wait_for(_drain_replay(ws), timeout=5))
+
+
+def test_an_orphan_turn_done_does_not_cancel_a_live_turn_start():
+    """The `in_flight > 0` clamp, which the unbalanced test above cannot reach.
+
+    `Hub._record` trims history from the FRONT, so the orphan that survives
+    trimming is a `turn_done` whose `turn_start` was evicted - not the reverse.
+    Replay one, then let a turn genuinely start. Without the clamp the orphan
+    drives the counter to -1 and the live `turn_start` only brings it back to 0,
+    so the quiet timer ends the drain INSIDE a running turn and `_collect_sync`
+    reads that turn's `turn_done` as its own reply - the mis-attribution this
+    module exists to prevent.
+
+    The test above cannot see it: its script reaches -2, which still satisfies
+    `in_flight <= 0`, so the drain returns with or without the clamp.
+    """
+    quiet = _DRAIN_IDLE * 3
+    ws = ScriptedWS([
+        (0.0, _frame("turn_done")),                  # orphan from a trimmed history
+        (0.0, _frame("turn_start", queued=True)),    # a turn that is genuinely running
+        (quiet, _frame("text", text="the live turn's first real frame")),
+        (0.0, _frame("turn_done")),
+    ])
+    asyncio.run(asyncio.wait_for(_drain_replay(ws), timeout=15))
+    assert not ws._script, (
+        "an orphaned turn_done cancelled a live turn_start, so the drain returned "
+        "inside a running turn - the caller would read that turn's turn_done as "
+        "its own reply"
+    )

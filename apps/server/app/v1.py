@@ -228,8 +228,9 @@ async def _drain_replay(ws) -> None:
     So the quiet timer only ends the drain while nothing is running: a
     `turn_start` marks a turn in flight and its `turn_done` clears it.
     `_DRAIN_MAX` bounds the whole thing, because a wedged agent must not hang the
-    drain forever - the caller's own turn timeout is the outer bound, and this
-    keeps the drain well inside it.
+    drain forever. It is NOT inside the caller's turn timeout: `_collect_sync`
+    drains BEFORE it computes `deadline`, so a drain that runs to the bound costs
+    up to `_DRAIN_MAX` on top of the turn's own full budget.
 
     A cancelled recv leaves any buffered frame for the next recv, so no live-turn
     frame is lost.

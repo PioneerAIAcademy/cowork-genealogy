@@ -779,6 +779,7 @@ class RealAgent:
             "rebuilding the client so the next turn does not read its tail",
         )
         await self._close_client()
+
     async def _stop_drain(self) -> None:
         """Hand the SDK stream back before anything else reads it.
 
