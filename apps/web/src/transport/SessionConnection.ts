@@ -62,6 +62,11 @@ const CREDENTIALS_TIMEOUT_MS = 30_000
 // merge + FamilySearch token refresh, so retrying a hang 20 times would multiply
 // that load by 20 against a control plane already failing to answer - trading a
 // wedge for a stampede. Two, then tell the user.
+// Worst case a user waits about 60 seconds before "Chat unavailable" appears:
+// two CREDENTIALS_TIMEOUT_MS bounds plus the retry delay between them. That is
+// the trade against an indefinite "Connecting to the agent..." placeholder,
+// which is the failure this card exists to remove, and it is written down here
+// rather than left to be derived from three constants.
 const MAX_CREDENTIAL_TIMEOUTS = 2
 
 /** The credentials fetch exceeded CREDENTIALS_TIMEOUT_MS. Distinct from a
@@ -89,9 +94,16 @@ export class WsSessionConnection implements SessionConnection {
   // Guards the await window inside connect(): without it a retry firing while
   // the credentials request is in flight would open a second socket.
   private connecting = false
-  // Counts only credential fetches that never answered. Reset on success, like
-  // `attempts`, so an intermittent control plane does not accumulate toward the
-  // ceiling across an otherwise healthy session.
+  // Counts only credential fetches that never answered. Reset on SUCCESS, so an
+  // intermittent control plane does not accumulate toward the ceiling across an
+  // otherwise healthy session.
+  //
+  // NOT symmetric with `attempts`, which this used to claim: `onVisibility`
+  // also resets `attempts` on focus, and this deliberately survives that.
+  // Resetting it on focus would let tabbing away and back re-arm the stampede
+  // the ceiling exists to prevent, which is a cheaper way to reach the failure
+  // than the one this card is about. Pinned by
+  // "focus does not reset the credential-timeout budget".
   private credentialTimeouts = 0
 
   private onVisibility = (): void => {

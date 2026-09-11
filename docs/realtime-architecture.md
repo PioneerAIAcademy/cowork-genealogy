@@ -193,10 +193,24 @@ the full 20-retry budget would multiply that against a control plane already
 failing to answer — trading a wedge for a stampede. Two attempts, then
 `chat_error`, which `ChatPane` renders as "Chat unavailable: …".
 
+**Worst case the user waits about 60 seconds** before "Chat unavailable"
+appears: two 30-second bounds plus the retry delay between them. That is the
+trade against an indefinite "Connecting to the agent…" placeholder, and it is
+stated here rather than left to be derived from three constants, because it is
+the first thing a reader asks of them.
+
 Bounded by `apps/web/src/transport/__tests__/SessionConnection.test.ts`, whose
 two wedge cases fail when the bound is removed while its rejection, retry-ceiling
 and happy-path cases pass either way — that asymmetry is what shows the retry
 semantics were not altered.
+
+Two further cases pin the budget's own arithmetic, because the guard is
+otherwise removable in silence: a success between two hangs must reset the
+budget (deleting that reset left every other test green), and a focus event must
+**not** reset it (adding a reset there also left every other test green).
+`credentialTimeouts` is deliberately not symmetric with `attempts`, which
+`onVisibility` does reset on focus — resetting the budget there would let
+tabbing away and back re-arm the stampede the ceiling exists to prevent.
 
 ---
 
