@@ -3562,6 +3562,25 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
   });
 
+  it("hard-errors when a fulltext_search returned results but staged no sidecar", async () => {
+    const research = baseResearch();
+    research.log = [{ ...searchLogEntry(null), tool: "fulltext_search" }] as any;
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...noId(validAssertion("x", "src_001")), log_entry_id: "log_001" },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+  });
+
   it("does NOT fire for a nil/negative producer search with no sidecar (legit — no false positive)", async () => {
     const research = baseResearch();
     research.log = [

@@ -434,6 +434,23 @@ divergence theme. A dangling `log_entry_id`, an unreadable sidecar, or a
 traversal-escaping `results_ref` skip this enforcement (the document validator
 already reports those). Ops without a `log_entry_id` are untouched here.
 
+**Staging-gap rejection.** Distinct from the matrix above: a
+`record_search` or `fulltext_search` log entry that *returned results* but staged
+no sidecar (`results_ref: null`) rejects the whole `assertions` append and points
+the caller to re-run the search **with** `projectPath`, then re-append. The gate
+covers those two producers only (`producerTools`). The loss it prevents differs by
+producer. For `record_search` the un-staged sidecar is the persona document D2
+auto-fills `record_persona_id` from, so proceeding would null out identity. For
+`fulltext_search` there is no persona to lose — the rejection preserves the
+**retained transcript and the `record_id` canonicalization** (the `id`-keyed
+canonical form above), not a persona; making persona auto-fill work for full-text
+was measured and rejected. `external_links_search` is likewise persona-less but is
+**not** covered by this rejection: a results-bearing `external_links_search` entry
+with no sidecar is not rejected here. Legitimate sidecar-less entries
+(`record_read`/PDF/image/pasted, and nil/negative searches) do not trip it. (The
+shipped rejection message still frames the loss as `record_persona_id` even for
+`fulltext_search`; correcting that wording is an engine-lane follow-up.)
+
 ### 3.6 `standard_place` levers — resolution, echo, country guard
 
 Two prevention levers for the silent-wrong-geocode theme, applied per `assertions`
@@ -1042,23 +1059,30 @@ writable by …`), and the batch stays all-or-nothing: nothing is written.
 
 ### 11.4 What this does *not* fix
 
-The router (main thread) is unrestrained in production — e2e grants
-`mcp__genealogy` wholesale and the hosted path runs `bypassPermissions` with no
-allowlist — so nothing stops the *router* from writing `person_evidence` itself,
-and there is precedent for a router doing directly what a subagent was denied
-(`eval/harness/harness/context_policy.py` was built after the router was observed
-calling `image_read` directly). The mitigation is prose in
-`record-extraction/SKILL.md` forbidding delegations that order identity writes;
-the instrument if it recurs is a `context_policy` PreToolUse rule keyed on
-`agent_id`, which is eval-only.
+The router (main thread) is unrestrained *by tool grants* in production — e2e
+grants `mcp__genealogy` wholesale and the hosted path runs `bypassPermissions`
+with no allowlist — and there is precedent for a router doing directly what a
+subagent was denied (`eval/harness/harness/context_policy.py` was built after the
+router was observed calling `image_read` directly). It did recur, for the four
+GPS guardrail skills rather than for `extraction_append`'s lane. What that cost,
+and why a `PreToolUse` rule keyed on `agent_id` cannot discriminate a
+main-session `Skill` invocation, is `docs/specs/guardrail-enforcement-spec.md`.
 
-It did recur, for the four GPS guardrail skills rather than for
-`extraction_append`'s lane. What that cost and what now enforces it —
-including why a `PreToolUse` rule keyed on `agent_id` cannot discriminate a
-main-session `Skill` invocation at all — is `docs/specs/guardrail-enforcement-spec.md`.
-A `PreToolUse` hook *does* now reach production (Cowork and hosted, via the
-plugin), so the "eval-only" half of the sentence above is no longer true of the
-instrument, only of the caller-attribution rule it would need.
+**The router writing `person_evidence` itself is no longer among the gaps.**
+Since 2026-09-01 the plugin's `PreToolUse` hook carries `person_evidence` in
+`OWNED_SECTIONS` (`packages/engine/plugin/hooks/guard_project_files.py`), and
+that hook reaches production — Cowork and hosted both. The rule denies unless
+the caller is the `person-evidence` agent, and the main thread has no `agent_id`
+key at all, so a router's own append resolves to the empty caller and is
+refused. Prose in `record-extraction/SKILL.md` is no longer the only mitigation.
+
+What is still open is one call earlier, and it is not a `research_append`
+problem: `owner_denied` inspects only `research_append`, so `materialize_facts`
+called with no `personId` mints a brand-new tree person and reaches this lane's
+work without passing the section check. `docs/specs/schemas/ownership.json`
+records the same limit on its `person_evidence` row, and ADR-0009's first
+`same_person` constraint makes the same point — an append-time gate is not the
+enforcement point for identity.
 
 One behavior *does* surface for `extraction_append`: the sources-without-
 assertions nudge (§5.1) fires whenever a call leaves ≥3 sources and zero

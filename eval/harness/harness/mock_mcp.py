@@ -69,6 +69,7 @@ Current live tools:
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -210,14 +211,47 @@ _PERMISSIVE_SCHEMA: dict[str, Any] = {
 }
 
 
+# Node-subprocess timeout budgets (seconds). The default is the fast/graceful
+# path used by the catalog probe, which degrades to permissive schemas on a
+# trip rather than misleading anyone. The LONG budget covers every path that
+# does real workspace file I/O — the live writer/validator tools and the
+# search-staging bridge — where a trip is indistinguishable from a rejected
+# write and gets graded down (#2025).
+#
+# Sizing: 2x the observed trip point (30s under 8-way concurrency; 0 trips in
+# the 839 later calls at 30s, so the margin over a legitimate slow call is
+# small — 41-op batches finished under 30s). NOT sized against a per-skill
+# floor: this raise is global, and the tightest unit test caps wall-clock at
+# 120s (tree-edit's match tests), with a 300s default when omitted. 60s keeps
+# >=60s of recovery headroom on even that tightest test, so a genuinely hung
+# call still fails-and-lets-the-model-recover inside the budget rather than
+# consuming all of it — which a 120s node cap on a 120s test would not.
+NODE_EVAL_TIMEOUT_DEFAULT = 30
+NODE_EVAL_TIMEOUT_LONG = 60
+
+#: Matches ``subprocess.TimeoutExpired.__str__`` ("Command '...' timed out after
+#: N seconds") and ONLY that. A tripped node subprocess in a live tool lands in
+#: that tool's ``{ok: false, errors: [...]}`` via the handler's
+#: ``except Exception``, so ``orchestrator._build_warnings`` scans a recorded
+#: live-tool response for this pattern to surface the flake as a warning (#2025).
+#: The ``seconds`` anchor is load-bearing: the engine's ``fetchWithTimeout``
+#: throws ``Request to <url> timed out after 30000ms.`` on a real upstream
+#: timeout, which a network-calling live tool would fold into the same
+#: ``{ok: false}`` shape — a bare ``"timed out after"`` marker would then excuse
+#: a genuine FamilySearch failure as a harness flake. Python says seconds, JS
+#: says ms; the anchor separates them.
+NODE_EVAL_TIMEOUT_PATTERN = re.compile(r"timed out after [\d.]+ seconds")
+
+
 def _run_node_eval(
-    script: str, input_str: str | None = None, timeout: int = 30
+    script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
 ) -> subprocess.CompletedProcess[str]:
     """Run a Node ESM ``--eval`` script and return the completed process.
 
     The single choke point for every ``node --input-type=module --eval``
-    invocation in this file (six call sites as of 2026-08-18, three separate
-    code-review passes flagged the hand-duplicated ``subprocess.run(...,
+    invocation in this file (seven call sites as of 2026-09-08 — six raised to
+    ``NODE_EVAL_TIMEOUT_LONG``, the catalog probe left on the default; three
+    separate code-review passes flagged the hand-duplicated ``subprocess.run(...,
     capture_output=True, text=True, encoding="utf-8", timeout=...)`` shape).
     ``encoding="utf-8"`` is load-bearing, not cosmetic: without it, ``text=True``
     decodes with the platform default -- cp1252 on Windows -- and crashes on
@@ -441,7 +475,7 @@ def _stage_and_compact_search_results(
         " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response }));"
     )
     try:
-        proc = _run_node_eval(script, json.dumps(input_obj))
+        proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
         out = proc.stdout.strip()
         if not out:
             return None, response, []
@@ -478,7 +512,9 @@ def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
     )
     try:
         proc = _run_node_eval(
-            script, json.dumps({"projectPath": str(workspace).replace("\\", "/")})
+            script,
+            json.dumps({"projectPath": str(workspace).replace("\\", "/")}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
         )
         out = proc.stdout.strip()
         return list(json.loads(out).get("unlogged") or []) if out else []
@@ -862,7 +898,7 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = _run_node_eval(script)
+                proc = _run_node_eval(script, timeout=NODE_EVAL_TIMEOUT_LONG)
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:
@@ -931,7 +967,7 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = _run_node_eval(script, json.dumps(input_obj))
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:
@@ -996,7 +1032,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = _run_node_eval(script, json.dumps(input_obj))
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:
@@ -1069,7 +1105,7 @@ def _make_compiled_tool_handler(
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = _run_node_eval(script, json.dumps(input_obj))
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:

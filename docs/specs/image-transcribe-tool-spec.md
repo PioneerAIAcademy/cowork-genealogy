@@ -318,6 +318,20 @@ is not addressed by a model swap, and Gemini has not been measured on the Västr
 Karaby pages where that was recorded. Nothing checks a transcription against its
 scan.
 
+**Ruled 2026-09-10 (lead): accepted and recorded, not gated.** No write-boundary
+check reaches this. The bridge — require a step to deposit its output, then gate
+the output (ADR-0011) — buys existence, not fidelity: a persisted transcript
+proves a page was read and says nothing about whether the words match it.
+Measured before accepting: across the 22 runs carrying agent attribution,
+`image-reader` returned without calling `image_transcribe` **0 times in 123
+instances**, so an existence gate would police a failure this corpus does not
+contain. That measurement, and what would reopen the postcondition it retired,
+are in `docs/specs/guardrail-enforcement-spec.md` under "Options set aside". Fidelity needs a second read — the retired Opus arm above, and the
+user-invoked re-read tool still parked in the open questions below. **What
+reopens it:** a confident-garbage instance observed in a graded run or a hosted
+feedback bundle — a transcription contradicted by its own scan, found per
+instance, not a count difference.
+
 ---
 
 > **Everything below (§5–§11) is the build contract, conditional on §4.4.**

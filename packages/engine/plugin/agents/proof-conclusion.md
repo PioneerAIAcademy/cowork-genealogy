@@ -51,6 +51,16 @@ tools:
 
 You are invoked with a `questionId` and a `projectPath`. Read what you need from the project yourself — do not expect the caller to have gathered it.
 
+**Confirm the question before you conclude.** The delegation's `questionId` is
+authoritative when it resolves to a question in `openQuestions`. If it does not
+resolve, if no id was given, or if the delegation also names a question in prose
+whose TEXT matches a different question, resolve on the question's **TEXT** via
+`project_context` — "the parentage question" is the question whose text asks
+about a parent. `questionStatuses` is advisory and must never rule a question in
+or out. If the text matches no question, matches more than one, or disagrees
+with the id, do not conclude and do not fall back to the only one left: return
+the decline under `## 9. Present`, naming every candidate `q_` id with its text.
+
 Return to the caller ONLY the terse summary described under `## 9. Present`. The narrative you write is persisted; do not repeat it in your return value.
 
 ## Preconditions — mandatory, mechanical gate (run before Step 1)
@@ -323,6 +333,7 @@ Present a terse summary ONLY:
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
 - **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years).
+- If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.
 

@@ -127,6 +127,112 @@ describe("Input validation", () => {
     await expect(personRecordMatches({ id: "not a pid" })).rejects.toThrow(/Unrecognized id/);
   });
 
+  // The id arrives in whatever spelling the caller happens to hold: a plain
+  // PID, a canonical ARK, a bare type-prefixed id off a sidecar, or a URL
+  // copied off a FamilySearch page. Only the first two used to be accepted.
+  it.each([
+    ["plain PID", "QPTX-TMQ2"],
+    ["canonical ARK", "ark:/61903/1:1:QPTX-TMQ2"],
+    ["bare type-prefixed id", "1:1:QPTX-TMQ2"],
+    ["resolver URL", "https://familysearch.org/ark:/61903/1:1:QPTX-TMQ2"],
+    ["resolver URL with www.", "https://www.familysearch.org/ark:/61903/1:1:QPTX-TMQ2"],
+    ["http resolver URL", "http://www.familysearch.org/ark:/61903/1:1:QPTX-TMQ2"],
+    ["surrounding whitespace", "  ark:/61903/1:1:QPTX-TMQ2  "],
+  ])("accepts a record persona id as a %s", async (_label, id) => {
+    mockJson(EMPTY_BODY);
+    await recordPersonMatches({ id });
+    // Every spelling must reach the SAME upstream id — the point of the
+    // normalization is that the caller's spelling stops being observable.
+    const url = new URL(mockFetch.mock.calls[0][0]);
+    expect(url.searchParams.get("id")).toBe("ark:/61903/1:1:QPTX-TMQ2");
+  });
+
+  it("still rejects the results sidecar's internal persona id", async () => {
+    // `p_293161675629` is the shape that produced every `Unrecognized id`
+    // failure in the corpus. Accepting it would be wrong, not lenient:
+    // FamilySearch validates the PID's check character and answers 400 for an
+    // id it did not assign, so this must fail here rather than one hop later.
+    await expect(
+      recordPersonMatches({ id: "p_293161675629" }),
+    ).rejects.toThrow(/Unrecognized id/);
+  });
+
+  it("throws when the response carries a not-found link", async () => {
+    // An id the service cannot resolve answers 200 with an empty `entries` —
+    // identical to a genuine zero except for this link. Reporting it as
+    // "no matches" would turn a bad id into a research finding.
+    mockJson({
+      entries: [],
+      results: 0,
+      title: "Matches for ark:/61903/1:1:ZZZZ-ZZZZ",
+      updated: "1970-01-01T00:00:00.001Z",
+      links: {
+        "not-found": { href: "https://familysearch.org/ark:/61903/1:1:ZZZZ-ZZZZ" },
+        "target-system": { href: "hr" },
+        self: { href: "/match-ws/match/matches" },
+      },
+    });
+    await expect(
+      recordPersonMatches({ id: "ZZZZ-ZZZZ" }),
+    ).rejects.toThrow(/no record persona at ark:\/61903\/1:1:ZZZZ-ZZZZ/);
+  });
+
+  it.each([
+    ["record_person_matches", recordPersonMatches, "record persona", true],
+    ["person_record_matches", personRecordMatches, "tree person", false],
+    ["person_person_matches", personPersonMatches, "tree person", false],
+    ["record_record_matches", recordRecordMatches, "record persona", true],
+  ] as const)(
+    "%s names the id the CALLER passed, not the side being searched",
+    async (_tool, fn, human, expectsPersonaAdvice) => {
+      // The noun follows `expectedPrefix`, not `collection`. Keying it on
+      // `collection` is right for the two cross-collection tools and inverted
+      // for the two same-collection ones, so a test covering only
+      // `record_person_matches` cannot see the difference. Telling
+      // `person_person_matches` its tree PID is not a "record persona" sends
+      // the agent to fetch a record ARK, which the same tool then refuses.
+      mockJson({
+        entries: [],
+        results: 0,
+        title: "t",
+        updated: "1970-01-01T00:00:00.001Z",
+        links: { "not-found": { href: "x" } },
+      });
+      const err = await fn({ id: "ZZZZ-ZZZZ" }).then(
+        () => null,
+        (e: Error) => e,
+      );
+      expect(err?.message).toContain(`has no ${human} at`);
+      // The `p_…` warning is about the results sidecar's record personas, so
+      // it must not be handed to a caller who passed a tree PID.
+      expect(/p_… persona id/.test(err?.message ?? "")).toBe(expectsPersonaAdvice);
+    },
+  );
+
+  it("does NOT throw on a genuine zero — same empty body, no not-found link", async () => {
+    // The other direction, and the one that decides whether this gate is
+    // usable: a persona that really has no matches must still return 0, not an
+    // error. The two bodies differ ONLY in `links`.
+    mockJson({
+      entries: [],
+      results: 0,
+      title: "Matches for ark:/61903/1:1:QPTX-TMQ2",
+      updated: "2025-03-11T17:10:44.970Z",
+      links: { self: { href: "/match-ws/match/matches" } },
+    });
+    const result = await recordPersonMatches({ id: "QPTX-TMQ2" });
+    expect(result.resultCount).toBe(0);
+    expect(result.matches).toEqual([]);
+  });
+
+  it("still rejects a sibling-collection ARK given in URL form", async () => {
+    // Widening the accepted spellings must not widen the accepted COLLECTION —
+    // a 4:1: tree ARK handed to a record tool keeps its sibling-tool hint.
+    await expect(
+      recordPersonMatches({ id: "https://www.familysearch.org/ark:/61903/4:1:KNDX-MKG" }),
+    ).rejects.toThrow(/person_person_matches/);
+  });
+
   it("rejects out-of-range minConfidence", async () => {
     await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 0 })).rejects.toThrow(/minConfidence/);
     await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 6 })).rejects.toThrow(/minConfidence/);
