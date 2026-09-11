@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildExternalSearchUrl } from "../../src/tools/build-external-search-url.js";
+import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 
 describe("build_external_search_url", () => {
   describe("one passing case per site", () => {
@@ -351,6 +352,42 @@ describe("build_external_search_url", () => {
     });
   });
 
+  describe("baseUrl treats empty/whitespace-only the same as absent (issue #1980 review)", () => {
+    it("falls back to the site-wide URL when baseUrl is an empty string", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/?name=Patrick_Flynn");
+    });
+
+    it("falls back to the site-wide URL when baseUrl is whitespace-only", () => {
+      const r = buildExternalSearchUrl({
+        site: "myheritage",
+        baseUrl: "   ",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url.startsWith("https://www.myheritage.com/research?")).toBe(true);
+      expect(r.url).not.toMatch(/^\s/);
+    });
+
+    it("digital_newspaper_archive still requires a real baseUrl — an empty string does not satisfy it", () => {
+      const r = buildExternalSearchUrl({
+        site: "digital_newspaper_archive",
+        baseUrl: "",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("base_url_required");
+    });
+  });
+
   describe("digital_newspaper_archive requires baseUrl", () => {
     it("rejects with base_url_required when baseUrl is omitted", () => {
       const r = buildExternalSearchUrl({
@@ -401,6 +438,53 @@ describe("build_external_search_url", () => {
           "newspapers",
         ].sort(),
       );
+    });
+
+    it("every advertised supported site builds without throwing (issue #1980 review)", () => {
+      // Reproduces the review finding's actual failure mode directly: before
+      // the fix, SUPPORTED_SITES was derived from the full `external_site`
+      // enum, which already carries room for 14 follow-up sites this tool
+      // has no `siteWideParams` case for (the review's own repro appended
+      // "fold3" to that enum and got a live `TypeError` on
+      // `Object.values(undefined)`). This loop is the general form: call the
+      // PUBLIC API for every site this tool currently advertises as
+      // supported, with only a name supplied (plus the required `baseUrl` for
+      // `digital_newspaper_archive`), and assert none of them throws. A
+      // future site added to `SUPPORTED_SITES` with no matching
+      // `siteWideParams` case reproduces the exact crash this guards against.
+      const supportedSites = (() => {
+        const r = buildExternalSearchUrl({ site: "not-a-real-site", attributes: {} });
+        if (r.ok) throw new Error("expected unsupported_site");
+        if (r.reason !== "unsupported_site") throw new Error(`expected unsupported_site, got ${r.reason}`);
+        return r.supportedSites;
+      })();
+      expect(supportedSites.length).toBeGreaterThan(0);
+      for (const site of supportedSites) {
+        expect(() =>
+          buildExternalSearchUrl({
+            site,
+            baseUrl: site === "digital_newspaper_archive" ? "https://example.org/search" : undefined,
+            attributes: { givenName: "Patrick", surname: "Flynn" },
+          }),
+        ).not.toThrow();
+      }
+    });
+
+    it("SUPPORTED_SITES is a subset of the shared external_site enum (one-directional drift check)", () => {
+      // Not derived from the enum (see the comment above SUPPORTED_SITES's
+      // declaration) — this test is what still catches a spelling drift or
+      // rename between this file and the shared enum, without the crash risk
+      // of deriving supported-sites FROM a schema that may list more sites
+      // than this tool has implementations for.
+      const r = buildExternalSearchUrl({ site: "not-a-real-site", attributes: {} });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("unsupported_site");
+      if (r.reason !== "unsupported_site") return;
+      const enumValues = new Set(VALIDATOR_ENUMS.external_site as readonly string[]);
+      for (const site of r.supportedSites) {
+        expect(enumValues.has(site), `${site} is not in the shared external_site enum`).toBe(true);
+      }
     });
   });
 
@@ -456,6 +540,23 @@ describe("build_external_search_url", () => {
         expect(r.ok, `birthYear=${bad}`).toBe(true);
         if (!r.ok) continue;
         expect(r.url, `birthYear=${bad}`).not.toMatch(/birth=/);
+      }
+    });
+
+    it("a two-ended date window with one invalid end omits dates entirely, rather than shipping NaN (issue #1980 review)", () => {
+      for (const bad of [NaN, Infinity, -Infinity, 1e21, 1845.7, -1]) {
+        const r = buildExternalSearchUrl({
+          site: "chronicling_america",
+          attributes: {
+            givenName: "Patrick",
+            surname: "Flynn",
+            searchStartYear: bad,
+            searchEndYear: 1910,
+          },
+        });
+        expect(r.ok, `searchStartYear=${bad}`).toBe(true);
+        if (!r.ok) continue;
+        expect(r.url, `searchStartYear=${bad}`).not.toMatch(/dates=/);
       }
     });
   });

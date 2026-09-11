@@ -19,6 +19,20 @@ assertions, and two of them (a_002, a_009) independently agree with the
 ("Pennsylvania"). A version of this validator that read "not the preferred
 id" as "rejected" flagged a_009's own agreeing "Ireland" as a violation. Using
 the real fixture is what caught that before it shipped.
+
+`_expect_fires` / `_expect_passes` below exist because a bare
+`with pytest.raises(AssertionError, ...)` has a silent failure mode: if the
+validator raises `pytest.skip.Exception` instead of `AssertionError` (e.g. a
+broken gate that now over-matches and skips a case that should have fired),
+`pytest.raises(AssertionError)` does not catch it — it propagates out of THIS
+test function uncaught, and pytest's own runner reports an uncaught `Skipped`
+as the *calling test being skipped*, not failed. A skip reads as green in any
+summary that counts passed+skipped as "nothing broke," so nine independent
+mutations of the validator's five skip gates were run against the previous
+version of this file and only two were caught — the other seven silently
+turned a "must fire" or "must pass" assertion into a skip (issue #1980
+review, round 2). Both helpers convert an unexpected `Skipped` into an
+explicit `pytest.fail(...)`, which cannot be mistaken for a pass.
 """
 
 import importlib.util
@@ -54,55 +68,79 @@ _RESEARCH = json.loads(
 )
 
 
-def _states(url: str, site: str = "myheritage"):
-    before_state = {"research_json": _RESEARCH}
-    after_research = dict(_RESEARCH)
-    after_research["log"] = list(_RESEARCH.get("log", [])) + [
+def _states():
+    return {"research_json": _RESEARCH}, {"research_json": _RESEARCH}
+
+
+def _tool_calls(birth_place=None, *, site="myheritage"):
+    """One `build_external_search_url` call, with `attributes.birthPlace`
+    set to `birth_place` — or omitted entirely when `birth_place is None`,
+    matching how a real call that never filled the field looks (no key, not
+    a null value)."""
+    attributes = {"givenName": "Patrick", "surname": "Flynn"}
+    if birth_place is not None:
+        attributes["birthPlace"] = birth_place
+    return [
         {
-            "id": "log_999",
-            "tool": "external_site",
-            "outcome": "partial",
-            "external_site": {"site": site, "url_generated": url, "capture_received": False},
+            "tool": "mcp__genealogy__build_external_search_url",
+            "args": {"site": site, "attributes": attributes},
         }
     ]
-    return before_state, {"research_json": after_research}
+
+
+def _expect_fires(tool_calls, test, match):
+    before, after = _states()
+    try:
+        _check(before, after, tool_calls, test)
+    except pytest.skip.Exception:
+        pytest.fail(
+            f"expected AssertionError (match={match!r}), but the validator "
+            "skipped instead — one of its skip gates over-matched"
+        )
+    except AssertionError as e:
+        assert match in str(e), f"AssertionError message doesn't contain {match!r}: {e}"
+        return
+    pytest.fail(f"expected AssertionError (match={match!r}), but the validator raised nothing")
+
+
+def _expect_passes(tool_calls, test):
+    before, after = _states()
+    try:
+        _check(before, after, tool_calls, test)
+    except pytest.skip.Exception:
+        pytest.fail(
+            "expected the validator to run and pass, but it skipped instead "
+            "— one of its skip gates over-matched"
+        )
+    # An unexpected AssertionError propagates naturally and fails this test —
+    # no special handling needed for that direction.
 
 
 def test_fires_on_the_real_captured_defect():
-    """The exact URL a live run produced (issue #1980 review) before this fix."""
-    before, after = _states(
-        "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn"
-        "&birth_year=1845&birth_place=Pennsylvania"
+    """The exact argument a live run produced (issue #1980 review) before this fix."""
+    _expect_fires(
+        _tool_calls("Pennsylvania"),
+        {"type": "positive"},
+        "attributes.birthPlace='Pennsylvania'",
     )
-    with pytest.raises(AssertionError, match=r"birth_place='Pennsylvania'"):
-        _check(before, after, {"type": "positive"})
 
 
 def test_passes_when_the_preferred_value_is_encoded():
-    before, after = _states(
-        "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn"
-        "&birth_year=1845&birth_place=Ireland"
-    )
-    _check(before, after, {"type": "positive"})  # must not raise
+    _expect_passes(_tool_calls("Ireland"), {"type": "positive"})
 
 
 def test_passes_when_the_field_is_omitted():
-    before, after = _states(
-        "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845"
-    )
-    _check(before, after, {"type": "positive"})  # must not raise
+    _expect_passes(_tool_calls(None), {"type": "positive"})
 
 
 def test_does_not_false_positive_on_a_legitimate_residence_place():
     """`residencePlace` ("Schuylkill County, Pennsylvania") legitimately
-    contains the rejected birthplace value as a substring — a whole-URL
-    substring search would wrongly flag this."""
-    before, after = _states(
-        "https://www.ancestry.com/search/?name=Patrick_Flynn&birth=1845&birthplace=Ireland"
-        "&residence=1870_Schuylkill+County%2C+Pennsylvania",
-        site="ancestry",
-    )
-    _check(before, after, {"type": "positive"})  # must not raise
+    contains the rejected birthplace value as a substring — reading the
+    structured `attributes.birthPlace` argument directly (not the rendered
+    URL string) cannot confuse the two fields regardless."""
+    calls = _tool_calls("Ireland", site="ancestry")
+    calls[0]["args"]["attributes"]["residencePlace"] = "Schuylkill County, Pennsylvania"
+    _expect_passes(calls, {"type": "positive"})
 
 
 def test_does_not_flag_a_competing_assertion_that_agrees_with_the_preferred_value():
@@ -116,47 +154,37 @@ def test_does_not_flag_a_competing_assertion_that_agrees_with_the_preferred_valu
     assert assertions_by_id["a_002"]["place"] == "Ireland"
     assert assertions_by_id["a_012"]["place"] == "Pennsylvania"
 
-    before, after = _states(
-        "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_place=Ireland"
+    _expect_passes(_tool_calls("Ireland"), {"type": "positive"})
+
+
+@pytest.mark.parametrize("site", ["ancestry", "findmypast", "findagrave", "newspapers"])
+def test_fires_on_any_site_regardless_of_its_own_url_parameter_name(site):
+    """Reading `attributes.birthPlace` directly needs no per-site knowledge of
+    which URL query parameter that site templates it into — unlike the URL-
+    string approach this replaced, which needed a per-site parameter-name
+    table and had no entry for every site at all (e.g. `newspapers`, which
+    has no birthplace slot in its own URL)."""
+    _expect_fires(
+        _tool_calls("Pennsylvania", site=site),
+        {"type": "positive"},
+        "attributes.birthPlace='Pennsylvania'",
     )
-    _check(before, after, {"type": "positive"})  # must not raise
-
-
-@pytest.mark.parametrize(
-    "site,param",
-    [("ancestry", "birthplace"), ("findmypast", "keywordsplace")],
-)
-def test_fires_on_other_sites_own_birthplace_parameter(site, param):
-    before, after = _states(f"https://example.com/search?{param}=Pennsylvania", site=site)
-    with pytest.raises(AssertionError, match=rf"{param}='Pennsylvania'"):
-        _check(before, after, {"type": "positive"})
 
 
 def test_skips_a_non_positive_test():
-    before, after = _states(
-        "https://www.myheritage.com/research?action=query&birth_place=Pennsylvania"
-    )
     with pytest.raises(pytest.skip.Exception):
-        _check(before, after, {"type": "negative"})
+        _check(*_states(), _tool_calls("Pennsylvania"), {"type": "negative"})
 
 
 def test_skips_when_the_scenario_has_no_resolved_birthplace_conflict():
     research = dict(_RESEARCH)
     research["conflicts"] = []
     before = {"research_json": research}
-    after_research = dict(research)
-    after_research["log"] = list(research.get("log", [])) + [
-        {
-            "id": "log_999",
-            "tool": "external_site",
-            "outcome": "partial",
-            "external_site": {
-                "site": "myheritage",
-                "url_generated": "https://www.myheritage.com/research?birth_place=Pennsylvania",
-                "capture_received": False,
-            },
-        }
-    ]
-    after = {"research_json": after_research}
+    after = {"research_json": research}
     with pytest.raises(pytest.skip.Exception):
-        _check(before, after, {"type": "positive"})
+        _check(before, after, _tool_calls("Pennsylvania"), {"type": "positive"})
+
+
+def test_skips_when_no_build_external_search_url_call_was_made():
+    with pytest.raises(pytest.skip.Exception):
+        _check(*_states(), [], {"type": "positive"})

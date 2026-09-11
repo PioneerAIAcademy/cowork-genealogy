@@ -465,6 +465,19 @@ above is taken on trust from the reviewer's own reported numbers, not
 independently reproduced here; if it is ever wrong, the fix is the same
 one-line change back, at the same single edit site.
 
+**A second, independent attempt to re-verify (review round 2, same day) hit
+the same Cloudflare wall.** So the claim now rests on exactly one live
+measurement, by one person, made once, and two separate later attempts by
+two different parties to check it independently were both blocked by the
+same bot protection this correction exists to work around. That is not
+weaker evidence than it was — the original measurement is unchanged — but it
+means "confirmed" would overstate it: nobody but the original reviewer has
+ever seen `q` bind and `qs` fail to, and if that one measurement is wrong,
+this tool, its spec, the skill, a test fixture, and committed run logs all
+now encode the same error. Treat any future re-measurement (by someone with
+a working browser session against loc.gov) as the first independent check
+this claim has ever had.
+
 Any future correction to a parameter name discovered the same way — by
 someone with a real browser and reproducible counts, not by re-reading
 SKILL.md more carefully — should be recorded here the same way: the

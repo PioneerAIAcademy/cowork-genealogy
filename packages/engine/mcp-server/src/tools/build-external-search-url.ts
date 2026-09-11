@@ -6,8 +6,6 @@
 // link fits, what conflicts[] says about a disputed field); the tool applies
 // only the string-templating. Spec: docs/specs/build-external-search-url-tool-spec.md.
 
-import { VALIDATOR_ENUMS } from "../validation/validator.js";
-
 export type ExternalSearchSite =
   | "ancestry"
   | "myheritage"
@@ -16,19 +14,6 @@ export type ExternalSearchSite =
   | "newspapers"
   | "chronicling_america"
   | "digital_newspaper_archive";
-
-// Derived from the shared closed enum at runtime, not hand-typed: a literal
-// `SUPPORTED_SITES = ["ancestry", ...]` array is exactly what
-// `tool-schema-enums.test.ts` flags as a near-miss copy of `external_site`
-// (it is one — every value but `familysearch_web`, which has no per-site
-// template here and is the persisted log's catch-all for a site with none).
-// A spread off the shared Set, same pattern `research-log-append.ts` already
-// uses for this enum, is what that test's own docstring calls "not a copy" —
-// and a future addition to the schema now shows up as a real site string this
-// file doesn't have a template for, rather than silent staleness in a literal.
-const SUPPORTED_SITES: ExternalSearchSite[] = [...VALIDATOR_ENUMS.external_site].filter(
-  (s): s is ExternalSearchSite => s !== "familysearch_web",
-);
 
 export interface BuildExternalSearchUrlAttributes {
   givenName?: string;
@@ -184,20 +169,29 @@ function siteWideParams(
         dr_year: str(a.searchYear),
         dr_place: str(a.searchPlace),
       };
-    case "chronicling_america":
+    case "chronicling_america": {
+      // Both ends must be valid, not merely present — `num()` rejects NaN,
+      // Infinity, out-of-range, and fractional years. Checking `!== undefined`
+      // alone let one bad end through as long as the other was supplied
+      // (e.g. `searchStartYear: NaN, searchEndYear: 1910` shipped
+      // `dates=NaN%2F1910`), because presence and validity are different
+      // questions and only presence was being asked.
+      const startYear = num(a.searchStartYear);
+      const endYear = num(a.searchEndYear);
       return {
         // Correction: `qs` is dead on the live site (a nonsense value returns
         // the same corpus total as no term at all); `q` is what actually
-        // filters. Verified live 2026-09-09 — see the spec's "What nothing
-        // checks" section.
+        // filters — from one reviewer's live measurement (2026-09-09), not
+        // independently reproduced since (loc.gov's bot protection blocks a
+        // non-browser client). See the spec's "What nothing checks" section
+        // for the full caveat and how to correct this if it's ever wrong.
         q: joinSpace(a.givenName, a.surname, a.keywords),
         // Correction: the shipped start_date/end_date pair is dead on the
         // live site; dates=YYYY/YYYY is the working replacement.
-        dates: a.searchStartYear !== undefined && a.searchEndYear !== undefined
-          ? `${a.searchStartYear}/${a.searchEndYear}`
-          : undefined,
+        dates: startYear !== undefined && endYear !== undefined ? `${startYear}/${endYear}` : undefined,
         location_state: str(a.usState)?.toLowerCase(),
       };
+    }
   }
 }
 
@@ -232,6 +226,26 @@ const SITE_BASE_URL: Record<Exclude<ExternalSearchSite, "digital_newspaper_archi
   newspapers: "https://www.newspapers.com/search/",
   chronicling_america: "https://www.loc.gov/collections/chronicling-america/",
 };
+
+// The sites this tool can actually build a URL for — every key `SITE_BASE_URL`
+// declares (a `Record` with exactly those keys, so `Object.keys` can never
+// diverge from `siteWideParams`'s own switch) plus `digital_newspaper_archive`,
+// which is handled separately. Deliberately NOT derived from the shared
+// `external_site` enum: that enum already carries the 14 follow-up sites'
+// eventual names (issue #1980's own deferred scope), and a site advertised
+// as valid before its `siteWideParams` case exists crashes on `Object.values`
+// of the switch's implicit `undefined` return — reproduced by appending a
+// site to the enum with no matching implementation here. `tsc` sees no error,
+// because `isSupportedSite`'s type predicate is an unchecked runtime
+// assertion the compiler cannot verify against the switch's actual cases.
+// A spread off `Object.keys(...)` is an identifier expression, not a string
+// literal array, so `tool-schema-enums.test.ts`'s literal-array scan does not
+// treat this as a hand-typed copy of `external_site` — nothing here needs the
+// VALIDATOR_ENUMS import that the previous, enum-derived version required.
+const SUPPORTED_SITES: ExternalSearchSite[] = [
+  ...(Object.keys(SITE_BASE_URL) as Array<Exclude<ExternalSearchSite, "digital_newspaper_archive">>),
+  "digital_newspaper_archive",
+];
 
 const SITE_FIXED_PARAMS: Partial<Record<Exclude<ExternalSearchSite, "digital_newspaper_archive">, Record<string, string>>> = {
   myheritage: { action: "query" },
@@ -290,8 +304,14 @@ function appendToBaseUrl(baseUrl: string, params: Record<string, string | undefi
 }
 
 export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): BuildExternalSearchUrlResult {
-  const { site, baseUrl, attributes } = input ?? ({} as BuildExternalSearchUrlInput);
+  const { site, baseUrl: rawBaseUrl, attributes } = input ?? ({} as BuildExternalSearchUrlInput);
   const a = attributes ?? {};
+  // "" and whitespace-only are absent, the same convention `str()` applies to
+  // every attribute — without this, `baseUrl: ""` (or a caller passing a
+  // curated link that turned out blank) built a dead link (`"?name=Flynn"`,
+  // no host at all) rather than falling back to the site-wide URL, and
+  // `baseUrl: "   "` built one with a literal leading space in the URL.
+  const baseUrl = rawBaseUrl?.trim() ? rawBaseUrl : undefined;
 
   if (!isSupportedSite(site)) {
     return {
