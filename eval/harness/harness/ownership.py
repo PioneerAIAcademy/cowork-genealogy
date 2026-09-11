@@ -76,6 +76,32 @@ def skill_name(identifier: str) -> str | None:
     return None
 
 
+def writer_tool_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[str]]:
+    """`section -> permitted writer TOOL names`, for the rows `plane` can enforce.
+
+    The companion to `writer_sets`, which answers "which skill may cause this
+    write". This answers "which tool may perform it", and the two are separate
+    authorizations because some writes are safe *whoever* asks for them: a tool
+    that can only permute person ids cannot assert a `match_score`, rewrite an
+    objective, or regenerate a timeline, so the guarantee the `callers` list
+    protects survives granting it broadly.
+
+    The manifest already uses that reasoning one row over — `person_evidence`'s
+    `requires` records that the record-extraction lane is held off the section
+    "by tool identity: `extraction_append` does not accept it."
+
+    Keyed on the same `enforceableAt` filter as `writer_sets`: a row this plane
+    cannot enforce contributes no tools, so a caller cannot be authorized on a
+    plane the row never claimed.
+    """
+    sets: dict[str, set[str]] = {}
+    for row in rows(artifact):
+        if plane not in (row.get("enforceableAt") or []):
+            continue
+        sets[row["section"]] = set(row.get("writerTools") or [])
+    return sets
+
+
 def writer_sets(artifact: str, plane: str = UNIT_PLANE) -> dict[str, set[str]]:
     """`section -> permitted skill names`, for the rows `plane` can enforce.
 
