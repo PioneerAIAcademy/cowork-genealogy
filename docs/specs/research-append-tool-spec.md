@@ -568,12 +568,10 @@ Mirrors `research_log_append` minus the sidecar:
    to a warning and does not block.
 6. Commit:
    - **No tree mutation** (every call without `sourceDescription`): write only
-     `research.json` with `atomicWriteJson`. No `.bak` (this section, unlike the
-     irreversible merges, is append/supersede with full history-in-file — the GPS
-     audit trail is the recovery mechanism; consistent with `research_log_append`).
-   - **Composite (§3.4) tree mutation:** back up `tree.gedcomx.json` →
-     `tree.gedcomx.json.bak` (the same one-deep user-recovery semantics every tree
-     writer has — NOT a rollback mechanism), then commit **both files with
+     `research.json` with `atomicWriteJson`. No `.bak` — this section is
+     append/supersede with full history-in-file, so the GPS audit trail is the
+     recovery mechanism (consistent with `research_log_append`).
+   - **Composite (§3.4) tree mutation:** commit **both files with
      `atomicWriteBoth`, tree first, research second** (the same both-or-neither
      write shape and ordering the merge tools use; a crash between the two renames
      leaves a new tree + old research — an unreferenced `S` entry, which is valid —
@@ -888,7 +886,7 @@ plain entry write fits here, the computed build may warrant its own tool),
 - **atomicity** — a validation failure leaves `research.json` byte-unchanged.
 - **composite create** — `sourceDescription` writes the `S` entry (shared `nextId`
   allocator), stamps the sources op, echoes `sourceDescriptionId`, writes both
-  files tree-first with a tree `.bak`.
+  files tree-first with `atomicWriteBoth` (no `.bak`).
 - **reuse-or-create** — an existing `S` reference is accepted with the tree
   untouched; a dangling `S` and a neither/both call are rejected op-indexed.
 - **source_id auto-stamp** — omitted/null `source_id` stamped in a single-source

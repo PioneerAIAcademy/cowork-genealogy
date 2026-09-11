@@ -58,7 +58,7 @@ describe("wikiReadTool", () => {
   });
 
   it("throws on non-2xx, non-404 response", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+    mockFetch.mockResolvedValue({ ok: false, status: 500, statusText: "Internal Server Error", headers: new Headers() });
 
     await expect(wikiReadTool({ url: TEST_URL })).rejects.toThrow(
       "wiki-query-api error: 500"
@@ -66,7 +66,7 @@ describe("wikiReadTool", () => {
   });
 
   it("throws a friendly error when the server is unreachable", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
     await expect(wikiReadTool({ url: TEST_URL })).rejects.toThrow(
       /Could not reach wiki-query-api/
