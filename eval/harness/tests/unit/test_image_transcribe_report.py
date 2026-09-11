@@ -14,6 +14,7 @@ from e2e.image_transcribe_report import (
     Call,
     SUCCESS,
     TIMEOUT,
+    TRUNCATED,
     UNCLASSIFIED,
     UNREACHABLE,
     UNRECOGNIZED_ARK,
@@ -386,6 +387,54 @@ def test_a_transcription_that_quotes_the_word_error_is_still_a_success():
     assert classify(clerk) == SUCCESS
     # The real envelope still matches, by key adjacency.
     assert classify('{"error":"OpenRouter OCR failed: 502"}') == UPSTREAM_ERROR
+
+
+def test_a_capped_read_with_content_is_truncated_not_success():
+    """#2457 item 3. `image_transcribe` returns the partial transcription verbatim
+    beside `truncated: true` — non-empty and carrying no `"error":` key — so it
+    read as an ordinary `success` and the truncation rate could not be measured.
+    Both envelope shapes must land in `truncated`: the unwrapped document and the
+    escaped one where the key reads `\\"truncated\\"`."""
+    unwrapped = (
+        '{"transcription":"birth register, first half of page","truncated":true,'
+        '"truncationNotice":"This transcription is INCOMPLETE..."}'
+    )
+    escaped = (
+        '[{"type": "text", "text": '
+        '"{\\"transcription\\":\\"first half\\",\\"truncated\\":true}"}]'
+    )
+    assert classify(unwrapped) == TRUNCATED
+    assert classify(escaped) == TRUNCATED, "the escaped form must not read as success"
+
+
+def test_a_transcription_that_quotes_the_word_truncated_is_still_a_success():
+    """The other direction, and the reason for key-adjacency. A genuine reading of
+    a document that uses the word must not be filed as a partial read: only the
+    colon-adjacent envelope key `"truncated":` is the signal, never the bare word."""
+    clerk = '[{"type":"text","text":"the marriage entry was truncated at the fold"}]'
+    assert classify(clerk) == SUCCESS
+    # The real envelope still matches, by key adjacency.
+    assert classify('{"transcription":"x","truncated":true}') == TRUNCATED
+
+
+def test_a_truncated_read_is_reported_but_is_not_a_reachability_failure(tmp_path: Path):
+    """It reached the service and returned content, so it is measurable and NOT
+    lost to reachability — it gets its own rate line so the #2457 marker's real
+    load-bearing frequency is visible rather than hidden inside `success`."""
+    p = _run(tmp_path / "fix", "run-2026-08-20_00-00-00.json",
+             ['{"transcription":"half a page","truncated":true}', "ok", "ok", "ok"])
+    r = scan([p], author_of=_authors({}))
+
+    assert r.truncated_reads == 1
+    assert r.reachability_failures == 0
+    assert r.measurable == 4
+    out = format_report(r)
+    assert "truncated (capped mid-read): 1 of 4 measurable (25.0%)" in out
+    # And it appears as its own By-cause bucket (whitespace-tolerant on the column).
+    assert any(
+        line.strip().startswith("truncated") and line.strip().endswith("of 4")
+        for line in out.splitlines()
+    ), "the truncated bucket must show in the By-cause table"
 
 
 def test_the_word_none_is_not_treated_as_an_absent_summary():
