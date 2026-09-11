@@ -1200,7 +1200,7 @@ def flag_routing_negative_judge_fail(
 
     **"Usually" is measured, and the exception matters.** The coercion fires on
     the routing signature alone and does NOT check whether the run produced
-    anything, per #2196's stated signature. On 4 of the 50 runs it fires on in
+    anything, per #2196's stated signature. On 4 of the 47 runs it fires on in
     the committed corpus the skill under test HAD produced real output before
     routing: ut_timeline_008 (1355 chars, extraction_append x2 + research_log
     _append, judge rationale "extracting 11 new assertions"), ut_person_evidence
@@ -1307,7 +1307,7 @@ def flag_routing_negative_judge_fail(
                         f"the N/A: if the skill under test carried out its own "
                         f"task inline, the 1 is right and the routing pass is "
                         f"hiding a real defect. The coercion does NOT check "
-                        f"whether the run produced output, and on 4 of the 50 "
+                        f"whether the run produced output, and on 4 of the 47 "
                         f"runs it fires on in the committed corpus it did "
                         f"(ut_timeline_008 wrote 11 assertions via "
                         f"extraction_append; ut_person_evidence_003's 1 is "
@@ -1330,7 +1330,7 @@ def flag_routing_negative_judge_fail(
                 f"[coerced-to-na] this is a correctly-routed negative test, whose "
                 f"outcome is decided by routing alone, so {dd['name']} is N/A and "
                 f"the judge's 1 was coerced to null. READ THE ORIGINAL BELOW "
-                f"BEFORE CONFIRMING THE N/A: on 4 of the 50 runs in the committed "
+                f"BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed "
                 f"corpus the skill under test produced real output first (up to "
                 f"1355 chars and 5 tool calls, including writes), and there a 1 "
                 f"names a genuine defect the routing pass hides. "

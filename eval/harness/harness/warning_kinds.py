@@ -49,8 +49,8 @@ WARNING_KIND_SIDES: dict[str, str] = {
     "coerced_tool_arguments_to_na": "judge",
     # Retired as an EMIT kind by #2196: the coercion below supersedes it and
     # fires on the identical condition, so emitting both would double-tally one
-    # cell. The row stays because 36 committed run logs carry the kind, across
-    # 100 warning entries.
+    # cell. The row stays because 33 committed run logs carry the kind, across
+    # 94 warning entries.
     "routing_negative_judge_fail": "judge",
     "coerced_routing_negative_to_na": "judge",
     # --- harness-side (advisories about skill / fixtures / harness) ---

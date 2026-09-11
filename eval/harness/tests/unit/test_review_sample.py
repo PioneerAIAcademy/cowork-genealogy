@@ -703,8 +703,9 @@ def test_the_third_trigger_returns_exactly_what_coercion_removes():
                 moved_samples.append(path.name)
 
     assert touched > 0, (
-        "the replay found no test entry carrying routing_negative_judge_fail, so "
-        "it exercises nothing - re-check the corpus before trusting a green here"
+        "no committed log still carries routing_negative_judge_fail. The kind is "
+        "retired and its population only shrinks with pruning, so this replay has "
+        "aged out - delete this test rather than trying to restore the corpus."
     )
     assert mand_after == mand_before, (
         f"coercion changed how many tests a human must read: "
@@ -723,7 +724,7 @@ def test_the_third_trigger_returns_exactly_what_coercion_removes():
     # this lands carries the new one.
     assert kept_by_trigger >= touched - 1, (
         f"only {kept_by_trigger} of {touched} affected entries are kept mandatory "
-        f"by the third trigger (49 of 50 on 2026-09-10). A number near zero means "
+        f"by the third trigger (46 of 47 on 2026-09-11). A number near zero means "
         f"the trigger is not doing the work it was added for, and the two "
         f"assertions above would pass anyway."
     )

@@ -606,7 +606,7 @@ def test_aggregate_excludes_a_validator_failing_run():
     """#2057: a validator-failing run is GRADED but stays out of the modal.
 
     Load-bearing test for the `r.validators.passed is False` disjunct, and it
-    has to be synthetic. Over the 131 committed run logs, ZERO runs have
+    has to be synthetic. Over the 129 committed run logs, ZERO runs have
     `validators.passed is False` together with `judge.skipped is False`, because
     the behaviour that produces that shape is the one this PR introduces. So a
     dump-and-diff of `aggregate_dimensions` over committed data is empty whether
@@ -656,7 +656,7 @@ def test_aggregate_excludes_a_validator_failing_run():
 
 def test_aggregate_excludes_a_validator_failing_run_even_when_it_is_the_only_run():
     """The single-run case, which is the ONLY shape the committed corpus has:
-    2131 of 2131 test entries carry exactly one run, so modal-across-runs never
+    2120 of 2120 test entries carry exactly one run, so modal-across-runs never
     actually runs on real data. A lone validator-failing run must produce an
     empty aggregate — which is what keeps `review_sample.is_gradeable` excluding
     it and what keeps every committed baseline where it was."""

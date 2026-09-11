@@ -82,7 +82,12 @@ def _carries_warning(entry: dict[str, Any], kind: str) -> bool:
 
 
 def is_gradeable(entry: dict[str, Any]) -> bool:
-    """True when the test produced at least one graded dimension.
+    """True when the test has at least one dimension ROW to annotate.
+
+    Row count, not scored-ness: after the routing-negative coercion a test can
+    carry three base rows all scored `null` -- zero GRADED dimensions -- and it
+    must still be sampled, which is what the third `is_mandatory` trigger
+    depends on. 44 of the 47 affected tests are that shape.
 
     `aggregated_dimensions` is empty when a run aborts, when the judge
     raised, or — since #2057, which grades such runs but keeps them out of
