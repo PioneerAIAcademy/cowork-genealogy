@@ -60,7 +60,7 @@ def cookie_secure() -> bool:
 
 
 def set_session_cookie(response: Response, user_id: str) -> None:
-    token = _serializer().dumps({"uid": user_id, "iat": int(time.time())})
+    token = _serializer().dumps({"uid": user_id, "iat": time.time()})
     response.set_cookie(
         COOKIE_NAME, token, max_age=COOKIE_MAX_AGE, httponly=True,
         samesite="lax", secure=cookie_secure(), path="/",
@@ -76,8 +76,7 @@ def _is_allowed(session: Session, email: str) -> bool:
     return session.get(AllowedEmail, email.lower()) is not None
 
 
-def _upsert_user(session: Session, email: str, familysearch_id: str | None = None,
-                 *, fresh_login: bool = False) -> User:
+def _upsert_user(session: Session, email: str, familysearch_id: str | None = None) -> User:
     email = email.lower()
     user = session.exec(select(User).where(User.email == email)).first()
     if user is None:
@@ -85,18 +84,11 @@ def _upsert_user(session: Session, email: str, familysearch_id: str | None = Non
         session.add(user)
         session.commit()
         session.refresh(user)
-    else:
-        dirty = False
-        if familysearch_id and not user.familysearch_id:
-            user.familysearch_id = familysearch_id
-            dirty = True
-        if fresh_login and user.sessions_revoked_at is not None:
-            user.sessions_revoked_at = None
-            dirty = True
-        if dirty:
-            session.add(user)
-            session.commit()
-            session.refresh(user)
+    elif familysearch_id and not user.familysearch_id:
+        user.familysearch_id = familysearch_id
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     return user
 
 
@@ -194,7 +186,7 @@ def get_current_user(
         revoked_ts = user.sessions_revoked_at.replace(tzinfo=timezone.utc) \
             if user.sessions_revoked_at.tzinfo is None else user.sessions_revoked_at
         iat = data.get("iat", 0)
-        if iat <= int(revoked_ts.timestamp()):
+        if iat <= revoked_ts.timestamp():
             raise HTTPException(status_code=401, detail="Session revoked")
     if get_settings().familysearch_configured and not _is_allowed(session, user.email):
         raise HTTPException(status_code=403, detail="Account removed from allowlist")
@@ -280,7 +272,7 @@ def dev_login(
     # access gate is the FamilySearch callback's allowlist, which is unaffected. A
     # blank email gets a default identity for one-click sign-in.
     email = body.email.strip().lower() or "dev@localhost"
-    user = _upsert_user(session, email, fresh_login=True)
+    user = _upsert_user(session, email)
     set_session_cookie(response, user.id)
     return MeResponse(id=user.id, email=user.email)
 
@@ -410,7 +402,7 @@ async def familysearch_callback(
             status_code=403,
         )
 
-    user = _upsert_user(session, email, familysearch_id=identity.get("id"), fresh_login=True)
+    user = _upsert_user(session, email, familysearch_id=identity.get("id"))
     _persist_fs_token(session, user.id, token_json)
 
     # Re-validate `next` on the way out: it came back on a client-held cookie,

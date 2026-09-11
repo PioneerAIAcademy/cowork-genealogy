@@ -237,3 +237,28 @@ def test_api_key_request_does_not_undo_revocation(monkeypatch):
         if u:
             s.delete(u)
             s.commit()
+
+
+def test_revoked_cookie_is_not_resurrected_by_a_later_login():
+    """A stolen cookie must stay dead even after the victim logs back in."""
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "v@example.com"})
+        stolen = client.cookies.get("wb_session")
+
+        def stolen_works():
+            with TestClient(app) as thief:
+                thief.cookies.set("wb_session", stolen)
+                return thief.get("/api/sessions").status_code
+
+        assert stolen_works() == 200
+        client.post("/auth/logout")
+        assert stolen_works() == 401
+        client.post("/auth/dev-login", json={"email": "v@example.com"})
+        assert client.get("/api/sessions").status_code == 200
+        assert stolen_works() == 401, "revoked cookie must stay revoked"
+
+    with Session(get_engine()) as s:
+        u = s.exec(select(User).where(User.email == "v@example.com")).first()
+        if u:
+            s.delete(u)
+            s.commit()
