@@ -165,15 +165,19 @@ titles mislead about scope and completeness.
 
 ## Supported sites
 
-| Site | URL pattern | Notes |
-|------|------------|-------|
-| Ancestry.com | `ancestry.com/search/collections/{id}/?params` | Largest indexed collection. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
-| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| Chronicling America | `loc.gov/collections/chronicling-america/?dl=page&params` | US digitised newspaper pages 1798–1963, Library of Congress. **Free.** Bot-protected — capture required |
-| State/regional digital newspaper archives | varies — see below | e.g. Utah Digital Newspapers, California Digital Newspaper Collection. **Free.** Bot-protected — capture required |
+Which parameters each site accepts is `build_external_search_url`'s own table
+(step 3 below), not repeated here — a second copy would drift from the tool
+that actually builds the URL.
+
+| Site | Notes |
+|------|-------|
+| Ancestry.com | Largest indexed collection. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
+| MyHeritage.com | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
+| FindMyPast.com | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
+| FindAGrave.com | Cemetery records. Free. User-contributed — treat as compiled source |
+| Newspapers.com | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
+| Chronicling America | US digitised newspaper pages 1798–1963, Library of Congress. **Free.** Bot-protected — capture required |
+| State/regional digital newspaper archives | e.g. Utah Digital Newspapers, California Digital Newspaper Collection — the specific archive's URL is not fixed; pass it as `baseUrl` (step 3). **Free.** Bot-protected — capture required |
 
 ## Steps
 
@@ -294,9 +298,14 @@ build_external_search_url({
 | `myheritage` | `givenName`/`surname`, `birthYear`/`birthPlace`, `marriageYear`/`marriagePlace`, `deathYear`/`deathPlace`, `father*`/`mother*` | No residence field |
 | `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace`/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) |
 | `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear`/`deathPlace` (falls back to `birthPlace` if no death place) | |
-| `newspapers` | `givenName`/`surname`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window) |
-| `chronicling_america` | `givenName`/`surname`, `searchStartYear`/`searchEndYear`, `usState` | Free. Digitised page coverage runs **1798–1963**, title-by-title and complete for no state — a nil result never means no newspaper covered the event. Target date outside 1798–1963: do not call this site. Say the page corpus does not reach that period, and route to the state/regional archive for the place (coverage differs) or to a paid site instead |
-| `digital_newspaper_archive` | `givenName`/`surname` only | Free. **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
+| `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` also accepts a hyphenated range (`"1880-1905"`) when the exact year isn't known. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
+| `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | Free. Digitised page coverage runs **1798–1963**, title-by-title and complete for no state — a nil result never means no newspaper covered the event. Target date outside 1798–1963: do not call this site. Say the page corpus does not reach that period, and route to the state/regional archive for the place (coverage differs) or to a paid site instead |
+| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | Free. **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
+
+A supplied attribute the target site doesn't read comes back in the response's
+`notes` (e.g. `"'deathYear' is not used by chronicling_america — supplied but
+ignored"`) rather than silently vanishing — read `notes` and narrate anything
+it flags.
 
 **Parameter strategy** (full guidance in
 `references/search-strategy-external.md`):

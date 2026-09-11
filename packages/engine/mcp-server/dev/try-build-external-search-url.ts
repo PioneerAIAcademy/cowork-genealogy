@@ -63,14 +63,27 @@ const cases: Array<{ label: string; input: Parameters<typeof buildExternalSearch
     },
   },
   {
-    label: "newspapers.com, obituary-style (generic year/place)",
+    label: "newspapers.com, obituary-style (searchYear as a plain year + keywords)",
     input: {
       site: "newspapers",
-      attributes: { givenName: "Patrick", surname: "Flynn", searchYear: 1908, searchPlace: "Schuylkill County" },
+      attributes: {
+        givenName: "Patrick",
+        surname: "Flynn",
+        searchYear: "1908",
+        searchPlace: "Schuylkill County",
+        keywords: "obituary",
+      },
     },
   },
   {
-    label: "chronicling_america, dates=YYYY/YYYY correction",
+    label: "newspapers.com, searchYear as a range (no exact year known)",
+    input: {
+      site: "newspapers",
+      attributes: { givenName: "Patrick", surname: "Flynn", searchYear: "1880-1905" },
+    },
+  },
+  {
+    label: "chronicling_america, q (not qs) + dates=YYYY/YYYY correction",
     input: {
       site: "chronicling_america",
       attributes: {
@@ -83,11 +96,26 @@ const cases: Array<{ label: string; input: Parameters<typeof buildExternalSearch
     },
   },
   {
-    label: "digital_newspaper_archive, WITH baseUrl (required)",
+    label: "chronicling_america, curated baseUrl still gets the required dl=page fixed param",
+    input: {
+      site: "chronicling_america",
+      baseUrl: "https://www.loc.gov/collections/chronicling-america/?fa=partof:pennsylvania",
+      attributes: { givenName: "Patrick", surname: "Flynn" },
+    },
+  },
+  {
+    label: "chronicling_america, an attribute the site doesn't read (expect a note, not silence)",
+    input: {
+      site: "chronicling_america",
+      attributes: { givenName: "Patrick", surname: "Flynn", deathYear: 1908 },
+    },
+  },
+  {
+    label: "digital_newspaper_archive, WITH baseUrl (required) + keywords",
     input: {
       site: "digital_newspaper_archive",
       baseUrl: "https://newspapers.lib.utah.edu/search",
-      attributes: { givenName: "Patrick", surname: "Flynn" },
+      attributes: { givenName: "Patrick", surname: "Flynn", keywords: "obituary" },
     },
   },
   {
@@ -95,6 +123,21 @@ const cases: Array<{ label: string; input: Parameters<typeof buildExternalSearch
     input: {
       site: "digital_newspaper_archive",
       attributes: { givenName: "Patrick", surname: "Flynn" },
+    },
+  },
+  {
+    label: "baseUrl with a #fragment (query must land before it, not after)",
+    input: {
+      site: "ancestry",
+      baseUrl: "https://www.ancestry.com/search/collections/8054/#facets",
+      attributes: { givenName: "Patrick", surname: "Flynn" },
+    },
+  },
+  {
+    label: "empty-string and non-finite attributes (expect them treated as absent, not '' / NaN in the URL)",
+    input: {
+      site: "ancestry",
+      attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: "", birthYear: NaN },
     },
   },
   {

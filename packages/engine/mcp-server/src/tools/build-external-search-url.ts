@@ -6,6 +6,8 @@
 // link fits, what conflicts[] says about a disputed field); the tool applies
 // only the string-templating. Spec: docs/specs/build-external-search-url-tool-spec.md.
 
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
+
 export type ExternalSearchSite =
   | "ancestry"
   | "myheritage"
@@ -15,15 +17,18 @@ export type ExternalSearchSite =
   | "chronicling_america"
   | "digital_newspaper_archive";
 
-const SUPPORTED_SITES: ExternalSearchSite[] = [
-  "ancestry",
-  "myheritage",
-  "findmypast",
-  "findagrave",
-  "newspapers",
-  "chronicling_america",
-  "digital_newspaper_archive",
-];
+// Derived from the shared closed enum at runtime, not hand-typed: a literal
+// `SUPPORTED_SITES = ["ancestry", ...]` array is exactly what
+// `tool-schema-enums.test.ts` flags as a near-miss copy of `external_site`
+// (it is one — every value but `familysearch_web`, which has no per-site
+// template here and is the persisted log's catch-all for a site with none).
+// A spread off the shared Set, same pattern `research-log-append.ts` already
+// uses for this enum, is what that test's own docstring calls "not a copy" —
+// and a future addition to the schema now shows up as a real site string this
+// file doesn't have a template for, rather than silent staleness in a literal.
+const SUPPORTED_SITES: ExternalSearchSite[] = [...VALIDATOR_ENUMS.external_site].filter(
+  (s): s is ExternalSearchSite => s !== "familysearch_web",
+);
 
 export interface BuildExternalSearchUrlAttributes {
   givenName?: string;
@@ -46,8 +51,16 @@ export interface BuildExternalSearchUrlAttributes {
   birthYearOffset?: number;
   placeProximityMiles?: number;
   eventYear?: number;
+  // Free-text terms appended alongside the name, for the three sites whose
+  // site-wide search is a single free-text query field rather than structured
+  // name parameters (newspapers, chronicling_america, digital_newspaper_archive).
+  // A caller wanting an exact phrase includes its own quote marks.
+  keywords?: string;
   // Newspapers.com's generic date/place slots (no single named event fits).
-  searchYear?: number;
+  // A plain year ("1892") or a hyphenated range ("1880-1905") — this site's
+  // own date filter accepts both; the tool does not parse or validate the
+  // shape, only templates it.
+  searchYear?: string;
   searchPlace?: string;
   // Chronicling America's date window and state.
   searchStartYear?: number;
@@ -71,25 +84,47 @@ function isSupportedSite(site: string): site is ExternalSearchSite {
   return (SUPPORTED_SITES as string[]).includes(site);
 }
 
+// A genealogy year is a small positive integer; this bound rejects NaN,
+// Infinity, 1e21-scale nonsense, and fractional years (1845.7) in one check —
+// `Number.isInteger` alone accepts 1e21 (it has no fractional part) and
+// rejects NaN/Infinity on its own, but the magnitude clamp is still needed.
+const YEAR_MIN = 0;
+const YEAR_MAX = 9999;
+
+function num(n: number | undefined): string | undefined {
+  return n !== undefined && Number.isInteger(n) && n >= YEAR_MIN && n <= YEAR_MAX
+    ? String(n)
+    : undefined;
+}
+
+// Empty-string treated as absent throughout — `attributes: { birthPlace: "" }`
+// must not produce `birthplace=` or defeat a documented fallback (FindAGrave's
+// death-place-falls-back-to-birth-place).
+function str(s: string | undefined): string | undefined {
+  return s !== undefined && s.length > 0 ? s : undefined;
+}
+
 function joinUnderscore(...parts: Array<string | undefined>): string | undefined {
-  const present = parts.filter((p): p is string => !!p && p.length > 0);
+  const present = parts.map(str).filter((p): p is string => p !== undefined);
   return present.length > 0 ? present.join("_") : undefined;
 }
 
-function joinPlus(...parts: Array<string | undefined>): string | undefined {
-  const present = parts.filter((p): p is string => !!p && p.length > 0);
-  return present.length > 0 ? present.join("+") : undefined;
+// Joined with a real space, not a literal `+` — `toQueryString` below encodes
+// a space as `+` (form-encoding convention), so the join and the encoding
+// step must not both try to own that character. Joining with `+` directly
+// and then percent-encoding the whole value turns the `+` into `%2B` (a
+// literal plus the receiving site's own parser must NOT decode as a space).
+function joinSpace(...parts: Array<string | undefined>): string | undefined {
+  const present = parts.map(str).filter((p): p is string => p !== undefined);
+  return present.length > 0 ? present.join(" ") : undefined;
 }
 
-function num(n: number | undefined): string | undefined {
-  return n === undefined ? undefined : String(n);
-}
-
-// Each site's table below is a straight port of its SKILL.md template
-// (search-external-sites/SKILL.md:277-337) — see the spec's §4 for the
-// per-site rationale (why keywordsplace defaults to birthPlace, why
-// Ancestry's death/marriage fields are ported despite not appearing in its
-// illustrative example URL, etc).
+// Each site's table below is a straight port of the site-wide templates this
+// tool replaces (search-external-sites/SKILL.md, before this PR) — see the
+// spec's §4 for the per-site rationale (why keywordsplace defaults to
+// birthPlace, why Ancestry's death/marriage fields are ported despite not
+// appearing in its illustrative example URL, etc). Every key read here must
+// also appear in RECOGNIZED_KEYS below, for that site.
 function siteWideParams(
   site: Exclude<ExternalSearchSite, "digital_newspaper_archive">,
   a: BuildExternalSearchUrlAttributes,
@@ -99,68 +134,95 @@ function siteWideParams(
       return {
         name: joinUnderscore(a.givenName, a.surname),
         birth: num(a.birthYear),
-        birthplace: a.birthPlace,
+        birthplace: str(a.birthPlace),
         death: num(a.deathYear),
-        deathplace: a.deathPlace,
+        deathplace: str(a.deathPlace),
         marriage: num(a.marriageYear),
-        residence: joinUnderscore(num(a.residenceYear), a.residencePlace),
+        residence: joinUnderscore(num(a.residenceYear), str(a.residencePlace)),
         father: joinUnderscore(a.fatherGivenName, a.fatherSurname),
         mother: joinUnderscore(a.motherGivenName, a.motherSurname),
         spouse: joinUnderscore(a.spouseGivenName, a.spouseSurname),
       };
     case "myheritage":
       return {
-        first: a.givenName,
-        last: a.surname,
+        first: str(a.givenName),
+        last: str(a.surname),
         birth_year: num(a.birthYear),
-        birth_place: a.birthPlace,
+        birth_place: str(a.birthPlace),
         marriage_year: num(a.marriageYear),
-        marriage_place: a.marriagePlace,
+        marriage_place: str(a.marriagePlace),
         death_year: num(a.deathYear),
-        death_place: a.deathPlace,
-        father_first: a.fatherGivenName,
-        father_last: a.fatherSurname,
-        mother_first: a.motherGivenName,
-        mother_last: a.motherSurname,
+        death_place: str(a.deathPlace),
+        father_first: str(a.fatherGivenName),
+        father_last: str(a.fatherSurname),
+        mother_first: str(a.motherGivenName),
+        mother_last: str(a.motherSurname),
       };
     case "findmypast":
       return {
-        firstname: a.givenName,
-        lastname: a.surname,
+        firstname: str(a.givenName),
+        lastname: str(a.surname),
         yearofbirth: num(a.birthYear),
         yearofbirth_offset: num(a.birthYearOffset),
-        keywordsplace: a.birthPlace,
+        keywordsplace: str(a.birthPlace),
         keywordsplace_proximity: num(a.placeProximityMiles),
         eventyear: num(a.eventYear),
-        fatherfirstname: a.fatherGivenName,
-        motherfirstname: a.motherGivenName,
+        fatherfirstname: str(a.fatherGivenName),
+        motherfirstname: str(a.motherGivenName),
       };
     case "findagrave":
       return {
-        firstname: a.givenName,
-        lastname: a.surname,
+        firstname: str(a.givenName),
+        lastname: str(a.surname),
         birthyear: num(a.birthYear),
         deathyear: num(a.deathYear),
-        location: a.deathPlace ?? a.birthPlace,
+        location: str(a.deathPlace) ?? str(a.birthPlace),
       };
     case "newspapers":
       return {
-        query: joinPlus(a.givenName, a.surname),
-        dr_year: num(a.searchYear),
-        dr_place: a.searchPlace,
+        query: joinSpace(a.givenName, a.surname, a.keywords),
+        dr_year: str(a.searchYear),
+        dr_place: str(a.searchPlace),
       };
     case "chronicling_america":
       return {
-        qs: joinPlus(a.givenName, a.surname),
+        // Correction: `qs` is dead on the live site (a nonsense value returns
+        // the same corpus total as no term at all); `q` is what actually
+        // filters. Verified live 2026-09-09 — see the spec's "What nothing
+        // checks" section.
+        q: joinSpace(a.givenName, a.surname, a.keywords),
         // Correction: the shipped start_date/end_date pair is dead on the
         // live site; dates=YYYY/YYYY is the working replacement.
         dates: a.searchStartYear !== undefined && a.searchEndYear !== undefined
           ? `${a.searchStartYear}/${a.searchEndYear}`
           : undefined,
-        location_state: a.usState?.toLowerCase(),
+        location_state: str(a.usState)?.toLowerCase(),
       };
   }
 }
+
+// The attribute keys each site above actually reads. Kept beside
+// `siteWideParams` (not derived from it) so a supplied-but-unrecognized
+// attribute can be flagged in `notes` — the caller passing `deathYear` to a
+// site with no death slot should not fail silently.
+const RECOGNIZED_KEYS: Record<Exclude<ExternalSearchSite, "digital_newspaper_archive">, Set<keyof BuildExternalSearchUrlAttributes>> = {
+  ancestry: new Set([
+    "givenName", "surname", "birthYear", "birthPlace", "deathYear", "deathPlace",
+    "marriageYear", "residenceYear", "residencePlace", "fatherGivenName", "fatherSurname",
+    "motherGivenName", "motherSurname", "spouseGivenName", "spouseSurname",
+  ]),
+  myheritage: new Set([
+    "givenName", "surname", "birthYear", "birthPlace", "marriageYear", "marriagePlace",
+    "deathYear", "deathPlace", "fatherGivenName", "fatherSurname", "motherGivenName", "motherSurname",
+  ]),
+  findmypast: new Set([
+    "givenName", "surname", "birthYear", "birthYearOffset", "birthPlace",
+    "placeProximityMiles", "eventYear", "fatherGivenName", "motherGivenName",
+  ]),
+  findagrave: new Set(["givenName", "surname", "birthYear", "deathYear", "deathPlace", "birthPlace"]),
+  newspapers: new Set(["givenName", "surname", "keywords", "searchYear", "searchPlace"]),
+  chronicling_america: new Set(["givenName", "surname", "keywords", "searchStartYear", "searchEndYear", "usState"]),
+};
 
 const SITE_BASE_URL: Record<Exclude<ExternalSearchSite, "digital_newspaper_archive">, string> = {
   ancestry: "https://www.ancestry.com/search/",
@@ -174,28 +236,57 @@ const SITE_BASE_URL: Record<Exclude<ExternalSearchSite, "digital_newspaper_archi
 const SITE_FIXED_PARAMS: Partial<Record<Exclude<ExternalSearchSite, "digital_newspaper_archive">, Record<string, string>>> = {
   myheritage: { action: "query" },
   // Required — without it the search returns newspaper titles from the U.S.
-  // Newspaper Directory, not digitised pages (SKILL.md:316-318).
+  // Newspaper Directory, not digitised pages.
   chronicling_america: { dl: "page" },
 };
+
+// Encodes a value the way a browser's own search form would submit it
+// (application/x-www-form-urlencoded): a space becomes `+`, everything else
+// is percent-encoded. `encodeURIComponent` alone escapes a literal `+` to
+// `%2B`, which is why `joinSpace` above joins with a real space rather than
+// inserting `+` before this runs — doing it the other way round turned an
+// intended "space between words" into a literal plus sign on the wire.
+function encodeFormValue(v: string): string {
+  return encodeURIComponent(v).replace(/%20/g, "+");
+}
 
 function toQueryString(params: Record<string, string | undefined>): string {
   const entries = Object.entries(params).filter(
     (entry): entry is [string, string] => entry[1] !== undefined,
   );
-  return entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+  return entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeFormValue(v)}`).join("&");
 }
 
+// Appends params onto an existing URL without decoding/re-encoding anything
+// already there. Earlier drafts routed the existing query through
+// `URLSearchParams`, which silently rewrote it three ways: a `#fragment`
+// landed after the appended `?query` (browsers never send anything after
+// `#`, so the search was never actually scoped); `?a=1?b=2` lost `b=2`
+// (URLSearchParams parses the whole remainder as one key); and a
+// already-encoded value was re-encoded to a different but equivalent form
+// (`Smith%2C%20John` -> `Smith%2C+John`), which is not the "does not
+// otherwise alter" guarantee the spec makes. Working on raw substrings
+// avoids all three: the fragment is split off first and reattached at the
+// very end, and the existing query is preserved as one untouched string.
 function appendToBaseUrl(baseUrl: string, params: Record<string, string | undefined>): string {
-  const [path, existingQuery] = baseUrl.split("?", 2);
-  const existingParams = new URLSearchParams(existingQuery ?? "");
-  // The one documented stray parameter that must never survive into a
-  // presented URL: browser session state, not a search parameter
-  // (SKILL.md:300).
-  existingParams.delete("sid");
+  const hashIndex = baseUrl.indexOf("#");
+  const fragment = hashIndex === -1 ? "" : baseUrl.slice(hashIndex);
+  const withoutFragment = hashIndex === -1 ? baseUrl : baseUrl.slice(0, hashIndex);
+
+  const qIndex = withoutFragment.indexOf("?");
+  const path = qIndex === -1 ? withoutFragment : withoutFragment.slice(0, qIndex);
+  const existingQuery = qIndex === -1 ? "" : withoutFragment.slice(qIndex + 1);
+
+  const existingTokens = existingQuery.length > 0 ? existingQuery.split("&") : [];
+  const preservedTokens = existingTokens.filter((token) => {
+    const key = token.split("=", 1)[0];
+    return key.toLowerCase() !== "sid";
+  });
+
   const appended = toQueryString(params);
-  const preserved = existingParams.toString();
-  const combined = [preserved, appended].filter((s) => s.length > 0).join("&");
-  return combined.length > 0 ? `${path}?${combined}` : path;
+  const combinedQuery = [preservedTokens.join("&"), appended].filter((s) => s.length > 0).join("&");
+  const query = combinedQuery.length > 0 ? `?${combinedQuery}` : "";
+  return `${path}${query}${fragment}`;
 }
 
 export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): BuildExternalSearchUrlResult {
@@ -221,14 +312,14 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
         ],
       };
     }
-    const q = joinPlus(a.givenName, a.surname);
+    const q = joinSpace(a.givenName, a.surname, a.keywords);
     if (!q) {
       return { ok: false, reason: "no_attributes", errors: ["givenName and/or surname required"] };
     }
     // Do not invent facet or date parameters for these archives — an
-    // unrecognized parameter is silently ignored or errors the page
-    // (SKILL.md:339-342).
-    return { ok: true, url: appendToBaseUrl(baseUrl, { q }), notes: [] };
+    // unrecognized parameter is silently ignored or errors the page.
+    const notes = unusedAttributeNotes(a, new Set(["givenName", "surname", "keywords"]), site);
+    return { ok: true, url: appendToBaseUrl(baseUrl, { q }), notes };
   }
 
   const params = siteWideParams(site, a);
@@ -241,19 +332,31 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     };
   }
 
-  const notes: string[] = [];
+  const notes = unusedAttributeNotes(a, RECOGNIZED_KEYS[site], site);
   if (site === "findmypast" && a.birthYear === undefined && a.eventYear === undefined) {
     notes.push("no yearofbirth or eventyear supplied — search is unscoped by year");
   }
 
-  const url = baseUrl
-    ? appendToBaseUrl(baseUrl, params)
-    : appendToBaseUrl(
-        `${SITE_BASE_URL[site]}`,
-        { ...(SITE_FIXED_PARAMS[site] ?? {}), ...params },
-      );
+  const combinedParams = { ...(SITE_FIXED_PARAMS[site] ?? {}), ...params };
+  const url = appendToBaseUrl(baseUrl ?? SITE_BASE_URL[site], combinedParams);
 
   return { ok: true, url, notes };
+}
+
+// A supplied attribute that the target site's mapping never reads vanishes
+// from the URL with no signal — the caller may believe a death event scoped
+// a chronicling_america search that actually ran whole-corpus and undated.
+function unusedAttributeNotes(
+  a: BuildExternalSearchUrlAttributes,
+  recognized: Set<keyof BuildExternalSearchUrlAttributes>,
+  site: ExternalSearchSite,
+): string[] {
+  const supplied = (Object.keys(a) as Array<keyof BuildExternalSearchUrlAttributes>).filter((k) => {
+    const v = a[k];
+    return typeof v === "string" ? v.length > 0 : v !== undefined;
+  });
+  const unused = supplied.filter((k) => !recognized.has(k));
+  return unused.map((k) => `'${k}' is not used by ${site} — supplied but ignored`);
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -317,9 +420,18 @@ export const buildExternalSearchUrlSchema = {
             description:
               "FindMyPast only: the event year when the search targets an event other than birth (e.g. a marriage or death search).",
           },
+          keywords: {
+            type: "string",
+            description:
+              "Additional free-text search terms (a record type like 'obituary', a nickname, or an " +
+              "exact phrase in your own quote marks) appended alongside the name. Only used by sites " +
+              "with a single free-text query field: newspapers, chronicling_america, digital_newspaper_archive.",
+          },
           searchYear: {
-            type: "number",
-            description: "Newspapers.com only: the year to search around — whichever event the search targets.",
+            type: "string",
+            description:
+              "Newspapers.com only: the year to search around, or a hyphenated range (e.g. '1880-1905') " +
+              "when the event's year isn't known exactly — whichever event the search targets.",
           },
           searchPlace: {
             type: "string",

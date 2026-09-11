@@ -16,12 +16,27 @@ signature contract. The `test` argument is the parsed test JSON dict
 
 from __future__ import annotations
 
+from urllib.parse import parse_qs, urlsplit
+
 import pytest
 
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import (
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
 )
+
+# The URL query parameter that carries `birthPlace` on each site
+# `build_external_search_url` supports, mirroring
+# `packages/engine/mcp-server/src/tools/build-external-search-url.ts`'s own
+# `siteWideParams` table. `findagrave`'s `location` is deliberately excluded:
+# it holds `deathPlace` whenever one is present, falling back to `birthPlace`
+# only when it isn't, so a `location` value cannot be read as "the birthplace
+# parameter" without also knowing which fallback branch fired.
+_BIRTHPLACE_PARAM_BY_SITE = {
+    "ancestry": "birthplace",
+    "myheritage": "birth_place",
+    "findmypast": "keywordsplace",
+}
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -77,6 +92,101 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
                 f"{detail.get('capture_received')!r}"
             )
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
+
+
+def test_resolved_birthplace_conflict_rejected_value_not_encoded(before_state, after_state, test):
+    """Mechanical form of SKILL.md's "check conflicts[] before encoding a
+    place or date" rule, scoped to resolved `birthplace` conflicts.
+
+    The rubric already grades this from prose, which makes it a single-run
+    judgment call the skill can miss (issue #1980's own corpus: `mid-research
+    -flynn`'s `conflicts[]` c_001 resolves birthplace as Ireland against a
+    rejected Pennsylvania, and a model has been observed encoding the
+    rejected value). Encoding a rejected fact is a genealogically wrong URL,
+    not a stylistic slip, so this makes the specific failure a hard,
+    deterministic fail rather than leaving it to the judge alone.
+
+    Deliberately narrow: only `disputed_attribute == "birthplace"`, only a
+    `status: "resolved"` conflict, and only the three sites whose own
+    parameter for it is unambiguous (see `_BIRTHPLACE_PARAM_BY_SITE`). A
+    substring search over the whole URL was considered and rejected — this
+    same fixture's `residencePlace` ("Schuylkill County, Pennsylvania")
+    legitimately contains the rejected birthplace value ("Pennsylvania") as a
+    substring, which would flag a *correct* `residence` parameter as if it
+    encoded the rejected fact. Reading the specific query parameter's own
+    decoded value avoids that false positive entirely.
+
+    "Rejected" is decided by comparing each competing assertion's `place`
+    value against the *preferred assertion's own value*, not by id: this
+    fixture's `competing_assertion_ids` for c_001 lists three assertions, two
+    of which (a_002, a_009) independently say "Ireland" — only the third
+    (a_012, "Pennsylvania") actually disagrees. Treating every non-preferred
+    id as rejected flagged a_009's own "Ireland" as if it were a rejected
+    value, which a synthetic test against this exact fixture caught before
+    this landed.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests generate URLs")
+    research = before_state.get("research_json")
+    if research is None:
+        pytest.skip("no research.json in scenario")
+
+    resolved_birthplace_conflicts = [
+        c for c in (research.get("conflicts") or [])
+        if c.get("conflict_type") == "fact"
+        and c.get("status") == "resolved"
+        and c.get("disputed_attribute") == "birthplace"
+    ]
+    if not resolved_birthplace_conflicts:
+        pytest.skip("no resolved birthplace conflict in this scenario")
+
+    assertions_by_id = {a.get("id"): a for a in (research.get("assertions") or [])}
+
+    new_entries = _new_log_entries(before_state, after_state)
+    external = [
+        e for e in new_entries
+        if e.get("tool") == "external_site" and e.get("outcome") == "partial"
+    ]
+    if not external:
+        pytest.skip("no URL-generation external_site log entry")
+
+    errors: list[str] = []
+    for c in resolved_birthplace_conflicts:
+        preferred_id = c.get("preferred_assertion_id")
+        preferred_assertion = assertions_by_id.get(preferred_id) or {}
+        preferred_place = preferred_assertion.get("place")
+        if not preferred_place:
+            continue
+        # A competing id is not automatically a rejected VALUE: two assertions
+        # can independently support the same preferred value from different
+        # sources (this fixture's a_002/a_009 both say "Ireland" — only a_012's
+        # "Pennsylvania" actually disagrees), so the comparison is by place
+        # value against the preferred assertion's own value, not by id.
+        rejected_places = {
+            assertions_by_id[i]["place"]
+            for i in (c.get("competing_assertion_ids") or [])
+            if i in assertions_by_id
+            and assertions_by_id[i].get("place")
+            and assertions_by_id[i]["place"] != preferred_place
+        }
+        if not rejected_places:
+            continue
+        for entry in external:
+            detail = entry.get("external_site") or {}
+            site = detail.get("site")
+            param = _BIRTHPLACE_PARAM_BY_SITE.get(site)
+            if not param:
+                continue
+            url = detail.get("url_generated") or ""
+            query = parse_qs(urlsplit(url).query)
+            for encoded in query.get(param, []):
+                if encoded in rejected_places:
+                    errors.append(
+                        f"log[{entry.get('id')}].external_site.url_generated's "
+                        f"{param}={encoded!r} is the value conflict {c.get('id')} "
+                        f"rejected (preferred: {preferred_id})"
+                    )
+    assert not errors, "resolved birthplace-conflict rejected value encoded:\n  - " + "\n  - ".join(errors)
 
 
 # --- Tag-gated no-harm invariant (grade_on_invariant negatives) ------
