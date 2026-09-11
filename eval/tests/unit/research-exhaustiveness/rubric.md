@@ -2,6 +2,50 @@
 
 Grading dimensions for research-exhaustiveness unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
+## Tool Arguments — this rubric owns the wiki_read fixture case
+
+**A `fixture_not_found` on a `wiki_read` for a page beyond the single one this
+test stocks is a gap in the test's fixtures, not a Tool Arguments defect. When
+the calls that DID match a fixture — above all `{State}_Vital_Records` or
+`{Country}_Civil_Registration`, the one page `## 1. Gather evidence` actually
+names — carry correct arguments, score Tool Arguments exactly 3. Not 2. A
+`fixture_not_found` of this kind contributes nothing to the score, so it cannot
+be the reason for a deduction of any size.**
+
+**Do not split the difference.** Partial is a deduction. If the only blemish is a
+sibling-page fixture miss, there is nothing to deduct for, and quoting this
+override while settling one band down is the failure mode this section exists to
+prevent — the `search-records` equivalent records three judges doing exactly
+that.
+
+This overrides the global "Critical: Tool Usage Errors" rule for this one case,
+under that prompt's own provision for a skill's rubric to claim a dimension and
+be deferred to.
+
+**Why it exists.** #2257 made a `wiki_read` an unconditional member of
+`## 1. Gather evidence`, and `test_fetches_registration_start_date` fails any run
+that omits it. But each test stocks exactly one wiki fixture, so a run that
+reaches past that page for a plausible sibling is penalised for making the class
+of call the suite now requires. Observed on
+`tentative-value-alternative-record-gate` in `v1_2026-09-10_14-33-15`: three
+`wiki_read` calls, the instructed `Iowa_Vital_Records` matched, `Iowa_Marriage_Records`
+and `Iowa_Census_Records` missed, and the judge scored 2 while naming the
+instructed call correct.
+
+**Scope this narrowly.** It covers a plausible sibling wiki page for the same
+jurisdiction — a record-type page a researcher would reach for next. It does not
+cover a malformed URL, the wrong jurisdiction, a tool the agent holds no grant
+for, or a `fixture_not_found` on any tool other than `wiki_read`. Those remain
+Tool Arguments defects under the global rule.
+
+**Wording alone has not held elsewhere — prefer stocking.**
+`eval/tests/unit/search-records/rubric.md` strengthened its equivalent paragraph
+twice and judges still scored 2 three times; it now concludes "do not reword this
+section again … stock its nil." Treat this section as mitigation, not a
+guarantee. If a sibling-page miss recurs here, stock a narrow nil fixture for
+that specific page rather than rewording this, or tighten the agent body so the
+speculative call is not made.
+
 ## Gate reasoning
 
 Did the skill work the 7-point stop criteria as a gate — in order, stopping at the first that fails, and naming it? An exhaustive declaration must be defensible against the criteria, not asserted unilaterally.

@@ -20,7 +20,7 @@
     "Should NOT set `q_001.exhaustive_declaration.declared` to true",
     "Should name at least one specific unsearched record type that bears on the parentage question (probate records, post-1860 censuses, naturalization papers, or Irish emigration manifests are all reasonable)",
     "Should reference the existing q_002 declaration only as background, not as the basis for declaring q_001 exhaustive — the two questions are scoped differently",
-    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema. A wiki_read to fetch the jurisdiction's registration start date IS expected: it is an unconditional member of the agent's `## 1. Gather evidence` list, so every run that reaches Step 1 makes at least one MCP call. Grade this dimension on the arguments of the calls that were actually made; score it N/A only if no tools are called at all."
+    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema."
   ],
   "mcp_fixtures": [
     "wiki-read-pennsylvania-vital-records"

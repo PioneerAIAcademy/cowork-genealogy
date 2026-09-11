@@ -21,7 +21,7 @@
     "Should name at least one decisive record type for a parentage question that was never searched — the subject's death record, baptism/church registers, or a parent's probate. The searches so far are census-only (1850/1860 era censuses), which cannot by themselves gate a parentage declaration under the 'named decisive records' rule.",
     "Noticing that the tree already cites Patrick Flynn's 1908 Schuylkill County death certificate (tree source S5) that was never examined in this project is the strongest form of the answer, but naming the death record as an unsearched decisive record type without spotting S5 still passes.",
     "Should recommend extending the plan (research-plan) to search the missing decisive record types — not an early termination, since the records are accessible, and not a declaration.",
-    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema. A wiki_read to fetch the jurisdiction's registration start date IS expected: it is an unconditional member of the agent's `## 1. Gather evidence` list, so every run that reaches Step 1 makes at least one MCP call. Grade this dimension on the arguments of the calls that were actually made; score it N/A only if no tools are called at all."
+    "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema."
   ],
   "mcp_fixtures": [
     "wiki-read-pennsylvania-vital-records"
