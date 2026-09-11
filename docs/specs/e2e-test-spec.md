@@ -856,10 +856,14 @@ recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
 
-This is harness-only. The plugin ships a `PreToolUse` hook that does bind in
-Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
-binds even under `bypassPermissions`), but its matcher covers the raw file-write
-tools and the device bridge's `device_commit_files` — it never sees an
+This is harness-only. The plugin ships a `PreToolUse` hook that binds on the
+hosted path — **measured**, by `make hook-smoke` — and is believed
+to bind in Cowork, which is a different loader and has no instrument but a live
+session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
+`bypassPermissions`). Its matcher is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`: the raw
+file-write tools, the device bridge's `device_commit_files`, and — since the
+caller-ownership rules shipped — `research_append`. It still never sees an
 `extraction_append`-shaped MCP tool call. Porting the per-context policy there
 is pending, and would mean widening the matcher to the MCP tool names as well as
 adding the rule; the harness comments carry the pointer.
