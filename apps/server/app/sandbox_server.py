@@ -218,12 +218,23 @@ class Hub:
                 except UnicodeEncodeError:
                     pass
             if kind == "turn_start":
-                # A QUEUED turn is starting. Hold the busy gate across the
-                # backlog: `turn_done` fires once per TURN, not once per
-                # backlog, so clearing on it left the UI idle while messages
-                # were still waiting - and the client's busy gate is what is
-                # supposed to stop a backlog forming.
+                # A turn is starting. Hold the busy gate across the backlog:
+                # `turn_done` fires once per TURN, not once per backlog, so
+                # clearing on it left the UI idle while messages were still
+                # waiting - and the client's busy gate is what is supposed to
+                # stop a backlog forming.
                 self._turn_active = True
+                # ANNOUNCE IT, do not just set it. `_turn_active` is sent to a
+                # client only at CONNECT time, so an already-connected client -
+                # precisely the one that built the backlog - never learns the
+                # gate was re-armed. It receives the raw `turn_start` frame, and
+                # ChatPane has no handler for that kind: it sets busy in send()
+                # and on a `turn_active` status, and clears it on `turn_done`.
+                # So without this broadcast the first `turn_done` drops that UI
+                # to idle for the whole backlog, which is the bug the gate
+                # exists to prevent. Asserting `_turn_active is True` does not
+                # catch it: the flag is true and the UI is still idle.
+                await self.broadcast({"type": "status", "state": "turn_active"})
             if kind == "turn_done":
                 self._turn_active = False
             await self.broadcast(msg)

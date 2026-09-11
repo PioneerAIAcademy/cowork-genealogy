@@ -482,6 +482,14 @@ def test_a_queued_turn_start_holds_the_busy_gate_across_the_backlog():
     queued, and the client's busy gate is what is supposed to stop a backlog
     forming in the first place - so a user who saw idle would keep sending.
     A queued turn's `turn_start` re-arms the gate. Issue #2062, review round 1.
+
+    ASSERTS THE BROADCAST, NOT THE FLAG, and that is the whole point of round 3.
+    `_turn_active` is sent to a client only at CONNECT time, so an
+    already-connected client - the one that built the backlog - never learns the
+    gate was re-armed. It gets the raw `turn_start` frame, and ChatPane has no
+    handler for that kind. So `assert hub._turn_active is True` passed while the
+    UI sat idle for the whole backlog: the flag was true and the screen was
+    wrong. Only a `turn_active` status frame on the wire reaches that client.
     """
     import app.sandbox_server as ss
 
@@ -494,15 +502,25 @@ def test_a_queued_turn_start_holds_the_busy_gate_across_the_backlog():
 
     hub = ss.Hub()
     hub._turn_active = True
+    sent = _broadcasts(hub)
     q: asyncio.Queue = asyncio.Queue()
     # Turn one ends, then a queued turn announces itself and ends.
     q.put_nowait(ev("turn_done"))
     q.put_nowait(ev("turn_start", queued=True))
     q.put_nowait(None)
     asyncio.run(hub._pump(q, FakeProc()))
+
     assert hub._turn_active is True, (
-        "the queued turn's turn_start did not re-arm the busy gate, so the UI "
-        "reports idle while a turn is running"
+        "the queued turn's turn_start did not re-arm the busy gate server-side"
+    )
+    busy = [
+        m for m in sent
+        if m.get("type") == "status" and m.get("state") == "turn_active"
+    ]
+    assert busy, (
+        "the gate was re-armed server-side but nothing went out on the wire, so "
+        "an already-connected client stays idle for the whole backlog. This is "
+        "the assertion the flag check could not make."
     )
 
 

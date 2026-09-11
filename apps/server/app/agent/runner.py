@@ -122,22 +122,28 @@ async def serve(agent, incoming: "asyncio.Queue", emit) -> None:
 
     def _start(text: str, *, queued: bool = False) -> None:
         nonlocal turn_task
-        if queued:
-            # A QUEUED turn announces itself, and the first turn does not.
-            #
-            # Without this, the only frames a turn produces are the agent's own
-            # plus the terminal `turn_done`, so between turn N's `turn_done` and
-            # turn N+1's first frame there is a silence the length of a full SDK
-            # round trip. Two things read that silence as "idle":
-            #   * `_drain_replay` (app/v1.py) returns after _DRAIN_IDLE of quiet,
-            #     so a 504 retry could send inside the gap and then read the
-            #     QUEUED turn's `turn_done` as its own reply.
-            #   * `sandbox_server` clears `_turn_active` on every `turn_done`, so
-            #     the UI went idle while messages were still queued - and the
-            #     client's busy gate is what is supposed to stop a backlog
-            #     forming in the first place.
-            # The first turn needs no announcement: its sender already knows.
-            emit({"kind": "turn_start", "queued": True})
+        # EVERY turn announces itself, queued or not.
+        #
+        # Without this, the only frames a turn produces are the agent's own plus
+        # the terminal `turn_done`, so before a turn's first frame there is a
+        # silence the length of a full SDK round trip. Two things read that
+        # silence as "idle":
+        #   * `_drain_replay` (app/v1.py) returns after _DRAIN_IDLE of quiet, so
+        #     a caller could send inside the gap and then read the RUNNING
+        #     turn's `turn_done` as its own reply.
+        #   * `sandbox_server` clears `_turn_active` on every `turn_done`, so
+        #     the UI went idle while messages were still queued - and the
+        #     client's busy gate is what is supposed to stop a backlog forming.
+        #
+        # This fired only for QUEUED turns at first, on the reasoning that a
+        # first turn's sender already knows it started. That reasoning is about
+        # the SENDER and the consumer that matters is the DRAIN: a sync
+        # `POST /messages` starts an UNqueued turn, so on its 504 retry there was
+        # no `turn_start`, `in_flight` stayed 0, and the drain returned inside
+        # the running turn. A first turn is quiet for a full SDK round trip
+        # before its first token, so the window is seconds wide, not a race.
+        # `queued` stays on the frame because the client distinguishes the two.
+        emit({"kind": "turn_start", "queued": queued})
         turn_task = asyncio.create_task(_run_turn(agent, text, emit))
         # Wakes this loop when the turn ends, which is what lets a queued message
         # start without `serve` having to poll or block on the turn (it must stay

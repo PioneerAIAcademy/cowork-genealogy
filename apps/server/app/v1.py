@@ -58,9 +58,13 @@ _DRAIN_IDLE = 0.5
 # quiet, which a wedged agent can do; without it the drain would wait forever
 # rather than let the caller's own turn timeout report the problem.
 # Strictly smaller than v1_turn_timeout_seconds (120), so no drain state can
-# consume a caller's entire budget: at 120 an orphaned `turn_start` in the
-# replay made the drain eat the whole turn timeout and the request 504 without
-# ever sending its message. The orphan is fixed at its source
+# cost a caller a second full timeout. The cost is ADDITIVE, not consuming:
+# `_collect_sync` drains BEFORE it computes `deadline`, so the turn always got
+# its own full budget and an orphaned `turn_start` in the replay made every
+# later call pay up to `_DRAIN_MAX` on top of it. (The first version of this
+# comment said the drain ate the turn's budget and 504'd without sending; that
+# was the review's own description, corrected a minute after this landed, and
+# it outlives the thread so it is fixed here rather than left.) The orphan is fixed at its source
 # (sandbox_server.py records the synthetic turn_done now); this keeps any future
 # orphan cheap rather than fatal. Same name and value as PR #2349 uses for the
 # same function, so the two land without a conflict.

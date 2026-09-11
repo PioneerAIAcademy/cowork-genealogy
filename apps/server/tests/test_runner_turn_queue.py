@@ -163,42 +163,62 @@ def test_a_stop_discards_the_backlog_it_was_pressed_on():
     )
 
 
-def test_a_queued_turn_announces_itself_and_the_first_turn_does_not():
-    """A queued turn emits `turn_start`; the turn its sender just asked for does not.
+def test_every_turn_announces_itself_and_the_queued_flag_still_distinguishes():
+    """EVERY turn emits `turn_start`; `queued` says which kind it is.
 
-    WHY THIS MATTERS beyond tidiness. Without it a turn's only frames are the
-    agent's own plus the terminal `turn_done`, so between turn N's `turn_done`
-    and turn N+1's first frame there is a silence the length of a full SDK round
-    trip - and two consumers read that silence as "idle":
+    WHY. Without an announcement a turn's only frames are the agent's own plus
+    the terminal `turn_done`, so before its first frame there is a silence the
+    length of a full SDK round trip, and two consumers read that silence as
+    "idle":
 
-      * `app/v1.py::_drain_replay` returns after `_DRAIN_IDLE` of quiet, so a 504
-        retry could send inside the gap and then read the QUEUED turn's
+      * `app/v1.py::_drain_replay` returns after `_DRAIN_IDLE` of quiet, so a
+        caller could send inside the gap and then read the RUNNING turn's
         `turn_done` as its own reply.
       * `sandbox_server` clears `_turn_active` on every `turn_done`, so the UI
         went idle while messages were still queued.
 
-    The first turn needs no announcement: its sender already knows it sent it.
+    THIS FIRED ONLY FOR QUEUED TURNS AT FIRST, and this test asserted that. The
+    reasoning was "the first turn's sender already knows it sent it" - which is
+    about the SENDER, while the consumer that matters is the DRAIN. A sync
+    `POST /messages` starts an UNqueued turn, so on its 504 retry there was no
+    `turn_start` at all, `in_flight` stayed 0, and the drain returned inside the
+    running turn. Review round 3 on issue #2062.
+
+    The `queued` flag is asserted per turn rather than just counted, because
+    emitting `turn_start` unconditionally with a hardcoded `queued: True` would
+    satisfy a count and lose the distinction the client uses.
     """
     agent = SlowAgent()
     events = asyncio.run(_drive(agent, ["first", "second", "third"]))
     starts = [e for e in events if e.get("kind") == "turn_start"]
 
     assert _answered(events) == ["first", "second", "third"]
-    assert len(starts) == 2, (
-        f"expected one turn_start per QUEUED turn (2 of 3), got {len(starts)}"
+    assert len(starts) == 3, (
+        f"expected one turn_start per turn (3 of 3), got {len(starts)}"
     )
-    assert all(e.get("queued") is True for e in starts)
+    assert [e.get("queued") for e in starts] == [False, True, True], (
+        "the first turn is not queued and the two behind it are; a hardcoded "
+        "queued flag would pass the count above and lose what the client reads"
+    )
 
-    # Ordering is the property the consumers rely on: each queued turn's
-    # announcement lands after the previous turn's turn_done, closing the gap.
+    # Ordering is the property the consumers rely on: every turn's announcement
+    # lands before its own frames, and each queued one after the previous
+    # turn_done, so there is no window a drain can mistake for idle.
     kinds = [e.get("kind") for e in events if e.get("kind") in ("turn_start", "turn_done")]
-    assert kinds == ["turn_done", "turn_start", "turn_done", "turn_start", "turn_done"], kinds
+    assert kinds == [
+        "turn_start", "turn_done", "turn_start", "turn_done", "turn_start", "turn_done",
+    ], kinds
 
 
-def test_a_lone_turn_emits_no_turn_start():
-    """The single-turn case, so the arm above cannot be satisfied by emitting
-    `turn_start` unconditionally."""
+def test_a_lone_turn_still_announces_itself():
+    """The single-turn case: the one a sync POST /messages starts.
+
+    This is the exact shape the drain missed. It used to assert NO `turn_start`
+    here, which is what made the first-turn gap invisible.
+    """
     agent = SlowAgent()
     events = asyncio.run(_drive(agent, ["only"]))
     assert _answered(events) == ["only"]
-    assert [e for e in events if e.get("kind") == "turn_start"] == []
+    starts = [e for e in events if e.get("kind") == "turn_start"]
+    assert len(starts) == 1, f"a lone turn must announce itself, got {len(starts)}"
+    assert starts[0].get("queued") is False
