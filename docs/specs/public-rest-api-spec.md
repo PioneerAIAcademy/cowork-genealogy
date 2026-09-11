@@ -141,12 +141,24 @@ wedged agent cannot hang it). Pinned by
 which fails on a drain that returns during the quiet stretch. Only then does the
 retry never mis-read another turn's frames as its own reply.
 
-**`turn_start` (`{"kind": "turn_start", "queued": true}`)** is emitted when a
-QUEUED turn begins, and not for the turn its sender just asked for. Two consumers
-need it: the drain above, and the client's busy gate - `turn_done` fires once per
-*turn*, not once per backlog, so a client that goes idle on it would report idle
-while messages were still waiting and invite the user to send more.
-`sandbox_server` re-arms `_turn_active` on it.
+**`turn_start` (`{"kind": "turn_start", "queued": <bool>}`)** is emitted when
+**every** turn begins; `queued` says whether it came off the backlog. It fired
+only for queued turns at first, on the reasoning that a first turn's sender
+already knows it started - but the consumer that matters is the *drain*, which is
+a different connection from the sender. A sync `POST /messages` starts an
+unqueued turn, so on its 504 retry there was no `turn_start`, `in_flight` stayed
+0, and the drain returned inside the running turn. Two consumers need it: the
+drain above, and the client's busy gate - `turn_done` fires once per *turn*, not
+once per backlog, so a client that goes idle on it would report idle while
+messages were still waiting and invite the user to send more. `sandbox_server`
+re-arms `_turn_active` on it **and broadcasts a `status: turn_active` frame**:
+`_turn_active` alone reaches a client only at connect time, so an
+already-connected client - precisely the one that built the backlog - would never
+learn the gate was re-armed.
+
+`_DRAIN_MAX` is **additive**, not a share of the turn budget: `_collect_sync`
+drains before it computes its deadline, so a caller can pay up to `_DRAIN_MAX` on
+top of `v1_turn_timeout_seconds`.
 
 **A stop discards the backlog.** `interrupt` clears every queued message before
 cancelling the running turn, so messages sent while the agent was busy are
