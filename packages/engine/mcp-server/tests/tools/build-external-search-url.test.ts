@@ -481,7 +481,7 @@ describe("build_external_search_url", () => {
       if (r.ok) return;
       expect(r.reason).toBe("unsupported_site");
       if (r.reason !== "unsupported_site") return;
-      const enumValues = new Set(VALIDATOR_ENUMS.external_site as readonly string[]);
+      const enumValues: ReadonlySet<string> = VALIDATOR_ENUMS.external_site;
       for (const site of r.supportedSites) {
         expect(enumValues.has(site), `${site} is not in the shared external_site enum`).toBe(true);
       }
