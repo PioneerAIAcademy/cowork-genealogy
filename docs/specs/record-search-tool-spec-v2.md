@@ -1804,7 +1804,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 61 | Read past other root fields (`FilmNumber`, `RecordGroup`, `UniqueId`) | Position independence within the array |
 | 62 | Survives the staged slim block, inline **and** in the sidecar | The staged case is the normal one; proven by sabotage |
 | 63 | Reaches `ranked[].batchNumber` on a `subjectId` search | The projection a subject-named search actually reads |
-| 64 | `results` is dropped when `ranked` replaces it, and survives all three shapes where it does not | The drop is conditional; a length-only condition silently fails the scoreable-no-match arm |
+| 64 | `results` is dropped when `ranked` replaces it, and survives every shape where it does not | The drop is conditional; a length-only condition silently fails the scoreable-no-match arm. The condition itself is unit-tested in `tests/utils/staged-compaction.test.ts`; this suite's `record-search-ranked-drop.test.ts` sibling pins that `record_search` wires it in and forwards `top`. |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63

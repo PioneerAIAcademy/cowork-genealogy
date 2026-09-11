@@ -17,7 +17,6 @@ import type {
 /** Match-score fan-out concurrency (deliberately higher than same_person's
  *  conservative PAIR_CONCURRENCY=5; confirmed with the matchTwoExamples dev). */
 const SCORE_CONCURRENCY = 10;
-/** Default number of top-ranked stubs returned. */
 /** A subject whose every score sits at or below this floor is unresolvable. */
 const DEGENERATE_FLOOR = 0.01;
 /** Append-only calibration log; a `.jsonl` name stays clear of the results

@@ -1150,8 +1150,11 @@ export async function recordSearchTool(
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
     }
-    // Same rows, two shapes, on every subject-named search until now. Runs
-    // after the try/catch so a ranking failure keeps `results` intact.
+    // Same rows, two shapes, on every subject-named search until now.
+    // Outside the try/catch because a failure to drop is not a ranking failure
+    // and must not be reported as one. Note this is not what protects `results`
+    // when ranking throws — `out.ranked` is simply never assigned on that path,
+    // so the drop no-ops wherever it sits.
     dropInlineResultsWhenRanked(out);
   }
 

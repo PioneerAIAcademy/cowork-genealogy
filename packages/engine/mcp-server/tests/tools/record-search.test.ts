@@ -1930,6 +1930,42 @@ describe("#1592 batchNumber on results", () => {
     }
   });
 
+  it("carries treeMatches onto the ranked stubs, the shape a subjectId search reads", async () => {
+    // record_search advertises "Family-Tree-person match suggestions" in its own
+    // tool description, and a subject-named search reads `ranked`, not
+    // `results`. Before the stub carried treeMatches, the dominant call shape
+    // silently had none.
+    const dir = await mkdtemp(join(tmpdir(), "record-search-rank-hints-"));
+    try {
+      await writeFile(
+        join(dir, "tree.gedcomx.json"),
+        JSON.stringify({
+          persons: [
+            {
+              id: "I1",
+              names: [{ preferred: true, given: "Abraham", surname: "Lincoln" }],
+              facts: [{ type: "Birth", date: "1809", place: "Hardin, Kentucky, United States" }],
+            },
+          ],
+        }),
+        "utf-8",
+      );
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+      );
+
+      const out = await recordSearchTool({
+        surname: "Lincoln",
+        projectPath: dir,
+        subjectId: "I1",
+      });
+
+      expect(out.ranked!.matches[0].treeMatches?.length).toBeGreaterThan(0);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("reaches the ranked stubs, the projection a subjectId search actually reads", async () => {
     const dir = await mkdtemp(join(tmpdir(), "record-search-batch-rank-"));
     try {

@@ -316,7 +316,7 @@ it is matched on `labelId`.
 
 Standard `allToolSchemas` entry. `name: "rank_search_matches"`, description
 summarizing "re-rank staged record_search results by match score against a tree
-subject; returns the top-N matches." `inputSchema` with the five Input fields;
+subject; returns every scored candidate." `inputSchema` with the five Input fields;
 `projectPath`, `stagedResultsRef`, `subjectId` required. `additionalProperties:
 false`.
 
