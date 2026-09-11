@@ -12,6 +12,7 @@
     "scenario": null
   },
   "mcp_fixtures": [
+    "wiki-search-guardianship-stepchildren",
     "wiki-search-any",
     "wikipedia-search-any"
   ],

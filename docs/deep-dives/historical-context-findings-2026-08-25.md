@@ -129,6 +129,13 @@ the new test fired (via `wikipedia_search`). The test still exercises prohibitio
 line 11 through the error path; the empty-results branch remains unexercised on this
 particular run and is worth checking on a future rerun.
 
+**Considered and rejected (issue #2283):** keeping `ut_historical_context_gsm` on
+`-any`-only fixtures and adding a `judge_context` line permitting a single scoped
+hedge — set aside because `_014` above is the deliberate no-coverage test (`gsm` was
+never meant to be one too) and because it would rely on the judge obeying an
+instruction, which issue #2191 documents it not doing; a topical fixture
+(`wiki-search-guardianship-stepchildren`) was added instead.
+
 ---
 
 ## F4 — the skill fabricated a false "system hiccup" to justify skipping research
