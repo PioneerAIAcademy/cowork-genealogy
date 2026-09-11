@@ -23,7 +23,7 @@
     "@tabler/icons-react": "^3.45.0",
     "@tanstack/react-query": "^5.101.4",
     "mantine-form-zod-resolver": "1.3.0",
-    "next": "15.5.21",
+    "next": "15.5.25",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^3.24.1"
@@ -47,6 +47,6 @@
   "overrides": {
     "react-textarea-autosize": "8.5.9",
     "postcss": "$postcss",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.4"
   }
 }
