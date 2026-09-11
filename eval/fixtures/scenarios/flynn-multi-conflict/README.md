@@ -7,6 +7,8 @@ Patrick Flynn parentage research with two unresolved conflicts active simultaneo
   - `c_002` — identity (which Patrick Flynn in 1850 Schuylkill County is the subject?), identity conflict, status: `unresolved`
 - **Both conflicts have:** null `preferred_assertion_id`, null `independence_analysis`, null `weighing_analysis`, null `resolution_rationale`. Both list `q_001` in `blocks_question_ids`.
 - **Everything else:** Same as `mid-research-flynn`.
+- **`ps_001.resolved_conflict_ids` is `[]`,** not `["c_001"]` as the parent has it: `c_001` is unresolved here, and a proof summary may only cite a conflict that is `resolved` or `moot` (issue #1972 V5, enforced by `validator.ts`).
+
 
 ## Used by
 
