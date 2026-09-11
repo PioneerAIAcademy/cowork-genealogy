@@ -62,12 +62,13 @@ reasoning that produced it.
 
 Three skills exist only to front an agent — to let a user invoke it without
 knowing the agent's name, and to give it a unit-eval suite. The orchestrator
-reaches the agent **directly** even where `research/SKILL.md`'s routing table
-still names the skill: both committed runs that postdate the `proof-conclusion`
-pair spawned the agent and called the skill zero times. So the skill is not on
-every route, and a rule stated only in the skill body is off during production
-research — measured on two runs, and unmeasured for the other pairs
-(`docs/skill-to-agent-pair-conversion.md`, "What is still open").
+reaches the agent **directly** — the skill is not a layer in front of it, so a
+rule stated only in the skill body is off during production research.
+
+`research/SKILL.md`'s routing table has not caught up: its Invoke cells still
+spell bare skill names, and `gps-mentor` is the only agent it delegates to by
+name. The table is behind this decision, not an argument against it — issue
+#2490 adds the first row that names an agent.
 
 Everything load-bearing therefore goes in the agent, and the routing skill
 carries only five things: frontmatter, the narration line, resolution of the
