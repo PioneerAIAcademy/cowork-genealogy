@@ -520,39 +520,53 @@ describe("recordSearchTool error propagation", () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
-  // #1316 (REPLACES the old single-500 "throws on other non-OK statuses" test):
-  // 5xx is now transient — retried 3× and, when still failing, surfaced as the
-  // explicit terminal error, NEVER as a short/empty result set.
-  it("retries 5xx and throws the terminal transient-failure error when exhausted", async () => {
+  // #1316 / #2054: 5xx is transient — retried by fetchWithRetry then, when
+  // exhausted, the last Response is returned and falls through to !response.ok.
+  it("retries 5xx and throws the generic API-error when exhausted", async () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 503,
       statusText: "Service Unavailable",
+      headers: new Headers(),
     });
     await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /did not complete after 3 attempts.*transient failure, NOT an empty result/s
+      /coverage is unknown/
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
-  // #1316: 429 is the OTHER transient status. The 5xx test above proves the
-  // retry machinery, but 429 is a separate operand of `status === 429 || status
-  // >= 500` — only an explicit 429 case guards that arm. Without it a regression
-  // dropping the `=== 429` check would fall through to the generic error below,
-  // never retry, and the 5xx test would still pass.
-  it("retries 429 and throws the terminal transient-failure error when exhausted", async () => {
+  // #2054: 429 then 200 → returns the successful result
+  it("recovers from a transient 429 and returns the search result", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const result = await recordSearchTool({ surname: "Lincoln" });
+    expect(result.returned).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // #1316 / #2054: 429 is retried alongside 5xx by fetchWithRetry.
+  it("retries 429 and throws when exhausted", async () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 429,
       statusText: "Too Many Requests",
+      headers: new Headers(),
     });
     await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /did not complete after 3 attempts.*transient failure, NOT an empty result/s
+      /rate limit/
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
-  // #1316: a timeout (AbortSignal firing → fetch rejects) is transient too.
+  // #1316 / #2054: a timeout (AbortSignal firing → fetch rejects) is transient
+  // too. fetchWithRetry re-throws the last error after exhaustion, caught by
+  // the try/catch in recordSearchTool.
   it("retries a timeout and throws the terminal error when exhausted", async () => {
     mockFetch.mockRejectedValue(
       Object.assign(new Error("The operation timed out"), {
@@ -560,7 +574,7 @@ describe("recordSearchTool error propagation", () => {
       })
     );
     await expect(recordSearchTool({ surname: "Lincoln" })).rejects.toThrow(
-      /did not complete after 3 attempts.*network timeout or transient error/s
+      /did not complete after retries.*network timeout or transient error/s
     );
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
