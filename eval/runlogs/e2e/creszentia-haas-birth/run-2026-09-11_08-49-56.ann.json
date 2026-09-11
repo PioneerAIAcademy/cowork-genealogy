@@ -1,0 +1,15 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial",
+    "f3": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Exact birth date (28 May 1830) correctly established and the parents are encoded, but the birth place (Durbach) is missing from the birth fact - Durbach appears only on the christening. The finding includes the place, so it is not fully satisfied. Date-and-place completeness call.",
+    "f2": "Christening place (Durbach, Offenburg, Baden) is correct, but the 29 May 1830 date is absent entirely.",
+    "f3": "Correctly declined the hinted 25/26 May 1835 Lichtental candidate - no 1835 date, no Lichtental, no Steinel persona anywhere in the final tree. Absence of the incorrect assertion is sufficient for an avoid finding, even though no explicit rejected hypothesis was recorded."
+  },
+  "annotator": "Emruthwill",
+  "findings_hash": "26bc47aebca5eea353d300186b946c7e00ecd3d05fb23c9a6002f7d0e2b9da44"
+}
