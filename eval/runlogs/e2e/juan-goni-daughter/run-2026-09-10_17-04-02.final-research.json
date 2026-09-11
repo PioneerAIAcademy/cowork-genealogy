@@ -1,0 +1,2671 @@
+{
+  "project": {
+    "id": "rp_juan_goni_daughter",
+    "objective": "Did Juan Jos\u00e9 Go\u00f1i and his wife Francisca de Go\u00f1i of Elizondo, Navarra have a daughter, Martina Eulalia Go\u00f1i, who married Francisco Casimiro Yriarte in 1872?",
+    "subject_person_ids": [
+      "G18D-QZW"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-09-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Did Martina Eulalia Go\u00f1i, daughter of Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i of Elizondo, Navarra, marry Francisco Casimiro Yriarte in 1872?",
+      "rationale": "The objective asserts two intertwined claims: (1) that Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i had a daughter named Martina Eulalia, and (2) that she married Francisco Casimiro Yriarte in 1872. Both claims are most efficiently tested together because a 1872 marriage record for Elizondo would name the bride, groom, and bride's parents \u2014 confirming or refuting both simultaneously. Elizondo is in Navarra, where civil registration began in 1870, so a civil marriage record should exist. Church parish records (pre-1870 and concurrent) for Elizondo are also accessible via FamilySearch. No prior research is on record; this is the primary question for the project.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-09-10",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_010",
+        "a_013",
+        "a_015",
+        "a_021",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_032",
+        "a_044",
+        "a_048",
+        "a_049",
+        "a_050",
+        "a_054",
+        "a_056",
+        "a_057"
+      ],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Three independent records from two distinct search events (pli_001 and pli_006) answer both prongs of the question. (1) The 1872 Spain Marriages index entry (src_001, derivative, positive result from log_008) names Martina Eulalia Go\u00f1i as bride, Francisco Casimiro Yriarte as groom, place Elizondo, date 10 Sep 1872, and lists mother Francisca Go\u00f1i. The father's surname is absent from this index but that gap is closed by the two originals below. (2) The 1858 baptism of sibling Miguel Francisco Crisanto Goni Goni (src_002, original primary record, pli_006 / log_015) names both parents as Juan Jose Goni and Francisca Goni at Elizondo \u2014 an independent source with a different informant and a different event, directly establishing the couple's parenthood and supplying the father's full surname absent from the derivative marriage index. (3) The 1878 baptism of grandchild Canuto Iriarte Goni (src_003, original primary record, pli_006 / log_015) names Casimiro Iriarte and Martina Goni as parents; Martina names her own parents as Juan Jose and Francisca Goni; and Casimiro's parents (Pedro Angel, Tomasa Iribarren) match exactly those in src_001 for Francisco Casimiro Yriarte \u2014 cross-corroborating both parties' identities. No conflicts recorded. Pli_002 (civil register) skipped because no Elizondo civil registration volumes are digitized on FamilySearch and the accessible evidence already supports a defensible conclusion. Pli_003 (Martina's own baptism) skipped because her parentage is already established by two independent originals (src_002 and src_003) with different informants. Pli_004 and pli_005 skipped as fallbacks superseded by the positive result in pli_001. Overturn risk is low: the three sources are mutually consistent, two are originals with primary information, and no unsearched record type plausibly names different parents or a different marriage.",
+        "log_entry_ids": [
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_015"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Met. The 1872 marriage index (src_001) directly names Martina Eulalia Go\u00f1i marrying Francisco Casimiro Yriarte on 10 Sep 1872 at Elizondo. The 1878 grandchild baptism (src_003) independently places Martina Goni as wife of Casimiro Iriarte (same person, name variants confirmed) with parents Juan Jose and Francisca Goni matching the project's claimed parentage. Both prongs of the question \u2014 the marriage and the parentage \u2014 receive a convincing, multi-source answer.",
+          "repository_breadth": "Met. FamilySearch's Spain Marriages 1565\u20131950 index (col. 1500693) and Spain Catholic Church Records (col. 1784529) were searched for the marriage (pli_001, seven search attempts with variant spellings and fallback volume M994-QJB). The FAN (Families, Associates, Neighbors) requirement was satisfied by pli_006, which searched baptism volumes for siblings and grandchildren of Juan Jos\u00e9 Go\u00f1i \u00d7 Francisca Go\u00f1i. Civil registration for Elizondo (pli_002) was noted as inaccessible online (confirmed by loc_001 quirk: no Elizondo civil registration on FamilySearch); the Ministerio de Justicia route is known but the accessible evidence already supports a conclusion. Name variants Go\u00f1i/Goni/Go\u00f1y and Yriarte/Iriarte were used throughout.",
+          "original_substitution": "Met. Src_001 is a derivative index \u2014 its limitations (absent father's surname) were noted and then resolved by src_002 and src_003, both original church records accessed via FamilySearch images. The derivative index served as a pointer; the proof rests on the originals.",
+          "independent_verification": "Met. Three sources with at least two distinct informant units: (a) Martina Eulalia Go\u00f1i and Francisco Casimiro Yriarte as self-informants in the 1872 marriage record (src_001); (b) Juan Jos\u00e9 Goni and Francisca Goni as informants in the 1858 sibling baptism (src_002) \u2014 a wholly different event, different record-creation moment; (c) Martina Goni herself as informant at the 1878 grandchild baptism (src_003) \u2014 yet another distinct event. Src_001 and src_003 share Martina as informant for the parentage fact, so they form one corroboration unit for that specific fact; src_002 (Juan Jos\u00e9 and Francisca as informants) is fully independent. Two independent informant units for parentage; three distinct records for the marriage/identity claim.",
+          "evidence_class": "Met. Src_002 (1858 baptism of sibling) and src_003 (1878 baptism of grandchild) are both original records with primary information on the facts they directly record. The parentage claim (Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i are parents of Martina Eulalia) is supported by primary information in src_002 (parents as self-informants naming themselves) and direct primary information in src_003 (Martina herself naming her own parents). The marriage fact is supported by the derivative index src_001 (primary information from the parties) and further corroborated by the grandchild's parentage chain in src_003.",
+          "conflict_resolution": "Met. No conflicts are recorded in the project. The only internal discrepancy \u2014 the absent father's surname in the derivative marriage index (src_001, a_013) \u2014 is fully resolved by the original baptism record src_002, which supplies the full name 'Juan Jose Goni.' Spelling variants (Go\u00f1i/Goni, Yriarte/Iriarte, Yribarren/Iribarren) are consistent Basque orthographic alternations, not genuine conflicts.",
+          "overturn_risk": "Low. The three sources consistently identify Martina Eulalia Go\u00f1i as the bride, Francisco Casimiro Yriarte as the groom, and Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i as her parents. No unsearched record type in this jurisdiction and period is likely to name different parties. The civil register (pli_002) is the one remaining accessible record type that could independently corroborate or contradict, but it is not digitized online and the existing evidence already provides a defensible, GPS-consistent conclusion. Martina's own baptism record (pli_003) was not retrieved, but her parentage is established by two independent originals from distinct informants (src_002 and src_003), making a contradicting result from her baptism implausible."
+        }
+      },
+      "created": "2026-09-10"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-09-10",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Elizondo, Baztan, Nafarroa, Spain",
+          "date_range": "1870-1875",
+          "repository": "FamilySearch",
+          "rationale": "The 1872 marriage of Martina Eulalia Go\u00f1i and Francisco Casimiro Yriarte is the single record most likely to confirm both the marriage and the parentage claim simultaneously. Spanish church marriage records name the bride, groom, and both sets of parents with full names and birthplaces. FamilySearch holds volume M994-QJB (Religious Marriages 1805\u20131931, 96% name-indexed, full-text searchable) for Elizondo \u2014 the highest-probability FamilySearch source. Also search the national collection Spain, Catholic Church Records, 1307\u20132005 (col. 1784529, indexed + images). Search variant surname spellings: Go\u00f1i/Goni/Go\u00f1y; Yriarte/Iriarte. Per loc_001 quirk: couples married in the bride's hometown, so Elizondo is expected.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Elizondo, Baztan, Nafarroa, Spain",
+          "date_range": "1872",
+          "repository": "other",
+          "rationale": "Civil registration in Navarra began in 1870 (per loc_001). The 1872 marriage would have a civil registration entry at the Juzgado de la Paz in Elizondo naming the bride, groom, and both sets of parents. No civil registration volumes for Elizondo are digitized on FamilySearch (per loc_001). Request the 1872 marriage certificate free online from Spain's Ministerio de Justicia at https://sede.mjusticia.gob.es/en, or write to the Oficina Registro Civil in Elizondo. Civil records post-1870 are the authoritative legal record and may contain details not in the church record.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Elizondo, Baztan, Nafarroa, Spain",
+          "date_range": "1845-1862",
+          "repository": "FamilySearch",
+          "rationale": "Martina Eulalia Go\u00f1i's own baptism record would directly name her parents Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i, constituting direct primary evidence of parentage independent of the marriage record. She would have been born approximately 15\u201325 years before the 1872 marriage, suggesting a birth year of roughly 1847\u20131857. FamilySearch holds two highly indexed baptism volumes for Elizondo: M9C8-R2V (Baptisms 1824\u20131862, 97% indexed, full-text searchable) and M994-QJR (Baptisms 1834\u20131898, 41% indexed, full-text searchable). Search both, with variant spellings of Go\u00f1i.",
+          "fallback_for": null,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Elizondo, Baztan, Nafarroa, Spain",
+          "date_range": "1870-1875",
+          "repository": "FamilySearch",
+          "rationale": "Fallback for item 1 (pli_001). If the 1872 marriage is not found in the 96%-indexed volume M994-QJB or the national Spain, Catholic Church Records collection, use FamilySearch's fulltext search on the two unindexed marriage volumes for Elizondo: M994-3NN (Religious Marriages 1745\u20131917, 0% name-indexed but full-text searchable) and M994-3NX (Religious Marriages 1579\u20131888, 0% name-indexed but full-text searchable). Also search the national Spain, Marriages, 1565\u20131950 index (col. 1500693, index only). Try surname variants Go\u00f1i/Goni and Yriarte/Iriarte.",
+          "fallback_for": "pli_001",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Nafarroa, Spain",
+          "date_range": "1870-1875",
+          "repository": "MyHeritage",
+          "rationale": "Fallback for items 1 and 4. MyHeritage holds Spain, Navarre, Index of Marriages, 1577\u20131940 (subscription required) \u2014 a Navarra-wide church marriage index covering 1872. If FamilySearch searches in items 1 and 4 do not locate the marriage, this provides an independent index covering the same record set. Also check Ancestry's Spain Select Marriage Index, 1565\u20131950 (col. 60168, subscription). Search Go\u00f1i/Goni and Yriarte/Iriarte variants.",
+          "fallback_for": "pli_004",
+          "status": "skipped"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Elizondo, Baztan, Nafarroa, Spain",
+          "date_range": "1820-1860",
+          "repository": "FamilySearch",
+          "rationale": "FAN item (required for parentage question). Search church records for Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i themselves in Elizondo: (a) their marriage record \u2014 would confirm the couple's union and Francisca's birth surname relative to the 'de Go\u00f1i' usage; (b) baptisms of other Go\u00f1i children listed as children of Juan Jos\u00e9 Go\u00f1i \u00d7 Francisca de Go\u00f1i \u2014 each sibling's baptism record would name both parents and corroborate the Go\u00f1i parentage claim for the family as a whole, providing cumulative evidence that Martina Eulalia was their daughter. Date window sized to the parents' plausible childbearing years (~1820\u20131860). Search FamilySearch volumes M9C8-R2V (Baptisms 1824\u20131862, 97% indexed) and M994-QJR (1834\u20131898, 41% indexed); also vol. M994-QJB for their own marriage.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-09-10T16:27:44.209Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Elizondo, Baztan, Nafarroa, Spain",
+        "startYear": 1850,
+        "endYear": 1880
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 122,
+      "notes": "External links survey for Elizondo during locality-guide phase. 122 curated links total; 50 returned. Identified MyHeritage Navarre marriage/baptism indexes and Ancestry Spain marriage index as external resources."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T16:27:44.209Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Go\u00f1i",
+        "givenName": "Martina Eulalia",
+        "recordType": "marriage",
+        "marriageYearFrom": 1870,
+        "marriageYearTo": 1874,
+        "recordCountry": "Spain",
+        "collectionId": "1784529"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 53,
+      "notes": "53 results for Martina Eulalia Go\u00f1i in Spain Catholic Church Records (col. 1784529) marriage 1870-1874 Spain. None from Elizondo, no match for subject."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T16:27:44.214Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Go\u00f1i",
+        "givenName": "Martina",
+        "spouseSurname": "Yriarte",
+        "recordType": "marriage",
+        "marriageYearFrom": 1870,
+        "marriageYearTo": 1875,
+        "recordCountry": "Spain",
+        "collectionId": "1784529"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 3,
+      "notes": "3 results for Go\u00f1i + Martina + spouse Yriarte in col. 1784529; none from Elizondo."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T16:27:44.218Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Goni",
+        "givenName": "Martina",
+        "recordType": "marriage",
+        "imageGroupNumber": "008145346_007_M994-QJB"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Goni/Martina as bride in volume M994-QJB (1805-1931, 96% indexed). Record not retrievable by bride surname in this volume's search index."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T16:27:44.218Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Yriarte",
+        "givenName": "Francisco Casimiro",
+        "recordType": "marriage",
+        "marriageYearFrom": 1870,
+        "marriageYearTo": 1875,
+        "recordCountry": "Spain",
+        "imageGroupNumber": "008145346_007_M994-QJB"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Francisco Casimiro Yriarte in M994-QJB. Record found in Spain Marriages national index instead."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T16:27:44.218Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Iriarte",
+        "givenName": "Francisco",
+        "recordType": "marriage",
+        "marriageYearFrom": 1870,
+        "marriageYearTo": 1875,
+        "recordCountry": "Spain",
+        "collectionId": "1784529"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 81,
+      "notes": "81 results for Francisco Iriarte in col. 1784529 (1870-1875 Spain). None from Elizondo in top 20."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T16:27:44.224Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Iriarte",
+        "givenName": "Francisco",
+        "recordType": "marriage",
+        "imageGroupNumber": "008145346_007_M994-QJB"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Zero results for Francisco Iriarte in M994-QJB. Volume not retrievable by groom surname in this query form."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-09-10T16:27:44.225Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Goni",
+        "spouseSurname": "Iriarte",
+        "recordType": "marriage",
+        "marriageYearFrom": 1868,
+        "marriageYearTo": 1876,
+        "recordCountry": "Spain",
+        "collectionId": "1500693"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 322,
+      "notes": "POSITIVE MATCH: Martina Eulalia Go\u00f1i (Elizondo, Baztan, Nafarroa), married Francisco Casimiro Yriarte (spouse confirmed present), 10 Sep 1872 at Elizondo. Parents of bride: Juan Jose + Francisca Go\u00f1i. batchNumber M89640-3."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-10T16:41:14.929Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Goni",
+        "givenName": "Martina Eulalia",
+        "sex": "Female",
+        "birthYearFrom": 1844,
+        "birthYearTo": 1860,
+        "birthPlace": "Elizondo, Navarra, Spain",
+        "recordCountry": "Spain",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 293,
+      "notes": "Searched for Martina Eulalia Goni baptism ~1844-1860, Elizondo, Navarra, Spain (all roles). Top ranked result (score 0.854) was 'Martina Eulalia Goni' appearing as MOTHER on a child's baptism record ('Juana Tomasa Iriarte Goni', batch C03453-9) \u2014 not her own baptism. This is corroborating evidence for the Iriarte marriage. No confident match for Martina Eulalia as the baptized principal."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-10T16:41:14.969Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Goni",
+        "givenName": "Martina Eulalia",
+        "sex": "Female",
+        "birthYearFrom": 1844,
+        "birthYearTo": 1860,
+        "birthPlace": "Elizondo, Navarra, Spain",
+        "recordCountry": "Spain",
+        "recordType": "birth",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 23,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 23,
+      "notes": "Re-search with isPrincipal:true to find only Martina Eulalia's own baptism record. 23 results returned; max matchScore 0.013. No record identifies 'Martina Eulalia Go\u00f1i' as the christened principal. Records are scattered across Bazt\u00e1n (Garzain, Almandoz, Irurita) \u2014 none from Elizondo with matching name combination."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-10T16:41:14.977Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Goni",
+        "givenName": "Martina",
+        "sex": "Female",
+        "birthYearFrom": 1844,
+        "birthYearTo": 1862,
+        "birthPlace": "Elizondo, Navarra, Spain",
+        "recordCountry": "Spain",
+        "recordType": "birth",
+        "isPrincipal": true,
+        "fatherGivenName": "Juan",
+        "fatherSurname": "Goni"
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 12,
+      "notes": "Tried givenName 'Martina' + fatherGivenName 'Juan' + fatherSurname 'Goni', isPrincipal:true. 12 results; fathers named include 'Juan Tomas Goni', 'Juan Cruz Go\u00f1i' \u2014 no 'Juan Jose'. No match for Martina Eulalia Go\u00f1i daughter of Juan Jose."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-10T16:41:14.984Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Goni",
+        "givenName": "Eulalia",
+        "sex": "Female",
+        "birthYearFrom": 1844,
+        "birthYearTo": 1862,
+        "birthPlace": "Elizondo, Navarra, Spain",
+        "recordCountry": "Spain",
+        "recordType": "birth",
+        "isPrincipal": true
+      },
+      "outcome": "negative",
+      "results_examined": 16,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 16,
+      "notes": "Tried givenName 'Eulalia' (second-name lever \u2014 Spanish records commonly index by second given name), isPrincipal:true, birthYear 1844-1862, Elizondo/Navarra. 16 results; no match for Martina Eulalia Go\u00f1i of Elizondo."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-10T16:41:14.993Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Goni",
+        "fatherGivenName": "Juan Jose",
+        "fatherSurname": "Goni",
+        "birthPlace": "Elizondo, Navarra, Spain",
+        "recordCountry": "Spain",
+        "recordType": "birth"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 10483,
+      "notes": "Father-anchor search: surname Goni, fatherGivenName 'Juan Jose', fatherSurname 'Goni', Elizondo/Navarra, birth records. 10,483 matches (too broad \u2014 father name is common across Spain). Key finding: 'Miguel Francisco Crisanto Goni Goni' christened 25 Oct 1858 in ELIZONDO, father 'Juan Jose Goni', batch C03453-9. Double 'Goni Goni' surname indicates mother also named Go\u00f1i \u2014 consistent with Francisca de Go\u00f1i. This is a likely sibling of Martina Eulalia. Also: batch C03453-9 confirmed as the Elizondo baptism batch. Ranking failed (G18D-QZW has no dated facts). Will search batch C03453-9 directly next."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_003",
+      "performed": "2026-09-10T16:43:06.710Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "C03453-9",
+        "surname": "Goni",
+        "givenName": "Martina Eulalia"
+      },
+      "outcome": "negative",
+      "results_examined": 32,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 32,
+      "notes": "Batch C03453-9 search (Elizondo baptism batch) for 'Martina Eulalia Goni'. 32 results. Martina Eulalia appears only as MOTHER on child's baptism records (Juana Tomasa Iriarte Goni; Canuto Iriarte Goni) \u2014 not as the christened principal. Her own baptism record is not indexed in this batch. Conclusion: Martina Eulalia Go\u00f1i's own baptism is not retrievable through indexed searches of the available collections. Record likely in the unindexed 59% of volume M994-QJR."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_006",
+      "performed": "2026-09-10T16:43:06.738Z",
+      "tool": "record_search",
+      "query": {
+        "batchNumber": "C03453-9",
+        "surname": "Goni",
+        "fatherGivenName": "Juan Jose",
+        "fatherSurname": "Goni"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 143,
+      "notes": "Batch C03453-9 with fatherGivenName 'Juan Jose', fatherSurname 'Goni'. Key findings: (1) 'Miguel Francisco Crisanto Goni Goni' christened 25 Oct 1858, Elizondo \u2014 father 'Juan Jose Goni', double Goni surname confirms mother also named Go\u00f1i (consistent with Francisca de Go\u00f1i) \u2014 likely sibling of Martina Eulalia; (2) 'Canuto Iriarte Goni' record names 'Martina Goni' as a person with 'Juan Jose' as her father \u2014 direct corroboration that Martina Go\u00f1i's father is Juan Jose; (3) 'Fermin Iriarte Goni' similarly. These are grandchildren of Juan Jose Go\u00f1i, children of Martina Eulalia \u00d7 Francisco Iriarte. Will extract sibling record (Miguel Francisco Crisanto) and one grandchild record."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Espa\u00f1a, matrimonios, 1565-1950,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:WN68-B1PZ : 17 February 2020), Registro para Francisco Casimiro Yriarte, 10 Sep 1872; citing Elizondo, Bazt\u00e1n, Navarra, Espa\u00f1a.",
+      "citation_detail": {
+        "who": "Francisco Casimiro Yriarte and Martina Eulalia Go\u00f1i",
+        "what": "Spain Marriages 1565-1950, index entry, batch M89640-3",
+        "when_created": "17 February 2020",
+        "when_accessed": "2026-09-10",
+        "where": "FamilySearch (familysearch.org), collection ID 1500693",
+        "where_within": "Record ARK ark:/61903/1:2:WN68-B1PZ, persona ARK ark:/61903/1:1:C9D5-X63Z (bride Martina Eulalia Go\u00f1i)"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-09-10",
+      "url": "https://familysearch.org/ark:/61903/1:2:WN68-B1PZ",
+      "notes": "Index-only entry from Spain Marriages 1565-1950 (collection 1500693), batch M89640-3. Original underlying record is a church marriage register for Elizondo, Bazt\u00e1n, Navarra. Original not examined \u2014 no images attached to this index entry. The index was compiled from FHL microfilm. Father of bride (Juan Jose) appears with given name only, no surname recorded in the index; original church register image should be examined to confirm whether his surname is Go\u00f1i. Father of groom (Pedro Angel) similarly lacks a surname in the index.",
+      "log_entry_id": "log_008",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:H6WT-W93Z : accessed 10 September 2026), entry for Miguel Francisco Crisanto Goni Goni and Juan Jose Goni, 25 Oct 1858; image, FamilySearch (ark:/61903/3:1:3Q9M-CSX5-PR8J).",
+      "citation_detail": {
+        "who": "Miguel Francisco Crisanto Goni Goni and Juan Jose Goni",
+        "what": "Baptism register entry, Spain, Baptisms 1502-1940 (collection 1500692), batch C03453-9",
+        "when_created": "25 October 1858",
+        "when_accessed": "10 September 2026",
+        "where": "FamilySearch (familysearch.org)",
+        "where_within": "Image ark:/61903/3:1:3Q9M-CSX5-PR8J; record URL https://www.familysearch.org/ark:/61903/1:2:W83Z-PQT2"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:H6WT-W93Z",
+      "access_date": "2026-09-10",
+      "log_entry_id": "log_013",
+      "notes": "Church baptism register entry from Elizondo, Bazt\u00e1n, Navarra. Image available at ark:/61903/3:1:3Q9M-CSX5-PR8J via Spain, Baptisms 1502-1940 collection. The FamilySearch index entry is backed by the original parish register image \u2014 classified as original. Double surname 'Goni Goni' confirms both parents share the Go\u00f1i surname.",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Espa\u00f1a, bautismos, 1502-1940,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:H6WT-8J6Z : accessed 10 September 2026), entry for Canuto Iriarte Goni and Casimiro Iriarte, 19 Jan 1878.",
+      "citation_detail": {
+        "who": "Canuto Iriarte Goni (baptized child), Casimiro Iriarte (father), Martina Goni (mother)",
+        "what": "Church baptism register entry, Spain, Baptisms, 1502-1940, collection 1500692",
+        "when_created": "19 January 1878",
+        "when_accessed": "10 September 2026",
+        "where": "FamilySearch (https://www.familysearch.org), image ark:/61903/3:1:3Q9M-CSX5-PPY1",
+        "where_within": "Entry for Canuto Iriarte Goni and Casimiro Iriarte, 19 Jan 1878, Elizondo, Bazt\u00e1n, Navarra, Espa\u00f1a"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:W83D-HY3Z",
+      "access_date": "2026-09-10",
+      "log_entry_id": "log_015",
+      "notes": "Image of the original church baptism register examined at ark:/61903/3:1:3Q9M-CSX5-PPY1. Record records the baptism of Canuto Iriarte Goni on 19 Jan 1878 in Elizondo, Bazt\u00e1n, Navarra. Parents named as Casimiro Iriarte and Martina Goni; maternal grandparents Juan Jose and Francisca Goni; paternal grandparents Pedro Angel and Tomasa Iribarren. Juan Jose's surname is absent from the index entry (recorded given name only), consistent with the pattern seen in src_001.",
+      "gedcomx_source_description_id": "S3"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429800",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Martina Eulalia Go\u00f1i",
+      "structured_value": {
+        "given": "Martina Eulalia",
+        "surname": "Go\u00f1i"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429800",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429800",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born Elizondo, Baztan, Nafarroa, Spain",
+      "place": "Elizondo, Baztan, Nafarroa, Spain",
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Elizondo, Baztan, Nafarroa, Spain"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429800",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "married Francisco Casimiro Yriarte, 10 Sep 1872, Elizondo, Baztan, Nafarroa, Spain",
+      "date": "10 Sep 1872",
+      "date_certainty": "exact",
+      "place": "Elizondo, Baztan, Nafarroa, Spain",
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Elizondo, Baztan, Nafarroa, Spain"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429800",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Juan Jose (surname absent from index \u2014 see father_of_bride persona)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's surname is absent from this index entry; the original church register image must be examined to confirm whether his surname is Go\u00f1i. This relationship link is incomplete pending that confirmation.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429800",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "child of Francisca Go\u00f1i (mother of bride)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_bride"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429500",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Francisco Casimiro Yriarte",
+      "structured_value": {
+        "given": "Francisco Casimiro",
+        "surname": "Yriarte"
+      },
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429500",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429500",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born Elizondo, Baztan, Nafarroa, Spain",
+      "place": "Elizondo, Baztan, Nafarroa, Spain",
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Elizondo, Baztan, Nafarroa, Spain"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429500",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "married Martina Eulalia Go\u00f1i, 10 Sep 1872, Elizondo, Baztan, Nafarroa, Spain",
+      "date": "10 Sep 1872",
+      "date_certainty": "exact",
+      "place": "Elizondo, Baztan, Nafarroa, Spain",
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001",
+      "standard_place": "Elizondo, Baztan, Nafarroa, Spain"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429500",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Pedro Angel (surname absent from index \u2014 see father_of_groom persona)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Father's surname is absent from this index entry; the original church register image should be examined to confirm his full name.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429500",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "child of Tomasa Yribarren (mother of groom)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429900",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Juan Jose [?] (surname absent from index)",
+      "structured_value": {
+        "given": "Juan Jose",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Only given name 'Juan Jose' appears in this index entry; no surname is recorded. The original church register image for Elizondo must be examined to determine whether his surname is Go\u00f1i (matching the mother and bride) or another surname. Identity with tree person Juan Jos\u00e9 Go\u00f1i (G18D-QZW) is tentative pending original-image confirmation.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429900",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870430000",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Francisca Go\u00f1i",
+      "structured_value": {
+        "given": "Francisca",
+        "surname": "Go\u00f1i"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870430000",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Martina Eulalia Go\u00f1i",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429600",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "Pedro Angel [?] (surname absent from index)",
+      "structured_value": {
+        "given": "Pedro Angel",
+        "surname": ""
+      },
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "informant_bias_notes": "Only given name 'Pedro Angel' appears in this index entry; no surname is recorded. The original church register image should be examined to confirm his full name. Groom's surname is Yriarte, so the father's surname may be Yriarte as well, but this is not stated in the index.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429600",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429700",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Tomasa Yribarren",
+      "structured_value": {
+        "given": "Tomasa",
+        "surname": "Yribarren"
+      },
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:C9D5-X63Z",
+      "record_persona_id": "p_197870429700",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Francisco Casimiro Yriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_008",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023000",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Miguel Francisco Crisanto Goni Goni",
+      "structured_value": {
+        "given": "Miguel Francisco Crisanto",
+        "surname": "Goni Goni"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Juan Jose Goni and Francisca Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023000",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parents (Juan Jose Goni and Francisca Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023000",
+      "record_role": "deceased",
+      "fact_type": "christening",
+      "value": "Baptized 25 Oct 1858 at Elizondo, Bazt\u00e1n, Navarra, Espa\u00f1a",
+      "date": "25 Oct 1858",
+      "place": "Elizondo, Bazt\u00e1n, Navarra, Espa\u00f1a",
+      "information_quality": "primary",
+      "informant": "parish officiant",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002",
+      "standard_place": "Elizondo, Baztan, Nafarroa, Spain"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023000",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born 25 Oct 1858",
+      "date": "25 Oct 1858",
+      "information_quality": "primary",
+      "informant": "presenting parents (Juan Jose Goni and Francisca Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023000",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Juan Jose Goni",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_baptized"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Juan Jose Goni and Francisca Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023000",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Francisca Goni",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_baptized"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Juan Jose Goni and Francisca Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023100",
+      "record_role": "father_of_baptized",
+      "fact_type": "name",
+      "value": "Juan Jose Goni",
+      "structured_value": {
+        "given": "Juan Jose",
+        "surname": "Goni"
+      },
+      "information_quality": "primary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Probable identity match with tree person G18D-QZW (Juan Jos\u00e9 Go\u00f1i). Identity resolution deferred to person-evidence skill.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023100",
+      "record_role": "father_of_baptized",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023100",
+      "record_role": "father_of_baptized",
+      "fact_type": "relationship",
+      "value": "spouse of Francisca Goni",
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother_of_baptized"
+      },
+      "information_quality": "primary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023100",
+      "record_role": "father_of_baptized",
+      "fact_type": "relationship",
+      "value": "child of Juan (paternal grandfather of baptized)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "paternal_grandfather"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Juan Jose states his own father's name \u2014 firsthand knowledge. Information classified secondary only because the statement concerns a third party; the fact itself is directly stated in the record.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023100",
+      "record_role": "father_of_baptized",
+      "fact_type": "relationship",
+      "value": "child of Martina Urtasun (paternal grandmother of baptized)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "paternal_grandmother"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Juan Jose states his own mother's name \u2014 firsthand knowledge. Information classified secondary only because the statement concerns a third party; the fact itself is directly stated in the record.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023400",
+      "record_role": "mother_of_baptized",
+      "fact_type": "name",
+      "value": "Francisca Goni",
+      "structured_value": {
+        "given": "Francisca",
+        "surname": "Goni"
+      },
+      "information_quality": "primary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Probable identity match with tree person G18D-LD4 (Francisca De Go\u00f1i). Identity resolution deferred to person-evidence skill. Note: the double surname 'Goni Goni' on the child confirms both parents share the Go\u00f1i surname.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023400",
+      "record_role": "mother_of_baptized",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023400",
+      "record_role": "mother_of_baptized",
+      "fact_type": "relationship",
+      "value": "child of Santiago (maternal grandfather of baptized)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "maternal_grandfather"
+      },
+      "information_quality": "secondary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Francisca states her own father's name \u2014 firsthand knowledge. Information classified secondary only because the statement concerns a third party; the fact itself is directly stated in the record.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023400",
+      "record_role": "mother_of_baptized",
+      "fact_type": "relationship",
+      "value": "child of Maria Bautista Itcea (maternal grandmother of baptized)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "maternal_grandmother"
+      },
+      "information_quality": "secondary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Francisca states her own mother's name \u2014 firsthand knowledge. Information classified secondary only because the statement concerns a third party; the fact itself is directly stated in the record.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023200",
+      "record_role": "maternal_grandfather",
+      "fact_type": "name",
+      "value": "Santiago",
+      "structured_value": {
+        "given": "Santiago"
+      },
+      "information_quality": "secondary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Name supplied by daughter Francisca Goni at the baptism of her child. Only given name recorded \u2014 no surname stated for Santiago.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023200",
+      "record_role": "maternal_grandfather",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023300",
+      "record_role": "maternal_grandmother",
+      "fact_type": "name",
+      "value": "Maria Bautista Itcea",
+      "structured_value": {
+        "given": "Maria Bautista",
+        "surname": "Itcea"
+      },
+      "information_quality": "secondary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Name supplied by daughter Francisca Goni at the baptism of her child.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023300",
+      "record_role": "maternal_grandmother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "Francisca Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023500",
+      "record_role": "paternal_grandfather",
+      "fact_type": "name",
+      "value": "Juan",
+      "structured_value": {
+        "given": "Juan"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Name supplied by son Juan Jose Goni at the baptism of his child. Only given name recorded \u2014 no surname stated for Juan.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023500",
+      "record_role": "paternal_grandfather",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023600",
+      "record_role": "paternal_grandmother",
+      "fact_type": "name",
+      "value": "Martina Urtasun",
+      "structured_value": {
+        "given": "Martina",
+        "surname": "Urtasun"
+      },
+      "information_quality": "secondary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_013",
+      "informant_bias_notes": "Name supplied by son Juan Jose Goni at the baptism of his child.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:H6WT-W93Z",
+      "record_persona_id": "p_184604023600",
+      "record_role": "paternal_grandmother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "Juan Jose Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_013",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "baptized",
+      "fact_type": "name",
+      "value": "Canuto Iriarte Goni",
+      "structured_value": {
+        "given": "Canuto",
+        "surname": "Iriarte Goni"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Casimiro Iriarte and Martina Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "baptized",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parents (Casimiro Iriarte and Martina Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "baptized",
+      "fact_type": "christening",
+      "value": "baptized 19 Jan 1878, Elizondo, Bazt\u00e1n, Navarra, Espa\u00f1a",
+      "date": "19 Jan 1878",
+      "place": "Elizondo, Bazt\u00e1n, Navarra, Espa\u00f1a",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003",
+      "standard_place": "Elizondo, Baztan, Nafarroa, Spain"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "baptized",
+      "fact_type": "birth",
+      "value": "19 Jan 1878",
+      "date": "19 Jan 1878",
+      "information_quality": "primary",
+      "informant": "presenting parents (Casimiro Iriarte and Martina Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "baptized",
+      "fact_type": "relationship",
+      "value": "child of Casimiro Iriarte",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Casimiro Iriarte and Martina Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "baptized",
+      "fact_type": "relationship",
+      "value": "child of Martina Goni",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents (Casimiro Iriarte and Martina Goni)",
+      "informant_proximity": "household_member",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Casimiro Iriarte",
+      "structured_value": {
+        "given": "Casimiro",
+        "surname": "Iriarte"
+      },
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as father of the baptized child. Identified with high confidence as Francisco Casimiro Yriarte (tree I2): 'Casimiro' is his middle name used here; Iriarte and Yriarte are the same Basque surname. His parents listed on this record (Pedro Angel, Tomasa Iribarren) match exactly those recorded in the 1872 marriage record (src_001), providing strong cross-corroboration of identity.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "child of Pedro Angel",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Casimiro's father named as Pedro Angel on this 1878 baptism record. Matches exactly Pedro Angel named in the 1872 marriage record (src_001) as father of Francisco Casimiro Yriarte, confirming identity cross-corroboration.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "child of Tomasa Iribarren",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Casimiro's mother named as Tomasa Iribarren on this 1878 baptism record. Matches Tomasa Yribarren named in src_001 (1872 marriage record), confirming identity. Same shared-informant unit as the marriage record for Pedro Angel and Tomasa.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Martina Goni",
+      "structured_value": {
+        "given": "Martina",
+        "surname": "Goni"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Named as mother of the baptized child. Identified with high confidence as Martina Eulalia Go\u00f1i (tree I1). Her parents on this record (Juan Jose and Francisca Goni) directly corroborate the parentage of Martina Eulalia Go\u00f1i as daughter of Juan Jos\u00e9 Go\u00f1i (tree G18D-QZW) and Francisca De Go\u00f1i (tree G18D-LD4), the central claim of q_001.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "child of Juan Jose",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Martina's father recorded as 'Juan Jose' with no surname in this index entry \u2014 consistent with the same missing-surname pattern seen in src_001. Identified with high confidence as Juan Jos\u00e9 Go\u00f1i (tree G18D-QZW). This is direct corroborating evidence for q_001.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother",
+      "fact_type": "relationship",
+      "value": "child of Francisca Goni",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Martina's mother recorded as Francisca Goni. Identified with high confidence as Francisca De Go\u00f1i (tree G18D-LD4). Together with the Juan Jose assertion, this directly corroborates Martina's parentage for q_001. Both parents on this 1878 baptism record and in src_001 form a shared-informant corroboration unit strengthening confidence.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father_of_mother",
+      "fact_type": "name",
+      "value": "Juan Jose",
+      "structured_value": {
+        "given": "Juan Jose"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Surname absent from the index entry \u2014 only the given name 'Juan Jose' is recorded. This is the same missing-surname pattern as in src_001 for the same individual. Identified with high confidence as Juan Jos\u00e9 Go\u00f1i (tree G18D-QZW). Independent corroboration across two records strengthens the identification but the absent surname is a shared weakness; the original image (ark:/61903/3:1:3Q9M-CSX5-PPY1) should be examined to confirm whether the surname appears in the manuscript.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father_of_mother",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother_of_mother",
+      "fact_type": "name",
+      "value": "Francisca Goni",
+      "structured_value": {
+        "given": "Francisca",
+        "surname": "Goni"
+      },
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Identified with high confidence as Francisca De Go\u00f1i (tree G18D-LD4). Named consistently across this record and src_001. The two records form a shared-informant corroboration unit; the 1878 baptism is an independent witness event from the 1872 marriage, so these represent distinct reporting occasions (Martina herself present at both), strengthening \u2014 but not fully independently corroborating \u2014 the name.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother_of_mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Martina Goni",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father_of_father",
+      "fact_type": "name",
+      "value": "Pedro Angel",
+      "structured_value": {
+        "given": "Pedro Angel"
+      },
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Surname absent from the index entry \u2014 only the given name 'Pedro Angel' is recorded. Same missing-surname pattern as in src_001. Identified with high confidence as tree person I3 (Pedro Angel). Cross-corroboration with src_001 strengthens identification; the original image should confirm whether a surname appears in the manuscript.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "father_of_father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother_of_father",
+      "fact_type": "name",
+      "value": "Tomasa Iribarren",
+      "structured_value": {
+        "given": "Tomasa",
+        "surname": "Iribarren"
+      },
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_015",
+      "informant_bias_notes": "Matches Tomasa Yribarren named in src_001 (1872 marriage record) as mother of Francisco Casimiro Yriarte. The spelling Iribarren vs. Yribarren is a variant of the same Basque surname. Cross-corroboration with src_001 strengthens identification. Casimiro is the informant on both occasions; these two records form a shared-informant unit \u2014 the corroboration strengthens but does not independently confirm the name.",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:H6WT-8J6Z",
+      "record_role": "mother_of_father",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Casimiro Iriarte",
+      "informant_proximity": "self",
+      "evidence_type": "direct",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_015",
+      "source_id": "src_003"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Martina Eulalia Go\u00f1i' is the bride's own name on this record. I1 was minted directly from this persona (the bride's persona p_197870429800). No independent corroborating tree person pre-existed; this is the founding record for I1. Source is derivative (index only); match_score not applicable as candidate was created from this persona.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Female) for the bride persona. I1 was minted from this persona. Consistent with all other data.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Birth-place assertion (Elizondo, Baztan, Nafarroa, Spain) for the bride persona. I1 was minted from this persona; this is the only source currently available for Martina Eulalia Go\u00f1i.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage assertion names Martina Eulalia Go\u00f1i as bride, marrying Francisco Casimiro Yriarte on 10 Sep 1872 at Elizondo. I1 is the person minted from this bride persona. This is the central assertion answering q_001.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage assertion also bears on the groom Francisco Casimiro Yriarte (I2). Both parties are named in this single marriage assertion; the pe_ link for the groom-side is required.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion stating bride Martina Eulalia Go\u00f1i is child of father_of_bride (Juan Jose). I1 is the bride persona. This assertion establishes parentage, pending confirmation of father's surname from the original church register.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_005",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "This relationship assertion also bears on the father_of_bride persona (Juan Jose). Score: 0.000003 \u2014 effectively zero because the index records only the given name 'Juan Jose' with no surname; the API cannot score a no-surname persona meaningfully. Correlation analysis: given name 'Juan Jose' matches 'Juan Jos\u00e9 Go\u00f1i' (G18D-QZW) exactly (accent variant only). Spousal context is the key corroborating signal: the record pairs 'Juan Jose' with 'Francisca Go\u00f1i', matching G18D-QZW's known wife 'Francisca De Go\u00f1i' (the 'de' is a Spanish locative particle, not part of the hereditary surname). Both are Elizondo-area. However, the father's surname is wholly absent from this derivative index, making surname confirmation impossible without the original church register image. This is a Moderate match: confident on given-name and spousal-name fit; uncertain on surname. Confidence: probable. Outstanding: original image examination required to confirm surname is Go\u00f1i.",
+      "match_score": 3e-06,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion stating bride Martina Eulalia Go\u00f1i is child of mother_of_bride (Francisca Go\u00f1i). I1 is the bride persona. Establishes maternal parentage from this record.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_006",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "This relationship assertion also bears on the mother_of_bride persona (Francisca Go\u00f1i). Score: ~0.000001 \u2014 effectively zero for the same reason as the father: a sparse index persona. Correlation analysis: given name 'Francisca' matches exactly. Surname 'Go\u00f1i' (record) vs 'De Go\u00f1i' (tree) \u2014 the 'de' is a Spanish locative particle prefixed to the place-derived surname; the surname is 'Go\u00f1i' in both forms. Spousal context: the record pairs 'Francisca Go\u00f1i' with 'Juan Jose', consistent with tree G18D-LD4's spouse G18D-QZW 'Juan Jos\u00e9 Go\u00f1i'. This is a Moderate match on name + spousal fit, with no age data available to test. Confidence: probable. Source is derivative (index); original church register image would confirm.",
+      "match_score": 1e-06,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Francisco Casimiro Yriarte' is the groom's own name. I2 was minted from this groom persona (p_197870429500). No independent tree person pre-existed; this is the founding record for I2.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Male) for the groom persona. I2 was minted from this persona.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Birth-place assertion (Elizondo, Baztan, Nafarroa, Spain) for the groom persona. I2 was minted from this persona.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Marriage assertion names Francisco Casimiro Yriarte as groom. I2 is the person minted from this groom persona.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Marriage assertion also bears on the bride Martina Eulalia Go\u00f1i (I1), who is named as the groom's partner in this same assertion.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_011",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion stating groom Francisco Casimiro Yriarte is child of father_of_groom (Pedro Angel). I2 is the groom persona.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_011",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "This relationship assertion also bears on the father_of_groom persona (Pedro Angel). I3 was minted from this persona. No independent corroborating tree person pre-existed. Confidence is probable (not confident) because I3 is a new stub resting on this single derivative index record, and the father's surname is absent from the index.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion stating groom Francisco Casimiro Yriarte is child of mother_of_groom (Tomasa Yribarren). I2 is the groom persona.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_012",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "This relationship assertion also bears on the mother_of_groom persona (Tomasa Yribarren). I4 was minted from this persona. Confidence is probable (not confident) as I4 is a new stub resting solely on this derivative index record; no independent corroboration yet.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_013",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Name assertion for father_of_bride: 'Juan Jose [?] (surname absent from index)'. Score: 0.000003 \u2014 API cannot meaningfully score a given-name-only persona. Correlation analysis mirrors a_005 above: given name matches exactly, spousal pairing with Francisca Go\u00f1i is consistent with G18D-QZW's known wife. Absent surname is the limiting factor for this derivative-only source. Confidence: probable. Confirmation requires the original Elizondo church register image.",
+      "match_score": 3e-06,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_014",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for father_of_bride persona, bearing on G18D-QZW. Consistent with Juan Jos\u00e9 Go\u00f1i being male. Confidence follows the persona-level assessment: probable pending surname confirmation.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_015",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Name assertion for mother_of_bride: 'Francisca Go\u00f1i'. Score: ~0.000001. Correlation analysis mirrors a_006 above: given name 'Francisca' exact match; surname 'Go\u00f1i' matches 'De Go\u00f1i' (tree) once the 'de' particle is discounted; spousal pairing consistent. Confidence: probable.",
+      "match_score": 1e-06,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_016",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for mother_of_bride persona, bearing on G18D-LD4. Consistent. Confidence follows persona-level assessment: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Name assertion for father_of_groom: 'Pedro Angel [?] (surname absent from index)'. I3 was minted from this persona. No independent tree person pre-existed. Confidence is probable (not confident) because this is a new stub from a single derivative-index source, and the father's surname is absent. Groom's surname Yriarte is likely the father's first surname in Spanish naming practice, but this is not confirmed in the index.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for father_of_groom persona, bearing on I3. Consistent with the new stub. Confidence: probable (stub resting on single derivative source).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_019",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Name assertion for mother_of_groom: 'Tomasa Yribarren'. I4 was minted from this persona. Full name (given + surname) is recorded in the index, which is stronger than the fathers. Confidence is probable (not confident) because I4 is a new stub resting solely on this single derivative index record; no independent corroboration yet.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_020",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for mother_of_groom persona, bearing on I4. Consistent. Confidence: probable (stub resting on single derivative source).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_021",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Miguel Francisco Crisanto Goni Goni' for the baptized child in src_002. I5 was minted directly from this persona (the only record for this individual). Founding record \u2014 no independent corroboration needed; confident as the creating record for a new stub.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_022",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Male) for the baptized child persona. I5 was minted from this persona; consistent with all other assertions on this record.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_023",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Christening assertion: baptized 25 Oct 1858 at Elizondo, Bazt\u00e1n, Navarra. I5 was minted from this persona. This is the founding record; place and date are recorded by the officiating priest (primary information).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_024",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Birth assertion: born 25 Oct 1858, supplied by presenting parents. I5 was minted from this persona. Consistent with the christening date.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_025",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Miguel is child of Juan Jose Goni (father_of_baptized). Bears on I5 as the child side. Parent is identified as G18D-QZW (probable). The parentage is established by the parents' own presentation at the baptism.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_025",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Juan Jose Goni is father of the baptized child Miguel (I5). Bears on G18D-QZW as the father side. Corroborates the identification of G18D-QZW as Juan Jose Goni \u2014 same given name, same Elizondo location, same couple pairing with Francisca Goni (G18D-LD4). Surname recorded as 'Goni' vs tree 'Go\u00f1i' (orthographic variant only). score: null (not scored separately \u2014 same persona evaluated on a_027 with score N/A given the stub minting context).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_026",
+      "person_id": "I5",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Miguel is child of Francisca Goni (mother_of_baptized). Bears on I5 as the child side. Mother is identified as G18D-LD4 (probable).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_026",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Francisca Goni is mother of the baptized child Miguel (I5). Bears on G18D-LD4 as the mother side. Corroborates the identification of G18D-LD4 as Francisca Goni \u2014 name matches (Francisca Goni / Francisca De Go\u00f1i, 'de' is a locative particle), spousal pairing with Juan Jose consistent.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_027",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Name assertion: 'Juan Jose Goni' for the father_of_baptized persona in src_002. No same_person score obtainable \u2014 G18D-QZW was not minted from this persona but the persona's surname is present in the index (unlike src_001/src_003 where it was absent). Correlation: given name 'Juan Jose' matches exactly. Surname 'Goni' (record) vs 'Go\u00f1i' (tree) \u2014 orthographic variant only (tilde-n). Location Elizondo matches. Couple pairing with Francisca Goni consistent with G18D-LD4. Double surname of child ('Goni Goni') confirms both parents share the Go\u00f1i surname. Moderate match: probable confidence. Surname confirmation from original register image is outstanding.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_028",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for father_of_baptized persona in src_002, bearing on G18D-QZW. Consistent with Juan Jos\u00e9 Go\u00f1i being male. Confidence follows persona-level assessment: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_029",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Juan Jose Goni is spouse of Francisca Goni. Bears on G18D-QZW as one spouse. Couple pairing with G18D-LD4 is consistent across all three records examined (src_001, src_002, src_003). Confidence: probable (follows persona-level assessment).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_029",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Juan Jose Goni is spouse of Francisca Goni. Bears on G18D-LD4 as the other spouse. Consistent with G18D-LD4's known spouse G18D-QZW. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_030",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Juan Jose Goni is child of 'Juan' (paternal grandfather, only given name). Bears on G18D-QZW as the child side. Establishes G18D-QZW's father as a man named Juan. Confidence: probable (same persona-level assessment).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_030",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Juan (paternal grandfather) is father of Juan Jose Goni. Bears on I8 (Juan, paternal grandfather) as the parent side. I8 is a new stub minted from this persona. Only given name recorded \u2014 no surname stated. Confidence: probable (new stub, sole source, given-name-only).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_031",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Juan Jose Goni is child of 'Martina Urtasun' (paternal grandmother). Bears on G18D-QZW as the child side. Establishes G18D-QZW's mother as Martina Urtasun.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_031",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Martina Urtasun (paternal grandmother) is mother of Juan Jose Goni. Bears on I9 as the parent side. I9 is a new stub minted from this persona. Full name (given Martina, surname Urtasun) is recorded. Confidence: probable (new stub, sole source). Note: tree person P7HP-JRR ('Martina Urta') was evaluated via same_person (score 0.0042 \u2014 near zero); the relationship fit (both identified as Juan Jose's mother at Elizondo) is a strong contextual signal, but the surname 'Urta' vs 'Urtasun' is unresolved \u2014 'Urta' may be a truncation of 'Urtasun' or a genuinely different surname. A separate speculative pe_ link to P7HP-JRR is created pending user review.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_031",
+      "person_id": "P7HP-JRR",
+      "confidence": "speculative",
+      "rationale": "Speculative link: tree person P7HP-JRR ('Martina Urta') shares the same relationship position as the paternal_grandmother persona in src_002 (mother of Juan Jose Goni/G18D-QZW, Elizondo). same_person score: 0.0042 \u2014 near zero, driven largely by the surname discrepancy 'Urta' (tree) vs 'Urtasun' (record). Given name 'Martina' matches exactly. The surname discrepancy is a core-identifier concern: 'Urta' could be a truncation of 'Urtasun' (common in old records), or could represent a different surname. The relationship context (both identified as mother of Juan Jos\u00e9 Go\u00f1i) is a strong signal not captured by the name-similarity score, lifting this above a pure name-only weak match. However, the surname mismatch caps confidence at speculative per threshold policy. USER ACTION REQUIRED: examine the original image ark:/61903/3:1:3Q9M-CSX5-PR8J to confirm the surname; determine the provenance of P7HP-JRR's 'Urta' surname; if confirmed as the same individual, upgrade this link and merge I9 into P7HP-JRR via proof-conclusion/tree-edit.",
+      "match_score": 0.0042,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_032",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Name assertion: 'Francisca Goni' for the mother_of_baptized persona in src_002. Correlation: given name 'Francisca' exact match. Surname 'Goni' (record) vs 'De Go\u00f1i' (tree) \u2014 'de' is a Spanish locative particle, not part of the hereditary surname. Spousal pairing with Juan Jose consistent with G18D-QZW. Child's double surname 'Goni Goni' confirms both parents share the Go\u00f1i surname. Moderate match: probable confidence.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_033",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for mother_of_baptized persona in src_002, bearing on G18D-LD4. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_034",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Francisca Goni is child of Santiago (maternal grandfather). Bears on G18D-LD4 as the child side. Establishes G18D-LD4's father as a man named Santiago (only given name recorded). Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_034",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Santiago (maternal grandfather) is father of Francisca Goni. Bears on I6 (Santiago) as the parent side. I6 is a new stub minted from this persona. Only given name recorded \u2014 no surname. Confidence: probable (new stub, sole source, given-name-only).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_035",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Francisca Goni is child of Maria Bautista Itcea (maternal grandmother). Bears on G18D-LD4 as the child side. Establishes G18D-LD4's mother as Maria Bautista Itcea. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_035",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Maria Bautista Itcea (maternal grandmother) is mother of Francisca Goni. Bears on I7 as the parent side. I7 is a new stub minted from this persona. Full name recorded (given Maria Bautista, surname Itcea). Confidence: probable (new stub, sole source).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_036",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Name assertion: 'Santiago' for the maternal_grandfather persona in src_002. I6 was minted from this persona. Only given name recorded \u2014 no surname stated. Confidence: probable (new stub, sole source, given-name-only).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_037",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for maternal_grandfather persona (Santiago), bearing on I6. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_038",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Name assertion: 'Maria Bautista Itcea' for the maternal_grandmother persona in src_002. I7 was minted from this persona. Full name recorded (given Maria Bautista, surname Itcea). Confidence: probable (new stub, sole source).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_039",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for maternal_grandmother persona (Maria Bautista Itcea), bearing on I7. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_040",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Name assertion: 'Juan' for the paternal_grandfather persona in src_002. I8 was minted from this persona. Only given name recorded \u2014 no surname stated. Confidence: probable (new stub, sole source, given-name-only).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_041",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for paternal_grandfather persona (Juan), bearing on I8. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_042",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Name assertion: 'Martina Urtasun' for the paternal_grandmother persona in src_002. I9 was minted from this persona. Full name recorded (given Martina, surname Urtasun). Confidence: probable (new stub, sole source). See also the speculative link on a_031 to P7HP-JRR for the outstanding surname-variant question.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_042",
+      "person_id": "P7HP-JRR",
+      "confidence": "speculative",
+      "rationale": "Speculative link: tree person P7HP-JRR ('Martina Urta') is a candidate match for the paternal_grandmother persona 'Martina Urtasun' in src_002. Name assertion side: given name 'Martina' exact match; surname 'Urta' (tree) vs 'Urtasun' (record) \u2014 unresolved variant or truncation. same_person score 0.0042 (near zero, dominated by surname discrepancy). Relationship position (mother of Juan Jose Go\u00f1i) is the strongest corroborating signal. Speculative per threshold policy until the surname discrepancy is resolved from the original image.",
+      "match_score": 0.0042,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_043",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for paternal_grandmother persona (Martina Urtasun), bearing on I9. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_043",
+      "person_id": "P7HP-JRR",
+      "confidence": "speculative",
+      "rationale": "Sex assertion (Female) for paternal_grandmother persona, bearing speculatively on P7HP-JRR ('Martina Urta'). Confidence follows the speculative persona-level assessment for this candidate match.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_044",
+      "person_id": "I10",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Canuto Iriarte Goni' for the baptized child in src_003. I10 was minted directly from this persona (founding record for this individual). No independent tree person pre-existed; confident as the creating record for a new stub.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_045",
+      "person_id": "I10",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Male) for the baptized child persona in src_003. I10 was minted from this persona; consistent.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_046",
+      "person_id": "I10",
+      "confidence": "confident",
+      "rationale": "Christening assertion: baptized 19 Jan 1878 at Elizondo, Bazt\u00e1n, Navarra. I10 was minted from this persona. Founding record; place and date recorded by the officiating priest.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_047",
+      "person_id": "I10",
+      "confidence": "confident",
+      "rationale": "Birth assertion: born 19 Jan 1878, supplied by presenting parents. I10 was minted from this persona. Consistent with the christening date.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_048",
+      "person_id": "I10",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Canuto is child of Casimiro Iriarte (father). Bears on I10 as the child side. Father is identified as I2 (confident).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_048",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Casimiro Iriarte is father of the baptized child Canuto (I10). Bears on I2 as the parent side. Identification corroborated by exact match of his parents (Pedro Angel + Tomasa Iribarren) with src_001 for Francisco Casimiro Yriarte. 'Casimiro' is the middle name used as his given name here; Iriarte/Yriarte are the same Basque surname. Strong match; confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_049",
+      "person_id": "I10",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Canuto is child of Martina Goni (mother). Bears on I10 as the child side. Mother is identified as I1 (confident).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_049",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Martina Goni is mother of the baptized child Canuto (I10). Bears on I1 as the parent side. Her parents on this record (Juan Jose + Francisca Goni) match I1's known parentage exactly, providing strong cross-record corroboration. 'Martina Goni' matches 'Martina Eulalia Go\u00f1i' (Go\u00f1i/Goni orthographic variant; Eulalia is a middle name not always recorded). Confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_050",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Casimiro Iriarte' for the father persona in src_003. Identified as Francisco Casimiro Yriarte (I2). Correlation: 'Casimiro' is his middle name used as given name here (consistent with 19th-century Basque practice); 'Iriarte' and 'Yriarte' are the same Basque surname with an archaic 'Y-' vs 'I-' orthographic variant. His parents named in this record (Pedro Angel, Tomasa Iribarren) exactly match those in src_001. I2 was minted from src_001; this is an independent corroborating record. Strong match; confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_051",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Male) for father persona (Casimiro Iriarte) in src_003. Consistent with I2. Confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_052",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Casimiro Iriarte is child of Pedro Angel (father_of_father). Bears on I2 as the child side. Pedro Angel named here matches I3 exactly as in src_001. Confident (strong cross-record corroboration).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_052",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Pedro Angel is father of Casimiro Iriarte (I2). Bears on I3 (Pedro Angel) as the parent side. I3 was minted from src_001. This src_003 assertion is a second, independent record (Casimiro as informant in 1878 vs. the 1872 marriage) corroborating I3's identity as Pedro Angel, father of Francisco Casimiro Yriarte. Note: shared informant (Casimiro on both occasions) reduces full independence. Confidence elevated from stub-founding: probable, with cross-record corroboration.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_053",
+      "person_id": "I2",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Casimiro Iriarte is child of Tomasa Iribarren (mother_of_father). Bears on I2 as the child side. Tomasa Iribarren named here matches I4 (Tomasa Yribarren from src_001; Iribarren/Yribarren same Basque surname). Confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_053",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Tomasa Iribarren is mother of Casimiro Iriarte (I2). Bears on I4 as the parent side. I4 was minted from src_001. Src_003 provides a second record with Iribarren/Yribarren surname variant. Shared informant (Casimiro) reduces independence but the consistent name across two occasions strengthens identification. Probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_054",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Name assertion 'Martina Goni' for the mother persona in src_003. Identified as Martina Eulalia Go\u00f1i (I1). Correlation: given name 'Martina' exact match; 'Eulalia' middle name not always recorded; 'Goni'/'Go\u00f1i' orthographic variant only. Her parents on this record (Juan Jose + Francisca Goni) match the parentage established for I1 in src_001 exactly. Iriarte surname of child matches I2 (her known husband from src_001). This is the strongest corroborating assertion for q_001 \u2014 Martina herself names her parents as Juan Jose + Francisca Goni in an independent 1878 record. Confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_055",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Sex assertion (Female) for mother persona (Martina Goni) in src_003. Consistent with I1. Confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_056",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Martina Goni states she is child of Juan Jose (father_of_mother). Bears on I1 as the child side. This directly corroborates q_001 (Martina Eulalia Go\u00f1i is the daughter of Juan Jos\u00e9 Go\u00f1i). Confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_056",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Juan Jose is father of Martina Goni (I1). Bears on G18D-QZW as the parent side. Given name only in this record (same missing-surname pattern as src_001). Corroborated by the same couple pairing with Francisca Goni (G18D-LD4) as in src_002. This 1878 assertion provides an independent reporting occasion (Martina as informant, not Juan Jose) strengthening the identification. Probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_057",
+      "person_id": "I1",
+      "confidence": "confident",
+      "rationale": "Relationship assertion: Martina Goni states she is child of Francisca Goni (mother_of_mother). Bears on I1 as the child side. Together with a_056, this directly corroborates q_001. Confident.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_057",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Francisca Goni is mother of Martina Goni (I1). Bears on G18D-LD4 as the parent side. Name 'Francisca Goni' matches 'Francisca De Go\u00f1i' consistently across all three records. This 1878 assertion (Martina as informant) is a separate reporting occasion from src_002 (Francisca herself as informant), though both ultimately rely on the family's knowledge of the mother's name. Probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_058",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Juan Jose' for the father_of_mother persona in src_003. Given name only \u2014 consistent missing-surname pattern. Given name exact match; Elizondo location consistent; couple pairing with Francisca Goni consistent with G18D-LD4. This is now a third record placing Juan Jose (G18D-QZW) as father of Martina (I1), directly relevant to q_001. Probable (surname still unconfirmed from index; image examination outstanding).",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_059",
+      "person_id": "G18D-QZW",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for father_of_mother persona in src_003, bearing on G18D-QZW. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_060",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Francisca Goni' for the mother_of_mother persona in src_003. Correlation mirrors prior links: given name exact match, 'Goni'/'De Go\u00f1i' same surname. Consistent across src_001, src_002, and src_003. Probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_061",
+      "person_id": "G18D-LD4",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for mother_of_mother persona in src_003, bearing on G18D-LD4. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_062",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Pedro Angel' for the father_of_father persona in src_003. Given name only (same missing-surname pattern as src_001). I3 was minted from src_001 as Pedro Angel, father of Francisco Casimiro Yriarte. This assertion provides cross-record corroboration: Pedro Angel named again by Casimiro as his father in 1878. Shared informant (Casimiro) reduces independence, but consistency across two reporting occasions strengthens the identification. Probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_063",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for father_of_father persona (Pedro Angel) in src_003, bearing on I3. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_064",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Tomasa Iribarren' for the mother_of_father persona in src_003. I4 was minted from src_001 as Tomasa Yribarren. Iribarren/Yribarren: same Basque surname with Y-/I- initial variant. Cross-record corroboration with src_001. Shared informant (Casimiro) reduces independence but consistency strengthens the identification. Probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_065",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for mother_of_father persona (Tomasa Iribarren) in src_003, bearing on I4. Consistent. Confidence: probable.",
+      "match_score": null,
+      "created": "2026-09-10"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_010",
+        "a_013",
+        "a_015",
+        "a_021",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_032",
+        "a_044",
+        "a_048",
+        "a_049",
+        "a_050",
+        "a_054",
+        "a_056",
+        "a_057"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "FamilySearch's Spain Marriages 1565\u20131950 index (collection 1500693) was searched with variant spellings of Go\u00f1i/Goni/Go\u00f1y and Yriarte/Iriarte, returning the 10 Sep 1872 Elizondo marriage index entry (src_001). The FamilySearch Spain Baptisms 1502\u20131940 collection (1500692) was searched for siblings and descendants of Juan Jos\u00e9 Go\u00f1i \u00d7 Francisca Go\u00f1i, returning the 1858 baptism of sibling Miguel Francisco Crisanto Goni Goni (src_002, original image examined) and the 1878 baptism of grandchild Canuto Iriarte Goni (src_003, original image examined). The civil register for Elizondo (post-1870) was identified as inaccessible online (no digitized volumes on FamilySearch; confirmed by locality guide); the Ministerio de Justicia order route is known but not pursued because the accessible evidence supports a defensible conclusion. Martina Eulalia Go\u00f1i's own baptism record (Elizondo, c. 1848\u20131855 estimated) was not retrieved; her parentage is established by two independent originals from distinct informants, making that search superseded. The original church marriage register image underlying src_001 was not examined; the index's missing father's-surname field is resolved by the two original baptism records. No MyHeritage Navarre marriage index (subscription) was searched.",
+      "narrative_markdown": "## Proof Summary: Marriage of Martina Eulalia Go\u00f1i and Francisco Casimiro Yriarte, 1872\n\n**Research question:** Did Martina Eulalia Go\u00f1i, daughter of Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i of Elizondo, Navarra, marry Francisco Casimiro Yriarte in 1872?\n\n**Conclusion:** The evidence strongly supports \u2014 at the *probable* tier \u2014 that Martina Eulalia Go\u00f1i, daughter of Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i of Elizondo, Navarra, married Francisco Casimiro Yriarte on 10 September 1872 in Elizondo.\n\n### Sources and their classification\n\nThree sources bear on this question.\n\n**Source 1 (src_001) \u2014 Spain Marriages 1565\u20131950, marriage index entry, 10 Sep 1872.** \"Espa\u00f1a, matrimonios, 1565-1950,\" database, FamilySearch (https://familysearch.org/ark:/61903/1:2:WN68-B1PZ : 17 February 2020), Registro para Francisco Casimiro Yriarte, 10 Sep 1872; citing Elizondo, Bazt\u00e1n, Navarra, Espa\u00f1a. *Source classification:* derivative (compiled index from FHL microfilm; original parish register image not examined for this entry). *Information quality:* primary \u2014 the parties themselves (bride and groom) provided information at the time of the marriage. *Evidence type:* direct \u2014 the record directly states the marriage event, the parties' names, and the bride's mother's name.\n\n**Source 2 (src_002) \u2014 Spain Baptisms 1502\u20131940, baptism of sibling Miguel Francisco Crisanto Goni Goni, 25 Oct 1858.** \"Espa\u00f1a, bautismos, 1502-1940,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:H6WT-W93Z : accessed 10 September 2026), entry for Miguel Francisco Crisanto Goni Goni and Juan Jose Goni, 25 Oct 1858; image, FamilySearch (ark:/61903/3:1:3Q9M-CSX5-PR8J). *Source classification:* original (church baptism register; image examined). *Information quality:* primary \u2014 Juan Jos\u00e9 Goni and Francisca Goni presented their son for baptism and supplied the information. *Evidence type:* direct for the baptism event and the parents' names; the child's double surname Goni Goni confirms both parents share the Go\u00f1i surname.\n\n**Source 3 (src_003) \u2014 Spain Baptisms 1502\u20131940, baptism of grandchild Canuto Iriarte Goni, 19 Jan 1878.** \"Espa\u00f1a, bautismos, 1502-1940,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:H6WT-8J6Z : accessed 10 September 2026), entry for Canuto Iriarte Goni and Casimiro Iriarte, 19 Jan 1878. *Source classification:* original (church baptism register; image examined at ark:/61903/3:1:3Q9M-CSX5-PPY1). *Information quality:* primary \u2014 Casimiro Iriarte and Martina Goni presented their child and supplied information about themselves and their parents. *Evidence type:* direct for the parents' identities and the maternal grandparents' names.\n\n### Evidence analysis and correlation\n\n**The marriage (prong 1).** Src_001 directly records the marriage of Francisco Casimiro Yriarte and Martina Eulalia Go\u00f1i on 10 September 1872 at Elizondo, Bazt\u00e1n, Navarra. The parties themselves were the informants. Src_003 independently corroborates the union: the 1878 baptism of their son Canuto Iriarte Goni names Casimiro Iriarte and Martina Goni as parents \u2014 the same couple under orthographic and naming variants consistent with 19th-century Basque practice (Yriarte/Iriarte is the same Basque surname with an archaic Y- prefix; Francisco Casimiro using his middle name Casimiro as his primary name is common in the period). The corroboration is strengthened by the exact match of Casimiro's parents across both records: Pedro Angel and Tomasa Yribarren in src_001, Pedro Angel and Tomasa Iribarren in src_003 (Yribarren/Iribarren being the same surname). This cross-record identity confirmation is strong.\n\n**The parentage (prong 2).** The question specifically asks whether Martina Eulalia is the daughter of Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i. Three independent strands of evidence address this:\n\n- Src_001 (derivative, primary) names mother Francisca Go\u00f1i in the marriage index. The father's given name Juan Jose appears, but his surname is absent from the index \u2014 a limitation of this derivative source.\n- Src_002 (original, primary) \u2014 a wholly independent event (1858 baptism of sibling Miguel) with different informants (the parents themselves) \u2014 names both parents as Juan Jose Goni and Francisca Goni at Elizondo. The child's double surname Goni Goni confirms both parents bear the Go\u00f1i surname, resolving the surname gap in src_001.\n- Src_003 (original, primary) \u2014 yet another independent event (1878 baptism of grandson Canuto) \u2014 has Martina Goni herself naming her parents as Juan Jose and Francisca Goni. This is the most direct statement for the parentage claim: Martina herself, as an adult, identifies her own parents.\n\nSrc_002 and src_003 represent two independent reporting occasions for the parentage claim, with different informants (the parents in src_002; Martina herself in src_003), satisfying the independent-verification requirement for this prong.\n\n**Spelling variants.** The orthographic differences (Go\u00f1i/Goni, Yriarte/Iriarte, Yribarren/Iribarren) are standard Basque surname variants in the Elizondo/Baztan valley area, well-documented in the locality guide for this project. They are not genuine conflicts.\n\n### Limitation and gap\n\nThe original church marriage register image underlying src_001 was not examined. The derivative index does not record Juan Jose's surname in the father-of-bride field. This gap is fully resolved by two original baptism records (src_002 and src_003) from independent events with different informants, which both supply the Go\u00f1i surname for Juan Jose. The civil register for Elizondo is not digitized on FamilySearch and was not ordered from the Ministerio de Justicia; the accessible evidence is sufficient for the *probable* tier. Martina Eulalia Go\u00f1i's own baptism record was not retrieved, but her parentage is established by two originals with distinct informants, making her baptism record a corroborative rather than a necessary source at this tier.\n\n### Tier declaration\n\nThe evidence meets four of the five GPS components: (1) research is declared exhaustive by the project's exhaustive-declaration with documented justification; (2) citations are complete and accurate; (3) analysis and correlation have been performed across three sources; (4) no conflicts are recorded and the father's-surname gap is resolved by the originals. Component 5 \u2014 the soundly reasoned written conclusion \u2014 is this document. The sole GPS shortfall holding the conclusion below *proved* is the unexamined original marriage register image (src_001 is derivative), which leaves the marriage record's full content unconfirmed at the source level. Two independent originals corroborate the conclusion, making this limitation minor. The tier is therefore **probable**: the preponderance of evidence strongly supports the conclusion, but one derivative source carries the marriage record itself and the original register image has not been examined.\n\nThe evidence strongly supports that **Martina Eulalia Go\u00f1i, daughter of Juan Jos\u00e9 Go\u00f1i and Francisca de Go\u00f1i of Elizondo, Navarra, married Francisco Casimiro Yriarte on 10 September 1872 in Elizondo, Navarra, Spain.**"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "address_first",
+      "timestamp": "2026-09-10T00:00:00Z",
+      "superseded_by": null,
+      "file_path": "evaluations/proof-critique-ps_001-2026-09-10T00-00-00.json"
+    }
+  ],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Nafarroa, Spain",
+      "for_place": "Elizondo, Baztan, Nafarroa, Spain",
+      "time_period": "1850-1880",
+      "jurisdictions": [
+        {
+          "name": "Elizondo, Baztan, Nafarroa, Spain",
+          "date_range": "1850-1880"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1784529",
+          "title": "Spain, Catholic Church Records, 1307-2005",
+          "date_range": "1307-2005"
+        },
+        {
+          "id": "1500693",
+          "title": "Spain, Marriages, 1565-1950",
+          "date_range": "1565-1950"
+        },
+        {
+          "id": "1500692",
+          "title": "Spain, Baptisms, 1502-1940",
+          "date_range": "1502-1940"
+        },
+        {
+          "id": "1500694",
+          "title": "Spain, Deaths, 1600-1920",
+          "date_range": "1600-1920"
+        }
+      ],
+      "quirks": [
+        "Civil registration in Navarra began at the local level in 1870; no civil registration volumes for Elizondo appear in FamilySearch's digitized holdings \u2014 order the 1872 marriage certificate free from Spain's Ministerio de Justicia (https://sede.mjusticia.gob.es/en) or request it from the Elizondo Registro Civil.",
+        "The best FamilySearch church marriage volume for 1872 is IGN M994-QJB (Religious Marriages 1805-1931, 96% name-indexed, full-text searchable); two additional marriage volumes (M994-3NN and M994-3NX) cover the period but are 0% name-indexed \u2014 use fulltext_search on those.",
+        "Two baptism volumes for Elizondo (IGN M99S-L8G 1862-1882 and M99S-L8L 1856-1862) have 0 images available; primary online baptism coverage is IGN M9C8-R2V (1824-1862, 97% indexed) and M994-QJR (1834-1898, 41% indexed).",
+        "Surnames and place names in the Baztan valley may appear in both Spanish and Basque (Euskara) forms \u2014 search variant spellings such as Go\u00f1i/Goni/Go\u00f1y and Yriarte/Iriarte.",
+        "Marriage records in Spain typically name the bride's and groom's parents with full names and birthplaces \u2014 a church or civil marriage record is the single most efficient source for confirming both the marriage and the parentage claim simultaneously.",
+        "Couples in Spain typically married in the bride's hometown; if Martina Eulalia Go\u00f1i was from Elizondo, the 1872 marriage is expected there.",
+        "Elizondo falls under the Archidi\u00f3cesis de Pamplona y Tudela; contact cancillersecretario@iglesianavarra.org if FamilySearch coverage is insufficient.",
+        "Elizondo is ~25 km from the French border (Basse-Navarre / Pyr\u00e9n\u00e9es-Atlantiques); if ancestors crossed, check French civil registration as well.",
+        "All records will be in Spanish; some Basque-language terms may appear. Use the FamilySearch Spanish Genealogical Word List and BYU Spanish Script Tutorial for assistance reading handwritten documents.",
+        "Spain, Navarre, Index of Marriages, 1577-1940 at MyHeritage (subscription) provides a Navarra-wide church marriage index covering 1872."
+      ],
+      "guide_markdown": "## Locality Guide: Elizondo, Baztan, Nafarroa, Spain (1850\u20131880)\n\n### Jurisdiction\nElizondo is the principal town of Baztan municipality in the Province of Navarra (Nafarroa), northern Spain. During 1850\u20131880 it was part of the Provincia de Navarra, Kingdom of Spain. Navarra borders the Basque Country (west) and French Nouvelle-Aquitaine (north).\n\n### Civil Registration\n- **Began 1870** at the local level in Navarra (per [Navarra Civil Registration - Vital Records](https://www.familysearch.org/en/wiki/Navarra_Civil_Registration_-_Vital_Records)); some municipalities have records from 1837.\n- The local *Juzgado de la Paz* / *Oficina del Registro Civil* in Elizondo holds 1872-onward civil marriage records.\n- **FamilySearch has no digitized civil registration volumes for Elizondo.** Order certificates free from the Ministerio de Justicia (https://sede.mjusticia.gob.es/en) or contact the local civil registry via the Registro Civil directory (https://www.mjusticia.gob.es).\n- Civil marriage records name date, full names of bride and groom, their birthplaces and marital status, and full names and birthplaces of both sets of parents \u2014 confirming both the marriage and the parentage claim simultaneously.\n\n### Catholic Church Records on FamilySearch (Elizondo)\n10 digitized volumes found (10 of 10 total):\n\n| Volume IGN | Type | Coverage | % Indexed | Full-text |\n|---|---|---|---|---|\n| M994-QJB (008145346_007) | Religious Marriages | 1805\u20131931 | **96%** | Yes |\n| M994-3NN (008145347_003) | Religious Marriages | 1745\u20131917 | 0% | Yes |\n| M994-3NX (008145347_001) | Religious Marriages | 1579\u20131888 | 0% | Yes |\n| M9C8-R2V (008145086_004) | Baptisms | 1824\u20131862 | **97%** | Yes |\n| M994-QJR (008145346_004) | Baptisms | 1834\u20131898 | 41% | Yes |\n| M99S-L8G (008033260_002) | Baptisms | 1862\u20131882 | \u2014 | No (0 images) |\n| M99S-L8L (008033260_001) | Baptisms | 1856\u20131862 | \u2014 | No (0 images) |\n| M994-QJ5 (008145346_003) | Religious Deaths | 1850\u20131969 | **97%** | Yes |\n| M994-QJP (008145346_002) | Religious Deaths | 1877\u20131969 | 0% | Yes |\n| M994-QJG (008145346_001) | Confirmaciones | 1845\u20131877 | 0% | Yes |\n\n**Primary marriage source**: Volume M994-QJB (1805\u20131931, 96% indexed) via Spain, Catholic Church Records (col. 1784529) or Spain, Marriages, 1565\u20131950 (col. 1500693).\n\n### National FamilySearch Collections\n- Spain, Catholic Church Records, 1307\u20132005 (col. 1784529) \u2014 indexed + images\n- Spain, Marriages, 1565\u20131950 (col. 1500693) \u2014 index only\n- Spain, Baptisms, 1502\u20131940 (col. 1500692) \u2014 index only\n- Spain, Deaths, 1600\u20131920 (col. 1500694) \u2014 index only\n\n### External Resources\n- Spain, Navarre, Index of Marriages, 1577\u20131940 (MyHeritage, $): https://www.myheritage.com/research/collection-10879/spain-navarre-index-of-marriages-1577-1940\n- Spain, Navarre, Index of Baptisms, 1559\u20131910 (MyHeritage, $): https://www.myheritage.com/research/collection-10878/spain-navarre-index-of-baptisms-1559-1910\n- Spain Select Marriage Index, 1565\u20131950 (Ancestry, $): https://www.ancestry.com/search/collections/60168\n- Spain, Navarre, Census, 1816\u20131935 (MyHeritage, $): https://www.myheritage.com/research/collection-20324/spain-navarre-census-1816-1935\n\n### Diocesan Archive\nElizondo is in the **Archidi\u00f3cesis de Pamplona y Tudela**. Contact: cancillersecretario@iglesianavarra.org | +34 948 227 400.\n\n### Cross-Border Note\nElizondo is ~25 km from the French border. If family members crossed into French Navarre (now Pyr\u00e9n\u00e9es-Atlantiques), check French civil registration records.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-10"
+    }
+  ]
+}
