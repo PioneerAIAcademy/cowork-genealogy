@@ -164,9 +164,9 @@ it("throws on 401 with re-login guidance", async () => {
   );
 });
 
-// Test 10 — network error
+// Test 10 — network error (retried by fetchWithRetry before surfacing)
 it("throws on network error", async () => {
-  mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+  mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
   await expect(
     imageSearchTool({ imageGroupNumber: "007621224_005_M99P-2TQ" })
@@ -275,15 +275,16 @@ it("returns the surviving IDs when the retry is also defective", async () => {
 // the second call threw and the caller got nothing — strictly worse than the
 // pre-filter behaviour, which at least returned the 163 survivors.
 it("keeps the surviving IDs when the retry rejects", async () => {
+  // First fetchChildren succeeds (defective), all subsequent calls reject
+  // (fetchWithRetry retries the rejection before re-throwing).
   mockFetch
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
-    .mockRejectedValueOnce(new Error("ECONNRESET"));
+    .mockRejectedValue(new Error("ECONNRESET"));
 
   const result = await imageSearchTool({
     imageGroupNumber: "004514823_003_M9SW-1CG",
   });
 
-  expect(mockFetch).toHaveBeenCalledTimes(2);
   expect(result.imageIds).toEqual([
     "004514823_00671",
     "004514823_00673",
@@ -292,12 +293,15 @@ it("keeps the surviving IDs when the retry rejects", async () => {
 
 // Test 17 — same guarantee when the retry is a non-OK HTTP response.
 it("keeps the surviving IDs when the retry returns a server error", async () => {
+  // First fetchChildren succeeds (defective), all subsequent calls return 500
+  // (fetchWithRetry retries the 500 before returning the last response).
   mockFetch
     .mockResolvedValueOnce(okChildren(DEFECTIVE_CHILDREN))
-    .mockResolvedValueOnce({
+    .mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
+      headers: new Headers(),
     });
 
   const result = await imageSearchTool({

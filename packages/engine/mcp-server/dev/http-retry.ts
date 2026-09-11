@@ -31,29 +31,11 @@
  * out on its own (`volume_search` hung 236 minutes on exactly this — see
  * `tests/packaging/no-bare-fetch.test.ts`).
  */
-import { fetchWithTimeout } from "../src/utils/http.js";
-
-/** Statuses worth retrying: throttling and transient gateway faults. A 400/401/404 will fail the same way, so it falls straight through. */
-export const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+import { fetchWithTimeout, RETRYABLE_STATUS, retryAfterMs } from "../src/utils/http.js";
+export { RETRYABLE_STATUS, retryAfterMs };
 
 export const sleep = (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, ms));
-
-/**
- * Retry-After in milliseconds, or null when the server sent none usable.
- *
- * Only the numeric (delay-seconds) form is honoured; the HTTP-date form needs
- * clock-skew handling a dev script has no business guessing at, so it reads as
- * null and the caller falls back to exponential backoff. Returning null for
- * both absent and non-numeric is the whole point — see the file header.
- */
-export function retryAfterMs(res: Response): number | null {
-  const header = res.headers.get("retry-after");
-  if (header === null) return null;
-  const trimmed = header.trim();
-  if (!/^\d+$/.test(trimmed)) return null;
-  return Number(trimmed) * 1000;
-}
 
 export interface RetryOptions {
   /** Max retry attempts after the first try. Default 8. */

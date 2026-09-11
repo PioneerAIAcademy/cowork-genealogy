@@ -432,7 +432,7 @@ describe("Error handling", () => {
   });
 
   it("translates 500 to a generic upstream error", async () => {
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false, status: 500, statusText: "Server Error",
       text: () => Promise.resolve(""),
       json: () => Promise.resolve({}),
@@ -442,7 +442,7 @@ describe("Error handling", () => {
   });
 
   it("translates a network error", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("ETIMEDOUT"));
+    mockFetch.mockRejectedValue(new Error("ETIMEDOUT"));
     await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/Could not reach/);
   });
 

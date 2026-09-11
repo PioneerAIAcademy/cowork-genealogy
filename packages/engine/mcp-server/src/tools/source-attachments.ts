@@ -1,6 +1,6 @@
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { arkToUrl } from "../utils/ark.js";
 import type {
   SourceAttachmentsInput,
@@ -31,7 +31,7 @@ export async function sourceAttachmentsTool(
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(URL, {
+    response = await fetchWithRetry(URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
