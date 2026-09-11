@@ -18,6 +18,7 @@ import {
   RESEARCH_SHAPES,
   ID_PREFIXES,
   ISO_DATE_PATTERN,
+  SETTLED_CONFLICT_STATUSES,
 } from "../../src/validation/validator.js";
 
 describe("Project Validator", () => {
@@ -783,6 +784,429 @@ describe("Project Validator", () => {
           e.message.includes("relationship.parent 'NONEXISTENT' not found in tree.gedcomx.json persons")
         )
       ).toBe(true);
+    });
+  });
+
+  // --- issue #1972 V5 -------------------------------------------------------
+  //
+  // `proof_summaries[].resolved_conflict_ids` was checked for presence and
+  // shape only, so a proof summary could claim an open conflict was settled and
+  // no tool, schema or eval check could see it. Four shipped scenario fixtures
+  // were in exactly that state. Labelled `nothing-checks`.
+  describe("proof_summaries resolved_conflict_ids -> conflicts[].status (V5)", () => {
+    function withConflictAndSummary(status: string | undefined, refs: string[]) {
+      const conflicts =
+        status === undefined
+          ? []
+          : [
+              {
+                id: "c_001",
+                conflict_type: "fact",
+                description: "Birth year conflict",
+                competing_assertion_ids: ["a_001", "a_002"],
+                status,
+                blocks_question_ids: [],
+                disputed_attribute: "birth_date",
+              },
+            ];
+      return {
+        ...minimalResearch,
+        conflicts,
+        proof_summaries: [
+          {
+            id: "ps_001",
+            question_id: "q_001",
+            tier: "probable",
+            vehicle: "summary",
+            supporting_assertion_ids: [],
+            resolved_conflict_ids: refs,
+            exhaustive_search_summary: "Test",
+            narrative_markdown: "Test",
+          },
+        ],
+      };
+    }
+
+    const v5Errors = (r: { errors: { message: string }[] }) =>
+      r.errors.filter((e) => e.message.includes("resolved_conflict_ids"));
+
+    it("accepts a citation of a resolved conflict", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("accepts a citation of a MOOT conflict", async () => {
+      // Deliberate deviation from the deep dive's rule text, which says
+      // `resolved` only. Four shipped sites treat the pair as jointly terminal,
+      // and one is this engine instructing the agent: research-append.ts:1434
+      // ("'resolved' and 'moot' both settle a conflict") and :1478-1479 (the
+      // completion-gate error says set it to "'resolved' … or 'moot'"). V5's
+      // harm is claiming an OPEN conflict is settled; `moot` is terminal, so a
+      // `resolved`-only rule would refuse a write the moment an agent follows
+      // that instruction, with nowhere to record the moot conflict.
+      const result = await validateParsed(
+        withConflictAndSummary("moot", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("accepts an empty resolved_conflict_ids", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", []),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("reports a citation of an unresolved conflict, naming the conflict", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      expect(result.valid).toBe(false);
+      const errs = v5Errors(result);
+      expect(errs).toHaveLength(1);
+      expect(errs[0].message).toContain("'c_001'");
+      expect(errs[0].message).toContain("not settled");
+    });
+
+    it("emits a byte-identical message for every state that reaches the error", async () => {
+      // The property, not one forbidden token. A previous version asserted only
+      // that the string "unresolved" was absent, which review defeated by
+      // making the message vary with the ARRAY INDEX instead — the whole engine
+      // suite passed while the freeze was re-introduced, since dropping one of
+      // two citations shifts the survivor's index.
+      //
+      // MANY document states reach this error with one byte-identical message —
+      // ten were run and all ten agree, so the four below are examples rather
+      // than a count. `introduced-errors.ts` keys on the normalized path plus
+      // the message, so if any pair of them produced different text, a project
+      // transitioning between them would have its unchanged defect read as
+      // newly introduced and its write refused.
+      const states: unknown[] = ["unresolved", null, 42, "not_a_status"];
+      const messages = new Set<string>();
+      for (const st of states) {
+        const research = withConflictAndSummary(st as string, ["c_001"]);
+        messages.add(v5Errors(await validateParsed(research, minimalTree))[0]?.message);
+      }
+      // ...and the fifth: `status` absent entirely.
+      const noStatus = withConflictAndSummary("unresolved", ["c_001"]);
+      delete (noStatus.conflicts[0] as any).status;
+      messages.add(v5Errors(await validateParsed(noStatus, minimalTree))[0]?.message);
+
+      expect(messages.size).toBe(1);
+      expect([...messages][0]).toContain("'c_001'");
+
+      // And it must not vary with position: two citations vs one must give the
+      // survivor the same text.
+      const two = withConflictAndSummary("unresolved", ["c_000_first", "c_001"]);
+      const shifted = v5Errors(await validateParsed(two, minimalTree)).find((e) =>
+        e.message.includes("'c_001'")
+      );
+      expect(shifted?.message).toBe([...messages][0]);
+    });
+
+    it("names the remedy and the order, because the order is inverted", async () => {
+      // Two independently correct guards compose into a dead end: re-opening a
+      // conflict that a proof summary cites is refused, and `research_append`'s
+      // ownership routing gives conflict-resolution no move from inside its own
+      // lane (it may not touch `proof_summaries`, and a combined batch is denied
+      // op-by-op). The only compliant sequence is inverted relative to the
+      // causal order — proof-conclusion prunes the citation FIRST, then
+      // conflict-resolution re-opens — and it is documented nowhere else.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      const msg = v5Errors(result)[0].message;
+      expect(msg).toContain("settle it first");
+      expect(msg).toContain("before re-opening it");
+      expect(msg).toContain("proof-conclusion owns");
+    });
+
+    it("reports a non-string entry rather than skipping it", async () => {
+      // Pre-existing gap this closes: both schema trees declare an array of
+      // `^c_` strings and the runtime validator does not load them, so a
+      // non-string entry added no error anywhere.
+      const research = withConflictAndSummary("resolved", [42 as unknown as string]);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(v5Errors(result)[0].message).toContain("non-string entry");
+    });
+
+    it("keeps a legacy assertion that the live status is absent", async () => {
+      // Load-bearing, and the subtlest thing here. `introduced-errors.ts`'s
+      // diff key is the normalized path PLUS the message text, so a message
+      // that varies with the conflict's status makes an UNCHANGED defect read
+      // as newly introduced and refuses the write — a self-inflicted freeze on
+      // the pre-existing drift that module exists to tolerate. The paired
+      // behavioural proof is the unresolved -> moot test in
+      // introduced-errors.test.ts.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", ["c_001"]),
+        minimalTree
+      );
+      expect(v5Errors(result)[0].message).not.toContain("unresolved");
+    });
+
+    it("reports a citation of a conflict that does not exist", async () => {
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", ["c_404"]),
+        minimalTree
+      );
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("references conflict 'c_404' which does not exist")
+        )
+      ).toBe(true);
+    });
+
+    it("reports each bad id separately, with distinct messages", async () => {
+      // Distinctness is what `introduced-errors.ts` keys on: two bad ids
+      // collapsing to one message would make fixing one of them read as "still
+      // pre-existing" and leave the other tolerated forever.
+      const research = withConflictAndSummary("unresolved", ["c_001", "c_404"]);
+      const result = await validateParsed(research, minimalTree);
+      const messages = new Set(
+        result.errors
+          .filter((e) => /c_001|c_404/.test(e.message))
+          .map((e) => e.message)
+      );
+      expect(messages.size).toBe(2);
+    });
+
+    it.each([
+      ["a bare string", "c_001"],
+      ["a model-serialized array", '["c_001"]'],
+      ["a number", 42],
+      ["an object", { "0": "c_001" }],
+    ])("refuses %s in place of the array", async (_label, value) => {
+      // The CONTAINER type. Without this guard the whole rule was bypassed by
+      // dropping two brackets — a refused write became a legal write asserting
+      // exactly the false thing V5 forbids, with `c_001` still unresolved.
+      // `coerceJsonArg` handles a serialized `entry` but not fields inside it,
+      // which is why the JSON-string form survives to here.
+      const research = withConflictAndSummary("unresolved", value as never);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'resolved_conflict_ids' must be an array")
+        )
+      ).toBe(true);
+    });
+
+    it("reports a null as a required-field error only, not also as a type error", async () => {
+      // The `!== null` clause in the container guard. `checkRequired` already
+      // rejects a null required field, so without it a null produces TWO errors
+      // for one problem — and a duplicated diagnosis is what makes an agent
+      // repair the wrong thing. The sibling `claims` guard excludes null for
+      // the same reason. Removing the clause left the whole suite green until
+      // this test existed.
+      const research = withConflictAndSummary("resolved", null as never);
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("'resolved_conflict_ids' must be an array")
+        )
+      ).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("resolved_conflict_ids"))
+      ).toBe(true);
+    });
+
+    it("reports an ABSENT key as a required-field error only, not also a type error", async () => {
+      // The `"resolved_conflict_ids" in ps` clause, which nothing tested:
+      // deleting it left all 247 validation tests green while an absent key
+      // produced BOTH `missing required field` and `must be an array` for one
+      // problem. Same double diagnosis the `null` case above prevents, on the
+      // twin case — and a duplicated diagnosis is what makes an agent repair
+      // the wrong thing.
+      const research = withConflictAndSummary("resolved", []);
+      delete (research.proof_summaries[0] as Record<string, unknown>)
+        .resolved_conflict_ids;
+      const result = await validateParsed(research, minimalTree);
+      expect(result.valid).toBe(false);
+      const mentions = result.errors.filter((e) =>
+        e.message.includes("resolved_conflict_ids")
+      );
+      expect(mentions).toHaveLength(1);
+      expect(mentions[0].message).not.toContain("must be an array");
+    });
+
+    it("embeds the offending value in the container message", async () => {
+      // `errorKey` is the normalized path PLUS the message, so a STATIC message
+      // keys identically before and after — which demotes a change from one
+      // non-array to a DIFFERENT non-array as pre-existing and writes it.
+      const result = await validateParsed(
+        withConflictAndSummary("resolved", "c_001" as never),
+        minimalTree
+      );
+      const msg = result.errors.find((e) =>
+        e.message.includes("'resolved_conflict_ids' must be an array")
+      )?.message;
+      expect(msg).toContain('"c_001"');
+    });
+
+    it.each([
+      // The first three messages name the field; the dangling one comes from
+      // the shared `checkRefExists`, whose house style names the REF TYPE
+      // ("assertion" vs "conflict") rather than the field. That is what
+      // disambiguates the two id-bearing arrays that sit at the same path, so
+      // it is matched as-is rather than reworded — the sibling
+      // `resolved_conflict_ids` dangling case is asserted the same way 200
+      // lines above.
+      ["a bare string", "a_001", "'supporting_assertion_ids' must be an array"],
+      ["an array-like object", { "0": "a_001" }, "'supporting_assertion_ids' must be an array"],
+      ["a non-string entry", [42], "supporting_assertion_ids contains a non-string entry"],
+      ["a dangling reference", ["a_999"], "references assertion 'a_999' which does not exist"],
+    ])(
+      "gives supporting_assertion_ids the same guards: %s",
+      async (_label, value, expected) => {
+        // The class recurs, not the field. Measured before this: all four were
+        // ACCEPTED and persisted with no error at all — and the dangling case is
+        // the same shape V5 exists to remove, on the sibling field, feeding the
+        // same reader that guards `.length > 0` then calls `.map`.
+        const research = withConflictAndSummary("resolved", []);
+        (research.proof_summaries[0] as Record<string, unknown>)
+          .supporting_assertion_ids = value;
+        const result = await validateParsed(research, minimalTree);
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.message.includes(expected))).toBe(true);
+      }
+    );
+
+    it.each([
+      ["a NON-EMPTY array of existing ids", ["a_001"]],
+      ["an empty array", []],
+    ])("still accepts %s", async (_label, value) => {
+      // Polarity for the four negative cases above.
+      //
+      // An earlier version of this looped over `[[], undefined]` and assigned
+      // `[]` in BOTH branches, so the non-empty case — which is what 36 shipped
+      // fixtures actually carry — was never exercised, while the comment
+      // claimed it was. Third instance in this PR family of a comment asserting
+      // coverage a test does not have, so the non-empty row is explicit and
+      // supplies a real assertion for the referential check to resolve.
+      const research = withConflictAndSummary("resolved", []);
+      (research as Record<string, unknown>).assertions = [
+        {
+          id: "a_001",
+          source_id: "src_001",
+          record_id: "test",
+          record_role: "principal",
+          fact_type: "birth",
+          value: "1850",
+          information_quality: "primary",
+          informant: "self",
+          informant_proximity: "self",
+          evidence_type: "direct",
+          extracted_for_question_ids: [],
+        },
+      ];
+      (research.proof_summaries[0] as Record<string, unknown>)
+        .supporting_assertion_ids = value;
+      const result = await validateParsed(research, minimalTree);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("supporting_assertion_ids")
+        )
+      ).toBe(false);
+      // And the referential check must not have flagged the id either — the
+      // failure this row exists to rule out is a valid id being reported as
+      // dangling.
+      expect(
+        result.errors.some((e) => e.message.includes("references assertion 'a_001'"))
+      ).toBe(false);
+    });
+
+    it("still accepts an empty array", async () => {
+      // Polarity for the guard above: `[]` is the legitimate empty case and the
+      // one four shipped fixtures were corrected TO, so a container check that
+      // rejected it would break the repair this PR makes.
+      const result = await validateParsed(
+        withConflictAndSummary("unresolved", []),
+        minimalTree
+      );
+      expect(v5Errors(result)).toEqual([]);
+    });
+
+    it("holds the join across a synthetic fixture tree, including a moot citation", async () => {
+      // A SECOND EXPRESSION of assertions this describe already makes, not the
+      // thing that makes the imported constant load-bearing — reviewed and
+      // conceded. Every mutation that breaks the `moot` half also reds the
+      // pre-existing "accepts a citation of a MOOT conflict" test at the same
+      // time, so this adds no marginal detection, and its three `validateParsed`
+      // calls duplicate three tests above with the same helper and tree. Kept
+      // because it states the whole matrix in one place; delete it freely if
+      // that is not worth the duplication.
+      const settled = (status: string) => SETTLED_CONFLICT_STATUSES.has(status);
+      expect(settled("resolved")).toBe(true);
+      expect(settled("moot")).toBe(true);
+      expect(settled("unresolved")).toBe(false);
+
+      for (const [status, shouldBeClean] of [
+        ["resolved", true],
+        ["moot", true],
+        ["unresolved", false],
+      ] as [string, boolean][]) {
+        const result = await validateParsed(
+          withConflictAndSummary(status, ["c_001"]),
+          minimalTree
+        );
+        expect(v5Errors(result).length === 0).toBe(shouldBeClean);
+      }
+    });
+
+    it("holds across every shipped scenario fixture", async () => {
+      // Scoped to the V5 join ON PURPOSE, not full validation: seven fixtures
+      // exist to FAIL validation (mid-research-flynn-bad-id-prefix,
+      // -dangling-ref, -bad-enum, -missing-field, -cross-file, -broken-fk-refs,
+      // -broken-fk), driven by `intentionally_invalid: true` tests, so a
+      // full-validation scan would red on landing.
+      //
+      // A scan rather than four hand-written cases so a FIFTH fixture
+      // acquiring the fault is caught. Four carried it when V5 landed:
+      // flynn-with-birthplace-conflict, flynn-multi-conflict,
+      // flynn-identity-geographic and flynn-unresolved-conflict — one more than
+      // the deep dive predicted.
+      const here = dirname(fileURLToPath(import.meta.url));
+      const scenarios = join(here, "..", "..", "..", "..", "..", "eval", "fixtures", "scenarios");
+      const { readdirSync, existsSync } = await import("fs");
+      const offenders: string[] = [];
+      for (const name of readdirSync(scenarios)) {
+        const rp = join(scenarios, name, "research.json");
+        if (!existsSync(rp)) continue;
+        const research = JSON.parse(readFileSync(rp, "utf-8"));
+        // Imported rather than hand-copied, for a single source of truth — NOT
+        // for detection. An earlier version of this comment called the copy
+        // "the only one of the eleven sites a tightening must touch that a test
+        // guards"; both halves were wrong. It is ten sites (the import removed
+        // the eleventh), and narrowing the constant to `["resolved"]` leaves
+        // this scan GREEN, because zero shipped fixtures cite a `moot`
+        // conflict — the "accepts a citation of a MOOT conflict" test is what
+        // catches that. See the docblock on SETTLED_CONFLICT_STATUSES.
+        const settled = new Set(
+          (research.conflicts ?? [])
+            .filter((c: any) => SETTLED_CONFLICT_STATUSES.has(c?.status))
+            .map((c: any) => c?.id)
+        );
+        const known = new Set((research.conflicts ?? []).map((c: any) => c?.id));
+        for (const ps of research.proof_summaries ?? []) {
+          for (const cid of ps?.resolved_conflict_ids ?? []) {
+            if (!known.has(cid) || !settled.has(cid)) {
+              offenders.push(`${name}: ${ps.id} -> ${cid}`);
+            }
+          }
+        }
+      }
+      expect(offenders).toEqual([]);
     });
   });
 

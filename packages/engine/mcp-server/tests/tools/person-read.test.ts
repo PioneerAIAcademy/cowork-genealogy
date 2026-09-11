@@ -699,6 +699,27 @@ describe("personReadTool", () => {
     await expect(personReadTool({ personId: "X" })).rejects.toThrow(/login tool/);
   });
 
+  // 25a. Recovery: 429 then 200 → returns the successful result
+  it("recovers from a transient 429 and returns the person", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        json: () => Promise.resolve({}),
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(PERSON_ONLY),
+        headers: new Headers(),
+      });
+    const result = await personReadTool({ personId: "KNDX-MKG" });
+    expect(result.persons[0].id).toBe("KNDX-MKG");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
   // 26. Rejects an empty personId before making any request
   it("rejects an empty personId without fetching", async () => {
     await expect(personReadTool({ personId: "  " })).rejects.toThrow(
