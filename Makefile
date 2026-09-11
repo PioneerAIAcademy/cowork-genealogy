@@ -400,6 +400,12 @@ probe-bedrock-parity: $(ENGINE_BUILD) ## P3 probe: tool search, 1h cache TTL, in
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python -m dev.p1.probe_bedrock_parity $(if $(OUT),--out $(OUT)) $(if $(filter 1 true yes on,$(SKIP_WAIT)),--skip-wait,)
 
+.PHONY: probe-gateway-path
+probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic ANTHROPIC_BASE_URL (a logging pass-through to api.anthropic.com) vs first-party — tool-search gate, eager tool load, cache_control ttls and betas on the wire (5 short billed sessions, cents): make probe-gateway-path [OUT=dir] [ARMS=a,b]
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_gateway_path $(if $(OUT),--out $(OUT)) $(if $(ARMS),--arms $(ARMS))
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
@@ -799,6 +805,18 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-cache-window
+e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e2e runs: make e2e-cache-window | TEST=<slug> | MD=1 for a Markdown table | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API. Production
+	# writes 5-minute cache entries (API key, no ENABLE_PROMPT_CACHING_1H; the
+	# gateway can offer nothing longer), but this corpus ran on the operator's
+	# subscription under the 1-hour TTL, so its > 300 s same-thread gaps were
+	# hits that a 5-minute TTL would turn into WRITES: each such model call is
+	# re-priced and the delta is reported per run and over the corpus. Per-call
+	# cache figures are not in the run log, so the run's cache-read total is
+	# distributed over its calls two stated ways (see the module docstring).
+	cd eval/harness && uv run python -m e2e.cache_window $(if $(TEST),--test $(TEST),) $(if $(MD),--markdown,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-compaction
 e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
