@@ -680,10 +680,10 @@ describe("volumeSearchTool", () => {
     );
   });
 
-  // 18. Network error
+  // 18. Network error (retried by fetchWithRetry before surfacing)
   it("throws on network error", async () => {
     mockFetch
-      .mockRejectedValueOnce(new Error("ECONNREFUSED"));
+      .mockRejectedValue(new Error("ECONNREFUSED"));
 
     await expect(volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" })).rejects.toThrow(
       "Could not reach FamilySearch volume search API: ECONNREFUSED."

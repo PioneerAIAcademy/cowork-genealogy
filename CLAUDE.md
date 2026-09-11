@@ -709,12 +709,19 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `collections_search`, `record_search`, `external_links_search`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
-- **`src/utils/http.ts`** — `fetchWithTimeout()` is the only correct way to call
-  an external service. Node's global `fetch` never times out on its own; a
-  stalled upstream connection (FamilySearch/Imperva, the wiki-query-api
-  sidecar, OpenRouter) hangs the call forever otherwise. Every tool that touches
-  the network calls this instead of the global `fetch` directly; it is the
-  only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
+- **`src/utils/http.ts`** — `fetchWithRetry()` is the standard way to call an
+  external service. It wraps `fetchWithTimeout()` with automatic retry of
+  transient failures (429, 5xx, network errors, timeouts) under a 10s budget
+  cap with exponential backoff + jitter. On exhaustion it returns the last
+  Response so the caller's existing `!response.ok` error path is preserved.
+  Use `fetchWithRetry` for new call sites; `fetchWithTimeout` is still
+  exported for the handful of excluded sites that manage their own retry or
+  carry timeouts too long for the budget (`image_transcribe` 180s,
+  `fs-image-fetch` 90s, `place-api`, `match-engine`). Node's global `fetch`
+  never times out on its own; a stalled upstream connection
+  (FamilySearch/Imperva, the wiki-query-api sidecar, OpenRouter) hangs the
+  call forever otherwise. This file is the only one allowed to call the global
+  `fetch` directly (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
   `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
   60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a

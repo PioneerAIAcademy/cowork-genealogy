@@ -91,6 +91,32 @@ describe("project-io write layer", () => {
       expect(leftovers).toEqual([]);
     });
 
+    it("dot-prefixes its temp files so a crash-left temp is a dotfile the feedback bundler skips (issue #2333)", async () => {
+      // The feedback bundler skips dotfiles and redacts by exact name, so a
+      // NON-dot temp (`tree.gedcomx.json.tmp-<uuid>`) left by a crash between
+      // write and rename would ship unredacted. Observe the real temp name
+      // mid-write via the between-renames seam: the second temp is still on
+      // disk here, not yet renamed.
+      const treePath = join(dir, "tree.gedcomx.json");
+      const researchPath = join(dir, "research.json");
+      let midWriteTemps: string[] = [];
+      await atomicWriteBoth(
+        [
+          { path: treePath, data: { tree: 1 } },
+          { path: researchPath, data: { research: 1 } },
+        ],
+        {
+          onBeforeSecondRename: async () => {
+            midWriteTemps = (await readdir(dir)).filter((f) => f.includes(".tmp-"));
+          },
+        },
+      );
+      expect(midWriteTemps.length).toBeGreaterThan(0);
+      for (const name of midWriteTemps) {
+        expect(name.startsWith("."), `temp ${name} must be dot-prefixed`).toBe(true);
+      }
+    });
+
     it("a failure during the temp-write phase leaves both targets unchanged (both-or-neither)", async () => {
       const treePath = join(dir, "tree.gedcomx.json");
       const researchPath = join(dir, "research.json");

@@ -359,6 +359,27 @@ query shape.
    matching only. The tool description must make this clear so Claude
    constructs appropriate queries.
 
+5. **Place parameter behaviour** (measured 2026-09-10,
+   `dev/probe-search-qualifiers.ts` section J, artifact
+   `dev/measured-figures.json`): both `q.recordPlace` and
+   `f.recordPlace*` search **collection metadata only**, not
+   transcript content. Confirmed by a discriminating-document test:
+   a Bullock County, Alabama probate record whose transcript mentions
+   Virginia but whose metadata says Alabama was found by
+   `q.recordPlace=Alabama` and `f.recordPlace1=10,Alabama`, and NOT
+   found by `q.recordPlace=Virginia` or `f.recordPlace1=10,Virginia`.
+   `q.text` does search transcript content (confirmed in the same
+   section). The `f.recordPlace*` filters accept only the numeric
+   hierarchical IDs returned by the facets API (e.g.
+   `f.recordPlace1=10,Alabama`), not plain text values — plain text
+   silently returns zero results. Guarded by
+   `tests/packaging/measured-figures.test.ts` (`FORBIDDEN_WHEN` rules
+   for `J.verdict:q.recordPlace searches` and
+   `J.verdict:f.recordPlace searches`; the tool description is also
+   guarded via `AGENT_SURFACES`). The skill-reference surface is
+   still unguarded; it is the fulltext collection-scoping decision's
+   to land.
+
 ## Files to create/modify
 
 | File | Action |
