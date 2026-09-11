@@ -418,7 +418,13 @@ def _stage_and_compact_search_results(
     tool_name: str,
     response: dict[str, Any],
     ranked: dict[str, Any] | None = None,
-) -> tuple[dict[str, Any] | None, dict[str, Any], list[dict[str, Any]], bool]:
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any],
+    list[dict[str, Any]],
+    bool,
+    dict[str, Any] | None,
+]:
     """Stage a mocked search response and apply the tool's own post-staging
     compaction, both by calling the compiled build.
 
@@ -450,7 +456,7 @@ def _stage_and_compact_search_results(
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not stager_js.exists():
-        return None, response, [], False
+        return None, response, [], False, ranked
 
     def _url(p: Path) -> str:
         posix = str(p).replace("\\", "/").replace("'", "\\'")
@@ -466,18 +472,29 @@ def _stage_and_compact_search_results(
 
     if ranked is not None and compactor_js.exists():
         compact_import += (
-            f"import {{ dropInlineResultsWhenRanked }} from '{_url(compactor_js)}';"
+            "import { dropInlineResultsWhenRanked, projectRowFieldsOntoRanked }"
+            f" from '{_url(compactor_js)}';"
         )
+        # The rank fixtures are hand-written and lean: they were authored when
+        # `ranked` shipped ALONGSIDE `results` and could afford to omit the
+        # triage fields. Production builds each stub FROM the row, so it never
+        # has that gap. Projecting the row fields on before the drop is what
+        # keeps the mock serving production's shape rather than strictly less
+        # than it — without this, every test that drops `results` grades the
+        # skill's triage on data production would really have sent.
         drop_probe = (
             " let dropResults = false;"
+            " let rankedOut = input.ranked;"
             " if (r && input.ranked) {"
-            "   const probe = { ...input.response, ranked: input.ranked };"
+            "   rankedOut = projectRowFieldsOntoRanked("
+            "     input.ranked, input.response.results ?? []);"
+            "   const probe = { ...input.response, ranked: rankedOut };"
             "   dropInlineResultsWhenRanked(probe);"
             "   dropResults = probe.results === undefined;"
             " }"
         )
     else:
-        drop_probe = " const dropResults = false;"
+        drop_probe = " const dropResults = false; const rankedOut = input.ranked;"
 
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
@@ -498,26 +515,27 @@ def _stage_and_compact_search_results(
         # Production's own rule, run on a throwaway copy carrying the `ranked`
         # this call will fold in. Only the verdict crosses back.
         f"{drop_probe}"
-        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response, dropResults }));"
+        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response, dropResults, ranked: rankedOut }));"
     )
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
         out = proc.stdout.strip()
         if not out:
-            return None, response, [], False
+            return None, response, [], False, ranked
         parsed = json.loads(out)
         unlogged = parsed.get("unlogged") or []
         staged = parsed.get("staged")  # StagedHandle, or null -> None
         if staged is None:
-            return None, response, unlogged, False
+            return None, response, unlogged, False, ranked
         return (
             staged,
             parsed.get("response", response),
             unlogged,
             bool(parsed.get("dropResults")),
+            parsed.get("ranked", ranked),
         )
     except Exception:
-        return None, response, [], False
+        return None, response, [], False, ranked, ranked
 
 
 def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
@@ -688,6 +706,7 @@ def create_mock_server(
                     response,
                     _unlogged_staged,
                     _drop_results,
+                    _rank_resp,
                 ) = _stage_and_compact_search_results(
                     _workspace, _name, response, ranked=_rank_resp
                 )

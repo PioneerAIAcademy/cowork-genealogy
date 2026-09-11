@@ -24,6 +24,8 @@
 
 import type { RecordSearchResult, RecordSearchToolResponse } from "../types/record-search.js";
 import type { FulltextSearchResponse } from "../types/fulltext-search.js";
+import type { RankSearchMatchesResult } from "../types/rank-search-matches.js";
+import { arkToBareId } from "./ark.js";
 
 /**
  * Slim `record_search`'s INLINE projection so a broad search can't overflow the
@@ -169,4 +171,57 @@ export function dropInlineResultsWhenRanked(
     delete out.results;
   }
   return out;
+}
+
+/**
+ * Copy the triage fields a ranked stub carries from the search row it was built
+ * from, for callers that did NOT build the stub themselves.
+ *
+ * Production never needs this: `rank_search_matches`'s `toStub` reads the staged
+ * row directly, so `events` / `collectionId` / `recordTitle` / `treeMatches` are
+ * on the stub by construction. The eval mock is the caller that does — it
+ * composes a hand-written `ranked` fixture with a real `results` list, and those
+ * fixtures were authored when `ranked` shipped ALONGSIDE `results` and could
+ * therefore afford to be lean. Now that `ranked` replaces `results`, serving a
+ * lean stub hands the agent strictly less than production does, and grades its
+ * triage on data it would really have had.
+ *
+ * Matching is by `recordId` reduced with `arkToBareId`, not by string equality:
+ * production emits a canonical ARK on both sides, but the committed fixtures
+ * predate that and carry a bare `MXHY-TP4` on the row against a full
+ * `ark:/61903/1:1:MXHY-TP4` on the stub. Exact matching silently projects
+ * nothing there, which is the same failure as not calling this at all.
+ *
+ * Fields already present on the stub win, so a fixture that deliberately pins
+ * an `events` list is never overwritten. Empty arrays are not copied, matching
+ * `toStub`'s own guards — an empty `treeMatches` says "none" in bytes.
+ *
+ * Mutates and returns `ranked`.
+ */
+export function projectRowFieldsOntoRanked(
+  ranked: RankSearchMatchesResult,
+  results: RecordSearchResult[],
+): RankSearchMatchesResult {
+  const rowById = new Map(results.map((r) => [arkToBareId(r.recordId), r]));
+  for (const stub of ranked.matches ?? []) {
+    const row = rowById.get(arkToBareId(stub.recordId));
+    if (!row) continue;
+    if (stub.events === undefined && row.events && row.events.length > 0) {
+      stub.events = row.events;
+    }
+    if (stub.collectionId === undefined && row.collectionId) {
+      stub.collectionId = row.collectionId;
+    }
+    if (stub.recordTitle === undefined && row.recordTitle) {
+      stub.recordTitle = row.recordTitle;
+    }
+    if (
+      stub.treeMatches === undefined &&
+      row.treeMatches &&
+      row.treeMatches.length > 0
+    ) {
+      stub.treeMatches = row.treeMatches;
+    }
+  }
+  return ranked;
 }

@@ -321,6 +321,49 @@ def test_record_search_drops_inline_results_when_ranked_replaces_them(tmp_path):
 
 
 @pytest.mark.requires_engine_build
+def test_dropped_results_do_not_take_the_triage_fields_with_them(tmp_path):
+    """The rank fixtures are lean; `results` is not. Dropping one without
+    projecting the other hands the agent strictly less than production sends.
+
+    Caught by a real eval run, not by reasoning: `ut_search_records_014`
+    regressed pass -> fail because the household `events` the skill needs for
+    the Step-4 age cross-check lived only on the dropped `results` row. All 16
+    committed rank fixtures are lean, because they were authored when `ranked`
+    shipped ALONGSIDE `results`.
+    """
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {
+            "surname": "Flynn",
+            "givenName": "Patrick",
+            "projectPath": str(tmp_path),
+            "subjectId": "I1",
+        },
+    )
+    body = _extract_response_dict(result)
+    assert body.get("staged"), "staging must still happen"
+    assert "results" not in body, "precondition: this fixture pair drops results"
+
+    # The fixture's own stubs carry none of these; they must arrive by
+    # projection from the rows that were dropped.
+    carried = [
+        m
+        for m in body["ranked"]["matches"]
+        if any(k in m for k in ("events", "collectionId", "recordTitle", "treeMatches"))
+    ]
+    assert carried, (
+        "every triage field vanished with `results` — the agent is being graded "
+        "on less than production would send it"
+    )
+
+
+@pytest.mark.requires_engine_build
 def test_record_search_keeps_inline_results_on_a_scoreable_no_match(tmp_path):
     """The arm a length-only drop condition gets wrong (#1212).
 
