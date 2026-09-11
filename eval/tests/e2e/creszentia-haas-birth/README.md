@@ -107,5 +107,24 @@ cannot pass; `f3` records restraint without gating the fixture on an
 unbackstopped subjective call. Do not promote it to `required` without first
 giving the guard a way to distinguish the 1835 fact from the 1830 one.
 
-**Second opinion:** _pending — to be named here by the reviewing genealogist
-before merge (required for this card per issue #2296)._
+Second opinion: Edmund Oware, 2026-09-11, concurs with outcome 2.
+
+Age does not separate the two candidates and the adjudication is right not
+to lean on it: born 1830 she is 24 at Genofeva's 1855 birth and 29 at her
+own marriage, born 1835 she would be 19 and 24, and both are ordinary. What
+carries the call is that Genofeva was illegitimate, so the 1855 Durbach
+entry names her mother's parents rather than her father, and the couple
+those names identify has four Durbach children of whom three carry burials
+in 1829, 1833 and 1834. Crescentia is the only one of the four without one,
+and she is the one who marries at Durbach in 1859 as that couple's daughter.
+The Lichtental family is independently attested at Oberbeuern, so the two
+are distinct families rather than one mis-indexed entry.
+
+Two qualifications are carried rather than resolved. The 1859 marriage entry
+gives a birth of 8 May 1830 against the internally consistent 28 May birth
+and 29 May christening pair; f1 asserts 28 May, which is the right reading,
+and the variant is better explained as a dropped digit than as a second
+candidate. And the adjudication is index level throughout, since both
+Freiburg register images return HTTP 403 and no original page was read. This
+second opinion inherits that limit and does not rest on an original page
+either.
