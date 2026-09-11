@@ -5,7 +5,7 @@
     "name": "Guardian of differently-surnamed minors is likely their stepfather",
     "type": "positive",
     "description": "Tests whether the skill infers that a man appointed guardian of minor children bearing a different surname, shortly after marrying a widow connected to that surname, is most likely their stepfather and the children are hers by a prior marriage — so the differing surname is the expected pattern, not evidence they are unrelated or that a generation is missing. Complements the natural-parent case (ut_historical_context_hbt / issue #1618): the two are told apart by whether the scenario contains a remarriage at all — hbt has none (a father appointed guardian of his own child after the mother's death), while this test turns on a marriage shortly before the appointment (issue #1710).",
-    "tags": ["guardianship", "step-relation", "prior-marriage", "legal-terms", "issue-1710"]
+    "tags": ["guardianship", "step-relation", "prior-marriage", "legal-terms", "issue-1710", "topical-fixture-required"]
   },
   "input": {
     "user_message": "I'm looking at an 1821 guardianship bond in which Josiah Meacham was appointed legal guardian of four minor children surnamed Barlow — none of whom share his surname. About six months earlier, Josiah married Sarah Barlow, a widow. Does the children carrying a different surname from their guardian mean they aren't related to him, or that I'm missing a generation somewhere? What does this record actually tell me?",

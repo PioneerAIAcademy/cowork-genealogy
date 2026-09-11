@@ -1,6 +1,6 @@
 {
   "tool": "wiki_search",
-  "description": "FamilySearch Wiki search about a stepfather appointed guardian of his wife's minor children by a prior marriage. Issue #2283: ut_historical_context_gsm had no topical fixture, so Source quality could never reach 3 without hedging every claim. The named page in the issue (\"United States Guardianship Records\") no longer exists in the live corpus (verified 2026-09-11: 404 on direct fetch, absent from every search tried); this chunk is the closest genuinely-indexed match to the stepfather/prior-marriage pattern -- a FamilySearch help-center lesson describing a real Danish guardianship record naming a stepfather. Not a US record, but it is real, verified content covering the exact legal pattern the test's scenario turns on (a new husband petitioning to be guardian of his wife's children from her first marriage), fetched live via wiki_search rather than written from memory.",
+  "description": "FamilySearch Wiki search about a stepfather appointed guardian of his wife's minor children by a prior marriage (issue #2283). Danish record, not US -- the closest live match after the named page (\"United States Guardianship Records\") proved dead; see the deep-dive doc and PR for the full search trail.",
   "args": { "query": "~guardianship" },
   "response": {
     "query": "widow remarried stepfather guardian children keep surname",
