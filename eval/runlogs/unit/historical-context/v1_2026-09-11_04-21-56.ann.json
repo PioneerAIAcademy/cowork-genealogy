@@ -659,12 +659,20 @@
       "comment": null
     },
     {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_historical_context_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "Agree with judge. Push-factor claims (crop failures, 1848 Revolutions, forced church mergers) and the port-hierarchy claim (Philadelphia primary, New York dominant) are presented as settled fact despite the skill's own admission that tools returned no confirming source — a real register violation, not noise."
     },
     {
       "test_id": "ut_historical_context_013",
@@ -672,15 +680,7 @@
       "dimension_name": "Source quality",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_historical_context_hbt",
-      "dimension_source": "rubric",
-      "dimension_name": "Citation completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "Same issue as Correctness — the same two claim clusters lack tool support but are presented with full confidence. Church-records and naturalization claims are correctly tied to real tool output."
     }
   ]
 }
