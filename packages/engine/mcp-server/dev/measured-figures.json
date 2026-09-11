@@ -1891,6 +1891,11 @@
       "total": 5822,
       "error": null
     },
+    "T3b:f.recordPlace1=Alabama (plain text)": {
+      "found": false,
+      "total": 0,
+      "error": null
+    },
     "facet:usRegionId": "10",
     "facet:virginiaFilter": "f.recordPlace1=10,Virginia",
     "facet:metadataStateFilter": "f.recordPlace1=10,Alabama",
@@ -1901,12 +1906,12 @@
     },
     "T5:f.recordPlace1=Alabama (metadata place)": {
       "found": true,
-      "total": 8946,
+      "total": 5822,
       "error": null
     },
     "verdict:q.text searches transcript": "CONFIRMED",
     "verdict:q.recordPlace searches": "metadata only",
     "verdict:f.recordPlace searches": "metadata only",
-    "measured_at": "2026-09-10T14:20:04.316Z"
+    "measured_at": "2026-09-11T15:58:12.144Z"
   }
 }

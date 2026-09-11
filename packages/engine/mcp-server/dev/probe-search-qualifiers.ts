@@ -5616,14 +5616,11 @@ async function fulltextGetUSRegionId(baseQuery: string): Promise<string | null> 
  * `q.recordPlace` and `f.recordPlace*` find that document when given the
  * transcript-only place name vs the metadata place name.
  *
- * DISCOVERY NOTE. `f.recordPlace1` accepts only the NUMERIC IDs returned by
- * the facets API (`f.recordPlace0=0`, `f.recordPlace1=5`), not text values
- * like `Ohio` or `Alabama`. Passing text values silently returns zero results.
- * This was measured during the first run: `f.recordPlace1=Ohio` → 0,
- * `f.recordPlace1=Alabama` → 0, `f.recordPlace1=United States` → 0, while
- * `q.recordPlace=Alabama` → 481,945 and `q.recordPlace=Ohio` → 4,163,978.
- * Phase 2 obtains the correct numeric IDs from the facets response before
- * using `f.recordPlace*`.
+ * `f.recordPlace1` accepts only the NUMERIC IDs returned by the facets API
+ * (e.g. `f.recordPlace1=10,Alabama`), not plain text values. Passing plain
+ * text silently returns zero results — measured and recorded as T3b in the
+ * artifact. Phase 2 obtains the correct numeric IDs from the facets response
+ * before using `f.recordPlace*`.
  *
  * Three verdicts:
  *   - verdict:q.text searches transcript
@@ -5749,14 +5746,26 @@ async function sectionJ(): Promise<void> {
   console.log(`     anchor found: ${t3Found}  (total: ${t3.total}, error: ${t3.error})`);
   record("J", `T3:q.recordPlace=${metadataState} (metadata place)`, { found: t3Found, total: t3.total, error: t3.error });
 
+  // Test 3b: f.recordPlace1 with PLAIN TEXT (no numeric ID) — control.
+  // Expected: 0 results, proving that plain text silently fails.
+  const t3b = await fulltextSearch(
+    "f.recordPlace1=" + encodeURIComponent(metadataState) +
+    "&q.text=" + encodeURIComponent("+executor +Virginia") +
+    "&f.collectionId=" + encodeURIComponent(cid),
+    20
+  );
+  const t3bFound = !t3b.error && containsAnchor(t3b);
+  console.log(`  T3b f.recordPlace1=${metadataState} (plain text, no facet ID), f.collectionId=${cid}`);
+  console.log(`     anchor found: ${t3bFound}  (total: ${t3b.total}, error: ${t3b.error})`);
+  record("J", `T3b:f.recordPlace1=${metadataState} (plain text)`, { found: t3bFound, total: t3b.total, error: t3b.error });
+
   // Test 4 & 5: f.recordPlace* tests.
   //
   // The fulltext `f.recordPlace*` filters use a hierarchical numeric scheme:
   //   f.recordPlace0=<regionId>           (e.g. 10 for "United States")
   //   f.recordPlace1=<regionId>,<state>   (e.g. "10,Alabama")
-  // Passing a plain text value (like `f.recordPlace1=Ohio`) silently returns 0
-  // results — measured during discovery. Discover the US regionId from the
-  // facets, then construct the correct filter params.
+  // Plain text silently returns 0 (measured and recorded as T3b above).
+  // Discover the US regionId from the facets, then construct correct params.
   console.log("\n  Obtaining US region ID from facets...");
   const usRegionId = await fulltextGetUSRegionId(
     "q.text=" + encodeURIComponent("+executor") +
@@ -5801,7 +5810,8 @@ async function sectionJ(): Promise<void> {
     // The anchor's metadata says this state, so this should find it.
     const t5 = await fulltextSearch(
       metadataFilter +
-      "&q.text=" + encodeURIComponent("+executor +Virginia"),
+      "&q.text=" + encodeURIComponent("+executor +Virginia") +
+      "&f.collectionId=" + encodeURIComponent(cid),
       20
     );
     t5Found = !t5.error && containsAnchor(t5);
@@ -5813,7 +5823,7 @@ async function sectionJ(): Promise<void> {
   console.log(`     anchor found: ${t4Found}  (total: ${t4Total}, error: ${t4Error})`);
   record("J", "T4:f.recordPlace1=Virginia (transcript-only place)", { found: t4Found, total: t4Total, error: t4Error });
 
-  console.log(`  T5 f.recordPlace1=${metadataState} (facet-derived), q.text=+executor+Virginia`);
+  console.log(`  T5 f.recordPlace1=${metadataState} (facet-derived), q.text=+executor+Virginia, f.collectionId=${cid}`);
   console.log(`     anchor found: ${t5Found}  (total: ${t5Total}, error: ${t5Error})`);
   record("J", `T5:f.recordPlace1=${metadataState} (metadata place)`, { found: t5Found, total: t5Total, error: t5Error });
 

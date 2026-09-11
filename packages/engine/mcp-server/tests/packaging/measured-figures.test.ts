@@ -84,6 +84,9 @@ const AGENT_SURFACES = [
   // shipped `person_search` description with the whole suite green — the same hole
   // this file closes elsewhere, left open one file over.
   "packages/engine/mcp-server/src/tools/person-search.ts",
+  // The fulltext tool file is model-read. Section J's FORBIDDEN_WHEN rules
+  // guard the place-parameter wording here via the union scan at line 579.
+  "packages/engine/mcp-server/src/tools/fulltext-search.ts",
   "packages/engine/plugin/skills/search-records/SKILL.md",
   "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md",
   "packages/engine/plugin/skills/search-records/references/place-date-mechanics.md",
@@ -549,6 +552,9 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // (transcript says Virginia, metadata says Alabama). q.recordPlace=Virginia
       // returned 0; q.recordPlace=Alabama found it. So q.recordPlace searches
       // metadata only. Guard against prose that claims it searches transcripts.
+      // The [^.,;] clause boundary is a proxy for negation awareness — it stops
+      // the pattern before a semicoloned contrast or a comma-not clause can
+      // match, which is good enough for the sentence shapes this repo uses.
       verdict: "J.verdict:q.recordPlace searches",
       activeWhen: /^metadata only$/,
       mustNotSay:

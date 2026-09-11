@@ -375,10 +375,10 @@ query shape.
    silently returns zero results. Guarded by
    `tests/packaging/measured-figures.test.ts` (`FORBIDDEN_WHEN` rules
    for `J.verdict:q.recordPlace searches` and
-   `J.verdict:f.recordPlace searches`). The tool description and the
-   skill-reference surface are still unguarded by this measurement;
-   the skill-reference surface is the fulltext collection-scoping
-   decision's to land.
+   `J.verdict:f.recordPlace searches`; the tool description is also
+   guarded via `AGENT_SURFACES`). The skill-reference surface is
+   still unguarded; it is the fulltext collection-scoping decision's
+   to land.
 
 ## Files to create/modify
 
