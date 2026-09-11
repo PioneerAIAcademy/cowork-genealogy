@@ -2,15 +2,14 @@
 // merge_warnings dry-run). The pure tree merge lives in utils/merge-gedcomx.ts;
 // this module owns the tool-layer concerns those wrappers share: reading the
 // project files, validating an inline candidate, deriving the compact summary
-// from the merged document, backing up before an irreversible overwrite, and
-// the Mode-2 research.json person-id remap. Spec: merge-gedcomx-spec.md §5b.
+// from the merged document, and the Mode-2 research.json person-id remap.
+// Spec: merge-gedcomx-spec.md §5b.
 
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import { validateGedcomx } from "../validation/validator.js";
 import { createReport, isValid } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
 import {
-  backupIfExists,
   readProjectJson as readProjectJsonBase,
   formatIssues,
   NoProjectError as NoProjectErrorBase,
@@ -19,7 +18,7 @@ import {
 // merge core and materialize_facts's conflict-surfacing gate (spec §4.4).
 import { VITAL_PRIMARY_TYPES } from "../utils/merge-gedcomx.js";
 
-export { backupIfExists, formatIssues };
+export { formatIssues };
 
 export interface MergePairSummary {
   survivorId: string;
@@ -60,8 +59,7 @@ export interface MergeFailure {
 export type MergeResult = MergeSuccess | MergeFailure;
 
 /** Re-exported so the merge tools' outer catches can build the no-project
- *  answer without importing project-io directly (the same back-compat shape
- *  this module already uses for `backupIfExists`). */
+ *  answer without importing project-io directly. */
 export { NoProjectError, noProjectResult } from "../utils/project-io.js";
 
 /** Raised for expected input problems; the tool turns these into `{ ok: false }`. */
