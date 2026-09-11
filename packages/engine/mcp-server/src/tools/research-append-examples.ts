@@ -153,12 +153,23 @@ const EXAMPLES: Record<string, string> = {
   "gaps": []
 }`,
 
+  // `resolved_conflict_ids` is `[]` in both proof-summary examples ON PURPOSE.
+  // The `conflicts` example above ships `status: "unresolved"` — correct, since
+  // creating a conflict is identification rather than resolution — and `c_001`
+  // appears in no settled example anywhere in this file. Citing it here taught
+  // an agent to write an unresolved conflict and then cite it as resolved,
+  // which `validator.ts` now refuses (#1972 V5) — and these strings are printed
+  // inside that very refusal, so the example handed back an instance of the
+  // thing just rejected. `[]` is the shape that matches this file's own
+  // conflict example. Do not re-add an id here without also adding a settled
+  // conflict example whose `preferred_assertion_id` and `resolution_rationale`
+  // match it.
   proof_summaries: `{
   "question_id": "q_002",
   "tier": "probable",
   "vehicle": "summary",
   "supporting_assertion_ids": ["a_013", "a_025"],
-  "resolved_conflict_ids": ["c_001"],
+  "resolved_conflict_ids": [],
   "exhaustive_search_summary": "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
   "narrative_markdown": "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father..."
 }`,
@@ -375,7 +386,7 @@ export function exampleFor(
     tier: "probable",
     vehicle: "summary",
     supporting_assertion_ids: ["a_013", "a_025"],
-    resolved_conflict_ids: ["c_001"],
+    resolved_conflict_ids: [],
     exhaustive_search_summary: "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
     narrative_markdown: "## Parents of Patrick Flynn\\n\\nThe 1908 death certificate names Thomas Flynn as father...",
     claims: [

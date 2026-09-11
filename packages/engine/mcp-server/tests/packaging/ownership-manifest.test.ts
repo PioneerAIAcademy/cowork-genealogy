@@ -228,4 +228,96 @@ describe("ownership manifest — every name resolves", () => {
       .map((r) => key(r));
     expect(bad).toEqual([]);
   });
+  /**
+   * Item 4 of issue #1790's ruling: the manifest's `writerTools` must match what
+   * the named tool's source actually writes.
+   *
+   * `ownership-manifest.test.ts` and `test_ownership_manifest.py` between them
+   * check that the declaration is exhaustive, resolvable and unchanged. Neither
+   * checked it against the code, so a tool silently gaining a cross-file write —
+   * or the manifest silently missing one it already has — was invisible to both.
+   * That is the `nothing-checks` half of #1790.
+   *
+   * `merge_tree_persons` repoints every research.json reference to a collapsed
+   * person through `remapResearchPersonIds`, which walks `iteratePersonIdRefs` —
+   * the single source of the field set, shared with the validator so "the field
+   * set can never drift" (merge-shared.ts). This reads that walker's own `field:`
+   * literals and requires a manifest row for each.
+   *
+   * **It found one on the day it was written.** The ruling named four sections;
+   * the walker yields five. `proof_summaries` carries person refs, is
+   * `enforceableAt: ["unit", "hook"]`, and listed only `research_append` — so a
+   * merge that touched a proof summary's person ref would have been denied by the
+   * very plane this work is fixing.
+   */
+  it("declares every research.json section merge_tree_persons actually writes", () => {
+    const walker = readFileSync(
+      join(mcpRoot, "src", "validation", "person-id-refs.ts"),
+      "utf8",
+    );
+    // Two readings that must agree. The quoted `field:` literals are what the
+    // walker demonstrably yields; `PersonIdRefField` is what it is ALLOWED to
+    // yield, and every yield site is typed against it. Scraping only the
+    // literals misses a field yielded through a variable — `field: HYP` where
+    // `const HYP: PersonIdRefField = "hypotheses"` — which type-checks, adds a
+    // sixth section, and leaves this guard green. Requiring the two sets to
+    // match is what makes the literal scrape trustworthy rather than a subset.
+    const fields = [...walker.matchAll(/\bfield:\s*"([a-z_]+)"/g)].map((m) => m[1]);
+    const union = [
+      ...(walker.match(/export type PersonIdRefField =([^;]+);/)?.[1] ?? "").matchAll(
+        /"([a-z_]+)"/g,
+      ),
+    ].map((m) => m[1]);
+
+    expect(
+      fields.length,
+      "no `field: \"...\"` literals found in person-id-refs.ts — the walker was " +
+        "restructured and this guard is now reading nothing, which passes silently",
+    ).toBeGreaterThan(0);
+    expect(
+      union.length,
+      "could not read the `PersonIdRefField` union from person-id-refs.ts — the " +
+        "guard's second reading is now empty and cannot disagree with the first",
+    ).toBeGreaterThan(0);
+    expect(
+      union.filter((f) => !fields.includes(f)).sort(),
+      "`PersonIdRefField` names a field no `field: \"...\"` literal yields — the " +
+        "walker reaches it through a variable, so the literal scrape below is " +
+        "reading a subset of what the tool actually writes",
+    ).toEqual([]);
+    expect(
+      fields.filter((f) => !union.includes(f)).sort(),
+      "a `field:` literal is not in the `PersonIdRefField` union — one of the two " +
+        "readings is stale",
+    ).toEqual([]);
+
+    // The walker names the FIELD; `subject_person_ids` lives inside `project`.
+    const sectionOf = (f: string) => (f === "subject_person_ids" ? "project" : f);
+    const written = new Set(union.map(sectionOf));
+
+    const declared = new Set(
+      rows
+        .filter(
+          (r) =>
+            r.artifact === "research.json" &&
+            r.writerTools.includes("merge_tree_persons"),
+        )
+        .map((r) => r.section),
+    );
+
+    const undeclared = [...written].filter((s) => !declared.has(s)).sort();
+    const overdeclared = [...declared].filter((s) => !written.has(s)).sort();
+
+    expect(
+      undeclared,
+      "merge_tree_persons writes these research.json sections but the manifest " +
+        "does not list it as a writer of them — the unit plane will deny a real " +
+        "merge on exactly these",
+    ).toEqual([]);
+    expect(
+      overdeclared,
+      "the manifest lists merge_tree_persons as a writer of these sections but " +
+        "the tool no longer writes them — a grant wider than the code",
+    ).toEqual([]);
+  });
 });
