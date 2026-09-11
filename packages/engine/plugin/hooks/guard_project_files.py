@@ -96,7 +96,14 @@ _MAX_PATH_LEN = 4096
 # hook runs in the VM with no access to the repo — `cwd` is the sandbox and the
 # connected folder is not mounted there. Keeping the two in step is the
 # manifest's `hookCallers` field plus this comment, not a loader.
-OWNED_SECTIONS = {"proof_summaries": "proof-conclusion"}
+OWNED_SECTIONS = {
+    "proof_summaries": "proof-conclusion",
+    # person_evidence, 2026-09-01. One owner, and `extraction_append` does not
+    # accept the section, so a whole-section route fits -- no field is required
+    # on every question the way `exhaustive_declaration` is, so this needs none
+    # of OWNED_DECLARATIONS' field-scoped treatment.
+    "person_evidence": "person-evidence",
+}
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
 # truthy. Same plane and same manifest as OWNED_SECTIONS, different granularity.
@@ -140,6 +147,14 @@ AGENT_WRITABLE_SECTIONS = {
     # owns `plan_items`, not by this agent, so leaving `plans`/`plan_items` out
     # is what stops it clearing its own blocker (issue #1821).
     "research-exhaustiveness": frozenset({"questions"}),
+    # person-evidence writes identity links and nothing else in research.json.
+    # Its stub `persons` and `relationships` writes go to tree.gedcomx.json
+    # through tree_edit/materialize_facts, which carry no `section` for this
+    # check to read. Deliberately narrow for the same reason as the row above:
+    # a blocker it meets -- an unclassified assertion, a genuinely competing
+    # candidate -- is cleared by record-extraction or conflict-resolution, not
+    # by this agent editing those sections itself.
+    "person-evidence": frozenset({"person_evidence"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
@@ -292,6 +307,29 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     Covers `op: "update"` as well as `"append"`: the skill updates an existing
     `ps_NNN` in place on every re-conclusion, and a rule that saw only appends
     would leave that path denied in production with its fixture still green.
+
+    **Gating on `research_append` alone is complete, and here is the check that
+    says so** — it looks like an oversight and is the first thing a reader asks.
+    Of the five declared writers of any research.json section
+    (`research_append`, `project_create`, `research_log_append`,
+    `extraction_append`, `merge_tree_persons`), only `merge_tree_persons` also
+    writes a section this function routes, and it reaches `person_evidence` and
+    `proof_summaries` without ever passing through here.
+
+    That is safe for a structural reason, not a lucky one: it writes those
+    sections through `iteratePersonIdRefs`, whose setters assign one field on an
+    entry that already exists — `pe.person_id = newId`. It cannot create an
+    entry, and it cannot touch `match_score`, which is the failure the
+    `person_evidence` row exists to prevent. A merge permutes ids; it never
+    authors a claim.
+
+    What keeps that true is the source-vs-manifest guard in
+    `tests/packaging/ownership-manifest.test.ts`, which reds when the manifest's
+    `writerTools` and the walker's own field set disagree. Note its limit before
+    relying on it: it catches this tool gaining a NEW SECTION, not it gaining
+    scope *within* a section. If `merge_tree_persons` ever writes a routed
+    section through anything but a ref setter, this docstring is what stops
+    being true, and nothing checks it.
     """
     if _basename(tool_name.replace("__", "/")) != "research_append":
         return None
