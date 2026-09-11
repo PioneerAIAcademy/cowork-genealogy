@@ -55,7 +55,8 @@ def _stub_run(outcome="pass", validators_passed=True, judge=None, activated=True
         validators=ValidatorResult(
             passed=validators_passed,
             results=[{"name": "test_log_append_only", "passed": validators_passed,
-                      "error": None}],
+                      "error": None,
+                      "outcome": "passed" if validators_passed else "failed"}],
         ),
         judge=judge or _stub_judge(),
     )
@@ -599,3 +600,30 @@ def test_a_run_log_without_the_new_fields_still_validates():
             del run["cache_creation_input_tokens"]
             del run["model_usage"]
     validate_run_log(log)
+
+
+def test_as_dicts_output_satisfies_the_run_log_schema():
+    """The real path, end to end: whatever `as_dicts` emits must validate.
+
+    Every other test in this file hand-writes the validator result dicts, so
+    they pin the schema against a fixture rather than against the harness's own
+    output — dropping `outcome` from `as_dicts` leaves all of them green. This
+    is the only test that goes red when the writer and the schema disagree.
+    """
+    from harness.validator_runner import ValidatorRunResult, as_dicts
+
+    results = as_dicts([
+        ValidatorRunResult(name="test_ran", passed=True, error=None),
+        ValidatorRunResult(name="test_failed", passed=False, error="boom"),
+        ValidatorRunResult(name="test_skipped", passed=True,
+                           error="skipped: not this scenario", skipped=True),
+    ])
+    judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
+    run = _stub_run(outcome="fail", validators_passed=False, judge=judge)
+    run.validators = ValidatorResult(passed=False, results=results)
+
+    log = _wrap_envelope(_make_entry(expected_outcome="xfail", runs=[run]))
+    validate_run_log(log)  # raises ValidationError on a shape the schema refuses
+
+    emitted = log["tests"][0]["runs"][0]["validators"]["results"]
+    assert [r["outcome"] for r in emitted] == ["passed", "failed", "skipped"]
