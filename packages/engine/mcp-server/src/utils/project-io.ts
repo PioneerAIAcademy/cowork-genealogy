@@ -11,7 +11,7 @@
 import { writeFile, readFile, rename, mkdir, unlink, access, stat } from "fs/promises";
 import { realpathSync } from "node:fs";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { dirname, join, resolve, relative, isAbsolute } from "path";
+import { basename, dirname, join, resolve, relative, isAbsolute } from "path";
 import { randomUUID } from "node:crypto";
 import type { ValidationError } from "../validation/types.js";
 
@@ -377,8 +377,19 @@ export async function fileExists(path: string): Promise<boolean> {
  * rename it over the target. The rename is atomic on a POSIX filesystem, so a
  * reader never observes a partially written file.
  */
+/**
+ * Temp-file name for an atomic write: a **dot-prefixed** sibling of the target.
+ * A crash between write and rename then leaves `.<file>.tmp-<uuid>`, which the
+ * feedback bundler skips along with every other dotfile — rather than a
+ * readable, unredacted tree copy it would ship (issue #2333's leak class, the
+ * same reason `tree_forget` dot-prefixes its restore file).
+ */
+function tmpSibling(path: string): string {
+  return join(dirname(path), `.${basename(path)}.tmp-${randomUUID()}`);
+}
+
 export async function atomicWriteJson(path: string, obj: unknown): Promise<void> {
-  const tmp = `${path}.tmp-${randomUUID()}`;
+  const tmp = tmpSibling(path);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(tmp, serialize(obj), "utf-8");
   try {
@@ -424,7 +435,7 @@ export async function atomicWriteBoth(
   const temps: Array<{ tmp: string; path: string }> = [];
   try {
     for (const w of writes) {
-      const tmp = `${w.path}.tmp-${randomUUID()}`;
+      const tmp = tmpSibling(w.path);
       await mkdir(dirname(w.path), { recursive: true });
       await writeFile(tmp, serialize(w.data), "utf-8");
       temps.push({ tmp, path: w.path });

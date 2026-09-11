@@ -674,12 +674,15 @@ def test_missing_living_flag_counts_as_living():
 
 
 def test_no_bundle_entry_leaks_a_living_name_date_or_ark():
-    # Scans EVERY file the redaction returns, not just tree.gedcomx.json.
-    # _redact_living matches by exact name, so any OTHER unredacted tree copy
-    # that reaches the walk (a stray .bak, a snapshot, a future readable dump)
-    # ships living names/dates untouched. Mirror of the electron guard behind
-    # issue #2333: the .bak writer that produced exactly such a copy is gone,
-    # and this fails if one ever reappears.
+    # Scans EVERY file the redaction returns, not just tree.gedcomx.json, so
+    # exact-name redaction is verified across whatever the bundle contains
+    # rather than one named file. NOTE: this helper stages only research.json +
+    # tree.gedcomx.json, so the scan does not by itself exercise a stray
+    # unredacted copy — the guard that no writer *produces* one lives in the
+    # engine tests (project-io's dot-prefixed-temp assertion and each writer's
+    # `.bak`-absent assertion, issue #2333). What this adds is that IF a future
+    # fixture or producer ever puts a second readable tree copy in the bundle,
+    # an every-entry scan catches it where a one-file assertion would not.
     _, _, files = _redact_tree(_TREE)
     assert files
     for name, buf in files.items():

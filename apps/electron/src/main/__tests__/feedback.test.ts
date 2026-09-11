@@ -458,12 +458,15 @@ describe('buildFeedbackZip — living-person redaction', () => {
   })
 
   it('never leaks a redacted name or date in ANY bundle entry — not just tree.gedcomx.json', async () => {
-    // Scans every file in the zip, not one. The exact-name redaction only
-    // covers tree.gedcomx.json / starting-tree.gedcomx.json, so any OTHER
-    // unredacted tree copy that reaches the walk (a stray .bak, a snapshot, a
-    // future tool's readable dump) ships living names/dates untouched. This is
-    // the guard behind issue #2333: the .bak writer that produced exactly such
-    // a copy was deleted, and this test fails if one ever reappears.
+    // Scans every file in the zip, not just tree.gedcomx.json, so the
+    // exact-name redaction is verified across whatever the bundle actually
+    // contains rather than one named file. NOTE: this fixture stages only the
+    // two tree files, so the scan does not by itself exercise a stray
+    // unredacted copy — the guard that no writer *produces* one lives in the
+    // engine tests (project-io's dot-prefixed-temp assertion and each writer's
+    // `.bak`-absent assertion, issue #2333). What this adds is that IF a future
+    // fixture or producer ever puts a second readable tree copy in the bundle,
+    // an every-entry scan catches it where a one-file assertion would not.
     const zip = await JSZip.loadAsync(
       Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
     )
