@@ -1,10 +1,10 @@
 {
   "id": "juan-rodriguez-son",
-  "name": "Juan Rodríguez Martínez — additional son Juan (b./d. 1801)",
+  "name": "Juan Rodríguez Martínez — additional son buried 1801",
   "genre": "record-hint",
   "source_pid": "9634-PS9",
   "captured": "2026-07-24",
-  "researcher_question": "Did Juan Rodríguez Martínez and his wife Marcelina Garcia of Pozuelo, Albacete, Spain have a son also named Juan, who died in infancy in 1801, in addition to their eight known children (b. 1799-1822)?",
+  "researcher_question": "Did Juan Rodríguez Martínez and his wife Marcelina Garcia of Pozuelo, Albacete, Spain have a son also named Juan, who died in infancy in 1801, in addition to the seven children recorded in the tree (b. 1799-1822)?",
   "tags": {
     "question_type": "children",
     "era": "1800s",
@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 31, flag adds_son, confidence 3). Draft transcribed from a Spanish diocesan parish record; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 31, flag adds_son, confidence 3). Resolved 2026-09-10 as outcome 2 — answerable, but differently: the 17 February 1801 burial is genuine and the couple had at least one son the tree omits, but the hint's ark cites the father rather than the child and the register's given name is not safe to assert alone. See README \"Notes for reviewers\"."
 }
