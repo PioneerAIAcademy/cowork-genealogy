@@ -914,7 +914,10 @@ without whichever Bedrock refuses.
   the D6–8 tool counts with PR #2397 (the external-search-URL
   tool), and the worker loop and D15's `map_message` edit with PRs #2371 and #2348 on
   `real_agent.py`. None is merge-ready; rebase after they land or get a ruling before
-  starting the day.
+  starting the day. **Re-checked 2026-09-11:** PR #2354, PR #2338 and PR #2348 have
+  merged, so D4–5 start from current `main` with no ruling needed; PR #2397 (tool
+  count 49→50) and PR #2371 (mid-turn `user_msg` queueing in the runner) are still
+  open and collide only with D6–8 and D13–15.
 
 ### Week 2 — the durable core
 
