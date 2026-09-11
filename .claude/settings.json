@@ -16,7 +16,6 @@
   },
   "permissions": {
     "allow": [
-      "Bash(git fetch *)",
       "Bash(git ls-tree *)",
       "Bash(git merge-base *)",
       "Bash(git grep *)",
