@@ -76,7 +76,8 @@ def _is_allowed(session: Session, email: str) -> bool:
     return session.get(AllowedEmail, email.lower()) is not None
 
 
-def _upsert_user(session: Session, email: str, familysearch_id: str | None = None) -> User:
+def _upsert_user(session: Session, email: str, familysearch_id: str | None = None,
+                 *, fresh_login: bool = False) -> User:
     email = email.lower()
     user = session.exec(select(User).where(User.email == email)).first()
     if user is None:
@@ -89,7 +90,7 @@ def _upsert_user(session: Session, email: str, familysearch_id: str | None = Non
         if familysearch_id and not user.familysearch_id:
             user.familysearch_id = familysearch_id
             dirty = True
-        if user.sessions_revoked_at is not None:
+        if fresh_login and user.sessions_revoked_at is not None:
             user.sessions_revoked_at = None
             dirty = True
         if dirty:
@@ -279,7 +280,7 @@ def dev_login(
     # access gate is the FamilySearch callback's allowlist, which is unaffected. A
     # blank email gets a default identity for one-click sign-in.
     email = body.email.strip().lower() or "dev@localhost"
-    user = _upsert_user(session, email)
+    user = _upsert_user(session, email, fresh_login=True)
     set_session_cookie(response, user.id)
     return MeResponse(id=user.id, email=user.email)
 
@@ -409,7 +410,7 @@ async def familysearch_callback(
             status_code=403,
         )
 
-    user = _upsert_user(session, email, familysearch_id=identity.get("id"))
+    user = _upsert_user(session, email, familysearch_id=identity.get("id"), fresh_login=True)
     _persist_fs_token(session, user.id, token_json)
 
     # Re-validate `next` on the way out: it came back on a client-held cookie,

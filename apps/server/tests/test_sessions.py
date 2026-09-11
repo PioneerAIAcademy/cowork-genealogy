@@ -2,8 +2,6 @@
 dev-login (local, no allowlist) → create sample session → list → resume →
 delete. Also asserts the sample seed lands real project files on the sandbox FS.
 """
-import time
-
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -199,6 +197,38 @@ def test_pre_feature_cookie_rejected_after_revocation():
 
     with Session(get_engine()) as s:
         u = s.get(User, uid)
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_api_key_request_does_not_undo_revocation(monkeypatch):
+    """A /v1 bearer request must not clear sessions_revoked_at — otherwise a
+    user holding both a cookie and an API key can undo their own logout."""
+    from app.config import get_settings
+
+    email = "dual-auth@example.com"
+    monkeypatch.setattr(
+        get_settings(), "api_keys", f"sk_dual:{email}",
+    )
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": email})
+        stolen = client.cookies.get("wb_session")
+        client.post("/auth/logout")
+
+        with TestClient(app) as api_client:
+            api_client.get("/api/sessions", headers={"Authorization": "Bearer sk_dual"})
+
+        with TestClient(app, cookies={"wb_session": stolen}) as thief:
+            r = thief.get("/auth/me")
+            assert r.status_code == 401, \
+                "API-key request must not un-revoke cookie sessions"
+
+    with Session(get_engine()) as s:
+        u = s.exec(
+            __import__("sqlmodel").select(User).where(User.email == email)
+        ).first()
         if u:
             s.delete(u)
             s.commit()
