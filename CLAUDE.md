@@ -115,9 +115,11 @@ This repo is also a pnpm + turborepo monorepo for the hosted web product —
 - **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
   `!packages/engine/**` negation. Both shipped artifacts install their production
   tree with `npm ci --omit=dev` from
-  `packages/engine/mcp-server/package-lock.json`, and no CI job builds either
-  one, so that lockfile has to stay npm's — a break surfaces at release time,
-  not in a green PR.
+  `packages/engine/mcp-server/package-lock.json`, so that lockfile has to stay
+  npm's. The required `vitest` job in `.github/workflows/engine-tests.yml`
+  builds both artifacts on every PR and verifies the `.mcpb` boots with every
+  manifest tool (`scripts/verify-mcpb.sh`), so a packaging break reds the PR
+  rather than waiting for a release.
 - **The web side depends on `packages/schema`, never on the engine.**
 
 What each package is and how they bind: `docs/architecture.md`, "The hosted web
