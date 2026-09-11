@@ -3,19 +3,21 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Pedro Pablo Chaves married Juana Flores on 30 August 1859 in Buenos Aires; she was the daughter of Sebastian Flores and Isabel Rivero.",
+      "description": "Pedro Pablo Chaves married Juana Flores on 14 September 1859 at the Parroquia de Nuestra Senora de la Asuncion, Barracas al Sud (now Avellaneda), Buenos Aires, Argentina. She was 24, a native of that town, daughter of the deceased Sebastian Flores and Isabel Rivero. The 30 August 1859 entry for the same couple is the informacion matrimonial, the premarital examination, not a second marriage.",
       "details": {
         "subject_person": "Pedro Pablo Chaves (2761-R34)",
         "relation": "spouse",
         "target_person": {
           "name": "Juana Flores",
-          "birth": "about 1835",
-          "parents": "Sebastian Flores and Isabel Rivero"
+          "birth": "about 1835 (aged 24 in September 1859)",
+          "parents": "Sebastian Flores and Isabel Rivero, both deceased by 1859"
         },
-        "marriage": "30 August 1859, Buenos Aires, Argentina"
+        "marriage": "14 September 1859, Parroquia de Nuestra Senora de la Asuncion, Barracas al Sud (Avellaneda), Buenos Aires, Argentina",
+        "identity_basis": "The register names the groom as son of the deceased Ysidro Chaves and Andrea Guerra, the same couple named on the subject's 1 July 1836 Socorro baptism, and gives his age as 23, consistent with a birth on 29 June 1836."
       },
       "supporting_sources": [
-        "Argentina, Buenos Aires, registros parroquiales, 1635-2017 — entry for Pedro Chaves and Juana Flores, 30 Aug 1859, naming his parents Isidro Chaves and Andrea Guerra"
+        "Argentina, Buenos Aires, registros parroquiales, 1635-2017 — marriage register entry for Pedro Chaves and Juana Flores, folio 77 no. 55, 14 Sep 1859, Parroquia de Nuestra Senora de la Asuncion, Barracas al Sud, naming the groom as son of the deceased Ysidro Chaves (65, natural de la Provincia de San Luis) and Andrea Guerra (60, nativa de Buenos Ayres), both then domiciled in Barracas (https://familysearch.org/ark:/61903/1:1:QJRM-GV8V)",
+        "Argentina, Buenos Aires, registros parroquiales, 1635-2017 — informacion matrimonial, page 193 no. 51, 30 Aug 1859, in which the groom swears he is natural y feligres de Barracas al Sud and hijo legitimo del finado D.n Ysidro Chaves y de D.a Andrea Guerra (https://familysearch.org/ark:/61903/1:1:QP84-TH55)"
       ],
       "required": true
     }

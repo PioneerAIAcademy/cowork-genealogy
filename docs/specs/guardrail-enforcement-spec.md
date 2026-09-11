@@ -1135,6 +1135,134 @@ nothing. **The general rule: a guardrail's matcher is part of the guardrail.**
 Widening a predicate without widening what reaches it is a no-op that tests
 cannot see.
 
+**The hosted copy's matcher was `None` until 2026-09-08, and that is now closed
+too — narrowed, and derived.** `real_agent.build_options` registered
+`HookMatcher(matcher=None, …)`, which fires the hook for **every** tool. The
+predicate was correct, so nothing was un-guarded; the cost was the opposite
+failure. When the SDK's message buffer filled and its transport read loop
+stalled, that loop is also what answers hook callbacks, so every PreToolUse
+callback went unanswered and the CLI timed each one out — and because the matcher
+was `None`, that killed calls with nothing to deny, including a purely local
+`ToolSearch`. A live session on 2026-08-25 lost 4 of 8 extractions this way. The
+matcher is now `_PRETOOL_MATCHER`, **derived** from the **three** constants the
+predicate reads — `_FILE_WRITE_TOOLS`, `_EXFIL_GUARD_TOOLS` and
+`DEVICE_WRITE_TOOLS` — so the divergence above cannot recur by restatement. It
+comes out as:
+
+    ^(Write|Edit|NotebookEdit|Bash)$|.*device_commit_files$
+
+Two corrections to what this paragraph said before review, both worth stating
+because the wrong version is the sort a reader would trust: the derivation named
+**two** constants, and it acquired a third when the `Bash` exfiltration arm
+landed; and it is **not** "the plugin's minus `.*research_append`" — it is that
+minus `.*research_append` **plus `Bash`**. The plugin's is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`. `research_append`
+is absent here because this hook returns `{}` for it, so binding it would only
+widen the blast radius of a starved callback; `Bash` is present because this hook
+alone carries the credential-exfiltration arm.
+
+**The bare names are anchored, and that is load-bearing.** The bundled CLI
+(2.1.220) applies a matcher that fits neither of its two charsets as
+`new RegExp(t).test(e)` — an unanchored **search**. Read out of the binary:
+
+    function IF_(e,t,r,n){ if(!t||t==="*")return!0;
+      if((r?/^[a-zA-Z0-9_|, -]+$/:/^[a-zA-Z0-9_|]+$/).test(t))
+          return t.split(...).map(...).flatMap(...).includes(e);   // EXACT LIST
+      try{ let i=new RegExp(t); if(i.test(e))return!0; ... }catch{...} }
+
+Unanchored, `Write|…|Bash` therefore also bound `TodoWrite`, `MultiEdit`,
+`EditNotebook`, `BashOutput` and `KillBash` — every one of which this hook denies
+nothing about. `TodoWrite` is precisely the "purely local call with nothing to
+deny" class `ToolSearch` died in, so the over-match reopened the failure the
+narrowing exists to close. The device-bridge arm stays a search because it must
+match a prefix it cannot predict.
+
+**The pattern must keep a character outside both charsets** (`.` and `*` do it).
+If a future edit makes it fit — someone dropping `.*` on the reasoning that a
+search matches anyway — the CLI silently switches to exact-string list
+membership and every namespaced `device_commit_files` spelling stops binding,
+with no error, because the hook simply never fires.
+
+**READING THE SIGNATURE — the misattribution this cost once.** The failure
+presents as an outage of something external: the CLI reports *"PreToolUse hook
+did not respond before its timeout (host client may be unreachable)"*, and it
+was triaged as environmental once and waited out. **Nothing is unreachable and
+there is nothing to wait out.** The hook is a local in-process callback; the
+"host client" the message names is the very process the message is printed by.
+What is actually wrong is that the SDK's transport read loop is blocked pushing
+into a full 100-slot buffer, and that same loop is what would answer the
+callback — so the timeout is a symptom of the buffer, not of a network. Anything
+that looks like this and involves background subagents is this bug until the
+buffer is ruled out.
+
+`_pretool_hook` also carries an explicit `timeout`. Unset, the bound is the
+CLI's own default, and **that default is findable** — an earlier version of this
+paragraph said it was not, named the wrong CLI (2.1.258; the SDK pinned in
+`uv.lock` bundles **2.1.220**) and cited two literals that are not hook timeouts
+at all. Corrected by reading the PreToolUse executor out of the binary:
+
+    var Hm=600000, frd=30000;
+    async function*VOt(e,t,r,n,o,i,s=Hm,a){ ...
+      yield*lM({hookInput:u, toolUseID:t, matchQuery:e, signal:i, timeoutMs:s, ...})
+
+The executor's own timeout parameter defaults to `Hm` = 600000 ms and hands it to
+the dispatcher as `timeoutMs`. **600 s**, which is exactly what the wedged
+session observed per call — so the default and the observation agree, rather than
+leaving three unexplained numbers. (`Timeout ?? 60000` in that binary is an HTTP
+server's `headersTimeout`; `timeout ?? 600000` as spaced does not occur.) The
+SDK's `HookMatcher` docstring advertises 60 and documents the unit as **seconds**,
+so the value set here is 10 s. It is still a mitigation and labelled as one in
+the code: a shorter timeout makes a starved callback fail faster, not succeed.
+
+**What checks it.** Two arms, and this paragraph previously credited the wrong
+one. `test_the_matcher_covers_every_tool_the_hook_can_deny` is **behavioural**:
+it drives `_pretool_hook` with a payload that would be denied if the tool were
+routed. It catches a future deny arm only when that arm FIRES on the payload this
+file happens to construct — and planting the shipped `Bash` arm, which is keyed on
+a command carrying both a credential marker and a network tool, it **passes**,
+because the fixture feeds `cat > research.json`. So it is not what proves this.
+
+What proves it is `test_the_matcher_binds_every_tool_name_the_hook_compares_against`,
+which is **structural**: it walks `_pretool_hook`'s AST for every tool name the
+hook keys a decision on and requires the matcher to bind each. It follows calls
+that pass the tool-name variable onward, so it reaches
+`direct_project_file_write` and `_device_bridge_target` — the hook names no
+raw-write tool itself. Proven to fail against a real deny arm planted in each of
+seven shapes (`==`, `in (…)`, `in {…}`, `in […]`, `in CONSTANT`, reversed
+operands, and a helper call), all seven caught. Its regex predecessor caught
+two of the seven.
+
+Both are kept. The structural arm cannot reach a name computed at runtime, and
+the behavioural arm cannot reach an arm that does not fire on one payload;
+neither subsumes the other. The three-copy parity test compares **predicates,
+not matchers**, so it stays green through a wrong matcher and is not the check
+here.
+
+`test_the_matcher_does_not_bind_a_tool_the_hook_can_never_deny` asserts the third
+direction, which nothing covered: a tool this hook cannot refuse must not reach
+it, under **search** semantics specifically, since that is what the CLI applies.
+
+**THIS SEAM IS SHARED WITH THE NEXT-USER-MESSAGE DESYNC, AND THE INTERACTION
+CUTS BOTH WAYS.** `handle_turn`'s `client.query()` / `receive_response()`
+pairing is also where the queued-next-message card lives, and its leading
+candidate cause is *a turn whose iteration ends without consuming its
+`ResultMessage` leaves the SDK stream mid-turn, so the next turn's
+`receive_response()` reads the previous turn's tail*. The background drainer
+specified here adds a **second consumer of that same stream**, so:
+
+- A drainer that is not stopped before the next `query()` is a **new mechanism
+  for that same symptom** — it reads the next turn's messages, including its
+  `ResultMessage`. That is why the handoff in `_stop_drain` is the load-bearing
+  property here and not merely tidy, and why it is pinned by a test whose
+  subagent is still running at turn end rather than one whose drainer has
+  already finished.
+- Equally, the drainer may **consume the unread tail** that candidate leaves
+  behind, and so mask or incidentally fix it. Neither direction is measured.
+
+Whoever works either card should read both: a fix on one side changes the
+evidence on the other, and the older card's collisions list predates this
+mechanism entirely.
+
 Two properties, both deliberate and both pinned by vectors in
 `eval/harness/tests/unit/test_write_lockdown_parity.py`:
 
