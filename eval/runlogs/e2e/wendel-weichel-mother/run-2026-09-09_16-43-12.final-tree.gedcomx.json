@@ -1,0 +1,917 @@
+{
+  "persons": [
+    {
+      "id": "G8Q5-BJ1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Wendel",
+          "surname": "Weichel"
+        },
+        {
+          "id": "N6",
+          "given": "Wendel A.",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N10",
+          "given": "Windelin",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "39453d18-36fb-4763-b7b3-42be828ab562",
+          "type": "Birth",
+          "date": "1912",
+          "standard_date": "1912",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Russia",
+          "standard_place": "Russia",
+          "primary": true
+        },
+        {
+          "id": "d3125e9d-304a-4b27-bc34-507aa16a6512",
+          "type": "Death",
+          "date": "1980",
+          "standard_date": "1980",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "7cb19b76-af68-4f01-9220-7d4568529591",
+          "type": "Burial",
+          "date": "1980",
+          "standard_date": "1980",
+          "place": "Odessa, Regina Census Division, Saskatchewan, Canada",
+          "standard_place": "Odessa, Francis No. 127, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Birth",
+          "date": "1913",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Residence",
+          "date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "G8QR-SBM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Stanley",
+          "surname": "Weichel"
+        }
+      ],
+      "facts": [
+        {
+          "id": "827e6c88-35e2-4311-8c6e-e6f0f9aa21d5",
+          "type": "Birth",
+          "date": "1941",
+          "standard_date": "1941"
+        },
+        {
+          "id": "09387a66-29b1-4763-b743-440ca93493ec",
+          "type": "Burial",
+          "date": "2000",
+          "standard_date": "2000",
+          "place": "Odessa, Regina Census Division, Saskatchewan, Canada",
+          "standard_place": "Odessa, Francis No. 127, Saskatchewan, Canada"
+        },
+        {
+          "id": "9286edd4-760d-4de8-b5eb-5a381614e6ee",
+          "type": "Obituary",
+          "date": "1 Dec 2000",
+          "standard_date": "1 Dec 2000",
+          "place": "Odessa, Francis No. 127, Saskatchewan, Canada",
+          "standard_place": "Odessa, Francis No. 127, Saskatchewan, Canada"
+        },
+        {
+          "id": "eadbc648-02e7-4b10-add8-309082e2dfe5",
+          "type": "Death",
+          "date": "1 December 2000",
+          "standard_date": "1 Dec 2000",
+          "place": "Odessa, Francis No. 127, Saskatchewan, Canada",
+          "standard_place": "Odessa, Francis No. 127, Saskatchewan, Canada"
+        }
+      ]
+    },
+    {
+      "id": "GX6M-5HT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "",
+          "surname": "Weichel"
+        },
+        {
+          "id": "N9",
+          "given": "Jacob",
+          "surname": "Weishel",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "26f9fc77-fd5d-4d0f-a8c6-54d76cecee3d",
+          "type": "Death"
+        },
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "1890",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Russia",
+          "standard_place": "Russia"
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "G11R-7JS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Lorraine",
+          "surname": "Weichel"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8c812765-332e-4f5a-b7d4-60ef06c107c4",
+          "type": "Birth",
+          "date": "1938",
+          "standard_date": "1938"
+        },
+        {
+          "id": "3ba6c68b-ad37-4627-a4c2-12986957a6b6",
+          "type": "Death",
+          "date": "18 December 2009",
+          "standard_date": "18 Dec 2009",
+          "place": "Regina, Saskatchewan, Canada",
+          "standard_place": "Regina, Saskatchewan, Canada"
+        },
+        {
+          "id": "02476c7a-70d3-4654-a65e-f012a7bd5e61",
+          "type": "Burial",
+          "place": "Odessa, Regina Census Division, Saskatchewan, Canada",
+          "standard_place": "Odessa, Francis No. 127, Saskatchewan, Canada"
+        }
+      ]
+    },
+    {
+      "id": "GQB7-212",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Rosa K",
+          "surname": "Deis"
+        }
+      ],
+      "facts": [
+        {
+          "id": "827448f8-3ac2-41fb-96ab-59439cacd25e",
+          "type": "Birth",
+          "date": "1914",
+          "standard_date": "1914",
+          "place": "Saskatchewan, Canada",
+          "standard_place": "Saskatchewan, Canada"
+        },
+        {
+          "id": "a44a19aa-8d87-4950-b6bb-8f0aeb0f9686",
+          "type": "Residence",
+          "date": "1926",
+          "standard_date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada"
+        },
+        {
+          "id": "ad6a9a2d-8ab7-4b36-ab39-d23ef3627bac",
+          "type": "Residence",
+          "date": "1 June 1931",
+          "standard_date": "1 Jun 1931",
+          "place": "Weyburn, Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn, Weyburn No. 67, Saskatchewan, Canada"
+        },
+        {
+          "id": "d08a2194-1d4c-4a07-8542-62a914481ac4",
+          "type": "Obituary",
+          "date": "11 Sep 2007",
+          "standard_date": "11 Sep 2007",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "eb6d3916-a3d7-44c3-8732-39b09ff95329",
+          "type": "Death",
+          "date": "11 September 2007",
+          "standard_date": "11 Sep 2007",
+          "place": "Odessa, Francis No. 127, Saskatchewan, Canada",
+          "standard_place": "Odessa, Francis No. 127, Saskatchewan, Canada"
+        },
+        {
+          "id": "dfd7b463-0e19-450e-b755-675b238e20b1",
+          "type": "Obituary",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "e2782cf9-9609-4649-9e7f-01a88a309c3b",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "0448f876-d372-4bb6-9676-6bdf09d2be58",
+          "type": "Nationality",
+          "value": "Canada"
+        },
+        {
+          "id": "a6a843a3-ed87-479f-a420-d4a1f8ce81fc",
+          "type": "Occupation",
+          "value": "Helper"
+        },
+        {
+          "id": "4d178b3a-376b-4ff4-8766-db243392e9b2",
+          "type": "Ethnicity",
+          "value": "German"
+        },
+        {
+          "id": "c948263f-572c-4b68-8e8f-253b2b0ae47a",
+          "type": "Religion",
+          "value": "r c"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N7",
+          "given": "Josephine",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N8",
+          "given": "Josephina",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N11",
+          "given": "Josefine",
+          "surname": "Weishel",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "7 Sep 1891",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ],
+          "place": "Selz, near Odessa, Russia (now Ukraine)",
+          "standard_place": "Selz, Odessa, Kherson, Russian Empire"
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "27 Jan 1974",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Burial",
+          "place": "Odessa, Regina Census Division, Saskatchewan, Canada",
+          "standard_place": "Odessa, Francis No. 127, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Immigration",
+          "date": "1924",
+          "place": "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+          "standard_place": "Thames Centre Township, Middlesex, Ontario, Canada",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Ethnicity",
+          "value": "German",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Birth",
+          "date": "1892",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Russia",
+          "standard_place": "Russia"
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N12",
+          "given": "Peter",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Birth",
+          "date": "1919",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Russia",
+          "standard_place": "Russia"
+        },
+        {
+          "id": "F16",
+          "type": "Residence",
+          "date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F17",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N13",
+          "given": "Augina",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F18",
+          "type": "Birth",
+          "date": "1922",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Germany",
+          "standard_place": "Germany"
+        },
+        {
+          "id": "F19",
+          "type": "Residence",
+          "date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N14",
+          "given": "Katherina",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F21",
+          "type": "Birth",
+          "date": "1923",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Germany",
+          "standard_place": "Germany"
+        },
+        {
+          "id": "F22",
+          "type": "Residence",
+          "date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N15",
+          "given": "Barbara",
+          "surname": "Weichel",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F24",
+          "type": "Birth",
+          "date": "1925",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "place": "Saskatchewan, Canada",
+          "standard_place": "Saskatchewan, Canada"
+        },
+        {
+          "id": "F25",
+          "type": "Residence",
+          "date": "1926",
+          "place": "Weyburn No. 67, Saskatchewan, Canada",
+          "standard_place": "Weyburn No. 67, Saskatchewan, Canada",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G8Q5-BJ1",
+      "person2": "GQB7-212"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GX6M-5HT",
+      "child": "G8Q5-BJ1"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G8Q5-BJ1",
+      "child": "G11R-7JS"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GQB7-212",
+      "child": "G11R-7JS"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G8Q5-BJ1",
+      "child": "G8QR-SBM"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GQB7-212",
+      "child": "G8QR-SBM"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "G8Q5-BJ1",
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "Couple",
+      "person1": "GX6M-5HT",
+      "person2": "I1",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R8"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R9"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GX6M-5HT",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R10"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R11"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GX6M-5HT",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R12"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R13"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GX6M-5HT",
+      "child": "I4",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R14"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R15"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GX6M-5HT",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R16"
+    }
+  ],
+  "sources": [
+    {
+      "id": "3ZCY-T3P",
+      "title": "Wendel A. Weichel, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVGH-T5TF : Thu Jul 16 05:37:50 UTC 2026), Entry for Wendel A. Weichel.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVGH-T5TF"
+    },
+    {
+      "id": "3ZCY-BN6",
+      "title": "Wendel, \"United States, Obituaries, American Historical Society of Germans from Russia, 1899-2012\"",
+      "citation": "\"United States, Obituaries, American Historical Society of Germans from Russia, 1899-2012\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVSQ-YZ8Y : Mon Jul 08 03:26:14 UTC 2024), Entry for Rose Deis Weichel and Wendel, 11 Sep 2007.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVSQ-YZ8B"
+    },
+    {
+      "id": "S1",
+      "title": "Entry for Wendel A. Weichel, \"Find a Grave Index\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVGH-T5TF"
+    },
+    {
+      "id": "S2",
+      "title": "Entry for Josephine Reiss Weichel, \"Find a Grave Index\", FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QVGH-T5TC"
+    },
+    {
+      "id": "S3",
+      "title": "Entry for Josephina Weichel, 'Canada, Immigration Records, 1919-1924'",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6ZBB-N884"
+    },
+    {
+      "id": "S4",
+      "title": "Household of Jacob Weishel, Canada, Prairie Provinces, Census, 1926",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QTM1-JBYT"
+    },
+    {
+      "id": "S5",
+      "title": "Canada, Census, 1931 \u2014 Household of Joseph Weichel, Odessa, Francis No. 127, Saskatchewan",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6RS1-MLV8"
+    }
+  ]
+}

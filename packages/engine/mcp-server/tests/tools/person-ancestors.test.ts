@@ -249,7 +249,14 @@ describe("person_ancestors", () => {
       /pass a personId explicitly/i,
     );
 
-    mockStatus(500);
+    // 500 is retried by fetchWithRetry — mock must return 500 on all attempts
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
     await expect(personAncestorsTool({})).rejects.toThrow(
       /could not read your current user/i,
     );
