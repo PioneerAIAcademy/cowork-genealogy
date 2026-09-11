@@ -117,7 +117,7 @@ England death/burial). For **the person you searched** (the matched persona):
   question that earlier looked like the blocker is **resolved** — no live read
   needed for it.
 - **Standardized place: the search result's is correct; a live `record_read`
-  used to re-standardize it WRONGLY** (observed 2026-07-08; re-probe pending — issue
+  used to re-standardize it WRONGLY** (observed 2026-07-08; re-probed 2026-09-11 — issue
   #1908 Phase 1: `Southampton, NY → Southampton, England`;
   `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore more
   reliable only for its FS-normalized share — its resolver-derived share came from
