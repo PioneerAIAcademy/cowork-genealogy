@@ -65,8 +65,8 @@ const EVIDENCE_SURFACES = [
   // predate `measured-figures.json` and are exempted by name; any NEW figure in that
   // spec must now trace.
   "docs/specs/person-search-tool-spec.md",
-  // The fulltext spec. Has zero FIGURE-pattern matches today (verified before
-  // adding). Section J's verdicts guard the place-search claim at line 48.
+  // The fulltext spec. Section J's verdicts guard the place-search claim at
+  // line 48; any future FIGURE-pattern match must trace to measured-figures.json.
   "docs/specs/fulltext-search-tool-spec.md",
 ];
 
@@ -552,7 +552,7 @@ describe("measured figures stay traceable to the probe artifact", () => {
       verdict: "J.verdict:q.recordPlace searches",
       activeWhen: /^metadata only$/,
       mustNotSay:
-        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.]{0,40}(?:transcript|full[- ]?text|document text)|place[^.]{0,40}(?:searches|matches)[^.]{0,40}(?:transcript|both)/i,
+        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text)|place[^.,;]{0,40}(?:searches|matches)[^.,;]{0,40}(?:transcript|both)/i,
       why: "section J measured q.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
     },
     {
@@ -563,7 +563,7 @@ describe("measured figures stay traceable to the probe artifact", () => {
       verdict: "J.verdict:f.recordPlace searches",
       activeWhen: /^metadata only$/,
       mustNotSay:
-        /f\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.]{0,40}(?:transcript|full[- ]?text|document text)/i,
+        /f\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text)/i,
       why: "section J measured f.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
     },
   ];
@@ -606,6 +606,22 @@ describe("measured figures stay traceable to the probe artifact", () => {
           `  with belief is re-measured, not reworded"). A verdict stuck at OPEN or\n` +
           `  NOT MEASURED is a measurement-design task, not a re-run.`
       ).toEqual([]);
+    });
+  }
+
+  // Converse arm for section J guards: correct prose that contrasts
+  // q.recordPlace/f.recordPlace (metadata) with q.text (transcript) must NOT
+  // be rejected. Without this, a pattern tightening that blocks the wrong
+  // direction can silently block the right direction too.
+  for (const [label, sentence] of [
+    ["contrast with semicolon", "q.recordPlace matches against collection metadata only; the transcript is reached by q.text."],
+    ["contrast with comma-not", "q.recordPlace matches collection metadata, not the transcript."],
+    ["plain metadata-only", "q.recordPlace matches against collection metadata only."],
+    ["generic advice", "Place qualifiers search metadata; use q.text for transcript terms."],
+  ] as const) {
+    it(`section J q.recordPlace guard accepts correct prose: ${label}`, () => {
+      const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.recordPlace searches")!;
+      expect(rule.mustNotSay.test(sentence)).toBe(false);
     });
   }
 
