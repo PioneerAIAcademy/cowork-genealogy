@@ -6,8 +6,8 @@
   },
   "proof_quality_score": 2,
   "notes": {
-    "f1": "Exact birth date (28 May 1830) correctly established and the parents are encoded, but the birth place (Durbach) is missing from the birth fact - Durbach appears only on the christening. The finding includes the place, so it is not fully satisfied. Date-and-place completeness call.",
-    "f2": "Christening place (Durbach, Offenburg, Baden) is correct, but the 29 May 1830 date is absent entirely.",
+    "f1": "Exact birth date (28 May 1830) correctly established, but the birth place (Durbach) is missing from the birth fact - Durbach appears only on the christening. The finding includes the place, so it is not fully satisfied. Partial rather than harsh because the missing place was AVAILABLE in the starting tree, not unavailable: 'Durbach, Offenburg, Baden' already sat on Genofeva's 1855 christening, so the agent had it in hand and did not carry it onto the birth fact. The parents (Matthias Haas, Maria Anna Schmieder) are also not new credit - the starting tree already held both and already linked them to Creszentia as ParentChild. Of f1's content the only genuinely new element was the date, and that element was recovered.",
+    "f2": "Partial, but not half-recovered: the half that is correct is the half the starting tree already had, and the novel half is absent entirely. The christening place (Durbach, Offenburg, Baden) was already present in the starting tree on Genofeva's 1855 christening; the 29 May 1830 date - the only genuinely new content in f2 - is absent from the final tree, which records a christening with a place and no date at all. Across f1 and f2 the sole new content was the two dates; the run recovered one of them (the birth) and not the other.",
     "f3": "Correctly declined the hinted 25/26 May 1835 Lichtental candidate - no 1835 date, no Lichtental, no Steinel persona anywhere in the final tree. Absence of the incorrect assertion is sufficient for an avoid finding, even though no explicit rejected hypothesis was recorded."
   },
   "annotator": "Emruthwill",
