@@ -99,7 +99,10 @@ census's "about 1892" still matches `f1`.
 
 **Immigration place corrected post-run.** The Immigration fact on the mother
 carried the indexed destination "Wellburn, Thames Centre, Middlesex, Ontario,
-Canada". That is a transcription error: the original manifest image
+Canada", and that reading was standardised: the fact's `standard_place`
+resolved to "Thames Centre Township, Middlesex, Ontario, Canada", so a place
+authority value — not only the display string — places her immigration in the
+wrong province. That is a transcription error: the original manifest image
 (`ark:/61903/3:1:3Q9M-C34W-PRCN`) reads "Odessa, Sask.", and the
 `research.json` assertion `a_011` already records the corrected place —
 **Odessa, Francis No. 127, Saskatchewan, Canada** — with the transcription
