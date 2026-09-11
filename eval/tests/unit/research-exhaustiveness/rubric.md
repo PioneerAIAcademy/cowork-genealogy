@@ -2,7 +2,7 @@
 
 Grading dimensions for research-exhaustiveness unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-## Tool Arguments — this rubric owns the wiki_read fixture case
+### Tool Arguments — this rubric owns the wiki_read fixture case
 
 **A `fixture_not_found` on a `wiki_read` for a page beyond the single one this
 test stocks is a gap in the test's fixtures, not a Tool Arguments defect. When
