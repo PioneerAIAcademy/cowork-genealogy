@@ -102,6 +102,8 @@ describe("exchangeCodeForTokens", () => {
     await expect(exchangeCodeForTokens("c", "v")).rejects.toThrow(
       /FamilySearch token endpoint error: 500/
     );
+    // The authorization code is single-use: a retry would burn it.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it("throws when the response body contains an OAuth error field", async () => {

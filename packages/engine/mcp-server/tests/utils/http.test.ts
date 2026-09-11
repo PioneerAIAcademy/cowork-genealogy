@@ -349,7 +349,19 @@ describe("fetchWithRetry", () => {
     expect(elapsed).toBeGreaterThanOrEqual(800);
   });
 
-  it("defaults to DEFAULT_RETRY_BUDGET_MS when no budgetMs is passed", () => {
-    expect(DEFAULT_RETRY_BUDGET_MS).toBe(10_000);
+  it("uses the 10s default budget when the caller passes no retryOpts", async () => {
+    vi.useFakeTimers();
+    try {
+      mockFetch.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(mockResponse(429)), 6000)),
+      );
+      const p = fetchWithRetry("https://example.com", {}, 30_000);
+      await vi.advanceTimersByTimeAsync(120_000);
+      const res = await p;
+      expect(res.status).toBe(429);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

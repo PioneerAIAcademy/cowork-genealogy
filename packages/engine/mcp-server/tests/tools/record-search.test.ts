@@ -535,6 +535,21 @@ describe("recordSearchTool error propagation", () => {
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
+  // #2054: 429 then 200 → returns the successful result
+  it("recovers from a transient 429 and returns the search result", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const result = await recordSearchTool({ surname: "Lincoln" });
+    expect(result.returned).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
   // #1316 / #2054: 429 is retried alongside 5xx by fetchWithRetry.
   it("retries 429 and throws when exhausted", async () => {
     mockFetch.mockResolvedValue({

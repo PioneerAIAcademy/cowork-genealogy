@@ -280,6 +280,21 @@ describe("externalLinksSearchTool — error handling", () => {
     ).rejects.toThrow(/403 Forbidden/i);
   });
 
+  it("recovers from a transient 429 and returns the result", async () => {
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({}, 429))
+      .mockResolvedValueOnce(singlePage([
+        { url: "https://example.com/a", linkText: "Link A", place: "France" },
+      ]));
+    const result = await externalLinksSearchTool({
+      standardPlace: "France",
+      startYear: 1900,
+      endYear: 1950,
+    });
+    expect(result.totalForPlace).toBe(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
   it("throws on 429 with rate-limit message after retry exhaustion", async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 429));
     await expect(

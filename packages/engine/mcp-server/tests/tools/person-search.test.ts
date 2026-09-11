@@ -499,4 +499,13 @@ describe("personSearchTool errors", () => {
       /tree search API error: 500/,
     );
   });
+
+  it("22d. recovers from a transient 429 and returns the search result", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeErrorResponse(429, "Too Many Requests"))
+      .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const result = await personSearchTool(VALID_QUERY);
+    expect(result.returned).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
 });
