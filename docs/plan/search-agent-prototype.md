@@ -45,7 +45,10 @@ carrying. Everything below is out on that test, not because it is unimportant.
   available for this work. **This is a written exception, not an oversight.**
   Zero FamilySearch pages mention `text/event-stream`, the HAProxy guide never
   mentions streaming or buffering, and every WebSocket deployment routes around
-  the DTM. It stays open until FamilySearch can run the probe themselves.
+  the DTM. It stays open until FamilySearch can run the probe themselves. Their
+  2026-09-11 answer narrows it (R3): HAProxy has no duration cap and DTM idles out at
+  60 s, so the design answer is reconnect-and-resume on `Last-Event-ID` (D11–12), and
+  what remains unprobed is CloudFront, Imperva and DTM under concurrency.
 - Multi-patron token custody (the seam is built; the custody is not).
 - Opaque session tokens in place of a live FamilySearch grant on every hop. Known
   pattern, no unknowns — fails the scoping test.
@@ -85,7 +88,7 @@ carrying. Everything below is out on that test, not because it is unimportant.
 | Agent shell | `Bash` under `bypassPermissions` | Removed via `disallowed_tools` on the worker's options — see below |
 | Tool layer | Node forked over stdio in the sandbox | Same, stdio, writing to Postgres/S3 — HTTP transport swapped in week 4 |
 | Transport | One WebSocket per session | SSE plus a 1 s Postgres poll |
-| Model | Anthropic API direct | Bedrock direct (`CLAUDE_CODE_USE_BEDROCK`) |
+| Model | Anthropic API direct | Bedrock direct (`CLAUDE_CODE_USE_BEDROCK`) for the prototype; production is the Messages-compatible Agent Gateway through `ANTHROPIC_BASE_URL` with the Bedrock flag unset (answered 2026-09-11; P3b) |
 | OCR | OpenRouter running Gemini | Unchanged — a pure HTTP caller the substrate does not touch |
 | Identity | FamilySearch OAuth + email allowlist | Unchanged |
 
@@ -352,7 +355,8 @@ every round it existed. It belongs in code with tests, not in prose.
    Gateway's API surface, prompt-caching behaviour, token quota, and Guardrails
    coverage; one asking for an SSE probe through the real edge. Between them they
    close the entire top tier of the risk register below, and neither costs a day of
-   the original twenty.
+   the original twenty. **Answered 2026-09-11** — folded into R1–R3, R6, the new
+   R10–R13, P3b and D11–12 below.
 
 No FamilySearch OAuth ticket is needed: `http://127.0.0.1:1837/callback` is already
 registered on the FS dev client. An Elastic Beanstalk hostname would not have been —
@@ -696,6 +700,23 @@ context management is on the wire for the first-party control only, never on Bed
 which confirms the gate above. Wire facts come from the CLI's own debug log, which
 records betas only at `CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose`.
 
+**The production path is not Bedrock direct (answered 2026-09-11).** The Agent
+Gateway is Anthropic-Messages-compatible — agentgateway v1.4.1, `POST
+/bedrock/v1/messages`, Messages→Converse and back including streaming and errors,
+read from upstream source at the pinned tag; one curl against integ settles it, and a
+miss is a three-line route addition. So the SDK runs unmodified with
+`ANTHROPIC_BASE_URL` at the gateway and `CLAUDE_CODE_USE_BEDROCK` unset. On that path
+the CLI believes it is talking to Anthropic, so none of the Bedrock stripping above
+applies — **but the CLI's own tool-search gate turns tool search off for any base URL
+other than `api.anthropic.com`** (read off 2.1.220 on 2026-09-10), and what
+Messages→Converse loses is the open question: the cache TTL (R2), tool-name rewriting,
+the thinking and beta headers, `count_tokens` (falls to passthrough).
+**P3b (one hour, cents):** run the CLI with `ANTHROPIC_BASE_URL` pointed at a local
+passthrough proxy to `api.anthropic.com` and record whether `ToolSearch` is in the
+init tools and the MCP names deferred, the first-call token delta if the 49 schemas
+are eager-loaded, and what goes out on the wire — `cache_control` ttl values and the
+extended-cache-ttl beta (the gateway drops the ttl; the proxy shows what it receives).
+
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
 body betas, and whether the engine survives a refusal. The first is settled by reading the
 pinned CLI and confirmed from its debug log, never measured against Bedrock; the other
@@ -1010,6 +1031,14 @@ without whichever Bedrock refuses.
   directly — only it runs the SDK and sees the message stream, and criteria 3 and 4
   depend on those rows reaching Postgres without a hop that dies with the worker. The web
   tier only reads them for `GET /events?after=N`.
+  **SSE is reconnect-and-resume by design (answered 2026-09-11):** every frame carries
+  `id: <seq>`, the browser consumes with `EventSource`, a dropped connection comes back
+  with `Last-Event-ID` and the server resumes from that cursor — the same read as
+  `GET /events?after=N`. A `: ping` every 15 s keeps HAProxy's and DTM's inactivity
+  timers (60 s at DTM) from firing. A duration cap at the edge then costs one
+  reconnect, not the product. `fs-eng/bridge` runs this pattern over JetStream,
+  load-tested at 100 subscribers / 50 events/s, and `fs-eng/help-research-only` raised
+  its `SseEmitter` from 5 to 10 minutes because real multi-task turns were cut.
 - **D13** Reuse `apps/web` with the WebSocket swapped for SSE. Plus the **80-line
   headless driver** — POST a message, poll events, assert on turn completion.
   Without it the acceptance test cannot be run until day 17.
@@ -1314,7 +1343,9 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
    subagent transcripts, when killed mid-delegation? **Yes — measured 2026-09-10; the
    delegation itself is redone, not resumed.**
 2. Does the prompt cache survive that resume, and what happens when the queue gap
-   exceeds the TTL? (Their blocker worth 4.6×, answered with a number.)
+   exceeds the TTL? (Their blocker worth 4.6×, answered with a number.) On the
+   gateway path the TTL is five minutes whatever the client asks for (R2), so the
+   number to carry is the corpus-derived cost of a five-minute window.
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell? **Measured 2026-09-10 on the
@@ -1323,7 +1354,10 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
 5. Does it run on Bedrock direct, with tool search on, and does caching hit at 1 h?
    **Yes — measured 2026-09-10: tool search deferred, the 1 h TTL honoured behind its
    flag, interleaved thinking and the 1M context accepted; server-side context
-   management is off there by the CLI's own gate.**
+   management is off there by the CLI's own gate.** Production is not Bedrock direct
+   but the Messages-compatible gateway (answered 2026-09-11), where the 1 h TTL is
+   dropped and tool search is gated off by the CLI for a foreign base URL — P3b
+   measures that path.
 6. How much turn-level idempotency a commit-time batch ledger buys: **none the model
    does not already provide** (measured 2026-09-10, n=1) — on resume it re-decides, so
    nothing folds byte-identically, and after a committed write it read the document
@@ -1343,34 +1377,76 @@ emails rather than engineering.
 
 ### Could kill it
 
-**R1 — The Agent Gateway's API surface.** "Bedrock through Agent Gateway" is three
-different things: native `bedrock-runtime`, an Anthropic Messages-compatible endpoint,
-or an OpenAI-shaped shim. The Agent SDK works unmodified on only some of them. If the
-gateway is neither Bedrock-native nor Messages-compatible, **the SDK cannot be used at
-all** and skills, delegated agents, hooks and compaction must be rebuilt on a raw
-loop — the entire engine. Unreachable here because the gateway does not exist for us.
-*Owner: FS AI Platform. Closes with an email.*
+**R1 — The Agent Gateway's API surface. CLOSED 2026-09-11.** It is Anthropic-Messages-
+compatible (agentgateway v1.4.1, `POST /bedrock/v1/messages`, Messages→Converse both
+ways including streaming and errors), so the SDK runs unmodified with
+`ANTHROPIC_BASE_URL` at the gateway. Read from upstream source at the pinned tag rather
+than the deployed binary; one curl against integ confirms it, and a miss is a
+three-line `ai.routes` addition. What replaces the risk is smaller and ours to
+measure: the CLI's tool-search gate is off for a non-`api.anthropic.com` base URL
+(P3b), and Messages→Converse may lose tool-name rewriting, the thinking/beta headers
+and `count_tokens`. Native `bedrock-runtime` is not a client surface, so the
+prototype's Bedrock-direct results (P3) describe the model, not the production path.
+*Owner: us, P3b plus one curl when integ access exists.*
 
-**R2 — Prompt-cache health, which is also the throughput ceiling.** One risk, not two.
-Cache reads are exempt from the Bedrock token quota; cache writes and uncached input
-are not, so **the quota requirement is roughly a 20× function of cache health.** 96% of
-cache-creation tokens in the corpus are 1-hour writes; in 2.1.220 the 1-hour TTL on Bedrock is
-opt-in behind `ENABLE_PROMPT_CACHING_1H_BEDROCK` and the extended-cache-ttl header is
-never sent there; the gateway may strip the 1 h `cache_control` ttl the flag adds to
-the request. Degraded caching
-costs both the 4.6× on session price and the stated 50/150/500 concurrency targets.
-P3 tests this on Bedrock direct only — never through the gateway — and on 2026-09-10
-measured the 1 h TTL honoured there behind the flag.
-*Owner: FS AI Platform. Closes with the same email.*
+**R2 — Prompt-cache health, which is also the throughput ceiling. SHARPENED 2026-09-11,
+not closed.** Caching works through the gateway; the 1-hour TTL does not survive it.
+agentgateway parses `cache_control` but keeps only its presence — Bedrock's
+`CachePointType` has one variant — so `ttl: "1h"` is silently discarded, and whether
+Bedrock honours 1 h on Converse at all is unconfirmed (P3 measured it honoured on the
+InvokeModel path the CLI uses, behind the flag). Cache points are inserted and
+`cacheRead`/`cacheWriteInputTokens` come back, but Converse usage has no 5m/1h split,
+so the 96% figure cannot be reproduced on that path — say so before it becomes
+unverifiable. Two measurements are ours: the cost of a five-minute window, derivable
+from the committed corpus (treat any cache read more than 300 s after the previous
+model call as a write; the inter-call gap is median 2.6 s, p99 148 s, so the loss is
+between turns and in the tail — and human think time between turns is not in the
+autonomous corpus at all); and the shared cap of four cache points, inserted system →
+messages → tools, where with 49 tools the tool-definition point is the one dropped —
+measure, do not assume. A TTL can be carried upstream (FS has pushed to agentgateway
+before) once Bedrock is shown to honour it in a sandbox account; the help-research team
+has the same question open and places Converse `cachePoint` blocks directly.
+Throughput: by design we own it — the gateway assumes `tap-gateway-invoke` in our
+product account via STS, so quota, throttling and billing land with us — **but it is
+not live**: the deployed route runs on the shared TAP task role, ETA December, so
+anything measured in integ before then is the shared pool. Which account is unsettled
+(the fulltext P25 accounts if the agent counts as the same product, else a new one via
+a GEM intake). The burndown multiplier and whether cache reads are exempt are unknown
+and the largest variable in the estimate (50 sessions is ~0.5M or ~8.1M TPM); the
+information is in the responses, we test it ourselves. Do not let a `model:` be pinned
+in our provider block — it overrides the client's model and breaks per-agent selection.
+Gateway capacity is one 0.25 vCPU / 512 MB task per environment, `desiredCount: 1`,
+no autoscaling, parsing and re-serialising every body for every tenant; per-account
+credentials isolate token pools but not this — performance-test our load and they
+scale accordingly. *Owner: us for the two measurements and the perf test; APT for the
+per-account role and the TTL.*
 
-**R3 — SSE through the FamilySearch edge.** Zero FamilySearch pages mention
-`text/event-stream`; the HAProxy guide never mentions streaming; every WebSocket
-deployment routes around the DTM. The survivable half is buffering — a config change
-that announces itself in ten seconds. The unsurvivable half is a **total-response-
-duration cap**, which CloudFront has. If a single response cannot live for minutes the
-fallback is polling, and "watch the work happen" stops being the product it was
-specced as. Structurally unreachable: we have no FamilySearch hardware.
-*Owner: FS platform / DPF. Closes with one afternoon of theirs.*
+**R3 — SSE through the FamilySearch edge. RESHAPED 2026-09-11.** Still no confirmed
+record of `text/event-stream` through the full public edge. But HAProxy has no
+total-duration cap: every relevant timeout is a per-cluster inactivity timer set through
+their Fusion API, a 15 s heartbeat resets it, and nothing buffers response bodies —
+a config request with an owner. DTM times out idle connections at 60 s. And a duration
+cap is survivable anyway: with `id: <seq>` on every frame and `EventSource`, a cap is
+an automatic reconnect with `Last-Event-ID` resumed from the `session_events` cursor
+we already have (D11–12); reconnect-and-resume is the real solution and the cap an
+optimisation. What is unsurvivable narrows to full response buffering, an idle timeout
+shorter than the heartbeat, or the edge stripping or rewriting the content type —
+CloudFront and Imperva. The real remaining risk is **concurrency**: DTM was not built
+for many concurrent connections — ask the Help team how they worked that with
+Platform, or whether they bypassed it. Prior art inside FS: `fs-eng/help-research-only`
+(a sibling genealogy assistant on SPS/Beanstalk running `SseEmitter(600_000L)`, raised
+from 5 to 10 minutes because real turns were cut; it hit Imperva 403s on outbound FS
+API calls and solved them with internal `*.fslocal.org` DTM binding-set CNAMEs that
+never cross the WAF; whether its frontend reaches it through the public edge is one
+message to its owner) and `fs-eng/bridge` (Last-Event-ID resume over a JetStream
+sequence, load-tested at 100 subscribers / 50 events/s with a chaos arm; routes
+around DTM). If the probe is still commissioned it needs: ramped emit intervals
+(5/15/30/60/120 s) to locate the idle threshold; per-layer arms (origin → HAProxy →
+Imperva → CloudFront); timestamps at both ends; a chunked `text/plain` control; header
+arms with and without `X-Accel-Buffering: no` and `no-transform`; capture of
+`via`/`x-cache`/`x-iinfo`; an explicit `Last-Event-ID` reconnect arm, which matters
+more than the duration arm; one 65-minute arm; and a mobile-API-path arm if mobile
+patrons are in scope. *Owner: FS platform / DPF for the edge; us for D11–12.*
 
 ### Would force significant rework
 
@@ -1387,11 +1463,28 @@ eyeball. If removing the filesystem costs quality in a way that only shows at n=
 nobody learns it until the 136-fixture corpus is re-baselined (94 of those fixtures have committed runs) — by which point the
 substrate is committed and every green check stayed green. *Owner: us.*
 
-**R6 — Bedrock Guardrails cannot see the vectors it is nominated to control.** Tool
-results, tool definitions and tool-call arguments are documented as not evaluated, and
-every vector the architecture document names arrives as a tool result. A security
-review blocker rather than a technical one, but the ARB is being asked to say yes to
-it. *Owner: InfoSec + Agent Foundation.*
+**R6 — Bedrock Guardrails cannot see the vectors it is nominated to control. CONFIRMED
+2026-09-11, and worse.** Nothing is evaluated on the input side: the Converse path sets
+`guardrailConfig` but never emits a `guardContent` block, so no input is tagged — not
+tool results, not user text, not the system prompt. The `promptGuard`/`ApplyGuardrail`
+alternative keeps only the literal text parts of messages and system, so `tool_result`
+and `tool_use` are dropped and tool definitions are never in scope; what is evaluated
+is model output, plus user text on promptGuard. Not a configuration gap but the wrong
+category of control — injection is an input-integrity problem on a channel neither
+mechanism reads — so do not accept "tune the guardrail" as a plan. And it is not even
+on: `guardrailIdentifier` is a placeholder in beta and prod, and their README warns
+that enabling `PROMPT_ATTACK` 403s every request on v1.3.x. Exposure, from the corpus:
+5,554 of 27,002 tool calls return externally-authored content — 20.6% of all calls,
+35.8% of MCP calls, about 34 per run over 163 runs — mostly `record_search`,
+`record_read`, `image_transcribe`, `wiki_place_page`, `fulltext_search`. The
+gateway-side fix is theirs and small (emit `guardContent` for `toolResult`, or teach
+promptGuard to walk tool-result parts) and covers every tenant; the semantic half is
+irreducibly ours, and we already ship doctrine plus a regression test for it. The
+argument nobody has made yet: the hosted design removes the shell, WebFetch/WebSearch
+and the device bridge from the session that ingests record text, against a Cowork
+census of 158 tools including Gmail send, Drive share and `device_bash` — the substrate
+change is itself the mitigation. *Owner: APT for the gateway half (the question is
+posted in their chat); InfoSec + us for the review.*
 
 **R7 — Multi-patron token custody.** Known and mechanical (~3.5 days), but the naive
 port is silent cross-patron impersonation rather than an error. The prototype builds
@@ -1418,6 +1511,28 @@ document's own first blocker: with no FamilySearch-baked AMI for Python 3.12 / N
 on AL2023, test and prod deploys fail validation. Logistics rather than architecture,
 but it can block for weeks. *Owner: FS platform + DTL.*
 
+**R10 — No client auth on the LLM routes.** Today it is `TODO-TAP(authn)`; the interim
+control is an ALB security-group CIDR allowlist behind an internal ALB, so our workers
+must sit in an allowlisted range. APT-1512 is issuing API keys — ask to be in that
+batch. *Owner: APT; us to ask.*
+
+**R11 — Our prompts are logged.** Full prompts and completions go to Langfuse at 100%
+sampling, gateway-wide; ours carry patron genealogical data and transcribed record
+images. Start the InfoSec conversation rather than discover it in review. *Owner: us
+to raise; InfoSec + APT.*
+
+**R12 — The SCP and the non-AWS egress.** The SCP denies direct Bedrock invoke to every
+principal in our account except `tap-gateway-invoke` and `bedrock-exception-*` — decide
+now whether we want an exception role for local dev and smoke tests (P3's direct calls
+would be denied there). It does not stop egress to non-AWS providers, which is where
+the OpenRouter/Gemini `image_transcribe` path sits — talk to ACE about what they use
+for image calls. *Owner: us.*
+
+**R13 — Route changes are image rebuilds.** `config.yaml` is baked into the gateway's
+Docker image and the GitOps end state is not live, so a route tweak is a rebuild and a
+deploy through their pipeline — days, not minutes. Plan any `ai.routes` change with
+that lead time. *Owner: APT.*
+
 ### Real but ordinary
 
 The 60 s tool-server ELB against four tool budgets (OCR 180 s, image fetch 90 s,
@@ -1443,11 +1558,13 @@ idle-session billing.
 - **The ARB question on prompt injection asks the board to bless a control that
   cannot see the threat.** Bedrock Guardrails does not evaluate tool results, tool
   definitions, or tool-call arguments — which is every vector the document names
-  (transcribed images, record full text, fetched wiki pages, patron uploads).
+  (transcribed images, record full text, fetched wiki pages, patron uploads). Worse,
+  as deployed it evaluates nothing on input at all and is not enabled (R6).
 - **Server-side context management, named twice as the conversation-growth
   mitigation, is off on Bedrock in the pinned CLI.** The beta is pushed only for
   first-party-class providers; the document needs a different mitigation on that path
-  or a gateway that supplies one.
+  or a gateway that supplies one. Through the gateway the CLI does send the beta, and
+  Messages→Converse has nowhere to put it — same outcome.
 - **The 14.7% "reads its own conversation transcript" row is mislabelled.** It is the
   CLI's oversized-tool-output spill: 739 reads, 11.8% of the 6,247 filesystem
   operations, in 66 of 161 runs (separator-normalised). That is a runtime mechanism, not passive storage, and
