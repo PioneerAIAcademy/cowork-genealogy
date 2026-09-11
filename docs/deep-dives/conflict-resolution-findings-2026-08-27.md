@@ -749,18 +749,22 @@ reader, which is the exact harm SKILL.md :457–465 describes for the conflict e
 
 **Why it is not judgment:** an id join and one closed-enum comparison.
 
-**What a violation looks like:** three shipped fixtures —
-`eval/fixtures/scenarios/flynn-with-birthplace-conflict/`, `flynn-multi-conflict/` and
-`flynn-identity-geographic/` — all carry `ps_001.resolved_conflict_ids: ["c_001"]` with
-`c_001.status: "unresolved"`.
+**What a violation looks like:** **four** shipped fixtures —
+`eval/fixtures/scenarios/flynn-with-birthplace-conflict/`, `flynn-multi-conflict/`,
+`flynn-identity-geographic/` and `flynn-unresolved-conflict/` — all carry
+`ps_001.resolved_conflict_ids: ["c_001"]` with `c_001.status: "unresolved"`. (Corrected
+from three when V5 was implemented: the fourth was found by scanning all 95 scenario
+fixtures rather than the three this paragraph named.)
 
 **Label `nothing-checks`.** `validator.ts` checks this field for presence and shape only — `checkRequired` plus
 `checkAllowedKeys` against `RESEARCH_SHAPES.proof_summary`; there is no `checkRefExists`
 on it (the proof-summary block's only one is on `question_id`), so today no tool, schema, validator
 or eval check can see the inconsistency. Belongs in `validator.ts` as a referential check,
 not only as an eval validator — it should bind on every project, not just on graded runs.
-**Expect it to fail three fixtures the moment it lands**; that is the point, and fixing
-them is part of the same change.
+**Expect it to fail four fixtures the moment it lands**; that is the point, and fixing
+them is part of the same change. Landed in #1972 V5 accepting `moot` as well as `resolved`
+— four shipped sites already treat the pair as jointly terminal, including the engine's own
+completion-gate error telling the agent to write either.
 
 ---
 

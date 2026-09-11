@@ -33,7 +33,7 @@
 // proof-conclusion does — and never writes relationships or `conflicts` entries.
 //
 // The write tail (sanitizeTree → read research → apply → validateIntroduced →
-// backupIfExists → atomicWriteJson) mirrors tree_edit's executeTreeOps; it is a
+// atomicWriteJson) mirrors tree_edit's executeTreeOps; it is a
 // SINGLE-FILE tree write (atomicWriteJson, never atomicWriteBoth).
 
 import { join } from "path";
@@ -57,7 +57,6 @@ import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
-  backupIfExists,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -831,7 +830,6 @@ export async function materializeFacts(
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await backupIfExists(treePath);
       await atomicWriteJson(treePath, tree);
       return {
         ok: true,
@@ -878,7 +876,6 @@ export async function materializeFacts(
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
-    await backupIfExists(treePath);
     await atomicWriteJson(treePath, tree);
 
     return {
