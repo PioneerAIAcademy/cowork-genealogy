@@ -1,5 +1,4 @@
-import { readFile, appendFile, mkdir } from "fs/promises";
-import { join, resolve, dirname } from "path";
+import { getProjectStore } from "../store/project-store.js";
 import { getValidToken } from "../auth/refresh.js";
 import { scorePair } from "../utils/match-engine.js";
 import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
@@ -252,10 +251,9 @@ export async function buildSubjectDoc(
   projectPath: string,
   subjectId: string,
 ): Promise<SubjectDoc> {
-  const treePath = join(projectPath, "tree.gedcomx.json");
   let tree: SimplifiedGedcomX;
   try {
-    tree = JSON.parse(await readFile(treePath, "utf-8"));
+    tree = JSON.parse(await getProjectStore().readText(projectPath, "tree.gedcomx.json"));
   } catch {
     throw new Error(
       `Could not read tree.gedcomx.json in project '${projectPath}'. ` +
@@ -292,7 +290,7 @@ export async function buildSubjectDoc(
 
   try {
     const research = JSON.parse(
-      await readFile(join(projectPath, "research.json"), "utf-8"),
+      await getProjectStore().readText(projectPath, "research.json"),
     );
     const linkedIds = new Set(
       (research.person_evidence ?? [])
@@ -484,8 +482,7 @@ async function appendScoreLog(
     .join("");
 
   try {
-    await mkdir(join(projectPath, "results"), { recursive: true });
-    await appendFile(join(projectPath, SCORE_LOG_REL), body, "utf-8");
+    await getProjectStore().appendText(projectPath, SCORE_LOG_REL, body);
     return null;
   } catch (error) {
     // Best-effort: a score-log write failure never fails a successful rank call.

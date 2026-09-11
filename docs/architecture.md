@@ -630,7 +630,11 @@ Architecturally:
   is not in a research project gets an answer rather than `research.json not
   found in projectPath`. Then add the tool to `CALLS` in
   `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
-  derives it, so a tool left out is uncovered.
+  derives it, so a tool left out is uncovered. Read and write through the
+  `project-io` / `results-staging` / `image-store` helpers or `getProjectStore()`
+  (`src/store/`), with project-relative refs — never `fs` and never an absolute
+  path. A tool that imports `fs` fails `tests/packaging/no-fs-outside-store.test.ts`,
+  because the same tool has to work under a backend that is not a directory.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
