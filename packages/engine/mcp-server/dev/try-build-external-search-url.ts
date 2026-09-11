@@ -141,6 +141,70 @@ const cases: Array<{ label: string; input: Parameters<typeof buildExternalSearch
     },
   },
   {
+    label: "ancestry, locale: uk (ancestry.co.uk instead of .com)",
+    input: {
+      site: "ancestry",
+      locale: "uk",
+      attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
+    },
+  },
+  {
+    label: "archives_gov, name-authority search (personOrOrg, not q)",
+    input: {
+      site: "archives_gov",
+      attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: "Pennsylvania" },
+    },
+  },
+  {
+    label: "archive_org, keyword-only (no structured date/place fields)",
+    input: {
+      site: "archive_org",
+      attributes: { givenName: "Patrick", surname: "Flynn", keywords: "genealogy" },
+    },
+  },
+  {
+    label: "billiongraves, cemetery search (no place field on this site)",
+    input: {
+      site: "billiongraves",
+      attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, deathYear: 1908 },
+    },
+  },
+  {
+    label: "digitalarkivet, birth-year range + domicile (residencePlace)",
+    input: {
+      site: "digitalarkivet",
+      attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, residencePlace: "Oslo" },
+    },
+  },
+  {
+    label: "antenati, one year field falling back from birthYear to deathYear",
+    input: {
+      site: "antenati",
+      attributes: { givenName: "Giovanni", surname: "Strada", deathYear: 1900, deathPlace: "Milano" },
+    },
+  },
+  {
+    label: "library_archives_canada, census search (no coded ProvinceCode/GenderCode)",
+    input: {
+      site: "library_archives_canada",
+      attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
+    },
+  },
+  {
+    label: "american_ancestors, Keywords carries the name (Name.First/Name.Last don't bind)",
+    input: {
+      site: "american_ancestors",
+      attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: "Ireland" },
+    },
+  },
+  {
+    label: "italian_genealogy, forum keyword search only",
+    input: {
+      site: "italian_genealogy",
+      attributes: { givenName: "Patrick", surname: "Flynn" },
+    },
+  },
+  {
     label: "unsupported site (expect unsupported_site + supportedSites)",
     input: {
       site: "wiewaswie",

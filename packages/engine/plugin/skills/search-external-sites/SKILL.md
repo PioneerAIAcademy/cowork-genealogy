@@ -35,15 +35,21 @@ the user clicks it in their own browser, captures the page as a PDF, and
 uploads it back. The agent supplies the genealogical expertise; the user's
 browser supplies the access.
 
-Two different reasons a site is handled this way, and they are not
-interchangeable:
-- **Paywalled** (Ancestry, MyHeritage, FindMyPast, Newspapers.com) — no public
-  API, automated access prohibited, and the user needs a subscription.
-- **Free but bot-protected** (Chronicling America, Utah Digital Newspapers and
-  other state/regional archives) — free to search, no subscription needed, but
-  behind bot protection that blocks automated fetch. Never tell the user these
-  are unavailable or need a subscription: generate the URL, and they can open
-  it. A blocked fetch is not a negative result — it is a capture-required one.
+`build_external_search_url`'s response names each site's access requirement
+in its `access` field — read it from there, every time, rather than from
+memory or a hand-maintained list: a site absent from a written-out list is a
+site the model improvises about, which is how an alpha tester was told
+FindAGrave needs a subscription when it is free.
+
+- **`"subscription"`** — no public API, automated access prohibited, and the
+  user needs their own access (see the subscription table below).
+- **`"free_bot_protected"`** — free to search, no subscription needed, but
+  behind bot protection that blocks automated fetch. Never tell the user
+  these are unavailable or need a subscription: generate the URL, and they
+  can open it. A blocked fetch is not a negative result — it is a
+  capture-required one.
+- **`"free"`** — no access barrier of any kind. Narrate it as free; don't
+  hedge or add a caveat that isn't in the tool's own `notes`.
 
 Getting the search **parameters** right is the core of the task: a URL
 with the wrong name encoding, a missing date window, or the wrong
@@ -138,6 +144,8 @@ account. Use it as a tie-breaker, never as a gate.
 | any of the above | `FamilySearch-Partner`, `LibraryAccess` — may cover it |
 | Chronicling America | free — no subscription, and no access route needed |
 | Utah Digital Newspapers and other state/regional archives | free — no subscription, and no access route needed |
+| National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, Italian Genealogy forum | free — no subscription, and no access route needed |
+| American Ancestors (NEHGS) | free to search; a subscription may be needed to view full results |
 
 `FamilySearch-Partner` and `LibraryAccess` are access *routes*, not
 sites: which sites each unlocks varies by institution and changes. Treat
@@ -167,17 +175,31 @@ titles mislead about scope and completeness.
 
 Which parameters each site accepts is `build_external_search_url`'s own table
 (step 3 below), not repeated here — a second copy would drift from the tool
-that actually builds the URL.
+that actually builds the URL. Same for access: each site's `access` value
+(free / free-but-bot-protected / subscription) comes from that same tool
+call, not from this table.
 
 | Site | Notes |
 |------|-------|
-| Ancestry.com | Largest indexed collection. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| MyHeritage.com | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| FindMyPast.com | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| FindAGrave.com | Cemetery records. Free. User-contributed — treat as compiled source |
-| Newspapers.com | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| Chronicling America | US digitised newspaper pages 1798–1963, Library of Congress. **Free.** Bot-protected — capture required |
-| State/regional digital newspaper archives | e.g. Utah Digital Newspapers, California Digital Newspaper Collection — the specific archive's URL is not fixed; pass it as `baseUrl` (step 3). **Free.** Bot-protected — capture required |
+| Ancestry.com | Largest indexed collection |
+| MyHeritage.com | Independent indexing |
+| FindMyPast.com | Strong UK/Ireland coverage |
+| FindAGrave.com | Cemetery records. User-contributed — treat as compiled source |
+| Newspapers.com | Historical newspapers. Ancestry-owned |
+| Chronicling America | US digitised newspaper pages 1798–1963, Library of Congress |
+| State/regional digital newspaper archives | e.g. Utah Digital Newspapers, California Digital Newspaper Collection — the specific archive's URL is not fixed; pass it as `baseUrl` (step 3) |
+| National Archives Catalog (archives.gov) | US federal records, name-authority search |
+| Internet Archive (archive.org) | Keyword only — no structured name/date fields |
+| BillionGraves | Cemetery records, GPS-tagged |
+| Digitalarkivet | Norwegian National Archives, person search |
+| Portale Antenati | Italian civil/parish records. One year field for whichever record matched (not separate birth/death years) |
+| Library and Archives Canada | Census search only — no death data (census records the living) |
+| American Ancestors (NEHGS) | Keyword only — the site's own name fields do not bind via URL |
+| Italian Genealogy forum | A discussion forum, not a records database — keyword search over posts only |
+
+Ancestry and FindMyPast also have UK-locale domains (ancestry.co.uk,
+findmypast.co.uk) — pass `locale: "uk"` to `build_external_search_url` for
+either when the researcher wants that domain specifically.
 
 ## Steps
 

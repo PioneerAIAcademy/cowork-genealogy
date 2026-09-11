@@ -50,7 +50,7 @@ describe("build_external_search_url", () => {
       );
     });
 
-    it("findagrave: firstname/lastname/birthyear/deathyear/location (from deathPlace)", () => {
+    it("findagrave: firstname/lastname/birthyear/deathyear, no place parameter", () => {
       const r = buildExternalSearchUrl({
         site: "findagrave",
         attributes: {
@@ -62,8 +62,11 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
+      // deathPlace is not a recognized attribute for findagrave (see the
+      // "location removed" note below) — it's flagged, not silently dropped.
+      expect(r.notes.some((n) => n.includes("'deathPlace'") && n.includes("findagrave"))).toBe(true);
       expect(r.url).toBe(
-        "https://www.findagrave.com/memorial/search?firstname=Patrick&lastname=Flynn&deathyear=1908&location=Pennsylvania",
+        "https://www.findagrave.com/memorial/search?firstname=Patrick&lastname=Flynn&deathyear=1908",
       );
     });
 
@@ -106,6 +109,165 @@ describe("build_external_search_url", () => {
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.url).toBe("https://newspapers.lib.utah.edu/search?q=Patrick+Flynn");
+    });
+
+    it("archives_gov: personOrOrg + fixed dataSource=authority", () => {
+      const r = buildExternalSearchUrl({
+        site: "archives_gov",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: "Ireland" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://catalog.archives.gov/search?dataSource=authority&availableOnline=false" +
+          "&personOrOrg=Patrick+Flynn&geographicReference=Ireland",
+      );
+    });
+
+    it("archive_org: query is the only field, space-joined", () => {
+      const r = buildExternalSearchUrl({
+        site: "archive_org",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://archive.org/search?query=Patrick+Flynn");
+    });
+
+    it("billiongraves: GivenNames/FamilyName/EventBirthYear/EventDeathYear", () => {
+      const r = buildExternalSearchUrl({
+        site: "billiongraves",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, deathYear: 1908 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://billiongraves.com/search/results?GivenNames=Patrick&FamilyName=Flynn" +
+          "&EventBirthYear=1845&EventDeathYear=1908",
+      );
+    });
+
+    it("digitalarkivet: a single birthYear fills both ends of the range field", () => {
+      const r = buildExternalSearchUrl({
+        site: "digitalarkivet",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://www.digitalarkivet.no/en/search/persons/advanced?firstname=Patrick&lastname=Flynn" +
+          "&birth_year_from=1845&birth_year_to=1845&birth_place=Ireland",
+      );
+    });
+
+    it("antenati: nome/cognome/anno/localita, Italian field names", () => {
+      const r = buildExternalSearchUrl({
+        site: "antenati",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://antenati.cultura.gov.it/search-nominative/?nome=Patrick&cognome=Flynn" +
+          "&anno=1845&localita=Ireland",
+      );
+    });
+
+    it("library_archives_canada: FirstName/LastName/YearOfBirth, fixed DataSource+ST", () => {
+      const r = buildExternalSearchUrl({
+        site: "library_archives_canada",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result?DataSource=Genealogy%7CCensus" +
+          "&ST=SCTB&FirstName=Patrick&LastName=Flynn&YearOfBirth=1845",
+      );
+    });
+
+    it("american_ancestors: name travels through Keywords, not a non-binding Name.First/Name.Last", () => {
+      const r = buildExternalSearchUrl({
+        site: "american_ancestors",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://app.americanancestors.org/SearchResults/AdvancedSearch?Keywords=Patrick+Flynn" +
+          "&Location=Ireland&FromYear=1845&ToYear=1845",
+      );
+    });
+
+    it("italian_genealogy: keywords + the three fixed params from the one confirmed-working URL", () => {
+      const r = buildExternalSearchUrl({
+        site: "italian_genealogy",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe(
+        "https://www.italiangenealogy.com/forum/search?terms=all&sf=all&sr=posts&keywords=Patrick+Flynn",
+      );
+    });
+  });
+
+  describe("locale: ancestry.co.uk / findmypast.co.uk (issue #1980 launch scope)", () => {
+    it("locale uk builds against ancestry.co.uk with the same parameters", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        locale: "uk",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.co.uk/search/?name=Patrick_Flynn");
+    });
+
+    it("locale uk builds against findmypast.co.uk with the same parameters", () => {
+      const r = buildExternalSearchUrl({
+        site: "findmypast",
+        locale: "uk",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.findmypast.co.uk/search/results?firstname=Patrick&lastname=Flynn");
+    });
+
+    it("locale us (or omitted) builds against the .com default", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        locale: "us",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/?name=Patrick_Flynn");
+    });
+
+    it("locale uk is noted, not silently ignored, for a site with no UK variant", () => {
+      const r = buildExternalSearchUrl({
+        site: "findagrave",
+        locale: "uk",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.findagrave.com/memorial/search?firstname=Patrick&lastname=Flynn");
+      expect(r.notes.some((n) => n.includes("uk") && n.includes("findagrave"))).toBe(true);
+    });
+
+    it("a curated baseUrl overrides locale — a curated link already names its own host", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        locale: "uk",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn");
     });
   });
 
@@ -418,7 +580,7 @@ describe("build_external_search_url", () => {
   });
 
   describe("unsupported site", () => {
-    it("names exactly the seven supported sites", () => {
+    it("names exactly the fifteen supported sites", () => {
       const r = buildExternalSearchUrl({
         site: "wiewaswie",
         attributes: { givenName: "Patrick", surname: "Flynn" },
@@ -436,6 +598,14 @@ describe("build_external_search_url", () => {
           "findmypast",
           "myheritage",
           "newspapers",
+          "archives_gov",
+          "archive_org",
+          "billiongraves",
+          "digitalarkivet",
+          "antenati",
+          "library_archives_canada",
+          "american_ancestors",
+          "italian_genealogy",
         ].sort(),
       );
     });
@@ -521,14 +691,14 @@ describe("build_external_search_url", () => {
       expect(r.url).not.toMatch(/birthplace=/);
     });
 
-    it("an empty deathPlace falls through to the documented birthPlace fallback (findagrave)", () => {
+    it("an empty birthPlace falls through to the documented deathPlace fallback (antenati)", () => {
       const r = buildExternalSearchUrl({
-        site: "findagrave",
-        attributes: { givenName: "Patrick", surname: "Flynn", deathPlace: "", birthPlace: "Ireland" },
+        site: "antenati",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: "", deathPlace: "Ireland" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toMatch(/location=Ireland/);
+      expect(r.url).toMatch(/localita=Ireland/);
     });
 
     it("rejects NaN, Infinity, and out-of-range/fractional years", () => {
@@ -604,6 +774,58 @@ describe("build_external_search_url", () => {
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.notes.some((n) => /unscoped by year/.test(n))).toBe(true);
+    });
+  });
+
+  describe("access classification (alpha feedback: FindAGrave wrongly called paywalled)", () => {
+    it.each([
+      ["ancestry", "subscription"],
+      ["myheritage", "subscription"],
+      ["findmypast", "subscription"],
+      ["findagrave", "free"],
+      ["newspapers", "subscription"],
+      ["chronicling_america", "free_bot_protected"],
+      ["archives_gov", "free"],
+      ["archive_org", "free"],
+      ["billiongraves", "free"],
+      ["digitalarkivet", "free"],
+      ["antenati", "free"],
+      ["library_archives_canada", "free"],
+      ["american_ancestors", "free"],
+      ["italian_genealogy", "free"],
+    ] as const)("%s reports access %s", (site, access) => {
+      const r = buildExternalSearchUrl({
+        site,
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.access).toBe(access);
+    });
+
+    it("digital_newspaper_archive reports free_bot_protected", () => {
+      const r = buildExternalSearchUrl({
+        site: "digital_newspaper_archive",
+        baseUrl: "https://newspapers.lib.utah.edu/search",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.access).toBe("free_bot_protected");
+    });
+
+    it("american_ancestors is 'free' but still notes the results-viewing caveat", () => {
+      // "free" alone would repeat the FindAGrave failure mode in the other
+      // direction if it implied a subscription never matters here — the
+      // permanent note carries the nuance the 3-value enum can't.
+      const r = buildExternalSearchUrl({
+        site: "american_ancestors",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.access).toBe("free");
+      expect(r.notes.some((n) => /subscription may still be required to view full results/.test(n))).toBe(true);
     });
   });
 });

@@ -120,6 +120,12 @@ const EXTERNAL_SITE_VALUES = new Set([
   // same click-capture loop as the paid sites. `digital_newspaper_archive` is
   // the bucket for state/regional archives; which one is in `url_generated`.
   "chronicling_america", "digital_newspaper_archive",
+  // Added for issue #1980's wiki-top-20 launch scope. `library_archives_canada`
+  // names the specific LAC census search the tool builds for, not the shared
+  // gc.ca domain suffix (which many unrelated agencies use). `american_ancestors`
+  // and `italian_genealogy` are keyword-only — see build-external-search-url.ts.
+  "archives_gov", "archive_org", "billiongraves", "digitalarkivet",
+  "antenati", "library_archives_canada", "american_ancestors", "italian_genealogy",
 ]);
 
 /**

@@ -13,7 +13,15 @@ export type ExternalSearchSite =
   | "findagrave"
   | "newspapers"
   | "chronicling_america"
-  | "digital_newspaper_archive";
+  | "digital_newspaper_archive"
+  | "archives_gov"
+  | "archive_org"
+  | "billiongraves"
+  | "digitalarkivet"
+  | "antenati"
+  | "library_archives_canada"
+  | "american_ancestors"
+  | "italian_genealogy";
 
 export interface BuildExternalSearchUrlAttributes {
   givenName?: string;
@@ -56,11 +64,24 @@ export interface BuildExternalSearchUrlAttributes {
 export interface BuildExternalSearchUrlInput {
   site: string;
   baseUrl?: string;
+  // Locale variant of a site with more than one country-specific domain — only
+  // "ancestry" and "findmypast" have one today (ancestry.co.uk,
+  // findmypast.co.uk). Ignored (with a note) for a site with no locale
+  // variant, and ignored silently when `baseUrl` is supplied — a curated link
+  // already names its own host.
+  locale?: "us" | "uk";
   attributes: BuildExternalSearchUrlAttributes;
 }
 
+// The one access fact a researcher is most likely to be misinformed about —
+// sourced from the tool, not left to the model's memory of a prose table it
+// can misremember or misapply to a site the table never named (the FindAGrave
+// "it said this was paywalled" alpha-feedback finding: FindAGrave is free,
+// and the model said otherwise anyway).
+export type AccessClassification = "free" | "free_bot_protected" | "subscription";
+
 export type BuildExternalSearchUrlResult =
-  | { ok: true; url: string; notes: string[] }
+  | { ok: true; url: string; notes: string[]; access: AccessClassification }
   | { ok: false; reason: "unsupported_site"; errors: string[]; supportedSites: string[] }
   | { ok: false; reason: "base_url_required"; errors: string[] }
   | { ok: false; reason: "no_attributes"; errors: string[] };
@@ -156,12 +177,20 @@ function siteWideParams(
         motherfirstname: str(a.motherGivenName),
       };
     case "findagrave":
+      // No place parameter. `location` was removed after live verification
+      // (issue #1980 review): the visible `location` field is a free-text
+      // autocomplete box whose real filter keys off a hidden `locationId` the
+      // client resolves from a dropdown, not the text itself — four different
+      // `location=` values (absent, a real place, a nonsense string, and the
+      // exact address copied from a matching result) all returned byte-
+      // identical result sets. Emitting it was indistinguishable from a
+      // silently-ignored parameter, which is the exact defect class this tool
+      // exists to eliminate.
       return {
         firstname: str(a.givenName),
         lastname: str(a.surname),
         birthyear: num(a.birthYear),
         deathyear: num(a.deathYear),
-        location: str(a.deathPlace) ?? str(a.birthPlace),
       };
     case "newspapers":
       return {
@@ -192,6 +221,92 @@ function siteWideParams(
         location_state: str(a.usState)?.toLowerCase(),
       };
     }
+    case "archives_gov":
+      // `personOrOrg` (paired with the fixed `dataSource=authority` params
+      // below) is the National Archives Catalog's dedicated person-name
+      // field; `q` is free text only (a record type like "obituary"), not the
+      // name itself. Sourced from the catalog's own live production JS field
+      // registry, not a rendered results page — see the spec's live-check
+      // section.
+      return {
+        personOrOrg: joinSpace(a.givenName, a.surname),
+        q: str(a.keywords),
+        geographicReference: str(a.birthPlace) ?? str(a.deathPlace),
+      };
+    case "archive_org":
+      // Dublin-Core metadata (creator/date/subject/title), not a vital-
+      // records schema — no structured birth/death fields exist. `query` is
+      // the one real parameter (confirmed via the legacy search.php redirect
+      // target); a name is only a free-text term here, same as this site's
+      // own lack of a name field.
+      return {
+        query: joinSpace(a.givenName, a.surname, a.keywords),
+      };
+    case "billiongraves":
+      return {
+        GivenNames: str(a.givenName),
+        FamilyName: str(a.surname),
+        EventBirthYear: num(a.birthYear),
+        EventDeathYear: num(a.deathYear),
+      };
+    case "digitalarkivet":
+      // `birth_year_from`/`birth_year_to` is a range field; a single known
+      // birth year is passed as both ends. `domicile` is the site's own name
+      // for a residence/domicile place, not birth or death place.
+      return {
+        firstname: str(a.givenName),
+        lastname: str(a.surname),
+        birth_year_from: num(a.birthYear),
+        birth_year_to: num(a.birthYear),
+        birth_place: str(a.birthPlace),
+        domicile: str(a.residencePlace),
+      };
+    case "antenati":
+      // One year field for "whichever act matched" (birth, marriage or
+      // death), not separate birth/death fields — the site indexes civil/
+      // parish acts, not persons. birthYear is preferred when both are
+      // known; there is no verified way to also select which act TYPE the
+      // year should scope to.
+      return {
+        nome: str(a.givenName),
+        cognome: str(a.surname),
+        anno: num(a.birthYear) ?? num(a.deathYear),
+        localita: str(a.birthPlace) ?? str(a.deathPlace),
+      };
+    case "library_archives_canada":
+      // Deliberately omits ProvinceCode/GenderCode/MaritalStatusCode: those
+      // are coded `<select>` values (e.g. `1`/`2`/`8` for gender) this tool
+      // has no verified mapping for, and a free-text place string would not
+      // bind to a coded select the way it binds to the free-text fields
+      // below — passing one anyway would be exactly the silent-mismatch risk
+      // this tool exists to avoid. The two fixed params are required by the
+      // site's own search-form JS to select the census/genealogy dataset.
+      return {
+        FirstName: str(a.givenName),
+        LastName: str(a.surname),
+        YearOfBirth: num(a.birthYear),
+      };
+    case "american_ancestors":
+      // `Name.First`/`Name.Last` do not bind on this site — confirmed by
+      // round-tripping a GET request and checking the form's own `value=`
+      // reflection, which came back blank for every name-field encoding
+      // tried. `Keywords` is the one free-text field that does bind, so the
+      // name travels through it instead, the same shape as the keyword-only
+      // sites above. A single known year is passed as both ends of the
+      // (verified-binding) `FromYear`/`ToYear` range.
+      return {
+        Keywords: joinSpace(a.givenName, a.surname, a.keywords),
+        Location: str(a.birthPlace) ?? str(a.deathPlace),
+        FromYear: num(a.birthYear),
+        ToYear: num(a.birthYear),
+      };
+    case "italian_genealogy":
+      // A phpBB forum, not a records database — confirmed by a live search
+      // returning real matching posts. `keywords` is the only field; there
+      // is no structured name/date/place search anywhere on this site.
+      return {
+        keywords: joinSpace(a.givenName, a.surname, a.keywords),
+      };
   }
 }
 
@@ -213,9 +328,17 @@ const RECOGNIZED_KEYS: Record<Exclude<ExternalSearchSite, "digital_newspaper_arc
     "givenName", "surname", "birthYear", "birthYearOffset", "birthPlace",
     "placeProximityMiles", "eventYear", "fatherGivenName", "motherGivenName",
   ]),
-  findagrave: new Set(["givenName", "surname", "birthYear", "deathYear", "deathPlace", "birthPlace"]),
+  findagrave: new Set(["givenName", "surname", "birthYear", "deathYear"]),
   newspapers: new Set(["givenName", "surname", "keywords", "searchYear", "searchPlace"]),
   chronicling_america: new Set(["givenName", "surname", "keywords", "searchStartYear", "searchEndYear", "usState"]),
+  archives_gov: new Set(["givenName", "surname", "keywords", "birthPlace", "deathPlace"]),
+  archive_org: new Set(["givenName", "surname", "keywords"]),
+  billiongraves: new Set(["givenName", "surname", "birthYear", "deathYear"]),
+  digitalarkivet: new Set(["givenName", "surname", "birthYear", "birthPlace", "residencePlace"]),
+  antenati: new Set(["givenName", "surname", "birthYear", "deathYear", "birthPlace", "deathPlace"]),
+  library_archives_canada: new Set(["givenName", "surname", "birthYear"]),
+  american_ancestors: new Set(["givenName", "surname", "keywords", "birthPlace", "deathPlace", "birthYear"]),
+  italian_genealogy: new Set(["givenName", "surname", "keywords"]),
 };
 
 const SITE_BASE_URL: Record<Exclude<ExternalSearchSite, "digital_newspaper_archive">, string> = {
@@ -225,23 +348,84 @@ const SITE_BASE_URL: Record<Exclude<ExternalSearchSite, "digital_newspaper_archi
   findagrave: "https://www.findagrave.com/memorial/search",
   newspapers: "https://www.newspapers.com/search/",
   chronicling_america: "https://www.loc.gov/collections/chronicling-america/",
+  archives_gov: "https://catalog.archives.gov/search",
+  archive_org: "https://archive.org/search",
+  billiongraves: "https://billiongraves.com/search/results",
+  digitalarkivet: "https://www.digitalarkivet.no/en/search/persons/advanced",
+  antenati: "https://antenati.cultura.gov.it/search-nominative/",
+  library_archives_canada: "https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Result",
+  american_ancestors: "https://app.americanancestors.org/SearchResults/AdvancedSearch",
+  italian_genealogy: "https://www.italiangenealogy.com/forum/search",
+};
+
+// A closed `Record` over the full `ExternalSearchSite` union (not filtered
+// like `SITE_BASE_URL`) — deliberately exhaustive so a new site added to the
+// union without a matching entry here is a compile error, not a silent gap.
+// There is no crash-safety reason to loosen this the way `SUPPORTED_SITES`
+// is loosened: an incomplete `SITE_ACCESS` cannot be reached at runtime for
+// an unimplemented site, since `siteWideParams` and `SITE_BASE_URL` gate
+// that already.
+const SITE_ACCESS: Record<ExternalSearchSite, AccessClassification> = {
+  ancestry: "subscription",
+  myheritage: "subscription",
+  findmypast: "subscription",
+  findagrave: "free",
+  newspapers: "subscription",
+  chronicling_america: "free_bot_protected",
+  digital_newspaper_archive: "free_bot_protected",
+  archives_gov: "free",
+  archive_org: "free",
+  billiongraves: "free",
+  digitalarkivet: "free",
+  antenati: "free",
+  library_archives_canada: "free",
+  // The search itself is free; a subscription may still gate viewing full
+  // results, which "free" alone doesn't say — see the permanent note pushed
+  // for this site in `buildExternalSearchUrl` below.
+  american_ancestors: "free",
+  italian_genealogy: "free",
+};
+
+// US/UK locale variants of a site sharing one parameter table — the issue's
+// own instruction is to handle these as a host argument on the existing
+// entry, not a duplicate table, since ancestry.co.uk and findmypast.co.uk
+// were confirmed (live fetch; and for findmypast.co.uk, Google-indexed real
+// production URLs, since Cloudflare blocks a direct fetch of either
+// findmypast domain equally) to use the identical path and parameter names
+// as their .com counterparts.
+const UK_BASE_URL: Partial<Record<Exclude<ExternalSearchSite, "digital_newspaper_archive">, string>> = {
+  ancestry: "https://www.ancestry.co.uk/search/",
+  findmypast: "https://www.findmypast.co.uk/search/results",
 };
 
 // The sites this tool can actually build a URL for — every key `SITE_BASE_URL`
 // declares (a `Record` with exactly those keys, so `Object.keys` can never
 // diverge from `siteWideParams`'s own switch) plus `digital_newspaper_archive`,
 // which is handled separately. Deliberately NOT derived from the shared
-// `external_site` enum: that enum already carries the 14 follow-up sites'
-// eventual names (issue #1980's own deferred scope), and a site advertised
-// as valid before its `siteWideParams` case exists crashes on `Object.values`
-// of the switch's implicit `undefined` return — reproduced by appending a
-// site to the enum with no matching implementation here. `tsc` sees no error,
-// because `isSupportedSite`'s type predicate is an unchecked runtime
-// assertion the compiler cannot verify against the switch's actual cases.
-// A spread off `Object.keys(...)` is an identifier expression, not a string
-// literal array, so `tool-schema-enums.test.ts`'s literal-array scan does not
-// treat this as a hand-typed copy of `external_site` — nothing here needs the
-// VALIDATOR_ENUMS import that the previous, enum-derived version required.
+// `external_site` enum: a site advertised as valid before its
+// `siteWideParams` case exists crashes on `Object.values` of the switch's
+// implicit `undefined` return — reproduced by appending a site to the enum
+// with no matching implementation here. `tsc` sees no error, because
+// `isSupportedSite`'s type predicate is an unchecked runtime assertion the
+// compiler cannot verify against the switch's actual cases. A spread off
+// `Object.keys(...)` is an identifier expression, not a string literal array,
+// so `tool-schema-enums.test.ts`'s literal-array scan does not treat this as
+// a hand-typed copy of `external_site` — nothing here needs the
+// VALIDATOR_ENUMS import that an enum-derived version would require.
+//
+// Six sites named in the launch-scope table are deliberately NOT here, each
+// for a reason live research could not resolve, so none gets an invented
+// template: `byu.edu` and `nyu.edu` (no verifiable structured search endpoint
+// could be found behind either domain), `usgwarchives.net` (unreachable from
+// every network vantage point tried), `uscis.gov` (its one live endpoint is
+// a paid request/order form with no searchable results page, not a query
+// interface), `italianparishrecords.org` (a pure browse-by-region directory
+// with no search of any kind at any level), and `genealogycenter.info` (its
+// two top-level search forms are POST-only and silently ignore a GET query
+// string — a real surname, no surname, and a nonsense surname all returned
+// byte-identical results; the site is otherwise a loose federation of dozens
+// of independently-shaped sub-databases with no confirmed common parameter
+// naming).
 const SUPPORTED_SITES: ExternalSearchSite[] = [
   ...(Object.keys(SITE_BASE_URL) as Array<Exclude<ExternalSearchSite, "digital_newspaper_archive">>),
   "digital_newspaper_archive",
@@ -252,6 +436,16 @@ const SITE_FIXED_PARAMS: Partial<Record<Exclude<ExternalSearchSite, "digital_new
   // Required — without it the search returns newspaper titles from the U.S.
   // Newspaper Directory, not digitised pages.
   chronicling_america: { dl: "page" },
+  // Scopes the catalog to person/org name-authority records, matching the
+  // `personOrOrg` field above — without it the same field is read by the
+  // archival-description search instead.
+  archives_gov: { dataSource: "authority", availableOnline: "false" },
+  // Required by the search-form's own client JS to select the census/
+  // genealogy dataset before redirecting to the results endpoint.
+  library_archives_canada: { DataSource: "Genealogy|Census", ST: "SCTB" },
+  // The exact three fields present on the one confirmed-working search URL
+  // (858 real matches) — omitting them was not tested and is not assumed safe.
+  italian_genealogy: { terms: "all", sf: "all", sr: "posts" },
 };
 
 // Encodes a value the way a browser's own search form would submit it
@@ -304,7 +498,7 @@ function appendToBaseUrl(baseUrl: string, params: Record<string, string | undefi
 }
 
 export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): BuildExternalSearchUrlResult {
-  const { site, baseUrl: rawBaseUrl, attributes } = input ?? ({} as BuildExternalSearchUrlInput);
+  const { site, baseUrl: rawBaseUrl, locale, attributes } = input ?? ({} as BuildExternalSearchUrlInput);
   const a = attributes ?? {};
   // "" and whitespace-only are absent, the same convention `str()` applies to
   // every attribute — without this, `baseUrl: ""` (or a caller passing a
@@ -339,7 +533,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     // Do not invent facet or date parameters for these archives — an
     // unrecognized parameter is silently ignored or errors the page.
     const notes = unusedAttributeNotes(a, new Set(["givenName", "surname", "keywords"]), site);
-    return { ok: true, url: appendToBaseUrl(baseUrl, { q }), notes };
+    return { ok: true, url: appendToBaseUrl(baseUrl, { q }), notes, access: SITE_ACCESS[site] };
   }
 
   const params = siteWideParams(site, a);
@@ -356,11 +550,28 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   if (site === "findmypast" && a.birthYear === undefined && a.eventYear === undefined) {
     notes.push("no yearofbirth or eventyear supplied — search is unscoped by year");
   }
+  if (site === "american_ancestors") {
+    notes.push("search is free; a subscription may still be required to view full results");
+  }
+
+  // A curated `baseUrl` already names its own host, so `locale` only applies
+  // to the site-wide fallback. A `locale: "uk"` for a site with no UK
+  // variant is noted, not silently ignored — the caller asked for something
+  // this tool cannot do and should know its request had no effect.
+  let siteWideUrl = SITE_BASE_URL[site];
+  if (!baseUrl && locale === "uk") {
+    const ukUrl = UK_BASE_URL[site];
+    if (ukUrl) {
+      siteWideUrl = ukUrl;
+    } else {
+      notes.push(`locale "uk" has no variant for ${site} — used the default site instead`);
+    }
+  }
 
   const combinedParams = { ...(SITE_FIXED_PARAMS[site] ?? {}), ...params };
-  const url = appendToBaseUrl(baseUrl ?? SITE_BASE_URL[site], combinedParams);
+  const url = appendToBaseUrl(baseUrl ?? siteWideUrl, combinedParams);
 
-  return { ok: true, url, notes };
+  return { ok: true, url, notes, access: SITE_ACCESS[site] };
 }
 
 // A supplied attribute that the target site's mapping never reads vanishes
@@ -384,15 +595,18 @@ function unusedAttributeNotes(
 export const buildExternalSearchUrlSchema = {
   name: "build_external_search_url",
   description:
-    "Build a pre-filled search URL for one of seven supported external genealogy " +
-    "sites (ancestry, myheritage, findmypast, findagrave, newspapers, " +
-    "chronicling_america, digital_newspaper_archive) from structured search " +
-    "attributes. Pass `baseUrl` (a FamilySearch-curated collection link) to append " +
-    "parameters onto it instead of building a fresh site-wide search — required " +
-    "for digital_newspaper_archive, which has no fixed site-wide URL. You decide " +
-    "which record type/event the search targets and how to resolve any " +
-    "conflicts[] entry on a disputed field; the tool only templates the URL. " +
-    "It writes nothing and makes no network call.",
+    "Build a pre-filled search URL for one of the supported external genealogy " +
+    "sites (see the `site` enum) from structured search attributes. Pass " +
+    "`baseUrl` (a FamilySearch-curated collection link) to append parameters " +
+    "onto it instead of building a fresh site-wide search — required for " +
+    "digital_newspaper_archive, which has no fixed site-wide URL. Pass `locale: " +
+    "\"uk\"` for the .co.uk variant of ancestry or findmypast (ignored, with a " +
+    "note, for any other site). You decide which record type/event the search " +
+    "targets and how to resolve any conflicts[] entry on a disputed field; the " +
+    "tool only templates the URL. On success the response's `access` field " +
+    "classifies the site as `free`, `free_bot_protected`, or `subscription` — " +
+    "read it from here, not from memory, when telling the user what access " +
+    "the search needs. It writes nothing and makes no network call.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -406,6 +620,14 @@ export const buildExternalSearchUrlSchema = {
         description:
           "A FamilySearch-curated collection URL to append parameters onto, instead of " +
           "a fresh site-wide search. Required for digital_newspaper_archive.",
+      },
+      locale: {
+        type: "string",
+        enum: ["us", "uk"],
+        description:
+          "Country-domain variant. \"uk\" builds against ancestry.co.uk or " +
+          "findmypast.co.uk instead of the .com default; has no effect on any " +
+          "other site, or when `baseUrl` is supplied.",
       },
       attributes: {
         type: "object",

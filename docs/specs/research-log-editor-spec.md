@@ -82,7 +82,9 @@ research_log_append({
   notes?: string | null,
   externalSite?: {                // REQUIRED when tool === "external_site"; else null/omit
     site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web"
-          | "chronicling_america" | "digital_newspaper_archive",
+          | "chronicling_america" | "digital_newspaper_archive" | "archives_gov" | "archive_org"
+          | "billiongraves" | "digitalarkivet" | "antenati" | "library_archives_canada"
+          | "american_ancestors" | "italian_genealogy",
     urlGenerated: string,
     captureReceived: boolean,
     captureFilename?: string | null,
