@@ -178,7 +178,10 @@ tree_edit({
   duplicated onto each spouse); supplying both or neither is an input error, and
   a `relationshipId` that names a `ParentChild` is an input error (the tree
   schema allows `facts` only on Couples). If `fact.primary === true`, clear
-  `primary` on every other fact of the **same `type`** on that holder. If
+  `primary` on every other fact of the **same `type`** on that holder.
+  `primary: false` means "add this without a primary" — the key is deleted
+  before the write and any existing primary of the type is left alone. Any
+  other spelling (`"false"`, `null`, `0`) is an input error. If
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves).
@@ -187,7 +190,12 @@ tree_edit({
   exactly-one-target contract as `add_fact`; the `factId` must live on the named
   holder. If `place` changed (and not explicitly accompanied by
   `standard_place`), re-resolve `standard_place`. If `primary: true` set, run the
-  same-type swap on that holder.
+  same-type swap on that holder. `primary: false` deletes the key on **that fact
+  only**, leaving other facts of the type untouched — so a vital type may end
+  with no primary at all, which is the point: it is the only way to retire a
+  concluded value while a conflict is open.
+  `add_person` and `add_relationship` apply the same `primary: false` deletion
+  to each inline fact they author.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
   `name.preferred === true`, clear `preferred` on the person's other names.
 - **`update_name`** `{ personId, nameId, name }` — shallow-merge fields; preferred
@@ -492,7 +500,9 @@ The caller (`tree-edit` skill) still:
 ## 9. Test plan (vitest, mirroring the merge tool tests)
 
 - **add_fact** — appends with the next `F` id; `primary: true` clears the prior
-  same-type primary; `place` set → `standard_place` resolved (mock the resolver);
+  same-type primary; `primary: false` is deleted rather than stored, on
+  `add_fact`, `update_fact`, `add_person` and `add_relationship` alike, and a
+  non-boolean `primary` is refused; `place` set → `standard_place` resolved (mock the resolver);
   only `tree.gedcomx.json` written; `.bak` created; project validates.
   Relationship-targeted: `relationshipId` appends to the Couple's own `facts`
   (same F id / primary swap / place resolution; nothing lands on either spouse);
