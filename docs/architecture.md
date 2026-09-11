@@ -647,7 +647,7 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
-- **Every network leg goes through `fetchWithTimeout` (`src/utils/http.ts`)** —
+- **Every network leg goes through `fetchWithRetry` (`src/utils/http.ts`)** —
   the global `fetch` never times out and a stalled upstream hangs the call
   forever. Size the budget under **60s** or accept that Cowork loses the tail:
   the device bridge caps every MCP call at 60s (see "Other environment
