@@ -733,8 +733,8 @@ with the extended-cache-ttl beta if we set the flag (moot through this gateway, 
 drops the ttl); the seven betas every call carries (advisor-tool, claude-code,
 context-management, effort, interleaved-thinking, prompt-caching-scope,
 thinking-token-count); a second model ID — every session opens with one
-`claude-haiku-4-5-20251001` call for the session title — and a `HEAD /api/hello` with
-no auth header. The proxy shows what the CLI sends, not what agentgateway keeps: that
+`claude-haiku-4-5-20251001` call for the session title, carrying
+`structured-outputs-2025-12-15` — and a `HEAD /api/hello` with no auth header. The proxy shows what the CLI sends, not what agentgateway keeps: that
 half is one curl against integ.
 
 **Four unknowns — context management, the 1-hour TTL, whether Bedrock accepts the
@@ -756,8 +756,9 @@ flag. Only a second turn after a wait longer than five minutes proves the TTL is
 *honoured* rather than echoed: expect `cache_read_input_tokens > 0` under the flag and
 near zero without it. 96% of cache-creation tokens in the corpus are 1 h writes, and the
 4.6× cost multiplier rests on it — but see the corpus cache-window measurement under
-R2: on the autonomous corpus a 5-minute TTL loses 0.4–0.5% of cache reads and is a net
-saving, because the 1 h write rate the corpus paid is 1.6× the 5-minute rate.
+R2: on the autonomous corpus a 5-minute TTL loses 0.4–0.5% of cache reads, 1.5–1.7% of
+run cost, and the corpus's own 1 h writes came from the operator's subscription, which
+production on an API key never gets without the flag.
 
 The last two are real measurements. The CLI does not strip features on Bedrock; it
 moves interleaved thinking, the 1M-context beta and **tool search** (on in production
@@ -1390,8 +1391,7 @@ Beanstalk deployments and **zero** measurements of the six things this produces:
    gateway path the TTL is five minutes whatever the client asks for (R2), so the
    number to carry is the corpus-derived cost of a five-minute window: **measured
    2026-09-11 over 148 runs — 0.4–0.5% of cache reads become writes, $20–23 on $1,298
-   of runs, and because the corpus paid the 1 h write rate the 5-minute window is a net
-   saving of about $115; human think time between turns is not in the corpus.**
+   of runs (1.5–1.7%); human think time between turns is not in the corpus.**
 3. Where can you actually checkpoint? Answered with the segment distribution rather
    than a grain chosen a priori.
 4. What does an oversized tool result do with no shell? **Measured 2026-09-10 on the
@@ -1452,12 +1452,19 @@ unverifiable. Two measurements are ours. The cost of a five-minute window, **mea
 re-priced as a 5-minute write; main-thread gaps over 300 s are median 0 per run, p90 2,
 max 4, in 63 of 148 runs, none over 1,800 s; 0.4–0.5% of cache reads become writes,
 $20–23 against $1,298 of runs (1.5–1.7%), per run median $0 / p90 $0.41–0.55 / max
-$1.01. And because the corpus paid the 1 h write rate (6.00 against 3.75 per Mtok),
-re-pricing its writes saves $133, so on this corpus the 5-minute window is a net saving
-of about $115.** The number the 4.6× rests on is therefore not the TTL. What the corpus
-cannot size is a patron's think time between turns — a turn arriving more than five
-minutes after the last model call re-writes the whole context at the write rate, about
-$0.11 per 30k tokens, growing with context length. The second measurement is still
+$1.01.** That is the whole production delta: the corpus's writes were 1 h only because
+the e2e harness runs on the operator's Claude subscription, whose OAuth allow-list grants
+1 h; on an API key — the hosted path, and P3b's own first-party control — writes are
+5-minute unless `ENABLE_PROMPT_CACHING_1H=1` is set, and asking for 1 h would have cost
+this corpus $133 more in write premium than the $20 it saves in reads. So the number
+the 4.6× rests on is not the TTL. Two cautions on the measurement: gaps are counted per
+thread (a delegation window during which the main thread makes no call is a main-thread
+gap — 71 of the 102 — and a thread-agnostic count would be 50), and the corpus's gap
+structure was observed under a 1 h TTL, which is exactly what makes its long gaps
+priceable as lost reads. What the corpus cannot size is a patron's think time between
+turns — a turn arriving more than five minutes after the last model call re-writes the
+whole context at the write rate, about $0.11 per 30k tokens, growing with context
+length. The second measurement is still
 open: the shared cap of four cache points, inserted system → messages → tools, where
 with 49 tools the tool-definition point is the one dropped — the CLI sends three (two
 on the system prompt, one on the last user message; P3b), so measure the fourth, do
