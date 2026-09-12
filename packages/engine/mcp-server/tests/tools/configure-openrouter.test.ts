@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const saveConfigMock = vi.hoisted(() => vi.fn());
@@ -26,31 +27,33 @@ afterEach(() => {
 
 describe("configureOpenRouterTool", () => {
   it("saves a model via saveConfig", async () => {
-    const result = await configureOpenRouterTool({ model: "qwen/other-vl" });
+    const result = await configureOpenRouterTool({ model: "qwen/other-vl" }, LOCAL);
     expect(saveConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({ openRouterModel: "qwen/other-vl" })
+      expect.objectContaining({ openRouterModel: "qwen/other-vl" }),
+      LOCAL
     );
     expect(result.saved).toBe(true);
     expect(result.model).toBe("qwen/other-vl");
   });
 
   it("trims surrounding whitespace on model", async () => {
-    await configureOpenRouterTool({ model: "  qwen/trimmed  " });
+    await configureOpenRouterTool({ model: "  qwen/trimmed  " }, LOCAL);
     expect(saveConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({ openRouterModel: "qwen/trimmed" })
+      expect.objectContaining({ openRouterModel: "qwen/trimmed" }),
+      LOCAL
     );
   });
 
   it("writes nothing when there is no model to save", async () => {
-    // saveConfig() rewrites the whole file from loadConfig(), which yields {}
+    // saveConfig(patch, LOCAL) rewrites the whole file from loadConfig(LOCAL), which yields {}
     // for a config.json it cannot parse — so an empty patch would clobber it.
-    const result = await configureOpenRouterTool({});
+    const result = await configureOpenRouterTool({}, LOCAL);
     expect(saveConfigMock).not.toHaveBeenCalled();
     expect(result).toEqual({ saved: false, model: null });
   });
 
   it("writes nothing when the model is only whitespace", async () => {
-    const result = await configureOpenRouterTool({ model: "   " });
+    const result = await configureOpenRouterTool({ model: "   " }, LOCAL);
     expect(saveConfigMock).not.toHaveBeenCalled();
     expect(result.saved).toBe(false);
   });

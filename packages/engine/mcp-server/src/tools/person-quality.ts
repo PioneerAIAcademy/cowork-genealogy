@@ -5,6 +5,7 @@
 // to the LLM as interpolated English sentences (plus a compact score summary),
 // keeping the LLM's context lean. Requires authentication.
 
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -23,7 +24,7 @@ export type {
   PersonQualityResult,
 } from "../types/person-quality.js";
 
-// Beta host, per the review decision. NEEDS VALIDATION: getValidToken() issues
+// Beta host, per the review decision. NEEDS VALIDATION: getValidToken(principal) issues
 // production familysearch.org tokens; confirm sg30p0 accepts them (see spec).
 const HOST = "https://sg30p0.familysearch.org";
 
@@ -144,6 +145,7 @@ export const personQualityToolSchema = {
 
 export async function personQualityTool(
   input: PersonQualityInput,
+  principal: Principal,
 ): Promise<PersonQualityResult> {
   const personId =
     typeof input.personId === "string" ? input.personId.trim() : "";
@@ -151,7 +153,7 @@ export async function personQualityTool(
     throw new Error("personId is required.");
   }
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const url = `${HOST}/service/tree/tree-data/quality/person/${encodeURIComponent(
     personId,
   )}/scores`;

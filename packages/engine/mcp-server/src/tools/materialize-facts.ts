@@ -36,7 +36,6 @@
 // atomicWriteJson) mirrors tree_edit's executeTreeOps; it is a
 // SINGLE-FILE tree write (atomicWriteJson, never atomicWriteBoth).
 
-import { join } from "path";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -794,7 +793,6 @@ export async function materializeFacts(
     // place): block only on errors THIS call introduces, not pre-existing drift
     // in a section it never touched (#1572).
     const beforeTree = structuredClone(tree);
-    const treePath = join(projectPath, "tree.gedcomx.json");
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
@@ -818,7 +816,7 @@ export async function materializeFacts(
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await atomicWriteJson(treePath, tree);
+      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
       return {
         ok: true,
         results,
@@ -864,7 +862,7 @@ export async function materializeFacts(
     if (!validation.valid) {
       return { ok: false, errors: formatIssues(validation.errors) };
     }
-    await atomicWriteJson(treePath, tree);
+    await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
 
     return {
       ok: true,

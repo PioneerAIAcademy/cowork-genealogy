@@ -39,6 +39,7 @@
  * less than a run over live-captured records. Adjust the list before the live run
  * for wider real coverage of the three record families.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { recordReadTool } from "../src/tools/record-read.js";
 import { collectFacts } from "../src/utils/gedcomx-convert.js";
 import {
@@ -102,7 +103,7 @@ async function main(): Promise<void> {
   // reconstruction of it.
   const reads: ArkRead[] = await mapWithConcurrency(ARKS, CONCURRENCY, async (ark) => {
     try {
-      const result = await recordReadTool({ recordId: ark.id });
+      const result = await recordReadTool({ recordId: ark.id }, LOCAL);
       return { ark, facts: collectFacts(result) };
     } catch (e) {
       return { ark, facts: [], error: (e as Error).message };
