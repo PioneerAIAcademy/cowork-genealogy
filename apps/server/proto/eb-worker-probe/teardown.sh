@@ -77,6 +77,9 @@ wait_gone() {
 
 ACCOUNT_ID=$(capture '<account-id>' "${AWS[@]}" sts get-caller-identity --query Account)
 BUCKET="${BUCKET:-${NAME}-${ACCOUNT_ID}}"
+# This script empties and deletes whatever bucket it is pointed at, so a stray
+# BUCKET in the shell must not be able to name someone else's.
+[[ "$BUCKET" == "$NAME"* ]] || die "refusing to touch bucket ${BUCKET}: it does not start with ${NAME}"
 
 # --- environment ------------------------------------------------------------------
 STATUS=$(capture Ready "${DESCRIBE_ENV[@]}" --query 'Environments[0].Status')

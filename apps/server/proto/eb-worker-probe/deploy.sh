@@ -107,6 +107,11 @@ trap 'rm -rf "$TMP"' EXIT
 # --- account, roles ---------------------------------------------------------------
 ACCOUNT_ID=$(capture '<account-id>' "${AWS[@]}" sts get-caller-identity --query Account)
 BUCKET="${BUCKET:-${NAME}-${ACCOUNT_ID}}"
+# put-bucket-policy replaces the whole policy document, and it runs whether or
+# not this script created the bucket — so a stray BUCKET in the shell must not
+# be able to point it at someone else's. The override stays usable for a
+# differently-suffixed bucket of this probe's own.
+[[ "$BUCKET" == "$NAME"* ]] || die "refusing to touch bucket ${BUCKET}: it does not start with ${NAME}"
 
 INSTANCE_ROLE_ARN=$(capture "arn:aws:iam::<account-id>:role/${INSTANCE_PROFILE}" "${AWS[@]}" iam get-instance-profile \
   --instance-profile-name "$INSTANCE_PROFILE" --query 'InstanceProfile.Roles[0].Arn') \
