@@ -14,6 +14,9 @@ import {
   saveSourceImage,
   gcUnreferencedImages,
   imageFilenameFor,
+  recordImageReadCap,
+  wasSourceImageTruncated,
+  __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
 
 const dirs: string[] = [];
@@ -96,5 +99,40 @@ describe("gcUnreferencedImages", () => {
   it("is a no-op when there is no images/ dir", async () => {
     const dir = await tmp();
     await gcUnreferencedImages(dir, new Set()); // must not throw
+  });
+});
+
+describe("truncated-source-image cache (#2457)", () => {
+  afterEach(() => __clearTruncatedSourceImagesForTests());
+
+  it("records a capped read so a source citing that image_filename reads truncated", () => {
+    recordImageReadCap("/proj", "images/004884748_02613.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "images/004884748_02613.jpg")).toBe(true);
+  });
+
+  it("reports false for an image never recorded", () => {
+    expect(wasSourceImageTruncated("/proj", "images/never-seen.jpg")).toBe(false);
+  });
+
+  it("a later clean read retracts a stale cap (add-or-remove, not add-only)", () => {
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
+    recordImageReadCap("/proj", "images/x.jpg", false);
+    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(false);
+  });
+
+  it("is keyed by project — one project's cap does not leak into another", () => {
+    recordImageReadCap("/proj-a", "images/shared.jpg", true);
+    expect(wasSourceImageTruncated("/proj-a", "images/shared.jpg")).toBe(true);
+    expect(wasSourceImageTruncated("/proj-b", "images/shared.jpg")).toBe(false);
+  });
+
+  it("an ARK read is joinable too — its imageRef is what a source cites", () => {
+    // saveSourceImage sanitizes an ARK label to this ref; the cache keys on the
+    // same string, so an ARK read is NOT a join blind spot (only a no-persist
+    // read is). Mirrors imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL").
+    const ref = `images/${imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL")}`;
+    recordImageReadCap("/proj", ref, true);
+    expect(wasSourceImageTruncated("/proj", ref)).toBe(true);
   });
 });

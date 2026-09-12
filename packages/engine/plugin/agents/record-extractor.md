@@ -165,20 +165,13 @@ classification.
 `id` and `gedcomx_source_description_id` (the tool stamps the `S` link
 even on reuse — never set either yourself). **Optional:** `url`, `url_archived`,
 `notes` (provenance/quality), `transcription` (verbatim image text),
-`transcription_truncated` (see below), `log_entry_id`. Do not invent fields — `record_id` is an assertion field,
+`log_entry_id`. Do not invent fields — `record_id` is an assertion field,
 not a source field; `record_type` is not a field at all.
 `when_accessed` / `access_date` are the **real** date the record was
 accessed (today for a record just fetched) — never a placeholder, a raw
 timestamp, or the record's publication date. `access_date` is ISO
 `YYYY-MM-DD` (e.g. `2026-07-13`) — never prose dates. Set `log_entry_id`
 to the delegation's `logId` — the source→search provenance link.
-
-**A capped transcription is partial — mark it.** When the `image_transcribe`
-result you were handed carries `truncated: true`, set
-`transcription_truncated: true` on the source. The text below the cut was
-never read: persist what you got, but never present it as the whole record,
-and surface the cap in your return summary as an open lead (re-read at a
-larger cap). Omit the field otherwise — absence means a whole read.
 
 **"Original not examined" — decide it now, not later.** If what you
 examined is a derivative (index entry, abstract, transcript, translation)

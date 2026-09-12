@@ -981,6 +981,29 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
                    `${sp}/citation_detail`, report, NULLABLE_FIELDS);
       checkAllowedKeys(cd, RESEARCH_SHAPES.citation_detail, "citation_detail objects", `${sp}/citation_detail`, report);
     }
+
+    // transcription_truncated marks the transcription it sits beside as partial,
+    // so it is only meaningful with real text to qualify. `true` on an empty or
+    // null transcription is exactly the state a model produces when it ASSERTS
+    // the flag rather than the tool deriving it (issue #2457) — reject it. The
+    // tool never emits that pair (a zero-content capped read throws instead of
+    // returning `truncated: true`, image-transcribe.ts), so the persisted writer
+    // must not accept it either.
+    if ("transcription_truncated" in src) {
+      const flag = src.transcription_truncated;
+      if (typeof flag !== "boolean") {
+        addError(report, sp, "transcription_truncated must be a boolean");
+      } else if (flag === true) {
+        const t = src.transcription;
+        if (typeof t !== "string" || t.trim() === "") {
+          addError(
+            report,
+            sp,
+            "transcription_truncated: true requires a non-empty transcription — a capped read still has the text it did read, so a truncation marker beside empty or null transcription is not a valid state",
+          );
+        }
+      }
+    }
   }
 
   // Assertions
