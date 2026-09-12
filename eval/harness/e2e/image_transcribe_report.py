@@ -89,13 +89,21 @@ TOOL_SUFFIX = "image_transcribe"
 # Buckets, fixed rather than re-derived per run, and mapped to distinct owners:
 # `unreachable`/`timeout` are the service or the machine's reach to it (the
 # subject of #1594); `unrecognized_ark` and `upstream_error` are the call being
-# wrong or the upstream refusing it, NOT reachability; `unclassified` is the
-# safety net.
+# wrong or the upstream refusing it, NOT reachability; `truncated` reached the
+# service and returned content that stopped at the output-token cap; `unclassified`
+# is the safety net.
 SUCCESS = "success"
 UNREACHABLE = "unreachable"
 TIMEOUT = "timeout"
 UNRECOGNIZED_ARK = "unrecognized_ark"
 UPSTREAM_ERROR = "upstream_error"
+# A capped read WITH content (#2457 item 3). `image_transcribe` returns the
+# partial transcription verbatim beside `truncated: true` — non-empty, no
+# `"error":` key — so it read as a clean `success` and the truncation rate was
+# unmeasurable. A zero-content cap throws instead (image-transcribe.ts:341-354)
+# and lands in `upstream_error`, not here: this bucket is the partial read the
+# consumer layer cannot tell from a whole one, which is the whole of #2457.
+TRUNCATED = "truncated"
 UNCLASSIFIED = "unclassified"
 
 #: The two buckets #1594 counts as "lost to reachability, not to content".
@@ -156,6 +164,14 @@ def classify(response_summary: str) -> str:
     # the direction unescaping was added for; key-adjacency avoids both.
     if '"error":' in s:
         return UPSTREAM_ERROR
+    # The envelope key (`"truncated":`), not a bare `truncated` substring — the
+    # same key-adjacency guard as `"error":` above. `image_transcribe` emits the
+    # key only when the value is true (`...(truncated ? { truncated: true } : {})`,
+    # image-transcribe.ts:394), so its presence IS the signal, while a genuine
+    # transcription mentioning the word ("the entry was truncated at the fold")
+    # carries no colon-adjacent key and stays `success`.
+    if '"truncated":' in s:
+        return TRUNCATED
     return SUCCESS
 
 
@@ -180,6 +196,10 @@ class ScanResult(NamedTuple):
     @property
     def reachability_failures(self) -> int:
         return sum(1 for c in self.calls if c.bucket in REACHABILITY_BUCKETS)
+
+    @property
+    def truncated_reads(self) -> int:
+        return sum(1 for c in self.calls if c.bucket == TRUNCATED)
 
 
 def scan(
@@ -264,7 +284,10 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
     lead and nothing more, and saying that plainly is the point.
     """
     # Three counters per cell: [reachability failures, total calls, REACHED].
-    # "Reached" is a demonstrated `success`, not merely the absence of a failure.
+    # "Reached" is a demonstrated `success` or a `truncated` read — both came
+    # back with content — not merely the absence of a failure. (A truncated read
+    # is the opposite of `unrecognized_ark`: the call went out and the service
+    # answered, just past the output-token cap, so it is reachability evidence.)
     # An operator whose calls were all `unrecognized_ark` has no reachability
     # failure and yet never got as far as OpenRouter — that error is raised
     # before the call is made — so counting them as a concurrent success would
@@ -278,7 +301,7 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
         cell[1] += 1
         if c.bucket in REACHABILITY_BUCKETS:
             cell[0] += 1
-        elif c.bucket == SUCCESS:
+        elif c.bucket in (SUCCESS, TRUNCATED):
             cell[2] += 1
 
     rows: list[str] = []
@@ -374,6 +397,14 @@ def format_report(result: ScanResult) -> str:
     out.append(
         f"  lost to reachability:        {fails} of {m} measurable "
         f"({round(100 * fails / m, 1)}%)"
+    )
+    # The #2457 rate: partial reads that reached the service but stopped at the
+    # cap. Distinct from a reachability failure — the page was read, just not to
+    # the end — so it gets its own line rather than folding into the loss above.
+    trunc = result.truncated_reads
+    out.append(
+        f"  truncated (capped mid-read): {trunc} of {m} measurable "
+        f"({round(100 * trunc / m, 1)}%)"
     )
     if result.stripped_calls:
         lo = round(100 * fails / total_seen, 1)
