@@ -253,12 +253,14 @@ person from a record" are the **same** operation. Because facts are the
 *input*, a person created **from a persona** this way **cannot** be fact-less —
 which is the structural cure for symptoms (1) and (2).
 
-The named-party arm (§4.6) is the one deliberate exception, and it is not the
-symptom (1) disease returning. A name-only shell is a defect when the record
-*had* facts for that person and they were dropped; the party §4.6 mints is
-named inside someone else's assertion and the record states nothing else about
-her, so a name plus its resolved ref is the whole of what the evidence
-supports. §4.6 backs that with a check rather than an assumption: it refuses
+The named-party arm (§4.6) does not reopen symptom (1) either, and it takes two
+routes to avoid it. A name-only shell is a defect when the record *had* facts
+for that person and they were dropped. Where the record names her inside someone
+else's assertion and states nothing else about her, a name plus its resolved ref
+is the whole of what the evidence supports, so that is what is written. Where the
+record DOES give her a persona but never names it, §4.6 mints her name and then
+writes that persona's facts through the persona arm in the same op, so her facts
+are not dropped by the one route that will take her. §4.6 backs that with a check rather than an assumption: it refuses
 when the named role has a persona the persona arm could mint instead, which is
 the case in which facts exist and would be dropped. The check is a steer and
 not a proof, for the reasons given there. The event that *does* concern her — the marriage — stays on the
@@ -376,15 +378,29 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   refusing them while accepting `Marriage` was not a defensible line. Widen it
   the same way: measure first, then decide.
 - **`relatedRole` should name a party that has no persona on that record**, and
-  the tool refuses when it can see that it does *and* that the persona arm would
-  actually write something: it scans the record's assertions for one carrying
-  `record_role == relatedRole`, and refuses only when that persona has an
-  assertion this tool would materialize (a name, a gender, or any fact that is
-  neither skipped nor negative evidence). **Having a `record_role` does not imply
-  having facts, or being mintable at all**: in a mirrored marriage register both
-  parties have a persona and neither carries anything but the `marriage`
-  assertion, so an unconditional refusal left the bride writable by *neither*
-  arm, which is worse than the name-only shell it was trying to prevent.
+  the tool refuses when it can see that it does *and* that the persona arm could
+  actually MINT her: it scans the record's assertions for one carrying
+  `record_role == relatedRole`, and refuses only when that persona carries a
+  non-negative **`name`** assertion. The condition is the name specifically, not
+  any materializable assertion, because the persona arm refuses to mint a person
+  it cannot name: steering a gender-only or birth-only persona there errors, and
+  this arm refusing would hand the caller back to the call that just failed.
+  **Having a `record_role` does not imply having facts, or being mintable at
+  all**: in a mirrored marriage register both parties have a persona and neither
+  carries anything but the `marriage` assertion, so an unconditional refusal left
+  the bride writable by *neither* arm, which is worse than the name-only shell it
+  was trying to prevent.
+
+  **What the narrowing owes, and pays here.** Letting a nameless persona through
+  means this arm now receives parties whose records DO state facts about them, so
+  minting a bare name would drop exactly what symptom (1) is about. It does not:
+  when the role has such a persona, the arm mints her name and then applies the
+  persona arm to that `{ recordId, recordRole }` with the id it just allocated,
+  merging the counts. The persona arm enriches rather than mints at that point,
+  and by construction there is no positive `name` assertion for it to
+  double-write. A ref it cannot resolve throws and the whole op is abandoned
+  before anything persists, which is §4.2 step 2 applied to the second pass as
+  well as the first.
   Measured over `eval/**/research.json`, 85 of 301 personas carry no usable
   `name` assertion, and 28 carry nothing but `relationship`/`marriage`.
 
@@ -533,7 +549,7 @@ fact the record does not support.
 
 | Tool | Role | Status |
 |---|---|---|
-| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref on every fact/name it authors; never sets `primary`. Its named-party arm (§4.6) additionally mints the party a relationship/marriage assertion names but gives no persona — a sourced **name** only, under the same mandatory ref. | **NEW — the record→tree workhorse** |
+| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref on every fact/name it authors; never sets `primary`. Its named-party arm (§4.6) additionally mints the party a relationship/marriage assertion names but cannot name from a persona — a sourced **name**, plus that persona's facts where the record gives her one, under the same mandatory ref. | **NEW — the record→tree workhorse** |
 | **`merge_tree_persons`** | Collapse two duplicate **tree nodes**; union their facts, carrying each fact's existing refs through untouched. Legacy ref-less facts are **tolerated** — the Mode-2 fold neither requires nor fabricates a ref (Cluster B / §6). | **Keep** (needs a trigger — e.g. cruz's unmerged grandparents — but the tool is right) |
 | **`merge_record_into_tree`** | Fold a candidate GedcomX *document*. | **Retire** (§9) — 0 live calls; its hand-assembled-candidate input is the re-serialize anti-pattern that dropped cruz's refs; its niche does not occur in the assertion pipeline |
 | `tree_edit` / `tree_correct` | Structure (`add_person`, `add_relationship`) / corrections + `primary`. `add_household_children` **retires** (§9) — superseded by `materialize_facts` create-or-enrich (stubs, now with facts) + `add_relationship` (edges). | Keep; refs mandatory on **newly-authored** facts/names/edges only (add-ops); `tree_correct` may not null an existing ref (§6, §8) |
