@@ -2672,6 +2672,13 @@ export async function researchAppend(
       if (prep.verdictFile) {
         await atomicWriteJson(projectPath, prep.verdictFile.relPath, prep.verdictFile.body);
       }
+      // Debug hold for the P1 resume probe (docs/plan/search-agent-prototype.md, P1):
+      // keep a delegated extraction_append open before its commit so a harness can
+      // kill the worker mid-write. Inert unless the env var is set.
+      const holdMs = Number(process.env.GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS ?? 0);
+      if (holdMs > 0 && options.toolName === "extraction_append") {
+        await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
+      }
       if (prep.treeMutated) {
         await atomicWriteBoth(projectPath, [
           { ref: "tree.gedcomx.json", data: tree }, // tree first —
@@ -2684,6 +2691,12 @@ export async function researchAppend(
         filesWritten = ["research.json"];
       }
       if (prep.verdictFile) filesWritten = [...filesWritten, prep.verdictFile.relPath];
+      // Second debug hold, after the commit and before the result returns: a kill
+      // here leaves a committed write whose tool_result never reached the transcript.
+      const holdAfterMs = Number(process.env.GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS ?? 0);
+      if (holdAfterMs > 0 && options.toolName === "extraction_append") {
+        await new Promise<void>((resolve) => setTimeout(resolve, holdAfterMs));
+      }
       // GC unreferenced source images (best-effort, TTL-gated) — design B, §8.5:
       // remove images/*.jpg no source cites and older than the TTL, so a
       // just-transcribed-but-unretained scan ages out instead of lingering.
