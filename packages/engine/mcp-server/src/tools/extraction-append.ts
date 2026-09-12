@@ -11,8 +11,9 @@
 // A lane expressed as prose loses to a caller that prompts against it, and a
 // lane expressed as a tool PARAMETER is forgeable by the caller. A lane
 // expressed as tool identity is not: the agent's `tools:` frontmatter simply
-// omits the broad writer, so there is no call it can emit. See
-// docs/plan/person-evidence-append-tool-plan.md §D1-D2.
+// omits the broad writer, so there is no call it can emit. The durable record
+// of that reasoning is ADR-0006, "Restrict capability by tool identity, not by
+// prompt or parameter", whose `Applies to:` names this file.
 //
 // The restriction is passed as a second function argument to `researchAppend`,
 // NOT as a field on the tool input — see `ResearchAppendOptions` for why that
