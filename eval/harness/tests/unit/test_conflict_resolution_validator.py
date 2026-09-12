@@ -1297,3 +1297,796 @@ def test_v3_does_not_crash_on_a_non_list_competing_assertion_ids(competing):
         check_identity_first(before, after)
     except AssertionError:
         pass
+
+
+def test_v2_population_is_prose_authored_not_v6s_resolution_set():
+    """Pins a distinction V2's own docstring calls load-bearing but nothing
+    tested — found while mutation-testing V4 (a mis-targeted anchor hit V2's
+    copy of the same line and the whole V2 suite stayed green).
+
+    `_conflicts_written` is "every after-state conflict whose prose this run
+    authored"; V6's `_conflicts_with_changed_analysis` is "entries this run
+    resolved", which counts a `status`-only change. Under V6's population a run
+    that merely flipped `status` on a conflict carrying a pre-existing 400-word
+    rationale would be reported for prose it never wrote; under V2's it is not.
+
+    Swapping the two left 11 of 11 V2 tests green before this existed.
+    """
+    long_prose = _words(400)
+    base = {"id": "c_001", "conflict_type": "fact",
+            "competing_assertion_ids": ["a_001", "a_002"],
+            "independence_analysis": None, "preferred_assertion_id": None,
+            "weighing_analysis": None, "resolution_rationale": long_prose}
+    before, after = _states([dict(base, status="unresolved")],
+                            [dict(base, status="resolved")])
+    # The run wrote no prose, so the cap has nothing to report.
+    check_word_caps(before, after)
+
+    # Paired: authoring the same prose this turn IS reported, so the clean case
+    # above cannot be passing because the check is inert.
+    b2, a2 = _states([dict(base, status="unresolved", resolution_rationale=None)],
+                     [dict(base, status="resolved")])
+    with pytest.raises(AssertionError):
+        check_word_caps(b2, a2)
+
+
+# --- V4: no certainty upgrade on a hedged informant --------------------------
+#
+# ONE of the spec's three arms ships. The validator's comment carries the
+# measurements; the parametrized regression below carries the three real corpus
+# sentences that make the firsthand arm unshippable, so nobody re-adds it
+# without seeing them.
+#
+# METHOD NOTE. Deleting the V4 block only reds the tests that assert a FINDING —
+# a clean-case test passes when the feature is absent, which is how three
+# vacuous tests shipped earlier in this issue. So every clean case below is
+# PAIRED with a near-miss that must fire, and the pair is what pins it.
+
+check_certainty_upgrade = getattr(
+    _VALIDATOR, "report_informant_certainty_upgrade", None
+)
+
+_HEDGED_INFORMANT = "Unknown household member (likely Thomas Flynn or wife)"
+# The real sentence from ut_008, v1_2026-08-19_15-24-31.
+_UPGRADE_SENTENCE = (
+    "First, informant proximity: the household informant for the census "
+    "birthplace — almost certainly Thomas Flynn or his wife, Patrick's own "
+    "parents — had direct personal knowledge of where their child was born."
+)
+
+
+def _v4_states(informant, *, before_prose=None, after_prose=None,
+               field="weighing_analysis", quality="indeterminate"):
+    a = {"id": "a_002", "source_id": "src_001", "informant": informant,
+         "information_quality": quality}
+    base = {"id": "c_001", "status": "resolved", "conflict_type": "fact",
+            "competing_assertion_ids": ["a_002"], "preferred_assertion_id": "a_002",
+            "independence_analysis": None, "weighing_analysis": None,
+            "resolution_rationale": None}
+    b = dict(base); b[field] = before_prose
+    af = dict(base); af[field] = after_prose
+    return ({"research_json": {"conflicts": [b], "assertions": [a]}},
+            {"research_json": {"conflicts": [af], "assertions": [a]}})
+
+
+def _fires(before, after, text=""):
+    with pytest.raises(AssertionError) as e:
+        check_certainty_upgrade(before, after, text)
+    return str(e.value)
+
+
+def test_v4_fires_on_a_certainty_upgrade_in_a_persisted_field():
+    msg = _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+    assert "Thomas Flynn" in msg
+    assert "c_001" in msg
+    # The record must be quoted against the prose, or a reader cannot judge it.
+    assert _HEDGED_INFORMANT in msg, msg
+
+
+def test_v4_fires_on_a_certainty_upgrade_in_the_REPLY_TEXT():
+    """The spec's own worked example lives here, not in a persisted field.
+
+    `"almost certainly Thomas Flynn, Patrick's father … with firsthand
+    knowledge"` occurs exactly once in the corpus — in
+    `v1_2026-08-19_15-24-31` / `ut_conflict_resolution_008` /
+    `output.text_response` — and in NO `weighing_analysis` or
+    `resolution_rationale`. A check reading only the persisted fields fires on
+    none of it; 6 of the 15 corpus observations are in this field.
+    """
+    reply = ("**Decisive finding:** The census informant — almost certainly "
+             "Thomas Flynn, Patrick's father — reported Ireland within 5–15 "
+             "years of the birth, with firsthand knowledge.")
+    before, after = _v4_states(_HEDGED_INFORMANT, after_prose="Some weighing.")
+    msg = _fires(before, after, reply)
+    assert "the reply text" in msg, msg
+    assert "Thomas Flynn" in msg
+
+
+def test_v4_clean_when_the_informant_is_named_WITHOUT_a_hedge():
+    """Paired near-miss: the same prose fires once the record hedges the name.
+    Without the pair, this passes with the feature deleted."""
+    check_certainty_upgrade(
+        *_v4_states("Thomas Flynn (father)", after_prose=_UPGRADE_SENTENCE,
+                    quality="primary"), "")
+    # The hedge has to sit in the NAME's own segment for the pair to fire — an
+    # earlier version of this line put it in a name-free segment, so the
+    # near-miss stayed silent and proved nothing.
+    _fires(*_v4_states("Unknown (likely Thomas Flynn, the father)",
+                       after_prose=_UPGRADE_SENTENCE, quality="primary"))
+
+
+def test_v4_clean_when_the_hedge_sits_in_a_DIFFERENT_segment():
+    """`"James Brown (son-in-law); the census informant is unknown"` names Brown
+    flatly — the hedge is about someone else. A naive contains-hedge-AND-name
+    test reads it as a hedged Brown."""
+    flat = "James Brown (son-in-law); the census informant is unknown"
+    prose = "The informant was almost certainly James Brown, the son-in-law."
+    check_certainty_upgrade(*_v4_states(flat, after_prose=prose, quality="secondary"), "")
+    # Paired: move the hedge into Brown's own segment and it must fire.
+    hedged = "Unknown informant (possibly James Brown, son-in-law)"
+    assert "James Brown" in _fires(
+        *_v4_states(hedged, after_prose=prose, quality="secondary"))
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        # Real corpus sentences. All three are CORRECT reasoning about the
+        # losing informant, and all three match the firsthand phrase list the
+        # spec proposes — which is why that arm is not shipped (>=63% of its
+        # matches are these).
+        "James Brown was a son-in-law who knew Patrick only as a long-established "
+        "Pennsylvania resident; he had no firsthand access to birth facts.",
+        "James Brown could not have had any firsthand knowledge of a birth that "
+        "occurred decades before he joined the family as a son-in-law.",
+        "This is precisely the epistemic position of a secondary informant: "
+        "reporting the family's American context rather than a witnessed fact.",
+    ],
+)
+def test_v4_is_clean_on_the_firsthand_forms_that_make_that_arm_unshippable(sentence):
+    """The regression that keeps arm 1 out.
+
+    Paired below with a certainty upgrade in the same text, so this cannot pass
+    merely because the feature is absent.
+    """
+    check_certainty_upgrade(*_v4_states(_HEDGED_INFORMANT, after_prose=sentence), "")
+    _fires(*_v4_states(_HEDGED_INFORMANT,
+                       after_prose=sentence + " " + _UPGRADE_SENTENCE))
+
+
+def test_v4_clean_when_certainty_names_a_DIFFERENT_person():
+    prose = "The informant was almost certainly Bridget Murphy, not a Flynn."
+    check_certainty_upgrade(*_v4_states(_HEDGED_INFORMANT, after_prose=prose), "")
+    _fires(*_v4_states(_HEDGED_INFORMANT,
+                       after_prose=prose + " " + _UPGRADE_SENTENCE))
+
+
+def test_v4_clean_on_a_capitalised_non_name():
+    """`'WPA Graves Registration worker (identity unknown)'` yields the bigram
+    `Graves Registration`, which is a record series, not a person."""
+    # The hedge must be in the NAME's own segment, or segment-scoping rejects
+    # the string before the stop-list is consulted and this proves nothing —
+    # which is how an earlier version of this test left the stop-list unpinned
+    # (deleting it kept the suite green).
+    junk = "Unknown (likely a WPA Graves Registration worker)"
+    prose = "The record was almost certainly Graves Registration material."
+    check_certainty_upgrade(*_v4_states(junk, after_prose=prose), "")
+    # Paired: a real hedged person in the same construction must fire.
+    _fires(*_v4_states("Unknown worker (likely Thomas Flynn)",
+                       after_prose="It was almost certainly Thomas Flynn."))
+
+
+def test_v4_clean_when_the_run_wrote_no_conflict_prose():
+    """Population is `_conflicts_written`. An untouched conflict is not this
+    run's doing, however bad its existing prose."""
+    before, after = _v4_states(_HEDGED_INFORMANT,
+                               before_prose=_UPGRADE_SENTENCE,
+                               after_prose=_UPGRADE_SENTENCE)
+    check_certainty_upgrade(before, after, "")
+    # Paired: authoring the same prose this turn fires.
+    _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+
+
+def test_v4_reports_one_observation_per_upgrade_not_two():
+    """One span, one observation.
+
+    This does NOT pin the alternation order — reversing it leaves the suite
+    green, because `finditer` matches `almost certainly` at the same position
+    either way. The comment in the validator that claimed otherwise was wrong
+    and is corrected. What this pins is the count itself, which a duplicated
+    scan of the same field would break.
+    """
+    msg = _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+    assert msg.count("attaches a certainty marker to 'Thomas Flynn'") == 1, msg
+
+
+def test_v4_fires_on_a_bare_certainty_marker_too():
+    """Polarity for the ordering test: `certainly` on its own is in scope."""
+    _fires(*_v4_states(_HEDGED_INFORMANT,
+                       after_prose="The informant was certainly Thomas Flynn."))
+
+
+def test_v4_the_extracted_name_may_be_the_research_SUBJECT():
+    """Documented behaviour, not a bug, and pinned so it is a known cost.
+
+    `mid-research-flynn-merge-pending` carries
+    `'Unknown — most likely Patrick Flynn as head of household, possibly his
+    wife'`, so the hedged name is the project's own subject. Strict adjacency
+    keeps this narrow — only a certainty marker DIRECTLY on the name fires — but
+    a resolution asserting "almost certainly Patrick Flynn" is reported.
+    """
+    inf = "Unknown — most likely Patrick Flynn as head of household, possibly his wife"
+    _fires(*_v4_states(inf, after_prose="The informant was almost certainly Patrick Flynn."))
+    # And ordinary prose about the subject is NOT reported.
+    check_certainty_upgrade(
+        *_v4_states(inf, after_prose="Patrick Flynn was born in Ireland in 1845."), "")
+
+
+def test_v4_a_single_word_hedged_name_is_a_known_FALSE_NEGATIVE():
+    """Recorded as a limitation rather than left to be discovered.
+
+    `'Unknown informant (likely Bridget herself, as head of household)'` yields
+    no bigram, so `"almost certainly Bridget"` is missed. Admitting lone
+    capitalised tokens would match ordinary sentence-initial words.
+    """
+    inf = "Unknown informant (likely Bridget herself, as head of household)"
+    check_certainty_upgrade(
+        *_v4_states(inf, after_prose="It was almost certainly Bridget."), "")
+
+
+@pytest.mark.parametrize(
+    "informant",
+    [None, 42, {"name": "Thomas Flynn"}, [], ""],
+)
+def test_v4_a_malformed_informant_does_not_raise(informant):
+    """An UNEXPECTED exception in a `report_*` gates and suppresses the judge;
+    an assert does not. `informant` is schema-required and typed string, so
+    these are defensive against states the schema forbids."""
+    check_certainty_upgrade(*_v4_states(informant, after_prose=_UPGRADE_SENTENCE), "")
+
+
+def test_v4_skips_when_either_side_lacks_research_json():
+    """Each side independently, the way V6 and V2 do it.
+
+    Only the before=None path was covered. Worth being exact about the reason:
+    an `or` -> `and` mutation DOES red this, but by raising `AttributeError`
+    inside `_conflicts_by_id(None)` rather than by failing the skip assertion —
+    so the after=None branch was untested and the red proved something else.
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check_certainty_upgrade({"research_json": None}, {"research_json": {}}, "")
+    with pytest.raises(pytest.skip.Exception):
+        check_certainty_upgrade({"research_json": {}}, {"research_json": None}, "")
+
+
+def test_v4_is_tier_2_reporting_not_gating():
+    assert hasattr(_VALIDATOR, "report_informant_certainty_upgrade")
+    assert not hasattr(_VALIDATOR, "test_informant_certainty_upgrade"), (
+        "V4 was promoted to a gating test_*; this arm reads PROSE, and gating "
+        "suppresses the only grader that can judge whether the upgrade was "
+        "justified"
+    )
+
+
+# --- V4 over the committed corpus -------------------------------------------
+#
+# The house pattern, and the thing whose absence let three different hit counts
+# (9 / 10 / 11 / 15) circulate in the plan before any code existed. `_replay`
+# above cannot serve: it calls `validator(before, after)` with two arguments and
+# V4 needs `text_response`, which is where 6 of the 15 observations live.
+
+
+def _replay_v4():
+    """Every committed run through V4, carrying `text_response`."""
+    fired = []
+    for path in _CORPUS:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        for t in log.get("tests", []):
+            fixture = (_REPO / "eval/fixtures/scenarios"
+                       / str(t.get("scenario")) / "research.json")
+            if not fixture.exists():
+                continue
+            fx = json.loads(fixture.read_text(encoding="utf-8"))
+            base = fx.get("conflicts") or []
+            assertions = fx.get("assertions") or []
+            for r in t.get("runs", []):
+                cd = ((((r.get("output") or {}).get("file_changes") or {})
+                       .get("research.json") or {}).get("diff") or {}).get("conflicts") or {}
+                after_c = [dict(c) for c in base]
+                by_id = {c["id"]: c for c in after_c}
+                for e in cd.get("modified") or []:
+                    tgt = by_id.get(e.get("id"))
+                    if tgt is None:
+                        continue
+                    for f, ch in (e.get("changed_fields") or {}).items():
+                        tgt[f] = ch.get("after")
+                for a in cd.get("added") or []:
+                    if isinstance(a, dict) and a.get("id") not in by_id:
+                        after_c.append(dict(a))
+                try:
+                    check_certainty_upgrade(
+                        {"research_json": {"conflicts": base, "assertions": assertions}},
+                        {"research_json": {"conflicts": after_c, "assertions": assertions}},
+                        str((r.get("output") or {}).get("text_response") or ""),
+                    )
+                except AssertionError as e:
+                    fired.append((Path(path).name, t["test_id"], str(e)))
+                except pytest.skip.Exception:
+                    pass
+    return fired
+
+
+def _independently_v4_hits():
+    """Re-derive from raw JSON, sharing none of the validator's helpers.
+
+    Restates the hedge-scoping and the adjacency rule rather than importing
+    them, for the reason the V6/V2 second derivations give: importing would make
+    both sides share the thing most likely to be wrong.
+    """
+    import re as _re
+    hedge = _re.compile(r"\b(unknown|possibly|likely|most likely)\b", _re.I)
+    seg = _re.compile(r"[();]|(?<=\w)\s+[—–-]\s+")
+    name = _re.compile(r"\b[A-Z][a-z]+(?: [A-Z][a-z]+)+\b")
+    notperson = _re.compile(r"\b(WPA|Graves Registration|Registration Worker|"
+                            r"Death Certificate|Census|Household Member|"
+                            r"Unknown Informant|Bureau|Vital Records)\b", _re.I)
+    # `\b` at both ends, matching the validator. Without it the derivation
+    # agrees with the validator as it was BEFORE the anchoring landed, so the
+    # agreement test could not see the fix at all — measured: removing both
+    # anchors from the validator left this test green.
+    mark = r"\b(?:almost certainly|undoubtedly|definitely|certainly)"
+
+    out = set()
+    for path in _CORPUS:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        for t in log.get("tests", []):
+            fixture = (_REPO / "eval/fixtures/scenarios"
+                       / str(t.get("scenario")) / "research.json")
+            if not fixture.exists():
+                continue
+            fx = json.loads(fixture.read_text(encoding="utf-8"))
+            A = {a.get("id"): a for a in fx.get("assertions") or []}
+            start = {c.get("id"): c for c in fx.get("conflicts") or []}
+            for r in t.get("runs", []):
+                cd = ((((r.get("output") or {}).get("file_changes") or {})
+                       .get("research.json") or {}).get("diff") or {}).get("conflicts") or {}
+                after = {k: dict(v) for k, v in start.items()}
+                wrote = set()
+                for e in cd.get("modified") or []:
+                    cid = e.get("id")
+                    if cid is None:
+                        continue
+                    tgt = after.setdefault(cid, {"id": cid})
+                    fields = e.get("changed_fields") or {}
+                    for f, ch in fields.items():
+                        tgt[f] = ch.get("after")
+                    if {"weighing_analysis", "resolution_rationale"} & set(fields):
+                        wrote.add(cid)
+                # The `added` arm, which `_replay_v4` handles and this omitted.
+                # Dormant — 0 added conflict entries in the corpus — but a
+                # rotation introducing a created-and-upgraded conflict would
+                # make the agreement test fail as "validator only", pointing at
+                # the derivation rather than at a real drift. The V2 derivation
+                # had to fix this same gap once already.
+                for a in cd.get("added") or []:
+                    if not isinstance(a, dict) or a.get("id") is None:
+                        continue
+                    after[a["id"]] = dict(a)
+                    # EVERY created conflict, prose keys or not —
+                    # `_conflicts_written` counts a new entry via `prev is None`
+                    # regardless. Gating on the prose keys made the derivation
+                    # silent where the validator fires (measured: a created
+                    # conflict with no prose keys and the upgrade in the reply
+                    # text).
+                    wrote.add(a["id"])
+                for cid in wrote:
+                    c = after.get(cid) or {}
+                    names = set()
+                    for aid in c.get("competing_assertion_ids") or []:
+                        a = A.get(aid) or {}
+                        inf = a.get("informant")
+                        if not isinstance(inf, str):
+                            continue
+                        for s in seg.split(inf):
+                            if s and hedge.search(s):
+                                names |= {n for n in name.findall(s)
+                                          if not notperson.search(n)}
+                        # The `indeterminate` arm, which is NOT a no-op — it
+                        # supplies 4 of the 11 flagged runs on its own. See
+                        # test_v4_the_indeterminate_arm_is_load_bearing.
+                        if a.get("information_quality") == "indeterminate":
+                            names |= {n for n in name.findall(inf)
+                                      if not notperson.search(n)}
+                    if not names:
+                        continue
+                    texts = [str(c.get("weighing_analysis") or ""),
+                             str(c.get("resolution_rationale") or ""),
+                             str((r.get("output") or {}).get("text_response") or "")]
+                    for txt in texts:
+                        for nm in names:
+                            if _re.search(mark + r"[\s,:;—–-]*" + _re.escape(nm)
+                                          + r"\b", txt, _re.I):
+                                out.add((Path(path).name, t["test_id"]))
+    return out
+
+
+def test_v4_agrees_with_a_second_derivation_over_the_corpus():
+    fired = {(n, t) for n, t, _ in _replay_v4()}
+    independent = _independently_v4_hits()
+    assert independent, (
+        "the second derivation found nothing, so this test cannot detect a V4 "
+        "that fires on nothing — has the corpus rotated away flynn-identity-geographic?"
+    )
+    assert fired == independent, (
+        "V4 and an independent re-derivation disagree over the committed corpus."
+        f"\n  validator only: {sorted(fired - independent)}"
+        f"\n  derivation only: {sorted(independent - fired)}"
+    )
+
+
+def test_v4_catches_the_specs_own_worked_example_in_the_corpus():
+    """The spec quotes one violation by name. It is in `text_response`, so a
+    check reading only the persisted fields fires on none of it — which is what
+    the first version of this plan would have shipped."""
+    quote = "almost certainly Thomas Flynn, Patrick's father"
+    hits = [(n, t) for n, t, msg in _replay_v4() if quote in msg]
+    assert hits, (
+        "V4 no longer reports the spec's own worked example. It lives in "
+        "ut_conflict_resolution_008's text_response in v1_2026-08-19_15-24-31 — "
+        "if that log has rotated out, re-point this test rather than deleting it"
+    )
+    assert any(t.endswith("008") for _, t in hits), hits
+
+
+def test_v4_reports_the_reply_text_as_well_as_the_persisted_fields():
+    """40% of the corpus signal is in the reply text. A regression that dropped
+    that field would leave the two tests above green if the persisted hits
+    survived, so the field split is asserted directly."""
+    fields = {"weighing_analysis": 0, "resolution_rationale": 0, "the reply text": 0}
+    for _, _, msg in _replay_v4():
+        for f in fields:
+            fields[f] += msg.count(f" {f} attaches a certainty marker to '")
+    assert all(v > 0 for v in fields.values()), (
+        f"V4 reported nothing from at least one field: {fields}"
+    )
+
+
+def test_v4_the_indeterminate_arm_is_load_bearing_not_a_no_op():
+    """Corrects a claim I made in the plan and a reviewer measured differently.
+
+    Both of us called `information_quality: "indeterminate"` a no-op, on the
+    grounds that no assertion carries it alongside an *unhedged* name. That is
+    true of "unhedged" meaning "no hedge word anywhere in the string" — and
+    false under the segment-scoping this check actually uses.
+
+    `flynn-with-birthplace-conflict`'s a_002 is the case:
+
+        'Unknown — most likely a household member (such as Thomas Flynn or his
+         wife), but possibly a neighbor'
+
+    The name sits in a parenthetical whose own segment has NO hedge word, so
+    segment-scoped extraction yields nothing and only the `indeterminate` arm
+    reaches it. It supplies `ut_conflict_resolution_001` in all four committed
+    logs — 4 of the 11 flagged runs.
+
+    The corpus re-derivation test found this within a minute of being written,
+    which is the argument for having it.
+    """
+    inf = ("Unknown — most likely a household member (such as Thomas Flynn or "
+           "his wife), but possibly a neighbor")
+    prose = "The informant was almost certainly Thomas Flynn or his wife."
+
+    # Segment-scoped hedging alone cannot see it: the name's own segment
+    # ("such as Thomas Flynn or his wife") carries no hedge word.
+    assert _VALIDATOR._hedged_informant_names(inf) == set(), (
+        "segment-scoped extraction now reaches this string, so the "
+        "indeterminate arm may no longer be what catches it"
+    )
+
+    # With `indeterminate`, it fires.
+    _fires(*_v4_states(inf, after_prose=prose, quality="indeterminate"))
+
+    # Without it, it does not — which is the whole point of keeping the arm.
+    check_certainty_upgrade(
+        *_v4_states(inf, after_prose=prose, quality="secondary"), "")
+
+
+def test_v4_strict_adjacency_is_a_deliberate_FALSE_NEGATIVE_boundary():
+    """The cost of not reading the argument, pinned so it is a decision.
+
+    A real corpus sentence — "based on information almost certainly supplied by
+    Thomas Flynn or his wife" — puts two words between the marker and the name,
+    so strict adjacency does NOT report it. Widening to "up to 3 words" would
+    catch it and costs one extra hit corpus-wide; widening to same-sentence
+    costs two. Both were measured before the tightest was chosen.
+
+    Paired with the adjacent form, so this cannot pass on the feature being
+    absent.
+    """
+    gap = ("In 1850, the household enumerator recorded Patrick's birthplace as "
+           "Ireland based on information almost certainly supplied by Thomas "
+           "Flynn or his wife.")
+    check_certainty_upgrade(*_v4_states(_HEDGED_INFORMANT, after_prose=gap), "")
+    _fires(*_v4_states(_HEDGED_INFORMANT,
+                       after_prose="The informant was almost certainly Thomas Flynn."))
+
+
+def test_v4_ignores_prose_the_run_did_not_author():
+    """Population is `_conflicts_written`, not V6's resolution population.
+
+    V6's `_conflicts_with_changed_analysis` counts a `status`-only change as a
+    resolution. Under it, a run that merely flipped `status` on a conflict whose
+    prose ALREADY carried an upgrade would be reported for prose it never wrote.
+    Swapping the populations left the suite green until this test existed.
+    """
+    a = {"id": "a_002", "source_id": "src_001", "informant": _HEDGED_INFORMANT,
+         "information_quality": "indeterminate"}
+    base = {"id": "c_001", "conflict_type": "fact",
+            "competing_assertion_ids": ["a_002"], "preferred_assertion_id": "a_002",
+            "independence_analysis": None, "resolution_rationale": None,
+            "weighing_analysis": _UPGRADE_SENTENCE}
+    before = {"research_json": {"conflicts": [dict(base, status="unresolved")],
+                                "assertions": [a]}}
+    after = {"research_json": {"conflicts": [dict(base, status="resolved")],
+                               "assertions": [a]}}
+    check_certainty_upgrade(before, after, "")
+
+    # Paired: authoring the prose in the same turn IS reported.
+    _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+
+
+def test_v4_derivation_and_validator_agree_on_a_CREATED_conflict():
+    """Pins the `added` arm of the second derivation, which was dormant.
+
+    The corpus has 0 added conflict entries, so agreement over it cannot
+    exercise that path — a rotation introducing a created-and-upgraded conflict
+    would have failed the agreement test as "validator only", which points at
+    the derivation rather than at real drift. This drives both sides over a
+    synthetic run log carrying exactly that shape.
+    """
+    inf = "Unknown household member (likely Thomas Flynn or wife)"
+    log = {"tests": [{
+        "test_id": "ut_synth", "scenario": "flynn-identity-geographic",
+        "runs": [{"output": {"file_changes": {"research.json": {"diff": {"conflicts": {
+            "added": [{
+                "id": "c_new", "status": "resolved", "conflict_type": "fact",
+                "competing_assertion_ids": ["a_002"],
+                "preferred_assertion_id": "a_002",
+                "independence_analysis": None,
+                "weighing_analysis": "The informant was almost certainly Thomas Flynn.",
+                "resolution_rationale": None,
+            }]}}}}}}],
+    }]}
+
+    fx_path = _REPO / "eval/fixtures/scenarios/flynn-identity-geographic/research.json"
+    fx = json.loads(fx_path.read_text(encoding="utf-8"))
+    # Confirm the fixture still supplies the hedged informant this rests on.
+    A = {a["id"]: a for a in fx.get("assertions") or []}
+    assert inf == A["a_002"]["informant"], (
+        "flynn-identity-geographic's a_002 informant changed; re-point this test"
+    )
+
+    # Drive BOTH real functions over a synthetic corpus, rather than
+    # re-implementing either. An earlier version of this test recomputed the
+    # `wrote` set inline, so deleting the derivation's `added` arm left it green
+    # — shape-only, which is the failure this whole test exists to prevent.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / "v1_2026-01-01_00-00-00.json"
+        path.write_text(json.dumps(log), encoding="utf-8")
+        saved = globals()["_CORPUS"]
+        globals()["_CORPUS"] = [str(path)]
+        try:
+            fired = {(n, t) for n, t, _ in _replay_v4()}
+            independent = _independently_v4_hits()
+            messages = [m for _, _, m in _replay_v4()]
+        finally:
+            globals()["_CORPUS"] = saved
+
+    assert fired == {("v1_2026-01-01_00-00-00.json", "ut_synth")}, fired
+    assert independent == fired, (
+        "the second derivation missed a CREATED conflict the validator reported "
+        f"— its `added` arm is the gap.\n  validator: {sorted(fired)}"
+        f"\n  derivation: {sorted(independent)}"
+    )
+    assert any("c_new" in m for m in messages), messages
+
+
+def test_v4_observations_are_newline_separated():
+    """V2 joins with newlines; a run-on sentence is harder to triage, and a
+    genealogist reads this text directly."""
+    inf = "Unknown household member (likely Thomas Flynn or wife)"
+    a = {"id": "a_002", "source_id": "src_001", "informant": inf,
+         "information_quality": "indeterminate"}
+    base = {"id": "c_001", "status": "resolved", "conflict_type": "fact",
+            "competing_assertion_ids": ["a_002"], "preferred_assertion_id": "a_002",
+            "independence_analysis": None, "resolution_rationale": None,
+            "weighing_analysis": None}
+    # Two fields each carrying an upgrade -> two observations.
+    after_c = dict(base,
+                   weighing_analysis="It was almost certainly Thomas Flynn.",
+                   resolution_rationale="Again, almost certainly Thomas Flynn.")
+    with pytest.raises(AssertionError) as e:
+        check_certainty_upgrade(
+            {"research_json": {"conflicts": [base], "assertions": [a]}},
+            {"research_json": {"conflicts": [after_c], "assertions": [a]}},
+            "",
+        )
+    msg = str(e.value)
+    assert msg.count("attaches a certainty marker to 'Thomas Flynn'") == 2, msg
+    assert "\n" in msg, f"observations are not newline-separated:\n{msg}"
+
+
+def test_v4_the_certainty_pattern_is_anchored_at_both_ends():
+    """Neither end was anchored, and both shapes fired before `\\b` was added.
+
+    Latent — the whole corpus yields one distinct hedged name (`Thomas Flynn`)
+    and zero instances of either shape across 51 runs — so this is pinned by
+    argument rather than by a corpus hit.
+    """
+    inf = "Unknown household member (likely Mary Ann or wife)"
+
+    # A DIFFERENT woman: hedged "Mary Ann", prose "Mary Anne".
+    check_certainty_upgrade(
+        *_v4_states(inf, after_prose="It was almost certainly Mary Anne Sullivan."), "")
+
+    # `certainly` inside `uncertainly` — plausible genealogy prose.
+    check_certainty_upgrade(
+        *_v4_states(inf,
+                    after_prose="The informant reported uncertainly Mary Ann was present."), "")
+
+    # PAIRED, so neither clean case can rest on the check being inert. The same
+    # woman with a surname ADDED must still fire — the trailing `\\b` is
+    # deliberately permissive there.
+    _fires(*_v4_states(inf, after_prose="It was almost certainly Mary Ann Sullivan."))
+    _fires(*_v4_states(inf, after_prose="It was almost certainly Mary Ann."))
+
+
+@pytest.fixture
+def v4_synthetic_corpus(tmp_path, monkeypatch):
+    """Point BOTH `_replay_v4` and `_independently_v4_hits` at a corpus we build.
+
+    They read the module globals `_CORPUS` and `_REPO`, so redirecting those is
+    what makes the agreement assertion able to see the anchoring. An earlier
+    version of this test called the VALIDATOR's own `_certainty_upgrades` helper
+    instead — which tested the validator twice and pinned the derivation not at
+    all: three mutations to the derivation (both `\b` and the created-conflict
+    gate) left the whole suite green.
+    """
+    mod = sys.modules[__name__]  # this module; pytest does not import it by name
+
+    scen = tmp_path / "eval" / "fixtures" / "scenarios" / "s_demo"
+    scen.mkdir(parents=True)
+    (scen / "research.json").write_text(
+        json.dumps({
+            "conflicts": [{"id": "c_001", "status": "unresolved",
+                           "conflict_type": "fact",
+                           "competing_assertion_ids": ["a_002"],
+                           "weighing_analysis": None,
+                           "resolution_rationale": None}],
+            "assertions": [{"id": "a_002", "source_id": "src_001",
+                            "informant": _HEDGED_INFORMANT,
+                            "information_quality": "indeterminate"}],
+        }),
+        encoding="utf-8",
+    )
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    monkeypatch.setattr(mod, "_REPO", tmp_path)
+    return logs, scen
+
+
+def _v4_log(path, *, prose=None, reply="", created=False):
+    diff = {"conflicts": {}}
+    entry = {"id": "c_001", "changed_fields": {}}
+    if created:
+        # A NEW id, not one the fixture already holds — `_replay_v4` correctly
+        # skips an `added` entry whose id is already present, so reusing c_001
+        # made this row test nothing.
+        diff["conflicts"]["added"] = [{"id": "c_new", "status": "resolved",
+                                       "conflict_type": "fact",
+                                       "competing_assertion_ids": ["a_002"]}]
+    else:
+        entry["changed_fields"]["weighing_analysis"] = {"before": None, "after": prose}
+        diff["conflicts"]["modified"] = [entry]
+    path.write_text(json.dumps({"tests": [{
+        "test_id": "ut_probe", "scenario": "s_demo", "outcome": "pass",
+        "runs": [{"output": {"text_response": reply,
+                             "file_changes": {"research.json": {"diff": diff}}}}],
+    }]}), encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "label,kwargs,should_fire",
+    [
+        ("control: the plain upgrade",
+         dict(prose="It was almost certainly Thomas Flynn."), True),
+        ("control: no certainty marker",
+         dict(prose="It was probably Thomas Flynn."), False),
+        ("certainly inside uncertainly",
+         dict(prose="Reported uncertainly Thomas Flynn was there."), False),
+        ("a name extended by a letter",
+         dict(prose="It was almost certainly Thomas Flynne."), False),
+        ("created conflict, upgrade in the REPLY",
+         dict(created=True, reply="It was almost certainly Thomas Flynn."), True),
+    ],
+)
+def test_v4_the_second_derivation_matches_the_validator(
+    v4_synthetic_corpus, monkeypatch, label, kwargs, should_fire
+):
+    """Drives the REAL replay and the REAL derivation over the same corpus.
+
+    The corpus-agreement test above cannot see the anchoring — measured:
+    removing both `\b` from the validator left it green, because the derivation
+    used the unanchored form and so agreed with the validator as it was BEFORE
+    the fix. Had the corpus rotated in one of these shapes it would have
+    reddened pointing at the wrong side.
+
+    The created-conflict row is the other half: `_conflicts_written` counts a new
+    entry via `prev is None` regardless of prose keys, and the derivation used to
+    gate on those keys.
+    """
+    mod = sys.modules[__name__]  # this module; pytest does not import it by name
+
+    logs, _ = v4_synthetic_corpus
+    log = logs / "v1_2026-01-01_00-00-00.json"
+    _v4_log(log, **kwargs)
+    monkeypatch.setattr(mod, "_CORPUS", [str(log)])
+
+    fired = {(n, t) for n, t, _ in mod._replay_v4()}
+    derived = mod._independently_v4_hits()
+    assert bool(fired) is should_fire, f"validator disagreed on {label!r}"
+    assert fired == derived, (
+        f"validator and derivation disagree on {label!r}: "
+        f"validator={sorted(fired)} derivation={sorted(derived)}"
+    )
+
+
+def test_v4_the_quoted_span_always_contains_the_phrase_it_accuses():
+    """`span[:200]` counted from the SENTENCE start, so a long run-up ate the
+    evidence — one real hit ended "…the informant was almost certainly T".
+    The window is now clamped to end no more than 200 chars after the match."""
+    runup = ("The 1850 census enumerator visited the dwelling on a Tuesday in "
+             "August and recorded every member of the household in turn, working "
+             "down the page from the head of family, and when he reached the "
+             "five-year-old child he wrote Ireland because the informant was "
+             "almost certainly Thomas Flynn or his wife.")
+    assert len(runup) > 200
+    msg = _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=runup))
+    quoted = msg.split("Quoted:", 1)[1]
+    assert "almost certainly Thomas Flynn" in quoted, quoted
+
+
+
+
+def test_v4_the_quote_does_not_end_at_the_name_it_accuses():
+    """The two truncations must not land on the same spot.
+
+    `_certainty_upgrades` bounds the run-up and the message then applies
+    `span[:200]`. With both set to 200 they coincide and everything after the
+    marker is dropped — measured on `ut_conflict_resolution_006`'s
+    `resolution_rationale`: a 295-char span with 95 chars after the match, all 95
+    cut, shipping "…the informant was almost certainly Thomas Flynn" where the
+    rationale says "almost certainly Thomas Flynn OR HIS WIFE".
+
+    That is the same defect the "attaches a certainty marker to" wording was
+    changed to stop — an observation showing the run naming one person when it
+    named two — arriving by a different route.
+    """
+    # A run-up long enough to force the clamp, with the disjunction after.
+    prose = (
+        "The 1850 census schedule was recorded by an enumerator who visited the "
+        "Thomas Flynn household roughly five years after Patrick's estimated "
+        "1845 birth, working down the page from the head of family through each "
+        "member in turn; the informant was almost certainly Thomas Flynn or his "
+        "wife, the two adults responsible for the household."
+    )
+    msg = _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=prose))
+    quoted = msg.split("Quoted:", 1)[1]
+    assert "almost certainly Thomas Flynn" in quoted, quoted
+    # The tail is the point: it is what shows the prose named TWO people.
+    assert "or his wife" in quoted, (
+        "the quote stops at the accused name, so it shows the run naming one "
+        f"person when it named two:\n{quoted}"
+    )
