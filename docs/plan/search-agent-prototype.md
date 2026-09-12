@@ -958,7 +958,11 @@ without whichever Bedrock refuses.
   warning came true in `tests/`, not `dev/`: 636 call sites in 83 files took the
   argument by codemod and typecheck caught the six the codemod missed. A stdio smoke
   (`make engine-smoke-stdio`) now drives the built server through the dispatch chain
-  no vitest imports, including `project_create` and `tree_forget`.
+  no vitest imports, including `project_create` and `tree_forget`. A second lint,
+  `credential-reads-in-auth.test.ts`, bans the token file layer outside `src/auth/`
+  — `auth-status` and `logout` exempt, with the same stale-exemption arm — so the
+  credential seam has the universal the store seam got; whether an exempt tool
+  keeps its bearer guard is `principal.test.ts`'s job.
 
 ### Week 2 — the durable core
 
@@ -1280,7 +1284,8 @@ write path rots silently, because nothing in CI runs it.
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the
-store, the four util modules, auth and `validation/validator.ts`. Per the repo rule,
+store, auth and the bundled-data reader — four files, since the validator reads
+through the store rather than taking an exemption. Per the repo rule,
 break it three ways
 before committing — an unquoted import, one inside a multi-line import list, and one
 via `require` — then show it still accepts a legitimate variant such as a reflowed
