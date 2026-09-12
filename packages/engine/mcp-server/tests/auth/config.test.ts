@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import {
@@ -35,7 +36,7 @@ describe("loadConfig", () => {
       Object.assign(new Error("ENOENT"), { code: "ENOENT" })
     );
 
-    const config = await loadConfig();
+    const config = await loadConfig(LOCAL);
 
     expect(config).toEqual({});
     expect(mockedReadFile).toHaveBeenCalledWith(CONFIG_STORAGE_PATH, "utf8");
@@ -103,7 +104,7 @@ describe("saveConfig", () => {
     mockedMkdir.mockResolvedValueOnce(undefined as unknown as string);
     mockedWriteFile.mockResolvedValueOnce(undefined);
 
-    await saveConfig({ wikiApiUrl: "http://localhost:9000" });
+    await saveConfig({ wikiApiUrl: "http://localhost:9000" }, LOCAL);
 
     expect(mockedMkdir).toHaveBeenCalledWith(STORAGE_DIR, { recursive: true, mode: 0o700 });
     expect(mockedChmod).toHaveBeenCalledWith(STORAGE_DIR, 0o700);

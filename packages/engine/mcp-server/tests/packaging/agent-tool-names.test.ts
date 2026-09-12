@@ -42,7 +42,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 // measured position rather than an oversight.** Every deny we had was on a tool
 // already absent from that agent's `tools:`, and this file used to justify them
 // by claiming a deny binds under `bypassPermissions` while an omission does not.
-// Probed 2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128
+// Probed 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128
 // (`make probe-agent-binding`, reproduced twice): BOTH bind. A tool merely
 // omitted from `tools:` is absent from the agent exactly as a denied one is, so
 // every deny was restating the line above it. (The old claim cited issue #695
@@ -206,7 +206,7 @@ const knownTools = new Set(allToolSchemas.map((s) => s.name));
  *
  * A deny is applied BEFORE the zero-tools spawn check, so an entry in both
  * lists does not merely cancel out — it can make the runtime refuse the agent
- * outright. Measured 2026-08-30 against Claude Code 2.1.251 / agent SDK 0.2.128
+ * outright. Measured 2026-08-30 against Claude Code 2.1.220 / agent SDK 0.2.128
  * (`make probe-agent-binding`): a probe agent granting one tool under all three
  * spellings plus `ToolSearch`, and denying that same tool, was rejected with
  *

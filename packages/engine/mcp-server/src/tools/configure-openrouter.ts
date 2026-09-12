@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { saveConfig } from "../auth/config.js";
 
 export interface ConfigureOpenRouterInput {
@@ -16,14 +17,15 @@ export interface ConfigureOpenRouterResult {
  * in the config file — it never passes through a tool call.
  */
 export async function configureOpenRouterTool(
-  input: ConfigureOpenRouterInput
+  input: ConfigureOpenRouterInput,
+  principal: Principal
 ): Promise<ConfigureOpenRouterResult> {
   const model = input.model?.trim() || null;
-  // Nothing to write. saveConfig() round-trips the whole file and loadConfig()
+  // Nothing to write. saveConfig(patch, principal) round-trips the whole file and loadConfig(principal)
   // returns {} for one it cannot parse, so an empty patch rewrites a corrupt
   // config.json as {} and discards content the user could still recover.
   if (!model) return { saved: false, model: null };
-  await saveConfig({ openRouterModel: model });
+  await saveConfig({ openRouterModel: model }, principal);
   return { saved: true, model };
 }
 

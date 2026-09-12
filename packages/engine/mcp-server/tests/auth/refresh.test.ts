@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   exchangeCodeForTokens,
@@ -168,7 +169,7 @@ describe("getValidToken", () => {
     });
     mockedIsExpired.mockReturnValueOnce(false);
 
-    expect(await getValidToken()).toBe("fresh");
+    expect(await getValidToken(LOCAL)).toBe("fresh");
   });
 
   it("refreshes and saves a new token when the current one is expired", async () => {
@@ -189,7 +190,7 @@ describe("getValidToken", () => {
       }),
     });
 
-    expect(await getValidToken()).toBe("refreshed");
+    expect(await getValidToken(LOCAL)).toBe("refreshed");
     expect(mockedSaveTokens).toHaveBeenCalledTimes(1);
     const saved = mockedSaveTokens.mock.calls[0][0];
     expect(saved.accessToken).toBe("refreshed");
@@ -198,7 +199,7 @@ describe("getValidToken", () => {
 
   it("throws an LLM-instruction error when no tokens are stored", async () => {
     mockedLoadTokens.mockResolvedValueOnce(null);
-    await expect(getValidToken()).rejects.toThrow(
+    await expect(getValidToken(LOCAL)).rejects.toThrow(
       /not logged in to FamilySearch/
     );
   });
@@ -217,7 +218,7 @@ describe("getValidToken", () => {
       json: async () => ({ error: "invalid_grant" }),
     });
 
-    await expect(getValidToken()).rejects.toThrow(/refresh failed/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/refresh failed/);
   });
 
   it("in hosted mode routes the user to the Reconnect button", async () => {
@@ -227,7 +228,7 @@ describe("getValidToken", () => {
     mockedIsHostedMode.mockResolvedValue(true);
     mockedLoadTokens.mockResolvedValue(null);
 
-    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/Reconnect FamilySearch/);
   });
 
   it("in hosted mode surfaces the Reconnect instruction when a refresh fails", async () => {
@@ -245,6 +246,6 @@ describe("getValidToken", () => {
       json: async () => ({ error: "invalid_grant" }),
     });
 
-    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/Reconnect FamilySearch/);
   });
 });
