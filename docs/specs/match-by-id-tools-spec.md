@@ -285,7 +285,7 @@ Mapped output:
 
 | Condition                                | Behavior                                                                                       |
 |------------------------------------------|------------------------------------------------------------------------------------------------|
-| Not logged in                            | Throws `getValidToken()`'s standard "User is not logged in to FamilySearch. Call the login tool to authenticate." |
+| Not logged in                            | Throws `getValidToken(principal)`'s standard "User is not logged in to FamilySearch. Call the login tool to authenticate." |
 | Empty `id`                               | Throws "`<tool_name>` requires a non-empty id (e.g. `\"KNDX-MKG\"`)."                          |
 | `id` is a full ARK with the wrong prefix | Throws "Expected `<expected-prefix>` ARK but received `<actual-prefix>`. Did you mean `<sibling-tool>`?" |
 | `id` has unrecognized shape              | Throws "Unrecognized id `<value>`. Expected a personId (e.g. `\"KNDX-MKG\"`) or a full FamilySearch ARK." |
@@ -306,7 +306,7 @@ network errors. (This matches `person_read` and `same_person`.)
 
 ## Auth
 
-Uses `getValidToken()` from `src/auth/refresh.ts`. Passes the token as
+Uses `getValidToken(principal)` from `src/auth/refresh.ts`. Passes the token as
 `Authorization: Bearer <token>`. Sends `User-Agent: BROWSER_USER_AGENT`
 from `src/constants.ts` (FS WAF rejects non-browser UAs). Do not
 re-implement token logic.

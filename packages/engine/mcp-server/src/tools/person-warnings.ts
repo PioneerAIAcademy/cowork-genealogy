@@ -5,8 +5,7 @@
 // data-quality checks from the point of view of a required anchor person.
 // No network, no auth — operates entirely on local file data.
 
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { getProjectStore } from "../store/project-store.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedGedcomX,
@@ -80,11 +79,9 @@ async function loadAnchor(
   projectPath: string,
   personId: string,
 ): Promise<LoadedAnchor> {
-  const treePath = resolve(projectPath, TREE_FILE);
-
   let raw: string;
   try {
-    raw = await readFile(treePath, "utf8");
+    raw = await getProjectStore().readText(projectPath, TREE_FILE);
   } catch {
     throw new Error(
       `${TREE_FILE} not found at ${projectPath}. Run person_read first to populate the tree file.`,
