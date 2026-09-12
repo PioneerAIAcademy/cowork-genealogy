@@ -108,9 +108,25 @@ class Settings(BaseSettings):
     # each distinct client a distinct email; two keys sharing an email share a
     # User (and therefore its sessions).
     api_keys: str = ""
-    # Sync turn cap. A turn that runs longer ends in 504 turn_timeout; streaming
-    # (stream:true) relies on heartbeats instead of a hard cap.
+    # Sync turn cap. A turn that runs longer ends in 504 turn_timeout. Streaming
+    # (stream:true) has no cap on DURATION — that is the point of it, and a total
+    # cap there would truncate the long tool-running turns callers are steered to
+    # it for. What streaming is capped on is SILENCE: see v1_stream_idle_seconds.
     v1_turn_timeout_seconds: int = 120
+    # Streaming idle cap. Bounds how long a stream turn may go without a single
+    # frame from the sandbox that is not the Hub's heartbeat, after which the SSE
+    # stream ends with an `error` event and a terminal `done` carrying
+    # finish_reason "error". Before this existed, `_handle_stream` had no bound of
+    # any kind and a turn whose agent went silent held the connection open
+    # indefinitely.
+    #
+    # ON SILENCE, NOT DURATION, and the distinction is what makes it safe: a real
+    # turn is silent of PUBLIC events (text/tool) for minutes while a subagent
+    # works, so a cap measured on those would fire on a healthy turn. It is also
+    # why the clock cannot simply be reset by any frame — the Hub broadcasts
+    # {"type":"ping"} to every client every WS_HEARTBEAT_INTERVAL seconds, so a
+    # naive idle clock is reset forever whether the agent is working or dead.
+    v1_stream_idle_seconds: int = 300
     # Staleness TTL for the per-session turn lock (Project.turn_locked_at). A lock
     # older than this is reclaimed by the next caller, so a crashed/killed instance
     # can't wedge a session forever. Must exceed the longest expected turn.

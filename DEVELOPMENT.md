@@ -478,7 +478,8 @@ Pydantic settings are env-driven and case-insensitive (`API_KEYS` →
 | Env var | Default | Purpose |
 |---|---|---|
 | `API_KEYS` | `""` | `key:email` pairs — the bearer-key registry (above). |
-| `V1_TURN_TIMEOUT_SECONDS` | `120` | Sync (`stream:false`) turn cap → `504 turn_timeout`. Streaming has no hard cap (heartbeats instead); steer long turns to `stream:true`. |
+| `V1_TURN_TIMEOUT_SECONDS` | `120` | Sync (`stream:false`) turn cap → `504 turn_timeout`. Streaming has no cap on DURATION - that is what it is for - so steer long turns to `stream:true`; it is capped on SILENCE instead, see the row below. |
+| `V1_STREAM_IDLE_SECONDS` | `300` | Streaming (`stream:true`) **silence** cap. The longest a stream may go with no frame from the sandbox other than the Hub's heartbeat, after which it emits an `error` event naming `turn_timeout` and a terminal `done` with `finish_reason:"error"`. Not a duration cap, and deliberately blind to pings - a clock reset by any frame can never fire, since the Hub pings forever whether the agent is alive or not. `docs/specs/public-rest-api-spec.md` § "The streaming contract". |
 | `V1_TURN_LOCK_STALE_SECONDS` | `600` | One turn at a time per session, via a DB-backed lock on `Project.turn_locked_at` (correct across horizontally-scaled instances). A lock older than this is reclaimed, so a crashed instance can't wedge a session. Must exceed the longest expected turn. |
 
 ### Run + smoke-test locally

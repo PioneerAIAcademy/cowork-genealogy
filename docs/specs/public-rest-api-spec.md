@@ -207,8 +207,9 @@ Lets the team release sandbox resources promptly.
 ## Implementation (as shipped)
 
 - **`config.py`** — `api_keys: str` (comma-separated `key:email`) + `api_key_map`
-  property; `v1_turn_timeout_seconds: int = 120` (sync cap; streaming uses heartbeats);
-  `v1_turn_lock_stale_seconds: int = 600` (turn-lock staleness TTL).
+  property; `v1_turn_timeout_seconds: int = 120` (sync cap);
+  `v1_stream_idle_seconds: int = 300` (streaming **silence** cap - see "The streaming
+  contract" below); `v1_turn_lock_stale_seconds: int = 600` (turn-lock staleness TTL).
 - **`auth.py`** — `get_api_client(Security(HTTPBearer(auto_error=False)), …)`:
   reject non-bearer (`401`), `hmac.compare_digest` against each configured key,
   resolve email → `_upsert_user`. **Deliberately NOT gated on `_is_allowed`**: API
@@ -249,9 +250,46 @@ Lets the team release sandbox resources promptly.
 
 1. Two send-endpoints → one with `stream:true`. 2. Don't return our session object —
 lean `{session_id,title,model,created_at}`. 3. Bearer keys, not cookies. 4. Steer to
-streaming for real (tool-running) turns; sync is capped (`504`). 5. One message at a
+streaming for real (tool-running) turns; sync is capped on DURATION (`504`) while
+streaming is capped only on SILENCE. 5. One message at a
 time per session (`409` → retry after a short backoff). 6. We add `DELETE`. 7.
 Consistent `{error:{code,message}}` envelope.
+
+### The streaming contract
+
+**Streaming has no cap on how long a turn may take, and that is the point of it.**
+Callers are steered here precisely for long tool-running turns, so a total cap
+would truncate exactly the requests this transport exists to serve. What streaming
+*is* bounded on is **silence**: `v1_stream_idle_seconds` (default 300) is the
+longest a stream may go without a single frame from the sandbox that is not the
+Hub's heartbeat. On exceeding it the stream emits an `event: error` naming the
+`turn_timeout` code, then the normal terminal `event: done` with
+`finish_reason: "error"`, and closes. **`finish_reason` stays `"stop" | "error"`** -
+no third value, because the error text already distinguishes the case and a new
+enum member would break published clients.
+
+Two things about that clock are easy to get wrong, and both were:
+
+1. **It cannot be reset by any frame.** The in-sandbox Hub broadcasts
+   `{"type":"ping"}` to every connected client every `WS_HEARTBEAT_INTERVAL`
+   seconds. `/v1`'s WS client receives those and `_normalize` drops them from the
+   public stream, so a clock reset on receipt is reset forever - whether the agent
+   is working or dead. `_is_liveness` excludes pings for this reason.
+2. **It cannot count only public events.** A healthy turn is silent of `text` and
+   `tool` frames for minutes while a subagent works - the reason the heartbeat loop
+   exists at all - so a clock fed only by what `_normalize` returns would fire on a
+   working turn. `status` frames and viewer deltas are dropped from the public
+   stream but are still proof the sandbox is doing something, so they count.
+
+An unparseable frame counts as liveness: it is not a ping, and ending a legitimate
+turn is the worse error.
+
+**A floor on the heartbeat interval, recorded because nothing enforces it.**
+`_drain_replay` returns only after `_DRAIN_IDLE` (0.5s) of silence on the socket
+before the turn is sent, so a `WS_HEARTBEAT_INTERVAL` at or below that value means
+silence never occurs and the drain never returns - the turn is never sent at all.
+Unreachable at the shipped defaults (15s against 0.5s) and found by setting 0.1 in
+a test, but any future heartbeat speed-up has to stay clear of it.
 
 Explicitly **not** built (over-engineering for a POC): DB-backed key table / hashing /
 rotation / scopes / rate limits, message-history endpoints, idempotency keys,
@@ -280,5 +318,5 @@ Runs fully on mocks (`agent_mode=mock`, `sandbox=local`).
 - `apps/server/app/auth.py` — `get_api_client` bearer dependency
 - `apps/server/app/sessions.py` — `create_project(...)` + `_owned`
 - `apps/server/app/models.py` — `Project.turn_locked_at` (the DB lock column)
-- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds` / `v1_turn_lock_stale_seconds`
+- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds` / `v1_stream_idle_seconds` / `v1_turn_lock_stale_seconds`
 - `apps/server/app/main.py` — register `v1.router` + the `/v1` error envelope handlers
