@@ -125,6 +125,10 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
+    # Same rationale as convert_calendar: pure URL-templating, no workspace or
+    # network dependency, so a canned fixture would supply the exact URL string
+    # search-external-sites' eval exists to measure.
+    "build_external_search_url",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -162,6 +166,10 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
     # failure the agent must see as one, not a verdict like merge_warnings' dry run.
     "convert_calendar",
+    # Its `ok: false` means the requested URL could not be built (an unsupported
+    # site, a missing baseUrl on digital_newspaper_archive, or no attributes at
+    # all) - a real failure, not a verdict about the search's subject.
+    "build_external_search_url",
 }
 
 
@@ -843,6 +851,17 @@ def _make_live_handler(
         # reads only `date` and `corrections`, so the extra key is inert.
         return _make_compiled_tool_handler(
             "convert_calendar", "convert-calendar.js", "convertCalendar", workspace, call_log
+        )
+    if tool_name == "build_external_search_url":
+        # Takes no projectPath; the generic handler injects one and
+        # buildExternalSearchUrl reads only `site`, `baseUrl` and `attributes`,
+        # so the extra key is inert.
+        return _make_compiled_tool_handler(
+            "build_external_search_url",
+            "build-external-search-url.js",
+            "buildExternalSearchUrl",
+            workspace,
+            call_log,
         )
     raise ValueError(f"No live handler defined for {tool_name!r}")
 

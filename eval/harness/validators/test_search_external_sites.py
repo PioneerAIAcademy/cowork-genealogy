@@ -83,6 +83,101 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
 
 
+def test_resolved_birthplace_conflict_rejected_value_not_encoded(
+    before_state, after_state, tool_calls, test
+):
+    """Mechanical form of SKILL.md's "check conflicts[] before encoding a
+    place or date" rule, scoped to resolved `birthplace` conflicts.
+
+    The rubric already grades this from prose, which makes it a single-run
+    judgment call the skill can miss (issue #1980's own corpus: `mid-research
+    -flynn`'s `conflicts[]` c_001 resolves birthplace as Ireland against a
+    rejected Pennsylvania, and a model has been observed encoding the
+    rejected value). Encoding a rejected fact is a genealogically wrong URL,
+    not a stylistic slip, so this makes the specific failure a hard,
+    deterministic fail rather than leaving it to the judge alone.
+
+    Reads the `build_external_search_url` call's own `attributes.birthPlace`
+    argument directly — option 2 of issue #1950's 2026-08-27 lead ruling
+    ("V1 checks the tool call's arguments instead of the URL string"),
+    available now that this tool exists. An earlier draft parsed the
+    generated URL string instead, which needed a per-site table of which
+    query parameter carries the birthplace value and was vulnerable to a
+    substring false positive: this fixture's `residencePlace` ("Schuylkill
+    County, Pennsylvania") legitimately contains the rejected value
+    ("Pennsylvania"), which a whole-URL substring search would have flagged
+    as if it were the birthplace parameter. Reading the structured argument
+    the model actually passed needs neither.
+
+    "Rejected" is decided by comparing each competing assertion's `place`
+    value against the *preferred assertion's own value*, not by id: this
+    fixture's `competing_assertion_ids` for c_001 lists three assertions, two
+    of which (a_002, a_009) independently say "Ireland" — only the third
+    (a_012, "Pennsylvania") actually disagrees. Treating every non-preferred
+    id as rejected flagged a_009's own "Ireland" as if it were a rejected
+    value, which a synthetic test against this exact fixture caught before
+    this landed.
+
+    Deliberately narrow to `disputed_attribute == "birthplace"` — the
+    general case (any disputed attribute) is issue #1950/V1's fuller scope.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests generate URLs")
+    research = before_state.get("research_json")
+    if research is None:
+        pytest.skip("no research.json in scenario")
+
+    resolved_birthplace_conflicts = [
+        c for c in (research.get("conflicts") or [])
+        if c.get("conflict_type") == "fact"
+        and c.get("status") == "resolved"
+        and c.get("disputed_attribute") == "birthplace"
+    ]
+    if not resolved_birthplace_conflicts:
+        pytest.skip("no resolved birthplace conflict in this scenario")
+
+    assertions_by_id = {a.get("id"): a for a in (research.get("assertions") or [])}
+
+    calls = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] == "build_external_search_url"
+    ]
+    if not calls:
+        pytest.skip("no build_external_search_url call")
+
+    errors: list[str] = []
+    for c in resolved_birthplace_conflicts:
+        preferred_id = c.get("preferred_assertion_id")
+        preferred_assertion = assertions_by_id.get(preferred_id) or {}
+        preferred_place = preferred_assertion.get("place")
+        if not preferred_place:
+            continue
+        # A competing id is not automatically a rejected VALUE: two assertions
+        # can independently support the same preferred value from different
+        # sources (this fixture's a_002/a_009 both say "Ireland" — only a_012's
+        # "Pennsylvania" actually disagrees), so the comparison is by place
+        # value against the preferred assertion's own value, not by id.
+        rejected_places = {
+            assertions_by_id[i]["place"]
+            for i in (c.get("competing_assertion_ids") or [])
+            if i in assertions_by_id
+            and assertions_by_id[i].get("place")
+            and assertions_by_id[i]["place"] != preferred_place
+        }
+        if not rejected_places:
+            continue
+        for call in calls:
+            args = call.get("args") or {}
+            birth_place = (args.get("attributes") or {}).get("birthPlace")
+            if birth_place in rejected_places:
+                errors.append(
+                    f"build_external_search_url call's attributes.birthPlace="
+                    f"{birth_place!r} is the value conflict {c.get('id')} "
+                    f"rejected (preferred: {preferred_id})"
+                )
+    assert not errors, "resolved birthplace-conflict rejected value passed to the tool:\n  - " + "\n  - ".join(errors)
+
+
 # --- Tag-gated no-harm invariant (grade_on_invariant negatives) ------
 
 def test_no_external_search_or_log_on_routeaway_negative(

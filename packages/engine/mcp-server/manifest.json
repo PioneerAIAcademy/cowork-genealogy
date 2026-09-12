@@ -63,6 +63,7 @@
     { "name": "merge_tree_persons" },
     { "name": "research_log_append" },
     { "name": "convert_calendar" },
+    { "name": "build_external_search_url" },
     { "name": "tree_edit" },
     { "name": "tree_correct" },
     { "name": "tree_forget" },
