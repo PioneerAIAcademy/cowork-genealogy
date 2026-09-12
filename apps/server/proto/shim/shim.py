@@ -220,6 +220,12 @@ def handle_safely(sqs, msg: dict) -> None:
         handle(sqs, msg)
     except Exception as exc:  # a thread must never die silently
         log(ev="error", msgid=msg.get("MessageId"), error=f"{type(exc).__name__}: {exc}")
+        # An exception between the POST and the delete would otherwise leave the
+        # message invisible for the whole visibility timeout — the same stranding
+        # the SIGTERM drain exists to prevent, and worse when the turn actually
+        # completed and only the delete failed: it re-runs 35 minutes later.
+        # Hand it straight back instead; the redelivery is the retry.
+        requeue_on_stop(sqs, msg, reason="error")
 
 
 def docker_status() -> str:
@@ -230,11 +236,13 @@ def docker_status() -> str:
         return f"unavailable: {type(exc).__name__}: {exc}"
 
 
-def requeue_on_stop(sqs, msg: dict) -> None:
-    """A message the last poll delivered after the stop signal: hand it straight back."""
+def requeue_on_stop(sqs, msg: dict, reason: str = "stop") -> None:
+    """Hand a message straight back to the queue: one the last poll delivered after
+    the stop signal (`reason="stop"`), or one whose handler raised before it could
+    decide (`reason="error"`). Either way the redelivery is the retry."""
     try:
         sqs.change_message_visibility(QueueUrl=QUEUE_URL, ReceiptHandle=msg["ReceiptHandle"], VisibilityTimeout=0)
-        log(ev="requeue_on_stop", msgid=msg["MessageId"])
+        log(ev="requeue_on_stop", msgid=msg["MessageId"], reason=reason)
     except Exception as exc:  # it reappears after the visibility timeout regardless
         log(ev="error", msgid=msg.get("MessageId"), error=f"{type(exc).__name__}: {exc}")
 
