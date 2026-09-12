@@ -23,6 +23,9 @@
  *     `<event>Year` family was measured". Its third question — what happens to
  *     records carrying NO indexed year — is answered only for `.exact=on`
  *     (it drops them); the unqualified case is OPEN and the section says so.
+ *   SECTION J — Fulltext search: what `q.recordPlace` and `f.recordPlace*`
+ *     actually search (transcript content vs collection metadata vs both).
+ *     Uses a discriminating-document strategy against the fulltext endpoint.
  *
  * EVERY CONCLUSION LINE IS COMPUTED FROM THE RUN, never a literal. Section F
  * used to end in a hardcoded `console.log` asserting "gibberish -> 0" — it
@@ -295,6 +298,7 @@ import { fileURLToPath } from "node:url";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
+import { fetchRetry } from "./http-retry.js";
 import {
   yearOf,
   yearOfDate,
@@ -305,6 +309,8 @@ import {
 
 const SEARCH_URL =
   "https://www.familysearch.org/service/search/hr/v2/personas";
+const FULLTEXT_URL =
+  "https://www.familysearch.org/service/search/fulltext/search";
 const REQUIRE_SWITCH = "m.queryRequireDefault=on";
 
 let token = "";
@@ -5498,6 +5504,376 @@ async function sectionQ(): Promise<void> {
   await runRecordsFamily(RECORDS_RESIDENCE_FAM, { pool: US_CENSUS_CONTROL, keyPrefix: "bands:records-uscensus" });
 }
 
+// --- SECTION J — fulltext: what q.recordPlace and f.recordPlace* search ---
+
+interface FulltextEntry {
+  id: string;
+  collectionId: string;
+  collectionTitle: string;
+  recordPlace: string;
+  textDocument: string;
+}
+
+interface FulltextHit {
+  total: number | null;
+  entries: FulltextEntry[];
+  error: string | null;
+}
+
+/**
+ * Query the fulltext endpoint. Uses `fetchRetry` (not the inline retry loop
+ * `searchOnce`/`search` use for the indexed endpoint) per issue #1829's mandate.
+ * Always appends `m.queryRequireDefault=on`.
+ */
+async function fulltextSearch(query: string, count = 5): Promise<FulltextHit> {
+  const url = `${FULLTEXT_URL}?${query}&${REQUIRE_SWITCH}&count=${count}`;
+  const res = await fetchRetry(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "User-Agent": BROWSER_USER_AGENT,
+    },
+  }, { label: query.slice(0, 80) });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    return { total: null, entries: [], error: `HTTP ${res.status}: ${body.slice(0, 200)}` };
+  }
+  let parsed: {
+    results?: number;
+    entries?: Array<{
+      id?: string;
+      collectionId?: string;
+      collectionTitle?: string;
+      content?: {
+        recordPlace?: string;
+        textDocument?: string;
+      };
+    }>;
+  };
+  try {
+    parsed = JSON.parse(await res.text());
+  } catch {
+    return { total: null, entries: [], error: `HTTP ${res.status}: unparseable` };
+  }
+  const entries: FulltextEntry[] = (parsed.entries ?? []).map((e) => ({
+    id: e.id ?? "",
+    collectionId: e.collectionId ?? "",
+    collectionTitle: e.collectionTitle ?? "",
+    recordPlace: e.content?.recordPlace ?? "",
+    textDocument: e.content?.textDocument ?? "",
+  }));
+  return {
+    total: typeof parsed.results === "number" ? parsed.results : null,
+    entries,
+    error: null,
+  };
+}
+
+/**
+ * Get the US region ID from the fulltext Place facets. The facets expose
+ * place filtering as a hierarchy: region (f.recordPlace0) → state
+ * (f.recordPlace1). The state-level filter format is
+ * `f.recordPlace1=<regionId>,<StateName>` (e.g. `f.recordPlace1=10,Alabama`).
+ * This helper discovers the regionId dynamically by finding the "United States"
+ * region in the facet response.
+ */
+async function fulltextGetUSRegionId(baseQuery: string): Promise<string | null> {
+  const url = `${FULLTEXT_URL}?${baseQuery}&${REQUIRE_SWITCH}&count=1&m.defaultFacets=on`;
+  const res = await fetchRetry(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "User-Agent": BROWSER_USER_AGENT,
+    },
+  }, { label: "facets: US region ID" });
+  if (!res.ok) return null;
+  let parsed: { facets?: Array<{ displayName?: string; facets?: Array<{ displayName?: string; params?: string }> }> };
+  try {
+    parsed = JSON.parse(await res.text());
+  } catch {
+    return null;
+  }
+  // Find the Place facet, then the "United States" region.
+  for (const facet of parsed.facets ?? []) {
+    if (facet.displayName !== "Place") continue;
+    for (const region of facet.facets ?? []) {
+      // The US region's displayName contains "United States".
+      if (region.displayName?.includes("United States")) {
+        // params is like "c.recordPlace1=on&f.recordPlace0=10" — extract the ID.
+        const m = region.params?.match(/f\.recordPlace0=(\d+)/);
+        return m ? m[1] : null;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Section J — Fulltext search: what `q.recordPlace` and `f.recordPlace*`
+ * actually search (transcript content vs collection metadata vs both).
+ *
+ * Strategy: find a DISCRIMINATING document — one where a place name appears
+ * in the transcript but NOT in the collection metadata. Then test whether
+ * `q.recordPlace` and `f.recordPlace*` find that document when given the
+ * transcript-only place name vs the metadata place name.
+ *
+ * `f.recordPlace1` accepts only the NUMERIC IDs returned by the facets API
+ * (e.g. `f.recordPlace1=10,Alabama`), not plain text values. Passing plain
+ * text silently returns zero results — measured and recorded as T3b in the
+ * artifact. Phase 2 obtains the correct numeric IDs from the facets response
+ * before using `f.recordPlace*`.
+ *
+ * Three verdicts:
+ *   - verdict:q.text searches transcript
+ *   - verdict:q.recordPlace searches
+ *   - verdict:f.recordPlace searches
+ */
+async function sectionJ(): Promise<void> {
+  console.log("\n=== J. Fulltext search: what q.recordPlace and f.recordPlace* actually search ===");
+
+  const NOT_MEASURED = (): void => {
+    record("J", "verdict:q.text searches transcript", "NOT MEASURED");
+    record("J", "verdict:q.recordPlace searches", "NOT MEASURED");
+    record("J", "verdict:f.recordPlace searches", "NOT MEASURED");
+  };
+
+  // --- Phase 1: Discovery ---
+  // Find a document where a place name appears in the transcript but NOT in the
+  // collection metadata. Strategy: search for probate documents mentioning
+  // "Virginia" in the full text, then find one whose recordPlace metadata does
+  // NOT contain Virginia (e.g. an Alabama or Ohio probate that mentions a
+  // Virginia-born person).
+  console.log("  Phase 1: finding a discriminating document (transcript place ≠ metadata place)");
+  const discovery = await fulltextSearch(
+    "q.text=" + encodeURIComponent("+executor +Virginia"),
+    10
+  );
+  if (discovery.error !== null) {
+    console.log(`  NOT MEASURED — discovery query errored: ${discovery.error}`);
+    NOT_MEASURED();
+    return;
+  }
+  if (discovery.entries.length === 0) {
+    console.log("  NOT MEASURED — discovery query returned no entries.");
+    record("J", "discovery", "no entries returned");
+    NOT_MEASURED();
+    return;
+  }
+
+  // Find the first entry where textDocument contains "Virginia" and
+  // recordPlace does NOT contain "Virginia" (the discriminating condition).
+  const anchor = discovery.entries.find(
+    (e) =>
+      e.textDocument.toLowerCase().includes("virginia") &&
+      !e.recordPlace.toLowerCase().includes("virginia") &&
+      e.id &&
+      e.collectionId
+  );
+  if (!anchor) {
+    console.log("  NOT MEASURED — no discriminating document found in discovery results.");
+    console.log("    All results either lacked Virginia in text or had it in recordPlace.");
+    record("J", "discovery", "no qualifying document found");
+    NOT_MEASURED();
+    return;
+  }
+
+  // Extract the metadata place state from the anchor's recordPlace.
+  // recordPlace is typically "County, State, Country" — take the first
+  // comma-delimited segment that is a US state (i.e. not the county).
+  const rpParts = anchor.recordPlace.split(",").map((s) => s.trim());
+  // For "Bullock, Alabama, United States", rpParts[1] is the state.
+  const metadataState = rpParts.length >= 2 ? rpParts[1] : rpParts[0];
+
+  console.log(`  anchor: ${anchor.id}`);
+  console.log(`    collection: ${anchor.collectionId} — ${anchor.collectionTitle}`);
+  console.log(`    recordPlace (metadata): ${anchor.recordPlace}`);
+  console.log(`    metadata state: ${metadataState}`);
+  console.log(`    textDocument contains "Virginia": YES`);
+  console.log(`    recordPlace contains "Virginia": NO`);
+  record("J", "anchor", {
+    id: anchor.id,
+    collectionId: anchor.collectionId,
+    collectionTitle: anchor.collectionTitle,
+    recordPlace: anchor.recordPlace,
+    metadataState,
+    transcriptPlace: "Virginia",
+  });
+
+  const cid = anchor.collectionId;
+  const anchorId = anchor.id;
+  /** Check whether the anchor document appears in a result set. */
+  const containsAnchor = (r: FulltextHit): boolean =>
+    r.entries.some((e) => e.id === anchorId);
+
+  // --- Phase 2: Membership tests ---
+  console.log("\n  Phase 2: membership tests");
+
+  // Test 1: q.text control — does q.text search the transcript?
+  // Search for "executor" + "Virginia" in text, scoped to anchor's collection.
+  const t1 = await fulltextSearch(
+    "q.text=" + encodeURIComponent("+executor +Virginia") +
+    "&f.collectionId=" + encodeURIComponent(cid),
+    20
+  );
+  const t1Found = !t1.error && containsAnchor(t1);
+  console.log(`  T1 q.text=+executor+Virginia, f.collectionId=${cid}`);
+  console.log(`     anchor found: ${t1Found}  (total: ${t1.total}, error: ${t1.error})`);
+  record("J", "T1:q.text control (transcript term)", { found: t1Found, total: t1.total, error: t1.error });
+
+  // Test 2: q.recordPlace=Virginia — does it reach the transcript?
+  // If place searches BOTH transcript and metadata, the anchor should appear.
+  // If metadata only, the anchor should NOT appear (Virginia is only in transcript).
+  const t2 = await fulltextSearch(
+    "q.recordPlace=" + encodeURIComponent("Virginia") +
+    "&q.text=" + encodeURIComponent("+executor") +
+    "&f.collectionId=" + encodeURIComponent(cid),
+    20
+  );
+  const t2Found = !t2.error && containsAnchor(t2);
+  console.log(`  T2 q.recordPlace=Virginia, q.text=+executor, f.collectionId=${cid}`);
+  console.log(`     anchor found: ${t2Found}  (total: ${t2.total}, error: ${t2.error})`);
+  record("J", "T2:q.recordPlace=Virginia (transcript-only place)", { found: t2Found, total: t2.total, error: t2.error });
+
+  // Test 3: q.recordPlace=<metadataState> — does it reach the metadata?
+  // The anchor's metadata says this state, so this should find it.
+  const t3 = await fulltextSearch(
+    "q.recordPlace=" + encodeURIComponent(metadataState) +
+    "&q.text=" + encodeURIComponent("+executor +Virginia") +
+    "&f.collectionId=" + encodeURIComponent(cid),
+    20
+  );
+  const t3Found = !t3.error && containsAnchor(t3);
+  console.log(`  T3 q.recordPlace=${metadataState}, q.text=+executor+Virginia, f.collectionId=${cid}`);
+  console.log(`     anchor found: ${t3Found}  (total: ${t3.total}, error: ${t3.error})`);
+  record("J", `T3:q.recordPlace=${metadataState} (metadata place)`, { found: t3Found, total: t3.total, error: t3.error });
+
+  // Test 3b: f.recordPlace1 with PLAIN TEXT (no numeric ID) — control.
+  // Expected: 0 results, proving that plain text silently fails.
+  const t3b = await fulltextSearch(
+    "f.recordPlace1=" + encodeURIComponent(metadataState) +
+    "&q.text=" + encodeURIComponent("+executor +Virginia") +
+    "&f.collectionId=" + encodeURIComponent(cid),
+    20
+  );
+  const t3bFound = !t3b.error && containsAnchor(t3b);
+  console.log(`  T3b f.recordPlace1=${metadataState} (plain text, no facet ID), f.collectionId=${cid}`);
+  console.log(`     anchor found: ${t3bFound}  (total: ${t3b.total}, error: ${t3b.error})`);
+  record("J", `T3b:f.recordPlace1=${metadataState} (plain text)`, { found: t3bFound, total: t3b.total, error: t3b.error });
+
+  // Test 4 & 5: f.recordPlace* tests.
+  //
+  // The fulltext `f.recordPlace*` filters use a hierarchical numeric scheme:
+  //   f.recordPlace0=<regionId>           (e.g. 10 for "United States")
+  //   f.recordPlace1=<regionId>,<state>   (e.g. "10,Alabama")
+  // Plain text silently returns 0 (measured and recorded as T3b above).
+  // Discover the US regionId from the facets, then construct correct params.
+  console.log("\n  Obtaining US region ID from facets...");
+  const usRegionId = await fulltextGetUSRegionId(
+    "q.text=" + encodeURIComponent("+executor") +
+    "&f.collectionId=" + encodeURIComponent(cid)
+  );
+  console.log(`  US region ID: ${usRegionId ?? "NOT FOUND"}`);
+  record("J", "facet:usRegionId", usRegionId);
+
+  let t4Found = false;
+  let t4Total: number | null = null;
+  let t4Error: string | null = null;
+  let t5Found = false;
+  let t5Total: number | null = null;
+  let t5Error: string | null = null;
+
+  if (usRegionId === null) {
+    t4Error = "could not discover US region ID from facets";
+    t5Error = t4Error;
+  } else {
+    const virginiaFilter = `f.recordPlace1=${usRegionId},Virginia`;
+    const metadataFilter = `f.recordPlace1=${usRegionId},${metadataState}`;
+    console.log(`  Virginia filter: ${virginiaFilter}`);
+    console.log(`  ${metadataState} filter: ${metadataFilter}`);
+    record("J", "facet:virginiaFilter", virginiaFilter);
+    record("J", "facet:metadataStateFilter", metadataFilter);
+
+    // Test 4: f.recordPlace1 with Virginia — does the filter reach transcript?
+    // The anchor has Virginia only in the transcript, not in metadata. If the
+    // filter searches transcript, the anchor should appear; if metadata only, it
+    // should not.
+    const t4 = await fulltextSearch(
+      virginiaFilter +
+      "&q.text=" + encodeURIComponent("+executor") +
+      "&f.collectionId=" + encodeURIComponent(cid),
+      20
+    );
+    t4Found = !t4.error && containsAnchor(t4);
+    t4Total = t4.total;
+    t4Error = t4.error;
+
+    // Test 5: f.recordPlace1 with metadata state — does the filter reach metadata?
+    // The anchor's metadata says this state, so this should find it.
+    const t5 = await fulltextSearch(
+      metadataFilter +
+      "&q.text=" + encodeURIComponent("+executor +Virginia") +
+      "&f.collectionId=" + encodeURIComponent(cid),
+      20
+    );
+    t5Found = !t5.error && containsAnchor(t5);
+    t5Total = t5.total;
+    t5Error = t5.error;
+  }
+
+  console.log(`  T4 f.recordPlace1=Virginia (facet-derived), q.text=+executor, f.collectionId=${cid}`);
+  console.log(`     anchor found: ${t4Found}  (total: ${t4Total}, error: ${t4Error})`);
+  record("J", "T4:f.recordPlace1=Virginia (transcript-only place)", { found: t4Found, total: t4Total, error: t4Error });
+
+  console.log(`  T5 f.recordPlace1=${metadataState} (facet-derived), q.text=+executor+Virginia, f.collectionId=${cid}`);
+  console.log(`     anchor found: ${t5Found}  (total: ${t5Total}, error: ${t5Error})`);
+  record("J", `T5:f.recordPlace1=${metadataState} (metadata place)`, { found: t5Found, total: t5Total, error: t5Error });
+
+  // --- Phase 3: Compute verdicts ---
+  console.log("\n  Phase 3: verdicts");
+
+  // Verdict 1: q.text searches transcript
+  const v1 = t1.error !== null ? "NOT MEASURED" : t1Found ? "CONFIRMED" : "NOT CONFIRMED";
+  record("J", "verdict:q.text searches transcript", v1);
+  console.log(`  verdict:q.text searches transcript — ${v1}`);
+
+  // Verdict 2: q.recordPlace searches ...
+  // T2 (Virginia = transcript-only place) tells us if it reaches transcript.
+  // T3 (metadataState = metadata place) tells us if it reaches metadata.
+  let v2: string;
+  if (t2.error !== null || t3.error !== null) {
+    v2 = "NOT MEASURED";
+  } else if (t2Found && t3Found) {
+    v2 = "BOTH transcript and metadata";
+  } else if (!t2Found && t3Found) {
+    v2 = "metadata only";
+  } else if (t2Found && !t3Found) {
+    v2 = "transcript only";
+  } else {
+    v2 = "NEITHER (unexpected — check query construction)";
+  }
+  record("J", "verdict:q.recordPlace searches", v2);
+  console.log(`  verdict:q.recordPlace searches — ${v2}`);
+
+  // Verdict 3: f.recordPlace searches ...
+  // T4 (Virginia facet ID) tells us if the filter reaches transcript.
+  // T5 (metadata state facet ID) tells us if the filter reaches metadata.
+  let v3: string;
+  if (t4Error !== null || t5Error !== null) {
+    // If we couldn't get facet IDs, this is NOT MEASURED rather than NEITHER.
+    v3 = "NOT MEASURED";
+  } else if (t4Found && t5Found) {
+    v3 = "BOTH transcript and metadata";
+  } else if (!t4Found && t5Found) {
+    v3 = "metadata only";
+  } else if (t4Found && !t5Found) {
+    v3 = "transcript only";
+  } else {
+    v3 = "NEITHER (unexpected — check query construction)";
+  }
+  record("J", "verdict:f.recordPlace searches", v3);
+  console.log(`  verdict:f.recordPlace searches — ${v3}`);
+}
+
 const SECTIONS: Record<string, () => Promise<void>> = {
   A: sectionA,
   B: sectionB,
@@ -5508,6 +5884,7 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   G: sectionG,
   H: sectionH,
   I: sectionI,
+  J: sectionJ,
   N: sectionN,
   P: sectionP,
   Q: sectionQ,
