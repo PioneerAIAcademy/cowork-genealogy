@@ -52,7 +52,7 @@ describe("project-io write layer", () => {
   describe("atomicWriteJson", () => {
     it("writes pretty JSON and leaves no temp file behind", async () => {
       const path = join(dir, "research.json");
-      await atomicWriteJson(path, { a: 1, b: [2, 3] });
+      await atomicWriteJson(dir, "research.json", { a: 1, b: [2, 3] });
 
       const text = await readFile(path, "utf-8");
       expect(JSON.parse(text)).toEqual({ a: 1, b: [2, 3] });
@@ -64,14 +64,14 @@ describe("project-io write layer", () => {
 
     it("creates missing parent directories", async () => {
       const path = join(dir, "results", "log_007.json");
-      await atomicWriteJson(path, { log_id: "log_007" });
+      await atomicWriteJson(dir, "results/log_007.json", { log_id: "log_007" });
       expect(JSON.parse(await readFile(path, "utf-8"))).toEqual({ log_id: "log_007" });
     });
 
     it("overwrites an existing file in place", async () => {
       const path = join(dir, "tree.gedcomx.json");
       await writeFile(path, JSON.stringify({ old: true }), "utf-8");
-      await atomicWriteJson(path, { new: true });
+      await atomicWriteJson(dir, "tree.gedcomx.json", { new: true });
       expect(JSON.parse(await readFile(path, "utf-8"))).toEqual({ new: true });
     });
   });
@@ -80,9 +80,9 @@ describe("project-io write layer", () => {
     it("writes both files and leaves no temps", async () => {
       const treePath = join(dir, "tree.gedcomx.json");
       const researchPath = join(dir, "research.json");
-      await atomicWriteBoth([
-        { path: treePath, data: { tree: 1 } },
-        { path: researchPath, data: { research: 1 } },
+      await atomicWriteBoth(dir, [
+        { ref: "tree.gedcomx.json", data: { tree: 1 } },
+        { ref: "research.json", data: { research: 1 } },
       ]);
 
       expect(JSON.parse(await readFile(treePath, "utf-8"))).toEqual({ tree: 1 });
@@ -101,9 +101,10 @@ describe("project-io write layer", () => {
       const researchPath = join(dir, "research.json");
       let midWriteTemps: string[] = [];
       await atomicWriteBoth(
+        dir,
         [
-          { path: treePath, data: { tree: 1 } },
-          { path: researchPath, data: { research: 1 } },
+          { ref: "tree.gedcomx.json", data: { tree: 1 } },
+          { ref: "research.json", data: { research: 1 } },
         ],
         {
           onBeforeSecondRename: async () => {
@@ -129,9 +130,9 @@ describe("project-io write layer", () => {
       circular.self = circular;
 
       await expect(
-        atomicWriteBoth([
-          { path: treePath, data: { tree: "new" } },
-          { path: researchPath, data: circular },
+        atomicWriteBoth(dir, [
+          { ref: "tree.gedcomx.json", data: { tree: "new" } },
+          { ref: "research.json", data: circular },
         ]),
       ).rejects.toThrow();
 
@@ -149,9 +150,10 @@ describe("project-io write layer", () => {
 
       await expect(
         atomicWriteBoth(
+          dir,
           [
-            { path: treePath, data: { tree: "new" } },
-            { path: researchPath, data: { research: "new" } },
+            { ref: "tree.gedcomx.json", data: { tree: "new" } },
+            { ref: "research.json", data: { research: "new" } },
           ],
           {
             onBeforeSecondRename: () => {
