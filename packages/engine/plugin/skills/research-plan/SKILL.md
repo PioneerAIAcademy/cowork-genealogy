@@ -337,6 +337,23 @@ Order items for efficient discovery (BCG Standard 15):
    the plan, but normally follow the target record rather than acting as a
    prerequisite to searching it. Exceptions are appropriate when identity,
    jurisdiction, or record availability remain uncertain
+8. **Dependency before efficiency** — an item may not be conditioned on
+   evidence that no earlier item can produce. Where the question turns on an
+   identifier the subject cannot yet be searched by — a maiden name, an unknown
+   given name, an unlocated residence — the records that *supply* that
+   identifier come first, and the records that merely *use* it come after. A
+   given name plus an approximate birth year plus a place is not an identifying
+   match, so an item resting on that much cannot be the gate a later item waits on
+9. **Do not skip an intervening link** — build from the best-established anchor
+   toward the unknown. Where two records sit at either end of a gap, plan the
+   record in between that would show the same person carries across it, rather
+   than asserting continuity from name, place and approximate age alone
+10. **Cover the question's window** — when the question supplies a birth
+    estimate and a death or last-known date, plan items whose `date_range`s
+    reach the later part of that window, not only its start. Where a recurring
+    series exists for the jurisdiction, prefer the years falling inside the
+    window, and among them a year whose schedule records each person's
+    relationship to the head of household over one that does not
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
@@ -352,7 +369,9 @@ to write:
 2. All relevant repositories identified (not just the most convenient)?
 3. Variant spellings/name forms accounted for?
 4. All relevant jurisdictions included (considering boundary changes)?
-5. All relevant time periods included?
+5. All relevant time periods included — do the plan's `date_range`s
+   span the question's whole window, from the birth estimate to the
+   death or last-known date?
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.
@@ -428,7 +447,9 @@ research_append({
 - `jurisdiction`: Human-readable place description
 - `date_range`: Target period (e.g., "1875-1890", "1850")
 - `repository`: FamilySearch, Ancestry, MyHeritage, FindMyPast,
-  NARA, state_archives, county_courthouse, other
+  NARA, state_archives, county_courthouse, other. These are examples,
+  not a closed list — name the actual repository rather than forcing it
+  to `other`.
 - `rationale`: Why this record set for this question — what it could
   reveal and why it's worth searching. "Because it exists" is insufficient.
 - `fallback_for`: `pli_` ID of the plan item this falls back from,
