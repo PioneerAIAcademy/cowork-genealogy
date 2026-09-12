@@ -73,7 +73,16 @@ describe("FsProjectStore specifics", () => {
       const real = join(root, "project");
       const alias = join(root, "alias");
       await mkdir(real);
-      await symlink(real, alias);
+      // "junction", not the default: creating a true symlink on Windows needs
+      // elevation or Developer Mode, so `symlink(real, alias)` threw EPERM on
+      // every unelevated Windows box and this test could not pass for the
+      // Windows-based half of the team. Node ignores the type argument on
+      // POSIX, so CI keeps testing the symlink it always did, while Windows
+      // gets a directory junction — which is the same thing for this test's
+      // purpose: `realpath` resolves both spellings to one path, which is what
+      // the lock key is derived from. Skipping instead would have bought a
+      // green suite and no coverage.
+      await symlink(real, alias, "junction");
       const store = new FsProjectStore();
       const order: string[] = [];
       const a = store.withTransaction(real, async () => {
