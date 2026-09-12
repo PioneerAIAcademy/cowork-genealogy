@@ -272,7 +272,7 @@
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "Should have declined or call record extraction"
+      "comment": "Should have declined or call record extraction — confirming 1: `skills_invoked` is empty, so NEITHER behaviour the fixture sanctions occurred. Both of them (auto-route to record-extraction, or load conflict-resolution and decline/over-explain in-body) require a skill to appear in skills_invoked, which `correct_skill` is matched against. The model answered inline with no skill loaded — a third shape the fixture does not name. The fixture's own premise that sonnet-4-6 'never returns empty skills_invoked' is falsified by this run, and `grade_on_invariant: true` hides it by passing on the no-new-conflict invariant before the routing check runs."
     },
     {
       "test_id": "ut_conflict_resolution_010",
@@ -280,7 +280,7 @@
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "Should call record extraction"
+      "comment": "Should call record extraction — confirming 1: `skills_invoked` is empty, so NEITHER behaviour the fixture sanctions occurred. Both of them (auto-route to record-extraction, or load conflict-resolution and decline/over-explain in-body) require a skill to appear in skills_invoked, which `correct_skill` is matched against. The model answered inline with no skill loaded — a third shape the fixture does not name. The fixture's own premise that sonnet-4-6 'never returns empty skills_invoked' is falsified by this run, and `grade_on_invariant: true` hides it by passing on the no-new-conflict invariant before the routing check runs."
     },
     {
       "test_id": "ut_conflict_resolution_010",
