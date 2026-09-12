@@ -6,6 +6,7 @@
  *   npx tsx dev/try-image-search.ts 007621224_005_M99P-2TQ   # split form
  *   npx tsx dev/try-image-search.ts 007621224                # bare form (apid path)
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { imageSearchTool } from "../src/tools/image-search.js";
 
 const imageGroupNumber = process.argv[2];
@@ -20,5 +21,5 @@ if (!imageGroupNumber) {
   process.exit(1);
 }
 
-const result = await imageSearchTool({ imageGroupNumber });
+const result = await imageSearchTool({ imageGroupNumber }, LOCAL);
 console.log(JSON.stringify(result, null, 2));

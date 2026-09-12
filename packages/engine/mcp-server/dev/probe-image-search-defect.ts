@@ -12,6 +12,7 @@
  * Usage:
  *   npx tsx dev/probe-image-search-defect.ts <imageGroupNumber> [iterations] [expectedCount]
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { imageSearchTool } from "../src/tools/image-search.js";
 
 const group = process.argv[2] ?? "004514823_003_M9SW-1CG";
@@ -45,7 +46,7 @@ let badResults = 0;
 
 for (let i = 1; i <= iterations; i++) {
   bodies = [];
-  const { imageIds } = await imageSearchTool({ imageGroupNumber: group });
+  const { imageIds } = await imageSearchTool({ imageGroupNumber: group }, LOCAL);
   const nulls = imageIds.filter((v) => typeof v !== "string" || !v).length;
   const upstreamBad = bodies.some((b) => b.bad > 0);
   const short = expected !== undefined && imageIds.length < expected;
