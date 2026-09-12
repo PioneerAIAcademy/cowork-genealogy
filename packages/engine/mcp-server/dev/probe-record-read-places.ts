@@ -57,6 +57,7 @@ type Category =
   | "US newspaper obituary"
   | "England parish"
   | "Scandinavian church book"
+  | "Scandinavian census"
   | "Scandinavian marriage index";
 
 interface Ark {
@@ -81,7 +82,7 @@ const ARKS: Ark[] = [
   { id: "MPXD-MZC", category: "US census", note: "US census, single-segment place 'North Dakota' (spriggs-parents-1898 e2e)" },
   { id: "M9VJ-V1R", category: "US census", note: "US census, multi-segment 'Grand Forks, ..., North Dakota' (spriggs-parents-1898 e2e; single-vs-multi contrast with MPXD-MZC)" },
   { id: "QL3R-C5SR", category: "England parish", note: "England parish baptism, West Bromwich, Staffordshire (hannah-earnest-children e2e)" },
-  { id: "8YMV-R76Z", category: "Scandinavian church book", note: "Norway, vernacular place 'Hamre, Hordaland, Norge' (anders-monsen-ancestry e2e)" },
+  { id: "8YMV-R76Z", category: "Scandinavian census", note: "Norway Census 1801 (Norges folketelling), vernacular place 'Hamre, Hordaland, Norge' (anders-monsen-ancestry e2e)" },
   { id: "Q5SZ-J9LG", category: "US newspaper obituary", note: "US newspaper obituary index (GenealogyBank), 'Milwaukee, Wisconsin' (heinrich-dewus-children-death e2e; 2026-07/08 runs)" },
 ];
 
