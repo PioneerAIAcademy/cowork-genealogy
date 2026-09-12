@@ -120,9 +120,10 @@ England death/burial). For **the person you searched** (the matched persona):
   used to re-standardize it WRONGLY** — two cross-country mis-resolutions observed
   2026-07-08: `Southampton, NY → Southampton, England`;
   `Rochdale, England → Rochdale, South Africa`. **Re-probed live 2026-09-11**
-  (issue #1908 Phase 1, 28 place observations across 11 records): those two
-  cross-country examples **did not reproduce** (0 contradiction verdicts / 28),
-  but one **intra-country** mis-resolution did — `Eye Town → Eye, Suffolk`, where
+  (issue #1908 Phase 1, 28 place observations across 11 records, neither of
+  these two among them): **no cross-country mis-resolution appeared** (0
+  contradiction verdicts / 28), but the run surfaced one **intra-country**
+  mis-resolution — `Eye Town → Eye, Suffolk`, where
   the same record's fully-qualified fact reads `Eye, Northamptonshire` — a class
   `countryConsistency` cannot detect. The sidecar is therefore more
   reliable only for its FS-normalized share — its resolver-derived share came from
