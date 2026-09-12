@@ -1,6 +1,7 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { toArk, arkToBareId } from "../utils/ark.js";
@@ -67,6 +68,7 @@ export const recordReadSchema = {
 
 export async function recordReadTool(
   input: RecordReadInput,
+  principal: Principal,
 ): Promise<RecordReadResult> {
   const { recordId, resultsRef, projectPath } = input;
   if (typeof recordId !== "string" || recordId.trim() === "") {
@@ -88,7 +90,7 @@ export async function recordReadTool(
   }
 
   const entityId = extractEntityId(recordId.trim());
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   // TODO: implement fetch + convert logic
   // 1. Build URL: `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`
@@ -99,7 +101,7 @@ export async function recordReadTool(
 
   const url = `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`;
 
-  const res = await fetchWithTimeout(url, {
+  const res = await fetchWithRetry(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/json",
@@ -126,7 +128,8 @@ export async function recordReadTool(
   }
   if (res.status === 429) {
     throw new Error(
-      "FamilySearch rate limit reached. Wait a moment and try again.",
+      "FamilySearch rate limit reached and did not clear within the retry budget. " +
+        "Wait a minute and try again.",
     );
   }
   if (!res.ok) {

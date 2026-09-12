@@ -255,3 +255,67 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     expect(single(r).entryId).toBe("pe_001");
   });
 });
+
+// ─── The P1 debug holds ────────────────────────────────────────────────────
+//
+// GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS / _AFTER_COMMIT_MS are the only two
+// environment variables the engine reads (CLAUDE.md: config-only, never
+// process.env), and they ship in the .mcpb. They exist so the P1 resume probe
+// (apps/server/dev/p1/) can kill a worker between an extraction_append's
+// validate and its commit. This pins the claim that makes shipping them
+// acceptable — inert unless set, and only on extraction_append — and that a
+// set value actually waits, so the seam cannot rot silently either way.
+describe("extraction_append debug holds", () => {
+  const BEFORE = "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS";
+  const AFTER = "GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS";
+  const saved: Record<string, string | undefined> = {};
+  let dir: string;
+
+  beforeEach(async () => {
+    saved[BEFORE] = process.env[BEFORE];
+    saved[AFTER] = process.env[AFTER];
+    dir = await mkdtemp(join(tmpdir(), "extraction-append-hold-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    for (const k of [BEFORE, AFTER]) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const appendSource = (fn: typeof extractionAppend | typeof researchAppend) =>
+    fn({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("src_002")) } as any);
+
+  it("are inert when unset, zero, or garbage", async () => {
+    delete process.env[BEFORE];
+    process.env[AFTER] = "0";
+    let t0 = Date.now();
+    expect((await appendSource(extractionAppend)).ok).toBe(true);
+    expect(Date.now() - t0).toBeLessThan(1000);
+
+    process.env[BEFORE] = "not-a-number";
+    process.env[AFTER] = "";
+    t0 = Date.now();
+    expect((await appendSource(extractionAppend)).ok).toBe(true);
+    expect(Date.now() - t0).toBeLessThan(1000);
+  });
+
+  it("hold only extraction_append, never research_append", async () => {
+    process.env[BEFORE] = "1500";
+    process.env[AFTER] = "1500";
+    const t0 = Date.now();
+    expect((await appendSource(researchAppend)).ok).toBe(true);
+    expect(Date.now() - t0).toBeLessThan(1000);
+  });
+
+  it("a set value actually holds an extraction_append, on both sides of the commit", async () => {
+    process.env[BEFORE] = "300";
+    process.env[AFTER] = "300";
+    const t0 = Date.now();
+    expect((await appendSource(extractionAppend)).ok).toBe(true);
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(600);
+  });
+});

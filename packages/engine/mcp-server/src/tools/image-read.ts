@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
@@ -29,7 +30,7 @@ export interface ImageReadResult {
   imageRef?: string;
 }
 
-export async function imageReadTool(input: ImageReadInput): Promise<{
+export async function imageReadTool(input: ImageReadInput, principal: Principal): Promise<{
   imageData: string;
   metadata: ImageReadResult;
 }> {
@@ -37,7 +38,8 @@ export async function imageReadTool(input: ImageReadInput): Promise<{
 
   const { bytes, contentType, sizeBytes, resolvedUrl } = await fetchFsImageBytes(
     url,
-    fallbackUrl
+    fallbackUrl,
+    principal
   );
 
   // Refuse oversized images before encoding — returning them would overflow

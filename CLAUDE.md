@@ -115,9 +115,11 @@ This repo is also a pnpm + turborepo monorepo for the hosted web product —
 - **Keep the engine out of the pnpm workspace.** `pnpm-workspace.yaml` carries a
   `!packages/engine/**` negation. Both shipped artifacts install their production
   tree with `npm ci --omit=dev` from
-  `packages/engine/mcp-server/package-lock.json`, and no CI job builds either
-  one, so that lockfile has to stay npm's — a break surfaces at release time,
-  not in a green PR.
+  `packages/engine/mcp-server/package-lock.json`, so that lockfile has to stay
+  npm's. The required `vitest` job in `.github/workflows/engine-tests.yml`
+  builds both artifacts on every PR and verifies the `.mcpb` boots with every
+  manifest tool (`scripts/verify-mcpb.sh`), so a packaging break reds the PR
+  rather than waiting for a release.
 - **The web side depends on `packages/schema`, never on the engine.**
 
 What each package is and how they bind: `docs/architecture.md`, "The hosted web
@@ -273,7 +275,7 @@ because unrecognized entries are ignored so long as at least one resolves.
 **No agent declares `disallowedTools:` any more — omit the tool instead.**
 Under `bypassPermissions` **both** bind: a tool merely omitted from `tools:` is
 absent from the agent, exactly as a denied one is (`make probe-agent-binding`,
-2026-08-30, Claude Code 2.1.251 / SDK 0.2.128). Every deny we shipped named a
+2026-08-30, Claude Code 2.1.220 / SDK 0.2.128). Every deny we shipped named a
 tool already absent from the list above it, so all five were deleted as
 restatements. What keeps `record-extractor` off the broad `research_append` is
 `research_append` not being in its `tools:`.
@@ -470,9 +472,18 @@ module — do not re-implement token plumbing. To see which tools those are toda
 
 Four rules hold across the module:
 
-- **`getValidToken()` (`refresh.ts`) is the single entry point.** It loads
+- **`getValidToken(principal)` (`refresh.ts`) is the single entry point.** It loads
   tokens, auto-refreshes if expired, and throws an LLM-instruction error
   ("Call the login tool to authenticate.") when there is no valid session.
+  **Every credential and per-user-config read takes a `Principal`**
+  (`src/auth/principal.ts`) — `LOCAL` for the one-user-per-process desktop and
+  harness path, a bearer carrying the request's token and config for a hosted
+  entrypoint — so the tool entry points that need one take it as their last
+  parameter and the stdio dispatcher binds `LOCAL` once. A call site that
+  never establishes it does not compile; never route around this with a
+  module-level or async-local default, which is the cross-patron
+  impersonation the parameter exists to prevent. A bearer never refreshes and
+  never touches `~/.familysearch-mcp` (`tests/auth/principal.test.ts` pins it).
 - **The bundled `config/familysearch.json` is the sole source of the FS client
   ID** — no env-var fallback, no per-user override. A missing or corrupt file
   throws an installation-framed error, not an LLM-actionable one: it ships with
@@ -498,17 +509,17 @@ Two distinct config sources:
    `loadConfig` / `saveConfig` read and write the per-user JSON.
    **Do not** introduce env-var fallbacks — the files are the sole
    sources. New per-user keys go on `AppConfig` in `src/types/auth.ts`
-   and are read via `loadConfig()`.
+   and are read via `loadConfig(principal)`.
 
 Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 
 | Field | Used by | Required | Notes |
 |-------|---------|----------|-------|
-| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl()` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
+| `wikiApiUrl` | `wiki_search`, `wiki_read`, `wiki_place_page` | When using any wiki tool | Base URL of the upstream `wiki-query-api` FastAPI. Local dev: `"http://localhost:8000"`. Read by `getWikiApiUrl(principal)` in `src/auth/config.ts`. Trailing slash is stripped. Defaults to `DEFAULT_WIKI_API_URL`. |
 | `popStatsUrl` | `place_population` | Optional | Base URL of the Pop Stats API. Read directly in `src/tools/place-population.ts`; defaults to `DEFAULT_POP_STATS_URL` when absent. |
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
-| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey()` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
-| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel()` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
+| `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user directly in `config.json` (the `configure_openrouter` tool does not accept a key). The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent directing the user to set it in config.json. |
+| `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the
@@ -691,14 +702,26 @@ module instead.
 
 Where to look first:
 
-- **`src/auth/`** — `getValidToken()` is the only correct way to
+- **`src/auth/`** — `getValidToken(principal)` is the only correct way to
   read a FamilySearch access token. Don't re-implement token
   loading, expiry checks, or refresh. The same applies to anything
   else here (PKCE, config loading, token storage).
-- **`src/auth/config.ts`** — `loadConfig()` / `getClientId()` is
+- **`src/auth/config.ts`** — `loadConfig(principal)` / `getClientId()` is
   the single source for app config. New provider keys go on
   `AppConfig` in `src/types/auth.ts`, not into env vars or
   ad-hoc files.
+- **`src/store/`** — `ProjectStore` is the only way to read or write project
+  state (`research.json`, `tree.gedcomx.json`, `results/`, `images/`). Tools
+  reach it through `src/utils/project-io.ts` (`readProjectJson`,
+  `atomicWriteJson(projectPath, ref, obj)`, `withProjectLock`),
+  `results-staging.ts` and `image-store.ts`, or call `getProjectStore()` for a
+  raw read; refs are project-relative, never absolute paths. The desktop and
+  both harnesses run `FsProjectStore`; a hosted deployment installs another
+  backend with `setProjectStore()` and no tool changes. **No module outside
+  `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
+  reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
+  also fails when an exemption stops being needed. A second backend runs
+  `tests/store/conformance.ts`.
 - **`src/types/`** — shared API response and tool I/O types live
   here. If a second tool touches the same upstream API, put the
   response shape here so both stay in sync.
@@ -709,12 +732,19 @@ Where to look first:
   examples). Import this constant instead of hardcoding the
   string — `collections_search`, `record_search`, `external_links_search`,
   `image_read`, `image_search`, `record_read`, and `fulltext_search` already do.
-- **`src/utils/http.ts`** — `fetchWithTimeout()` is the only correct way to call
-  an external service. Node's global `fetch` never times out on its own; a
-  stalled upstream connection (FamilySearch/Imperva, the wiki-query-api
-  sidecar, OpenRouter) hangs the call forever otherwise. Every tool that touches
-  the network calls this instead of the global `fetch` directly; it is the
-  only file allowed to (enforced by `tests/packaging/no-bare-fetch.test.ts`).
+- **`src/utils/http.ts`** — `fetchWithRetry()` is the standard way to call an
+  external service. It wraps `fetchWithTimeout()` with automatic retry of
+  transient failures (429, 5xx, network errors, timeouts) under a 10s budget
+  cap with exponential backoff + jitter. On exhaustion it returns the last
+  Response so the caller's existing `!response.ok` error path is preserved.
+  Use `fetchWithRetry` for new call sites; `fetchWithTimeout` is still
+  exported for the handful of excluded sites that manage their own retry or
+  carry timeouts too long for the budget (`image_transcribe` 180s,
+  `fs-image-fetch` 90s, `place-api`, `match-engine`). Node's global `fetch`
+  never times out on its own; a stalled upstream connection
+  (FamilySearch/Imperva, the wiki-query-api sidecar, OpenRouter) hangs the
+  call forever otherwise. This file is the only one allowed to call the global
+  `fetch` directly (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
   `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
   60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a

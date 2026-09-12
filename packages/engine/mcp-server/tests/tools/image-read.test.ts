@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, readFile } from "fs/promises";
 import { tmpdir } from "os";
@@ -43,7 +44,7 @@ describe("imageReadTool — imageId input", () => {
   it("builds the DGS URL from imageId and fetches it", async () => {
     mockImageResponse();
 
-    const result = await imageReadTool({ imageId: "004884748_02613" });
+    const result = await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -59,7 +60,7 @@ describe("imageReadTool — imageId input", () => {
   it("sends the shared BROWSER_USER_AGENT header", async () => {
     mockImageResponse();
 
-    await imageReadTool({ imageId: "004884748_02613" });
+    await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
@@ -71,7 +72,7 @@ describe("imageReadTool — imageId input", () => {
     // transport buffer and crash the session, so the tool must refuse it.
     mockImageResponse(new Uint8Array(800_000));
 
-    await expect(imageReadTool({ imageId: "004884748_02613" })).rejects.toThrow(
+    await expect(imageReadTool({ imageId: "004884748_02613" }, LOCAL)).rejects.toThrow(
       /too large to return inline/i
     );
   });
@@ -79,7 +80,7 @@ describe("imageReadTool — imageId input", () => {
   it("returns an image sitting just under the size cap", async () => {
     mockImageResponse(new Uint8Array(699_999));
 
-    const result = await imageReadTool({ imageId: "004884748_02613" });
+    const result = await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
 
     expect(result.metadata.sizeBytes).toBe(699_999);
     expect(result.imageData.length).toBeGreaterThan(0);
@@ -92,7 +93,7 @@ describe("imageReadTool — imageId input", () => {
       const result = await imageReadTool({
         imageId: "004884748_02613",
         projectPath: dir,
-      });
+      }, LOCAL);
       expect(result.metadata.imageRef).toBe("images/004884748_02613.jpg");
       const saved = await readFile(join(dir, "images", "004884748_02613.jpg"));
       expect(saved.length).toBe(3); // the 3 mocked fetch bytes
@@ -103,7 +104,7 @@ describe("imageReadTool — imageId input", () => {
 
   it("omits imageRef when projectPath is not given", async () => {
     mockImageResponse();
-    const result = await imageReadTool({ imageId: "004884748_02613" });
+    const result = await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.metadata.imageRef).toBeUndefined();
   });
 
@@ -122,7 +123,7 @@ describe("imageReadTool — imageId input", () => {
       "an ARK URL",
     ],
   ])("rejects %j (%s) without fetching", async (imageId) => {
-    await expect(imageReadTool({ imageId })).rejects.toThrow(
+    await expect(imageReadTool({ imageId }, LOCAL)).rejects.toThrow(
       /Unrecognized.*imageId/i
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -135,7 +136,7 @@ describe("imageReadTool — ark input", () => {
     const ark =
       "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist";
 
-    const result = await imageReadTool({ ark });
+    const result = await imageReadTool({ ark }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -147,7 +148,7 @@ describe("imageReadTool — ark input", () => {
     mockImageResponse();
     const url = "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg";
 
-    await imageReadTool({ ark: url });
+    await imageReadTool({ ark: url }, LOCAL);
 
     const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(fetchedUrl).toBe(url);
@@ -156,7 +157,7 @@ describe("imageReadTool — ark input", () => {
   it("expands a canonical document-image ARK (3:1:) to a resolver URL", async () => {
     mockImageResponse();
 
-    await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" });
+    await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }, LOCAL);
 
     const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(fetchedUrl).toBe(
@@ -169,7 +170,7 @@ describe("imageReadTool — ark input", () => {
     // shell, not the image, so this shape is deliberately unsupported —
     // only 3:1:/3:2: document-image ARKs resolve to bytes.
     await expect(
-      imageReadTool({ ark: "ark:/61903/1:2:HSJG-CLNF" })
+      imageReadTool({ ark: "ark:/61903/1:2:HSJG-CLNF" }, LOCAL)
     ).rejects.toThrow(/Unrecognized ark/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -177,7 +178,7 @@ describe("imageReadTool — ark input", () => {
   it("expands a bare n:n:id ARK to a resolver URL", async () => {
     mockImageResponse();
 
-    await imageReadTool({ ark: "3:2:3Q9M-CSNL-S98H-M" });
+    await imageReadTool({ ark: "3:2:3Q9M-CSNL-S98H-M" }, LOCAL);
 
     const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(fetchedUrl).toBe(
@@ -189,7 +190,7 @@ describe("imageReadTool — ark input", () => {
     mockImageResponse();
     const url = "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M";
 
-    await imageReadTool({ ark: url });
+    await imageReadTool({ ark: url }, LOCAL);
 
     const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(fetchedUrl).toBe(url);
@@ -217,7 +218,7 @@ describe("imageReadTool — ark input", () => {
     const url =
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=999&cc=1858355&groupId=1858355";
 
-    const result = await imageReadTool({ ark: url });
+    const result = await imageReadTool({ ark: url }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(mockFetch.mock.calls[0][0]).toBe(
@@ -234,7 +235,7 @@ describe("imageReadTool — ark input", () => {
   });
 
   it("rejects an unrecognized ark value without fetching", async () => {
-    await expect(imageReadTool({ ark: "not-an-ark" })).rejects.toThrow(
+    await expect(imageReadTool({ ark: "not-an-ark" }, LOCAL)).rejects.toThrow(
       /Unrecognized ark/i
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -250,7 +251,7 @@ describe("imageReadTool — ark input", () => {
     });
 
     await expect(
-      imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" })
+      imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }, LOCAL)
     ).rejects.toThrow(/Expected an image response/i);
   });
 });
@@ -258,13 +259,13 @@ describe("imageReadTool — ark input", () => {
 describe("imageReadTool — input validation", () => {
   it("rejects when both imageId and ark are provided", async () => {
     await expect(
-      imageReadTool({ imageId: "004884748_02613", ark: "ark:/61903/1:2:HSJG-CLNF" })
+      imageReadTool({ imageId: "004884748_02613", ark: "ark:/61903/1:2:HSJG-CLNF" }, LOCAL)
     ).rejects.toThrow(/either imageId or ark, not both/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("rejects when neither imageId nor ark is provided", async () => {
-    await expect(imageReadTool({})).rejects.toThrow(
+    await expect(imageReadTool({}, LOCAL)).rejects.toThrow(
       /requires either imageId or ark/i
     );
     expect(mockFetch).not.toHaveBeenCalled();

@@ -22,6 +22,7 @@
  * difference from a persona that genuinely has no matches. `updated` is a
  * second tell (epoch vs a real timestamp). `matchById` keys on the link.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
@@ -39,7 +40,7 @@ const CASES: Array<[label: string, collection: string, id: string, status?: stri
 ];
 
 async function main(): Promise<void> {
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
 
   for (const [label, collection, id, status] of CASES) {
     const url = new URL(API);

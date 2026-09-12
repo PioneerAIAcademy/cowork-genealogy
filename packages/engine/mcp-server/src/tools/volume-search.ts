@@ -1,6 +1,7 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import {
   RECORD_TYPE_GROUP_NAMES,
   assertKnownGroupNames,
@@ -116,7 +117,7 @@ async function callGroupSearch(
 ): Promise<MetadataRmsSearchResponse> {
   let response: Response;
   try {
-    response = await fetchWithTimeout(RMS_SEARCH_URL, {
+    response = await fetchWithRetry(RMS_SEARCH_URL, {
       method: "PUT",
       headers: rmsHeaders(token),
       body: JSON.stringify(body),
@@ -152,20 +153,14 @@ async function fetchFulltextSearchable(
   const ids = groupNames.join(",");
   const url = `${FULLTEXT_GROUP_URL}?ids=${encodeURIComponent(ids)}`;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const response = await fetchWithTimeout(url, { headers: rmsHeaders(token) });
-      if (!response.ok) {
-        if (attempt === 2) return null;
-        continue;
-      }
-      const data = (await response.json()) as FulltextGroupNumberResponse;
-      return new Set(data.ids ?? []);
-    } catch {
-      if (attempt === 2) return null;
-    }
+  try {
+    const response = await fetchWithRetry(url, { headers: rmsHeaders(token) });
+    if (!response.ok) return null;
+    const data = (await response.json()) as FulltextGroupNumberResponse;
+    return new Set(data.ids ?? []);
+  } catch {
+    return null;
   }
-  return null;
 }
 
 function derivePrefix(groupName: string): string {
@@ -264,13 +259,14 @@ function mapGroup(
 }
 
 export async function volumeSearchTool(
-  input: VolumeSearchInput
+  input: VolumeSearchInput,
+  principal: Principal
 ): Promise<VolumeSearchResult> {
   validate(input);
 
   // Auth first, so an unauthenticated user always gets the login-instruction
   // error (rather than a "could not resolve" message) regardless of the place.
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   // Resolve the standard place name -> placeId -> all of its representation
   // IDs. standardPlaceToPlaceId returns null when the name is unresolvable or

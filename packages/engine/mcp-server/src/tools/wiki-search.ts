@@ -1,5 +1,6 @@
+import type { Principal } from "../auth/principal.js";
 import { getWikiApiUrl } from "../auth/config.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import type {
   WikiSearchAPIResponse,
   WikiSearchResult,
@@ -15,14 +16,15 @@ export interface WikiSearchInput {
 }
 
 export async function wikiSearch(
-  input: WikiSearchInput
+  input: WikiSearchInput,
+  principal: Principal
 ): Promise<WikiSearchResult> {
-  const baseUrl = await getWikiApiUrl();
+  const baseUrl = await getWikiApiUrl(principal);
   const url = `${baseUrl}/search`;
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(
+    response = await fetchWithRetry(
       url,
       {
         method: "POST",

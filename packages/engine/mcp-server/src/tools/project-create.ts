@@ -36,7 +36,6 @@
 // The full→simplified GedcomX conversion stays in the skill, exactly where it
 // is today; moving it host-side is a separate change.
 
-import { join } from "path";
 import {
   atomicWriteBoth,
   fileExists,
@@ -113,8 +112,6 @@ export async function projectCreate(
       );
     }
 
-    const researchPath = join(projectPath, "research.json");
-    const treePath = join(projectPath, "tree.gedcomx.json");
     // The opening tree, copied write-once alongside the two live documents. The
     // tree-encoding completion gate (issue #1490) diffs the final tree against
     // this baseline to tell a conclusion this session encoded from a fact that
@@ -122,13 +119,12 @@ export async function projectCreate(
     // a persisted baseline it cannot make that distinction. Written from the same
     // caller-passed `tree`, in the same atomic write, so the baseline is the
     // opening tree exactly and never diverges.
-    const startingTreePath = join(projectPath, "starting-tree.gedcomx.json");
 
     // Create, not upsert. Overwriting an existing project would destroy an
     // audit trail that cannot be reconstructed, and the caller that wants to
     // add to a project already has the writer tools for it.
-    const hasResearch = await fileExists(researchPath);
-    const hasTree = await fileExists(treePath);
+    const hasResearch = await fileExists(projectPath, "research.json");
+    const hasTree = await fileExists(projectPath, "tree.gedcomx.json");
     if (hasResearch && hasTree) {
       throw new ProjectCreateError(
         "research.json and tree.gedcomx.json already exist in projectPath — " +
@@ -206,10 +202,10 @@ export async function projectCreate(
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
-    await atomicWriteBoth([
-      { path: treePath, data: tree },
-      { path: researchPath, data: research },
-      { path: startingTreePath, data: tree },
+    await atomicWriteBoth(projectPath, [
+      { ref: "tree.gedcomx.json", data: tree },
+      { ref: "research.json", data: research },
+      { ref: "starting-tree.gedcomx.json", data: tree },
     ]);
 
     return {
