@@ -7,6 +7,7 @@
  *   npx tsx dev/try-person-read.ts KNDX-MKG --sources             # person + sources
  *   npx tsx dev/try-person-read.ts KNDX-MKG --relatives --sources # everything
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { personReadTool } from "../src/tools/person-read.js";
 
 const personId = process.argv[2];
@@ -20,5 +21,5 @@ if (!personId) {
 const relatives = process.argv.includes("--relatives");
 const sourceDescriptions = process.argv.includes("--sources");
 
-const result = await personReadTool({ personId, relatives, sourceDescriptions });
+const result = await personReadTool({ personId, relatives, sourceDescriptions }, LOCAL);
 console.log(JSON.stringify(result, null, 2));

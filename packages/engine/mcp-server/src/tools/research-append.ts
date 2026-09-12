@@ -18,8 +18,7 @@
 // all three phases (sources/assertions/person_evidence, the status-transition
 // sections, the phase-3 sections, and the `project` singleton).
 
-import { join } from "path";
-import { readFile, mkdir } from "fs/promises";
+import { getProjectStore } from "../store/project-store.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -928,7 +927,7 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
  *  block a completion for a project that simply predates it. */
 async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
   try {
-    const raw = await readFile(join(projectPath, "starting-tree.gedcomx.json"), "utf-8");
+    const raw = await getProjectStore().readText(projectPath, "starting-tree.gedcomx.json");
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === "object" ? (parsed as SimplifiedGedcomX) : null;
   } catch {
@@ -2177,7 +2176,7 @@ async function prepareOps(
     let results: any[] | null = null;
     if (isInsideProject(projectPath, ref)) {
       try {
-        const sc = JSON.parse(await readFile(join(projectPath, ref), "utf-8"));
+        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
         if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
           results = sc.payload.results;
         }
@@ -2671,20 +2670,17 @@ export async function researchAppend(
       // name a file that does not exist. Written before the document commit so
       // a failure here aborts before the pointer is persisted.
       if (prep.verdictFile) {
-        await mkdir(join(projectPath, "evaluations"), { recursive: true });
-        await atomicWriteJson(join(projectPath, prep.verdictFile.relPath), prep.verdictFile.body);
+        await atomicWriteJson(projectPath, prep.verdictFile.relPath, prep.verdictFile.body);
       }
-      const researchPath = join(projectPath, "research.json");
       if (prep.treeMutated) {
-        const treePath = join(projectPath, "tree.gedcomx.json");
-        await atomicWriteBoth([
-          { path: treePath, data: tree }, // tree first —
-          { path: researchPath, data: research }, // — then research (commit order)
+        await atomicWriteBoth(projectPath, [
+          { ref: "tree.gedcomx.json", data: tree }, // tree first —
+          { ref: "research.json", data: research }, // — then research (commit order)
         ]);
         filesWritten = ["tree.gedcomx.json", "research.json"];
         validationWarnings = [...sanitized.warnings, ...validationWarnings];
       } else {
-        await atomicWriteJson(researchPath, research);
+        await atomicWriteJson(projectPath, "research.json", research);
         filesWritten = ["research.json"];
       }
       if (prep.verdictFile) filesWritten = [...filesWritten, prep.verdictFile.relPath];

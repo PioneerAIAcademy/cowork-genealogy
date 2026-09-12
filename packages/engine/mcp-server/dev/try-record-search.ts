@@ -1,3 +1,4 @@
+import { LOCAL } from "../src/auth/principal.js";
 import { recordSearchTool } from "../src/tools/record-search.js";
 import type { RecordSearchInput } from "../src/types/record-search.js";
 
@@ -162,7 +163,7 @@ const argv = process.argv.slice(2);
 if (argv.length === 0) usage();
 
 const { input, termsOnly } = parseArgs(argv);
-const result = await recordSearchTool(input);
+const result = await recordSearchTool(input, LOCAL);
 
 if (termsOnly) {
   // The distribution `record-search-tool-spec-v2.md` § relativeTerms cannot get

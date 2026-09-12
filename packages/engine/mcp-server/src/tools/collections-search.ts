@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -190,7 +191,8 @@ export interface CollectionsSearchInput {
 }
 
 export async function collectionsSearchTool(
-  input: CollectionsSearchInput
+  input: CollectionsSearchInput,
+  principal: Principal
 ): Promise<CollectionsSearchResult> {
   if (!input.standardPlace) {
     throw new Error(
@@ -210,7 +212,7 @@ export async function collectionsSearchTool(
   // Canada/Mexico, country otherwise). Free-text queries pass through.
   const scope = standardPlaceToCollectionsQuery(input.standardPlace);
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const data = await fetchAllCollections(token);
   const entries = data.entries ?? [];
 
