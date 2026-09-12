@@ -3,18 +3,20 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Ignacio Alvarado and Teodosia Durán had an infant daughter, Angela, born and buried in 1880 at El Carmen, San José, Costa Rica.",
+      "description": "Ignacio Alvarado and Teodosia Durán of San José, Costa Rica had a legitimate daughter, Angela Alvarado Durán, born shortly before her baptism on 27 March 1879 and buried 20 June 1880 at El Carmen, San José at the age of one year and two months.",
       "details": {
         "subject_person": "Ignacio Alvarado (K21K-P1C)",
         "relation": "child",
         "target_person": {
           "name": "Angela Alvarado Durán",
-          "birth": "1880",
+          "birth": "shortly before her baptism on 27 Mar 1879 at San Vicente Ferrer — the burial register gives her age as one year and two months on 20 Jun 1880, which in completed years and months places her birth between 21 March and 20 April 1879; the baptism falls inside that window, so the two agree exactly and together fix the birth in the week of 21–27 March 1879",
           "burial": "20 June 1880, El Carmen, San José, Costa Rica"
-        }
+        },
+        "mother": "Teodosia Durán — the woman the starting tree carries twice, as Teodosia Duran (K4JL-NPF, b. 1876) and Teodora Durán (K21K-P18). The tree's 1876 birth year is unsourced and impossible, and the record this finding rests on is itself the strongest disproof: 1876 would make her no more than three when she bore Angela, baptized 27 Mar 1879. Beyond that one record she is bearing children in this parish from 1881 onward and buries two infants in 1880 and 1884."
       },
       "supporting_sources": [
-        "Costa Rica, registros parroquiales y diocesanos, 1595-2022 — burial entry for Angela Charado Duran, 20 Jun 1880, naming parents Ygnacio Alvarado and Teodosia Duran"
+        "Costa Rica, registros parroquiales y diocesanos, 1595-2022 — baptism of Angela Procesa Maria de las Piedades Alvarado Duran, 27 Mar 1879, San Vicente Ferrer, San Vicente, San José, daughter of Ygnacio Alvarado and Teodosia Duran (ark:/61903/1:1:NQ24-QZQ)",
+        "Costa Rica, registros parroquiales y diocesanos, 1595-2022 — burial entry no. 814, 20 Jun 1880, San José: \"Angela Alvarado, hija legitima de Ygnacio Alvarado y Teodosia Duran, de año y dos meses, murió de Alfericia\" — original register image ark:/61903/3:1:S3HT-63K2-3Z, indexed as ark:/61903/1:1:NQ5N-RXJ, which mangles the surname to \"Charado\" and the year to 1880"
       ],
       "required": true
     }
