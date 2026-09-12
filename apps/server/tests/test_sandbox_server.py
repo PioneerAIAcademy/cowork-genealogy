@@ -418,3 +418,129 @@ def test_an_agent_exit_keeps_the_retry_framing_and_drops_the_exit_code():
     assert statuses and "-9" not in statuses[-1]["message"]
     # The turn is unstuck either way, or the UI spins forever.
     assert hub._turn_active is False
+
+
+def test_a_crashed_runners_synthetic_turn_done_enters_history():
+    """The synthetic `turn_done` on agent exit must be RECORDED, not only
+    broadcast, or every later reconnect replays an unbalanced `turn_start`.
+
+    Three facts composed into a wedge that persists rather than self-corrects:
+
+    * `turn_start` is not in `TRANSIENT_KINDS`, so it IS recorded and replayed.
+    * `_history` is never cleared, only trimmed at `_HISTORY_MAX` (1000). And
+      `_record` trims from the FRONT, so a `turn_start` is always evicted before
+      its own `turn_done` - the survivable orphan is a `turn_done`, which the v1
+      drain already clamps. The crash path was the only producer of the other
+      orphan, and it was the one path that skipped `_record`.
+    * The v1 drain counts `turn_start` as a turn in flight and waits for a
+      `turn_done` that exists nowhere, so it ran to its own ceiling on every
+      later sync call until 1000 events pushed the frame out.
+
+    `broadcast` does not touch `_record`, which is why "the user saw it" was not
+    the same as "history has it".
+    """
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return -9
+
+    hub = ss.Hub()
+    proc = FakeProc()
+    hub._proc = proc
+    hub._turn_active = True
+    sent = _broadcasts(hub)
+
+    # A turn was in flight when the runner died: its turn_start is in history.
+    start = {"type": "agent_event", "event": {"kind": "turn_start", "queued": True}}
+    hub._record(start)
+
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, proc))
+
+    kinds = [
+        m["event"].get("kind") for m in hub._history
+        if m.get("type") == "agent_event"
+    ]
+    assert kinds.count("turn_start") == kinds.count("turn_done"), (
+        f"history is unbalanced: {kinds}. A reconnect replays a turn_start whose "
+        f"turn_done exists nowhere, and the v1 drain waits it out to its ceiling "
+        f"on every later call."
+    )
+    # And the user still saw it: recording must be in ADDITION to broadcasting.
+    assert any(
+        m.get("type") == "agent_event" and m["event"].get("kind") == "turn_done"
+        for m in sent
+    ), "the terminal frame stopped reaching live clients"
+
+
+def test_a_queued_turn_start_holds_the_busy_gate_across_the_backlog():
+    """`turn_done` fires once per TURN, not once per backlog.
+
+    Clearing `_turn_active` on it left the UI idle while messages were still
+    queued, and the client's busy gate is what is supposed to stop a backlog
+    forming in the first place - so a user who saw idle would keep sending.
+    A queued turn's `turn_start` re-arms the gate. Issue #2062, review round 1.
+
+    ASSERTS THE BROADCAST, NOT THE FLAG, and that is the whole point of round 3.
+    `_turn_active` is sent to a client only at CONNECT time, so an
+    already-connected client - the one that built the backlog - never learns the
+    gate was re-armed. It gets the raw `turn_start` frame, and ChatPane has no
+    handler for that kind. So `assert hub._turn_active is True` passed while the
+    UI sat idle for the whole backlog: the flag was true and the screen was
+    wrong. Only a `turn_active` status frame on the wire reaches that client.
+    """
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    def ev(kind, **extra):
+        return json.dumps({"type": "agent_event", "event": {"kind": kind, **extra}})
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    sent = _broadcasts(hub)
+    q: asyncio.Queue = asyncio.Queue()
+    # Turn one ends, then a queued turn announces itself and ends.
+    q.put_nowait(ev("turn_done"))
+    q.put_nowait(ev("turn_start", queued=True))
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, FakeProc()))
+
+    assert hub._turn_active is True, (
+        "the queued turn's turn_start did not re-arm the busy gate server-side"
+    )
+    busy = [
+        m for m in sent
+        if m.get("type") == "status" and m.get("state") == "turn_active"
+    ]
+    assert busy, (
+        "the gate was re-armed server-side but nothing went out on the wire, so "
+        "an already-connected client stays idle for the whole backlog. This is "
+        "the assertion the flag check could not make."
+    )
+
+
+def test_the_gate_still_clears_once_the_last_queued_turn_is_done():
+    """The converse, so the arm above cannot be satisfied by never clearing."""
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    def ev(kind, **extra):
+        return json.dumps({"type": "agent_event", "event": {"kind": kind, **extra}})
+
+    hub = ss.Hub()
+    hub._turn_active = True
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(ev("turn_done"))
+    q.put_nowait(ev("turn_start", queued=True))
+    q.put_nowait(ev("turn_done"))
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, FakeProc()))
+    assert hub._turn_active is False

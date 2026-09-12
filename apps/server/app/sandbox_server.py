@@ -217,6 +217,24 @@ class Hub:
                     print(f"{_ts()} [agent] {kind} {detail}".rstrip(), flush=True)
                 except UnicodeEncodeError:
                     pass
+            if kind == "turn_start":
+                # A turn is starting. Hold the busy gate across the backlog:
+                # `turn_done` fires once per TURN, not once per backlog, so
+                # clearing on it left the UI idle while messages were still
+                # waiting - and the client's busy gate is what is supposed to
+                # stop a backlog forming.
+                self._turn_active = True
+                # ANNOUNCE IT, do not just set it. `_turn_active` is sent to a
+                # client only at CONNECT time, so an already-connected client -
+                # precisely the one that built the backlog - never learns the
+                # gate was re-armed. It receives the raw `turn_start` frame, and
+                # ChatPane has no handler for that kind: it sets busy in send()
+                # and on a `turn_active` status, and clears it on `turn_done`.
+                # So without this broadcast the first `turn_done` drops that UI
+                # to idle for the whole backlog, which is the bug the gate
+                # exists to prevent. Asserting `_turn_active is True` does not
+                # catch it: the flag is true and the UI is still idle.
+                await self.broadcast({"type": "status", "state": "turn_active"})
             if kind == "turn_done":
                 self._turn_active = False
             await self.broadcast(msg)
@@ -244,7 +262,18 @@ class Hub:
                 "text": "The agent stopped unexpectedly. Nothing you did caused "
                         "this — send another message to restart it, and report "
                         "it if it keeps happening."}})
-            await self.broadcast({"type": "agent_event", "event": {"kind": "turn_done"}})
+            # _record as well as broadcast, or history keeps a `turn_start`
+            # whose `turn_done` exists nowhere. `turn_start` is not in
+            # TRANSIENT_KINDS, so it IS replayed on every reconnect, and
+            # `_history` is never cleared -- only trimmed at _HISTORY_MAX. A
+            # v1 drain counts the orphan as a turn in flight, never sees it
+            # close, and runs to its own ceiling on every later call until 1000
+            # events push the frame out. `broadcast` does not touch `_record`,
+            # and this is the one turn_done that does not come through the
+            # runner's recorded path (runner.py:73 is the sole other source).
+            _turn_done = {"type": "agent_event", "event": {"kind": "turn_done"}}
+            await self.broadcast(_turn_done)
+            self._record(_turn_done)
             await self.broadcast({"type": "status", "state": "chat_error",
                                   "message": "the agent stopped unexpectedly"})
 

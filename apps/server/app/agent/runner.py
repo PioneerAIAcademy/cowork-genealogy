@@ -73,23 +73,109 @@ async def _run_turn(agent, text: str, emit) -> None:
     emit({"kind": "turn_done"})  # sole source of turn_done (mock + real)
 
 
+# How many user_msgs may wait behind a running turn.
+#
+# A bound is needed, and so is the fact that overflow is REPORTED. The client's
+# busy gate is what should stop a backlog forming, and issue #2062 is a report of
+# that gate leaking — any `turn_done` clears it, including the synthetic one the
+# sandbox emits when the runner exits, and a queued send re-fires from the
+# reconnect outbox with no check that the turn it was composed against ever
+# ended. So the backlog is real but small: a person types a handful of messages,
+# not hundreds. Dropping silently past the bound would just move the defect this
+# constant exists to fix to message N+1.
+MAX_QUEUED_TURNS = 8
+
+# Internal wake-up, put on the queue by a finished turn so the loop can start the
+# next queued message. Not reachable from a client: `Hub.handle` forwards only
+# `user_msg` and `interrupt` (`sandbox_server.py`), so nothing outside this
+# module can inject it.
+_TURN_FINISHED = "_turn_finished"
+
+
 async def serve(agent, incoming: "asyncio.Queue", emit) -> None:
     """Dispatch messages from ``incoming`` (a queue fed concurrently with the
-    running turn; ``None`` = stdin EOF). At most one turn runs at a time —
-    additional user_msgs while busy are dropped (the UI disables Send). An
-    interrupt asks the agent to stop; agents that can't (return falsy) are
-    cancelled instead. Extracted from main() so it is testable without stdio."""
+    running turn; ``None`` = stdin EOF). At most one turn runs at a time;
+    additional user_msgs while busy are QUEUED and run in order.
+
+    THEY USED TO BE DROPPED, and that was issue #2062: the hosted chat answered
+    the previous message and kept doing so. Each half looked reasonable alone.
+    `Hub.handle` records a `user_msg` into the replay history and sets
+    `_turn_active` before forwarding it, so the message is in the transcript the
+    user is reading; this loop then discarded it with a bare `continue`. The user
+    saw their message appear, never got an answer to it, and read the previous
+    turn's completion as the answer — persisting, because every later message
+    sent while busy met the same fate. One tester hit it four times in 38 minutes
+    and the agent concluded their screen was broken.
+
+    Queueing is also what `docs/specs/public-rest-api-spec.md` already claimed
+    was happening ("it won't read the next `user_msg` until the current turn
+    emits `turn_done`"), so this makes the code match a contract other reasoning
+    on that page already rests on.
+
+    An interrupt CLEARS the backlog. Stop means stop: a person who queued two
+    messages and then pressed Stop does not want the second one to start on its
+    own a moment later.
+
+    Extracted from main() so it is testable without stdio."""
     turn_task: asyncio.Task | None = None
+    pending: list[str] = []
+
+    def _start(text: str, *, queued: bool = False) -> None:
+        nonlocal turn_task
+        # EVERY turn announces itself, queued or not.
+        #
+        # Without this, the only frames a turn produces are the agent's own plus
+        # the terminal `turn_done`, so before a turn's first frame there is a
+        # silence the length of a full SDK round trip. Two things read that
+        # silence as "idle":
+        #   * `_drain_replay` (app/v1.py) returns after _DRAIN_IDLE of quiet, so
+        #     a caller could send inside the gap and then read the RUNNING
+        #     turn's `turn_done` as its own reply.
+        #   * `sandbox_server` clears `_turn_active` on every `turn_done`, so
+        #     the UI went idle while messages were still queued - and the
+        #     client's busy gate is what is supposed to stop a backlog forming.
+        #
+        # This fired only for QUEUED turns at first, on the reasoning that a
+        # first turn's sender already knows it started. That reasoning is about
+        # the SENDER and the consumer that matters is the DRAIN: a sync
+        # `POST /messages` starts an UNqueued turn, so on its 504 retry there was
+        # no `turn_start`, `in_flight` stayed 0, and the drain returned inside
+        # the running turn. A first turn is quiet for a full SDK round trip
+        # before its first token, so the window is seconds wide, not a race.
+        # `queued` stays on the frame because the client distinguishes the two.
+        emit({"kind": "turn_start", "queued": queued})
+        turn_task = asyncio.create_task(_run_turn(agent, text, emit))
+        # Wakes this loop when the turn ends, which is what lets a queued message
+        # start without `serve` having to poll or block on the turn (it must stay
+        # responsive to `interrupt` while a turn runs — that is why interrupt
+        # worked at all).
+        turn_task.add_done_callback(lambda _t: incoming.put_nowait({"type": _TURN_FINISHED}))
+
     while True:
         msg = await incoming.get()
         if msg is None:  # stdin EOF — the control plane closed the connection
             break
         mtype = msg.get("type")
-        if mtype == "user_msg":
+        if mtype == _TURN_FINISHED:
+            if pending and (turn_task is None or turn_task.done()):
+                _start(pending.pop(0), queued=True)
+        elif mtype == "user_msg":
+            text = msg.get("text", "")
             if turn_task and not turn_task.done():
-                continue  # already busy; the UI prevents concurrent sends
-            turn_task = asyncio.create_task(_run_turn(agent, msg.get("text", ""), emit))
+                if len(pending) >= MAX_QUEUED_TURNS:
+                    emit({
+                        "kind": "error",
+                        "text": (
+                            "Too many messages are already waiting for the agent; "
+                            "this one was not queued. Wait for the current reply."
+                        ),
+                    })
+                else:
+                    pending.append(text)
+                continue
+            _start(text)
         elif mtype == "interrupt":
+            pending.clear()
             if turn_task and not turn_task.done():
                 handled = False
                 try:

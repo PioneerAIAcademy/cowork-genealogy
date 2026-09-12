@@ -114,11 +114,58 @@ POST /v1/.../messages {stream?} ─────▶  acquire per-session turn loc
 ```
 
 **Why this is correct on retry without a "drain-owns-the-lock" task:** the in-sandbox
-runner is sequential (it won't read the next `user_msg` until the current turn emits
-`turn_done`). If a sync turn times out (504) and the lock releases, a retry opens a
-*fresh* WS and drains-until-idle — but the prior turn is still emitting frames, so
-there is no idle gap and the drain simply waits the prior turn out before sending.
-The retry therefore never mis-reads the prior turn's trailing frames as its own reply.
+runner is sequential (it won't start the next `user_msg`'s turn until the current one
+emits `turn_done`). **That was an assumption this page rested on and the runner did not
+hold**: `serve` dropped a `user_msg` arriving mid-turn with a bare `continue`, while
+`Hub.handle` had already recorded it into the replay history, so the message was in the
+user's transcript and never answered. It is now enforced rather than assumed - the
+message is queued and run in order, bounded by `MAX_QUEUED_TURNS` with an explicit error
+on overflow rather than a silent drop, and pinned by
+`apps/server/tests/test_runner_turn_queue.py`, whose first case fails on the old
+drop-on-busy behaviour. If a sync turn times out (504) and the lock releases, a retry opens a
+*fresh* WS and drains before sending.
+
+**Drain-until-idle was not enough once turns queue, and this page said it was.**
+The claim used to be that "the prior turn is still emitting frames, so there is
+no idle gap". A queued turn breaks it: it emits `turn_start` and then goes quiet
+for a full SDK round trip before its first real frame, so a drain that returns on
+quiet can return *inside* a running turn, send its message behind it, and read
+that turn's `turn_done` as its own reply. That is exactly the mis-attribution
+this paragraph exists to rule out, and the queue introduced it.
+
+So the drain is turn-aware rather than idle-aware: `turn_start` marks a turn in
+flight, its `turn_done` clears it, and the quiet timer only ends the drain while
+nothing is running (`_drain_replay`, `app/v1.py`, bounded by `_DRAIN_MAX` so a
+wedged agent cannot hang it). Pinned by
+`apps/server/tests/test_v1_drain.py::test_the_drain_waits_out_a_turn_that_started_while_it_was_draining`,
+which fails on a drain that returns during the quiet stretch. Only then does the
+retry never mis-read another turn's frames as its own reply.
+
+**`turn_start` (`{"kind": "turn_start", "queued": <bool>}`)** is emitted when
+**every** turn begins; `queued` says whether it came off the backlog. It fired
+only for queued turns at first, on the reasoning that a first turn's sender
+already knows it started - but the consumer that matters is the *drain*, which is
+a different connection from the sender. A sync `POST /messages` starts an
+unqueued turn, so on its 504 retry there was no `turn_start`, `in_flight` stayed
+0, and the drain returned inside the running turn. Two consumers need it: the
+drain above, and the client's busy gate - `turn_done` fires once per *turn*, not
+once per backlog, so a client that goes idle on it would report idle while
+messages were still waiting and invite the user to send more. `sandbox_server`
+re-arms `_turn_active` on it **and broadcasts a `status: turn_active` frame**:
+`_turn_active` alone reaches a client only at connect time, so an
+already-connected client - precisely the one that built the backlog - would never
+learn the gate was re-armed.
+
+`_DRAIN_MAX` is **additive**, not a share of the turn budget: `_collect_sync`
+drains before it computes its deadline, so a caller can pay up to `_DRAIN_MAX` on
+top of `v1_turn_timeout_seconds`.
+
+**A stop discards the backlog.** `interrupt` clears every queued message before
+cancelling the running turn, so messages sent while the agent was busy are
+dropped rather than answered after the stop. This is externally visible and a
+REST client reasoning from this page would not otherwise expect it: "Stop means
+stop" applies to what the user queued, not only to what is running. Pinned by
+`test_a_stop_discards_the_backlog_it_was_pressed_on`.
 
 ## API contract (`/v1`, bearer-only)
 
