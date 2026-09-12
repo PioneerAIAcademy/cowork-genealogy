@@ -44,9 +44,32 @@ ones, and "outside Backlog" is never the test for anything**, because it counts
 them too. **Feedback is none of the three** — it is an untriaged inbox that
 `/triage-feedback` owns and this skill never reads.
 
-**Re-read the board immediately before you apply anything.** The lead edits it
-while you work, so a snapshot taken at the start of a long analysis is stale by
-the end of it.
+**Verify the items you are about to move, immediately before you move them.**
+The lead edits the board while you work, so a snapshot taken at the start of a
+long analysis is stale by the end of it. That means re-reading *those items* —
+not re-listing all ~1200. Check each one with a single-node query, which is
+cheap and, unlike `item-list`, keeps working when the ProjectsV2 quota is
+exhausted:
+
+```sh
+gh api graphql -f query='query{node(id:"PVTI_..."){... on ProjectV2Item{
+  fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}
+  content{... on Issue{number state}}}}}'
+```
+
+**Budget full `item-list` passes to two per run** — one to rank, one before the
+first write. Each reads ~1200 items against a ProjectsV2 GraphQL quota that
+`gh api rate_limit` does not report (it shows 5000/5000 while every project call
+is refused), and six passes in one run is enough to exhaust it mid-apply. After
+those two, apply the moves you have made to the cached snapshot yourself and
+verify per item.
+
+When the quota does trip: `gh issue view`/`edit` route through GraphQL and die
+with it, but REST has its own budget — `gh api repos/OWNER/REPO/issues/N` to
+read, `-X POST .../issues/N/labels -f 'labels[]=name'` to label. Column moves
+have no REST equivalent; poll `item-list` until it succeeds rather than sleeping
+to the reset timestamp, which reads long. And never chain writes with `&&` — a
+mid-chain trip leaves an issue body edited and its labels not.
 
 Two labels carry the routing:
 
@@ -702,8 +725,9 @@ un-startable.
 win.** Discount a `Touches:` line inherited from an issue since closed `not planned`.
 
 **The map is a snapshot.** It is right for the pass that produced it and stale by the next
-one — re-run it before you write anything to the board, and tell a junior to re-check the
-slot before opening a PR rather than trusting a table in an issue body.
+one — rebuild it before you write anything to the board (this is one of the two budgeted
+`item-list` passes in § 0), and tell a junior to re-check the slot before opening a PR
+rather than trusting a table in an issue body.
 
 **This map only sees snapshot paths, and that is correct — but it is not the whole
 collision picture.** `build_snapshot` deliberately excludes
@@ -789,7 +813,8 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
   --field-id "$STATUS_FIELD" --single-select-option-id "f75ad846"
 ```
 
-Verify with a fresh `gh project item-list`. New issues land in Backlog via an
+Verify with a single-node query per moved item (§ 0), not a fresh full
+`item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
 Ready still needs this move. (A raw feedback submission is the exception: the
 same workflow files it into the Feedback column, where `/triage-feedback` moves
@@ -1172,5 +1197,5 @@ list it does not appear in. Add state when it matters.
    the heading when every slot is free.
 7. **Grooming** — capped, with verdicts.
 
-Then stop and wait for approval. Apply only what he approves, re-reading the
-board first. Do not begin any of the work.
+Then stop and wait for approval. Apply only what he approves, verifying each
+item you move first (§ 0). Do not begin any of the work.
