@@ -289,17 +289,50 @@ describe("recordReadTool", () => {
     );
   });
 
-  // 10. Error: 429 → rate-limit message
-  it("throws on 429 with rate-limit message", async () => {
-    mockStatus(429);
+  // 10a. Recovery: 429 then 200 → returns the successful result
+  it("recovers from a transient 429 and returns the record", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        json: () => Promise.resolve({}),
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(MINIMAL_RECORD),
+        headers: new Headers(),
+      });
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" });
+    expect(result.persons).toBeDefined();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // 10b. Error: 429 → retried then returned, hits dedicated rate-limit branch
+  it("throws on 429 with rate-limit message after retry exhaustion", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
     await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
       /rate limit/,
     );
   });
 
-  // 11. Error: generic non-OK → includes status code
+  // 11. Error: generic non-OK → includes status code (500 is retried then returned)
   it("throws on unexpected non-OK status with code in message", async () => {
-    mockStatus(500);
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
     await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
       /500/,
     );

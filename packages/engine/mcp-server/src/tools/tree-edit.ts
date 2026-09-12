@@ -2,7 +2,7 @@
 //
 // The sibling of the merge tools: where those collapse persons, this one does
 // the add/correct/remove edits the tree-edit skill performs by hand today. It
-// reuses the shipped write layer (atomicWriteJson, backupIfExists, validateIntroduced)
+// reuses the shipped write layer (atomicWriteJson, validateIntroduced)
 // and the shared id allocator, so the LLM passes only the content judgment and
 // the tool does id assignment, the primary/preferred swaps, standard_place
 // resolution, validate-before-persist, and the atomic write. Writes only
@@ -30,7 +30,6 @@ import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
-  backupIfExists,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -232,6 +231,18 @@ function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: st
  */
 const FACT_STRING_FIELDS = ["date", "standard_date", "place", "standard_place", "value"] as const;
 function requireFactShape(fact: SimplifiedFact, op: string): void {
+  // `primary` carries an instruction, so a near-miss spelling must not be
+  // assigned and left for the document validator: its message is "omit it
+  // rather than setting false", which is the one action that leaves a stale
+  // flag exactly where it was. Caught here because every fact path calls this.
+  const flag = (fact as Record<string, unknown>).primary;
+  if (flag !== undefined && typeof flag !== "boolean") {
+    const got = flag === null ? "null" : Array.isArray(flag) ? "an array" : `a ${typeof flag}`;
+    throw new TreeEditError(
+      `${op}: fact \`primary\` must be the boolean true or false, got ${got} — ` +
+        "`true` makes it the primary of its type, `false` clears the flag",
+    );
+  }
   for (const field of FACT_STRING_FIELDS) {
     const v = (fact as Record<string, unknown>)[field];
     if (v !== undefined && typeof v !== "string") {
@@ -243,6 +254,19 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
       );
     }
   }
+}
+
+/**
+ * `primary: false` is an INSTRUCTION, never a stored value. The persisted schema
+ * pins the flag to `const: true` (omit-when-false, for token count —
+ * simplified-gedcomx-spec §6), so the key is dropped before the write and the
+ * document stays conformant. See clearPrimaryOfType's note.
+ *
+ * Every path that authors a NEW fact calls this. `update_fact` does not: it
+ * deletes the flag from the EXISTING fact rather than from the incoming patch.
+ */
+function stripClearedPrimary(fact: SimplifiedFact): void {
+  if (fact.primary === false) delete fact.primary;
 }
 
 // ─── delta-scoped mandatory-ref guard (tree-materialization-spec §6, §8) ─────
@@ -281,7 +305,15 @@ function assertNodeHasRef(
   }
 }
 
-/** Remove the `primary` flag from the holder's other facts of the same type. */
+/** Remove the `primary` flag from the holder's other facts of the same type.
+ *
+ *  Fires only as a side effect of designating a REPLACEMENT primary, so it can
+ *  move the flag but never retire it. Clearing without a replacement is
+ *  `primary: false` on add_fact/update_fact, which is the state a newly-surfaced
+ *  conflict needs: `materialize_facts` never sets `primary` and surfaces a
+ *  conflict when a second vital fact lands, so a pre-existing flag would
+ *  otherwise keep asserting a concluded value the evidence no longer supports
+ *  (10 such persons across the committed e2e final trees, 2026-09-10). */
 function clearPrimaryOfType(holder: FactHolder, type: string | undefined, exceptId: string | undefined): void {
   for (const f of holder.facts ?? []) {
     if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
@@ -348,6 +380,7 @@ async function applyOperation(
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
+      stripClearedPrimary(fact);
       assertNodeHasRef(fact, "the added fact", "add_fact");
       await maybeResolvePlace(fact, input.fact.standard_place !== undefined);
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
@@ -372,6 +405,15 @@ async function applyOperation(
       const factHadRef = hasNonNullRef(existing);
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
+        // `primary: false` clears the flag rather than storing a false — the
+        // only way to reach "this type has no concluded value" while a conflict
+        // is open. Assigning it would fail the document validator, whose own
+        // message ("omit it rather than setting false") is advice no op could
+        // follow until this existed.
+        if (k === "primary" && v === false) {
+          delete (existing as any).primary;
+          continue;
+        }
         (existing as any)[k] = v;
       }
       if (factHadRef && !hasNonNullRef(existing)) {
@@ -467,6 +509,7 @@ async function applyOperation(
         for (const f of person.facts) {
           if (f.id) throw new TreeEditError("add_person facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_person");
+          stripClearedPrimary(f);
           assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
           await maybeResolvePlace(f, f.standard_place !== undefined);
@@ -540,6 +583,7 @@ async function applyOperation(
         for (const f of rel.facts) {
           if (f.id) throw new TreeEditError("add_relationship facts must not carry ids — the tool assigns them");
           requireFactShape(f, "add_relationship");
+          stripClearedPrimary(f);
           // A Couple fact (e.g. Marriage) with no ref of its own inherits the
           // edge's resolved ref — but ONLY when that ref came from
           // `sourceAssertionId` (the marriage record IS typically the source
@@ -625,7 +669,7 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
 }
 
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
- *  id-assignment, validate-on-write, and `.bak` semantics; only the admitted
+ *  id-assignment, and validate-on-write semantics; only the admitted
  *  op set (the gate) differs. */
 export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promise<TreeEditResult> {
   const { projectPath } = input;
@@ -690,7 +734,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await backupIfExists(treePath);
       await atomicWriteJson(treePath, tree);
       return {
         ok: true,
@@ -716,7 +759,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
-    await backupIfExists(treePath);
     await atomicWriteJson(treePath, tree);
 
     const result: TreeEditResult = {
@@ -767,7 +809,7 @@ export const treeEditSchema = {
     "Pick the `operation` and supply the content (snake_case simplified-GedcomX " +
     "fields) WITHOUT ids — the tool assigns the next F/N/I/R/S id, swaps the " +
     "primary/preferred flag, resolves standard_place for a place, validates the " +
-    "whole project, and writes only tree.gedcomx.json (with a one-deep .bak). " +
+    "whole project, and writes only tree.gedcomx.json. " +
     "Returns a compact summary (the assigned ids); on a validation failure nothing " +
     "is written and `{ ok: false, errors }` is returned. Run check-warnings after " +
     "for genealogical-plausibility checks.\n" +
@@ -814,7 +856,8 @@ export const treeEditSchema = {
         description:
           "The fact to add (full, no id). date/standard_date/place/" +
           "standard_place/value are plain strings (date: \"2 October 1876\"), never nested objects. " +
-          "Set `primary: true` to make it the primary of its type.",
+          "Set `primary: true` to make it the primary of its type; `primary: false` " +
+          "adds it without one, leaving any existing primary of that type alone.",
       },
       name: {
         type: "object",

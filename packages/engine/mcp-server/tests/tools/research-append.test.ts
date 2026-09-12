@@ -3131,7 +3131,7 @@ describe("research_append (composite persist + enforcement)", () => {
     });
     const research = await readResearch();
     expect(research.sources[1].gedcomx_source_description_id).toBe("S1");
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true); // one-deep tree backup
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false); // no readable .bak copy of the tree
   });
 
   it("accepts a sources append that reuses an existing S id (multi-repository pattern); tree untouched", async () => {
