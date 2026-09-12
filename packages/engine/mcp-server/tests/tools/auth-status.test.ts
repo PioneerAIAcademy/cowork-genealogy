@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../src/auth/tokenManager.js", () => ({
@@ -20,7 +21,7 @@ describe("authStatusTool", () => {
   it("reports loggedIn: false when no tokens are stored", async () => {
     mockedLoadTokens.mockResolvedValueOnce(null);
 
-    const result = await authStatusTool();
+    const result = await authStatusTool({}, LOCAL);
 
     expect(result).toEqual({ loggedIn: false });
   });
@@ -34,7 +35,7 @@ describe("authStatusTool", () => {
     });
     mockedIsExpired.mockReturnValueOnce(false);
 
-    const result = await authStatusTool();
+    const result = await authStatusTool({}, LOCAL);
 
     expect(result.loggedIn).toBe(true);
     expect(result.expiresAt).toBe(new Date(expiresAt).toISOString());
@@ -48,7 +49,7 @@ describe("authStatusTool", () => {
     });
     mockedIsExpired.mockReturnValueOnce(true);
 
-    const result = await authStatusTool();
+    const result = await authStatusTool({}, LOCAL);
 
     expect(result.loggedIn).toBe(false);
     expect(result.expiresAt).toBeDefined();
@@ -61,7 +62,7 @@ describe("authStatusTool", () => {
       expiresAt: Date.now() + 60 * 60 * 1000,
     });
     mockedIsExpired.mockReturnValueOnce(false);
-    const withRefresh = await authStatusTool();
+    const withRefresh = await authStatusTool({}, LOCAL);
     expect(withRefresh.hasRefreshToken).toBe(true);
 
     mockedLoadTokens.mockResolvedValueOnce({
@@ -69,7 +70,7 @@ describe("authStatusTool", () => {
       expiresAt: Date.now() + 60 * 60 * 1000,
     });
     mockedIsExpired.mockReturnValueOnce(false);
-    const withoutRefresh = await authStatusTool();
+    const withoutRefresh = await authStatusTool({}, LOCAL);
     expect(withoutRefresh.hasRefreshToken).toBe(false);
   });
 });

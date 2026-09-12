@@ -8,6 +8,7 @@
  *   cd mcp-server
  *   npx tsx dev/try-person-quality.ts KD96-TV2
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { personQualityTool } from "../src/tools/person-quality.js";
 
 const personId = process.argv[2];
@@ -20,7 +21,7 @@ console.log("Input:", JSON.stringify({ personId }));
 console.log("---");
 
 try {
-  const result = await personQualityTool({ personId });
+  const result = await personQualityTool({ personId }, LOCAL);
   console.log(
     `${result.personId}  overall=${result.overallScore}  ` +
       `segment=${result.segment}  issues=${result.issueCount}`,

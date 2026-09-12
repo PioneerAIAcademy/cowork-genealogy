@@ -66,7 +66,7 @@ understands:
 
 | Header | Value | Notes |
 |--------|-------|-------|
-| `Authorization` | `Bearer <token>` | From `getValidToken()` |
+| `Authorization` | `Bearer <token>` | From `getValidToken(principal)` |
 | `Accept` | `application/json` | The `children/names` call returns JSON |
 | `User-Agent` | `BROWSER_USER_AGENT` | From `src/constants.ts` — FS sits behind Imperva, which 403s non-browser UAs |
 | `FS-User-Agent-Chain` | `chesworth` | Hard-coded identifier so the FamilySearch team knows who to contact |
@@ -223,7 +223,7 @@ internally — the caller no longer constructs the URL.
 
 ## Authentication
 
-Uses `getValidToken()` from `src/auth/refresh.ts`. Same OAuth flow as
+Uses `getValidToken(principal)` from `src/auth/refresh.ts`. Same OAuth flow as
 all other authenticated tools. Do not re-implement token plumbing.
 
 ---
@@ -234,7 +234,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 |-----------|----------|
 | `imageGroupNumber` not provided | Throw: `"image_search requires an imageGroupNumber."` |
 | apid lookup (unsplit form) returns non-OK | Throw: `"Could not resolve image group number {imageGroupNumber} to an image group."` |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | `children/names` returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | `children/names` returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
 | `children/names` other non-OK | Throw: `"FamilySearch image search API error: {status} {statusText}."` |

@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -41,6 +42,7 @@ interface MatchByIdConfig {
 async function matchById(
   input: MatchByIdInput,
   cfg: MatchByIdConfig,
+  principal: Principal,
 ): Promise<MatchByIdResult> {
   const queryArk = normalizeId(input.id, cfg);
   const { minConfidence, status, includeSummary, count } = validateOptions(input);
@@ -67,7 +69,7 @@ async function matchById(
   // scope difference here to point at. Settling it needs FamilySearch, not
   // another probe from us.
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   let response: Response;
   try {
@@ -294,17 +296,17 @@ const CFG_RR: MatchByIdConfig = {
   siblingTool: "person_record_matches",
 };
 
-export function personRecordMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_PR);
+export function personRecordMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_PR, principal);
 }
-export function recordPersonMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_RP);
+export function recordPersonMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_RP, principal);
 }
-export function personPersonMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_PP);
+export function personPersonMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_PP, principal);
 }
-export function recordRecordMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_RR);
+export function recordRecordMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_RR, principal);
 }
 
 const INPUT_SCHEMA = {

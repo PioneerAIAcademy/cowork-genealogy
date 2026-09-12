@@ -77,7 +77,7 @@ All `sg30p0.familysearch.org` calls (group search, full-text searchability):
 
 | Header | Value | Notes |
 |--------|-------|-------|
-| `Authorization` | `Bearer <token>` | From `getValidToken()` |
+| `Authorization` | `Bearer <token>` | From `getValidToken(principal)` |
 | `Content-Type` | `application/json` | On the PUT (group search) |
 | `Accept` | `application/json` | |
 | `User-Agent` | `BROWSER_USER_AGENT` | From `src/constants.ts` — FS sits behind Imperva, which 403s non-browser UAs |
@@ -831,7 +831,7 @@ as absent rather than guessing.
 
 ## Authentication
 
-Uses `getValidToken()` from `src/auth/refresh.ts`. Same OAuth flow as
+Uses `getValidToken(principal)` from `src/auth/refresh.ts`. Same OAuth flow as
 all other authenticated tools. Do not re-implement token plumbing.
 
 ---
@@ -849,7 +849,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
 | `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — nothing validates input against the advertised JSON Schema server-side — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
 | `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Throw, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters-read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and catching those is the schema-wide `additionalProperties` question this spec puts out of scope |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
 | Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}."` |

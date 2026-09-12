@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -258,13 +259,14 @@ function mapGroup(
 }
 
 export async function volumeSearchTool(
-  input: VolumeSearchInput
+  input: VolumeSearchInput,
+  principal: Principal
 ): Promise<VolumeSearchResult> {
   validate(input);
 
   // Auth first, so an unauthenticated user always gets the login-instruction
   // error (rather than a "could not resolve" message) regardless of the place.
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   // Resolve the standard place name -> placeId -> all of its representation
   // IDs. standardPlaceToPlaceId returns null when the name is unresolvable or
