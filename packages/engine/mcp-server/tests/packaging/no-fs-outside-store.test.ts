@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join, relative } from "node:path";
+import { srcFiles, srcSource, withoutComments } from "./src-files.js";
 
 // Every read and write of project state goes through src/store/ (`ProjectStore`).
 // A module that imports `fs` reaches the project directory around that seam —
@@ -10,9 +8,6 @@ import { dirname, join, relative } from "node:path";
 // file backend itself, auth (per-user files under ~/.familysearch-mcp, which
 // are not project state) and the bundled-data reader. Porting every tool proves
 // forty-eight existentials; this proves the universal.
-
-const here = dirname(fileURLToPath(import.meta.url));
-const srcRoot = join(here, "..", "..", "src");
 
 const EXEMPT = new Set([
   "store/fs-project-store.ts",
@@ -36,27 +31,8 @@ const FS_REFERENCE = new RegExp(
   ].join("|"),
 );
 
-/** Comments are prose, not bindings — a docstring that says `import "fs"` is
- *  not an import. Strip them before matching. */
-function withoutComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
-}
-
 function referencesFs(source: string): boolean {
   return FS_REFERENCE.test(withoutComments(source));
-}
-
-function collectTsFiles(dir: string): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) {
-      out.push(...collectTsFiles(full));
-    } else if (entry.endsWith(".ts")) {
-      out.push(full);
-    }
-  }
-  return out;
 }
 
 describe("no fs import outside the project store", () => {
@@ -93,12 +69,10 @@ describe("no fs import outside the project store", () => {
   });
 
   it("only the file backend, auth and the bundled-data reader import fs", () => {
-    const offenders: string[] = [];
-    for (const file of collectTsFiles(srcRoot)) {
-      const rel = relative(srcRoot, file).split("\\").join("/");
-      if (EXEMPT.has(rel)) continue;
-      if (referencesFs(readFileSync(file, "utf8"))) offenders.push(rel);
-    }
+    const offenders = srcFiles()
+      .filter(({ rel }) => !EXEMPT.has(rel))
+      .filter(({ source }) => referencesFs(source))
+      .map(({ rel }) => rel);
     expect(
       offenders,
       `fs imported outside src/store/ — read and write project state through ` +
@@ -110,9 +84,7 @@ describe("no fs import outside the project store", () => {
   it("every exemption is still needed", () => {
     // An exemption for a file that no longer imports fs is a hole nothing
     // tests. Fail so the list shrinks when the port reaches it.
-    const stale = [...EXEMPT].filter(
-      (rel) => !referencesFs(readFileSync(join(srcRoot, rel), "utf8")),
-    );
+    const stale = [...EXEMPT].filter((rel) => !referencesFs(srcSource(rel)));
     expect(stale, `exempt files that no longer import fs: ${stale.join(", ")}`).toEqual([]);
   });
 });
