@@ -500,8 +500,9 @@ persona matched to an **existing** person as well as a newly minted one, and on
 a **single-person record** (a death certificate, a baptism) as well as a
 household. Batch one record's personas into a single `materialize_facts({ ops:
 [...] })` call. Skip a persona whose assertions are entirely `relationship`,
-`marriage`, or `age`: the tool skips those fact_types, so there is nothing to
-write. The facts you land here are what the next search reads off the tree
+`marriage`, `parentage`, `parentchild`, or `age`: the tool skips those fact_types, so there is nothing to
+write **onto that persona**. The other party such an assertion names is still
+written, per Step 5. The facts you land here are what the next search reads off the tree
 person.
 
 ### 5. Handle new persons (stub creation)
@@ -520,16 +521,36 @@ shell that a later step fills in. The tool allocates the synthetic
 proof-conclusion's job). **Never use FamilySearch IDs for a new person** —
 those belong to persons already in the tree.
 
-**A persona with nothing to materialize from.** When an unmatched person is
-named only *inside* another persona's `relationship` or `marriage` assertion —
-a bride named in the groom's marriage register — she carries no persona role
-and no name assertion of her own, so `materialize_facts` has nothing to mint
-from. Create her with `tree_edit add_person` (gender plus the name the record
-gives), then link per Step 4. This is the **only** case where `tree_edit
-add_person` is correct; a persona that has its own `record_role` always goes
-through `materialize_facts`. The person takes `gender` and
-`names: [{ given, surname, type }]` — the simplified shape, **not** GedcomX's
-`nameForms`.
+**A person the record NAMES inside another persona's assertion** (a bride in
+the groom's marriage register). Take the first that applies:
+
+1. **Already in the tree** — link to that `personId` (Step 4), do not mint. To
+   add the record's spelling of her name, carry that `personId` into 2 or 3.
+2. **That role has a persona on this record** —
+   `materialize_facts({ personId?, recordId, recordRole })`. When you are
+   MINTING her (no `personId` from 1), that persona must carry a non-negative
+   `name` assertion: the persona arm refuses to mint a person it cannot name,
+   so a persona carrying only a gender, a birth, or other facts goes to 3.
+   Enriching an existing `personId` needs no name assertion. Gender comes from
+   her `gender`/`sex` assertions; absent one it is `Unknown`.
+3. **Otherwise** — `materialize_facts({ assertionId, relatedRole,
+   name: { given, surname }, gender?, nameType?, personId? })`. `assertionId`
+   is the `relationship`/`marriage`/`parentage`/`parentchild` assertion naming
+   her; `relatedRole` is her role, not the persona's, spelled **exactly as that
+   record spells it** in `record_role` (`father_of_bride`, not "the bride's
+   father"): the check that catches a wrong branch is an exact match, so a
+   paraphrase slips past it and mints a duplicate. Read her name from the
+   assertion's `structured_value` if it carries one, else from its `value`
+   prose, else `record_read` the record. Give `given` and `surname`
+   separately; `surname: ""` when the record gives none. Give `nameType`
+   (`"BirthName"`/`"MarriedName"`) only when the record settles it. If no
+   usable name is recoverable, do not mint: link what you can and say so.
+   Where that role has a persona the record never names, this call writes that
+   persona's facts as well as her name. One call, no follow-up.
+
+Never `tree_edit add_person` for a person the record names. If you pick 3
+where 2 applied, the tool refuses and names the `{ recordId, recordRole }` to
+use instead.
 
 **Stub person rules:**
 - Then create the `pe_` entry (Step 4) linking the assertion to the
@@ -646,11 +667,13 @@ hands a merge set to proof-conclusion to fold. For a household record:
    WITH its facts (never a name-only stub) — pass a not-yet-existing
    `personId`, or omit it and the tool allocates one. **"Needs
    materializing" excludes a matched persona whose assertions are
-   entirely relationship-implying** (`marriage`, `relationship`) — the
+   entirely relationship-implying** (`marriage`, `relationship`,
+   `parentage`, `parentchild`) — the
    tool silently skips those fact_types (they belong on the Couple/edge,
    never a person), so a persona with nothing else to contribute has
-   nothing to materialize; skip the call for it and go straight to its
-   `pe_` link (Step 4). The call returns
+   nothing to materialize **for itself**; skip the call for it and go
+   straight to its `pe_` link (Step 4). The other party such an assertion
+   names goes through Step 5's three questions, not skipped. The call returns
    `results: [...]`, one entry per persona in the same order you listed
    them — read each persona's `personId` from there to create its `pe_`
    link (Step 4). **Batch this; do not loop one call per persona** — a
@@ -666,8 +689,8 @@ hands a merge set to proof-conclusion to fold. For a household record:
    is the bare `ParentChild` or `Couple`, **not** the `http://gedcomx.org/…`
    URI; endpoints are `parent`/`child` for ParentChild and `person1`/`person2`
    for Couple. Pass
-   **`sourceAssertionId`** (the `id` of the `relationship`-type assertion
-   this edge comes from) — do **not** hand-walk `assertion.source_id →
+   **`sourceAssertionId`** (the `id` of the `relationship`, `marriage`,
+   `parentage` or `parentchild` assertion this edge comes from) — do **not** hand-walk `assertion.source_id →
    research source → tree S-entry` and supply a literal
    `relationship.sources` yourself; the tool resolves it for you (the same
    resolver `materialize_facts` uses), including the direct/indirect quality

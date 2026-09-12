@@ -555,15 +555,16 @@ function applyNamedPartyOp(
     );
   }
 
-  // This arm exists ONLY for a party the record gives no persona. If the role
-  // being minted DOES have a persona on this record, the persona arm is the
-  // correct call and mints her with her facts, where this arm would leave a
-  // name-only shell — the very symptom tree-materialization-spec §1.1 (1)
-  // exists to cure. Measured over eval/**/research.json: the role named by a
+  // Both of the next two checks turn on the role's OWN personas, not the
+  // assertion's. Measured over eval/**/research.json: the role named by a
   // relationship/marriage assertion already has its own persona on the same
   // record in 52 of 162 cases (32.1%), so this is the common path, not an edge
-  // case. Comparing only against the assertion's OWN record_role would miss
-  // every one of them.
+  // case, and comparing only against the assertion's own record_role would miss
+  // every one of them. A party whose persona can name itself belongs to the
+  // persona arm and is refused below; a party whose persona cannot is minted
+  // here and then handed to the persona arm for its facts, so that neither
+  // route ends in the name-only shell tree-materialization-spec §1.1 (1)
+  // exists to cure.
   const wanted = normNamePart(relatedRole);
   const ownRole = normNamePart(String(assertion.record_role ?? ""));
   if (wanted === ownRole) {
@@ -577,35 +578,27 @@ function applyNamedPartyOp(
   const siblings = (Array.isArray(research.assertions) ? research.assertions : []).filter(
     (a: any) => a && a.record_id === recordId && normNamePart(String(a.record_role ?? "")) === wanted,
   );
-  // Refuse ONLY when the call being steered to would actually succeed. A
-  // persona exists whenever ANY assertion carries the role, but the persona arm
-  // can only MINT one that has a name assertion to build a name from — and in a
-  // mirrored marriage register both parties' personas carry nothing but the
-  // `marriage` assertion. Refusing there left the party writable by neither arm,
-  // which is worse than the name-only shell the refusal exists to prevent. So
-  // the guard fires only when the persona arm can do the better job: the
-  // persona has a name to mint from, or the target person already exists and
-  // the persona arm would enrich it rather than mint.
-  // The guard is only a valid steer when the persona arm would actually WRITE
-  // something for this party. Having a `record_role` does not mean that: in a
-  // mirrored marriage register both parties have a persona and each carries
-  // nothing but the `marriage` assertion, which SKIP_TYPES drops — so the
-  // persona call returns ok:true and writes nothing, and refusing here would
-  // leave the party writable by neither arm. So the test is "does that persona
-  // have an assertion this tool would materialize": a name, a gender, or any
-  // fact that is not skipped and not negative evidence.
+  // Refuse ONLY when the persona arm could actually MINT this party, which
+  // means the persona carries a non-negative NAME assertion: the arm refuses to
+  // mint a person it cannot name, so steering a gender-only or birth-only
+  // persona there errors, and this arm refusing would send the caller back to
+  // the call that just failed. That is the writable-by-neither-arm dead end
+  // this whole arm exists to remove. Measured over eval/**/research.json: 85
+  // personas carry no positive `name` assertion, and 57 of those 85 also carry
+  // a fact this tool would materialize (the largest shape is
+  // [birth, death, relationship], 34 of them). Those 57 are why the pass below
+  // exists: letting them through here without it would drop the very facts the
+  // record does state about them.
   //
   // Deliberately NOT part of this test: whether the target person already
-  // exists. An earlier version added that as a second condition, reasoning that
-  // the persona arm would enrich rather than mint — but an existing person does
-  // not give the persona anything to write, so it re-created the same dead end,
-  // and it broke idempotency (the first call mints the person, so the second
-  // call refuses itself).
-  const siblingCanMint = siblings.some((a: any) => {
-    const ft = String(a.fact_type ?? "").toLowerCase();
-    if (a.evidence_type === "negative") return false;
-    return NAME_TYPES.has(ft) || GENDER_TYPES.has(ft) || !SKIP_TYPES.has(ft);
-  });
+  // exists. An earlier version added that as a second condition, reasoning the
+  // persona arm would enrich rather than mint. But an existing person gives the
+  // persona nothing to write, so it re-created the same dead end, and it broke
+  // idempotency (the first call mints the person, so the second refuses itself).
+  const siblingCanMint = siblings.some(
+    (a: any) =>
+      a.evidence_type !== "negative" && NAME_TYPES.has(String(a.fact_type ?? "").toLowerCase()),
+  );
   if (siblings.length > 0 && siblingCanMint) {
     const personIdHint = str(op.personId) !== undefined ? `personId: '${str(op.personId)}', ` : "";
     throw new MaterializeFactsError(
@@ -689,14 +682,38 @@ function applyNamedPartyOp(
     tree, person, given, surname, ref, str(op.nameType),
   );
 
+  // Reaching here WITH siblings means the role has a persona on this record
+  // that could not mint her: the refusal above fires only when a sibling
+  // carries a non-negative `name` assertion, so what is left is a nameless
+  // persona (the live shape is a `bride` of [birth, marriage]). Minting her
+  // name and stopping would leave exactly the name-only shell §1.1 (1) exists
+  // to cure, with her sourced facts dropped: the 1839 birth has no other route
+  // into the tree, because the persona arm refuses her for want of a name and
+  // this arm is the only one that will take her.
+  //
+  // So write them by BEING the persona arm rather than restating it. It
+  // enriches instead of minting now that she exists, and by construction there
+  // is no positive `name` assertion among the siblings for it to double-write.
+  // A ref it cannot resolve throws, which aborts the whole op before anything
+  // is persisted — provenance first (§4.2 step 2), the same rule as everywhere
+  // else here, rather than a half-provenanced person.
+  let enriched: MaterializeFactsOpResult | undefined;
+  if (siblings.length > 0) {
+    enriched = applyMaterializeOp(tree, research, {
+      personId: targetId,
+      recordId: String(recordId),
+      recordRole: String(siblings[0].record_role),
+    });
+  }
+
   return {
     personId: targetId,
     created,
-    factsAdded: 0,
-    factsEnriched: 0,
-    namesAdded,
-    refsAttached,
-    conflicts_surfaced: [],
+    factsAdded: enriched?.factsAdded ?? 0,
+    factsEnriched: enriched?.factsEnriched ?? 0,
+    namesAdded: namesAdded + (enriched?.namesAdded ?? 0),
+    refsAttached: refsAttached + (enriched?.refsAttached ?? 0),
+    conflicts_surfaced: enriched?.conflicts_surfaced ?? [],
   };
 }
 
@@ -942,8 +959,8 @@ export const materializeFactsSchema = {
     "NAMED PARTY — for a person the record names only INSIDE another persona's " +
     "link-establishing assertion (`relationship`, `marriage`, `parentage` or " +
     "`parentchild`, case-insensitive): a bride named in the groom's marriage " +
-    "register. She has no record_role and no " +
-    "name assertion of her own, so there is no persona to pass. Call " +
+    "register. She has no persona of her own to pass, or has one that carries " +
+    "nothing this tool would write. Call " +
     "`{ projectPath, assertionId, relatedRole, name: { given, surname }, gender?, " +
     "personId? }` (or the same fields as an `ops` element) instead of " +
     "recordId/recordRole — supplying both forms in one op is rejected. You supply " +
@@ -951,20 +968,21 @@ export const materializeFactsSchema = {
     "tool resolves the source-ref from that assertion's own source_id and REFUSES " +
     "the write if it cannot, so a record-derived person can never land without " +
     "provenance. `relatedRole` is the role of the party being minted (\"bride\", " +
-    "\"mother\") and should name someone who has NO persona on that record: if the " +
-    "record has a persona with that record_role AND it could be materialized instead, " +
-    "the call is refused and names the { recordId, recordRole } to use, because that " +
-    "form writes her facts too. A negative-evidence " +
+    "\"mother\") and should name someone the record does not NAME through a persona: " +
+    "if the record has a persona with that record_role carrying a name assertion, the " +
+    "call is refused and names the { recordId, recordRole } to use, because that form " +
+    "writes her facts too. A negative-evidence " +
     "assertion (what the source does NOT say) is refused too — it cannot mint anyone. " +
     "Pass nameType only when the record settles whether the surname is her own or " +
     "a married one; omitted means no claim, which is preferable to a wrong one. This " +
-    "writes a SOURCED NAME and the gender scalar only: no facts, no relationship. " +
+    "writes a SOURCED NAME and the gender scalar; where that role does have a persona " +
+    "and it simply carries no name, that persona's facts are written too, in the same " +
+    "call. Never a relationship. " +
     "The marriage event still belongs on the Couple via tree_edit " +
     "add_relationship, and the edge itself via add_relationship's " +
     "sourceAssertionId. Unlike tree_edit add_person, whose name path is " +
-    "ref-tolerant, this arm cannot leave her without a source. If a skill you are " +
-    "running still instructs add_person for this case, follow the skill — it is " +
-    "being updated separately.",
+    "ref-tolerant, this arm cannot leave her without a source, which is why it is " +
+    "the correct mint for a person the record names.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -1061,6 +1079,7 @@ export const materializeFactsSchema = {
               },
             },
             gender: { type: "string" },
+            nameType: { type: "string" },
           },
         },
       },

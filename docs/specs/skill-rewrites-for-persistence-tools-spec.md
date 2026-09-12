@@ -142,10 +142,14 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ### 4.7 `person-evidence` — Wave 2 (two tools)
 - **Step 4 link:** `research_append({ section: "person_evidence", op: "append" })`.
-- **Step 5 stub person:** `tree_edit({ operation: "add_person" })` (tool allocates
-  the synthetic `I`/`N` ids).
-- **Step 6 revision:** two calls — `append` the corrected `pe_` link, then `update`
-  the old entry's `superseded_by` (never delete).
+- **Step 5 stub person:** `materialize_facts` (tool allocates the synthetic
+  `I`/`N` ids) — the persona form `{ personId?, recordId, recordRole }` when
+  that party has its own persona on the record carrying a name assertion, the
+  named-party form `{ assertionId, relatedRole, name }` when the record only
+  names her. **Not** `tree_edit add_person`: it enforces no source-ref on names
+  and leaves a record-derived person provenance-less
+  (`tree-materialization-spec.md` section 4.6).
+
 
 ### 4.8 `hypothesis-tracking` — Wave 2
 - **Create:** `research_append({ section: "hypotheses", op: "append" })`. **Update /

@@ -11,7 +11,8 @@
       "lane-boundary",
       "relationship-assertion",
       "ownership",
-      "a_005"
+      "a_005",
+      "named-party"
     ]
   },
   "input": {
@@ -25,7 +26,7 @@
     "It is WRONG for person-evidence to create the Couple relationship between Thomas and Mary, and WRONG to write a Marriage fact anywhere (neither on a person via add_fact nor on a relationship). Those belong to proof-conclusion → tree-edit, which own the `relationships` section. A run that adds a Couple relationship or any Marriage fact should fail Correctness — the skill should explicitly DEFER the relationship and event to the downstream pipeline.",
     "a_005's record_persona_id is null, but its log entry retained a sidecar (results/log_005.json) whose gedcomx carries both personas — MP1 (Thomas) and MP2 (Mary) — so a persona IS reachable for each link and calling same_person is correct behaviour, not a boundary violation. Each party scores against ITS OWN persona: reusing MP1 for the Mary link is the error. This test's subject is lane discipline, not the score, so do not grade the score's value or its absence — but if match_score is left null the rationale must say why.",
     "The new Mary stub rests on the single marriage record with no independent corroboration yet, so her person_evidence link is probable at most — confident would over-claim.",
-    "Mary is named only inside the groom's marriage assertion — she carries no record_role and no name assertion of her own, so materialize_facts has no persona to mint from (it also skips the marriage fact_type outright). tree_edit add_person carrying gender plus the name the register gives is the correct mint for her, and is the one case where it is: a persona that does have its own record_role goes through materialize_facts. Do not mark the run down for reaching for add_person here, and do not credit birth or marriage facts written onto her.",
+    "Mary is named only inside the groom's marriage assertion and has no persona of her own on that record: no assertion there carries `record_role: \"bride\"`, and she is not already in the tree. The correct mint is materialize_facts's NAMED-PARTY form, `{ assertionId: \"a_005\", relatedRole: \"bride\", name: { given, surname }, gender }`, which resolves her name's source-ref from a_005 and refuses the write without one. Grade a `tree_edit add_person` mint DOWN on Correctness: it enforces no source-ref on names, so it leaves a record-derived person with no provenance, which is the write tree-materialization-spec section 6 exists to eliminate. Her name carrying a resolved ref is the requirement; do not credit birth or marriage facts written onto her.",
     "COMPLETENESS GRADING NOTE for the judge: score Completeness on whether person-evidence created the Mary stub and both pe_ links and correctly deferred the relationship/event — not on any downstream step (proof-conclusion, tree-edit, check-warnings) that is out of this skill's lane and unavailable in the unit harness."
   ],
   "execution": {
