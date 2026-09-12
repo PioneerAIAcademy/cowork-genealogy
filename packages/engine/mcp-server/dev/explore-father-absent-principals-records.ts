@@ -47,6 +47,7 @@
  * Run: `npx tsx dev/explore-father-absent-principals-records.ts` from
  * `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchRetry, sleep } from "./http-retry.js";
@@ -61,7 +62,7 @@ async function main(): Promise<void> {
   const rows: any[] = [];
   for (let offset = 0; offset < 1500; offset += 100) {
     await sleep(300);
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     // `fetchRetry`, not a bare fetch: this endpoint throttles, and until 2026-08-20
     // this loop treated a 429 as a fatal `!res.ok` abort — killing the whole run
     // on ordinary rate limiting the sibling record scripts already back off from.

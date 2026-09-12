@@ -23,6 +23,7 @@
  *
  * Run: `npx tsx dev/explore-year-bands-tree.ts` from `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { fetchRetry, sleep } from "./http-retry.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
@@ -32,9 +33,9 @@ let retries = 0;
 async function page(qs: string): Promise<any | null> {
   for (let a = 0; a < 10; a++) {
     await sleep(1200);
-    // Per request, not once up front: `getValidToken()` auto-refreshes, so a token
+    // Per request, not once up front: `getValidToken(LOCAL)` auto-refreshes, so a token
     // expiring mid-run cannot surface as a 401 that reads like a data value.
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     // `fetchRetry` owns the 429/5xx backoff (correct Retry-After parse — an absent
     // header no longer reads as a 0ms wait); `onRetry` keeps those in the run-wide
     // `retries` tally. The outer loop remains for the body-level transients the

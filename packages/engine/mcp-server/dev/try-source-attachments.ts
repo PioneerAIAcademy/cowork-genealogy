@@ -11,6 +11,7 @@
  *     "ark:/61903/1:1:QK2S-4W7G" \
  *     "ark:/61903/3:1:3Q9M-CSNL-S98H-M"
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { sourceAttachmentsTool } from "../src/tools/source-attachments.js";
 
 const uris = process.argv.slice(2);
@@ -22,5 +23,5 @@ if (uris.length === 0) {
   process.exit(1);
 }
 
-const result = await sourceAttachmentsTool({ uris });
+const result = await sourceAttachmentsTool({ uris }, LOCAL);
 console.log(JSON.stringify(result, null, 2));

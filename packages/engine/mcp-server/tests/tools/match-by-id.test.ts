@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -42,7 +43,7 @@ afterEach(() => {
 describe("URL construction", () => {
   it("person_record_matches builds the right URL", async () => {
     mockJson(EMPTY_BODY);
-    await personRecordMatches({ id: "KNDX-MKG" });
+    await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.host).toBe("sg30p0.familysearch.org");
     expect(url.pathname).toBe("/search/match/resolutions/match/matches");
@@ -57,7 +58,7 @@ describe("URL construction", () => {
 
   it("record_person_matches: collection=tree, ark prefix 1:1:", async () => {
     mockJson(EMPTY_BODY);
-    await recordPersonMatches({ id: "QPTX-TMQ2" });
+    await recordPersonMatches({ id: "QPTX-TMQ2" }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.get("collection")).toBe("tree");
     expect(url.searchParams.get("id")).toBe("ark:/61903/1:1:QPTX-TMQ2");
@@ -65,7 +66,7 @@ describe("URL construction", () => {
 
   it("person_person_matches: collection=tree, ark prefix 4:1:", async () => {
     mockJson(EMPTY_BODY);
-    await personPersonMatches({ id: "KNDX-MKG" });
+    await personPersonMatches({ id: "KNDX-MKG" }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.get("collection")).toBe("tree");
     expect(url.searchParams.get("id")).toBe("ark:/61903/4:1:KNDX-MKG");
@@ -73,7 +74,7 @@ describe("URL construction", () => {
 
   it("record_record_matches: collection=records, ark prefix 1:1:", async () => {
     mockJson(EMPTY_BODY);
-    await recordRecordMatches({ id: "QPTX-TMQ2" });
+    await recordRecordMatches({ id: "QPTX-TMQ2" }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.get("collection")).toBe("records");
     expect(url.searchParams.get("id")).toBe("ark:/61903/1:1:QPTX-TMQ2");
@@ -81,7 +82,7 @@ describe("URL construction", () => {
 
   it("sends Authorization, Accept, and User-Agent headers", async () => {
     mockJson(EMPTY_BODY);
-    await personRecordMatches({ id: "KNDX-MKG" });
+    await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     const [, init] = mockFetch.mock.calls[0];
     expect(init.headers.Authorization).toBe("Bearer test-token");
     expect(init.headers.Accept).toBe("application/json");
@@ -92,39 +93,39 @@ describe("URL construction", () => {
 
 describe("Input validation", () => {
   it("rejects empty id", async () => {
-    await expect(personRecordMatches({ id: "" })).rejects.toThrow(/non-empty id/);
+    await expect(personRecordMatches({ id: "" }, LOCAL)).rejects.toThrow(/non-empty id/);
   });
 
   it("rejects whitespace-only id", async () => {
-    await expect(personRecordMatches({ id: "   " })).rejects.toThrow(/non-empty id/);
+    await expect(personRecordMatches({ id: "   " }, LOCAL)).rejects.toThrow(/non-empty id/);
   });
 
   it("person_record_matches rejects a 1:1: ARK with sibling hint", async () => {
     await expect(
-      personRecordMatches({ id: "ark:/61903/1:1:QPTX-TMQ2" }),
+      personRecordMatches({ id: "ark:/61903/1:1:QPTX-TMQ2" }, LOCAL),
     ).rejects.toThrow(/record_record_matches/);
   });
 
   it("record_person_matches rejects a 4:1: ARK with sibling hint", async () => {
     await expect(
-      recordPersonMatches({ id: "ark:/61903/4:1:KNDX-MKG" }),
+      recordPersonMatches({ id: "ark:/61903/4:1:KNDX-MKG" }, LOCAL),
     ).rejects.toThrow(/person_person_matches/);
   });
 
   it("person_person_matches rejects a 1:1: ARK with sibling hint", async () => {
     await expect(
-      personPersonMatches({ id: "ark:/61903/1:1:QPTX-TMQ2" }),
+      personPersonMatches({ id: "ark:/61903/1:1:QPTX-TMQ2" }, LOCAL),
     ).rejects.toThrow(/record_person_matches/);
   });
 
   it("record_record_matches rejects a 4:1: ARK with sibling hint", async () => {
     await expect(
-      recordRecordMatches({ id: "ark:/61903/4:1:KNDX-MKG" }),
+      recordRecordMatches({ id: "ark:/61903/4:1:KNDX-MKG" }, LOCAL),
     ).rejects.toThrow(/person_record_matches/);
   });
 
   it("rejects unrecognized id shape", async () => {
-    await expect(personRecordMatches({ id: "not a pid" })).rejects.toThrow(/Unrecognized id/);
+    await expect(personRecordMatches({ id: "not a pid" }, LOCAL)).rejects.toThrow(/Unrecognized id/);
   });
 
   // The id arrives in whatever spelling the caller happens to hold: a plain
@@ -140,7 +141,7 @@ describe("Input validation", () => {
     ["surrounding whitespace", "  ark:/61903/1:1:QPTX-TMQ2  "],
   ])("accepts a record persona id as a %s", async (_label, id) => {
     mockJson(EMPTY_BODY);
-    await recordPersonMatches({ id });
+    await recordPersonMatches({ id }, LOCAL);
     // Every spelling must reach the SAME upstream id — the point of the
     // normalization is that the caller's spelling stops being observable.
     const url = new URL(mockFetch.mock.calls[0][0]);
@@ -153,7 +154,7 @@ describe("Input validation", () => {
     // FamilySearch validates the PID's check character and answers 400 for an
     // id it did not assign, so this must fail here rather than one hop later.
     await expect(
-      recordPersonMatches({ id: "p_293161675629" }),
+      recordPersonMatches({ id: "p_293161675629" }, LOCAL),
     ).rejects.toThrow(/Unrecognized id/);
   });
 
@@ -173,7 +174,7 @@ describe("Input validation", () => {
       },
     });
     await expect(
-      recordPersonMatches({ id: "ZZZZ-ZZZZ" }),
+      recordPersonMatches({ id: "ZZZZ-ZZZZ" }, LOCAL),
     ).rejects.toThrow(/no record persona at ark:\/61903\/1:1:ZZZZ-ZZZZ/);
   });
 
@@ -198,7 +199,7 @@ describe("Input validation", () => {
         updated: "1970-01-01T00:00:00.001Z",
         links: { "not-found": { href: "x" } },
       });
-      const err = await fn({ id: "ZZZZ-ZZZZ" }).then(
+      const err = await fn({ id: "ZZZZ-ZZZZ" }, LOCAL).then(
         () => null,
         (e: Error) => e,
       );
@@ -220,7 +221,7 @@ describe("Input validation", () => {
       updated: "2025-03-11T17:10:44.970Z",
       links: { self: { href: "/match-ws/match/matches" } },
     });
-    const result = await recordPersonMatches({ id: "QPTX-TMQ2" });
+    const result = await recordPersonMatches({ id: "QPTX-TMQ2" }, LOCAL);
     expect(result.resultCount).toBe(0);
     expect(result.matches).toEqual([]);
   });
@@ -229,50 +230,50 @@ describe("Input validation", () => {
     // Widening the accepted spellings must not widen the accepted COLLECTION —
     // a 4:1: tree ARK handed to a record tool keeps its sibling-tool hint.
     await expect(
-      recordPersonMatches({ id: "https://www.familysearch.org/ark:/61903/4:1:KNDX-MKG" }),
+      recordPersonMatches({ id: "https://www.familysearch.org/ark:/61903/4:1:KNDX-MKG" }, LOCAL),
     ).rejects.toThrow(/person_person_matches/);
   });
 
   it("rejects out-of-range minConfidence", async () => {
-    await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 0 })).rejects.toThrow(/minConfidence/);
-    await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 6 })).rejects.toThrow(/minConfidence/);
+    await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 0 }, LOCAL)).rejects.toThrow(/minConfidence/);
+    await expect(personRecordMatches({ id: "KNDX-MKG", minConfidence: 6 }, LOCAL)).rejects.toThrow(/minConfidence/);
   });
 
   it("rejects out-of-range count", async () => {
-    await expect(personRecordMatches({ id: "KNDX-MKG", count: 0 })).rejects.toThrow(/count/);
-    await expect(personRecordMatches({ id: "KNDX-MKG", count: 51 })).rejects.toThrow(/count/);
+    await expect(personRecordMatches({ id: "KNDX-MKG", count: 0 }, LOCAL)).rejects.toThrow(/count/);
+    await expect(personRecordMatches({ id: "KNDX-MKG", count: 51 }, LOCAL)).rejects.toThrow(/count/);
   });
 
   it("rejects unknown status value", async () => {
     await expect(
       // @ts-expect-error testing runtime guard
-      personRecordMatches({ id: "KNDX-MKG", status: ["nope"] }),
+      personRecordMatches({ id: "KNDX-MKG", status: ["nope"] }, LOCAL),
     ).rejects.toThrow(/Unknown status/);
   });
 
   it("rejects empty status array", async () => {
     await expect(
-      personRecordMatches({ id: "KNDX-MKG", status: [] }),
+      personRecordMatches({ id: "KNDX-MKG", status: [] }, LOCAL),
     ).rejects.toThrow(/non-empty array/);
   });
 
   it("accepts a full https:// ARK with the right prefix", async () => {
     mockJson(EMPTY_BODY);
-    await personRecordMatches({ id: "https://familysearch.org/ark:/61903/4:1:KNDX-MKG" });
+    await personRecordMatches({ id: "https://familysearch.org/ark:/61903/4:1:KNDX-MKG" }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.get("id")).toBe("ark:/61903/4:1:KNDX-MKG");
   });
 
   it("custom status array is sent as-is and dedup'd", async () => {
     mockJson(EMPTY_BODY);
-    await personRecordMatches({ id: "KNDX-MKG", status: ["accepted", "accepted", "pending"] });
+    await personRecordMatches({ id: "KNDX-MKG", status: ["accepted", "accepted", "pending"] }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.getAll("status").sort()).toEqual(["accepted", "pending"]);
   });
 
   it("custom count and minConfidence are propagated", async () => {
     mockJson(EMPTY_BODY);
-    await personRecordMatches({ id: "KNDX-MKG", count: 7, minConfidence: 4 });
+    await personRecordMatches({ id: "KNDX-MKG", count: 7, minConfidence: 4 }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.get("count")).toBe("7");
     expect(url.searchParams.get("minConfidence")).toBe("4");
@@ -280,14 +281,14 @@ describe("Input validation", () => {
 
   it("includeSummary=true is sent as the string 'true'", async () => {
     mockJson(EMPTY_BODY);
-    await personRecordMatches({ id: "KNDX-MKG", includeSummary: true });
+    await personRecordMatches({ id: "KNDX-MKG", includeSummary: true }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.get("includeSummary")).toBe("true");
   });
 
   it("never sends includeFlags", async () => {
     mockJson(EMPTY_BODY);
-    await personRecordMatches({ id: "KNDX-MKG", includeSummary: true, minConfidence: 5, count: 50, status: ["accepted"] });
+    await personRecordMatches({ id: "KNDX-MKG", includeSummary: true, minConfidence: 5, count: 50, status: ["accepted"] }, LOCAL);
     const url = new URL(mockFetch.mock.calls[0][0]);
     expect(url.searchParams.has("includeFlags")).toBe(false);
   });
@@ -318,7 +319,7 @@ describe("Response parsing", () => {
 
   it("maps the happy-path response", async () => {
     mockJson(KNDX_RESPONSE);
-    const result = await personRecordMatches({ id: "KNDX-MKG" });
+    const result = await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     expect(result.queryArk).toBe("ark:/61903/4:1:KNDX-MKG");
     expect(result.resultCount).toBe(1);
     expect(result.returned).toBe(1);
@@ -342,7 +343,7 @@ describe("Response parsing", () => {
     const body = JSON.parse(JSON.stringify(KNDX_RESPONSE));
     delete body.entries[0].content;
     mockJson(body);
-    const result = await personRecordMatches({ id: "KNDX-MKG" });
+    const result = await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     expect(result.matches[0].summary).toBeUndefined();
   });
 
@@ -361,7 +362,7 @@ describe("Response parsing", () => {
       ],
     };
     mockJson(body);
-    const result = await personRecordMatches({ id: "KNDX-MKG" });
+    const result = await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     expect(result.matches.map((m) => m.status)).toEqual(["pending", "rejected", "accepted"]);
   });
 
@@ -380,7 +381,7 @@ describe("Response parsing", () => {
       ],
     };
     mockJson(body);
-    const result = await personRecordMatches({ id: "KNDX-MKG" });
+    const result = await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     expect(result.matches).toHaveLength(1);
     expect(result.matches[0].pid).toBe("GOOD-PID");
   });
@@ -395,7 +396,7 @@ describe("Response parsing", () => {
       ],
     };
     mockJson(body);
-    const result = await personRecordMatches({ id: "KNDX-MKG" });
+    const result = await personRecordMatches({ id: "KNDX-MKG" }, LOCAL);
     expect(result.resultCount).toBe(1);
   });
 });
@@ -408,7 +409,7 @@ describe("Error handling", () => {
       json: () => Promise.resolve({}),
       headers: new Headers(),
     });
-    await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/login tool/);
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/login tool/);
   });
 
   it("translates 403 to a login-instruction error", async () => {
@@ -418,7 +419,7 @@ describe("Error handling", () => {
       json: () => Promise.resolve({}),
       headers: new Headers(),
     });
-    await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/login tool/);
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/login tool/);
   });
 
   it("translates 400 to a malformed-ARK message", async () => {
@@ -428,22 +429,22 @@ describe("Error handling", () => {
       json: () => Promise.resolve({}),
       headers: new Headers(),
     });
-    await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/malformed ARK/);
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/malformed ARK/);
   });
 
   it("translates 500 to a generic upstream error", async () => {
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false, status: 500, statusText: "Server Error",
       text: () => Promise.resolve(""),
       json: () => Promise.resolve({}),
       headers: new Headers(),
     });
-    await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/500/);
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/500/);
   });
 
   it("translates a network error", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("ETIMEDOUT"));
-    await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/Could not reach/);
+    mockFetch.mockRejectedValue(new Error("ETIMEDOUT"));
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/Could not reach/);
   });
 
   it("rejects malformed JSON body", async () => {
@@ -453,11 +454,11 @@ describe("Error handling", () => {
       json: () => Promise.reject(new Error("bad json")),
       headers: new Headers({ "content-type": "application/json" }),
     });
-    await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/unexpected response body/);
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/unexpected response body/);
   });
 
   it("rejects body with no entries array", async () => {
     mockJson({ results: 0, title: "x", updated: "t" });
-    await expect(personRecordMatches({ id: "KNDX-MKG" })).rejects.toThrow(/unexpected response body/);
+    await expect(personRecordMatches({ id: "KNDX-MKG" }, LOCAL)).rejects.toThrow(/unexpected response body/);
   });
 });

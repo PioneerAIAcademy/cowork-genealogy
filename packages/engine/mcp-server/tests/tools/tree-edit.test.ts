@@ -109,7 +109,7 @@ describe("tree_edit", () => {
     expect(refless).toBe(0);
   };
 
-  it("add_fact: assigns the next F id, resolves standard_place, swaps the primary, writes only the tree + .bak", async () => {
+  it("add_fact: assigns the next F id, resolves standard_place, swaps the primary, writes only the tree and no .bak", async () => {
     await writeProject(onePersonSourced());
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
@@ -134,7 +134,7 @@ describe("tree_edit", () => {
     // the old Birth lost its primary (one primary per type)
     expect(facts.find((f: any) => f.id === "F1").primary).toBeUndefined();
 
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
   });
 
@@ -474,7 +474,7 @@ describe("tree_edit", () => {
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
   });
 
-  it("add_source: assigns the next S id, rejects a caller-supplied id, writes only the tree + .bak", async () => {
+  it("add_source: assigns the next S id, rejects a caller-supplied id, writes only the tree and no .bak", async () => {
     await writeProject(onePerson());
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
@@ -492,7 +492,7 @@ describe("tree_edit", () => {
     expect(tree.sources).toHaveLength(1);
     expect(tree.sources[0]).toMatchObject({ id: "S1", title: "1850 U.S. Federal Census" });
 
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     // research.json is never touched by a source add
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
 
@@ -987,7 +987,7 @@ describe("tree_edit (batch ops)", () => {
     sources: [],
   });
 
-  it("(a/c) applies a heterogeneous batch (source + person + fact) in one write, sequencing ids, one .bak", async () => {
+  it("(a/c) applies a heterogeneous batch (source + person + fact) in one write, sequencing ids, no .bak", async () => {
     await writeProject(onePerson());
     const r = await treeEdit({
       projectPath: dir,
@@ -1004,7 +1004,7 @@ describe("tree_edit (batch ops)", () => {
     expect(r.results[1].assignedIds?.person).toBe("I2");
     expect(r.results[2].assignedIds?.fact).toBe("F2");
     expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     const tree = await readTree();
     expect(tree.sources.map((s: any) => s.id)).toEqual(["S1"]);
     expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);

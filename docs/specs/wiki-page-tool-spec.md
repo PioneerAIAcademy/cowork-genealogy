@@ -64,7 +64,7 @@ GET /wiki/page/Portugal_Genealogy
 ## MCP-side tools
 
 Two TypeScript tools call the new endpoint. Both follow the same call
-pattern as `wiki-search.ts`: read the base URL via `getWikiApiUrl()`,
+pattern as `wiki-search.ts`: read the base URL via `getWikiApiUrl(principal)`,
 `fetch(`{base}/page/{title}`)`, handle 200/404/5xx/network. No
 `fs/promises`, no `getWikiMarkdownDir`.
 
@@ -112,7 +112,7 @@ place-resolver fallback to `getPlaceCandidateNames`, and the
 
 | Condition | Behavior |
 |---|---|
-| Missing `wikiApiUrl` | Bubble up the LLM-instruction error from `getWikiApiUrl()` |
+| Missing `wikiApiUrl` | Bubble up the LLM-instruction error from `getWikiApiUrl(principal)` |
 | 5xx from API | Throw: `wiki-query-api error: {status}` |
 | Network failure | Throw: `Could not reach wiki-query-api at {url}. Is the server running?` |
 | 404 (`wiki_read`) | Throw: `No wiki page found for "<slug>". The page may not exist in the corpus.` |

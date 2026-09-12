@@ -131,7 +131,7 @@ snake_case envelope it reads.
    `subjectResolvable: false` in the output so the skill treats it as *no match
    signal* (fall back to the manual `same_person` / cross-check path) rather than
    promoting a meaningless order as authoritative.
-3. **Score every candidate.** One `getValidToken()`. Wrap each pair in a per-item
+3. **Score every candidate.** One `getValidToken(principal)`. Wrap each pair in a per-item
    `try/catch` (as `same_person`'s relatives mode does, `same-person.ts:67-91`),
    and **skip candidates with no `gedcomx` or no `primaryId`** (both optional on
    `RecordSearchResult`) with `matchScore: null` and **no FS call** — a
@@ -316,7 +316,7 @@ false`.
 ## Authentication
 
 Authenticated tool — obtains the FamilySearch token via
-`getValidToken()` (one token reused across the whole fan-out). No new token
+`getValidToken(principal)` (one token reused across the whole fan-out). No new token
 plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 `BROWSER_USER_AGENT`.
 
@@ -333,7 +333,7 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   (not an error).
 - **Score-log write failure** → `scoreLogError` note in the return; call
   succeeds.
-- **No valid session** → the standard `getValidToken()` "call the login tool"
+- **No valid session** → the standard `getValidToken(principal)` "call the login tool"
   error.
 
 ## Files
