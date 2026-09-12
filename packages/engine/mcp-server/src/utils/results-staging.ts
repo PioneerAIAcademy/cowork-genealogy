@@ -1,15 +1,18 @@
 // results-staging — the host-side payload transport for search-result sidecars
 // (Option B). A search tool stages its verbatim response to results/.staging/
 // and returns a small handle; research_log_append later finalizes that staged
-// file into results/<log_id>.json. The big payload travels search-tool → disk →
+// file into results/<log_id>.json. The big payload travels search-tool → store →
 // log-append and never round-trips through the model.
 //
 // Specs: search-result-staging-spec.md (producer + finalize), research-log-
 // editor-spec.md §5–§6 (consumer).
+//
+// All I/O goes through the active ProjectStore; this module owns the staging
+// protocol (envelope shape, the pairing rule, the TTL) and the error wording.
 
-import { writeFile, readFile, readdir, stat, unlink, mkdir } from "fs/promises";
 import { join, resolve, dirname } from "path";
 import { randomUUID } from "node:crypto";
+import { getProjectStore } from "../store/project-store.js";
 import { isInsideProject, assertInsideProject, readProjectJson } from "./project-io.js";
 
 /** The mandatory staging subdirectory. Invisible to the validator orphan check
@@ -50,7 +53,7 @@ export interface StagedHandle {
   returnedCount: number;
 }
 
-/** The on-disk staging envelope (snake_case — it is persisted project state). */
+/** The persisted staging envelope (snake_case — it is persisted project state). */
 interface StagingEnvelope {
   tool: string;
   retrieved: string;
@@ -86,25 +89,22 @@ export async function stageSearchResults<TResponse extends { results?: unknown[]
   const results = Array.isArray(response.results) ? response.results : [];
   if (results.length === 0) return null; // nil search retains nothing
 
+  const store = getProjectStore();
+
   // A missing or non-directory projectPath is a staging failure (§8) — never
   // silently scaffold a bogus directory tree under a typo'd path. Throwing here
   // surfaces to the producer as `staged: null` + a stagingError note.
-  let st;
-  try {
-    st = await stat(projectPath);
-  } catch {
+  const state = await store.projectDirState(projectPath);
+  if (state === "missing") {
     throw new Error(`projectPath '${projectPath}' does not exist`);
   }
-  if (!st.isDirectory()) {
+  if (state === "not_directory") {
     throw new Error(`projectPath '${projectPath}' is not a directory`);
   }
 
-  const stagingDir = join(projectPath, STAGING_SUBDIR);
-  await mkdir(stagingDir, { recursive: true });
-
   // Opportunistic prune of stale staging files (best-effort; runs before the
   // fresh write so it never deletes the file we are about to create).
-  await pruneStale(stagingDir);
+  await pruneStale(projectPath);
 
   const filename = `${randomUUID()}.json`;
   const envelope: StagingEnvelope = {
@@ -113,14 +113,11 @@ export async function stageSearchResults<TResponse extends { results?: unknown[]
     returned_count: results.length,
     payload: response,
   };
-  await writeFile(
-    join(stagingDir, filename),
-    JSON.stringify(envelope, null, 2),
-    "utf-8",
-  );
+  const resultsRef = `${STAGING_SUBDIR}/${filename}`;
+  await store.writeJson(projectPath, resultsRef, envelope);
 
   return {
-    resultsRef: `${STAGING_SUBDIR}/${filename}`,
+    resultsRef,
     returnedCount: results.length,
   };
 }
@@ -151,6 +148,7 @@ export async function finalizeStagedResults(args: {
   payloadQuery?: Record<string, unknown>;
 }> {
   const { projectPath, stagedResultsRef, logId, expectedTool } = args;
+  const store = getProjectStore();
 
   // 1. Path-traversal guard, then require the ref to live under results/.staging/.
   const abs = assertInsideProject(projectPath, stagedResultsRef);
@@ -164,7 +162,7 @@ export async function finalizeStagedResults(args: {
   // 2. Read the staged envelope.
   let envelope: StagingEnvelope;
   try {
-    envelope = JSON.parse(await readFile(abs, "utf-8"));
+    envelope = JSON.parse(await store.readText(projectPath, stagedResultsRef));
   } catch {
     throw new Error(
       `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON`,
@@ -194,15 +192,10 @@ export async function finalizeStagedResults(args: {
     returned_count: returnedCount,
     payload,
   };
-  await mkdir(join(projectPath, "results"), { recursive: true });
-  await writeFile(
-    join(projectPath, resultsRef),
-    JSON.stringify(sidecar, null, 2),
-    "utf-8",
-  );
+  await store.writeJson(projectPath, resultsRef, sidecar);
 
   // 6. Consume the staged file (best-effort; a lost race is harmless).
-  await unlink(abs).catch(() => {});
+  await store.remove(projectPath, stagedResultsRef);
 
   // The producer's echoed query, if it recorded one. Guarded on a plain object
   // so a malformed payload degrades to "no default" rather than persisting a
@@ -299,8 +292,8 @@ export const NIL_SEARCH_NEEDS_LOG_NOTE =
  * `query` — a 20%-failure-rate transcription (`research-log-append.ts`), and an
  * entry of exactly the shape the pairing below tolerates, so the count would drop
  * to zero while the raw response was lost for good. Handing back the refs makes the
- * obligation satisfiable from disk, and `research_log_append` then fills `query`
- * from the staged payload verbatim.
+ * obligation satisfiable from the store, and `research_log_append` then fills
+ * `query` from the staged payload verbatim.
  *
  * Never throws, and returns an empty array on any failure — a missing project,
  * unreadable research.json, corrupt envelope. This runs inside a successful search;
@@ -327,11 +320,11 @@ export async function unloggedStagedSearches(
   // scaffolding one.
   if (typeof projectPath !== "string" || projectPath === "") return [];
 
-  const stagingDir = join(projectPath, STAGING_SUBDIR);
+  const store = getProjectStore();
 
-  let names: string[];
+  let names: { name: string; mtimeMs: number }[];
   try {
-    names = (await readdir(stagingDir)).filter((n) => n.endsWith(".json"));
+    names = (await store.list(projectPath, STAGING_SUBDIR)).filter((e) => e.name.endsWith(".json"));
   } catch {
     return []; // no staging dir yet — nothing staged, nothing owed
   }
@@ -345,21 +338,20 @@ export async function unloggedStagedSearches(
   // work, not because deletion is imminent.
   const cutoff = Date.now() - STAGING_TTL_MS;
   const staged: { ref: string; tool: string; retrieved: number; iso: string }[] = [];
-  for (const n of names) {
-    const p = resolve(stagingDir, n);
+  for (const entry of names) {
+    const ref = `${STAGING_SUBDIR}/${entry.name}`;
     try {
-      const s = await stat(p);
-      if (s.mtimeMs < cutoff) continue;
-      const envelope = JSON.parse(await readFile(p, "utf-8")) as StagingEnvelope;
+      if (entry.mtimeMs < cutoff) continue;
+      const envelope = JSON.parse(await store.readText(projectPath, ref)) as StagingEnvelope;
       const parsed = Date.parse(envelope.retrieved);
       const fallback = Number.isNaN(parsed);
       staged.push({
-        ref: `${STAGING_SUBDIR}/${n}`,
+        ref,
         tool: typeof envelope.tool === "string" ? envelope.tool : "",
         // mtime is the fallback for an envelope whose `retrieved` is missing or
         // unparseable: it is the same clock, one write later.
-        retrieved: fallback ? s.mtimeMs : parsed,
-        iso: fallback ? new Date(s.mtimeMs).toISOString() : envelope.retrieved,
+        retrieved: fallback ? entry.mtimeMs : parsed,
+        iso: fallback ? new Date(entry.mtimeMs).toISOString() : envelope.retrieved,
       });
     } catch {
       continue; // unreadable or corrupt: not counted, never fatal
@@ -403,25 +395,20 @@ export async function unloggedStagedSearches(
   return unpaired;
 }
 
-async function pruneStale(stagingDir: string): Promise<void> {
-  let names: string[];
+async function pruneStale(projectPath: string): Promise<void> {
+  const store = getProjectStore();
+  let entries;
   try {
-    names = await readdir(stagingDir);
+    entries = await store.list(projectPath, STAGING_SUBDIR);
   } catch {
     return;
   }
   const cutoff = Date.now() - STAGING_TTL_MS;
   await Promise.all(
-    names
-      .filter((n) => n.endsWith(".json"))
-      .map(async (n) => {
-        const p = resolve(stagingDir, n);
-        try {
-          const s = await stat(p);
-          if (s.mtimeMs < cutoff) await unlink(p);
-        } catch {
-          // best-effort: ignore ENOENT / races / stat failures
-        }
+    entries
+      .filter((e) => e.name.endsWith(".json"))
+      .map(async (e) => {
+        if (e.mtimeMs < cutoff) await store.remove(projectPath, `${STAGING_SUBDIR}/${e.name}`);
       }),
   );
 }
@@ -451,7 +438,7 @@ export async function readStagedResults(
   }
   let envelope: { payload?: { results?: unknown[] } };
   try {
-    envelope = JSON.parse(await readFile(abs, "utf-8"));
+    envelope = JSON.parse(await getProjectStore().readText(projectPath, stagedResultsRef));
   } catch {
     throw new Error(
       `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON.`,

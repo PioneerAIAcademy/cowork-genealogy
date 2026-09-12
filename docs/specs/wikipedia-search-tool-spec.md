@@ -47,10 +47,11 @@ Example:
 
 ### Timeout
 
-`WIKIPEDIA_TIMEOUT_MS` = **60s**, passed as `fetchWithTimeout`'s third
-argument, rather than the shared 30s default. This is a single un-retried
-summary fetch, so a slow success becomes a hard failure at the default with
-nothing behind it. Across the committed e2e run logs, 2 of 19 calls ran past
+`WIKIPEDIA_TIMEOUT_MS` = **60s**, passed as `fetchWithRetry`'s third
+argument, rather than the shared 30s default. The call is retried by
+`fetchWithRetry` (up to 3 attempts, 10s budget), but a 60s timeout exhausts the
+budget on the first attempt, so timeouts are effectively single-attempt. A slow
+success becomes a hard failure at the default with nothing behind it. Across the committed e2e run logs, 2 of 19 calls ran past
 30s, at 33.7s and 35.2s. Re-measure rather than re-guess; the method is in
 `image-transcribe-tool-spec.md`'s timeout-budget section.
 

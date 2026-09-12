@@ -58,7 +58,40 @@ Examples that all resolve to `ark:/61903/4:1:KNDX-MKG` inside
 
 - `"KNDX-MKG"`
 - `"ark:/61903/4:1:KNDX-MKG"`
+- `"4:1:KNDX-MKG"` — the bare type-prefixed form
 - `"https://familysearch.org/ark:/61903/4:1:KNDX-MKG"`
+- `"https://www.familysearch.org/ark:/61903/4:1:KNDX-MKG"` — the form
+  FamilySearch's own pages emit, and the form `arkToUrl` produces
+- the `http://` variants of both, and any of the above with surrounding
+  whitespace
+
+Normalization is `toArk` (`src/utils/ark.ts`), the same helper the rest of the
+engine uses, rather than a second URL-shape regex maintained here. It matches
+the ARK token anywhere in the string, so the list above is a set of examples and
+not the accepted set: anything *containing* a canonical `ark:/61903/<n:n>:<pid>`
+resolves, a non-FamilySearch host included. Only the token is kept — the prefix
+and pid are re-parsed and the ARK reassembled — so the surrounding text never
+reaches the request.
+
+**A malformed id still errors, and must.** The results sidecar's internal
+persona id (`p_293161675629`) is the shape that produced every `Unrecognized id`
+failure in the corpus, and accepting it here would only move the failure one hop
+— upstream answers `400` for it. The id that works travels to the caller as the
+record's ARK.
+
+**The STATUS CODE turns on form alone, and the form rule is a character set with
+no check character** (measured 2026-09-10,
+`dev/probe-match-not-found.ts`). A pid is `XXXX-XXXX`, uppercase, drawn from
+digits `1-9` and consonants — `0` and the vowels `A E I O U` are excluded at
+every position. Varying a real pid's last character across all 36 alphanumerics
+accepts **30** and rejects exactly `0 A E I O U`; a vowel in position 1, 3 or 6
+each returns 400, as does a lowercase id.
+
+So `ark:/61903/1:1:ZZZZ-ZZZZ` — well-formed, never assigned to anything —
+answers **200**, while `…:AAAA-AAAA` answers **400** because `A` is a vowel, not
+because of a checksum. A well-formed id is accepted whether or not it names a
+real persona, and the service reports the difference in the body rather than the
+status. See "Unresolvable ids" below, which is why that matters.
 
 Examples that **error** inside `person_record_matches` (which expects a
 tree person):
@@ -105,18 +138,57 @@ keeps responses compact.
 Result page size. FS API default is 5 — too small for a useful
 LLM-facing tool. We default to **20** and clamp to `[1, 50]`.
 
+### Unresolvable ids
+
+**A well-formed id the service cannot resolve is reported as an error, not as
+zero matches.** Upstream answers `200` in both cases and the two bodies are
+otherwise identical — same `title`, `entries: []`, `results: 0`. The only
+explicit discriminator is a `not-found` entry in `links` (an epoch `updated` of
+`1970-01-01T00:00:00.001Z` is a second tell; the link is the one the tool keys
+on). Measured 2026-09-10:
+
+| | genuine zero | unresolvable id |
+|---|---|---|
+| `entries` / `results` | `[]` / 0 | `[]` / 0 |
+| `title` | `Matches for <ark>` | `Matches for <ark>` |
+| `links` | `self` | `not-found`, `target-system`, `self` |
+| `updated` | real timestamp | epoch |
+
+Collapsing the two would hand the agent "nothing is attached to this record"
+when the truth is "you asked about a record that does not exist" — opposite
+research decisions from the same output. It is the failure shape of an outage
+recorded as an absence: the same one that lets a failed wiki lookup persist as
+"the wiki has no page for this place".
+
+Reproduce with `dev/probe-match-not-found.ts`.
+
 ### What we deliberately don't expose
 
 - `includeFlags` — when populated, surfaces per-match boolean flags on
   `matchInfo[]` (e.g. `hasFourOrMorePeople`, `addsOtherFact`) that
-  would be useful to a `tree-edit` skill. We don't expose it yet:
-  with the team's shared internal-dev token, sending `includeFlags=true`
-  silently returns `{"entries": []}` for every call we tested,
-  including the exact shape that works on Richard's account. The
-  divergence is the OAuth scope/permission set on the token, not the
-  param itself. Worth revisiting once we know what unlocks it. Sending
-  `none`/`false`/omitted behave identically (server default `none`);
-  `all`/`person` return `400 Bad Request`.
+  would be useful to a `tree-edit` skill. We don't expose it: on this
+  token, `includeFlags=true` returns a **degenerate empty feed** for every
+  call tested, including the exact shape that returned flags on a
+  teammate's account on 2026-05-27. Sending `none`/`false`/omitted behave
+  identically (server default `none`); `all`/`person` return `400 Bad
+  Request`.
+
+  **It is not a filter on entries.** A genuine zero keeps the full envelope
+  (`title`, `updated`, `links`, `results`); the flag response carries none of
+  it, and under `Accept: application/atom+xml` the server returns an entirely
+  empty `<feed/>`. The server is constructing an empty feed, which also rules
+  out serialization and content negotiation.
+
+  **The cause is not decidable from our side, and the OAuth-scope explanation
+  this section used to assert is not one we can state.** `SCOPES` in
+  `src/auth/config.ts` is the single string `offline_access` for every token
+  this codebase mints (`src/auth/login.ts` passes it verbatim), and the access
+  token is opaque rather than a JWT, so there is no per-user scope difference
+  here to point at and nothing checkable client-side. Roughly 35 requests
+  across both collections, every status/count/minConfidence permutation, ARK
+  and bare-pid, and five `Accept` types never once returned a populated flag
+  set. Settling this needs FamilySearch, not another probe from us — do not
+  spend a session re-probing it.
 
 ---
 
@@ -213,7 +285,7 @@ Mapped output:
 
 | Condition                                | Behavior                                                                                       |
 |------------------------------------------|------------------------------------------------------------------------------------------------|
-| Not logged in                            | Throws `getValidToken()`'s standard "User is not logged in to FamilySearch. Call the login tool to authenticate." |
+| Not logged in                            | Throws `getValidToken(principal)`'s standard "User is not logged in to FamilySearch. Call the login tool to authenticate." |
 | Empty `id`                               | Throws "`<tool_name>` requires a non-empty id (e.g. `\"KNDX-MKG\"`)."                          |
 | `id` is a full ARK with the wrong prefix | Throws "Expected `<expected-prefix>` ARK but received `<actual-prefix>`. Did you mean `<sibling-tool>`?" |
 | `id` has unrecognized shape              | Throws "Unrecognized id `<value>`. Expected a personId (e.g. `\"KNDX-MKG\"`) or a full FamilySearch ARK." |
@@ -223,6 +295,7 @@ Mapped output:
 | Upstream 401                             | Re-throws as "FamilySearch match API rejected the request: 401 Unauthorized. Call the login tool to authenticate." |
 | Upstream 400 (bad ARK)                   | Re-throws as "FamilySearch rejected the id `<value>` as a malformed ARK."                     |
 | Upstream non-2xx                         | Re-throws as "FamilySearch match API error: `<status> <statusText>`."                         |
+| Upstream 200 carrying a `not-found` link | Throws "FamilySearch has no record persona / tree person at `<ark>` …" — see "Unresolvable ids" |
 | Network error                            | Re-throws as "Could not reach FamilySearch match API: `<message>`."                           |
 | Response not JSON / missing entries      | Throws "FamilySearch match API returned an unexpected response body."                          |
 
@@ -233,7 +306,7 @@ network errors. (This matches `person_read` and `same_person`.)
 
 ## Auth
 
-Uses `getValidToken()` from `src/auth/refresh.ts`. Passes the token as
+Uses `getValidToken(principal)` from `src/auth/refresh.ts`. Passes the token as
 `Authorization: Bearer <token>`. Sends `User-Agent: BROWSER_USER_AGENT`
 from `src/constants.ts` (FS WAF rejects non-browser UAs). Do not
 re-implement token logic.
@@ -242,7 +315,8 @@ re-implement token logic.
 
 ## What NOT to do
 
-- Don't send `includeFlags=true` — silent empty-response bug.
+- Don't send `includeFlags=true` — it returns a degenerate empty feed on this
+  token, for reasons not decidable from our side.
 - Don't accept arbitrary ARK prefixes (e.g. `1:2:` record sources,
   `3:1:` images) — only `1:1:` and `4:1:`.
 - Don't omit `status` — the upstream default is `Pending` only, which
@@ -282,8 +356,10 @@ tools. Skill wiring is downstream work.
     each of the other three uses the right (collection, prefix) combo.
   - URL construction: every required + default query param appears
     exactly once in the URL; `status[]` repeats correctly.
-  - `includeFlags` is NEVER part of the URL (it would trigger the
-    upstream bug).
+  - `includeFlags` is NEVER part of the URL (it returns the empty feed
+    described under "What we deliberately don't expose").
+  - Every accepted id spelling reaches the same upstream `id` param, and a
+    sidecar-internal `p_…` id is still refused.
   - Happy-path parsing of a populated entry (`status` URI → lowercase,
     `id` URL → pid + ark + arkType, `matchInfo[0].collection`).
   - `includeSummary=true` passes through `content.gedcomx` as `summary`.

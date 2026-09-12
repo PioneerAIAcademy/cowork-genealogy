@@ -63,6 +63,7 @@ from harness.runlog import (
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
 from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
+from harness.warning_kinds import JUDGE_WARNING_KINDS
 from harness.versioning import (
     DEFAULT_KEEP_CANDIDATES,
     ann_filename_for,
@@ -492,27 +493,17 @@ def _print_timing_report(entries: list[dict], elapsed_total: float) -> None:
 
 #: Warning kinds about the JUDGE — either the judge breaking one of its own
 #: prompt rules (`judge._extract_dimensions`) or a judge score the harness wants
-#: a human to re-read (`orchestrator.flag_routing_negative_judge_fail`). Both
-#: files emit into this class; it is not judge.py's alone.
+#: a human to re-read (`orchestrator.flag_routing_negative_judge_fail`). Tallied
+#: under "Judge rule violations"; the harness-side advisories `output.warnings`
+#: also carries (`unread_skill_call`, `uncovered_tool_call`, `harness_node_timeout`,
+#: …) are about the skill/fixtures/harness, not the judge, and are not tallied.
 #:
-#: `output.warnings` also carries harness-side advisories from
-#: `orchestrator._build_warnings` (`unread_skill_call`,
-#: `missing_tool_usage_dimension`, `uncovered_tool_call`) which are about the
-#: skill or the fixtures, not the judge; those are deliberately not tallied here.
-#:
-#: A new judge-warning kind in EITHER file must be added here too, or it prints
-#: nowhere — which is the state this whole section exists to end, and which is
-#: exactly what happened to the routing warning: it was emitted from
-#: orchestrator.py, the guard scanned only judge.py, and it printed nowhere for
-#: its entire life. `test_summary_ignores_non_judge_warning_kinds` now scans
-#: both.
-_JUDGE_WARNING_KINDS = frozenset({
-    "dropped_unknown_rubric_dimension",
-    "dropped_unknown_base_dimension",
-    "dropped_duplicate_dimension",
-    "coerced_tool_arguments_to_na",
-    "routing_negative_judge_fail",
-})
+#: DERIVED from `harness/warning_kinds.py`, the single source of truth — not a
+#: hand-kept second copy. This is what the old regex-scan guard could not
+#: guarantee: a new kind that prints nowhere is now impossible in two ways — the
+#: registry validates every emitted kind at the `_build_warnings` chokepoint, and
+#: the summary's tally list is this same registry, so the two cannot drift.
+_JUDGE_WARNING_KINDS = JUDGE_WARNING_KINDS
 
 
 def _print_summary(rows: list[dict]) -> None:

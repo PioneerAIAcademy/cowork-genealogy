@@ -31,6 +31,7 @@
  * Run: `npx tsx dev/explore-year-range-sweep-records.ts` from
  * `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchRetry, sleep } from "./http-retry.js";
@@ -45,8 +46,8 @@ async function readAll(range: string): Promise<{ total: number | null; ids: stri
     await sleep(300);
     // Per request, not once in `main()`: this sweeps many windows with 429 backoffs,
     // and a token expiring mid-run would surface as a 401 abort that discards the
-    // whole sweep. `getValidToken()` auto-refreshes.
-    const token = await getValidToken();
+    // whole sweep. `getValidToken(LOCAL)` auto-refreshes.
+    const token = await getValidToken(LOCAL);
     // `fetchRetry` owns the 429 backoff: correct Retry-After parse (an absent
     // header no longer reads as a 0ms wait) and a per-call attempt counter capped
     // at maxRetries, so a persistently throttling page is bounded. An

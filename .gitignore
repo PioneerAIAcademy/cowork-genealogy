@@ -117,3 +117,9 @@ PROBES.md
 
 # OCR model-comparison spike output: FamilySearch page scans (PII) + full transcriptions.
 packages/engine/mcp-server/dev/ocr-spike-out/
+
+# Search-result sidecars written into a fixture folder when a tool is pointed at
+# it as its projectPath during manual research (resolving a record-hint fixture).
+# A fixture folder holds no `results/` of its own — e2e runs seed their workspace
+# under eval/e2e-project/ or eval/e2e-view/ instead.
+eval/tests/e2e/*/results/

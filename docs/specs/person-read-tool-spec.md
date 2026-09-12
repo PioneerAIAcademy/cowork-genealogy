@@ -243,10 +243,10 @@ Present when `sourceDescriptions: true`. Each source object:
 ## Authentication
 
 This tool requires a valid FamilySearch access token. It must call
-`getValidToken()` from `src/auth/refresh.ts` — the single entry point for
+`getValidToken(principal)` from `src/auth/refresh.ts` — the single entry point for
 all authenticated tools. Do not re-implement token plumbing.
 
-If the user is not authenticated, `getValidToken()` throws an LLM-instruction
+If the user is not authenticated, `getValidToken(principal)` throws an LLM-instruction
 error directing the user to call the `login` tool. The tool function must not
 swallow this error — it lets the error throw, and the MCP server in
 `src/index.ts` catches it and returns the message as `isError: true`.
@@ -505,7 +505,7 @@ metadata, not real sources.
 
 | Condition | Behavior |
 |-----------|----------|
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Person not found (404) | Throw: `"Person {pid} not found in the FamilySearch Family Tree."` |
 | Person deleted (410) | Throw: `"Person {pid} has been deleted from the FamilySearch Family Tree."` |
 | Person restricted (403) | Throw: `"Person {pid} is restricted and cannot be viewed."` |

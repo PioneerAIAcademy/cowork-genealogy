@@ -1,6 +1,7 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { toArk } from "../utils/ark.js";
 import { expandNameForFulltext } from "../utils/name-variants.js";
 import type {
@@ -174,7 +175,8 @@ function echoQuery(input: FulltextSearchInput): Record<string, string | number |
 }
 
 export async function fulltextSearchTool(
-  input: FulltextSearchInput
+  input: FulltextSearchInput,
+  principal: Principal
 ): Promise<FulltextSearchResponse> {
   validateInput(input);
 
@@ -183,7 +185,7 @@ export async function fulltextSearchTool(
   // and stageSearchResults must both see the caller's original input.name.
   const expansion = input.name ? expandNameForFulltext(input.name) : null;
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const url = buildUrl(input, expansion?.expanded);
 
   const headers: Record<string, string> = {
@@ -195,7 +197,7 @@ export async function fulltextSearchTool(
     headers["X-FS-Feature-Tag"] = "search_naturalLanguageSupport";
   }
 
-  const response = await fetchWithTimeout(url, { headers });
+  const response = await fetchWithRetry(url, { headers });
 
   if (!response.ok) {
     if (response.status === 401) {

@@ -1,0 +1,131 @@
+{
+  "tool": "person_read",
+  "description": "FamilySearch tree person read for Thomas Doyle WITH relatives and source descriptions. Wife Bridget Doyle carries a genuine timeline impossibility on her own record -- a Death fact in 1875 and a Residence fact (1880 census, listing her as head of household) four years later -- for issue #1827: init-project must invoke check-warnings on every imported relative, not just the subject, and this is the fixture that gives check-warnings a real hasEventAfterDeath1 to find on a non-subject person. Children John and Kate carry no impossibility; only Bridget does, so the test can isolate which person the finding belongs to.",
+  "args": { "personId": "MKVT-7XR", "relatives": true, "sourceDescriptions": true },
+  "response": {
+    "persons": [
+      {
+        "id": "MKVT-7XR",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "Thomas", "surname": "Doyle" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "~1830",
+            "standard_date": "Abt 1830",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          },
+          {
+            "type": "Death",
+            "date": "1895",
+            "standard_date": "1895",
+            "place": "Northumberland County, Pennsylvania, United States",
+            "standard_place": "Northumberland, Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "MKVT-8YQ",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Bridget", "surname": "Doyle" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1834",
+            "standard_date": "1834",
+            "place": "Ireland",
+            "standard_place": "Ireland"
+          },
+          {
+            "type": "Death",
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Northumberland County, Pennsylvania, United States",
+            "standard_place": "Northumberland, Pennsylvania, United States"
+          },
+          {
+            "type": "Residence",
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Coal Township, Northumberland County, Pennsylvania, United States",
+            "standard_place": "Coal, Northumberland, Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "MKVT-9ZP",
+        "gender": "Male",
+        "living": false,
+        "names": [
+          { "given": "John", "surname": "Doyle" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1856",
+            "standard_date": "1856",
+            "place": "Northumberland County, Pennsylvania, United States",
+            "standard_place": "Northumberland, Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "MKVT-6WN",
+        "gender": "Female",
+        "living": false,
+        "names": [
+          { "given": "Kate", "surname": "Doyle" }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1859",
+            "standard_date": "1859",
+            "place": "Northumberland County, Pennsylvania, United States",
+            "standard_place": "Northumberland, Pennsylvania, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "MKVT-7XR",
+        "person2": "MKVT-8YQ",
+        "facts": [
+          {
+            "type": "Marriage",
+            "date": "1854",
+            "standard_date": "1854",
+            "place": "Northumberland County, Pennsylvania, United States",
+            "standard_place": "Northumberland, Pennsylvania, United States"
+          }
+        ]
+      },
+      { "type": "ParentChild", "parent": "MKVT-7XR", "child": "MKVT-9ZP", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MKVT-8YQ", "child": "MKVT-9ZP", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MKVT-7XR", "child": "MKVT-6WN", "subtype": "Biological" },
+      { "type": "ParentChild", "parent": "MKVT-8YQ", "child": "MKVT-6WN", "subtype": "Biological" }
+    ],
+    "sources": [
+      {
+        "id": "NPPX-1QF",
+        "title": "Pennsylvania, County Death Records, Bridget Doyle, 1875",
+        "citation": "\"Pennsylvania, County Death Records\", database with images, FamilySearch, entry for Bridget Doyle, 1875, Northumberland County.",
+        "url": "https://familysearch.org/ark:/61903/1:1:NPPX-2QS"
+      },
+      {
+        "id": "NPPX-7RB",
+        "title": "United States Census, 1880, Coal Township, Northumberland, Pennsylvania",
+        "url": "https://familysearch.org/ark:/61903/1:1:NPPX-3WD"
+      }
+    ]
+  }
+}

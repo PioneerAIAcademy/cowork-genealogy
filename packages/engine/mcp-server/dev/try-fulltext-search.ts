@@ -9,6 +9,7 @@
  *   npx tsx dev/try-fulltext-search.ts "+Patrick +Flynn" --facets
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { fulltextSearchTool } from "../src/tools/fulltext-search.js";
 import type { FulltextSearchInput } from "../src/types/fulltext-search.js";
 
@@ -56,5 +57,5 @@ while (i < args.length) {
 console.log("Input:", JSON.stringify(input, null, 2));
 console.log();
 
-const result = await fulltextSearchTool(input);
+const result = await fulltextSearchTool(input, LOCAL);
 console.log(JSON.stringify(result, null, 2));

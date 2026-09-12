@@ -1,0 +1,11 @@
+# Override for the smoke's ceiling case: the shim's read timeout drops from the
+# 1800 s step ceiling to 15 s so a `sleep 60` turn overruns it in seconds. Nothing
+# else changes. Apply on top of the base file, shim only:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.ceiling.yml up -d shim
+#
+# and restore with the base file alone.
+services:
+  shim:
+    environment:
+      READ_TIMEOUT_S: "15"

@@ -16,6 +16,7 @@
  *
  * Sections: filter | containment | or | roots | reach | anchors | tree | union
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import {
   standardPlaceToPlaceId,
@@ -579,7 +580,7 @@ async function main() {
     console.error(`Unknown section "${wanted}". Choose from: ${Object.keys(SECTIONS).join(" | ")}`);
     process.exit(1);
   }
-  token = await getValidToken();
+  token = await getValidToken(LOCAL);
   for (const [name, fn] of Object.entries(SECTIONS)) {
     if (wanted && name !== wanted) continue;
     await fn();

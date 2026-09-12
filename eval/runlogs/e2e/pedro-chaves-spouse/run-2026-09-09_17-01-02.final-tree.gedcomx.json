@@ -1,0 +1,377 @@
+{
+  "persons": [
+    {
+      "id": "2761-R34",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Pedro Pablo",
+          "surname": "Chaves"
+        },
+        {
+          "id": "N6",
+          "given": "Pedro",
+          "surname": "Chaves",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "1 Jul 1836",
+          "standard_date": "1 Jul 1836",
+          "place": "Nuestra Se\u00f1ora del Socorro, Buenos Aires, Distrito Federal, Argentina",
+          "standard_place": "Buenos Aires, Argentina"
+        },
+        {
+          "id": "2a0b3c56-75aa-4c91-8642-f5b4432d3b1b",
+          "type": "Baptism",
+          "date": "01 Jul 1836",
+          "standard_date": "1 Jul 1836",
+          "place": "Nuestra Se\u00f1ora del Socorro, Ciudad de Buenos Aires, Capital Federal, Argentina",
+          "standard_place": "Nuestra Se\u00f1ora del Socorro, Retiro, Comuna 1, Buenos Aires City, Argentina"
+        },
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "~1836",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "Avellaneda, Buenos Aires, Argentina",
+          "standard_place": "Avellaneda, Buenos Aires, Argentina"
+        }
+      ]
+    },
+    {
+      "id": "275H-YL7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N2",
+          "given": "Andrea",
+          "surname": "Guerra",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "2761-R3H",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N3",
+          "given": "Isidoro",
+          "surname": "Chaves"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "275H-YL3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N4",
+          "given": "Sargento Isidro",
+          "surname": "Chaves"
+        },
+        {
+          "id": "N8",
+          "given": "Isidro",
+          "surname": "Chaves",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "2761-R3C",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N5",
+          "given": "Andrea",
+          "surname": "Guerra"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N7",
+          "given": "Juana",
+          "surname": "Flores",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "~1835",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 2
+            },
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "place": "Avellaneda, Buenos Aires, Argentina",
+          "standard_place": "Avellaneda, Buenos Aires, Argentina"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N9",
+          "given": "Sebastian",
+          "surname": "Flores",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N10",
+          "given": "Isabel",
+          "surname": "Rivero",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "275H-YL3",
+      "person2": "275H-YL7"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "2761-R3H",
+      "person2": "2761-R3C"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "275H-YL3",
+      "child": "2761-R34"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "275H-YL7",
+      "child": "2761-R34"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "2761-R3H",
+      "child": "2761-R34"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "2761-R3C",
+      "child": "2761-R34"
+    },
+    {
+      "type": "Couple",
+      "person1": "2761-R34",
+      "person2": "I1",
+      "facts": [
+        {
+          "type": "Marriage",
+          "date": "30 Aug 1859",
+          "standard_date": "1859-08-30",
+          "place": "Asunci\u00f3n de Mar\u00eda Sant\u00edsima, Avellaneda, Avellaneda, Buenos Aires, Argentina",
+          "standard_place": "Avellaneda, Avellaneda, Buenos Aires, Argentina",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "id": "F3",
+          "primary": true
+        }
+      ],
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "id": "R8",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "id": "R9",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "QRBR-GS7",
+      "title": "Pedro Pablo Chaves, \"Argentina, Capital Federal, registros parroquiales, 1640-1978\"",
+      "citation": "\"Argentina, Capital Federal, registros parroquiales, 1640-1978\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XN9Y-ZHZ : Tue Aug 04 01:15:24 UTC 2026), Entry for Pedro Pablo Chaves and Isidoro Chaves, 01 Jul 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XN9Y-ZHZ"
+    },
+    {
+      "id": "QRBR-L1B",
+      "title": "\"Computer-Generated Trees,\" entry for Pedro Pablo Chaves.",
+      "citation": "\"Computer-Generated Trees,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/2:5:7Z6L-ZRK : accessed 7 September 2026), entry for Pedro Pablo Chaves, cites sources; \"Argentina Computer-Generated Tree by FamilySearch\" file (2:5:2:MMNB-YD1), submitted 19 May 2023 by Genealogies Data Admin.",
+      "url": "https://familysearch.org/ark:/61903/2:5:7Z6L-ZRK"
+    },
+    {
+      "id": "QRBR-GQ8",
+      "title": "Pedro Pablo Chaves, \"Argentina, Capital Federal, registros parroquiales, 1640-1978\"",
+      "citation": "\"Argentina, Capital Federal, registros parroquiales, 1640-1978\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XNSL-1LM : Tue Aug 04 02:05:42 UTC 2026), Entry for Pedro Pablo Chaves and Isidro Chaves, 01 Jul 1836.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XNSL-1LM"
+    },
+    {
+      "id": "S1",
+      "title": "Argentina, Buenos Aires, registros parroquiales, 1635-2017 \u2014 Pedro Chaves and Juana Flores marriage, 14 September 1859",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QJRM-GV8V",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QJRM-GV8V : accessed 9 September 2026), entry for Pedro Chaves and Juana Flores, marriage 14 September 1859."
+    },
+    {
+      "id": "S2",
+      "title": "Argentina, Buenos Aires, registros parroquiales, 1635-2017 \u2014 Pedro Chaves and Juana Flores marriage, 30 Aug 1859",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QP84-TH55",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QP84-TH55 : accessed 9 September 2026), entry for Pedro Chaves and Juana Flores, 30 Aug 1859; index of Argentina, Buenos Aires, Catholic Church Records, 1635-2017 (collection 1972912), sub-series Argentina, Buenos Aires, Marriages, 1727-2017."
+    }
+  ]
+}
