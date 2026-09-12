@@ -125,6 +125,20 @@ def test_fires_on_the_real_captured_defect():
     )
 
 
+def test_fires_when_the_rejected_value_is_reformatted_with_extra_jurisdiction():
+    """A place-resolution tool commonly returns a broader-context string
+    ("Pennsylvania, United States") for what the fixture's own assertion
+    records as the bare place name ("Pennsylvania") — the same rejected fact,
+    differently formatted. This is the exact argument a live run produced
+    (issue #1980 review round 3, 2026-09-11): the original exact-string check
+    missed it, and only the LLM judge caught it."""
+    _expect_fires(
+        _tool_calls("Pennsylvania, United States"),
+        {"type": "positive"},
+        "attributes.birthPlace='Pennsylvania, United States'",
+    )
+
+
 def test_passes_when_the_preferred_value_is_encoded():
     _expect_passes(_tool_calls("Ireland"), {"type": "positive"})
 

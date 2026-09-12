@@ -79,6 +79,14 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
 
 
+def _place_key(value: str) -> str:
+    """Normalize a place string to its leading jurisdiction segment,
+    casefolded — a resolved place-search result routinely appends broader
+    context ("Pennsylvania, United States") that a raw fixture assertion's
+    `place` field never carries, and both name the same place."""
+    return value.split(",")[0].strip().casefold()
+
+
 def test_resolved_birthplace_conflict_rejected_value_not_encoded(
     before_state, after_state, tool_calls, test
 ):
@@ -162,10 +170,22 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         }
         if not rejected_places:
             continue
+        # A place-resolution tool commonly hands back a broader-context
+        # string ("Pennsylvania, United States") for what the fixture's own
+        # assertion records as the bare place name ("Pennsylvania") — the
+        # same rejected fact, differently formatted. An exact-string
+        # comparison missed this on a live run (issue #1980 review round 3):
+        # the model encoded the reformatted value and only the LLM judge
+        # caught it. Comparing the leading comma-segment, casefolded, catches
+        # that reformatting without needing the URL-string substring match
+        # this validator deliberately avoids (see the module docstring above
+        # on `residencePlace` false positives) — it only ever looks at the
+        # `birthPlace` argument's own value, never the rendered URL.
+        rejected_keys = {_place_key(p) for p in rejected_places}
         for call in calls:
             args = call.get("args") or {}
             birth_place = (args.get("attributes") or {}).get("birthPlace")
-            if birth_place in rejected_places:
+            if birth_place and _place_key(birth_place) in rejected_keys:
                 errors.append(
                     f"build_external_search_url call's attributes.birthPlace="
                     f"{birth_place!r} is the value conflict {c.get('id')} "
