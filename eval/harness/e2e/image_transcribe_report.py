@@ -284,7 +284,10 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
     lead and nothing more, and saying that plainly is the point.
     """
     # Three counters per cell: [reachability failures, total calls, REACHED].
-    # "Reached" is a demonstrated `success`, not merely the absence of a failure.
+    # "Reached" is a demonstrated `success` or a `truncated` read — both came
+    # back with content — not merely the absence of a failure. (A truncated read
+    # is the opposite of `unrecognized_ark`: the call went out and the service
+    # answered, just past the output-token cap, so it is reachability evidence.)
     # An operator whose calls were all `unrecognized_ark` has no reachability
     # failure and yet never got as far as OpenRouter — that error is raised
     # before the call is made — so counting them as a concurrent success would
@@ -298,7 +301,7 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
         cell[1] += 1
         if c.bucket in REACHABILITY_BUCKETS:
             cell[0] += 1
-        elif c.bucket == SUCCESS:
+        elif c.bucket in (SUCCESS, TRUNCATED):
             cell[2] += 1
 
     rows: list[str] = []

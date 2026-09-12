@@ -330,6 +330,23 @@ def test_an_operator_who_never_reached_the_service_is_not_a_concurrent_success(t
     )
 
 
+def test_a_truncated_read_counts_as_having_reached_the_service():
+    """A capped read got content back, so it proves the operator reached
+    OpenRouter — the same reachability evidence a `success` is, and the opposite
+    of `unrecognized_ark` (raised before the call goes out). Adding the
+    `truncated` bucket must NOT withdraw that: a day where one operator's read was
+    capped while another's was unreachable still SEPARATES machine from service.
+    Before the fix (#2501 review) the truncated read fell outside `reached`, so
+    the same data read CANNOT SEPARATE — the very headline this report exists to
+    produce, silently withdrawn the first time a truncation lands."""
+    separates = [
+        Call("r1", TRUNCATED, "2026-08-20", "alice", "x"),
+        Call("r2", UNREACHABLE, "2026-08-20", "bob", "x"),
+    ]
+    verdict, _ = interleaving_verdict(separates)
+    assert "SEPARATES" in verdict, "a truncated read reached the service — it is a concurrent success"
+
+
 def test_a_non_list_tool_calls_costs_only_its_own_run(tmp_path: Path):
     """The neighbouring shape of the previous review's finding. A truthy non-list
     `tool_calls` (42, True, 3.14) reached `for tc in ...` and threw TypeError
