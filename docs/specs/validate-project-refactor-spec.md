@@ -187,9 +187,9 @@ the only `writeFile`s anywhere are auth tokens). That makes the write path a
 corrupt-the-user's-project blast radius, so its primitives should be lifted to
 shared, **independently unit-tested** utils rather than reimplemented in each tool:
 
-- `atomicWriteJson(path, obj)` — single-file temp-write + rename
+- `atomicWriteJson(projectPath, ref, obj)` — single-file temp-write + rename
   (`research_log_append`, `merge_record_into_tree`).
-- `atomicWriteBoth(...)` — two-file both-or-neither, used by `merge_tree_persons`,
+- `atomicWriteBoth(projectPath, writes)` — two-file both-or-neither, used by `merge_tree_persons`,
   which rewrites tree + research together. Note: two renames are **not** truly atomic
   on POSIX; the contract is write-both-temps → rename-both back-to-back to shrink the
   window, with validate-on-next-open as the backstop. Test it with an injectable
@@ -197,6 +197,18 @@ shared, **independently unit-tested** utils rather than reimplemented in each to
 - `assertInsideProject(projectPath, ref)` — the path-traversal guard currently
   inlined at `validator.ts:988` and re-described by `research-log-editor-spec.md` §8
   and `search-result-staging-spec.md` §6. One implementation, one test.
+
+These utils own the classification, the error wording and the no-project contract;
+the I/O behind them is the `ProjectStore` seam (`src/store/project-store.ts`), and
+every argument that names a file is a **project-relative ref**, not an absolute
+path. `FsProjectStore` is the file backend described above (temp-write + rename,
+the per-project mutex, the dot-prefixed temp name); `withProjectLock` is its
+`withTransaction`, which a database backend implements as one connection holding
+the project's advisory lock — the reason `validateParsed` runs inside the lock,
+not after it. `validateProject` and the sidecar pass read through the same store,
+so a backend that is not a directory validates the same documents. The seam is
+total by lint (`tests/packaging/no-fs-outside-store.test.ts`), and a second
+backend proves itself against `tests/store/conformance.ts`.
 
 Additionally, **export `validateGedcomx`** (today a private function at
 `validator.ts:737`; it already takes a parsed tree + a report and no `projectPath`).

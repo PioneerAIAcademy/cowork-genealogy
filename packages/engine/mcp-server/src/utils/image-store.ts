@@ -7,9 +7,11 @@
 // ages out instead of lingering. Same discipline as results-staging's pruneStale;
 // here a GC sweep replaces staging→finalize because a source carries no imageId to
 // key a finalize on. Spec: docs/specs/image-transcribe-tool-spec.md §8.5.
+//
+// All I/O goes through the active ProjectStore; this module owns the naming and
+// the retention rule only.
 
-import { writeFile, readdir, stat, unlink, mkdir } from "fs/promises";
-import { join } from "path";
+import { getProjectStore } from "../store/project-store.js";
 
 /** Project-relative directory holding retained source scans. */
 export const IMAGES_SUBDIR = "images";
@@ -94,21 +96,19 @@ export async function saveSourceImage(args: {
   bytes: Uint8Array;
 }): Promise<string> {
   const { projectPath, imageKey, bytes } = args;
+  const store = getProjectStore();
 
-  let st;
-  try {
-    st = await stat(projectPath);
-  } catch {
+  const state = await store.projectDirState(projectPath);
+  if (state === "missing") {
     throw new Error(`projectPath '${projectPath}' does not exist`);
   }
-  if (!st.isDirectory()) {
+  if (state === "not_directory") {
     throw new Error(`projectPath '${projectPath}' is not a directory`);
   }
 
-  const name = imageFilenameFor(imageKey);
-  await mkdir(join(projectPath, IMAGES_SUBDIR), { recursive: true });
-  await writeFile(join(projectPath, IMAGES_SUBDIR, name), Buffer.from(bytes));
-  return `${IMAGES_SUBDIR}/${name}`;
+  const ref = `${IMAGES_SUBDIR}/${imageFilenameFor(imageKey)}`;
+  await store.writeBytes(projectPath, ref, bytes);
+  return ref;
 }
 
 /**
@@ -124,26 +124,21 @@ export async function gcUnreferencedImages(
   projectPath: string,
   referenced: Set<string>,
 ): Promise<void> {
-  const dir = join(projectPath, IMAGES_SUBDIR);
-  let names: string[];
+  const store = getProjectStore();
+  let entries;
   try {
-    names = await readdir(dir);
+    entries = await store.list(projectPath, IMAGES_SUBDIR);
   } catch {
-    return; // no images/ dir yet — nothing to GC
+    return; // an unusable projectPath — nothing to GC
   }
   const cutoff = Date.now() - IMAGE_GC_TTL_MS;
   await Promise.all(
-    names
-      .filter((n) => n.endsWith(".jpg"))
-      .map(async (n) => {
-        if (referenced.has(`${IMAGES_SUBDIR}/${n}`)) return;
-        const p = join(dir, n);
-        try {
-          const s = await stat(p);
-          if (s.mtimeMs < cutoff) await unlink(p);
-        } catch {
-          // best-effort: ignore ENOENT / races / stat failures
-        }
+    entries
+      .filter((e) => e.name.endsWith(".jpg"))
+      .map(async (e) => {
+        const ref = `${IMAGES_SUBDIR}/${e.name}`;
+        if (referenced.has(ref)) return;
+        if (e.mtimeMs < cutoff) await store.remove(projectPath, ref);
       }),
   );
 }

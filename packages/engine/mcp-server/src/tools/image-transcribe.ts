@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
 import {
   resolveFsImageInput,
@@ -200,6 +201,7 @@ function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
  */
 export async function imageTranscribeTool(
   input: ImageTranscribeInput,
+  principal: Principal,
 ): Promise<ImageTranscribeResult> {
   const { url, label, fallbackUrl } = resolveFsImageInput(
     input,
@@ -209,12 +211,13 @@ export async function imageTranscribeTool(
   // Resolve credentials/config BEFORE fetching the image: a missing key
   // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
   // throws an LLM-actionable error naming config.json when absent.
-  const apiKey = await getOpenRouterApiKey();
-  const model = await getOpenRouterModel();
+  const apiKey = await getOpenRouterApiKey(principal);
+  const model = await getOpenRouterModel(principal);
 
   const { bytes, contentType, sizeBytes } = await fetchFsImageBytes(
     url,
     fallbackUrl,
+    principal,
   );
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
   // Expand recognized given names in lookingFor with historical diminutives

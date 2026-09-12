@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -174,7 +175,7 @@ describe("person_ancestors", () => {
   // 1
   it("returns { persons } for a valid personId (default generations)", async () => {
     mockOk(leanResponse());
-    const r = await personAncestorsTool({ personId: "LZJW-C31" });
+    const r = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(Array.isArray(r.persons)).toBe(true);
     expect(r.persons.length).toBe(4);
   });
@@ -182,7 +183,7 @@ describe("person_ancestors", () => {
   // 2
   it("re-attaches ascendancyNumber and carries name prefixes", async () => {
     mockOk(leanResponse());
-    const r = await personAncestorsTool({ personId: "LZJW-C31" });
+    const r = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     const byId = Object.fromEntries(r.persons.map((p) => [p.id, p.ascendancyNumber]));
     expect(byId["LZJW-C31"]).toBe("1");
     expect(byId["LCHV-P5R"]).toBe("1-S");
@@ -196,7 +197,7 @@ describe("person_ancestors", () => {
   // 3
   it("returns the simplified graph directly with no envelope", async () => {
     mockOk(leanResponse());
-    const r = await personAncestorsTool({ personId: "LZJW-C31" });
+    const r = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(Object.keys(r)).toEqual(["persons"]);
     expect(r).not.toHaveProperty("personId");
     expect(r).not.toHaveProperty("generations");
@@ -208,7 +209,7 @@ describe("person_ancestors", () => {
   it("with no personId, looks up the current user then fetches their ancestry", async () => {
     mockCurrentUser("LZJW-C31"); // GET /platform/users/current
     mockOk(leanResponse()); // ancestry on the resolved id
-    const r = await personAncestorsTool({});
+    const r = await personAncestorsTool({}, LOCAL);
     expect(r.persons.length).toBe(4);
     expect(mockFetch.mock.calls[0][0] as string).toContain(
       "/platform/users/current",
@@ -222,7 +223,7 @@ describe("person_ancestors", () => {
   it("treats empty/whitespace personId as 'use current user'", async () => {
     mockCurrentUser("LZJW-C31");
     mockOk(leanResponse());
-    await personAncestorsTool({ personId: "   " });
+    await personAncestorsTool({ personId: "   " }, LOCAL);
     expect(mockFetch.mock.calls[0][0] as string).toContain(
       "/platform/users/current",
     );
@@ -231,7 +232,7 @@ describe("person_ancestors", () => {
   // 4b — no needless lookup
   it("with a provided personId, makes a single ancestry fetch (no current-user lookup)", async () => {
     mockOk(leanResponse());
-    await personAncestorsTool({ personId: "LZJW-C31" });
+    await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch.mock.calls[0][0] as string).toContain(
       "/platform/tree/ancestry",
@@ -242,10 +243,10 @@ describe("person_ancestors", () => {
   // 4c — lookup error handling
   it("surfaces current-user lookup errors", async () => {
     mockStatus(401);
-    await expect(personAncestorsTool({})).rejects.toThrow(/401|re-authenticate/i);
+    await expect(personAncestorsTool({}, LOCAL)).rejects.toThrow(/401|re-authenticate/i);
 
     mockCurrentUser(undefined); // 200 but no users[0].personId
-    await expect(personAncestorsTool({})).rejects.toThrow(
+    await expect(personAncestorsTool({}, LOCAL)).rejects.toThrow(
       /pass a personId explicitly/i,
     );
 
@@ -257,7 +258,7 @@ describe("person_ancestors", () => {
       json: () => Promise.resolve({}),
       headers: new Headers(),
     });
-    await expect(personAncestorsTool({})).rejects.toThrow(
+    await expect(personAncestorsTool({}, LOCAL)).rejects.toThrow(
       /could not read your current user/i,
     );
   });
@@ -266,7 +267,7 @@ describe("person_ancestors", () => {
   it("throws when generations is 0, 9, or non-integer (no fetch)", async () => {
     for (const g of [0, 9, 3.5]) {
       await expect(
-        personAncestorsTool({ personId: "LZJW-C31", generations: g }),
+        personAncestorsTool({ personId: "LZJW-C31", generations: g }, LOCAL),
       ).rejects.toThrow(/between 1 and 8/);
     }
     expect(mockFetch).not.toHaveBeenCalled();
@@ -282,7 +283,7 @@ describe("person_ancestors", () => {
       personDetails: true,
       marriageDetails: true,
       descendants: true,
-    });
+    }, LOCAL);
     const url = lastUrl();
     expect(url).toContain("person=LZJW-C31");
     expect(url).toContain("generations=4");
@@ -292,7 +293,7 @@ describe("person_ancestors", () => {
     expect(url).toContain("descendants=true");
 
     mockOk(leanResponse());
-    await personAncestorsTool({ personId: "LZJW-C31" });
+    await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     const lean = lastUrl();
     expect(lean).not.toContain("spouse=");
     expect(lean).not.toContain("personDetails=");
@@ -303,14 +304,14 @@ describe("person_ancestors", () => {
   // 7
   it("defaults generations to 3 in the URL when not supplied", async () => {
     mockOk(leanResponse());
-    await personAncestorsTool({ personId: "LZJW-C31" });
+    await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(lastUrl()).toContain("generations=3");
   });
 
   // 8
   it("sends Accept fs-v1 + Authorization, and no User-Agent / Accept-Language", async () => {
     mockOk(leanResponse());
-    await personAncestorsTool({ personId: "LZJW-C31" });
+    await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     const headers = lastHeaders();
     expect(headers.Accept).toBe("application/x-fs-v1+json");
     expect(headers.Authorization).toBe("Bearer test-token");
@@ -321,14 +322,14 @@ describe("person_ancestors", () => {
   // 9
   it("includes facts only when the response carries them (personDetails)", async () => {
     mockOk(leanResponse());
-    const lean = await personAncestorsTool({ personId: "LZJW-C31" });
+    const lean = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(lean.persons.find((p) => p.id === "9VMF-H1F")?.facts).toBeUndefined();
 
     mockOk(detailedResponse());
     const rich = await personAncestorsTool({
       personId: "LZJW-C31",
       personDetails: true,
-    });
+    }, LOCAL);
     const thomas = rich.persons.find((p) => p.id === "9VMF-H1F");
     expect(thomas?.facts?.some((f) => f.type === "Birth")).toBe(true);
   });
@@ -339,7 +340,7 @@ describe("person_ancestors", () => {
     const r = await personAncestorsTool({
       personId: "LZJW-C31",
       personDetails: true,
-    });
+    }, LOCAL);
     for (const p of r.persons) expect(p.sources).toBeUndefined();
   });
 
@@ -349,7 +350,7 @@ describe("person_ancestors", () => {
     const r = await personAncestorsTool({
       personId: "LZJW-C31",
       marriageDetails: true,
-    });
+    }, LOCAL);
     expect(r.relationships?.length).toBe(1);
     const rel = r.relationships![0];
     expect(rel.type).toBe("Couple");
@@ -358,14 +359,14 @@ describe("person_ancestors", () => {
     expect(rel.facts?.some((f) => f.type === "Marriage")).toBe(true);
 
     mockOk(leanResponse());
-    const r2 = await personAncestorsTool({ personId: "LZJW-C31" });
+    const r2 = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(r2).not.toHaveProperty("relationships");
   });
 
   // 12
   it("preserves real FamilySearch IDs (no I1/N1 renumbering)", async () => {
     mockOk(leanResponse());
-    const r = await personAncestorsTool({ personId: "LZJW-C31" });
+    const r = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(r.persons.map((p) => p.id)).toContain("9VMF-H1F");
     expect(r.persons.every((p) => !/^[INF]\d+$/.test(p.id!))).toBe(true);
   });
@@ -373,7 +374,7 @@ describe("person_ancestors", () => {
   // 13
   it("returns { persons: [] } on 204", async () => {
     mockStatus(204);
-    const r = await personAncestorsTool({ personId: "LZJW-C31" });
+    const r = await personAncestorsTool({ personId: "LZJW-C31" }, LOCAL);
     expect(r).toEqual({ persons: [] });
   });
 
@@ -384,7 +385,7 @@ describe("person_ancestors", () => {
       "https://api.familysearch.org/platform/tree/ancestry?person=WXYZ-789&generations=3",
     );
     mockOk(leanResponse());
-    const r = await personAncestorsTool({ personId: "ABCD-123" });
+    const r = await personAncestorsTool({ personId: "ABCD-123" }, LOCAL);
     expect(r.persons.length).toBe(4);
     expect(mockFetch.mock.calls[1][0] as string).toContain("person=WXYZ-789");
   });
@@ -394,7 +395,7 @@ describe("person_ancestors", () => {
     mockStatus(301, "https://x/platform/tree/ancestry?person=A-1");
     mockStatus(301, "https://x/platform/tree/ancestry?person=B-2");
     await expect(
-      personAncestorsTool({ personId: "ABCD-123" }),
+      personAncestorsTool({ personId: "ABCD-123" }, LOCAL),
     ).rejects.toThrow(/redirect loop/);
   });
 
@@ -405,7 +406,7 @@ describe("person_ancestors", () => {
       new Error("Call the login tool to authenticate."),
     );
     await expect(
-      personAncestorsTool({ personId: "LZJW-C31" }),
+      personAncestorsTool({ personId: "LZJW-C31" }, LOCAL),
     ).rejects.toThrow(/login tool/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -422,7 +423,7 @@ describe("person_ancestors", () => {
     for (const [status, re] of cases) {
       mockStatus(status);
       await expect(
-        personAncestorsTool({ personId: "LZJW-C31" }),
+        personAncestorsTool({ personId: "LZJW-C31" }, LOCAL),
       ).rejects.toThrow(re);
     }
   });
@@ -438,7 +439,7 @@ describe("person_ancestors", () => {
       ],
     });
     await expect(
-      personAncestorsTool({ personId: "LZJW-C31", generations: 8 }),
+      personAncestorsTool({ personId: "LZJW-C31", generations: 8 }, LOCAL),
     ).rejects.toThrow(/must be less than or equal to 8/);
   });
 });

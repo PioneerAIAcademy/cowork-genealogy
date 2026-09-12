@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
 import { selectRelativePairs } from "../utils/relatives.js";
@@ -23,11 +24,12 @@ const ROLE_ORDER: Record<SamePersonRelativeMatch["role"], number> = {
 
 export async function samePerson(
   input: SamePersonInput,
+  principal: Principal,
 ): Promise<SamePersonResult | SamePersonRelativesResult> {
   validateInput(input);
 
   // One OAuth token reused for the whole call (single pair or whole batch).
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   if (input.matchRelatives) {
     return matchRelatives(input, token);

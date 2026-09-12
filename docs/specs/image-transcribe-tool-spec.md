@@ -415,7 +415,7 @@ This mirrors `fulltext_search`'s `nameExpansion` without
 ### 5.4 Behavior (pipeline)
 
 1. **Resolve + fetch** the FS distribution image host-side, authed, via the
-   shared fetcher lifted from `image-read.ts` (§8). Reuse `getValidToken()`
+   shared fetcher lifted from `image-read.ts` (§8). Reuse `getValidToken(principal)`
    and `BROWSER_USER_AGENT` — do **not** re-implement token or fetch logic.
 2. **No pre-processing** — the spike (PR 723) showed prep lowers accuracy, so
    the raw JPEG bytes go straight to OCR (no `jimp`; see §7).
@@ -772,9 +772,9 @@ flow. Storage follows the existing per-user config convention exactly:
 
 - Add `openRouterApiKey?: string` (and optional `openRouterModel?: string`)
   to `AppConfig` in `src/types/auth.ts`.
-- Add `getOpenRouterApiKey(): Promise<string>` to `src/auth/config.ts` — reads
-  `loadConfig()`, throws the LLM-instruction error in §5.6 when absent. Add
-  `getOpenRouterModel()` returning the default slug when unset. **No env-var
+- Add `getOpenRouterApiKey(principal): Promise<string>` to `src/auth/config.ts` — reads
+  `loadConfig(principal)`, throws the LLM-instruction error in §5.6 when absent. Add
+  `getOpenRouterModel(principal)` returning the default slug when unset. **No env-var
   fallback** (repo rule). Stored in `~/.familysearch-mcp/config.json`, mode
   `0o600` (already enforced by `saveConfig`).
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
@@ -833,7 +833,7 @@ built now.)
 - **Lift the resolve+fetch** out of `image-read.ts` into
   `src/utils/fs-image-fetch.ts`: `resolveInput` (imageId/ark → URL) and a
   `fetchFsImageBytes(url) → { bytes, contentType }` that carries the
-  `getValidToken()` + `BROWSER_USER_AGENT` + content-type checks. Both
+  `getValidToken(principal)` + `BROWSER_USER_AGENT` + content-type checks. Both
   `image_read` and `image_transcribe` call it. (Two concrete callers now =
   the right time to extract, per the code-reuse rule; not premature.)
 - **`image_read` stays** — its raw-image return still serves any consumer

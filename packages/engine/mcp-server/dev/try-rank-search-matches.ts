@@ -13,6 +13,7 @@
  * Example (the spec's validated case):
  *   npx tsx dev/try-rank-search-matches.ts /path/to/project KNS4-P6W Quass Kenneth
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { recordSearchTool } from "../src/tools/record-search.js";
 import { rankSearchMatches } from "../src/tools/rank-search-matches.js";
 
@@ -33,7 +34,7 @@ const search = await recordSearchTool({
   surname,
   givenName,
   count: 50,
-});
+}, LOCAL);
 
 console.log("record_search →");
 console.log(
@@ -60,7 +61,7 @@ const ranked = await rankSearchMatches({
   stagedResultsRef: search.staged.resultsRef,
   subjectId,
   checkAttachments: true,
-});
+}, LOCAL);
 
 console.log("\nrank_search_matches →");
 console.log(JSON.stringify(ranked, null, 2));
