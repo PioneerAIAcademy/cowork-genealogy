@@ -218,6 +218,21 @@ def read_skill_tool_input(tool_input: dict[str, Any]) -> tuple[str | None, list[
 # about (a Read `file_path`, a Skill name, a Grep pattern) and bounds the rest.
 BUILTIN_ARG_TRUNCATE = 200
 
+# (tool_name, arg_key) pairs exempted from BUILTIN_ARG_TRUNCATE (issue #2020,
+# absorbed into #2189). The cap's stated purpose is bounding a Read/Grep/
+# Write/Edit-shaped argument; it was applied uniformly to every built-in
+# argument instead, which also cut the Agent tool's `prompt` — the delegation
+# contract between a routing skill and its agent — to 200 characters. Measured
+# at 4a6cfad44 over the five committed record-extraction run logs
+# (`git ls-files eval/runlogs/unit/record-extraction`, no `.ann.json`): 143 of
+# 145 Agent prompts were exactly 200 characters long.
+# record-extraction/SKILL.md's prohibitions that live only in that message
+# (never frame the delegation as a "fix"; never
+# instruct identity-confidence assignment; pass project_path; phrase
+# looking_for as a search key; carry recordId/logId/open question ids) were
+# consequently unauditable from any committed run log.
+_UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
+
 
 def builtin_call_record(
     tool_name: str, input_data: dict[str, Any]
@@ -244,7 +259,8 @@ def builtin_call_record(
     record: dict[str, Any] = {
         "tool": tool_name,
         "args": {
-            key: str(value)[:BUILTIN_ARG_TRUNCATE]
+            key: str(value) if (tool_name, key) in _UNTRUNCATED_ARGS
+            else str(value)[:BUILTIN_ARG_TRUNCATE]
             for key, value in tool_input.items()
         },
     }
@@ -402,6 +418,13 @@ class SkillRunResult:
     # {"tool", "args", "agent_id"?} — see builtin_call_record for why this
     # exists. Telemetry only: nothing reads it to gate, grade, or abort.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # True when the run ended before a ResultMessage ever arrived even though
+    # it is NOT an abort — currently only the negative-test routing
+    # short-circuit (issue #2189). On that path num_turns is real (turns_seen
+    # survives regardless of exit path), but output_tokens has no real answer:
+    # no partial token count exists before a ResultMessage. This says so
+    # instead of leaving 0 indistinguishable from "the skill used no tokens."
+    no_result_message: bool = False
 
 
 async def run_skill(
@@ -467,7 +490,7 @@ async def run_skill(
     # execution), so we deny the sub-skill launch and stop the run instead
     # of paying for the routed-to skill's full workload. The loop reads
     # this after consuming to force a clean (non-aborted) termination.
-    routing_resolved = {"v": False}
+    routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
     # the negative-test short-circuit above: that one DENIES AND STOPS, because
@@ -511,6 +534,7 @@ async def run_skill(
                 # the routed-to skill's (often very expensive) execution.
                 if skill_name in _short_circuit:
                     routing_resolved["v"] = True
+                    routing_resolved["tool_use_id"] = tool_use_id
                     return {
                         "hookSpecificOutput": {
                             "hookEventName": "PreToolUse",
@@ -669,6 +693,13 @@ async def run_skill(
     # in the orchestrator depends on it (`_is_zero_progress_timeout`).
     # A mutable holder because the nested consumer rebinds `usage` wholesale.
     turns_seen: dict[str, int] = {"n": 0}
+    # Set on the routing short-circuit path when no ResultMessage arrived, so
+    # output_tokens: 0 there is legible as "no real count exists" rather than
+    # "the skill used no tokens" (issue #2189). A mutable holder, not read
+    # straight off routing_resolved["v"]: guarded on `usage` being empty at
+    # the point it is set, so a genuine trailing ResultMessage (raced ahead of
+    # the flag becoming visible) is never mistaken for one that never arrived.
+    no_result_message_flag: dict[str, bool] = {"v": False}
     # Rate-limit evidence, collected from all three places the SDK offers it and
     # recorded whether or not any fired. Every key stays present-but-None on a
     # healthy run so a future occurrence shows which signals a real subscription
@@ -708,14 +739,6 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
-            # Negative-test routing short-circuit: the hook denied the
-            # correct-skill launch and set this flag. The SDK does NOT honor
-            # the hook's `continue_: False` to end the run (it just retries
-            # other tools), so we stop consuming here — the routing verdict
-            # is already captured in skills_invoked. This is the early-exit
-            # the hook's stopReason alone can't deliver.
-            if routing_resolved["v"]:
-                return
             if isinstance(message, RateLimitEvent):
                 # The CLI emits this whenever rate-limit state transitions. It
                 # is in the SDK's Message union and streamed straight past this
@@ -733,15 +756,42 @@ async def run_skill(
                 # one that matters here. Absent on a healthy turn.
                 if getattr(message, "error", None):
                     rate_limit_signals["assistant_error"] = message.error
+                # Collected per-turn, not appended to text_chunks block by
+                # block: multiple TextBlocks in one AssistantMessage are the
+                # same utterance, but two different AssistantMessages are two
+                # different turns and must not run together (issue #2189 —
+                # measured at 4a6cfad44 over every committed run log under
+                # eval/runlogs/unit/ (`git ls-files`, no `.ann.json`): 1,385
+                # of 1,755 texted runs carried a word-final ./!/?/` against a
+                # capital with no boundary between them).
+                turn_text_parts: list[str] = []
+                # True when THIS message carries the ToolUseBlock the hook
+                # denied for routing. Checking message CONTENT rather than
+                # the routing_resolved["v"] flag alone is what makes the stop
+                # point exact: the flag can already be true by the time a
+                # LATER message (the model reacting to the denial) streams
+                # in, and stopping on "whatever arrives next" would record
+                # that reaction as the skill's own turns and text (review of
+                # #2189, round 2).
+                routed_call_seen = False
                 for block in message.content:
                     if isinstance(block, TextBlock):
-                        text_chunks.append(block.text)
-                    elif isinstance(block, ToolUseBlock) and block.name.startswith(
-                        "mcp__"
-                    ):
-                        attempted_mcp_calls.append(
-                            {"tool": block.name, "args": dict(block.input or {})}
-                        )
+                        turn_text_parts.append(block.text)
+                    elif isinstance(block, ToolUseBlock):
+                        if block.id == routing_resolved["tool_use_id"] or (
+                            routing_resolved["v"]
+                            and routing_resolved["tool_use_id"] is None
+                            and block.name == "Skill"
+                            and read_skill_tool_input(dict(block.input or {}))[0]
+                            in _short_circuit
+                        ):
+                            routed_call_seen = True
+                        if block.name.startswith("mcp__"):
+                            attempted_mcp_calls.append(
+                                {"tool": block.name, "args": dict(block.input or {})}
+                            )
+                if turn_text_parts:
+                    text_chunks.append("".join(turn_text_parts))
                 # Per-turn input-token cap, post-hoc: the SDK exposes usage
                 # on the AssistantMessage *after* the model returned, so
                 # the offending turn was already billed. This still catches
@@ -753,6 +803,46 @@ async def run_skill(
                     )
                     if turn_input > max_input_tokens_per_turn:
                         raise _LimitExceeded("max_input_tokens_per_turn")
+                if routed_call_seen:
+                    # Negative-test routing short-circuit: the hook denied the
+                    # correct-skill launch the instant it saw the ToolUseBlock
+                    # above and set routing_resolved. The SDK does NOT honor
+                    # the hook's `continue_: False` to end the run (it just
+                    # retries other tools), so we stop consuming here — the
+                    # routing verdict is already captured in skills_invoked.
+                    #
+                    # A quota rejection can arrive as a RateLimitEvent BEFORE
+                    # this message — rate_limit_signals is already populated
+                    # in that case — and the classification below normally
+                    # only runs from a ResultMessage, which this path never
+                    # reaches. Check it here too: #2192's whole point is that
+                    # the suite must stop submitting once a real subscription
+                    # quota is hit, and it can only do that off
+                    # aborted_reason, so a quota that happens to coincide with
+                    # a routing short-circuit must not go undetected.
+                    if aborted_reason is None and _looks_like_quota(
+                        rate_limit_signals, None, "".join(text_chunks)
+                    ):
+                        aborted_reason = QUOTA_ABORT_REASON
+                        error = _format_quota_evidence(rate_limit_signals, None)
+                    # No ResultMessage will arrive on this path in the common
+                    # case (the downstream skill never launched), so `usage`
+                    # never gets its SDK-reported fields — UNLESS one already
+                    # arrived from an earlier iteration before the flag became
+                    # visible here, guarded against by checking `usage` is
+                    # still empty before touching it, so a genuine
+                    # ResultMessage's real num_turns is never overwritten by
+                    # the manufactured count below. turns_seen counts every
+                    # AssistantMessage regardless of exit path, the same
+                    # counter the wall-clock-timeout path below uses for the
+                    # identical reason. output_tokens has no real answer
+                    # either way pre-ResultMessage; no_result_message_flag
+                    # says so instead of leaving a fabricated 0
+                    # indistinguishable from "the skill used no tokens."
+                    if not usage:
+                        usage["num_turns"] = turns_seen["n"]
+                        no_result_message_flag["v"] = True
+                    return
             elif isinstance(message, ResultMessage):
                 usage = {
                     "duration_ms": message.duration_ms,
@@ -802,6 +892,39 @@ async def run_skill(
                         )
                 if message.stop_reason == "max_turns":
                     aborted_reason = "max_turns"
+            # No catch-all fallback keyed on routing_resolved["v"] alone, on
+            # purpose: that flag can already be true on the very first
+            # iteration (set during hook-driving, before any message is
+            # delivered), so a check keyed on the flag alone — checked every
+            # iteration regardless of message type — fires on whatever
+            # happens to arrive first, not on the message that actually
+            # carries the routed tool_use_id. Measured: a RateLimitEvent
+            # arriving before the routed AssistantMessage tripped exactly
+            # that, returning at turns_seen["n"] == 0 before the hand-off
+            # message was ever processed. The AssistantMessage branch above
+            # is the only correct stop point for a run that has one.
+            #
+            # The hook's tool_use_id is `str | None` on the SDK's own hook
+            # request type (read with `.get()`), so there can in principle be
+            # no id to key on. That case is covered inside the
+            # AssistantMessage branch above too — by matching the
+            # ToolUseBlock's own Skill name against `_short_circuit` when the
+            # id is absent, not by a second flag-only check after the message
+            # is processed. A flag-only check here, even gated on the id
+            # being absent, still fires on whichever message arrives first
+            # once the flag is set (e.g. an earlier RateLimitEvent), dropping
+            # the hand-off exactly like the bug this PR fixes — reproduced
+            # and removed during review (round 3).
+            #
+            # The two remaining orderings — the hand-off consumed before the
+            # hook runs, or the routed ToolUseBlock never appearing on the
+            # stream at all — are accepted rather than closed: closing them
+            # with a flag check would bring back the dropped-hand-off bug
+            # this PR fixes, since the flag can be true before the hand-off
+            # message is ever processed. When routed_call_seen never fires,
+            # the loop keeps consuming until the stream ends naturally
+            # (StopAsyncIteration, a cap, or a timeout already handle that
+            # case).
 
     start = time.perf_counter()
     try:
@@ -857,14 +980,24 @@ async def run_skill(
     # failure. The SDK may surface the hook-initiated stop as an error/abort
     # on the trailing ResultMessage, so clear any such state and keep the
     # run clean. The downstream skill never ran; that's the whole point.
-    if routing_resolved["v"]:
+    #
+    # Exempt a genuine subscription-quota classification from that clearing:
+    # #2192 depends on aborted_reason surviving so the suite-level breaker can
+    # see it and stop submitting. A real quota rejection is real regardless of
+    # whether routing also happened to resolve on the same run — clearing it
+    # here would silently discard the one signal that decision is made from.
+    if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON:
         aborted_reason = None
         error = None
 
     duration_ms = (time.perf_counter() - start) * 1000.0
 
     return SkillRunResult(
-        text_response="".join(text_chunks),
+        # Turn-separated, not "".join: two AssistantMessages' text must not
+        # run together (issue #2189). Each text_chunks entry is already one
+        # turn's own TextBlocks joined with no separator (they're one
+        # utterance); "\n\n" is the boundary between separate turns.
+        text_response="\n\n".join(text_chunks),
         skills_invoked=skills_invoked,
         tool_calls=call_log,
         duration_ms=duration_ms,
@@ -878,4 +1011,5 @@ async def run_skill(
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
         builtin_tool_calls=builtin_tool_calls,
+        no_result_message=no_result_message_flag["v"],
     )

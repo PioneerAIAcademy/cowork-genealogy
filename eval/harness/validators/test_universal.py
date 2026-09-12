@@ -1,4 +1,4 @@
-"""Universal validators that run on every test, regardless of skill.
+r"""Universal validators that run on every test, regardless of skill.
 
 These check structural correctness of the output files against
 the research schema spec (docs/specs/research-schema-spec.md).
@@ -25,8 +25,9 @@ before_state/after_state.**
       tools that the PreToolUse hook denied, with shape
       {"tool": "image_read", "args": dict}. Empty = healthy. These calls
       were blocked, so they never appear in `tool_calls`.
-  - `text_response` (str): every assistant text block concatenated, not
-      the final reply alone — the same string the run log stores as
+  - `text_response` (str): every assistant turn's text, not the final
+      reply alone — turns joined with "\n\n", blocks within one turn with
+      no separator — the same string the run log stores as
       `output.text_response`. Empty when the run produced no assistant
       text. For a LITERAL property of the text (a phrase that must never
       appear, an identifier that must be named); not for re-grading prose

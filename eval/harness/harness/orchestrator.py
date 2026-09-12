@@ -722,6 +722,7 @@ async def _execute_single_run(
         cache_creation_input_tokens=skill_cache_write,
         output_tokens=skill_output,
         model_usage=per_model,
+        no_result_message=result.no_result_message,
         skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
