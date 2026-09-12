@@ -22,19 +22,20 @@
  *
  * Run: `npx tsx dev/explore-tree-empty-field-leg.ts` from `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 const BASE = "https://api.familysearch.org/platform/tree/search";
 const R = "m.queryRequireDefault=on";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// `getValidToken()` per request, not once up front: this script runs 18 queries
+// `getValidToken(LOCAL)` per request, not once up front: this script runs 18 queries
 // with up to 12 attempts and multi-second backoffs, easily tens of minutes, and a
 // token that expires mid-run would otherwise print `HTTP 401` as a data value in
 // the results column. It auto-refreshes, so calling it per request is cheap.
 async function total(qs: string): Promise<{ v: number | string; tries: number }> {
   for (let a = 0; a < 12; a++) {
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     await sleep(3000);
     // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
     // its own, and these scripts page for tens of minutes against an endpoint that

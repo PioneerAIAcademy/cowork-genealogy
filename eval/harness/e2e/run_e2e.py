@@ -274,6 +274,29 @@ def main(argv: list[str] | None = None) -> int:
             "vacuously. Recorded in the runlog's usage block."
         ),
     )
+    parser.add_argument(
+        "--deny-shell",
+        action="store_true",
+        help=(
+            "Deny Bash and PowerShell for the whole run, with a reason pointing "
+            "the agent at the MCP tools (P2: does removing the filesystem cost "
+            "research quality?). Every attempt lands in blocked_tree_reads with "
+            "blocked_by: shell. Default off. Recorded in the runlog's usage block."
+        ),
+    )
+    parser.add_argument(
+        "--deny-project-reads",
+        action="store_true",
+        help=(
+            "Deny Read/Grep/Glob of the project folder — research.json, the tree, "
+            "results/ sidecars, evaluations/ — so the agent must use "
+            "project_context, research_query and record_read instead, as the "
+            "hosted sandbox would. The staged .claude/ tree and the CLI's "
+            "tool-results spill files stay readable. Every attempt lands in "
+            "blocked_tree_reads with blocked_by: path. Default off. Recorded in "
+            "the runlog's usage block."
+        ),
+    )
     args = parser.parse_args(argv)
 
     fixtures_root: Path = args.fixtures_root
@@ -322,6 +345,8 @@ def main(argv: list[str] | None = None) -> int:
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,
         "person_evidence_guard": args.person_evidence_guard,
+        "deny_shell": args.deny_shell,
+        "deny_project_reads": args.deny_project_reads,
     }
 
     results: list[E2eResult] = []

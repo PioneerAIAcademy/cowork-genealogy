@@ -1,5 +1,6 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import {
   toSimplified,
   standardizePlaces,
@@ -267,14 +268,15 @@ function emptyResponse(input: PersonSearchInput): PersonSearchToolResponse {
 }
 
 export async function personSearchTool(
-  input: PersonSearchInput
+  input: PersonSearchInput,
+  principal: Principal
 ): Promise<PersonSearchToolResponse> {
   validateInput(input);
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const url = buildSearchUrl(input);
 
-  const response = await fetchWithTimeout(url, {
+  const response = await fetchWithRetry(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,

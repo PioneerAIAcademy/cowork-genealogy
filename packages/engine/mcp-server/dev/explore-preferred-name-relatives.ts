@@ -18,6 +18,7 @@
  * Run: `npx tsx dev/explore-preferred-name-relatives.ts [PID]` from
  * `packages/engine/mcp-server`. Default PID is the #1948 bundle's subject.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { fetchRetry } from "./http-retry.js";
 
@@ -57,9 +58,9 @@ async function main(): Promise<void> {
   const pid = process.argv[2] ?? DEFAULT_PID;
   const url = `${API_BASE}/${encodeURIComponent(pid)}?relatives=true`;
 
-  // Per request: `getValidToken()` auto-refreshes, so an expired token cannot
+  // Per request: `getValidToken(LOCAL)` auto-refreshes, so an expired token cannot
   // surface as a 401 that reads like a data value.
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   const res = await fetchRetry(
     url,
     {

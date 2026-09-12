@@ -1,3 +1,4 @@
+import { LOCAL } from "../src/auth/principal.js";
 import { recordSearchTool } from "../src/tools/record-search.js";
 import type { RecordSearchInput } from "../src/types/record-search.js";
 
@@ -65,5 +66,5 @@ if (!input.imageGroupNumber) {
   usage();
 }
 
-const result = await recordSearchTool(input);
+const result = await recordSearchTool(input, LOCAL);
 console.log(JSON.stringify(result, null, 2));

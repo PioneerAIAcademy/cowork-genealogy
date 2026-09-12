@@ -6,6 +6,7 @@
  * name, and the pool with a real one. Wanted is a few hundred — small enough to
  * enumerate every father and look for conflicts directly.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 
@@ -46,7 +47,7 @@ const CANDIDATES = [
 ];
 
 async function main(): Promise<void> {
-  token = await getValidToken();
+  token = await getValidToken(LOCAL);
   const f = (n: number | null): string => (n === null ? "ERR" : n.toLocaleString("en-US"));
   console.log("surname          bare pool   +gibberish father   +real father (Jose)");
   for (const s of CANDIDATES) {

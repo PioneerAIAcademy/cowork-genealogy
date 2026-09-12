@@ -169,7 +169,7 @@ The tool returns two content blocks:
 
 ## Auth
 
-Uses `getValidToken()` from `src/auth/refresh.ts`. Passes the token as
+Uses `getValidToken(principal)` from `src/auth/refresh.ts`. Passes the token as
 `Authorization: Bearer {token}`. Do not re-implement token logic.
 
 ## Size cap (a transport floor, not the primary defense)

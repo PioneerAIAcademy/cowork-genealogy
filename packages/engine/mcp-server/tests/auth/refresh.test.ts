@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   exchangeCodeForTokens,
@@ -91,16 +92,19 @@ describe("exchangeCodeForTokens", () => {
   });
 
   it("throws a descriptive error on a non-OK HTTP response with no error field", async () => {
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
       json: async () => ({}),
+      headers: new Headers(),
     });
 
     await expect(exchangeCodeForTokens("c", "v")).rejects.toThrow(
       /FamilySearch token endpoint error: 500/
     );
+    // The authorization code is single-use: a retry would burn it.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it("throws when the response body contains an OAuth error field", async () => {
@@ -165,7 +169,7 @@ describe("getValidToken", () => {
     });
     mockedIsExpired.mockReturnValueOnce(false);
 
-    expect(await getValidToken()).toBe("fresh");
+    expect(await getValidToken(LOCAL)).toBe("fresh");
   });
 
   it("refreshes and saves a new token when the current one is expired", async () => {
@@ -186,7 +190,7 @@ describe("getValidToken", () => {
       }),
     });
 
-    expect(await getValidToken()).toBe("refreshed");
+    expect(await getValidToken(LOCAL)).toBe("refreshed");
     expect(mockedSaveTokens).toHaveBeenCalledTimes(1);
     const saved = mockedSaveTokens.mock.calls[0][0];
     expect(saved.accessToken).toBe("refreshed");
@@ -195,7 +199,7 @@ describe("getValidToken", () => {
 
   it("throws an LLM-instruction error when no tokens are stored", async () => {
     mockedLoadTokens.mockResolvedValueOnce(null);
-    await expect(getValidToken()).rejects.toThrow(
+    await expect(getValidToken(LOCAL)).rejects.toThrow(
       /not logged in to FamilySearch/
     );
   });
@@ -214,7 +218,7 @@ describe("getValidToken", () => {
       json: async () => ({ error: "invalid_grant" }),
     });
 
-    await expect(getValidToken()).rejects.toThrow(/refresh failed/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/refresh failed/);
   });
 
   it("in hosted mode routes the user to the Reconnect button", async () => {
@@ -224,7 +228,7 @@ describe("getValidToken", () => {
     mockedIsHostedMode.mockResolvedValue(true);
     mockedLoadTokens.mockResolvedValue(null);
 
-    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/Reconnect FamilySearch/);
   });
 
   it("in hosted mode surfaces the Reconnect instruction when a refresh fails", async () => {
@@ -242,6 +246,6 @@ describe("getValidToken", () => {
       json: async () => ({ error: "invalid_grant" }),
     });
 
-    await expect(getValidToken()).rejects.toThrow(/Reconnect FamilySearch/);
+    await expect(getValidToken(LOCAL)).rejects.toThrow(/Reconnect FamilySearch/);
   });
 });
