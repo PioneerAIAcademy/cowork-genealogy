@@ -31,6 +31,7 @@ class User(SQLModel, table=True):
     # login for traceability; the allowlist still gates on email (plan Spike 0).
     familysearch_id: str | None = Field(default=None, index=True)
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
+    sessions_revoked_at: datetime | None = Field(default=None, sa_type=_TZ, nullable=True)
 
 
 class AllowedEmail(SQLModel, table=True):

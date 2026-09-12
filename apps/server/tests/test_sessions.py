@@ -3,9 +3,12 @@ dev-login (local, no allowlist) → create sample session → list → resume �
 delete. Also asserts the sample seed lands real project files on the sandbox FS.
 """
 from fastapi.testclient import TestClient
+from sqlmodel import Session, select
 
 from app.config import get_settings
+from app.db import get_engine
 from app.main import app
+from app.models import User
 
 
 def test_unauthenticated_is_rejected():
@@ -115,3 +118,147 @@ def test_session_image_serves_saved_scan():
             ), bad
 
         client.delete(f"/api/sessions/{sid}")
+
+
+def test_logout_revokes_all_sessions():
+    """After logout, a copied session cookie from the same user is rejected."""
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "revoke-logout@example.com"})
+        assert client.get("/auth/me").status_code == 200
+
+        stolen = client.cookies.get("wb_session")
+
+        client.post("/auth/logout")
+        assert client.get("/auth/me").status_code == 401
+
+        # A second client presenting the pre-logout cookie is also rejected.
+        with TestClient(app, cookies={"wb_session": stolen}) as thief:
+            r = thief.get("/auth/me")
+            assert r.status_code == 401, "stolen cookie must be rejected after logout"
+
+    with Session(get_engine()) as s:
+        u = s.exec(
+            select(User).where(
+                User.email == "revoke-logout@example.com"
+            )
+        ).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_login_after_revocation_works():
+    """A fresh login after logout works immediately: the new cookie's iat is
+    strictly greater than the revocation stamp, which is never cleared."""
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "relogin@example.com"})
+        client.post("/auth/logout")
+        assert client.get("/auth/me").status_code == 401
+
+        client.post("/auth/dev-login", json={"email": "relogin@example.com"})
+        assert client.get("/auth/me").status_code == 200, \
+            "fresh login after revocation must succeed"
+
+    with Session(get_engine()) as s:
+        u = s.exec(
+            select(User).where(
+                User.email == "relogin@example.com"
+            )
+        ).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_pre_feature_cookie_rejected_after_revocation():
+    """A cookie minted before the iat feature (no iat field) is rejected once
+    sessions_revoked_at is set — it defaults to iat=0, which is always older."""
+    from app.auth import _serializer, COOKIE_NAME, COOKIE_MAX_AGE
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "legacy-cookie@example.com"})
+
+        with Session(get_engine()) as s:
+            user = s.exec(
+                select(User).where(
+                    User.email == "legacy-cookie@example.com"
+                )
+            ).first()
+            uid = user.id
+
+        legacy_token = _serializer().dumps({"uid": uid})
+
+        client.post("/auth/logout")
+
+        with TestClient(app, cookies={"wb_session": legacy_token}) as legacy:
+            r = legacy.get("/auth/me")
+            assert r.status_code == 401, \
+                "pre-feature cookie (no iat) must be rejected after revocation"
+
+    with Session(get_engine()) as s:
+        u = s.get(User, uid)
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_api_key_request_does_not_undo_revocation(monkeypatch):
+    """A /v1 bearer request must not clear sessions_revoked_at — otherwise a
+    user holding both a cookie and an API key can undo their own logout."""
+    from app.config import get_settings
+
+    email = "dual-auth@example.com"
+    monkeypatch.setattr(
+        get_settings(), "api_keys", f"sk_dual:{email}",
+    )
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": email})
+        stolen = client.cookies.get("wb_session")
+        client.post("/auth/logout")
+
+        with TestClient(app) as api_client:
+            r = api_client.delete(
+                "/v1/sessions/prj_nonexistent",
+                headers={"Authorization": "Bearer sk_dual"},
+            )
+            assert r.status_code == 404, \
+                f"bearer dependency did not run: {r.status_code} {r.text}"
+
+        with TestClient(app, cookies={"wb_session": stolen}) as thief:
+            r = thief.get("/auth/me")
+            assert r.status_code == 401, \
+                "API-key request must not un-revoke cookie sessions"
+
+    with Session(get_engine()) as s:
+        u = s.exec(
+            select(User).where(User.email == email)
+        ).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
+def test_revoked_cookie_is_not_resurrected_by_a_later_login():
+    """A stolen cookie must stay dead even after the victim logs back in."""
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "v@example.com"})
+        stolen = client.cookies.get("wb_session")
+
+        def stolen_works():
+            with TestClient(app) as thief:
+                thief.cookies.set("wb_session", stolen)
+                return thief.get("/api/sessions").status_code
+
+        assert stolen_works() == 200
+        client.post("/auth/logout")
+        assert stolen_works() == 401
+        client.post("/auth/dev-login", json={"email": "v@example.com"})
+        assert client.get("/api/sessions").status_code == 200
+        assert stolen_works() == 401, "revoked cookie must stay revoked"
+
+    with Session(get_engine()) as s:
+        u = s.exec(select(User).where(User.email == "v@example.com")).first()
+        if u:
+            s.delete(u)
+            s.commit()

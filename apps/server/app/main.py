@@ -28,7 +28,7 @@ from sqlmodel import Session, select
 from . import auth, feedback, sessions, v1
 from .config import assert_production_config, get_settings
 from .db import get_engine, init_db
-from .models import FamilySearchToken, Project, User
+from .models import FamilySearchToken, Project, User, utcnow
 from .obs import setup_logging
 from .sandbox import make_provider
 
@@ -78,10 +78,15 @@ async def _revoke_sandboxes(provider) -> None:
                 if project.id in succeeded:
                     project.status = "archived"
 
+            now = utcnow()
             for user_id in {p.user_id for p in projects}:
                 row = session.get(FamilySearchToken, user_id)
                 if row is not None:
                     session.delete(row)
+                user = session.get(User, user_id)
+                if user is not None:
+                    user.sessions_revoked_at = now
+                    session.add(user)
 
             session.commit()
     except Exception:
