@@ -26,6 +26,8 @@ Did the skill apply the GPS preponderance hierarchy? Original sources outweigh d
 
 Did the resolution address ALL competing assertions, not just the two most obvious? A conflict with three competing assertions requires explaining why each non-preferred assertion is less reliable, not just why the preferred one is best. The resolution rationale must be specific enough that a reviewer can understand the reasoning without reading the full assertion details.
 
+**This dimension owns the identity-dependency judgement.** Where a competing assertion's person-link is covered by an unresolved identity conflict, that is graded here and nowhere else — not under Correctness, and a per-test `judge_context` may not reassign it to another dimension.
+
 - **pass:** `resolution_rationale` names every competing assertion and explains why the non-preferred ones are less reliable.
 - **partial:** Resolution covers the preferred assertion plus one non-preferred but leaves another non-preferred unaddressed.
 - **fail:** Resolution names only the preferred assertion and ignores why the others were rejected, or it treats a competing assertion as a settled attribute of the research subject while an unresolved identity conflict covers that assertion's person-link. Until the identity question is answered the competing assertions are not known to describe one person, so the disagreement is not yet established as a conflict at all — resolving over it, without saying so, presents a contingent result as a decided one.
