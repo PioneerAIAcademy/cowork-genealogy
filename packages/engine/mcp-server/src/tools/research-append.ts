@@ -37,6 +37,7 @@ import {
   noProjectResult,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { compatiblePlace } from "../utils/date-comparison.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -157,6 +158,53 @@ const SECTIONS: Record<string, SectionConfig> = {
 // checks conflict competing-counts, hypothesis ruled_out⇒reason, and
 // exhaustive-declaration completeness — those are left to validate-before-persist.)
 // Each returns error strings on the post-mutation entry; empty = ok.
+
+// A broader place containing a narrower one is not a disagreement. "Ireland"
+// and "County Cork, Ireland" are the same claim at two levels of precision, so
+// a conflict entry pairing them asserts a dispute the sources do not have
+// (issue #2028, widened by the 2026-09-09 ruling on #1965). Decidable from
+// research.json alone, so it is a precondition rather than a line of SKILL.md
+// prose: ADR-0011's first question.
+//
+// `compatiblePlace` is the existing comparator and its own worked example is
+// this exact pair; it reads the free-text `place`, which is what assertions
+// actually carry (`standard_place` is populated on 0 of the 113 competing
+// assertions in the scenario corpus, so keying on that would be a check that
+// cannot fire). Siblings — "Schuylkill, Pennsylvania" vs "Allegheny,
+// Pennsylvania" — are incompatible and stay allowed, as does the live
+// Ireland/Pennsylvania birthplace conflict this corpus is built on.
+function placeContainmentErrors(entry: any, research: any): string[] {
+  if (entry.conflict_type !== "fact") return [];
+  const ids: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const byId = new Map<string, any>(
+    ((research.assertions ?? []) as any[])
+      .filter((a) => a && typeof a.id === "string")
+      .map((a) => [a.id, a]),
+  );
+  const errs: string[] = [];
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      // A missing or place-less neighbour is not this entry's problem — the
+      // document validator reports dangling ids, and an assertion with no
+      // place states nothing to compare. Same stance as planActiveInvariants.
+      const a = byId.get(ids[i]);
+      const b = byId.get(ids[j]);
+      if (!a || !b) continue;
+      if (typeof a.place !== "string" || typeof b.place !== "string") continue;
+      if (!compatiblePlace(a.place, b.place)) continue;
+      errs.push(
+        `competing assertions '${ids[i]}' ("${a.place}") and '${ids[j]}' ` +
+          `("${b.place}") name the same place at two levels of precision, so they ` +
+          `do not disagree — one simply says less. Drop the broader assertion from ` +
+          `competing_assertion_ids, or record the dispute over an attribute the ` +
+          `sources actually contradict.`,
+      );
+    }
+  }
+  return errs;
+}
 
 function conflictInvariants(entry: any): string[] {
   // `moot` settles a conflict for every gate that reads `status` — the
@@ -1735,7 +1783,19 @@ function applyOne(
       invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
   }
-  if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
+  if (section === "conflicts") {
+    invariantErrors.push(...conflictInvariants(resultEntry));
+    // Place containment: on append, and on an update that (re)sets the pairing.
+    // Scoped that way so an unrelated edit to a conflict written before this
+    // rule existed is not refused — the freeze #2354 had to design around.
+    const conflictFields = op.fields ?? {};
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "competing_assertion_ids")
+    ) {
+      invariantErrors.push(...placeContainmentErrors(resultEntry, research));
+    }
+  }
   // One active plan per question — enforced on append OR an update that
   // (re)sets status to "active"; the helper no-ops for non-active entries.
   if (section === "plans") {

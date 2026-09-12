@@ -1001,6 +1001,143 @@ describe("research_append (Phase 3)", () => {
   });
 
 
+  // ── a broader place containing a narrower one is not a conflict (#2028) ──
+  //
+  // "Ireland" and "County Cork, Ireland" are one claim at two levels of
+  // precision. The reported defect is the agent filing that pair as a dispute.
+  // Measured before landing: 0 of the 113 competing assertions in the scenario
+  // corpus carry `standard_place`, so the check reads free-text `place`; and 0
+  // existing conflicts are in a containment relationship, so nothing shipped
+  // starts out refused.
+  describe("place containment is not a disagreement", () => {
+    const placed = (conflictIds: string[], places: Record<string, string>) => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "born where?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }],
+      assertions: Object.entries(places).map(([id, place]) => ({
+        id,
+        source_id: "src_001",
+        fact_type: "birth",
+        value: place,
+        place,
+      })),
+      conflicts: conflictIds.length
+        ? [
+            {
+              id: "c_001",
+              conflict_type: "fact",
+              description: "birthplace",
+              competing_assertion_ids: conflictIds,
+              status: "unresolved",
+              blocks_question_ids: [],
+            },
+          ]
+        : [],
+      proof_summaries: [],
+    });
+    const appendConflict = (ids: string[]) => ({
+      projectPath: dir,
+      section: "conflicts" as const,
+      op: "append" as const,
+      entry: {
+        conflict_type: "fact",
+        description: "birthplace",
+        competing_assertion_ids: ids,
+        status: "unresolved",
+        blocks_question_ids: [],
+        disputed_attribute: "birthplace",
+      },
+    });
+
+    it.each([
+      ["broader first", { a_001: "Ireland", a_002: "County Cork, Ireland" }],
+      ["narrower first", { a_001: "County Cork, Ireland", a_002: "Ireland" }],
+      ["deeper hierarchy", {
+        a_001: "Pennsylvania, United States",
+        a_002: "Schuylkill, Pennsylvania, United States",
+      }],
+    ])("refuses a conflict over a containment pair: %s", async (_label, places) => {
+      await writeProject(placed([], places as Record<string, string>));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(false);
+      const msg = JSON.stringify((r as any).errors);
+      expect(msg).toContain("two levels of precision");
+      expect(msg).toContain("a_001");
+      expect(msg).toContain("a_002");
+    });
+
+    // The other direction, which is the half a "break it and watch it fail"
+    // pass cannot show: the guard must leave real disputes alone. Both rows
+    // are live in the committed corpus.
+    it.each([
+      ["different countries", { a_001: "Ireland", a_002: "Pennsylvania" }],
+      ["sibling counties", {
+        a_001: "Schuylkill, Pennsylvania, United States",
+        a_002: "Allegheny, Pennsylvania, United States",
+      }],
+    ])("still allows a real disagreement: %s", async (_label, places) => {
+      await writeProject(placed([], places as Record<string, string>));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("ignores an assertion carrying no place — nothing to compare", async () => {
+      await writeProject(placed([], { a_001: "Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      // a_002 does not exist at all; the dangling-ref check owns that, not this.
+      expect(JSON.stringify((r as any).errors ?? [])).not.toContain(
+        "two levels of precision",
+      );
+    });
+
+    it("does not fire on an identity conflict", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "County Cork, Ireland" }));
+      const r = await researchAppend({
+        ...appendConflict(["a_001", "a_002"]),
+        entry: {
+          ...appendConflict(["a_001", "a_002"]).entry,
+          conflict_type: "identity",
+          identity_question: "same Patrick?",
+        },
+      });
+      expect(JSON.stringify((r as any).errors ?? [])).not.toContain(
+        "two levels of precision",
+      );
+    });
+
+    // The freeze #2354 had to design around: a project written before this
+    // rule existed must stay editable. The arm is scoped to ops that (re)set
+    // the pairing, so an unrelated field update passes.
+    it("does not refuse an unrelated update to a pre-existing containment conflict", async () => {
+      await writeProject(
+        placed(["a_001", "a_002"], { a_001: "Ireland", a_002: "County Cork, Ireland" }),
+      );
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { description: "birthplace, restated" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does fire on an update that re-sets competing_assertion_ids", async () => {
+      await writeProject(
+        placed(["a_001"], { a_001: "Ireland", a_002: "County Cork, Ireland" }),
+      );
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { competing_assertion_ids: ["a_001", "a_002"] },
+      });
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+  });
+
   // ── correlation presupposes identity (lead ruling, 2026-08-19) ──
   //
   // A conclusion may not out-tier the reliability of the sources it rests on.
