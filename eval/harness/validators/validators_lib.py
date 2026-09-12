@@ -19,31 +19,15 @@ small and lets each validator file decide how to handle missing state.
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 import pytest
 
-# A bare 4-digit year embedded in free text. `1000`-`2099` is the union of
-# every range this repo's validators/scripts have independently used for the
-# same purpose (test_research_plan.py: 1000-2049; test_record_extraction.py's
-# `_EMBEDDED_YEAR_RE`: 1500-2099; e2e/author.py's `_YEAR`: 1000-2099) --
-# widening only, never narrowing, so migrating a caller here cannot silently
-# stop matching something it used to (PR #2004 review, clack391: "the three
-# disagree on what a year is"). `test_record_extraction.py` and
-# `e2e/author.py` still carry their own copies -- migrating those is
-# out of scope for the PR that added this one; see issue tracking that.
-EMBEDDED_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})\b")
-
-
-def extract_year(text: str | None) -> str | None:
-    """Pull the first embedded 4-digit year out of `text` -- a bare year,
-    `~yyyy`, ISO `yyyy-mm-dd`/`yyyy-mm`, or a `standard_date` sidecar like
-    "Abt 1850". `None` when `text` is falsy or no such pattern is found."""
-    if not text:
-        return None
-    m = EMBEDDED_YEAR_RE.search(text)
-    return m.group(1) if m else None
+# Re-exported for back-compat with existing `from validators_lib import
+# extract_year` callers; the canonical definitions live in harness/dates.py so
+# both validators/ and e2e/ can share them without pulling in this module's
+# pytest dependency.
+from harness.dates import EMBEDDED_YEAR_RE, extract_year  # noqa: F401
 
 
 def bare_tool_name(tool: str) -> str:
