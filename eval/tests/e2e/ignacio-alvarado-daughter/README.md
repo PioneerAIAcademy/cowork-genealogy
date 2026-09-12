@@ -40,7 +40,9 @@ ochenta, se dió sepultura Ecca. á Angela Alvarado, hija legitima de Ygnacio
 Alvarado y Teodosia Duran, de año y dos meses, murió de Alfericia."* Three
 things follow. The parentage is stated outright, so it is not an index
 inference. *Hija legitima* means the parents were married. And *de año y dos
-meses* puts her birth about April 1879 — the "1880" in the hint index
+meses* — an age in completed years and months, so at least one year two
+months and not yet one year three — places her birth between 21 March and
+20 April 1879. The "1880" in the hint index
 (`ark:/61903/1:1:NQ5N-RXJ`) is the indexer's, not the register's; a second
 indexing of the same image (`ark:/61903/1:1:6JPG-ZB6D`) reads the year as 1879
 and the surname as "Alvarado Duran". The age phrase was read off the image
@@ -55,9 +57,10 @@ comparison, and neither resembles no. 814.
 `ark:/61903/1:1:NQ24-QZQ`, Angela Procesa Maria de las Piedades Alvarado Duran,
 27 Mar 1879 at San Vicente Ferrer, daughter of Ygnacio Alvarado and Teodosia
 Duran — a different event on a different image
-(`ark:/61903/3:1:S3HY-DYZS-JNJ`). A baptism in late March 1879 and an age of
-one year two months on 20 June 1880 agree to within a month. She is the only
-Angela among the couple's children.
+(`ark:/61903/3:1:S3HY-DYZS-JNJ`). That baptism falls inside the window the
+burial age defines, so the two records do not merely agree to within a month —
+they agree exactly, and together they fix her birth in the week of 21–27 March
+1879. She is the only Angela among the couple's children.
 
 **The two Duráns are one woman.** The starting tree's `K4JL-NPF` (Teodosia
 Duran, b. 1876) and `K21K-P18` (Teodora Durán, no dates) are a duplicate, and
@@ -94,7 +97,10 @@ matches `K21K-P1C` at 0.9999994, and María Rosa is `K21K-P1H`. None of these
 duplicates were merged, for the same snapshot reason as the Durán pair.
 
 **The tree's 1876 birth year for her is impossible** and does not need the
-duplicate to fall. This couple baptizes children at El Carmen in 1881, 1885,
+duplicate to fall. The disproof is the record this finding rests on: a woman
+born in 1876 is no more than three when she bears Angela, baptized 27 Mar 1879.
+That instance is not a probable identification — it is the finding's own
+record. Beyond it, this couple baptizes children at El Carmen in 1881, 1885,
 1886, 1889, 1891, 1893 and 1895 and buries infants there in 1880 and 1884; a
 woman born in 1876 is four at the first of those burials. An earlier run of
 baptisms at San Vicente Ferrer, 1870–1879, is very probably the same couple —
