@@ -1138,6 +1138,112 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // ── two dates that cannot be ordered are warned about, not refused (#2028) ──
+  describe("unorderable competing dates raise a warning", () => {
+    const dated = (rows: [string, string, string][]) => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "when?", status: "open" }],
+      sources: [{ id: "src_001", citation: "a source" }],
+      assertions: rows.map(([id, fact_type, date]) => ({
+        id,
+        source_id: "src_001",
+        fact_type,
+        value: `${fact_type} ${date}`,
+        date,
+      })),
+      conflicts: [],
+      proof_summaries: [],
+    });
+    const appendConflict = (ids: string[]) => ({
+      projectPath: dir,
+      section: "conflicts" as const,
+      op: "append" as const,
+      entry: {
+        conflict_type: "fact",
+        description: "temporal impossibility",
+        disputed_attribute: "event_order",
+        competing_assertion_ids: ids,
+        status: "unresolved",
+        blocks_question_ids: [],
+      },
+    });
+    const warningsOf = (r: any) => JSON.stringify(r.validation?.warnings ?? []);
+
+    it("warns on the reported incident — an arrival inside a year-only death", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1856-12-15"], ["a_002", "death", "1856"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      // The write SUCCEEDS. This is an advisory, not a gate.
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).toContain("cannot be ordered");
+      expect(warningsOf(r)).toContain("a_001");
+      expect(warningsOf(r)).toContain("a_002");
+    });
+
+    it("stays silent when the two events are genuinely ordered", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1853"], ["a_002", "death", "1908-03-12"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    // The noise check. A birthplace conflict is two `birth` assertions whose
+    // dates overlap by construction; warning there would fire on 35 of the 42
+    // corpus conflicts and teach the reader to skip this channel.
+    it("stays silent on a same-fact_type value disagreement", async () => {
+      await writeProject(
+        dated([["a_001", "birth", "~1845"], ["a_002", "birth", "1845"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    // Regression guard for the bug this nearly shipped with: `getDayRange`
+    // returns null for `~approx` and ISO, and `compatibleDate` reads null as
+    // "incompatible", so skipping `stdDate` makes the check silently say
+    // nothing on exactly the imprecise dates it exists to flag.
+    it("normalizes through stdDate — an approx year still overlaps a day date", async () => {
+      await writeProject(
+        dated([["a_001", "residence", "~1856"], ["a_002", "death", "1856-12-15"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(warningsOf(r)).toContain("cannot be ordered");
+    });
+
+    // Covers the outer fact_type-span guard specifically. Without it, a pair
+    // where only ONE side declares a fact_type reaches the date comparison —
+    // the inner same-type `continue` cannot catch that, because a string never
+    // equals undefined. An assertion that does not say what kind of event it
+    // records gives no reason to read the pair as an ordering claim.
+    it("says nothing when only one side declares a fact_type", async () => {
+      await writeProject({
+        project: { objective: "x" },
+        questions: [{ id: "q_001", question: "when?", status: "open" }],
+        sources: [{ id: "src_001", citation: "a source" }],
+        assertions: [
+          { id: "a_001", source_id: "src_001", fact_type: "death", value: "d", date: "1856" },
+          { id: "a_002", source_id: "src_001", value: "untyped", date: "1856-12-15" },
+        ],
+        conflicts: [],
+        proof_summaries: [],
+      });
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    it("says nothing when either date is absent", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1856-12-15"], ["a_002", "relationship", ""]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+  });
+
   // ── correlation presupposes identity (lead ruling, 2026-08-19) ──
   //
   // A conclusion may not out-tier the reliability of the sources it rests on.

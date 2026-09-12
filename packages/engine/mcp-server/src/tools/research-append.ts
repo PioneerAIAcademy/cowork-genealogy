@@ -37,7 +37,7 @@ import {
   noProjectResult,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import { compatiblePlace } from "../utils/date-comparison.js";
+import { compatibleDate, compatiblePlace } from "../utils/date-comparison.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -204,6 +204,63 @@ function placeContainmentErrors(entry: any, research: any): string[] {
     }
   }
   return errs;
+}
+
+// A year-only date cannot be ordered against a day-precision date inside that
+// same year. The reported defect is an agent telling a researcher that an
+// arrival of 15 Dec 1856 conflicted with a death recorded only as "1856" — it
+// derived the ordering by reading two date strings, and no tool was consulted.
+//
+// A warning, not a refusal, and the distinction is load-bearing. Whether a
+// conflict entry *claims* an ordering is not declarable today: `conflict_type`
+// is only fact|identity and `disputed_attribute` is free text. A gate would
+// therefore have to infer the claim, and a wrong inference refuses legitimate
+// work. A warning that is wrong costs one line of text, so the shape below can
+// be used as the trigger without that risk.
+//
+// The trigger is the ordering *shape*: competing assertions spanning more than
+// one fact_type. A value disagreement is two assertions of the SAME type with
+// different values (35 of the 42 corpus conflicts are two `birth` assertions),
+// and warning there would fire on every birthplace conflict — true, irrelevant,
+// and the fastest way to teach a reader to ignore this channel.
+//
+// `stdDate` first, always: `getDayRange` returns null for ISO and `~approx`
+// forms, which are 191 of the 391 assertion dates in the corpus, and
+// `compatibleDate` reads null as "incompatible" — i.e. raw input would make
+// this silently say nothing on precisely the imprecise dates it exists to flag.
+function unorderableDateWarnings(entry: any, research: any): string[] {
+  if (entry.conflict_type !== "fact") return [];
+  const ids: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const byId = new Map<string, any>(
+    ((research.assertions ?? []) as any[])
+      .filter((a) => a && typeof a.id === "string")
+      .map((a) => [a.id, a]),
+  );
+  const present = ids.map((i) => byId.get(i)).filter(Boolean);
+  const factTypes = new Set(
+    present.map((a) => a.fact_type).filter((t) => typeof t === "string"),
+  );
+  if (factTypes.size < 2) return [];
+  const out: string[] = [];
+  for (let i = 0; i < present.length; i++) {
+    for (let j = i + 1; j < present.length; j++) {
+      const a = present[i];
+      const b = present[j];
+      if (a.fact_type === b.fact_type) continue;
+      if (typeof a.date !== "string" || typeof b.date !== "string") continue;
+      if (!compatibleDate(stdDate(a.date), stdDate(b.date))) continue;
+      out.push(
+        `'${a.id}' (${a.fact_type}, ${a.date}) and '${b.id}' (${b.fact_type}, ` +
+          `${b.date}) cannot be ordered against each other: the less precise date's ` +
+          `possible range contains the other, so neither is known to come first. If ` +
+          `this conflict rests on one event postdating the other, it is not ` +
+          `established — say what else makes them incompatible, or withdraw it.`,
+      );
+    }
+  }
+  return out;
 }
 
 function conflictInvariants(entry: any): string[] {
@@ -1794,6 +1851,10 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(conflictFields, "competing_assertion_ids")
     ) {
       invariantErrors.push(...placeContainmentErrors(resultEntry, research));
+      // Non-blocking, on the same ops: the write succeeds and the agent is told
+      // the two dates cannot be ordered. See unorderableDateWarnings for why
+      // this is a warning rather than a precondition.
+      opWarnings.push(...unorderableDateWarnings(resultEntry, research));
     }
   }
   // One active plan per question — enforced on append OR an update that
