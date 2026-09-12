@@ -545,17 +545,23 @@ that measurement as a standing property rather than a dated snapshot.
 
 ## The standing panel
 
-Four fixtures are run repeatedly, so the corpus can be compared week over week
+Four fixtures are run repeatedly, so the corpus can be compared month over month
 instead of describing whichever fixtures someone happened to touch:
 `eval/tests/e2e/spriggs-parents-1898/`, `eval/tests/e2e/hannah-earnest-children/`,
 `eval/tests/e2e/anders-monsen-ancestry/` and `eval/tests/e2e/cruz-corona-ancestry/`.
 
 The lead runs `/file-e2e-panel` whenever more panel work is wanted — there is no
-fixed cadence, though in practice a batch lands about once a week, and every run
-files **four more issues, one per fixture**, each an unassigned half-day any
-genealogist can pick up. Four parallel tasks rather than one bundle is what stops
-the tier having a single operator. Take one the same way you would any assigned
-fixture, on the "Running a panel fixture" route above.
+fixed cadence, though in practice a batch lands about once a week. Every run files
+**four more issues, one per fixture**, each an unassigned half-day any genealogist
+can pick up. Four parallel tasks rather than one bundle is what stops the tier
+having a single operator. Take one the same way you would any assigned fixture, on
+the "Running a panel fixture" route above.
+
+**Weekly filing is what fills the monthly window.** A batch is one run per fixture,
+so filing about weekly puts roughly four runs per fixture inside the report's 28
+days — the "at least 4 runs" its acceptance check asks for. Read the same panel over
+one week instead and every fixture reports a single run, which is the small-sample
+window the panel exists to escape.
 
 A panel run is landed at whatever verdict it earned — `pass`, `partial` or `fail`
 — because the panel counts runs and a failed run is the data point; re-run only
