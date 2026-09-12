@@ -29,15 +29,15 @@
  * Usage:
  *   npx tsx dev/probe-record-read-places.ts
  *
- * The ARKs below are taken verbatim from committed fixtures under
- * eval/fixtures/mcp/record-read-*.json, labelled by each fixture's FS collection
- * title. None are invented, but fixture-derived is not the same as captured-live:
- * only the Richardson pair (JMF4-CL9, NFCY-7VM) is marked CAPTURED LIVE in its
- * fixture; the other six ARKs are constructed or carry no live-capture note
- * (ackerman-1860 / patrick-flynn "mirror an embedded gedcomx"; 68Q9-K34P,
- * birkeland, anders, and urna claim no live capture), so a run over them settles
- * less than a run over live-captured records. Adjust the list before the live run
- * for wider real coverage of the three record families.
+ * The 13 ARKs below are part fixture-derived and part mined from committed e2e
+ * run logs; none are invented. The original eight come verbatim from committed
+ * fixtures under eval/fixtures/mcp/record-read-*.json (only the Richardson pair,
+ * JMF4-CL9 / NFCY-7VM, is marked CAPTURED LIVE; the rest are constructed or carry
+ * no live-capture note). The five added for #1908 phase 1b (MPXD-MZC, M9VJ-V1R,
+ * QL3R-C5SR, 8YMV-R76Z, Q5SZ-J9LG) are real record ids taken from committed
+ * eval/runlogs/e2e/ runs, not from the mcp fixtures. The live run has been
+ * performed (2026-09-11); its results are recorded on issue #1908. To extend
+ * coverage, add more real record ids (fixture- or run-log-derived) and re-run.
  */
 import { LOCAL } from "../src/auth/principal.js";
 import { recordReadTool } from "../src/tools/record-read.js";
@@ -54,7 +54,7 @@ const CONCURRENCY = 6;
 
 type Category =
   | "US census"
-  | "US death"
+  | "US newspaper obituary"
   | "England parish"
   | "Scandinavian church book"
   | "Scandinavian marriage index";
@@ -74,13 +74,15 @@ const ARKS: Ark[] = [
   { id: "68Q3-5SGC", category: "Scandinavian church book", note: "Norway, Church Books, 1797-1958 (Birkeland baptism)" },
   { id: "NW44-PM2", category: "Scandinavian marriage index", note: "Norway, Marriages, 1660-1926 (Urna/Anders)" },
   { id: "9XKT-M2P", category: "Scandinavian church book", note: "Norway, Church Books, 1815-1930 (Anders)" },
-  // Added 2026-09-11 (#1908 phase 1b): real ARKs proven live-resolved in committed 2026-09 e2e runs;
-  // place strings noted are from run-log summaries and are confirmed by this probe when run.
+  // Added for #1908 phase 1b: real record ids drawn from committed eval/runlogs/e2e/ runs
+  // (various dates, NOT all September — Q5SZ-J9LG is from 2026-07/08 runs only). Each resolved
+  // live when this probe was run on 2026-09-11. Place strings in the notes are from run-log
+  // summaries; the probe confirms the actual place.original at run time.
   { id: "MPXD-MZC", category: "US census", note: "US census, single-segment place 'North Dakota' (spriggs-parents-1898 e2e)" },
   { id: "M9VJ-V1R", category: "US census", note: "US census, multi-segment 'Grand Forks, ..., North Dakota' (spriggs-parents-1898 e2e; single-vs-multi contrast with MPXD-MZC)" },
   { id: "QL3R-C5SR", category: "England parish", note: "England parish baptism, West Bromwich, Staffordshire (hannah-earnest-children e2e)" },
   { id: "8YMV-R76Z", category: "Scandinavian church book", note: "Norway, vernacular place 'Hamre, Hordaland, Norge' (anders-monsen-ancestry e2e)" },
-  { id: "Q5SZ-J9LG", category: "US death", note: "US death record, 'Milwaukee, Wisconsin' (heinrich-dewus-children-death e2e)" },
+  { id: "Q5SZ-J9LG", category: "US newspaper obituary", note: "US newspaper obituary index (GenealogyBank), 'Milwaukee, Wisconsin' (heinrich-dewus-children-death e2e; 2026-07/08 runs)" },
 ];
 
 type Consistency = "ok" | "contradiction" | "unverifiable" | "no-resolve";

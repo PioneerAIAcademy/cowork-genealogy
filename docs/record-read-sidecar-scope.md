@@ -1,6 +1,6 @@
 # Scope: read staged records from the sidecar instead of re-fetching via `record_read`
 
-**Status:** scoped + partially verified (one live re-probe owed) · **Date:** 2026-07-07
+**Status:** scoped + partially verified (live re-probe completed 2026-09-11) · **Date:** 2026-07-07
 · Extends [`search-result-staging-spec.md`](docs/specs/search-result-staging-spec.md)
 and the `rank_search_matches` reranker.
 
@@ -117,18 +117,25 @@ England death/burial). For **the person you searched** (the matched persona):
   question that earlier looked like the blocker is **resolved** — no live read
   needed for it.
 - **Standardized place: the search result's is correct; a live `record_read`
-  used to re-standardize it WRONGLY** (observed 2026-07-08; re-probed 2026-09-11 — issue
-  #1908 Phase 1: `Southampton, NY → Southampton, England`;
-  `Rochdale, England → Rochdale, South Africa`). The sidecar is therefore more
+  used to re-standardize it WRONGLY** — two cross-country mis-resolutions observed
+  2026-07-08: `Southampton, NY → Southampton, England`;
+  `Rochdale, England → Rochdale, South Africa`. **Re-probed live 2026-09-11**
+  (issue #1908 Phase 1, 28 place observations across 11 records): those two
+  cross-country examples **did not reproduce** (0 contradiction verdicts / 28),
+  but one **intra-country** mis-resolution did — `Eye Town → Eye, Suffolk`, where
+  the same record's fully-qualified fact reads `Eye, Northamptonshire` — a class
+  `countryConsistency` cannot detect. The sidecar is therefore more
   reliable only for its FS-normalized share — its resolver-derived share came from
   the same resolver — and the sidecar tool returns the staged place **as-is** (no
   `standardizePlaces` re-run). **The live `record_read` path is also fixed:** it
   now uses `toSimplified` instead of `toSimplifiedStandardized`, so it keeps
   whatever `standard_place` the record's own `normalized` value supplies and never
   falls back to the resolver, rather than resolving an un-normalized name to a
-  wrong place. (How often a recapi record response carries a `normalized` place is
-  what `dev/probe-record-read-places.ts` re-measures — Phase 1's open question.)
-  Staged records carry the search stage's standardized place regardless.
+  wrong place. (How often a recapi record response carries a `normalized` place
+  was measured by `dev/probe-record-read-places.ts` on 2026-09-11: **0 of the 28
+  observations** carried one, so the live path produced no `standard_place` at all
+  for the probed records.) Staged records carry the search stage's standardized
+  place regardless.
 
 The one genuine "read has more" is **co-residents**: a census search returns other
 household members with **reduced facts** (name + a fact or two); a live read fills
