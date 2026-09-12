@@ -288,10 +288,11 @@
  * Requires a live FamilySearch session. Log in with `make e2e-login` from the
  * repo root (opens a browser; uses the bundled client ID; token lasts ~24h and
  * is shared host-wide). Do NOT reach for `dev/try-login.ts` — it takes an
- * explicit <clientId> argument. The token here comes from getValidToken(),
+ * explicit <clientId> argument. The token here comes from getValidToken(LOCAL),
  * never from a literal in this file.
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { getValidToken } from "../src/auth/refresh.js";
@@ -5897,7 +5898,7 @@ const SECTIONS: Record<string, () => Promise<void>> = {
 };
 
 async function main(): Promise<void> {
-  token = await getValidToken();
+  token = await getValidToken(LOCAL);
   const requested = process.argv.slice(2).map((a) => a.toUpperCase());
   const names = requested.length
     ? requested.filter((n) => n in SECTIONS)

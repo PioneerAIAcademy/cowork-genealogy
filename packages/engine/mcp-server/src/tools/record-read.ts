@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -67,6 +68,7 @@ export const recordReadSchema = {
 
 export async function recordReadTool(
   input: RecordReadInput,
+  principal: Principal,
 ): Promise<RecordReadResult> {
   const { recordId, resultsRef, projectPath } = input;
   if (typeof recordId !== "string" || recordId.trim() === "") {
@@ -88,7 +90,7 @@ export async function recordReadTool(
   }
 
   const entityId = extractEntityId(recordId.trim());
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   // TODO: implement fetch + convert logic
   // 1. Build URL: `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`

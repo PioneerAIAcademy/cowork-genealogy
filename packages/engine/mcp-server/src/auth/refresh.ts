@@ -12,13 +12,14 @@ import {
   type RetryBudgetOptions,
 } from "../utils/http.js";
 import type { TokenStore, FSTokenResponse } from "../types/auth.js";
+import type { Principal } from "./principal.js";
 
 // The instruction the LLM gets when there is no usable FamilySearch session.
 // In hosted mode the `login` tool is a dead end (its loopback callback can't
 // reach the user's browser), so point them at the app's Reconnect button; on
 // the desktop, `login` is exactly right.
-async function reauthInstruction(desktopMessage: string): Promise<string> {
-  return (await isHostedMode()) ? HOSTED_REAUTH_INSTRUCTION : desktopMessage;
+async function reauthInstruction(desktopMessage: string, principal: Principal): Promise<string> {
+  return (await isHostedMode(principal)) ? HOSTED_REAUTH_INSTRUCTION : desktopMessage;
 }
 
 async function postTokenEndpoint(
@@ -104,12 +105,30 @@ export async function refreshAccessToken(
   return toTokenStore(data, refreshToken);
 }
 
-export async function getValidToken(): Promise<string> {
+/**
+ * The access token `principal` acts with. The single entry point for every
+ * FamilySearch call; the parameter is what makes an unscoped call a compile
+ * error rather than a read of whichever user last wrote `~/.familysearch-mcp`
+ * (see auth/principal.ts).
+ *
+ * A bearer principal's token is used as given: the web tier owns the grant,
+ * refreshes it and hands each turn a fresh token, so the tool server never
+ * refreshes and has nowhere per-user to persist one. The local principal is
+ * the desktop flow — load, refresh when expired, persist.
+ */
+export async function getValidToken(principal: Principal): Promise<string> {
+  if (principal.kind === "bearer") {
+    if (!principal.accessToken) {
+      throw new Error(HOSTED_REAUTH_INSTRUCTION);
+    }
+    return principal.accessToken;
+  }
   const tokens = await loadTokens();
   if (!tokens) {
     throw new Error(
       await reauthInstruction(
-        "User is not logged in to FamilySearch. Call the login tool to authenticate."
+        "User is not logged in to FamilySearch. Call the login tool to authenticate.",
+        principal
       )
     );
   }
@@ -119,7 +138,8 @@ export async function getValidToken(): Promise<string> {
   if (!tokens.refreshToken) {
     throw new Error(
       await reauthInstruction(
-        "FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."
+        "FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate.",
+        principal
       )
     );
   }
@@ -130,7 +150,8 @@ export async function getValidToken(): Promise<string> {
   } catch {
     throw new Error(
       await reauthInstruction(
-        "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."
+        "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate.",
+        principal
       )
     );
   }

@@ -10,6 +10,7 @@
  * section's answer is checkable, and it had been left to whatever surname was
  * convenient (`Martin`, `Smith`, `Oliveira` — 1.5M to 68M rows).
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 
@@ -60,7 +61,7 @@ const GROUPS: Array<{ country: string; recordType?: string; extra?: string; name
 ];
 
 async function main(): Promise<void> {
-  token = await getValidToken();
+  token = await getValidToken(LOCAL);
   const f = (n: number | null): string => (n === null ? "ERR" : n.toLocaleString("en-US"));
   for (const g of GROUPS) {
     console.log(`\n### ${g.country}${g.recordType ? " (marriage)" : ""}`);

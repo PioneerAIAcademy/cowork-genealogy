@@ -7,7 +7,6 @@
 // files both-or-neither. Use case: two persons (e.g. two fathers) that were
 // kept separate turn out to be the same. Spec: merge-gedcomx-spec.md §5b.
 
-import { join } from "path";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -85,11 +84,9 @@ export async function mergeTreePersons(
 
     // 7. Persist both files both-or-neither. Order [tree, research] matches
     //    the documented residual window.
-    const treePath = join(projectPath, "tree.gedcomx.json");
-    const researchPath = join(projectPath, "research.json");
-    await atomicWriteBoth([
-      { path: treePath, data: merged },
-      { path: researchPath, data: research },
+    await atomicWriteBoth(projectPath, [
+      { ref: "tree.gedcomx.json", data: merged },
+      { ref: "research.json", data: research },
     ]);
 
     return {

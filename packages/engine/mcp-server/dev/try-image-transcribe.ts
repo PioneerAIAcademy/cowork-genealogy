@@ -11,6 +11,7 @@
  *   npx tsx dev/try-image-transcribe.ts "<ark>"     ["<lookingFor>"]
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { imageTranscribeTool } from "../src/tools/image-transcribe.js";
 
 const value = process.argv[2];
@@ -27,7 +28,7 @@ const isImageId = /^\d+_\d+$/.test(value);
 const result = await imageTranscribeTool({
   ...(isImageId ? { imageId: value } : { ark: value }),
   ...(lookingFor ? { lookingFor } : {}),
-});
+}, LOCAL);
 
 console.log("Metadata:", JSON.stringify(result.metadata, null, 2));
 if (result.found) console.log("Found:", result.found);
