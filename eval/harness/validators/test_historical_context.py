@@ -37,3 +37,50 @@ def test_does_not_modify_research_json(before_state, after_state, test):
     assert before == after, (
         "historical-context modified research.json; it is a read-only skill"
     )
+
+
+# --- Topical fixture actually fires (issue #2283 review) --------------
+
+# Maps a tagged test id to the topical fixture stem its `mcp_fixtures[0]`
+# names. Hardcoded rather than read from the test spec: the `test` fixture
+# only carries the inner "test" block (id/skill/name/type/tags), not
+# top-level `mcp_fixtures` (validator_runner.py). Add an entry here whenever
+# the "topical-fixture-required" tag is added to a test.
+_TOPICAL_FIXTURE_BY_TEST_ID = {
+    "ut_historical_context_gsm": "wiki-search-guardianship-stepchildren",
+    "ut_historical_context_hbt": "wiki-search-guardianship-own-children",
+}
+
+
+def test_topical_fixture_actually_used(tool_calls, test):
+    """A test tagged 'topical-fixture-required' lists a subject-matter
+    fixture ahead of the wiki-search-any/wikipedia-search-any fallbacks
+    (topical fixtures match first). Nothing previously confirmed the model's
+    actual query phrasing hit that predicate rather than silently falling
+    through to the generic fallback -- issue #2283 review (mercyokum): "If
+    the model's phrasing ever drifts off matching [the predicate], this
+    silently falls back to the generic fixture with no signal anywhere that
+    it happened."
+
+    Asserts at least one tool call's `response_fixture` equals the topical
+    stem. A miss means the judge graded Source quality against generic
+    fallback content, not the subject-matter fixture the test exists to
+    exercise -- the same failure mode the fixture was added to fix.
+    """
+    if "topical-fixture-required" not in test.get("tags", []):
+        pytest.skip("not a topical-fixture-required test")
+    test_id = test.get("id")
+    expected = _TOPICAL_FIXTURE_BY_TEST_ID.get(test_id)
+    assert expected is not None, (
+        f"{test_id} carries 'topical-fixture-required' but has no entry in "
+        "_TOPICAL_FIXTURE_BY_TEST_ID -- add one naming its topical fixture stem"
+    )
+    hit_fixtures = [
+        c.get("response_fixture") for c in (tool_calls or []) if c.get("response_fixture")
+    ]
+    assert expected in hit_fixtures, (
+        f"{test_id}: expected the topical fixture '{expected}' to match at least "
+        "one tool call, but it never did -- the model's query phrasing missed the "
+        f"fixture's args predicate and fell back to a generic fixture instead. "
+        f"Fixtures actually hit: {hit_fixtures or '(none)'}"
+    )
