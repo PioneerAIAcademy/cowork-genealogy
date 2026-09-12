@@ -771,13 +771,13 @@ Two matcher modifiers keep the check both precise and non-flappy:
 
 **Deterministic-validator deference (grading).** When `test_expected_classifications` **passes**, the LLM judge's `Evidence type accuracy` and `Informant identification` dimensions cannot **FAIL** on the verified classifications — the harness floors a judge `1` to `2` (`orchestrator.apply_deterministic_deference`). A fuzzy re-grade must not override a deterministic check that already confirmed the classification (this retired the recurring census direct/indirect judge-inversion flap). Partial (`2`) is still permitted for a real issue on an *undeclared* assertion. Correctness likewise does not grade classification at all (base judge prompt) — evidence_type/proximity/quality are the classification dimensions' scope.
 
-**Routing negatives are NOT deferred (grading).** On a **negative** test with a non-empty `correct_skill`, the outcome is decided by routing alone (§7) and the judge runs base-only and diagnostically — but the harness does **not** adjust the judge's scores there. It reports them: when the skill under test is absent from `skills_invoked` **and** an accepted skill fired, a judge `1` on `Correctness` / `Completeness` raises a `routing_negative_judge_fail` warning on the run entry (`orchestrator.flag_routing_negative_judge_fail`) carrying the score and the judge's rationale. The scores themselves are recorded as graded.
+**Routing negatives are coerced to N/A (grading).** On a **negative** test with a non-empty `correct_skill`, the outcome is decided by routing alone (§7) and the judge runs base-only and diagnostically. The harness usually stops the run the instant the accepted skill fires, so the judge is handed a truncated transcript and still asked to grade Correctness and Completeness, where a `1` grades a blank field. **"Usually" is measured, and the exception is the point.** The coercion fires on the routing signature alone and does not check whether the run produced anything. Of the 47 runs in the committed corpus carrying this warning, **4 had produced real output before routing**: `ut_timeline_008` (1355 chars, two `extraction_append` calls, judge rationale "extracting 11 new assertions"), `ut_person_evidence_003` (710 chars, 4 tool calls, and its `1` is human-confirmed with a written comment), and two `ut_citation_003` runs. On those the `1` names a real defect that the `pass` outcome already hides, and what preserves it is the warning plus the mandatory review slot, not the dimension. Since the 2026-09-02 ruling those two dimensions are **coerced from `1` to `null`**, with the original score and rationale preserved in an `output.warnings[]` entry of kind `coerced_routing_negative_to_na` and the rationale rewritten with a `[coerced-to-na]` prefix. A `2` is left alone. The prompt still asks for an integer; the prompt and the code state different rules, and that is the accepted cost of not trusting prose. The signature is: the skill under test is absent from `skills_invoked` **and** an accepted skill fired. The warning carries the original score and the judge's rationale (`orchestrator.flag_routing_negative_judge_fail`), and the coerced cell is **mandatory** in the review sample (§"Layer 3"), because the sample's first trigger keys on `1` or `2` and would otherwise go blind on it.
 
-A floor that rewrote such a `1` to `2` shipped briefly and was **removed** in 2026-08 on the corpus evidence: across the 121 committed unit run logs, 24 cells were floor-eligible with a judge `1` and a human confirmed the `1` on **20** of them. All 14 cells where the skill produced non-empty output (102–14,123 chars) were confirmed, with rationales naming the case the floor treated as a rare corner — the skill doing its own task inline while `skills_invoked` was empty.
+**Coercion is not that floor, and the paragraph below is why.** A floor that rewrote such a `1` to `2` shipped briefly and was **removed** in 2026-08 on the corpus evidence, and that argument stands unchanged: rewriting a `1` to a `2` asserts the skill did better than the judge said, which the corpus contradicts. N/A asserts nothing about the skill; it declines to grade a field the harness blanked. The evidence: across the 121 committed unit run logs, 24 cells were floor-eligible with a judge `1` and a human confirmed the `1` on **20** of them. All 14 cells where the skill produced non-empty output (102–14,123 chars) were confirmed, with rationales naming the case the floor treated as a rare corner — the skill doing its own task inline while `skills_invoked` was empty.
 
-**Do not reintroduce it gated on empty output.** All 4 overrides had `text_response == ""` and zero turns, but so did 6 of the 20 confirmations, and `ut_search_records_003` carries that identical signature in all 8 of its eligible cells — confirmed in two run logs, overridden in two others. Such a gate would have fired on 10 cells and been wrong on 6. There is no mechanical discriminator; that is the reason the floor is gone rather than narrowed. Deleting it changes no outcome — `_compute_outcome` decides these tests on routing alone, so a base-dimension score there has never gated anything.
+**Do not reintroduce it gated on empty output.** This still binds, and the coercion does not breach it: it is gated on the routing signature (skill under test absent from `skills_invoked`, an accepted skill fired), never on whether output was empty. All 4 overrides had `text_response == ""` and zero turns, but so did 6 of the 20 confirmations, and `ut_search_records_003` carries that identical signature in all 8 of its eligible cells — confirmed in two run logs, overridden in two others. Such a gate would have fired on 10 cells and been wrong on 6. There is no mechanical discriminator; that is the reason the floor is gone rather than narrowed. Deleting it changes no outcome — `_compute_outcome` decides these tests on routing alone, so a base-dimension score there has never gated anything.
 
-Read a `routing_negative_judge_fail` warning before overriding the `1`. Either the skill carried out its own task inline — a real defect the routing pass hides — or the judge misread a clean decline.
+Read a `coerced_routing_negative_to_na` warning before confirming the N/A. Either the skill carried out its own task inline — a real defect the routing pass hides, and correcting the `null` back to `1` is the only route by which it gets seen — or the judge misread a clean decline. Such a test is **mandatory** in the review sample for exactly that reason (§"Layer 3"): coercion turns the diagnostic `1` into `null`, and the sample's first trigger keys on `1` or `2`.
 
 ### 5.11 `refinement_targets`
 
@@ -943,7 +943,7 @@ Three independent layers. Each feeds results into the run log. The layers do not
 | Layer 2: LLM judge | Quality evaluation | Haiku | Scenario README + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
 | Layer 3: Human | Verification | Junior + senior genealogists | Both Layer 1 and Layer 2 results | Agree/disagree per dimension |
 
-**Cost optimization:** If Layer 1 validators fail, skip Layer 2 (the LLM judge). The test already failed structurally — don't spend money evaluating quality of broken output.
+**Layer 2 runs on every non-aborted run, including one whose Layer 1 validators failed.** The failing validator names are handed to the judge, which grades the substantive dimensions and discounts the defect itself. The run's outcome is already `fail` (Section 7); grading it buys the per-dimension diagnosis. Only an abort skips Layer 2.
 
 ### Layer 1: Deterministic validators
 
@@ -992,7 +992,7 @@ The base and skill rubrics produce scored dimensions. `judge_context` is **not**
 |-----------|------------------------|
 | Correctness | Are the skill's outputs factually correct given the input state? Are claims supported by the provided sources and assertions? |
 | Completeness | Did the skill address everything the input state and user message required? Were there omissions? |
-| Tool Arguments | Did Claude call MCP tools with args that match each matched fixture's declared `args` block? Substring (`~`-prefix) expectations on free-text fields tolerate paraphrase; identifier fields are strict. Multi-call holistically. **Special: N/A.** When the test made zero MCP tool calls, this dimension scores `null` (N/A) — it doesn't penalize stateless skills or tests that legitimately don't call tools. |
+| Tool Arguments | Did Claude call MCP tools with args that match each matched fixture's declared `args` block? Substring (`~`-prefix) expectations on free-text fields tolerate paraphrase; identifier fields are strict. Multi-call holistically. **Special: N/A.** When the test made zero MCP tool calls, this dimension scores `null` (N/A) — it doesn't penalize stateless skills or tests that legitimately don't call tools. It is no longer the only base dimension that can be `null`: Correctness and Completeness are coerced to N/A on a correctly-routed negative test (§5.10). |
 
 Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on 3 base + 3–5 skill rubric dimensions; `judge_context` notes add no scored dimensions.
 
@@ -1052,7 +1052,7 @@ For skills where tool work *is* the work (e.g., `search-records`, `search-full-t
 | Skill rubric | 3-5 dimensions | What to grade on |
 | `judge_context` | 0-N plain-English notes | Background to ground rationales (not scored) |
 
-**What the judge does NOT see:** Deterministic validator results. The layers are independent. A schema violation is already captured in Layer 1 — showing it to the judge would bias every quality score downward, double-penalizing structural failures.
+**What the judge sees of Layer 1:** the *names* of gating validators that failed, under "Deterministic validators that FAILED" — not their assertion output. The original rule here was that it saw nothing, on the reasoning that showing it a schema violation would bias every quality score downward and double-penalize structural failures. The 2026-09-07 ruling accepted that risk in exchange for a per-dimension diagnosis: a run whose validators failed is already `fail` by Section 7, so a downward-biased dimension cannot change the outcome, and the scores are excluded from `aggregated_dimensions`. **Not yet measured:** whether the judge discounts the named defect or punishes the run for it. Before this ruling the section was populated on 31 of 1984 graded runs (the `intentionally_invalid` file-validity exemption); it is now populated on every validator-failing run.
 
 #### Judge prompt template
 
@@ -1124,7 +1124,7 @@ The minimum rationale length (20 chars) blocks one-word rationales — those cor
 
 ### Layer 3: Human verification
 
-The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for **every dimension of the tests named in the run log's `review_sample`** — not every test — plus a written comment on each cell that is not a confirmed pass. The sample is five chosen picks (3 rotation, 1 targeted, 1 random) **plus every test that failed or scored a 1 or 2 on any dimension**, so its size varies with the run: across the committed corpus it is a median of 6 tests and at most 11. A run log with no `review_sample` (every one written before sampling shipped) still owes every dimension of every test. Sampling is `eval/harness/harness/review_sample.py`; CI rule 3 enforces it. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
+The team submitting the PR writes one `.ann.json` file per run log, containing corrected scores for **every dimension of the tests named in the run log's `review_sample`** — not every test — plus a written comment on each cell that is not a confirmed pass. The sample is five chosen picks (3 rotation, 1 targeted, 1 random) **plus every test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning**, so its size varies with the run. Measured over the 117 committed logs carrying one (2026-09-11): the samples as committed run a median of 5 and a maximum of 13; recomputed fresh with no prior cursor they run a median of 6 and a maximum of 15. The third trigger does not change either — it returns exactly the class coercion removes (mandatory totals 265 -> 265, no sampled-id set moves, and 46 of the 47 affected tests would drop out without it). A run log with no `review_sample` (every one written before sampling shipped) still owes every dimension of every test. Sampling is `eval/harness/harness/review_sample.py`; CI rule 3 enforces it. Senior genealogists review the corrected grades via GitHub PR comments — there is no separate adjudication artifact. See `docs/per-pr-review-workflow.md` for the full workflow and `eval/CLAUDE.md` for filename conventions.
 
 Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD UI) use the same integer scale: **`3` = pass, `2` = partial, `1` = fail.** The semantic labels (pass/partial/fail) live in the judge prompt's instruction text and in each dimension's `**pass:** / **partial:** / **fail:**` bullets in `rubric.md`; the data field itself is just the integer. The monthly judge-prompt review (per the per-PR workflow plan §2.6) reads `.ann` files and computes `llm_score - corrected_score` deltas grouped by `(dimension_source, dimension_name)` to identify systematic LLM-judge drift.
 
@@ -1198,7 +1198,7 @@ This composition cleanly handles all edge cases:
 
 So `flaky` never fires and no dashboard surfaces a flapping test. **That is the instrument being permanently blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. Manual re-running is therefore not a stopgap; it is the mechanism. To check a test you suspect, re-run it yourself: `run_tests.py --test <id> --runlogs-root <tmp>`, twice or more, comparing the outcome and the per-dimension scores. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
-**Cost impact.** Running N=3 triples skill-execution cost and (when validators pass) judge cost. Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
+**Cost impact.** Running N=3 triples skill-execution cost and judge cost (every non-aborted run is judged). Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
 
 ### Stability floor — ruled out
 
@@ -1214,7 +1214,7 @@ What that leaves is the rule already in force: **treat any pass-rate drop as a s
 
 ## 8. Deterministic Validators
 
-Validators provide structural correctness checks. They run automatically after each test execution, before the LLM judge. If any validator fails, the LLM judge is skipped (saves cost — the test already failed structurally).
+Validators provide structural correctness checks. They run automatically after each test execution, before the LLM judge. A failure fails the test (Section 7) but does **not** skip the judge; the failing validators' names are passed into the judge prompt. Chosen over a blocking/non-blocking validator list, which would be a fourth hand-maintained validator taxonomy beside `FILE_VALIDITY_VALIDATORS`, `_COMMISSION_VALIDATORS` and the `reporting_only` tier — the judge is already handed `validator_failures` by name and can discount a defective run itself (lead ruling 2026-09-07).
 
 **Source of truth.** The JSON Schema files under `docs/specs/schemas/` are canonical for structural validity (shape, types, enums, ID prefixes, conditional fields). The prose tables in `research-schema-spec.md` and `simplified-gedcomx-spec.md` are derived documentation — when the schema changes, update the schema file first, then resync the prose. Validators must use `jsonschema` against the schema files rather than reimplementing field/type checks in Python.
 
@@ -1254,7 +1254,7 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 
 Validators are split into three tiers:
 
-- **Tier 1 (gating):** `test_*` prefix. Failure = test fail, judge is skipped. The validator's function name appears in the judge prompt under "Deterministic validators that FAILED".
+- **Tier 1 (gating):** `test_*` prefix. Failure = test fail. The judge still runs — only an abort skips it — and the validator's function name appears in the judge prompt under "Deterministic validators that FAILED".
 - **Tier 2 (reporting):** `report_*` prefix. An `AssertionError` is a finding: it is fed to the judge as anonymous text under "Harness observations on the response text" and never gates the test outcome. The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
   - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
 - **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
@@ -1448,7 +1448,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       {
         "source": "string (base | rubric)",
         "name": "string",
-        "score": "integer (1 | 2 | 3 — modal across runs; 1=fail, 2=partial, 3=pass)",
+        "score": "1 | 2 | 3 | null  (modal across runs; 1=fail, 2=partial, 3=pass; null=N/A, and note a validator-failing run contributes nothing here at all)",
         "rationale": "string (rationale from the modal run)"
       }
     ]
@@ -1543,12 +1543,12 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       },
 
       "judge": {
-        "skipped": "boolean (true when validators failed or run was aborted)",
+        "skipped": "boolean (true when the run was aborted, or the judge call raised; a validator failure alone does NOT skip the judge)",
         "dimensions": [
           {
             "source": "string (base | rubric)",
             "name": "string (dimension name)",
-            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — any rubric dimension whose situation the fixture never created, or Tool Arguments on a run with zero MCP tool calls)",
+            "score": "1 | 2 | 3 | null  (1=fail, 2=partial, 3=pass; null=N/A — any rubric dimension whose situation the fixture never created, Tool Arguments on a run with zero MCP tool calls, or Correctness/Completeness coerced on a correctly-routed negative test)",
             "rationale": "string"
           }
         ],
@@ -1642,7 +1642,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`quota_exhausted` is split out of `error` because it is not transient.** The limit is deterministic until the seat's window resets, so retrying spends attempts in seconds against something that clears in hours. It is deliberately absent from both `_ALWAYS_RETRYABLE_ABORTS` (orchestrator) and `_TRANSIENT_ABORT_REASONS` (run_tests) — membership in either would restore the retry or feed the abort-storm breaker's ratio arithmetic. One such abort stops the suite submitting new tests and promotes what finished to a `scratch_` log, so no releasable `v{N}` is minted from a run a quota cut short. Classified from one structured signal — `RateLimitEvent.rate_limit_info.status == "rejected"`, the only one that cannot come from a per-minute API limit, since every `RateLimitType` literal is a subscription window — with a text match on the CLI's display string as a documented last resort. `ResultMessage.api_error_status` and `AssistantMessage.error == "rate_limit"` are recorded as evidence but do not classify: in `api_key` mode either can be an org per-minute limit this repo treats as transient (`harness/auth.py`, `harness/judge.py`), and misreading one discards a whole paid run. **No CI job can produce a real subscription quota**, so a green suite proves the classifier's branch, not that the predicate matches a live quota — whichever signals fire are recorded in `runs[].error` on any run that aborts, so the next occurrence settles which one fires. A healthy run persists none of them — `error` is set on failure paths only.
 - **`runs[].error`** (str | None, optional) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. Optional rather than required, so already-committed run logs stay valid. Before it existed the only trace of *why* a run aborted was inside `output.text_response`, which is not anywhere a reader looks: a subscription quota sat there unread while the PR that shipped the run described it as an SDK error.
 - **`runs[].validators.passed`** — top-level boolean per run for at-a-glance status.
-- **`runs[].judge.skipped`** — true when validators failed in this run *or* the run was aborted. When skipped, `dimensions` is an empty array and `judge_cost_usd` is 0.
+- **`runs[].judge.skipped`** — true when the run was aborted, or when the judge call itself raised (`error` is then non-null). When skipped, `dimensions` is `[]` and `judge_cost_usd` is 0. A validator failure alone no longer skips the judge: those runs carry dimensions in `runs[].judge.dimensions` but are excluded from `outcome_summary.aggregated_dimensions`.
 - **`totals.skill_cost_usd` + `totals.judge_cost_usd`** — separated so the UI can show skill execution cost vs judge cost independently.
 
 ---
@@ -1664,7 +1664,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 2. **Prompt caching for batched skill runs.** When running 15 tests for one skill, the SKILL.md + references (~5-10K tokens) is identical across all tests. With prompt caching, cached input tokens cost 90% less. The harness structures prompts so cacheable content (skill prompt) comes first and test-specific content (scenario state, user message) comes last.
 
-3. **Skip the judge when validators fail.** If deterministic validators catch a schema violation or ownership breach, skip the LLM judge. The test already failed — don't pay for quality evaluation of broken output.
+3. **Judge every non-aborted run.** Grading a structurally-failed run is what makes it diagnosable; it costs ~$0.0135 per validator-failing run. 117 of the 2120 committed runs failed a validator; the 112 of those that are non-aborted are the newly-judged, cost-bearing set (5.3%, measured 2026-09-11).
 
 4. **Input trimming is deferred to a later version.** The earlier draft of this spec proposed trimming `research.json` to only the sections each skill reads. v1 sends the full scenario files unchanged — this matches what Cowork does in production and removes a class of bugs where a skill behaves differently in eval because trimming hid state. Re-evaluate trimming if `cached_input_tokens` rates fall below target and per-run costs prove materially higher than estimated.
 
@@ -2168,7 +2168,7 @@ After the skill executes and output is captured:
 1. Run deterministic validators (before/after state + tool calls)
      ↓
    Any validator failures?
-     → Yes: skip LLM judge, record failures in run log
+     → Yes: record failures in the run log, pass their names to the judge, continue
      → No: continue
      ↓
 2. Run LLM judge (Haiku)
@@ -2271,7 +2271,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 
 Validators in `eval/harness/validators/` fall into three tiers:
 
-- **Gating** — failure prevents the LLM judge from running (saves cost). All universal validators except `test_tool_allowlist` are gating. In `test_citation.py` the gating `test_*` functions are V5, V6, and the persisted/literal halves of V3, V4 and V10; the five `report_*` functions — the response halves of V3, V4 and V10, plus V11 and V12 — are tier-2 and never gate.
+- **Gating** — failure fails the test. It does **not** prevent the LLM judge from running; only an abort does. All universal validators except `test_tool_allowlist` are gating. In `test_citation.py` the gating `test_*` functions are V5, V6, and the persisted/literal halves of V3, V4 and V10; the five `report_*` functions — the response halves of V3, V4 and V10, plus V11 and V12 — are tier-2 and never gate.
 - **Reporting** — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. A reporting-only check is a `report_*` function (not `test_*`); the runner tags its result with `reporting_only=True`. Observations reach the judge via the `{harness_observations}` prompt section and are recorded in `output.warnings[]` as `prose_observation` entries.
 - **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
 

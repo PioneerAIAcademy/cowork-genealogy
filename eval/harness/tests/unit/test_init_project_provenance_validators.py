@@ -248,7 +248,7 @@ def _read_two_same_named():
 def test_v2_passes_a_same_named_pair_each_carrying_its_own_ark():
     """Round 2 of review: keying one written person per name blamed each of a
     same-named pair for the other's pid, failing a CORRECT import. A failed
-    validator skips the judge, so that cost the test its whole grade."""
+    validator fails the test outright, so that cost the test its whole grade."""
     after = _tree(persons=[_named("I1", "ark:/61903/4:1:LZNY-BRF"),
                            _named("I2", "ark:/61903/4:1:LZNY-P7Q")])
     check_ark(after, [_read_two_same_named()])

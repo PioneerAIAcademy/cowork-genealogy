@@ -192,7 +192,13 @@ def test_rule3_unchanged_without_review_sample(tmp_path):
 
 def test_rule3_warns_on_zero_dimension_tests(tmp_path, capsys):
     """An ungraded test asks nothing of rule 3 and is dropped from sampling, so
-    without a warning a run with nothing gradeable passes silently."""
+    without a warning a run with nothing gradeable passes silently.
+
+    The message says "no aggregated dimensions", not "produced no graded
+    dimensions": since #2057 a validator-failing run DOES produce graded
+    dimensions (they live in `runs[].judge.dimensions`) and is excluded from the
+    aggregate instead, so the old wording asserted something false about exactly
+    the class this warning now fires on most."""
     skill_dir = tmp_path / "init-project"
     skill_dir.mkdir()
     log = _multi_test_log(3, review_sample={"tests": ["ut_x_000"], "cursor": [], "seed": 0})
@@ -202,7 +208,7 @@ def test_rule3_warns_on_zero_dimension_tests(tmp_path, capsys):
     fn = _write_ann(skill_dir, "v1_2026-06-24_00-00-00.json", _corrections_for(["ut_x_000"]))
     assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir) == 0
     out = capsys.readouterr().out
-    assert "no graded dimensions" in out
+    assert "no aggregated dimensions" in out
     assert "ut_x_aborted" in out
 
 

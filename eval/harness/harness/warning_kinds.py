@@ -47,7 +47,12 @@ WARNING_KIND_SIDES: dict[str, str] = {
     "dropped_unknown_base_dimension": "judge",
     "dropped_unknown_rubric_dimension": "judge",
     "coerced_tool_arguments_to_na": "judge",
+    # Retired as an EMIT kind by #2196: the coercion below supersedes it and
+    # fires on the identical condition, so emitting both would double-tally one
+    # cell. The row stays because 33 committed run logs carry the kind, across
+    # 94 warning entries.
     "routing_negative_judge_fail": "judge",
+    "coerced_routing_negative_to_na": "judge",
     # --- harness-side (advisories about skill / fixtures / harness) ---
     "unread_skill_call": "harness",
     "missing_tool_usage_dimension": "harness",
@@ -73,6 +78,24 @@ class UnregisteredWarningKind(Exception):
     loudly on first emission rather than printing nowhere. The fix is always to
     add the kind to `WARNING_KIND_SIDES` with its side.
     """
+
+
+def iter_run_warnings(entry: dict[str, Any]) -> Iterable[dict[str, Any]]:
+    """Every `output.warnings` entry across every run of one assembled TEST entry.
+
+    Warnings are per-RUN (`entry["runs"][i]["output"]["warnings"][j]`, per
+    `runlog.assemble_test_entry` and run-log.schema.json's `$defs.run_output`);
+    there is no `entry["output"]`. Every level is read defensively because
+    callers and fixtures legitimately omit them: a test entry has no `runs` key
+    until a run is recorded, and test fixtures build run dicts with no `output`.
+
+    Two call sites needed this identical nesting (`review_sample.is_mandatory`
+    for a boolean, `run_tests` to collect the judge-side kinds), which is the
+    second concrete need CLAUDE.md waits for before consolidating.
+    """
+    for r in entry.get("runs") or []:
+        for w in (r.get("output") or {}).get("warnings") or []:
+            yield w
 
 
 def validate_warning_kinds(warnings: Iterable[dict[str, Any]]) -> None:

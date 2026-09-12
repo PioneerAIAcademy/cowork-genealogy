@@ -65,7 +65,10 @@ _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
 def scores_of(entry: dict[str, Any]) -> dict[tuple[str, str], int | None]:
     """Map (source, name) -> aggregated score for one candidate test entry.
 
-    An aborted or judge-skipped entry has no aggregated_dimensions -> empty map.
+    An aborted, judge-skipped or validator-failing entry has no
+    aggregated_dimensions -> empty map. Since #2057 a validator-failing entry
+    is graded but excluded from the modal, so it reaches here empty without
+    the judge having been skipped.
     """
     dims = (entry.get("outcome_summary") or {}).get("aggregated_dimensions") or []
     return {(d.get("source", ""), d.get("name", "")): d.get("score") for d in dims}
@@ -182,7 +185,7 @@ def compute_signal(
         )
 
     # Coverage gap: a dimension the baseline graded that the candidate did NOT
-    # (the candidate test aborted or the judge was skipped). `candidate=None`
+    # (the candidate test aborted, the judge was skipped, or a validator failed - which is graded but excluded from the modal). `candidate=None`
     # can't be a "regression" score-wise, but it means we can't confirm the
     # result on that test — so it must block LOOKS GOOD, not pass silently.
     def _has_gap(rows: list[DimRow]) -> bool:

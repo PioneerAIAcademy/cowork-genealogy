@@ -72,7 +72,12 @@ class JudgeResult:
     cached_input_tokens: int = 0
     output_tokens: int = 0
     # Wall-clock of the judge LLM call (perf_counter around _run_judge).
-    # 0.0 when the judge was skipped (validators failed / run aborted).
+    # 0.0 only on the branch that never attempted a judge call, which since
+    # #2057 means an aborted run alone - a validator failure no longer skips
+    # the judge. A judge that RAISED still records wall-clock here, because
+    # orchestrator sets this on every attempted branch including
+    # `except JudgeError`; `skipped: true` beside a nonzero duration_ms is
+    # therefore a normal shape, not a contradiction.
     duration_ms: float = 0.0
 
 
@@ -202,17 +207,42 @@ def _modal_with_tiebreak_down(values, rank):
 def aggregate_dimensions(runs: list[SingleRun]) -> list[dict[str, Any]]:
     """Modal per-dimension score across runs (ties resolve down).
 
-    A dimension may have score=None (N/A) — currently only the Tool
-    Arguments base dimension uses this, when a test made zero MCP tool
-    calls. All-None buckets aggregate to None; mixed buckets fall back
-    to standard modal logic with None ranking above pass so a real
-    score wins any tie.
+    A dimension may have score=None (N/A): the Tool Arguments base
+    dimension on a run with zero MCP tool calls, any rubric dimension the
+    fixture never exercised, and since #2196 Correctness/Completeness on a
+    correctly-routed negative test, where the harness usually truncates the
+    transcript at the hand-off (measured: not on 4 of the 47 runs it fires
+    on, where the 1 is real - see flag_routing_negative_judge_fail). All-None buckets aggregate to None; mixed
+    buckets fall back to standard modal logic with None ranking above pass
+    so a real score wins any tie.
+
+    Runs that FAILED a validator are excluded (#2057): they are graded now,
+    but their scores stay out of the modal so committed baselines do not
+    shift. Their per-run scores remain in `runs[].judge.dimensions`.
     """
     if not runs:
         return []
     bucket: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for r in runs:
-        if r.judge.skipped:
+        # A validator-failing run is now GRADED (#2057) but stays out of the
+        # modal: letting defective runs into the aggregate would move every
+        # committed baseline at once, so the next gate-skill comparison would
+        # be against a shifted goalpost. The per-run scores remain in
+        # runs[].judge.dimensions. On committed data this disjunct is a no-op
+        # (every validator-failing run there was already judge-skipped), so
+        # test_aggregate_excludes_a_validator_failing_run is what pins it.
+        #
+        # `is False`, not `not r.validators.passed` as issue #2057 words it:
+        # ValidatorResult.passed is `bool | None`, and None means validators
+        # never reached a verdict (the _aborted_entry path) rather than that
+        # one failed. Truthiness would drop an unknown-but-graded run from the
+        # aggregate too, which is wider than the ruling. Unreachable today —
+        # compute_validators_passed returns a bool, and every None-valued run
+        # is aborted and so already excluded by judge.skipped — so this is
+        # about intent surviving the next reader, and
+        # test_aggregate_still_counts_a_run_whose_validators_are_unknown fails
+        # if it is ever simplified back.
+        if r.judge.skipped or r.validators.passed is False:
             continue
         for d in r.judge.dimensions:
             key = (d.get("source", ""), d.get("name", ""))

@@ -130,12 +130,14 @@ special-casing), but nothing for adversarial content in fixture inputs.
 
 **Scope note, verified — do not re-propose:** Open-Genealogy's eval harness
 also runs cheap deterministic checks before its expensive judge call. I
-checked whether we have this. We do:
-`eval/harness/harness/orchestrator.py:396-471` already gates `_run_judge`
-behind `validators_passed` — a failing deterministic validator produces
-`JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)` and the judge
-is never called, at zero judge cost. Nothing to build there. This plan adds
-only the judge-isolation instruction above, which does not exist today.
+checked whether we have this. We run the checks first, but they no longer
+gate the judge: the `validators_passed` conjunct was removed from the judge
+gate, so every non-aborted run is graded and a validator-failing run's scores
+are excluded from `outcome_summary.aggregated_dimensions` instead. The test
+still fails on the validator, so there is nothing to build here for
+correctness — but the cost saving this note originally claimed no longer
+exists, and a judge call is now paid on those runs. This plan adds only the
+judge-isolation instruction above, which does not exist today.
 
 ## 3. Changes by area
 

@@ -17,7 +17,7 @@
     },
     "corrections": {
       "type": "array",
-      "description": "One entry per dimension of each test named in the run log's `review_sample` (3 rotation + 1 targeted + 1 random, plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by run); a run log without one (every log written before sampling shipped) owes an entry for every dimension of every test. `agreed` is computed as `corrected_score == llm_score` (no separate field).",
+      "description": "One entry per dimension of each test named in the run log's `review_sample` (3 rotation + 1 targeted + 1 random, plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the count varies by run); a run log without one (every log written before sampling shipped) owes an entry for every dimension of every test. `agreed` is computed as `corrected_score == llm_score` (no separate field).",
       "items": { "$ref": "#/$defs/correction" }
     }
   },
@@ -42,7 +42,7 @@
         },
         "llm_score": {
           "$ref": "#/$defs/score",
-          "description": "The LLM judge's score on this dimension, read directly from the run log (3 = pass, 2 = partial, 1 = fail, null = N/A. Any **rubric** dimension may be null when the fixture never created the situation it grades; among base dimensions only Tool Arguments may be null, and only on a run with zero MCP tool calls. `null` never means the skill produced nothing — that is a 1)."
+          "description": "The LLM judge's score on this dimension, read directly from the run log (3 = pass, 2 = partial, 1 = fail, null = N/A. Any **rubric** dimension may be null when the fixture never created the situation it grades. Among base dimensions the judge emits null only on Tool Arguments, on a run with zero MCP tool calls; the harness additionally coerces Correctness/Completeness to null on a correctly-routed negative test, whose transcript it usually truncated at the hand-off. A judge-emitted `null` never means the skill produced nothing — that is a 1 — but a coerced null means the harness declined to grade the field. It was usually blank; on 4 of the 47 coercing runs in the committed corpus the skill had produced real output first (up to 1355 chars, one case human-confirmed at 1), so read the preserved original in output.warnings before confirming the N/A. Correcting it back to 1 is how a skill doing its own task inline gets caught)."
         },
         "corrected_score": {
           "$ref": "#/$defs/score",
@@ -59,7 +59,7 @@
         { "type": "integer", "minimum": 1, "maximum": 3 },
         { "type": "null" }
       ],
-      "description": "1 = fail, 2 = partial, 3 = pass, null = N/A. Any **rubric** dimension may be null when the fixture never created the situation it grades; among base dimensions only Tool Arguments may be null, and only on a run with zero MCP tool calls. `null` never means the skill produced nothing — that is a 1."
+      "description": "1 = fail, 2 = partial, 3 = pass, null = N/A. Any **rubric** dimension may be null when the fixture never created the situation it grades. Among base dimensions the judge emits null only on Tool Arguments, on a run with zero MCP tool calls; the harness additionally coerces Correctness/Completeness to null on a correctly-routed negative test. A judge-emitted `null` never means the skill produced nothing — that is a 1."
     }
   }
 }

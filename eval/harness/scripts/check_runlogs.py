@@ -16,7 +16,8 @@ docs/plan/eval-runlog-versioning.md §C6:
     Rule 3   the same run log's .ann.json has corrections for every
              (test_id, dimension_source, dimension_name) triple of the tests
              named in its `review_sample` (3 rotation + 1 targeted + 1
-             random, plus every test that failed or scored a 1 or 2 on any dimension, so the count varies by
+             random, plus every test that failed, scored a 1 or 2 on any dimension, or
+             carries a coerced_routing_negative_to_na warning, so the count varies by
              run), each carrying a
              comment unless it is a confirmed pass. A run log with no
              `review_sample` owes every dimension of every test. An edited
@@ -465,16 +466,19 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     }
     tests = log.get("tests") or []
 
-    # A test whose judge was skipped (validators failed, or the run aborted)
-    # carries no dimensions, so the loop below asks nothing of it — and the
+    # A test with no AGGREGATED dimensions asks nothing of the loop below, and
+    # the sampler drops it from every slot. Three ways to get there: the run
+    # aborted, the judge raised, or a validator failed — that last one is
+    # graded now but excluded from the aggregate, so its scores exist in
+    # runs[].judge.dimensions while nothing here can see them. And the
     # sampler drops it from every slot. Excluded is not unnoticed: warn, because
     # an ungraded test is a signal, not an absence, and silently dropping it is
     # how a run with nothing gradeable would pass rule 3 on an empty annotation.
     ungraded = zero_dimension_test_ids(tests)
     if ungraded:
         gh_warning(
-            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` produced "
-            f"no graded dimensions, so nothing is required of them here: "
+            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` have no "
+            f"aggregated dimensions, so nothing is required of them here: "
             f"{', '.join(ungraded[:5])}. Read their `aborted_reason` / validator "
             f"results before treating this run as a clean pass.",
         )

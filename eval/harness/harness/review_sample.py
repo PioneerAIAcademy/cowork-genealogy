@@ -18,8 +18,9 @@ point — each answers a different question:
 - **Random (1)** — the only unbiased estimator of judge accuracy. Every other
   slot is chosen, so only this one supports an honest error rate.
 - **Mandatory (uncapped)** — every test that scored a 1 or 2 on any dimension,
-  or whose outcome is not `pass`/`xfail`. `is_mandatory` below carries the
-  evidence for both triggers. Appended last so the three slots above keep
+  whose outcome is not `pass`/`xfail`, or which carries a
+  `coerced_routing_negative_to_na` warning. `is_mandatory` below carries the
+  evidence for all three triggers. Appended last so the three slots above keep
   drawing from the whole eligible pool.
 
 **The mandatory slot does not replace the other three, and must not be made to.**
@@ -46,6 +47,7 @@ from __future__ import annotations
 
 import random
 from typing import Any
+from harness.warning_kinds import iter_run_warnings
 
 
 N_ROTATION = 3
@@ -66,11 +68,31 @@ def _dimensions(entry: dict[str, Any]) -> list[dict[str, Any]]:
     return entry.get("outcome_summary", {}).get("aggregated_dimensions") or []
 
 
-def is_gradeable(entry: dict[str, Any]) -> bool:
-    """True when the test produced at least one graded dimension.
+def _carries_warning(entry: dict[str, Any], kind: str) -> bool:
+    """True when any run of this test emitted an `output.warnings` entry of `kind`.
 
-    The judge is skipped when validators fail or a run aborts, leaving
-    `aggregated_dimensions` empty — and `rule3_completeness` iterates exactly
+    Warnings are per-RUN (`entry["runs"][i]["output"]["warnings"][j]["kind"]`,
+    per `runlog.assemble_test_entry` and run-log.schema.json's
+    `$defs.run_output`); there is no `entry["output"]`. Every level is read
+    defensively because callers and fixtures legitimately omit them — a test
+    entry has no `runs` key at all until a run is recorded, and `_test_entry` in
+    tests/unit/test_review_sample.py builds run dicts with no `output` key.
+    """
+    return any(w.get("kind") == kind for w in iter_run_warnings(entry))
+
+
+def is_gradeable(entry: dict[str, Any]) -> bool:
+    """True when the test has at least one dimension ROW to annotate.
+
+    Row count, not scored-ness: after the routing-negative coercion a test can
+    carry three base rows all scored `null` -- zero GRADED dimensions -- and it
+    must still be sampled, which is what the third `is_mandatory` trigger
+    depends on. 44 of the 47 affected tests are that shape.
+
+    `aggregated_dimensions` is empty when a run aborts, when the judge
+    raised, or — since #2057, which grades such runs but keeps them out of
+    the modal — when a validator failed. Either way the array is empty, and
+    `rule3_completeness` iterates exactly
     that array, so such a test demands zero corrections. Sampling one wastes a
     slot: on `project-status` 3 of 11 tests are empty, and **76 of the 79** empty
     tests in the corpus failed or aborted — which is exactly what `is_mandatory`
@@ -99,8 +121,8 @@ def _has_rubric_null_on_positive(entry: dict[str, Any]) -> bool:
 def is_mandatory(entry: dict[str, Any]) -> bool:
     """A test a human must read this run, whatever the other three slots picked.
 
-    Two triggers, both measured over the 102 committed run logs that carry a
-    `review_sample`:
+    Three triggers. The first two were measured over the 102 committed run logs
+    that carried a `review_sample` when they landed (115 as of 2026-09-10):
 
     - **A dimension scored 1 or 2.** 131 of the 216 tests carrying one were
       never sampled, so nobody read them; 65 of 102 runs shipped with at least
@@ -122,10 +144,27 @@ def is_mandatory(entry: dict[str, Any]) -> bool:
     routing deference explains only 4 of the 77, so the harness is not
     manufacturing them. Do not "fix" this by keying on
     `dimensions_gate_outcome`; that was proposed, measured, and rejected.
+
+    **Third trigger: a `coerced_routing_negative_to_na` warning (#2196).** It
+    extends the paragraph above rather than qualifying it. Coercion turns the
+    diagnostic `1` those two paragraphs are about into `null`, and the first
+    trigger keys on `score in (1, 2)` — null is neither — so without this the
+    coercion would silently delete the highest-correction-rate class in the
+    corpus (17.28%, 14/81) from human review, on a test whose outcome is `pass`.
+    A reviewer can still correct a null to 1, and that is the only remaining
+    route by which a skill doing its own task inline gets seen.
+
+    Keyed on the WARNING, not on "an aggregated base dimension is null": that
+    reading would also swallow every legitimate Tool Arguments N/A, and
+    `aggregate_dimensions` can resolve a mixed null/3 bucket to the real score,
+    so a multi-run test could carry the coercion with no null in
+    `aggregated_dimensions` at all.
     """
     if entry.get("outcome") not in _NON_FAILING_OUTCOMES:
         return True
-    return any(d.get("score") in (1, 2) for d in _dimensions(entry))
+    if any(d.get("score") in (1, 2) for d in _dimensions(entry)):
+        return True
+    return _carries_warning(entry, "coerced_routing_negative_to_na")
 
 
 def select_review_sample(

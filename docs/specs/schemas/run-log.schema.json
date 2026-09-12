@@ -70,7 +70,7 @@
         "tests": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed or scored a 1 or 2 on any dimension, so the length varies by run."
+          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the length varies by run."
         },
         "cursor": {
           "type": "array",
@@ -487,7 +487,7 @@
           "items": { "$ref": "#/$defs/judge_dimension" }
         },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
-        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 when the judge was skipped. Optional (absent in pre-instrumentation run logs)." },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 only when no judge call was attempted (an aborted run); a judge that raised records wall-clock here, so a nonzero value beside `skipped: true` is normal. Optional (absent in pre-instrumentation run logs)." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
@@ -506,7 +506,7 @@
             { "enum": [1, 2, 3] },
             { "type": "null" }
           ],
-          "description": "1=fail, 2=partial, 3=pass. Null = N/A, currently allowed only on the Tool Arguments base dimension when a test makes zero MCP tool calls."
+          "description": "1=fail, 2=partial, 3=pass. Null = N/A: the Tool Arguments base dimension when a test makes zero MCP tool calls, any rubric dimension the fixture never exercised, and Correctness/Completeness on a correctly-routed negative test, where the harness usually truncates the transcript at the hand-off and coerces the judge's 1 (coerced_routing_negative_to_na)."
         },
         "rationale": { "type": "string" }
       }

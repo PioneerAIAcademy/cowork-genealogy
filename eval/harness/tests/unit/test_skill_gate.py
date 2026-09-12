@@ -110,7 +110,8 @@ def test_signal_needs_eyes_on_regression_even_if_fix_lands():
 
 def test_signal_needs_eyes_when_a_gate_test_is_ungraded():
     # The fix landed on Correctness, but a dimension the baseline graded is absent
-    # on the candidate (the run aborted or the judge was skipped) -> candidate
+    # on the candidate (aborted, judge raised, or a validator failed and its
+    # scores were excluded from the modal) -> candidate
     # scored None. That can't be a "regression" score-wise, but it must block
     # LOOKS GOOD, because we can't confirm no regression.
     mined = compare(
