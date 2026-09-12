@@ -439,7 +439,6 @@ describe("materialize_facts", () => {
         ],
       }),
     );
-    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
 
     const result = await materializeFacts({
       projectPath: dir,
@@ -459,9 +458,9 @@ describe("materialize_facts", () => {
     const t = await readTree();
     expect(findPerson(t, "I2")).toBeTruthy();
     expect(findPerson(t, "I3").facts).toHaveLength(1);
-    // Exactly one write cycle: the .bak captures the pre-batch state, not an
-    // intermediate one between the two ops.
-    expect(await readFile(join(dir, "tree.gedcomx.json.bak"), "utf-8")).toBe(before);
+    // One atomic write cycle for the whole batch, and no readable `.bak` copy
+    // left beside the tree.
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
   });
 
   it("(15) batch all-or-nothing: op[1] failing writes NOTHING, not even op[0]'s facts", async () => {

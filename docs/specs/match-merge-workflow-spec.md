@@ -131,8 +131,8 @@ this workflow; each pair drives one per-persona `materialize_facts` write
   merge-mode warnings are **MCP tools** (host). Skills orchestrate them; they
   never compute matches or warnings in the VM.
 - **Recovery, not undo (§12).** A research project is a single run; the
-  recovery model for a bad merge is "start over." Backups (`*.bak`) are
-  retained for accidents but there is no merge receipt / programmatic unmerge.
+  recovery model for a bad merge is "start over." The tools write no `*.bak`;
+  there is no merge receipt / programmatic unmerge.
 
 ---
 
@@ -539,9 +539,11 @@ under Block — corrected to match.)
 ## 12. Reversibility & recovery
 
 "Recovery, not undo." A project is a single research run; the recovery model for
-a wrong merge is **start over**. `*.bak` backups are retained for accidents.
-There is no merge receipt and no programmatic unmerge — deliberately, given the
-start-over model and the cost of maintaining reversibility metadata.
+a wrong merge is **start over**. The tools write no `*.bak` — nothing read it and
+the feedback bundler shipped it unredacted — so recovery falls back on the project
+folder's version history (git or the viewer's snapshots). There is no merge
+receipt and no programmatic unmerge — deliberately, given the start-over model and
+the cost of maintaining reversibility metadata.
 
 ---
 

@@ -246,9 +246,9 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
 > undo. Because a deterministic merge is *faster and more trusted* than the hand-merge
 > it replaces, the blast radius of a confident mistake is higher, not lower. Before
 > these tools land, confirm the project folder has version history to fall back on
-> (git-tracked, or the viewer's snapshots); if neither exists, write a one-deep backup
-> (`tree.gedcomx.json.bak`, plus `research.json.bak` for Mode 2) before the atomic
-> overwrite. The data is the user's irreplaceable research.
+> (git-tracked, or the viewer's snapshots). The tools write no `.bak` — nothing
+> read it and the feedback bundler shipped it unredacted — so version history is
+> the only recovery path. The data is the user's irreplaceable research.
 
 > **Implementation note.** `validateProject` (`src/validation/validator.ts`) today
 > only takes a `projectPath` and reads from disk. Step 4 needs an **in-memory**
