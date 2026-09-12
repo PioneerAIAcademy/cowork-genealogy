@@ -1,3 +1,8 @@
+- [ ] I have signed the [CLA](../CLA.md) — my name is in
+      [CLA-SIGNERS.md](../CLA-SIGNERS.md). Contributing from outside the
+      team? Add the row in this PR. One row, one time; skip this box on
+      later PRs.
+
 ## Summary
 
 <!-- 1-3 bullets describing what changed and why. Name the tier
