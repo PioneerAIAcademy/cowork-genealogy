@@ -545,16 +545,17 @@ that measurement as a standing property rather than a dated snapshot.
 
 ## The standing panel
 
-Four fixtures are run repeatedly, so the corpus can be compared month over month
+Four fixtures are run repeatedly, so the corpus can be compared week over week
 instead of describing whichever fixtures someone happened to touch:
 `eval/tests/e2e/spriggs-parents-1898/`, `eval/tests/e2e/hannah-earnest-children/`,
 `eval/tests/e2e/anders-monsen-ancestry/` and `eval/tests/e2e/cruz-corona-ancestry/`.
 
 The lead runs `/file-e2e-panel` whenever more panel work is wanted — there is no
-fixed cadence, and every run files **four more issues, one per fixture**, each an
-unassigned half-day any genealogist can pick up. Four parallel tasks rather than
-one bundle is what stops the tier having a single operator. Take one the same way
-you would any assigned fixture, on the "Running a panel fixture" route above.
+fixed cadence, though in practice a batch lands about once a week, and every run
+files **four more issues, one per fixture**, each an unassigned half-day any
+genealogist can pick up. Four parallel tasks rather than one bundle is what stops
+the tier having a single operator. Take one the same way you would any assigned
+fixture, on the "Running a panel fixture" route above.
 
 A panel run is landed at whatever verdict it earned — `pass`, `partial` or `fail`
 — because the panel counts runs and a failed run is the data point; re-run only

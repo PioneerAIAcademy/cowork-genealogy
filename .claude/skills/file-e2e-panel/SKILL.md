@@ -13,7 +13,7 @@ allowed-tools:
 The e2e tier is the only measurement of the whole research loop, and it had one
 operator: runs per ISO week fell 43 → 37 → 12 → 4 → 4 → 1 → 1 over the seven weeks
 to 2026-09-07, so every corpus report opens on a two-run window and nothing can be
-compared month over month. Four issues per batch, filed separately, is how the work
+compared week over week. Four issues per batch, filed separately, is how the work
 reaches four people instead of one.
 
 **Run this whenever more panel work is wanted — twice in a week, or not at all for
