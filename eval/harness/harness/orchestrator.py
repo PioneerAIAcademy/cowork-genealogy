@@ -575,6 +575,11 @@ async def _execute_single_run(
             # the declaration the validator reads a legal hand-off as a
             # violation (issue #1012).
             "execution": spec.execution,
+            # Also threaded in: `user_message` (from input.user_message), so
+            # validators can verify whether a figure in the response was
+            # supplied by the user rather than derived from a tool call.
+            # Used by report_unsourced_year_in_response (issue #1965 V2).
+            "user_message": spec.raw.get("input", {}).get("user_message", ""),
         },
     )
     validators_passed = compute_validators_passed(
@@ -1505,8 +1510,18 @@ def _compute_outcome(
         # refuse-new-source), the skill may or may not fire, but no run
         # may harm state, and the validator is what enforces that. The
         # invariant must be backed by a tag-gated validator that actually
-        # runs; a `grade_on_invariant` test with no such validator passes
-        # vacuously (see docs/specs/unit-test-spec.md).
+        # runs; a `grade_on_invariant` test with no such validator would pass
+        # vacuously, which `runnability.py` blocks at load time by matching the
+        # test's tags against the validator file's gate tags. Do not add a
+        # second, runtime check of the same thing here — replayed over the
+        # committed corpus it fires on one run, already fixed (measured
+        # 2026-09-10: 1 of 71 `grade_on_invariant` runs was vacuous,
+        # `search-wikipedia/v1_2026-06-23_16-05-24`, which predates
+        # `test_no_wiki_no_write`, the tag-gated validator added 2026-07-29).
+        # Note what the load-time gate does and does not prove: that a
+        # validator GATES ON the test's tags, never that it EXECUTES. A
+        # tag-gated validator with a second, state-dependent skip could still
+        # go vacuous. None does today, and nothing checks for one.
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in

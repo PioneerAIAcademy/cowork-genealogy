@@ -6,7 +6,11 @@ import {
   HOSTED_REAUTH_INSTRUCTION,
 } from "./config.js";
 import { loadTokens, saveTokens, isExpired } from "./tokenManager.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import {
+  fetchWithRetry,
+  DEFAULT_FETCH_TIMEOUT_MS,
+  type RetryBudgetOptions,
+} from "../utils/http.js";
 import type { TokenStore, FSTokenResponse } from "../types/auth.js";
 
 // The instruction the LLM gets when there is no usable FamilySearch session.
@@ -18,16 +22,22 @@ async function reauthInstruction(desktopMessage: string): Promise<string> {
 }
 
 async function postTokenEndpoint(
-  body: URLSearchParams
+  body: URLSearchParams,
+  retryOpts: RetryBudgetOptions = {}
 ): Promise<FSTokenResponse> {
-  const response = await fetchWithTimeout(TOKEN_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
+  const response = await fetchWithRetry(
+    TOKEN_URL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body: body.toString(),
     },
-    body: body.toString(),
-  });
+    DEFAULT_FETCH_TIMEOUT_MS,
+    retryOpts
+  );
 
   let data: FSTokenResponse | null = null;
   try {
@@ -75,7 +85,9 @@ export async function exchangeCodeForTokens(
     client_id: clientId,
     code_verifier: codeVerifier,
   });
-  const data = await postTokenEndpoint(body);
+  // An authorization code is single-use. If FamilySearch consumed it and the
+  // response was lost, re-POSTing returns invalid_grant and burns the login.
+  const data = await postTokenEndpoint(body, { attempts: 1 });
   return toTokenStore(data);
 }
 

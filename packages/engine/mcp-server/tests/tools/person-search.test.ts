@@ -61,6 +61,7 @@ function makeErrorResponse(status: number, statusText: string, body: unknown = {
     status,
     statusText,
     json: async () => body,
+    headers: new Headers(),
   };
 }
 
@@ -493,9 +494,18 @@ describe("personSearchTool errors", () => {
   });
 
   it("22c. throws a generic error on other non-OK status", async () => {
-    mockFetch.mockResolvedValueOnce(makeErrorResponse(500, "Server Error"));
+    mockFetch.mockResolvedValue(makeErrorResponse(500, "Server Error"));
     await expect(personSearchTool(VALID_QUERY)).rejects.toThrow(
       /tree search API error: 500/,
     );
+  });
+
+  it("22d. recovers from a transient 429 and returns the search result", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeErrorResponse(429, "Too Many Requests"))
+      .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const result = await personSearchTool(VALID_QUERY);
+    expect(result.returned).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });

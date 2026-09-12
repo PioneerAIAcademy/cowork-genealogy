@@ -23,7 +23,7 @@
     "Should classify the uncertainty as a single record's data-quality issue that a DIFFERENT record type could independently resolve, NOT as genuine source inaccessibility. The illegible marriage certificate is therefore not a valid inaccessible-source stopping point.",
     "Should name at least one specific alternative record type that was never searched and could establish the maiden surname independently — e.g. the 1880 US census (Ellen as a child under her maiden surname in her father's household), an Iowa birth or baptism record, or a death/obituary naming her maiden name.",
     "Should recommend extending the plan (research-plan) with an item targeting that alternative record type — not an early termination (the records are accessible) and not a declaration.",
-    "Tool Arguments: this is a decline/review response — no MCP tool call is required. If no tools are called, Tool Arguments should be N/A."
+    "Tool Arguments: this is a decline/review response — Claude is not expected to call validate_research_schema."
   ],
   "mcp_fixtures": [
     "wiki-read-iowa-vital-records"

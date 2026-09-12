@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "true"
+  },
+  "proof_quality_score": 3,
+  "findings_hash": "5534f15d7bdbb1991d016921d4c3ae17a026cf1c389db87ed7528630453c5e4a"
+}

@@ -73,9 +73,11 @@ describe("wikiSearch", () => {
 
   it("throws on non-2xx response", async () => {
     getWikiApiUrlMock.mockResolvedValueOnce("http://localhost:8000");
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
+      statusText: "Internal Server Error",
+      headers: new Headers(),
     });
 
     await expect(wikiSearch({ query: "test" })).rejects.toThrow(
@@ -85,7 +87,7 @@ describe("wikiSearch", () => {
 
   it("throws a friendly error when the server is unreachable", async () => {
     getWikiApiUrlMock.mockResolvedValueOnce("http://localhost:8000");
-    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
     await expect(wikiSearch({ query: "test" })).rejects.toThrow(
       /Could not reach wiki-query-api/

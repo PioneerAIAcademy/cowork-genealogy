@@ -172,8 +172,10 @@ carries a `!packages/engine/**` negation. The reason is the lockfile, not the
 build: both shipped artifacts — the `.mcpb` staged by `scripts/build-mcpb.mjs`
 and the E2B sandbox image built from `apps/server/sandbox/e2b.Dockerfile` —
 install a clean production tree with `npm ci --omit=dev` from
-`packages/engine/mcp-server/package-lock.json`, and **no CI job builds either
-one**, so a lockfile that stopped being npm's would first go wrong at a release.
+`packages/engine/mcp-server/package-lock.json`. The required `vitest` job builds
+the `.mcpb` and the plugin `.zip` on every PR and verifies the `.mcpb` with
+`scripts/verify-mcpb.sh`, but **no CI job builds the E2B image**, so a lockfile
+that stopped being npm's would first go wrong there, at a release.
 Neither artifact copies the development `node_modules`, and the plugin `.zip`
 has no dependency step at all. The dependency runs one way only: **the web side
 depends on `packages/schema`, never on the engine.**
@@ -647,7 +649,7 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
-- **Every network leg goes through `fetchWithTimeout` (`src/utils/http.ts`)** —
+- **Every network leg goes through `fetchWithRetry` (`src/utils/http.ts`)** —
   the global `fetch` never times out and a stalled upstream hangs the call
   forever. Size the budget under **60s** or accept that Cowork loses the tail:
   the device bridge caps every MCP call at 60s (see "Other environment
