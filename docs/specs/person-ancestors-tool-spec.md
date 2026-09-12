@@ -264,10 +264,10 @@ also enforces it — see Error Handling).
 
 ## Authentication
 
-Requires a valid FamilySearch access token. Calls `getValidToken()` from
+Requires a valid FamilySearch access token. Calls `getValidToken(principal)` from
 `src/auth/refresh.ts` — the single entry point for authenticated tools.
 Do not re-implement token plumbing. If the user is not authenticated,
-`getValidToken()` throws an LLM-instruction error directing them to the
+`getValidToken(principal)` throws an LLM-instruction error directing them to the
 `login` tool; the handler lets it propagate.
 
 **No browser User-Agent is required.** *(Empirical, probe 2026-06-02:
@@ -391,7 +391,7 @@ Mirrors `person_read`'s status handling (shared host contract).
 |-----------|----------|
 | `personId` omitted / empty | Resolve the current user (see *current-user lookup* rows below); not an error. |
 | `generations` supplied but not an integer in `[1, 8]` | Throw: `"generations must be an integer between 1 and 8."` |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error. |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | **Current-user lookup** 401 | Throw the same re-auth message as the ancestry 401 below. |
 | **Current-user lookup** 200 but `users[0].personId` absent | Throw: `"Could not determine your FamilySearch tree person (your account may not be linked to one). Pass a personId explicitly."` |
 | **Current-user lookup** other non-OK | Throw: `"FamilySearch could not read your current user: HTTP ${status}."` |

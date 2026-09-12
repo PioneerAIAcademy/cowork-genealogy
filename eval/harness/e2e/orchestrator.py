@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import posixpath
 import re
 import shutil
 import sys
@@ -373,6 +374,182 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
+
+
+# --- P2: the two opt-in filesystem denials (--deny-shell, --deny-project-reads)
+#
+# The measurement behind them: does removing the filesystem cost research
+# quality? The hosted sandbox holds no project folder — the agent reads the
+# project through project_context / research_query / record_read and has no
+# shell — so an e2e run with both flags on is the closest the harness gets to
+# that posture. Both default off; every existing run is unaffected.
+#
+# Pure functions, for the reason person_evidence_deny_decision gives: the hook
+# they serve spawns the SDK and the real MCP server, so a closure-local
+# implementation would be reachable only from a paid e2e run.
+
+# The read tools the project-read denial inspects, and the argument each names
+# its target in. Read takes an absolute `file_path`; Grep/Glob take an optional
+# `path` that defaults to the working directory — which in an e2e run IS the
+# project root, so an absent path is a read of the project.
+_PROJECT_READ_TOOLS = {"Read": "file_path", "Grep": "path", "Glob": "path"}
+SHELL_TOOLS = ("Bash", "PowerShell")
+
+
+def _normalise_path(value: str, *, cwd: str) -> str:
+    """`value` as a forward-slash, absolute, `..`-free path.
+
+    A Windows path arrives with backslashes (`C:\\Users\\...\\research.json`)
+    and the model may compose either separator; both are folded to `/` before
+    any prefix test. A relative path is resolved against `cwd` (Grep/Glob
+    accept one; Read documents `file_path` as absolute but is normalised the
+    same way rather than trusting the model). A leading `~` expands to the
+    home directory so a `~/.claude/...` spelling matches `config_root`. The
+    comparison in `project_read_denied` runs on `realpath`s of the result so both
+    spellings of a symlinked workspace compare equal: macOS hands out `/var/folders/...` while the model reads
+    `/private/var/folders/...`, and the first P2 run (2026-09-10) allowed every project
+    read because the two never prefix-matched.
+    """
+    text = str(value).replace("\\", "/")
+    if text.startswith("~"):
+        text = os.path.expanduser(text).replace("\\", "/")
+    if not (text.startswith("/") or re.match(r"^[A-Za-z]:/", text)):
+        text = cwd.replace("\\", "/").rstrip("/") + "/" + text
+    return posixpath.normpath(text)
+
+
+def _real(path: str) -> str:
+    """`path` with symlinks resolved, forward-slashed — for comparison only; the
+    recorded path stays the model's own spelling."""
+    return os.path.realpath(path).replace("\\", "/")
+
+
+def _under(path: str, root: str) -> bool:
+    """Whether `path` is `root` or lies beneath it (both already normalised).
+
+    `os.path.normcase` folds case on Windows, where the model may compose
+    `c:/users/...` for a workspace the harness knows as `C:\\Users\\...`; on
+    POSIX it is the identity. It also swaps `/` for `\\` there, on both sides
+    alike, which is why the separator appended below is `os.sep`.
+    """
+    p, r = os.path.normcase(path), os.path.normcase(root.rstrip("/"))
+    return p == r or p.startswith(r + os.sep)
+
+
+def _project_read_target(tool_name: str, tool_input: dict | None, *, cwd: str) -> str | None:
+    """The normalised path a Read/Grep/Glob call reads, or None for any other tool."""
+    key = _PROJECT_READ_TOOLS.get(tool_name)
+    if key is None:
+        return None
+    raw = (tool_input or {}).get(key)
+    return _normalise_path(str(raw) if raw else cwd, cwd=cwd)
+
+
+def _project_read_route(target: str, root: str) -> str:
+    """The MCP tool that replaces a direct read of `target`."""
+    if _under(target, root + "/results"):
+        return "record_read({recordId, resultsRef})"
+    if _basename(target) == "research.json" or _under(target, root + "/evaluations"):
+        return "research_query"
+    return "project_context"
+
+
+def project_read_denied(
+    tool_name: str,
+    tool_input: dict | None,
+    *,
+    cwd: str | os.PathLike[str],
+    project_root: str | os.PathLike[str],
+    config_root: str | os.PathLike[str],
+) -> str | None:
+    """Why a Read/Grep/Glob of the project folder is denied, or None to allow it.
+
+    Denies a read under `<project_root>/` — except under `<project_root>/.claude/`,
+    which holds the staged skills and agents the run needs — and allows
+    everything else. `<config_root>/projects/**/tool-results/**` is allowed
+    explicitly rather than by falling through: that is where the CLI spills an
+    oversized tool result for the model to Read back, and the carve-out has to
+    survive if the default outside the project ever flips to deny.
+
+    The reason names the MCP route that replaces the read, chosen by target: a
+    `results/` sidecar -> `record_read({recordId, resultsRef})`; research.json or
+    `evaluations/` -> `research_query`; anything else -> `project_context`.
+    """
+    cwd_s = str(cwd)
+    target = _project_read_target(tool_name, tool_input, cwd=cwd_s)
+    if target is None:
+        return None
+    root = _normalise_path(str(project_root), cwd=cwd_s)
+    spill_root = _normalise_path(str(config_root), cwd=cwd_s) + "/projects"
+    t_r, root_r, spill_r = _real(target), _real(root), _real(spill_root)
+    if _under(t_r, spill_r):
+        rest = t_r[len(spill_r):].strip("/").split("/")
+        if "tool-results" in rest:
+            return None
+    if not _under(t_r, root_r) or _under(t_r, root_r + "/.claude"):
+        return None
+    rel = t_r[len(root_r):].strip("/") or "the project root"
+    return (
+        f"{tool_name} on {rel} is disabled in this run — the project folder is "
+        "not readable directly. Read it through the MCP tools instead: "
+        f"{_project_read_route(t_r, root_r)}."
+    )
+
+
+def _pretool_deny(reason: str) -> dict[str, Any]:
+    """The PreToolUse deny payload, in the shape every arm of the hook returns."""
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
+
+
+def filesystem_denial(
+    tool_name: str,
+    tool_input: dict | None,
+    *,
+    deny_shell: bool,
+    deny_project_reads: bool,
+    cwd: str | os.PathLike[str],
+    project_root: str | os.PathLike[str],
+    config_root: str | os.PathLike[str],
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """The `blocked_tree_reads` entry and the deny payload for a filesystem call
+    one of the P2 flags refuses, or None to let the call through.
+
+    With both flags off this is always None, so the hook arm that calls it is
+    inert on every run that did not opt in. The entry carries the same
+    `{tool, args, blocked_by}` keys as the tree and fixture denials, plus
+    `reason` and — for a read — `path`.
+    """
+    args = dict(tool_input or {})
+    bare = _bare_tool_name(tool_name)
+    if deny_shell and tool_name in SHELL_TOOLS:
+        reason = (
+            f"{tool_name} is unavailable in this run — there is no shell. Use the "
+            "MCP tools instead: project_context and research_query to read the "
+            "project, record_read for a saved search result, and the writer tools "
+            "(research_append, research_log_append, tree_edit, tree_correct) to "
+            "change it."
+        )
+        return (
+            {"tool": bare, "args": args, "blocked_by": "shell", "reason": reason},
+            _pretool_deny(reason),
+        )
+    if deny_project_reads:
+        reason = project_read_denied(
+            tool_name, tool_input, cwd=cwd, project_root=project_root, config_root=config_root
+        )
+        if reason is not None:
+            path = _project_read_target(tool_name, tool_input, cwd=str(cwd))
+            return (
+                {"tool": bare, "args": args, "blocked_by": "path", "path": path, "reason": reason},
+                _pretool_deny(reason),
+            )
+    return None
 
 
 # Cap on how many person ids the issue-#963 shadow entry names inline. A single
@@ -1178,6 +1355,8 @@ async def _run_agent(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
     person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
+    deny_shell: bool = False,
+    deny_project_reads: bool = False,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -1242,6 +1421,11 @@ async def _run_agent(
     # skill_invocation.py caller-aware instead of guessing from Skill/Agent
     # adjacency in the flat list.
     caller_by_tool_use_id: dict[str, tuple[str | None, str | None]] = {}
+    # P2 — where the CLI spills oversized tool results (`<config>/projects/
+    # <slug>/<session>/tool-results/`), the one tree project_read_denied keeps
+    # readable outside `.claude/`. The agent subprocess inherits os.environ, so
+    # the same variable decides its config dir.
+    config_root = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
@@ -1372,6 +1556,35 @@ async def _run_agent(
                     ),
                 },
             }
+
+        # P2 — the two opt-in filesystem denials (--deny-shell,
+        # --deny-project-reads). After the write lockdown, which is
+        # unconditional, and before the mcp__ filter, because what these
+        # refuse are the built-in Read/Grep/Glob/Bash. Inert unless a flag was
+        # passed: filesystem_denial is None with both off.
+        if deny_shell or deny_project_reads:
+            fs_denial = filesystem_denial(
+                tool_name,
+                input_data.get("tool_input") or {},
+                deny_shell=deny_shell,
+                deny_project_reads=deny_project_reads,
+                cwd=workspace,
+                project_root=workspace,
+                config_root=config_root,
+            )
+            if fs_denial is not None:
+                entry, deny = fs_denial
+                blocked_tree_reads.append(entry)
+                narration.append(
+                    {
+                        "tool_calls_before": len(tool_calls),
+                        "kind": "blocked",
+                        "text": f"`{entry['tool']}` denied — {entry['reason']}",
+                    }
+                )
+                where = f" -> {entry['path']}" if "path" in entry else ""
+                _emit(f"[blocked {entry['blocked_by']}] {entry['tool']}{where}")
+                return deny
 
         if not tool_name.startswith("mcp__"):
             return {}
@@ -2417,6 +2630,8 @@ async def run_e2e_test(
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
     person_evidence_guard: str = PERSON_EVIDENCE_GUARD_SHADOW,
+    deny_shell: bool = False,
+    deny_project_reads: bool = False,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -2484,6 +2699,8 @@ async def run_e2e_test(
             max_output_tokens=max_output_tokens,
             agent_model=agent_model,
             person_evidence_guard=person_evidence_guard,
+            deny_shell=deny_shell,
+            deny_project_reads=deny_project_reads,
         )
 
         final_research = read_research_json(workspace)
@@ -2650,6 +2867,12 @@ async def run_e2e_test(
             # find_person_evidence_missing_same_person sees no person_evidence
             # entry for that person and its compliance arm passes VACUOUSLY.
             "person_evidence_guard": person_evidence_guard,
+            # P2 — the two filesystem denials, off by default. Recorded because
+            # a run made with either on is not comparable to one without: its
+            # reads were rerouted through the MCP tools, and every refused
+            # attempt sits in blocked_tree_reads as blocked_by "shell"/"path".
+            "deny_shell": deny_shell,
+            "deny_project_reads": deny_project_reads,
         }
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)

@@ -76,3 +76,15 @@ jobs:
       - name: Run vitest (pretest builds first)
         working-directory: packages/engine/mcp-server
         run: npm test
+
+      # Build both shipped artifacts here, not in a workflow of their own: this
+      # job is already a required check and already carries every prerequisite
+      # (Node 22, the pinned npm, the engine `npm ci`), so the step is required
+      # without a ruleset edit. Before this, no workflow built either artifact,
+      # and a packaging break surfaced at release time rather than in a red PR.
+      # verify-mcpb.sh is the part that counts: it unpacks the bundle, checks
+      # the required and forbidden files, and boots the packed server to diff
+      # tools/list against the manifest — "it packs" alone proves little, and
+      # the plugin's frontmatter gate already runs under the runlogs check.
+      - name: Build both shipped artifacts (.mcpb + plugin zip) and verify the bundle
+        run: make mcpb && ./scripts/verify-mcpb.sh && make plugin

@@ -172,8 +172,10 @@ carries a `!packages/engine/**` negation. The reason is the lockfile, not the
 build: both shipped artifacts — the `.mcpb` staged by `scripts/build-mcpb.mjs`
 and the E2B sandbox image built from `apps/server/sandbox/e2b.Dockerfile` —
 install a clean production tree with `npm ci --omit=dev` from
-`packages/engine/mcp-server/package-lock.json`, and **no CI job builds either
-one**, so a lockfile that stopped being npm's would first go wrong at a release.
+`packages/engine/mcp-server/package-lock.json`. The required `vitest` job builds
+the `.mcpb` and the plugin `.zip` on every PR and verifies the `.mcpb` with
+`scripts/verify-mcpb.sh`, but **no CI job builds the E2B image**, so a lockfile
+that stopped being npm's would first go wrong there, at a release.
 Neither artifact copies the development `node_modules`, and the plugin `.zip`
 has no dependency step at all. The dependency runs one way only: **the web side
 depends on `packages/schema`, never on the engine.**
@@ -630,7 +632,11 @@ Architecturally:
   is not in a research project gets an answer rather than `research.json not
   found in projectPath`. Then add the tool to `CALLS` in
   `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
-  derives it, so a tool left out is uncovered.
+  derives it, so a tool left out is uncovered. Read and write through the
+  `project-io` / `results-staging` / `image-store` helpers or `getProjectStore()`
+  (`src/store/`), with project-relative refs — never `fs` and never an absolute
+  path. A tool that imports `fs` fails `tests/packaging/no-fs-outside-store.test.ts`,
+  because the same tool has to work under a backend that is not a directory.
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
@@ -654,7 +660,7 @@ Architecturally:
   differences that bite"), so any budget above it is honoured only on the
   stdio paths (harnesses and hosted, both verified) and silently truncated in
   Cowork. Size a raise from the measured e2e corpus, not by guessing.
-- **Reuse before you write:** `getValidToken()` for auth (never re-implement
+- **Reuse before you write:** `getValidToken(principal)` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
   FS sits behind Imperva and **403s non-browser UAs**.
@@ -921,7 +927,7 @@ ADR-0004, ADR-0006, ADR-0011, two specs, the packaging test and three agent
 bodies all said "a deny binds even under `bypassPermissions`; an omission alone
 is not." Seven of them cited the birkeland lane breach for it,
 which says nothing about `bypassPermissions`, denies, or omissions. Probed
-2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` **both**
 bind. A tool merely omitted from `tools:` is absent from the agent, exactly as a
 denied one is. So the omission is what keeps `record-extractor` off the broad
