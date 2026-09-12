@@ -154,6 +154,11 @@ Use the resulting `logId` in the delegation below.
 
 ## Per-record delegation
 
+**Announce before delegating, not only after.** State the count once
+before the first invocation, then name each record and its position
+before you invoke the agent for it — "3 of 12: 1880 census, Schuylkill
+County". Never delegate silently.
+
 For **each** record, invoke `@plugin:record-extractor` **once** — the
 same subagent-delegation mechanism `/research` uses for its mentor — with
 a delegation message carrying:
