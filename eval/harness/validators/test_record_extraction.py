@@ -31,6 +31,7 @@ from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
 )
+from validators_lib import new_section_entries as _new_section_entries
 
 
 # Ownership enforcement is centralised in test_universal.py, driven by
@@ -1228,4 +1229,111 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
         "Skill('convert-dates') before delegating. Narrating the problem "
         "in prose is not resolving it. "
         f"skills_invoked={skills_invoked}"
+    )
+
+
+# --- Batch progress narration (issue #1998, candidate 3) ---------------
+#
+# The rubric CANNOT carry this check. `eval/tests/unit/record-extraction/
+# rubric.md` scores every dimension on the persisted assertion/source fields
+# and says so twice - "not on how the chat response narrates them" and
+# "Narrative style, verbosity, and presentation are never grounds for a
+# deduction". That is a deliberate calibration choice, not an oversight, so
+# the guard for a narration rule has to be deterministic and live here.
+
+# A position marker must be ANCHORED - preceded by a word or followed by a
+# colon. A bare `N/M` or `N of M` is not enough, because this skill narrates
+# ratios constantly and every one of them would read as a marker:
+# `record_person_matches` returns `confidence 4/5`, ages appear as `~48/45`,
+# roles as `child_1/2/3`, US dates as `9/14/1880`, fractional ages as
+# `Age 5/12`, enumeration districts as `district 12/3` - and, the one that
+# matters most for a genealogy tool, `2 of 3 children survived` is ordinary
+# census mortality prose. Measured on `v1_2026-09-09_17-11-04`: under the
+# unanchored pattern all four "passing" runs passed on exactly these
+# accidents (#2390 review).
+_POSITION_RE = re.compile(
+    r"(?:\b(?:record|document|doc|item|page|file|extracting)\s+)(\d{1,3})\s*(?:of|/)\s*(\d{1,3})\b"
+    r"|(?<![\w/])(\d{1,3})\s*(?:of|/)\s*(\d{1,3})\s*:",
+    re.IGNORECASE,
+)
+
+
+def _records_extracted(before_state, after_state):
+    """Records extracted this run, counted by the sources they created.
+
+    NOT by counting `extraction_append` calls. That was the first version and
+    it was wrong: on the discarded run of 2026-09-09, two tests each made TWO
+    append calls against ONE `Agent` delegation, with the two calls identical
+    - same source title, same op count. They are a retry. Counting calls
+    scored a compliant single-record run as a two-record batch and failed it.
+
+    One record creates one source, so the new-source count is the record
+    count. `Agent` delegations would be the most direct signal but
+    `builtin_tool_calls` is not among the fixtures the harness exposes here.
+    """
+    return len(_new_section_entries(before_state, after_state, "sources"))
+
+
+def _announced_positions(text_response, n):
+    """Positions announced in the narration, as ints.
+
+    A marker whose denominator is BELOW `n` is not counted: "1 of 2" in a
+    three-record run names a batch that is not the one being run. Above `n` is
+    accepted - announcing three and extracting two is a dropped record, a
+    different defect this check should not also fail for.
+    """
+    found = set()
+    for m in _POSITION_RE.finditer(text_response or ""):
+        k, total = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        if int(total) >= n:
+            found.add(int(k))
+    return found
+
+
+def report_a_multi_record_batch_announces_each_record_position(
+    text_response, before_state, after_state, test
+):
+    """Each record extracted is announced with its position before its turn.
+
+    SKILL.md "Per-record delegation": state the count once, then name each
+    record and its position before invoking the agent for it.
+
+    A document costs ~136 seconds and 81.9% of that is model reasoning inside
+    the subagent, so the silence falls INSIDE each extraction rather than
+    between them - and `record-extractor.md` is deliberately mute ("Work
+    silently ... the caller handles presentation"). The router is the only
+    thing that can speak during it, which is why a tester read a working run
+    as a hang (#1998).
+
+    **`report_`, not `test_`, and deliberately so.** The rule it checks lives
+    in `record-extraction/SKILL.md` on PR #2391, not in this branch. A
+    `test_`-prefixed validator gates the run outcome
+    (`validator_runner.py`/`orchestrator.py`), so merging this first would fail
+    128 of the 132 gated runs in the committed corpus against a rule nobody has
+    been given (#2390 review). Reporting-only is correct under either merge
+    order. Promote it to `test_` once #2391 has landed and the body states the
+    rule.
+
+    **Gated at one record, not two.** The batch this card describes does not
+    exist in the unit corpus: 0 of 152 runs across the committed logs extracted
+    more than one record. A two-record gate is dormant forever, which is the
+    "reads as coverage" failure the sibling #1950 work exists to prevent.
+
+    Verifying the real batch case needs a multi-record test in
+    `eval/tests/unit/record-extraction/`, which is genealogist-authored, sits
+    inside the run-log snapshot, and is its own card.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests extract records")
+
+    n = _records_extracted(before_state, after_state)
+    if n < 1:
+        pytest.skip("no record extracted - nothing to announce")
+
+    missing = sorted(set(range(1, n + 1)) - _announced_positions(text_response, n))
+    assert not missing, (
+        f"{n} record(s) extracted, but position(s) {missing} were never "
+        f"announced in the narration. At ~136s per document an unannounced "
+        f"record is silence the user cannot distinguish from a hang - say "
+        f"'1 of {n}: <record>' before delegating it."
     )

@@ -158,6 +158,37 @@ def assert_foreign_keys_valid(
     assert not errors, "Dangling references:\n  - " + "\n  - ".join(errors)
 
 
+def new_section_entries(
+    before_state: dict[str, Any], after_state: dict[str, Any], section: str
+) -> list[dict]:
+    """Entries of `section` present in `after_state` but not `before_state`, by id.
+
+    The general form of `new_log_entries` below, which is now a thin alias for
+    `section="log"`. Generalised rather than copied when `test_record_extraction`
+    needed the same diff over `sources`: that copy would have been the fifth,
+    and it dropped the `isinstance` guard the four earlier ones taught us to
+    keep (#2390 review).
+
+    Takes the wrapped per-run state dicts ({"research_json": {...}, ...}), not
+    the unwrapped research.json dict `assert_log_append_only` and its neighbours
+    above take — see `new_log_entries` for why that mismatch is deliberate.
+    """
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    # `or []`, not `.get(section, [])`: an explicit `"log": null` satisfies the
+    # default and then raises TypeError on iteration. Pre-existing in the four
+    # copies this helper replaced, and it fires on 0 of 2131 committed runs, so
+    # it is hardening rather than a fix — but the section is now caller-supplied,
+    # which widens the set of shapes that reach here.
+    before_ids = {
+        e.get("id") for e in (before.get(section) or []) if isinstance(e, dict)
+    }
+    return [
+        e for e in (after.get(section) or [])
+        if isinstance(e, dict) and e.get("id") not in before_ids
+    ]
+
+
 def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -> list[dict]:
     """Log entries present in `after_state` but not `before_state`, by id.
 
@@ -171,13 +202,7 @@ def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -
     with no logic change, rather than matching the unwrapped convention
     the two helpers above use.
     """
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+    return new_section_entries(before_state, after_state, "log")
 
 
 def assert_log_append_only(
