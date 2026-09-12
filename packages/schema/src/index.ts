@@ -154,6 +154,11 @@ export interface Source {
   notes?: string | null
   log_entry_id?: string | null
   transcription?: string | null
+  /** True when `transcription` is PARTIAL — image_transcribe hit its
+   *  output-token cap (its `truncated` output flag; image-transcribe-tool-spec
+   *  §6.2) and the text below the cut was not read. Absent (not false) on a
+   *  whole read or a non-image source. */
+  transcription_truncated?: boolean
   /** Project-relative path of the saved page scan (images/<key>.jpg), when the
    *  source is image-backed and image_transcribe persisted it (§8.5). */
   image_filename?: string | null

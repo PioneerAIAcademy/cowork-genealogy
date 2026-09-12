@@ -16,6 +16,59 @@ import { getProjectStore } from "../store/project-store.js";
 /** Project-relative directory holding retained source scans. */
 export const IMAGES_SUBDIR = "images";
 
+// Persisted source images whose read was CAPPED, keyed `${projectPath}\0${imageRef}`
+// — the same `images/<key>.jpg` string a source records as `image_filename`. A
+// capped read returns its partial transcription verbatim beside `truncated: true`,
+// so the fact is known at the read; but `record-extractor` relays that text across
+// a subagent boundary and never sees the flag, so `transcription_truncated` is
+// derived at the write boundary instead: research_append joins a source's
+// `image_filename` against this set (`wasSourceImageTruncated`) and sets the field
+// from it (#2457). It lives here, not in image-transcribe.ts, because both the
+// writer (image_transcribe) and the reader (research_append) already import this
+// module — a tool→tool import would be the alternative, and image_filename is
+// exactly the imageRef this module mints. Process-lifetime, never persisted; a
+// group-only or global key would leak one project's cap into another, so it is
+// keyed by project as browseBudgetSeen is. Only reads that PERSISTED an image land
+// here (an imageRef is what a source cites); a read with no projectPath leaves no
+// image_filename to join, the known limitation in image-transcribe-tool-spec §5.8.
+// image_filename, not imageId, is the key because it is the only identifier both
+// tools share — an ARK read gets one too, so an ARK read is NOT the blind spot the
+// browse budget's imageId keying has.
+const truncatedSourceImages = new Set<string>();
+
+function truncatedImageKey(projectPath: string, imageRef: string): string {
+  return `${projectPath}\0${imageRef}`;
+}
+
+/** Record (or clear) whether this project's persisted source image was read past
+ *  the OCR output-token cap. Add-or-remove rather than add-only, so a later clean
+ *  read of the same image — e.g. after an OCR model change — retracts a stale cap
+ *  instead of leaving a whole read marked partial. */
+export function recordImageReadCap(
+  projectPath: string,
+  imageRef: string,
+  truncated: boolean,
+): void {
+  const key = truncatedImageKey(projectPath, imageRef);
+  if (truncated) truncatedSourceImages.add(key);
+  else truncatedSourceImages.delete(key);
+}
+
+/** Whether image_transcribe capped its read of the source image a research.json
+ *  source cites via `image_filename` — the join research_append uses to derive
+ *  `transcription_truncated` at the write boundary. */
+export function wasSourceImageTruncated(
+  projectPath: string,
+  imageFilename: string,
+): boolean {
+  return truncatedSourceImages.has(truncatedImageKey(projectPath, imageFilename));
+}
+
+/** Test-only reset — the Set is module-level and persists across `it()` blocks. */
+export function __clearTruncatedSourceImagesForTests(): void {
+  truncatedSourceImages.clear();
+}
+
 /** Unreferenced scans older than this are pruned opportunistically. Matches the
  *  results-staging TTL — long enough that a scan survives from transcription to
  *  the research_append that cites it, short enough to bound uncited bloat. */

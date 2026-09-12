@@ -23,6 +23,10 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
+import {
+  recordImageReadCap,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
@@ -203,6 +207,61 @@ describe("research_append (Phase 1)", () => {
       const persisted = research.sources.find((s: any) => s.id === singleOk(r).entryId);
       expect(persisted.access_date, `${supplied} → ISO`).toBe(expected);
     }
+  });
+
+  describe("transcription_truncated is derived at the write boundary (#2457)", () => {
+    afterEach(() => __clearTruncatedSourceImagesForTests());
+    const imageSource = (over: Record<string, unknown>) => {
+      const { id: _omit, ...src } = validSource("x");
+      return { ...src, image_filename: "images/x.jpg", transcription: "first half of the page", ...over };
+    };
+
+    it("marks a source truncated when image_transcribe capped the cited image", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect(persisted.transcription_truncated).toBe(true);
+    });
+
+    it("leaves the field absent when the cited image was read whole", async () => {
+      await writeProject();
+      // No recordImageReadCap → the image is not in the truncated set.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({}),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("is authoritative — strips an agent-asserted flag the tool did not record", async () => {
+      await writeProject();
+      // The image read was NOT capped, but the caller asserts it was. The field
+      // is derived from the tool's record, so the false assertion is dropped
+      // rather than persisted (the failure mode #2457 removes the agent from).
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: imageSource({ transcription_truncated: true }),
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {

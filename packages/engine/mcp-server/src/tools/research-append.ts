@@ -38,7 +38,7 @@ import {
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { exampleHints } from "./research-append-examples.js";
-import { gcUnreferencedImages } from "../utils/image-store.js";
+import { gcUnreferencedImages, wasSourceImageTruncated } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
@@ -2412,6 +2412,28 @@ async function prepareOps(
         );
       }
     }
+  }
+
+  // ── Derive transcription_truncated at the write boundary (#2457) ──
+  // The truncation of an image read is known to image_transcribe, not to
+  // record-extractor (which only holds the relayed text). So research_append is
+  // authoritative for it on any image-backed source: set it true iff this
+  // process capped the read of the cited image, and otherwise strip any value —
+  // the field is DERIVED here, never asserted by the agent. A source with no
+  // image_filename (not image-backed, or the scan was never persisted) has
+  // nothing to join and is left untouched; that no-persist gap is the §5.8
+  // limitation. Runs after the reuse rewrite above so it sees the final op shape
+  // (an append folded into an update carries its image_filename in `fields`).
+  for (const op of ops) {
+    if (op.section !== "sources") continue;
+    const bag = (op.op === "append" ? op.entry : op.fields) as
+      | Record<string, unknown>
+      | undefined;
+    if (!bag || typeof bag !== "object") continue;
+    const ref = bag.image_filename;
+    if (typeof ref !== "string" || ref.length === 0) continue;
+    if (wasSourceImageTruncated(projectPath, ref)) bag.transcription_truncated = true;
+    else delete bag.transcription_truncated;
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
