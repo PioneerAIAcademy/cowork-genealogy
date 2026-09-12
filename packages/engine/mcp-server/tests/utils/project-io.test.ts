@@ -52,7 +52,7 @@ describe("project-io write layer", () => {
   describe("atomicWriteJson", () => {
     it("writes pretty JSON and leaves no temp file behind", async () => {
       const path = join(dir, "research.json");
-      await atomicWriteJson(path, { a: 1, b: [2, 3] });
+      await atomicWriteJson(dir, "research.json", { a: 1, b: [2, 3] });
 
       const text = await readFile(path, "utf-8");
       expect(JSON.parse(text)).toEqual({ a: 1, b: [2, 3] });
@@ -64,14 +64,14 @@ describe("project-io write layer", () => {
 
     it("creates missing parent directories", async () => {
       const path = join(dir, "results", "log_007.json");
-      await atomicWriteJson(path, { log_id: "log_007" });
+      await atomicWriteJson(dir, "results/log_007.json", { log_id: "log_007" });
       expect(JSON.parse(await readFile(path, "utf-8"))).toEqual({ log_id: "log_007" });
     });
 
     it("overwrites an existing file in place", async () => {
       const path = join(dir, "tree.gedcomx.json");
       await writeFile(path, JSON.stringify({ old: true }), "utf-8");
-      await atomicWriteJson(path, { new: true });
+      await atomicWriteJson(dir, "tree.gedcomx.json", { new: true });
       expect(JSON.parse(await readFile(path, "utf-8"))).toEqual({ new: true });
     });
   });
@@ -80,15 +80,42 @@ describe("project-io write layer", () => {
     it("writes both files and leaves no temps", async () => {
       const treePath = join(dir, "tree.gedcomx.json");
       const researchPath = join(dir, "research.json");
-      await atomicWriteBoth([
-        { path: treePath, data: { tree: 1 } },
-        { path: researchPath, data: { research: 1 } },
+      await atomicWriteBoth(dir, [
+        { ref: "tree.gedcomx.json", data: { tree: 1 } },
+        { ref: "research.json", data: { research: 1 } },
       ]);
 
       expect(JSON.parse(await readFile(treePath, "utf-8"))).toEqual({ tree: 1 });
       expect(JSON.parse(await readFile(researchPath, "utf-8"))).toEqual({ research: 1 });
       const leftovers = (await readdir(dir)).filter((f) => f.includes(".tmp-"));
       expect(leftovers).toEqual([]);
+    });
+
+    it("dot-prefixes its temp files so a crash-left temp is a dotfile the feedback bundler skips (issue #2333)", async () => {
+      // The feedback bundler skips dotfiles and redacts by exact name, so a
+      // NON-dot temp (`tree.gedcomx.json.tmp-<uuid>`) left by a crash between
+      // write and rename would ship unredacted. Observe the real temp name
+      // mid-write via the between-renames seam: the second temp is still on
+      // disk here, not yet renamed.
+      const treePath = join(dir, "tree.gedcomx.json");
+      const researchPath = join(dir, "research.json");
+      let midWriteTemps: string[] = [];
+      await atomicWriteBoth(
+        dir,
+        [
+          { ref: "tree.gedcomx.json", data: { tree: 1 } },
+          { ref: "research.json", data: { research: 1 } },
+        ],
+        {
+          onBeforeSecondRename: async () => {
+            midWriteTemps = (await readdir(dir)).filter((f) => f.includes(".tmp-"));
+          },
+        },
+      );
+      expect(midWriteTemps.length).toBeGreaterThan(0);
+      for (const name of midWriteTemps) {
+        expect(name.startsWith("."), `temp ${name} must be dot-prefixed`).toBe(true);
+      }
     });
 
     it("a failure during the temp-write phase leaves both targets unchanged (both-or-neither)", async () => {
@@ -103,9 +130,9 @@ describe("project-io write layer", () => {
       circular.self = circular;
 
       await expect(
-        atomicWriteBoth([
-          { path: treePath, data: { tree: "new" } },
-          { path: researchPath, data: circular },
+        atomicWriteBoth(dir, [
+          { ref: "tree.gedcomx.json", data: { tree: "new" } },
+          { ref: "research.json", data: circular },
         ]),
       ).rejects.toThrow();
 
@@ -123,9 +150,10 @@ describe("project-io write layer", () => {
 
       await expect(
         atomicWriteBoth(
+          dir,
           [
-            { path: treePath, data: { tree: "new" } },
-            { path: researchPath, data: { research: "new" } },
+            { ref: "tree.gedcomx.json", data: { tree: "new" } },
+            { ref: "research.json", data: { research: "new" } },
           ],
           {
             onBeforeSecondRename: () => {

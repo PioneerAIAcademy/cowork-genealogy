@@ -822,9 +822,8 @@ def test_project_file_changes_route_through_writer_tools(
     """Universal: a modified research.json / tree.gedcomx.json requires at
     least one writer-tool call in the session.
 
-    The writer tools validate-before-persist, allocate ids, and keep the
-    `.bak` safety copy; a direct file write (Write/Edit/python) bypasses
-    all three. Evidence this happens: tree-edit ut_012 (2026-07-12) made
+    The writer tools validate-before-persist and allocate ids; a direct file
+    write (Write/Edit/python) bypasses both. Evidence this happens: tree-edit ut_012 (2026-07-12) made
     ZERO tool calls yet research.json grew a person_evidence entry with a
     fabricated `created` date — and every validator passed, because
     nothing checked the write PATH, only the resulting state.
@@ -867,7 +866,7 @@ def test_project_file_changes_route_through_writer_tools(
     ]
     assert writer_calls, (
         f"project file {' and '.join(changed)} modified with no writer-tool "
-        f"call — direct file writes bypass validation/id-allocation/.bak; "
+        f"call — direct file writes bypass validation/id-allocation; "
         f"route through the writer tools "
         f"({', '.join(sorted(PROJECT_WRITER_TOOLS))})"
     )
@@ -1098,7 +1097,7 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 
     Those two documents must be written only through the MCP writer tools
     (research_append, research_log_append, tree_edit, tree_correct), which
-    validate, allocate ids, and keep a `.bak` before persisting. A direct file
+    validate and allocate ids before persisting. A direct file
     write skips all of that. The rule ships as a PreToolUse deny in Cowork, the
     hosted control plane, and the e2e harness; this validator is the unit tier's
     half of it (issue #1493).

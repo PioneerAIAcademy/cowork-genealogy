@@ -25,7 +25,6 @@
 // person, and that restriction is load-bearing for allowlist-enforceable write
 // authority. Spec: docs/specs/tree-forget-tool-spec.md.
 
-import { join } from "path";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -969,15 +968,14 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
 
     // Snapshot the pre-removal tree — but only if there isn't one already, so
     // the restore point keeps pointing at the ORIGINAL rather than at an
-    // already-forgotten intermediate (spec §5). No `.bak`: backupIfExists would
-    // write a non-dot-prefixed copy of the answer, which is the one thing the
-    // dot-prefix exists to prevent.
-    const restorePath = join(projectPath, RESTORE_FILE);
-    if (!(await fileExists(restorePath))) {
-      await atomicWriteJson(restorePath, original);
+    // already-forgotten intermediate (spec §5). The restore file is
+    // dot-prefixed so the feedback bundler skips it: a non-dot-prefixed copy
+    // of the answer is the one thing the dot-prefix exists to prevent.
+    if (!(await fileExists(projectPath, RESTORE_FILE))) {
+      await atomicWriteJson(projectPath, RESTORE_FILE, original);
     }
 
-    await atomicWriteJson(join(projectPath, "tree.gedcomx.json"), tree);
+    await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
 
     result.filesWritten = ["tree.gedcomx.json"];
 
@@ -986,9 +984,8 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     // pre-forget tree, a fact the agent re-derives would read as "no new
     // structure" and the tree-encoding gate would false-flag the conclusion.
     // Only when a baseline already exists — tree_forget never creates one.
-    const baselinePath = join(projectPath, "starting-tree.gedcomx.json");
-    if (await fileExists(baselinePath)) {
-      await atomicWriteJson(baselinePath, tree);
+    if (await fileExists(projectPath, "starting-tree.gedcomx.json")) {
+      await atomicWriteJson(projectPath, "starting-tree.gedcomx.json", tree);
       result.filesWritten.push("starting-tree.gedcomx.json");
     }
 

@@ -1,6 +1,7 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   FSCollectionData,
@@ -107,7 +108,7 @@ export async function fetchAllCollections(
 
   const url = `${FS_COLLECTIONS_URL}?count=5000&offset=0&facets=OFF`;
 
-  const response = await fetchWithTimeout(
+  const response = await fetchWithRetry(
     url,
     {
       headers: {
@@ -116,7 +117,7 @@ export async function fetchAllCollections(
         "User-Agent": BROWSER_USER_AGENT,
       },
     },
-    COLLECTIONS_TIMEOUT_MS
+    COLLECTIONS_TIMEOUT_MS,
   );
 
   if (!response.ok) {
@@ -190,7 +191,8 @@ export interface CollectionsSearchInput {
 }
 
 export async function collectionsSearchTool(
-  input: CollectionsSearchInput
+  input: CollectionsSearchInput,
+  principal: Principal
 ): Promise<CollectionsSearchResult> {
   if (!input.standardPlace) {
     throw new Error(
@@ -210,7 +212,7 @@ export async function collectionsSearchTool(
   // Canada/Mexico, country otherwise). Free-text queries pass through.
   const scope = standardPlaceToCollectionsQuery(input.standardPlace);
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const data = await fetchAllCollections(token);
   const entries = data.entries ?? [];
 

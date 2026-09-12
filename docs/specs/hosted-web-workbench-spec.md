@@ -431,7 +431,7 @@ later, so the package holds **13** today.
 ### 5.2 Data auth: per-user FamilySearch OAuth (the big refactor)
 The current MCP auth (`packages/engine/mcp-server/src/auth/`) is **single-user, single-machine**:
 `login.ts` runs a **localhost:1837** callback and writes one
-`~/.familysearch-mcp/tokens.json`; every tool calls `getValidToken()` which reads
+`~/.familysearch-mcp/tokens.json`; every tool calls `getValidToken(principal)` which reads
 that **one global file** — there is **no per-request/per-env token path**. For
 multi-tenant web this must change:
 
@@ -447,7 +447,7 @@ multi-tenant web this must change:
    - **(a) Minimal:** write `~/.familysearch-mcp/tokens.json` inside the sandbox
      (matches today's MCP server exactly — zero MCP code change). Simple, works,
      but couples to the file format.
-   - **(b) Clean:** refactor `getValidToken()` to accept a token from an env var
+   - **(b) Clean:** refactor `getValidToken(principal)` to accept a token from an env var
      / per-session config the MCP server reads (`FAMILYSEARCH_ACCESS_TOKEN`),
      and the control plane refreshes centrally. Preferred long-term.
    Recommendation: ship (a) for v1 speed, plan (b).
@@ -459,7 +459,7 @@ multi-tenant web this must change:
 > `familysearch_tokens` table with server-side refresh (`auth.fresh_fs_token`),
 > and **option (a)** injection — the control plane writes
 > `~/.familysearch-mcp/tokens.json` into the sandbox, zero MCP change
-> (`fs_oauth.write_tokens`). Option (b) was not pursued; `getValidToken()` still
+> (`fs_oauth.write_tokens`). Option (b) was not pursued; `getValidToken(principal)` still
 > reads the file. Two implementation details worth knowing:
 >
 > - **The redirect reuses the desktop OAuth registration**, so the callback lives
@@ -627,6 +627,73 @@ Per `docs/specs/sandbox-provider-spec.md`. Key points for this spec:
   (we never depend on microVM memory snapshots).
 - After each turn it pushes file deltas over WS **and** syncs `/project` to the
   object store.
+- **The SDK message stream stays drained while background subagents are still
+  running, and what the drain reads is discarded.** Background subagents keep
+  streaming after the parent turn's `ResultMessage` — the SDK holds stdin open
+  for exactly that — and those messages land in a stream whose
+  `max_buffer_size=100` is hardcoded in the SDK, not an option we can pass. With
+  `include_partial_messages=True` and several subagents emitting deltas, it fills
+  in seconds; once full the SDK's transport read loop blocks, and that same loop
+  dispatches the CLI's `control_request` frames, so every `PreToolUse` callback
+  goes unanswered and the session cannot run **any** tool call. A live session on
+  2026-08-25 died this way and lost 4 of 8 extractions, and it recurred twice in
+  the following week.
+
+  Three properties of `RealAgent._drain_background` are load-bearing rather than
+  incidental:
+
+  - **One reader at a time, by explicit handoff.** `Query.receive_messages`
+    iterates one `anyio` memory object stream, which hands each item to exactly
+    one receiver, so a drainer still running when the next turn starts would take
+    that turn's `ResultMessage` and hang `handle_turn` forever. Every path about
+    to read the stream calls `_stop_drain()` first, and the drainer closes the
+    iterator rather than leaving it suspended.
+  - **Outside the turn.** `runner._run_turn` emits exactly one `turn_done` when
+    the generator finishes and `runner.serve` drops any `user_msg` while the turn
+    task is alive, so draining *inside* the turn loop would leave the UI spinning
+    and Send disabled until the last subagent finished — the symptom that was
+    reported, not a fix for it.
+  - **Discarded, after an operator log line.** Delivering these events to the
+    browser was considered and deferred: it would extend the change into
+    `runner.py`, `sandbox_server.py`, the WS replay buffer and `apps/web`, and
+    reopen the one-`turn_done`-per-turn contract that `_run_turn` owns. That
+    contract is real - `_run_turn` emits it unconditionally at the end and its
+    own docstring says "exactly one" - but no test pins it:
+    `test_runner_interrupt.py` asserts `events[-1] == {"kind": "turn_done"}`
+    three times, which is "ends with", and carries no count assertion. The user-visible half is owned separately and stays open: a wedged
+    session and a finished turn look identical in the status line, and the event
+    mapper drops `is_error`. So the post-turn subagent prose is still not shown —
+    a known, owned gap rather than an oversight.
+
+  The in-process signal for "subagents still running" is
+  `RealAgent._live_tasks`, a set of `task_id` - not the SDK's private
+  `_inflight_tasks`, and not `_tasks`, which is a separate `tool_use_id` ->
+  label map used only for attribution. The split is deliberate:
+  `TaskStartedMessage.tool_use_id` is `str | None`, so keying liveness on it
+  meant a Task without one registered nothing and no drainer started, while
+  `task_id` is a required `str`.
+  It is filled on `TaskStartedMessage` and cleared on a terminal status from
+  **either** a `TaskNotificationMessage` or a `TaskUpdatedMessage` - the SDK
+  states a terminal state can arrive only on the latter, with the notification
+  "sometimes suppressed", so a task stopped via `TaskStop` reports
+  `status="killed"` there and nowhere else.
+  **It does not gate the drainer's START.** That gate was removed: the set is
+  legitimately empty at turn end when a terminal update lands inside the turn,
+  or when a `TaskStartedMessage` lands after the `ResultMessage`, and both
+  orderings stranded the post-turn messages this section is about. The drainer
+  starts whenever a client exists and `_stop_drain` owns its lifetime.
+
+  **No CI job reaches this path.** `apps/server/tests/test_background_drain.py`
+  asserts at unit scale that more than `max_buffer_size` post-`ResultMessage`
+  messages are consumed and that the next turn loses none of its own, over a fake
+  transport with the same bounded-buffer shape, and carries a negative control
+  that fails if the bound stops being modelled. It does **not** prove the real
+  CLI's `control_request` path recovers; that needs the manual run — launch two
+  or more subagents, let the parent turn end, then make one tool call. Because
+  `apps/server/app/agent/*` is baked into the
+  `genealogy-agent` E2B image and neither `make server-e2b` nor `make deploy`
+  rebuilds it, verify with `make server-dev` (which runs the repo's copy) or run
+  `make sandbox-image` first.
 
 ### 7.1 Sandbox image (`apps/server` build target)
 A template/image bundling: Node + Python + `claude-agent-sdk`, the genealogy MCP

@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -196,7 +197,7 @@ describe("recordReadTool", () => {
   // 1. Happy path: returns simplified GEDCOMX for a valid bare ID
   it("returns simplified GEDCOMX for a valid bare record ID", async () => {
     mockOk(MINIMAL_RECORD);
-    const result = await recordReadTool({ recordId: "QVS9-DHDB" });
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     expect(result.persons).toBeDefined();
     expect(result.persons!.length).toBeGreaterThan(0);
     const person = result.persons![0];
@@ -207,7 +208,7 @@ describe("recordReadTool", () => {
   // 2. Happy path: accepts a full ARK and resolves to the entity ID
   it("accepts a full ARK and calls the correct URL", async () => {
     mockOk(MINIMAL_RECORD);
-    await recordReadTool({ recordId: "ark:/61903/1:1:QVS9-DHDB" });
+    await recordReadTool({ recordId: "ark:/61903/1:1:QVS9-DHDB" }, LOCAL);
     const calledUrl = String(mockFetch.mock.calls[0][0]);
     expect(calledUrl).toContain("QVS9-DHDB");
     expect(calledUrl).not.toContain("ark");
@@ -219,14 +220,14 @@ describe("recordReadTool", () => {
   // in image-read.test.ts, which refuses a 1:2: ARK the same way.
   it("refuses a 1:2: record ARK without fetching", async () => {
     await expect(
-      recordReadTool({ recordId: "ark:/61903/1:2:M8GR-TJY" }),
+      recordReadTool({ recordId: "ark:/61903/1:2:M8GR-TJY" }, LOCAL),
     ).rejects.toThrow(/1:2: record ARK/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("refuses a 3:1: document-image ARK without fetching", async () => {
     await expect(
-      recordReadTool({ recordId: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }),
+      recordReadTool({ recordId: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }, LOCAL),
     ).rejects.toThrow(/image_read|image_transcribe/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -234,7 +235,7 @@ describe("recordReadTool", () => {
   // 3. URL construction: bare ID is included in the path
   it("constructs the recapi URL correctly for a bare ID", async () => {
     mockOk(MINIMAL_RECORD);
-    await recordReadTool({ recordId: "QVS9-DHDB" });
+    await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     const calledUrl = String(mockFetch.mock.calls[0][0]);
     expect(calledUrl).toContain("/records/persona/QVS9-DHDB.json");
   });
@@ -243,7 +244,7 @@ describe("recordReadTool", () => {
   it("sends the Bearer token in the Authorization header", async () => {
     mockedGetValidToken.mockResolvedValue("my-secret-token");
     mockOk(MINIMAL_RECORD);
-    await recordReadTool({ recordId: "QVS9-DHDB" });
+    await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     const callOptions = mockFetch.mock.calls[0][1] as RequestInit;
     const headers = callOptions.headers as Record<string, string>;
     expect(headers["Authorization"]).toBe("Bearer my-secret-token");
@@ -252,14 +253,14 @@ describe("recordReadTool", () => {
   // 5. Relationships: simplified relationships are returned when present
   it("returns relationships when the record includes them", async () => {
     mockOk(WITH_RELATIONSHIPS);
-    const result = await recordReadTool({ recordId: "QVS9-DHDB" });
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     expect(result.relationships).toBeDefined();
     expect(result.relationships!.length).toBeGreaterThan(0);
   });
 
   // 6. Error: throws on empty recordId before fetching
   it("throws on empty recordId without fetching", async () => {
-    await expect(recordReadTool({ recordId: "  " })).rejects.toThrow(
+    await expect(recordReadTool({ recordId: "  " }, LOCAL)).rejects.toThrow(
       /non-empty recordId/,
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -268,7 +269,7 @@ describe("recordReadTool", () => {
   // 7. Error: 401 → login guidance
   it("throws on 401 with login guidance", async () => {
     mockStatus(401);
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
+    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
       /login tool/,
     );
   });
@@ -276,7 +277,7 @@ describe("recordReadTool", () => {
   // 8. Error: 403 → restricted message
   it("throws on 403 with restricted-record message", async () => {
     mockStatus(403);
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
+    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
       /restricted and cannot be viewed/,
     );
   });
@@ -284,23 +285,56 @@ describe("recordReadTool", () => {
   // 9. Error: 404 → not found message
   it("throws on 404 with not-found message", async () => {
     mockStatus(404);
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
+    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
       /not found in FamilySearch/,
     );
   });
 
-  // 10. Error: 429 → rate-limit message
-  it("throws on 429 with rate-limit message", async () => {
-    mockStatus(429);
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
+  // 10a. Recovery: 429 then 200 → returns the successful result
+  it("recovers from a transient 429 and returns the record", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        json: () => Promise.resolve({}),
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(MINIMAL_RECORD),
+        headers: new Headers(),
+      });
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
+    expect(result.persons).toBeDefined();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  // 10b. Error: 429 → retried then returned, hits dedicated rate-limit branch
+  it("throws on 429 with rate-limit message after retry exhaustion", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
+    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
       /rate limit/,
     );
   });
 
-  // 11. Error: generic non-OK → includes status code
+  // 11. Error: generic non-OK → includes status code (500 is retried then returned)
   it("throws on unexpected non-OK status with code in message", async () => {
-    mockStatus(500);
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({}),
+      headers: new Headers(),
+    });
+    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
       /500/,
     );
   });
@@ -310,7 +344,7 @@ describe("recordReadTool", () => {
     mockedGetValidToken.mockRejectedValueOnce(
       new Error("Call the login tool to authenticate."),
     );
-    await expect(recordReadTool({ recordId: "QVS9-DHDB" })).rejects.toThrow(
+    await expect(recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL)).rejects.toThrow(
       /login tool/,
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -319,7 +353,7 @@ describe("recordReadTool", () => {
   // 13. Fact type: URI prefixes stripped in simplified output
   it("strips URI prefixes from fact types", async () => {
     mockOk(MINIMAL_RECORD);
-    const result = await recordReadTool({ recordId: "QVS9-DHDB" });
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     const facts = result.persons?.[0]?.facts ?? [];
     expect(facts.find((f) => f.type === "Birth")).toBeDefined();
     expect(facts.find((f) => f.type?.startsWith("http://"))).toBeUndefined();
@@ -328,7 +362,7 @@ describe("recordReadTool", () => {
   // 14. Empty record: handles a response with no persons gracefully
   it("handles a record response with no persons without throwing", async () => {
     mockOk({});
-    const result = await recordReadTool({ recordId: "QVS9-DHDB" });
+    const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     // toSimplified returns an empty object for empty input — no throw
     expect(result).toBeDefined();
   });
@@ -344,7 +378,7 @@ describe("recordReadTool", () => {
         },
       ],
     } as unknown as GedcomX);
-    await recordReadTool({ recordId: "QVS9-DHDB" });
+    await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     // toSimplifiedStandardized would have resolved the place name (and mis-placed
     // it — this mock response carries no `normalized` place); toSimplified must not
     // touch the resolver at all.
@@ -399,7 +433,7 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
       recordId: "ark:/61903/1:1:MXHY-TP4",
       resultsRef: handle!.resultsRef,
       projectPath: dir,
-    });
+    }, LOCAL);
     expect(out.persons).toHaveLength(2);
     expect(out.persons!.map((p) => p.names![0].given)).toEqual(["Patrick", "Thomas"]);
     expect(out.relationships).toHaveLength(1);
@@ -421,7 +455,7 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
       recordId: "MXHY-TP4",
       resultsRef: handle!.resultsRef,
       projectPath: dir,
-    });
+    }, LOCAL);
     expect(out.persons).toHaveLength(2);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -433,14 +467,14 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
       response: stagedResponse(),
     });
     await expect(
-      recordReadTool({ recordId: "NOPE-99", resultsRef: handle!.resultsRef, projectPath: dir }),
+      recordReadTool({ recordId: "NOPE-99", resultsRef: handle!.resultsRef, projectPath: dir }, LOCAL),
     ).rejects.toThrow(/not found in staged results/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("requires projectPath when resultsRef is given", async () => {
     await expect(
-      recordReadTool({ recordId: "MXHY-TP4", resultsRef: "results/.staging/x.json" }),
+      recordReadTool({ recordId: "MXHY-TP4", resultsRef: "results/.staging/x.json" }, LOCAL),
     ).rejects.toThrow(/requires `projectPath`/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -464,7 +498,7 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
       recordId: "MXHY-TP4",
       resultsRef: "results/log_001.json",
       projectPath: dir,
-    });
+    }, LOCAL);
     expect(out.persons).toHaveLength(2);
     expect(mockFetch).not.toHaveBeenCalled();
   });

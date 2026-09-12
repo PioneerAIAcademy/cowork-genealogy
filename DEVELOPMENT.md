@@ -412,7 +412,7 @@ Endpoints (all require `Authorization: Bearer <key>`):
 - `POST /v1/sessions` → create. Optional body `{title?, familysearch_token?}`. Supply
   `familysearch_token` (`{access_token, refresh_token?, expires_in?}`) to authenticate the
   sandbox's FamilySearch tool calls — it's injected into the sandbox's `tokens.json` and is
-  **never** persisted to the DB; with a refresh token the in-sandbox `getValidToken()`
+  **never** persisted to the DB; with a refresh token the in-sandbox `getValidToken(principal)`
   self-refreshes for the sandbox's life. Omit it for an FS-tool-less session. Returns
   `{session_id, title, model, created_at}`.
 - `POST /v1/sessions/{id}/messages` → send a message. Body `{message, stream?}`:

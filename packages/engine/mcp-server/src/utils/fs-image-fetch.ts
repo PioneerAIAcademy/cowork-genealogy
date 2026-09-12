@@ -4,6 +4,7 @@
 // host-side and returns text) build on one resolver + fetcher instead of
 // duplicating the token/UA/content-type plumbing.
 
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
@@ -192,7 +193,7 @@ async function attemptFsImageFetch(
 
 /**
  * Fetch the raw bytes of a FamilySearch distribution image, authenticated.
- * Reuses getValidToken() + BROWSER_USER_AGENT. Throws on non-2xx or a
+ * Reuses getValidToken(principal) + BROWSER_USER_AGENT. Throws on non-2xx or a
  * non-image content-type. Imposes no size cap — callers decide what to do
  * with the bytes (image_read refuses oversize inline; image_transcribe
  * streams them to OCR host-side, where no transport cap applies).
@@ -208,9 +209,10 @@ async function attemptFsImageFetch(
  */
 export async function fetchFsImageBytes(
   url: string,
-  fallbackUrl?: string
+  fallbackUrl: string | undefined,
+  principal: Principal
 ): Promise<FetchedFsImage> {
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   let attempt = await attemptFsImageFetch(url, token);
   let resolvedUrl = url;
