@@ -321,8 +321,9 @@ set is now the shared `RELATIONSHIP_ESTABLISHING_TYPES` in
 
 What §4.5 does **not** say is that the party the skipped assertion *names* has
 nowhere to go. She is minted by §4.6 — as a sourced name, plus that persona's
-own facts where the record gives her a persona it never names. Every clause
-above still holds: the second pass runs through the persona arm, so `SKIP_TYPES`
+own facts where the record gives her a persona it never names and the
+assertion's `related_person_role` corroborates the role. Every clause above
+still holds: the second pass runs through the persona arm, so `SKIP_TYPES`
 drops the `marriage` assertion there exactly as it would on any other persona,
 and no Marriage fact reaches a person.
 
