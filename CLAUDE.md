@@ -318,9 +318,11 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 proves a runtime *binds* it, and because the script must never raise, a hook that
 stopped binding is indistinguishable from one with no opinion — no error, no log,
 no red test. It is a live billed probe (two short sessions), hard-errors without a
-key, and no CI job runs it. It covers the **hosted** loader only: Cowork is a
-different loader, so "binds in both" above is measured on one side and inferred on
-the other, and the Cowork side stays on the `nothing-checks` register.
+key, and no CI job runs it. It covers the **hosted** loader only. Cowork's loader
+was probed live on 2026-07-30 (ADR-0005) — but with a broader matcher, and only
+for `Write` and `Bash`, three weeks before `.*research_append` entered the
+matcher (2026-08-21). That arm is still unmeasured there and stays on the
+`nothing-checks` register.
 
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a

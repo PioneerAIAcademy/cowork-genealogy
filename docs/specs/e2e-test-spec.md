@@ -857,8 +857,10 @@ recorded in a separate `blocked_context_calls` array
 because this is a write denied by a different guard.
 
 This is harness-only. The plugin ships a `PreToolUse` hook that binds on the
-hosted path — **measured**, by `make hook-smoke` — and is believed
-to bind in Cowork, which is a different loader and has no instrument but a live
+hosted path — **measured**, by `make hook-smoke` — and binds in Cowork, probed
+live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
+`.*research_append` arm entered the matcher 2026-08-21 and is unmeasured there;
+Cowork is a different loader and has no instrument but a live
 session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `bypassPermissions`). Its matcher is
 `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`: the raw

@@ -262,7 +262,17 @@ async def run_arm(hooks_present: bool, key: str, reason: str) -> dict:
     # The verdict is read off the structured tool_result, never off the model's
     # prose -- "I was blocked" in an assistant message is not evidence; the
     # guard's own reason text arriving in a tool_result is.
-    marker = reason[:60]
+    # Escaped the same way the payload is, because the payload is JSON and the
+    # reason is not. OWNER_REASON's em-dash currently sits at index 64 for both
+    # owned sections (their names are the same length), four characters past
+    # this window -- so a reword that moves it five characters earlier, or a
+    # double quote entering the window, would make `json.dumps` escape it to
+    # `\u2014` in the payload while the raw marker still carries the literal
+    # character. The probe would then report NOT_BOUND while the hook binds
+    # perfectly, which is the one failure this file's docstring promises cannot
+    # happen. Measured: with the em-dash inside the window the raw marker misses
+    # and the escaped one matches.
+    marker = json.dumps(reason[:60])[1:-1]
     called, denied_by_guard, deny_texts = False, False, []
     for cid, call in calls.items():
         if not call["name"].endswith("research_append"):
