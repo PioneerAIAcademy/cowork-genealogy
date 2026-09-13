@@ -195,7 +195,8 @@ Escalation guidance:
   second. If one error explains the cluster,
   verify that fact against its original source first. If no single
   error explains it, two people merged is the stronger reading;
-  recommend splitting the profile and rebuilding person_evidence links
+  recommend splitting the profile and rebuilding the record-to-person
+  links from the sources
 - Any `contradiction` involving the death-vs-event sequence
   (`hasEventAfterDeath1`, `hasEventBeforeBirth365_2`): stop and
   investigate immediately regardless of other warning count
@@ -209,9 +210,9 @@ activities:
    arrangement of all events often reveals the exact point where
    two identities were merged.
 
-2. **Check person_evidence links** for the assertions involved
-   in the warning -- which sources support linking that record to
-   this person?
+2. **Check which sources support the link** for the assertions
+   involved in the warning -- which attached record ties that fact
+   to this person?
 
 3. **Search for same-name individuals** in the same locality and
    time period -- the "other person" whose records were merged is

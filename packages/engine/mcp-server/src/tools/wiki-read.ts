@@ -1,5 +1,6 @@
+import type { Principal } from "../auth/principal.js";
 import { getWikiApiUrl } from "../auth/config.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import type { WikiReadInput, WikiPageResult } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
@@ -18,14 +19,14 @@ interface PageApiResponse {
   source_url: string;
 }
 
-export async function wikiReadTool(input: WikiReadInput): Promise<WikiPageResult> {
+export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiPageResult> {
   const slug = urlToSlug(input.url);
-  const baseUrl = await getWikiApiUrl();
+  const baseUrl = await getWikiApiUrl(principal);
   const pageUrl = `${baseUrl}/page/${slug}`;
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(pageUrl, {
+    response = await fetchWithRetry(pageUrl, {
       method: "GET",
       headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
     });

@@ -1,0 +1,510 @@
+{
+  "run_log": "v1_2026-09-10_09-52-24.json",
+  "annotator": "mercybocumy2000@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The warnings check was done right and zero warnings is correct. But the skill wrote \"no FamilySearch quality call needed\" which the rules forbid."
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The tool was correctly not called. The problem is the skill added the explanation for the skip. The rule says skip with no mention at all."
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "All four warnings were reported accurately and the cluster reasoning was good. But the skill said \"no FamilySearch quality call applies here\" and that sentence should not exist."
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Same issue. The tool was not called which is right. But the narration explaining the skip is forbidden."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The warning and the three cause analysis were correct. The problem is the closing note saying \"no FamilySearch quality score as Patrick Flynn has a local project ID.\" That note violates the silence rule."
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Tool correctly not called. The closing parenthetical should not be there."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The warning was detected and reported well. But the skill wrote \"No FamilySearch quality check applies\" which is exactly what the rule says not to write."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Tool not called which is correct. But the line explaining it is forbidden."
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The zero warnings result was reported correctly. The parenthetical note about synthetic IDs and no quality fetch is the one thing that should not appear."
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_018",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Tool not called which is right. The note explaining why must not be there."
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_017",
+      "dimension_source": "rubric",
+      "dimension_name": "FamilySearch quality reporting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

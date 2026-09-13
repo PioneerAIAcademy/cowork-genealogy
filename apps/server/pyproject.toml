@@ -30,6 +30,9 @@ dev = [
     "jsonschema>=4.22.0",
     "pytest-asyncio>=0.24",
     "anyio>=4.14.2",
+    # tests/test_proto_config.py parses apps/server/proto/docker-compose.yml.
+    # Already present transitively (uvicorn[standard]); declared because we import it.
+    "pyyaml>=6.0",
 ]
 
 [tool.pytest.ini_options]

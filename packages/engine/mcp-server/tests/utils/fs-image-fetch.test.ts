@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -133,7 +134,7 @@ describe("fetchFsImageBytes — fallback retry", () => {
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=999";
     const fallback = "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X";
 
-    const result = await fetchFsImageBytes(primary, fallback);
+    const result = await fetchFsImageBytes(primary, fallback, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(mockFetch.mock.calls[0][0]).toBe(primary);
@@ -148,7 +149,8 @@ describe("fetchFsImageBytes — fallback retry", () => {
     await expect(
       fetchFsImageBytes(
         "https://www.familysearch.org/ark:/61903/3:1:BAD?i=999",
-        "https://www.familysearch.org/ark:/61903/3:1:BAD"
+        "https://www.familysearch.org/ark:/61903/3:1:BAD",
+        LOCAL
       )
     ).rejects.toThrow(/FamilySearch image fetch failed/);
 
@@ -159,7 +161,7 @@ describe("fetchFsImageBytes — fallback retry", () => {
     mockHtmlResponse();
 
     await expect(
-      fetchFsImageBytes("https://www.familysearch.org/ark:/61903/3:1:X?i=999")
+      fetchFsImageBytes("https://www.familysearch.org/ark:/61903/3:1:X?i=999", undefined, LOCAL)
     ).rejects.toThrow(/Expected an image response/);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -170,7 +172,8 @@ describe("fetchFsImageBytes — fallback retry", () => {
 
     const result = await fetchFsImageBytes(
       "https://www.familysearch.org/ark:/61903/3:1:X?i=1",
-      "https://www.familysearch.org/ark:/61903/3:1:X"
+      "https://www.familysearch.org/ark:/61903/3:1:X",
+      LOCAL
     );
 
     expect(mockFetch).toHaveBeenCalledTimes(1);

@@ -1,6 +1,7 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { toArk } from "../utils/ark.js";
 import type {
   MatchApiEntry,
@@ -22,7 +23,13 @@ const STATUS_URI_TO_LOWER: Record<string, MatchStatus> = {
   "http://familysearch.org/v1/Rejected": "rejected",
 };
 const PID_RE = /^[A-Z0-9]{3,5}-[A-Z0-9]{3,5}$/;
-const ARK_RE = /^(?:https:\/\/familysearch\.org\/)?ark:\/61903\/(\d:\d):([A-Z0-9-]+)$/;
+// Matches the CANONICAL ark form only. Every other spelling — a resolver URL
+// with or without `www.`, http or https, a bare `1:1:QPTX-TMQ2` — is reduced to
+// this form by `toArk` before the test, rather than being enumerated here a
+// second time. The hand-rolled alternation this replaced knew only
+// `https://familysearch.org/`, so it rejected the `www.` URL FamilySearch's own
+// pages emit and `arkToUrl` produces.
+const ARK_RE = /^ark:\/61903\/(\d:\d):([A-Z0-9-]+)$/;
 const ENTRY_ARK_RE = /ark:\/61903\/(\d:\d):([A-Z0-9-]+)/;
 
 interface MatchByIdConfig {
@@ -35,6 +42,7 @@ interface MatchByIdConfig {
 async function matchById(
   input: MatchByIdInput,
   cfg: MatchByIdConfig,
+  principal: Principal,
 ): Promise<MatchByIdResult> {
   const queryArk = normalizeId(input.id, cfg);
   const { minConfidence, status, includeSummary, count } = validateOptions(input);
@@ -46,16 +54,26 @@ async function matchById(
   url.searchParams.set("includeSummary", includeSummary ? "true" : "false");
   url.searchParams.set("count", String(count));
   for (const s of status) url.searchParams.append("status", s);
-  // NOTE: includeFlags is deliberately omitted for now. With the team's
-  // shared internal-dev token, every includeFlags=true call returns an
-  // empty entries[]. Other team members with different OAuth scopes do
-  // get populated responses with per-match flags. See spec for details.
+  // NOTE: includeFlags is deliberately omitted. On this token every
+  // `includeFlags=true` call returns a degenerate empty feed — not a filtered
+  // result set: a genuine zero keeps the envelope (title/updated/links/results),
+  // and the flag response has none of it, so the server is constructing an empty
+  // feed rather than dropping entries. Reproduced across both collections, every
+  // status/count/minConfidence permutation, ARK and bare-pid, and several Accept
+  // types. One team member's account returned populated flags on 2026-05-27.
+  //
+  // The cause is NOT decidable from our side, and the OAuth-scope explanation
+  // this comment used to assert is not one we can even state: `SCOPES` in
+  // `auth/config.ts` is the single string `offline_access` for every token this
+  // codebase mints, and the access token is opaque, so there is no per-user
+  // scope difference here to point at. Settling it needs FamilySearch, not
+  // another probe from us.
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(url.toString(), {
+    response = await fetchWithRetry(url.toString(), {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
@@ -81,6 +99,25 @@ async function matchById(
     throw new Error("FamilySearch match API returned an unexpected response body.");
   }
 
+  // An id the service cannot resolve answers 200 with `entries: []` and
+  // `results: 0` — byte-identical to a persona that genuinely has no matches,
+  // except for this link. Reporting it as zero matches would hand the agent
+  // "nothing is attached to this record" when the truth is "you asked about a
+  // record that does not exist", and the two lead to opposite research
+  // decisions. Same failure shape as a wiki outage recorded as "no page for
+  // this place" (issue #2130).
+  if (body.links?.["not-found"]) {
+    throw new Error(
+      `FamilySearch has no ${humanId(cfg)} at ${queryArk}. The id is well-formed ` +
+        `but names nothing, so this is NOT "no matches found" — re-check the id ` +
+        `you passed.` +
+        (cfg.expectedPrefix === "1:1:"
+          ? ` For a record persona use the recordId/ARK from the search result or ` +
+            `record_read, never the results sidecar's internal p_… persona id.`
+          : ``),
+    );
+  }
+
   const matches = body.entries
     .map(simplifyEntry)
     .filter((m): m is MatchByIdMatch => m !== null);
@@ -95,19 +132,37 @@ async function matchById(
   };
 }
 
+// What the caller PASSES, which is `expectedPrefix` — not `collection`, which is
+// the side being searched. They agree only for the two cross-collection tools,
+// so keying an error message on `collection` names the wrong entity for
+// `person_person_matches` and `record_record_matches`.
+function humanId(cfg: MatchByIdConfig): string {
+  return cfg.expectedPrefix === "4:1:" ? "tree person" : "record persona";
+}
+
 function normalizeId(raw: string, cfg: MatchByIdConfig): string {
   if (typeof raw !== "string" || raw.trim() === "") {
     throw new Error(`${cfg.toolName} requires a non-empty id (e.g. "KNDX-MKG").`);
   }
   const id = raw.trim();
-  const arkMatch = id.match(ARK_RE);
+  // `toArk` returns its input unchanged when no ARK can be derived, so a plain
+  // PID falls through to PID_RE below and a non-id like the results sidecar's
+  // `p_293161675629` still reaches the throw. That rejection is CORRECT and must
+  // stay. The upstream check is on FORM, not on existence: a well-formed id the
+  // service never assigned answers 200 (with the `not-found` link handled
+  // below), while a malformed one answers 400. The form rule is a character set
+  // — `XXXX-XXXX`, uppercase, digits 1-9 and consonants, with `0` and the vowels
+  // `AEIOU` excluded at every position; there is NO check character (measured:
+  // varying a real pid's last character over all 36 alphanumerics accepts 30 and
+  // rejects exactly `0AEIOU`). `p_…` is malformed on several counts, so passing
+  // it through would buy a 400 instead of this readable message.
+  const arkMatch = toArk(id).match(ARK_RE);
   if (arkMatch) {
     const [, prefixCore, pid] = arkMatch;
     const prefix = `${prefixCore}:` as MatchArkType;
     if (prefix !== cfg.expectedPrefix) {
-      const human = cfg.expectedPrefix === "4:1:" ? "tree person" : "record persona";
       throw new Error(
-        `Expected a ${human} ARK (ark:/61903/${cfg.expectedPrefix}...) ` +
+        `Expected a ${humanId(cfg)} ARK (ark:/61903/${cfg.expectedPrefix}...) ` +
           `but received ${prefix}. Did you mean ${cfg.siblingTool}?`,
       );
     }
@@ -241,17 +296,17 @@ const CFG_RR: MatchByIdConfig = {
   siblingTool: "person_record_matches",
 };
 
-export function personRecordMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_PR);
+export function personRecordMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_PR, principal);
 }
-export function recordPersonMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_RP);
+export function recordPersonMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_RP, principal);
 }
-export function personPersonMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_PP);
+export function personPersonMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_PP, principal);
 }
-export function recordRecordMatches(input: MatchByIdInput): Promise<MatchByIdResult> {
-  return matchById(input, CFG_RR);
+export function recordRecordMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
+  return matchById(input, CFG_RR, principal);
 }
 
 const INPUT_SCHEMA = {

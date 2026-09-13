@@ -44,8 +44,8 @@ already removed for the collapse case:
   `validate_research_schema` … fix errors" (`SKILL.md:243–248`), the whole-file
   rewrite loop this whole tool direction exists to kill.
 
-The merge work already built the machinery (atomic write, `validateParsed`,
-`.bak`); a single-entity edit is a strict subset of it.
+The merge work already built the machinery (atomic write, `validateParsed`);
+a single-entity edit is a strict subset of it.
 
 ---
 
@@ -98,8 +98,8 @@ allowlist level on all three binding surfaces named above, and a per-op contract
 would have to be re-implemented and re-verified in each of them. Reach for
 another tool split before reaching for per-op authorization.
 
-Both tools keep identical batched `ops`, id rules, validate-on-write, and
-`.bak` semantics (everything in §4–§7). An op sent to the wrong tool is
+Both tools keep identical batched `ops`, id rules, and validate-on-write
+semantics (everything in §4–§7). An op sent to the wrong tool is
 rejected before anything is applied, with a redirect naming the sibling tool
 (`tree_edit only adds — 'update_name' is a correction/removal op; corrections
 and removals live in tree_correct`, and the mirror-image message on
@@ -131,7 +131,7 @@ step, run after — see §8).
 | Simplified ids are `I/N/F/R/S`, "unique within their array, immutable once created" | `docs/specs/simplified-gedcomx-spec.md:61–69` |
 | `SimplifiedFact.primary?`, `SimplifiedName.preferred?`, relationship `parent/child` vs `person1/person2` | `src/types/gedcomx.ts:104–151` |
 | Shared write layer: `atomicWriteJson`, `assertInsideProject`, `validateParsed`, exported `validateGedcomx` | `src/utils/project-io.ts`, `src/validation/validator.ts` (shipped) |
-| `.bak`-before-overwrite + compact-return + validate-before-persist pattern | `src/tools/merge-tree-persons.ts` + `src/utils/project-io.ts` (`atomicWriteJson`) |
+| compact-return + validate-before-persist pattern | `src/tools/merge-tree-persons.ts` + `src/utils/project-io.ts` (`atomicWriteJson`) |
 | Per-prefix max-id logic already exists (private) | `src/utils/merge-gedcomx.ts` `maxIdNum` |
 | Name→standard place resolver | `src/utils/place-resolver.ts` `resolveStandardPlace` (`place_search` returns `standardPlace`) |
 
@@ -178,7 +178,10 @@ tree_edit({
   duplicated onto each spouse); supplying both or neither is an input error, and
   a `relationshipId` that names a `ParentChild` is an input error (the tree
   schema allows `facts` only on Couples). If `fact.primary === true`, clear
-  `primary` on every other fact of the **same `type`** on that holder. If
+  `primary` on every other fact of the **same `type`** on that holder.
+  `primary: false` means "add this without a primary" — the key is deleted
+  before the write and any existing primary of the type is left alone. Any
+  other spelling (`"false"`, `null`, `0`) is an input error. If
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves).
@@ -187,7 +190,12 @@ tree_edit({
   exactly-one-target contract as `add_fact`; the `factId` must live on the named
   holder. If `place` changed (and not explicitly accompanied by
   `standard_place`), re-resolve `standard_place`. If `primary: true` set, run the
-  same-type swap on that holder.
+  same-type swap on that holder. `primary: false` deletes the key on **that fact
+  only**, leaving other facts of the type untouched — so a vital type may end
+  with no primary at all, which is the point: it is the only way to retire a
+  concluded value while a conflict is open.
+  `add_person` and `add_relationship` apply the same `primary: false` deletion
+  to each inline fact they author.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
   `name.preferred === true`, clear `preferred` on the person's other names.
 - **`update_name`** `{ personId, nameId, name }` — shallow-merge fields; preferred
@@ -318,7 +326,7 @@ tree_edit({
 Semantics (decision from the e2e research-runtime speedup review, §6 Q1):
 
 - **All-or-nothing.** Every op applies to one in-memory tree; the whole tree is
-  **validated once** and written **once** (one `.bak` reflecting pre-batch state). Any
+  **validated once** and written **once** (a single atomic write, no `.bak`). Any
   op's precondition throw or the final validation failure writes **nothing**. (A
   best-effort `standard_place` resolution miss does not throw — it leaves the field
   unset and adds a warning; it never aborts the batch. See §7.)
@@ -403,8 +411,7 @@ Sequence (validate-before-persist, tree-only):
    before any write. If the call introduces an error → write nothing, return
    `{ ok: false, errors }`; a pre-existing error the call did not introduce rides
    as a warning.
-4. Persist: back up `tree.gedcomx.json` → `tree.gedcomx.json.bak`, then
-   `atomicWriteJson` the new tree. **Only `tree.gedcomx.json` is written** —
+4. Persist: `atomicWriteJson` the new tree. **Only `tree.gedcomx.json` is written** —
    `research.json` is untouched (ad-hoc adds create ids nothing references yet;
    corrections change values, not ids; `remove` deletes facts/relationships, not
    persons — so no person-id reference can dangle). This is the Mode-1 write shape.
@@ -412,7 +419,7 @@ Sequence (validate-before-persist, tree-only):
 > **Tree-writer closure.** The tree's writers are the merge tools, `tree_edit`,
 > and — for the one composite case — `research_append`, whose `sourceDescription`
 > input appends an `S` entry through the same shared layer (`nextId`,
-> `backupIfExists`, `atomicWriteBoth`, `validateParsed`; research-append spec
+> `atomicWriteBoth`, `validateParsed`; research-append spec
 > §3.4/§4). No other tool writes `tree.gedcomx.json`; all of them share the id
 > allocator and validate-before-persist, so the closure holds.
 
@@ -420,11 +427,16 @@ Sequence (validate-before-persist, tree-only):
 > `merge-gedcomx.ts` already computes privately as `maxIdNum`; with a second
 > consumer now, lift it to a shared `src/utils/gedcomx-ids.ts` (the repo's
 > "second concrete need → factor it out" rule) and have both call it. The persist
-> half is `atomicWriteJson` + `backupIfExists` + `validateParsed`, all shipped.
+> half is `atomicWriteJson` + `validateParsed`, all shipped.
 
 > **Recovery, not undo** (same caveat as the merge tools): validate-before-persist
-> guarantees schema-valid, not *correct*. The `.bak` is the one-deep safety net for
-> a wrong-but-valid edit; there is no undo.
+> guarantees schema-valid, not *correct*. There is no `.bak` and no undo for a
+> wrong-but-valid edit; recovery is to correct it with a further edit.
+>
+> **No `.bak`.** The tree writers no longer copy `tree.gedcomx.json` →
+> `tree.gedcomx.json.bak` before an overwrite — nothing read it and the feedback
+> bundler shipped it unredacted. Any `.bak` already sitting in an existing project
+> folder is accepted, not drained.
 
 ---
 
@@ -492,8 +504,10 @@ The caller (`tree-edit` skill) still:
 ## 9. Test plan (vitest, mirroring the merge tool tests)
 
 - **add_fact** — appends with the next `F` id; `primary: true` clears the prior
-  same-type primary; `place` set → `standard_place` resolved (mock the resolver);
-  only `tree.gedcomx.json` written; `.bak` created; project validates.
+  same-type primary; `primary: false` is deleted rather than stored, on
+  `add_fact`, `update_fact`, `add_person` and `add_relationship` alike, and a
+  non-boolean `primary` is refused; `place` set → `standard_place` resolved (mock the resolver);
+  only `tree.gedcomx.json` written; no `.bak`; project validates.
   Relationship-targeted: `relationshipId` appends to the Couple's own `facts`
   (same F id / primary swap / place resolution; nothing lands on either spouse);
   both/neither of `personId`/`relationshipId` rejected; `ParentChild` target

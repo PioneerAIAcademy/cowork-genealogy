@@ -12,12 +12,10 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
-    "person-record-matches-flynn",
-    "person-record-matches-flynn-person-id",
-    "person-record-matches-flynn-personid"
+    "person-record-matches-flynn"
   ],
   "judge_context": [
-    "Should call person_record_matches with id LZNY-BRF (not a made-up ID)",
+    "Should call person_record_matches with the `id` parameter set to LZNY-BRF (not a made-up ID). The tool's schema declares `id` and nothing else — a call passing `personId` or `person_id` is wrong, and no fixture covers it any more",
     "Should clearly distinguish the accepted match (1850 census, confidence 5) from the two pending hints (1860 census confidence 3, Pennsylvania Death Certificates confidence 2)",
     "Should NOT make any edits to tree.gedcomx.json or research.json — this is a read-only query, not an edit request",
     "Should recommend the user review the two pending hints, especially the higher-confidence 1860 census match"

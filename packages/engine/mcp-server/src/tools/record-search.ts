@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import {
@@ -45,8 +46,7 @@ import {
 } from "../utils/results-staging.js";
 import { compactStagedRecordSearch } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
-import { withRetry } from "../utils/place-resolver.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
@@ -62,8 +62,8 @@ const FS_SEARCH_URL =
 // Per-attempt ceiling for the FamilySearch search fetch. FS search can be slow;
 // without a timeout a stalled connection hangs until the OS/transport kills it,
 // which surfaces upstream as a dead turn mid-search rather than an actionable
-// error (issue #1316). Retried up to 3× by fetchSearchWithRetry, so worst-case
-// wall time before the terminal error is ~3×25s plus backoff.
+// error (issue #1316). Retried by fetchWithRetry (default 3 attempts within a
+// 10s budget), so worst-case wall time is ~25s + budget.
 const SEARCH_TIMEOUT_MS = 25_000;
 
 const PAGINATION_CAP = 4999;
@@ -876,45 +876,9 @@ export function mapEntry(
   return result;
 }
 
-/**
- * One FamilySearch search fetch with a per-attempt timeout, shaped for retry by
- * `withRetry` (#1316). The retryable-vs-terminal decision is made by throw-vs-return,
- * so `withRetry`'s "retry every thrown error" contract is exactly right and needs no
- * predicate:
- *   - THROW on transient states — 429, 5xx, and any `fetch` rejection (network error
- *     or the AbortSignal.timeout firing) — so `withRetry` retries them.
- *   - RETURN the response for 2xx and for permanent 4xx (400/401/403/404), so the
- *     caller's `!response.ok` block handles them once, without retrying.
- * `fetchWithTimeout` creates a fresh `AbortSignal.timeout` on every call, i.e. per
- * attempt, because `withRetry` invokes this function anew each time (an aborted
- * signal can't be reused).
- */
-async function fetchSearchWithRetry(
-  url: string,
-  token: string
-): Promise<Response> {
-  const response = await fetchWithTimeout(
-    url,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-        "Accept-Language": "en",
-        "User-Agent": BROWSER_USER_AGENT,
-      },
-    },
-    SEARCH_TIMEOUT_MS
-  );
-  if (response.status === 429 || response.status >= 500) {
-    throw new Error(
-      `FamilySearch search API error: ${response.status} ${response.statusText}`
-    );
-  }
-  return response;
-}
-
 export async function recordSearchTool(
-  input: RecordSearchInput
+  input: RecordSearchInput,
+  principal: Principal
 ): Promise<RecordSearchToolResponse> {
   validateInput(input);
 
@@ -924,27 +888,30 @@ export async function recordSearchTool(
   }
   const paired = applyAltNameAutoPair(normalizedInput);
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const url = buildSearchUrl(paired);
 
-  // #1316: a timed-out or transiently-failed search must surface as an explicit,
-  // distinguishable error the agent reacts to — never as a short/empty result set
-  // that reads like an exhaustive search. A bare fetch had no timeout (a slow FS
-  // connection hung the turn) and no retry (one blip was fatal). fetchSearchWithRetry
-  // adds a per-attempt timeout and THROWS on transient states (429/5xx, network,
-  // timeout) so withRetry retries them; permanent 4xx (400/401/403) are RETURNED
-  // and handled unchanged by the `!response.ok` block below (retrying them is
-  // pointless). getValidToken() stays outside the retry so an auth failure surfaces
-  // immediately without re-authenticating per attempt.
+  // #1316 / #2054: fetchWithRetry wraps fetchWithTimeout with automatic retry
+  // of transient failures (429/5xx, network errors, timeouts). getValidToken(principal)
+  // stays outside the retry so an auth failure surfaces immediately.
   let response: Response;
   try {
-    response = await withRetry(() => fetchSearchWithRetry(url, token), {
-      attempts: 3,
-    });
+    response = await fetchWithRetry(
+      url,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Accept-Language": "en",
+          "User-Agent": BROWSER_USER_AGENT,
+        },
+      },
+      SEARCH_TIMEOUT_MS,
+    );
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `FamilySearch record search did not complete after 3 attempts ` +
+      `FamilySearch record search did not complete after retries ` +
         `(network timeout or transient error): ${detail}. This is a transient ` +
         `failure, NOT an empty result — coverage is unknown.`
     );
@@ -976,9 +943,19 @@ export async function recordSearchTool(
         `FamilySearch search rejected the query (400 ${response.statusText}).`
       );
     }
-    // Only NON-retryable non-OK statuses reach here (e.g. 404). 429/5xx are
-    // intercepted and thrown inside fetchSearchWithRetry, so they are retried
-    // and, if still failing, surface via the terminal error above — never here.
+    if (response.status === 429) {
+      throw new Error(
+        "FamilySearch rate limit reached and did not clear within the retry budget. " +
+          "Wait a minute and try again.",
+      );
+    }
+    if (response.status >= 500) {
+      throw new Error(
+        `FamilySearch record search did not complete after retries ` +
+          `(FamilySearch search API error: ${response.status} ${response.statusText}). ` +
+          `This is a transient failure, NOT an empty result — coverage is unknown.`
+      );
+    }
     throw new Error(
       `FamilySearch search API error: ${response.status} ${response.statusText}`
     );
@@ -1129,12 +1106,15 @@ export async function recordSearchTool(
   // no partial-failure state.
   if (out.staged && input.subjectId && input.projectPath) {
     try {
-      out.ranked = await rankSearchMatches({
-        projectPath: input.projectPath,
-        stagedResultsRef: out.staged.resultsRef,
-        subjectId: input.subjectId,
-        checkAttachments: true,
-      });
+      out.ranked = await rankSearchMatches(
+        {
+          projectPath: input.projectPath,
+          stagedResultsRef: out.staged.resultsRef,
+          subjectId: input.subjectId,
+          checkAttachments: true,
+        },
+        principal,
+      );
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
     }

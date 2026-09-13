@@ -18,7 +18,8 @@
       ],
       "writerTools": [
         "project_create",
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit"
@@ -53,7 +54,8 @@
         "skill:init-project"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [],
       "notes": "Recorded as unowned while the only writer was init-project's raw file write, on a measurement taken over the e2e corpus — where init-project never runs, because every fixture starts from an existing project. The unit corpus does exercise it. Now routed through `research_append` with the rest of project creation. Not enforceable on the unit plane: the section is outside the diff set that plane iterates.",
@@ -207,7 +209,8 @@
         "skill:person-evidence"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit",
@@ -267,7 +270,8 @@
         "skill:timeline"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit"
@@ -286,7 +290,8 @@
         "skill:proof-conclusion"
       ],
       "writerTools": [
-        "research_append"
+        "research_append",
+        "merge_tree_persons"
       ],
       "enforceableAt": [
         "unit",
@@ -359,7 +364,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub — except the party a relationship/marriage assertion NAMES but gives no persona (materialize_facts's named-party form, tree-materialization-spec.md section 4.6), where a sourced name is the whole of what the record supports and the mandatory ref still binds. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else.",
+      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub — except the party a relationship/marriage assertion NAMES but gives no persona (materialize_facts's named-party form, tree-materialization-spec.md section 4.6), where a sourced name is the whole of what the record supports and the mandatory ref still binds. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else. tree-edit may CLEAR `primary` (`primary: false`, never stored) to retire a concluded value while a conflict is open; it may not set one.",
       "failure": "This file is the upload target. An unsourced person written here is uploaded to FamilySearch as fact.",
       "remedy": "Mint through person-evidence with the record's facts attached; correct through tree-edit; conclude through proof-conclusion.",
       "override": "none"

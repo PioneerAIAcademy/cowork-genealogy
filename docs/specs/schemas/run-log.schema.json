@@ -461,12 +461,16 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "passed"],
+            "required": ["name", "passed", "outcome"],
             "additionalProperties": false,
             "properties": {
               "name": { "type": "string" },
               "passed": { "type": "boolean" },
-              "error": { "type": ["string", "null"] }
+              "error": { "type": ["string", "null"] },
+              "outcome": {
+                "enum": ["passed", "failed", "skipped"],
+                "description": "What the validator did. `skipped` means it raised pytest.skip() and executed no assertion — non-gating, so it also carries `passed: true`, but it is NOT evidence the checked property holds. Absent on run logs written before this field existed; read those by testing `error` for a leading \"skipped: \"."
+              }
             }
           }
         }
