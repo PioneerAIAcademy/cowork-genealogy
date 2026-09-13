@@ -250,6 +250,21 @@ async function applyLogAppendOp(
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
   }
+  // This entry grades the curated-links FETCH, not the search: any links
+  // returned is a positive fetch, even when none fit the plan item's record
+  // type (that goes in notes instead). Enforced mechanically — rather than
+  // left to the model's own judgment call — because it was measured to be
+  // wrong often enough in practice to need a hard gate, not another
+  // reminder in prose. Scoped to `external_links_search` only: no other
+  // tool value shares this fetch-vs-search distinction, and it is the only
+  // one search-external-sites (its sole caller) uses this way.
+  if (op.tool === "external_links_search" && op.resultsExamined > 0 && op.outcome !== "positive") {
+    throw new LogAppendError(
+      `tool 'external_links_search' returned ${op.resultsExamined} result(s), so outcome must be ` +
+        `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
+        `results didn't fit the plan item's record type in 'notes' instead.`,
+    );
+  }
 
   if (!Array.isArray(research.log)) {
     throw new LogAppendError("research.json `log` is missing or not an array");

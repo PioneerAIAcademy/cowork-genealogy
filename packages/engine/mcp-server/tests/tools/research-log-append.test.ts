@@ -364,6 +364,53 @@ describe("research_log_append", () => {
     expect(research.log).toHaveLength(0);
   });
 
+  it("rejects an external_links_search entry logged negative despite returning results", async () => {
+    // This entry grades the curated-links FETCH, not the search: a model
+    // that recognizes none of the returned links fit the target site/record
+    // type has been observed logging outcome "negative" anyway — collapsing
+    // "FamilySearch curates nothing here" and "curates plenty, none
+    // relevant" into the same value, which loses the distinction permanently
+    // in the audit trail. Enforced here rather than left to the model, since
+    // it was a repeat, measured miss in practice.
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "negative",
+      resultsExamined: 2,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/outcome must be 'positive'/);
+    const research = await readJson("research.json");
+    expect(research.log).toHaveLength(0);
+  });
+
+  it("accepts an external_links_search entry logged positive when it returned results", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "positive",
+      resultsExamined: 2,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts an external_links_search entry logged negative when it genuinely returned nothing", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "negative",
+      resultsExamined: 0,
+    });
+    expect(result.ok).toBe(true);
+  });
+
   it("accepts a null planItemId (opportunistic search) and a valid pli_ id", async () => {
     await writeProject(baseResearch());
     const optOut = await researchLogAppend({
