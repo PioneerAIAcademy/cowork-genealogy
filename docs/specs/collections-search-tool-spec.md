@@ -173,10 +173,10 @@ overlapping the requested year window:
 ## Authentication
 
 The tool requires a valid FamilySearch access token. It must call
-`getValidToken()` from `src/auth/refresh.ts` — the single entry point
+`getValidToken(principal)` from `src/auth/refresh.ts` — the single entry point
 for all authenticated tools. Do not re-implement token plumbing.
 
-If the user is not authenticated, `getValidToken()` throws an
+If the user is not authenticated, `getValidToken(principal)` throws an
 LLM-instruction error directing the user to call the `login` tool. The
 tool handler should let this error propagate.
 
@@ -254,7 +254,7 @@ contains only the collections that pass it.
 |-----------|----------|
 | `standardPlace` not provided | Throw error: `"collections_search requires a standardPlace (preferably the standardPlace from place_search)."` |
 | `endYear` less than `startYear` (both given) | Throw error: `"endYear must be greater than or equal to startYear."` |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
 | API returns non-OK status | Throw error: `"FamilySearch collections API error: {status} {statusText}"` |
 | API returns empty/malformed response | Return `{ query, scope, totalForPlace: 0, results: [] }` |
 

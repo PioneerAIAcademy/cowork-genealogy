@@ -16,7 +16,6 @@
 // tree_edit is structurally unable to rewrite identity (the ut_013 rename
 // incident), instead of merely prose-forbidden from it.
 
-import { join } from "path";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -703,7 +702,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
     // section it never touched (#1572).
     const beforeTree = structuredClone(tree);
 
-    const treePath = join(projectPath, "tree.gedcomx.json");
 
     // ─── Batch form: apply every op in-memory, then validate + write once ─────
     if (input.ops !== undefined) {
@@ -734,7 +732,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await atomicWriteJson(treePath, tree);
+      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
       return {
         ok: true,
         results,
@@ -759,7 +757,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
-    await atomicWriteJson(treePath, tree);
+    await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
 
     const result: TreeEditResult = {
       ok: true,

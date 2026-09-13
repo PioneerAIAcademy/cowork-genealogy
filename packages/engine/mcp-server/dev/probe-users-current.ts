@@ -35,6 +35,7 @@
  *     tiny POC allowlist. (2) The endpoint also returns account PII
  *     (helperAccessPin, birthDate, mobilePhoneNumber); read ONLY email + id.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 
@@ -43,7 +44,7 @@ const ACCEPT = "application/x-fs-v1+json";
 const FIELDS = ["id", "email", "personId", "displayName", "contactName"];
 
 async function main(): Promise<void> {
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   const res = await fetch(URL, {
     headers: {
       Authorization: `Bearer ${token}`,

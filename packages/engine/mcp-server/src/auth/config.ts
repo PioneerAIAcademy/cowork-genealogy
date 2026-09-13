@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import type { AppConfig } from "../types/auth.js";
+import type { Principal } from "./principal.js";
 
 export const AUTHORIZATION_URL =
   "https://ident.familysearch.org/cis-web/oauth2/v3/authorization";
@@ -64,7 +65,16 @@ export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. " +
   "Do not ask the user to paste the key into the chat.";
 
-export async function loadConfig(): Promise<AppConfig> {
+/**
+ * The per-user config `principal` acts with: the desktop's
+ * `~/.familysearch-mcp/config.json` for the local principal, the config that
+ * travelled with the request for a bearer. Every getter below takes the
+ * principal for the same reason `getValidToken` does (auth/principal.ts).
+ */
+export async function loadConfig(principal: Principal): Promise<AppConfig> {
+  if (principal.kind === "bearer") {
+    return principal.config;
+  }
   try {
     const raw = await readFile(CONFIG_STORAGE_PATH, "utf8");
     const parsed: unknown = JSON.parse(raw);
@@ -82,8 +92,17 @@ export async function ensureStorageDir(): Promise<void> {
   await chmod(STORAGE_DIR, 0o700);
 }
 
-export async function saveConfig(patch: Partial<AppConfig>): Promise<void> {
-  const existing = await loadConfig();
+export const HOSTED_CONFIG_READ_ONLY_MESSAGE =
+  "Per-user settings are managed by the web app in a hosted session and cannot be changed from here.";
+
+export const HOSTED_SESSION_MANAGED_MESSAGE =
+  "The FamilySearch session is managed by the web app in a hosted session; sign out there.";
+
+export async function saveConfig(patch: Partial<AppConfig>, principal: Principal): Promise<void> {
+  if (principal.kind === "bearer") {
+    throw new Error(HOSTED_CONFIG_READ_ONLY_MESSAGE);
+  }
+  const existing = await loadConfig(principal);
   const merged: AppConfig = { ...existing, ...patch };
   await ensureStorageDir();
   await writeFile(
@@ -119,13 +138,14 @@ export async function getClientId(): Promise<string> {
 // True inside a hosted sandbox (the control plane writes `hosted: true` into
 // config.json when it provisions one). Defaults to false, so the desktop .mcpb
 // — where interactive loopback login IS the right answer — is unaffected.
-export async function isHostedMode(): Promise<boolean> {
-  const config = await loadConfig();
+export async function isHostedMode(principal: Principal): Promise<boolean> {
+  if (principal.kind === "bearer") return true;
+  const config = await loadConfig(principal);
   return config.hosted === true;
 }
 
-export async function getWikiApiUrl(): Promise<string> {
-  const config = await loadConfig();
+export async function getWikiApiUrl(principal: Principal): Promise<string> {
+  const config = await loadConfig(principal);
   const url = config.wikiApiUrl?.trim().replace(/\/$/, "");
   return url || DEFAULT_WIKI_API_URL;
 }
@@ -134,8 +154,8 @@ export async function getWikiApiUrl(): Promise<string> {
 // rule): the server reads it here in every runtime. e2e and the hosted
 // sandbox bridge their env var into config.json at the orchestration layer —
 // see docs/specs/image-transcribe-tool-spec.md §6.5.
-export async function getOpenRouterApiKey(): Promise<string> {
-  const config = await loadConfig();
+export async function getOpenRouterApiKey(principal: Principal): Promise<string> {
+  const config = await loadConfig(principal);
   const key = config.openRouterApiKey?.trim();
   if (!key) {
     throw new Error(OPENROUTER_API_KEY_MISSING_MESSAGE);
@@ -143,7 +163,7 @@ export async function getOpenRouterApiKey(): Promise<string> {
   return key;
 }
 
-export async function getOpenRouterModel(): Promise<string> {
-  const config = await loadConfig();
+export async function getOpenRouterModel(principal: Principal): Promise<string> {
+  const config = await loadConfig(principal);
   return config.openRouterModel?.trim() || DEFAULT_OPENROUTER_MODEL;
 }

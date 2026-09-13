@@ -5,8 +5,8 @@
  * Port of plugin/skills/validate-schema/scripts/validate_project.py
  */
 
-import { readFile, readdir } from "fs/promises";
-import { join, resolve, basename } from "path";
+import { basename } from "path";
+import { getProjectStore } from "../store/project-store.js";
 import type {
   ValidationReport,
   ValidationResult,
@@ -185,23 +185,21 @@ export const ID_PREFIXES: Record<string, string> = {
  */
 export async function validateProject(projectPath: string): Promise<ValidationResult> {
   const report = createReport();
-
-  const researchPath = resolve(projectPath, "research.json");
-  const treePath = resolve(projectPath, "tree.gedcomx.json");
+  const store = getProjectStore();
 
   let research: any;
   let tree: any;
 
   // Load files
   try {
-    const researchText = await readFile(researchPath, "utf-8");
+    const researchText = await store.readText(projectPath, "research.json");
     research = JSON.parse(researchText);
   } catch (error) {
     addError(report, "", `research.json not found or invalid JSON: ${error}`);
   }
 
   try {
-    const treeText = await readFile(treePath, "utf-8");
+    const treeText = await store.readText(projectPath, "tree.gedcomx.json");
     tree = JSON.parse(treeText);
   } catch (error) {
     addError(report, "", `tree.gedcomx.json not found or invalid JSON: ${error}`);
@@ -1901,7 +1899,7 @@ async function validateSidecars(
   projectPath: string,
   report: ValidationReport
 ): Promise<void> {
-  const resultsDir = join(projectPath, "results");
+  const store = getProjectStore();
   const logById = new Map<string, any>();
   const log = Array.isArray(research.log) ? research.log : [];
 
@@ -1927,7 +1925,6 @@ async function validateSidecars(
     }
 
     referenced.add(basename(ref));
-    const scPath = join(projectPath, ref);
 
     // Guard against path traversal: results_ref must resolve inside projectPath
     // (it is user-influenced; in multi-tenant it must not read outside the dir).
@@ -1938,7 +1935,7 @@ async function validateSidecars(
 
     let sc: any;
     try {
-      const scText = await readFile(scPath, "utf-8");
+      const scText = await store.readText(projectPath, ref);
       sc = JSON.parse(scText);
     } catch (error) {
       addError(report, lp, `results_ref points at '${ref}' which does not exist or is invalid JSON`);
@@ -1976,15 +1973,12 @@ async function validateSidecars(
   }
 
   // Orphan sidecars: a results/ file that no log entry references
-  try {
-    const files = await readdir(resultsDir);
-    for (const f of files) {
-      if (f.endsWith(".json") && !referenced.has(f)) {
-        addError(report, `results/${f}`, "orphan sidecar — no log entry references it");
-      }
+  // An absent results/ directory lists as empty — not an error if no log
+  // entries reference sidecars.
+  for (const { name: f } of await store.list(projectPath, "results")) {
+    if (f.endsWith(".json") && !referenced.has(f)) {
+      addError(report, `results/${f}`, "orphan sidecar — no log entry references it");
     }
-  } catch {
-    // results/ directory doesn't exist — not an error if no log entries reference sidecars
   }
 
   // D5: every assertion carrying a record_persona_id must resolve it to a

@@ -44,7 +44,13 @@ echo Running e2e fixture %SLUG%...
 echo.
 
 cd harness
-call uv run python -m e2e.run_e2e --test %SLUG%
+rem Optional P2 flags, set in the shell before launching (the Makefile's
+rem DENY_SHELL=1 / DENY_PROJECT_READS=1): deny the shell, and/or deny direct
+rem reads of the project folder so the agent must use the MCP tools.
+set E2E_FLAGS=
+if "%DENY_SHELL%"=="1" set E2E_FLAGS=%E2E_FLAGS% --deny-shell
+if "%DENY_PROJECT_READS%"=="1" set E2E_FLAGS=%E2E_FLAGS% --deny-project-reads
+call uv run python -m e2e.run_e2e --test %SLUG%%E2E_FLAGS%
 
 echo.
 echo Done. Four result files were written under eval\runlogs\e2e\%SLUG%\.

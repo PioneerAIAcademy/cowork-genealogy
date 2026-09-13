@@ -2,16 +2,25 @@
 """Does an agent's `tools:` allow-list -- and its `disallowedTools:` deny -- bind
 under `permission_mode="bypassPermissions"`, which the hosted path runs?
 
-Answered 2026-08-30 against Claude Code 2.1.251 / agent SDK 0.2.128:
-**both bind**, reproduced twice.
+Answered 2026-08-30 against agent SDK 0.2.128 and its bundled Claude Code 2.1.220
+(an earlier docstring said 2.1.251 -- the PATH `claude --version`, which the SDK never
+spawns; since 2026-09-10 the run prints the resolved binary): **both bind**, reproduced
+twice, and again on 2026-09-10 under the prototype option set (`agents=`,
+`setting_sources=[]`, `plugins=[...]`, `--option-set prototype`):
 
-    arm               tool_search  verdict   probe line
-    probe-a-control   false        CALLED    PROBE_RESULT: CALLED 1751
-    probe-b-deny      false        BLOCKED   subagent could not be spawned
-    probe-c-omit      false        BLOCKED   PROBE_RESULT: ABSENT
-    probe-a-control   true         CALLED    PROBE_RESULT: CALLED 1751
-    probe-b-deny      true         BLOCKED   PROBE_RESULT: ABSENT
-    probe-c-omit      true         BLOCKED   PROBE_RESULT: ABSENT
+    option_set  arm               tool_search  verdict   probe line
+    hosted      probe-a-control   false        CALLED    PROBE_RESULT: CALLED 1751
+    hosted      probe-b-deny      false        BLOCKED   subagent could not be spawned
+    hosted      probe-c-omit      false        BLOCKED   PROBE_RESULT: ABSENT
+    hosted      probe-a-control   true         CALLED    PROBE_RESULT: CALLED 1751
+    hosted      probe-b-deny      true         BLOCKED   PROBE_RESULT: ABSENT
+    hosted      probe-c-omit      true         BLOCKED   PROBE_RESULT: ABSENT
+    prototype   probe-a-control   false        CALLED    PROBE_RESULT: CALLED 1751
+    prototype   probe-b-deny      false        BLOCKED
+    prototype   probe-c-omit      false        BLOCKED
+    prototype   probe-a-control   true         CALLED    PROBE_RESULT: CALLED 1751
+    prototype   probe-b-deny      true         BLOCKED
+    prototype   probe-c-omit      true         BLOCKED
 
 Two things that follow, both of which corrected the docs:
 
@@ -38,8 +47,9 @@ strength of it binding: `make probe-agent-binding`.
 WHAT THE PROBE DOES
 
 Six arms = three frontmatter configurations x two ENABLE_TOOL_SEARCH settings.
-Each arm is its own SDK session built from the EXACT hosted options
-(`real_agent.build_options`), against a temp copy of the real plugin with three
+Each arm is its own SDK session built from the hosted options
+(`real_agent.build_options`) or, with `--option-set prototype`, from the prototype set
+(`dev.p1.options.build_prototype_options`), against a temp copy of the real plugin with three
 extra probe agents staged into it, driven by one query that delegates to one of
 them.
 
@@ -66,6 +76,7 @@ Costs six short sessions (~13k subagent tokens). Needs a compiled engine
 """
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import os
@@ -88,6 +99,8 @@ PLUGIN_DIR = REPO / "packages" / "engine" / "plugin"
 ENGINE_BUILD = REPO / "packages" / "engine" / "mcp-server" / "build" / "index.js"
 sys.path.insert(0, str(SERVER_DIR))
 
+OPTION_SETS = ("hosted", "prototype")
+
 
 def api_key() -> str:
     key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -99,6 +112,31 @@ def api_key() -> str:
             if line.startswith("ANTHROPIC_API_KEY="):
                 return line.split("=", 1)[1].strip()
     return ""
+
+
+def print_versions() -> None:
+    """The SDK, the CLI it bundles, and the CLI binary it will actually spawn.
+
+    `_find_cli()` is resolved off a transport instance whose constructor only
+    records its arguments -- nothing is spawned, so this costs no session and
+    no tokens. The third line says whether that path IS the bundled binary,
+    because `__cli_version__` describes the bundled one and nothing else.
+    """
+    import claude_agent_sdk
+    from claude_agent_sdk import ClaudeAgentOptions
+    from claude_agent_sdk._cli_version import __cli_version__
+    from claude_agent_sdk._internal.transport.subprocess_cli import SubprocessCLITransport
+
+    cli = SubprocessCLITransport(prompt="", options=ClaudeAgentOptions())._find_cli()
+    bundled_dir = (Path(claude_agent_sdk.__file__).parent / "_bundled").resolve()
+    is_bundled = Path(cli).resolve().parent == bundled_dir
+    print(f"claude-agent-sdk {claude_agent_sdk.__version__}")
+    print(f"bundled Claude Code CLI {__cli_version__}")
+    print(
+        f"_find_cli() -> {cli} "
+        + ("(the bundled binary)" if is_bundled
+           else "(NOT the bundled binary -- __cli_version__ does not describe it)")
+    )
 
 
 # ── the three frontmatter configurations ─────────────────────────────
@@ -170,7 +208,56 @@ QUERY = (
 )
 
 
-async def run_arm(name: str, tool_search: str, key: str) -> dict:
+def _usage_totals(usage: dict | None) -> dict[str, int]:
+    keys = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
+    out = {k: 0 for k in keys}
+    for k in keys:
+        v = (usage or {}).get(k)
+        if isinstance(v, (int, float)):
+            out[k] = int(v)
+    return out
+
+
+def build_arm_options(option_set: str, plugin: Path, project: Path, config_dir: Path,
+                      key: str, tool_search: str):
+    """The session options for one arm under one option set.
+
+    ``config_dir`` is the prototype set's ``CLAUDE_CONFIG_DIR``. The caller owns
+    it (it sits inside the arm's temp dir), so a failure here leaks nothing.
+    """
+    from app.agent import real_agent
+
+    if option_set == "hosted":
+        real_agent._PLUGIN_DIR = str(plugin)
+        real_agent._MCP_BUILD = str(ENGINE_BUILD)
+        options = real_agent.build_options(project, api_key=key)
+    elif option_set == "prototype":
+        from dev.p1.options import build_prototype_options
+
+        options = build_prototype_options(
+            project,
+            api_key=key,
+            store=None,
+            config_dir=config_dir,
+            plugin_dir=str(plugin),
+            mcp_build=str(ENGINE_BUILD),
+        )
+        # Arm B is the only definition with a deny. If the loader dropped it, the
+        # bare-name definition the query targets would be arm A under another name.
+        dropped = [
+            n for n, (_tools, denied) in ARMS.items()
+            if denied and not getattr((options.agents or {}).get(n), "disallowedTools", None)
+        ]
+        if dropped:
+            raise RuntimeError(f"load_agent_definitions carried no disallowedTools for {dropped}")
+    else:
+        raise ValueError(f"unknown option set {option_set!r}")
+
+    options.env["ENABLE_TOOL_SEARCH"] = tool_search
+    return options
+
+
+async def run_arm(name: str, tool_search: str, key: str, option_set: str) -> dict:
     from claude_agent_sdk import (
         AssistantMessage,
         ClaudeSDKClient,
@@ -179,7 +266,6 @@ async def run_arm(name: str, tool_search: str, key: str) -> dict:
         ToolUseBlock,
         UserMessage,
     )
-    from app.agent import real_agent
 
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
@@ -191,17 +277,18 @@ async def run_arm(name: str, tool_search: str, key: str) -> dict:
             )
         project = tmp / "project"
         project.mkdir()
+        config_dir = tmp / "config"
+        config_dir.mkdir()
 
-        real_agent._PLUGIN_DIR = str(plugin)
-        real_agent._MCP_BUILD = str(ENGINE_BUILD)
-        options = real_agent.build_options(project, api_key=key)
-        options.env["ENABLE_TOOL_SEARCH"] = tool_search
+        options = build_arm_options(option_set, plugin, project, config_dir, key, tool_search)
 
         calls: dict[str, dict] = {}   # tool_use_id -> {name, parent}
         results: dict[str, dict] = {} # tool_use_id -> {is_error, text}
         text_lines: list[str] = []
         saw_subagent_msg = False
         registered: list[str] = []
+        cost: dict = {"cost_usd": None, "duration_ms": None, "num_turns": None,
+                      "usage": _usage_totals(None)}
 
         client = ClaudeSDKClient(options=options)
         await client.connect()
@@ -226,6 +313,12 @@ async def run_arm(name: str, tool_search: str, key: str) -> dict:
                         elif getattr(block, "text", None):
                             text_lines.append(block.text)
                 if isinstance(msg, ResultMessage):
+                    cost = {
+                        "cost_usd": msg.total_cost_usd,
+                        "duration_ms": msg.duration_ms,
+                        "num_turns": msg.num_turns,
+                        "usage": _usage_totals(msg.usage),
+                    }
                     break
         finally:
             await client.disconnect()
@@ -264,6 +357,7 @@ async def run_arm(name: str, tool_search: str, key: str) -> dict:
         verdict = "BLOCKED"
 
     return {
+        "option_set": option_set,
         "arm": name,
         "tool_search": tool_search,
         "verdict": verdict,
@@ -273,7 +367,43 @@ async def run_arm(name: str, tool_search: str, key: str) -> dict:
         "delegation_calls": delegation,
         "final_text": " | ".join(t.strip().replace("\n", " ") for t in text_lines)[-1200:],
         "registered_probe_agents": [a for a in registered if a.startswith("probe-")],
+        **cost,
     }
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="python dev/probe_agent_binding.py",
+        description="Do an agent's tools:/disallowedTools: bind under bypassPermissions? "
+                    "Six arms per option set; see the module docstring.",
+    )
+    p.add_argument(
+        "--option-set", choices=(*OPTION_SETS, "both"), default="both",
+        help="hosted = real_agent.build_options (staged agents, setting_sources=['project']); "
+             "prototype = dev.p1.options.build_prototype_options (agents=, setting_sources=[], "
+             "fresh CLAUDE_CONFIG_DIR per arm); default both",
+    )
+    p.add_argument(
+        "--version-only", action="store_true",
+        help="print the SDK / bundled CLI / resolved CLI path lines and exit (no session)",
+    )
+    return p
+
+
+def _print_cost_totals(rows: list[dict]) -> None:
+    print("\ntoken / cost totals (from ResultMessage; a VOID-by-exception arm contributes nothing):")
+    groups = [(s, [r for r in rows if r.get("option_set") == s]) for s in OPTION_SETS]
+    groups = [(s, rs) for s, rs in groups if rs] + [("all", rows)]
+    for label, rs in groups:
+        usage = {k: sum((r.get("usage") or {}).get(k, 0) for r in rs)
+                 for k in _usage_totals(None)}
+        cost = sum(r["cost_usd"] for r in rs if isinstance(r.get("cost_usd"), (int, float)))
+        priced = sum(1 for r in rs if isinstance(r.get("cost_usd"), (int, float)))
+        print(
+            f"  {label:<10} arms={len(rs)} priced={priced} cost_usd={cost:.4f} "
+            f"input={usage['input_tokens']} cache_create={usage['cache_creation_input_tokens']} "
+            f"cache_read={usage['cache_read_input_tokens']} output={usage['output_tokens']}"
+        )
 
 
 async def main() -> None:
@@ -283,38 +413,53 @@ async def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
+    args = build_parser().parse_args()
+
+    print_versions()
+    if args.version_only:
+        return
+
     key = api_key()
     if not key:
         sys.exit("no ANTHROPIC_API_KEY in env or eval/.env")
     if not ENGINE_BUILD.exists():
         sys.exit(f"no compiled engine at {ENGINE_BUILD} — run `make engine-build`")
 
+    option_sets = list(OPTION_SETS) if args.option_set == "both" else [args.option_set]
     rows = []
-    for tool_search in ("false", "true"):
-        for name in ARMS:
-            print(f"... running {name}  ENABLE_TOOL_SEARCH={tool_search}", flush=True)
-            try:
-                rows.append(await asyncio.wait_for(run_arm(name, tool_search, key), timeout=300))
-            except Exception as exc:  # noqa: BLE001
-                rows.append({"arm": name, "tool_search": tool_search,
-                             "verdict": f"VOID ({type(exc).__name__}: {exc})",
-                             "probe_line": "", "subagent_tool_calls": [],
-                             "registered_probe_agents": []})
+    for option_set in option_sets:
+        for tool_search in ("false", "true"):
+            for name in ARMS:
+                print(f"... running {option_set}/{name}  ENABLE_TOOL_SEARCH={tool_search}",
+                      flush=True)
+                try:
+                    rows.append(await asyncio.wait_for(
+                        run_arm(name, tool_search, key, option_set), timeout=300))
+                except Exception as exc:  # noqa: BLE001
+                    rows.append({"option_set": option_set, "arm": name,
+                                 "tool_search": tool_search,
+                                 "verdict": f"VOID ({type(exc).__name__}: {exc})",
+                                 "probe_line": "", "subagent_tool_calls": [],
+                                 "registered_probe_agents": []})
 
-    print("\n" + "=" * 78)
-    print(f"{'arm':<18}{'tool_search':<13}{'verdict':<12}probe line")
-    print("-" * 78)
+    print("\n" + "=" * 90)
+    print(f"{'option_set':<12}{'arm':<18}{'tool_search':<13}{'verdict':<12}probe line")
+    print("-" * 90)
     for r in rows:
-        print(f"{r['arm']:<18}{r['tool_search']:<13}{r['verdict'][:11]:<12}{r['probe_line'][:34]}")
-    print("=" * 78)
+        print(f"{r['option_set']:<12}{r['arm']:<18}{r['tool_search']:<13}"
+              f"{r['verdict'][:11]:<12}{r['probe_line'][:34]}")
+    print("=" * 90)
+    _print_cost_totals(rows)
     print("\nfull rows:")
     for r in rows:
         print(json.dumps(r, indent=2))
 
-    controls = [r for r in rows if r["arm"] == "probe-a-control"]
-    if any(r["verdict"] != "CALLED" for r in controls):
-        print("\n*** RUN IS VOID: the control arm did not call the tool. "
-              "Nothing else on this table means anything. ***")
+    for option_set in option_sets:
+        controls = [r for r in rows
+                    if r["option_set"] == option_set and r["arm"] == "probe-a-control"]
+        if any(r["verdict"] != "CALLED" for r in controls):
+            print(f"\n*** {option_set.upper()} RUN IS VOID: its control arm did not call the "
+                  "tool. Nothing else in that option set's rows means anything. ***")
 
 
 if __name__ == "__main__":

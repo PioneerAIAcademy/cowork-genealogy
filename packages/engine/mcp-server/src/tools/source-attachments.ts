@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -14,12 +15,13 @@ const URL =
 
 export async function sourceAttachmentsTool(
   input: SourceAttachmentsInput,
+  principal: Principal,
 ): Promise<SourceAttachmentsResult> {
   if (!Array.isArray(input.uris) || input.uris.length === 0) {
     throw new Error("uris array must not be empty.");
   }
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   // Callers pass ARKs (canonical `ark:/61903/...`, the form record_search and
   // fulltext_search now emit) or full resolver URLs. The attachments API keys

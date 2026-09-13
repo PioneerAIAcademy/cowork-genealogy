@@ -126,7 +126,7 @@ Algorithm (all of step 1–3 is local/no-network; only step 4 calls FamilySearch
    `scorePair(gedcomx1, target.id, gedcomx2, candidate.id, token)`. Run these
    with **bounded concurrency** (`mapWithConcurrency`, cap ~5) wrapped in
    `withRetry` (both in `src/utils/place-resolver.ts`). Reuse one OAuth token
-   for the whole batch (call `getValidToken()` once).
+   for the whole batch (call `getValidToken(principal)` once).
 
 5. **Return** the list (§6).
 
@@ -284,7 +284,7 @@ pair, continue the batch" unless there's a reason not to, and comment it.
 - **`src/utils/mob.ts:299-336`** — the canonical relationship walk to model the
   relative gathering on (do not import `Mob`; lift a small shared helper or
   inline it).
-- **`src/auth/refresh.ts`** — `getValidToken()` once per batch.
+- **`src/auth/refresh.ts`** — `getValidToken(principal)` once per batch.
 
 No new MCP tool, no `manifest.json` change, no `tool-schemas.ts`/`index.ts`
 dispatch change — `same_person` is already registered; only its input schema +

@@ -17,7 +17,7 @@
  * For each it prints the raw top-level keys, choices[0].finish_reason,
  * choices[0].native_finish_reason, the content length, and usage.
  *
- * Auth: FamilySearch via getValidToken() (auto-refresh); OpenRouter key +
+ * Auth: FamilySearch via getValidToken(LOCAL) (auto-refresh); OpenRouter key +
  * model via the repo config helpers (~/.familysearch-mcp/config.json), so it
  * needs no eval/.env. Dev-only, NOT shipped.
  *
@@ -50,6 +50,7 @@
  *      matches a cap marker ("length"/"MAX_TOKENS"), case-insensitively.
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../src/auth/config.js";
 import { OCR_MAX_TOKENS } from "../src/tools/image-transcribe.js";
@@ -131,9 +132,9 @@ async function callOnce(
 
 async function main() {
   const [token, apiKey, model] = await Promise.all([
-    getValidToken(),
-    getOpenRouterApiKey(),
-    getOpenRouterModel(),
+    getValidToken(LOCAL),
+    getOpenRouterApiKey(LOCAL),
+    getOpenRouterModel(LOCAL),
   ]);
   console.log(`Model: ${model}`);
   console.log(`Image: ${IMAGE_ID} (1880 U.S. federal census)`);
