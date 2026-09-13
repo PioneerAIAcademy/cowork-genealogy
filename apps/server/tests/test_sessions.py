@@ -147,6 +147,32 @@ def test_logout_revokes_all_sessions():
             s.commit()
 
 
+def test_logout_clears_cookie_when_revocation_write_fails(monkeypatch):
+    """A dead connection during the revocation write must not stop logout from
+    clearing the cookie."""
+    email = "dbfail@example.com"
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": email})
+
+        def boom(self):
+            raise RuntimeError("neon connection dropped")
+
+        monkeypatch.setattr(Session, "commit", boom)
+        r = client.post("/auth/logout")
+        monkeypatch.undo()
+
+        assert r.status_code == 200, f"logout must not fail: {r.status_code}"
+        assert r.headers.get("set-cookie"), \
+            "logout must clear the cookie even when the revocation write fails"
+        assert client.get("/auth/me").status_code == 401
+
+    with Session(get_engine()) as s:
+        u = s.exec(select(User).where(User.email == email)).first()
+        if u:
+            s.delete(u)
+            s.commit()
+
+
 def test_login_after_revocation_works():
     """A fresh login after logout works immediately: the new cookie's iat is
     strictly greater than the revocation stamp, which is never cleared."""
