@@ -328,6 +328,13 @@ function applyMaterializeOp(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsOp,
+  /** Fact ids that existed before the whole OP, when an op runs this more than
+   *  once (the named-party arm's fact pass, one call per role spelling).
+   *  Without it each pass snapshots its own "before", so pass 2 counts pass 1's
+   *  brand-new fact as pre-existing and reports it `factsEnriched` on a person
+   *  the same op created — which the count's own definition ("existed BEFORE
+   *  this op") says is impossible. */
+  preExistingFactIds?: ReadonlySet<string>,
 ): MaterializeFactsOpResult {
   const { recordId, recordRole } = op;
   if (str(recordId) === undefined || str(recordRole) === undefined) {
@@ -370,7 +377,7 @@ function applyMaterializeOp(
   // to this same person are already on `person.facts` and correctly count as
   // pre-existing for this op, exactly as if they'd arrived in an earlier,
   // separate call.
-  const preFactIds = new Set((person.facts ?? []).map((f) => f.id));
+  const preFactIds = preExistingFactIds ?? new Set((person.facts ?? []).map((f) => f.id));
   const createdFactIds = new Set<string>();
   const enrichedFactIds = new Set<string>();
   let namesAdded = 0;
@@ -717,22 +724,61 @@ function applyNamedPartyOp(
   // `validate_research_schema` does not enforce) — but the fix is a loop, and
   // a silent partial write under an enforced ref is the exact failure class
   // this tool exists to refuse.
+  //
+  // CORROBORATED ONLY. `relatedRole` is caller-supplied free text and is never
+  // persisted, so a wrong one that happens to name a REAL other role on this
+  // record selects a real persona — a different individual's. Writing a name
+  // under that mistake mints a duplicate, which is bad and was the pre-existing
+  // risk the spec accepted ("a miss degrades to exactly the behaviour this arm
+  // would have had without the guard"). Writing that individual's FACTS under
+  // it is categorically worse and breaks that acceptance: it attaches one
+  // person's birth and death to another's name, each carrying a genuine
+  // resolved ref, so the misattribution looks provenanced. Executed: a
+  // `testator` parentage assertion naming a daughter, with `relatedRole:
+  // "heir"` where `heir` is a real male persona of [birth 1802, death 1871],
+  // wrote Ann Weller carrying both, refsAttached 3, conflicts_surfaced [].
+  // That is the same objection this file already makes about splitting a
+  // multi-token `given` (line ~634: "fabricates a surname — under an enforced
+  // ref, which makes the fabrication look provenanced").
+  //
+  // So the fact pass runs ONLY where the assertion itself corroborates the
+  // role: `structured_value.related_person_role` present and normalizing equal
+  // to `relatedRole`. 146 of 167 corpus relationship/marriage assertions carry
+  // that key, so corroboration is the common case, not a rare one. Without it
+  // the arm does what it did before — a sourced name and nothing else — which
+  // is the conservative direction: a missing fact is recoverable by a later
+  // persona-arm call, a fact on the wrong person is not.
+  const sv = assertion.structured_value;
+  const namedRole =
+    sv && typeof sv === "object" && !Array.isArray(sv)
+      ? str((sv as Record<string, unknown>).related_person_role)
+      : undefined;
+  const corroborated = namedRole !== undefined && normNamePart(namedRole) === wanted;
+
   let factsAdded = 0;
   let factsEnriched = 0;
   const conflicts: MaterializeFactsOpResult["conflicts_surfaced"] = [];
   let extraNames = 0;
   let extraRefs = 0;
   const spellings: string[] = [];
-  for (const a of siblings) {
+  for (const a of corroborated ? siblings : []) {
     const raw = String(a.record_role ?? "");
     if (!spellings.includes(raw)) spellings.push(raw);
   }
+  // Snapshotted ONCE, before the first pass, and handed to every pass: see the
+  // `preExistingFactIds` docstring. Without it a two-spelling role reported
+  // `{created: true, factsAdded: 1, factsEnriched: 1}` for one fact on a person
+  // that had none before the call.
+  const preOpFactIds: ReadonlySet<string> = new Set(
+    (person.facts ?? []).map((f) => f.id).filter((id): id is string => id !== undefined),
+  );
   for (const spelling of spellings) {
-    const pass = applyMaterializeOp(tree, research, {
-      personId: targetId,
-      recordId: String(recordId),
-      recordRole: spelling,
-    });
+    const pass = applyMaterializeOp(
+      tree,
+      research,
+      { personId: targetId, recordId: String(recordId), recordRole: spelling },
+      preOpFactIds,
+    );
     factsAdded += pass.factsAdded;
     factsEnriched += pass.factsEnriched;
     extraNames += pass.namesAdded;
@@ -1009,9 +1055,14 @@ export const materializeFactsSchema = {
     "assertion (what the source does NOT say) is refused too — it cannot mint anyone. " +
     "Pass nameType only when the record settles whether the surname is her own or " +
     "a married one; omitted means no claim, which is preferable to a wrong one. This " +
-    "writes a SOURCED NAME and the gender scalar; where that role does have a persona " +
-    "and it simply carries no name, that persona's facts are written too, in the same " +
-    "call. Never a relationship. " +
+    "writes a SOURCED NAME and the gender scalar. Where that role does have a persona " +
+    "the record never names, that persona's facts are written too in the same call, but " +
+    "ONLY when the assertion's structured_value.related_person_role names that same role: " +
+    "relatedRole is free text this tool cannot otherwise check, and a wrong one that happens " +
+    "to name a real OTHER role would attach that individual's facts to this name under a " +
+    "genuine ref. factsAdded: 0 means it was not corroborated and only the name was written. " +
+    "Your `gender` WINS over the persona's own gender/sex assertions when you supply one; " +
+    "omit it to take the record's. Never a relationship. " +
     "The marriage event still belongs on the Couple via tree_edit " +
     "add_relationship, and the edge itself via add_relationship's " +
     "sourceAssertionId. Unlike tree_edit add_person, whose name path is " +

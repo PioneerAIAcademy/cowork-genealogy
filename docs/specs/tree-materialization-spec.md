@@ -453,12 +453,31 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   here there is only one assertion, so the call is refused rather than
   silently emptied.
 - **Writes a sourced name and the gender scalar, plus that persona's own facts
-  where the role does have a persona the record never names.** Never a
-  relationship edge, never `preferred`. The fact pass runs one `applyMaterializeOp`
-  per distinct `record_role` spelling the guard matched, not one for the first:
-  the guard selects case- and space-insensitively while the persona arm filters
-  exactly, so a single spelling would hand it a subset and drop the rest
-  silently.
+  where the role does have a persona the record never names AND the assertion
+  corroborates the role.** Never a relationship edge, never `preferred`. Two
+  conditions on that fact pass, each for a failure it was measured causing.
+  (1) It runs only when `structured_value.related_person_role` normalizes equal
+  to `relatedRole`. `relatedRole` is free text the tool cannot otherwise check,
+  and a wrong one that happens to name a real OTHER role on the record selects a
+  different individual's persona: executed, a `testator` parentage assertion
+  naming a daughter with `relatedRole: "heir"` wrote Ann Weller carrying the
+  male heir's Birth 1802 and Death 1871, three resolved refs, no conflict
+  surfaced. That breaks this section's own acceptance of a guard miss below
+  ("a miss degrades to exactly the behaviour this arm would have had without
+  the guard"), which was written when the arm wrote a name. 146 of 167 corpus
+  relationship/marriage assertions carry the key, so corroboration is the common
+  case; without it the arm writes the name alone, because a missing fact is
+  recoverable by a later persona-arm call and a fact on the wrong person is not.
+  (2) It runs one `applyMaterializeOp` per distinct `record_role` spelling the
+  guard matched, not one for the first: the guard selects case- and
+  space-insensitively while the persona arm filters exactly, so a single
+  spelling would hand it a subset and drop the rest silently. The pre-op fact
+  ids are snapshotted once and shared across those passes, so a later pass
+  cannot report a fact an earlier one just created as `factsEnriched`.
+- **The caller's `gender` wins.** `gender` on the op is applied before the fact
+  pass, and the persona arm only fills an absent or `Unknown` one, so a supplied
+  `gender` overrides the persona's own `gender`/`sex` assertions. Omit it to
+  take the record's.
 - **No name type is invented.** `nameType` is optional and the field is
   **omitted** when the caller does not supply one. This differs from the persona
   arm, which records `BirthName`, and the difference is deliberate: a persona's

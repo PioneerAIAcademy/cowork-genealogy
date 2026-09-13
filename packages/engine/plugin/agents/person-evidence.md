@@ -545,8 +545,10 @@ the groom's marriage register). Take the first that applies:
    separately; `surname: ""` when the record gives none. Give `nameType`
    (`"BirthName"`/`"MarriedName"`) only when the record settles it. If no
    usable name is recoverable, do not mint: link what you can and say so.
-   Where that role has a persona the record never names, this call writes that
-   persona's facts as well as her name. One call, no follow-up.
+   Where that role has a persona the record never names, this call also writes
+   that persona's facts, but only when the assertion's
+   `structured_value.related_person_role` names that same role. `factsAdded: 0`
+   in the reply means it did not, and only her name was written.
 
 Never `tree_edit add_person` for a person the record names. If you pick 3
 where 2 applied, the tool refuses and names the `{ recordId, recordRole }` to
