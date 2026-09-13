@@ -1,6 +1,7 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { arkToUrl } from "../utils/ark.js";
 import type {
   SourceAttachmentsInput,
@@ -27,7 +28,7 @@ async function fetchAttachmentMap(
 ): Promise<SourceAttachmentsApiResponse["attachedSourcesMap"]> {
   let response: Response;
   try {
-    response = await fetchWithTimeout(URL, {
+    response = await fetchWithRetry(URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -84,12 +85,13 @@ async function fetchAttachmentMap(
 
 export async function sourceAttachmentsTool(
   input: SourceAttachmentsInput,
+  principal: Principal,
 ): Promise<SourceAttachmentsResult> {
   if (!Array.isArray(input.uris) || input.uris.length === 0) {
     throw new Error("uris array must not be empty.");
   }
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
 
   // Callers pass ARKs (canonical `ark:/61903/...`, the form record_search and
   // fulltext_search now emit) or full resolver URLs. The attachments API keys

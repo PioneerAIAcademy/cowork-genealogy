@@ -19,6 +19,7 @@
  * token is actually written to ~/.familysearch-mcp/tokens.json — it does
  * not claim success merely because the flow started.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { loginTool } from "../src/tools/login.js";
 import { loadTokens, isExpired } from "../src/auth/tokenManager.js";
 import { LOGIN_TIMEOUT_MS } from "../src/auth/config.js";
@@ -36,7 +37,7 @@ const beforeToken = before?.accessToken ?? null;
 console.log("Starting FamilySearch login.");
 console.log("---");
 
-const result = await loginTool({});
+const result = await loginTool({}, LOCAL);
 
 // `success` here means the flow STARTED, not that we are logged in.
 if (!result.success) {

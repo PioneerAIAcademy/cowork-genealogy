@@ -15,6 +15,8 @@ import asyncio
 
 import pytest
 
+from _fakes import ReplayFakeClient, attach, turn_events
+
 from app.agent.errors import MISCONFIGURED, UNEXPECTED, classify, operator_log
 from app.agent.mcp_health import (
     classify_server_status,
@@ -245,34 +247,14 @@ def test_a_healthy_assistant_message_still_emits_text():
 # --- handle_turn: the silent in-turn failure -------------------------------
 
 
-def _fake_client(messages):
-    """A stand-in for ClaudeSDKClient that replays `messages` for one turn.
-
-    Offline by construction. Driving the LIVE SDK to raise is explicitly out of
-    bounds (no offline gate exercises it — #1207); replaying real SDK message
-    objects through the real loop is the house pattern.
-    """
-
-    class _Client:
-        async def query(self, text):
-            return None
-
-        async def receive_response(self):
-            for message in messages:
-                yield message
-
-    return _Client()
-
-
 def _turn_events(agent, messages) -> list[dict]:
-    async def drive():
-        return [ev async for ev in agent.handle_turn("go")]
+    """One turn against a client that replays `messages`.
 
-    async def _ensure():
-        return _fake_client(messages)
-
-    agent._ensure_client = _ensure  # type: ignore[assignment]
-    return asyncio.run(drive())
+    `ReplayFakeClient` (tests/_fakes.py) is the shared stand-in; this file used
+    to carry its own `_Client` declaring only query/receive_response.
+    """
+    attach(agent, ReplayFakeClient(messages))
+    return asyncio.run(turn_events(agent, "go"))
 
 
 def test_an_in_turn_api_failure_is_no_longer_silent(tmp_path):

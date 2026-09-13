@@ -1,7 +1,8 @@
+import type { Principal } from "../auth/principal.js";
 import { getPlaceCandidateNames } from "./place-search.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import { getWikiApiUrl } from "../auth/config.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import type {
   WikiPlacePageInput,
   WikiPlacePageResult,
@@ -56,7 +57,7 @@ async function fetchPage(
 ): Promise<PageApiResponse | null> {
   let response: Response;
   try {
-    response = await fetchWithTimeout(`${baseUrl}/page/${slug}`, {
+    response = await fetchWithRetry(`${baseUrl}/page/${slug}`, {
       method: "GET",
       headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
     });
@@ -105,7 +106,8 @@ async function tryNames(
 
 async function readPlacePage(
   standardPlace: string,
-  getCandidateSlugs: (nameSlug: string) => string[]
+  getCandidateSlugs: (nameSlug: string) => string[],
+  principal: Principal
 ): Promise<WikiPlacePageResult> {
   if (!standardPlace || typeof standardPlace !== "string" || !standardPlace.trim()) {
     throw new Error(
@@ -114,7 +116,7 @@ async function readPlacePage(
     );
   }
 
-  const baseUrl = await getWikiApiUrl();
+  const baseUrl = await getWikiApiUrl(principal);
   const leaf = standardPlace.split(",")[0].trim();
 
   // 1) Common case: try the standard place's own leaf name against the
@@ -138,7 +140,8 @@ async function readPlacePage(
 }
 
 export async function wikiPlacePageTool(
-  input: WikiPlacePageInput
+  input: WikiPlacePageInput,
+  principal: Principal
 ): Promise<WikiPlacePageResult> {
   const { standardPlace, section } = input;
   if (!section) {
@@ -148,7 +151,8 @@ export async function wikiPlacePageTool(
     );
   }
   return readPlacePage(standardPlace, (nameSlug) =>
-    candidateSlugsFor(section, nameSlug)
+    candidateSlugsFor(section, nameSlug),
+    principal
   );
 }
 

@@ -1,5 +1,5 @@
-import { readFile, appendFile, mkdir } from "fs/promises";
-import { join, resolve, dirname } from "path";
+import type { Principal } from "../auth/principal.js";
+import { getProjectStore } from "../store/project-store.js";
 import { getValidToken } from "../auth/refresh.js";
 import { scorePair } from "../utils/match-engine.js";
 import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
@@ -35,6 +35,7 @@ interface ScoredCandidate {
 
 export async function rankSearchMatches(
   input: RankSearchMatchesInput,
+  principal: Principal,
 ): Promise<RankSearchMatchesResult> {
   const { projectPath, stagedResultsRef, subjectId } = input;
 
@@ -61,7 +62,7 @@ export async function rankSearchMatches(
   }
 
   // ── 3. Score every candidate (one token, bounded fan-out, retried) ─────────
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const scored = await mapWithConcurrency(
     results,
     SCORE_CONCURRENCY,
@@ -138,7 +139,7 @@ export async function rankSearchMatches(
       : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1));
 
   if (input.checkAttachments && matches.length > 0) {
-    await applyAttachments(matches, subjectId);
+    await applyAttachments(matches, subjectId, principal);
   }
 
   const out: RankSearchMatchesResult = {
@@ -255,10 +256,9 @@ export async function buildSubjectDoc(
   projectPath: string,
   subjectId: string,
 ): Promise<SubjectDoc> {
-  const treePath = join(projectPath, "tree.gedcomx.json");
   let tree: SimplifiedGedcomX;
   try {
-    tree = JSON.parse(await readFile(treePath, "utf-8"));
+    tree = JSON.parse(await getProjectStore().readText(projectPath, "tree.gedcomx.json"));
   } catch {
     throw new Error(
       `Could not read tree.gedcomx.json in project '${projectPath}'. ` +
@@ -295,7 +295,7 @@ export async function buildSubjectDoc(
 
   try {
     const research = JSON.parse(
-      await readFile(join(projectPath, "research.json"), "utf-8"),
+      await getProjectStore().readText(projectPath, "research.json"),
     );
     const linkedIds = new Set(
       (research.person_evidence ?? [])
@@ -497,8 +497,7 @@ async function appendScoreLog(
     .join("");
 
   try {
-    await mkdir(join(projectPath, "results"), { recursive: true });
-    await appendFile(join(projectPath, SCORE_LOG_REL), body, "utf-8");
+    await getProjectStore().appendText(projectPath, SCORE_LOG_REL, body);
     return null;
   } catch (error) {
     // Best-effort: a score-log write failure never fails a successful rank call.
@@ -511,10 +510,11 @@ async function appendScoreLog(
 async function applyAttachments(
   matches: RankedMatch[],
   subjectId: string,
+  principal: Principal,
 ): Promise<void> {
   const uris = matches.map((m) => m.recordId);
   try {
-    const att = await sourceAttachmentsTool({ uris });
+    const att = await sourceAttachmentsTool({ uris }, principal);
     for (const stub of matches) {
       const persons = att.attachments[stub.recordId] ?? [];
       // subjectId is the tree person's FamilySearch PID; source_attachments

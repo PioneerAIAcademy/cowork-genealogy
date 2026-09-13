@@ -29,6 +29,7 @@
  */
 import { readFileSync } from "node:fs";
 import { getValidToken } from "../src/auth/refresh.js";
+import { LOCAL } from "../src/auth/principal.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 import { arkToUrl } from "../src/utils/ark.js";
@@ -114,7 +115,7 @@ async function probe(n: number, token: string) {
   }
 }
 
-const token = await getValidToken();
+const token = await getValidToken(LOCAL);
 console.log(`pool=${pool.length} unique ARKs from ${poolPath}`);
 console.log(`sizes=${sizes.join(",")}\n`);
 

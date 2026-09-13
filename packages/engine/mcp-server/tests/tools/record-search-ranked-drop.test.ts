@@ -26,6 +26,7 @@ vi.mock("../../src/tools/rank-search-matches.js", () => ({
 import { recordSearchTool } from "../../src/tools/record-search.js";
 import { rankSearchMatches } from "../../src/tools/rank-search-matches.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { LOCAL } from "../../src/auth/principal.js";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -102,7 +103,7 @@ const usableRanking = (n = 2) => ({
 });
 
 const search = (extra: Record<string, unknown> = {}) =>
-  recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1", ...extra });
+  recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1", ...extra }, LOCAL);
 
 describe("record_search: dropping the inline results block", () => {
   it("drops `results` when the ranking is usable", async () => {

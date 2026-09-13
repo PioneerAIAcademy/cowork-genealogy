@@ -1,3 +1,4 @@
+import { LOCAL, type Principal } from "./auth/principal.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -129,6 +130,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 // Nothing downstream parses the formatting; a human debugging a transcript can
 // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  // The stdio server is one desktop user per process (the .mcpb, both
+  // harnesses, the hosted alpha's sandbox): every tool acts as the local
+  // principal. A hosted entrypoint binds a per-request bearer here instead.
+  const principal: Principal = LOCAL;
   if (request.params.name === "wikipedia_search") {
     try {
       const args = request.params.arguments as unknown as WikipediaSearchInput;
@@ -177,7 +182,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "login") {
     try {
       const args = (request.params.arguments ?? {}) as unknown as LoginToolInput;
-      const result = await loginTool(args);
+      const result = await loginTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -192,7 +197,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "logout") {
     try {
       const args = (request.params.arguments ?? {}) as unknown as LogoutToolInput;
-      const result = await logoutTool(args);
+      const result = await logoutTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -207,7 +212,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "auth_status") {
     try {
       const args = (request.params.arguments ?? {}) as unknown as AuthStatusToolInput;
-      const result = await authStatusTool(args);
+      const result = await authStatusTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -222,7 +227,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "collections_search") {
     try {
       const args = request.params.arguments as unknown as CollectionsSearchInput;
-      const result = await collectionsSearchTool(args);
+      const result = await collectionsSearchTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -237,7 +242,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "collection_read") {
     try {
       const args = request.params.arguments as unknown as CollectionReadInput;
-      const result = await collectionReadTool(args);
+      const result = await collectionReadTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -252,7 +257,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "wiki_search") {
     try {
       const args = request.params.arguments as unknown as WikiSearchInput;
-      const result = await wikiSearch(args);
+      const result = await wikiSearch(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -282,7 +287,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "place_population") {
     try {
       const args = request.params.arguments as unknown as PopulationToolInput;
-      const result = await populationTool(args);
+      const result = await populationTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -312,7 +317,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "image_read") {
     try {
       const args = request.params.arguments as unknown as ImageReadInput;
-      const { imageData, metadata } = await imageReadTool(args);
+      const { imageData, metadata } = await imageReadTool(args, principal);
       return {
         content: [
           { type: "image", data: imageData, mimeType: metadata.mimeType },
@@ -330,7 +335,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "image_transcribe") {
     try {
       const args = request.params.arguments as unknown as ImageTranscribeInput;
-      const result = await imageTranscribeTool(args);
+      const result = await imageTranscribeTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }],
       };
@@ -346,7 +351,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params
         .arguments as unknown as ConfigureOpenRouterInput;
-      const result = await configureOpenRouterTool(args);
+      const result = await configureOpenRouterTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }],
       };
@@ -361,7 +366,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "record_search") {
     try {
       const args = request.params.arguments as unknown as RecordSearchInput;
-      const result = await recordSearchTool(args);
+      const result = await recordSearchTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -376,7 +381,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "person_search") {
     try {
       const args = request.params.arguments as unknown as PersonSearchInput;
-      const result = await personSearchTool(args);
+      const result = await personSearchTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -391,7 +396,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "same_person") {
     try {
       const args = request.params.arguments as unknown as SamePersonInput;
-      const result = await samePerson(args);
+      const result = await samePerson(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -406,7 +411,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "person_record_matches") {
     try {
       const args = request.params.arguments as unknown as MatchByIdInput;
-      const result = await personRecordMatches(args);
+      const result = await personRecordMatches(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -421,7 +426,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "record_person_matches") {
     try {
       const args = request.params.arguments as unknown as MatchByIdInput;
-      const result = await recordPersonMatches(args);
+      const result = await recordPersonMatches(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -436,7 +441,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "person_person_matches") {
     try {
       const args = request.params.arguments as unknown as MatchByIdInput;
-      const result = await personPersonMatches(args);
+      const result = await personPersonMatches(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -451,7 +456,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "record_record_matches") {
     try {
       const args = request.params.arguments as unknown as MatchByIdInput;
-      const result = await recordRecordMatches(args);
+      const result = await recordRecordMatches(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -466,7 +471,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "person_read") {
     try {
       const args = request.params.arguments as unknown as PersonReadToolInput;
-      const result = await personReadTool(args);
+      const result = await personReadTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -481,7 +486,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "person_ancestors") {
     try {
       const args = request.params.arguments as unknown as PersonAncestorsInput;
-      const result = await personAncestorsTool(args);
+      const result = await personAncestorsTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -496,7 +501,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "record_read") {
     try {
       const args = request.params.arguments as unknown as RecordReadInput;
-      const result = await recordReadTool(args);
+      const result = await recordReadTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -511,7 +516,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "fulltext_search") {
     try {
       const args = request.params.arguments as unknown as FulltextSearchInput;
-      const result = await fulltextSearchTool(args);
+      const result = await fulltextSearchTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -526,7 +531,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "wiki_read") {
     try {
       const args = request.params.arguments as unknown as WikiReadInput;
-      const result = await wikiReadTool(args);
+      const result = await wikiReadTool(args, principal);
       return {
         content: [{ type: "text", text: JSON.stringify(result) }]
       };
@@ -541,7 +546,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "wiki_place_page") {
     try {
       const args = request.params.arguments as unknown as WikiPlacePageInput;
-      const result = await wikiPlacePageTool(args);
+      const result = await wikiPlacePageTool(args, principal);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -561,7 +566,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "source_attachments") {
     try {
       const args = request.params.arguments as unknown as SourceAttachmentsInput;
-      const result = await sourceAttachmentsTool(args);
+      const result = await sourceAttachmentsTool(args, principal);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -571,7 +576,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "image_search") {
     try {
       const args = request.params.arguments as unknown as ImageSearchInput;
-      const result = await imageSearchTool(args);
+      const result = await imageSearchTool(args, principal);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -591,7 +596,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "person_quality") {
     try {
       const args = request.params.arguments as unknown as PersonQualityInput;
-      const result = await personQualityTool(args);
+      const result = await personQualityTool(args, principal);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -611,7 +616,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "volume_search") {
     try {
       const args = request.params.arguments as unknown as VolumeSearchInput;
-      const result = await volumeSearchTool(args);
+      const result = await volumeSearchTool(args, principal);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -713,7 +718,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "rank_search_matches") {
     try {
       const args = request.params.arguments as unknown as RankSearchMatchesInput;
-      const result = await rankSearchMatches(args);
+      const result = await rankSearchMatches(args, principal);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

@@ -9,6 +9,7 @@ import {
   ATTACHMENTS_URI_CAP,
 } from "../../src/tools/source-attachments.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { LOCAL } from "../../src/auth/principal.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -50,7 +51,7 @@ function sentBatches(): string[][] {
 
 describe("source_attachments", () => {
   it("rejects an empty uris array", async () => {
-    await expect(sourceAttachmentsTool({ uris: [] })).rejects.toThrow(
+    await expect(sourceAttachmentsTool({ uris: [] }, LOCAL)).rejects.toThrow(
       /must not be empty/,
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -59,7 +60,7 @@ describe("source_attachments", () => {
   it("sends one POST and keys the answer back to the caller's input string", async () => {
     mockFetch.mockResolvedValueOnce(okWith({ [url(1)]: entryFor("KWZZ-111") }));
 
-    const out = await sourceAttachmentsTool({ uris: [ark(1), ark(2)] });
+    const out = await sourceAttachmentsTool({ uris: [ark(1), ark(2)] }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(sentBatches()[0]).toEqual([url(1), url(2)]);
@@ -78,7 +79,7 @@ describe("source_attachments", () => {
     mockFetch.mockResolvedValue(okWith({}));
     const uris = Array.from({ length: ATTACHMENTS_URI_CAP }, (_, i) => ark(i));
 
-    await sourceAttachmentsTool({ uris });
+    await sourceAttachmentsTool({ uris }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(sentBatches()[0]).toHaveLength(ATTACHMENTS_URI_CAP);
@@ -88,7 +89,7 @@ describe("source_attachments", () => {
     mockFetch.mockResolvedValue(okWith({}));
     const uris = Array.from({ length: ATTACHMENTS_URI_CAP + 1 }, (_, i) => ark(i));
 
-    await sourceAttachmentsTool({ uris });
+    await sourceAttachmentsTool({ uris }, LOCAL);
 
     const batches = sentBatches();
     expect(batches).toHaveLength(2);
@@ -107,7 +108,7 @@ describe("source_attachments", () => {
       .mockResolvedValueOnce(okWith({ [url(lastIndex)]: entryFor("KWZZ-BBB") }));
 
     const uris = Array.from({ length: ATTACHMENTS_URI_CAP + 1 }, (_, i) => ark(i));
-    const out = await sourceAttachmentsTool({ uris });
+    const out = await sourceAttachmentsTool({ uris }, LOCAL);
 
     expect(out.attachments[ark(0)]).toEqual([
       { personId: "KWZZ-AAA", tags: ["Birth"] },
@@ -124,7 +125,7 @@ describe("source_attachments", () => {
     // Cap distinct ARKs, each repeated — 2x the cap in raw input length.
     const distinct = Array.from({ length: ATTACHMENTS_URI_CAP }, (_, i) => ark(i));
 
-    await sourceAttachmentsTool({ uris: [...distinct, ...distinct] });
+    await sourceAttachmentsTool({ uris: [...distinct, ...distinct] }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
@@ -135,7 +136,7 @@ describe("source_attachments", () => {
       .mockResolvedValueOnce({ ok: false, status: 401, statusText: "Unauthorized" });
     const uris = Array.from({ length: ATTACHMENTS_URI_CAP + 1 }, (_, i) => ark(i));
 
-    await expect(sourceAttachmentsTool({ uris })).rejects.toThrow(
+    await expect(sourceAttachmentsTool({ uris }, LOCAL)).rejects.toThrow(
       /call the login tool/,
     );
   });

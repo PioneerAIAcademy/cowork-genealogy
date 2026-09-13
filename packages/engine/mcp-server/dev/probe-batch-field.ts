@@ -46,6 +46,7 @@
  * Run:  npx tsx dev/probe-batch-field.ts
  * Needs a live FamilySearch token (`login` tool first).
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
@@ -60,7 +61,7 @@ async function fetchEntries(
   params: Record<string, string>,
 ): Promise<{ entries: AnyObj[]; total: unknown } | null> {
   try {
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     const qs = new URLSearchParams({
       ...params,
       "m.queryRequireDefault": "on",

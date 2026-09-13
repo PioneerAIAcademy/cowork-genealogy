@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { wikiSearch } from "../../src/tools/wiki-search.js";
 import type { WikiSearchAPIResponse } from "../../src/types/wiki-search.js";
@@ -45,7 +46,7 @@ describe("wikiSearch", () => {
       json: async () => mockResponse,
     });
 
-    const result = await wikiSearch({ query: "How do I find Italian birth records?" });
+    const result = await wikiSearch({ query: "How do I find Italian birth records?" }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledWith(
       "http://localhost:8000/search",
@@ -65,7 +66,7 @@ describe("wikiSearch", () => {
       new Error("wiki-query-api MCP is not configured.")
     );
 
-    await expect(wikiSearch({ query: "anything" })).rejects.toThrow(
+    await expect(wikiSearch({ query: "anything" }, LOCAL)).rejects.toThrow(
       /wiki-query-api MCP is not configured/
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -73,21 +74,23 @@ describe("wikiSearch", () => {
 
   it("throws on non-2xx response", async () => {
     getWikiApiUrlMock.mockResolvedValueOnce("http://localhost:8000");
-    mockFetch.mockResolvedValueOnce({
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
+      statusText: "Internal Server Error",
+      headers: new Headers(),
     });
 
-    await expect(wikiSearch({ query: "test" })).rejects.toThrow(
+    await expect(wikiSearch({ query: "test" }, LOCAL)).rejects.toThrow(
       "wiki-query-api error: 500"
     );
   });
 
   it("throws a friendly error when the server is unreachable", async () => {
     getWikiApiUrlMock.mockResolvedValueOnce("http://localhost:8000");
-    mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
-    await expect(wikiSearch({ query: "test" })).rejects.toThrow(
+    await expect(wikiSearch({ query: "test" }, LOCAL)).rejects.toThrow(
       /Could not reach wiki-query-api/
     );
   });

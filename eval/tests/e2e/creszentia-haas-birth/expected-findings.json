@@ -3,30 +3,48 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Creszentia Haas was born 25 May 1835 and christened 26 May 1835 at Lichtental, Amt Baden, Baden.",
+      "description": "Creszentia Haas was born 28 May 1830 at Durbach, Amt Offenburg, Baden, the daughter of Mathias Haas and Maria Anna Schmieder.",
       "details": {
         "subject_person": "Creszentia Haas (9DZX-B29)",
         "fact_type": "Birth",
-        "date": "25 May 1835",
-        "place": "Lichtental, Amt Baden, Baden, Germany"
+        "date": "28 May 1830",
+        "place": "Durbach, Kreis Offenburg, Baden, Germany"
       },
       "supporting_sources": [
-        "Germany, Births and Baptisms, 1558-1898 — entry for Creszentia Haas, 1835, parents Mathias Haas and M. Anna Steinel"
+        "Germany, Baden, Archdiocese of Freiburg im Breisgau, Catholic Church Records, 1463-1931 - entry for Crescentia Haas, born 28 May 1830, baptized at Durbach, parents Mathias Haas and Maria Anna Schmieder (ark:/61903/1:1:QP3D-5ZR5)",
+        "Germany, Baden, Archdiocese of Freiburg im Breisgau, Catholic Church Records, 1463-1931 - marriage of Franz Klausmann and Kreszentia Haas, 12 Dec 1859 at Durbach, naming her parents Matthias Haas and Maria Anna Schmieder; identity corroboration that she survived past Genofeva's 1855 birth (ark:/61903/1:1:WXK5-XQ6Z)"
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "fact",
-      "description": "Creszentia Haas was christened 26 May 1835 at Lichtental, Amt Baden.",
+      "description": "Creszentia Haas was christened 29 May 1830 at Durbach, Amt Offenburg, Baden.",
       "details": {
         "subject_person": "Creszentia Haas (9DZX-B29)",
         "fact_type": "Christening",
-        "date": "26 May 1835",
-        "place": "Lichtental, Amt Baden, Baden, Germany"
+        "date": "29 May 1830",
+        "place": "Durbach, Kreis Offenburg, Baden, Germany"
       },
       "supporting_sources": [
-        "Germany, Births and Baptisms, 1558-1898 — entry for Creszentia Haas, 1835"
+        "Germany, Births and Baptisms, 1558-1898 - entry for Crescentia Haas, christened 29 May 1830 at Durbach, Offenburg, Baden, parents Mathias Haas and Maria Anna Schmieder (ark:/61903/1:1:C4GZ-FYZM)"
+      ],
+      "required": false
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "The hinted 25/26 May 1835 birth and christening at Lichtental, Amt Baden, is a different Creszentia Haas - the daughter of Mathias Haas and M. Anna Steinel - and must not be asserted of the subject.",
+      "details": {
+        "subject_person": "Creszentia Haas (9DZX-B29)",
+        "fact_type": "Birth",
+        "date": "25 May 1835",
+        "place": "Lichtental, Amt Baden, Baden, Germany"
+      },
+      "polarity": "avoid",
+      "supporting_sources": [
+        "Germany, Births and Baptisms, 1558-1898 - entry for Creszentia Haas, born 25 May 1835 and christened 26 May 1835 at Lichtental, Amt Baden, parents Mathias Haas and M. Anna Steinel (ark:/61903/1:1:NJB1-3BM)",
+        "Germany, Births and Baptisms, 1558-1898 - second entry for the same Lichtental family at Oberbeuern, parents Mathias Haas and M Anna Steinel, showing it is a real but distinct family (ark:/61903/1:1:7MF8-6C3Z)"
       ],
       "required": false
     }
