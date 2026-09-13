@@ -1,11 +1,18 @@
+import type { Principal } from "../auth/principal.js";
 import { loadTokens, isExpired } from "../auth/tokenManager.js";
 import type { AuthStatusResult } from "../types/auth.js";
 
 export type AuthStatusToolInput = Record<string, never>;
 
 export async function authStatusTool(
-  _input: AuthStatusToolInput = {} as AuthStatusToolInput
+  _input: AuthStatusToolInput,
+  principal: Principal
 ): Promise<AuthStatusResult> {
+  // A bearer principal carries its credential with the request; the web tier
+  // that issued it knows the expiry, this server does not.
+  if (principal.kind === "bearer") {
+    return { loggedIn: principal.accessToken.length > 0 };
+  }
   const tokens = await loadTokens();
   if (!tokens) {
     return { loggedIn: false };

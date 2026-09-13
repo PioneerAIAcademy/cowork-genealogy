@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import type { PopulationResponse, PopulationToolInput } from "../types/place-population.js";
 export type { PopulationToolInput } from "../types/place-population.js";
 import { loadConfig } from "../auth/config.js";
@@ -7,7 +8,8 @@ import { fetchWithRetry } from "../utils/http.js";
 const DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats";
 
 export async function populationTool(
-  input: PopulationToolInput
+  input: PopulationToolInput,
+  principal: Principal
 ): Promise<PopulationResponse> {
   if (!input.standardPlace) {
     throw new Error("standardPlace is required");
@@ -21,7 +23,7 @@ export async function populationTool(
     );
   }
 
-  const config = await loadConfig();
+  const config = await loadConfig(principal);
   const baseUrl = config.popStatsUrl ?? DEFAULT_POP_STATS_URL;
 
   // The upstream Pop Stats API expects snake_case query params; map the

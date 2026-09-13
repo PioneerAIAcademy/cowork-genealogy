@@ -21,6 +21,7 @@
  * Usage:
  *   npx tsx dev/try-same-person-relatives.ts
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { samePerson } from "../src/tools/same-person.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 
@@ -110,7 +111,7 @@ const focus = await samePerson({
   primaryId1: "I1",
   gedcomx2,
   primaryId2: "I1",
-});
+}, LOCAL);
 console.log("=== focus single-pair (anchor on I1, the child) ===");
 console.log(JSON.stringify(focus, null, 2));
 
@@ -121,7 +122,7 @@ const relatives = await samePerson({
   gedcomx2,
   primaryId2: "I1",
   matchRelatives: true,
-});
+}, LOCAL);
 console.log("\n=== matchRelatives:true (anchors on the relatives) ===");
 console.log(JSON.stringify(relatives, null, 2));
 console.log(

@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
@@ -82,9 +83,10 @@ export const personAncestorsToolSchema = {
 
 export async function personAncestorsTool(
   input: PersonAncestorsInput,
+  principal: Principal,
 ): Promise<PersonAncestorsResult> {
   validateInput(input);
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   // Resolve the root: the supplied personId, or the logged-in user's own
   // tree person when it's omitted/empty.
   const provided =

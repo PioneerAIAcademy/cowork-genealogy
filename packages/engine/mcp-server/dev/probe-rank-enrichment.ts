@@ -56,6 +56,7 @@
  *   new bundles no longer include one.)
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { readFile, readdir, stat } from "fs/promises";
 import { join } from "path";
 import { getValidToken } from "../src/auth/refresh.js";
@@ -188,7 +189,7 @@ async function main() {
   }
   console.log("\nscoring both arms against live FamilySearch…\n");
 
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   const a = await scoreAll(results, bare, subjectId, token);
   const b = await scoreAll(results, enriched.doc, subjectId, token);
 
