@@ -228,8 +228,10 @@ class Hub:
                 # client only at CONNECT time, so an already-connected client -
                 # precisely the one that built the backlog - never learns the
                 # gate was re-armed. It receives the raw `turn_start` frame, and
-                # ChatPane has no handler for that kind: it sets busy in send()
-                # and on a `turn_active` status, and clears it on `turn_done`.
+                # ChatPane deliberately ignores that kind: it sets busy in
+                # send() and on a `turn_active` status, and clears it on
+                # `turn_done`. (It ignores it explicitly, not by omission --
+                # falling through appended an empty assistant bubble.)
                 # So without this broadcast the first `turn_done` drops that UI
                 # to idle for the whole backlog, which is the bug the gate
                 # exists to prevent. Asserting `_turn_active is True` does not
