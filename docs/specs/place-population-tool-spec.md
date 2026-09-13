@@ -149,7 +149,7 @@ None required. The Pop Stats API is an internal service with no auth.
 GET {popStatsUrl}/population
 ```
 
-The base URL is read from `loadConfig().popStatsUrl` and defaults to the
+The base URL is read from `loadConfig(principal).popStatsUrl` and defaults to the
 hosted Pop Stats service (`https://malachi.taild68f1b.ts.net/pop-stats`). It
 can be overridden per-user via the `popStatsUrl` field in
 `~/.familysearch-mcp/config.json`.
@@ -190,7 +190,7 @@ can be overridden per-user via the `popStatsUrl` field in
 
 ## Configuration
 
-The Pop Stats API base URL is read from `loadConfig().popStatsUrl` (the
+The Pop Stats API base URL is read from `loadConfig(principal).popStatsUrl` (the
 `popStatsUrl` field in `~/.familysearch-mcp/config.json`), defaulting to the
 hosted Pop Stats service `https://malachi.taild68f1b.ts.net/pop-stats`. This
 allows deployment flexibility — the API may run on the same host or a remote

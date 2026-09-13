@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getWikiApiUrl } from "../auth/config.js";
 import { fetchWithRetry } from "../utils/http.js";
 import type { WikiReadInput, WikiPageResult } from "../types/wikiPage.js";
@@ -18,9 +19,9 @@ interface PageApiResponse {
   source_url: string;
 }
 
-export async function wikiReadTool(input: WikiReadInput): Promise<WikiPageResult> {
+export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiPageResult> {
   const slug = urlToSlug(input.url);
-  const baseUrl = await getWikiApiUrl();
+  const baseUrl = await getWikiApiUrl(principal);
   const pageUrl = `${baseUrl}/page/${slug}`;
 
   let response: Response;

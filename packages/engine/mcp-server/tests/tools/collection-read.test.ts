@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -246,12 +247,12 @@ describe("convertHtmlToMarkdown", () => {
   });
 });
 
-describe("collectionReadTool (pass-through)", () => {
+describe("collectionReadTool (pass-through, LOCAL)", () => {
   it("returns the FS response shape, not a wrapped { collection: ... }", async () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch();
 
-    const result = (await collectionReadTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await collectionReadTool({ id: "1743384" }, LOCAL)) as CollectionDetailResult;
 
     expect("collection" in result).toBe(false);
     expect(result.sourceDescriptions).toBeDefined();
@@ -263,7 +264,7 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch();
 
-    const result = (await collectionReadTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await collectionReadTool({ id: "1743384" }, LOCAL)) as CollectionDetailResult;
     const citation = result.sourceDescriptions?.[0].citations?.[0].value ?? "";
 
     expect(citation).toContain("<i>FamilySearch</i>");
@@ -274,7 +275,7 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch();
 
-    const result = (await collectionReadTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await collectionReadTool({ id: "1743384" }, LOCAL)) as CollectionDetailResult;
     const doc = result.documents?.[0];
 
     expect(doc?.text).toContain("# Alabama County Marriages");
@@ -287,7 +288,7 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch();
 
-    const result = (await collectionReadTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await collectionReadTool({ id: "1743384" }, LOCAL)) as CollectionDetailResult;
     const ids = result.sourceDescriptions?.map((sd) => sd.id);
 
     expect(ids).toContain("1743384");
@@ -298,7 +299,7 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch();
 
-    const result = (await collectionReadTool({ id: "1743384" })) as CollectionDetailResult;
+    const result = (await collectionReadTool({ id: "1743384" }, LOCAL)) as CollectionDetailResult;
     const meta = result.collections?.[0].searchMetadata?.[0];
 
     expect(meta?.placeIds).toEqual([33]);
@@ -312,7 +313,7 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch();
 
-    await collectionReadTool({ id: "1743384" });
+    await collectionReadTool({ id: "1743384" }, LOCAL);
 
     const urls = mockFetch.mock.calls.map((call) => call[0] as string);
     expect(urls).toHaveLength(1);
@@ -323,7 +324,7 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch({ detailStatus: 404 });
 
-    await expect(collectionReadTool({ id: "9999999" })).rejects.toThrow(
+    await expect(collectionReadTool({ id: "9999999" }, LOCAL)).rejects.toThrow(
       /No FamilySearch collection found with id "9999999".*collections_search/s
     );
   });
@@ -332,7 +333,7 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch({ detailStatus: 500 });
 
-    await expect(collectionReadTool({ id: "1743384" })).rejects.toThrow(
+    await expect(collectionReadTool({ id: "1743384" }, LOCAL)).rejects.toThrow(
       /FamilySearch collection detail API error: 500/
     );
   });
@@ -344,7 +345,7 @@ describe("collectionReadTool (pass-through)", () => {
       )
     );
 
-    await expect(collectionReadTool({ id: "1743384" })).rejects.toThrow(
+    await expect(collectionReadTool({ id: "1743384" }, LOCAL)).rejects.toThrow(
       /User is not logged in/
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -354,13 +355,13 @@ describe("collectionReadTool (pass-through)", () => {
     mockedGetValidToken.mockResolvedValue("test-token");
     mockDetailFetch({ detailMalformed: true });
 
-    await expect(collectionReadTool({ id: "1743384" })).rejects.toThrow(
+    await expect(collectionReadTool({ id: "1743384" }, LOCAL)).rejects.toThrow(
       /malformed response/
     );
   });
 
   it("throws when id is missing", async () => {
-    await expect(collectionReadTool({ id: "" })).rejects.toThrow(
+    await expect(collectionReadTool({ id: "" }, LOCAL)).rejects.toThrow(
       /collection_read requires an id/
     );
     expect(mockFetch).not.toHaveBeenCalled();

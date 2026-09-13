@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
@@ -34,7 +35,7 @@ describe("populationTool", () => {
   it("resolves the standard place to a placeId and queries Pop Stats", async () => {
     mockFetch.mockResolvedValueOnce(okJson(SAMPLE));
 
-    const result = await populationTool({ standardPlace: "Nigeria" });
+    const result = await populationTool({ standardPlace: "Nigeria" }, LOCAL);
 
     expect(mockStandardPlaceToPlaceId).toHaveBeenCalledWith("Nigeria");
     const url = mockFetch.mock.calls[0][0] as string;
@@ -50,7 +51,7 @@ describe("populationTool", () => {
       year: 1960,
       startYear: 1900,
       endYear: 2000,
-    });
+    }, LOCAL);
 
     const url = mockFetch.mock.calls[0][0] as string;
     expect(url).toContain("year=1960");
@@ -61,7 +62,7 @@ describe("populationTool", () => {
   it("throws and does not fetch when the place cannot be resolved", async () => {
     mockStandardPlaceToPlaceId.mockResolvedValueOnce(null);
 
-    await expect(populationTool({ standardPlace: "Nowhere" })).rejects.toThrow(
+    await expect(populationTool({ standardPlace: "Nowhere" }, LOCAL)).rejects.toThrow(
       /Could not resolve "Nowhere"/
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -69,14 +70,14 @@ describe("populationTool", () => {
 
   it("throws when standardPlace is missing", async () => {
     await expect(
-      populationTool({ standardPlace: "" } as PopulationToolInput)
+      populationTool({ standardPlace: "" } as PopulationToolInput, LOCAL)
     ).rejects.toThrow(/standardPlace is required/);
   });
 
   it("throws a friendly error when the service is unreachable", async () => {
     mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
 
-    await expect(populationTool({ standardPlace: "Nigeria" })).rejects.toThrow(
+    await expect(populationTool({ standardPlace: "Nigeria" }, LOCAL)).rejects.toThrow(
       /Population data service is unavailable/
     );
   });
@@ -89,7 +90,7 @@ describe("populationTool", () => {
       json: () => Promise.resolve({}),
     });
 
-    await expect(populationTool({ standardPlace: "Nigeria" })).rejects.toThrow(
+    await expect(populationTool({ standardPlace: "Nigeria" }, LOCAL)).rejects.toThrow(
       /Population API error: 404/
     );
   });
