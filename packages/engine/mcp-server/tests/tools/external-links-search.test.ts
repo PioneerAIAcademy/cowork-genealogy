@@ -44,7 +44,9 @@ function jsonResponse(body: unknown, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
+    statusText: status === 200 ? "OK" : `Status ${status}`,
     json: async () => body,
+    headers: new Headers(),
   } as unknown as Response;
 }
 
@@ -271,17 +273,47 @@ describe("externalLinksSearchTool — error handling", () => {
     mockFetch.mockReset();
   });
 
-  it.each([
-    { label: "403", mock: () => jsonResponse({}, 403), pattern: /Wait 60 seconds and retry once/i },
-    { label: "429", mock: () => jsonResponse({}, 429), pattern: /Wait 60 seconds and retry once/i },
-    { label: "5xx (503)", mock: () => jsonResponse({}, 503), pattern: /retry once before giving up/i },
-    { label: "malformed JSON", mock: () => brokenJsonResponse(200), pattern: /not valid JSON/i },
-  ])("throws an instructional error on $label", async ({ mock, pattern }) => {
-    mockFetch.mockResolvedValueOnce(mock());
-
+  it("throws on 403 with WAF message", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({}, 403));
     await expect(
       externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
-    ).rejects.toThrow(pattern);
+    ).rejects.toThrow(/403 Forbidden/i);
+  });
+
+  it("recovers from a transient 429 and returns the result", async () => {
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({}, 429))
+      .mockResolvedValueOnce(singlePage([
+        { url: "https://example.com/a", linkText: "Link A", place: "France" },
+      ]));
+    const result = await externalLinksSearchTool({
+      standardPlace: "France",
+      startYear: 1900,
+      endYear: 1950,
+    });
+    expect(result.totalForPlace).toBe(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws on 429 with rate-limit message after retry exhaustion", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 429));
+    await expect(
+      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/Wait 60 seconds/i);
+  });
+
+  it("throws on 5xx (503) after retry exhaustion", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 503));
+    await expect(
+      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/503/);
+  });
+
+  it("throws on malformed JSON", async () => {
+    mockFetch.mockResolvedValueOnce(brokenJsonResponse(200));
+    await expect(
+      externalLinksSearchTool({ standardPlace: "France", startYear: 1900, endYear: 1950 })
+    ).rejects.toThrow(/not valid JSON/i);
   });
 });
 

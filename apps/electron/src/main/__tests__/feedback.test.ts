@@ -457,15 +457,29 @@ describe('buildFeedbackZip — living-person redaction', () => {
     expect(p3.facts).toEqual([])
   })
 
-  it('never leaks a redacted name or date anywhere in the bundled tree', async () => {
+  it('never leaks a redacted name or date in ANY bundle entry — not just tree.gedcomx.json', async () => {
+    // Scans every file in the zip, not just tree.gedcomx.json, so the
+    // exact-name redaction is verified across whatever the bundle actually
+    // contains rather than one named file. NOTE: this fixture stages only the
+    // two tree files, so the scan does not by itself exercise a stray
+    // unredacted copy — the guard that no writer *produces* one lives in the
+    // engine tests (project-io's dot-prefixed-temp assertion and each writer's
+    // `.bak`-absent assertion, issue #2333). What this adds is that IF a future
+    // fixture or producer ever puts a second readable tree copy in the bundle,
+    // an every-entry scan catches it where a one-file assertion would not.
     const zip = await JSZip.loadAsync(
       Buffer.from((await buildFeedbackZip(makeOptions(folder))).zipBase64, 'base64')
     )
-    const raw = await zip.file('tree.gedcomx.json')!.async('string')
-    for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
-      expect(raw).not.toContain(leak)
+    const entries = Object.values(zip.files).filter((f) => !f.dir)
+    expect(entries.length).toBeGreaterThan(0)
+    for (const entry of entries) {
+      const raw = await entry.async('string')
+      for (const leak of ['Jane Marie', 'Bobby', '3 March 1985', 'Riverside, CA', 'SECRET']) {
+        expect(raw, `${leak} leaked into ${entry.name}`).not.toContain(leak)
+      }
     }
-    expect(raw).toContain('Reuben Spencer') // the deceased subject survives
+    // The deceased subject still ships in the bundle.
+    expect(await zip.file('tree.gedcomx.json')!.async('string')).toContain('Reuben Spencer')
   })
 
   it('clears Couple facts touching a living person, keeps the rest', async () => {

@@ -146,22 +146,19 @@ def test_real_agent_interrupt_forwards_to_the_sdk_client():
     True so the runner does not also cancel; no client → False (runner cancels)."""
     from app.agent.real_agent import RealAgent
 
-    class FakeClient:
-        def __init__(self):
-            self.called = False
-
-        async def interrupt(self):
-            self.called = True
+    from _fakes import FakeSDKClient
 
     async def drive():
         agent = RealAgent.__new__(RealAgent)  # skip __init__ (no project on disk)
         agent._client = None
         assert await agent.interrupt() is False  # nothing to stop
 
-        fake = FakeClient()
+        # The shared stand-in (tests/_fakes.py); this file used to declare its
+        # own three-line fake for the interrupt surface alone.
+        fake = FakeSDKClient()
         agent._client = fake
         assert await agent.interrupt() is True
-        assert fake.called
+        assert fake.interrupted
 
     asyncio.run(drive())
 

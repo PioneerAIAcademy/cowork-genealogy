@@ -5,6 +5,7 @@
  *   npx tsx dev/try-record-read.ts QVS9-DHDB
  *   npx tsx dev/try-record-read.ts "ark:/61903/1:1:QVS9-DHDB"
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { recordReadTool } from "../src/tools/record-read.js";
 
 const recordId = process.argv[2];
@@ -17,5 +18,5 @@ if (!recordId) {
   process.exit(1);
 }
 
-const result = await recordReadTool({ recordId });
+const result = await recordReadTool({ recordId }, LOCAL);
 console.log(JSON.stringify(result, null, 2));

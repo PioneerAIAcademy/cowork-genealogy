@@ -12,7 +12,7 @@ Wraps the endpoint:
 `GET https://www.familysearch.org/service/search/fulltext/search`
 
 Requires authentication (OAuth tokens via the `login` tool). Uses the
-same auth flow as the existing `search` tool (`getValidToken()` from
+same auth flow as the existing `search` tool (`getValidToken(principal)` from
 `src/auth/refresh.ts`).
 
 ### Why a separate tool
@@ -329,7 +329,7 @@ verify against the original image, not an inability to reach it.
 
 ## Auth
 
-Uses `getValidToken()` from `src/auth/refresh.ts` — same as the
+Uses `getValidToken(principal)` from `src/auth/refresh.ts` — same as the
 existing `search` tool. Requires the `BROWSER_USER_AGENT` from
 `src/constants.ts` (Imperva WAF requirement). When `nlQuery` is set, an
 additional `X-FS-Feature-Tag: search_naturalLanguageSupport` header is sent
@@ -358,6 +358,27 @@ query shape.
 4. **No fuzzy matching**: Unlike indexed search, FTS does exact text
    matching only. The tool description must make this clear so Claude
    constructs appropriate queries.
+
+5. **Place parameter behaviour** (measured 2026-09-10,
+   `dev/probe-search-qualifiers.ts` section J, artifact
+   `dev/measured-figures.json`): both `q.recordPlace` and
+   `f.recordPlace*` search **collection metadata only**, not
+   transcript content. Confirmed by a discriminating-document test:
+   a Bullock County, Alabama probate record whose transcript mentions
+   Virginia but whose metadata says Alabama was found by
+   `q.recordPlace=Alabama` and `f.recordPlace1=10,Alabama`, and NOT
+   found by `q.recordPlace=Virginia` or `f.recordPlace1=10,Virginia`.
+   `q.text` does search transcript content (confirmed in the same
+   section). The `f.recordPlace*` filters accept only the numeric
+   hierarchical IDs returned by the facets API (e.g.
+   `f.recordPlace1=10,Alabama`), not plain text values — plain text
+   silently returns zero results. Guarded by
+   `tests/packaging/measured-figures.test.ts` (`FORBIDDEN_WHEN` rules
+   for `J.verdict:q.recordPlace searches` and
+   `J.verdict:f.recordPlace searches`; the tool description is also
+   guarded via `AGENT_SURFACES`). The skill-reference surface is
+   still unguarded; it is the fulltext collection-scoping decision's
+   to land.
 
 ## Files to create/modify
 

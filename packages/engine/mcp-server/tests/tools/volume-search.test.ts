@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -113,7 +114,7 @@ describe("volumeSearchTool", () => {
       standardPlace: "Edensor, Derbyshire, England, United Kingdom",
       startYear: 1730,
       endYear: 1810,
-    });
+    }, LOCAL);
 
     expect(result.query).toEqual({
       standardPlace: "Edensor, Derbyshire, England, United Kingdom",
@@ -140,7 +141,7 @@ describe("volumeSearchTool", () => {
   // 2. Missing placeId
   it("throws when standardPlace is missing", async () => {
     await expect(
-      volumeSearchTool({ standardPlace: "" })
+      volumeSearchTool({ standardPlace: "" }, LOCAL)
     ).rejects.toThrow("volume_search requires a standardPlace.");
   });
 
@@ -152,7 +153,7 @@ describe("volumeSearchTool", () => {
       standardPlace: "Edensor, Derbyshire, England, United Kingdom",
       startYear: 1730,
       endYear: 1810,
-    });
+    }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.coverage.fromDateString).toBe("1730-01-01");
@@ -162,7 +163,7 @@ describe("volumeSearchTool", () => {
   it("omits date bounds from the request when no years are given", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
-    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.coverage.fromDateString).toBeUndefined();
@@ -175,7 +176,7 @@ describe("volumeSearchTool", () => {
         standardPlace: "Edensor, Derbyshire, England, United Kingdom",
         startYear: 1810,
         endYear: 1730,
-      })
+      }, LOCAL)
     ).rejects.toThrow("endYear must be greater than or equal to startYear.");
   });
 
@@ -183,7 +184,7 @@ describe("volumeSearchTool", () => {
   it("converts placeId to placeRepIds in coverage.placeRepIds", async () => {
     setupCalls([2968392, 10609408], makeSearchResponse([makeGroup()]), []);
 
-    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
     expect(mockStandardPlaceToPlaceId).toHaveBeenCalledWith(
       "Edensor, Derbyshire, England, United Kingdom"
@@ -197,7 +198,7 @@ describe("volumeSearchTool", () => {
   it("sends types NATURAL, active true, pageSize 100, returnChildCounts true", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
-    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.types).toEqual(["NATURAL"]);
@@ -209,7 +210,7 @@ describe("volumeSearchTool", () => {
   // 6. imageGroupPrefix derivation
   it("derives imageGroupPrefix for bare groupName", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup({ groupName: "004452257" })]), []);
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].imageGroupPrefix).toBe("004452257");
   });
 
@@ -219,7 +220,7 @@ describe("volumeSearchTool", () => {
       makeSearchResponse([makeGroup({ groupName: "007621224_005_M99P-2TQ" })]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].imageGroupNumber).toBe("007621224_005_M99P-2TQ");
     expect(result.results[0].imageGroupPrefix).toBe("007621224");
   });
@@ -232,7 +233,7 @@ describe("volumeSearchTool", () => {
       makeSearchResponse([makeGroup({ childCount: 412, indexedChildCount: 366, noIndexableDataChildCount: 0 })]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].recordSearchablePercent).toBe(89);
   });
 
@@ -243,7 +244,7 @@ describe("volumeSearchTool", () => {
       makeSearchResponse([makeGroup({ childCount: 100, indexedChildCount: 80, noIndexableDataChildCount: 20 })]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].recordSearchablePercent).toBe(100);
   });
 
@@ -254,7 +255,7 @@ describe("volumeSearchTool", () => {
       makeSearchResponse([makeGroup({ childCount: 10, indexedChildCount: 0, noIndexableDataChildCount: 10 })]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].recordSearchablePercent).toBeNull();
   });
 
@@ -265,7 +266,7 @@ describe("volumeSearchTool", () => {
     delete (groupNoCount as Partial<MetadataRmsGroup>).indexedChildCount;
     setupCalls([2968392], makeSearchResponse([groupNoCount]), []);
 
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].imageCount).toBeNull();
     expect(result.results[0].recordSearchablePercent).toBeNull();
   });
@@ -277,7 +278,7 @@ describe("volumeSearchTool", () => {
       makeSearchResponse([makeGroup({ groupName: "004452257" })]),
       ["004452257"]
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].fulltextSearchable).toBe(true);
   });
 
@@ -287,7 +288,7 @@ describe("volumeSearchTool", () => {
       makeSearchResponse([makeGroup({ groupName: "004452257" })]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].fulltextSearchable).toBe(false);
   });
 
@@ -299,7 +300,7 @@ describe("volumeSearchTool", () => {
       .mockRejectedValueOnce(new Error("network error"))
       .mockRejectedValueOnce(new Error("network error"));
 
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].fulltextSearchable).toBeNull();
   });
 
@@ -311,7 +312,7 @@ describe("volumeSearchTool", () => {
     ];
     setupCalls([2968392], makeSearchResponse(groups), []);
 
-    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
     // calls: [0] search, [1] fulltext
     const fulltextCall = mockFetch.mock.calls[1];
@@ -332,7 +333,7 @@ describe("volumeSearchTool", () => {
       ]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].coverages[0]).toEqual({
       place: "Edensor",
       dateRange: "1726–1812",
@@ -361,7 +362,7 @@ describe("volumeSearchTool", () => {
       ]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     const coverages = result.results[0].coverages;
     // Opaque internal id — nothing a reader can use.
     expect(coverages[0].recordType).toBeUndefined();
@@ -386,7 +387,7 @@ describe("volumeSearchTool", () => {
     mockFetch
       .mockResolvedValueOnce(makeOkResponse({ totalCount: 0 }));
 
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.totalResults).toBe(0);
     expect(result.results).toHaveLength(0);
   });
@@ -411,7 +412,7 @@ describe("volumeSearchTool", () => {
       ]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
     const c = result.results[0].coverages[0];
     expect(c.startYear).toBe(1726);
     expect(c.endYear).toBe(1812);
@@ -427,7 +428,7 @@ describe("volumeSearchTool", () => {
       ]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
     const c = result.results[0].coverages[0];
     expect(c.startYear).toBeUndefined();
     expect(c.endYear).toBeUndefined();
@@ -458,7 +459,7 @@ describe("volumeSearchTool", () => {
       ]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
     const [span, single, none] = result.results[0].coverages;
     expect(span.dateRange).toBe("1683-1700");
     expect(single.dateRange).toBe("1873-1873");
@@ -484,7 +485,7 @@ describe("volumeSearchTool", () => {
       ]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
     expect(result.results[0].coverages[0].dateRange).toBe("1683-1700");
   });
 
@@ -507,7 +508,7 @@ describe("volumeSearchTool", () => {
       ]),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: EDENSOR_P });
+    const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
     const [named, placeholder] = result.results[0].coverages;
     expect(named.recordType).toBe("Konfirmationslängd");
     expect(named.recordTypeConceptId).toBe(101655);
@@ -521,7 +522,7 @@ describe("volumeSearchTool", () => {
   it("expands a group to its anchor and sends it inside coverage", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
     // Marriage carries no strays, so this isolates the anchor path.
-    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Marriage"] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Marriage"] }, LOCAL);
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Inside `coverage`, not at the top level — at the top level it is ignored.
     expect(body.coverage.recordTypeConceptIds).toEqual([104727]);
@@ -530,7 +531,7 @@ describe("volumeSearchTool", () => {
 
   it("sends a group's strays alongside its anchor", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
-    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Prison"] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Prison"] }, LOCAL);
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // 131448 police records, 130086 criminal records and 126416 criminal case
     // files all sit outside 123478's subtree, so containment cannot reach them.
@@ -544,7 +545,7 @@ describe("volumeSearchTool", () => {
     await volumeSearchTool({
       standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax", "Census"],
-    });
+    }, LOCAL);
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Tax anchor + Tax stray + Census anchor + Census stray.
     expect(body.coverage.recordTypeConceptIds.sort((a: number, b: number) => a - b)).toEqual(
@@ -554,7 +555,7 @@ describe("volumeSearchTool", () => {
 
   it("sends a parent's anchor plus its descendants' strays, not their anchors", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
-    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Legal"] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Legal"] }, LOCAL);
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Court, Probate, Wills and Land anchors are NOT enumerated — the API
     // expands 122797's subtree itself. Their strays are, because a stray sits
@@ -566,7 +567,7 @@ describe("volumeSearchTool", () => {
 
   it("treats an empty recordTypeGroups array as no filter", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
-    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: [] });
+    await volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: [] }, LOCAL);
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     // Upstream treats an empty id list as no filter; omit it rather than send a
     // no-op that reads like a filter.
@@ -575,7 +576,7 @@ describe("volumeSearchTool", () => {
 
   it("throws on an unknown group name and names the valid set", async () => {
     await expect(
-      volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Taxation"] })
+      volumeSearchTool({ standardPlace: EDENSOR_P, recordTypeGroups: ["Taxation"] }, LOCAL)
     ).rejects.toThrow(/Unknown record-type group\(s\): Taxation.*Tax/s);
     // Never falls through to an unfiltered search: upstream answers an
     // unrecognised id with totalCount 0 and status 200, which is
@@ -591,7 +592,7 @@ describe("volumeSearchTool", () => {
       volumeSearchTool({
         standardPlace: EDENSOR_P,
         recordType: "probate",
-      } as unknown as VolumeSearchInput)
+      } as unknown as VolumeSearchInput, LOCAL)
     ).rejects.toThrow(/filters by recordTypeGroups.*not recordType/s);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -608,7 +609,7 @@ describe("volumeSearchTool", () => {
     const first = await volumeSearchTool({
       standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax"],
-    });
+    }, LOCAL);
     expect(first.nextPageToken).toBe("page-2-cursor");
 
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
@@ -616,7 +617,7 @@ describe("volumeSearchTool", () => {
       standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax"],
       pageToken: first.nextPageToken,
-    });
+    }, LOCAL);
 
     // calls: [0] page-1 search, [1] page-1 fulltext, [2] page-2 search.
     const page1 = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -636,7 +637,7 @@ describe("volumeSearchTool", () => {
       volumeSearchTool({
         standardPlace: EDENSOR_P,
         recordTypeGroups: "Tax",
-      } as unknown as VolumeSearchInput)
+      } as unknown as VolumeSearchInput, LOCAL)
     ).rejects.toThrow(/recordTypeGroups must be an array/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -646,7 +647,7 @@ describe("volumeSearchTool", () => {
     const result = await volumeSearchTool({
       standardPlace: EDENSOR_P,
       recordTypeGroups: ["Tax"],
-    });
+    }, LOCAL);
     expect(result.query.recordTypeGroups).toEqual(["Tax"]);
   });
 
@@ -657,14 +658,14 @@ describe("volumeSearchTool", () => {
       makeSearchResponse([makeGroup()], { nextPageToken: "abc123" }),
       []
     );
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.nextPageToken).toBe("abc123");
   });
 
   it("sends pageToken as nextPageToken in the request body", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
-    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageToken: "cursor-xyz" });
+    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageToken: "cursor-xyz" }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.nextPageToken).toBe("cursor-xyz");
@@ -675,17 +676,17 @@ describe("volumeSearchTool", () => {
     mockFetch
       .mockResolvedValueOnce(makeErrorResponse(401, "Unauthorized"));
 
-    await expect(volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" })).rejects.toThrow(
+    await expect(volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL)).rejects.toThrow(
       "FamilySearch session not accepted; call the login tool to re-authenticate."
     );
   });
 
-  // 18. Network error
+  // 18. Network error (retried by fetchWithRetry before surfacing)
   it("throws on network error", async () => {
     mockFetch
-      .mockRejectedValueOnce(new Error("ECONNREFUSED"));
+      .mockRejectedValue(new Error("ECONNREFUSED"));
 
-    await expect(volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" })).rejects.toThrow(
+    await expect(volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL)).rejects.toThrow(
       "Could not reach FamilySearch volume search API: ECONNREFUSED."
     );
   });
@@ -694,7 +695,7 @@ describe("volumeSearchTool", () => {
   it("sends Authorization, Content-Type, User-Agent, and FS-User-Agent-Chain headers", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
-    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" });
+    await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
     const searchCall = mockFetch.mock.calls[0];
     const headers = searchCall[1].headers;
@@ -709,7 +710,7 @@ describe("volumeSearchTool", () => {
     mockStandardPlaceToPlaceId.mockResolvedValueOnce(null);
 
     await expect(
-      volumeSearchTool({ standardPlace: "Nowhere" })
+      volumeSearchTool({ standardPlace: "Nowhere" }, LOCAL)
     ).rejects.toThrow(/Could not resolve "Nowhere"/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -719,7 +720,7 @@ describe("volumeSearchTool", () => {
     mockPlaceIdToRepIds.mockResolvedValueOnce([]);
 
     await expect(
-      volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" })
+      volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL)
     ).rejects.toThrow(
       'No place representations found for "Edensor, Derbyshire, England, United Kingdom".'
     );
