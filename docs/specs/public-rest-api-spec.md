@@ -142,15 +142,23 @@ which fails on a drain that returns during the quiet stretch. Only then does the
 retry never mis-read another turn's frames as its own reply.
 
 **`turn_start` (`{"kind": "turn_start", "queued": <bool>}`)** is emitted when
-**every** turn begins; `queued` says whether it came off the backlog. It fired
+**every** turn begins; `queued` says whether it came off the backlog. Nothing in
+this repo reads `queued` - it is produced in `runner.py` and consumed only by
+tests. It stays on the frame for the audience this document is written for: an
+external client of the public REST API, which has no other way to tell a turn it
+asked for from one that was waiting. Named here so the next reader does not hunt
+for an internal consumer. It fired
 only for queued turns at first, on the reasoning that a first turn's sender
 already knows it started - but the consumer that matters is the *drain*, which is
 a different connection from the sender. A sync `POST /messages` starts an
 unqueued turn, so on its 504 retry there was no `turn_start`, `in_flight` stayed
 0, and the drain returned inside the running turn. Two consumers need it: the
-drain above, and the client's busy gate - `turn_done` fires once per *turn*, not
-once per backlog, so a client that goes idle on it would report idle while
-messages were still waiting and invite the user to send more. `sandbox_server`
+drain above, and `sandbox_server`, which converts it. The web client does NOT
+read this frame - `ChatPane` returns early on it - it reads the converted
+`status: turn_active` below. The conversion is what the busy gate needs:
+`turn_done` fires once per *turn*, not once per backlog, so a client that went
+idle on it would report idle while messages were still waiting and invite the
+user to send more. `sandbox_server`
 re-arms `_turn_active` on it **and broadcasts a `status: turn_active` frame**:
 `_turn_active` alone reaches a client only at connect time, so an
 already-connected client - precisely the one that built the backlog - would never

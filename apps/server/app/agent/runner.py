@@ -142,7 +142,10 @@ async def serve(agent, incoming: "asyncio.Queue", emit) -> None:
         # no `turn_start`, `in_flight` stayed 0, and the drain returned inside
         # the running turn. A first turn is quiet for a full SDK round trip
         # before its first token, so the window is seconds wide, not a race.
-        # `queued` stays on the frame because the client distinguishes the two.
+        # `queued` stays on the frame for an EXTERNAL client of the public REST
+        # API -- nothing in this repo reads it. The web client cannot: ChatPane
+        # returns early on turn_start and acts on the `status: turn_active`
+        # frame sandbox_server converts this into.
         emit({"kind": "turn_start", "queued": queued})
         turn_task = asyncio.create_task(_run_turn(agent, text, emit))
         # Wakes this loop when the turn ends, which is what lets a queued message
