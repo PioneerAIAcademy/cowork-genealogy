@@ -320,18 +320,22 @@ set is now the shared `RELATIONSHIP_ESTABLISHING_TYPES` in
 `utils/source-ref-resolver.ts`.
 
 What §4.5 does **not** say is that the party the skipped assertion *names* has
-nowhere to go. She is minted by §4.6 — as a sourced name, still with no fact,
-so every clause above holds unchanged.
+nowhere to go. She is minted by §4.6 — as a sourced name, plus that persona's
+own facts where the record gives her a persona it never names. Every clause
+above still holds: the second pass runs through the persona arm, so `SKIP_TYPES`
+drops the `marriage` assertion there exactly as it would on any other persona,
+and no Marriage fact reaches a person.
 
 ---
 
 ### 4.6 The named party (a person the record names but gives no persona)
 
-A person named only *inside* another persona's `relationship` or `marriage`
+A person the record names inside another persona's `relationship` or `marriage`
 assertion — the bride named in the groom's marriage register is the canonical
-case — has no `record_role` of her own and no name assertion, so the persona arm
-has nothing to select on and `SKIP_TYPES` drops the only assertion that names
-her.
+case — has no name assertion the persona arm can mint her from: either she has
+no `record_role` of her own, so the arm has nothing to select on and
+`SKIP_TYPES` drops the only assertion that names her, or the persona that role
+does have is never named by the record.
 
 **Which shapes actually reach this arm, measured rather than assumed.** Running
 the arm against the corpus fixtures: the bride in `flynn-spouse-stub-marriage`

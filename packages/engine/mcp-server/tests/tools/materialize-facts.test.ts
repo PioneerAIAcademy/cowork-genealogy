@@ -1822,6 +1822,37 @@ describe("materialize_facts", () => {
     expect(again.factsAdded).toBe(0);
     expect(again.namesAdded).toBe(0);
     expect(findPerson(await readTree(), r.personId).facts).toHaveLength(1);
+
+    // The live corpus shape is [birth, marriage], not birth alone, and §4.5's
+    // guarantee has to survive the second pass: the marriage assertion must NOT
+    // become a person-level fact just because a different arm reached it. It
+    // does not, because the second pass IS the persona arm and SKIP_TYPES drops
+    // it there exactly as on any other persona.
+    await writeProject(
+      tree(),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M", date: "1860" }),
+          assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+          assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "marriage", value: "M married T", date: "1860" }),
+        ],
+      }),
+    );
+    const withMarriage = single(
+      await materializeFacts({
+        projectPath: dir,
+        assertionId: "a_001",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(withMarriage.ok).toBe(true);
+    if (!withMarriage.ok) return;
+    expect(withMarriage.factsAdded).toBe(1); // the birth, and only the birth
+    const bride = findPerson(await readTree(), withMarriage.personId);
+    expect(bride.facts.map((f: any) => f.type)).toEqual(["Birth"]);
+    expect(bride.facts.some((f: any) => String(f.type).toLowerCase() === "marriage")).toBe(false);
   });
 
   it("(55) the fact pass is scoped: no persona, gender-only, and negative evidence each write no fact", async () => {

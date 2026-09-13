@@ -97,8 +97,9 @@ class MaterializeFactsError extends Error {}
  *
  *  Skipped here means "not a fact for THIS persona" — it never meant the other
  *  party the assertion names has nowhere to go. That party is minted by the
- *  named-party arm below (§4.6), which writes her a sourced NAME and still no
- *  fact, so the Couple event stays on the edge where it belongs. */
+ *  named-party arm below (§4.6), which writes her a sourced NAME — plus that
+ *  persona's own facts where the record gives her a persona it never names —
+ *  so the Couple event stays on the edge where it belongs. */
 const NAME_TYPES: ReadonlySet<string> = new Set(["name"]);
 const GENDER_TYPES: ReadonlySet<string> = new Set(["gender", "sex"]);
 const SKIP_TYPES: ReadonlySet<string> = new Set([
@@ -506,14 +507,19 @@ function isNamedPartyOp(op: MaterializeFactsAnyOp): op is MaterializeFactsNamedP
 // not give a persona of its own — canonically the bride in the groom's marriage
 // register. She has no `record_role`, so the persona arm
 // has nothing to select on and `SKIP_TYPES` drops the only assertion naming
-// her; before this arm she could only be written by `tree_edit add_person`,
-// whose name path is ref-tolerant, so a record-derived person landed with NO
-// provenance (the leak tree-materialization-spec §6 names).
+// her; or the persona that role does have is never named by the record, so the
+// arm refuses to mint from it. Before this arm either shape could only be
+// written by `tree_edit add_person`, whose name path is ref-tolerant, so a
+// record-derived person landed with NO provenance (the leak
+// tree-materialization-spec §6 names).
 //
-// Writes a sourced NAME plus the gender scalar, and NOTHING else: no facts, no
+// Writes a sourced NAME plus the gender scalar, and, where that role has a
+// persona the record never names, that persona's own facts. Never a
 // relationship edge. §4.5 therefore still holds in full — a `marriage`
-// assertion never becomes a person-level fact; only the party it names becomes
-// a sourced name, and the Couple event stays on the edge.
+// assertion never becomes a person-level fact, because the second pass runs
+// through the persona arm and `SKIP_TYPES` drops it there exactly as it would
+// on any other persona; only the party it names becomes a sourced name, and the
+// Couple event stays on the edge.
 //
 // The ref is enforced, the name is not: the tool cannot know the name the
 // record gives (8 of 162 corpus relationship/marriage assertions carry it in
