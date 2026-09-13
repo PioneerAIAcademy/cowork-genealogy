@@ -244,14 +244,6 @@
     },
     {
       "test_id": "ut_search_external_sites_006",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Agree (2/partial). dr_year is a single-value slot in both the tool and the original hand-composed template, pre-existing limitation, not new. Model should've picked one representative year more carefully or relied on the on-site date filter more explicitly, but this isn't a build_external_search_url defect (Chronicling America's range param on the same turn encoded correctly).,"
-    },
-    {
-      "test_id": "ut_search_external_sites_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -344,7 +336,47 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Agree (2/partial). Same defect as URL generation: dr_year=1892 is a midpoint, not the 1880–1905 range, pre-existing single-value-slot limitation in the Newspapers.com template, not a build_external_search_url bug. Chronicling America's range param on the same turn encoded correctly."
+      "comment": "Agree (2/partial). dr_year=1892 is a midpoint, not the 1880-1905 range. This was NOT a pre-existing limitation the original hand-composed SKILL.md template could express ranges (see the 09-06 run). This PR's first draft newly typed searchYear as {type: \"number\"}, which is what forced the collapse to a single value; it was fixed two days later (09-11) by widening it to accept a string. A regression this PR introduced and then fixed, not inherited."
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_006",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree (2/partial). Same correction as Correctness: this is not a pre-existing template limitation. The prose template supported ranges; this PR's own searchYear: {type: \"number\"} is what newly forced a midpoint value, and that was fixed in a later commit of the same PR (09-11). Not a model slip to blame, and not inherited from the original template."
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }

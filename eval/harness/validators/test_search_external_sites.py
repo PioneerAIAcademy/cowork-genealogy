@@ -79,12 +79,31 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
 
 
-def _place_key(value: str) -> str:
-    """Normalize a place string to its leading jurisdiction segment,
-    casefolded — a resolved place-search result routinely appends broader
-    context ("Pennsylvania, United States") that a raw fixture assertion's
-    `place` field never carries, and both name the same place."""
-    return value.split(",")[0].strip().casefold()
+def _place_matches_rejected(birth_place: str, rejected_place: str) -> bool:
+    """True when `birth_place` names the same place as `rejected_place`,
+    tolerating a place-resolution tool appending broader jurisdiction context
+    a raw fixture assertion's `place` field never carries ("Pennsylvania" vs
+    "Pennsylvania, United States") — but not so loose that two different
+    places sharing only a leading segment collide ("Paris, Texas, United
+    States" vs the rejected "Paris, France": a genuine same-leaf-different-
+    jurisdiction pair, common in genealogy for towns named after Old World
+    cities). Comparing just the first comma-segment on both sides (an earlier
+    version of this function) flagged that correctly-reformatted, correct
+    answer as if it encoded the rejected fact.
+
+    Compares exactly as many of `birth_place`'s leading comma-segments as
+    `rejected_place` itself has, both casefolded — so a rejected value that
+    already carries its own disambiguating context ("Paris, France", two
+    segments) requires `birth_place` to match on that same context, not just
+    the leaf name. Does not catch the converse reformatting (a resolver
+    prepending a finer unit, e.g. "Philadelphia, Pennsylvania" for a rejected
+    bare "Pennsylvania") — a false negative, left to the LLM judge, and a much
+    safer failure mode than the false positive this replaces."""
+    rejected_segments = [s.strip().casefold() for s in rejected_place.split(",")]
+    birth_segments = [s.strip().casefold() for s in birth_place.split(",")]
+    if len(birth_segments) < len(rejected_segments):
+        return False
+    return birth_segments[: len(rejected_segments)] == rejected_segments
 
 
 def test_resolved_birthplace_conflict_rejected_value_not_encoded(
@@ -174,18 +193,23 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         # string ("Pennsylvania, United States") for what the fixture's own
         # assertion records as the bare place name ("Pennsylvania") — the
         # same rejected fact, differently formatted. An exact-string
-        # comparison missed this on a live run (issue #1980 review round 3):
-        # the model encoded the reformatted value and only the LLM judge
-        # caught it. Comparing the leading comma-segment, casefolded, catches
-        # that reformatting without needing the URL-string substring match
-        # this validator deliberately avoids (see the module docstring above
-        # on `residencePlace` false positives) — it only ever looks at the
-        # `birthPlace` argument's own value, never the rendered URL.
-        rejected_keys = {_place_key(p) for p in rejected_places}
+        # comparison missed this on a live run: the model encoded the
+        # reformatted value and only the LLM judge caught it.
+        # `_place_matches_rejected` catches that reformatting without needing
+        # the URL-string substring match this validator deliberately avoids
+        # (see the module docstring above on `residencePlace` false
+        # positives) — it only ever looks at the `birthPlace` argument's own
+        # value, never the rendered URL. It also anchors on the rejected
+        # value's own segment count, not just its first segment, so a
+        # different place that merely shares a leading token with the
+        # rejected one ("Paris, Texas" vs. rejected "Paris, France") cannot
+        # collide with it.
         for call in calls:
             args = call.get("args") or {}
             birth_place = (args.get("attributes") or {}).get("birthPlace")
-            if birth_place and _place_key(birth_place) in rejected_keys:
+            if birth_place and any(
+                _place_matches_rejected(birth_place, p) for p in rejected_places
+            ):
                 errors.append(
                     f"build_external_search_url call's attributes.birthPlace="
                     f"{birth_place!r} is the value conflict {c.get('id')} "

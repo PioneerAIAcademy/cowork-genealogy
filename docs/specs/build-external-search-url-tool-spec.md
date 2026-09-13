@@ -225,7 +225,7 @@ silently dropped Chronicling America's required `dl=page` and MyHeritage's
 
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
-Unlike the other six sites, `digital_newspaper_archive` has no fixed
+Unlike the other fourteen sites, `digital_newspaper_archive` has no fixed
 site-wide URL — it is an open bucket for whichever state/regional free
 archive applies to the place being researched (Utah Digital Newspapers,
 California Digital Newspaper Collection, …), and "which one is identified by
@@ -289,10 +289,11 @@ fractional years (`1845.7`) in one place rather than letting any of them
 reach the URL as a literal string. An empty string (`""`) is treated
 identically to an absent attribute throughout — `attributes: { birthPlace:
 "" }` must not produce `birthplace=`, and must not defeat a documented
-fallback: `findagrave`'s `location` falls back from `deathPlace` to
-`birthPlace` only when `deathPlace` is genuinely absent, empty string
-included (a first draft's `??` fallback only triggered on `null`/`undefined`,
-so `deathPlace: ""` produced `location=` instead of falling through).
+fallback: `antenati`'s `localita`/`anno` fall back from birth to death
+place/year when the birth value is empty, exactly as when it's absent
+entirely, because the fallback is built on `str()`/`num()`'s own
+empty-as-absent normalization rather than a bare `??` (which alone would
+treat `""` as present and never fall through).
 
 ### 3.8 Unsupported site
 
@@ -318,7 +319,7 @@ to use the identical path and parameter names as their `.com` counterparts
 
 ### 3.10 Sites named in the launch scope with no template
 
-Six of the fourteen sites named in the launch-scope table (§4) got no
+Six of the fourteen sites named in the issue's own launch-scope list got no
 template — each for a reason live research could not resolve, not an
 oversight:
 
@@ -475,8 +476,8 @@ generally, not verified per archive:
   (or present only as empty strings) is rejected rather than returning a
   bare site URL.
 - **Empty strings and non-finite numbers** — an empty `birthPlace` does not
-  reach the URL; an empty `deathPlace` still falls through to `birthPlace`
-  on `findagrave`; `NaN`/`Infinity`/`1e21`/`1845.7` are all rejected.
+  reach the URL; an empty `birthPlace` still falls through to `deathPlace`
+  on `antenati`; `NaN`/`Infinity`/`1e21`/`1845.7` are all rejected.
 - **Unused-attribute notes** — a supplied attribute the target site doesn't
   read produces a note naming it; an attribute the site does read produces
   no such note.
@@ -537,10 +538,17 @@ Chronicling America parameter. That is exactly how the dead `qs` shipped
 through the initial version of this same PR: `qs` was carried over from the
 pre-existing SKILL.md template, the earlier live measurement behind
 correction #1 (§1) held the search term fixed while varying only the date
-parameters, and so never exercised `qs` itself. Every one of this tool's
-other six parameter tables carries the identical, unaddressed risk — they
-are unverified ports of prose that was itself never mechanically checked
-against the live sites.
+parameters, and so never exercised `qs` itself. No unit test or CI job binds
+any of this tool's other fourteen parameter tables against a live site
+either — a vitest case can only assert the tool's own constant against
+itself. The six sites ported from the original prose (`ancestry`,
+`myheritage`, `findmypast`, `findagrave`, `newspapers`,
+`digital_newspaper_archive`) carry this risk unmitigated: they are unverified
+ports of prose that was itself never mechanically checked against the live
+sites. The eight sites added in this PR were each checked live once before
+being written in, at one of the two confidence tiers §10 records — narrower
+than a CI-enforced check, but not the same unaddressed-risk category as the
+six ported sites.
 
 **The one live check this PR does record**, from review (2026-09-09), against
 the exact URL shape `chronicling_america`'s Case B branch builds:

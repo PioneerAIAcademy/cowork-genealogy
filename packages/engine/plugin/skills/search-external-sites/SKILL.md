@@ -319,7 +319,7 @@ build_external_search_url({
 | `ancestry` | `givenName`/`surname`, `birthYear`/`birthPlace`, `deathYear`/`deathPlace`, `marriageYear`, `residenceYear`/`residencePlace`, `father*`/`mother*`/`spouse*` | |
 | `myheritage` | `givenName`/`surname`, `birthYear`/`birthPlace`, `marriageYear`/`marriagePlace`, `deathYear`/`deathPlace`, `father*`/`mother*` | No residence field |
 | `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace`/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) |
-| `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear`/`deathPlace` (falls back to `birthPlace` if no death place) | |
+| `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear` | No place parameter |
 | `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` also accepts a hyphenated range (`"1880-1905"`) when the exact year isn't known. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
 | `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | Free. Digitised page coverage runs **1798–1963**, title-by-title and complete for no state — a nil result never means no newspaper covered the event. Target date outside 1798–1963: do not call this site. Say the page corpus does not reach that period, and route to the state/regional archive for the place (coverage differs) or to a paid site instead |
 | `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | Free. **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
@@ -410,7 +410,7 @@ research_log_append({
   resultsExamined: 0,
   notes: "URL generated; awaiting user capture.",
   externalSite: {
-    site: "<ancestry|myheritage|findmypast|findagrave|newspapers|chronicling_america|digital_newspaper_archive>",
+    site: "<the same `site` value you passed to build_external_search_url>",
     urlGenerated: "<the exact URL you present below>",
     captureReceived: false,
     captureFilename: null

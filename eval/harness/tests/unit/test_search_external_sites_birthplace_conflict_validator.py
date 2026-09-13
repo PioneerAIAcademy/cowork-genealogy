@@ -88,8 +88,8 @@ def _tool_calls(birth_place=None, *, site="myheritage"):
     ]
 
 
-def _expect_fires(tool_calls, test, match):
-    before, after = _states()
+def _expect_fires(tool_calls, test, match, states=None):
+    before, after = states or _states()
     try:
         _check(before, after, tool_calls, test)
     except pytest.skip.Exception:
@@ -103,8 +103,8 @@ def _expect_fires(tool_calls, test, match):
     pytest.fail(f"expected AssertionError (match={match!r}), but the validator raised nothing")
 
 
-def _expect_passes(tool_calls, test):
-    before, after = _states()
+def _expect_passes(tool_calls, test, states=None):
+    before, after = states or _states()
     try:
         _check(before, after, tool_calls, test)
     except pytest.skip.Exception:
@@ -145,6 +145,33 @@ def test_passes_when_the_preferred_value_is_encoded():
 
 def test_passes_when_the_field_is_omitted():
     _expect_passes(_tool_calls(None), {"type": "positive"})
+
+
+def test_does_not_false_positive_on_a_different_place_sharing_a_leading_segment():
+    """A rejected value that already carries its own disambiguating context
+    ("Paris, France") must not collide with a different, correctly-encoded
+    place that merely shares a leading token ("Paris, Texas, United States")
+    — common in genealogy for American towns named after Old World cities
+    (Paris, Dublin, Rome, Athens, Berlin, Vienna). A version of this check
+    that compared only the first comma-segment on both sides flagged this
+    correct answer as if it had encoded the rejected fact (code-review
+    finding, 2026-09-13) — the exact false positive the fix for the
+    reformatted-value case (above) introduced."""
+    research = dict(_RESEARCH)
+    research["conflicts"] = [{
+        "id": "c_synthetic",
+        "conflict_type": "fact",
+        "disputed_attribute": "birthplace",
+        "status": "resolved",
+        "preferred_assertion_id": "a_synthetic_preferred",
+        "competing_assertion_ids": ["a_synthetic_preferred", "a_synthetic_rejected"],
+    }]
+    research["assertions"] = list(_RESEARCH["assertions"]) + [
+        {"id": "a_synthetic_preferred", "place": "Paris, Texas, United States"},
+        {"id": "a_synthetic_rejected", "place": "Paris, France"},
+    ]
+    states = ({"research_json": research}, {"research_json": research})
+    _expect_passes(_tool_calls("Paris, Texas, United States"), {"type": "positive"}, states=states)
 
 
 def test_does_not_false_positive_on_a_legitimate_residence_place():

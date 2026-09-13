@@ -104,8 +104,8 @@ function num(n: number | undefined): string | undefined {
 }
 
 // Empty-string treated as absent throughout — `attributes: { birthPlace: "" }`
-// must not produce `birthplace=` or defeat a documented fallback (FindAGrave's
-// death-place-falls-back-to-birth-place).
+// must not produce `birthplace=` or defeat a documented fallback (antenati's
+// `localita`/`anno` fall back from birth to death place/year when birth is absent).
 function str(s: string | undefined): string | undefined {
   return s !== undefined && s.length > 0 ? s : undefined;
 }
