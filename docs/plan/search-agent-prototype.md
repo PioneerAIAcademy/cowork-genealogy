@@ -3,7 +3,8 @@
 **Status:** IN PROGRESS — P1, the three D1–2 probes, P3 and P2 measured 2026-09-10 (PR
 #2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
-measured the same day; the build continues on the re-decide branch · plan of 2026-09-09 ·
+measured the same day; the five asks those answers left with FamilySearch are listed under
+"Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
 adversarially reviewed twenty-five rounds (`plan-critic`), then **cut**: the review
 loop's own output — a turn-lock protocol, a five-arm shim and a ceiling guard with its
 proof — grew to a third of the document and generated a blocking finding every round it
@@ -363,6 +364,27 @@ every round it existed. It belongs in code with tests, not in prose.
 No FamilySearch OAuth ticket is needed: `http://127.0.0.1:1837/callback` is already
 registered on the FS dev client. An Elastic Beanstalk hostname would not have been —
 a second reason a full AWS deploy is out of scope.
+
+## Open asks — what the 2026-09-11 answers left with FamilySearch
+
+The answers closed R1 and opened five narrower questions that only a FamilySearch team
+can answer. Each is recorded in its register entry below; this is the list of messages,
+with who owns the reply and when it was sent. None blocks the build — Weeks 2 and 3
+run locally, and the gateway path matters from D16 — so the build continues while
+these are out. Update the date column when a reply lands and fold the answer into the
+entry it names.
+
+| To | Ask | Unblocks | Register | Sent | Answered |
+|---|---|---|---|---|---|
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | 2026-09-13 (drafted) | — |
+| InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | 2026-09-13 (drafted) | — |
+| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | 2026-09-13 (drafted) | — |
+| Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | 2026-09-13 (drafted) | — |
+| FS platform / DPF | The SSE edge probe with the arm list under R3 — only if the Help team says they bypass DTM. | CloudFront and Imperva behaviour on `text/event-stream`. | R3 | not yet | — |
+
+Not an ask: R13's route-change lead time (days, an image rebuild) is a planning fact, and
+the 1 h TTL is moot until Bedrock is shown to honour it on Converse — the corpus says the
+TTL is not where the cost is (R2).
 
 ---
 
