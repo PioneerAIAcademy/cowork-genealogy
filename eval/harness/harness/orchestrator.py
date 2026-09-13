@@ -1417,8 +1417,16 @@ def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
       (`correct_skill: []`), where "no skill fired" holds whether the model
       cleanly declined or answered the request itself, so the base dimensions
       are the only thing telling those apart and they DO gate.
+    - `"trigger"` — a positive test tagged `grade:trigger` (opt-in). The verdict
+      is activation alone (the skill under test fired, checked in
+      `_compute_outcome`'s positive branch); the judge runs base-only and
+      diagnostically and does NOT gate. For a test whose sub-skills are stubbed,
+      an outcome score would measure the stub, not the skill (issue #2156;
+      mirrors #2023's stubbed-run principle).
     """
     if spec.type == "positive":
+        if "grade:trigger" in (getattr(spec, "tags", None) or []):
+            return "trigger", False
         return "dimensions", True
     negative = spec.negative or {}
     if negative.get("grade_on_invariant"):
@@ -1500,6 +1508,15 @@ def _compute_outcome(
         # docs/specs/unit-test-spec-v2.md for v2 fidelity work.
         if spec.skill not in skills_invoked:
             return "fail"
+        if "grade:trigger" in (getattr(spec, "tags", None) or []):
+            # grade:trigger (issue #2156): the deterministic contract for this
+            # positive test is activation alone — checked just above. Its
+            # sub-skills are stubbed, so the judge's outcome dimensions measure
+            # the stub, not the skill (mirrors the #2023 stubbed-run principle);
+            # they still run and are recorded but do not gate. Kept in step with
+            # grading_mode_for's "trigger" mode (dimensions_gate_outcome=False),
+            # enforced by test_grading_mode_matches_what_compute_outcome_does.
+            return "pass"
     else:  # negative
         # Invariant grading (opt-in via `negative.grade_on_invariant`).
         # The test is graded SOLELY on its deterministic invariant

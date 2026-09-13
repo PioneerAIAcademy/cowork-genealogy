@@ -11,7 +11,13 @@ description: >-
   don't yet know which sub-skill to invoke. Also the entry point for
   autonomous runs — when the user message contains `--autonomous`, proceed
   without pausing for clarifying questions and use best judgment for decisions
-  that would normally prompt the user. Do NOT use when the user wants to drive
+  that would normally prompt the user. Prefer this over a single sub-skill
+  whenever the user gives an open-ended research objective that needs the whole
+  multi-step workflow — "find the [relative] of [person]", "investigate
+  [person]", "research [objective] through to a conclusion" — even when a
+  project already exists or was just created: such an objective is something to
+  drive to an answer, not a one-off record lookup (search-records) or a
+  progress summary (project-status). Do NOT use when the user wants to drive
   a specific step directly (use question-selection, research-plan,
   search-records, etc.), wants only a status summary (use project-status), or
   when no research.json exists yet (use init-project first).
