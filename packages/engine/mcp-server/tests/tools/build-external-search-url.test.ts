@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildExternalSearchUrl } from "../../src/tools/build-external-search-url.js";
+import { buildExternalSearchUrl, buildExternalSearchUrlSchema } from "../../src/tools/build-external-search-url.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 
 describe("build_external_search_url", () => {
@@ -469,14 +469,48 @@ describe("build_external_search_url", () => {
     });
 
     it("does not re-encode an existing value already in a different valid encoding", () => {
+      // A key the tool never sets (not `name`, which the next test covers
+      // separately as an override case) — this test is purely about leaving
+      // an untouched existing value's own encoding alone.
       const r = buildExternalSearchUrl({
         site: "ancestry",
-        baseUrl: "https://www.ancestry.com/search/collections/8054/?name=Smith%2C%20John",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/?ref=Smith%2C%20John",
         attributes: { givenName: "Patrick", surname: "Flynn" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toMatch(/[?&]name=Smith%2C%20John(&|$)/);
+      expect(r.url).toMatch(/[?&]ref=Smith%2C%20John(&|$)/);
+    });
+
+    it("overrides rather than duplicates a key the curated baseUrl already carries (review finding)", () => {
+      // ?name=John_Smith + the tool's own name=Patrick_Flynn used to ship as
+      // both, `?name=John_Smith&name=Patrick_Flynn` — parser-dependent which
+      // one a receiving site actually uses. The tool's own value must win,
+      // with no leftover duplicate key.
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/?name=John_Smith",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn");
+    });
+
+    it("overrides a fixed param the curated baseUrl already carries, not just an attribute-derived one", () => {
+      // ?dl=title (a curated Chronicling America link's own value) collided
+      // with the tool's own required dl=page — the spec calls dl=page
+      // required precisely because without it the search hits newspaper
+      // titles, not digitised pages, so a stale dl=title silently coexisting
+      // defeats the one param the correction exists to guarantee.
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        baseUrl: "https://www.loc.gov/collections/chronicling-america/?dl=title",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.loc.gov/collections/chronicling-america/?dl=page&q=Patrick+Flynn");
     });
 
     it("preserves an existing valueless flag parameter as-is", () => {
@@ -826,6 +860,165 @@ describe("build_external_search_url", () => {
       if (!r.ok) return;
       expect(r.access).toBe("free");
       expect(r.notes.some((n) => /subscription may still be required to view full results/.test(n))).toBe(true);
+    });
+  });
+
+  describe("null-safety and invalid-value notes (review findings, 2026-09-13)", () => {
+    it("treats a null string attribute as absent instead of crashing", () => {
+      // `str()` previously checked `!== undefined` only; a model emitting
+      // `null` for a field it doesn't know reached `.length` on `null` and
+      // threw. Reproduced live across 11 of the tool's string attributes.
+      expect(() =>
+        buildExternalSearchUrl({
+          site: "ancestry",
+          attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: null as any },
+        }),
+      ).not.toThrow();
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: null as any },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("birthplace=");
+    });
+
+    it("treats a null year attribute as absent instead of a stray param", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: null as any },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("birth=");
+    });
+
+    it("notes a recognized string key supplied with the wrong type, not just an unrecognized one", () => {
+      // A recognized key of the wrong type reached the same silent
+      // `undefined` as an absent one — 89 cases across every site×key
+      // combination in the review, 76 with an empty notes array.
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: 12345 as any },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("birthplace=");
+      expect(r.notes.some((n) => /'birthPlace' was supplied but is not a usable string/.test(n))).toBe(true);
+    });
+
+    it("notes a recognized year key supplied out of range, not just an absent one", () => {
+      const r = buildExternalSearchUrl({
+        site: "findmypast",
+        attributes: { givenName: "Patrick", surname: "Flynn", eventYear: 99999 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("eventyear=");
+      expect(r.notes.some((n) => /'eventYear' was supplied but is not a valid year/.test(n))).toBe(true);
+      // The presence-vs-validity bug: this exact case (an invalid eventYear,
+      // no birthYear) must still warn the search is unscoped by year — an
+      // earlier version's `!== undefined` check treated 99999 as "present"
+      // and suppressed the warning.
+      expect(r.notes.some((n) => /unscoped by year/.test(n))).toBe(true);
+    });
+
+    it("notes a half-supplied Chronicling America date window", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "Patrick", surname: "Flynn", searchStartYear: 1880 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("dates=");
+      expect(r.notes.some((n) => /must both be supplied for a dates window/.test(n))).toBe(true);
+    });
+
+    it("rejects a non-negative-integer birthYearOffset/placeProximityMiles rather than sharing the year bound", () => {
+      const r = buildExternalSearchUrl({
+        site: "findmypast",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthYearOffset: 9999, placeProximityMiles: -5 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("yearofbirth_offset=");
+      expect(r.url).not.toContain("keywordsplace_proximity=");
+    });
+
+    it("accepts a valid birthYearOffset/placeProximityMiles", () => {
+      const r = buildExternalSearchUrl({
+        site: "findmypast",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthYearOffset: 3, placeProximityMiles: 10 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("yearofbirth_offset=3");
+      expect(r.url).toContain("keywordsplace_proximity=10");
+    });
+  });
+
+  describe("baseUrl format validation (review finding, 2026-09-13)", () => {
+    it("rejects a baseUrl that is not a URL at all", () => {
+      const r = buildExternalSearchUrl({
+        site: "digital_newspaper_archive",
+        baseUrl: "Utah Digital Newspapers",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+    });
+
+    it("rejects a javascript: baseUrl", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "javascript:alert(1)",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+    });
+
+    it("rejects a data: baseUrl", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "data:text/html,<b>x</b>",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+    });
+
+    it("still accepts a real https baseUrl", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+    });
+  });
+
+  describe("SUPPORTED_SITES reference safety (review finding, 2026-09-13)", () => {
+    it("mutating a returned supportedSites array does not affect a later call", () => {
+      const first = buildExternalSearchUrl({
+        site: "not-a-real-site",
+        attributes: { givenName: "Patrick" },
+      });
+      expect(first.ok).toBe(false);
+      if (first.ok || first.reason !== "unsupported_site") throw new Error("expected unsupported_site");
+      first.supportedSites.push("hacked-in-site");
+
+      const second = buildExternalSearchUrl({
+        site: "not-a-real-site",
+        attributes: { givenName: "Patrick" },
+      });
+      expect(second.ok).toBe(false);
+      if (second.ok || second.reason !== "unsupported_site") throw new Error("expected unsupported_site");
+      expect(second.supportedSites).not.toContain("hacked-in-site");
+      expect(buildExternalSearchUrlSchema.inputSchema.properties.site.enum).not.toContain("hacked-in-site");
     });
   });
 });

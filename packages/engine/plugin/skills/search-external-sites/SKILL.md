@@ -273,7 +273,7 @@ or census years exist in this `collections_search` result, never in memory.
 ### 3. Build the URL
 
 Call `build_external_search_url` to get the URL — never hand-compose one.
-It returns `{ ok: true, url, notes }` or `{ ok: false, reason, errors }`; on
+It returns `{ ok: true, url, notes, access }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
 blindly or hand-writing a URL.
 

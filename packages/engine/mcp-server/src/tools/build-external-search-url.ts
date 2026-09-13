@@ -6,6 +6,8 @@
 // link fits, what conflicts[] says about a disputed field); the tool applies
 // only the string-templating. Spec: docs/specs/build-external-search-url-tool-spec.md.
 
+import { isFourDigitYear } from "../utils/search-helpers.js";
+
 export type ExternalSearchSite =
   | "ancestry"
   | "myheritage"
@@ -84,30 +86,60 @@ export type BuildExternalSearchUrlResult =
   | { ok: true; url: string; notes: string[]; access: AccessClassification }
   | { ok: false; reason: "unsupported_site"; errors: string[]; supportedSites: string[] }
   | { ok: false; reason: "base_url_required"; errors: string[] }
+  | { ok: false; reason: "invalid_base_url"; errors: string[] }
   | { ok: false; reason: "no_attributes"; errors: string[] };
+
+// `baseUrl` is a caller-supplied string with no other check on it anywhere —
+// accepting anything meant a plain label ("Utah Digital Newspapers"), a
+// `javascript:`/`data:` value, or any other non-http(s) string built
+// `{ ok: true, url: "Utah Digital Newspapers?q=Flynn" }`, a dead or unsafe
+// link returned as a success. Requires an absolute http(s) URL; anything
+// else is a caller error, not a URL this tool can build onto.
+function isHttpUrl(u: string): boolean {
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 function isSupportedSite(site: string): site is ExternalSearchSite {
   return (SUPPORTED_SITES as string[]).includes(site);
 }
 
-// A genealogy year is a small positive integer; this bound rejects NaN,
-// Infinity, 1e21-scale nonsense, and fractional years (1845.7) in one check —
-// `Number.isInteger` alone accepts 1e21 (it has no fractional part) and
-// rejects NaN/Infinity on its own, but the magnitude clamp is still needed.
-const YEAR_MIN = 0;
-const YEAR_MAX = 9999;
+// Calendar years reuse the same plausibility bound `record-search.ts` and
+// `fulltext-search.ts` already apply (`isFourDigitYear`), rather than a
+// second, differently-bounded copy — a duplicate here previously accepted
+// `0` and rejected years before 1000, which a real historical record can
+// need and `isFourDigitYear`'s own [1000, 9999] already gets right.
+function numYear(n: number | undefined | null): string | undefined {
+  return typeof n === "number" && isFourDigitYear(n) ? String(n) : undefined;
+}
 
-function num(n: number | undefined): string | undefined {
-  return n !== undefined && Number.isInteger(n) && n >= YEAR_MIN && n <= YEAR_MAX
+// FindMyPast's two tuning knobs are not years — `birthYearOffset` (a
+// give-or-take count) and `placeProximityMiles` (a radius) — and sharing
+// `numYear`'s bound let either one silently accept a 9999-year offset or a
+// 9999-mile radius while rejecting small legitimate values outside
+// [1000, 9999]. A small non-negative integer is the actual constraint for
+// both: neither is ever a year, and neither is ever negative.
+const SMALL_NUMBER_MAX = 1000;
+function numSmall(n: number | undefined | null): string | undefined {
+  return typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= SMALL_NUMBER_MAX
     ? String(n)
     : undefined;
 }
 
-// Empty-string treated as absent throughout — `attributes: { birthPlace: "" }`
-// must not produce `birthplace=` or defeat a documented fallback (antenati's
-// `localita`/`anno` fall back from birth to death place/year when birth is absent).
-function str(s: string | undefined): string | undefined {
-  return s !== undefined && s.length > 0 ? s : undefined;
+// `null` and empty-string are both treated as absent throughout —
+// `attributes: { birthPlace: null }` or `{ birthPlace: "" }` must neither
+// crash (an earlier version's `s !== undefined` let a `null` reach
+// `s.length` and throw `TypeError: Cannot read properties of null`, live,
+// for any model that emits `null` rather than omitting a field — 11 of the
+// tool's string-typed attributes) nor produce `birthplace=`, and must not
+// defeat a documented fallback (antenati's `localita`/`anno` fall back from
+// birth to death place/year when birth is absent).
+function str(s: string | undefined | null): string | undefined {
+  return typeof s === "string" && s.trim().length > 0 ? s : undefined;
 }
 
 function joinUnderscore(...parts: Array<string | undefined>): string | undefined {
@@ -139,12 +171,12 @@ function siteWideParams(
     case "ancestry":
       return {
         name: joinUnderscore(a.givenName, a.surname),
-        birth: num(a.birthYear),
+        birth: numYear(a.birthYear),
         birthplace: str(a.birthPlace),
-        death: num(a.deathYear),
+        death: numYear(a.deathYear),
         deathplace: str(a.deathPlace),
-        marriage: num(a.marriageYear),
-        residence: joinUnderscore(num(a.residenceYear), str(a.residencePlace)),
+        marriage: numYear(a.marriageYear),
+        residence: joinUnderscore(numYear(a.residenceYear), str(a.residencePlace)),
         father: joinUnderscore(a.fatherGivenName, a.fatherSurname),
         mother: joinUnderscore(a.motherGivenName, a.motherSurname),
         spouse: joinUnderscore(a.spouseGivenName, a.spouseSurname),
@@ -153,11 +185,11 @@ function siteWideParams(
       return {
         first: str(a.givenName),
         last: str(a.surname),
-        birth_year: num(a.birthYear),
+        birth_year: numYear(a.birthYear),
         birth_place: str(a.birthPlace),
-        marriage_year: num(a.marriageYear),
+        marriage_year: numYear(a.marriageYear),
         marriage_place: str(a.marriagePlace),
-        death_year: num(a.deathYear),
+        death_year: numYear(a.deathYear),
         death_place: str(a.deathPlace),
         father_first: str(a.fatherGivenName),
         father_last: str(a.fatherSurname),
@@ -168,11 +200,11 @@ function siteWideParams(
       return {
         firstname: str(a.givenName),
         lastname: str(a.surname),
-        yearofbirth: num(a.birthYear),
-        yearofbirth_offset: num(a.birthYearOffset),
+        yearofbirth: numYear(a.birthYear),
+        yearofbirth_offset: numSmall(a.birthYearOffset),
         keywordsplace: str(a.birthPlace),
-        keywordsplace_proximity: num(a.placeProximityMiles),
-        eventyear: num(a.eventYear),
+        keywordsplace_proximity: numSmall(a.placeProximityMiles),
+        eventyear: numYear(a.eventYear),
         fatherfirstname: str(a.fatherGivenName),
         motherfirstname: str(a.motherGivenName),
       };
@@ -189,8 +221,8 @@ function siteWideParams(
       return {
         firstname: str(a.givenName),
         lastname: str(a.surname),
-        birthyear: num(a.birthYear),
-        deathyear: num(a.deathYear),
+        birthyear: numYear(a.birthYear),
+        deathyear: numYear(a.deathYear),
       };
     case "newspapers":
       return {
@@ -199,14 +231,14 @@ function siteWideParams(
         dr_place: str(a.searchPlace),
       };
     case "chronicling_america": {
-      // Both ends must be valid, not merely present — `num()` rejects NaN,
+      // Both ends must be valid, not merely present — `numYear()` rejects NaN,
       // Infinity, out-of-range, and fractional years. Checking `!== undefined`
       // alone let one bad end through as long as the other was supplied
       // (e.g. `searchStartYear: NaN, searchEndYear: 1910` shipped
       // `dates=NaN%2F1910`), because presence and validity are different
       // questions and only presence was being asked.
-      const startYear = num(a.searchStartYear);
-      const endYear = num(a.searchEndYear);
+      const startYear = numYear(a.searchStartYear);
+      const endYear = numYear(a.searchEndYear);
       return {
         // Correction: `qs` is dead on the live site (a nonsense value returns
         // the same corpus total as no term at all); `q` is what actually
@@ -246,8 +278,8 @@ function siteWideParams(
       return {
         GivenNames: str(a.givenName),
         FamilyName: str(a.surname),
-        EventBirthYear: num(a.birthYear),
-        EventDeathYear: num(a.deathYear),
+        EventBirthYear: numYear(a.birthYear),
+        EventDeathYear: numYear(a.deathYear),
       };
     case "digitalarkivet":
       // `birth_year_from`/`birth_year_to` is a range field; a single known
@@ -256,8 +288,8 @@ function siteWideParams(
       return {
         firstname: str(a.givenName),
         lastname: str(a.surname),
-        birth_year_from: num(a.birthYear),
-        birth_year_to: num(a.birthYear),
+        birth_year_from: numYear(a.birthYear),
+        birth_year_to: numYear(a.birthYear),
         birth_place: str(a.birthPlace),
         domicile: str(a.residencePlace),
       };
@@ -270,7 +302,7 @@ function siteWideParams(
       return {
         nome: str(a.givenName),
         cognome: str(a.surname),
-        anno: num(a.birthYear) ?? num(a.deathYear),
+        anno: numYear(a.birthYear) ?? numYear(a.deathYear),
         localita: str(a.birthPlace) ?? str(a.deathPlace),
       };
     case "library_archives_canada":
@@ -284,7 +316,7 @@ function siteWideParams(
       return {
         FirstName: str(a.givenName),
         LastName: str(a.surname),
-        YearOfBirth: num(a.birthYear),
+        YearOfBirth: numYear(a.birthYear),
       };
     case "american_ancestors":
       // `Name.First`/`Name.Last` do not bind on this site — confirmed by
@@ -297,8 +329,8 @@ function siteWideParams(
       return {
         Keywords: joinSpace(a.givenName, a.surname, a.keywords),
         Location: str(a.birthPlace) ?? str(a.deathPlace),
-        FromYear: num(a.birthYear),
-        ToYear: num(a.birthYear),
+        FromYear: numYear(a.birthYear),
+        ToYear: numYear(a.birthYear),
       };
     case "italian_genealogy":
       // A phpBB forum, not a records database — confirmed by a live search
@@ -485,10 +517,21 @@ function appendToBaseUrl(baseUrl: string, params: Record<string, string | undefi
   const path = qIndex === -1 ? withoutFragment : withoutFragment.slice(0, qIndex);
   const existingQuery = qIndex === -1 ? "" : withoutFragment.slice(qIndex + 1);
 
+  // Any key this call is about to set wins over the same key already sitting
+  // in a curated baseUrl's query string, rather than duplicating it — a
+  // duplicate key's outcome is parser-dependent (`?name=John_Smith` from the
+  // curated link plus the tool's own `&name=Patrick_Flynn`; `dl=title` plus
+  // the tool's own required `dl=page`, which the spec calls out as required
+  // precisely because a stale `dl=title` already present would otherwise
+  // silently coexist with it). Exact key match only — a differently-cased
+  // key names a different parameter on most sites, so it is left alone.
+  const overriddenKeys = new Set(Object.keys(params));
   const existingTokens = existingQuery.length > 0 ? existingQuery.split("&") : [];
   const preservedTokens = existingTokens.filter((token) => {
     const key = token.split("=", 1)[0];
-    return key.toLowerCase() !== "sid";
+    if (key.toLowerCase() === "sid") return false;
+    if (overriddenKeys.has(key)) return false;
+    return true;
   });
 
   const appended = toQueryString(params);
@@ -507,12 +550,20 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   // `baseUrl: "   "` built one with a literal leading space in the URL.
   const baseUrl = rawBaseUrl?.trim() ? rawBaseUrl : undefined;
 
+  if (baseUrl && !isHttpUrl(baseUrl)) {
+    return {
+      ok: false,
+      reason: "invalid_base_url",
+      errors: [`baseUrl ${JSON.stringify(baseUrl)} is not an absolute http(s) URL`],
+    };
+  }
+
   if (!isSupportedSite(site)) {
     return {
       ok: false,
       reason: "unsupported_site",
       errors: [`"${site}" is not a supported site`],
-      supportedSites: SUPPORTED_SITES,
+      supportedSites: [...SUPPORTED_SITES],
     };
   }
 
@@ -532,7 +583,11 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     }
     // Do not invent facet or date parameters for these archives — an
     // unrecognized parameter is silently ignored or errors the page.
-    const notes = unusedAttributeNotes(a, new Set(["givenName", "surname", "keywords"]), site);
+    const dnaRecognized = new Set<keyof BuildExternalSearchUrlAttributes>(["givenName", "surname", "keywords"]);
+    const notes = [
+      ...unusedAttributeNotes(a, dnaRecognized, site),
+      ...invalidRecognizedKeyNotes(a, dnaRecognized, site),
+    ];
     return { ok: true, url: appendToBaseUrl(baseUrl, { q }), notes, access: SITE_ACCESS[site] };
   }
 
@@ -547,11 +602,25 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   }
 
   const notes = unusedAttributeNotes(a, RECOGNIZED_KEYS[site], site);
-  if (site === "findmypast" && a.birthYear === undefined && a.eventYear === undefined) {
+  notes.push(...invalidRecognizedKeyNotes(a, RECOGNIZED_KEYS[site], site));
+  // Tests validity, not presence: `numYear` rejects out-of-range/non-integer
+  // values, so `eventYear: 99999` must warn exactly like an absent one does —
+  // an earlier version checked `!== undefined` here while the sibling
+  // Chronicling America case six lines below already tested validity for the
+  // identical reason, so the one invalid literal a model most commonly emits
+  // (an out-of-range or non-integer year) silently lost its warning.
+  if (site === "findmypast" && numYear(a.birthYear) === undefined && numYear(a.eventYear) === undefined) {
     notes.push("no yearofbirth or eventyear supplied — search is unscoped by year");
   }
   if (site === "american_ancestors") {
     notes.push("search is free; a subscription may still be required to view full results");
+  }
+  // A half-supplied window is recognized on both ends, so `notes` can't see
+  // it via unused-attribute detection alone — only one end reaching `dates`
+  // silently drops the whole window rather than warning that the other end
+  // is needed too.
+  if (site === "chronicling_america" && (a.searchStartYear !== undefined) !== (a.searchEndYear !== undefined)) {
+    notes.push("searchStartYear/searchEndYear must both be supplied for a dates window — only one was given, so no date window was applied");
   }
 
   // A curated `baseUrl` already names its own host, so `locale` only applies
@@ -574,6 +643,11 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   return { ok: true, url, notes, access: SITE_ACCESS[site] };
 }
 
+function isSuppliedValue(v: unknown): boolean {
+  if (v === undefined || v === null) return false;
+  return typeof v === "string" ? v.trim().length > 0 : true;
+}
+
 // A supplied attribute that the target site's mapping never reads vanishes
 // from the URL with no signal — the caller may believe a death event scoped
 // a chronicling_america search that actually ran whole-corpus and undated.
@@ -582,12 +656,59 @@ function unusedAttributeNotes(
   recognized: Set<keyof BuildExternalSearchUrlAttributes>,
   site: ExternalSearchSite,
 ): string[] {
-  const supplied = (Object.keys(a) as Array<keyof BuildExternalSearchUrlAttributes>).filter((k) => {
-    const v = a[k];
-    return typeof v === "string" ? v.length > 0 : v !== undefined;
-  });
+  const supplied = (Object.keys(a) as Array<keyof BuildExternalSearchUrlAttributes>).filter((k) =>
+    isSuppliedValue(a[k]),
+  );
   const unused = supplied.filter((k) => !recognized.has(k));
   return unused.map((k) => `'${k}' is not used by ${site} — supplied but ignored`);
+}
+
+// Which runtime type each attribute is templated as — used only to tell
+// "supplied but the wrong type/out of range" apart from "not supplied at
+// all" below. A recognized key of the wrong type reached the same silent
+// `undefined` as an absent one (a string field given a number, an
+// out-of-range or fractional year, a negative offset): `unusedAttributeNotes`
+// can't see it, because the key IS recognized — only its value was
+// rejected. Deliberately excludes `usState`: it accepts any string, has no
+// separate validity check, and always reaches `unusedAttributeNotes`
+// correctly if unrecognized.
+const STRING_TYPED_KEYS = new Set<keyof BuildExternalSearchUrlAttributes>([
+  "givenName", "surname", "birthPlace", "deathPlace", "marriagePlace", "residencePlace",
+  "fatherGivenName", "fatherSurname", "motherGivenName", "motherSurname",
+  "spouseGivenName", "spouseSurname", "keywords", "searchYear", "searchPlace",
+]);
+const YEAR_TYPED_KEYS = new Set<keyof BuildExternalSearchUrlAttributes>([
+  "birthYear", "deathYear", "marriageYear", "residenceYear", "eventYear",
+  "searchStartYear", "searchEndYear",
+]);
+const SMALL_NUMBER_TYPED_KEYS = new Set<keyof BuildExternalSearchUrlAttributes>([
+  "birthYearOffset", "placeProximityMiles",
+]);
+
+function invalidRecognizedKeyNotes(
+  a: BuildExternalSearchUrlAttributes,
+  recognized: Set<keyof BuildExternalSearchUrlAttributes>,
+  site: ExternalSearchSite,
+): string[] {
+  const notes: string[] = [];
+  for (const key of recognized) {
+    const v = a[key];
+    if (!isSuppliedValue(v)) continue;
+    if (STRING_TYPED_KEYS.has(key)) {
+      if (str(v as string) === undefined) {
+        notes.push(`'${key}' was supplied but is not a usable string for ${site} — ignored`);
+      }
+    } else if (YEAR_TYPED_KEYS.has(key)) {
+      if (numYear(v as number) === undefined) {
+        notes.push(`'${key}' was supplied but is not a valid year for ${site} — ignored`);
+      }
+    } else if (SMALL_NUMBER_TYPED_KEYS.has(key)) {
+      if (numSmall(v as number) === undefined) {
+        notes.push(`'${key}' was supplied but is not a valid number for ${site} — ignored`);
+      }
+    }
+  }
+  return notes;
 }
 
 // ─── MCP schema ──────────────────────────────────────────────────────────────
@@ -612,7 +733,13 @@ export const buildExternalSearchUrlSchema = {
     properties: {
       site: {
         type: "string",
-        enum: SUPPORTED_SITES,
+        // Spread, not the shared constant itself — a caller mutating this
+        // array (e.g. `result.supportedSites.push(...)` on the unsupported-
+        // site error above, which returns the very same reference) would
+        // otherwise rewrite the advertised schema's own enum, reproducing the
+        // crash `SUPPORTED_SITES`'s own definition comment says this bounding
+        // exists to prevent.
+        enum: [...SUPPORTED_SITES],
         description: "Which site to build a search URL for.",
       },
       baseUrl: {
@@ -666,8 +793,10 @@ export const buildExternalSearchUrlSchema = {
             type: "string",
             description:
               "Additional free-text search terms (a record type like 'obituary', a nickname, or an " +
-              "exact phrase in your own quote marks) appended alongside the name. Only used by sites " +
-              "with a single free-text query field: newspapers, chronicling_america, digital_newspaper_archive.",
+              "exact phrase in your own quote marks) appended alongside the name. Used by every site " +
+              "with a free-text query field: newspapers, chronicling_america, digital_newspaper_archive, " +
+              "archives_gov (its q field), archive_org, american_ancestors, and italian_genealogy — for " +
+              "archive_org and italian_genealogy this is the only field available for a record-type term.",
           },
           searchYear: {
             type: "string",

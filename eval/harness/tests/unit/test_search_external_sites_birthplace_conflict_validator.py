@@ -229,3 +229,112 @@ def test_skips_when_the_scenario_has_no_resolved_birthplace_conflict():
 def test_skips_when_no_build_external_search_url_call_was_made():
     with pytest.raises(pytest.skip.Exception):
         _check(*_states(), [], {"type": "positive"})
+
+
+def _tool_calls_with_field(field, value, *, site="antenati"):
+    """Like `_tool_calls`, but sets an arbitrary attribute field — used to
+    reach `deathPlace` and non-string values `_tool_calls` doesn't cover."""
+    attributes = {"givenName": "Patrick", "surname": "Flynn"}
+    attributes[field] = value
+    return [
+        {
+            "tool": "mcp__genealogy__build_external_search_url",
+            "args": {"site": site, "attributes": attributes},
+        }
+    ]
+
+
+def test_fires_on_a_rejected_value_routed_through_deathplace():
+    """On antenati/archives_gov/american_ancestors, `str(birthPlace) ??
+    str(deathPlace)` means deathPlace becomes the effective birthplace slot
+    whenever birthPlace is absent — a rejected value reaching the URL through
+    that fallback is the identical genealogical error, and review found this
+    check missed it because it only ever read `attributes.birthPlace`."""
+    _expect_fires(
+        _tool_calls_with_field("deathPlace", "Pennsylvania"),
+        {"type": "positive"},
+        "attributes.deathPlace='Pennsylvania'",
+    )
+
+
+def test_passes_on_the_preferred_value_routed_through_deathplace():
+    _expect_passes(_tool_calls_with_field("deathPlace", "Ireland"), {"type": "positive"})
+
+
+def test_does_not_crash_on_a_non_string_birthplace():
+    """The tool itself accepts and templates whatever value it's given —
+    `attributes.birthPlace: 1845` is real, live input, not a hypothetical.
+    An unguarded `.split()` inside the place-matching helper turned that into
+    an `AttributeError`, which `validator_runner` reports as `passed=False`
+    with the exception text — indistinguishable in the outcome column from a
+    genuine rejected-value violation. Must pass cleanly (skip the check for
+    that value), not crash."""
+    _expect_passes(_tool_calls_with_field("birthPlace", 1845), {"type": "positive"})
+
+
+def test_does_not_crash_on_a_non_string_deathplace():
+    _expect_passes(_tool_calls_with_field("deathPlace", 1845), {"type": "positive"})
+
+
+# --- test_no_hand_composed_external_site_url --------------------------
+
+_HAND_COMPOSED_CHECK = _VALIDATOR.test_no_hand_composed_external_site_url
+
+
+def _log_states(new_entry):
+    """A before/after pair whose only diff is one new log[] entry — enough
+    for `_new_log_entries`'s before/after-length comparison to see it as new."""
+    before_log = list(_RESEARCH.get("log") or [])
+    after_log = before_log + [new_entry]
+    before = {"research_json": {**_RESEARCH, "log": before_log}}
+    after = {"research_json": {**_RESEARCH, "log": after_log}}
+    return before, after
+
+
+def test_fires_when_a_url_generation_entry_exists_with_no_tool_call():
+    """Issue #1980 explicitly asks for a guard that checks the skill called
+    the tool rather than hand-writing a URL — this fires exactly that case:
+    a log entry recording a generated URL, but no build_external_search_url
+    call anywhere in the run."""
+    before, after = _log_states({
+        "id": "log_999", "tool": "external_site", "outcome": "partial",
+        "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn"},
+    })
+    with pytest.raises(AssertionError, match="hand-composed"):
+        _HAND_COMPOSED_CHECK(before, after, [], {"type": "positive"})
+
+
+def test_passes_when_the_tool_was_actually_called():
+    before, after = _log_states({
+        "id": "log_999", "tool": "external_site", "outcome": "partial",
+        "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn"},
+    })
+    _HAND_COMPOSED_CHECK(before, after, _tool_calls("Ireland"), {"type": "positive"})  # must not raise
+
+
+def test_hand_composed_check_skips_when_no_url_generation_entry_this_run():
+    with pytest.raises(pytest.skip.Exception):
+        _HAND_COMPOSED_CHECK(*_states(), [], {"type": "positive"})
+
+
+def test_hand_composed_check_skips_a_capture_entry_with_no_tool_call():
+    """A capture-arrival entry re-logs the earlier URL without generating a
+    new one this turn — not a "URL was hand-composed" situation, so no tool
+    call is required and the check correctly has nothing to grade."""
+    before, after = _log_states({
+        "id": "log_999", "tool": "external_site", "outcome": "positive",
+        "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn", "capture_received": True},
+    })
+    with pytest.raises(pytest.skip.Exception):
+        _HAND_COMPOSED_CHECK(before, after, [], {"type": "positive"})
+
+
+def test_hand_composed_check_skips_an_error_entry_with_no_tool_call():
+    """The no-access entry (`outcome: "error"`) asks whether to skip the
+    site — also a re-log, not a fresh generation."""
+    before, after = _log_states({
+        "id": "log_999", "tool": "external_site", "outcome": "error",
+        "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn", "capture_received": False},
+    })
+    with pytest.raises(pytest.skip.Exception):
+        _HAND_COMPOSED_CHECK(before, after, [], {"type": "positive"})

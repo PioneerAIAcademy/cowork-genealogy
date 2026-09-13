@@ -210,16 +210,92 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         # collide with it.
         for call in calls:
             args = call.get("args") or {}
-            birth_place = (args.get("attributes") or {}).get("birthPlace")
-            if birth_place and any(
-                _place_matches_rejected(birth_place, p) for p in rejected_places
-            ):
-                errors.append(
-                    f"build_external_search_url call's attributes.birthPlace="
-                    f"{birth_place!r} is the value conflict {c.get('id')} "
-                    f"rejected (preferred: {preferred_id})"
-                )
+            attrs = args.get("attributes") or {}
+            # `deathPlace` is checked too, not just `birthPlace`: on
+            # antenati/archives_gov/american_ancestors the tool's own
+            # `str(birthPlace) ?? str(deathPlace)` fallback means deathPlace
+            # BECOMES the effective birthplace slot whenever birthPlace is
+            # absent — a rejected value routed through that fallback field
+            # reached the URL exactly as if it had been passed as birthPlace,
+            # and this check has to follow it there to mean what its own name
+            # says. Guarded with `isinstance(..., str)` — a model emitting a
+            # non-string (`birthPlace: 1845`) is real, live tool input
+            # (the tool accepts and templates whatever it's given), and an
+            # unguarded `.split()` inside `_place_matches_rejected` turned
+            # that into an `AttributeError` indistinguishable in the outcome
+            # column from a genuine rejected-value violation.
+            for field in ("birthPlace", "deathPlace"):
+                value = attrs.get(field)
+                if not isinstance(value, str) or not value:
+                    continue
+                if any(_place_matches_rejected(value, p) for p in rejected_places):
+                    errors.append(
+                        f"build_external_search_url call's attributes.{field}="
+                        f"{value!r} is the value conflict {c.get('id')} "
+                        f"rejected (preferred: {preferred_id})"
+                    )
     assert not errors, "resolved birthplace-conflict rejected value passed to the tool:\n  - " + "\n  - ".join(errors)
+
+
+def test_no_hand_composed_external_site_url(before_state, after_state, tool_calls, test):
+    """Issue #1980 asks explicitly for "one that checks the skill called the
+    tool rather than hand-writing a URL" — no such deterministic check
+    existed; the rule lived only in rubric.md's Tool selection dimension,
+    graded by the judge alone. A hand-composed URL is exactly the failure
+    mode this tool exists to make unnecessary: every documented correction
+    (the dead qs, the retired legacy host, the missing dl=page) applies only
+    to a URL `build_external_search_url` actually built.
+
+    Fires when a new `external_site` log entry presents a freshly generated
+    URL — a non-empty `url_generated`, not a re-log of an already-presented
+    one — but no `build_external_search_url` call appears anywhere in this
+    run's tool calls at all. Does not try to match a specific log entry to a
+    specific call (a run can legitimately call the tool more than once, e.g.
+    a curated-link fetch plus a site-wide fallback for the same or a
+    different search) — only whether the tool was used at all, which is
+    what "hand-wrote instead of calling the tool" actually means.
+
+    Excludes exactly what the sibling `test_the_url_logged_is_the_url_presented`
+    (V4) excludes, for the same reason: step 6 appends a new entry that
+    re-logs the step-4 URL without presenting it again — the capture-arrival
+    entry (`capture_received: true`, analyzing a returned PDF) and the
+    no-access entry (`outcome: "error"`, asking whether to skip the site).
+    Neither is a fresh generation this turn, so neither requires a fresh
+    tool call this turn.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests generate URLs")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    def _is_fresh_url_generation(entry):
+        detail = entry.get("external_site") or {}
+        url = detail.get("url_generated")
+        if not isinstance(url, str) or not url.strip():
+            return False
+        if detail.get("capture_received") is True:
+            return False
+        if entry.get("outcome") == "error":
+            return False
+        return True
+
+    url_generation_entries = [
+        e for e in _new_external_entries(before_state, after_state, "external_site")
+        if _is_fresh_url_generation(e)
+    ]
+    if not url_generation_entries:
+        pytest.skip("no URL-generation external_site log entry this run")
+
+    called_tool = any(
+        c.get("tool", "").split("__")[-1] == "build_external_search_url"
+        for c in (tool_calls or [])
+    )
+    assert called_tool, (
+        "a URL-generation external_site log entry exists "
+        f"(log id(s): {[e.get('id') for e in url_generation_entries]}) but "
+        "build_external_search_url was never called this run — the URL was "
+        "hand-composed instead of built by the tool"
+    )
 
 
 # --- Tag-gated no-harm invariant (grade_on_invariant negatives) ------

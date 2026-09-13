@@ -127,9 +127,12 @@ instead of rebuilding it.**
     a side.
 35. Must use the documented per-site parameter names exactly
     (`birthplace` not `birth_place` on Ancestry; `birth_place` not
-    `birthplace` on MyHeritage; `keywordsplace` on FindMyPast; `location` on
-    FindAGrave; `query` on Newspapers.com). A swapped parameter name produces
-    a URL that loads and silently ignores the filter.
+    `birthplace` on MyHeritage; `keywordsplace` on FindMyPast; `query` on
+    Newspapers.com). A swapped parameter name produces a URL that loads and
+    silently ignores the filter. FindAGrave has no place parameter at all —
+    its `location` field was removed (issue #1980 review): live verification
+    found the visible location box does not filter results at all, so naming
+    it here would itself be the exact defect this rule warns against.
 36. Must not invent a parameter the site's template does not list. **Confirmed
     live 2026-08-26:** `_004` emitted `yearofbirthrange=5` on FindMyPast; the
     site ignored it and applied its ±2yr default. The real spelling is
@@ -165,8 +168,9 @@ instead of rebuilding it.**
     `externalSite.captureFilename: null`.
 46. Must not pass `stagedResultsRef` on the `external_site` entry — no
     sidecar exists until the capture arrives.
-47. `externalSite.site` must be one of `ancestry | myheritage | findmypast |
-    findagrave | newspapers`, and must match the site actually targeted.
+47. `externalSite.site` must be one of the `external_site` enum's values
+    (`research-schema-spec.md`) — the same `site` argument passed to
+    `build_external_search_url` — and must match the site actually targeted.
 48. The `log[]` is append-only. Must never edit or delete a prior entry. A
     capture that comes back gets a **new** entry, not an amendment.
 49. Two runs of the same search correctly produce two entries. Must not

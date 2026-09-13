@@ -250,6 +250,20 @@ async function applyLogAppendOp(
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
   }
+  // `resultsExamined` had no validation of its own anywhere in this tool —
+  // `NaN`, a negative number, or a fraction all reached `research.json`
+  // unrejected (`NaN` specifically persists as `null`, since
+  // `JSON.stringify(NaN) === "null"`, which the schema validator then
+  // rejects downstream with no connection back to the actual bad input).
+  // Rejected here, before the check below, because that check's own
+  // `resultsExamined > 0` comparison is `false` for both `NaN` and a
+  // negative number — silently passing validation instead of catching the
+  // bad value it was built to catch.
+  if (!Number.isInteger(op.resultsExamined) || op.resultsExamined < 0) {
+    throw new LogAppendError(
+      `resultsExamined must be a non-negative integer; got ${JSON.stringify(op.resultsExamined)}`,
+    );
+  }
   // This entry grades the curated-links FETCH, not the search: any links
   // returned is a positive fetch, even when none fit the plan item's record
   // type (that goes in notes instead). Enforced mechanically — rather than

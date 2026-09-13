@@ -17,7 +17,7 @@ as a fresh site-wide search or by appending parameters onto a FamilySearch-
 curated collection link.
 
 ```
-build_external_search_url({ site, baseUrl?, attributes }) -> { ok: true, url, notes } | { ok: false, reason, errors, supportedSites? }
+build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, notes, access } | { ok: false, reason, errors, supportedSites? }
 ```
 
 ---
@@ -240,13 +240,16 @@ fabricating a site-wide URL.
 
 ### 3.4 Fixed parameters
 
-Two sites carry a parameter with no attribute behind it at all, applied on
+Five sites carry a parameter with no attribute behind it at all, applied on
 every call regardless of `baseUrl` (§3.2):
 
 | Site | Fixed parameter | Why |
 |------|-----------------|-----|
 | `myheritage` | `action=query` | Required for the site-wide search form; harmless on a curated link |
 | `chronicling_america` | `dl=page` | Required — without it the search returns newspaper *titles* from the U.S. Newspaper Directory, not digitised pages |
+| `archives_gov` | `dataSource=authority`, `availableOnline=false` | Scopes the catalog to person/org name-authority records, matching `personOrOrg` — without it the same field is read by the archival-description search instead |
+| `library_archives_canada` | `DataSource=Genealogy\|Census`, `ST=SCTB` | Required by the search-form's own client JS to select the census/genealogy dataset before redirecting to the results endpoint |
+| `italian_genealogy` | `terms=all`, `sf=all`, `sr=posts` | The exact fields present on the one confirmed-working search URL; omitting them was not tested and is not assumed safe |
 
 ### 3.5 Free-text `keywords`
 
@@ -315,7 +318,10 @@ to use the identical path and parameter names as their `.com` counterparts
 (§9). `locale` only affects the Case B site-wide fallback — a supplied
 `baseUrl` already names its own host and is used as-is regardless of
 `locale`. Requesting `locale: "uk"` for a site with no UK variant is noted
-(`notes: [...]`) rather than silently ignored.
+(`notes: [...]`) when there is no `baseUrl` — the case where `locale` could
+otherwise have had an effect. When `baseUrl` is supplied, `locale` is
+silently inert with no note: the caller already named the exact host to
+use, so there is nothing for the tool to have overridden.
 
 ### 3.10 Sites named in the launch scope with no template
 

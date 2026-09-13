@@ -411,6 +411,29 @@ describe("research_log_append", () => {
     expect(result.ok).toBe(true);
   });
 
+  it.each([NaN, -3, 1.5])(
+    "rejects resultsExamined=%s instead of silently bypassing the outcome check (review finding)",
+    async (bad) => {
+      // NaN and negative values both make `resultsExamined > 0` false in JS,
+      // so the outcome-consistency check above silently passed a bad
+      // outcome/resultsExamined pair through — this must be caught before
+      // that check ever runs.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "external_links_search",
+        query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+        outcome: "negative",
+        resultsExamined: bad,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toMatch(/resultsExamined must be a non-negative integer/);
+      const research = await readJson("research.json");
+      expect(research.log).toEqual([]);
+    },
+  );
+
   it("accepts a null planItemId (opportunistic search) and a valid pli_ id", async () => {
     await writeProject(baseResearch());
     const optOut = await researchLogAppend({
