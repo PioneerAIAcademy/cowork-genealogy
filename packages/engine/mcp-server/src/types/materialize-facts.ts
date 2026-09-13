@@ -53,7 +53,7 @@ export interface NamedPartyName {
  *  reaching for this one on a parentage assertion.
  *
  *  The caller supplies the name because the assertion usually does not carry
- *  one in machine-readable form (8 of 162 corpus `relationship`/`marriage`
+ *  one in machine-readable form (8 of 167 corpus `relationship`/`marriage`
  *  assertions put it in `structured_value`, under five distinct key shapes).
  *  The tool
  *  supplies the source-ref, resolved from the assertion's own `source_id`, and

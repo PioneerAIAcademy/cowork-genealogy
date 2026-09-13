@@ -522,7 +522,7 @@ function isNamedPartyOp(op: MaterializeFactsAnyOp): op is MaterializeFactsNamedP
 // Couple event stays on the edge.
 //
 // The ref is enforced, the name is not: the tool cannot know the name the
-// record gives (8 of 162 corpus relationship/marriage assertions carry it in
+// record gives (8 of 167 corpus relationship/marriage assertions carry it in
 // `structured_value`, under five distinct key shapes, which is why the caller supplies
 // it). It also does NOT refuse a name matching the persona's own — a same-named
 // father and son is ordinary genealogy, and refusing there would block correct
@@ -564,7 +564,7 @@ function applyNamedPartyOp(
   // Both of the next two checks turn on the role's OWN personas, not the
   // assertion's. Measured over eval/**/research.json: the role named by a
   // relationship/marriage assertion already has its own persona on the same
-  // record in 52 of 162 cases (32.1%), so this is the common path, not an edge
+  // record in 93 of 167 cases (55.7%), so this is the common path, not an edge
   // case, and comparing only against the assertion's own record_role would miss
   // every one of them. A party whose persona can name itself belongs to the
   // persona arm and is refused below; a party whose persona cannot is minted
@@ -589,8 +589,8 @@ function applyNamedPartyOp(
   // mint a person it cannot name, so steering a gender-only or birth-only
   // persona there errors, and this arm refusing would send the caller back to
   // the call that just failed. That is the writable-by-neither-arm dead end
-  // this whole arm exists to remove. Measured over eval/**/research.json: 85
-  // personas carry no positive `name` assertion, and 57 of those 85 also carry
+  // this whole arm exists to remove. Measured over eval/**/research.json: 90
+  // personas carry no positive `name` assertion, and 61 of those 90 also carry
   // a fact this tool would materialize (the largest shape is
   // [birth, death, relationship], 34 of them). Those 57 are why the pass below
   // exists: letting them through here without it would drop the very facts the
@@ -703,23 +703,51 @@ function applyNamedPartyOp(
   // A ref it cannot resolve throws, which aborts the whole op before anything
   // is persisted — provenance first (§4.2 step 2), the same rule as everywhere
   // else here, rather than a half-provenanced person.
-  let enriched: MaterializeFactsOpResult | undefined;
-  if (siblings.length > 0) {
-    enriched = applyMaterializeOp(tree, research, {
+  // ONE PASS PER DISTINCT RAW SPELLING, not one for `siblings[0]`. `siblings`
+  // was selected through `normNamePart`, so it can span spellings that
+  // normalize equal (`Bride` and `bride`, or a trailing space), while the
+  // persona arm filters with exact `a.record_role === recordRole`. Driving it
+  // from a single spelling therefore hands it a SUBSET of the personas this
+  // guard just matched, and the rest are dropped with no error and no count:
+  // a bride of `Bride`[birth 1839] + `bride`[death 1901] wrote the birth,
+  // returned factsAdded 1, and lost the death. Which fact survived was array
+  // order. Latent rather than live (no record in the corpus carries two
+  // spellings that normalize equal today, though 10 of 10,341 assertions
+  // already break the schema's own `^[a-z][a-z0-9_]*$` pattern, which
+  // `validate_research_schema` does not enforce) — but the fix is a loop, and
+  // a silent partial write under an enforced ref is the exact failure class
+  // this tool exists to refuse.
+  let factsAdded = 0;
+  let factsEnriched = 0;
+  const conflicts: MaterializeFactsOpResult["conflicts_surfaced"] = [];
+  let extraNames = 0;
+  let extraRefs = 0;
+  const spellings: string[] = [];
+  for (const a of siblings) {
+    const raw = String(a.record_role ?? "");
+    if (!spellings.includes(raw)) spellings.push(raw);
+  }
+  for (const spelling of spellings) {
+    const pass = applyMaterializeOp(tree, research, {
       personId: targetId,
       recordId: String(recordId),
-      recordRole: String(siblings[0].record_role),
+      recordRole: spelling,
     });
+    factsAdded += pass.factsAdded;
+    factsEnriched += pass.factsEnriched;
+    extraNames += pass.namesAdded;
+    extraRefs += pass.refsAttached;
+    conflicts.push(...pass.conflicts_surfaced);
   }
 
   return {
     personId: targetId,
     created,
-    factsAdded: enriched?.factsAdded ?? 0,
-    factsEnriched: enriched?.factsEnriched ?? 0,
-    namesAdded: namesAdded + (enriched?.namesAdded ?? 0),
-    refsAttached: refsAttached + (enriched?.refsAttached ?? 0),
-    conflicts_surfaced: enriched?.conflicts_surfaced ?? [],
+    factsAdded,
+    factsEnriched,
+    namesAdded: namesAdded + extraNames,
+    refsAttached: refsAttached + extraRefs,
+    conflicts_surfaced: conflicts,
   };
 }
 

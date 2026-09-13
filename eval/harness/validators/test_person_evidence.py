@@ -500,7 +500,10 @@ def test_research_query_called_for_coverage(tool_calls, test):
 #
 # Scoped to the persona deliberately. The tool's named-party arm DOES mint from
 # a relationship/marriage assertion, but it mints the OTHER party the assertion
-# names, as a sourced name — never a fact, and never onto this persona. So the
+# names, and it writes onto THAT party's person, never onto this persona. Since
+# 2026-09-13 it also writes that other party's own persona facts where the
+# record gives her a persona it never names, so "a sourced name only" is no
+# longer the reason; "never onto this persona" is, and that is unchanged. The
 # demand this set stands down is still absent.
 _UNMATERIALIZABLE = frozenset(
     {"relationship", "marriage", "age", "parentage", "parentchild"}

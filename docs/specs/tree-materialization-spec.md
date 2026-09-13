@@ -405,8 +405,9 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   double-write. A ref it cannot resolve throws and the whole op is abandoned
   before anything persists, which is §4.2 step 2 applied to the second pass as
   well as the first.
-  Measured over `eval/**/research.json`, 85 of 301 personas carry no usable
-  `name` assertion, and 28 carry nothing but `relationship`/`marriage`.
+  Measured over `eval/**/research.json` (99 files, re-derived 2026-09-13), 90 of
+  311 personas carry no usable `name` assertion, and 29 carry nothing but
+  `relationship`/`marriage`.
 
   **"Or the target person already exists" is NOT part of the condition, and
   adding it was a bug worth recording.** It reads plausibly — the persona arm
@@ -436,7 +437,7 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   Comparing `relatedRole` only against the *assertion's own* `record_role` is
   not enough and was the first version of this guard. Measured over
   `eval/**/research.json`, the role a relationship/marriage assertion names
-  already has its own persona on the same record in **52 of 162 cases (32.1%)**,
+  already has its own persona on the same record in **93 of 167 cases (55.7%)**,
   including `flynn-baptism-names-mother` — the "father named in a child's
   baptism" shape this section leads with. The narrow check missed every one.
 
@@ -451,8 +452,13 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   evidence. The persona arm already skips negative assertions per §7.1 (4);
   here there is only one assertion, so the call is refused rather than
   silently emptied.
-- **Writes a sourced name and the gender scalar. Nothing else.** No facts, no
-  relationship edge, never `preferred`.
+- **Writes a sourced name and the gender scalar, plus that persona's own facts
+  where the role does have a persona the record never names.** Never a
+  relationship edge, never `preferred`. The fact pass runs one `applyMaterializeOp`
+  per distinct `record_role` spelling the guard matched, not one for the first:
+  the guard selects case- and space-insensitively while the persona arm filters
+  exactly, so a single spelling would hand it a subset and drop the rest
+  silently.
 - **No name type is invented.** `nameType` is optional and the field is
   **omitted** when the caller does not supply one. This differs from the persona
   arm, which records `BirthName`, and the difference is deliberate: a persona's

@@ -1855,6 +1855,56 @@ describe("materialize_facts", () => {
     expect(bride.facts.some((f: any) => String(f.type).toLowerCase() === "marriage")).toBe(false);
   });
 
+  it("(56) the fact pass covers EVERY spelling the guard matched, not just the first", async () => {
+    // `siblings` is selected through normNamePart, so it can span spellings that
+    // normalize equal, while the persona arm filters with exact equality.
+    // Driving the second pass from siblings[0] alone handed it a subset and
+    // dropped the rest with no error and no count, which fact survived being
+    // decided by array order.
+    for (const order of [
+      [
+        assertion("a_002", { record_id: "REC-MARR", record_role: "Bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+        assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "death", date: "1901", place: "Cork, Ireland" }),
+      ],
+      // Reversed: under the old code this flipped WHICH fact was lost.
+      [
+        assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "death", date: "1901", place: "Cork, Ireland" }),
+        assertion("a_003", { record_id: "REC-MARR", record_role: "Bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+      ],
+      // A trailing space normalizes equal too.
+      [
+        assertion("a_002", { record_id: "REC-MARR", record_role: "bride ", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+        assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "death", date: "1901", place: "Cork, Ireland" }),
+      ],
+    ]) {
+      const label = order.map((a: any) => `${a.record_role}:${a.fact_type}`).join("+");
+      await writeProject(
+        tree(),
+        research({
+          sources: [S1],
+          assertions: [
+            assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+            ...order,
+          ],
+        }),
+      );
+      const r = single(
+        await materializeFacts({
+          projectPath: dir,
+          assertionId: "a_001",
+          relatedRole: "bride",
+          name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+      expect(r.ok, label).toBe(true);
+      if (!r.ok) continue;
+      expect(r.factsAdded, label).toBe(2);
+      const her = findPerson(await readTree(), r.personId);
+      expect([...her.facts.map((f: any) => f.type)].sort(), label).toEqual(["Birth", "Death"]);
+      assertWrittenNodesHaveRefs(await readTree(), her);
+    }
+  });
+
   it("(55) the fact pass is scoped: no persona, gender-only, and negative evidence each write no fact", async () => {
     // The other direction of the same guard. Writing her facts must not start
     // writing facts that are not hers, are not facts, or are not positive
