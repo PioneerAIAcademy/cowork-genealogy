@@ -284,12 +284,18 @@ Two things about that clock are easy to get wrong, and both were:
 An unparseable frame counts as liveness: it is not a ping, and ending a legitimate
 turn is the worse error.
 
-**A floor on the heartbeat interval, recorded because nothing enforces it.**
-`_drain_replay` returns only after `_DRAIN_IDLE` (0.5s) of silence on the socket
-before the turn is sent, so a `WS_HEARTBEAT_INTERVAL` at or below that value means
-silence never occurs and the drain never returns - the turn is never sent at all.
-Unreachable at the shipped defaults (15s against 0.5s) and found by setting 0.1 in
-a test, but any future heartbeat speed-up has to stay clear of it.
+**The replay drain is bounded twice, and the second bound is why a fast heartbeat
+no longer wedges a turn.** `_drain_replay` returns on `_DRAIN_IDLE` (0.5s) of
+silence on the socket, or on `_DRAIN_MAX` (30s) of total elapsed time, whichever
+comes first. The ceiling lives inside the function rather than at its call sites
+because `_collect_sync` drains *before* setting its deadline, so
+`v1_turn_timeout_seconds` never covered the sync path's drain.
+
+**A floor on the heartbeat interval still applies, and nothing enforces it.** A
+`WS_HEARTBEAT_INTERVAL` at or below `_DRAIN_IDLE` means the socket never goes
+silent, so every turn pays the full `_DRAIN_MAX` before it is sent - a 30s tax
+per turn rather than the indefinite hang it used to be. Any future heartbeat
+speed-up still has to stay clear of it.
 
 Explicitly **not** built (over-engineering for a POC): DB-backed key table / hashing /
 rotation / scopes / rate limits, message-history endpoints, idempotency keys,

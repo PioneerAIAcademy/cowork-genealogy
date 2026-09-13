@@ -61,8 +61,11 @@ _DRAIN_IDLE = 0.5
 # message on that session reconnects and drains -- if the agent resumed
 # producing meanwhile, the drain spins while holding the turn lock, which is the
 # wedge this card exists to remove. Well inside v1_turn_timeout_seconds (120) so
-# no drain can consume a caller's whole budget. Same name and value as PR #2371
-# uses, so the two land without a conflict.
+# no drain can consume a caller's whole budget. PR #2371 bounds this same
+# function with the same name and value but rewrites the body to be
+# turn-aware, so whichever lands second gets a real conflict here, in
+# `_drain_replay`, and between `_is_liveness` and `_event_kind`. Keep
+# both functions and both bounds; do not resolve it by taking one side.
 _DRAIN_MAX = 30.0
 # SSE heartbeat interval: emit a comment if no frame arrives within this window so
 # proxies don't drop a long-running stream.
