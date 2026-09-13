@@ -323,6 +323,14 @@ build_external_search_url({
 | `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` also accepts a hyphenated range (`"1880-1905"`) when the exact year isn't known. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
 | `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | Free. Digitised page coverage runs **1798–1963**, title-by-title and complete for no state — a nil result never means no newspaper covered the event. Target date outside 1798–1963: do not call this site. Say the page corpus does not reach that period, and route to the state/regional archive for the place (coverage differs) or to a paid site instead |
 | `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | Free. **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
+| `archives_gov` | `givenName`/`surname`, `keywords`, `birthPlace`/`deathPlace` | Free. National Archives Catalog — `keywords` is free text (a record type), not the name |
+| `archive_org` | `givenName`/`surname`/`keywords` | Free. Internet Archive — no structured name/date/place fields; the name is only a free-text term here |
+| `billiongraves` | `givenName`/`surname`, `birthYear`/`deathYear` | Free. Cemetery records, GPS-tagged |
+| `digitalarkivet` | `givenName`/`surname`, `birthYear`, `birthPlace`/`residencePlace` | Free. Norwegian National Archives — `residencePlace` maps to the site's own domicile field |
+| `antenati` | `givenName`/`surname`, `birthYear`/`deathYear`, `birthPlace`/`deathPlace` | Free. Italian civil/parish records — one year/place field for whichever record type matched, not separate birth/death fields; `birthYear`/`birthPlace` preferred when both are known |
+| `library_archives_canada` | `givenName`/`surname`, `birthYear` | Free. Census search only — no death data (census records the living) |
+| `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Free to search; a subscription may be needed to view full results. Keyword-only — the site's own structured name fields do not bind |
+| `italian_genealogy` | `givenName`/`surname`/`keywords` | Free. A discussion forum, not a records database — keyword search over posts only |
 
 A supplied attribute the target site doesn't read comes back in the response's
 `notes` (e.g. `"'deathYear' is not used by chronicling_america — supplied but

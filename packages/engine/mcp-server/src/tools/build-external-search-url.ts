@@ -525,7 +525,22 @@ function appendToBaseUrl(baseUrl: string, params: Record<string, string | undefi
   // precisely because a stale `dl=title` already present would otherwise
   // silently coexist with it). Exact key match only — a differently-cased
   // key names a different parameter on most sites, so it is left alone.
-  const overriddenKeys = new Set(Object.keys(params));
+  //
+  // Filtered to keys with a DEFINED value, not `Object.keys(params)` — every
+  // site's own table (siteWideParams) always declares every key it recognizes,
+  // `undefined`-valued when the caller didn't supply that attribute, so
+  // `Object.keys` on the raw object named every key the site *could* ever
+  // emit, not just the ones this call is actually setting. That silently
+  // deleted an already-correct curated-link value (`?birthplace=Boston`) the
+  // instant a call omitted the matching attribute, with nothing to replace
+  // it and no note — the exact "a value silently never reaches the URL"
+  // defect class this override was added to close, reopened in the other
+  // direction.
+  const overriddenKeys = new Set(
+    Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .map(([k]) => k),
+  );
   const existingTokens = existingQuery.length > 0 ? existingQuery.split("&") : [];
   const preservedTokens = existingTokens.filter((token) => {
     const key = token.split("=", 1)[0];

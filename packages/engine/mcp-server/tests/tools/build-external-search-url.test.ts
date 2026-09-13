@@ -513,6 +513,24 @@ describe("build_external_search_url", () => {
       expect(r.url).toBe("https://www.loc.gov/collections/chronicling-america/?dl=page&q=Patrick+Flynn");
     });
 
+    it("does not delete a curated baseUrl's own value for a key this call never supplies (review finding)", () => {
+      // siteWideParams() always declares every key a site recognizes,
+      // undefined-valued when the caller omits that attribute — an earlier
+      // version of the override fix built `overriddenKeys` from
+      // `Object.keys(params)` directly, which named every key the site could
+      // ever emit rather than the ones this call is actually setting, and
+      // silently deleted an already-correct curated value with nothing to
+      // replace it and no note.
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/?birthplace=Boston",
+        attributes: { givenName: "Patrick", surname: "Flynn" }, // no birthPlace supplied
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?birthplace=Boston&name=Patrick_Flynn");
+    });
+
     it("preserves an existing valueless flag parameter as-is", () => {
       const r = buildExternalSearchUrl({
         site: "ancestry",
