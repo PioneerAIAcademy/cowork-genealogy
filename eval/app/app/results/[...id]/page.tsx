@@ -438,7 +438,7 @@ const DimensionRow = memo(function DimensionRow({
               <Badge color="orange" variant="outline" size="xs">unreviewed</Badge>
             )}
           </Group>
-          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap' }}>
+          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             {judgeRationale || '(no rationale)'}
           </Text>
         </Box>
