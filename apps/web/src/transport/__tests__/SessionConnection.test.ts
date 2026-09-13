@@ -51,6 +51,12 @@ function listen(conn: WsSessionConnection): WsMessage[] {
 const errors = (seen: WsMessage[]): WsMessage[] =>
   seen.filter((m) => m.type === 'status' && m.state === 'chat_error')
 
+// `conn_state`, not `status` — `emitConn` and `fail` use different frame types,
+// and filtering on the wrong one reads as "never emitted" rather than as a bug
+// in the filter.
+const reconnecting = (seen: WsMessage[]): WsMessage[] =>
+  seen.filter((m) => m.type === 'conn_state' && m.state === 'reconnecting')
+
 beforeEach(() => {
   vi.useFakeTimers()
   FakeSocket.instances = []
@@ -137,7 +143,6 @@ describe('a credentials fetch that never settles', () => {
     await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10) // hang #2
     expect(errors(seen)).toHaveLength(0)
   })
-})
 
   it('focus does not reset the credential-timeout budget', async () => {
     // The budget deliberately survives a visibility change, unlike `attempts`,
@@ -172,6 +177,7 @@ describe('a credentials fetch that never settles', () => {
     await vi.advanceTimersByTimeAsync(CREDENTIALS_TIMEOUT_MS + 10) // timeout #2
     expect(errors(seen)).toHaveLength(1)
   })
+})
 
 describe('a credentials fetch that is rejected', () => {
   it('retries with backoff and eventually surfaces chat_error', async () => {
@@ -210,6 +216,38 @@ describe('a credentials fetch that is rejected', () => {
     expect(calls).toBe(MAX_RETRIES + 1) // the first attempt, then MAX_RETRIES retries
     expect(errors(seen)).toHaveLength(1)
   })
+  it('tells the UI it is retrying, on every attempt, not just at the end', async () => {
+    // The panel showed one static line for the whole window: this path retried
+    // silently, so a failing `/connect` was indistinguishable from a healthy
+    // slow one until it gave up.
+    const conn = new WsSessionConnection(() => Promise.reject(new Error('500')))
+    const seen = listen(conn)
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    const afterFirst = reconnecting(seen).length
+    expect(afterFirst).toBeGreaterThan(0)
+    expect(errors(seen)).toHaveLength(0)
+
+    for (let i = 0; i < MAX_RETRIES + 2; i++) await vi.advanceTimersByTimeAsync(2000)
+
+    // It keeps saying so as the backoff runs, rather than going quiet after one.
+    expect(reconnecting(seen).length).toBeGreaterThan(afterFirst)
+  })
+
+  it('stays silent while the tab is hidden', async () => {
+    // The `hidden` guard sits above the new emit, so a backgrounded tab still
+    // says nothing — otherwise this chatters at a tab nobody is looking at.
+    const conn = new WsSessionConnection(() => Promise.reject(new Error('500')))
+    const seen = listen(conn)
+    ;(conn as unknown as { hidden: boolean }).hidden = true
+
+    conn.connect()
+    for (let i = 0; i < MAX_RETRIES + 2; i++) await vi.advanceTimersByTimeAsync(2000)
+
+    expect(reconnecting(seen)).toHaveLength(0)
+  })
+
 })
 
 describe('the happy path still works', () => {
@@ -254,4 +292,6 @@ describe('the happy path still works', () => {
     expect(FakeSocket.instances).toHaveLength(1)
     expect(errors(seen)).toHaveLength(0)
   })
+
+
 })

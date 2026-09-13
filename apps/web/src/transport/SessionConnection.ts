@@ -188,6 +188,12 @@ export class WsSessionConnection implements SessionConnection {
             return
           }
         }
+        // Every other retrying path tells the UI it is retrying; without this
+        // one a failing `/connect` shows the same static line as a healthy
+        // connect for the whole window. Below the ceiling block so a terminal
+        // failure still goes through `fail()`, and after the `hidden` guard so
+        // a backgrounded tab stays silent.
+        this.emitConn('reconnecting')
         this.scheduleRetry()
       }
     )
