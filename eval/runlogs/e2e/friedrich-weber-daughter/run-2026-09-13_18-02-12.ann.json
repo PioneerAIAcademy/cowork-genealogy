@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "notes": {
+    "f1": "True match, both independent records (D43H-7DN2 baptism + D43D-J2MM second indexing pass) correctly linked to the right parents in the tree. Two things worth noting, neither weakening the identification: (1) premarital conception -- marriage 7 Feb 1869, Rosina born 3 May 1869 (~85 days later), conception preceded the marriage by roughly six months, common and unremarkable for the period; (2) no single source names Anna Maria Eva and Rosina together as siblings -- each is attested by her own independent baptismal entry, and the sibling relationship is inferred by correlating the same parents' names across the two records, not a direct documentary link."
+  },
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "findings_hash": "cb72ad5ffed6c8a27febc3166c4675fbb30e312c4819a6a55d10f838ed2896ed"
+}
