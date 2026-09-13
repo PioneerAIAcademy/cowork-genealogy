@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Friedrich Carl Weber and Catharina Carell had a daughter, Anna Maria Eva Weber, born 26 February 1870 in Höchst, Hesse-Nassau. Her parentage is confirmed by two independent entries in the same parish register collection: the original baptismal entry naming parents Karl Weber and Katharina Karell, and a second entry recording her baptism on 13 March 1870 with the same parents and birth date. She is not the couple's first known child — an earlier daughter, Rosina, was baptized 3 May 1869 in Nied, naming the same parents (Carl Friedrich Weber and Catharina Karel).",
+      "description": "Friedrich Carl Weber and Catharina Carell had a daughter, Anna Maria Eva Weber, born 26 February 1870, baptized 13 March 1870 in Höchst, Hesse-Nassau — one baptism, attested by the parish Kirchenbuch and its Kirchenbuchduplikat, both naming parents Karl Weber and Katharina Karell. She is not the couple's first known child — an earlier daughter, Rosina, was baptized 3 May 1869 in Nied, naming the same parents (Carl Friedrich Weber and Catharina Karel).",
       "details": {
         "subject_person": "Friedrich Carl Weber (GTDL-981)",
         "relation": "child",
@@ -13,8 +13,8 @@
         }
       },
       "supporting_sources": [
-        "Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919 — baptismal entry for Anna Maria Eva Weber, 26 Feb 1870, naming parents Karl Weber and Katharina Karell (ark:/61903/1:1:D43D-J23Z)",
-        "Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919 — a second, independent entry for Anna Maria Eva Weber recording her baptism 13 Mar 1870 and birth 26 Feb 1870, naming the same parents Karl Weber and Katharina Karell (ark:/61903/1:1:D43H-7DN2)",
+        "Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919 — Kirchenbuch (parish register), Anna Maria Eva Weber's own persona: baptism 13 Mar 1870, birth 26 Feb 1870, Höchst, naming parents Karl Weber and Katharina Karell (ark:/61903/1:1:D43H-7DN2)",
+        "Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919 — Kirchenbuchduplikat (the same baptism recorded a second time, a second indexing pass, not a separate corroborating source), Anna Maria Eva Weber's own persona: birth 26 Feb 1870, naming the same parents Karl Weber and Katharina Karell (ark:/61903/1:1:D43D-J2MM; this entry's father persona, Karl Weber, is the ark the issue linked as the hint: ark:/61903/1:1:D43D-J23Z)",
         "Deutschland, Hesse-Nassau, Diözese Limburg, Katholische Kirchenbücher, 1601-1919 — baptismal entry for Rosina Weber, 3 May 1869, Nied, naming parents Carl Friedrich Weber and Catharina Karel, the couple's earlier and actual first known child (ark:/61903/1:1:D4WC-V9PZ)"
       ],
       "required": true
