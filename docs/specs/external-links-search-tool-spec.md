@@ -175,7 +175,7 @@ default is to preserve API truth.
 
 This tool **does not require authentication**. The endpoint is public,
 unlike the sibling `collections_search` and `record_search` tools which call
-`getValidToken()`. Do not add auth to this tool's handler.
+`getValidToken(principal)`. Do not add auth to this tool's handler.
 
 ---
 

@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import TurndownService from "turndown";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
@@ -85,7 +86,8 @@ export interface CollectionReadInput {
 }
 
 export async function collectionReadTool(
-  input: CollectionReadInput
+  input: CollectionReadInput,
+  principal: Principal
 ): Promise<CollectionDetailResult> {
   if (!input.id) {
     throw new Error(
@@ -94,7 +96,7 @@ export async function collectionReadTool(
     );
   }
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const detail = await fetchCollectionDetail(token, input.id);
   return convertHtmlToMarkdown(detail);
 }

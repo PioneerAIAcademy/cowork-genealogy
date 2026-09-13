@@ -10,6 +10,7 @@
  * Edensor, Derbyshire is a known small result set.
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { volumeSearchTool } from "../src/tools/volume-search.js";
 
 const args = process.argv.slice(2);
@@ -44,7 +45,7 @@ try {
     ...(endYear != null ? { endYear } : {}),
     ...(recordTypeGroups?.length ? { recordTypeGroups } : {}),
     ...(pageToken ? { pageToken } : {}),
-  });
+  }, LOCAL);
   console.log(JSON.stringify(result, null, 2));
   console.log("---");
   console.log(`Total results: ${result.totalResults}, returned: ${result.results.length}`);
