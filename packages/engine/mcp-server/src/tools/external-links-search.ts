@@ -1,5 +1,5 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import {
   stageSearchResults,
@@ -67,24 +67,28 @@ async function fetchPage(
   url.searchParams.set("offset", String(offset));
   url.searchParams.set("count", String(PAGE_SIZE));
 
-  const res = await fetchWithTimeout(url, {
+  const res = await fetchWithRetry(url, {
     headers: {
       "User-Agent": BROWSER_USER_AGENT,
       Accept: "application/json",
     },
   });
 
-  if (res.status === 403 || res.status === 429) {
+  if (res.status === 403) {
     throw new Error(
-      `FamilySearch rejected the request (status ${res.status}). ` +
-        "This usually means rate limiting or a User-Agent block. " +
+      `FamilySearch rejected the request (403 Forbidden). ` +
+        "This usually means a User-Agent block — check that the MCP server is running an unmodified build."
+    );
+  }
+  if (res.status === 429) {
+    throw new Error(
+      "FamilySearch rate limit reached and did not clear within the retry budget. " +
         "Wait 60 seconds and retry once. If it persists, surface this to the user."
     );
   }
   if (!res.ok) {
     throw new Error(
-      `FamilySearch returned ${res.status}. ` +
-        "Treat this as a transient error and retry once before giving up."
+      `FamilySearch external-links API error: ${res.status} ${res.statusText}.`
     );
   }
 

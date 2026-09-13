@@ -119,10 +119,10 @@ results (`3:1:`/`3:2:` document images).
 ## Authentication
 
 This tool requires a valid FamilySearch access token. It must call
-`getValidToken()` from `src/auth/refresh.ts` — the single entry point for
+`getValidToken(principal)` from `src/auth/refresh.ts` — the single entry point for
 all authenticated tools. Do not re-implement token plumbing.
 
-If the user is not authenticated, `getValidToken()` throws an
+If the user is not authenticated, `getValidToken(principal)` throws an
 LLM-instruction error directing the user to call the `login` tool. The
 tool function must not swallow this error.
 
@@ -217,7 +217,7 @@ Only `entityId` (as `personId`) and `tags` are kept. All other fields
 
 | Condition | Behavior |
 |-----------|----------|
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Empty `uris` array | Throw: `"uris array must not be empty."` |
 | 401 Unauthorized | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | 403 Forbidden (WAF) | Throw: `"FamilySearch attachments blocked by WAF. The User-Agent header was rejected."` |
