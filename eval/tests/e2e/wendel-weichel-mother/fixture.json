@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 4, hint-samples.csv row 155, flag adds_mother, confidence 3). Draft transcribed from the 1926 Prairie Provinces census household; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 4, hint-samples.csv row 155, flag adds_mother, confidence 3). Resolved 2026-09-09: true match. The hint record ark:/61903/1:1:QP51-QH2Y (Canada, Prairie Provinces, Census, 1926, Weyburn No. 67, Saskatchewan) names the mother Josefine, b. 7 September 1891 Russia. The index's Weishel/Weichel surname split is an indexing artifact — the image shows one consistent hand. The census's Jacob fills the tree's unnamed placeholder father GX6M-5HT rather than competing with it. Only the mother finding is required; father, residence and siblings are bonuses. See README 'Notes for reviewers'."
 }

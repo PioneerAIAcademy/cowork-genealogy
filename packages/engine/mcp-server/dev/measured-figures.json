@@ -1866,5 +1866,52 @@
       "exactRowsRead": 468
     },
     "measured_at": "2026-08-23T03:23:36.066Z"
+  },
+  "J": {
+    "anchor": {
+      "id": "3:1:33S7-LB3G-JWS",
+      "collectionId": "M9J1-94K",
+      "collectionTitle": "United States, Alabama, Legal, from 1600 to 2010",
+      "recordPlace": "Bullock, Alabama, United States",
+      "metadataState": "Alabama",
+      "transcriptPlace": "Virginia"
+    },
+    "T1:q.text control (transcript term)": {
+      "found": true,
+      "total": 5822,
+      "error": null
+    },
+    "T2:q.recordPlace=Virginia (transcript-only place)": {
+      "found": false,
+      "total": 0,
+      "error": null
+    },
+    "T3:q.recordPlace=Alabama (metadata place)": {
+      "found": true,
+      "total": 5822,
+      "error": null
+    },
+    "T3b:f.recordPlace1=Alabama (plain text)": {
+      "found": false,
+      "total": 0,
+      "error": null
+    },
+    "facet:usRegionId": "10",
+    "facet:virginiaFilter": "f.recordPlace1=10,Virginia",
+    "facet:metadataStateFilter": "f.recordPlace1=10,Alabama",
+    "T4:f.recordPlace1=Virginia (transcript-only place)": {
+      "found": false,
+      "total": 0,
+      "error": null
+    },
+    "T5:f.recordPlace1=Alabama (metadata place)": {
+      "found": true,
+      "total": 5822,
+      "error": null
+    },
+    "verdict:q.text searches transcript": "CONFIRMED",
+    "verdict:q.recordPlace searches": "metadata only",
+    "verdict:f.recordPlace searches": "metadata only",
+    "measured_at": "2026-09-11T15:58:12.144Z"
   }
 }

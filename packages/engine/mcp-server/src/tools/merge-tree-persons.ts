@@ -7,7 +7,6 @@
 // files both-or-neither. Use case: two persons (e.g. two fathers) that were
 // kept separate turn out to be the same. Spec: merge-gedcomx-spec.md §5b.
 
-import { join } from "path";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { mergeGedcomx } from "../utils/merge-gedcomx.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -19,7 +18,6 @@ import {
   derivePairSummaries,
   personMapByIds,
   remapResearchPersonIds,
-  backupIfExists,
   formatIssues,
   NoProjectError,
   noProjectResult,
@@ -84,15 +82,11 @@ export async function mergeTreePersons(
     // 6. Derive the compact summary.
     const pairs = derivePairSummaries(merges, preSurvivors, preCollapsed, merged);
 
-    // 7. Persist both files both-or-neither, after backing up both. Order
-    //    [tree, research] matches the documented residual window.
-    const treePath = join(projectPath, "tree.gedcomx.json");
-    const researchPath = join(projectPath, "research.json");
-    await backupIfExists(treePath);
-    await backupIfExists(researchPath);
-    await atomicWriteBoth([
-      { path: treePath, data: merged },
-      { path: researchPath, data: research },
+    // 7. Persist both files both-or-neither. Order [tree, research] matches
+    //    the documented residual window.
+    await atomicWriteBoth(projectPath, [
+      { ref: "tree.gedcomx.json", data: merged },
+      { ref: "research.json", data: research },
     ]);
 
     return {
@@ -130,8 +124,7 @@ export const mergeTreePersonsSchema = {
     "repointed. Every research.json reference to a collapsed id (subject persons, " +
     "person_evidence, timelines, known_holdings) is repointed to the survivor. " +
     "Both files are written both-or-neither and NOT returned — you get a compact " +
-    "summary including how many research references were updated. One-deep " +
-    ".bak backups of both files are written before the overwrite. On a validation " +
+    "summary including how many research references were updated. On a validation " +
     "failure nothing is written and `{ ok: false, errors }` is returned.",
   inputSchema: {
     type: "object" as const,
