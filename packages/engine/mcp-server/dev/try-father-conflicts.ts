@@ -10,6 +10,7 @@
  *
  * Usage: npx tsx dev/try-father-conflicts.ts [offset] [count]
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 
@@ -44,7 +45,7 @@ interface Entry {
 }
 
 async function main(): Promise<void> {
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   const arg = process.argv[2] ?? "1960";
   // `all` reads the pool to the END rather than sampling one page. A sampled
   // page can only ever say what is near the top; whether a CONFLICTING father

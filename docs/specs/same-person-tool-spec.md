@@ -177,7 +177,7 @@ do next), thrown as `Error` objects.
 
 | Condition | Throw message |
 |-----------|--------------|
-| No FamilySearch session (no tokens / refresh failed) | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` (re-raised from `getValidToken()`) |
+| No FamilySearch session (no tokens / refresh failed) | `"User is not logged in to FamilySearch. Call the login tool to authenticate."` (re-raised from `getValidToken(principal)`) |
 | API returns 401 | `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 with Imperva body (errorCode 15) | `"FamilySearch matchTwoExamples blocked by WAF. The User-Agent header was rejected — check that the MCP server is running an unmodified build."` |
 | API returns 400 with JSON body | `"FamilySearch matchTwoExamples rejected the payload: ${detail-from-body}."` |
@@ -199,7 +199,7 @@ POST https://www.familysearch.org/service/search/record/collections/match/matchT
 
 **Required headers:**
 ```
-Authorization: Bearer <access token from getValidToken()>
+Authorization: Bearer <access token from getValidToken(principal)>
 Accept: application/json
 Content-Type: application/json
 User-Agent: <BROWSER_USER_AGENT from src/constants.ts>
@@ -304,7 +304,7 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │       ] }
   │
   ├─ 5. POST to the FS URL with:
-  │       Authorization: Bearer <getValidToken()>
+  │       Authorization: Bearer <getValidToken(principal)>
   │       User-Agent: BROWSER_USER_AGENT
   │       Accept: application/json
   │       Content-Type: application/json
@@ -424,7 +424,7 @@ export async function samePerson(
 ): Promise<SamePersonResult> {
   validateInput(input);
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const raw1 = buildRawWithAnchor(input.gedcomx1, input.primaryId1);
   const raw2 = buildRawWithAnchor(input.gedcomx2, input.primaryId2);
 
@@ -594,7 +594,7 @@ export const samePersonSchema = {
 
 ## Patterns to Follow
 
-- **Auth:** call `getValidToken()` from `src/auth/refresh.ts`. Never read tokens directly.
+- **Auth:** call `getValidToken(principal)` from `src/auth/refresh.ts`. Never read tokens directly.
 - **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Do not hardcode the Mozilla string.
 - **HTTP errors:** map each upstream status to an LLM-instruction error message per the Error Handling table. Never surface raw HTTP errors to the LLM.
 - **Simplifier:** use `toGedcomX()` from `src/utils/gedcomx-convert.ts`. Do not roll your own inflation logic.

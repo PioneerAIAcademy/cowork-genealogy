@@ -568,12 +568,10 @@ Mirrors `research_log_append` minus the sidecar:
    to a warning and does not block.
 6. Commit:
    - **No tree mutation** (every call without `sourceDescription`): write only
-     `research.json` with `atomicWriteJson`. No `.bak` (this section, unlike the
-     irreversible merges, is append/supersede with full history-in-file — the GPS
-     audit trail is the recovery mechanism; consistent with `research_log_append`).
-   - **Composite (§3.4) tree mutation:** back up `tree.gedcomx.json` →
-     `tree.gedcomx.json.bak` (the same one-deep user-recovery semantics every tree
-     writer has — NOT a rollback mechanism), then commit **both files with
+     `research.json` with `atomicWriteJson`. No `.bak` — this section is
+     append/supersede with full history-in-file, so the GPS audit trail is the
+     recovery mechanism (consistent with `research_log_append`).
+   - **Composite (§3.4) tree mutation:** commit **both files with
      `atomicWriteBoth`, tree first, research second** (the same both-or-neither
      write shape and ordering the merge tools use; a crash between the two renames
      leaves a new tree + old research — an unreferenced `S` entry, which is valid —
@@ -888,7 +886,7 @@ plain entry write fits here, the computed build may warrant its own tool),
 - **atomicity** — a validation failure leaves `research.json` byte-unchanged.
 - **composite create** — `sourceDescription` writes the `S` entry (shared `nextId`
   allocator), stamps the sources op, echoes `sourceDescriptionId`, writes both
-  files tree-first with a tree `.bak`.
+  files tree-first with `atomicWriteBoth` (no `.bak`).
 - **reuse-or-create** — an existing `S` reference is accepted with the tree
   untouched; a dangling `S` and a neither/both call are rejected op-indexed.
 - **source_id auto-stamp** — omitted/null `source_id` stamped in a single-source
@@ -962,7 +960,7 @@ The lane is therefore the *tool*, and the extractor's frontmatter simply omits
 `research_append`. **The omission is the whole mechanism.** This spec used to say
 the opposite — that a deny is enforced under
 `permission_mode="bypassPermissions"` and "an omission alone is not." Probed
-2026-08-30 against Claude Code 2.1.251 / SDK 0.2.128 (`make
+2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
 probe-agent-binding`, reproduced twice): under `bypassPermissions` both bind, and
 a tool merely omitted from `tools:` is absent from the agent exactly as a denied
 one is. The agent carried a `disallowedTools:` deny alongside the omission for
@@ -1102,3 +1100,19 @@ supersedes an earlier reading of this paragraph as "the lever is eval/rubric,
 not tooling" — #1006 explicitly concedes that a present `match_score` does not
 prove `same_person` ran, and takes the presence check anyway rather than
 over-engineering past it.
+
+### 11.5 Debug holds — a probe seam, not a feature
+
+Two environment variables, `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS` and
+`GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS`, pause an **`extraction_append`** call for
+that many milliseconds just before its atomic write and just after it (before the
+result returns). They exist for the P1 cross-process resume probe
+(`apps/server/dev/p1/`, `docs/plan/search-agent-prototype.md`), which needs to kill a
+worker between a delegated extraction's validate and its commit, and between its
+commit and its `tool_result`. They are the only environment variables the engine
+reads — everything else is config-only (CLAUDE.md, "Secrets/config convention") —
+and they ship in the `.mcpb`, so the contract is pinned by
+`tests/tools/extraction-append.test.ts` ("debug holds"): unset, `0`, empty or a
+non-numeric value is inert; `research_append` is never held whatever the value;
+a set value on `extraction_append` waits on both sides of the commit. Nothing
+else may read them.

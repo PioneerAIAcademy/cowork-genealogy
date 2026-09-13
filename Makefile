@@ -366,16 +366,87 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	# agent and check whether a harmless tool call actually landed, read off
 	# the tool_result rather than the agent's own prose.
 	#
-	# Answered 2026-08-30 (Claude Code 2.1.251, SDK 0.2.128): BOTH bind, so a
+	# Answered 2026-08-30 (Claude Code 2.1.220, SDK 0.2.128): BOTH bind, so a
 	# deny is redundant with omitting the tool. Re-run when the CLI or the SDK
 	# moves, or before adding a deny on the strength of it binding.
 	cd apps/server && \
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: probe-p1-resume
+probe-p1-resume: $(ENGINE_BUILD) ## P1 cross-process resume probe (docker postgres + 2 billed turns): make probe-p1-resume VARIANT=clean|mid-delegation|mid-model-call|forced
+	docker start p1-postgres >/dev/null 2>&1 || docker run -d --name p1-postgres -e POSTGRES_PASSWORD=p1 -e POSTGRES_DB=p1 -p 5433:5432 postgres:16-alpine >/dev/null
+	@for i in $$(seq 1 60); do docker exec p1-postgres pg_isready -U postgres >/dev/null 2>&1 && break; sleep 0.5; done
+	@docker exec p1-postgres pg_isready -U postgres >/dev/null 2>&1 || { echo "p1-postgres is not accepting connections after 30s"; exit 1; }
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.kill_resume --variant $(or $(VARIANT),clean)
+
+.PHONY: probe-bash-deny
+probe-bash-deny: $(ENGINE_BUILD) ## D1–2 probe: is disallowed_tools=["Bash",…] a pool removal or a call-time refusal under the prototype option set? (3 short billed sessions)
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_bash_deny
+
+.PHONY: probe-registration
+probe-registration: $(ENGINE_BUILD) ## D1–2 probe: do the plugin agents register under bare names via agents=, and does the CLI spawn image-reader by that name? (1 billed session + 1 subagent turn)
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_registration
+
+.PHONY: probe-bedrock-parity
+probe-bedrock-parity: $(ENGINE_BUILD) ## P3 probe: tool search, 1h cache TTL, interleaved thinking, 1M beta and context_management on Bedrock direct vs first-party (4 billed sessions, ~8 min; SKIP_WAIT=1 for a smoke): make probe-bedrock-parity [OUT=dir]
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_bedrock_parity $(if $(OUT),--out $(OUT)) $(if $(filter 1 true yes on,$(SKIP_WAIT)),--skip-wait,)
+
+.PHONY: probe-gateway-path
+probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic ANTHROPIC_BASE_URL (a logging pass-through to api.anthropic.com) vs first-party — tool-search gate, eager tool load, cache_control ttls and betas on the wire (5 short billed sessions, cents): make probe-gateway-path [OUT=dir] [ARMS=a,b]
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python -m dev.p1.probe_gateway_path $(if $(OUT),--out $(OUT)) $(if $(ARMS),--arms $(ARMS))
+
+# ── Search-agent prototype: D3 compose skeleton (apps/server/proto/) ─────
+# postgres :5434 (5433 is the P1 probe's p1-postgres), minio :9000/:9001,
+# elasticmq :9324, plus the worker stub and the sqsd shim built from ./worker
+# and ./shim. Plan: docs/plan/search-agent-prototype.md, "Week 1" D3.
+# proto-up waits in a second call that names the long-running services only:
+# `up --wait` on the whole stack exits 1 the moment the minio-init one-shot
+# exits 0 (Compose v5.1.4) and abandons the wait before the worker is healthy.
+PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
+
+.PHONY: proto-up
+proto-up: ## D3 prototype: build + start postgres/minio/elasticmq/worker/shim and wait for health
+	$(PROTO_COMPOSE) up -d --build
+	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
+
+.PHONY: proto-down
+proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-applies on the next up)
+	$(PROTO_COMPOSE) down -v
+
+.PHONY: proto-logs
+proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
+	$(PROTO_COMPOSE) logs -f $(SERVICE)
+
+.PHONY: proto-send
+proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS="--behaviour ok"
+	cd apps/server && uv run python proto/enqueue.py $(ARGS)
+
+.PHONY: proto-smoke
+proto-smoke: proto-up ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
+	cd apps/server && uv run python proto/smoke.py
+
+.PHONY: proto-test
+proto-test: ## D3 offline tests: compose/conf/schema shape + the shim's pure decide()
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test
+
+.PHONY: engine-smoke-stdio
+engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and call every offline tool once (no FamilySearch login needed)
+	cd $(ENGINE_DIR) && npx tsx dev/smoke-stdio.ts
 
 # $(ENGINE_BUILD) is a real prerequisite here, not a convenience. The mock MCP
 # server (eval/harness/harness/mock_mcp.py) shells out to the COMPILED build/
@@ -547,6 +618,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
 	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
 	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
+	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
+	#   DENY_PROJECT_READS 1                             (default off; P2 — deny Read/Grep/Glob of the project folder)
 	# A/B these to find what clears a runaway-thinking subagent freeze
 	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
@@ -555,7 +628,7 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# run's `compliance` is not comparable to a shadow run's (the blocked write
 	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
@@ -770,6 +843,18 @@ e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latenc
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
 	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-cache-window
+e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e2e runs: make e2e-cache-window | TEST=<slug> | MD=1 for a Markdown table | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API. Production
+	# writes 5-minute cache entries (API key, no ENABLE_PROMPT_CACHING_1H; the
+	# gateway can offer nothing longer), but this corpus ran on the operator's
+	# subscription under the 1-hour TTL, so its > 300 s same-thread gaps were
+	# hits that a 5-minute TTL would turn into WRITES: each such model call is
+	# re-priced and the delta is reported per run and over the corpus. Per-call
+	# cache figures are not in the run log, so the run's cache-read total is
+	# distributed over its calls two stated ways (see the module docstring).
+	cd eval/harness && uv run python -m e2e.cache_window $(if $(TEST),--test $(TEST),) $(if $(MD),--markdown,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-compaction
 e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD

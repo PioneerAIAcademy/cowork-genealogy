@@ -114,3 +114,130 @@ export async function fetchWithTimeout(
   }
   return guardBodyReads(response, url, timeoutMs);
 }
+
+// ─── Retry with budget cap (issue #2054) ─────────────────────────────────────
+
+/** HTTP statuses worth retrying: throttling and transient server faults. */
+export const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+// Cap: 10 seconds for retry sleeps and for any attempt after the first,
+// whose timeout is clamped to what remains. Total wall clock stays
+// under timeoutMs + budget. Chosen so every
+// tool's existing per-attempt timeout stays valid inside the Cowork bridge's
+// 60s abort window. Configurable per call and in tests via `budgetMs`.
+export const DEFAULT_RETRY_BUDGET_MS = 10_000;
+
+/**
+ * Retry-After in milliseconds, or null when the header is absent or not a
+ * bare integer. Only the numeric (delay-seconds) form is honoured; the
+ * HTTP-date form needs clock-skew handling and is treated as absent.
+ */
+export function retryAfterMs(res: Response): number | null {
+  const header = res.headers.get("retry-after");
+  if (header === null) return null;
+  const trimmed = header.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  return Number(trimmed) * 1000;
+}
+
+export interface RetryBudgetOptions {
+  /** Max attempts (including the first try). Default 3. */
+  attempts?: number;
+  /** Total wall-clock budget in ms for all attempts + sleeps. Default 10_000. */
+  budgetMs?: number;
+  /** Base delay for exponential backoff when no Retry-After. Default 200. */
+  baseMs?: number;
+}
+
+const retrySleep = (ms: number): Promise<void> =>
+  new Promise((r) => setTimeout(r, ms));
+
+/**
+ * `fetchWithTimeout` + automatic retry of transient failures.
+ *
+ * Retries on RETRYABLE_STATUS (429, 5xx), network errors, and per-attempt
+ * timeouts. Returns the Response immediately for 2xx and permanent 4xx
+ * (400/401/403/404). On exhaustion:
+ *   - retryable HTTP status -> returns the last Response (caller's !response.ok
+ *     block handles it, so existing error messaging is preserved)
+ *   - thrown error (network/timeout) -> re-throws the last error
+ *
+ * Parses Retry-After when present and uses it as the next delay if it fits
+ * inside the remaining budget; otherwise throws a descriptive error naming the
+ * requested wait so the agent can tell the user how long to wait.
+ */
+export async function fetchWithRetry(
+  url: string | URL,
+  init: RequestInit = {},
+  timeoutMs: number = DEFAULT_FETCH_TIMEOUT_MS,
+  retryOpts: RetryBudgetOptions = {},
+): Promise<Response> {
+  const {
+    attempts = 3,
+    budgetMs = DEFAULT_RETRY_BUDGET_MS,
+    baseMs = 200,
+  } = retryOpts;
+  const deadline = Date.now() + budgetMs;
+  let lastErr: unknown;
+  let lastResponse: Response | undefined;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    // Budget check before starting a new attempt (first attempt always runs).
+    if (attempt > 0 && Date.now() >= deadline) break;
+
+    let response: Response;
+    try {
+      const attemptTimeout =
+        attempt === 0
+          ? timeoutMs
+          : Math.min(timeoutMs, Math.max(0, deadline - Date.now()));
+      response = await fetchWithTimeout(url, init, attemptTimeout);
+    } catch (err) {
+      // Network error or per-attempt timeout — retryable.
+      lastErr = err;
+      if (attempt >= attempts - 1) break;
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      const backoff = baseMs * 2 ** attempt;
+      const jitter = backoff * 0.5 * Math.random();
+      const delay = Math.min(backoff + jitter, remaining);
+      if (delay > 0) await retrySleep(delay);
+      continue;
+    }
+
+    if (!RETRYABLE_STATUS.has(response.status)) {
+      return response; // 2xx or permanent 4xx — done.
+    }
+
+    // Retryable HTTP status (429/5xx).
+    lastResponse = response;
+    lastErr = new Error(
+      `HTTP ${response.status} ${response.statusText}`,
+    );
+
+    if (attempt >= attempts - 1) break;
+
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+
+    const ra = retryAfterMs(response);
+    if (ra !== null && ra > remaining) {
+      throw new Error(
+        `Server requested a ${Math.ceil(ra / 1000)}s wait (Retry-After: ${response.headers.get("retry-after")}), ` +
+          `but only ${Math.ceil(remaining / 1000)}s of the ${Math.ceil(budgetMs / 1000)}s retry budget remains. ` +
+          `The request may succeed if retried later.`,
+      );
+    }
+
+    const backoff = baseMs * 2 ** attempt;
+    const jitter = backoff * 0.5 * Math.random();
+    const delay = ra ?? Math.min(backoff + jitter, remaining);
+    if (delay > 0) await retrySleep(Math.min(delay, remaining));
+  }
+
+  // Exhausted: return the last retryable Response if we have one (so the
+  // caller's !response.ok block can produce an LLM-actionable error), or
+  // re-throw the last error (network/timeout).
+  if (lastResponse !== undefined) return lastResponse;
+  throw lastErr;
+}

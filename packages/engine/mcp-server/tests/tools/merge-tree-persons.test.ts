@@ -88,9 +88,9 @@ describe("merge_tree_persons", () => {
     });
     expect(result.newRelatives).toEqual([]);
 
-    // both .bak backups written.
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
-    expect(await exists("research.json.bak")).toBe(true);
+    // no readable `.bak` copy of either file left beside the originals.
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
+    expect(await exists("research.json.bak")).toBe(false);
 
     // collapsed person removed from the tree.
     const tree = await readJson("tree.gedcomx.json");

@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -195,7 +196,7 @@ walkSrc(join(mcpRoot, "src"));
  * Every arm is `if (request.params.name === "<tool>") { … }`. Inside, the
  * handler is the function whose awaited result is serialized for the model:
  *
- *   const result = await recordSearchTool(args);
+ *   const result = await recordSearchTool(args, LOCAL);
  *   return { content: [{ type: "text", text: JSON.stringify(result) }] };
  *
  * Two real variants the extraction has to survive, so neither is a special
