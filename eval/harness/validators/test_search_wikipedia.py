@@ -419,8 +419,9 @@ _NARRATION_RE = re.compile(
 def test_reply_does_not_narrate_pending_step(text_response, test):
     """No assistant turn announces writing the file — not just the closing one.
 
-    `text_response` concatenates every text block, so narration fails this
-    even when the final sentence is clean. In Cowork the user sees every block.
+    `text_response` joins every turn's text (blocks within one turn with no
+    separator), so narration fails this even when the final sentence is
+    clean. In Cowork the user sees every turn.
 
     Added after run `v1_2026-08-22_10-20-08`, which is why that run log carries
     no result for it. On that run's data it would have failed
@@ -450,5 +451,5 @@ def test_reply_does_not_narrate_pending_step(text_response, test):
         f"reply narrates a pending step ({hit.group(0)!r}) instead of only "
         f"reporting the saved file. SKILL.md step 5: 'Tell the user the file "
         f"was created. One sentence only.' The phrase may sit in a mid-workflow "
-        f"turn — this string concatenates every text block. Full text: {text_response!r}"
+        f"turn — this string joins every turn's text. Full text: {text_response!r}"
     )
