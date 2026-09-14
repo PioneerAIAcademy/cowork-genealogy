@@ -133,6 +133,9 @@ Do not declare exhaustive while a blocking check fails.
 
 ## 1. Gather evidence
 
+Reached only when Step 0 neither stopped nor refused. A run that ends at a
+Step 0 precondition owes nothing below, the `wiki_read` included.
+
 Read:
 - The question and its `exhaustive_declaration`
 - Log entries for its plan items (via `plan_item_id`)
