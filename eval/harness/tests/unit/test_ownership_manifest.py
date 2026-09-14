@@ -10,9 +10,9 @@ this module asserts the manifest still produces them. Deleting an owner reddens
 this test. Adding one reddens it too, which is the point: a widening is a
 decision, and it should have to be written down here.
 
-Four deltas are declared explicitly below — one newly-enforced section, one
-research-side widening, one narrowing, and one tree-side widening — each with
-the reason it was made and the measurement behind it. They are the only four.
+Three deltas are declared explicitly below — one newly-enforced section, one
+widening, one narrowing — each with the reason it was made and the measurement
+behind it. They are the only three.
 
 **This is not `make harness-test`'s ownership result.** `pyproject.toml` sets
 `testpaths = ["tests"]`, so `validators/test_universal.py::test_ownership_table`
@@ -99,29 +99,6 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 #: departure from it is a line someone had to write.
 NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 
-#: tree `persons` gains `record-extraction`. Issue #2472: a place corrected on an
-#: assertion never reached the tree fact already materialised from it, and the
-#: ruling gives the fact a real backlink (`assertion_id`, stamped by
-#: `materialize_facts` on the mint branch) so `research_append`'s assertion
-#: `update` op can rewrite the linked fact in the same atomic write. That op
-#: lives in the shared `research-append.ts`, so it fires for `extraction_append`
-#: too -- and `record-extraction` is the only declared caller of the `assertions`
-#: section, so it is the only skill that can reach it.
-#:
-#: Narrow on purpose: those two tools may only change `place`, `standard_place`,
-#: `date` and `value` on a fact that already carries the corrected assertion's
-#: id. They add no person, no fact, no name and no ref, so the row's `failure`
-#: ("an unsourced person written here is uploaded to FamilySearch as fact")
-#: stays out of reach.
-#:
-#: A widening cannot newly fail a test -- it only permits. Measured before
-#: declaring it anyway: across every committed unit run log the two populations
-#: are disjoint, all 51 `materialize_facts` calls being `person-evidence`'s and
-#: every four-field assertion `update` op `record-extraction`'s, so no unit test
-#: mints a backlinked fact and later corrects its assertion.
-TREE_WIDENED: dict[str, set[str]] = {"persons": {"record-extraction"}}
-
-
 def expected_research_owners() -> dict[str, set[str]]:
     expected = {k: set(v) for k, v in FROZEN_OWNERSHIP_TABLE.items()}
     for section, added in WIDENED.items():
@@ -138,33 +115,10 @@ def test_research_owners_match_the_frozen_tables():
     assert writer_sets(RESEARCH_JSON, UNIT_PLANE) == expected_research_owners()
 
 
-def expected_tree_owners() -> dict[str, set[str]]:
-    expected = {k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()}
-    for section, added in TREE_WIDENED.items():
-        expected[section] |= added
-    return expected
-
-
 def test_tree_owners_match_the_frozen_table():
-    assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == expected_tree_owners()
-
-
-def test_no_tree_owner_was_dropped():
-    """The tree table only ever widens; a drop must be declared like a research one.
-
-    The research side has `NARROWED` and its own drop assertion. The tree side
-    has no narrowing, so the check is the simpler one: every writer the frozen
-    literal named is still a writer. Without this, `expected_tree_owners()`
-    could absorb a drop by having someone edit the literal instead of declaring
-    it -- which is the exact move the literal exists to prevent.
-    """
-    actual = writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE)
-    dropped = {
-        section: sorted(frozen - actual.get(section, set()))
-        for section, frozen in FROZEN_TREE_OWNERSHIP_TABLE.items()
-        if frozen - actual.get(section, set())
+    assert writer_sets(TREE_GEDCOMX_JSON, UNIT_PLANE) == {
+        k: set(v) for k, v in FROZEN_TREE_OWNERSHIP_TABLE.items()
     }
-    assert not dropped, f"tree owners dropped without a declared narrowing: {dropped}"
 
 
 def test_the_only_newly_enforced_section_is_localities():

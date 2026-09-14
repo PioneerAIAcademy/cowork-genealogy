@@ -228,7 +228,10 @@ describe("research_append (Phase 1)", () => {
     it("(3) `place`+`standard_place`+`value` on a VALUE-BEARING fact rewrites all three", async () => {
       await writeProject(
         withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
-        treeWithBacklink({ type: "Occupation", value: "Labourer" }),
+        // `value` mirrors the assertion's pre-call reading: a fact holding a
+        // value the assertion never asserted is another source's evidence, and
+        // the provenance guard leaves it alone.
+        treeWithBacklink({ type: "Occupation", value: "Farmer" }),
       );
 
       const r = await researchAppend({
@@ -353,8 +356,8 @@ describe("research_append (Phase 1)", () => {
     it("(9) rewrites every fact carrying the id, and no fact carrying another", async () => {
       const tree = treeWithBacklink();
       tree.persons[0].facts.push(
-        { id: "F5", type: "Immigration", place: "Wellburn, Ontario, Canada", assertion_id: "a_011", sources: [{ ref: "SD-001" }] } as any,
-        { id: "F6", type: "Immigration", place: "Wellburn, Ontario, Canada", assertion_id: "a_999", sources: [{ ref: "SD-001" }] } as any,
+        { id: "F5", type: "Immigration", place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada", assertion_id: "a_011", sources: [{ ref: "SD-001" }] } as any,
+        { id: "F6", type: "Immigration", place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada", assertion_id: "a_999", sources: [{ ref: "SD-001" }] } as any,
       );
       await writeProject(withAssertion(backlinkAssertion()), tree);
 
@@ -372,7 +375,118 @@ describe("research_append (Phase 1)", () => {
       const by = (id: string) => facts.find((f: any) => f.id === id);
       expect(by("F4").place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
       expect(by("F5").place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
-      expect(by("F6").place).toBe("Wellburn, Ontario, Canada");
+      expect(by("F6").place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
+    });
+
+    it("(10) does NOT clobber an attribute a different assertion corroborated onto the fact", async () => {
+      // The corroboration branch fills an attribute the fact lacks from another
+      // assertion, and the fact keeps that source's ref. Overwriting it destroys
+      // the other source's evidence while the fact still cites it.
+      const research = withAssertion(backlinkAssertion({ date: null }));
+      await writeProject(research, treeWithBacklink({ date: "3 January 1855" }));
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { date: "1856" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.date).toBe("3 January 1855");
+      expect(r.validation.warnings.join(" ")).toMatch(/did not assert/);
+    });
+
+    it("(11) a non-string value leaves the fact alone instead of deleting its value", async () => {
+      // `validator.ts` type-checks an assertion's date/place/standard_place but
+      // not its `value`, so a malformed value reaches the rewrite. Read as
+      // "withdrawn" it silently deleted tree data.
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+        treeWithBacklink({ type: "Occupation", value: "Farmer" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { value: 1924 as unknown as string },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      expect((await factF4()).value).toBe("Farmer");
+      expect(r.validation.warnings.join(" ")).toMatch(/non-string 'value'/);
+    });
+
+    it("(12) warns when a place correction leaves an un-corrected standard_place", async () => {
+      // The card's own harm one level down: the display string reads corrected
+      // while the place-AUTHORITY value still names the old jurisdiction. Both
+      // the assertion and the fact carry it, so the agreement guard cannot see it.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.standard_place).toBe("Thames Centre Township, Middlesex, Ontario, Canada");
+      expect(r.validation.warnings.join(" ")).toMatch(/place authority value was not part of this correction/);
+    });
+
+    it("(13) warns loudly when the rewritten fact is a concluded (primary) value", async () => {
+      // proof-conclusion lands the concluded value by setting `primary`, and
+      // `primary` is not a detach trigger, so the backlink survives a
+      // conclusion. The correction must still land — a known-wrong concluded
+      // value on the upload target is worse — but never quietly.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink({ primary: true }));
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(r.validation.warnings.join(" ")).toMatch(/marked primary \(a concluded value\)/);
+    });
+
+    it("(14) stays silent for a fact_type that can never become a person fact", async () => {
+      // 21 of the 145 corpus ops correct a name/relationship/marriage/age/sex
+      // assertion. None of those materializes as a person fact, so "re-check it
+      // with person_read" sends the caller after something that cannot exist.
+      const tree = treeWithBacklink();
+      delete (tree.persons[0].facts[0] as any).assertion_id;
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "name", value: "Anna Weichel" })),
+        tree,
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { value: "Anna Wendel" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.join(" ")).not.toMatch(/no tree fact is linked to it/);
     });
   });
 

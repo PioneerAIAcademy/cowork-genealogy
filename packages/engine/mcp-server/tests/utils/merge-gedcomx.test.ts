@@ -831,8 +831,17 @@ describe("assertion_id across a fact merge (#2472)", () => {
     expect(f.assertion_id).toBeUndefined();
   });
 
-  it("drops it when only one member carries one", () => {
-    expect(mergedBirth(["a_001", undefined]).assertion_id).toBeUndefined();
+  it("drops it when only one member carries one, and that conservatism is the point", () => {
+    // The tempting narrowing is "drop only when two members carry DIFFERENT
+    // non-empty backlinks". It is wrong, and this case is why: I1 carries the
+    // backlink, I2 carries none, and the merge takes I2's longer place chain.
+    // Under that rule the survivor would keep a_001 while carrying a place
+    // a_001 never asserted, which is precisely the drift the agreement check
+    // reports. The merge cannot consult research.json to tell the benign case
+    // apart, so it drops the link rather than guess.
+    const f = mergedBirth(["a_001", undefined]);
+    expect(f.place).toBe("Schuylkill County, Pennsylvania, United States");
+    expect(f.assertion_id).toBeUndefined();
     expect(mergedBirth([undefined, "a_002"]).assertion_id).toBeUndefined();
   });
 

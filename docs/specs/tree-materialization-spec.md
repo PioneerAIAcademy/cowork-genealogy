@@ -340,20 +340,65 @@ facts with `len(sources) > 1` across
 **The backlink is dropped, not kept, in three places**, because a fact that no
 longer answers to its assertion must stop claiming to:
 
-- `tree_edit` / `tree_correct` `update_fact`, when the op sets any
-  `FACT_STRING_FIELDS` member. A human correcting the fact directly is recording
-  their own conclusion, exactly as `add_fact` does. It warns when it detaches,
-  because the cost is real: that fact is now outside the automatic update, which
-  re-opens this bug for it. **31 of 114 `update_fact` ops** in the committed e2e
-  run logs set one of those fields and would detach (109 `tree_correct`, 5
-  `tree_edit`, across 80 calls; measured 2026-09-14).
+- `tree_edit` / `tree_correct` `update_fact`, when the op **changes** any of the
+  fact's own fields — `date`, `standard_date`, `place`, `standard_place`, `value`
+  or `type`. A human correcting the fact directly is recording their own
+  conclusion, exactly as `add_fact` does. It warns when it detaches, because the
+  cost is real: that fact is now outside the automatic update, which re-opens
+  this bug for it. **31 of 114 `update_fact` ops** in the committed e2e run logs
+  set one of those fields and would detach; those 31 are 26 `tree_correct` and 5
+  `tree_edit` across 21 calls, out of 114 ops across 80 calls in total (measured
+  2026-09-14). Three details it turns on: it keys on a real change rather than on
+  the key being present (7 of those 31 also carry `primary`, the conclude-a-fact
+  shape, where an unchanged echo rides along); it runs after `standard_place`
+  re-resolution, so a sidecar the resolver rewrites counts; and `type` is in the
+  trigger although it is not a string field, because a re-classification moves
+  the fact across the event / value-bearing line that decides whether an
+  assertion's `value` may be written to it at all.
 - a fact merge (`mergeFactGroup`), unless every member carries the same
   backlink. The merged fact takes its best date and best place from possibly
   different members, so keeping the first member's id would leave it claiming an
-  assertion whose place it no longer carries.
+  assertion whose place it no longer carries. **This is deliberately conservative
+  and drops the link when one member simply has none**, not only when two
+  disagree: narrowing it to "two different non-empty backlinks" would keep the
+  link on a fact whose winning place came from the *unbacklinked* member, which
+  is the drift the agreement check reports. The merge is tree-only and cannot
+  consult `research.json` to tell the benign case apart, so it drops rather than
+  guesses. Unlike the `update_fact` detach it does **not** warn: `mergeGedcomx`
+  returns a document and has no warnings channel, and adding one changes a
+  signature shared with `merge_warnings`' dry run. The drop is always safe, so
+  the cost is a lost automatic update rather than a wrong value.
 - `tree_edit` refuses a caller-supplied `assertion_id` outright, on every fact
   write path. Admitting the field to the tree schema also made it settable by a
   model, and a forged backlink is one `research_append` would later rewrite.
+
+**The rewrite only ever changes what this assertion put there.** The
+corroboration arm fills an attribute the fact lacks from a *different* assertion,
+and the fact keeps that source's ref — so a fact holding a value the corrected
+assertion never asserted is carrying someone else's evidence. Rewriting it would
+destroy that evidence silently, which is the over-reach mirror of the residue
+above and lands on the same multi-source population. Each attribute is therefore
+compared against the assertion's **pre-call** value: equal, or absent on the
+fact, and it is rewritten; anything else is left alone with a warning pointing at
+conflict-resolution.
+
+**A malformed value is not a withdrawn one.** `validator.ts` type-checks an
+assertion's `date`/`place`/`standard_place` but not its `value`, so a
+`value: 1924` reaches the rewrite. Read as "the researcher withdrew this" it
+deletes the fact's value; it is reported instead, and the fact is left alone.
+
+**A concluded fact is rewritten, loudly.** `primary` is not a detach trigger, so
+a fact proof-conclusion concluded keeps its backlink. The correction still has to
+reach it — a known-wrong concluded value on the upload target is worse than a
+moved one — but it carries a warning naming the fact, because the proof summary
+citing it was written against the earlier reading.
+
+**A `place` corrected without its `standard_place` warns.** The update path
+cannot re-resolve the sidecar (the geocode lever is append-only), and the
+assertion is equally stale, so the agreement check below cannot see it. That is
+this card's own harm one level down — the display string reads corrected while
+the place-authority value still names the old jurisdiction — and it is surfaced
+rather than left silent.
 
 **The rewrite never fails the call it rides on.** A fact rewrite is
 call-introduced, so a rewritten fact that failed validation would refuse the
@@ -371,6 +416,28 @@ or CI job surfaced it. With `assertion_id` present it is a property, and
 `eval/harness/validators/test_universal.py::test_tree_facts_agree_with_linked_assertions`
 asserts it: for every backlinked fact, where both the fact and its assertion
 hold a value for `place`/`standard_place`/`date`/`value`, the two must agree.
+
+Two limits on that check, stated because the `nothing-checks` label turns on
+them. It runs on the **unit** plane only — `run_validators` has one caller, the
+unit orchestrator, and the e2e harness runs no universal validators — while the
+card was filed off an e2e run. And it is **green by construction on today's unit
+corpus**, where the two populations are disjoint: all 51 `materialize_facts`
+calls are `person-evidence`'s and every four-field assertion `update` is
+`record-extraction`'s, so no unit run both mints a backlinked fact and later
+corrects its assertion. Its falsifiable half is the direct unit test at
+`eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py`;
+`validators/` is outside the harness's own `testpaths`, so without that file the
+check would ship unexecuted.
+
+**Who may perform this write.** `record-extraction` is deliberately **not** added
+to the `tree.gedcomx.json`/`persons` row's `callers`: a skill-granular grant
+would also authorize adding an unsourced person and setting `primary`, which that
+row's `failure` line ("this file is the upload target") is precisely about.
+`research_append`/`extraction_append` are authorized as **tools** instead, and
+only when the whole persons delta is this rewrite — mirrored attributes on facts
+that already carried the same backlink, nothing added or removed. Same shape as
+the `merge_tree_persons` authorization on the research side: anything the
+substitution does not explain still fails.
 
 ### 4.5 What it never does
 

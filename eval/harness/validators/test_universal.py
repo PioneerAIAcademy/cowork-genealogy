@@ -165,6 +165,11 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
     tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if research is None or tree is None:
         pytest.skip("both research.json and tree.gedcomx.json required")
+    # A malformed document is the schema validators' business, not this one's.
+    # Without the isinstance test a list-shaped research.json raised
+    # AttributeError out of `.get` instead of producing a verdict.
+    if not isinstance(research, dict) or not isinstance(tree, dict):
+        pytest.skip("malformed project documents — the schema validators report this")
 
     by_id = {
         a.get("id"): a
@@ -190,7 +195,11 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
         *facts_of(tree.get("relationships")),
     ]:
         linked_id = fact.get("assertion_id")
-        if not linked_id:
+        # `isinstance`, not truthiness alone: a non-string backlink (a list, say)
+        # is unhashable and would raise TypeError out of the dict lookup below
+        # instead of producing a verdict. The schema check in this same file
+        # already rejects that shape; this one must not crash on the way.
+        if not isinstance(linked_id, str) or not linked_id:
             continue
         assertion = by_id.get(linked_id)
         if assertion is None:
@@ -715,7 +724,73 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
         )
 
 
-def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test):
+#: The tree-fact attributes `research_append`'s assertion-`update` rewrite may
+#: change. Mirrors ASSERTION_FACT_ATTRS in materialize-facts.ts; kept as a
+#: literal because this plane is Python and cannot import it. A fifth attribute
+#: added there and not here silently stops being authorized, which fails CLOSED
+#: (the write is refused) rather than open.
+_REWRITABLE_FACT_ATTRS = ("place", "standard_place", "date", "value")
+
+
+def _explained_by_fact_rewrite(before_section, after_section) -> bool:
+    """True when the whole persons delta is the assertion-backlink fact rewrite.
+
+    `research_append` / `extraction_append` reach `tree.gedcomx.json`'s `persons`
+    only by rewriting a fact ALREADY carrying the corrected assertion's
+    `assertion_id`. They are therefore absent from that row's `callers` and
+    authorized by tool identity instead, exactly as `merge_tree_persons` is on
+    the research side.
+
+    Deliberately exact, and the same discipline `_explained_by_merge` states: a
+    run that rewrites a fact AND also edits persons on its own fails, because the
+    extra edit survives this comparison. Anything added or removed - a person, a
+    fact, a name, a source ref - fails. `primary` moving fails, because only
+    proof-conclusion may set it. Only the four mirrored attributes, only on facts
+    that carried a backlink before and still carry the same one, may differ.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+
+    for b_person, a_person in zip(before_section, after_section):
+        if not isinstance(b_person, dict) or not isinstance(a_person, dict):
+            return False
+        if b_person.get("id") != a_person.get("id"):
+            return False
+        # Everything except `facts` must be untouched.
+        if {k: v for k, v in b_person.items() if k != "facts"} != {
+            k: v for k, v in a_person.items() if k != "facts"
+        }:
+            return False
+
+        b_facts = b_person.get("facts") or []
+        a_facts = a_person.get("facts") or []
+        if not isinstance(b_facts, list) or not isinstance(a_facts, list):
+            return False
+        if len(b_facts) != len(a_facts):
+            return False
+
+        for b_fact, a_fact in zip(b_facts, a_facts):
+            if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
+                return False
+            if b_fact == a_fact:
+                continue
+            # A changed fact must have carried a backlink, and the same one.
+            link = b_fact.get("assertion_id")
+            if not isinstance(link, str) or not link:
+                return False
+            if a_fact.get("assertion_id") != link:
+                return False
+            # ...and differ only in the mirrored attributes.
+            b_rest = {k: v for k, v in b_fact.items() if k not in _REWRITABLE_FACT_ATTRS}
+            a_rest = {k: v for k, v in a_fact.items() if k not in _REWRITABLE_FACT_ATTRS}
+            if b_rest != a_rest:
+                return False
+    return True
+
+
+def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
     """Universal: skill may only modify tree.gedcomx.json sections it owns.
 
     Parallel to test_ownership_table, but for tree.gedcomx.json. Driven by the
@@ -743,8 +818,26 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         pytest.skip("skill_frontmatter has no `name` field")
 
     owners = writer_sets(TREE_GEDCOMX_JSON)
+    writer_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
+    called = _tools_called(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
-    unauthorized = [s for s in modified if skill_name not in owners[s]]
+    unauthorized = []
+    for section in modified:
+        if skill_name in owners[section]:
+            continue
+        # Authorized by tool identity: `research_append`/`extraction_append`
+        # reach `persons` only through the assertion-backlink fact rewrite, and
+        # only for the delta that rewrite can produce. A skill that is not a
+        # declared caller gets no broader access from this -- anything the
+        # rewrite does not explain still fails.
+        rewriters = {"research_append", "extraction_append"} & (writer_tools.get(section) or set())
+        if (
+            section == "persons"
+            and rewriters & called
+            and _explained_by_fact_rewrite(before.get(section), after.get(section))
+        ):
+            continue
+        unauthorized.append(section)
 
     if unauthorized:
         owners_summary = {s: sorted(owners[s]) for s in unauthorized}

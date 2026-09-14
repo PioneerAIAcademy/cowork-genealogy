@@ -147,4 +147,37 @@ describe("fact-rewrite rollback (#2472)", () => {
     expect((await read("tree.gedcomx.json")).persons[0].facts[0].place)
       .toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
   });
+  it("rolls back correctly when ONE batch updates the same assertion twice", async () => {
+    // The undo stack replays per (op, fact) pair. Two ops on one assertion
+    // snapshot the same fact twice, and the second snapshot captures the state
+    // AFTER the first rewrite — so replaying them in insertion order restores
+    // the first rewrite instead of the original. The single-op test above
+    // cannot see it.
+    failOnce.remaining = 1;
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update", entryId: "a_011", fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" } },
+        { section: "assertions", op: "update", entryId: "a_011", fields: { date: "1925" } },
+      ],
+    } as any);
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.filesWritten).toEqual(["research.json"]);
+
+    // The retry must validate the ORIGINAL tree, or a genuinely rewrite-caused
+    // failure would fail again and the call would be refused — the one thing
+    // the ruling forbids.
+    expect(seenTrees).toHaveLength(2);
+    const retried = seenTrees[1].persons[0].facts[0];
+    expect(retried.place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
+    expect(retried.date).toBeUndefined();
+
+    // And the persisted tree is untouched.
+    const onDisk = (await read("tree.gedcomx.json")).persons[0].facts[0];
+    expect(onDisk.place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
+    expect(onDisk.date).toBeUndefined();
+  });
 });

@@ -54,6 +54,7 @@ import { treeDiff } from "./tree-diff.js";
 import {
   ASSERTION_FACT_ATTRS,
   assertionFactAttr,
+  materializesToPersonFact,
   type AssertionFactAttr,
 } from "./materialize-facts.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
@@ -1024,6 +1025,13 @@ interface AppliedOp {
 
 // ─── #2472: carry an assertion correction onto the fact it minted ────────────
 
+/** Trimmed-non-empty reader, matching `materialize-facts.ts`'s `str`: what the
+ *  fact and the assertion are compared AS, so a blank and an absent field read
+ *  the same on both sides. */
+function factText(v: unknown): string | undefined {
+  return typeof v === "string" && v.trim() !== "" ? v : undefined;
+}
+
 interface FactRewriteResult {
   /** True when at least one fact attribute actually changed. */
   mutated: boolean;
@@ -1053,26 +1061,35 @@ function rewriteLinkedFacts(
   applied: AppliedOp[],
   ops: ResearchAppendOp[],
   research: any,
+  beforeResearch: any,
   tree: SimplifiedGedcomX,
 ): FactRewriteResult {
   const warnings: string[] = [];
-  const undos: Array<() => void> = [];
+  const concludedTouched = new Set<SimplifiedFact>();
   let mutated = false;
 
   const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
   const allFacts: SimplifiedFact[] = (tree?.persons ?? []).flatMap((p) => p.facts ?? []);
 
-  /** Snapshot the mirrored attributes so a failed validation can roll back. */
+  /** Snapshot the mirrored attributes so a failed validation can roll back.
+   *
+   *  ONCE PER FACT, keyed on the object. A batch may update the same assertion
+   *  twice, which reaches the same fact twice; a second snapshot would capture
+   *  the state left by the first rewrite, and replaying the two in order would
+   *  restore that instead of the original. The retry would then validate a tree
+   *  that still carries the rewrite, so a genuinely rewrite-caused failure would
+   *  fail again and refuse the assertion correction — exactly what this valve
+   *  exists to prevent. Keying on the fact makes the rollback order-independent
+   *  rather than relying on a stack discipline someone has to maintain. */
+  const snapshots = new Map<SimplifiedFact, Map<AssertionFactAttr, string | undefined>>();
   const snapshot = (fact: SimplifiedFact) => {
-    const before = new Map<AssertionFactAttr, string | undefined>(
-      ASSERTION_FACT_ATTRS.map((a) => [a, fact[a]]),
+    if (snapshots.has(fact)) return;
+    snapshots.set(
+      fact,
+      new Map<AssertionFactAttr, string | undefined>(
+        ASSERTION_FACT_ATTRS.map((a) => [a, fact[a]]),
+      ),
     );
-    undos.push(() => {
-      for (const [a, v] of before) {
-        if (v === undefined) delete fact[a];
-        else fact[a] = v;
-      }
-    });
   };
 
   for (let i = 0; i < applied.length; i++) {
@@ -1087,9 +1104,20 @@ function rewriteLinkedFacts(
 
     const assertion = assertions.find((e: any) => e && e.id === a.entryId);
     if (!assertion) continue;
+    // The same assertion as it stood BEFORE this call. `beforeResearch` is the
+    // pre-mutation clone the validator already uses; the provenance test below
+    // reads it rather than re-deriving one.
+    const priorAssertion = (Array.isArray(beforeResearch?.assertions) ? beforeResearch.assertions : [])
+      .find((e: any) => e && e.id === a.entryId);
 
     const linked = allFacts.filter((f) => f.assertion_id === a.entryId);
     if (linked.length === 0) {
+      // 21 of the 145 corpus ops (14%) correct an assertion whose fact_type can
+      // never become a person fact — `name` becomes a tree name, `gender` sets
+      // the scalar, and `relationship`/`marriage`/`parentage`/`age` are
+      // two-party links or non-facts. Telling that caller to "re-check it with
+      // person_read" sends them after something that does not exist.
+      if (!materializesToPersonFact(assertion.fact_type)) continue;
       // Scoped to THIS op, deliberately. Every fact written before the backlink
       // existed lacks the field, so a warning phrased as "a fact has no
       // assertion_id" would fire on essentially every call. No heuristic
@@ -1106,22 +1134,71 @@ function rewriteLinkedFacts(
 
     for (const fact of linked) {
       snapshot(fact);
+      // A concluded fact is the value proof-conclusion landed, and a proof
+      // summary may cite it. Correcting a misread record still has to reach it —
+      // leaving a known-wrong concluded value on the upload target is worse —
+      // but it must never happen quietly.
+      const concluded = fact.primary === true;
       for (const attr of touched) {
         const action = assertionFactAttr(assertion, attr, fact.type);
         // null: materialize would never have written this attribute (a `value`
-        // on an event fact, #711). Leave whatever is there alone.
+        // on an event fact). Leave whatever is there alone.
         if (action === null) continue;
+        if ("malformed" in action) {
+          warnings.push(
+            `assertion '${a.entryId}' has a non-string '${attr}', so fact '${fact.id}' was left ` +
+              "unchanged. A malformed value is not a withdrawn one: set the field to a string, " +
+              "or to null to withdraw the claim.",
+          );
+          continue;
+        }
+        // PROVENANCE: only rewrite what THIS assertion put there. The
+        // corroboration branch fills an attribute the fact lacks from a
+        // DIFFERENT assertion, and the fact keeps that source's ref — so a fact
+        // holding a value this assertion never asserted is carrying someone
+        // else's evidence, and overwriting it destroys it. Compared against the
+        // assertion's PRE-CALL state, which is what the fact was mirroring
+        // before this correction.
+        const current = factText(fact[attr]);
+        const priorClaim = factText(priorAssertion?.[attr]);
+        if (current !== undefined && current !== priorClaim) {
+          warnings.push(
+            `fact '${fact.id}' holds a '${attr}' that assertion '${a.entryId}' did not assert ` +
+              `('${current}') — another source corroborated it, or it was corrected by hand — so ` +
+              "it was left alone. Reconcile the two readings through conflict-resolution.",
+          );
+          continue;
+        }
         if ("clear" in action) {
           if (fact[attr] !== undefined) {
             delete fact[attr];
             mutated = true;
+            if (concluded) concludedTouched.add(fact);
           }
           continue;
         }
         if (fact[attr] !== action.set) {
           fact[attr] = action.set;
           mutated = true;
+          if (concluded) concludedTouched.add(fact);
         }
+      }
+      // A `place` correction that leaves an un-corrected `standard_place` is the
+      // shape this card was filed about, one level down: the display string
+      // reads corrected while the place-AUTHORITY value still names the old
+      // jurisdiction. The update path cannot re-resolve it (the sidecar/geocode
+      // lever is append-only), and the assertion is equally stale, so the guard
+      // below cannot see it either. Say so rather than let it pass silently.
+      if (
+        touched.includes("place") &&
+        !touched.includes("standard_place") &&
+        typeof fact.standard_place === "string"
+      ) {
+        warnings.push(
+          `fact '${fact.id}' kept standard_place '${fact.standard_place}' while its place was ` +
+            `corrected from assertion '${a.entryId}' — the place authority value was not part of ` +
+            "this correction. Update the assertion's standard_place too if the reading moved.",
+        );
       }
       // Country-contradiction guard on the pair this rewrite just produced.
       // Clears + warns, mirroring tree-edit.ts's guard on the same object;
@@ -1146,7 +1223,23 @@ function rewriteLinkedFacts(
     }
   }
 
-  return { mutated, warnings, undo: () => undos.forEach((u) => u()) };
+  for (const fact of concludedTouched) {
+    warnings.push(
+      `fact '${fact.id}' is marked primary (a concluded value) and was rewritten from its ` +
+        "assertion. Re-read the proof summary that cites it: the conclusion was written against " +
+        "the earlier reading.",
+    );
+  }
+
+  const undo = () => {
+    for (const [fact, before] of snapshots) {
+      for (const [attr, value] of before) {
+        if (value === undefined) delete fact[attr];
+        else fact[attr] = value;
+      }
+    }
+  };
+  return { mutated, warnings, undo };
 }
 
 /**
@@ -2758,7 +2851,7 @@ export async function researchAppend(
 
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
-    const rewrite = rewriteLinkedFacts(applied, ops, research, tree);
+    const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
 
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
@@ -2803,8 +2896,9 @@ export async function researchAppend(
           rewriteWarnings = [
             ...rewrite.warnings,
             "the linked tree fact(s) could not be updated from this correction — the rewritten " +
-              "fact failed validation, so it was rolled back and only research.json was written. " +
-              "The assertion is corrected; the fact still holds the earlier reading.",
+              "fact failed validation, so the fact rewrite was rolled back. The assertion is " +
+              "corrected; the fact still holds the earlier reading. (Any other write this call " +
+              "made, including a composite source description, still landed — see filesWritten.)",
           ];
         }
       }

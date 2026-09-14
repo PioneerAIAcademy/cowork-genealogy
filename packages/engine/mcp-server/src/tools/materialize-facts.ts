@@ -274,17 +274,15 @@ interface FactCandidate {
 function factCandidate(assertion: any): FactCandidate {
   const type = toTreeFactType(String(assertion.fact_type));
   const cand: FactCandidate = { type };
-  const date = str(assertion.date);
-  if (date) cand.date = date;
-  const place = str(assertion.place);
-  if (place) cand.place = place;
-  const standardPlace = str(assertion.standard_place);
-  if (standardPlace) cand.standard_place = standardPlace;
-  // Event facts carry no `value` (place/date are attributes, #711); value-bearing
-  // types (Occupation, …) keep the assertion's value.
-  if (!EVENT_TREE_TYPES.has(type)) {
-    const value = str(assertion.value);
-    if (value) cand.value = value;
+  // Driven by `assertionFactAttr` rather than repeating its rules, so minting a
+  // fact and later rewriting one cannot disagree about which assertion field
+  // becomes which fact field. A second copy here is how the two would drift:
+  // the rewrite's whole purpose is to keep a fact matching what minted it.
+  for (const attr of ASSERTION_FACT_ATTRS) {
+    const action = assertionFactAttr(assertion, attr, type);
+    if (action !== null && "set" in action) cand[attr] = action.set;
+    // `clear` and `malformed` both mean "nothing to mint here", which is what
+    // the pre-shared `str()` call did for both. Minting is unchanged.
   }
   return cand;
 }
@@ -298,6 +296,13 @@ function factCandidate(assertion: any): FactCandidate {
  * `fact_type`: retyping an assertion is a re-classification, not an attribute
  * correction, and rewriting a fact's `type` under it would silently change what
  * the fact claims.
+ *
+ * A near-neighbour, deliberately separate: `FACT_STRING_FIELDS`
+ * (`tools/tree-edit.ts`) is the five fields a tree fact types as strings, and
+ * `checkTreeFact` (`validation/validator.ts`) carries the same five for its type
+ * check. This set is the four an ASSERTION can supply, which is a different
+ * question with a different answer, so it is not derived from either. If they
+ * ever need to agree, `standard_date` is the difference to look at.
  */
 export const ASSERTION_FACT_ATTRS = ["date", "place", "standard_place", "value"] as const;
 export type AssertionFactAttr = (typeof ASSERTION_FACT_ATTRS)[number];
@@ -306,9 +311,9 @@ export type AssertionFactAttr = (typeof ASSERTION_FACT_ATTRS)[number];
  * What a rewrite should do to one tree-fact attribute, given the assertion the
  * fact was minted from and the fact's own tree type.
  *
- * This is `factCandidate`'s rule, lifted rather than copied, because
- * `research_append`'s rewrite has to agree with what minted the fact in the
- * first place. `tree-forget.ts` already imports from this module and
+ * The single source of that mapping: `factCandidate` below is driven by this
+ * function rather than repeating it, so minting a fact and later rewriting one
+ * cannot disagree about which assertion field becomes which fact field. `tree-forget.ts` already imports from this module and
  * `research-append.ts` already imports `treeDiff` from a sibling tool, so the
  * cross-tool import is the established shape here rather than a new util.
  *
@@ -321,16 +326,35 @@ export type AssertionFactAttr = (typeof ASSERTION_FACT_ATTRS)[number];
  *     blank). Delete the key rather than writing `null`: the tree schema types
  *     these `string`, with no null branch, so assigning one makes the fact
  *     invalid.
+ *   - `{ malformed: true }` — the assertion holds a NON-STRING here. Distinct
+ *     from `clear` on purpose: "withdrawn" and "malformed" are different claims,
+ *     and conflating them deletes tree data on a typo. `validator.ts` type-checks
+ *     an assertion's `date`/`place`/`standard_place` but not its `value`, so a
+ *     `value: 1924` reaches here and must not be read as "the researcher
+ *     withdrew this". The caller leaves the fact alone and says so.
  *   - `{ set }` — the assertion's value, to write.
  */
 export function assertionFactAttr(
   assertion: any,
   attr: AssertionFactAttr,
   treeFactType: string | undefined,
-): { set: string } | { clear: true } | null {
+): { set: string } | { clear: true } | { malformed: true } | null {
   if (attr === "value" && EVENT_TREE_TYPES.has(String(treeFactType ?? ""))) return null;
-  const v = str(assertion?.[attr]);
-  return v === undefined ? { clear: true } : { set: v };
+  const raw = assertion?.[attr];
+  if (raw === null || raw === undefined) return { clear: true };
+  if (typeof raw !== "string") return { malformed: true };
+  return raw.trim() === "" ? { clear: true } : { set: raw };
+}
+
+/** Whether an assertion of this `fact_type` can ever materialize as a PERSON
+ *  fact. `name` becomes a tree name, `gender`/`sex` sets the scalar, and
+ *  `SKIP_TYPES` (relationship, marriage, parentage, age, …) are two-party links
+ *  or non-facts that never reach `person.facts` at all. Exported so
+ *  `research_append` does not tell a caller to go re-check a fact that could
+ *  not exist. */
+export function materializesToPersonFact(factType: unknown): boolean {
+  const t = String(factType ?? "").toLowerCase();
+  return t !== "" && !NAME_TYPES.has(t) && !GENDER_TYPES.has(t) && !SKIP_TYPES.has(t);
 }
 
 /** A SimplifiedFact view of a candidate for factsEquivalent(). */

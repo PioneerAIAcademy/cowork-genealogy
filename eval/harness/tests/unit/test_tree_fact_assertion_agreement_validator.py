@@ -194,3 +194,32 @@ def test_missing_documents_skip():
     with pytest.raises(BaseException) as exc:
         check({"research_json": None, "tree_gedcomx_json": None})
     assert exc.typename == "Skipped"
+def test_a_non_string_backlink_does_not_crash():
+    """A list is unhashable; before the isinstance guard this raised TypeError
+    out of the dict lookup instead of producing a verdict."""
+    after = state(
+        [fact(place="Wellburn, Thames Centre, Middlesex, Ontario, Canada", assertion_id=["a_011"])],
+        [assertion("a_011")],
+    )
+    check(after)
+
+
+def test_a_non_dict_fact_is_skipped():
+    after = state(["not a dict", fact(assertion_id="a_011")], [assertion("a_011")])
+    check(after)
+
+
+def test_a_non_dict_assertion_is_skipped():
+    after = state(
+        [fact(place="Wellburn, Thames Centre, Middlesex, Ontario, Canada", assertion_id="a_011")],
+        ["not a dict", assertion("a_011")],
+    )
+    with pytest.raises(AssertionError, match="never reached the fact"):
+        check(after)
+
+
+def test_malformed_documents_skip():
+    """A list-shaped research.json raised AttributeError instead of a verdict."""
+    with pytest.raises(BaseException) as exc:
+        check({"research_json": [], "tree_gedcomx_json": {"persons": []}})
+    assert exc.typename == "Skipped"

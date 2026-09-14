@@ -161,12 +161,26 @@ camelCase convenience fields the same way `research_log_append` does.
     an assertion's `value` is a prose sentence, and a Birth fact's `value` is a
     qualifier. The mapping is shared with `materialize_facts` rather than
     restated, so the two cannot disagree about what minted the fact.
+  - **It only changes what this assertion put there.** Each attribute is
+    compared against the assertion's **pre-call** value. Equal, or absent on the
+    fact, and it is rewritten; anything else was corroborated onto the fact by a
+    *different* assertion (whose ref the fact still carries) or entered by hand,
+    so it is left alone with a warning. Overwriting it would destroy another
+    source's evidence silently.
+  - **A malformed value is not a withdrawn one.** `validator.ts` does not
+    type-check an assertion's `value`, so a non-string reaches here. Treated as
+    "withdrawn" it would delete the fact's value; it is reported instead.
   - **It never fails the call, and never fabricates a place.** A rewrite that
     fails validation is rolled back and degrades to a warning, because writers
     block on call-introduced errors only (commit `7cd6a19b9`) and refusing here
     would refuse the assertion correction itself — the legitimate write. A
     resulting `place`/`standard_place` pair that contradicts on country clears
     the fact's `standard_place` and warns, matching `tree_edit`.
+  - **Two more advisories, both non-blocking.** A rewritten fact marked
+    `primary` is a concluded value a proof summary may cite, so it is named. And
+    a `place` corrected without its `standard_place` is reported, because the
+    update path cannot re-resolve the sidecar and the agreement check cannot see
+    a divergence the assertion shares.
 
   This is a **write, not a refusal**, deliberately: see
   `tree-materialization-spec.md` §4.4 for why ADR-0011's write-boundary-refusal
@@ -349,10 +363,13 @@ record-extraction consolidation; see
   supplied `source_id` always wins (rare multi-source batches). Calls with zero or
   2+ sources append ops auto-stamp nothing: assertion `source_id` requirements are
   exactly as before.
-- **Scope: `S` entry only, never tree facts.** The composite's tree write is
+- **Scope: `S` entry only.** The composite's tree write is
   limited to the source-description `S` entry — `research_append` **owns S-entry
-  creation** but never writes person facts, names, or relationships into
-  `tree.gedcomx.json`. Evidence facts materialize onto tree persons separately, at
+  creation** but never writes names or relationships into `tree.gedcomx.json`,
+  and never AUTHORS a fact. It does rewrite the attributes of a fact that already
+  carries the corrected assertion's `assertion_id` (§3.1), which is a different
+  op from this one and adds nothing to the tree.
+  Evidence facts materialize onto tree persons separately, at
   identity-link time, via **`materialize_facts`** (the fact writer), which reads
   the assertions this call persisted and stamps each fact with a provenance ref
   that resolves through the `S` id created here. See `research-schema-spec.md` §8,
@@ -834,7 +851,10 @@ A **warning** — never a rejection — emitted when this call's `assertions`
   fact written before the backlink existed lacks the field, so a warning phrased
   as "a fact has no `assertion_id`" would fire on essentially every call in every
   existing project. The trigger is this op, this assertion, these four fields;
-  an op touching none of them is silent, and so is a project with no tree facts.
+  an op touching none of them is silent. A project whose tree holds no matching
+  fact **does** warn, including an empty tree: "no fact carries that
+  `assertion_id`" is the condition the ruling names, and a correction made
+  before the assertion was ever materialized is a case worth surfacing.
 - **No heuristic fallback.** The rejected alternative joined on (person, fact
   type, source ref), which is ambiguous wherever one source yields two facts of
   the same type. The point of the backlink is that the join stops being a guess,
@@ -847,6 +867,11 @@ A **warning** — never a rejection — emitted when this call's `assertions`
 - **A detach is warned about too**, at the other end: `tree_edit`/`tree_correct`
   `update_fact` says when a direct correction has unlinked a fact from its
   assertion, because that fact is then outside the automatic update.
+- **Silent for a `fact_type` that can never become a person fact.** A `name`
+  assertion materializes as a tree name, `gender`/`sex` set the scalar, and
+  `relationship`/`marriage`/`parentage`/`age` are two-party links or non-facts.
+  21 of the 145 corpus ops (14%) correct one of those, and telling that caller to
+  "re-check it with `person_read`" sends them after a fact that cannot exist.
 
 ---
 

@@ -387,8 +387,8 @@ export interface GedcomxFact {
   /** The `research.json` assertion this fact was minted from. Stamped by
    *  `materialize_facts` on the mint branch only, so a later correction to that
    *  assertion can find the fact it produced. Absent on hand-entered facts, on
-   *  facts merged from differently-backlinked members, and on every fact written
-   *  before the field existed. */
+   *  facts merged from members that do not all carry the same backlink, and on
+   *  every fact written before the field existed. */
   assertion_id?: string
   sources?: GedcomxSourceRef[]
 }

@@ -151,31 +151,82 @@ def test_tree_owner_writing_persons_passes():
     check_tree(tree(), tree(persons=entry("I1")), {"name": "person-evidence"}, POSITIVE)
 
 
-def test_record_extraction_may_write_tree_sources_and_persons_but_not_relationships():
-    """`persons` was added by #2472; `relationships` deliberately was not.
+def test_record_extraction_may_write_tree_sources_but_not_tree_persons():
+    """Unchanged by #2472, deliberately.
 
-    record-extraction reaches `sources` through the composite sourceDescription
-    persist, and `persons` through the assertion-`update` rewrite: correcting an
-    assertion's place/standard_place/date/value also rewrites any fact carrying
-    that assertion's `assertion_id`. Facts live on persons, so the write lands
-    in that section even though the tool mints no person and no fact.
-
-    `relationships` stays refused, and the asymmetry is the point rather than an
-    oversight. Nothing can stamp a relationship fact — `materialize_facts` never
-    writes relationship facts and `tree_edit` rejects a caller-supplied
-    `assertion_id` — so the rewrite can never reach one, and that row's own
-    `requires` says record-extraction "is assertion-only here: it writes the
-    inferred relationship-type assertion and never the edge."
-
-    This test previously asserted `persons` was refused. That is what the
-    ownership widening changed, and the widening is declared as `TREE_WIDENED`
-    in test_ownership_manifest.py with its reason.
+    The assertion-backlink rewrite gives `extraction_append` a way to touch
+    `persons`, but record-extraction is NOT added to that row's `callers`: a
+    skill-granular grant would also authorize adding an unsourced person and
+    setting `primary`, both of which this test refuses and both of which the
+    row's own `failure` line is about ("This file is the upload target"). The
+    rewrite is authorized by TOOL identity instead, and only for its own delta -
+    see the two cases below.
     """
     check_tree(tree(), tree(sources=entry("S1")), {"name": "record-extraction"}, POSITIVE)
-    check_tree(tree(), tree(persons=entry("I1")), {"name": "record-extraction"}, POSITIVE)
     with pytest.raises(AssertionError) as e:
-        check_tree(tree(), tree(relationships=entry("R1")), {"name": "record-extraction"}, POSITIVE)
-    assert "relationships" in str(e.value)
+        check_tree(tree(), tree(persons=entry("I1")), {"name": "record-extraction"}, POSITIVE)
+    assert "persons" in str(e.value)
+
+
+def _person_with_fact(**fact_over):
+    fact = {"id": "F1", "type": "Immigration", "place": "Wellburn, Ontario, Canada",
+            "assertion_id": "a_011", "sources": [{"ref": "S1"}]}
+    fact.update(fact_over)
+    return [{"id": "I1", "names": [{"id": "N1", "given": "Anna", "surname": "W"}], "facts": [fact]}]
+
+
+_EXTRACTION_CALL = [{"tool": "mcp__genealogy__extraction_append", "args": {}}]
+
+
+def test_the_fact_rewrite_is_authorized_by_tool_identity():
+    """A backlinked fact's mirrored attributes may change under extraction_append."""
+    check_tree(
+        tree(persons=_person_with_fact()),
+        tree(persons=_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+        {"name": "record-extraction"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )
+
+
+@pytest.mark.parametrize("label,after_persons", [
+    # Anything the rewrite cannot produce must still fail, even with the call present.
+    ("adds a person", _person_with_fact() + [{"id": "I2", "names": [], "facts": []}]),
+    ("adds a fact", [{**_person_with_fact()[0],
+                      "facts": _person_with_fact()[0]["facts"] + [{"id": "F2", "type": "Birth"}]}]),
+    ("sets primary", _person_with_fact(primary=True)),
+    ("adds a source ref", _person_with_fact(sources=[{"ref": "S1"}, {"ref": "S2"}])),
+    ("changes a name", [{**_person_with_fact()[0],
+                         "names": [{"id": "N1", "given": "Anne", "surname": "W"}]}]),
+    ("changes an unbacklinked fact", [{**_person_with_fact()[0],
+                                       "facts": [{"id": "F1", "type": "Immigration",
+                                                  "place": "Odessa, Saskatchewan, Canada",
+                                                  "sources": [{"ref": "S1"}]}]}]),
+    ("retypes the fact", _person_with_fact(type="Residence")),
+])
+def test_the_tool_identity_path_authorizes_nothing_else(label, after_persons):
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            tree(persons=_person_with_fact()),
+            tree(persons=after_persons),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value), label
+
+
+def test_the_tool_identity_path_needs_the_call():
+    """Without an extraction_append/research_append call, the same delta fails."""
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            tree(persons=_person_with_fact()),
+            tree(persons=_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=[{"tool": "mcp__genealogy__person_read", "args": {}}],
+        )
+    assert "persons" in str(e.value)
 
 
 def test_person_evidence_may_not_write_tree_sources():

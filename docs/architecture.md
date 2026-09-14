@@ -1380,12 +1380,24 @@ than let a hand-written union silently shadow a generated one.
 > remember. `packages/schema`'s enum unions are generated; everything else is
 > linted. **Don't add a fifth copy.** If your change would, say so in the PR.
 
-**Add a field to the tree (simplified GedcomX).** Everything above, **plus** the
-closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
-validator enforces `additionalProperties: false` from those sets, so an unlisted
-field makes **every writer tool reject the write.** `tests/validation/tree-shape-drift.test.ts`
-diffs those sets against the schema. Check whether the change needs a heal rule
-in `tree-sanitize.ts` for pre-change trees.
+**Add a field to the tree (simplified GedcomX).** Everything above, **plus** two
+engine sites the research.json list has no counterpart for:
+
+- the closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
+  validator enforces `additionalProperties: false` from those sets, so an
+  unlisted field makes **every writer tool reject the write.**
+  `tests/validation/tree-shape-drift.test.ts` diffs those sets against the
+  schema, by field NAME only.
+- the matching `Simplified*` interface in `src/types/gedcomx.ts`, which the tools
+  are typed against, **and** the field's type check in `validator.ts`'s
+  `checkTree*` function. `tree-shape.ts` admits the key; only `checkTreeStrings`
+  (or its sibling) says what type it must be, so a field added to the allow-list
+  and not there is accepted by the runtime validator at the wrong type and
+  rejected by the JSON Schema. Nothing catches that, because the drift test
+  compares names.
+
+Check whether the change needs a heal rule in `tree-sanitize.ts` for pre-change
+trees.
 
 ---
 
