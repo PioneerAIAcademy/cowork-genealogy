@@ -1033,9 +1033,11 @@ unchanged: the composite `sourceDescription` persist (§3.4) writes the tree `S`
 entry, and an `assertions` `update` op rewrites the tree fact minted from that
 assertion (§3.1). Neither is a widening of the lane — the sections this
 tool may write are still `sources` and `assertions` — but both mean a successful
-`extraction_append` can return `tree.gedcomx.json` in `filesWritten`, and the
-ownership manifest names `record-extraction` as a `tree.gedcomx.json`/`persons`
-caller for exactly that reason. The rewrite is not a rare path here: of the
+`extraction_append` can return `tree.gedcomx.json` in `filesWritten`. The
+ownership manifest deliberately does **not** name `record-extraction` as a
+`tree.gedcomx.json`/`persons` caller for it: a skill-granular grant would also
+authorize adding an unsourced person and setting `primary`. The two tools are
+authorized there by TOOL identity instead, and only for the rewrite's own delta. The rewrite is not a rare path here: of the
 assertion-`update` ops touching one of the four mirrored fields in the committed
 e2e corpus, **60 arrive through `extraction_append` and 85 through
 `research_append`** (measured 2026-09-14; recount by walking

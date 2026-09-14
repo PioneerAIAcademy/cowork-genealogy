@@ -1117,7 +1117,7 @@ function rewriteLinkedFacts(
 
     const linked = allFacts.filter((f) => f.assertion_id === a.entryId);
     if (linked.length === 0) {
-      // 21 of the 145 corpus ops (14%) correct an assertion whose fact_type can
+      // 24 of the 145 corpus ops correct an assertion whose fact_type can
       // never become a person fact — `name` becomes a tree name, `gender` sets
       // the scalar, and `relationship`/`marriage`/`parentage`/`age` are
       // two-party links or non-facts. Telling that caller to "re-check it with
@@ -1149,16 +1149,21 @@ function rewriteLinkedFacts(
       // here at all. Rewriting across that seam put a birth year into an
       // Occupation fact's `value`. `tree_edit` detaches on a fact retype; the
       // mirror case is an assertion retype, which only this side can see.
+      // A fact with no `type` fails this too: `EVENT_TREE_TYPES.has("")` is
+      // false, so the event/value-bearing gate would let the assertion's prose
+      // `value` through. A typeless fact is already schema-invalid, but the
+      // rewrite must not be the thing that compounds it.
       const assertionType = assertionTreeFactType(assertion.fact_type);
-      if (fact.type !== undefined && assertionType !== "" && fact.type !== assertionType) {
+      if (assertionType !== "" && fact.type !== assertionType) {
         warnings.push(
-          `fact '${fact.id}' is a ${fact.type} but assertion '${a.entryId}' is now a ` +
+          `fact '${fact.id}' is a ${fact.type ?? "(typeless)"} but assertion '${a.entryId}' is a ` +
             `${assertionType}, so the fact was left alone. Re-materialize the assertion, or ` +
             "correct the fact directly with tree_correct, which unlinks the two.",
         );
         continue;
       }
       let placeRewritten = false;
+      let standardPlaceRewritten = false;
       for (const attr of touched) {
         const action = assertionFactAttr(assertion, attr, fact.type);
         // null: materialize would never have written this attribute (a `value`
@@ -1198,6 +1203,7 @@ function rewriteLinkedFacts(
             delete fact[attr];
             mutated = true;
             if (attr === "place") placeRewritten = true;
+            if (attr === "standard_place") standardPlaceRewritten = true;
             if (concluded) concludedTouched.add(fact);
             // Never silent. A blank string withdraws a claim exactly as `null`
             // does, and it is also the likelier typo; either way this deleted
@@ -1213,6 +1219,7 @@ function rewriteLinkedFacts(
           fact[attr] = action.set;
           mutated = true;
           if (attr === "place") placeRewritten = true;
+          if (attr === "standard_place") standardPlaceRewritten = true;
           if (concluded) concludedTouched.add(fact);
         }
       }
@@ -1222,6 +1229,22 @@ function rewriteLinkedFacts(
       // jurisdiction. The update path cannot re-resolve it (the sidecar/geocode
       // lever is append-only), and the assertion is equally stale, so the guard
       // below cannot see it either. Say so rather than let it pass silently.
+      if (
+        touched.includes("date") &&
+        typeof fact.standard_date === "string" &&
+        fact.standard_date !== undefined &&
+        before.get("date") !== fact.date
+      ) {
+        // The same asymmetry the place side gets an advisory for. An assertion
+        // has no `standard_date` to mirror, so a corrected date leaves the
+        // fact's GEDCOM-canonical sidecar naming the old one, and the agreement
+        // check does not compare it.
+        mutationWarnings.push(
+          `fact '${fact.id}' kept standard_date '${fact.standard_date}' while its date was ` +
+            `corrected from assertion '${a.entryId}' — an assertion carries no standard_date, so ` +
+            "the sidecar was not part of this correction. Re-check it with tree_correct.",
+        );
+      }
       if (
         placeRewritten &&
         !touched.includes("standard_place") &&
@@ -1240,7 +1263,17 @@ function rewriteLinkedFacts(
       // and this must not become the first. Clearing does not read as drift to
       // the agreement check either: that compares only where both sides hold a
       // value, so an absent standard_place is skipped.
+      //
+      // ONLY when this rewrite actually produced the pair. Ungated it fired on
+      // every linked fact whenever the op named any of the four fields, so a
+      // `date`-only correction deleted a PRE-EXISTING contradiction the call
+      // never touched — writing the tree solely to destroy data, and editing
+      // exactly the pre-existing drift commit 7cd6a19b9 says a writer must
+      // leave alone. Worse, it deleted a `standard_place` the provenance test
+      // one block up had just refused to rewrite because it belonged to another
+      // source, so one response both promised to leave it alone and removed it.
       if (
+        (placeRewritten || standardPlaceRewritten) &&
         typeof fact.place === "string" &&
         typeof fact.standard_place === "string" &&
         countryConsistency(fact.place, fact.standard_place) === "contradiction"
@@ -2234,7 +2267,7 @@ async function prepareOps(
     const batchRecordKeys = new Set(
       assertionAppends
         .map((op) => (op.entry as any).record_id)
-        .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "")
+        .filter((v: unknown): v is string => factText(v) !== undefined)
         .map((v: string) => arkToBareId(v)),
     );
     if (
@@ -2415,13 +2448,13 @@ async function prepareOps(
   const batchAssertionRecordKeys = new Set(
     assertionAppends
       .map((op) => (op.entry as any).record_id)
-      .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== "")
+      .filter((v: unknown): v is string => factText(v) !== undefined)
       .map((v: string) => arkToBareId(v)),
   );
   const batchAssertionRoles = new Set(
     assertionAppends
       .map((op) => (op.entry as any).record_role)
-      .filter((v: unknown): v is string => typeof v === "string" && v.trim() !== ""),
+      .filter((v: unknown): v is string => factText(v) !== undefined),
   );
   const autoFillScopeOk = batchAssertionRecordKeys.size === 1 && batchAssertionRoles.size === 1;
   const logById = new Map<string, any>();
@@ -2617,7 +2650,7 @@ async function prepareOps(
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
     // only a fully omitted field triggers resolution.
     let geocoded = false;
-    if (typeof entry.place === "string" && entry.place.trim() !== "" && entry.standard_place === undefined) {
+    if (factText(entry.place) !== undefined && entry.standard_place === undefined) {
       let sp: string | null = null;
       let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {

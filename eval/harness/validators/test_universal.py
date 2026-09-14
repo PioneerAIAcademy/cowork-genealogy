@@ -39,6 +39,7 @@ treated as "not applicable to this state" — recorded as passed with a
 skip marker, not as a failure.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -139,8 +140,8 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
     on it, "this fact disagrees with its own source assertion" is a computable
     property, and this is it.
 
-    Compared only where BOTH sides hold a non-empty string, which is what keeps
-    it free of false positives in three directions that are all legitimate:
+    Compared only where BOTH sides hold a non-empty string, and only on a fact
+    citing a SINGLE source. Four false-positive directions, all legitimate:
 
       - assertion side absent: the corroboration branch can fill an attribute on
         a backlinked fact from a DIFFERENT assertion, so "fact has it, linked
@@ -151,6 +152,17 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
       - `assertion_id` naming nothing: there is no assertion to compare against,
         so it is skipped rather than failed. Referential integrity for this field
         is not this check's job.
+      - MORE THAN ONE SOURCE REF: the corroboration branch can fill an attribute
+        from another assertion, and `research_append`'s rewrite then refuses to
+        overwrite it (that would destroy the other source's evidence). The fact
+        legitimately holds a value its own backlink never asserted, and there is
+        no tool that can reconcile the two without destroying one of them, so
+        firing here would be red forever on correct work. That is the population
+        `tree-materialization-spec.md` section 4.4 already bounds and accepts:
+        175 of 7225 person facts in the committed corpus carry more than one
+        ref. A single-ref fact holds exactly what its own assertion said, which
+        is where the reported defect lives (the run that produced the card has
+        one ref on the diverging fact).
 
     Facts corrected by hand (`tree_correct`) and facts merged from differently
     backlinked members carry no `assertion_id` by then -- both writers drop it --
@@ -203,6 +215,9 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
             continue
         assertion = by_id.get(linked_id)
         if assertion is None:
+            continue
+        refs = [r for r in (fact.get("sources") or []) if isinstance(r, dict)]
+        if len(refs) > 1:
             continue
         for field in ("place", "standard_place", "date", "value"):
             on_fact = text(fact.get(field))
@@ -749,14 +764,28 @@ def _corrected_assertion_ids(tool_calls) -> set[str]:
         if not isinstance(args, dict):
             continue
         ops = args.get("ops")
+        if isinstance(ops, str):
+            # `research_append` runs `coerceJsonArg` on this argument precisely
+            # because the model routinely emits the array as a JSON string, so
+            # the write lands. The run log records what the model emitted, so
+            # without this the authorization false-fails a legitimate write.
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
         candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
         for op in candidates:
             if not isinstance(op, dict):
                 continue
-            if op.get("section") == "assertions" and op.get("op") == "update":
-                entry_id = op.get("entryId")
-                if isinstance(entry_id, str) and entry_id:
-                    ids.add(entry_id)
+            if op.get("section") != "assertions" or op.get("op") != "update":
+                continue
+            # Only an op that touched a MIRRORED field can have caused a rewrite.
+            fields = op.get("fields")
+            if not isinstance(fields, dict) or not (set(fields) & set(_REWRITABLE_FACT_ATTRS)):
+                continue
+            entry_id = op.get("entryId")
+            if isinstance(entry_id, str) and entry_id:
+                ids.add(entry_id)
     return ids
 
 
@@ -784,7 +813,10 @@ def _fact_identity(fact: dict) -> tuple:
 def _person_identity(person: dict) -> tuple:
     """The same, for one person: nothing but its facts' mirrored attrs may move."""
     names = tuple(
-        (n.get("given"), n.get("surname"), n.get("type"), n.get("preferred"))
+        # Everything but `id`, which `sanitizeTree` mints when a legacy name
+        # lacks one. Comparing four keys let a name's prefix, suffix and source
+        # refs change and ride the authorization through.
+        tuple(sorted((k, repr(v)) for k, v in n.items() if k != "id"))
         for n in (person.get("names") or [])
         if isinstance(n, dict)
     )
@@ -858,13 +890,21 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
                 return False
             for key in changed:
                 got = a_fact.get(key)
-                # Absent on the fact is how the rewrite expresses "the assertion
-                # withdrew this", and a contradicting standard_place is cleared
-                # rather than written, so an absent value is legitimate whatever
-                # the assertion holds.
+                want = source.get(key)
                 if got is None:
-                    continue
-                if got != source.get(key):
+                    # Absent on the fact is how the rewrite expresses "the
+                    # assertion withdrew this", so it is legitimate only when the
+                    # assertion withdrew it. The one exception is
+                    # `standard_place`, which the country guard CLEARS rather
+                    # than writing when the resulting pair contradicts. Without
+                    # this narrowing all four attributes could be deleted from a
+                    # backlinked fact while the assertion still asserted them.
+                    if key == "standard_place":
+                        continue
+                    if want is None or (isinstance(want, str) and want.strip() == ""):
+                        continue
+                    return False
+                if got != want:
                     return False
     return True
 

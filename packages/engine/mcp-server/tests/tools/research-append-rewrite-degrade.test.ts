@@ -14,8 +14,8 @@ import { tmpdir } from "os";
  * requires the rewrite to degrade to a warning rather than fail the call.
  *
  * **No ordinary input is known to reach it.** The rewrite only ever writes a
- * trimmed non-empty string into one of four fields the tree schema types
- * `string`, or deletes the key; `checkTreeStrings` is the only thing validating
+ * string with non-space content into one of four fields the tree schema types
+ * `string` (verbatim, not trimmed), or deletes the key; `checkTreeStrings` is the only thing validating
  * those, and both directions strictly reduce the error set. That is precisely
  * why the branch is mocked here rather than driven: an untested safety valve
  * that nothing can trigger is indistinguishable from one that does not work.

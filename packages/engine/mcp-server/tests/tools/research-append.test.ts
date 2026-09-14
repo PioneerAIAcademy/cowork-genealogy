@@ -582,7 +582,7 @@ describe("research_append (Phase 1)", () => {
       const f = await factF4();
       expect(f.type).toBe("Occupation");
       expect(f.value).toBe("Farmer");
-      expect(r.validation.warnings.join(" ")).toMatch(/is now a Birth, so the fact was left alone/);
+      expect(r.validation.warnings.join(" ")).toMatch(/is a Birth, so the fact was left alone/);
     });
   });
 

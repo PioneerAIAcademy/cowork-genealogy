@@ -99,6 +99,7 @@ WIDENED: dict[str, set[str]] = {"questions": {"proof-conclusion"}}
 #: departure from it is a line someone had to write.
 NARROWED: dict[str, set[str]] = {"assertions": {"convert-dates"}}
 
+
 def expected_research_owners() -> dict[str, set[str]]:
     expected = {k: set(v) for k, v in FROZEN_OWNERSHIP_TABLE.items()}
     for section, added in WIDENED.items():

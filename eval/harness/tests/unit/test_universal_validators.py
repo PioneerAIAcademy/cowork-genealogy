@@ -15,6 +15,7 @@ rule their own spec row states. Which skill owns which section is frozen next
 door, in `test_ownership_manifest.py`.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -330,3 +331,85 @@ def test_deleting_from_an_already_covered_section_still_fails():
 
 def test_appending_is_not_a_deletion():
     check_no_deletes(research(), research(localities=entry("loc_001")))
+
+def test_a_stringified_ops_payload_is_still_authorized():
+    """`research_append` coerces a JSON-string `ops`, so the write lands and the
+    run log records the string. Without parsing it here the authorization
+    false-fails a legitimate write, which is the worse direction."""
+    call = [{
+        "tool": "mcp__genealogy__extraction_append",
+        "args": {"ops": json.dumps([{
+            "section": "assertions", "op": "update", "entryId": "a_011",
+            "fields": {"place": "Odessa, Saskatchewan, Canada"},
+        }])},
+    }]
+    check_tree(
+        _tree_state(_person_with_fact()),
+        _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+        {"name": "record-extraction"},
+        POSITIVE,
+        tool_calls=call,
+    )
+
+
+def test_an_op_touching_no_mirrored_field_authorizes_nothing():
+    """An assertions update that set only `informant` cannot have caused a
+    rewrite, so it must not license one."""
+    call = [{
+        "tool": "mcp__genealogy__extraction_append",
+        "args": {"section": "assertions", "op": "update", "entryId": "a_011",
+                 "fields": {"informant": "official"}},
+    }]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=call,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_deleting_an_attribute_the_assertion_still_asserts_is_refused():
+    """Absence is how the rewrite expresses a withdrawal, so it is legitimate
+    only when the assertion withdrew it."""
+    after = _person_with_fact()
+    del after[0]["facts"][0]["place"]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(after),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_deleting_an_attribute_the_assertion_withdrew_is_authorized():
+    after = _person_with_fact()
+    del after[0]["facts"][0]["place"]
+    check_tree(
+        _tree_state(_person_with_fact()),
+        _tree_state(after, {"assertions": [{"id": "a_011", "place": None}]}),
+        {"name": "record-extraction"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )
+
+
+def test_a_name_prefix_change_is_not_authorized():
+    """`_person_identity` compared four keys, so prefix, suffix and a name's own
+    source refs could change and ride through."""
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["names"] = [{"id": "N1", "given": "Anna", "surname": "W", "prefix": "Dr."}]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(after),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)

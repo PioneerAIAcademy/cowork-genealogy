@@ -44,7 +44,7 @@ def assertion(aid, **fields):
 
 
 def fact(**fields):
-    base = {"id": "F4", "type": "Immigration"}
+    base = {"id": "F4", "type": "Immigration", "sources": [{"ref": "S1"}]}
     base.update(fields)
     return base
 
@@ -223,3 +223,43 @@ def test_malformed_documents_skip():
     with pytest.raises(BaseException) as exc:
         check({"research_json": [], "tree_gedcomx_json": {"persons": []}})
     assert exc.typename == "Skipped"
+
+
+def test_a_multi_source_fact_is_skipped():
+    """The state the shipped tools deliberately produce and preserve.
+
+    materialize_facts corroborates a second source onto the fact, filling an
+    attribute from a DIFFERENT assertion; research_append's rewrite then refuses
+    to overwrite it, because that would destroy the other source's evidence. The
+    fact legitimately holds a value its own backlink never asserted, and no tool
+    can reconcile the two without destroying one. Firing here would be red
+    forever on correct work.
+    """
+    after = state(
+        [
+            fact(
+                place="Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+                assertion_id="a_011",
+                sources=[{"ref": "S1"}, {"ref": "S2"}],
+            )
+        ],
+        [assertion("a_011")],
+    )
+    check(after)
+
+
+def test_a_single_source_fact_still_fires():
+    """The other direction, so the multi-source skip cannot swallow the defect:
+    the run that produced the card has one ref on the diverging fact."""
+    after = state(
+        [
+            fact(
+                place="Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+                assertion_id="a_011",
+                sources=[{"ref": "S3", "quality": 3}],
+            )
+        ],
+        [assertion("a_011")],
+    )
+    with pytest.raises(AssertionError, match="never reached the fact"):
+        check(after)
