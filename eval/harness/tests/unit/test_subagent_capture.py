@@ -11,8 +11,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from e2e.subagent_capture import (
     collect_subagents,
+    sdk_cache_dir,
     is_runaway_turn,
     parse_jsonl,
     summarize_transcript,
@@ -108,12 +111,97 @@ def test_parse_jsonl_skips_blank_and_truncated_lines(tmp_path: Path):
     assert records[0]["message"]["stop_reason"] == "tool_use"
 
 
+def _key(workspace: Path) -> str:
+    from claude_agent_sdk import project_key_for_directory
+
+    return project_key_for_directory(workspace)
+
+
+def _seed_cache(home: Path, workspace: Path) -> Path:
+    """Build the cache dir the SDK would actually write for `workspace`.
+
+    The key is the sanitized **full realpath**, not the leaf — hardcoding
+    `-tmp-<leaf>` produces a directory nothing will ever look for.
+    """
+    from claude_agent_sdk import project_key_for_directory
+
+    slug_dir = home / ".claude" / "projects" / project_key_for_directory(workspace)
+    subagents = slug_dir / "session-uuid" / "subagents"
+    subagents.mkdir(parents=True)
+    (subagents / "agent-1.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in [_PROJECT_CONTEXT_TURN, _RUNAWAY_TURN]),
+        encoding="utf-8",
+    )
+    (subagents / "agent-1.meta.json").write_text(
+        json.dumps({"agentType": "record-extractor", "description": "Extract"}),
+        encoding="utf-8",
+    )
+    return slug_dir
+
+
+# The bug this file exists to pin (#2468): tempfile's suffix alphabet contains
+# `_`, Claude Code's slug turns `_` into `-`, and the old `endswith(leaf)` match
+# therefore missed ~20% of runs. Every leaf below carries an underscore; the
+# original case did not, which is why it never caught this.
+@pytest.mark.parametrize(
+    "leaf",
+    [
+        "e2e-frederick-8fu_3bbk",  # underscore in the random suffix
+        "e2e_frederick-8fu_3bbk",  # and in the fixture id too
+        "e2e-frederick-8f_3b_bk",  # two underscores
+    ],
+)
+def test_collect_subagents_matches_when_the_leaf_has_an_underscore(
+    tmp_path: Path, monkeypatch, leaf: str
+):
+    home = tmp_path / "home"
+    workspace = tmp_path / leaf
+    _seed_cache(home, workspace)
+    monkeypatch.setattr(Path, "home", lambda: home)
+
+    summaries, status = collect_subagents(workspace)
+    assert len(summaries) == 1, f"capture missed the cache dir for leaf {leaf!r}"
+    assert status == "captured"
+
+
+def test_sdk_key_really_rewrites_the_underscore(tmp_path: Path):
+    """Pin the transform itself.
+
+    The fixtures above build their cache dir with the same function under test,
+    so they would stay green if the SDK stopped rewriting `_`. This asserts the
+    rewrite directly, so that change fails loudly here instead.
+    """
+    from claude_agent_sdk import project_key_for_directory
+
+    ws = tmp_path / "e2e-frederick-8fu_3bbk"
+    assert "8fu_3bbk" in ws.name
+    assert "8fu-3bbk" in project_key_for_directory(ws)
+
+
+def test_collect_subagents_ignores_a_near_miss_directory(tmp_path: Path, monkeypatch):
+    """A different run's cache must not be picked up.
+
+    Trivial under an exact lookup — this is the regression guard if anyone
+    reintroduces a scan.
+    """
+    home = tmp_path / "home"
+    _seed_cache(home, tmp_path / "e2e-frederick-8fu_3bbk")
+    monkeypatch.setattr(Path, "home", lambda: home)
+
+    assert collect_subagents(tmp_path / "e2e-frederick-8fuX3bbk") == ([], "no_cache_dir")
+
+
+def test_sdk_cache_dir_is_none_when_projects_missing(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "nonexistent")
+    assert sdk_cache_dir(tmp_path / "e2e-x") is None
+
+
 def test_collect_subagents_walks_the_ephemeral_cache(tmp_path: Path, monkeypatch):
     # Fake the ~/.claude/projects cache with the real nested layout:
-    #   projects/<slug-ending-in-workspace-leaf>/<uuid>/subagents/agent-*.jsonl
+    #   projects/<sanitized-full-realpath>/<uuid>/subagents/agent-*.jsonl
     home = tmp_path / "home"
-    workspace = tmp_path / "e2e-frederick-abc123"  # the leaf that appears in the slug
-    slug_dir = home / ".claude" / "projects" / f"-tmp-{workspace.name}"
+    workspace = tmp_path / "e2e-frederick-abc123"
+    slug_dir = home / ".claude" / "projects" / _key(workspace)
     subagents = slug_dir / "session-uuid" / "subagents"
     subagents.mkdir(parents=True)
     (subagents / "agent-1.jsonl").write_text(
@@ -126,7 +214,8 @@ def test_collect_subagents_walks_the_ephemeral_cache(tmp_path: Path, monkeypatch
     )
     monkeypatch.setattr(Path, "home", lambda: home)
 
-    summaries = collect_subagents(workspace)
+    summaries, status = collect_subagents(workspace)
+    assert status == "captured"
     assert len(summaries) == 1
     assert summaries[0]["agent_type"] == "record-extractor"
     assert summaries[0]["runaway_thinking"] is True
@@ -135,4 +224,25 @@ def test_collect_subagents_walks_the_ephemeral_cache(tmp_path: Path, monkeypatch
 
 def test_collect_subagents_empty_when_no_cache(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "nonexistent")
-    assert collect_subagents(tmp_path / "e2e-x") == []
+    assert collect_subagents(tmp_path / "e2e-x") == ([], "no_cache_dir")
+
+
+def test_status_distinguishes_a_resolved_dir_with_no_usable_transcript(
+    tmp_path: Path, monkeypatch
+):
+    """The value that `[]` used to hide.
+
+    The directory resolves and holds an `agent-*.jsonl`, but it is unparseable —
+    the run-killed-mid-generation shape. Before #2468 this was indistinguishable
+    from "no subagents ran".
+    """
+    home = tmp_path / "home"
+    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    subagents = (
+        home / ".claude" / "projects" / _key(workspace) / "session-uuid" / "subagents"
+    )
+    subagents.mkdir(parents=True)
+    (subagents / "agent-1.jsonl").write_text("not json at all\n", encoding="utf-8")
+    monkeypatch.setattr(Path, "home", lambda: home)
+
+    assert collect_subagents(workspace) == ([], "matched_no_transcripts")
