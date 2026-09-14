@@ -62,17 +62,22 @@ from typing import Any
 # op-shaped semantics this module would have to model rather than read back, and
 # no current consumer needs tree state. They are reported as unmodelled.
 #
-# ONE KNOWN GAP, stated rather than fixed. Since #2472 `research_append` and
-# `extraction_append` also write `tree.gedcomx.json` when an assertion `update`
-# corrects a fact's place/standard_place/date/value. That happens on the research
-# path, so those two stay in this set and the replay reads their research.json
-# effect back correctly — but the tree half is neither modelled NOR reported as
-# unmodelled, because `note_unmodelled` is only reached for a tool OUTSIDE this
-# set. A consumer that needed tree state would silently get the pre-call tree.
-# None does today; the moment one does, split the tree half out explicitly.
+# Since #2472 `research_append` and `extraction_append` also write
+# `tree.gedcomx.json` when an assertion `update` corrects a fact's
+# place/standard_place/date/value. That happens on the research path, so those
+# two stay in this set and the replay reads their research.json effect back
+# correctly; the TREE half is not modelled and is reported per-op as
+# `tree:<tool>:fact-rewrite`. A partial gap needs its own key rather than the
+# whole-tool `tool:<name>` one: the research half really was applied, and
+# reporting the call as wholly unmodelled would be the opposite lie.
 RESEARCH_WRITERS = frozenset(
     {"research_append", "research_log_append", "extraction_append"}
 )
+
+#: The attributes an assertion `update` mirrors onto its materialized tree fact.
+#: Mirrors ASSERTION_FACT_ATTRS in materialize-facts.ts. A fifth added there and
+#: not here under-reports the gap rather than mis-applying anything.
+_MIRRORED_FACT_ATTRS = frozenset({"place", "standard_place", "date", "value"})
 
 # Project-file writers this module does NOT apply. Named explicitly so a run
 # containing them reports a coverage gap instead of looking fully replayed.
@@ -448,4 +453,24 @@ def replay(
                     if entry_id is not None:
                         out.synthesised_ids += 1
             _apply_op(out.research, op, entry_id, out)
+            # An assertion `update` touching a mirrored attribute ALSO rewrites
+            # the tree fact minted from it (#2472). The research half is applied
+            # above; the tree half is not modelled, so report it rather than let
+            # a consumer read a pre-call tree as current. Reported on the op's
+            # SHAPE, not on whether a fact was really rewritten: the replay
+            # cannot see the tree, and `unmodelled` means "this call may have
+            # done something I did not apply", which is exactly the claim.
+            #
+            # Its own blind spot, inherited from `_ops_from_args`: a JSON-STRING
+            # `ops` payload (which the engine coerces, so the write lands) parses
+            # as a log op here and never reaches this branch. That is a
+            # pre-existing gap in the parser rather than in this report, and it
+            # under-reports rather than over-reports.
+            if (
+                op.get("section") == "assertions"
+                and op.get("op") == "update"
+                and isinstance(op.get("fields"), dict)
+                and _MIRRORED_FACT_ATTRS & set(op["fields"])
+            ):
+                out.note_unmodelled(f"tree:{name}:fact-rewrite")
     return out
