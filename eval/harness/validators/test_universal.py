@@ -576,13 +576,24 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     test where the skill *does* wrongly activate already fails on the
     routing check.
 
-    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09; also the policy
-    for issue #2023's ownership question — decided here, not re-decided there).
-    When execution.stub_skills is non-empty the owning callee is denied, so the
-    section can only ever be written by the caller: the check would measure the
-    stub/caller rather than the skill under test. Same rationale as the
-    negative-test skip, and the stub's own denial text asks the caller to finish
-    its remaining steps (logging, status, summary).
+    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09, re-affirmed by the
+    lead 2026-09-14; also the policy for issue #2023's ownership question —
+    decided here, not re-decided there). When execution.stub_skills is non-empty
+    the owning callee is denied, so the section can only ever be written by the
+    caller: the check would measure the stub/caller rather than the skill under
+    test. Same rationale as the negative-test skip, and the stub's own denial
+    text tells the caller both to carry on ("finish your own remaining steps —
+    logging, status, summary") AND not to substitute for the callee ("do not
+    attempt to do its work yourself"): the caller writing `log`/`project`/status
+    is obeying the first clause, not violating ownership.
+
+    The skip is deliberately keyed on **any** stub being present (whole-run),
+    not evaluated per-section. A per-section form gives opposite answers
+    depending on whether it keys on the section's declared owner or on any
+    permitted writer, and on `research`'s `_005` that fork re-breaks the test
+    over `project.status = "completed"` — a write `research`'s own SKILL.md
+    orders and whose ownership contradiction is issue #1335's to resolve, not
+    this check's. Keying on the whole run avoids adjudicating that here.
     """
     if test.get("type") == "negative":
         pytest.skip(
