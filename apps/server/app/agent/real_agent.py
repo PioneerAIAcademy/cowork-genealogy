@@ -710,6 +710,11 @@ class RealAgent:
         self._resume_id: str | None = None
         self._tool_names: dict[str, str] = {}  # tool_use_id → name, for tool_result tagging
         self._tasks: dict[str, str] = {}  # Task tool_use_id → subagent label, for attribution
+        # True from the moment a turn is queried until that turn consumes its own
+        # ResultMessage. A turn abandoned at a yield — which is what Stop does —
+        # never clears it, and that is the signal the SDK stream still owes a
+        # terminal frame. See _handle_abandoned_stream.
+        self._stream_dirty = False
         # Liveness, keyed on the REQUIRED task_id rather than the optional
         # tool_use_id above. This is what gates the drainer; see map_message.
         self._live_tasks: set[str] = set()
@@ -734,6 +739,46 @@ class RealAgent:
                 self._resume_id = self._session_file.read_text(encoding="utf-8").strip() or None
             except OSError:
                 self._resume_id = None
+
+    async def _handle_abandoned_stream(self) -> None:
+        """Drop the client when the previous turn never finished reading its stream.
+
+        THE DEFECT THIS CLOSES. `handle_turn` breaks out of its receive loop at
+        the ResultMessage. When the generator is abandoned at a `yield` instead —
+        which is exactly what Stop does, via `_run_turn`'s cancellation — that
+        loop never runs again, so the turn's tail INCLUDING its ResultMessage
+        stays queued. The next turn then calls `client.query(text)` and
+        `receive_response()` reads that stale terminal frame first and returns
+        immediately: the new turn delivers nothing, its own frames stay unread,
+        and the stream is one turn behind from then on. Reproduced over a fake
+        transport — turn 2 emits zero text events and two frames are left unread,
+        so it persists rather than self-correcting.
+
+        WHY DROP THE CLIENT RATHER THAN DRAIN. Draining until the stream goes
+        idle looks cheaper and is wrong: the abandoned turn's ResultMessage may
+        not have ARRIVED yet when the next turn starts, so a short drain finds
+        nothing, declares the stream clean, and the late frame still terminates
+        the next turn. Draining until a ResultMessage appears needs a deadline,
+        and a turn that will never produce one then hangs the next. A fresh
+        client has no such race: the stream is new by construction. The cost is a
+        CLI respawn, paid only after a Stop, which a person does rarely — and
+        `_remember_session` has already persisted the session id, so
+        `_ensure_client` resumes rather than starting the conversation over.
+
+        Not a substitute for the post-turn drain (issue #1915): that one keeps a
+        COMPLETED turn's subagent tail from filling the SDK's 100-slot buffer and
+        stalling the transport. This one handles a turn that never completed. The
+        two compose.
+        """
+        if not self._stream_dirty:
+            return
+        self._stream_dirty = False
+        log_operator(
+            "abandoned_stream",
+            "previous turn ended without consuming its ResultMessage (Stop); "
+            "rebuilding the client so the next turn does not read its tail",
+        )
+        await self._close_client()
 
     async def _stop_drain(self) -> None:
         """Hand the SDK stream back before anything else reads it.
@@ -899,6 +944,11 @@ class RealAgent:
         # reach. Raised in review round 2 (item 5).
         self._tasks.clear()
         self._live_tasks.clear()
+        # The respawn flag goes with the client. Left set, a close from any path
+        # other than the abandoned-stream one costs the NEXT turn a redundant
+        # rebuild, which makes the flag mean "maybe dirty" rather than "dirty".
+        # Harmless but untrue; raised in review.
+        self._stream_dirty = False
         client, self._client, self._client_key = self._client, None, None
         if client is None:
             return
@@ -1029,6 +1079,10 @@ class RealAgent:
         # calls `_stop_drain` too — it is idempotent, so calling it here first is
         # strictly safe.
         await self._stop_drain()
+        # BEFORE acquiring the client, not after: a turn abandoned mid-flight left
+        # its tail in the stream, and this may drop the client so the next
+        # `receive_response()` cannot read that instead of this turn's reply.
+        await self._handle_abandoned_stream()
         try:
             client = await self._ensure_client()
         except Exception as exc:
@@ -1038,6 +1092,7 @@ class RealAgent:
             return
         try:
             await client.query(text)
+            self._stream_dirty = True
             # Whether an errored AssistantMessage has already told the user about
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
@@ -1108,6 +1163,9 @@ class RealAgent:
                         classification = classify(status=status)
                         log_operator("result_message", classification, status=status)
                         yield _event("error", text=classification)
+                    # This turn read its own terminal frame, so the stream owes
+                    # nothing and the next turn can reuse the client.
+                    self._stream_dirty = False
                     self._remember_session(message)  # persist for resume on relaunch
                     # Per-turn cost/usage for the operator cost meter (alpha
                     # mode, web only). The SDK's ResultMessage carries
