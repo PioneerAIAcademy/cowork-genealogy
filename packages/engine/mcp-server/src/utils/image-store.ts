@@ -30,14 +30,18 @@ export const IMAGES_SUBDIR = "images";
 // group-only or global key would leak one project's cap into another, so it is
 // keyed by project as browseBudgetSeen is. Only reads that PERSISTED an image land
 // here (an imageRef is what a source cites); a read with no projectPath leaves no
-// image_filename to join, the known limitation in image-transcribe-tool-spec §5.8.
+// image_filename to join, the known limitation in image-transcribe-tool-spec §8.6.
 // image_filename, not imageId, is the key because it is the only identifier both
 // tools share — an ARK read gets one too, so an ARK read is NOT the blind spot the
 // browse budget's imageId keying has.
 const truncatedSourceImages = new Set<string>();
 
 function truncatedImageKey(projectPath: string, imageRef: string): string {
-  return `${projectPath}\0${imageRef}`;
+  // projectPath arrives raw from an LLM relay, so a record under `/p/` and a query
+  // under `/p` must join — strip the trailing separator on both sides. imageRef is
+  // module-minted (canonical) and needs none. Without this the record/query
+  // symmetry placeSearchCache relies on is lost and a capped read reads back clean.
+  return `${projectPath.replace(/[/\\]+$/, "")}\0${imageRef}`;
 }
 
 /** Record (or clear) whether this project's persisted source image was read past

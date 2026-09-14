@@ -262,6 +262,24 @@ describe("research_append (Phase 1)", () => {
       const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
       expect("transcription_truncated" in persisted).toBe(false);
     });
+
+    it("strips an agent-asserted flag even on a source with no image_filename to join", async () => {
+      await writeProject();
+      // No image_filename → nothing to join, but the field is still derived-only.
+      // Without stripping here the agent's guess persists verbatim, exactly where
+      // the join key that would override it is absent (#2457 review, blocker 4c).
+      const { id: _omit, ...src } = validSource("x");
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "append",
+        entry: { ...src, transcription: "first half of the page", transcription_truncated: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {

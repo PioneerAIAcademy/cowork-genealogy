@@ -2430,10 +2430,14 @@ async function prepareOps(
       | Record<string, unknown>
       | undefined;
     if (!bag || typeof bag !== "object") continue;
+    // Derived here, never asserted by the agent — so strip any caller-supplied
+    // value FIRST, even on a source with no joinable image_filename (where the
+    // agent's guess would otherwise persist verbatim, exactly where it is least
+    // reliable). Then set it true only on a cache hit against the cited image.
+    delete bag.transcription_truncated;
     const ref = bag.image_filename;
     if (typeof ref !== "string" || ref.length === 0) continue;
     if (wasSourceImageTruncated(projectPath, ref)) bag.transcription_truncated = true;
-    else delete bag.transcription_truncated;
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);

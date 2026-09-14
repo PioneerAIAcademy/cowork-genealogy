@@ -546,6 +546,27 @@ splintering into inconsistent labels, over a form the model added:
   is `indirect` — distinguished by field population (`place` set = the
   place-claim, `date` set = the date-claim) rather than by the type name.
 
+### 3.8 `transcription_truncated` — derived, never asserted
+
+On every `sources` op the tool **owns** `sources[].transcription_truncated`,
+after the §3.4 reuse rewrite so it sees the final op shape:
+
+- Any caller-supplied value is **stripped first**, unconditionally — including on
+  a source with no `image_filename` to join. The truncation of an OCR read is
+  known to `image_transcribe`, not to the agent relaying the text, so an
+  agent-asserted flag is a guess and is dropped rather than persisted.
+- The flag is then set `true` **only** when this process capped the read of the
+  cited image, joined by `image_filename` against the image-store cap set
+  (`wasSourceImageTruncated`); otherwise it stays absent. See
+  `image-transcribe-tool-spec.md` §8.6 for the record side and the
+  no-`projectPath` limitation.
+
+Unlike §3.6, this override **echoes nothing** — the response carries no signal
+that a caller-supplied value was dropped. The persisted-side invariant
+(`transcription_truncated: true` requires a non-empty `transcription`) is
+enforced by both `validate_research_schema` and the two `research.schema.json`
+mirrors (an `if`/`then` on the `source` object).
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic

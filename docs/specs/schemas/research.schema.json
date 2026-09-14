@@ -370,6 +370,14 @@
             { "type": "null" }
           ]
         }
+      },
+      "if": {
+        "properties": { "transcription_truncated": { "const": true } },
+        "required": ["transcription_truncated"]
+      },
+      "then": {
+        "properties": { "transcription": { "type": "string", "minLength": 1 } },
+        "required": ["transcription"]
       }
     },
     "citation_detail": {

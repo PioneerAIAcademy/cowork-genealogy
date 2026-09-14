@@ -135,4 +135,16 @@ describe("truncated-source-image cache (#2457)", () => {
     recordImageReadCap("/proj", ref, true);
     expect(wasSourceImageTruncated("/proj", ref)).toBe(true);
   });
+
+  it("joins across a trailing separator on projectPath — record `/p/`, query `/p` (#2457 review, blocker 4a)", () => {
+    // projectPath arrives raw from an LLM relay, so record and query can spell
+    // the same project with and without a trailing slash. The key must normalize
+    // both or a capped read reads back clean.
+    recordImageReadCap("/proj/", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
+    // …and the other direction.
+    __clearTruncatedSourceImagesForTests();
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("/proj/", "images/x.jpg")).toBe(true);
+  });
 });

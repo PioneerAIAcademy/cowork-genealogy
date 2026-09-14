@@ -27,7 +27,7 @@
 }
 
 .partialBadge {
-  color: var(--text-warning, #b45309);
+  color: var(--badge-amber-text);
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0;

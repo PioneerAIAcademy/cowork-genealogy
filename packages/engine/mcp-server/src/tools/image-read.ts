@@ -4,7 +4,7 @@ import {
   fetchFsImageBytes,
   type FsImageInput,
 } from "../utils/fs-image-fetch.js";
-import { saveSourceImage } from "../utils/image-store.js";
+import { saveSourceImage, recordImageReadCap } from "../utils/image-store.js";
 
 // The MCP transport between this server and the calling agent caps a single
 // response near 1 MiB. Base64 inflates raw bytes by ~33%, so this floor on
@@ -72,6 +72,11 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
         imageKey: label,
         bytes,
       });
+      // image_read returns the whole scan (oversized reads are refused above, not
+      // capped), so a source built from it is complete. Clear any stale truncation
+      // cap a prior image_transcribe of this same page left against imageRef, so it
+      // is not persisted as transcription_truncated: true (#2457).
+      recordImageReadCap(input.projectPath, imageRef, false);
     } catch {
       imageRef = undefined;
     }

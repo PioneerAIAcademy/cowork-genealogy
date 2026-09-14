@@ -11,6 +11,11 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { imageReadTool } from "../../src/tools/image-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
+import {
+  recordImageReadCap,
+  wasSourceImageTruncated,
+  __clearTruncatedSourceImagesForTests,
+} from "../../src/utils/image-store.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -106,6 +111,28 @@ describe("imageReadTool — imageId input", () => {
     mockImageResponse();
     const result = await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.metadata.imageRef).toBeUndefined();
+  });
+
+  it("clears a stale truncation cap left by a prior image_transcribe of the same page (#2457 review, note N5)", async () => {
+    // image_read returns the whole scan, so a source built from it is complete.
+    // A capped image_transcribe of the same page earlier left a cap against the
+    // same imageRef; image_read must retract it, else the complete transcription
+    // persists as transcription_truncated: true.
+    const dir = await mkdtemp(join(tmpdir(), "imgr-cap-"));
+    try {
+      recordImageReadCap(dir, "images/004884748_02613.jpg", true);
+      expect(wasSourceImageTruncated(dir, "images/004884748_02613.jpg")).toBe(true);
+      mockImageResponse(new Uint8Array([1, 2, 3]));
+      const result = await imageReadTool({
+        imageId: "004884748_02613",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.metadata.imageRef).toBe("images/004884748_02613.jpg");
+      expect(wasSourceImageTruncated(dir, "images/004884748_02613.jpg")).toBe(false);
+    } finally {
+      __clearTruncatedSourceImagesForTests();
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it.each([
