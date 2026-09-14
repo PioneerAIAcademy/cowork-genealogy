@@ -577,7 +577,8 @@ export const rankSearchMatchesSchema = {
         description:
           "Optional cap on how many top-ranked stubs to return. Omit to get " +
           "every scored candidate, which is the default. A fixed count, not a " +
-          "score threshold.",
+          "score threshold. " +
+          "When the ranking is usable the full `results` rows are dropped from the response, so `top` hides rows as well as shortening the ranked list: `top: 10` against a pool of 50 returns 10 stubs and no rows, where the other 40 are scored but invisible. Raise it or omit it to see them.",
       },
       checkAttachments: {
         type: "boolean",

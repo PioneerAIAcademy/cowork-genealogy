@@ -341,7 +341,7 @@ reads the record.
 | Field | Type | Description |
 |-------|------|-------------|
 | `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side — `count` is what bounds the response, and `top` is the caller's opt-in to fewer. |
-| `top` | number | Forwarded to `rank_search_matches` as its `top`: a cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful alongside `subjectId` and `projectPath`, since ranking does not otherwise run. |
+| `top` | number | Forwarded to `rank_search_matches` as its `top`: a cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful alongside `subjectId` and `projectPath`, since ranking does not otherwise run. **`top` hides rows as well as shortening the ranked list:** when the ranking is usable the full `results` rows are dropped, so `top: 10` against a pool of 50 returns 10 stubs and no rows — the other 40 are scored, paid for and invisible. Raise it or omit it to see them. |
 | `offset` | number | Pagination offset. Default 0. The combined value `offset + count` must be at most 4999. |
 
 ### Examples

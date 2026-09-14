@@ -145,6 +145,32 @@ describe("record_search: dropping the inline results block", () => {
     expect(out.results).toHaveLength(2);
   });
 
+  // The reviewer's point on #2473: `top` does not merely shorten the ranked
+  // list, it HIDES ROWS. The drop fires on whether the ranking is usable, and
+  // `top` does not enter that condition -- so a narrowed call returns `top`
+  // stubs and NO rows, with the rest scored and paid for but invisible. That
+  // is the harm the issue exists to remove, reachable through a parameter, so
+  // it is pinned here rather than left to the description alone.
+  it("still drops `results` when `top` narrowed the ranked list", async () => {
+    // 10 scored, 3 returned: the shape a caller passing `top: 3` gets.
+    mockedRank.mockResolvedValue({
+      ...usableRanking(3),
+      scoredCount: 10,
+      returnedCount: 3,
+    } as never);
+
+    const out = await search({ top: 3 });
+
+    expect(out.ranked).toBeTruthy();
+    if (!out.ranked) return;
+    expect(out.ranked.matches).toHaveLength(3);
+    // The rows are gone even though 7 further candidates were scored.
+    expect(out.results).toBeUndefined();
+    expect(out.ranked.scoredCount).toBe(10);
+    // Not lost, just not inline: the sidecar still holds them.
+    expect(out.staged).toBeTruthy();
+  });
+
   it("forwards `top` to the ranker, and omits it when the caller does", async () => {
     mockedRank.mockResolvedValue(usableRanking() as never);
 
