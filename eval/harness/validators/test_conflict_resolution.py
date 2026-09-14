@@ -18,6 +18,8 @@ harness — pull the one you need by declaring it in your function
 signature.
 """
 
+import re
+
 import pytest
 
 from harness.skill_invocation import CONFLICT_ANALYSIS_FIELDS
@@ -424,7 +426,8 @@ def report_resolution_word_caps(before_state, after_state):
     corpus rotates, so do not quote this).
 
     Reporting, not gating, and that is not a style choice: a failing tier-1
-    validator suppresses the LLM judge for that run (orchestrator.py:607), so a
+    validator suppresses the LLM judge for that run (the `validators_passed`
+    gate in orchestrator.py), so a
     gating version would silence the Evidence weighing and Resolution
     completeness grading on the runs it fires -- the craft grading this dive
     exists to protect.
@@ -646,8 +649,8 @@ def report_resolution_precedes_identity(before_state, after_state):
     Tier 2 by design, on measured grounds:
 
     - A failing tier-1 validator suppresses the LLM judge for that run
-      (orchestrator.py:607; compute_validators_passed at :126-139 confirms tier
-      2 never gates). The runs this fires on DO produce judge signal --
+      (the `validators_passed` gate in orchestrator.py;
+      `compute_validators_passed` confirms tier 2 never gates). The runs this fires on DO produce judge signal --
       Correctness 2, Source independence analysis 2, Tool Arguments 2 -- which
       gating would delete.
     - `Resolution completeness` carries a fail branch for this exact ground
@@ -745,3 +748,316 @@ def report_resolution_precedes_identity(before_state, after_state):
 
     if observations:
         raise AssertionError(" ".join(observations))
+
+
+# --- No certainty upgrade on a hedged informant (V4) --------------------
+#
+# Issue #1972 V4, from the conflict-resolution deep dive (findings doc § V4).
+#
+# ONE of the spec's three arms ships. The measurements, so the other two are not
+# re-proposed:
+#
+# ARM 1, firsthand/eyewitness attribution -- NOT SHIPPED. The spec calls it "a
+# literal-phrase check ... not a reading of the argument". Re-derived
+# 2026-09-14 over the 5 committed logs, scanning the two persisted prose fields
+# and the reply text, counting sentences that contain `firsthand`/`first-hand`/
+# `eyewitness`: of 75 such sentences, 59 (79%) are NEGATED and are correct
+# reasoning about the LOSING informant --
+#   "he had no firsthand access to birth facts"          CORRECT
+#   "James Brown could not have had any firsthand knowledge"  CORRECT
+#   "the census informants (likely Thomas Flynn or his wife) were household
+#    members with firsthand knowledge"                    VIOLATION
+# -- and negation filtering does not rescue it: a survivor is "reporting the
+# family's American context rather than a witnessed fact", correct and
+# distinguished only by "rather than". The true FP rate is >=79%. Separating
+# these IS a reading of the argument, so the spec's own ground for calling this
+# mechanical does not hold for this arm.
+#
+# ARM 3, "assign them a family relationship the project has not established" --
+# the spec's own deferred half. Needs a ruling on reading `hypotheses[].status`,
+# which the spec says is the lead's call.
+#
+# ARM 2, certainty naming -- SHIPPED, below. It keys on a NAME rather than an
+# epistemic verb, so the negation problem cannot arise.
+
+_HEDGE_WORDS = re.compile(r"\b(unknown|possibly|likely|most likely)\b", re.I)
+
+# Longest-first by convention, NOT for correctness — an earlier comment here
+# claimed `certainly` would otherwise double-count inside `almost certainly`,
+# and that is false: `finditer` scans left to right and at the "a" of "almost"
+# the alternation tries `certainly` (fails) then `almost certainly` (matches)
+# under either order. A mutation reversing the order left the whole suite green,
+# which is what exposed the claim.
+# `\b` at BOTH ends, and both were measured firing before it was added:
+#   hedged "Mary Ann", prose "almost certainly Mary Anne Sullivan"  -> reported
+#     (a plausibly different woman)
+#   prose "reported uncertainly Mary Ann was present"               -> reported
+#     (`certainly` matched inside `uncertainly`)
+# Latent — the whole corpus yields one distinct hedged name (`Thomas Flynn`) and
+# zero instances of either shape across 64 runs. The trailing `\b` deliberately
+# still allows a surname to be ADDED ("almost certainly Mary Ann Sullivan", the
+# same woman), which is correct; only the Ann/Anne substitution stops.
+_CERTAINTY = r"\b(?:almost certainly|undoubtedly|definitely|certainly)"
+
+# A name is only "the informant's name" if a hedge sits in ITS OWN segment.
+# Without this, "James Brown (son-in-law); the census informant is unknown"
+# reads as a hedged Brown, when the string names him flatly.
+_INFORMANT_SEGMENTS = re.compile(r"[();]|(?<=\w)\s+[—–-]\s+")
+_PERSON_NAME = re.compile(r"\b[A-Z][a-z]+(?: [A-Z][a-z]+)+\b")
+
+# Capitalised bigrams that are not people. Measured need: without it,
+# "WPA Graves Registration worker (identity unknown)" yields "Graves
+# Registration" as an informant name.
+_NOT_A_PERSON = re.compile(
+    r"\b(WPA|Graves Registration|Registration Worker|Death Certificate|Census|"
+    r"Household Member|Unknown Informant|Bureau|Vital Records)\b",
+    re.I,
+)
+
+# The spec's worked violation lives in the REPLY, not in the persisted fields:
+# "almost certainly Thomas Flynn, Patrick's father ... with firsthand knowledge"
+# occurs exactly once in the corpus, in ut_conflict_resolution_008's
+# `text_response`, and in no `weighing_analysis` or `resolution_rationale`. A
+# check reading only the persisted fields fires on none of the spec's own
+# example, so all three are scanned.
+_V4_TEXT_FIELDS = ("weighing_analysis", "resolution_rationale")
+
+
+def _hedged_informant_names(informant: object) -> set[str]:
+    """Personal names an `informant` string mentions only under a hedge.
+
+    Three known limitations, stated rather than hidden:
+
+    - SINGLE-WORD names are missed. "Unknown informant (likely Bridget
+      herself...)" yields nothing, so "almost certainly Bridget" is a false
+      negative. Admitting lone capitalised tokens would match ordinary words.
+    - COMPOUND SURNAMES are missed or mangled. The pattern cannot span an
+      internal capital, an apostrophe, a hyphen or a lowercase particle, so
+      "likely Patrick McDonald" and "likely Johan van der Berg" yield nothing,
+      and "likely Anne-Marie Dupont" yields "Marie Dupont". 1 of the 673 fixture
+      informants carries such a name (Rev. Michael O'Connor); it is unhedged, so
+      nothing is missed today.
+    - The name can be the research SUBJECT. "Unknown -- most likely Patrick
+      Flynn as head of household" yields Patrick Flynn, who is the subject of
+      mid-research-flynn-merge-pending. Strict adjacency below mitigates it.
+
+    Measured across all 673 informant strings in the shipped fixtures: 250 carry
+    a hedge, 71 yield a hedged name, 0 suspicious extractions.
+    """
+    if not isinstance(informant, str) or not informant:
+        return set()
+    out: set[str] = set()
+    for segment in _INFORMANT_SEGMENTS.split(informant):
+        if not segment or not _HEDGE_WORDS.search(segment):
+            continue
+        for name in _PERSON_NAME.findall(segment):
+            if _NOT_A_PERSON.search(name):
+                continue
+            out.add(name)
+    return out
+
+
+def _certainty_upgrades(text: str, names: set[str]) -> list[tuple[str, str]]:
+    """`(name, quoted span)` for each certainty marker asserting a hedged name.
+
+    STRICT ADJACENCY: the marker, separators only, then the name. Measured
+    against the looser readings, with `text_response` included --
+    adjacency 19, up-to-3-words 20, same-sentence 21, same-field 26 -- the
+    loosest counted one hit per (name, field), not per marker occurrence.
+    Re-derived 2026-09-14 over the 5 committed logs. The
+    tightest is shipped; it still catches the spec's exemplar, and the 1 hit it
+    gives up versus 3-words is the stated cost of not reading the argument.
+    """
+    found = []
+    for name in sorted(names):
+        for m in re.finditer(
+            _CERTAINTY + r"[\s,:;—–-]*" + re.escape(name) + r"\b", text, re.I
+        ):
+            # 120, not 200, and the difference is the whole point. The message
+            # applies `span[:200]`, so a 200-char run-up allowance lands on the
+            # SAME spot and drops everything after the marker.
+            #
+            # Measured on ut_conflict_resolution_006's resolution_rationale
+            # (v1_2026-08-19_15-24-31): the span is 295 chars with 95 after the
+            # match, and all 95 were cut, shipping
+            #   "…the informant was almost certainly Thomas Flynn"
+            # where the rationale says "almost certainly Thomas Flynn OR HIS
+            # WIFE". So the observation showed the run naming one person when it
+            # named two — exactly what the "attaches a certainty marker to"
+            # wording was changed to stop. It also opened mid-word, same cause.
+            #
+            # Leaving room between the two limits is what keeps the accused
+            # phrase and its tail inside the quote.
+            start = max(0, text.rfind(".", 0, m.start()) + 1, m.end() - 120)
+            end = text.find(".", m.end())
+            # `end != -1`, not `end > 0`: `find` returns -1 on not-found, and
+            # `> 0` also rejects a legitimate period at index 0. Unreachable
+            # today (the match is always >=15 chars in, so `find` from
+            # `m.end()` cannot return 0) but the idiom said the wrong thing.
+            found.append((name, text[start : end if end != -1 else len(text)].strip()))
+    return found
+
+
+def report_informant_certainty_upgrade(before_state, after_state, text_response):
+    """A resolution may not name a hedged informant with certainty (V4).
+
+    The record says `informant: "Unknown household member (likely Thomas Flynn
+    or wife)"`; the resolution says "almost certainly Thomas Flynn". That upgrade
+    is what this reports.
+
+    Tier 2, and V4 cannot be gating even in principle: this arm reads PROSE. A
+    failing tier-1 validator suppresses the LLM judge (the `validators_passed`
+    gate in orchestrator.py), and
+    the grader is the only thing that can read whether the upgrade was justified.
+    `Evidence weighing` scored 3 on all 35 runs where it was graded, and
+    `Resolution completeness` on 34 of 35 -- its one 2 is ut_006 in
+    v1_2026-09-11_14-05-47 -- which is both
+    this check's marginal value and the reason not to silence the grader.
+
+    HONEST PRECISION. 16 of the 19 corpus hits are the disjunctive template
+    "almost certainly Thomas Flynn or his wife", upgrading the record's "likely
+    Thomas Flynn or wife" over the same two-person set. That is the DISJUNCTIVE
+    reading, and it is what ships. The other 3 are singular, and one of them is
+    in a persisted field -- ut_conflict_resolution_006's resolution_rationale in
+    v1_2026-09-11_14-05-47, "almost certainly Thomas Flynn himself as head" --
+    so rejecting the disjunctive reading leaves real signal rather than none.
+    Three of the four certainty markers have zero corpus support.
+
+    Population is `_conflicts_written` -- every after-state conflict whose prose
+    this run authored -- not V3's `_resolutions_this_run`, which requires
+    `status` to reach `resolved` and would drop the 13 corpus writes that
+    authored prose without touching it.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    informants = {
+        a.get("id"): a
+        for a in (after.get("assertions") or [])
+        if isinstance(a, dict) and a.get("id")
+    }
+
+    before_by_id = _conflicts_by_id(before)
+
+    observations = []
+    # Names contributed by every written conflict, for the single reply-text
+    # scan after the loop, plus the ids that contributed them.
+    reply_names: dict[str, str] = {}
+    written_ids: list[str] = []
+    for c in _conflicts_written(before, after):
+        cid = c.get("id", "?")
+        prev = before_by_id.get(cid)
+        # name -> the informant string that hedged it, so the message can quote
+        # the record against the prose. Without the source string a reader
+        # cannot tell whether the upgrade was real.
+        names: dict[str, str] = {}
+        for aid in _competing_ids(c):
+            # Entries inside the list are as unconstrained as the container
+            # was: the built validator reports NO error for [{'id': 'a_002'}]
+            # or [['a_002']] (controls -- a 1-element list and null -- both
+            # DO error, so the check is live), and only the LENGTH is
+            # constrained. A dict or list key raises `TypeError: unhashable
+            # type`, and a crash in a report_* is not an observation: it is
+            # withheld `reporting_only`, counts as a gating failure, and the
+            # judge does not run for that test. V2 and V3 both survive this
+            # input; V4 was the only one that went down.
+            if not isinstance(aid, str):
+                continue
+            a = informants.get(aid)
+            if not a:
+                continue
+            hedged = _hedged_informant_names(a.get("informant"))
+            # `information_quality: "indeterminate"` is a hedge in its own right
+            # per the spec, and it is NOT a no-op. It supplies no name of its
+            # own, but it lifts the segment scoping, which is the only thing
+            # that reaches a name sitting in a hedge-free parenthetical. It
+            # supplies 4 of the 13 flagged runs on today's corpus. Removing it
+            # reds test_v4_the_indeterminate_arm_is_load_bearing_not_a_no_op.
+            #
+            # An earlier version of this comment called it a no-op, reasoning
+            # from a true premise (no assertion pairs `indeterminate` with a
+            # name that carries no hedge word anywhere in the string) to a false
+            # conclusion. The cost was specific: someone trimming dead code
+            # deletes the branch, two tests red, and the comment tells them the
+            # tests are wrong.
+            inf = a.get("information_quality")
+            if inf == "indeterminate" and isinstance(a.get("informant"), str):
+                # isinstance is load-bearing: a `str()` here turned a dict
+                # informant into its repr and extracted a name out of it, which
+                # the malformed-input parametrize caught. `informant` is
+                # schema-required and typed string, so this guards a state the
+                # schema forbids — but an unexpected exception (or a bogus
+                # finding) in a report_* is worse than a cheap check.
+                hedged |= {
+                    n
+                    for n in _PERSON_NAME.findall(a["informant"])
+                    if not _NOT_A_PERSON.search(n)
+                }
+            for n in hedged:
+                names.setdefault(n, str(a.get("informant") or ""))
+        if not names:
+            continue
+
+        # Only the prose fields THIS turn authored. `_conflicts_written`
+        # returns the conflict when EITHER field changed, so scanning both
+        # reports an upgrade sitting in a field byte-identical before the
+        # turn -- telling a genealogist the run wrote prose it did not
+        # write, the same defect class as the truncated quote. `prev is
+        # None` is a conflict this turn created, where every field is
+        # authored. Does not fire on today's corpus (all 36 prose edits
+        # write both fields in one turn) but 33 of the 42 fixture conflicts
+        # already carry prose in both, so one single-field revision trips it.
+        written_ids.append(str(cid))
+        for _n, _src in names.items():
+            reply_names.setdefault(_n, _src)
+
+        texts = {
+            f: str(c.get(f) or "")
+            for f in _V4_TEXT_FIELDS
+            if prev is None or c.get(f) != prev.get(f)
+        }
+        for field, txt in texts.items():
+            for name, span in _certainty_upgrades(txt, set(names)):
+                observations.append(
+                    # "attaches a certainty marker to" rather than "asserts":
+                    # 16 of the 19 corpus matches are DISJUNCTIVE ("almost
+                    # certainly Thomas Flynn or his wife"), so the prose names no
+                    # single person — it keeps the record's two-person
+                    # disjunction and raises the confidence on it. "asserts
+                    # 'Thomas Flynn'" told a genealogist the run named someone it
+                    # did not name. Two of the three singular matches are in the
+                    # reply text; the third is in a resolution_rationale.
+                    f"conflicts[{cid}] {field} attaches a certainty marker to "
+                    f"'{name}', "
+                    f"but the record names that informant only under a hedge: "
+                    f"informant is \"{names[name]}\". An undetermined informant "
+                    f"cannot be the ground of a resolution. Quoted: “{span[:200]}”"
+                )
+
+    # The reply text is ONE document, not one per conflict. Scanned inside the
+    # loop above it emitted the same upgrade once per conflict the turn wrote,
+    # under a different conflict id each time -- only one of which was about
+    # that conflict. Latent on today's corpus (ut_002 in
+    # v1_2026-08-18_19-42-11 is the only run writing two conflicts and its
+    # competing assertions carry no hedged name), so the field counts above are
+    # unchanged by this. Scanned once here over the union of every hedged name
+    # the written conflicts contributed; the ids ride in the message, so the
+    # observation stays traceable without being attributed to one conflict it
+    # may not be about.
+    if reply_names:
+        for name, span in _certainty_upgrades(
+            str(text_response or ""), set(reply_names)
+        ):
+            observations.append(
+                f"the reply text attaches a certainty marker to '{name}', "
+                f"but the record names that informant only under a hedge: "
+                f"informant is \"{reply_names[name]}\". An undetermined "
+                f"informant cannot be the ground of a resolution. Conflicts "
+                f"written this turn: {', '.join(written_ids)}. "
+                f"Quoted: “{span[:200]}”"
+            )
+
+    if observations:
+        raise AssertionError("\n".join(observations))
