@@ -9,6 +9,7 @@ plus the cache-discovery walk.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -182,8 +183,9 @@ def test_sdk_key_really_rewrites_the_underscore(tmp_path: Path):
 def test_collect_subagents_ignores_a_near_miss_directory(tmp_path: Path, monkeypatch):
     """A different run's cache must not be picked up.
 
-    Trivial under an exact lookup — this is the regression guard if anyone
-    reintroduces a scan.
+    Note this does NOT guard against a reintroduced scan — the underscore
+    params above are what do that. This pins that a near-miss leaf is not
+    treated as a hit.
     """
     home = tmp_path / "home"
     _seed_cache(home, tmp_path / "e2e-frederick-8fu_3bbk")
@@ -271,7 +273,6 @@ def test_find_session_transcript_matches_when_the_leaf_has_an_underscore(
     (slug_dir / "session-uuid.jsonl").write_text("{}\n", encoding="utf-8")
     monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
-    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
 
     found = _find_session_transcript(workspace)
     assert found is not None, "session transcript lookup missed the cache dir"
@@ -307,3 +308,95 @@ def test_cache_dir_honours_claude_config_dir(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
 
     assert sdk_cache_dir(workspace) is not None
+
+
+def test_cache_dir_found_when_the_cli_keyed_on_an_unresolved_spelling(
+    tmp_path: Path, monkeypatch
+):
+    """The CLI slugs the cwd IT resolved, not the one it was handed.
+
+    Windows is the live case: committed run logs key on
+    `C--Users-KWESIA-1-…` while the home in the same string is
+    `C:\\Users\\KWESI ASANTE`, so the CLI never expanded the 8.3 short name.
+    Python's realpath does, so a resolved-only key misses every time — three
+    operators, eleven logs, all of which capture fine under a leaf match.
+
+    Reproduced here with a symlink, which is the same divergence on a platform
+    CI can actually run. Seeds the cache under the LITERAL spelling and asserts
+    we still find it.
+    """
+    real = tmp_path / "real"
+    real.mkdir()
+    (tmp_path / "link").symlink_to(real)
+    workspace = tmp_path / "link" / "e2e-frederick-abc12345"
+    workspace.mkdir()
+    config = tmp_path / "cfg"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
+
+    literal_key = re.sub(r"[^A-Za-z0-9]", "-", str(workspace))
+    assert literal_key != _key(workspace), "symlink did not produce a divergence"
+    (config / "projects" / literal_key).mkdir(parents=True)
+
+    assert sdk_cache_dir(workspace) is not None
+
+
+def test_cache_dir_falls_back_to_the_leaf_when_no_whole_path_key_matches(
+    tmp_path: Path, monkeypatch
+):
+    """The backstop the issue actually asked for.
+
+    A leaf match cannot care how the parent directories were spelled, which is
+    why it survives cases neither whole-path key covers.
+    """
+    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    config = tmp_path / "cfg"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
+    # A parent spelling neither candidate key can produce.
+    (config / "projects" / "-somewhere-else-entirely-e2e-frederick-8fu-3bbk").mkdir(
+        parents=True
+    )
+
+    assert sdk_cache_dir(workspace) is not None
+
+
+def _seed_raw(tmp_path: Path, monkeypatch, jsonl: bytes, meta: bytes | None = None):
+    """Cache holding one transcript written as raw bytes."""
+    workspace = tmp_path / "e2e-x-abc12345"
+    workspace.mkdir()
+    config = tmp_path / "cfg"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
+    sub = config / "projects" / _key(workspace) / "s" / "subagents"
+    sub.mkdir(parents=True)
+    (sub / "agent-1.jsonl").write_bytes(jsonl)
+    if meta is not None:
+        (sub / "agent-1.meta.json").write_bytes(meta)
+    return workspace
+
+
+_GOOD_TURN = (
+    b'{"type":"assistant","message":{"content":[],"stop_reason":"end_turn"}}\n'
+)
+
+
+@pytest.mark.parametrize(
+    ("name", "jsonl", "meta", "expected"),
+    [
+        ("json_but_not_an_object", b'"a string"\n', None, "matched_no_transcripts"),
+        ("meta_is_not_a_dict", _GOOD_TURN, b"[1,2]", "captured"),
+        ("truncated_utf8_tail", _GOOD_TURN + b"\xe2\x82", None, "captured"),
+        ("healthy_control", _GOOD_TURN, None, "captured"),
+    ],
+)
+def test_a_malformed_transcript_is_recorded_not_raised(
+    tmp_path: Path, monkeypatch, name: str, jsonl: bytes, meta: bytes | None, expected: str
+):
+    """Capture must never raise — it runs before the run log is written.
+
+    `collect_subagents` is called outside any try, so anything raised here costs
+    a completed, paid run its entire log. The truncated-UTF-8 case is the
+    run-killed-mid-generation shape this module's docstring already claimed to
+    tolerate and did not: `read_text`'s guard catches only `OSError`.
+    """
+    workspace = _seed_raw(tmp_path, monkeypatch, jsonl, meta)
+    _, status = collect_subagents(workspace)
+    assert status == expected

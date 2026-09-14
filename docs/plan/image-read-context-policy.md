@@ -172,9 +172,8 @@ Recorded because both would have misdirected an implementer:
 ### Considered and rejected: `subagent_capture.py`
 
 `43ec2480` (#710) added per-subagent capture and looks adjacent, but it is the wrong
-lever: it is **e2e-only**, **best-effort by design** (`collect_subagents` returns `[]`
-on any failure — a missing cache dir is indistinguishable from "the subagent never
-called `image_read`", i.e. it fails **open**), records **tool names only**, and covers
+lever: it is **e2e-only**, **best-effort by design** (`collect_subagents` records a failure
+rather than raising, so it fails **open**), records **tool names only**, and covers
 **subagents only** — it can confirm the reader *did* call `image_read`, never that the
 router *didn't*. It also reads the ephemeral SDK cache, which
 `harness/orchestrator.py:634` `rmtree`s via `cleanup_session_store(workspace)`. The

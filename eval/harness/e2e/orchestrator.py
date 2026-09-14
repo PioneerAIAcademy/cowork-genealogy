@@ -1036,7 +1036,9 @@ def build_workspace(
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
     # freeze the run; lower it here to A/B whether that clears (read the runlog's
-    # `subagents[].runaway_thinking`). Valid: low | medium | high | xhigh | max.
+    # `subagents[].runaway_thinking`; an empty list means read
+    # `subagent_capture_status` before concluding no runaway).
+    # Valid: low | medium | high | xhigh | max.
     if effort_level is not None:
         claude_dir = target / ".claude"
         claude_dir.mkdir(parents=True, exist_ok=True)
@@ -2592,7 +2594,7 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
     The SDK runs Claude Code as a subprocess, which writes a session transcript
-    to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
+    to ``<config-root>/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
     the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
     is otherwise only discoverable by hand. It is strictly richer than the
     runlog's own structured trace: only the JSONL has
@@ -2879,7 +2881,8 @@ async def run_e2e_test(
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)
         # from the SDK's ephemeral cache while `workspace` is still in scope (the
-        # cache lives outside the tempdir, keyed on workspace.name). Best-effort;
+        # cache lives outside the tempdir; see sdk_cache_dir for how it is
+        # located). Best-effort;
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
         subagents, subagent_capture_status = collect_subagents(workspace)

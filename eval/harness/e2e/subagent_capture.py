@@ -4,10 +4,13 @@ An e2e run delegates work to plugin subagents via the Agent tool (e.g. the
 `record-extractor`). Those subagents run in their own SDK sub-session whose
 transcript is written to the *ephemeral* local cache:
 
-    ~/.claude/projects/<cwd-slug>/<session-uuid>/subagents/agent-*.jsonl
-    ~/.claude/projects/<cwd-slug>/<session-uuid>/subagents/agent-*.meta.json
+    <config-root>/projects/<cwd-slug>/<session-uuid>/subagents/agent-*.jsonl
+    <config-root>/projects/<cwd-slug>/<session-uuid>/subagents/agent-*.meta.json
 
-That directory is the temp-workspace-encoded path and is deleted with the
+where <config-root> is CLAUDE_CONFIG_DIR when the operator set it, else
+~/.claude — see `sdk_cache_dir`.
+
+That directory is the temp-workspace-encoded path and outlives the
 workspace. The committed runlog records each tool call with a key-preserving
 `response_summary` (see `orchestrator._summarize_tool_response`; before
 `HARNESS_SCHEMA_VERSION` 2 it head-truncated anything over 500 chars, keeping 497
@@ -42,6 +45,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -96,12 +100,33 @@ def is_runaway_turn(turn: dict[str, Any]) -> bool:
     return len(blocks) > 0 and all(b == "thinking" for b in blocks)
 
 
-def parse_jsonl(path: Path) -> list[dict[str, Any]]:
+def parse_jsonl(path: Path, errors: str = "strict") -> list[dict[str, Any]]:
     """Parse a JSONL transcript. Skips blank / unparseable lines (a run killed
-    mid-generation can leave a truncated final line)."""
+    mid-generation can leave a truncated final line).
+
+    Two things here are load-bearing rather than defensive, because this runs
+    before the run log is written and outside any try — anything raised costs a
+    completed, paid run its whole log:
+
+    - ``errors``. A kill mid-write can end the file inside a multi-byte UTF-8
+      sequence, and a strict decode raises ``UnicodeDecodeError``, which the
+      ``except OSError`` below never sees — the exact shape this docstring
+      claims to tolerate. Capture passes ``"replace"`` so it cannot raise and
+      salvages the good prefix.
+
+      The default stays ``"strict"``, and the ``UnicodeDecodeError`` is
+      deliberately NOT caught here, because ``feedback_transcript_adapter``
+      depends on it being raised: ``UnicodeDecodeError`` is a ``ValueError``,
+      and its ``except (ValueError, OSError)`` is what marks a bundle unreadable
+      and names the owner it excludes. Swallowing it here silently emptied that
+      exclusion. Two callers, opposite needs — so the caller chooses.
+    - The ``isinstance(rec, dict)`` filter. A line can be valid JSON and not an
+      object (``"a string"``), and the return type says ``dict`` — every caller
+      indexes it.
+    """
     records: list[dict[str, Any]] = []
     try:
-        text = path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8", errors=errors)
     except OSError:
         return records
     for line in text.splitlines():
@@ -109,9 +134,11 @@ def parse_jsonl(path: Path) -> list[dict[str, Any]]:
         if not line:
             continue
         try:
-            records.append(json.loads(line))
+            rec = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if isinstance(rec, dict):
+            records.append(rec)
     return records
 
 
@@ -163,24 +190,61 @@ def sdk_cache_dir(workspace: Path) -> Path | None:
     Calling the SDK is what keeps this correct: the CLI computes the same key
     with the same function, so the two cannot drift.
 
+    Tries more than one spelling, because **the CLI slugs the cwd IT resolved,
+    not the one it was handed** — the same fact ``mcp_stderr.py`` records and
+    acts on. ``project_key_for_directory`` realpaths, so on its own it misses
+    wherever the CLI did not:
+
+    - **Windows 8.3 short names.** Committed run logs show the CLI keying on
+      ``C--Users-KWESIA-1-AppData-Local-Temp-…`` while the home in the same
+      string is ``C:\\Users\\KWESI ASANTE``. Python's ``realpath`` expands that,
+      so an exact key built from it never matches. Three operators and eleven
+      logs carry that shape, and they capture successfully under a leaf match —
+      so a resolved-only key would REGRESS the platform this team runs on.
+    - **Symlinked parents** on Linux, and ``/var`` vs ``/private/var`` on macOS.
+
+    So: the resolved key first (authoritative when the CLI did resolve, and the
+    only candidate that carries NFC normalisation), then the literal spelling,
+    then a normalised-leaf scan. The leaf is immune to every path-spelling
+    difference above — which is what the issue asked for and why it stays as the
+    backstop.
+
     Lets ``ImportError`` propagate, deliberately. ``collect_subagents`` already
     wraps this call in ``except Exception`` and records ``error``, so the run log
     survives either way — but swallowing it here would report ``no_cache_dir``
     instead, i.e. "no subagent ran, or the cache was cleaned", for a lookup that
-    is broken. That is the ambiguity this status field exists to remove, and
-    ``harness/workspace.py`` raises on this same import for the same reason.
+    is broken. ``harness/workspace.py`` raises on this same import for the same
+    reason.
     """
     from claude_agent_sdk import project_key_for_directory
 
-    # Honour CLAUDE_CONFIG_DIR exactly as orchestrator.py does when it builds the
-    # agent's environment: the operator's shell sets it, the SDK subprocess
-    # inherits it, and the cache then lives somewhere other than ~/.claude.
+    # Honour CLAUDE_CONFIG_DIR exactly as orchestrator.py:1428 does when it
+    # builds the agent's environment: the operator's shell sets it, the SDK
+    # subprocess inherits it, and the cache then lives outside ~/.claude.
     config_root = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
-    cache = config_root / "projects" / project_key_for_directory(workspace)
-    return cache if cache.is_dir() else None
+    projects = config_root / "projects"
+
+    keys: list[str] = [project_key_for_directory(workspace)]
+    literal = re.sub(r"[^A-Za-z0-9]", "-", str(workspace))
+    if literal not in keys:
+        keys.append(literal)
+    for key in keys:
+        cache = projects / key
+        if cache.is_dir():
+            return cache
+
+    # Backstop: match on the normalised leaf. Unlike a whole-path key this
+    # cannot care how the parent directories were spelled.
+    if not projects.is_dir():
+        return None
+    leaf = re.sub(r"[^A-Za-z0-9]", "-", workspace.name)
+    for d in sorted(projects.iterdir()):
+        if d.is_dir() and d.name.endswith(leaf):
+            return d
+    return None
 
 
-def find_subagent_transcripts(workspace: Path) -> list[tuple[Path, Path | None]]:
+def find_subagent_transcripts(workspace: Path, cache_dir: Path | None = None) -> list[tuple[Path, Path | None]]:
     """Locate this run's subagent transcripts (+ their meta) in the SDK cache.
 
     Subagent transcripts live under
@@ -190,11 +254,18 @@ def find_subagent_transcripts(workspace: Path) -> list[tuple[Path, Path | None]]
     distinguishes them from the parent's ``<session-uuid>.jsonl``. Returns
     (jsonl, meta-or-None) pairs sorted by mtime (oldest first = dispatch order).
     """
-    cache = sdk_cache_dir(workspace)
+    cache = cache_dir if cache_dir is not None else sdk_cache_dir(workspace)
     if cache is None:
         return []
-    jsonls: list[Path] = list(cache.rglob("agent-*.jsonl"))
-    jsonls.sort(key=lambda p: p.stat().st_mtime)
+    # `stat` before parsing means one dangling symlink would take down an
+    # otherwise healthy capture, so missing entries sort last rather than raise.
+    def _mtime(p: Path) -> float:
+        try:
+            return p.stat().st_mtime
+        except OSError:
+            return float("inf")
+
+    jsonls: list[Path] = sorted(cache.rglob("agent-*.jsonl"), key=_mtime)
     pairs: list[tuple[Path, Path | None]] = []
     for jsonl in jsonls:
         meta = jsonl.parent / (jsonl.stem + ".meta.json")
@@ -224,21 +295,29 @@ def collect_subagents(workspace: Path) -> tuple[list[dict[str, Any]], str]:
         Something failed while looking. Recorded, never raised.
     """
     try:
-        if sdk_cache_dir(workspace) is None:
+        cache = sdk_cache_dir(workspace)
+        if cache is None:
             return [], "no_cache_dir"
-        pairs = find_subagent_transcripts(workspace)
+        # Resolved once and passed down: a second lookup could disagree with the
+        # first if the directory vanishes between them, and the status would
+        # then describe a different world than the summaries do.
+        pairs = find_subagent_transcripts(workspace, cache_dir=cache)
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         return [], "error"
     summaries: list[dict[str, Any]] = []
     for jsonl, meta_path in pairs:
-        records = parse_jsonl(jsonl)
+        records = parse_jsonl(jsonl, errors="replace")
         if not records:
             continue
         meta: dict[str, Any] | None = None
         if meta_path is not None:
             try:
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                meta = None
+            if not isinstance(meta, dict):
+                # A non-empty non-dict (`[1, 2]`) survives the falsy check the
+                # summarizer does and then raises on `.get`.
                 meta = None
         summaries.append(
             summarize_transcript(records, meta=meta, transcript_name=jsonl.name)
