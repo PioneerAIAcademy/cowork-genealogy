@@ -175,9 +175,8 @@ Recorded because both would have misdirected an implementer:
 lever: it is **e2e-only**, **best-effort by design** (`collect_subagents` records a failure
 rather than raising, so it fails **open**), records **tool names only**, and covers
 **subagents only** — it can confirm the reader *did* call `image_read`, never that the
-router *didn't*. It also reads the ephemeral SDK cache, which
-`harness/orchestrator.py:634` `rmtree`s via `cleanup_session_store(workspace)`. The
-hook is synchronous, fails **closed**, and works under parallel subagents.
+router *didn't*. The hook is synchronous, fails **closed**, and works under parallel
+subagents.
 
 ## 4. The change — IMPLEMENTED
 

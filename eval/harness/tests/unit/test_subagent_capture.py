@@ -9,7 +9,10 @@ plus the cache-discovery walk.
 from __future__ import annotations
 
 import json
+import os
 import re
+import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -112,6 +115,22 @@ def test_parse_jsonl_skips_blank_and_truncated_lines(tmp_path: Path):
     assert records[0]["message"]["stop_reason"] == "tool_use"
 
 
+@pytest.fixture
+def shortspace():
+    """A SHORT base dir for every test that seeds a fake SDK cache.
+
+    The SDK key embeds the sanitized FULL path, so seeding under pytest's
+    `tmp_path` writes that path twice — once as the parent and once inside the
+    key — which reaches ~289 characters and trips Windows' 260-char MAX_PATH.
+    The seed then dies with an opaque `FileNotFoundError` before any assertion
+    runs, so the tests that prove this fix could not run on the one platform
+    whose 8.3 short names motivated the lookup in the first place.
+    """
+    base = Path(tempfile.mkdtemp(prefix="sc"))
+    yield base
+    shutil.rmtree(base, ignore_errors=True)
+
+
 def _key(workspace: Path) -> str:
     from claude_agent_sdk import project_key_for_directory
 
@@ -153,10 +172,10 @@ def _seed_cache(home: Path, workspace: Path) -> Path:
     ],
 )
 def test_collect_subagents_matches_when_the_leaf_has_an_underscore(
-    tmp_path: Path, monkeypatch, leaf: str
+    shortspace: Path, monkeypatch, leaf: str
 ):
-    home = tmp_path / "home"
-    workspace = tmp_path / leaf
+    home = shortspace / "home"
+    workspace = shortspace / leaf
     _seed_cache(home, workspace)
     monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
@@ -180,19 +199,19 @@ def test_sdk_key_really_rewrites_the_underscore(tmp_path: Path):
     assert "8fu-3bbk" in project_key_for_directory(ws)
 
 
-def test_collect_subagents_ignores_a_near_miss_directory(tmp_path: Path, monkeypatch):
+def test_collect_subagents_ignores_a_near_miss_directory(shortspace: Path, monkeypatch):
     """A different run's cache must not be picked up.
 
     Note this does NOT guard against a reintroduced scan — the underscore
     params above are what do that. This pins that a near-miss leaf is not
     treated as a hit.
     """
-    home = tmp_path / "home"
-    _seed_cache(home, tmp_path / "e2e-frederick-8fu_3bbk")
+    home = shortspace / "home"
+    _seed_cache(home, shortspace / "e2e-frederick-8fu_3bbk")
     monkeypatch.setattr(Path, "home", lambda: home)
     monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
 
-    assert collect_subagents(tmp_path / "e2e-frederick-8fuX3bbk") == ([], "no_cache_dir")
+    assert collect_subagents(shortspace / "e2e-frederick-8fuX3bbk") == ([], "no_cache_dir")
 
 
 def test_sdk_cache_dir_is_none_when_projects_missing(tmp_path: Path, monkeypatch):
@@ -201,11 +220,11 @@ def test_sdk_cache_dir_is_none_when_projects_missing(tmp_path: Path, monkeypatch
     assert sdk_cache_dir(tmp_path / "e2e-x") is None
 
 
-def test_collect_subagents_walks_the_ephemeral_cache(tmp_path: Path, monkeypatch):
+def test_collect_subagents_walks_the_ephemeral_cache(shortspace: Path, monkeypatch):
     # Fake the ~/.claude/projects cache with the real nested layout:
     #   projects/<sanitized-full-realpath>/<uuid>/subagents/agent-*.jsonl
-    home = tmp_path / "home"
-    workspace = tmp_path / "e2e-frederick-abc123"
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc123"
     slug_dir = home / ".claude" / "projects" / _key(workspace)
     subagents = slug_dir / "session-uuid" / "subagents"
     subagents.mkdir(parents=True)
@@ -235,7 +254,7 @@ def test_collect_subagents_empty_when_no_cache(tmp_path: Path, monkeypatch):
 
 
 def test_status_distinguishes_a_resolved_dir_with_no_usable_transcript(
-    tmp_path: Path, monkeypatch
+    shortspace: Path, monkeypatch
 ):
     """The value that `[]` used to hide.
 
@@ -243,8 +262,8 @@ def test_status_distinguishes_a_resolved_dir_with_no_usable_transcript(
     the run-killed-mid-generation shape. Before #2468 this was indistinguishable
     from "no subagents ran".
     """
-    home = tmp_path / "home"
-    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-8fu_3bbk"
     subagents = (
         home / ".claude" / "projects" / _key(workspace) / "session-uuid" / "subagents"
     )
@@ -257,7 +276,7 @@ def test_status_distinguishes_a_resolved_dir_with_no_usable_transcript(
 
 
 def test_find_session_transcript_matches_when_the_leaf_has_an_underscore(
-    tmp_path: Path, monkeypatch
+    shortspace: Path, monkeypatch
 ):
     """The mirror of the capture case, for the run's own session JSONL.
 
@@ -266,8 +285,8 @@ def test_find_session_transcript_matches_when_the_leaf_has_an_underscore(
     """
     from e2e.orchestrator import _find_session_transcript
 
-    home = tmp_path / "home"
-    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-8fu_3bbk"
     slug_dir = home / ".claude" / "projects" / _key(workspace)
     slug_dir.mkdir(parents=True)
     (slug_dir / "session-uuid.jsonl").write_text("{}\n", encoding="utf-8")
@@ -295,21 +314,24 @@ def test_status_is_error_when_the_lookup_itself_fails(tmp_path: Path, monkeypatc
     assert collect_subagents(tmp_path / "e2e-x") == ([], "error")
 
 
-def test_cache_dir_honours_claude_config_dir(tmp_path: Path, monkeypatch):
+def test_cache_dir_honours_claude_config_dir(shortspace: Path, monkeypatch):
     """The operator's shell can move the cache; the SDK subprocess inherits it.
 
     Hardcoding ~/.claude makes every run on such a machine report
     `no_cache_dir` — a silent 100% miss, the same shape as the bug this fixes.
     """
-    config = tmp_path / "elsewhere"
-    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    config = shortspace / "elsewhere"
+    workspace = shortspace / "e2e-frederick-8fu_3bbk"
     (config / "projects" / _key(workspace)).mkdir(parents=True)
-    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home-with-no-cache")
+    monkeypatch.setattr(Path, "home", lambda: shortspace / "home-with-no-cache")
     monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
 
     assert sdk_cache_dir(workspace) is not None
 
 
+@pytest.mark.skipif(
+    os.name == "nt", reason="symlink creation needs a privilege on Windows"
+)
 def test_cache_dir_found_when_the_cli_keyed_on_an_unresolved_spelling(
     tmp_path: Path, monkeypatch
 ):
@@ -388,7 +410,7 @@ _GOOD_TURN = (
     ],
 )
 def test_a_malformed_transcript_is_recorded_not_raised(
-    tmp_path: Path, monkeypatch, name: str, jsonl: bytes, meta: bytes | None, expected: str
+    shortspace: Path, monkeypatch, name: str, jsonl: bytes, meta: bytes | None, expected: str
 ):
     """Capture must never raise — it runs before the run log is written.
 
@@ -397,6 +419,6 @@ def test_a_malformed_transcript_is_recorded_not_raised(
     run-killed-mid-generation shape this module's docstring already claimed to
     tolerate and did not: `read_text`'s guard catches only `OSError`.
     """
-    workspace = _seed_raw(tmp_path, monkeypatch, jsonl, meta)
+    workspace = _seed_raw(shortspace, monkeypatch, jsonl, meta)
     _, status = collect_subagents(workspace)
     assert status == expected
