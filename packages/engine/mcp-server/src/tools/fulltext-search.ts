@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -174,7 +175,8 @@ function echoQuery(input: FulltextSearchInput): Record<string, string | number |
 }
 
 export async function fulltextSearchTool(
-  input: FulltextSearchInput
+  input: FulltextSearchInput,
+  principal: Principal
 ): Promise<FulltextSearchResponse> {
   validateInput(input);
 
@@ -183,7 +185,7 @@ export async function fulltextSearchTool(
   // and stageSearchResults must both see the caller's original input.name.
   const expansion = input.name ? expandNameForFulltext(input.name) : null;
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const url = buildUrl(input, expansion?.expanded);
 
   const headers: Record<string, string> = {

@@ -7,6 +7,7 @@
  * Usage:
  *   npx tsx dev/probe-image-read-ark-resolver.ts <ark>
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 
@@ -16,7 +17,7 @@ async function main() {
     console.error("Usage: npx tsx dev/probe-image-read-ark-resolver.ts <ark>");
     process.exit(1);
   }
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   const url = ark.startsWith("http")
     ? ark
     : `https://www.familysearch.org/${ark.replace(/^ark:\//, "ark:/")}`;

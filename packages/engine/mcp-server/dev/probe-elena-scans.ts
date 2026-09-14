@@ -14,6 +14,7 @@
  *   npx tsx dev/probe-elena-scans.ts /tmp/scans 004523018_00049 004523018_00050
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { resolveFsImageInput, fetchFsImageBytes } from "../src/utils/fs-image-fetch.js";
@@ -28,7 +29,7 @@ mkdirSync(outDir, { recursive: true });
 for (const imageId of imageIds) {
   try {
     const { url, fallbackUrl } = resolveFsImageInput({ imageId }, "probe-elena-scans");
-    const fetched = await fetchFsImageBytes(url, fallbackUrl);
+    const fetched = await fetchFsImageBytes(url, fallbackUrl, LOCAL);
     const path = join(outDir, `${imageId}.jpg`);
     writeFileSync(path, fetched.bytes);
     console.log(

@@ -17,8 +17,7 @@
 // on any later failure, exactly mirroring the single-call path's existing
 // orphan-cleanup behavior, just extended to a list.
 
-import { join } from "path";
-import { unlink } from "fs/promises";
+import { getProjectStore } from "../store/project-store.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -181,7 +180,7 @@ function nextLogId(log: any[]): string {
  *  orphan sidecar survives a call that ultimately writes nothing. */
 async function cleanupSidecars(projectPath: string, resultsRefs: string[]): Promise<void> {
   for (const ref of resultsRefs) {
-    await unlink(join(projectPath, ref)).catch(() => {});
+    await getProjectStore().remove(projectPath, ref);
   }
 }
 
@@ -432,7 +431,7 @@ export async function researchLogAppend(
         await cleanupSidecars(projectPath, sidecarsCreated);
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await atomicWriteJson(join(projectPath, "research.json"), research);
+      await atomicWriteJson(projectPath, "research.json", research);
       const persistWarn = logWithoutPersistenceWarning(research);
       return {
         ok: true,
@@ -482,7 +481,7 @@ export async function researchLogAppend(
       await cleanupSidecars(projectPath, sidecarsCreated);
       return { ok: false, errors: formatIssues(validation.errors) };
     }
-    await atomicWriteJson(join(projectPath, "research.json"), research);
+    await atomicWriteJson(projectPath, "research.json", research);
 
     const persistWarn = logWithoutPersistenceWarning(research);
     return {

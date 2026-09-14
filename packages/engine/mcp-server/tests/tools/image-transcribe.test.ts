@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, readFile } from "fs/promises";
 import { tmpdir } from "os";
@@ -106,7 +107,7 @@ describe("imageTranscribeTool — request + happy path", () => {
   it("POSTs the image to OpenRouter with the OCR prompt, model, temperature 0, and data_collection deny", async () => {
     mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
 
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -143,7 +144,7 @@ describe("imageTranscribeTool — request + happy path", () => {
       const result = await imageTranscribeTool({
         imageId: "004884748_02613",
         projectPath: dir,
-      });
+      }, LOCAL);
       expect(result.imageRef).toBe("images/004884748_02613.jpg");
       const saved = await readFile(join(dir, "images", "004884748_02613.jpg"));
       expect(saved.length).toBe(3); // the 3 mocked fetch bytes
@@ -154,7 +155,7 @@ describe("imageTranscribeTool — request + happy path", () => {
 
   it("omits imageRef when projectPath is not given", async () => {
     mockOpenRouterOk("Johann Schreck");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.imageRef).toBeUndefined();
   });
 
@@ -162,7 +163,7 @@ describe("imageTranscribeTool — request + happy path", () => {
     mockOpenRouterOk("some text");
     const result = await imageTranscribeTool({
       ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M",
-    });
+    }, LOCAL);
     expect(result.metadata.ark).toBe("ark:/61903/3:1:3Q9M-CSNL-S98H-M");
     expect(result.metadata.imageId).toBeUndefined();
   });
@@ -182,11 +183,12 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
     const url =
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=112&cc=1858355&groupId=1858355";
 
-    await imageTranscribeTool({ ark: url });
+    await imageTranscribeTool({ ark: url }, LOCAL);
 
     expect(fetchFsImageBytesMock.mock.calls[0]).toEqual([
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X",
+      LOCAL,
     ]);
   });
 });
@@ -197,7 +199,7 @@ describe("imageTranscribeTool — lookingFor", () => {
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
-    });
+    }, LOCAL);
     expect(result.found).toBe("FOUND");
     expect(result.transcription).toContain("Schreck family");
   });
@@ -207,7 +209,7 @@ describe("imageTranscribeTool — lookingFor", () => {
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
-    });
+    }, LOCAL);
     expect(result.found).toBe("NOT FOUND");
   });
 
@@ -216,7 +218,7 @@ describe("imageTranscribeTool — lookingFor", () => {
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
-    });
+    }, LOCAL);
     expect(result.found).toBeUndefined();
   });
 });
@@ -224,7 +226,7 @@ describe("imageTranscribeTool — lookingFor", () => {
 describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", () => {
   it("flags a finish_reason=length read as truncated with a tool-voiced notice", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: partway down the pag", "length");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
     // The transcription stays verbatim — the notice is a sibling field, never
@@ -235,7 +237,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
 
   it("does not flag a finish_reason=stop read as truncated", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBeUndefined();
     expect(result.truncationNotice).toBeUndefined();
   });
@@ -245,14 +247,14 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
-    });
+    }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.found).toBeUndefined();
   });
 
   it("sends an explicit max_tokens so the cap is ours and reproducible", async () => {
     mockOpenRouterOk("Row 1: Anna");
-    await imageTranscribeTool({ imageId: "004884748_02613" });
+    await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(init.body as string);
     expect(body.max_tokens).toBe(16000);
@@ -262,14 +264,14 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // Top-level finish_reason is "stop"; the cap shows up as the provider's
     // native "MAX_TOKENS". Detection must still flag it.
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "stop", "MAX_TOKENS");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
   });
 
   it("catches a native_finish_reason=length even when top-level is stop", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "stop", "length");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBe(true);
   });
 
@@ -277,17 +279,17 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // A model reachable via the openRouterModel override may spell the marker
     // differently or set it on the top-level field. Both must still be caught.
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut", "stop", "max_tokens");
-    const lower = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const lower = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(lower.truncated).toBe(true);
 
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut", "MAX_TOKENS");
-    const topCap = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const topCap = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(topCap.truncated).toBe(true);
   });
 
   it("does not flag when neither field marks a cap, even with a native stop reason present", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family", "stop", "STOP");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBeUndefined();
   });
 
@@ -295,7 +297,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // The type allows string | null; OpenRouter can send null. null !== any
     // marker, so this must read as a complete, non-truncated success.
     mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family", null);
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     expect(result.truncated).toBeUndefined();
     expect(result.found).toBeUndefined();
   });
@@ -307,7 +309,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
-    });
+    }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.found).toBeUndefined();
   });
@@ -319,27 +321,27 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     // learns a budget bound, not an unreadable scan.
     mockOpenRouterOk("", "length", "MAX_TOKENS");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/output-token limit/i);
   });
 
   it("still throws the plain empty error when content is empty and no cap fired", async () => {
     mockOpenRouterOk("", "stop");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/empty transcription/i);
   });
 
   it("throws the empty error on an empty choices array (@yinkid28)", async () => {
     mockOpenRouterRaw({ choices: [] });
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/empty transcription/i);
   });
 
   it("truncationNotice pins the safety meaning: remainder UNREAD/not-blank and no absence inference (not just the keyword)", async () => {
     mockOpenRouterOk("Row 1: Anna\nRow 2: cut off", "length");
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
     const notice = result.truncationNotice ?? "";
     // Required claims.
     expect(notice).toMatch(/unread/i);
@@ -360,7 +362,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
       mockOpenRouterRaw({
         choices: [{ message: { content: "Row 1: Anna" }, finish_reason: bad }],
       });
-      const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+      const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
       expect(result.truncated).toBeUndefined();
       expect(result.transcription).toBe("Row 1: Anna");
     }
@@ -375,7 +377,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
       )
     );
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/No OpenRouter API key/);
     expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
@@ -384,7 +386,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
   it("maps a 401 to a re-configure instruction", async () => {
     mockOpenRouterStatus(401);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/rejected \(401\)/);
   });
 
@@ -392,7 +394,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
     mockOpenRouterStatus(401);
     const message = await imageTranscribeTool({
       imageId: "004884748_02613",
-    }).then(
+    }, LOCAL).then(
       () => "",
       (e: unknown) => (e instanceof Error ? e.message : String(e))
     );
@@ -406,7 +408,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
   it("maps a 402 to an out-of-credits message", async () => {
     mockOpenRouterStatus(402);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/out of credits \(402\)/);
   });
 });
@@ -415,14 +417,14 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
   it("throws a clean error on a non-2xx response", async () => {
     mockOpenRouterStatus(500, "upstream boom");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/OpenRouter OCR failed: 500/);
   });
 
   it("throws a friendly error when OpenRouter is unreachable", async () => {
     mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter/);
   });
 
@@ -434,7 +436,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     mockFetch.mockRejectedValueOnce(new TypeError("fetch failed"));
     mockOpenRouterOk("Anno 1762, Henckelstorp");
 
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
 
     expect(result.transcription).toBe("Anno 1762, Henckelstorp");
     expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -443,7 +445,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
   it("retries at most once, and says so when the retry also fails", async () => {
     mockFetch.mockRejectedValue(new TypeError("fetch failed"));
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter \(2 attempts\)/);
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
@@ -457,7 +459,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     mockFetch.mockRejectedValue(timeout);
 
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/timed out after 180000ms/);
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
@@ -473,7 +475,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     // the classification this carries is lost exactly when it is needed.
     mockFetch.mockRejectedValue(fetchFailed);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter.*ECONNRESET/s);
   });
 
@@ -486,21 +488,21 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
     const fetchFailed = Object.assign(new TypeError("fetch failed"), { cause });
     mockFetch.mockRejectedValue(fetchFailed);
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/Could not reach OpenRouter.*ENOTFOUND/s);
   });
 
   it("throws rather than fabricate on empty OCR content", async () => {
     mockOpenRouterOk("   ");
     await expect(
-      imageTranscribeTool({ imageId: "004884748_02613" })
+      imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL)
     ).rejects.toThrow(/empty transcription/i);
   });
 });
 
 describe("imageTranscribeTool — input validation", () => {
   it("rejects when neither imageId nor ark is given (before any fetch)", async () => {
-    await expect(imageTranscribeTool({})).rejects.toThrow(
+    await expect(imageTranscribeTool({}, LOCAL)).rejects.toThrow(
       /image_transcribe requires either imageId or ark/
     );
     expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
@@ -512,7 +514,7 @@ describe("imageTranscribeTool — input validation", () => {
       imageTranscribeTool({
         imageId: "004884748_02613",
         ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M",
-      })
+      }, LOCAL)
     ).rejects.toThrow(/either imageId or ark, not both/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -537,7 +539,7 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
   it("does not attach browseBudget for the first 20 distinct images in one group/project", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 20; i++) {
-      const result = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      const result = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
       expect(result.browseBudget).toBeUndefined();
     }
   });
@@ -545,9 +547,9 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
   it("attaches browseBudget on the 21st distinct image, naming the count, group, and pivot actions", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 20; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
-    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" });
+    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" }, LOCAL);
 
     expect(result.browseBudget).toBeDefined();
     expect(result.browseBudget?.imageGroup).toBe(GROUP);
@@ -567,9 +569,9 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     const dir = await mkdtemp(join(tmpdir(), "imgt-budget-"));
     try {
       for (let i = 1; i <= 20; i++) {
-        await imageTranscribeTool({ imageId: img(i), projectPath: dir });
+        await imageTranscribeTool({ imageId: img(i), projectPath: dir }, LOCAL);
       }
-      const result = await imageTranscribeTool({ imageId: img(21), projectPath: dir });
+      const result = await imageTranscribeTool({ imageId: img(21), projectPath: dir }, LOCAL);
 
       expect(result.browseBudget?.distinctImagesRead).toBe(21);
       // Everything else is exactly the un-noticed path's output.
@@ -594,9 +596,9 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
     for (let i = 1; i <= 20; i++) mockOpenRouterOk("page text", "stop");
     mockOpenRouterOk("page 21, cut off", "length");
     for (let i = 1; i <= 20; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
-    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" });
+    const result = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.truncationNotice).toMatch(/INCOMPLETE/i);
     expect(result.browseBudget?.distinctImagesRead).toBe(21);
@@ -606,33 +608,33 @@ describe("imageTranscribeTool — browse budget (#1081, spec §5.8)", () => {
   it("does not carry the budget to a different image group in the same process", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 21; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
-    const other = await imageTranscribeTool({ imageId: "999999999_00001", projectPath: "/p" });
+    const other = await imageTranscribeTool({ imageId: "999999999_00001", projectPath: "/p" }, LOCAL);
     expect(other.browseBudget).toBeUndefined();
   });
 
   it("keys by project: the same group under a different projectPath starts fresh", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 21; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p1" });
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p1" }, LOCAL);
     }
-    const p2 = await imageTranscribeTool({ imageId: img(1), projectPath: "/p2" });
+    const p2 = await imageTranscribeTool({ imageId: img(1), projectPath: "/p2" }, LOCAL);
     expect(p2.browseBudget).toBeUndefined();
   });
 
   it("does not advance the count when an already-read image is re-read", async () => {
     mockOcrAlwaysOk();
     for (let i = 1; i <= 20; i++) {
-      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
     }
     // Re-read all 20 — the set does not grow, so still no notice.
     for (let i = 1; i <= 20; i++) {
-      const r = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" });
+      const r = await imageTranscribeTool({ imageId: img(i), projectPath: "/p" }, LOCAL);
       expect(r.browseBudget).toBeUndefined();
     }
     // The 21st DISTINCT image trips it at exactly 21, proving re-reads did not inflate.
-    const r21 = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" });
+    const r21 = await imageTranscribeTool({ imageId: img(21), projectPath: "/p" }, LOCAL);
     expect(r21.browseBudget?.distinctImagesRead).toBe(21);
   });
 });
@@ -644,7 +646,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Elizabeth Martin",
-    });
+    }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     const prompt: string = body.messages[0].content[0].text;
@@ -660,7 +662,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Patrick Flynn",
-    });
+    }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     const prompt: string = body.messages[0].content[0].text;
@@ -675,7 +677,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Elizabeth Martin",
-    });
+    }, LOCAL);
 
     expect(result.found).toBe("FOUND");
   });
@@ -683,7 +685,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("leaves the prompt unchanged when lookingFor is absent", async () => {
     mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
 
-    await imageTranscribeTool({ imageId: "004884748_02613" });
+    await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     const prompt: string = body.messages[0].content[0].text;
@@ -697,7 +699,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Elizabeth Martin",
-    });
+    }, LOCAL);
 
     expect(result.nameExpansion).toBeDefined();
     expect(result.nameExpansion!.original).toBe("Elizabeth Martin");
@@ -711,7 +713,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     const result = await imageTranscribeTool({
       imageId: "004884748_02613",
       lookingFor: "Patrick Flynn",
-    });
+    }, LOCAL);
 
     expect(result.nameExpansion).toBeUndefined();
   });
@@ -719,7 +721,7 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   it("omits nameExpansion when lookingFor is absent", async () => {
     mockOpenRouterOk("Johann Schreck, b. 1801, Bayern");
 
-    const result = await imageTranscribeTool({ imageId: "004884748_02613" });
+    const result = await imageTranscribeTool({ imageId: "004884748_02613" }, LOCAL);
 
     expect(result.nameExpansion).toBeUndefined();
   });

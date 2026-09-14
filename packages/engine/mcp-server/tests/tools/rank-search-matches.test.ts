@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
@@ -170,7 +171,7 @@ describe("rank_search_matches", () => {
     scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
     const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
 
-    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
 
     expect(out.subjectEnrichedFacts).toBe(2);
     const sentSubject = scorePairMock.mock.calls[0][2] as any;
@@ -205,7 +206,7 @@ describe("rank_search_matches", () => {
     scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
     const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
 
-    await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+    await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
 
     const sentSubject = scorePairMock.mock.calls[0][2] as any;
     const facts = sentSubject.persons[0].facts ?? [];
@@ -221,7 +222,7 @@ describe("rank_search_matches", () => {
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2" }),
     ]);
 
-    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
 
     // Empty ON PURPOSE — a ranked-looking list here would be search order.
     expect(out.matches).toEqual([]);
@@ -241,7 +242,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.subjectResolvable).toBe(false);
     expect(out.diagnostic).toMatch(/real negative/);
@@ -258,7 +259,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.subjectEnrichedFacts).toBeUndefined();
     expect(out.matches).toHaveLength(1);
@@ -272,7 +273,7 @@ describe("rank_search_matches", () => {
     (rich as any).events = [{ type: "Census", date: "1900", place: "Jackson, TN" }];
     const ref = await stage([thin, rich]);
 
-    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID });
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID }, LOCAL);
 
     const byId = Object.fromEntries(out.matches.map((m) => [m.recordId, m.candidateFactCount]));
     expect(byId["ark:/61903/1:1:AAAA-AA1"]).toBe(0);
@@ -302,7 +303,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.subjectId).toBe(SUBJECT_ID);
     expect(out.scoredCount).toBe(4);
@@ -342,7 +343,7 @@ describe("rank_search_matches", () => {
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
       top: 2,
-    });
+    }, LOCAL);
 
     expect(out.scoredCount).toBe(3);
     expect(out.returnedCount).toBe(2);
@@ -372,7 +373,7 @@ describe("rank_search_matches", () => {
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
       top: 1, // only 1 returned, but all 3 must be logged
-    });
+    }, LOCAL);
 
     expect(out.returnedCount).toBe(1);
 
@@ -412,7 +413,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.scoreLogError).toBeTruthy();
     expect(typeof out.scoreLogError).toBe("string");
@@ -438,7 +439,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.scoredCount).toBe(2);
     expect(out.scoringErrors).toBe(1);
@@ -461,7 +462,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.scoringErrors).toBe(0);
     expect(out.scoredCount).toBe(2);
@@ -484,7 +485,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.subjectResolvable).toBe(false);
   });
@@ -500,7 +501,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.subjectResolvable).toBeUndefined();
   });
@@ -521,7 +522,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: rel,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out).toMatchObject({ scoredCount: 0, returnedCount: 0, matches: [] });
     expect(out.scoreLogError).toBeNull();
@@ -539,7 +540,7 @@ describe("rank_search_matches", () => {
         projectPath: dir,
         stagedResultsRef: "../evil.json",
         subjectId: SUBJECT_ID,
-      }),
+      }, LOCAL),
     ).rejects.toThrow(/escapes the project directory/);
   });
 
@@ -550,7 +551,7 @@ describe("rank_search_matches", () => {
         projectPath: dir,
         stagedResultsRef: "notresults/x.json",
         subjectId: SUBJECT_ID,
-      }),
+      }, LOCAL),
     ).rejects.toThrow(/must be a staged handle/);
   });
 
@@ -561,7 +562,7 @@ describe("rank_search_matches", () => {
         projectPath: dir,
         stagedResultsRef: `${STAGING_SUBDIR}/missing.json`,
         subjectId: SUBJECT_ID,
-      }),
+      }, LOCAL),
     ).rejects.toThrow(/does not exist or is invalid JSON/);
   });
 
@@ -576,7 +577,7 @@ describe("rank_search_matches", () => {
         projectPath: dir,
         stagedResultsRef: rel,
         subjectId: SUBJECT_ID,
-      }),
+      }, LOCAL),
     ).rejects.toThrow(/no payload\.results array/);
   });
 
@@ -590,7 +591,7 @@ describe("rank_search_matches", () => {
         projectPath: dir,
         stagedResultsRef: ref,
         subjectId: "NOPE-XYZ",
-      }),
+      }, LOCAL),
     ).rejects.toThrow(/NOPE-XYZ/);
   });
 
@@ -612,7 +613,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: handle.resultsRef,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     // Still on disk after the read-only rank call.
     await expect(access(join(dir, handle.resultsRef))).resolves.toBeUndefined();
@@ -651,7 +652,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: rel,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.scoredCount).toBe(1);
     expect(out.matches[0].recordId).toBe("ark:/61903/1:1:AAAA-AA1");
@@ -679,7 +680,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.matches[0].relativeTerms).toEqual({
       father: { status: "absent" },
@@ -706,7 +707,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.matches[0].batchNumber).toBe("M01048-5");
   });
@@ -724,7 +725,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect("batchNumber" in out.matches[0]).toBe(false);
   });
@@ -752,7 +753,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.relativeTermNote).toContain("2 name no father");
     expect(out.relativeTermNote).toContain("not evidence of them");
@@ -781,7 +782,7 @@ describe("rank_search_matches", () => {
     });
     const ref = await stage(rows);
 
-    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" });
+    const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
 
     expect(out.matches).toEqual([]);
     expect(out.returnedCount).toBe(0);
@@ -806,7 +807,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.relativeTermNote).toBeUndefined();
   });
@@ -822,7 +823,7 @@ describe("rank_search_matches", () => {
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
-    });
+    }, LOCAL);
 
     expect(out.matches[0].relativeTerms).toBeUndefined();
   });

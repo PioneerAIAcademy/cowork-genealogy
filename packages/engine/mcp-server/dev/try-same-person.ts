@@ -9,6 +9,7 @@
  * Usage:
  *   npx tsx dev/try-same-person.ts
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { samePerson } from "../src/tools/same-person.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 
@@ -97,6 +98,6 @@ const result = await samePerson({
   primaryId1: "I1",
   gedcomx2,
   primaryId2: "I1",
-});
+}, LOCAL);
 
 console.log(JSON.stringify(result, null, 2));

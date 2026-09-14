@@ -1,3 +1,4 @@
+import { LOCAL } from "../src/auth/principal.js";
 import { wikiPlacePageTool } from "../src/tools/wiki-place-page.js";
 import type { WikiPageSection } from "../src/types/wikiPage.js";
 
@@ -27,7 +28,7 @@ if (!VALID.includes(section)) {
   process.exit(1);
 }
 
-const result = await wikiPlacePageTool({ standardPlace, section });
+const result = await wikiPlacePageTool({ standardPlace, section }, LOCAL);
 console.log(`Place: ${result.placeName}`);
 console.log(`Section: ${section}`);
 console.log(`URL: ${result.url}`);
