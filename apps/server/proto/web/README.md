@@ -46,7 +46,7 @@ and drops the one the 202's `seq` names; everything else relays.
 
 ## Running it
 
-- **Self-contained** (`make proto-drive`) — **the mode this was verified in.**
+- **Self-contained** (`make proto-drive`) — **the mode the 17/17 acceptance ran in.**
   `drive.py --embedded-pg` starts a pip-installed PostgreSQL 16 (`pgserver`, in the
   `proto` dependency group — never installed by `uv sync` or CI; wheels exist for macOS
   arm64/x86_64 and Linux x86_64, **not** Linux aarch64), applies the schema and runs the
@@ -54,11 +54,14 @@ and drops the one the 202's `seq` names; everything else relays.
 - **Compose** (`make proto-up`): the `web` service on `127.0.0.1:8085`, `QUEUE_URL` pointed
   at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies
   `../sql/*.sql` (all idempotent), so a volume that predates `003_web.sql` gets its
-  columns without a `make proto-down`. **Unverified where this was written** — no Docker
-  on that machine, and no CI job runs any proto compose target — so the service and its
-  Dockerfile have been pinned by shape tests only. The first `make proto-up` on a Docker
-  machine is the check; then `make proto-drive BASE=http://localhost:8085` (worker mode:
-  the D3 stub answers the turn). `make proto-smoke` no longer waits on this service.
+  columns without a `make proto-down`. **Verified on a Docker machine 2026-09-14** (in
+  review; no CI job runs any proto compose target, so this stays a hand check): the image
+  builds and the service comes up healthy, `make proto-smoke` passes 14/14 through the new
+  `proto-up-core`, dropping the three columns from a live volume and restarting `proto-web`
+  puts them back, and a turn round-trips POST → `SendMessage` → shim → worker →
+  `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
+  in worker mode — it proves the tier, not the resume, since the D3 stub's turn ends inside
+  stream A (the driver says so in its own table).
 - **From the venv** (`make proto-web`): the same tier via `uvicorn --app-dir proto
   web.app:app` against the compose postgres (`:5434`) and elasticmq (`:9324`).
 

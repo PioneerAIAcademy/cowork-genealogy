@@ -306,7 +306,6 @@ def run(base: str, dsn: str | None, mode: str, text: str, deadline_s: float = ST
 
     # Stream A: read CUT_AFTER id-frames, then drop the connection. A short turn (a real
     # worker's, or the stub's single turn_done) ends A early instead of hanging it.
-    active_at_open = client.get(f"/api/sessions/{sid}/events?after=0").json()["turn_active"]
     t0 = time.monotonic()
     try:
         stream(client, f"/api/sessions/{sid}/events/stream?after=0", {}, a,
@@ -354,15 +353,25 @@ def run(base: str, dsn: str | None, mode: str, text: str, deadline_s: float = ST
     catch_up = [i for i, x in enumerate(a.order) if isinstance(x, int) and x <= user_seq]
     short_turn = len(a.ids) < CUT_AFTER and _turn_done_for(turn_id, a.data_by_seq.values())
     checks += [
-        ("A: status turn_active arrived, after the catch-up rows" if active_at_open
-         else "A: no turn_active status (the turn had completed before A opened)",
-         (status_at is not None and all(i < status_at for i in catch_up)) if active_at_open else status_at is None,
+        # Decided from `mode`, never from a pre-read of turn_active: the stub's turn can
+        # finish between such a read and the stream opening, and the check would then
+        # assert the wrong branch. In seed mode the turn runs ~25 s, so the strong
+        # assertion binds there.
+        ("A: status turn_active arrived, after the catch-up rows" if mode == "seed"
+         else "A: any turn_active status came after the catch-up rows (a stub turn can finish first)",
+         all(i < status_at for i in catch_up) if status_at is not None else mode != "seed",
          f"order={a.order[:6]}"),
         (f"A: cut after {CUT_AFTER} id-frames, ids strictly increasing" if not short_turn
          else f"A: the turn ended after {len(a.ids)} id-frames, ids strictly increasing",
          (len(a.ids) == CUT_AFTER or short_turn) and increasing(a.ids), f"ids={a.ids}"),
         ("every id equals its data seq", all(a.data_by_seq[i]["seq"] == i for i in a.ids) and all(b.data_by_seq[i]["seq"] == i for i in b.ids), ""),
-        ("B: resumed at A's last seq + 1 (header beat ?after=0)", bool(b.ids) and b.ids[0] == a_last + 1, f"first={b.ids[:1]} expected {a_last + 1}"),
+        # Against the D3 stub the whole turn is two events and ends inside A, so B has
+        # nothing to resume: that mode proves the tier, not the resume. Say so rather
+        # than relax the check; a real worker's long turn brings the strong form back.
+        ("B: resumed at A's last seq + 1 (header beat ?after=0)" if not short_turn
+         else "B: resume not exercised — the turn ended inside A (--embedded-pg is the resume check)",
+         (bool(b.ids) and b.ids[0] == a_last + 1) if not short_turn else True,
+         f"first={b.ids[:1]} expected {a_last + 1}"),
         ("B: ids strictly increasing", increasing(b.ids), f"ids={b.ids[:5]}..."),
         ("A ∩ B is empty", not (set(a.ids) & set(b.ids)), f"overlap={sorted(set(a.ids) & set(b.ids))}"),
         (f"A ∪ B == GET /events, dense 1..{n}", union == set(truth_by_seq) == set(range(1, n + 1)) and n >= 2,

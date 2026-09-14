@@ -1141,8 +1141,11 @@ without whichever Bedrock refuses.
   compares A ∪ B against `GET /events` exactly. **Measured 2026-09-14, `make proto-drive`
   (pgserver + the tier in-process, no Docker): 17/17 — 42 events dense, A ∩ B empty, B
   resumed at 9, one ping, activity and document frames without ids, turn closed.** The
-  compose path (`web` service, `make proto-up`) is pinned by shape tests only; Docker was
-  not available where this was built. `--worker` runs the same checks against a real
+  compose path (`web` service, `make proto-up`) was verified in review on a Docker machine
+  2026-09-14: the image builds and comes up healthy, `make proto-smoke` passes 14/14
+  through `proto-up-core`, `003_web.sql` applies to a pre-existing volume, and a turn
+  round-trips POST → queue → shim → worker → `turn_done` → SSE. No CI job runs any proto
+  compose target, so it stays a hand check. `--worker` runs the same checks against a real
   worker for D17.
 - **D14** Kill-resume test **against the mock agent**, not a real fixture. Twenty
   debug iterations on a real run is $147 and 18 hours; the mock is ~90 s and free,
