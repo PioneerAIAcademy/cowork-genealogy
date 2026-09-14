@@ -186,13 +186,6 @@ tell the user this belongs to **search-records** (it finds new records; this
 skill only evaluates records already gathered) and stop. Only proceed below
 when the request is about evaluating or linking records already in hand.
 
-**Guard — competing candidates (route to conflict-resolution):** If the request
-describes or implies **two or more competing candidates for the same record role**
-("is this person A or person B?", "I'm not sure whether this is [X] or [Y]",
-"two people match this record", "which of these persons is this?") — this is
-**conflict-resolution**, not person-evidence. Do **not** create or modify any
-`pe_` entries. Tell the user this belongs to **conflict-resolution** and stop.
-
 **Linking mode (default):** The user wants new `person_evidence`
 entries — to link unlinked assertions to persons, process roles in a
 multi-person record, or add a missing other-side link. Triggers
@@ -209,12 +202,6 @@ include: "is the confidence on pe_NNN appropriate?",
 "review/confirm this identity link", "is pe_NNN still warranted?",
 "audit pe_NNN", "audit the person_evidence entries". In this mode:
 
-- **NO WRITES. Do not call `research_append`, `tree_edit`, or
-  `materialize_facts` — not for any reason, not even to improve a
-  thin rationale.** Your entire output in this mode is text in your
-  response. If an update is warranted, write the improved text in your
-  response and stop. The user must explicitly say "yes, make that
-  change" before you call any write tool.
 - Read the named `pe_` entry (or the entries the user pointed to),
   its assertion(s), its person(s), and the immediate corroborating
   context (other pe entries for the same assertion or person; the
@@ -223,15 +210,24 @@ include: "is the confidence on pe_NNN appropriate?",
   match threshold policy, rationale quality, multi-attribute
   corroboration. Look for daylight between the recorded confidence
   and what the evidence actually supports.
+- **Produce a written analysis only.** Do NOT write to `research.json`
+  or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
+  modify the entry under review (not its `confidence`, not its
+  `rationale`, not any other field). No writes are made in this mode,
+  so no persistence call is needed.
 - If the review **confirms** the existing entry: state that, citing
   the specific attributes that support the recorded confidence. If the
   existing `rationale` text is thin or generic — missing specific
   identifying attributes such as name match details, age, location, or
   competing-candidate reasoning — write an improved rationale **as text
-  in your response**, then stop and ask the user to authorize the update.
+  in your response**, then stop and ask the user to authorize the update
+  before calling `research_append`. Do **not** call `research_append` to
+  make the change until the user says yes.
 - If the review **surfaces a concern** (calibration off, rationale
   thin, link should be superseded, etc.): describe the concern and
-  the corrective action you'd recommend, then stop. Do not act.
+  the corrective action you'd recommend, then **stop and ask the user
+  to authorize the action** before doing it. Don't expand scope from a
+  review request into a write.
 
 The two modes are mutually exclusive for a single invocation. If a
 review legitimately reveals that *new* linking work is needed — a
@@ -502,27 +498,6 @@ reach and tree-edit to execute.
 
 ### 4. Create person_evidence entries
 
-**Pre-link gate — run for EVERY pe_ entry before writing it:**
-
-1. **`record_persona_id` non-null?** → the persona is in the search sidecar.
-   Call `same_person` now, before writing this entry. Do not skip even if
-   the qualitative match is obvious.
-2. **Assertion came from `record_read`?** → call `record_read` again to
-   fetch the GedcomX, find the persona in `persons[]` for this role, then
-   call `same_person`. A null `record_persona_id` does not exempt you from
-   this — that field only records whether a search sidecar was kept.
-3. **Candidate is an existing tree person (not a stub you are minting right
-   now)?** → `same_person` is mandatory. Do not skip because the expected
-   score is low or the match seems clear from correlation alone.
-4. **Circular case (minting from the persona you would be scoring)?** →
-   `match_score` null, stated in rationale. This is the ONLY allowed skip.
-5. **Chronological conflict?** → Before writing `confidence`, check whether
-   the record's birth or christening date and the tree person's birth year
-   differ by more than a few years in a way that cannot describe the same
-   birth event (e.g. an Irish Catholic baptism follows birth within days,
-   so a 13-year gap = different events). If so, cap `confidence` at
-   `speculative` and name the contradiction explicitly in the rationale.
-
 Persist all assertion → person links in ONE batched `research_append({
 ops: [...] })` call — one `append` op per assertion-person pair (still one
 `pe_` entry per pair; batching changes the call count, not the links).
@@ -536,16 +511,21 @@ than retrying blindly.
 - `assertion_id`: The `a_` ID of the assertion being linked
 - `person_id`: The GedcomX person ID in tree.gedcomx.json
 - `confidence`: `confident`, `probable`, or `speculative` — governed
-  by the match threshold policy (Step 3) and the pre-link gate above
-  (chronological conflict → `speculative` at most). This field measures
-  **identity certainty**: how sure we are that this record's role IS the
-  tree person. It is NOT a measure of the source's informant quality. A
-  death certificate with a primary informant present at the event is a
-  high-quality source, but if it is the only source linking this record to
-  this tree person it is still `probable` on the identity scale, not
-  `confident`. Do not cite `information_quality` or `informant_proximity`
-  as the basis for this tier; cite corroboration of identity, name match,
-  location, and the absence of contradicting evidence instead.
+  by the match threshold policy (Step 3). This field measures **identity
+  certainty**: how sure we are that this record's role IS the tree person.
+  It is NOT a measure of the source's informant quality. A death certificate
+  with a primary informant present at the event is a high-quality source,
+  but if it is the only source linking this record to this tree person it is
+  still `probable` on the identity scale, not `confident`. Do not cite
+  `information_quality` or `informant_proximity` as the basis for this
+  tier; cite corroboration of identity, name match, location, and the
+  absence of contradicting evidence instead.
+  **Chronological contradiction cap:** when a record's birth or christening
+  date and the tree person's birth year differ by more than a few years and
+  cannot describe the same birth event (e.g. an Irish Catholic baptism
+  follows birth within days, so a 13-year gap means different people), the
+  link is `speculative` at most. Note the contradiction explicitly in the
+  rationale — do not absorb it silently into a higher tier.
 - `rationale`: WHY this assertion's record_role is believed to be
   this person. Must include the specific evidence that supports the
   identification: name match, age compatibility, location match,
@@ -557,17 +537,17 @@ than retrying blindly.
   any link where no score was obtained (an input to Step 3, not the
   verdict).
 
-**Relationship edges — gate before calling `tree_edit add_relationship`:**
-Ask yourself: is this record a **household record** — a census, or a probate
-with co-enumerated members living together? If **NO**, do not call
-`tree_edit add_relationship`. Baptisms, marriage registers, and wills
-naming a parentage assertion are NOT household records.
+**Relationship edges — write vs. defer:**
 - **Household record** (census, probate with co-enumerated household
   members): after writing `pe_` links, write the parent-child and couple
   edges via `tree_edit add_relationship` (step 7.4).
-- **Non-household record** (baptism, marriage register, will's parentage
-  assertion): write `pe_` links for both parties, then **stop**. Do NOT
-  call `tree_edit add_relationship`. The edge belongs to proof-conclusion.
+- **Non-household relationship record** (a baptism naming a parent, a
+  marriage register, a will's parentage/relationship assertion for a
+  person already in the tree): write `pe_` links for **both** parties the
+  assertion names, then **stop — do NOT call `tree_edit add_relationship`
+  for the relationship edge**. The edge is written by proof-conclusion →
+  tree-edit once identity is concluded. The `pe_` entries are the
+  complete deliverable here.
 
 **Materialize each linked persona onto its person.** Once the `pe_` links
 land, write the persona's assertions onto the tree person as sourced facts and
@@ -721,20 +701,14 @@ hands a merge set to proof-conclusion to fold. For a household record:
    head/spouse among existing tree persons by name + place +
    relationship position, allowing transcription and name variants. If
    **no household parent is in the tree**, surface that gap plainly and
-   do **not** fabricate a parent to anchor the household on. The
+   do **not** fabricate a parent to anchor the household on. If a person
+   who is **expected** in the household (e.g. a known spouse or child
+   from the tree) is **absent from the record**, flag that absence as an
+   identity question — it may indicate a death, separation, enumeration
+   elsewhere, or a different person entirely. The
    `matchRelatives` triples from step 2.4 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
    step 3.
-
-   **Required: compare tree family against the record roster.** After
-   identifying the household head in the tree, look up their known spouses
-   and children in `tree.gedcomx.json`. For each tree-family member
-   (spouse, child) who is **absent from the record roster**: investigate
-   why. A spouse with no death fact and no separation evidence who is
-   missing from a census the head leads is an **open research question** —
-   flag it explicitly in your response. Do not silently accept the record
-   roster as complete just because no assertion covers that person. This
-   check is mandatory for every household record.
 2. **Dry-run `merge_warnings` as the coherence gate — before any write
    (when a candidate record document is available).**
    If you have the `candidateGedcomx` from a prior `record_read` call,
