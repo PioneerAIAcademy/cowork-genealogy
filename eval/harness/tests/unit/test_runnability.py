@@ -290,6 +290,48 @@ def test_exclusivity_gate_is_inert_without_an_actual_overlap(execution):
     assert _stub_check(execution).runnable is True
 
 
+def _check_with(tags, execution):
+    d = _runnable_test_dict()
+    d["test"]["tags"] = tags
+    d["execution"] = execution
+    return check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+
+
+@pytest.mark.parametrize(
+    "execution",
+    [{}, {"stub_skills": []}, {"max_turns": 20}],
+    ids=["no-execution", "empty-stub-list", "no-stub-key"],
+)
+def test_blocks_grade_trigger_without_stubbed_callees(execution):
+    """grade:trigger (issue #2156) grades a positive test on activation alone,
+    with the judge dimensions diagnostic. That is sound only when the delegated
+    sub-skills are stubbed — an outcome score would otherwise measure the stub,
+    not the skill. Tagged but stubbing nothing, the callees run for real and the
+    tag silences the judge's gate over that real execution: a vacuous pass, the
+    same failure mode as grade_on_invariant. It must be refused at load time."""
+    result = _check_with(["grade:trigger"], execution)
+    assert result.runnable is False
+    assert "grade:trigger" in result.reason
+    assert "stub_skills" in result.reason
+
+
+def test_allows_grade_trigger_with_stubbed_callees():
+    """The four shipped grade:trigger fixtures all stub their callees, so this
+    is the positive control for that population."""
+    result = _check_with(["grade:trigger"], {"stub_skills": ["record-extraction"]})
+    assert result.runnable is True
+
+
+def test_grade_trigger_gate_is_inert_without_the_tag():
+    """The other direction: an ordinary positive test with no stubs is still
+    runnable — the empty-stub refusal fires only for grade:trigger, not for
+    every stubless positive test."""
+    assert _check_with([], {}).runnable is True
+
+
 def _invariant_test_dict(tags):
     d = _runnable_test_dict()
     d["test"]["type"] = "negative"

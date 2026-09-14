@@ -1,20 +1,17 @@
 ---
 name: research
 description: >-
-  Drives the full GPS research workflow on a research objective, invoking the
-  right sub-skills in the right order based on current research.json state.
-  Iterates from question selection through proof conclusion until all
-  questions are resolved. Use when the user says "research [objective]",
-  "/research [question]", "find [relative]", "investigate [person]", "answer
-  this research question", or wants to hand off a full research objective
-  without driving each step themselves. Especially useful for beginners who
-  don't yet know which sub-skill to invoke. Also the entry point for
-  autonomous runs — when the user message contains `--autonomous`, proceed
-  without pausing for clarifying questions and use best judgment for decisions
-  that would normally prompt the user. Do NOT use when the user wants to drive
-  a specific step directly (use question-selection, research-plan,
-  search-records, etc.), wants only a status summary (use project-status), or
-  when no research.json exists yet (use init-project first).
+  Full GPS research orchestrator — the default choice whenever a user wants
+  genealogy research driven forward. Use for: the `/research` command, 'find
+  [relative] of [person]', 'research [person or question]', 'investigate
+  [person]', 'drive the workflow forward', 'answer this research question', any
+  message with `--autonomous`, or any open-ended research goal that needs
+  multiple steps (question selection, planning, searching, extraction, proof
+  conclusion). Choose this over any sub-skill when the user states an objective
+  rather than a specific action. Do NOT use when the user explicitly targets one
+  step only (search-records, research-plan, question-selection, etc.), wants
+  only a status summary (project-status), or has no project yet (init-project
+  first).
 allowed-tools:
   - validate_research_schema
   - research_query

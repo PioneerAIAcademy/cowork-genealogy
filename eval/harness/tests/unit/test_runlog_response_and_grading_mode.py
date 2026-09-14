@@ -175,6 +175,7 @@ def test_grading_mode_matches_what_compute_outcome_does():
     """
     cases = [
         _spec(type="positive"),
+        _spec(type="positive", tags=["grade:trigger"]),
         _spec(type="negative", negative={"grade_on_invariant": True}),
         _spec(type="negative", negative={"correct_skill": []}),
         _spec(type="negative", negative={"correct_skill": ["research-plan"]}),
@@ -210,6 +211,57 @@ def test_grading_mode_matches_what_compute_outcome_does():
                 f"{mode}: dimensions_gate_outcome=False but a dimension scored 1 "
                 f"changed the outcome {clean!r} -> {failed!r}"
             )
+
+
+def test_every_grading_mode_is_accepted_by_the_runlog_schema():
+    """Every value grading_mode_for() can return must be in the run-log schema's
+    grading_mode enum — in BOTH schema trees.
+
+    This is the guard the 2026-09-13 paid `research` run was missing: the code
+    returned `trigger` but the schema enum omitted it, so the harness aborted
+    while writing the run log (issue #2156). Reads the enum from the actual
+    schema data rather than restating it here, and checks the docs tree and the
+    packages/schema mirror so they cannot drift apart.
+    """
+    import json
+    from pathlib import Path
+
+    produced = set()
+    for spec in (
+        _spec(type="positive"),
+        _spec(type="positive", tags=["grade:trigger"]),
+        _spec(type="negative", negative={"grade_on_invariant": True}),
+        _spec(type="negative", negative={"correct_skill": []}),
+        _spec(type="negative", negative={"correct_skill": ["research-plan"]}),
+    ):
+        produced.add(grading_mode_for(spec)[0])
+    assert "trigger" in produced, "sanity: grade:trigger must produce the 'trigger' mode"
+
+    def _grading_mode_enums(node):
+        """Every enum declared for a `grading_mode` property, found anywhere in
+        the schema (robust to the exact nesting)."""
+        out = []
+        if isinstance(node, dict):
+            for key, val in node.items():
+                if key == "grading_mode" and isinstance(val, dict) and "enum" in val:
+                    out.append(set(val["enum"]))
+                out.extend(_grading_mode_enums(val))
+        elif isinstance(node, list):
+            for item in node:
+                out.extend(_grading_mode_enums(item))
+        return out
+
+    repo = Path(__file__).resolve().parents[4]
+    for schema_path in (
+        repo / "docs/specs/schemas/run-log.schema.json",
+        repo / "packages/schema/schemas/run-log.schema.json",
+    ):
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        enums = _grading_mode_enums(schema)
+        assert enums, f"{schema_path}: no grading_mode enum found in schema"
+        for enum in enums:
+            missing = produced - enum
+            assert not missing, f"{schema_path}: grading_mode enum missing {sorted(missing)}"
 
 
 def test_the_entry_carries_the_two_fields():
