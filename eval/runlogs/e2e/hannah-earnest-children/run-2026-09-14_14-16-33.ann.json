@@ -6,6 +6,7 @@
   "notes": {
     "f1": "Lydia Grice present as I1, daughter of Edwin (R15) and Hannah (R16), with christening F1 = 8 Aug 1878 West Bromwich citing S1 (QL3R-C5SR — the Staffordshire Church Records entry). Parent-child relationships correctly cite S1 (christening), fixing the citation-hygiene issue flagged in prior runs. Birth fact F5 records ~1879 from census back-calculation; the fixture README confirms this is correct behaviour — the exact day '10 July' is unattested. Two census records (S2 1881, S3 1891) independently corroborate household membership. Zero conflicts declared or unresolved. PQ 3: direct christening evidence + two independent corroborating censuses, no conflicts, correct source citations throughout."
   },
+  "compliance": "FAIL — research-exhaustiveness and proof-conclusion GPS guardrail skills were not invoked via the Skill tool. The agent narrated routing to these skills but called no Skill tool for either; the exhaustiveness declaration and proof summary were written directly via MCP tool calls. Zero Skill-tool hits confirmed by session.jsonl search.",
   "annotator": "mercyokum",
   "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145"
 }
