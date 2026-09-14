@@ -450,3 +450,38 @@ def test_a_name_prefix_change_is_not_authorized():
             tool_calls=_EXTRACTION_CALL,
         )
     assert "persons" in str(e.value)
+
+
+def test_a_stubbed_run_skips_tree_ownership():
+    """Mirrors the research-side skip (#2156 ruling). `research` carries 10
+    stubbed positive tests, owns no tree section, and stubs `person-evidence`
+    and `proof-conclusion` which own `persons` -- so without this the caller's
+    write is attributed to `research` and the check measures the stub."""
+    with pytest.raises(BaseException) as exc:
+        check_tree(
+            tree(),
+            tree(persons=entry("I1")),
+            {"name": "research"},
+            {"type": "positive", "execution": {"stub_skills": ["person-evidence"]}},
+        )
+    assert exc.typename == "Skipped"
+
+
+def test_an_UNSTUBBED_run_still_checks_tree_ownership():
+    """The other direction, written so a SKIP counts as a FAILURE.
+
+    `pytest.raises(AssertionError)` cannot express this. A `pytest.skip` inside
+    the validator raises `Skipped`, which is a BaseException pytest reports as a
+    skipped test, not a failed one -- so widening the skip to every run left the
+    `raises` form green while silently standing the whole check down. Measured:
+    that break turned 21 tests into skips and the suite still reported 0 failed.
+    """
+    outcome = "the check did not run at all (passed)"
+    try:
+        check_tree(tree(), tree(persons=entry("I1")), {"name": "research"}, POSITIVE)
+    except AssertionError as exc:
+        assert "persons" in str(exc)
+        outcome = "refused"
+    except BaseException as exc:  # noqa: BLE001 -- Skipped is a BaseException
+        outcome = f"{type(exc).__name__}: {exc}"
+    assert outcome == "refused", f"ownership was not enforced on an unstubbed run: {outcome}"

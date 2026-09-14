@@ -968,11 +968,26 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     Skipped on negative tests for the same reason as test_ownership_table
     — a routed-to skill's legitimate writes would otherwise be
     misattributed to the skill under test.
+
+    Skipped on stubbed runs for the same reason again, and on the same ruling
+    (#2156, 2026-09-09, re-affirmed by the lead 2026-09-14), which that sibling
+    records as policy "decided here, not re-decided there". It reached the
+    research half first and this half second, only because the two landed in
+    different PRs. The gap it leaves is not hypothetical: `research` carries 10
+    stubbed positive tests and owns no tree section, while its stub list includes
+    `person-evidence` and `proof-conclusion`, which own `persons` and
+    `relationships` — so the caller's write is attributed to `research` and the
+    check measures the stub.
     """
     if test.get("type") == "negative":
         pytest.skip(
             "ownership is not checked on negative tests — writes belong "
             "to the routed-to skill, not the skill under test"
+        )
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — a denied callee cannot write, so ownership measures "
+            "the stub/caller, not the skill under test"
         )
 
     before = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
