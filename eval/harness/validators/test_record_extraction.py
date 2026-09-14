@@ -391,7 +391,8 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
     # "1870 census: born in Ohio" carries the enumeration year, `search` takes
     # the FIRST year it finds, and no structured field states 1870 — so a
     # doctrine-correct run with its birth year properly on a sibling got
-    # flagged. Since a validator failure suppresses the judge, that false
+    # flagged. Since a validator failure fails the test outright and drops its
+    # scores from aggregated_dimensions, that false
     # positive costs the test's entire grade. Year-matching only ever bought
     # the contrived "sibling states the wrong year" case, which occurs nowhere
     # in the corpus; extra years in a human-readable label are common. Fewer
@@ -458,7 +459,8 @@ def test_birth_place_value_has_no_embedded_year(before_state, after_state):
 #     Mary, Mother of Sorrows      (a devotional name)
 #
 # All three fired under the first version of this rule (caught in review), and a
-# false positive is expensive: a failing validator suppresses the judge, so it
+# false positive is expensive: a failing validator fails the test outright and
+# drops its scores from aggregated_dimensions, so it
 # costs the test's whole grade, not one dimension. Scoping to brackets removes
 # them and is what makes the wider vocabulary below safe.
 #
