@@ -141,12 +141,19 @@ export async function recordReadTool(
   // standard_place the record's own `normalized` value supplies and never falls
   // back to the resolver; toSimplifiedStandardized would additionally resolve any
   // free-text place NAME the record left un-normalized, and the resolver
-  // mis-places ambiguous names (observed 2026-07-08: "Southampton, NY" ->
-  // "Southampton, England"; "Rochdale, England" -> "Rochdale, South Africa").
-  // How often a recapi record response carries a `normalized` place is what
-  // dev/probe-record-read-places.ts measures; either way, we never resolver-fill
-  // it here. Records reached via the search sidecar already carry the search
-  // stage's standardized place.
+  // mis-places ambiguous names. Ruled to stay this way on a live re-probe
+  // (issue #1908 Phase 2, Option 4, decided 2026-09-12). Do not flip it on the
+  // two cross-country examples that motivated the original rule (observed
+  // 2026-07-08: "Southampton, NY" -> "Southampton, England"; "Rochdale, England"
+  // -> "Rochdale, South Africa") — neither was among the re-probe's 28
+  // observations, but the run surfaced an intra-country mis-resolution that
+  // countryConsistency cannot detect: "Eye Town" -> "Eye, Suffolk", where the
+  // same record's fully-qualified fact reads Northamptonshire. 0 of the 28
+  // carried a `normalized` place at all, so the live path filled no
+  // standard_place for any probed record. Measurement and rationale:
+  // docs/record-read-sidecar-scope.md; re-measure with
+  // dev/probe-record-read-places.ts. Records reached via the search sidecar
+  // already carry the search stage's standardized place.
   return toSimplified(body);
 }
 
