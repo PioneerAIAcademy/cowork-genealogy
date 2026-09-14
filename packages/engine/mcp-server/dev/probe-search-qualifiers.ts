@@ -5891,8 +5891,8 @@ async function sectionJ(): Promise<void> {
  *
  * METHOD. A top-N comparison cannot tell ABSENT from OUTRANKED, which has
  * already invalidated one probe in this file (section E). So every leg here is
- * a SET comparison on one hard-scoped pool small enough to read in a single
- * page. `count` is capped at 100 by the endpoint — asking for 200 returns a 400
+ * a SET comparison on one hard-scoped pool, ENUMERATED with `scanIds` rather
+ * than sampled. `count` is capped at 100 by the endpoint — asking for 200 returns a 400
  * and ZERO rows, and a set comparison over two empty arrays reports "identical"
  * for free. That is why `readPool` returns null on an errored OR EMPTY read and
  * every verdict below falls to NOT MEASURED rather than to agreement.
@@ -5900,9 +5900,11 @@ async function sectionJ(): Promise<void> {
 async function sectionK(): Promise<void> {
   console.log("\n=== K. particle surnames: does quoting matter, does the particle? ===");
 
-  // Hard-scoped: one given name, one country, a ten-year window. 558 rows at
-  // the time of writing, so a 100-row page is a real sample of it rather than
-  // the head of a ranking over millions.
+  // Hard-scoped: one given name, one country, a ten-year window. ~558 rows at
+  // the time of writing, which is small enough to ENUMERATE -- the point of the
+  // scoping -- rather than to sample. An earlier version of this comment called
+  // a 100-row page "a real sample", and that reasoning is what produced the
+  // wrong answer about `Linde`.
   const POOL =
     "q.givenName=Marinus&f.recordCountry=Netherlands" +
     "&q.birthLikeDate.from=1800&q.birthLikeDate.to=1810";

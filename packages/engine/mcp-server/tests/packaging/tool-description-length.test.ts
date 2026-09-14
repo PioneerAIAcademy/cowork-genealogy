@@ -24,8 +24,8 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * read the paragraph above as a standing claim.
  *
  * #2071 then added the particle-surname clause to BOTH `surname` descriptions
- * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,406), combined
- * 20,278. Same direction again, and for the same reason: the clause records a
+ * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,292), combined
+ * 20,164. Same direction again, and for the same reason: the clause records a
  * measured result (section K) that a model would otherwise guess at.
  *
  * The ruling on #1323 was to name
@@ -141,7 +141,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
   ["record_search", 14872],
-  ["person_search", 5406],
+  ["person_search", 5292],
 ];
 
 /**
