@@ -44,9 +44,67 @@ ones, and "outside Backlog" is never the test for anything**, because it counts
 them too. **Feedback is none of the three** — it is an untriaged inbox that
 `/triage-feedback` owns and this skill never reads.
 
-**Re-read the board immediately before you apply anything.** The lead edits it
-while you work, so a snapshot taken at the start of a long analysis is stale by
-the end of it.
+**Verify the items you are about to move, immediately before you move them.**
+The lead edits the board while you work, so a snapshot taken at the start of a
+long analysis is stale by the end of it. That means re-reading *those items* —
+not re-listing all ~1200. Check each one with a single-node query, which is
+cheap and, unlike `item-list`, keeps working when the ProjectsV2 quota is
+exhausted:
+
+```sh
+gh api graphql -f query='query{node(id:"PVTI_..."){... on ProjectV2Item{
+  fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}
+  content{... on Issue{number state
+    assignees(first:10){nodes{login}}
+    labels(first:30){nodes{name}}}}}}}'
+```
+
+**It has to return `assignees` and `labels`, not Status alone.** This skill
+promotes unassigned items and holds unassigned pool depths, so a self-assignment
+landing between your snapshot and the move is exactly what should stop it — and
+it is the most common mid-run change on this board. A Status-only check cannot
+see it, where the full re-list this replaces could.
+
+**Budget full `item-list` passes to two per run** — one to rank, one before the
+first write. One pass reads ~1200 items and costs ~1,300 points of a 5,000/hour
+GraphQL budget, so the fourth is already over the line and six in one run
+exhausted it mid-apply. Take the first at the top of § 1 "Measure Ready depth"
+and cache it — every board read in that section, in § 3 "The four gates" and in
+§ 6 "Above the junior pools" comes out of this file, not a fresh call:
+
+```sh
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+```
+
+Take the second when you rebuild the slot map before the first write (Gate 4),
+overwriting the same file. After those two, apply the moves you have made to the
+cached snapshot yourself and verify per item.
+
+**Read the budget live before a pass; `gh api rate_limit` cannot see it.**
+
+```sh
+gh api graphql -f query='query{rateLimit{remaining resetAt}}'   # costs 1 point
+```
+
+Measured 2026-09-14, seconds apart in one session: the GraphQL field read
+`remaining: 4994, used: 6` while `gh api rate_limit` read its `graphql` bucket as
+`5000/5000, used: 0`. The REST `reset` is blind the same way — sitting at
+`used: 0` it reported a full untouched hour, now + 60 min, while the real window
+had 53 left. So a wait computed from it overshoots by however long the real
+window has already been running. `rateLimit{resetAt}` is the true end, and the
+window opens on the first point you spend, not on the refusal.
+
+The single-node query above and `item-list --limit 1` cost **1 point each**
+(measured the same session), which is why both stay available when a full pass
+will not run.
+
+When the quota does trip: `gh issue view`/`edit` route through GraphQL and die
+with it, but REST has its own budget — `gh api repos/OWNER/REPO/issues/N` to
+read, `-X POST .../issues/N/labels -f 'labels[]=name'` to label. Column moves
+have no REST equivalent; poll `item-list --limit 1` until it succeeds — same
+endpoint, one row, so it answers the same question at a fraction of the cost —
+rather than sleeping to a reset timestamp. And never chain writes with `&&` — a
+mid-chain trip leaves an issue body edited and its labels not.
 
 Two labels carry the routing:
 
@@ -128,15 +186,18 @@ today, and one lane can be short of eligible senior items through no fault of
 the ranking. Report the mix; do not swap a card out to hit a number.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 \
-  | jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0
+# The first of the two budgeted `item-list` passes (§ 0 "Board facts"). Everything
+# downstream reads this file; do not fetch the board again until the rebuild.
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0
       and ((.labels|index("cross-cutting"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
                      senior: map(select((index("developer")) and index("senior")))|length,
                      high_priority: map(select((index("developer")) and index("high-priority")))|length },
         genealogist: { total: map(select(index("genealogist")))|length,
                        senior: map(select((index("genealogist")) and index("senior")))|length,
-                       high_priority: map(select((index("genealogist")) and index("high-priority")))|length } }'
+                       high_priority: map(select((index("genealogist")) and index("high-priority")))|length } }' \
+  /tmp/board.json
 ```
 
 **Report the `high-priority` share of each pool from the same numbers** —
@@ -531,7 +592,7 @@ lines, so it is only ever as good as they are — a missing line means an item
 simply does not appear.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+# /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -641,7 +702,9 @@ every open PR (the only input here that is not self-reported), and the `**Touche
 line of every open issue in **Ready, In Progress or Review** — not Review and PRs alone.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+# Ranking pass: reuse /tmp/board.json from § 1 "Measure Ready depth".
+# Pre-write rebuild: refresh it first — that is the second budgeted pass.
+#   gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -702,8 +765,9 @@ un-startable.
 win.** Discount a `Touches:` line inherited from an issue since closed `not planned`.
 
 **The map is a snapshot.** It is right for the pass that produced it and stale by the next
-one — re-run it before you write anything to the board, and tell a junior to re-check the
-slot before opening a PR rather than trusting a table in an issue body.
+one — rebuild it before you write anything to the board (this is the second of the
+two budgeted `item-list` passes in § 0 "Board facts"), and tell a junior to re-check
+the slot before opening a PR rather than trusting a table in an issue body.
 
 **This map only sees snapshot paths, and that is correct — but it is not the whole
 collision picture.** `build_snapshot` deliberately excludes
@@ -789,7 +853,8 @@ gh project item-edit --id "$ITEM_ID" --project-id "$PROJ_ID" \
   --field-id "$STATUS_FIELD" --single-select-option-id "f75ad846"
 ```
 
-Verify with a fresh `gh project item-list`. New issues land in Backlog via an
+Verify with a single-node query per moved item (§ 0 "Board facts"), not a fresh
+full `item-list`. New issues land in Backlog via an
 auto-add workflow that sets nothing else — a freshly filed issue that belongs in
 Ready still needs this move. (A raw feedback submission is the exception: the
 same workflow files it into the Feedback column, where `/triage-feedback` moves
@@ -960,10 +1025,11 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
                  | test("(?m)^#{1,4} +(Ruling|Decision)\\b|\\*\\*(Ruling|Decision)\\b")] | any)
              then "ANSWERED" else "WAITING" end) as $s
       | "\(.updatedAt[0:10])\t\($s)\t#\(.number)\t\(.title)"' | sort
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 \
-  | jq -r '.items[] | select((.labels|index("senior"))
+# /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
+jq -r '.items[] | select((.labels|index("senior"))
       and (.status|IN("Backlog","Ready","In Progress","Review")))
-    | "\(.status)\t\(if (.assignees|length)==0 then "unassigned" else "assigned" end)\t#\(.content.number)\t\([.labels[]|select(.=="reviewed" or .=="needs-decision" or .=="icebox")]|join(","))"' | sort
+    | "\(.status)\t\(if (.assignees|length)==0 then "unassigned" else "assigned" end)\t#\(.content.number)\t\([.labels[]|select(.=="reviewed" or .=="needs-decision" or .=="icebox")]|join(","))"' \
+  /tmp/board.json | sort
 ```
 
 Report each separately — they have different remedies:
@@ -1172,5 +1238,5 @@ list it does not appear in. Add state when it matters.
    the heading when every slot is free.
 7. **Grooming** — capped, with verdicts.
 
-Then stop and wait for approval. Apply only what he approves, re-reading the
-board first. Do not begin any of the work.
+Then stop and wait for approval. Apply only what he approves, verifying each
+item you move first (§ 0 "Board facts"). Do not begin any of the work.
