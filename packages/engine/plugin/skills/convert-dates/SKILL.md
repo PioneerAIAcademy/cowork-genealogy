@@ -106,14 +106,31 @@ always preserve both the original and converted forms.
 place the record names and it identifies which calendar was in force, where
 the civil year began, and whether the correction you asked for applies.
 
+**Decide whether a conversion is in play before you call.** The tool answers
+a calendar question; it is not how you find out whether there is one. Where a
+record post-dates its own jurisdiction's transition by a wide margin, there is
+no question: say the date already stands in the modern calendar and stop, with
+no call. Calling to confirm a non-question spends a turn and presents a
+conversion nobody asked for.
+
+Judge that margin per jurisdiction, not by century: some jurisdictions stayed
+Julian well into the twentieth century, so a late date is not by itself past
+its transition. When the margin is not plainly wide — the record sits near a
+transition, or you are not certain where that jurisdiction's transition falls
+— call, and let the tool answer. Calling needlessly costs a turn; skipping a
+call that was needed produces a wrong date, so resolve doubt by calling.
+
 - Pass the place as the record gives it (`England`, `Gelderland`, `Sweden`,
   `Scotland`). Case and punctuation do not matter. An unrecognized place
   returns an error listing what it accepts — read that list, do not guess.
 - A place is a jurisdiction, not a town: pass `Russia`, not `Moscow`.
 - Where the tool says a correction does not apply, report that. It means the
   date was already on the calendar asked about — not that conversion failed.
-- Do not state an adoption date, an offset, or a year-start from memory. Ask
-  the tool and quote what it returns.
+- Do not state an adoption date, an offset, or a year-start **as a fact in
+  your answer** from memory — those come from the tool, quoted as returned.
+  Rough knowledge is for deciding whether to call at all; where you did not
+  call, say the date needs no conversion without asserting a precise date or
+  offset for the transition.
 - Omit `jurisdiction` only when the record names no place, and then say in
   your answer that the conversion assumes a regime you could not confirm.
 
