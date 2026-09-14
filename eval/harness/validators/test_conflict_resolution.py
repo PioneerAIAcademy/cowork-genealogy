@@ -954,6 +954,17 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
         # cannot tell whether the upgrade was real.
         names: dict[str, str] = {}
         for aid in _competing_ids(c):
+            # Entries inside the list are as unconstrained as the container
+            # was: the built validator reports NO error for [{'id': 'a_002'}]
+            # or [['a_002']] (controls -- a 1-element list and null -- both
+            # DO error, so the check is live), and only the LENGTH is
+            # constrained. A dict or list key raises `TypeError: unhashable
+            # type`, and a crash in a report_* is not an observation: it is
+            # withheld `reporting_only`, counts as a gating failure, and the
+            # judge does not run for that test. V2 and V3 both survive this
+            # input; V4 was the only one that went down.
+            if not isinstance(aid, str):
+                continue
             a = informants.get(aid)
             if not a:
                 continue

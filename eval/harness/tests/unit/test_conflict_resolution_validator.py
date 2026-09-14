@@ -1895,6 +1895,14 @@ def test_v4_population_is_prose_authored_not_v6s_analysis_set():
         42,               # int: iterating raises TypeError -- a CRASH, which gates
         {"a_002": 1},     # dict: iterates KEYS, so it reports iff they match ids
         "a_002",          # bare string: iterates CHARACTERS -- silently wrong, never raises
+        # ELEMENT shapes, not container shapes. The container rows above are
+        # handled by `_competing_ids`; these reach the loop body, where an
+        # unhashable key raises. The schema constrains only the LENGTH of this
+        # list -- a list of objects and a list of lists each validate with no
+        # error about the field, while a 1-element list and `null` both DO
+        # error, so that check is live rather than vacuously silent.
+        [{"id": "a_002"}, {"id": "a_003"}],  # list of objects: unhashable dict key
+        [["a_002"], ["a_003"]],              # list of lists: unhashable list key
     ],
 )
 def test_v4_a_non_list_competing_assertion_ids_neither_raises_nor_misreports(competing):
