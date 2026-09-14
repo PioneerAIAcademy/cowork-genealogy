@@ -600,7 +600,7 @@ function applyNamedPartyOp(
   // this whole arm exists to remove. Measured over eval/**/research.json: 90
   // personas carry no positive `name` assertion, and 61 of those 90 also carry
   // a fact this tool would materialize (the largest shape is
-  // [birth, death, relationship], 34 of them). Those 57 are why the pass below
+  // [birth, death, relationship], 34 of them). Those 61 are why the pass below
   // exists: letting them through here without it would drop the very facts the
   // record does state about them.
   //
@@ -690,7 +690,8 @@ function applyNamedPartyOp(
   // wife Mary Smith" gives the husband's — so asserting BirthName would source a
   // claim to a record that never made it, which is the failure this tool exists
   // to prevent. The caller names the type when the record supports one (a bride
-  // in a marriage register is giving her maiden name); otherwise the field is
+  // in a FIRST marriage is giving her maiden name; a remarrying widow is giving
+  // her late husband's, and a register rarely says which); otherwise the field is
   // omitted, which the tree schema allows and most of the corpus does.
   const { namesAdded, refsAttached } = upsertName(
     tree, person, given, surname, ref, str(op.nameType),
@@ -1136,7 +1137,9 @@ export const materializeFactsSchema = {
         type: "string",
         description:
           "NAMED-PARTY form, optional: the name's type — \"BirthName\" when the record gives " +
-          "her own/maiden surname (a bride in a marriage register), \"MarriedName\" when it " +
+          "her own/maiden surname (a bride in a FIRST marriage; a remarrying widow is " +
+          "giving her late husband's surname, so omit the type unless the register " +
+          "settles it), \"MarriedName\" when it " +
           "gives a married one (\"survived by his wife Mary Smith\" gives the husband's " +
           "surname). OMIT IT when the record does not settle which; the field is optional and " +
           "no type is a smaller claim than the wrong type.",

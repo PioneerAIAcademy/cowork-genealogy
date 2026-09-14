@@ -505,9 +505,9 @@ here so it is not re-derived. Measured 2026-09-07 by walking
 
 | | |
 |---|---|
-| relationship + marriage assertions in the corpus | **162** |
-| carrying the other party's **name** in `structured_value` | **8 (4.9%)**, under five distinct key *shapes* (nine distinct key strings), **7 of the 8 assertions distinct** |
-| carrying `related_person_role` | **143 (88.3%)** |
+| relationship + marriage assertions in the corpus | **167** |
+| carrying the other party's **name** in `structured_value` | **8 (4.8%)**, under five distinct key *shapes* (nine distinct key strings), **7 of the 8 assertions distinct** |
+| carrying `related_person_role` | **146 (87.4%)** |
 | …of those, where `related_person_role` holds the **persona's own** `record_role` | 39 raw, but only **5 distinct** assertion shapes |
 
 The last row needs its caveat stated or it misleads: 35 of those 39 are one

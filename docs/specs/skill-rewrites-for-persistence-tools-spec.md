@@ -149,7 +149,8 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   names her. **Not** `tree_edit add_person`: it enforces no source-ref on names
   and leaves a record-derived person provenance-less
   (`tree-materialization-spec.md` section 4.6).
-
+- **Step 6 revision:** two calls — `append` the corrected `pe_` link, then `update`
+  the old entry's `superseded_by` (never delete).
 
 ### 4.8 `hypothesis-tracking` — Wave 2
 - **Create:** `research_append({ section: "hypotheses", op: "append" })`. **Update /
