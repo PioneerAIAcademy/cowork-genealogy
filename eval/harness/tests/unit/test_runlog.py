@@ -602,6 +602,27 @@ def test_a_run_log_without_the_new_fields_still_validates():
     validate_run_log(log)
 
 
+def test_no_result_message_reaches_the_run_log_and_validates():
+    """Issue #2189: SingleRun is a dataclass, but assemble_test_entry hand-
+    builds the persisted `run_entry` dict field by field rather than via
+    reflection — a field added only to the dataclass (and to skill_runner.py/
+    orchestrator.py's threading) never reaches this dict or the JSON anyone
+    reads. Caught in plan review before landing; this is the regression test
+    that would have caught it during implementation."""
+    run = _stub_run()
+    run.no_result_message = True
+    entry = assemble_test_entry(
+        test_id="ut_no_result_message_001", test_type="negative",
+        expected_outcome="pass", scenario=None, mcp_fixtures=[], runs=[run],
+        timestamp_for_run_id="2026-09-07_10-00-00",
+    )
+    log = _wrap_envelope(entry)
+    validate_run_log(log)
+
+    logged = log["tests"][0]["runs"][0]
+    assert logged["no_result_message"] is True
+
+
 def test_as_dicts_output_satisfies_the_run_log_schema():
     """The real path, end to end: whatever `as_dicts` emits must validate.
 
