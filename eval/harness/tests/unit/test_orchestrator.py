@@ -1744,6 +1744,50 @@ def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monke
     )
 
 
+def test_the_skill_runs_no_result_message_reaches_the_run_entry(tmp_path, monkeypatch):
+    """The same second hop, for `no_result_message` (#2189, review of #2356).
+
+    `runlog.py` persists it and a test covers that, but the value only reaches
+    `SingleRun` via `no_result_message=result.no_result_message` in
+    `_execute_single_run` — and deleting that line left the whole suite green,
+    exactly as it did for `error` one PR earlier. The persistence test builds
+    `SingleRun(no_result_message=True)` by hand, so it proves the serializer
+    and says nothing about the wiring. Without this, every committed run log
+    would carry `false` forever and nothing would notice.
+    """
+    import asyncio
+
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        return SkillRunResult(
+            text_response="Routing this to record-extraction.",
+            skills_invoked=["record-extraction"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"num_turns": 1},
+            no_result_message=True,
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-09-09_10-00-00",
+    ))
+
+    run = entry["runs"][0]
+    assert run["no_result_message"] is True, (
+        "no_result_message must reach the committed run entry — it is the only "
+        "thing distinguishing a real 0 output_tokens from an absent count"
+    )
+
+
 def test_the_skill_runs_error_reaches_the_run_entry(tmp_path, monkeypatch):
     """The second hop of the serializer trap (#2192, review of #2326).
 
