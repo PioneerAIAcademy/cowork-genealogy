@@ -180,4 +180,27 @@ describe("fact-rewrite rollback (#2472)", () => {
     expect(onDisk.place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
     expect(onDisk.date).toBeUndefined();
   });
+  it("discards the advisories that described the rolled-back change", async () => {
+    // A warning that DESCRIBES a tree change is false once the change is undone.
+    // Left in, the response told a researcher to re-read a proof summary for an
+    // edit that never landed.
+    failOnce.remaining = 1;
+    const withPrimary = tree();
+    (withPrimary.persons[0].facts[0] as any).primary = true;
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(withPrimary, null, 2), "utf-8");
+
+    const r = await researchAppend({
+      projectPath: dir, section: "assertions", op: "update", entryId: "a_011",
+      fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.join(" ");
+    expect(w).toMatch(/could not be updated from this correction/);
+    // ...and nothing claiming the fact was changed.
+    expect(w).not.toMatch(/was rewritten from its assertion/);
+    expect(w).not.toMatch(/place authority value/);
+    expect(w).not.toMatch(/lost its /);
+  });
 });

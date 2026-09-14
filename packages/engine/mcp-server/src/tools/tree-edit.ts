@@ -475,9 +475,10 @@ async function applyOperation(
         if (changed.length > 0) {
           warnings.push(
             `fact '${existing.id}' is no longer linked to assertion '${existing.assertion_id}' ` +
-              `(${changed.join(", ")} changed) — a direct correction detaches it, so a later ` +
-              "correction to that assertion will not reach this fact. Correct the assertion " +
-              "instead if the record was misread.",
+              `(${changed.join(", ")} changed) — an edit here detaches the fact, so a later ` +
+              "correction to that assertion will not reach it. Correct the assertion instead " +
+              "if the record was misread. (`standard_place` can change on its own when the " +
+              "resolver re-runs, which detaches for the same reason.)",
           );
           delete existing.assertion_id;
         }

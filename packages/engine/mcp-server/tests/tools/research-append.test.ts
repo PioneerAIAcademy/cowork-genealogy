@@ -488,6 +488,102 @@ describe("research_append (Phase 1)", () => {
       if (!r.ok) return;
       expect(r.validation.warnings.join(" ")).not.toMatch(/no tree fact is linked to it/);
     });
+
+    it("(15) warns when a correction DELETES a fact field, blank string included", async () => {
+      // A blank string withdraws a claim exactly as null does, and is the
+      // likelier typo. Either way it deleted data from the upload target, so it
+      // must not be silent — the shape the malformed branch was added for.
+      for (const blank of ["", "   "]) {
+        await writeProject(
+          withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+          treeWithBacklink({ type: "Occupation", value: "Farmer" }),
+        );
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "assertions",
+          op: "update",
+          entryId: "a_011",
+          fields: { value: blank },
+        });
+        expect(r.ok, blank).toBe(true);
+        if (!r.ok) return;
+        expect((await factF4()).value, blank).toBeUndefined();
+        expect(r.validation.warnings.join(" "), blank).toMatch(/lost its 'value'/);
+      }
+    });
+
+    it("(16) two ops on one assertion and one field do not accuse the call of corroboration", async () => {
+      // The provenance test reads the fact's PRE-CALL value. Reading the live
+      // one made the second op mistake the first op's own write for another
+      // source's evidence.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "assertions", op: "update", entryId: "a_011", fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" } },
+          { section: "assertions", op: "update", entryId: "a_011", fields: { place: "Regina, Saskatchewan, Canada" } },
+        ],
+      } as never);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      expect((await factF4()).place).toBe("Regina, Saskatchewan, Canada");
+      expect(r.validation.warnings.join(" ")).not.toMatch(/did not assert/);
+    });
+
+    it("(17) does not claim a place was corrected when the rewrite did not apply", async () => {
+      // Two shapes: an echo that changes nothing, and a place the provenance
+      // guard refuses. Both previously emitted "its place was corrected",
+      // the second one directly contradicting the refusal beside it.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+      const echo = await researchAppend({
+        projectPath: dir, section: "assertions", op: "update", entryId: "a_011",
+        fields: { place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada" },
+      });
+      expect(echo.ok).toBe(true);
+      if (!echo.ok) return;
+      expect(echo.validation.warnings.join(" ")).not.toMatch(/place authority value/);
+
+      await writeProject(
+        withAssertion(backlinkAssertion()),
+        treeWithBacklink({ place: "Somewhere another source supplied" }),
+      );
+      const refused = await researchAppend({
+        projectPath: dir, section: "assertions", op: "update", entryId: "a_011",
+        fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(refused.ok).toBe(true);
+      if (!refused.ok) return;
+      const w = refused.validation.warnings.join(" ");
+      expect(w).toMatch(/did not assert/);
+      expect(w).not.toMatch(/place authority value/);
+    });
+
+    it("(18) leaves the fact alone when the assertion has been RE-CLASSIFIED", async () => {
+      // The mirror of tree_edit's retype detach: `assertionFactAttr` keys the
+      // event / value-bearing rule on the FACT's type, so rewriting across that
+      // seam wrote a birth year into an Occupation fact's `value`.
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+        treeWithBacklink({ type: "Occupation", value: "Farmer" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { fact_type: "birth", value: "1850" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.type).toBe("Occupation");
+      expect(f.value).toBe("Farmer");
+      expect(r.validation.warnings.join(" ")).toMatch(/is now a Birth, so the fact was left alone/);
+    });
   });
 
   it("a pre-existing unrelated drift does not block a write; it rides as a warning (#1572)", async () => {

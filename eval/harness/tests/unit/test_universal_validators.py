@@ -175,26 +175,91 @@ def _person_with_fact(**fact_over):
     return [{"id": "I1", "names": [{"id": "N1", "given": "Anna", "surname": "W"}], "facts": [fact]}]
 
 
-_EXTRACTION_CALL = [{"tool": "mcp__genealogy__extraction_append", "args": {}}]
+#: A real correction: the tool, the op, and the assertion id it named.
+_EXTRACTION_CALL = [{
+    "tool": "mcp__genealogy__extraction_append",
+    "args": {"section": "assertions", "op": "update", "entryId": "a_011",
+             "fields": {"place": "Odessa, Saskatchewan, Canada"}},
+}]
+
+#: research.json as it stands AFTER that correction. The authorization checks
+#: the fact's new value against it, so an arbitrary edit cannot ride the path.
+def _research_after(place="Odessa, Saskatchewan, Canada"):
+    return {"assertions": [{"id": "a_011", "place": place}]}
+
+
+def _tree_state(persons, research=None):
+    state = tree(persons=persons)
+    state["research_json"] = research if research is not None else _research_after()
+    return state
 
 
 def test_the_fact_rewrite_is_authorized_by_tool_identity():
     """A backlinked fact's mirrored attributes may change under extraction_append."""
     check_tree(
-        tree(persons=_person_with_fact()),
-        tree(persons=_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+        _tree_state(_person_with_fact()),
+        _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
         {"name": "record-extraction"},
         POSITIVE,
         tool_calls=_EXTRACTION_CALL,
     )
 
 
+def test_a_legacy_heal_riding_along_with_the_rewrite_is_still_authorized():
+    """research_append runs sanitizeTree on every call and persists the healed
+    document whenever it writes the tree, so a coerced legacy `quality` or a
+    pruned unknown key arrives with a perfectly legitimate rewrite. Refusing that
+    reds a run for something the TOOL did and the skill could not avoid."""
+    before = _person_with_fact()
+    before[0]["facts"][0]["sources"] = [{"ref": "S1", "quality": "3"}]
+    before[0]["facts"][0]["legacy_key"] = "pruned on read"
+    after = _person_with_fact(place="Odessa, Saskatchewan, Canada")
+    after[0]["facts"][0]["sources"] = [{"ref": "S1", "quality": 3}]
+    check_tree(
+        _tree_state(before),
+        _tree_state(after),
+        {"name": "record-extraction"},
+        POSITIVE,
+        tool_calls=_EXTRACTION_CALL,
+    )
+
+
+def test_the_new_value_must_match_the_corrected_assertion():
+    """An arbitrary edit to a backlinked fact is not the rewrite."""
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="anything at all")),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=_EXTRACTION_CALL,
+        )
+    assert "persons" in str(e.value)
+
+
+def test_the_corrected_assertion_must_be_one_the_run_named():
+    """A backlink to an assertion no op touched cannot have been rewritten."""
+    other = [{"tool": "mcp__genealogy__extraction_append",
+              "args": {"section": "assertions", "op": "update", "entryId": "a_999",
+                       "fields": {"place": "x"}}}]
+    with pytest.raises(AssertionError) as e:
+        check_tree(
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+            {"name": "record-extraction"},
+            POSITIVE,
+            tool_calls=other,
+        )
+    assert "persons" in str(e.value)
+
+
 @pytest.mark.parametrize("label,after_persons", [
     # Anything the rewrite cannot produce must still fail, even with the call present.
-    ("adds a person", _person_with_fact() + [{"id": "I2", "names": [], "facts": []}]),
+    ("adds a person", _person_with_fact(place="Odessa, Saskatchewan, Canada")
+     + [{"id": "I2", "names": [], "facts": []}]),
     ("adds a fact", [{**_person_with_fact()[0],
                       "facts": _person_with_fact()[0]["facts"] + [{"id": "F2", "type": "Birth"}]}]),
-    ("sets primary", _person_with_fact(primary=True)),
+    ("sets primary", _person_with_fact(place="Odessa, Saskatchewan, Canada", primary=True)),
     ("adds a source ref", _person_with_fact(sources=[{"ref": "S1"}, {"ref": "S2"}])),
     ("changes a name", [{**_person_with_fact()[0],
                          "names": [{"id": "N1", "given": "Anne", "surname": "W"}]}]),
@@ -207,8 +272,8 @@ def test_the_fact_rewrite_is_authorized_by_tool_identity():
 def test_the_tool_identity_path_authorizes_nothing_else(label, after_persons):
     with pytest.raises(AssertionError) as e:
         check_tree(
-            tree(persons=_person_with_fact()),
-            tree(persons=after_persons),
+            _tree_state(_person_with_fact()),
+            _tree_state(after_persons),
             {"name": "record-extraction"},
             POSITIVE,
             tool_calls=_EXTRACTION_CALL,
@@ -220,8 +285,8 @@ def test_the_tool_identity_path_needs_the_call():
     """Without an extraction_append/research_append call, the same delta fails."""
     with pytest.raises(AssertionError) as e:
         check_tree(
-            tree(persons=_person_with_fact()),
-            tree(persons=_person_with_fact(place="Odessa, Saskatchewan, Canada")),
+            _tree_state(_person_with_fact()),
+            _tree_state(_person_with_fact(place="Odessa, Saskatchewan, Canada")),
             {"name": "record-extraction"},
             POSITIVE,
             tool_calls=[{"tool": "mcp__genealogy__person_read", "args": {}}],

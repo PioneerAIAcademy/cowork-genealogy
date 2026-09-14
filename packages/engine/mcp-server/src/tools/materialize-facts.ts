@@ -163,10 +163,15 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   }
 }
 
-/** Trimmed non-empty string, else undefined. */
-function str(v: unknown): string | undefined {
+/** The value when it is a string with non-space content, else undefined.
+ *  Returns the value UNTRIMMED — the trim decides emptiness, it does not
+ *  normalize the result. Exported because `research_append`'s rewrite has to
+ *  compare a fact and an assertion the same way this reads them; a second copy
+ *  there was a verbatim duplicate. */
+export function factText(v: unknown): string | undefined {
   return typeof v === "string" && v.trim() !== "" ? v : undefined;
 }
+const str = factText;
 
 /** Normalize a comparison key for a name part (case/space-insensitive). */
 function normNamePart(v: string | undefined): string {
@@ -297,12 +302,13 @@ function factCandidate(assertion: any): FactCandidate {
  * correction, and rewriting a fact's `type` under it would silently change what
  * the fact claims.
  *
- * A near-neighbour, deliberately separate: `FACT_STRING_FIELDS`
- * (`tools/tree-edit.ts`) is the five fields a tree fact types as strings, and
- * `checkTreeFact` (`validation/validator.ts`) carries the same five for its type
- * check. This set is the four an ASSERTION can supply, which is a different
- * question with a different answer, so it is not derived from either. If they
- * ever need to agree, `standard_date` is the difference to look at.
+ * Two near-neighbours, deliberately separate. `FACT_STRING_FIELDS`
+ * (`tools/tree-edit.ts`) is the five fields a tree fact types as strings;
+ * `checkTreeFact` (`validation/validator.ts`) passes those five plus
+ * `assertion_id` for its type check. This set is the four an ASSERTION can
+ * supply, a different question with a different answer, so it is derived from
+ * neither. The differences, if they ever need to agree, are `standard_date`
+ * (no assertion has one) and `assertion_id` (not an assertion field at all).
  */
 export const ASSERTION_FACT_ATTRS = ["date", "place", "standard_place", "value"] as const;
 export type AssertionFactAttr = (typeof ASSERTION_FACT_ATTRS)[number];
@@ -343,6 +349,10 @@ export function assertionFactAttr(
   const raw = assertion?.[attr];
   if (raw === null || raw === undefined) return { clear: true };
   if (typeof raw !== "string") return { malformed: true };
+  // A blank or whitespace-only string reads as "withdrawn" exactly as `null`
+  // does — but it is also the likelier typo, so the caller WARNS on every clear
+  // rather than trying to tell the two apart here. Deleting tree data is a
+  // destructive edit whatever prompted it, and none of them should be silent.
   return raw.trim() === "" ? { clear: true } : { set: raw };
 }
 
@@ -352,9 +362,19 @@ export function assertionFactAttr(
  *  or non-facts that never reach `person.facts` at all. Exported so
  *  `research_append` does not tell a caller to go re-check a fact that could
  *  not exist. */
-export function materializesToPersonFact(factType: unknown): boolean {
-  const t = String(factType ?? "").toLowerCase();
+export function materializesToPersonFact(assertion: any): boolean {
+  // Mirrors the materialize loop's own three skips, in its order: negative
+  // evidence stays an argument and never becomes a positive fact; `name` becomes
+  // a tree name; `gender`/`sex` set the scalar; SKIP_TYPES are two-party links.
+  if (assertion?.evidence_type === "negative") return false;
+  const t = String(assertion?.fact_type ?? "").toLowerCase();
   return t !== "" && !NAME_TYPES.has(t) && !GENDER_TYPES.has(t) && !SKIP_TYPES.has(t);
+}
+
+/** The tree type an assertion's `fact_type` materializes as. Exported so the
+ *  rewrite can tell when a fact no longer corresponds to its assertion's type. */
+export function assertionTreeFactType(factType: unknown): string {
+  return toTreeFactType(String(factType ?? ""));
 }
 
 /** A SimplifiedFact view of a candidate for factsEquivalent(). */

@@ -732,36 +732,105 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
 _REWRITABLE_FACT_ATTRS = ("place", "standard_place", "date", "value")
 
 
-def _explained_by_fact_rewrite(before_section, after_section) -> bool:
+def _corrected_assertion_ids(tool_calls) -> set[str]:
+    """Assertion ids this run corrected through the two rewriting tools.
+
+    Only an assertion an `update` op actually named can have caused a rewrite,
+    so this is what the authorization is keyed on. Without it the path would
+    authorize any four-attribute edit to any already-backlinked fact.
+    """
+    ids: set[str] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict):
+            continue
+        if _bare_tool_name(call.get("tool", "")) not in {"research_append", "extraction_append"}:
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        for op in candidates:
+            if not isinstance(op, dict):
+                continue
+            if op.get("section") == "assertions" and op.get("op") == "update":
+                entry_id = op.get("entryId")
+                if isinstance(entry_id, str) and entry_id:
+                    ids.add(entry_id)
+    return ids
+
+
+def _fact_identity(fact: dict) -> tuple:
+    """What must survive the rewrite untouched, for one fact.
+
+    A POSITIVE list rather than "everything else must be byte-equal", because
+    `research_append` runs `sanitizeTree` on every call and persists the healed
+    document whenever it writes the tree. A legacy `quality: "3"` coerced to `3`,
+    or an unknown key pruned, rides along with a perfectly legitimate rewrite and
+    must not red the run for something the TOOL did. Source REFS are compared,
+    not whole ref objects, for exactly that reason.
+    """
+    refs = tuple(
+        sorted(
+            r.get("ref")
+            for r in (fact.get("sources") or [])
+            if isinstance(r, dict) and isinstance(r.get("ref"), str)
+        )
+    )
+    return (fact.get("id"), fact.get("type"), fact.get("primary"),
+            fact.get("standard_date"), fact.get("assertion_id"), refs)
+
+
+def _person_identity(person: dict) -> tuple:
+    """The same, for one person: nothing but its facts' mirrored attrs may move."""
+    names = tuple(
+        (n.get("given"), n.get("surname"), n.get("type"), n.get("preferred"))
+        for n in (person.get("names") or [])
+        if isinstance(n, dict)
+    )
+    return (person.get("id"), person.get("gender"), person.get("ark"),
+            person.get("living"), names)
+
+
+def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected) -> bool:
     """True when the whole persons delta is the assertion-backlink fact rewrite.
 
     `research_append` / `extraction_append` reach `tree.gedcomx.json`'s `persons`
-    only by rewriting a fact ALREADY carrying the corrected assertion's
+    only by rewriting a fact ALREADY carrying a corrected assertion's
     `assertion_id`. They are therefore absent from that row's `callers` and
     authorized by tool identity instead, exactly as `merge_tree_persons` is on
-    the research side.
+    the research side. Anything the rewrite does not explain still fails.
 
-    Deliberately exact, and the same discipline `_explained_by_merge` states: a
-    run that rewrites a fact AND also edits persons on its own fails, because the
-    extra edit survives this comparison. Anything added or removed - a person, a
-    fact, a name, a source ref - fails. `primary` moving fails, because only
-    proof-conclusion may set it. Only the four mirrored attributes, only on facts
-    that carried a backlink before and still carry the same one, may differ.
+    Four things are checked, and the last two are what stop the path becoming a
+    blanket grant:
+
+      - no person and no fact added or removed, and each person's identity
+        (`_person_identity`) and each fact's identity (`_fact_identity`)
+        unchanged — which covers the two the row's `failure` line is about, an
+        added unsourced person and a set `primary`, plus names, refs and `type`;
+      - every fact whose mirrored attributes changed kept the same
+        `assertion_id`, and that id is one this run's ops actually corrected;
+      - the changed attributes now equal that assertion's post-call values.
     """
     if not isinstance(before_section, list) or not isinstance(after_section, list):
         return False
     if len(before_section) != len(after_section):
         return False
+    if not corrected:
+        return False
+
+    assertions = {}
+    if isinstance(research_after, dict):
+        assertions = {
+            a.get("id"): a
+            for a in (research_after.get("assertions") or [])
+            if isinstance(a, dict)
+        }
 
     for b_person, a_person in zip(before_section, after_section):
         if not isinstance(b_person, dict) or not isinstance(a_person, dict):
             return False
-        if b_person.get("id") != a_person.get("id"):
-            return False
-        # Everything except `facts` must be untouched.
-        if {k: v for k, v in b_person.items() if k != "facts"} != {
-            k: v for k, v in a_person.items() if k != "facts"
-        }:
+        if _person_identity(b_person) != _person_identity(a_person):
             return False
 
         b_facts = b_person.get("facts") or []
@@ -774,19 +843,29 @@ def _explained_by_fact_rewrite(before_section, after_section) -> bool:
         for b_fact, a_fact in zip(b_facts, a_facts):
             if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
                 return False
-            if b_fact == a_fact:
+            if _fact_identity(b_fact) != _fact_identity(a_fact):
+                return False
+            changed = [
+                k for k in _REWRITABLE_FACT_ATTRS if b_fact.get(k) != a_fact.get(k)
+            ]
+            if not changed:
                 continue
-            # A changed fact must have carried a backlink, and the same one.
             link = b_fact.get("assertion_id")
-            if not isinstance(link, str) or not link:
+            if not isinstance(link, str) or not link or link not in corrected:
                 return False
-            if a_fact.get("assertion_id") != link:
+            source = assertions.get(link)
+            if not isinstance(source, dict):
                 return False
-            # ...and differ only in the mirrored attributes.
-            b_rest = {k: v for k, v in b_fact.items() if k not in _REWRITABLE_FACT_ATTRS}
-            a_rest = {k: v for k, v in a_fact.items() if k not in _REWRITABLE_FACT_ATTRS}
-            if b_rest != a_rest:
-                return False
+            for key in changed:
+                got = a_fact.get(key)
+                # Absent on the fact is how the rewrite expresses "the assertion
+                # withdrew this", and a contradicting standard_place is cleared
+                # rather than written, so an absent value is legitimate whatever
+                # the assertion holds.
+                if got is None:
+                    continue
+                if got != source.get(key):
+                    return False
     return True
 
 
@@ -834,7 +913,12 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         if (
             section == "persons"
             and rewriters & called
-            and _explained_by_fact_rewrite(before.get(section), after.get(section))
+            and _explained_by_fact_rewrite(
+                before.get(section),
+                after.get(section),
+                after_state.get("research_json"),
+                _corrected_assertion_ids(tool_calls),
+            )
         ):
             continue
         unauthorized.append(section)

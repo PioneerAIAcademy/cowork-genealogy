@@ -54,6 +54,8 @@ import { treeDiff } from "./tree-diff.js";
 import {
   ASSERTION_FACT_ATTRS,
   assertionFactAttr,
+  assertionTreeFactType,
+  factText,
   materializesToPersonFact,
   type AssertionFactAttr,
 } from "./materialize-facts.js";
@@ -1025,17 +1027,18 @@ interface AppliedOp {
 
 // ─── #2472: carry an assertion correction onto the fact it minted ────────────
 
-/** Trimmed-non-empty reader, matching `materialize-facts.ts`'s `str`: what the
- *  fact and the assertion are compared AS, so a blank and an absent field read
- *  the same on both sides. */
-function factText(v: unknown): string | undefined {
-  return typeof v === "string" && v.trim() !== "" ? v : undefined;
-}
-
 interface FactRewriteResult {
   /** True when at least one fact attribute actually changed. */
   mutated: boolean;
+  /** Advisories about the CALL's state, true whether or not the rewrite
+   *  survives: no fact carries the backlink, the assertion's value is malformed,
+   *  the fact holds another source's evidence. */
   warnings: string[];
+  /** Advisories that DESCRIBE a change made to the tree. A rollback discards
+   *  the change, so these must be discarded with it — otherwise the response
+   *  tells a researcher to re-read a proof summary for an edit that never
+   *  landed, or says a `standard_place` was cleared after `undo()` restored it. */
+  mutationWarnings: string[];
   /** Restore every touched fact to its pre-rewrite attributes. */
   undo: () => void;
 }
@@ -1065,6 +1068,7 @@ function rewriteLinkedFacts(
   tree: SimplifiedGedcomX,
 ): FactRewriteResult {
   const warnings: string[] = [];
+  const mutationWarnings: string[] = [];
   const concludedTouched = new Set<SimplifiedFact>();
   let mutated = false;
 
@@ -1082,14 +1086,15 @@ function rewriteLinkedFacts(
    *  exists to prevent. Keying on the fact makes the rollback order-independent
    *  rather than relying on a stack discipline someone has to maintain. */
   const snapshots = new Map<SimplifiedFact, Map<AssertionFactAttr, string | undefined>>();
-  const snapshot = (fact: SimplifiedFact) => {
-    if (snapshots.has(fact)) return;
-    snapshots.set(
-      fact,
-      new Map<AssertionFactAttr, string | undefined>(
+  const snapshot = (fact: SimplifiedFact): Map<AssertionFactAttr, string | undefined> => {
+    let before = snapshots.get(fact);
+    if (before === undefined) {
+      before = new Map<AssertionFactAttr, string | undefined>(
         ASSERTION_FACT_ATTRS.map((a) => [a, fact[a]]),
-      ),
-    );
+      );
+      snapshots.set(fact, before);
+    }
+    return before;
   };
 
   for (let i = 0; i < applied.length; i++) {
@@ -1117,7 +1122,7 @@ function rewriteLinkedFacts(
       // the scalar, and `relationship`/`marriage`/`parentage`/`age` are
       // two-party links or non-facts. Telling that caller to "re-check it with
       // person_read" sends them after something that does not exist.
-      if (!materializesToPersonFact(assertion.fact_type)) continue;
+      if (!materializesToPersonFact(assertion)) continue;
       // Scoped to THIS op, deliberately. Every fact written before the backlink
       // existed lacks the field, so a warning phrased as "a fact has no
       // assertion_id" would fire on essentially every call. No heuristic
@@ -1133,12 +1138,27 @@ function rewriteLinkedFacts(
     }
 
     for (const fact of linked) {
-      snapshot(fact);
+      const before = snapshot(fact);
       // A concluded fact is the value proof-conclusion landed, and a proof
       // summary may cite it. Correcting a misread record still has to reach it —
       // leaving a known-wrong concluded value on the upload target is worse —
       // but it must never happen quietly.
       const concluded = fact.primary === true;
+      // A re-CLASSIFIED assertion no longer describes this fact's type, and the
+      // event / value-bearing split decides whether its `value` may be written
+      // here at all. Rewriting across that seam put a birth year into an
+      // Occupation fact's `value`. `tree_edit` detaches on a fact retype; the
+      // mirror case is an assertion retype, which only this side can see.
+      const assertionType = assertionTreeFactType(assertion.fact_type);
+      if (fact.type !== undefined && assertionType !== "" && fact.type !== assertionType) {
+        warnings.push(
+          `fact '${fact.id}' is a ${fact.type} but assertion '${a.entryId}' is now a ` +
+            `${assertionType}, so the fact was left alone. Re-materialize the assertion, or ` +
+            "correct the fact directly with tree_correct, which unlinks the two.",
+        );
+        continue;
+      }
+      let placeRewritten = false;
       for (const attr of touched) {
         const action = assertionFactAttr(assertion, attr, fact.type);
         // null: materialize would never have written this attribute (a `value`
@@ -1159,7 +1179,11 @@ function rewriteLinkedFacts(
         // else's evidence, and overwriting it destroys it. Compared against the
         // assertion's PRE-CALL state, which is what the fact was mirroring
         // before this correction.
-        const current = factText(fact[attr]);
+        // Read off the PRE-CALL snapshot, not the live fact: a batch may update
+        // one assertion twice, and reading the live value would make this pass
+        // mistake its own earlier write for a third party's evidence and send
+        // the agent into conflict-resolution over nothing.
+        const current = factText(before.get(attr));
         const priorClaim = factText(priorAssertion?.[attr]);
         if (current !== undefined && current !== priorClaim) {
           warnings.push(
@@ -1173,13 +1197,22 @@ function rewriteLinkedFacts(
           if (fact[attr] !== undefined) {
             delete fact[attr];
             mutated = true;
+            if (attr === "place") placeRewritten = true;
             if (concluded) concludedTouched.add(fact);
+            // Never silent. A blank string withdraws a claim exactly as `null`
+            // does, and it is also the likelier typo; either way this deleted
+            // data from the upload target.
+            mutationWarnings.push(
+              `fact '${fact.id}' lost its '${attr}' because assertion '${a.entryId}' no longer ` +
+                "asserts one. If that was a typo rather than a withdrawal, set the field back.",
+            );
           }
           continue;
         }
         if (fact[attr] !== action.set) {
           fact[attr] = action.set;
           mutated = true;
+          if (attr === "place") placeRewritten = true;
           if (concluded) concludedTouched.add(fact);
         }
       }
@@ -1190,11 +1223,11 @@ function rewriteLinkedFacts(
       // lever is append-only), and the assertion is equally stale, so the guard
       // below cannot see it either. Say so rather than let it pass silently.
       if (
-        touched.includes("place") &&
+        placeRewritten &&
         !touched.includes("standard_place") &&
         typeof fact.standard_place === "string"
       ) {
-        warnings.push(
+        mutationWarnings.push(
           `fact '${fact.id}' kept standard_place '${fact.standard_place}' while its place was ` +
             `corrected from assertion '${a.entryId}' — the place authority value was not part of ` +
             "this correction. Update the assertion's standard_place too if the reading moved.",
@@ -1212,7 +1245,7 @@ function rewriteLinkedFacts(
         typeof fact.standard_place === "string" &&
         countryConsistency(fact.place, fact.standard_place) === "contradiction"
       ) {
-        warnings.push(
+        mutationWarnings.push(
           `standard_place '${fact.standard_place}' contradicts place '${fact.place}' on fact ` +
             `'${fact.id}' (from assertion '${a.entryId}') — the place text names a different ` +
             "country; cleared (left unset). Correct the assertion's standard_place.",
@@ -1224,7 +1257,7 @@ function rewriteLinkedFacts(
   }
 
   for (const fact of concludedTouched) {
-    warnings.push(
+    mutationWarnings.push(
       `fact '${fact.id}' is marked primary (a concluded value) and was rewritten from its ` +
         "assertion. Re-read the proof summary that cites it: the conclusion was written against " +
         "the earlier reading.",
@@ -1239,7 +1272,7 @@ function rewriteLinkedFacts(
       }
     }
   };
-  return { mutated, warnings, undo };
+  return { mutated, warnings, mutationWarnings, undo };
 }
 
 /**
@@ -2858,7 +2891,7 @@ export async function researchAppend(
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
     let treeMutated = prep.treeMutated || rewrite.mutated;
-    let rewriteWarnings = rewrite.warnings;
+    let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
@@ -2893,6 +2926,7 @@ export async function researchAppend(
         if (retry.valid) {
           validation = retry;
           treeMutated = prep.treeMutated;
+          // The mutation half described a tree change that no longer exists.
           rewriteWarnings = [
             ...rewrite.warnings,
             "the linked tree fact(s) could not be updated from this correction — the rewritten " +

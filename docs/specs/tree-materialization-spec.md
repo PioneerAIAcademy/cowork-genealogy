@@ -346,9 +346,12 @@ longer answers to its assertion must stop claiming to:
   conclusion, exactly as `add_fact` does. It warns when it detaches, because the
   cost is real: that fact is now outside the automatic update, which re-opens
   this bug for it. **31 of 114 `update_fact` ops** in the committed e2e run logs
-  set one of those fields and would detach; those 31 are 26 `tree_correct` and 5
-  `tree_edit` across 21 calls, out of 114 ops across 80 calls in total (measured
-  2026-09-14). Three details it turns on: it keys on a real change rather than on
+  SET one of those fields; those 31 are 26 `tree_correct` and 5 `tree_edit`
+  across 21 calls, out of 114 ops across 80 calls in total (measured
+  2026-09-14). That is an upper bound on how many would actually detach, not a
+  count of them: the trigger keys on a real change, and a run log records the op
+  but not the fact's value at the time, so the detaching subset is not derivable
+  from the corpus. Three details it turns on: it keys on a real change rather than on
   the key being present (7 of those 31 also carry `primary`, the conclude-a-fact
   shape, where an unchanged echo rides along); it runs after `standard_place`
   re-resolution, so a sidecar the resolver rewrites counts; and `type` is in the

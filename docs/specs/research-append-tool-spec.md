@@ -870,8 +870,12 @@ A **warning** — never a rejection — emitted when this call's `assertions`
 - **Silent for a `fact_type` that can never become a person fact.** A `name`
   assertion materializes as a tree name, `gender`/`sex` set the scalar, and
   `relationship`/`marriage`/`parentage`/`age` are two-party links or non-facts.
-  21 of the 145 corpus ops (14%) correct one of those, and telling that caller to
-  "re-check it with `person_read`" sends them after a fact that cannot exist.
+  Negative evidence is skipped for the same reason. **24 of the 145** corpus ops
+  correct an assertion of one of those kinds (relationship 9, marriage 6, name 6,
+  age 2, sex 1; negative evidence 0), and telling that caller to "re-check it
+  with `person_read`" sends them after a fact that cannot exist. Recount: resolve
+  each op's `entryId` against its own run's `.final-research.json` and group by
+  `fact_type`.
 
 ---
 
