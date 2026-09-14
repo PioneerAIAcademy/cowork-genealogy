@@ -41,6 +41,7 @@ un-flushed), so capture can never fail an otherwise-loggable run.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -162,15 +163,20 @@ def sdk_cache_dir(workspace: Path) -> Path | None:
     Calling the SDK is what keeps this correct: the CLI computes the same key
     with the same function, so the two cannot drift.
 
-    Never raises. ``collect_subagents`` runs before the run log is built and
-    outside any try, so anything raised here would lose the log of a completed,
-    paid run — which the contract at the top of this module forbids.
+    Lets ``ImportError`` propagate, deliberately. ``collect_subagents`` already
+    wraps this call in ``except Exception`` and records ``error``, so the run log
+    survives either way — but swallowing it here would report ``no_cache_dir``
+    instead, i.e. "no subagent ran, or the cache was cleaned", for a lookup that
+    is broken. That is the ambiguity this status field exists to remove, and
+    ``harness/workspace.py`` raises on this same import for the same reason.
     """
-    try:
-        from claude_agent_sdk import project_key_for_directory
-    except ImportError:
-        return None
-    cache = Path.home() / ".claude" / "projects" / project_key_for_directory(workspace)
+    from claude_agent_sdk import project_key_for_directory
+
+    # Honour CLAUDE_CONFIG_DIR exactly as orchestrator.py does when it builds the
+    # agent's environment: the operator's shell sets it, the SDK subprocess
+    # inherits it, and the cache then lives somewhere other than ~/.claude.
+    config_root = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    cache = config_root / "projects" / project_key_for_directory(workspace)
     return cache if cache.is_dir() else None
 
 

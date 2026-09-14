@@ -158,6 +158,7 @@ def test_collect_subagents_matches_when_the_leaf_has_an_underscore(
     workspace = tmp_path / leaf
     _seed_cache(home, workspace)
     monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
 
     summaries, status = collect_subagents(workspace)
     assert len(summaries) == 1, f"capture missed the cache dir for leaf {leaf!r}"
@@ -187,12 +188,14 @@ def test_collect_subagents_ignores_a_near_miss_directory(tmp_path: Path, monkeyp
     home = tmp_path / "home"
     _seed_cache(home, tmp_path / "e2e-frederick-8fu_3bbk")
     monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
 
     assert collect_subagents(tmp_path / "e2e-frederick-8fuX3bbk") == ([], "no_cache_dir")
 
 
 def test_sdk_cache_dir_is_none_when_projects_missing(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "nonexistent")
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
     assert sdk_cache_dir(tmp_path / "e2e-x") is None
 
 
@@ -213,6 +216,7 @@ def test_collect_subagents_walks_the_ephemeral_cache(tmp_path: Path, monkeypatch
         encoding="utf-8",
     )
     monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
 
     summaries, status = collect_subagents(workspace)
     assert status == "captured"
@@ -224,6 +228,7 @@ def test_collect_subagents_walks_the_ephemeral_cache(tmp_path: Path, monkeypatch
 
 def test_collect_subagents_empty_when_no_cache(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path / "nonexistent")
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
     assert collect_subagents(tmp_path / "e2e-x") == ([], "no_cache_dir")
 
 
@@ -244,5 +249,61 @@ def test_status_distinguishes_a_resolved_dir_with_no_usable_transcript(
     subagents.mkdir(parents=True)
     (subagents / "agent-1.jsonl").write_text("not json at all\n", encoding="utf-8")
     monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
 
     assert collect_subagents(workspace) == ([], "matched_no_transcripts")
+
+
+def test_find_session_transcript_matches_when_the_leaf_has_an_underscore(
+    tmp_path: Path, monkeypatch
+):
+    """The mirror of the capture case, for the run's own session JSONL.
+
+    Without this, the whole second lookup site can be reverted to the old
+    `endswith` scan with the entire suite green — which is how it shipped.
+    """
+    from e2e.orchestrator import _find_session_transcript
+
+    home = tmp_path / "home"
+    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    slug_dir = home / ".claude" / "projects" / _key(workspace)
+    slug_dir.mkdir(parents=True)
+    (slug_dir / "session-uuid.jsonl").write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    found = _find_session_transcript(workspace)
+    assert found is not None, "session transcript lookup missed the cache dir"
+    assert found.name == "session-uuid.jsonl"
+
+
+def test_status_is_error_when_the_lookup_itself_fails(tmp_path: Path, monkeypatch):
+    """`error` must be reachable, and must not be reported as `no_cache_dir`.
+
+    A broken lookup reported as "no subagent ran" is the exact ambiguity this
+    status exists to remove.
+
+    Drives the REAL import, not a stubbed `sdk_cache_dir` — stubbing the helper
+    leaves the swallow this pins invisible, which is how the first version of
+    this test passed while proving nothing.
+    """
+    import sys
+
+    monkeypatch.setitem(sys.modules, "claude_agent_sdk", None)
+    assert collect_subagents(tmp_path / "e2e-x") == ([], "error")
+
+
+def test_cache_dir_honours_claude_config_dir(tmp_path: Path, monkeypatch):
+    """The operator's shell can move the cache; the SDK subprocess inherits it.
+
+    Hardcoding ~/.claude makes every run on such a machine report
+    `no_cache_dir` — a silent 100% miss, the same shape as the bug this fixes.
+    """
+    config = tmp_path / "elsewhere"
+    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    (config / "projects" / _key(workspace)).mkdir(parents=True)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home-with-no-cache")
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
+
+    assert sdk_cache_dir(workspace) is not None

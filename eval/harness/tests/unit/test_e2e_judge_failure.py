@@ -107,6 +107,10 @@ def test_judge_exception_yields_ungraded_and_commits_the_run(tmp_path, monkeypat
     result, paths = _drive(tmp_path, monkeypatch, judge=boom, final_tree={"persons": []})
 
     assert result.verdict == "ungraded"
+    # The capture status must reach the COMMITTED log, not just the dataclass —
+    # dropping it from the E2eResult(...) call left the whole suite green.
+    payload = json.loads(paths["result"].read_text(encoding="utf-8"))
+    assert payload["subagent_capture_status"] == "no_cache_dir"
     assert result.judge_output["error"].startswith("RuntimeError:")
     # Committed, not scratch — the tree survives for /grade-e2e-run.
     assert paths["result"].name.startswith("run-")
