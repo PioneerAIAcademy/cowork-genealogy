@@ -342,15 +342,39 @@ describe("convert_calendar", () => {
       expect(r.applied.map((a) => a.correction)).toContain("julianToGregorianDay");
     });
 
-    it("matching ignores case, padding and punctuation, and accepts alternates", () => {
-      for (const spelling of ["England", "  england ", "Great Britain", "great britain,"]) {
+    // Asserts WHICH regime each spelling resolves to, not merely that the call
+    // succeeded. An earlier version checked only `ok`, and an alias moved onto
+    // the wrong country passed it silently -- every spelling still returned
+    // ok:true, just under another nation's calendar.
+    //
+    // 1800 is the discriminating year: England has been Gregorian since 1752,
+    // so the correction is DECLINED, while a jurisdiction still on Julian in
+    // 1800 (Russia, Greece) would apply a 12-day offset. A 1700 date cannot
+    // discriminate -- both were Julian then, so both give the same answer.
+    it("every England spelling resolves to England's regime, not merely to ok", () => {
+      for (const spelling of ["England", "  england ", "Great Britain", "great britain,", "GREAT BRITAIN"]) {
         const r = convertCalendar({
-          date: { year: 1700, month: 6, day: 1 },
+          date: { year: 1800, month: 6, day: 1 },
           corrections: { julianToGregorianDay: true },
           jurisdiction: spelling,
         });
         expect(r.ok, spelling).toBe(true);
+        if (!r.ok) continue;
+        expect(r.applied.map((a) => a.correction), spelling).not.toContain("julianToGregorianDay");
+        expect(r.converted, spelling).toEqual({ year: 1800, month: 6, day: 1 });
       }
+    });
+
+    it("a jurisdiction still Julian in 1800 does convert, so the case above discriminates", () => {
+      const r = convertCalendar({
+        date: { year: 1800, month: 6, day: 1 },
+        corrections: { julianToGregorianDay: true },
+        jurisdiction: "Russia",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.applied.map((a) => a.correction)).toContain("julianToGregorianDay");
+      expect(r.converted).toEqual({ year: 1800, month: 6, day: 13 });
     });
 
     it("an unrecognized jurisdiction is an error that lists the accepted keys", () => {
