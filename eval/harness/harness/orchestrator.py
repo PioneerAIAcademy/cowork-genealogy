@@ -1487,7 +1487,19 @@ def _compute_outcome(
     # explicitly. Negative tests are routing-determined (see the negative
     # branch below) — their judge call is base-only and diagnostic, so a
     # judge crash doesn't gate their outcome.
-    if judge_skipped and spec.type == "positive":
+    #
+    # grade:trigger positive tests are the exception on the positive side:
+    # they are graded on activation alone (grading_mode "trigger",
+    # dimensions_gate_outcome=False), so their judge call is diagnostic just
+    # like a negative's. A judge crash must NOT gate them — the trigger
+    # verdict in the positive branch below owns the outcome, after the same
+    # activation + skills_invoked checks every positive test runs. Without
+    # this exemption a run log could show dimensions_gate_outcome=False beside
+    # a fail the (skipped) dimensions caused (issue #2156).
+    _is_trigger_positive = spec.type == "positive" and "grade:trigger" in (
+        getattr(spec, "tags", None) or []
+    )
+    if judge_skipped and spec.type == "positive" and not _is_trigger_positive:
         return "fail"
 
     if spec.type == "positive":
