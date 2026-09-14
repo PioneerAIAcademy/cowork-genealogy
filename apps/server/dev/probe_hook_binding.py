@@ -164,6 +164,33 @@ def preflight(plugin: Path) -> tuple[bool, str]:
         "tool_input": {"section": SECTION, "op": "append", "entry": {}},
     }
     script = plugin / "hooks" / "guard_project_files.py"
+    # `hooks.json` shells the literal name `python3`. On stock Windows that is
+    # not an interpreter but a Microsoft Store alias which prints an install
+    # advert and exits 9009, so the probe must establish that the name resolves
+    # before it can say anything about binding.
+    #
+    # Deliberately NOT falling back to `py -3`: the hook itself shells `python3`,
+    # so a machine where that name does not launch Python is a machine where the
+    # hook genuinely cannot run. Resolving a different interpreter here would
+    # hide that fact behind a green preflight.
+    try:
+        probe = subprocess.run(
+            ["python3", "--version"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, f"no `python3` on this machine: {type(exc).__name__}: {exc}"
+    if probe.returncode != 0 or not probe.stdout.startswith("Python 3"):
+        return False, (
+            "`python3` does not launch a Python 3 interpreter here -- stock "
+            "Windows resolves the name to a Microsoft Store alias. hooks.json "
+            "shells that exact name, so the hook cannot run on this machine and "
+            "this probe cannot measure binding. Run it on macOS or Linux."
+        )
     try:
         proc = subprocess.run(
             ["python3", str(script)],
@@ -339,8 +366,9 @@ async def main() -> None:
     if not ok:
         sys.exit(
             "VOID (preflight): the guard script is not runnable as hooks.json "
-            "invokes it, so a negative result here would be a packaging problem "
-            "misreported as a binding problem."
+            "invokes it -- either a packaging problem or no `python3` on this "
+            "machine. Either way a negative result here would be misreported as "
+            "a binding problem. See the detail line above."
         )
 
     rows = []
