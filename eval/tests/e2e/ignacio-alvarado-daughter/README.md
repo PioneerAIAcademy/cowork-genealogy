@@ -127,8 +127,9 @@ couple in these two parishes in this period.
 
 **Why `f1` changed rather than being kept as drafted.** The draft asserted
 "born and buried in 1880" as one claim. The relationship and the 20 June 1880
-burial are confirmed; the 1880 birth is not, so the finding states an April
-1879 birth with the age-at-death and baptism as its warrant. Under
-§3.4.2 only `link` components score, so the corrected year sits in `details` as
+burial are confirmed; the 1880 birth is not, so the finding states a birth in
+the week of 21–27 March 1879, with the age-at-death and baptism as its
+warrant. Under §3.4.2 only `link` components score, so the corrected year sits
+in `details` as
 an identifying detail. The `researcher_question` is unchanged — it is the hint
 record's own spelling of the mother's name and stays answerable.
