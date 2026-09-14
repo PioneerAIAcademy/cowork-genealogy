@@ -426,7 +426,8 @@ def report_resolution_word_caps(before_state, after_state):
     corpus rotates, so do not quote this).
 
     Reporting, not gating, and that is not a style choice: a failing tier-1
-    validator suppresses the LLM judge for that run (orchestrator.py:607), so a
+    validator suppresses the LLM judge for that run (the `validators_passed`
+    gate in orchestrator.py), so a
     gating version would silence the Evidence weighing and Resolution
     completeness grading on the runs it fires -- the craft grading this dive
     exists to protect.
@@ -648,8 +649,8 @@ def report_resolution_precedes_identity(before_state, after_state):
     Tier 2 by design, on measured grounds:
 
     - A failing tier-1 validator suppresses the LLM judge for that run
-      (orchestrator.py:607; compute_validators_passed at :126-139 confirms tier
-      2 never gates). The runs this fires on DO produce judge signal --
+      (the `validators_passed` gate in orchestrator.py;
+      `compute_validators_passed` confirms tier 2 never gates). The runs this fires on DO produce judge signal --
       Correctness 2, Source independence analysis 2, Tool Arguments 2 -- which
       gating would delete.
     - `Resolution completeness` carries a fail branch for this exact ground
@@ -901,7 +902,8 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
     is what this reports.
 
     Tier 2, and V4 cannot be gating even in principle: this arm reads PROSE. A
-    failing tier-1 validator suppresses the LLM judge (orchestrator.py:609), and
+    failing tier-1 validator suppresses the LLM judge (the `validators_passed`
+    gate in orchestrator.py), and
     the grader is the only thing that can read whether the upgrade was justified.
     `Evidence weighing` and `Resolution completeness` scored 3 on all 28 runs
     where either was graded -- neither has ever discriminated -- which is both
@@ -930,9 +932,12 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
         if isinstance(a, dict) and a.get("id")
     }
 
+    before_by_id = _conflicts_by_id(before)
+
     observations = []
     for c in _conflicts_written(before, after):
         cid = c.get("id", "?")
+        prev = before_by_id.get(cid)
         # name -> the informant string that hedged it, so the message can quote
         # the record against the prose. Without the source string a reader
         # cannot tell whether the upgrade was real.
@@ -973,7 +978,20 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
         if not names:
             continue
 
-        texts = {f: str(c.get(f) or "") for f in _V4_TEXT_FIELDS}
+        # Only the prose fields THIS turn authored. `_conflicts_written`
+        # returns the conflict when EITHER field changed, so scanning both
+        # reports an upgrade sitting in a field byte-identical before the
+        # turn -- telling a genealogist the run wrote prose it did not
+        # write, the same defect class as the truncated quote. `prev is
+        # None` is a conflict this turn created, where every field is
+        # authored. Does not fire on today's corpus (all 29 prose edits
+        # write both fields in one turn) but 34 of the 42 fixture conflicts
+        # already carry prose in both, so one single-field revision trips it.
+        texts = {
+            f: str(c.get(f) or "")
+            for f in _V4_TEXT_FIELDS
+            if prev is None or c.get(f) != prev.get(f)
+        }
         texts["the reply text"] = str(text_response or "")
         for field, txt in texts.items():
             for name, span in _certainty_upgrades(txt, set(names)):

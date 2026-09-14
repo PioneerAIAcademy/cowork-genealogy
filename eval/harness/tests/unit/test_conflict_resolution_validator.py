@@ -657,7 +657,7 @@ def test_v6_mooting_one_conflict_alone_passes():
 # `flynn-competing-fathers`, is in this skill's own corpus. With a broken
 # before-reader every one of them looks new, `_analysis_written` returns True,
 # and V6 fires on a run that touched exactly one conflict — failing the run and
-# suppressing the judge at orchestrator.py:607.
+# suppressing the judge at the `validators_passed` gate in orchestrator.py.
 #
 # The corpus replay structurally cannot cover this: `_replay` skips runs with no
 # conflicts diff, and every scenario it reaches starts with zero analysed
@@ -1113,7 +1113,8 @@ def test_v3_is_tier_2_reporting_not_gating():
     """The tier is carried by the function-name PREFIX and nothing else
     (`validator_runner.py` branches on `startswith("report_")`), so a rename
     flips gating on silently. Gating would suppress the judge
-    (orchestrator.py:607) on runs that do produce signal on other dimensions."""
+    (the `validators_passed` gate in orchestrator.py) on runs that do produce
+    signal on other dimensions."""
     assert hasattr(_VALIDATOR, "report_resolution_precedes_identity")
     assert not hasattr(_VALIDATOR, "test_resolution_precedes_identity"), (
         "V3 was promoted to a gating test_* function; that is a lead decision "
@@ -1833,6 +1834,86 @@ def test_v4_ignores_prose_the_run_did_not_author():
 
     # Paired: authoring the prose in the same turn IS reported.
     _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+
+
+def _v4_both_fields(*, rationale_before, rationale_after,
+                    weighing_before, weighing_after):
+    """A conflict carrying prose in BOTH fields, each settable per side.
+
+    `_v4_states` cannot express this: it moves one field and pins the other to
+    `None` on both sides, so no state it builds has one field authored while
+    the other carries standing prose -- the shape this pair exists for.
+    """
+    a = {"id": "a_002", "source_id": "src_001", "informant": _HEDGED_INFORMANT,
+         "information_quality": "indeterminate"}
+    base = {"id": "c_001", "status": "resolved", "conflict_type": "fact",
+            "competing_assertion_ids": ["a_002"], "preferred_assertion_id": "a_002",
+            "independence_analysis": None}
+    b = dict(base, resolution_rationale=rationale_before,
+             weighing_analysis=weighing_before)
+    af = dict(base, resolution_rationale=rationale_after,
+              weighing_analysis=weighing_after)
+    return ({"research_json": {"conflicts": [b], "assertions": [a]}},
+            {"research_json": {"conflicts": [af], "assertions": [a]}})
+
+
+_INNOCUOUS = "The 1850 census is an original record and outweighs the derivative index."
+
+
+def test_v4_does_not_report_an_upgrade_in_a_field_this_turn_did_not_touch():
+    """`_conflicts_written` returns the conflict when EITHER prose field moved.
+
+    Scanning both then reports an upgrade sitting in a field that is
+    byte-identical across the turn. The message names the run as the author of
+    prose it did not write -- the same defect as the quote that stopped at the
+    name it accused, arriving by a different route.
+
+    NOT reachable through `_v4_states`, and not covered by
+    `test_v4_ignores_prose_the_run_did_not_author`, which holds NEITHER field
+    changed. Both stayed green with the bug present.
+
+    Does not fire on today's corpus -- all 29 prose-writing edits move both
+    fields in one turn -- but 34 of the 42 conflict entries across the scenario
+    fixtures already carry prose in both, so the first single-field revision
+    reaches it.
+    """
+    # `resolution_rationale` carries the upgrade and is UNCHANGED; the run
+    # authored only `weighing_analysis`.
+    check_certainty_upgrade(*_v4_both_fields(
+        rationale_before=_UPGRADE_SENTENCE, rationale_after=_UPGRADE_SENTENCE,
+        weighing_before=None, weighing_after=_INNOCUOUS), "")
+
+
+def test_v4_still_reports_when_that_same_field_IS_authored_this_turn():
+    """Near-miss for the test above: the one-token difference that must fire.
+
+    Same conflict, same upgrade, same field -- the only change is that
+    `resolution_rationale` now differs across the turn, so the run did write
+    it. Without this, the clean case above is satisfied by a check that reports
+    nothing at all.
+    """
+    msg = _fires(*_v4_both_fields(
+        rationale_before=_INNOCUOUS, rationale_after=_UPGRADE_SENTENCE,
+        weighing_before=None, weighing_after=_INNOCUOUS))
+    assert "resolution_rationale" in msg, msg
+    assert "Thomas Flynn" in msg, msg
+
+
+def test_v4_reports_every_field_of_a_conflict_the_turn_CREATED():
+    """`prev is None` must not be read as "nothing was authored".
+
+    A conflict this turn created has no before-image, so every field on it is
+    the run's own prose. Guarding the field filter on equality with a missing
+    previous conflict would silence exactly the case with the most authorship.
+    """
+    before = {"research_json": {"conflicts": [], "assertions": [
+        {"id": "a_002", "source_id": "src_001", "informant": _HEDGED_INFORMANT,
+         "information_quality": "indeterminate"}]}}
+    after, _ = _v4_both_fields(
+        rationale_before=_UPGRADE_SENTENCE, rationale_after=_UPGRADE_SENTENCE,
+        weighing_before=None, weighing_after=_INNOCUOUS)
+    msg = _fires(before, after)
+    assert "resolution_rationale" in msg, msg
 
 
 def test_v4_derivation_and_validator_agree_on_a_CREATED_conflict():
