@@ -5,7 +5,7 @@
     "name": "Autonomous mode flag triggers research",
     "type": "positive",
     "description": "The --autonomous flag is an explicit trigger in the skill description. The user wants unattended GPS research without pausing for clarifying questions.",
-    "tags": ["core-trigger", "autonomous"]
+    "tags": ["core-trigger", "autonomous", "grade:trigger"]
   },
   "input": {
     "user_message": "Research Patrick Flynn's parentage --autonomous",
