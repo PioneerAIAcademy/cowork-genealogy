@@ -938,6 +938,17 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (entry.plan_item_id) {
       checkIdPrefix(entry.plan_item_id, ID_PREFIXES.plan_items, lp, report);
     }
+    // `results_examined` is `integer, minimum: 0` in the JSON Schema; this
+    // validator only ever checked the key was present, so `NaN` (which
+    // persists as `null`), a negative, or a fraction passed here and failed
+    // only in the schema validator downstream. Same drift class, same fix as
+    // `plan_item_id` above: match the schema, for every writer of `log[]`.
+    if ("results_examined" in entry) {
+      const n = entry.results_examined;
+      if (typeof n !== "number" || !Number.isInteger(n) || n < 0) {
+        addError(report, lp, `results_examined must be a non-negative integer; got ${JSON.stringify(n)}`);
+      }
+    }
 
     const ext = entry.external_site;
     if (entry.tool === "external_site" && ext === null) {

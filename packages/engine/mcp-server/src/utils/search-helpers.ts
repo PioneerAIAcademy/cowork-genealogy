@@ -10,6 +10,24 @@ export function isFourDigitYear(value: number): boolean {
 }
 
 /**
+ * True for an absolute `http:`/`https:` URL. The shape check for any
+ * caller-composed, URL-typed string on its way into a URL the researcher will
+ * click (`build_external_search_url`'s `baseUrl`) or into `research.json`
+ * (`research_log_append`'s `externalSite.urlGenerated`) — a plain label, a
+ * `javascript:`/`data:` value, or a relative path is a caller error in both.
+ * `new URL()` strips leading/trailing whitespace before parsing, so a padded
+ * value passes here; callers that go on to use the string trim it first.
+ */
+export function isHttpUrl(u: string): boolean {
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/**
  * A display date range from a `startYear`/`endYear` pair.
  *
  * One format for every search tool that shows a span, so two tools cannot

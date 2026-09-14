@@ -190,7 +190,7 @@ call, not from this table.
 | State/regional digital newspaper archives | e.g. Utah Digital Newspapers, California Digital Newspaper Collection — the specific archive's URL is not fixed; pass it as `baseUrl` (step 3) |
 | National Archives Catalog (archives.gov) | US federal records, name-authority search |
 | Internet Archive (archive.org) | Keyword only — no structured name/date fields |
-| BillionGraves | Cemetery records, GPS-tagged |
+| BillionGraves | Cemetery records, GPS-tagged. User-contributed — treat as compiled source |
 | Digitalarkivet | Norwegian National Archives, person search |
 | Portale Antenati | Italian civil/parish records. One year field for whichever record matched (not separate birth/death years) |
 | Library and Archives Canada | Census search only — no death data (census records the living) |
@@ -440,7 +440,10 @@ If the call returns `{ ok: false, errors }`, surface the errors and fix
 the inputs rather than retrying blindly or hand-writing the entry; nothing
 was written. On success the response carries the `logId` it assigned.
 
-Then present the URL:
+Then present the URL. For a user-contributed site (`findagrave`,
+`billiongraves`), add one line with it now, before any capture arrives:
+entries are user-contributed — a lead, not proof; photographed evidence
+will outweigh contributor-entered text once a capture comes back.
 
 ---
 
@@ -581,8 +584,8 @@ the natural next move:
 
 ## User-contributed sources
 
-Find A Grave memorials, public member trees, and crowd-sourced indexes are
-compiled sources. Apply the nine criteria in
+Find A Grave and BillionGraves memorials, public member trees, and
+crowd-sourced indexes are compiled sources. Apply the nine criteria in
 `references/evaluating-compiled-sources.md`. In short: separate
 photographed evidence from contributor-entered text, never cite them as
 primary, and use them as leads — add a plan item to find the originals

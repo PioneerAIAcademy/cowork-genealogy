@@ -952,6 +952,65 @@ describe("build_external_search_url", () => {
       expect(r.notes.some((n) => /must both be supplied for a dates window/.test(n))).toBe(true);
     });
 
+    it("notes a Chronicling America window whose one end is null — presence is not validity (review finding)", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "Patrick", surname: "Flynn", searchStartYear: null as any, searchEndYear: 1910 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("dates=");
+      expect(r.notes.some((n) => /must both be supplied for a dates window/.test(n))).toBe(true);
+    });
+
+    it("notes a Chronicling America window whose one end is out of range, not just absent (review finding)", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "Patrick", surname: "Flynn", searchStartYear: 1880, searchEndYear: 99999 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("dates=");
+      expect(r.notes.some((n) => /must both be supplied for a dates window/.test(n))).toBe(true);
+    });
+
+    it("notes a wrong-typed usState instead of dropping it silently (review finding)", () => {
+      // usState was the one recognized key in none of the old type Sets, so a
+      // number here vanished from the URL with an empty notes array.
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "Patrick", surname: "Flynn", usState: 12 as any },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("location_state=");
+      expect(r.notes.some((n) => /'usState' was supplied but is not a usable string/.test(n))).toBe(true);
+    });
+
+    it("rejects a year below 1000 with a note, matching the shared isFourDigitYear bound", () => {
+      const r = buildExternalSearchUrl({
+        site: "antenati",
+        attributes: { givenName: "Pietro", surname: "Rossi", birthYear: 950 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("anno=");
+      expect(r.notes.some((n) => /'birthYear' was supplied but is not a valid year/.test(n))).toBe(true);
+    });
+
+    it("trims a whitespace-padded baseUrl instead of shipping the padding into the URL (review finding)", () => {
+      // `new URL()` strips the padding itself, so the untrimmed string passed
+      // isHttpUrl while appendToBaseUrl's substring slicing kept the spaces.
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "  https://www.ancestry.com/search/collections/8054/  ",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn");
+    });
+
     it("rejects a non-negative-integer birthYearOffset/placeProximityMiles rather than sharing the year bound", () => {
       const r = buildExternalSearchUrl({
         site: "findmypast",

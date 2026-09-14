@@ -31,6 +31,7 @@ import {
 } from "../utils/project-io.js";
 import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { isHttpUrl } from "../utils/search-helpers.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -247,9 +248,25 @@ async function applyLogAppendOp(
   if (externalSite && !EXTERNAL_SITE_VALUES.has(externalSite.site)) {
     throw new LogAppendError(`externalSite.site '${externalSite.site}' is not a valid site`);
   }
+  // `urlGenerated` is the string the skill presents as the clickable link
+  // and persists verbatim into `research.json` — the same caller-composed,
+  // URL-shaped input `build_external_search_url` rejects as `invalid_base_url`
+  // when it is a plain label or a `javascript:`/`data:` value, and until now
+  // the only such field with no check at all on the way to disk.
+  if (externalSite && externalSite.urlGenerated != null && !isHttpUrl(externalSite.urlGenerated)) {
+    throw new LogAppendError(
+      `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
+    );
+  }
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
   }
+  // Coerced the same way `resultsAvailable` is below: a model that
+  // stringifies numeric args (`resultsExamined: "5"`) otherwise hard-fails
+  // the integer check under it for a value whose intent is unambiguous.
+  // `coerceJsonArg` leaves a genuinely non-numeric string untouched, so
+  // `"five"` still reaches that check and is rejected with its own text.
+  const resultsExamined = coerceJsonArg(op.resultsExamined);
   // `resultsExamined` had no validation of its own anywhere in this tool —
   // `NaN`, a negative number, or a fraction all reached `research.json`
   // unrejected (`NaN` specifically persists as `null`, since
@@ -258,8 +275,11 @@ async function applyLogAppendOp(
   // Rejected here, before the check below, because that check's own
   // `resultsExamined > 0` comparison is `false` for both `NaN` and a
   // negative number — silently passing validation instead of catching the
-  // bad value it was built to catch.
-  if (!Number.isInteger(op.resultsExamined) || op.resultsExamined < 0) {
+  // bad value it was built to catch. `validator.ts` enforces the same bound
+  // on the persisted `results_examined` for every writer of `log[]`; this is
+  // the fail-fast under the caller's own parameter name, the same split
+  // `planItemId` above already uses.
+  if (typeof resultsExamined !== "number" || !Number.isInteger(resultsExamined) || resultsExamined < 0) {
     throw new LogAppendError(
       `resultsExamined must be a non-negative integer; got ${JSON.stringify(op.resultsExamined)}`,
     );
@@ -272,9 +292,9 @@ async function applyLogAppendOp(
   // reminder in prose. Scoped to `external_links_search` only: no other
   // tool value shares this fetch-vs-search distinction, and it is the only
   // one search-external-sites (its sole caller) uses this way.
-  if (op.tool === "external_links_search" && op.resultsExamined > 0 && op.outcome !== "positive") {
+  if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {
     throw new LogAppendError(
-      `tool 'external_links_search' returned ${op.resultsExamined} result(s), so outcome must be ` +
+      `tool 'external_links_search' returned ${resultsExamined} result(s), so outcome must be ` +
         `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
         `results didn't fit the plan item's record type in 'notes' instead.`,
     );
@@ -295,7 +315,7 @@ async function applyLogAppendOp(
     tool: op.tool,
     query,
     outcome: op.outcome,
-    results_examined: op.resultsExamined,
+    results_examined: resultsExamined,
     external_site: externalSite
       ? {
           site: externalSite.site,

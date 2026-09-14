@@ -434,6 +434,37 @@ describe("research_log_append", () => {
     },
   );
 
+  it("coerces a stringified resultsExamined the way resultsAvailable already is, rather than rejecting it", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: "5" as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].results_examined).toBe(5);
+  });
+
+  it("rejects an externalSite.urlGenerated that is not an absolute http(s) URL (review finding)", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_site",
+      query: { name: "Patrick Flynn" },
+      outcome: "partial",
+      resultsExamined: 0,
+      externalSite: { site: "ancestry", urlGenerated: "javascript:alert(1)", captureReceived: false, captureFilename: null },
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/urlGenerated .* is not an absolute http\(s\) URL/);
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
+  });
+
   it("accepts a null planItemId (opportunistic search) and a valid pli_ id", async () => {
     await writeProject(baseResearch());
     const optOut = await researchLogAppend({

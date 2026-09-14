@@ -6,7 +6,7 @@
 // link fits, what conflicts[] says about a disputed field); the tool applies
 // only the string-templating. Spec: docs/specs/build-external-search-url-tool-spec.md.
 
-import { isFourDigitYear } from "../utils/search-helpers.js";
+import { isFourDigitYear, isHttpUrl } from "../utils/search-helpers.js";
 
 export type ExternalSearchSite =
   | "ancestry"
@@ -89,30 +89,17 @@ export type BuildExternalSearchUrlResult =
   | { ok: false; reason: "invalid_base_url"; errors: string[] }
   | { ok: false; reason: "no_attributes"; errors: string[] };
 
-// `baseUrl` is a caller-supplied string with no other check on it anywhere —
-// accepting anything meant a plain label ("Utah Digital Newspapers"), a
-// `javascript:`/`data:` value, or any other non-http(s) string built
-// `{ ok: true, url: "Utah Digital Newspapers?q=Flynn" }`, a dead or unsafe
-// link returned as a success. Requires an absolute http(s) URL; anything
-// else is a caller error, not a URL this tool can build onto.
-function isHttpUrl(u: string): boolean {
-  try {
-    const parsed = new URL(u);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 function isSupportedSite(site: string): site is ExternalSearchSite {
   return (SUPPORTED_SITES as string[]).includes(site);
 }
 
 // Calendar years reuse the same plausibility bound `record-search.ts` and
-// `fulltext-search.ts` already apply (`isFourDigitYear`), rather than a
-// second, differently-bounded copy — a duplicate here previously accepted
-// `0` and rejected years before 1000, which a real historical record can
-// need and `isFourDigitYear`'s own [1000, 9999] already gets right.
+// `person-search.ts` already apply (`isFourDigitYear`), rather than a
+// second, differently-bounded copy. This narrows what an inline duplicate
+// here previously accepted (`[0, 9999]`, so a year below 1000 — a real
+// possibility for a medieval parish or church-book record — used to
+// template) in exchange for one shared validity rule instead of two that
+// can silently drift apart; see the tool spec's numeric-bounds table.
 function numYear(n: number | undefined | null): string | undefined {
   return typeof n === "number" && isFourDigitYear(n) ? String(n) : undefined;
 }
@@ -561,10 +548,21 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   // "" and whitespace-only are absent, the same convention `str()` applies to
   // every attribute — without this, `baseUrl: ""` (or a caller passing a
   // curated link that turned out blank) built a dead link (`"?name=Flynn"`,
-  // no host at all) rather than falling back to the site-wide URL, and
-  // `baseUrl: "   "` built one with a literal leading space in the URL.
-  const baseUrl = rawBaseUrl?.trim() ? rawBaseUrl : undefined;
+  // no host at all) rather than falling back to the site-wide URL. The
+  // TRIMMED value is what gets used, not merely checked: `new URL()` strips
+  // leading/trailing whitespace itself, so a padded-but-valid
+  // `" https://..."` passed `isHttpUrl` below while the raw untrimmed string
+  // still reached `appendToBaseUrl`'s substring slicing and shipped a URL
+  // with a literal leading space.
+  const trimmedBaseUrl = rawBaseUrl?.trim();
+  const baseUrl = trimmedBaseUrl ? trimmedBaseUrl : undefined;
 
+  // `baseUrl` is a caller-supplied string with no other check on it anywhere —
+  // accepting anything meant a plain label ("Utah Digital Newspapers"), a
+  // `javascript:`/`data:` value, or any other non-http(s) string built
+  // `{ ok: true, url: "Utah Digital Newspapers?q=Flynn" }`, a dead or unsafe
+  // link returned as a success. Anything but an absolute http(s) URL is a
+  // caller error, not a URL this tool can build onto.
   if (baseUrl && !isHttpUrl(baseUrl)) {
     return {
       ok: false,
@@ -599,10 +597,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     // Do not invent facet or date parameters for these archives — an
     // unrecognized parameter is silently ignored or errors the page.
     const dnaRecognized = new Set<keyof BuildExternalSearchUrlAttributes>(["givenName", "surname", "keywords"]);
-    const notes = [
-      ...unusedAttributeNotes(a, dnaRecognized, site),
-      ...invalidRecognizedKeyNotes(a, dnaRecognized, site),
-    ];
+    const notes = attributeNotes(a, dnaRecognized, site);
     return { ok: true, url: appendToBaseUrl(baseUrl, { q }), notes, access: SITE_ACCESS[site] };
   }
 
@@ -616,8 +611,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     };
   }
 
-  const notes = unusedAttributeNotes(a, RECOGNIZED_KEYS[site], site);
-  notes.push(...invalidRecognizedKeyNotes(a, RECOGNIZED_KEYS[site], site));
+  const notes = attributeNotes(a, RECOGNIZED_KEYS[site], site);
   // Tests validity, not presence: `numYear` rejects out-of-range/non-integer
   // values, so `eventYear: 99999` must warn exactly like an absent one does —
   // an earlier version checked `!== undefined` here while the sibling
@@ -633,9 +627,12 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   // A half-supplied window is recognized on both ends, so `notes` can't see
   // it via unused-attribute detection alone — only one end reaching `dates`
   // silently drops the whole window rather than warning that the other end
-  // is needed too.
-  if (site === "chronicling_america" && (a.searchStartYear !== undefined) !== (a.searchEndYear !== undefined)) {
-    notes.push("searchStartYear/searchEndYear must both be supplied for a dates window — only one was given, so no date window was applied");
+  // is needed too. Tests validity, not presence, for the same reason as the
+  // findmypast check above: `{ searchStartYear: null, searchEndYear: 1910 }`
+  // and `{ searchStartYear: 1880, searchEndYear: 99999 }` both look
+  // "two-ended" to a `!== undefined` check yet template no `dates` at all.
+  if (site === "chronicling_america" && (numYear(a.searchStartYear) !== undefined) !== (numYear(a.searchEndYear) !== undefined)) {
+    notes.push("searchStartYear/searchEndYear must both be supplied for a dates window — only one produced a valid year, so no date window was applied");
   }
 
   // A curated `baseUrl` already names its own host, so `locale` only applies
@@ -663,64 +660,89 @@ function isSuppliedValue(v: unknown): boolean {
   return typeof v === "string" ? v.trim().length > 0 : true;
 }
 
-// A supplied attribute that the target site's mapping never reads vanishes
-// from the URL with no signal — the caller may believe a death event scoped
-// a chronicling_america search that actually ran whole-corpus and undated.
-function unusedAttributeNotes(
-  a: BuildExternalSearchUrlAttributes,
-  recognized: Set<keyof BuildExternalSearchUrlAttributes>,
-  site: ExternalSearchSite,
-): string[] {
-  const supplied = (Object.keys(a) as Array<keyof BuildExternalSearchUrlAttributes>).filter((k) =>
-    isSuppliedValue(a[k]),
-  );
-  const unused = supplied.filter((k) => !recognized.has(k));
-  return unused.map((k) => `'${k}' is not used by ${site} — supplied but ignored`);
-}
+type AttributeKind = "string" | "year" | "smallNumber";
+type AttributeValidatorEntry = { kind: AttributeKind; validate: (v: unknown) => string | undefined };
 
-// Which runtime type each attribute is templated as — used only to tell
-// "supplied but the wrong type/out of range" apart from "not supplied at
-// all" below. A recognized key of the wrong type reached the same silent
-// `undefined` as an absent one (a string field given a number, an
-// out-of-range or fractional year, a negative offset): `unusedAttributeNotes`
-// can't see it, because the key IS recognized — only its value was
-// rejected. Deliberately excludes `usState`: it accepts any string, has no
-// separate validity check, and always reaches `unusedAttributeNotes`
-// correctly if unrecognized.
-const STRING_TYPED_KEYS = new Set<keyof BuildExternalSearchUrlAttributes>([
-  "givenName", "surname", "birthPlace", "deathPlace", "marriagePlace", "residencePlace",
-  "fatherGivenName", "fatherSurname", "motherGivenName", "motherSurname",
-  "spouseGivenName", "spouseSurname", "keywords", "searchYear", "searchPlace",
-]);
-const YEAR_TYPED_KEYS = new Set<keyof BuildExternalSearchUrlAttributes>([
-  "birthYear", "deathYear", "marriageYear", "residenceYear", "eventYear",
-  "searchStartYear", "searchEndYear",
-]);
-const SMALL_NUMBER_TYPED_KEYS = new Set<keyof BuildExternalSearchUrlAttributes>([
-  "birthYearOffset", "placeProximityMiles",
-]);
+// One authoritative validator per attribute, keyed exactly as the interface
+// and exhaustive over it — `-?` strips the optionality, so a field added to
+// `BuildExternalSearchUrlAttributes` with no entry here is a compile error,
+// not a key that silently falls through with no note. That is how `usState`
+// used to escape: three hand-kept Sets partitioned the keys by type, and a
+// key in none of them (usState was deliberately left out) got no
+// "wrong type" note for any value at all. Each entry's `validate` is checked
+// against that key's own declared type, so a year field cannot be handed
+// `str` nor a string field `numYear` without `tsc` objecting — the `as`
+// casts the Set-based version needed to compile hid exactly that mistake.
+const ATTRIBUTE_VALIDATORS: {
+  [K in keyof BuildExternalSearchUrlAttributes]-?: {
+    kind: AttributeKind;
+    validate: (v: BuildExternalSearchUrlAttributes[K] | null) => string | undefined;
+  };
+} = {
+  givenName: { kind: "string", validate: str },
+  surname: { kind: "string", validate: str },
+  birthYear: { kind: "year", validate: numYear },
+  birthPlace: { kind: "string", validate: str },
+  deathYear: { kind: "year", validate: numYear },
+  deathPlace: { kind: "string", validate: str },
+  marriageYear: { kind: "year", validate: numYear },
+  marriagePlace: { kind: "string", validate: str },
+  residenceYear: { kind: "year", validate: numYear },
+  residencePlace: { kind: "string", validate: str },
+  fatherGivenName: { kind: "string", validate: str },
+  fatherSurname: { kind: "string", validate: str },
+  motherGivenName: { kind: "string", validate: str },
+  motherSurname: { kind: "string", validate: str },
+  spouseGivenName: { kind: "string", validate: str },
+  spouseSurname: { kind: "string", validate: str },
+  birthYearOffset: { kind: "smallNumber", validate: numSmall },
+  placeProximityMiles: { kind: "smallNumber", validate: numSmall },
+  eventYear: { kind: "year", validate: numYear },
+  keywords: { kind: "string", validate: str },
+  searchYear: { kind: "string", validate: str },
+  searchPlace: { kind: "string", validate: str },
+  searchStartYear: { kind: "year", validate: numYear },
+  searchEndYear: { kind: "year", validate: numYear },
+  usState: { kind: "string", validate: str },
+};
 
-function invalidRecognizedKeyNotes(
+const KIND_LABEL: Record<AttributeKind, string> = {
+  string: "usable string",
+  year: "valid year",
+  smallNumber: "valid number",
+};
+
+// One pass over every attribute the caller supplied. Unrecognized by this
+// site → "not used" (the caller may believe a death event scoped a
+// chronicling_america search that actually ran whole-corpus and undated).
+// Recognized but rejected by its validator → "wrong type / out of range"
+// (a string field given a number, an out-of-range or fractional year, a
+// negative offset — all of which otherwise reach the same silent `undefined`
+// as an absent value). `null`, `""` and whitespace-only count as absent on
+// BOTH branches, the same convention `str()` documents: a caller passing
+// `deathYear: null` to a site with no death slot said "I have no death
+// year", not "scope by this", so there is nothing lost to warn about.
+function attributeNotes(
   a: BuildExternalSearchUrlAttributes,
   recognized: Set<keyof BuildExternalSearchUrlAttributes>,
   site: ExternalSearchSite,
 ): string[] {
   const notes: string[] = [];
-  for (const key of recognized) {
-    const v = a[key];
-    if (!isSuppliedValue(v)) continue;
-    if (STRING_TYPED_KEYS.has(key)) {
-      if (str(v as string) === undefined) {
-        notes.push(`'${key}' was supplied but is not a usable string for ${site} — ignored`);
-      }
-    } else if (YEAR_TYPED_KEYS.has(key)) {
-      if (numYear(v as number) === undefined) {
-        notes.push(`'${key}' was supplied but is not a valid year for ${site} — ignored`);
-      }
-    } else if (SMALL_NUMBER_TYPED_KEYS.has(key)) {
-      if (numSmall(v as number) === undefined) {
-        notes.push(`'${key}' was supplied but is not a valid number for ${site} — ignored`);
-      }
+  for (const key of Object.keys(a) as Array<keyof BuildExternalSearchUrlAttributes>) {
+    const value = a[key];
+    if (!isSuppliedValue(value)) continue;
+    if (!recognized.has(key)) {
+      notes.push(`'${key}' is not used by ${site} — supplied but ignored`);
+      continue;
+    }
+    // `value` is `a[key]`, by construction the very type this key's
+    // `validate` was declared (and compile-checked) for. The widening cast
+    // exists only because TypeScript cannot call a union of differently-
+    // typed functions with the matching union argument; it introduces no
+    // per-key ambiguity the way the old Set membership did.
+    const { kind, validate } = ATTRIBUTE_VALIDATORS[key] as AttributeValidatorEntry;
+    if (validate(value) === undefined) {
+      notes.push(`'${key}' was supplied but is not a ${KIND_LABEL[kind]} for ${site} — ignored`);
     }
   }
   return notes;

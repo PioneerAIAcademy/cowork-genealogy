@@ -154,6 +154,7 @@ build_external_search_url({
 { ok: true, url: string, notes: string[], access: "free" | "free_bot_protected" | "subscription" }
 | { ok: false, reason: "unsupported_site", errors: string[], supportedSites: string[] }
 | { ok: false, reason: "base_url_required", errors: string[] }
+| { ok: false, reason: "invalid_base_url", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
 ```
 
@@ -420,11 +421,15 @@ generally, not verified per archive:
 |-----------|----------|
 | `site` outside the supported values | `{ ok: false, reason: "unsupported_site", supportedSites: [...] }` |
 | `site: "digital_newspaper_archive"` with no `baseUrl` | `{ ok: false, reason: "base_url_required" }` |
+| `baseUrl` is supplied but is not an absolute `http(s)` URL (a plain label, a `javascript:`/`data:` value, a relative path) | `{ ok: false, reason: "invalid_base_url", errors: [...] }` — a caller error, not a URL the tool can build onto. Checked on the trimmed value, so leading/trailing whitespace neither fails the check nor reaches the built URL |
 | `attributes` has no field the target site uses at all (e.g. `site: "ancestry"` with only `eventYear` set) | `{ ok: false, reason: "no_attributes", errors: [...] }` — an empty search is not a URL worth presenting |
 | `attributes` has fields but every one is an empty string | same as above — empty string never counts as a supplied value (§3.7) |
 | `baseUrl` carries an existing `sid` parameter (any case) | stripped before appending; not an error |
 | `baseUrl` carries a `#fragment` | the appended query lands before it; the fragment is preserved at the end of the URL |
-| A numeric attribute is `NaN`/`Infinity`/out of `[0, 9999]`/non-integer | treated as absent, not stringified into the URL |
+| A year attribute is `NaN`/`Infinity`/non-integer or outside `[1000, 9999]` (the shared `isFourDigitYear` bound; a year below 1000 is rejected) | treated as absent, not stringified into the URL; `notes` flags it as supplied but not a valid year |
+| A FindMyPast tuning knob (`birthYearOffset`, `placeProximityMiles`) is `NaN`/non-integer or outside `[0, 1000]` | treated as absent; `notes` flags it as supplied but not a valid number |
+| A string attribute (including `usState`) is supplied with a non-string value | treated as absent; `notes` flags it as supplied but not a usable string |
+| `chronicling_america` with only one of `searchStartYear`/`searchEndYear` producing a valid year (the other absent, `null`, or out of range) | no `dates` window is applied; `notes` says both ends are needed |
 | FindMyPast call with name/place but no `birthYear`/`eventYear` | succeeds; `notes` flags the search as unscoped by year |
 | A supplied attribute the target site doesn't read (e.g. `keywords` on `ancestry`) | succeeds; `notes` flags the attribute as unused |
 | Any relative-name field given with only given-name or only surname (e.g. `fatherGivenName` but no `fatherSurname`) | the joined value uses whichever half is present — not an error |

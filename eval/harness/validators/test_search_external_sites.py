@@ -26,6 +26,7 @@ from validators_lib import assert_log_append_only as _assert_log_append_only
 from validators_lib import (
     assert_only_writes_to_sections as _assert_only_writes_to_sections,
 )
+from validators_lib import bare_tool_name as _bare_tool_name
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -262,6 +263,12 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
     no-access entry (`outcome: "error"`, asking whether to skip the site).
     Neither is a fresh generation this turn, so neither requires a fresh
     tool call this turn.
+
+    Also excludes `site: "familysearch_web"` — the one `external_site` enum
+    value the tool has no template for (its SUPPORTED_SITES is a subset of
+    the enum). An ad-hoc URL to a site outside the fifteen is logged under
+    it without any tool call, by design, so there is nothing hand-composed
+    there to flag.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests generate URLs")
@@ -277,6 +284,8 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
             return False
         if entry.get("outcome") == "error":
             return False
+        if detail.get("site") == "familysearch_web":
+            return False
         return True
 
     url_generation_entries = [
@@ -287,7 +296,7 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
         pytest.skip("no URL-generation external_site log entry this run")
 
     called_tool = any(
-        c.get("tool", "").split("__")[-1] == "build_external_search_url"
+        _bare_tool_name(c.get("tool")) == "build_external_search_url"
         for c in (tool_calls or [])
     )
     assert called_tool, (

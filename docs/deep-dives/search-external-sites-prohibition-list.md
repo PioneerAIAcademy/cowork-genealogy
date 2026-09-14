@@ -169,8 +169,10 @@ instead of rebuilding it.**
 46. Must not pass `stagedResultsRef` on the `external_site` entry — no
     sidecar exists until the capture arrives.
 47. `externalSite.site` must be one of the `external_site` enum's values
-    (`research-schema-spec.md`) — the same `site` argument passed to
-    `build_external_search_url` — and must match the site actually targeted.
+    (`research-schema-spec.md`) and must match the site actually targeted.
+    For a URL `build_external_search_url` built, that is the same `site`
+    argument passed to it; the enum also carries `familysearch_web`, which
+    the tool has no template for and which is logged without a tool call.
 48. The `log[]` is append-only. Must never edit or delete a prior entry. A
     capture that comes back gets a **new** entry, not an amendment.
 49. Two runs of the same search correctly produce two entries. Must not
