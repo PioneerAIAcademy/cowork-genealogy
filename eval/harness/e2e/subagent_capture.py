@@ -149,24 +149,45 @@ def summarize_transcript(
     return summary
 
 
+def sdk_cache_dir(workspace: Path) -> Path | None:
+    """The SDK's cache directory for this workspace, or None if absent.
+
+    Resolved with the SDK's own ``project_key_for_directory`` rather than a
+    match on the workspace leaf. The leaf does NOT survive into the slug: the
+    key is the sanitized full realpath, and ``_sanitize_path`` rewrites every
+    non-alphanumeric character to ``-``. Since tempfile's suffix alphabet
+    contains ``_``, a leaf-suffix match missed roughly one run in five and
+    recorded ``subagents: []`` with no way to tell that from "none ran" (#2468).
+
+    Calling the SDK is what keeps this correct: the CLI computes the same key
+    with the same function, so the two cannot drift.
+
+    Never raises. ``collect_subagents`` runs before the run log is built and
+    outside any try, so anything raised here would lose the log of a completed,
+    paid run — which the contract at the top of this module forbids.
+    """
+    try:
+        from claude_agent_sdk import project_key_for_directory
+    except ImportError:
+        return None
+    cache = Path.home() / ".claude" / "projects" / project_key_for_directory(workspace)
+    return cache if cache.is_dir() else None
+
+
 def find_subagent_transcripts(workspace: Path) -> list[tuple[Path, Path | None]]:
     """Locate this run's subagent transcripts (+ their meta) in the SDK cache.
 
     Subagent transcripts live under
-    ``~/.claude/projects/<slug>/**/subagents/agent-*.jsonl`` where the project
-    dir's slug ends with the unique tempdir leaf (``e2e-<id>-<rand>``) — the same
-    match used by ``_find_session_transcript``. The ``agent-`` prefix
+    ``~/.claude/projects/<key>/**/subagents/agent-*.jsonl``, where the key comes
+    from ``sdk_cache_dir`` — the same resolution ``_find_session_transcript``
+    uses. The slug does **not** end with the tempdir leaf; see ``sdk_cache_dir``. The ``agent-`` prefix
     distinguishes them from the parent's ``<session-uuid>.jsonl``. Returns
     (jsonl, meta-or-None) pairs sorted by mtime (oldest first = dispatch order).
     """
-    projects = Path.home() / ".claude" / "projects"
-    if not projects.is_dir():
+    cache = sdk_cache_dir(workspace)
+    if cache is None:
         return []
-    leaf = workspace.name
-    jsonls: list[Path] = []
-    for d in projects.iterdir():
-        if d.is_dir() and d.name.endswith(leaf):
-            jsonls.extend(d.rglob("agent-*.jsonl"))
+    jsonls: list[Path] = list(cache.rglob("agent-*.jsonl"))
     jsonls.sort(key=lambda p: p.stat().st_mtime)
     pairs: list[tuple[Path, Path | None]] = []
     for jsonl in jsonls:
@@ -175,16 +196,33 @@ def find_subagent_transcripts(workspace: Path) -> list[tuple[Path, Path | None]]
     return pairs
 
 
-def collect_subagents(workspace: Path) -> list[dict[str, Any]]:
+def collect_subagents(workspace: Path) -> tuple[list[dict[str, Any]], str]:
     """Top-level entry: summarize every subagent transcript for this run.
 
-    Best-effort — returns ``[]`` on any failure so it can never break an
-    otherwise-loggable run.
+    Returns ``(summaries, status)``. Best-effort — never raises, so it can never
+    break an otherwise-loggable run.
+
+    ``status`` exists because an empty list used to mean three different things
+    and nothing in the envelope told them apart (#2468):
+
+    ``captured``
+        At least one transcript was summarized.
+    ``no_cache_dir``
+        The SDK cache directory for this workspace does not exist. Either no
+        agent ran, or the cache was already cleaned up.
+    ``matched_no_transcripts``
+        The directory resolved but produced zero summaries — no
+        ``agent-*.jsonl``, or every one of them unparseable, which is the
+        run-killed-mid-generation shape this module skips silently below.
+    ``error``
+        Something failed while looking. Recorded, never raised.
     """
     try:
+        if sdk_cache_dir(workspace) is None:
+            return [], "no_cache_dir"
         pairs = find_subagent_transcripts(workspace)
-    except OSError:
-        return []
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return [], "error"
     summaries: list[dict[str, Any]] = []
     for jsonl, meta_path in pairs:
         records = parse_jsonl(jsonl)
@@ -199,4 +237,4 @@ def collect_subagents(workspace: Path) -> list[dict[str, Any]]:
         summaries.append(
             summarize_transcript(records, meta=meta, transcript_name=jsonl.name)
         )
-    return summaries
+    return summaries, ("captured" if summaries else "matched_no_transcripts")

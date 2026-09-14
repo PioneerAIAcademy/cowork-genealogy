@@ -84,7 +84,7 @@ def _drive(tmp_path, monkeypatch, *, judge, final_tree):
     monkeypatch.setattr(orchestrator, "read_research_json", lambda _ws: {"project": {}})
     monkeypatch.setattr(orchestrator, "read_tree_json", lambda _ws: final_tree)
     monkeypatch.setattr(orchestrator, "check_guardrail_compliance", lambda *a, **k: [])
-    monkeypatch.setattr(orchestrator, "collect_subagents", lambda _ws: [])
+    monkeypatch.setattr(orchestrator, "collect_subagents", lambda _ws: ([], "no_cache_dir"))
     monkeypatch.setattr(orchestrator, "_find_session_transcript", lambda _ws: None)
     monkeypatch.setattr(judge_module, "run_judge", judge)
 
