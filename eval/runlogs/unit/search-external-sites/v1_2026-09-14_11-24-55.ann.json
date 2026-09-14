@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-09-13_16-44-00.json",
+  "run_log": "v1_2026-09-14_11-24-55.json",
   "annotator": "83524248+taiwo-stack@users.noreply.github.com",
   "corrections": [
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "Capture guidance",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -51,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "Tool selection",
       "llm_score": 3,
@@ -59,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_013",
       "dimension_source": "rubric",
       "dimension_name": "Log entry",
       "llm_score": 3,
@@ -67,15 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_007",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -83,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -99,7 +91,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
       "llm_score": 3,
@@ -107,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "rubric",
       "dimension_name": "Capture guidance",
       "llm_score": 3,
@@ -115,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -123,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_007",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "rubric",
       "dimension_name": "Log entry",
       "llm_score": 3,
@@ -131,63 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_010",
+      "test_id": "ut_search_external_sites_009",
       "dimension_source": "rubric",
       "dimension_name": "Tool selection",
       "llm_score": 3,
@@ -195,55 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
+      "test_id": "ut_search_external_sites_008",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
       "llm_score": 3,
@@ -251,23 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_006",
+      "test_id": "ut_search_external_sites_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -275,23 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_006",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_006",
+      "test_id": "ut_search_external_sites_008",
       "dimension_source": "rubric",
       "dimension_name": "Capture guidance",
       "llm_score": 3,
@@ -299,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_006",
+      "test_id": "ut_search_external_sites_008",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -307,7 +163,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_006",
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2. The first research_log_append batch logged the curated-links fetch as \"negative\" with 2 results; the tool's fetch-outcome gate refused it and the model re-logged it correctly as \"positive\". The final log is right, but the first call was a genuine wrong argument — the gate working as designed, not a judge error."
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
       "dimension_source": "rubric",
       "dimension_name": "Tool selection",
       "llm_score": 3,
@@ -315,12 +187,148 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_006",
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
       "dimension_source": "rubric",
       "dimension_name": "Log entry",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "\n"
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Same misread. Free archive built first via build_external_search_url, Newspapers.com offered alongside as the fixture permits, place_search - external_links_search - tool-built URLs in the documented order. Nothing was hand-composed.\n"
+    },
+    {
+      "test_id": "ut_search_external_sites_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Same misread. Free archive built first via build_external_search_url, Newspapers.com offered alongside as the fixture permits, place_search -I am done anotating external_links_search tool-built URLs in the documented order. Nothing was hand-compose"
     }
   ]
 }
