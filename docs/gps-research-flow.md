@@ -124,12 +124,11 @@ assumptions have genuinely been invalidated.
 Four modes, chosen by what the records actually are.
 
 **Indexed search** is the default. Queries go broad to narrow, always anchored
-on surname or country. Spelling variants are tried explicitly first — so it can
-be said which letter changed — and a wildcard follows, to catch the shape nobody
-could guess. Only once the correctly-indexed spellings are exhausted does the
-system start dropping a criterion — the given name, the surname, a relative's
-name — on the theory that *that* field is the mistranscribed one. Index entries
-are mistranscribed roughly 5-15% of the time. A drop is always paired with a
+on surname or country. Spelling variants are tried explicitly first, so it can
+be said which letter changed. Only once those are exhausted does the system
+start dropping a criterion — the given name, the surname, a relative's name —
+on the theory that *that* field is the mistranscribed one, with wildcards after
+that for the shape nobody could guess. A drop is always paired with a
 compensating tighten elsewhere, since it widens the pool. Every search is
 logged, including the ones that find nothing: a negative result is a
 finding, and the query behind it is recorded so it isn't repeated blindly.
@@ -161,10 +160,10 @@ auto-expands recognized English given names). Three rules come from repeated fai
   Cantabrian baptism found by an unscoped name search returned nothing when
   scoped that way.
 - **Decompose compound surnames into co-occurrence, not an exact phrase.**
-  In the father's own records he carries only the paternal surname, so a
-  phrase search misses exactly the parentage records you want. The mother
-  is the exception — her own and her married surnames often do appear
-  together.
+  In the parents' own records the father carries the paternal surname and
+  the mother the maternal one, so the two sit on different people. The phrase
+  form matches only where the child's compound name is written out, and misses
+  exactly the parentage records you want.
 
 Full-text hits are derivative — an original, photographed, then read by
 machine, with meaningful error — so a hit is always confirmed against the
@@ -193,12 +192,17 @@ deliberate pass over the record; the system will not extract in passing,
 however small the record looks.
 
 The three GPS layers are classified **independently**, and they do not all
-attach at the same level — source type is a property of the record, while
-information and evidence are judged per assertion:
+attach at the same level — source type is a property of the source, which is
+the record *as you reached it*, while information and evidence are judged per
+assertion:
 
-- **Source** — original, derivative, or authored — *per record*
+- **Source** — original, derivative, or authored — *per source*
 - **Information** — primary, secondary, or undetermined — *per assertion*
 - **Evidence** — direct, indirect, or negative — *per assertion*
+
+The same record reached two ways is two sources with two classifications: the
+1850 census is *original* read from the image and *derivative* read as an
+index entry.
 
 A contemporaneous death certificate is an *original* source even when the
 informant's knowledge of the deceased's birthplace is secondhand; that
@@ -369,8 +373,8 @@ plausible-sounding holdings.
 and geographic feasibility checked: a person in two places too far apart for
 the era's travel. One person enumerated twice in a census year is common
 rather than impossible, so it is tested before it is read as two people:
-the distance is measured from the enumeration dates written on the pages,
-not from the census year.
+the household composition must match, and the distance is measured from the
+enumeration dates written on the pages, not from the census year.
 Single-person logical impossibilities — an event before birth or after
 death — are check-warnings' job, not the timeline's. Gap boundaries are the
 dates of the bounding events, never rounded out to January 1st. A timeline can span two
