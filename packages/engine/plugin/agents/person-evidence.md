@@ -216,7 +216,11 @@ include: "is the confidence on pe_NNN appropriate?",
   `rationale`, not any other field). No writes are made in this mode,
   so no persistence call is needed.
 - If the review **confirms** the existing entry: state that, citing
-  the specific attributes that support the recorded confidence.
+  the specific attributes that support the recorded confidence. If the
+  existing `rationale` text is thin or generic — missing specific
+  identifying attributes such as name match details, age, location, or
+  competing-candidate reasoning — draft an improved rationale and ask
+  the user to authorize updating the entry.
 - If the review **surfaces a concern** (calibration off, rationale
   thin, link should be superseded, etc.): describe the concern and
   the corrective action you'd recommend, then **stop and ask the user
@@ -283,16 +287,24 @@ core identifier conflicts. Make the assessment auditable with the
 correlation techniques above (side-by-side chart,
 agreement/disagreement list).
 
-**Score the match with `same_person`** whenever a record persona is
-reachable for the assertion **and** the candidate is a tree person that
-exists independently of this record. Do **not** score a stub you minted
-from the persona you would be scoring: comparing a record persona to a
-person created out of it is circular and can only confirm itself. Leave
-`match_score` null there and say so in the rationale. A person minted
-from an *earlier* record is a normal candidate — score it. The tool
-returns a name + date + place similarity score (0.0–1.0) that *informs*
-the correlation analysis; it never replaces it (see step 3). For each
-serious candidate tree person:
+**Call `same_person` BEFORE writing any `pe_` link** whenever a record
+persona is reachable **and** the candidate is a tree person that exists
+independently of this record. A persona is reachable when the assertion
+came from `record_read` (re-open the record; its GedcomX has a persons
+array) or from a `record_search` with a retained sidecar (`results_ref`
+present in the log entry). **A null `record_persona_id` does NOT mean
+the persona is unreachable** — that field only records whether a search
+sidecar was kept; a `record_read`-sourced assertion is always reachable
+regardless. Skipping `same_person` when a reachable persona meets an
+existing tree candidate is a Score discipline failure regardless of how
+compelling the qualitative case is; it also blocks the judge from scoring
+any dimension. Do **not** score a stub you minted from the persona you
+would be scoring: comparing a record persona to a person created out of
+it is circular. Leave `match_score` null there and say so in the
+rationale. A person minted from an *earlier* record is a normal
+candidate — score it. The tool returns a 0.0–1.0 similarity score that
+*informs* the correlation analysis; it never replaces it (see step 3).
+For each serious candidate tree person:
 
 1. **Resolve the record and its persona.** The assertion carries
    `log_entry_id`, `record_id`, and `record_persona_id`; `log_entry_id`
@@ -514,12 +526,27 @@ than retrying blindly.
   any link where no score was obtained (an input to Step 3, not the
   verdict).
 
+**Relationship edges — write vs. defer:**
+- **Household record** (census, probate with co-enumerated household
+  members): after writing `pe_` links, write the parent-child and couple
+  edges via `tree_edit add_relationship` (step 7.4).
+- **Non-household relationship record** (a baptism naming a parent, a
+  marriage register, a will's parentage/relationship assertion for a
+  person already in the tree): write `pe_` links for **both** parties the
+  assertion names, then **stop — do NOT call `tree_edit add_relationship`
+  for the relationship edge**. The edge is written by proof-conclusion →
+  tree-edit once identity is concluded. The `pe_` entries are the
+  complete deliverable here.
+
 **Materialize each linked persona onto its person.** Once the `pe_` links
 land, write the persona's assertions onto the tree person as sourced facts and
 names via `materialize_facts({ personId, recordId, recordRole })` — for a
 persona matched to an **existing** person as well as a newly minted one, and on
 a **single-person record** (a death certificate, a baptism) as well as a
-household. Batch one record's personas into a single `materialize_facts({ ops:
+household. **Never skip `materialize_facts` for a matched existing person** —
+the pe_ entry records the link; `materialize_facts` is what writes the facts
+onto the tree person. Omitting it leaves the tree incomplete even when the link
+is correct. Batch one record's personas into a single `materialize_facts({ ops:
 [...] })` call. Skip a persona whose assertions are entirely `relationship`,
 `marriage`, `parentage`, `parentchild`, or `age`: the tool skips those fact_types, so there is nothing to
 write **onto that persona**. The other party such an assertion names is still
