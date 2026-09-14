@@ -124,9 +124,13 @@ assumptions have genuinely been invalidated.
 Four modes, chosen by what the records actually are.
 
 **Indexed search** is the default. Queries go broad to narrow, always anchored
-on surname or country, and never narrowed by dropping the given name. Spelling
-variants are tried explicitly first — so it can be said which letter changed —
-and a wildcard follows, to catch the shape nobody could guess. Every search is
+on surname or country. Spelling variants are tried explicitly first — so it can
+be said which letter changed — and a wildcard follows, to catch the shape nobody
+could guess. Only once the correctly-indexed spellings are exhausted does the
+system start dropping a criterion — the given name, the surname, a relative's
+name — on the theory that *that* field is the mistranscribed one. Index entries
+are mistranscribed roughly 5-15% of the time. A drop is always paired with a
+compensating tighten elsewhere, since it widens the pool. Every search is
 logged, including the ones that find nothing: a negative result is a
 finding, and the query behind it is recorded so it isn't repeated blindly.
 
