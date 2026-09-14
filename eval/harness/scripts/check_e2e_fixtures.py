@@ -10,6 +10,8 @@ genealogist teams grade every run they commit; docs/e2e-testing-guide.md
 exempt: there is nothing to grade. Scoped to PR-added run logs via
 ``git diff --diff-filter=A`` (BASE_SHA / HEAD_SHA), mirroring check_runlogs.py
 rule 1; skipped when run outside a PR (env unset), so local runs still work.
+Both siblings are resolved from the HEAD_SHA tree, never the working directory,
+so a local run and CI reach the same verdict (issue #2469).
 
 The grading gate checks annotation *presence*, not content. Deeper content
 validity (drift / incomplete / malformed) is the maintainer's
@@ -124,7 +126,40 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     return added
 
 
-def check_added_runlogs_graded(added: list[Path]) -> list[str]:
+def _head_is_resolvable(head: str) -> bool:
+    """True when ``head`` names a commit reachable from REPO_ROOT's git dir.
+
+    ``git cat-file -e`` exits 128 for *every* failure -- a missing path, an
+    unknown sha, a cwd that is not a repo -- so without this check a broken
+    environment reads as "no final tree", every run is exempted as treeless,
+    and the gate prints OK and exits 0. That is issue #2469's own shape with a
+    new cause, so an unresolvable head fails the job loudly instead.
+    """
+    proc = subprocess.run(
+        ["git", "rev-parse", "--verify", f"{head}^{{commit}}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    return proc.returncode == 0
+
+
+def _in_head_tree(head: str, rel: Path) -> bool:
+    """True when ``rel`` (repo-relative) exists in the git tree at ``head``.
+
+    Only meaningful once ``_head_is_resolvable(head)`` has passed -- see there.
+    Paths are POSIX-joined because git addresses ``<sha>:<path>`` with forward
+    slashes on every platform. Binary mode: only the returncode is read, so the
+    child's bytes are never decoded.
+    """
+    proc = subprocess.run(
+        ["git", "cat-file", "-e", f"{head}:{rel.as_posix()}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    return proc.returncode == 0
+
+
+def check_added_runlogs_graded(added: list[Path], head: str) -> list[str]:
     """Blocking gate: every PR-added run log that produced a tree must ship its
     committed ``run-<ts>.ann.json`` in the same PR.
 
@@ -132,17 +167,22 @@ def check_added_runlogs_graded(added: list[Path]) -> list[str]:
     loader can't grade it and neither can a human, so no annotation is owed.
     Detected by the absence of the ``run-<ts>.final-tree.gedcomx.json`` sibling,
     which is exactly the file the grade loader requires.
+
+    Both siblings resolve from the ``head`` tree, not the working directory: the
+    run logs were selected from that tree too, and a sibling present on disk but
+    uncommitted must not change the verdict (issue #2469). The two warn-only
+    checks below deliberately keep reading the working directory — they never
+    block, so the disagreement costs nothing there. Do not "unify" them.
     """
     violations: list[str] = []
     for rel in added:
-        runlog = REPO_ROOT / rel
         stem = rel.name[: -len(".json")]  # run-<ts>
-        slug_dir = runlog.parent
+        slug_dir = rel.parent
         tree = slug_dir / f"{stem}.final-tree.gedcomx.json"
         ann = slug_dir / f"{stem}.ann.json"
-        if not tree.exists():
+        if not _in_head_tree(head, tree):
             continue  # treeless run — nothing to grade
-        if not ann.exists():
+        if not _in_head_tree(head, ann):
             violations.append(
                 f"run log '{rel}' produced a final tree but no committed "
                 f"'{stem}.ann.json'. Grade it in this PR with /grade-e2e-run and "
@@ -317,6 +357,8 @@ def main() -> int:
     if added is None:
         print("E2E grading gate skipped (no PR context: BASE_SHA/HEAD_SHA unset).")
         return 0
+    # Present by construction: git_added_e2e_runlogs() returns None when unset.
+    head = os.environ["HEAD_SHA"]
 
     # --- Unresolved-draft check (warn only) — runs first so its output is
     # --- visible even when the blocking gate below fails the job.
@@ -329,7 +371,21 @@ def main() -> int:
         print(f"::warning::{w}")
         print(f"  ! {w}", file=sys.stderr)
 
-    grade_violations = check_added_runlogs_graded(added)
+    # Below the warn loops on purpose: they read the working directory and need
+    # no resolvable head, and an early return here would swallow their output —
+    # the reorder test_main_drift_warning_prints_even_when_grading_gate_fails
+    # exists to catch.
+    if not _head_is_resolvable(head):
+        msg = (
+            f"HEAD_SHA {head!r} does not resolve to a commit in this checkout, "
+            "so the grading gate cannot read the tree it must check. Fetch the "
+            "commit (CI uses fetch-depth: 0) and re-run."
+        )
+        print(f"::error::{msg}")
+        print(f"  - {msg}", file=sys.stderr)
+        return 1
+
+    grade_violations = check_added_runlogs_graded(added, head)
     if grade_violations:
         print(
             "E2E grading gate — PR-added run logs missing their annotation:",
