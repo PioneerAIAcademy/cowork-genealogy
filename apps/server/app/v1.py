@@ -54,6 +54,21 @@ router = APIRouter(prefix="/v1", tags=["public-api"])
 # Seconds of silence that marks the end of the in-sandbox snapshot/history replay
 # burst (so we don't read replayed frames as the new turn's reply).
 _DRAIN_IDLE = 0.5
+# Outer bound on _drain_replay. Reached only when a turn is in flight and stays
+# quiet, which a wedged agent can do; without it the drain would wait forever
+# rather than let the caller's own turn timeout report the problem.
+# Strictly smaller than v1_turn_timeout_seconds (120), so no drain state can
+# cost a caller a second full timeout. The cost is ADDITIVE, not consuming:
+# `_collect_sync` drains BEFORE it computes `deadline`, so the turn always got
+# its own full budget and an orphaned `turn_start` in the replay made every
+# later call pay up to `_DRAIN_MAX` on top of it. (The first version of this
+# comment said the drain ate the turn's budget and 504'd without sending; that
+# was the review's own description, corrected a minute after this landed, and
+# it outlives the thread so it is fixed here rather than left.) The orphan is fixed at its source
+# (sandbox_server.py records the synthetic turn_done now); this keeps any future
+# orphan cheap rather than fatal. Same name and value as PR #2349 uses for the
+# same function, so the two land without a conflict.
+_DRAIN_MAX = 30.0
 # SSE heartbeat interval: emit a comment if no frame arrives within this window so
 # proxies don't drop a long-running stream.
 _HEARTBEAT_S = 15.0
@@ -182,17 +197,62 @@ def _normalize(raw: str):
     return None
 
 
+def _event_kind(raw) -> str | None:
+    """The `kind` of an agent_event frame, or None for anything else.
+
+    Deliberately separate from `_normalize`, which maps frames onto the REST
+    reply shape and returns None for kinds it does not carry - including
+    `turn_start`. The drain needs the kind itself, not the reply mapping.
+    """
+    try:
+        msg = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    if msg.get("type") != "agent_event":
+        return None
+    return (msg.get("event") or {}).get("kind")
+
+
 async def _drain_replay(ws) -> None:
     """Consume the snapshot/history replay burst, stopping once the socket has been
-    idle for _DRAIN_IDLE. A cancelled recv leaves any buffered frame for the next
-    recv, so no live-turn frame is lost."""
+    idle for _DRAIN_IDLE **and no turn is in flight**.
+
+    IDLE ALONE IS NOT ENOUGH once the runner queues turns. A queued turn emits
+    `turn_start` and then goes quiet for a full SDK round trip before its first
+    real frame, so a drain that returns on quiet can return INSIDE a running
+    turn, send its own message behind it, and then read that turn's `turn_done`
+    as its own reply. That is the mis-attribution
+    `docs/specs/public-rest-api-spec.md` used to rule out by asserting the prior
+    turn is "still emitting frames", which a backlog makes false.
+
+    So the quiet timer only ends the drain while nothing is running: a
+    `turn_start` marks a turn in flight and its `turn_done` clears it.
+    `_DRAIN_MAX` bounds the whole thing, because a wedged agent must not hang the
+    drain forever. It is NOT inside the caller's turn timeout: `_collect_sync`
+    drains BEFORE it computes `deadline`, so a drain that runs to the bound costs
+    up to `_DRAIN_MAX` on top of the turn's own full budget.
+
+    A cancelled recv leaves any buffered frame for the next recv, so no live-turn
+    frame is lost.
+    """
+    in_flight = 0
+    deadline = time.monotonic() + _DRAIN_MAX
     while True:
-        try:
-            await asyncio.wait_for(ws.recv(), timeout=_DRAIN_IDLE)
-        except asyncio.TimeoutError:
+        if time.monotonic() >= deadline:
             return
+        try:
+            raw = await asyncio.wait_for(ws.recv(), timeout=_DRAIN_IDLE)
+        except asyncio.TimeoutError:
+            if in_flight <= 0:
+                return
+            continue  # quiet, but a turn is running - keep waiting it out
         except websockets.ConnectionClosed:
             return
+        kind = _event_kind(raw)
+        if kind == "turn_start":
+            in_flight += 1
+        elif kind == "turn_done" and in_flight > 0:
+            in_flight -= 1
 
 
 # ── sync path ────────────────────────────────────────────────────
