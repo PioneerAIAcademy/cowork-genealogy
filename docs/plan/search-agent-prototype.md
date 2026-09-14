@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS — P1, the three D1–2 probes, P3 and P2 measured 2026-09-10 (PR
 #2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); D11–13 built
-2026-09-14 ahead of D6–10 (branch `proto-web-tier`; the web tier, the SSE transport in
+2026-09-14 ahead of D6–10 (PR #2548; the web tier, the SSE transport in
 `apps/web`, the headless driver — driven against seeded rows until the worker exists); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
