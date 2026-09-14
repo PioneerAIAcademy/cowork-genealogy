@@ -70,7 +70,7 @@
         "tests": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed or scored a 1 or 2 on any dimension, so the length varies by run."
+          "description": "test_ids whose every dimension needs a correction entry in the .ann.json. Five chosen picks (3 rotation, 1 targeted, 1 random) plus every gradeable test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the length varies by run."
         },
         "cursor": {
           "type": "array",
@@ -121,12 +121,12 @@
         "flaky": { "type": "boolean" },
         "grading_mode": {
           "type": "string",
-          "enum": ["dimensions", "invariant", "routing"],
-          "description": "What decided this test's outcome. \"invariant\": a grade_on_invariant negative, passed on its tag-gated validator alone. \"routing\": a negative with a non-empty correct_skill, decided by which skill fired. \"dimensions\": a positive test, or an out-of-scope negative (correct_skill: []), where the judge dimensions gate. Optional — absent on run logs written before this field existed."
+          "enum": ["dimensions", "invariant", "routing", "trigger"],
+          "description": "What decided this test's outcome. \"invariant\": a grade_on_invariant negative, passed on its tag-gated validator alone. \"routing\": a negative with a non-empty correct_skill, decided by which skill fired. \"dimensions\": a positive test, or an out-of-scope negative (correct_skill: []), where the judge dimensions gate. \"trigger\": a positive test tagged grade:trigger, decided by activation alone (the skill under test fired), with the judge dimensions diagnostic only. Optional — absent on run logs written before this field existed."
         },
         "dimensions_gate_outcome": {
           "type": "boolean",
-          "description": "Whether the judge dimensions could change this outcome for a test that RAN TO COMPLETION. It describes the test's grading design, so on an \"aborted\" entry it says how the test would have been graded, not what decided it — an abort carries zero dimensions, and the abort is what decided the outcome. False on \"invariant\" and \"routing\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
+          "description": "Whether the judge dimensions could change this outcome for a test that RAN TO COMPLETION. It describes the test's grading design, so on an \"aborted\" entry it says how the test would have been graded, not what decided it — an abort carries zero dimensions, and the abort is what decided the outcome. False on \"invariant\", \"routing\", and \"trigger\" tests, where they are diagnostic only — so a dimension scored 1 beside outcome \"pass\" is designed, not a defect. Optional — absent on run logs written before this field existed."
         },
         "outcome_summary": {
           "type": "object",
@@ -272,6 +272,7 @@
           "additionalProperties": { "type": "object" },
           "description": "The SDK's per-model token ledger for this run, keyed by model id, verbatim (inputTokens / outputTokens / cacheReadInputTokens / cacheCreationInputTokens per entry). The run's own token fields are its column sums. More than one key means the run delegated to a plugin agent on its own model: pin — the only record of what that pin cost. Optional: absent on the abort path and in logs written before it was captured."
         },
+        "no_result_message": { "type": "boolean", "description": "True when the run ended before a ResultMessage arrived even though it is not an abort — currently only the negative-test routing short-circuit. num_turns is real here (see its own description); output_tokens is 0 because no real count exists, not because the skill used none. Optional, defaults to absent/false in logs written before it was captured." },
         "skill_cost_usd": { "type": "number", "minimum": 0 },
         "output": { "$ref": "#/$defs/run_output" },
         "validators": { "$ref": "#/$defs/validator_results" },
@@ -487,7 +488,7 @@
           "items": { "$ref": "#/$defs/judge_dimension" }
         },
         "judge_cost_usd": { "type": "number", "minimum": 0 },
-        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 when the judge was skipped. Optional (absent in pre-instrumentation run logs)." },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Wall-clock of the judge LLM call (perf_counter around _run_judge). 0 only when no judge call was attempted (an aborted run); a judge that raised records wall-clock here, so a nonzero value beside `skipped: true` is normal. Optional (absent in pre-instrumentation run logs)." },
         "input_tokens": { "type": "integer", "minimum": 0 },
         "cached_input_tokens": { "type": "integer", "minimum": 0 },
         "output_tokens": { "type": "integer", "minimum": 0 },
@@ -506,7 +507,7 @@
             { "enum": [1, 2, 3] },
             { "type": "null" }
           ],
-          "description": "1=fail, 2=partial, 3=pass. Null = N/A, currently allowed only on the Tool Arguments base dimension when a test makes zero MCP tool calls."
+          "description": "1=fail, 2=partial, 3=pass. Null = N/A: the Tool Arguments base dimension when a test makes zero MCP tool calls, any rubric dimension the fixture never exercised, and Correctness/Completeness on a correctly-routed negative test, where the harness usually truncates the transcript at the hand-off and coerces the judge's 1 (coerced_routing_negative_to_na)."
         },
         "rationale": { "type": "string" }
       }
