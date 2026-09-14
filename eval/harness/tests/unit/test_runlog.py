@@ -288,6 +288,51 @@ def test_envelope_totals_sum_across_tests():
     validate_run_log(log)
 
 
+def test_trigger_grading_mode_entry_validates_against_both_schema_trees():
+    """A run-log entry with grading_mode='trigger' must pass the real write-path
+    validator (validate_run_log, docs tree) AND the packages/schema mirror.
+
+    The 2026-09-13 paid `research` run aborted exactly here (issue #2156): the
+    harness computed grading_mode='trigger' but the schema enum omitted it, so
+    validation raised mid-run. This exercises the actual jsonschema validators,
+    not a string check, and fails if either schema tree rejects 'trigger'.
+    """
+    import jsonschema
+    from referencing import Registry, Resource
+
+    entry = assemble_test_entry(
+        test_id="ut_research_001",
+        test_type="positive",
+        expected_outcome="pass",
+        scenario=None,
+        mcp_fixtures=[],
+        runs=[_stub_run()],
+        timestamp_for_run_id="2026-09-13_15-11-07",
+        grading_mode="trigger",
+        dimensions_gate_outcome=False,
+    )
+    log = _wrap_envelope(entry, skill="research")
+
+    # Real write-path validator (docs/specs/schemas tree) — the exact call the
+    # harness makes before writing a run log.
+    validate_run_log(log)
+
+    # packages/schema mirror — rebuild the same validator against that tree so a
+    # divergence there also fails.
+    schemas_dir = Path(__file__).resolve().parents[4] / "packages/schema/schemas"
+    schema = json.loads((schemas_dir / "run-log.schema.json").read_text(encoding="utf-8"))
+    registry = Registry()
+    enums_path = schemas_dir / "enums.schema.json"
+    if enums_path.exists():
+        registry = registry.with_resource(
+            uri="enums.schema.json",
+            resource=Resource.from_contents(
+                json.loads(enums_path.read_text(encoding="utf-8"))
+            ),
+        )
+    jsonschema.Draft202012Validator(schema, registry=registry).validate(log)
+
+
 # ---- write_run_log -------------------------------------------------------
 
 

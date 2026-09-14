@@ -380,6 +380,51 @@ def test_na_rule_coercion_flips_a_positive_test_from_partial():
     ) == "pass"
 
 
+def test_grade_trigger_positive_is_not_gated_by_a_judge_crash():
+    """Issue #2156, reviewer point 3. A grade:trigger positive test is graded
+    on activation alone, so a skipped/errored judge must NOT fail it: the
+    positive `judge_skipped -> fail` gate exempts trigger tests and the
+    trigger verdict owns the outcome after the same activation + skills_invoked
+    checks every positive test runs.
+
+    Remove the `and not _is_trigger_positive` clause from that gate and the
+    judge-skipped assertion below flips to "fail". The two contrasts pin the
+    exemption's edges: an ordinary positive still fails on a judge crash, and
+    activation is still required even for a trigger test.
+    """
+    from harness.orchestrator import _compute_outcome
+
+    trig = SimpleNamespace(
+        type="positive", skill="research", negative=None, tags=["grade:trigger"],
+    )
+    kw = dict(
+        spec=trig, validators_passed=True, aborted_reason=None,
+        activated=True, skills_invoked=["research"],
+    )
+    # Judge succeeded — even three failing dimensions are diagnostic-only.
+    assert _compute_outcome(
+        judge_dimensions=[{"score": 1}, {"score": 1}, {"score": 1}], **kw
+    ) == "pass"
+    # Judge skipped/errored — still pass, because activation is the gate.
+    assert _compute_outcome(judge_dimensions=[], judge_skipped=True, **kw) == "pass"
+
+    # Contrast 1: an ordinary positive test still fails on a judge crash.
+    plain = SimpleNamespace(type="positive", skill="citation", negative=None)
+    assert _compute_outcome(
+        judge_dimensions=[], judge_skipped=True,
+        spec=plain, validators_passed=True, aborted_reason=None,
+        activated=True, skills_invoked=["citation"],
+    ) == "fail"
+
+    # Contrast 2: activation is still required — a trigger test that did not
+    # fire the skill under test fails even with the judge skipped.
+    assert _compute_outcome(
+        judge_dimensions=[], judge_skipped=True,
+        spec=trig, validators_passed=True, aborted_reason=None,
+        activated=False, skills_invoked=[],
+    ) == "fail"
+
+
 def test_na_rule_coercion_fires_on_a_real_historical_draw():
     """Frozen, not sourced from the live corpus on purpose.
 
