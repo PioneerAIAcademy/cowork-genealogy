@@ -25,7 +25,14 @@ export interface UnitTestFile {
     xfail_reason?: string;
   };
   input: {
-    user_message: string;
+    /** Routed test. Exactly one of `user_message` / `delegation` is set (`input.oneOf`). */
+    user_message?: string;
+    /**
+     * Direct-agent test (issue #2246): the exact text handed to the pair's
+     * agent, in place of a user turn. The harness wraps it in its own
+     * dispatcher prompt and asserts the recorded spawn contains it verbatim.
+     */
+    delegation?: string;
     scenario?: string | null;
     scenario_notes?: string | null;
   };

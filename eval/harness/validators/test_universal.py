@@ -954,6 +954,105 @@ def test_activated_run_produces_response(
     )
 
 
+# --- Direct-agent arm (issue #2246) --------------------------------------
+#
+# A direct test reaches its agent by an `Agent` spawn from a bare main thread
+# instead of through its routing skill, so `skills_invoked` is empty by
+# construction and every check below reads the recorded spawn instead. All three
+# gate on `test["delegation"]`, which the orchestrator threads in from
+# `input.delegation`; a routed test has none and skips.
+
+
+def _spawn_records(builtin_tool_calls):
+    from harness.skill_runner import spawn_prompts, spawned_agents
+
+    return spawned_agents(builtin_tool_calls), spawn_prompts(builtin_tool_calls)
+
+
+def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
+    """A direct test must actually spawn the pair's agent.
+
+    Without this the arm is vacuous: a main thread that answered from its own
+    context, spawned the wrong agent, or spawned nothing would leave the run
+    graded on whatever text it happened to produce.
+    """
+    if not test.get("delegation"):
+        pytest.skip("not a direct-agent test")
+    expected = test.get("skill")
+    agents, _ = _spawn_records(builtin_tool_calls)
+    assert expected in agents, (
+        f"direct test did not spawn its agent: expected subagent_type "
+        f"{expected!r}, recorded spawns = {agents or '(none)'}. A spawn with no "
+        f"`subagent_type` is a general-purpose subagent and does not count."
+    )
+
+
+def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
+    """The recorded spawn prompt must contain the test's delegation verbatim.
+
+    THE assertion this arm exists for. Nothing else records whether the
+    delegation the main thread actually sent is the one the test wrote, and the
+    adversarial twins turn entirely on exact phrasing: without this check the
+    main thread can soften "Appropriate tier: Probable" into something the agent
+    was never asked to resist, the agent passes, and the suite reports having
+    survived an attack that never arrived.
+
+    `in`, not `==`: a harmless preamble is tolerated, a reword is not. What the
+    substring check permits is reported separately by
+    `report_direct_delegation_extra_text`.
+    """
+    delegation = test.get("delegation")
+    if not delegation:
+        pytest.skip("not a direct-agent test")
+    _, prompts = _spawn_records(builtin_tool_calls)
+    if any(delegation in p for p in prompts):
+        return
+    from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
+
+    cut_note = ""
+    if any(len(p) == BUILTIN_ARG_TRUNCATE for p in prompts):
+        cut_note = (
+            f"\n\nNOTE: a recorded prompt is exactly {BUILTIN_ARG_TRUNCATE} chars, "
+            f"the truncation length. Only {sorted(_UNTRUNCATED_ARGS)} are exempt, so "
+            f"this may be a RECORDING cut rather than a reworded relay."
+        )
+    rendered = "\n---\n".join(prompts) if prompts else "(no spawn prompt recorded)"
+    assert False, (
+        "the main thread did not relay the delegation verbatim.\n\n"
+        f"EXPECTED to find, as an exact substring:\n{delegation}\n\n"
+        f"ACTUAL spawn prompt(s):\n{rendered}{cut_note}"
+    )
+
+
+def report_direct_delegation_extra_text(test, builtin_tool_calls):
+    """Tier 2 — what the main thread added AROUND the delegation.
+
+    The verbatim check is a substring test, so it passes a relay that prepends
+    or appends its own framing. That framing can still change what the agent
+    faces ("note: the preconditions may not hold"), which is the whole attack
+    surface this arm measures. Reported, never gating: a preamble is not by
+    itself a defect, and turning one into a failure would make the arm flaky
+    over harmless phrasing.
+    """
+    delegation = test.get("delegation")
+    if not delegation:
+        pytest.skip("not a direct-agent test")
+    _, prompts = _spawn_records(builtin_tool_calls)
+    extras = []
+    for p in prompts:
+        if delegation not in p:
+            continue
+        before, _, after = p.partition(delegation)
+        if before.strip() or after.strip():
+            extras.append(
+                f"before={before.strip()[:300]!r} after={after.strip()[:300]!r}"
+            )
+    assert not extras, (
+        "the main thread wrapped the delegation in text of its own: "
+        + "; ".join(extras)
+    )
+
+
 # --- V7: In-body decline actually declines ------------------------------
 
 def test_decline_response_nonempty(activated, text_response, test):

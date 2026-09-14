@@ -248,6 +248,7 @@ def derive_activated(
     files_created: list[str],
     text_response: str,
     other_skill_names: set[str] | None = None,
+    agents_spawned: list[str] | None = None,
 ) -> bool:
     """Per unit-test-spec.md §6 three-rule definition.
 
@@ -264,8 +265,22 @@ def derive_activated(
     The known-accepted failure mode is Agent SDK skill-discovery bugs
     that leave `skills_invoked` empty even when the skill ran — re-runs
     typically clear it.
+
+    **Direct-agent arm (issue #2246).** A direct test invokes no skill at all —
+    the main thread spawns the pair's agent — so `skills_invoked` is empty by
+    construction and the attribution signal is `agents_spawned` instead. Callers
+    pass it only for a direct test; when it is None the rule is unchanged.
+
+    This has to live here rather than in `_compute_outcome` alone, because
+    `activated` is read further on: `test_activated_run_produces_response`
+    (`validators/test_universal.py`) opens `if activated is not True:
+    pytest.skip(...)`, so a direct run stuck at False would silently lose that
+    gate rather than fail it.
     """
-    if skill in skills_invoked:
+    attributed = skill in skills_invoked
+    if agents_spawned is not None:
+        attributed = skill in agents_spawned
+    if attributed:
         if file_changes:
             for f_diff in file_changes.values():
                 if f_diff and f_diff.get("sections_modified"):

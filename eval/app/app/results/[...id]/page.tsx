@@ -119,6 +119,12 @@ interface OutcomeExplanation {
 function deriveOutcomeExplanation(
   entry: TestEntry,
   skillUnderTest: string,
+  /**
+   * True for a direct-agent test (#2246), whose `skills_invoked` is empty by
+   * construction. Passed in rather than read from a module-scope value so the
+   * routing-miss branch cannot silently go back to guessing.
+   */
+  isDirect = false,
 ): OutcomeExplanation | null {
   if (entry.outcome === 'xfail') {
     return {
@@ -186,7 +192,12 @@ function deriveOutcomeExplanation(
     };
   }
   if (entry.test_type === 'positive') {
-    if (activated === false || !skillsInvoked.includes(skillUnderTest)) {
+    // A direct-agent test (#2246) invokes no skill at all — the main thread
+    // spawns the pair's agent — so `skills_invoked` is empty BY CONSTRUCTION.
+    // Without this guard every red twin is explained to the annotator as a
+    // routing miss it cannot be, which is a wrong diagnosis handed to the
+    // person whose grading the arm exists to inform.
+    if (!isDirect && (activated === false || !skillsInvoked.includes(skillUnderTest))) {
       const others = skillsInvoked.filter((s) => s !== skillUnderTest);
       const routedTo = others.length
         ? `Claude routed to ${others.map((s) => `"${s}"`).join(', ')} instead.`
@@ -582,6 +593,7 @@ function ToolArgsTable({
 function GradesPane({
   entry,
   skillUnderTest,
+  isDirect,
   annotation,
   sampled,
   onSetCorrection,
@@ -593,6 +605,8 @@ function GradesPane({
 }: {
   entry: TestEntry;
   skillUnderTest: string;
+  /** Direct-agent test (#2246): `skills_invoked` is empty by construction. */
+  isDirect: boolean;
   annotation: AnnotationFile | null;
   /** Tests the annotation must cover, or null for all of them. */
   sampled: Set<string> | null;
@@ -634,7 +648,11 @@ function GradesPane({
     if (isConfirmedNonFailing(c.llm_score, c.corrected_score)) return false;
     return owesComments || c.corrected_score !== c.llm_score;
   });
-  const explanation = deriveOutcomeExplanation(entry, skillUnderTest);
+  const explanation = deriveOutcomeExplanation(
+    entry,
+    skillUnderTest,
+    isDirect,
+  );
 
   return (
     <Stack gap="sm" p="md" h="100%">
@@ -816,8 +834,12 @@ const TracePane = memo(function TracePane({
   const attempts = run.skill_attempts ?? 1;
   const judgeSec = (run.judge?.duration_ms ?? 0) / 1000;
 
+  // A direct-agent test has no user turn; the delegation is what the run was
+  // given, so it is what belongs in the trace panel.
+  const testInput = testJson?.input as Record<string, unknown> | undefined;
   const userMessage =
-    (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
+    (testInput?.user_message as string | undefined) ??
+    (testInput?.delegation as string | undefined);
   const scenarioNotes =
     (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
   const judgeContext = (testJson?.judge_context as string[] | undefined) ?? [];
@@ -1557,6 +1579,15 @@ export default function RunLogDetailPage({
             <GradesPane
               entry={selectedEntry}
               skillUnderTest={log.skill}
+              isDirect={Boolean(
+                (
+                  findTestJson(
+                    query.data.snapshotFiles ?? {},
+                    log.skill,
+                    selectedEntry.test_id,
+                  )?.input as Record<string, unknown> | undefined
+                )?.delegation,
+              )}
               annotation={localAnn}
               sampled={sampled}
               onSetCorrection={setCorrection}

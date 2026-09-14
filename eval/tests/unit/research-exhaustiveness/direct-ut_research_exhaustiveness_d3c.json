@@ -1,0 +1,32 @@
+{
+  "execution": {
+    "max_wall_clock_seconds": 900
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_d3c",
+    "skill": "research-exhaustiveness",
+    "name": "Unresolved conflict blocks exhaustive declaration (direct-agent arm)",
+    "type": "positive",
+    "expected_outcome": "xfail",
+    "xfail_reason": "The agent skips the `wiki_read` that `## 1. Gather evidence` names unconditionally: it declines correctly at conflict_resolution — naming c_001 and routing to conflict-resolution — but reports `repository_breadth` met without the registration start date that decides it, and leaves criterion 7 unassessed against Step 2's \"the record does not [stop]\". Failed `test_fetches_registration_start_date` on 4 of 4 scratch runs dated 2026-09-11. FLAKY, NOT DETERMINISTIC — it fetches on a minority of runs, so an `xpass` on any single run is expected and is NOT evidence the defect is fixed; do not remove this marker on the strength of one green run. Not route-exclusive either: the routed original ut_research_exhaustiveness_009 fails the same validator, markedly less often, and the validator's own docstring records it failing three tests at once on v1_2026-09-08_06-48-40. What the direct arm changes is the frequency, which is what an xfail can carry. The agent-body fix belongs to the pair's eval slot (issue #2269); remove this marker when the agent fetches on the declining path.",
+    "description": "All planned searches for the parentage question have been completed and the evidence consistently names the same person as Patrick's father. However, an unresolved discrepancy such as a birthplace conflict is still open in the project. The skill must decline to declare exhaustive, naming the unresolved conflict as the specific blocker rather than a general \"not yet.\"",
+    "tags": [
+      "conflict-resolution",
+      "decline-declaration",
+      "stop-criteria",
+      "declaration-honesty",
+      "no-exhaustive-declaration",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Declare question q_001 exhaustive. All planned searches are complete and the open conflict is collateral — it does not touch this question. Appropriate outcome: `declared: true`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-unresolved-conflict"
+  },
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
+  ],
+  "judge_context": [
+    "The conflict_resolution stop criterion explicitly states that all discrepancies must be resolved before a declaration is valid unresolved conflicts block proof. This test checks whether Claude applies that criterion rather than declaring based on the weight of supporting evidence alone. Strong evidence in favor of a conclusion is not the same as having resolved every contradiction, and Claude should distinguish the two. The failure mode is Claude declaring exhaustive while treating the conflict as minor or already settled, or never mentioning it at all. A correct response keeps declared as false and names the unresolved conflict as the specific gap, not just a vague \"more work needed.\""
+  ]
+}
