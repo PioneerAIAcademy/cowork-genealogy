@@ -119,4 +119,38 @@ describe("ranked stub / search row field parity", () => {
       expect(stub.has(f), `RankedMatch lost ${f}`).toBe(true);
     }
   });
+
+  // The three checks above compare two INTERFACES. None of them looks at
+  // whether the stub is ever populated, so a field declared on both and set by
+  // neither passes everything -- declared, and invisible at runtime, which is
+  // exactly what the header says this guard prevents. Worse, the parity
+  // failure message points at the interface as the way to go green, so the
+  // wrong fix is the signposted one.
+  //
+  // Scans the MODULE, not `toStub`: `attachedToSubject` and `attachedToOther`
+  // are assigned in `applyAttachments`, well outside it.
+  it("every RankedMatch field is actually populated, not merely declared", () => {
+    const src = readFileSync(
+      join(__dirname, "..", "..", "src", "tools", "rank-search-matches.ts"),
+      "utf-8",
+    );
+    const assigned = new Set(
+      [...src.matchAll(/\bstub\.([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]),
+    );
+    const lit = src.match(/const stub:\s*RankedMatch\s*=\s*\{([\s\S]*?)\n\s*\};/);
+    if (lit) {
+      for (const m of lit[1].matchAll(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*[,:]/gm)) {
+        assigned.add(m[1]);
+      }
+    }
+    const missing = [...interfaceFields("rank-search-matches.ts", "RankedMatch")].filter(
+      (f) => !assigned.has(f),
+    );
+    expect(
+      missing,
+      `declared on RankedMatch but never populated: ${missing.join(", ")}. ` +
+        `Declaring the field is not the fix -- populate it in toStub (or in ` +
+        `applyAttachments, for the attachment fields).`,
+    ).toEqual([]);
+  });
 });

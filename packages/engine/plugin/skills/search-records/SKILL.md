@@ -313,8 +313,9 @@ Those two arguments do all of Step 4 for you:
 
 - `projectPath` stages the raw results host-side and returns a
   `staged.resultsRef` handle (pass it to `research_log_append` in Step 5), with
-  the inline results as **compact stubs** — the bulk per-result GedcomX lives in
-  the staged file.
+  the bulk per-result GedcomX left in the staged file. When you also pass
+  `subjectId`, the inline results are dropped entirely and `ranked` carries
+  them instead (Step 4).
 - `subjectId` makes the tool **rank the candidates for you** against that subject
   and return them under `ranked` (see Step 4). You do not call
   `rank_search_matches` yourself in the normal flow.

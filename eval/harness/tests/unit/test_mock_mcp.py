@@ -979,3 +979,35 @@ def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
     }
     warnings = _build_warnings([upstream])
     assert not any(w["kind"] == "harness_node_timeout" for w in warnings)
+
+
+def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
+    """The `except` arm must ABSORB a node failure, not become one.
+
+    It returned six values while every other return -- and the caller's unpack
+    at mock_mcp.py:715 -- takes five, so any node timeout raised
+    `ValueError: too many values to unpack (expected 5)` from the very branch
+    written to survive it. Flagged 2026-09-11 and still green, because nothing
+    reached the arm: the node call has to actually fail.
+    """
+    from harness import mock_mcp
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    # Whatever the arm calls inside the try, make it raise.
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+
+    response = {"results": [{"id": "r1"}]}
+    ranked = {"matches": [{"recordId": "r1"}]}
+    out = mock_mcp._stage_and_compact_search_results(
+        tmp_path, "record_search", response, ranked
+    )
+
+    assert len(out) == 5, f"the degrade arm must return five values, got {len(out)}"
+    staged, resp, unlogged, drop, rank = out          # the caller's unpack
+    assert staged is None
+    assert resp == response
+    assert unlogged == []
+    assert drop is False
+    assert rank == ranked

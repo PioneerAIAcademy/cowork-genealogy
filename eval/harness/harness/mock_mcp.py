@@ -535,7 +535,12 @@ def _stage_and_compact_search_results(
             parsed.get("ranked", ranked),
         )
     except Exception:
-        return None, response, [], False, ranked, ranked
+        # Five values, like every other return here and like the caller's unpack.
+        # This arm exists to ABSORB a node failure; returning six turned every
+        # node timeout into `ValueError: too many values to unpack (expected 5)`,
+        # so the degrade path was itself the crash. Flagged 2026-09-11 and
+        # unexercised until test_stage_and_compact_degrades_on_node_failure.
+        return None, response, [], False, ranked
 
 
 def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
