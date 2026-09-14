@@ -581,7 +581,7 @@ describe("measured figures stay traceable to the probe artifact", () => {
       verdict: "J.verdict:q.fullName searches",
       activeWhen: /^name fields only$/,
       mustNotSay:
-        /q\.fullName[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text|entire)/i,
+        /q\.fullName[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|document text|full[- ]?text(?!\s+(?:search|endpoint|API|index))|entire (?:transcript|document|record))/i,
       why: "section J measured q.fullName as name-fields-only; these phrasings assert it reaches the full transcript",
     },
   ];
@@ -639,6 +639,22 @@ describe("measured figures stay traceable to the probe artifact", () => {
   ] as const) {
     it(`section J q.recordPlace guard accepts correct prose: ${label}`, () => {
       const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.recordPlace searches")!;
+      expect(rule.mustNotSay.test(sentence)).toBe(false);
+    });
+  }
+
+  // Converse arm for the q.fullName guard: correct prose that names the
+  // fulltext endpoint or describes name-field behaviour must NOT be rejected.
+  // Without this, a pattern tightening that blocks the wrong direction can
+  // silently block the right direction too.
+  for (const [label, sentence] of [
+    ["plain name-fields-only", "q.fullName searches name fields only."],
+    ["contrast with q.text", "q.fullName matches name fields, not the transcript."],
+    ["names the endpoint", "q.fullName searches name fields on the fulltext endpoint."],
+    ["entire, of a name field", "q.fullName searches the entire name field."],
+  ] as const) {
+    it(`section J q.fullName guard accepts correct prose: ${label}`, () => {
+      const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.fullName searches")!;
       expect(rule.mustNotSay.test(sentence)).toBe(false);
     });
   }
