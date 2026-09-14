@@ -37,7 +37,9 @@ import {
   noProjectResult,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import { compatibleDate, compatiblePlace } from "../utils/date-comparison.js";
+import { compatiblePlace } from "../utils/date-comparison.js";
+import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
+import { placeSegments } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -167,14 +169,36 @@ const SECTIONS: Record<string, SectionConfig> = {
 // prose: ADR-0011's first question.
 //
 // `compatiblePlace` is the existing comparator and its own worked example is
-// this exact pair; it reads the free-text `place`, which is what assertions
-// actually carry (`standard_place` is populated on 0 of the 113 competing
-// assertions in the scenario corpus, so keying on that would be a check that
-// cannot fire). Siblings — "Schuylkill, Pennsylvania" vs "Allegheny,
-// Pennsylvania" — are incompatible and stay allowed, as does the live
-// Ireland/Pennsylvania birthplace conflict this corpus is built on.
+// this exact pair. It reads the free-text `place` because that is the value
+// the comparator is built for and the one every assertion carries however it
+// was authored — NOT because `standard_place` is empty. It is empty on the
+// hand-authored fixtures only; `research_append` resolves and writes it
+// itself on every assertion append carrying a place.
+// `disputed_attribute` is free text — 28 distinct values across the 102 fact
+// conflicts in the corpus, including whole sentences and two compounds
+// ("birth_year_and_birthplace"). So this is an exact allow-list of the
+// attributes that are about place and nothing else. A conflict over
+// `birth_year` between "Ireland" and "County Cork, Ireland" is a real dispute
+// about the year; refusing it, with a message saying the two "do not disagree",
+// is false about the axis actually in dispute. A compound attribute names a
+// non-place axis too, so it is left alone for the same reason.
+const PLACE_ONLY_DISPUTED_ATTRIBUTES = new Set([
+  "place",
+  "birthplace",
+  "birth_place",
+  "deathplace",
+  "death_place",
+  "marriage_place",
+  "burial_place",
+  "residence_place",
+]);
+
 function placeContainmentErrors(entry: any, research: any): string[] {
   if (entry.conflict_type !== "fact") return [];
+  const attr = typeof entry.disputed_attribute === "string"
+    ? entry.disputed_attribute.trim().toLowerCase()
+    : "";
+  if (!PLACE_ONLY_DISPUTED_ATTRIBUTES.has(attr)) return [];
   const ids: string[] = Array.isArray(entry.competing_assertion_ids)
     ? entry.competing_assertion_ids
     : [];
@@ -185,25 +209,27 @@ function placeContainmentErrors(entry: any, research: any): string[] {
   );
   // A missing or place-less neighbour is not this entry's problem — the
   // document validator reports dangling ids, and an assertion with no place
-  // states nothing to compare. Same stance as planActiveInvariants.
+  // states nothing to compare. `placeSegments` is what decides "no place":
+  // a blank or comma-only string passed a `typeof === "string"` test, then read
+  // as a disagreement (nothing is compatible with ""), which silently disabled
+  // the whole guard for the entry.
   const placed = ids
     .map((id) => byId.get(id))
-    .filter((a) => a && typeof a.place === "string");
+    .filter((a) => a && typeof a.place === "string" && placeSegments(a.place).length > 0);
 
-  // `compatiblePlace` is true for EQUAL places as well as for containment —
-  // its own docstring lists "County Cork, Ireland" against itself as
-  // compatible. So "some pair is compatible" is the wrong predicate: the
-  // canonical Flynn birthplace conflict is Ireland / Ireland / Pennsylvania,
-  // where the two Irelands are compatible with each other while Pennsylvania
-  // genuinely disagrees. Keying on any-compatible-pair refused that shape,
-  // which is 35 of the 42 conflicts in the corpus.
+  // `compatiblePlace` is true for EQUAL places as well as for containment — its
+  // own docstring lists "County Cork, Ireland" against itself as compatible. So
+  // "some pair is compatible" is the wrong predicate: the canonical Flynn
+  // conflict is Ireland / Ireland / Pennsylvania, where the two Irelands are
+  // compatible with each other while Pennsylvania genuinely disagrees.
   //
-  // The entry is refused only when BOTH hold: no pair disagrees at all, and at
-  // least one pair is a *strict* containment — compatible with differing
-  // hierarchy depth, i.e. one side genuinely says less than the other. Equal
-  // places are compatible but not containment, so a conflict recorded over two
-  // identical places is left alone; whatever is wrong with it, it is not this.
-  const depth = (place: string) => place.split(",").length;
+  // Refused only when BOTH hold: no pair disagrees at all, and at least one
+  // pair is a *strict* containment — compatible with differing hierarchy depth,
+  // so one side genuinely says less. Depth counts normalized segments, matching
+  // what the comparator itself does; a raw comma count disagrees with it in
+  // both directions ("Ireland" vs "Ireland," wrongly refused, "Cork, Ireland"
+  // vs "Ireland," wrongly allowed).
+  const depth = (place: string) => placeSegments(place).length;
   let anyDisagreement = false;
   const containment: Array<[any, any]> = [];
   for (let i = 0; i < placed.length; i++) {
@@ -223,9 +249,10 @@ function placeContainmentErrors(entry: any, research: any): string[] {
     return (
       `competing assertions '${broad.id}' ("${broad.place}") and '${narrow.id}' ` +
       `("${narrow.place}") name the same place at two levels of precision, so they ` +
-      `do not disagree — the first simply says less. Drop the broader assertion from ` +
-      `competing_assertion_ids, or record the dispute over an attribute the ` +
-      `sources actually contradict.`
+      `do not disagree about '${entry.disputed_attribute}' — the first simply says ` +
+      `less. Record the dispute over an attribute the sources actually contradict, ` +
+      `or drop this conflict entry: removing one assertion would leave fewer than ` +
+      `the two a fact conflict requires.`
     );
   });
 }
@@ -244,7 +271,8 @@ function placeContainmentErrors(entry: any, research: any): string[] {
 //
 // The trigger is the ordering *shape*: competing assertions spanning more than
 // one fact_type. A value disagreement is two assertions of the SAME type with
-// different values (35 of the 42 corpus conflicts are two `birth` assertions),
+// different values (35 of the 37 corpus fact conflicts are all-`birth`; 34 of
+// those carry three assertions, not two),
 // and warning there would fire on every birthplace conflict — true, irrelevant,
 // and the fastest way to teach a reader to ignore this channel.
 //
@@ -274,11 +302,25 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
       const b = present[j];
       if (a.fact_type === b.fact_type) continue;
       if (typeof a.date !== "string" || typeof b.date !== "string") continue;
-      if (!compatibleDate(stdDate(a.date), stdDate(b.date))) continue;
+      // `isABeforeB`, not `compatibleDate`: the latter widens imperfect dates by
+      // DEFAULT_IMPERFECT_FUDGE_DAYS (365), so a death of "1856" reads as
+      // unorderable against a burial on 1857-12-31 — and the warning would then
+      // tell the agent that neither is known to come first, which is false.
+      // `isABeforeB` is three-valued at fudge 0 and returns null for exactly the
+      // case this warns about: the ranges overlap, so neither is established as
+      // earlier. It was already exported with zero callers.
+      // `isABeforeB` returns null for TWO reasons — the ranges overlap, or a
+      // date is unparseable — and only the first is what this warns about.
+      // Parse both first, or a blank or garbage date reads as "unorderable"
+      // and warns about a comparison that never happened.
+      const ra = getDayRange(stdDate(a.date));
+      const rb = getDayRange(stdDate(b.date));
+      if (!ra || !rb) continue;
+      if (isABeforeB(stdDate(a.date), stdDate(b.date)) !== null) continue;
       out.push(
         `'${a.id}' (${a.fact_type}, ${a.date}) and '${b.id}' (${b.fact_type}, ` +
-          `${b.date}) cannot be ordered against each other: the less precise date's ` +
-          `possible range contains the other, so neither is known to come first. If ` +
+          `${b.date}) cannot be ordered against each other: their possible-day ranges ` +
+          `overlap, so neither is established as earlier. If ` +
           `this conflict rests on one event postdating the other, it is not ` +
           `established — say what else makes them incompatible, or withdraw it.`,
       );

@@ -1027,6 +1027,7 @@ describe("research_append (Phase 3)", () => {
               id: "c_001",
               conflict_type: "fact",
               description: "birthplace",
+              disputed_attribute: "birthplace",
               competing_assertion_ids: conflictIds,
               status: "unresolved",
               blocks_question_ids: [],
@@ -1083,7 +1084,8 @@ describe("research_append (Phase 3)", () => {
 
     // REPRO for the reviewer's blocker: three competing assertions where two
     // agree and one genuinely disagrees. This is the dominant corpus shape
-    // (35 of 42 conflicts), and every other test here uses exactly two
+    // (34 of the 37 corpus fact conflicts carry three all-`birth` assertions;
+    // exactly two is 1), and every other test here uses exactly two
     // assertions, which is why inverting the comparator reds 6 tests without
     // ever exercising it.
     it("allows the live 3-assertion Ireland-vs-Pennsylvania conflict", async () => {
@@ -1135,10 +1137,68 @@ describe("research_append (Phase 3)", () => {
     it("ignores an assertion carrying no place — nothing to compare", async () => {
       await writeProject(placed([], { a_001: "Ireland" }));
       const r = await researchAppend(appendConflict(["a_001", "a_002"]));
-      // a_002 does not exist at all; the dangling-ref check owns that, not this.
+      // a_002 does not exist, and that is NOT refused here — nothing
+      // reference-checks competing_assertion_ids on this path. Pin the outcome
+      // as well as the absent substring: asserting only that a substring is
+      // missing passes when the write is refused for any other reason at all.
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
       expect(JSON.stringify((r as any).errors ?? [])).not.toContain(
         "two levels of precision",
       );
+    });
+
+    // The blocker: the guard read no `disputed_attribute`, so a dispute about
+    // the YEAR between two places in a containment relationship was refused
+    // with a message saying they "do not disagree" — false about the axis
+    // actually in dispute. `disputed_attribute` is free text (28 distinct
+    // values across 102 corpus fact conflicts), so the allow-list is exact.
+    it.each([
+      ["birth_year", "a plain non-place attribute"],
+      ["birth_year_and_birthplace", "a compound naming a non-place axis too"],
+      ["surname_spelling", "another axis entirely"],
+      ["Father's name: 'John W. Spriggs' vs 'Wm. Spriggs'", "free-text prose"],
+    ])("does not fire when disputed_attribute is %s (%s)", async (attr) => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+      }));
+      const base = appendConflict(["a_001", "a_002"]);
+      const r = await researchAppend({
+        ...base,
+        entry: { ...base.entry, disputed_attribute: attr },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // A blank or comma-only place is "no place", not a disagreement. Reading it
+    // as one silently disabled the guard for the whole entry.
+    it.each([["", "blank"], [" , ", "comma-only"]])(
+      "is not disabled by a %s place on a third assertion (%s)",
+      async (blank) => {
+        await writeProject(placed([], {
+          a_001: "Ireland",
+          a_002: "County Cork, Ireland",
+          a_003: blank,
+        }));
+        const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+        expect(r.ok).toBe(false);
+        expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+      },
+    );
+
+    // Depth counts normalized segments, as the comparator does. A raw comma
+    // count disagrees in both directions.
+    it("treats a trailing comma as the same depth, not a containment", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "Ireland," }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("still sees containment through a trailing comma", async () => {
+      await writeProject(placed([], { a_001: "Ireland,", a_002: "Cork, Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
     });
 
     it("does not fire on an identity conflict", async () => {
@@ -1237,12 +1297,12 @@ describe("research_append (Phase 3)", () => {
         dated([["a_001", "immigration", "1853"], ["a_002", "death", "1908-03-12"]]),
       );
       const r = await researchAppend(appendConflict(["a_001", "a_002"]));
-      expect(r.ok).toBe(true);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
       expect(warningsOf(r)).not.toContain("cannot be ordered");
     });
 
     // The noise check. A birthplace conflict is two `birth` assertions whose
-    // dates overlap by construction; warning there would fire on 35 of the 42
+    // dates overlap by construction; warning there would fire on 35 of the 37
     // corpus conflicts and teach the reader to skip this channel.
     it("stays silent on a same-fact_type value disagreement", async () => {
       await writeProject(
@@ -1270,6 +1330,20 @@ describe("research_append (Phase 3)", () => {
     // the inner same-type `continue` cannot catch that, because a string never
     // equals undefined. An assertion that does not say what kind of event it
     // records gives no reason to read the pair as an ordering claim.
+    // Ask 7: `compatibleDate` widens imperfect dates by 365 days, so it calls
+    // a death of "1856" unorderable against a burial on 1857-12-31 — and the
+    // warning would then tell the agent neither is known to come first, which
+    // is false. `isABeforeB` is three-valued at fudge 0 and says nothing here.
+    it.each([
+      ["1857-12-31", "a year later — ordered, despite the 365-day fudge"],
+      ["1855-06-01", "a year earlier — ordered the other way"],
+    ])("stays silent on a genuinely ordered pair: %s (%s)", async (other) => {
+      await writeProject(dated([["a_001", "death", "1856"], ["a_002", "burial", other]]));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
     it("says nothing when only one side declares a fact_type", async () => {
       await writeProject({
         project: { objective: "x" },
@@ -1283,6 +1357,7 @@ describe("research_append (Phase 3)", () => {
         proof_summaries: [],
       });
       const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
       expect(warningsOf(r)).not.toContain("cannot be ordered");
     });
 
@@ -1291,6 +1366,7 @@ describe("research_append (Phase 3)", () => {
         dated([["a_001", "immigration", "1856-12-15"], ["a_002", "relationship", ""]]),
       );
       const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
       expect(warningsOf(r)).not.toContain("cannot be ordered");
     });
   });
