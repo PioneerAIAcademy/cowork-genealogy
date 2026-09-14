@@ -1081,6 +1081,57 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    // REPRO for the reviewer's blocker: three competing assertions where two
+    // agree and one genuinely disagrees. This is the dominant corpus shape
+    // (35 of 42 conflicts), and every other test here uses exactly two
+    // assertions, which is why inverting the comparator reds 6 tests without
+    // ever exercising it.
+    it("allows the live 3-assertion Ireland-vs-Pennsylvania conflict", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "Ireland",
+        a_003: "Pennsylvania",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Equal places are compatible but are not containment — neither says less
+    // than the other. Whatever is wrong with a conflict recorded over two
+    // identical places, it is not the defect this guard names.
+    it("allows a conflict over two identical places", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Containment still fires when it is the ONLY relationship present, even
+    // with a third assertion in the entry that agrees with one side.
+    it("still refuses containment when a third assertion agrees", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+        a_003: "Ireland",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+
+    // Exercises the anyDisagreement clause specifically: a containment pair
+    // AND a genuine disagreement in the same entry. The conflict is real —
+    // Pennsylvania contradicts both Irish places — so the entry stands even
+    // though two of its assertions are one claim at two precisions.
+    it("allows containment when some other pair genuinely disagrees", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+        a_003: "Pennsylvania",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
     it("ignores an assertion carrying no place — nothing to compare", async () => {
       await writeProject(placed([], { a_001: "Ireland" }));
       const r = await researchAppend(appendConflict(["a_001", "a_002"]));

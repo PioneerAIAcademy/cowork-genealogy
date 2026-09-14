@@ -183,27 +183,51 @@ function placeContainmentErrors(entry: any, research: any): string[] {
       .filter((a) => a && typeof a.id === "string")
       .map((a) => [a.id, a]),
   );
-  const errs: string[] = [];
-  for (let i = 0; i < ids.length; i++) {
-    for (let j = i + 1; j < ids.length; j++) {
-      // A missing or place-less neighbour is not this entry's problem — the
-      // document validator reports dangling ids, and an assertion with no
-      // place states nothing to compare. Same stance as planActiveInvariants.
-      const a = byId.get(ids[i]);
-      const b = byId.get(ids[j]);
-      if (!a || !b) continue;
-      if (typeof a.place !== "string" || typeof b.place !== "string") continue;
-      if (!compatiblePlace(a.place, b.place)) continue;
-      errs.push(
-        `competing assertions '${ids[i]}' ("${a.place}") and '${ids[j]}' ` +
-          `("${b.place}") name the same place at two levels of precision, so they ` +
-          `do not disagree — one simply says less. Drop the broader assertion from ` +
-          `competing_assertion_ids, or record the dispute over an attribute the ` +
-          `sources actually contradict.`,
-      );
+  // A missing or place-less neighbour is not this entry's problem — the
+  // document validator reports dangling ids, and an assertion with no place
+  // states nothing to compare. Same stance as planActiveInvariants.
+  const placed = ids
+    .map((id) => byId.get(id))
+    .filter((a) => a && typeof a.place === "string");
+
+  // `compatiblePlace` is true for EQUAL places as well as for containment —
+  // its own docstring lists "County Cork, Ireland" against itself as
+  // compatible. So "some pair is compatible" is the wrong predicate: the
+  // canonical Flynn birthplace conflict is Ireland / Ireland / Pennsylvania,
+  // where the two Irelands are compatible with each other while Pennsylvania
+  // genuinely disagrees. Keying on any-compatible-pair refused that shape,
+  // which is 35 of the 42 conflicts in the corpus.
+  //
+  // The entry is refused only when BOTH hold: no pair disagrees at all, and at
+  // least one pair is a *strict* containment — compatible with differing
+  // hierarchy depth, i.e. one side genuinely says less than the other. Equal
+  // places are compatible but not containment, so a conflict recorded over two
+  // identical places is left alone; whatever is wrong with it, it is not this.
+  const depth = (place: string) => place.split(",").length;
+  let anyDisagreement = false;
+  const containment: Array<[any, any]> = [];
+  for (let i = 0; i < placed.length; i++) {
+    for (let j = i + 1; j < placed.length; j++) {
+      const a = placed[i];
+      const b = placed[j];
+      if (!compatiblePlace(a.place, b.place)) {
+        anyDisagreement = true;
+        continue;
+      }
+      if (depth(a.place) !== depth(b.place)) containment.push([a, b]);
     }
   }
-  return errs;
+  if (anyDisagreement || containment.length === 0) return [];
+  return containment.map(([a, b]) => {
+    const [broad, narrow] = depth(a.place) < depth(b.place) ? [a, b] : [b, a];
+    return (
+      `competing assertions '${broad.id}' ("${broad.place}") and '${narrow.id}' ` +
+      `("${narrow.place}") name the same place at two levels of precision, so they ` +
+      `do not disagree — the first simply says less. Drop the broader assertion from ` +
+      `competing_assertion_ids, or record the dispute over an attribute the ` +
+      `sources actually contradict.`
+    );
+  });
 }
 
 // A year-only date cannot be ordered against a day-precision date inside that
