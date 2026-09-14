@@ -704,11 +704,35 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     writes to the skill under test is a false positive. A negative
     test where the skill *does* wrongly activate already fails on the
     routing check.
+
+    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09, re-affirmed by the
+    lead 2026-09-14; also the policy for issue #2023's ownership question —
+    decided here, not re-decided there). When execution.stub_skills is non-empty
+    the owning callee is denied, so the section can only ever be written by the
+    caller: the check would measure the stub/caller rather than the skill under
+    test. Same rationale as the negative-test skip, and the stub's own denial
+    text tells the caller both to carry on ("finish your own remaining steps —
+    logging, status, summary") AND not to substitute for the callee ("do not
+    attempt to do its work yourself"): the caller writing `log`/`project`/status
+    is obeying the first clause, not violating ownership.
+
+    The skip is deliberately keyed on **any** stub being present (whole-run),
+    not evaluated per-section. A per-section form gives opposite answers
+    depending on whether it keys on the section's declared owner or on any
+    permitted writer, and on `research`'s `_005` that fork re-breaks the test
+    over `project.status = "completed"` — a write `research`'s own SKILL.md
+    orders and whose ownership contradiction is issue #1335's to resolve, not
+    this check's. Keying on the whole run avoids adjudicating that here.
     """
     if test.get("type") == "negative":
         pytest.skip(
             "ownership is not checked on negative tests — writes belong "
             "to the routed-to skill, not the skill under test"
+        )
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — a denied callee cannot write, so ownership measures "
+            "the stub/caller, not the skill under test"
         )
 
     before = before_state.get("research_json")
@@ -1109,9 +1133,22 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
 # any skill that holds the tool, not just citation.
 
 def test_write_then_validate(before_state, after_state, tool_calls, skill_frontmatter, test):
-    """If research.json was modified, validate_research_schema must have been called."""
+    """If research.json was modified, validate_research_schema must have been called.
+
+    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09). When
+    execution.stub_skills is non-empty the routed-to callee is denied, so any
+    research.json write was performed by the stub/caller, not the skill under
+    test — the check would measure the stub. This matters here specifically
+    because `research`'s own SKILL.md forbids defensive validate passes, so
+    demanding one on its stubbed runs grades against the skill's own doctrine.
+    """
     if test.get("type") == "negative":
         pytest.skip("negative test — tool calls belong to the routed-to skill")
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — the write measures the stub/caller, not the skill "
+            "under test"
+        )
     allowed = (skill_frontmatter or {}).get("allowed-tools", []) or []
     if "validate_research_schema" not in allowed:
         pytest.skip("skill does not declare validate_research_schema")

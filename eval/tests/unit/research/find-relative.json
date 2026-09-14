@@ -5,7 +5,7 @@
     "name": "Find [relative] triggers research",
     "type": "positive",
     "description": "'Find [relative]' is an explicit trigger in the skill description. The user wants to locate a family member through the full GPS workflow, not just search one record collection.",
-    "tags": ["core-trigger"]
+    "tags": ["core-trigger", "grade:trigger"]
   },
   "input": {
     "user_message": "Find the wife of Patrick Flynn. He was born around 1845 in Ireland and lived in New York by 1870.",

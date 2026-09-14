@@ -18,7 +18,7 @@
     "Should drive the question through the GPS workflow, not just answer it conversationally"
   ],
   "execution": {
-    "max_turns": 20,
+    "max_turns": 30,
     "max_wall_clock_seconds": 1200,
     "stub_skills": [
       "question-selection", "locality-guide", "research-plan",

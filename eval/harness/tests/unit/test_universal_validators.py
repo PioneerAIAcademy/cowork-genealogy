@@ -29,6 +29,7 @@ from test_universal import (  # noqa: E402
     test_no_entries_deleted as check_no_deletes,
     test_ownership_table as check_research,
     test_tree_ownership_table as check_tree,
+    test_write_then_validate as check_write_then_validate,
 )
 
 
@@ -142,6 +143,42 @@ def test_negative_tests_are_skipped():
             research(conflicts=entry("c_001")),
             {"name": "timeline"},
             {"type": "negative"},
+        )
+
+
+def test_ownership_is_skipped_on_a_stubbed_run():
+    """The stub_skills skip must actually fire (issue #2156, lead-affirmed
+    2026-09-14). On a stubbed positive run the owning callee is denied, so every
+    section write lands on the caller; grading the caller for it measures the
+    stub, not the skill. This uses a **non-owner** write so that if the skip
+    block is ever removed the test fails loudly — the check would raise
+    AssertionError instead of skipping — rather than passing vacuously, which is
+    the coverage gap the lead flagged.
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check_research(
+            research(),
+            research(conflicts=entry("c_001")),
+            {"name": "research"},
+            {"type": "positive", "execution": {"stub_skills": ["question-selection"]}},
+        )
+
+
+def test_write_then_validate_is_skipped_on_a_stubbed_run():
+    """Companion coverage for the other new stub skip (issue #2156). Same
+    property: a stubbed positive run's research.json write is the stub/caller's,
+    so demanding a `validate_research_schema` pass measures the stub. The skill
+    declares the tool and none was called and research.json changed, so without
+    the skip this raises — proving the skip block is load-bearing rather than
+    inert (the gap the lead flagged for both new arms).
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check_write_then_validate(
+            research(),
+            research(conflicts=entry("c_001")),
+            [],  # no tool calls -> no validate_research_schema call
+            {"name": "research", "allowed-tools": ["validate_research_schema"]},
+            {"type": "positive", "execution": {"stub_skills": ["question-selection"]}},
         )
 
 
