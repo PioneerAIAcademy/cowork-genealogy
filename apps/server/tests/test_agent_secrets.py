@@ -184,3 +184,26 @@ def test_connect_rewrites_the_secrets_file(monkeypatch):
         assert json.loads(secrets.read_text(encoding="utf-8")) == {
             "anthropic_api_key": "sk-ant-rotated"
         }
+
+
+async def test_closing_the_client_resets_the_respawn_flag(tmp_path, monkeypatch, fake_sdk):
+    """`_close_client` must clear `_stream_dirty` along with the client.
+
+    Left set, a close from any path other than the abandoned-stream one costs the
+    NEXT turn a redundant rebuild, which makes the flag mean "maybe dirty" rather
+    than "dirty". Raised in review on issue #2062.
+    """
+    secrets = tmp_path / "session.json"
+    secrets.write_bytes(secrets_bytes("sk-ant-old"))
+    _point_at(monkeypatch, secrets)
+
+    agent = real_agent.RealAgent(tmp_path)
+    await agent._ensure_client()
+    agent._stream_dirty = True
+
+    await agent._close_client()
+
+    assert agent._stream_dirty is False, (
+        "the respawn flag survived the client it describes, so the next turn "
+        "rebuilds a client that was never dirty"
+    )

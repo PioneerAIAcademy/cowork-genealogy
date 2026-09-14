@@ -167,6 +167,51 @@ today); reconnect re-syncs via `GET /state`.
   `ChatPane` and `WsResearchTransport` consume the `SessionConnection` interface
   and are untouched.
 
+### 4.1 The credentials fetch is bounded, and a hang is not a refusal
+
+`WsSessionConnection.connect()` guards its await window with a `connecting` flag,
+cleared only when the credentials provider settles. **A provider that never
+settles left that flag `true` forever**, so every later `connect()` returned at
+the guard: no socket, no retry, and no `chat_error` either. The chat panel sat on
+"Connecting to the agent…" indefinitely. That is one of only two paths that can
+produce an indefinite placeholder; the other is a socket that opens but never
+receives `chat_ready`.
+
+The fetch now has a 30-second bound (`CREDENTIALS_TIMEOUT_MS`), and it lives in
+`WsSessionConnection` rather than on `api.req` or at the `connectSession` call
+site. Two reasons: `req` is the shared REST helper and `resumeSession` plus the
+viewer's `/state` hydration resume the same paused sandbox and are just as slow,
+so a blanket timeout there would abort them too; and the flag that actually
+wedges lives in this class, so the bound belongs where the invariant is.
+
+**A hang gets a tighter ceiling than a refusal (`MAX_CREDENTIAL_TIMEOUTS = 2`
+against `MAX_RETRIES = 20`), and the asymmetry is the point.** A refused socket
+is cheap and fast. Each credentials attempt is a full `POST /connect`: an E2B
+resume (~1 s), `write_secrets`, `merge_config`, a FamilySearch token refresh over
+the network, and `expose_port` (`sessions.py` `connect_session`). Giving a hang
+the full 20-retry budget would multiply that against a control plane already
+failing to answer — trading a wedge for a stampede. Two attempts, then
+`chat_error`, which `ChatPane` renders as "Chat unavailable: …".
+
+**Worst case the user waits about 60 seconds** before "Chat unavailable"
+appears: two 30-second bounds plus the retry delay between them. That is the
+trade against an indefinite "Connecting to the agent…" placeholder, and it is
+stated here rather than left to be derived from three constants, because it is
+the first thing a reader asks of them.
+
+Bounded by `apps/web/src/transport/__tests__/SessionConnection.test.ts`, whose
+two wedge cases fail when the bound is removed while its rejection, retry-ceiling
+and happy-path cases pass either way — that asymmetry is what shows the retry
+semantics were not altered.
+
+Two further cases pin the budget's own arithmetic, because the guard is
+otherwise removable in silence: a success between two hangs must reset the
+budget (deleting that reset left every other test green), and a focus event must
+**not** reset it (adding a reset there also left every other test green).
+`credentialTimeouts` is deliberately not symmetric with `attempts`, which
+`onVisibility` does reset on focus — resetting the budget there would let
+tabbing away and back re-arm the stampede the ceiling exists to prevent.
+
 ---
 
 ## 5. The Hobby 1-hour cap (alpha)

@@ -71,3 +71,35 @@ def test_routes_to_expected_skill(skills_invoked, test):
             f"got '{delegations[0]}'. "
             f"Full list: {skills_invoked}"
         )
+
+
+def test_creates_no_project_when_none_exists(before_state, after_state, test):
+    """Tag-gated (``research-vs-init-project``) no-harm invariant for the
+    no-research-json-yet negative (ut_research_008).
+
+    The user asks to "set up a project and begin", but with no research.json
+    the correct move is to route to init-project, not to scaffold a project
+    inline. This is why _008 is graded on the invariant (``grade_on_invariant``)
+    rather than on routing: with an empty folder the state-safe outcomes are
+    several — auto-route to init-project, or load research and decline via
+    AskUserQuestion — and the routing check fails the (correct) decline. The
+    routing-independent gate is that NO project is created: research.json must
+    not exist after the run. Mirrors
+    test_citation.py::test_does_not_add_new_source_entries and
+    test_conflict_resolution.py::test_creates_no_new_conflict — a pure tag-gate,
+    so it never touches any other research test.
+    """
+    if "research-vs-init-project" not in test.get("tags", []):
+        pytest.skip("not a research-vs-init-project scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    assert before is None, (
+        "ut_research_008 expects the empty-folder-no-project scenario, which "
+        "has no research.json before the run; one was present. Scenario drift — "
+        "fix the fixture rather than the skill."
+    )
+    assert after is None, (
+        "research scaffolded a project inline for a no-research-json request; "
+        "creating the project is init-project's job. A research.json exists in "
+        "the output where none did before — it must route to init-project."
+    )
