@@ -65,6 +65,47 @@ describe("FsProjectStore specifics", () => {
     }
   });
 
+  it.skipIf(process.platform === "win32")(
+    "readText refuses a symlink that leaves the project and follows one that stays",
+    async () => {
+      // assertInsideProject reasons about the ref string; a symlink placed in
+      // the project resolves "inside" and readFile would follow it to any
+      // host-readable file. readText re-checks on the real path.
+      const root = await mkdtemp(join(tmpdir(), "fs-store-"));
+      try {
+        const project = join(root, "project");
+        const outsideDir = join(root, "outside");
+        await mkdir(join(project, "uploads"), { recursive: true });
+        await mkdir(outsideDir);
+        await writeFile(join(outsideDir, "secret.txt"), "outside", "utf-8");
+        await writeFile(join(project, "uploads", "real.txt"), "inside", "utf-8");
+        await symlink(join(outsideDir, "secret.txt"), join(project, "uploads", "link-file.txt"));
+        await symlink(outsideDir, join(project, "uploads", "link-dir"));
+        await symlink(join(project, "uploads", "real.txt"), join(project, "uploads", "alias.txt"));
+        const store = new FsProjectStore();
+        await expect(store.readText(project, "uploads/link-file.txt")).rejects.toThrow(
+          /escapes the project/,
+        );
+        await expect(store.readText(project, "uploads/link-dir/secret.txt")).rejects.toThrow(
+          /escapes the project/,
+        );
+        // The other direction: a symlink that stays inside still reads, and so
+        // does a project reached through an alias of its own path.
+        expect(await store.readText(project, "uploads/alias.txt")).toBe("inside");
+        const projectAlias = join(root, "project-alias");
+        await symlink(project, projectAlias);
+        expect(await store.readText(projectAlias, "uploads/real.txt")).toBe("inside");
+        // An absent ref still surfaces as ENOENT, so callers that classify by
+        // code (sidecar_read → not_found) are unaffected.
+        await expect(store.readText(project, "uploads/nope.txt")).rejects.toMatchObject({
+          code: "ENOENT",
+        });
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+
   it("locks one project under two spellings of its path", async () => {
     // Two callers can name one project through different symlinks (on macOS
     // /tmp itself is one). The lock key is the real path, so they serialize.

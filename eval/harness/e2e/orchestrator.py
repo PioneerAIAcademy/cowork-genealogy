@@ -380,8 +380,8 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
 #
 # The measurement behind them: does removing the filesystem cost research
 # quality? The hosted sandbox holds no project folder — the agent reads the
-# project through project_context / research_query / record_read and has no
-# shell — so an e2e run with both flags on is the closest the harness gets to
+# project through project_context / research_query / record_read / sidecar_read
+# and has no shell — so an e2e run with both flags on is the closest the harness gets to
 # that posture. Both default off; every existing run is unaffected.
 #
 # Pure functions, for the reason person_evidence_deny_decision gives: the hook
@@ -449,7 +449,9 @@ def _project_read_route(target: str, root: str) -> str:
     """The MCP tool that replaces a direct read of `target`."""
     if _under(target, root + "/results"):
         return "record_read({recordId, resultsRef})"
-    if _basename(target) == "research.json" or _under(target, root + "/evaluations"):
+    if _under(target, root + "/evaluations") or _under(target, root + "/uploads"):
+        return "sidecar_read({projectPath, ref})"
+    if _basename(target) == "research.json":
         return "research_query"
     return "project_context"
 
@@ -472,8 +474,10 @@ def project_read_denied(
     survive if the default outside the project ever flips to deny.
 
     The reason names the MCP route that replaces the read, chosen by target: a
-    `results/` sidecar -> `record_read({recordId, resultsRef})`; research.json or
-    `evaluations/` -> `research_query`; anything else -> `project_context`.
+    `results/` sidecar -> `record_read({recordId, resultsRef})`; a verdict body
+    under `evaluations/` or a text upload under `uploads/` ->
+    `sidecar_read({projectPath, ref})`; research.json -> `research_query`;
+    anything else -> `project_context`.
     """
     cwd_s = str(cwd)
     target = _project_read_target(tool_name, tool_input, cwd=cwd_s)
@@ -531,7 +535,8 @@ def filesystem_denial(
         reason = (
             f"{tool_name} is unavailable in this run — there is no shell. Use the "
             "MCP tools instead: project_context and research_query to read the "
-            "project, record_read for a saved search result, and the writer tools "
+            "project, record_read for a saved search result, sidecar_read for a "
+            "verdict body or a text upload, and the writer tools "
             "(research_append, research_log_append, tree_edit, tree_correct) to "
             "change it."
         )
