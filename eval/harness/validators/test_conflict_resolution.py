@@ -917,9 +917,9 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
     four certainty markers have zero corpus support.
 
     Population is `_conflicts_written` -- every after-state conflict whose prose
-    this run authored -- not V6's resolution population, which filters on
-    `status` and would drop the 11 corpus writes that authored prose without
-    touching it.
+    this run authored -- not V3's `_resolutions_this_run`, which requires
+    `status` to reach `resolved` and would drop the 11 corpus writes that
+    authored prose without touching it.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")
@@ -942,7 +942,7 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
         # the record against the prose. Without the source string a reader
         # cannot tell whether the upgrade was real.
         names: dict[str, str] = {}
-        for aid in c.get("competing_assertion_ids") or []:
+        for aid in _competing_ids(c):
             a = informants.get(aid)
             if not a:
                 continue

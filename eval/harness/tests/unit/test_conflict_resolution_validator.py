@@ -1818,7 +1818,10 @@ def test_v4_ignores_prose_the_run_did_not_author():
     V6's `_conflicts_with_changed_analysis` counts a `status`-only change as a
     resolution. Under it, a run that merely flipped `status` on a conflict whose
     prose ALREADY carried an upgrade would be reported for prose it never wrote.
-    Swapping the populations left the suite green until this test existed.
+
+    The authored-field filter now covers that shape on its own, so this test no
+    longer discriminates between the two populations --
+    `test_v4_population_is_prose_authored_not_v6s_analysis_set` does.
     """
     a = {"id": "a_002", "source_id": "src_001", "informant": _HEDGED_INFORMANT,
          "information_quality": "indeterminate"}
@@ -1834,6 +1837,71 @@ def test_v4_ignores_prose_the_run_did_not_author():
 
     # Paired: authoring the prose in the same turn IS reported.
     _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+
+
+def test_v4_population_is_prose_authored_not_v6s_analysis_set():
+    """A conflict this turn CREATED bare -- identification only, no analysis --
+    with the upgrade in the reply text.
+
+    `_conflicts_written` reaches it via `prev is None`;
+    `_conflicts_with_changed_analysis` drops it, because `_analysis_written` is
+    False on an entry carrying no analysis. That is the ONLY shape the two
+    populations still disagree on once the authored-field filter is in, which
+    is why the test above stopped discriminating and this one exists.
+    """
+    a = {"id": "a_002", "source_id": "src_001", "informant": _HEDGED_INFORMANT,
+         "information_quality": "indeterminate"}
+    bare = {"id": "c_new", "status": "unresolved", "conflict_type": "fact",
+            "competing_assertion_ids": ["a_002"], "preferred_assertion_id": None,
+            "independence_analysis": None, "weighing_analysis": None,
+            "resolution_rationale": None}
+    before = {"research_json": {"conflicts": [], "assertions": [a]}}
+    after = {"research_json": {"conflicts": [bare], "assertions": [a]}}
+    msg = _fires(before, after, "The informant was almost certainly Thomas Flynn.")
+    assert "c_new" in msg and "the reply text" in msg, msg
+
+
+@pytest.mark.parametrize(
+    "competing",
+    [
+        42,               # int: iterating raises TypeError -- a CRASH, which gates
+        {"a_002": 1},     # dict: iterates KEYS, so it reports iff they match ids
+        "a_002",          # bare string: iterates CHARACTERS -- silently wrong, never raises
+    ],
+)
+def test_v4_a_non_list_competing_assertion_ids_neither_raises_nor_misreports(competing):
+    """V4 was the only one of the three `report_*` functions reading this field
+    raw; V2 calls `_competing_ids` directly and V3 reaches it via `_sources_for`.
+
+    Reachable: the built validator reports NO error about the field for `42`,
+    `"a_002"` or a dict (measured against `validateParsed`) -- only `null` and
+    omitted are rejected -- so a model can write one and nothing stops it.
+
+    The int is the serious shape. A crash inside a `report_*` is not an
+    observation: `validator_runner.py` builds the result without
+    `reporting_only`, so `compute_validators_passed` counts it as a gating
+    failure and the judge does not run for that test -- the one outcome tier 2
+    exists to avoid.
+    """
+    a = {"id": "a_002", "source_id": "src_001", "informant": _HEDGED_INFORMANT,
+         "information_quality": "indeterminate"}
+    base = {"id": "c_001", "status": "resolved", "conflict_type": "fact",
+            "competing_assertion_ids": competing, "preferred_assertion_id": "a_002",
+            "independence_analysis": None, "resolution_rationale": None}
+    before = {"research_json": {"conflicts": [dict(base, weighing_analysis=None)],
+                                "assertions": [a]}}
+    after = {"research_json": {"conflicts": [dict(base, weighing_analysis=_UPGRADE_SENTENCE)],
+                               "assertions": [a]}}
+    check_certainty_upgrade(before, after, "")
+
+    # Paired: the same state with a WELL-FORMED list still fires, so the row
+    # above cannot be satisfied by a check that reports nothing.
+    ok_before = {"research_json": {"conflicts": [dict(base, competing_assertion_ids=["a_002"],
+                                                      weighing_analysis=None)], "assertions": [a]}}
+    ok_after = {"research_json": {"conflicts": [dict(base, competing_assertion_ids=["a_002"],
+                                                     weighing_analysis=_UPGRADE_SENTENCE)],
+                                  "assertions": [a]}}
+    assert "Thomas Flynn" in _fires(ok_before, ok_after)
 
 
 def _v4_both_fields(*, rationale_before, rationale_after,
