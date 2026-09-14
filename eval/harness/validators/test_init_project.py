@@ -165,7 +165,7 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
     to get right. An earlier version of this validator required a
     `research_append` with `section: "project"`, which encoded a design that was
     abandoned before it shipped: it failed 8 of 11 tests on a skill that was
-    behaving correctly, and because a failed validator skips the judge, it also
+    behaving correctly, and because a failed validator fails the test outright, it also
     threw away the grades. A check that encodes a stale design is worse than no
     check, because its red looks like the skill's fault.
 
@@ -434,7 +434,7 @@ def test_tree_ark_is_canonical_and_traceable(after_state, tool_calls):
         # single person per name would blame a Sr./Jr. pair -- or same-named
         # siblings, which #1689 adds to the family fixture -- for each other's
         # pid, failing a correct import and costing the test its whole grade
-        # (a failed validator skips the judge).
+        # (a failed validator fails the test outright; the judge still grades it, for diagnosis).
         if any(p.get("ark") == expected for p in candidates):
             continue
         given, surname = name_key

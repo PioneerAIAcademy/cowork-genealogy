@@ -117,8 +117,13 @@ it carries no record provenance). See spec §3.6.1 (issue #1025).
   it anyway.
 
 - **`README.md`** — replace the "DRAFT PENDING ADJUDICATION" paragraph under
-  "Notes for reviewers" with the genealogist's conclusion and reasoning. No
-  fixture has been resolved yet, so there is no example to imitate; write the
+  "Notes for reviewers" with the genealogist's conclusion and reasoning. 40 of
+  65 record-hint fixtures have been resolved this way (re-derive: `grep -rl
+  '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | wc -l` against
+  `grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | wc -l`);
+  `eval/tests/e2e/chresten-nielsen-daughter/README.md`'s
+  "Notes for reviewers" is a worked example (re-adjudicated after a graded
+  run, the closest match to a correction-not-rejection outcome). Write the
   paragraph so the next person can re-derive the call without redoing the
   research — the verdict, what evidence decided it, and what was searched and
   came up empty. Remove the marker text itself: it is the only signal that
