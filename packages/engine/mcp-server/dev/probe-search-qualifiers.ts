@@ -5919,7 +5919,8 @@ async function sectionK(): Promise<void> {
     surname: string
   ): Promise<{ total: number; ids: Set<string>; rows: number } | null> => {
     const r = await scanIds(
-      `q.surname=${encodeURIComponent(surname)}&${POOL}&${REQUIRE_SWITCH}`,
+      // No REQUIRE_SWITCH here -- scanIds appends it to every page it fetches.
+      `q.surname=${encodeURIComponent(surname)}&${POOL}`,
       1000
     );
     if (!r.complete || r.total === null || r.ids.size === 0) return null;
