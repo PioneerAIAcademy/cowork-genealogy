@@ -19,13 +19,55 @@
  * RESULTS (recorded here so a future reader doesn't need to re-run; measured
  * 2026-09-14 against the live service).
  *
+ * VANTAGE POINT. Except where a line says otherwise, these were measured from
+ * INSIDE the church network, which Imperva clears ahead of the checks it
+ * applies to public traffic. Query semantics do not move with it: review
+ * re-ran B and D in full from outside (B reproduces this header exactly; D's
+ * sweep separates real from nonsense values for all ten parameters), confirmed
+ * E's ignored-offset flag can fire, and spot-checked four figures the sections
+ * do not regenerate. What an in-network run cannot see is anything gated on
+ * network origin. Section A is the known instance and says so; the paging
+ * limits in E are the other place worth re-measuring from outside before a
+ * spec leans on them. C's place counts, F's field shapes and G were NOT re-run
+ * from outside. Account privilege is not a factor — it was varied against
+ * section A and changed nothing.
+ *
  * SEARCH  GET /service/search/catalog/v3/search
  *
  *   A. Bearer required — without an Authorization header the service returns
- *      401 with an empty body (no JSON error). A browser User-Agent is NOT
- *      required today (the same query answers 200 without one), but Imperva
- *      fronts the host (`X-CDN: Imperva` on the 401), so send
- *      BROWSER_USER_AGENT as every other FamilySearch call site here does.
+ *      401 with an empty body (no JSON error).
+ *
+ *      BROWSER_USER_AGENT is required. Imperva fronts the host (`X-CDN:
+ *      Imperva`, on the 401 and on every 200) and 403s non-browser UAs: the
+ *      same query returns 403 under Node's default `User-Agent: node` and 403
+ *      under `fs-search-agent`, 200 only under BROWSER_USER_AGENT. That is
+ *      the behaviour CLAUDE.md already documents for every FamilySearch call
+ *      site, and it is the condition shipped code meets — the `.mcpb` runs on
+ *      an end user's machine, on the public internet, under an ordinary
+ *      account.
+ *
+ *      DO NOT RE-RECORD THIS SECTION FROM INSIDE THE CHURCH NETWORK. It
+ *      cannot observe the requirement. Three vantage points, all 2026-09-14,
+ *      same query:
+ *
+ *        in-network,  elevated account -> all four spellings 200 (3 rounds)
+ *        in-network,  ordinary account -> all four spellings 200 (2 rounds)
+ *        outside,     ordinary account -> node 403, fs-search-agent 403,
+ *                                         BROWSER_USER_AGENT 200
+ *
+ *      THE GATE IS NETWORK ORIGIN, NOT ACCOUNT STANDING. The first two rows
+ *      differ only in account privilege and are identical (12,344 hits on
+ *      every spelling), which rules account standing out; the second and third
+ *      differ only in network origin and that is where the behaviour changes.
+ *      In-network callers are cleared before Imperva looks at the UA string,
+ *      so a 200 there is not evidence the UA is optional — it is evidence you
+ *      are on the wrong side of the gate to be measuring this at all. Each
+ *      regime was re-measured and is stable where it was taken.
+ *
+ *      This section prints the whole matrix so a re-run shows which regime
+ *      the caller is in rather than recording one vantage point as the
+ *      contract.
+ *
  *      Searches measured 0.20-0.44s, items 0.18-0.25s; the 30s default
  *      timeout is not close to binding.
  *
@@ -206,13 +248,31 @@ async function sectionA(token: string): Promise<void> {
     `no Authorization header -> ${noAuth.status}, body ${noAuthBody.length} bytes, X-CDN: ${noAuth.headers.get("x-cdn") ?? "(none)"}`,
   );
 
-  const noUa = await fetchWithRetry(`${SEARCH_URL}?${q}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-  });
-  console.log(`no User-Agent           -> ${noUa.status}`);
-  await noUa.text();
+  console.log("\n  UA matrix. Outside the church network on an ordinary account, the");
+  console.log("  non-browser rows are 403 and only BROWSER_USER_AGENT is 200 — that is");
+  console.log("  the contract. All four rows 200 means you are inside the church");
+  console.log("  network, which cannot observe it; see the header before recording.\n");
 
-  console.log(`bearer + browser UA     -> ${await total(token, q)}`);
+  const uas: [string, string | null][] = [
+    ["(header omitted)", null],
+    ["node", "node"],
+    ["fs-search-agent", "fs-search-agent"],
+    ["BROWSER_USER_AGENT", BROWSER_USER_AGENT],
+  ];
+  for (const [label, ua] of uas) {
+    const uaHeaders: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    };
+    if (ua !== null) uaHeaders["User-Agent"] = ua;
+    const res = await fetchWithRetry(`${SEARCH_URL}?${q}`, { headers: uaHeaders });
+    await res.text();
+    console.log(
+      `  ${label.padEnd(20)} -> ${res.status}  X-CDN: ${res.headers.get("x-cdn") ?? "(none)"}`,
+    );
+  }
+
+  console.log(`\n  bearer + browser UA  -> ${await total(token, q)}`);
 }
 
 async function sectionB(token: string): Promise<void> {
