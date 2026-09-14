@@ -5528,8 +5528,8 @@ interface FulltextHit {
  * `searchOnce`/`search` use for the indexed endpoint) per issue #1829's mandate.
  * Always appends `m.queryRequireDefault=on`.
  */
-async function fulltextSearch(query: string, count = 5): Promise<FulltextHit> {
-  const url = `${FULLTEXT_URL}?${query}&${REQUIRE_SWITCH}&count=${count}`;
+async function fulltextSearch(query: string, count = 5, offset = 0): Promise<FulltextHit> {
+  const url = `${FULLTEXT_URL}?${query}&${REQUIRE_SWITCH}&count=${count}&offset=${offset}`;
   const res = await fetchRetry(url, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -5626,12 +5626,15 @@ async function fulltextGetUSRegionId(baseQuery: string): Promise<string | null> 
  * transcript-only place name vs the metadata place name.
  *
  * `q.fullName` is tested with T6 (an NLP-recognized name from the anchor)
- * and T7 (a non-name word "executor" known to be in the transcript). If T7
- * finds the anchor, `q.fullName` searches full transcript text; if not, it
- * is restricted to name fields. Note: if T7 returns "not found", the verdict
- * cannot distinguish "searches name fields only" from "applies NLP name
- * recognition to the query input, rejecting non-name terms"; the simpler
- * interpretation is assumed.
+ * and T7 (a non-name word "executor" known to be in the transcript). T7
+ * paginates the full result set (count=100, offset stepping) so the negative
+ * is airtight — a `found=false` with unexamined entries is a paging artifact,
+ * not a measurement. If the full set cannot be exhausted, the soundness guard
+ * in verdict 4 falls to NOT MEASURED. If T7 finds the anchor, `q.fullName`
+ * searches full transcript text; if not (over the full set), it is restricted
+ * to name fields. Note: a "not found" negative cannot distinguish "searches
+ * name fields only" from "applies NLP name recognition to the query input,
+ * rejecting non-name terms"; the simpler interpretation is assumed.
  *
  * `f.recordPlace1` accepts only the NUMERIC IDs returned by the facets API
  * (e.g. `f.recordPlace1=10,Alabama`), not plain text values. Passing plain
@@ -5870,37 +5873,65 @@ async function sectionJ(): Promise<void> {
     console.log(`     anchor found: ${t6Found}  (total: ${t6Total}, error: ${t6Error})`);
   }
   record("J", `T6:q.fullName=${anchorName ?? "(none)"} (NLP name control)`, { found: t6Found, total: t6Total, error: t6Error });
+  // Note: T6 often returns a much larger total than other collection-scoped
+  // queries (e.g. ~1.9M vs ~5.8K for T1/T3/T5), suggesting f.collectionId may
+  // not constrain q.fullName the same way. This does not invalidate the
+  // positive control (the anchor IS in the result set) but is worth recording.
+  if (t6Total !== null && t1.total !== null && t6Total > t1.total * 10) {
+    console.log(`     NOTE: T6 total (${t6Total}) is >10× the T1 total (${t1.total}) — f.collectionId may not constrain q.fullName`);
+  }
 
   // Test 7: q.fullName with a non-name word ("executor") known to be in the
   // transcript (the discovery query uses +executor +Virginia). "executor" is a
   // legal role, not a person name. If q.fullName finds the anchor with this
   // term, it searches the full transcript text — not just name fields.
   //
-  // Ambiguity note: if T7 returns "not found", the verdict cannot distinguish
-  // "searches name fields only" from "searches all fields but applies NLP name
-  // recognition to the query input, rejecting non-name terms". The simpler
-  // interpretation (name fields only) is assumed.
+  // Paginates the full result set so the negative is airtight: a `found=false`
+  // with `total > entries examined` is a paging artifact, not a measurement
+  // (every other section-J negative returns total=0). If pagination cannot
+  // exhaust the set, the soundness guard in verdict 4 falls to NOT MEASURED.
+  //
+  // Ambiguity note: if T7 returns "not found" over the full set, the verdict
+  // cannot distinguish "searches name fields only" from "searches all fields
+  // but applies NLP name recognition to the query input, rejecting non-name
+  // terms". The simpler interpretation (name fields only) is assumed.
   let t7Found = false;
   let t7Total: number | null = null;
   let t7Error: string | null = null;
+  let t7Examined = 0;
   if (!anchorName) {
     // If T6 could not run, skip T7 too — we need the name control to anchor
     // the verdict.
     t7Error = "skipped (T6 could not run)";
     console.log("  T7 q.fullName=executor — SKIPPED: T6 could not run (no name control)");
   } else {
-    const t7 = await fulltextSearch(
+    const t7Query =
       "q.fullName=" + encodeURIComponent("executor") +
-      "&f.collectionId=" + encodeURIComponent(cid),
-      20
-    );
-    t7Found = !t7.error && containsAnchor(t7);
-    t7Total = t7.total;
-    t7Error = t7.error;
+      "&f.collectionId=" + encodeURIComponent(cid);
+    const PAGE_SIZE = 100;
+    let offset = 0;
+    while (true) {
+      const page = await fulltextSearch(t7Query, PAGE_SIZE, offset);
+      if (page.error) {
+        t7Error = page.error;
+        break;
+      }
+      if (t7Total === null) t7Total = page.total;
+      t7Examined += page.entries.length;
+      if (page.entries.some((e) => e.id === anchorId)) {
+        t7Found = true;
+        break;
+      }
+      // Last page or empty page — done.
+      if (page.entries.length < PAGE_SIZE) break;
+      offset += page.entries.length;
+      // Safety cap: don't paginate beyond 1000 entries.
+      if (offset >= 1000) break;
+    }
     console.log(`  T7 q.fullName=executor, f.collectionId=${cid}`);
-    console.log(`     anchor found: ${t7Found}  (total: ${t7Total}, error: ${t7Error})`);
+    console.log(`     anchor found: ${t7Found}  (total: ${t7Total}, examined: ${t7Examined}, error: ${t7Error})`);
   }
-  record("J", "T7:q.fullName=executor (non-name word)", { found: t7Found, total: t7Total, error: t7Error });
+  record("J", "T7:q.fullName=executor (non-name word)", { found: t7Found, total: t7Total, examined: t7Examined, error: t7Error });
 
   // --- Phase 3: Compute verdicts ---
   console.log("\n  Phase 3: verdicts");
@@ -5950,6 +5981,12 @@ async function sectionJ(): Promise<void> {
   // Verdict 4: q.fullName searches ...
   // T6 (NLP name from anchor) tells us if q.fullName works at all.
   // T7 ("executor", a non-name word) tells us if it reaches the full transcript.
+  //
+  // Soundness guard: a T7 negative is only airtight when the probe examined
+  // every result (t7Examined >= t7Total). A negative with unexamined entries
+  // is a paging artifact (the anchor could rank beyond the examined window).
+  const t7NegativeSound =
+    t7Total !== null && t7Total >= 0 && t7Examined >= t7Total;
   let v4: string;
   if (t6Error !== null) {
     v4 = "NOT MEASURED";
@@ -5959,6 +5996,8 @@ async function sectionJ(): Promise<void> {
     v4 = "NOT MEASURED";
   } else if (t7Found) {
     v4 = "full transcript (same as q.text)";
+  } else if (!t7NegativeSound) {
+    v4 = `NOT MEASURED — T7 negative unsound (examined ${t7Examined} of ${t7Total})`;
   } else {
     v4 = "name fields only";
   }

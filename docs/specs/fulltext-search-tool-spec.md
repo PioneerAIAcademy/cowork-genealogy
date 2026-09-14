@@ -388,7 +388,9 @@ query shape.
    `q.fullName=Virginia A. Blackman` (an NLP-recognized NAME entity
    from the anchor's transcript) found the anchor;
    `q.fullName=executor` (a non-name word known to be in the
-   transcript) did not. Note: the verdict cannot distinguish "name
+   transcript) did not — T7 paginated the full result set (229
+   entries, all examined) so the negative is airtight, not a paging
+   artifact. Note: the verdict cannot distinguish "name
    fields only" from "applies NLP name recognition to the query
    input, rejecting non-name terms" — the simpler interpretation is
    assumed. Guarded by `tests/packaging/measured-figures.test.ts`

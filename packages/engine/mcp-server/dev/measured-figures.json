@@ -1917,12 +1917,13 @@
     "T7:q.fullName=executor (non-name word)": {
       "found": false,
       "total": 229,
+      "examined": 229,
       "error": null
     },
     "verdict:q.text searches transcript": "CONFIRMED",
     "verdict:q.recordPlace searches": "metadata only",
     "verdict:f.recordPlace searches": "metadata only",
     "verdict:q.fullName searches": "name fields only",
-    "measured_at": "2026-09-14T11:34:02.316Z"
+    "measured_at": "2026-09-14T12:23:18.691Z"
   }
 }
