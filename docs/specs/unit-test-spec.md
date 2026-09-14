@@ -571,6 +571,27 @@ that carry it). If the gate's holdout comparison is ever revived, it must select
 **automatically** from run-log history (stability across committed runs, shape spread) — a
 human picking 2-3 by hand does not give real regression coverage.
 
+**Reserved tag: `grade:trigger`.** Tags are freeform except this one,
+which changes how a **positive** test is graded. A positive test tagged
+`grade:trigger` is graded on **activation alone** — it passes once the skill under
+test fired (present in `skills_invoked`) and its validators passed; the judge
+dimensions still run and are recorded but are **diagnostic only** and do not gate
+(`grading_mode: "trigger"`, `dimensions_gate_outcome: false`). This is *trigger*
+grading, not the ordinary *dimensions* grading every other positive test gets, where
+a dimension scored 1 or 2 forces a partial/fail.
+
+Use it only when the test exercises the skill's **routing/handoff**, not the quality
+of the downstream work — the canonical case is an orchestrator whose delegated
+sub-skills are **stubbed**, so an outcome-dimension score would measure the stub, not
+the skill under test. Because of that, the tag **requires** a non-empty
+`execution.stub_skills`: the runnability gate refuses to load a `grade:trigger` test
+that stubs nothing (a tag applied without stubs would silence the judge over a real
+execution — a vacuous pass, the same failure mode `grade_on_invariant` guards against
+on the negative side). And because the judge call is diagnostic, a skipped/errored
+judge does **not** fail a trigger test — unlike an ordinary positive, which fails on
+an empty judge. It does **not** relax the activation requirement: a trigger test whose
+skill never fired still fails.
+
 ### 5.2 `input`
 
 | Field | Type | Required | Description |
@@ -1326,12 +1347,13 @@ def report_example_pattern(text_response):
 - `blocked_protected_writes` (list) — raw writes to protected project files denied by the hook.
 - `blocked_owned_section_writes` (list) — `research_append` ops the shipped ownership rule refused, denied by the hook, as `{"tool", "args", "section", "rule", "caller"}`. Empty is the healthy case; `test_no_out_of_lane_section_writes` gates on it.
 - `attempted_mcp_calls` (list) — MCP calls the model emitted that never reached a fixture match.
-- `text_response` (str) — every assistant text block concatenated, no separator: narration and closing reply in one string, not the final reply alone (`"".join(text_chunks)` in `skill_runner.run_skill`). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
+- `text_response` (str) — every assistant turn's text, narration and closing reply both included (not the final reply alone), joined with a `"\n\n"` boundary between turns (`"\n\n".join(text_chunks)` in `skill_runner.run_skill`, where each `text_chunks` entry is already one turn's own text blocks joined with no separator — they're one utterance). Empty when the run produced no assistant text. Use it for a **literal** property of the text — a phrase that must never appear, an identifier that must be named — and **not** to re-grade prose quality, which is a rubric dimension's job. A validator that tries to score how well the reply reads becomes a dimension nobody can tune. The case it exists for: a reply-shape rule a skill body states outright ("One sentence only", "do not restate the article content") is graded unevenly by a judge — on `search-wikipedia`'s run `v1_2026-08-22_10-20-08` the `Reply economy` dimension caught a narrating reply on one test and scored a byte-identical shape 3 on another, quoting a reply it had not been given.
 - `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).
-- `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort.
-- `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort.
+- `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort. On a negative test's routing short-circuit this is the real count of assistant turns streamed before the hook denied the routed skill's launch — not 0 — for the same reason a wall-clock timeout already records real streamed turns rather than 0.
+- `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort. See `no_result_message` below for the one case where this 0 is not a real count.
+- `no_result_message` (bool) — true when the run ended before a `ResultMessage` ever arrived even though it is not an abort (currently only the negative-test routing short-circuit). `num_turns` above has a real answer on this path (it is not read off the `ResultMessage` — see its own entry); `output_tokens` does not, since no partial token count exists before a `ResultMessage`. This field is what distinguishes that 0 from a skill that genuinely used no output tokens. Shape choice: the alternative considered was making `num_turns`/`output_tokens` nullable instead of adding this flag, and rejected — neither field has a null branch today, so nullable would be a schema change in both mirrors, would break every `int(...)` summation site, and would silently disable `test_universal.py`'s V8 guard (`num_turns != 0 or output_tokens != 0`, which becomes vacuously true against `None`). The sibling-flag shape keeps both fields real integers everywhere, so no consumer arithmetic and no existing validator needed to change.
 - `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
-- `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate).
+- `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate). On a routing short-circuit that also detects a genuine subscription-quota rejection, `aborted_reason`/`error` survive rather than being cleared with the rest of the short-circuit's abort state — see `skill_runner.run_skill`'s routing-short-circuit branch.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
 
@@ -1440,8 +1462,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
   "outcome": "string (pass | partial | fail | aborted | xfail | xpass)",
   "flaky": "boolean (true when per-run outcomes are not unanimous)",
-  "grading_mode": "string (dimensions | invariant | routing) — what decided this outcome; OPTIONAL, absent on run logs written before this field existed",
-  "dimensions_gate_outcome": "boolean — whether the judge dimensions could change this outcome; false on `invariant` and `routing` tests, where they are diagnostic only. OPTIONAL, same reason",
+  "grading_mode": "string (dimensions | invariant | routing | trigger) — what decided this outcome; OPTIONAL, absent on run logs written before this field existed",
+  "dimensions_gate_outcome": "boolean — whether the judge dimensions could change this outcome; false on `invariant`, `routing` and `trigger` tests, where they are diagnostic only. OPTIONAL, same reason",
   "outcome_summary": {
     "per_run_outcomes": ["string (one entry per run: pass | partial | fail | aborted)"],
     "aggregated_dimensions": [
@@ -1584,12 +1606,17 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`outcome_summary.aggregated_dimensions`** — modal dimension scores across runs (ties resolve toward the lower score). Used by dashboards; per-run dimension scores remain in `runs[].judge.dimensions` for human review.
 - **`grading_mode` / `dimensions_gate_outcome`** — what decided the outcome, and
   whether the judge dimensions had any part in it. `invariant` (a
-  `grade_on_invariant` negative, decided by its tag-gated validator alone) and
+  `grade_on_invariant` negative, decided by its tag-gated validator alone),
   `routing` (a negative with a non-empty `correct_skill`, decided by which skill
-  fired) both grade the dimensions **diagnostically**: a dimension scored 1
-  beside `outcome: "pass"` is designed, not a defect. `dimensions` covers
-  positive tests and out-of-scope negatives (`correct_skill: []`), where a 1
-  does force a fail.
+  fired) and `trigger` (a positive tagged `grade:trigger`, decided by activation
+  alone — see below) all grade the dimensions **diagnostically**: a dimension
+  scored 1 beside `outcome: "pass"` is designed, not a defect. `dimensions`
+  covers ordinary (untagged) positive tests and out-of-scope negatives
+  (`correct_skill: []`), where a 1 does force a fail. Because a `grade:trigger`
+  positive is decided on activation, its judge call is diagnostic exactly as a
+  negative's is, so a skipped/errored judge does **not** fail it (the trigger
+  verdict owns the outcome after the usual activation + `skills_invoked`
+  checks) — unlike an ordinary positive, which fails on an empty judge.
 
   Without these two fields the run log renders all four cases identically, and a
   reader has to know `grade_on_invariant` exists, find the test JSON, then read
