@@ -427,14 +427,6 @@
       "comment": "Correctly invoke search-records skill"
     },
     {
-      "test_id": "ut_person_evidence_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
       "test_id": "ut_person_evidence_025",
       "dimension_source": "base",
       "dimension_name": "Completeness",
@@ -777,6 +769,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the skill should have declined before reaching this point"
     }
   ]
 }
