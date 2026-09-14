@@ -715,7 +715,10 @@ async def _execute_single_run(
         activated=activated,
         skills_invoked=result.skills_invoked,
         judge_skipped=judge_result.skipped,
-        agents_spawned=agents_spawned,
+        # None on a routed run, the (possibly empty) spawn list on a direct one
+        # — the same shape `derive_activated` is fed above, and the thing
+        # `_compute_outcome` keys the arm on.
+        agents_spawned=agents_spawned if spec.is_direct else None,
     )
 
     skill_input, skill_cached, skill_cache_write, skill_output, per_model = (
@@ -1585,7 +1588,16 @@ def _compute_outcome(
         # construction and `agents_spawned` carries the same meaning. The rule is
         # otherwise identical — a positive test must show the thing under test
         # actually ran.
-        ran = agents_spawned if spec.is_direct else skills_invoked
+        #
+        # `agents_spawned is None` is the routed/direct discriminator, NOT
+        # `spec.is_direct`, and deliberately so: the caller already knows which
+        # arm it is and passes None for a routed run (`_execute_single_run`,
+        # matching how it feeds `derive_activated`). Reading `spec.is_direct`
+        # here instead would make every caller owe a real `TestSpec`, and the
+        # callers include unit tests that pass a `SimpleNamespace` stand-in —
+        # one such test arrived from main and broke on exactly that. An empty
+        # list is not None: a direct run that spawned nothing still fails.
+        ran = skills_invoked if agents_spawned is None else agents_spawned
         if spec.skill not in (ran or []):
             return "fail"
         if "grade:trigger" in (getattr(spec, "tags", None) or []):
