@@ -44,8 +44,8 @@ just a style preference:
   that dispute *against* Pennsylvania (`preferred_assertion_id: a_002`,
   Ireland). A worked example that contradicts the fixture it illustrates
   teaches exactly the failure this skill's "check `conflicts[]` before
-  encoding a place or date" rule (SKILL.md `:318-337`) exists to prevent. Both
-  now encode Ireland (SKILL.md `:275`, `:420`).
+  encoding a place or date" rule (SKILL.md `:314-333`) exists to prevent. Both
+  now encode Ireland (SKILL.md `:264`, `:278`).
 - **The general risk this class of bug represents.** A hand-composed URL with
   a wrong or dead parameter name doesn't error — the site accepts it,
   ignores what it doesn't recognize, and returns an unscoped or empty result
@@ -72,11 +72,11 @@ Facts still verifiable in the current tree, cited at their current location:
 | Fact | Source |
 |------|--------|
 | `conflicts[]` c_001 rejects Pennsylvania in favor of Ireland | `eval/fixtures/scenarios/mid-research-flynn/research.json` |
-| The "check `conflicts[]` before encoding" rule | `SKILL.md:318-337` |
-| The two worked examples now encoding Ireland | `SKILL.md:275`, `:420` |
+| The "check `conflicts[]` before encoding" rule | `SKILL.md:314-333` |
+| The two worked examples now encoding Ireland | `SKILL.md:264`, `:278` |
 | `digital_newspaper_archive` is an open bucket identified by `url_generated`, not a fixed per-state URL | `docs/specs/schemas/enums.schema.json:177-178`, `docs/specs/research-schema-spec.md:452` |
 | `convert_calendar` — the architectural precedent for a pure, no-network, no-project-files tool | `packages/engine/mcp-server/src/tools/convert-calendar.ts` |
-| `research-log-append.ts` already derives an MCP schema enum from `VALIDATOR_ENUMS` rather than hand-typing it — the pattern this tool's `SUPPORTED_SITES` follows | `packages/engine/mcp-server/src/tools/research-log-append.ts`, `EXTERNAL_SITE_VALUES` |
+| `research-log-append.ts` derives its MCP schema enum from `VALIDATOR_ENUMS`; this tool deliberately does **not** (§8) — `SUPPORTED_SITES` is the keys of its own `SITE_BASE_URL`, since the shared enum also names `familysearch_web`, which the tool has no template for | `packages/engine/mcp-server/src/tools/research-log-append.ts`, `EXTERNAL_SITE_VALUES` |
 
 Facts about SKILL.md prose that **this same PR deletes** — cited without a
 line number, since one would be wrong the moment the PR merges and the file
@@ -155,6 +155,7 @@ build_external_search_url({
 | { ok: false, reason: "unsupported_site", errors: string[], supportedSites: string[] }
 | { ok: false, reason: "base_url_required", errors: string[] }
 | { ok: false, reason: "invalid_base_url", errors: string[] }
+| { ok: false, reason: "outside_coverage", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
 ```
 
@@ -169,11 +170,28 @@ build_external_search_url({
   supplied but ignored"`) rather than silently vanishing. Without this, a
   caller could believe a death event scoped a search that actually ran
   whole-corpus and undated, with nothing in the response saying so.
-- **`american_ancestors` always carries a note** that a subscription may
-  still be required to view full results, even though `access` reports
-  `"free"` — the search itself has no paywall, but the 3-value `access` enum
-  alone can't express "free to search, may gate the results," so the nuance
-  travels as a note instead.
+- **A recognized attribute whose value was rejected** (a string field given a
+  number, a year outside `[1000, 9999]`, a negative offset) is named too —
+  `"'usState' was supplied but is not a usable string for chronicling_america
+  — ignored"` — so a wrong-typed value cannot reach the same silent
+  `undefined` as an absent one.
+- **A supplied attribute shadowed by a site's single field** is named: on
+  `antenati` both `birthYear` and `deathYear` feed one `anno`, and the losing
+  one is reported rather than dropped. Same for `findmypast`'s
+  `keywordsplace` and the two place fallbacks on `archives_gov` and
+  `american_ancestors`. A FindMyPast tuning knob supplied without its slot
+  (`birthYearOffset` with no `birthYear`) is noted the same way.
+- **A key this call replaced in a curated `baseUrl`** is named (§3.2).
+- **Standing per-site notes** ride every call for that site, so a fact the
+  URL cannot express is relayed from the tool rather than remembered from
+  prose: `american_ancestors` (the search is free; viewing full results may
+  need a subscription — what the 3-value `access` enum alone cannot say),
+  `findagrave` and `billiongraves` (user-contributed — a lead, not proof;
+  photographed evidence outweighs contributor-entered text),
+  `chronicling_america` (page coverage runs 1798–1963, title-by-title and
+  complete for no state, so a nil never means no newspaper covered the
+  event), and `digital_newspaper_archive` (the URL carries no date filter —
+  the user sets the range in the site's own UI).
 
 `access` classifies the target site's own barrier to entry — `"free"` (no
 barrier), `"free_bot_protected"` (free, but bot protection blocks an
@@ -216,13 +234,30 @@ review, all covered by a test in `tests/tools/build-external-search-url.test.ts`
   parameter (`?flag`) into `flag=` — both are real changes to `baseUrl`'s own
   bytes that the spec's "does not otherwise alter" guarantee, below, forbids.
 
-Beyond that stripping, the tool does **not** otherwise alter `baseUrl`'s
-existing query string: a curated link's own collection-scoping parameters
-(if any) are the caller's evidence, not the tool's to second-guess. **Each
-site's fixed parameters (§3.4) are applied whether or not `baseUrl` is
-given** — a first draft applied them only on the site-wide branch, which
-silently dropped Chronicling America's required `dl=page` and MyHeritage's
-`action=query` on exactly the curated-link path SKILL.md's Case A uses first.
+Beyond that stripping, one thing changes in `baseUrl`'s existing query, and
+it is reported in `notes`: **a key this call sets replaces the same key
+already present** (exact, case-sensitive match) rather than duplicating it —
+a duplicate's outcome is parser-dependent, and a curated link's stale
+`dl=title` beside the required `dl=page` would otherwise silently coexist.
+Only keys this call actually sets count: every site's table declares every
+key it could emit, and a draft that used the declared keys deleted a curated
+`?birthplace=Boston` the call never supplied. Every other token is preserved
+byte-for-byte. **Each site's fixed parameters (§3.4) are applied whether or
+not `baseUrl` is given** — a first draft applied them only on the site-wide
+branch, which silently dropped Chronicling America's required `dl=page` and
+MyHeritage's `action=query` on exactly the curated-link path SKILL.md's Case
+A uses first.
+
+`baseUrl` must also belong to the requested site, compared by domain family
+(`app.americanancestors.org` and `www.americanancestors.org` agree, and the
+UK variants agree with their sites): a MyHeritage link passed with `site:
+"ancestry"` would carry Ancestry's parameter names to a host that ignores
+them, and is `invalid_base_url`. A retired host is refused the same way —
+`chroniclingamerica.loc.gov`'s legacy search form still loads but ignores
+every parameter this tool appends, so the search would run unscoped and its
+nil be logged as evidence of absence. `digital_newspaper_archive`, which has
+no fixed host, is exempt. Both checks read only the call's own arguments; the
+tool still fetches nothing (§9).
 
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
@@ -234,10 +269,14 @@ California Digital Newspaper Collection, …), and "which one is identified by
 (`research-schema-spec.md:452`). A single hard-coded URL would be wrong for
 every place but the one it names. So for this site, `baseUrl` — the specific
 archive's own search endpoint, from `locality-guide` output or a curated
-link — is **required**, and the tool appends `q=<given>[+<surname>][+<keywords>]`
-(space-joined, form-encoded as `+` — see §3.6). Omitting `baseUrl` for this
-site returns `{ ok: false, reason: "base_url_required" }` rather than
-fabricating a site-wide URL.
+link — is **required** (`{ ok: false, reason: "base_url_required" }` without
+it, rather than a fabricated site-wide URL), and the site's table emits only
+`q` from `givenName`, `surname` and `keywords` (space-joined, form-encoded as
+`+` — see §3.6; any one of the three suffices). No facet or date parameter is
+ever invented for these archives, so every call carries the standing note
+that the date range must be set in the site's own UI (§3.1). Otherwise the
+site takes the same path as every other — `RECOGNIZED_KEYS`, the attribute
+notes, `no_attributes`.
 
 ### 3.4 Fixed parameters
 
@@ -256,15 +295,18 @@ every call regardless of `baseUrl` (§3.2):
 
 `givenName`/`surname` alone cannot express what the original prose could —
 a record-type hint ("obituary"), a nickname, or an exact phrase. `keywords`
-restores that for the three sites whose site-wide search is a single
-free-text field rather than structured name parameters: `newspapers`
-(`query`), `chronicling_america` (`q`), `digital_newspaper_archive` (`q`).
+restores that for the seven sites whose search carries a free-text field:
+`newspapers` (`query`), `chronicling_america` (`q`),
+`digital_newspaper_archive` (`q`), `archives_gov` (`q`, the record-type slot
+beside `personOrOrg`), `archive_org` (`query`), `american_ancestors`
+(`Keywords`) and `italian_genealogy` (`keywords`).
 It is appended after the name, space-joined like the name itself. A caller
 wanting an exact-phrase match includes its own quote marks in `keywords`
 (e.g. `'"Patrick Flynn"'`); the tool does not add or strip quoting, only
 templates and encodes whatever string it is given. `keywords` is not a
-recognized attribute for the four structured-name sites (`ancestry`,
-`myheritage`, `findmypast`, `findagrave`) — supplying it there produces the
+recognized attribute for the eight structured-field sites (`ancestry`,
+`myheritage`, `findmypast`, `findagrave`, `billiongraves`, `digitalarkivet`,
+`antenati`, `library_archives_canada`) — supplying it there produces the
 "not used by `<site>`" note (§3.1) rather than being silently absorbed
 somewhere unexpected.
 
@@ -286,16 +328,27 @@ escaping either way.
 
 ### 3.7 Numbers and empty strings
 
-Every numeric attribute must be a finite integer in `[0, 9999]` — a
-genealogy year is always a small positive integer, and this single check
-rejects `NaN`, `Infinity`, scientific-notation nonsense (`1e21`), and
-fractional years (`1845.7`) in one place rather than letting any of them
-reach the URL as a literal string. An empty string (`""`) is treated
+A year attribute must be an integer in `[1000, 9999]` — the shared
+`isFourDigitYear` bound the FamilySearch search tools already apply, so one
+rule serves both rather than two that drift; a year below 1000 is rejected
+with a note. FindMyPast's two tuning knobs (`birthYearOffset`,
+`placeProximityMiles`) are integers in `[0, 1000]`, and each applies only when
+its slot (`birthYear`, a place) is set — a knob without its slot is not a
+search term and does not count toward `no_attributes`. These checks reject
+`NaN`, `Infinity`, scientific-notation nonsense (`1e21`) and fractional years
+(`1845.7`) in one place rather than letting any of them reach the URL as a
+literal string. A numeric attribute sent as a numeric string (`"1845"`) is
+coerced to the number first — the same stringified-argument slip
+`research_log_append` coerces — while a number in a string attribute is
+rejected with a note. `attributes` itself is JSON-coerced when a model sends
+the whole object as a string; a value that is still not an object yields
+`no_attributes` with an error naming the shape. A string attribute is used
+trimmed, so padding never reaches the URL. An empty string (`""`) is treated
 identically to an absent attribute throughout — `attributes: { birthPlace:
 "" }` must not produce `birthplace=`, and must not defeat a documented
 fallback: `antenati`'s `localita`/`anno` fall back from birth to death
 place/year when the birth value is empty, exactly as when it's absent
-entirely, because the fallback is built on `str()`/`num()`'s own
+entirely, because the fallback is built on `str()`/`numYear()`'s own
 empty-as-absent normalization rather than a bare `??` (which alone would
 treat `""` as present and never fall through).
 
@@ -357,13 +410,13 @@ here — this section documents the same mapping the implementation embeds.
 
 | Site | Base URL (Case B) | Fixed params | Parameters |
 |------|--------------------|--------------|------------|
-| `ancestry` | `https://www.ancestry.com/search/` | — | `name` (`givenName`_`surname`), `birth` (`birthYear`), `birthplace` (`birthPlace`), `death` (`deathYear`), `deathplace` (`deathPlace`), `marriage` (`marriageYear`), `residence` (`residenceYear`_`residencePlace`), `father`/`mother`/`spouse` (`{given}_{surname}` per relative) |
+| `ancestry` | `https://www.ancestry.com/search/` | — | `name` (`givenName`_`surname` — positional: an absent half keeps its underscore, so a surname-only search is `name=_Flynn`), `birth` (`birthYear`), `birthplace` (`birthPlace`), `death` (`deathYear`), `deathplace` (`deathPlace`), `marriage` (`marriageYear`), `residence` (`residenceYear`_`residencePlace`, positional), `father`/`mother`/`spouse` (`{given}_{surname}` per relative, positional) |
 | `myheritage` | `https://www.myheritage.com/research` | `action=query` | `first`, `last`, `birth_year`, `birth_place`, `marriage_year`, `marriage_place`, `death_year`, `death_place`, `father_first`, `father_last`, `mother_first`, `mother_last` |
-| `findmypast` | `https://www.findmypast.com/search/results` | — | `firstname`, `lastname`, `yearofbirth` (`birthYear`), `yearofbirth_offset` (`birthYearOffset`), `keywordsplace` (`birthPlace`), `keywordsplace_proximity` (`placeProximityMiles`), `eventyear` (`eventYear`), `fatherfirstname`, `motherfirstname` — ported exactly: the template names only `fatherfirstname`/`motherfirstname`, no `*lastname` counterpart |
+| `findmypast` | `https://www.findmypast.com/search/results` | — | `firstname`, `lastname`, `yearofbirth` (`birthYear`), `yearofbirth_offset` (`birthYearOffset`, only with `yearofbirth`), `keywordsplace` (`birthPlace`, falling back to `marriagePlace`, `deathPlace`, `residencePlace` — the site's one place field, so a marriage or death search scoped by `eventyear` can still name its place), `keywordsplace_proximity` (`placeProximityMiles`, only with `keywordsplace`), `eventyear` (`eventYear`), `fatherfirstname`, `motherfirstname` — ported exactly: the template names only `fatherfirstname`/`motherfirstname`, no `*lastname` counterpart |
 | `findagrave` | `https://www.findagrave.com/memorial/search` | — | `firstname`, `lastname`, `birthyear` (`birthYear`), `deathyear` (`deathYear`). No place parameter — **removed by live verification**: `location` is a free-text autocomplete box whose real filter keys off a hidden `locationId` resolved from a dropdown, not the text itself; four different `location=` values (absent, a real place, a nonsense string, and the exact address copied from a matching result) all returned byte-identical result sets |
 | `newspapers` | `https://www.newspapers.com/search/` | — | `query` (`givenName`+`surname`+`keywords`, space-joined), `dr_year` (`searchYear` — a year or a range, passed through unparsed), `dr_place` (`searchPlace`) |
 | `chronicling_america` | `https://www.loc.gov/collections/chronicling-america/` | `dl=page` (required — without it the search returns newspaper titles, not digitised pages) | `q` (`givenName`+`surname`+`keywords`, space-joined — **correction #2**: the site-wide template's `qs` is dead, `q` is what filters, §9) , `dates` (`searchStartYear`/`searchEndYear` → **`YYYY/YYYY`, correction #1** — not `start_date`/`end_date`), `location_state` (`usState`, lowercased) |
-| `digital_newspaper_archive` | none — `baseUrl` required (§3.3) | — | `q` (`givenName`+`surname`+`keywords`, space-joined) |
+| `digital_newspaper_archive` | none — `baseUrl` required (§3.3) | — | `q` (`givenName`+`surname`+`keywords`, space-joined; any one suffices) |
 | `archives_gov` | `https://catalog.archives.gov/search` | `dataSource=authority`, `availableOnline=false` (scopes to person/org name-authority records; without them the same `personOrOrg` field is read by the archival-description search instead) | `personOrOrg` (`givenName`+`surname`, space-joined), `q` (`keywords` only — free text, not the name), `geographicReference` (`birthPlace`, falling back to `deathPlace`) |
 | `archive_org` | `https://archive.org/search` | — | `query` (`givenName`+`surname`+`keywords`, space-joined). No structured date/place fields — Dublin-Core metadata (creator/date/subject/title), not a vital-records schema |
 | `billiongraves` | `https://billiongraves.com/search/results` | — | `GivenNames`, `FamilyName`, `EventBirthYear` (`birthYear`), `EventDeathYear` (`deathYear`). No place field exists on this site's form |
@@ -422,6 +475,15 @@ generally, not verified per archive:
 | `site` outside the supported values | `{ ok: false, reason: "unsupported_site", supportedSites: [...] }` |
 | `site: "digital_newspaper_archive"` with no `baseUrl` | `{ ok: false, reason: "base_url_required" }` |
 | `baseUrl` is supplied but is not an absolute `http(s)` URL (a plain label, a `javascript:`/`data:` value, a relative path) | `{ ok: false, reason: "invalid_base_url", errors: [...] }` — a caller error, not a URL the tool can build onto. Checked on the trimmed value, so leading/trailing whitespace neither fails the check nor reaches the built URL |
+| `baseUrl` is not a string (an array, a number) | `{ ok: false, reason: "invalid_base_url" }` naming the type — never a thrown `TypeError` |
+| `baseUrl`'s host does not belong to `site` (a MyHeritage link with `site: "ancestry"`), or is a host the site retired (`chroniclingamerica.loc.gov`) | `{ ok: false, reason: "invalid_base_url" }` naming both hosts (§3.2) |
+| `chronicling_america` with `searchStartYear` after `searchEndYear` | no `dates` window; `notes` says the start is after the end |
+| `chronicling_america` window entirely outside 1798–1963 | `{ ok: false, reason: "outside_coverage" }` — a URL for it could only log a nil as evidence of absence; a window that only partly overlaps succeeds, with a note |
+| `findmypast` call carrying only a tuning knob (`birthYearOffset` / `placeProximityMiles`) | `{ ok: false, reason: "no_attributes" }` — a knob without its slot searches nothing |
+| `attributes` is a JSON string | coerced to the object first; if the result is still not an object, `no_attributes` with an error naming the type |
+| every supplied attribute is rejected by its validator (`{ birthYear: 99999 }`) | `no_attributes`, with each rejection note carried in `errors` so the caller learns why |
+| two attributes compete for a site's single field (`antenati`'s `anno` from `birthYear`/`deathYear`; `findmypast`'s `keywordsplace`) | the first valid one is used; `notes` names each one shadowed |
+| a key this call sets is already in `baseUrl`'s query | replaced, not duplicated; `notes` names the key (§3.2) |
 | `attributes` has no field the target site uses at all (e.g. `site: "ancestry"` with only `eventYear` set) | `{ ok: false, reason: "no_attributes", errors: [...] }` — an empty search is not a URL worth presenting |
 | `attributes` has fields but every one is an empty string | same as above — empty string never counts as a supplied value (§3.7) |
 | `baseUrl` carries an existing `sid` parameter (any case) | stripped before appending; not an error |
@@ -440,17 +502,15 @@ generally, not verified per archive:
 
 - **Writes nothing.** Like `convert_calendar`, output-only — no
   `research.json` or `tree.gedcomx.json` access. The skill still owns
-  writing the `external_site` log entry (SKILL.md `:382-395`); the tool
+  writing the `external_site` log entry (SKILL.md `:378-392`); the tool
   returns only the URL string.
 - **Does not decide which event a search targets, or resolve `conflicts[]`.**
-  Those are the skill's judgments (SKILL.md `:318-337`) — the tool receives
+  Those are the skill's judgments (SKILL.md `:314-333`) — the tool receives
   already-decided attribute values and templates them.
-- **Does not fetch or validate that the URL resolves, or that `site` and
-  `baseUrl` agree.** Pure string construction; no network (§9). A caller
-  could in principle pass `site: "myheritage"` with an Ancestry `baseUrl` and
-  get a URL mixing both sites' conventions — matching the curated link to the
-  requested site is left to the skill's own judgment (SKILL.md's Case A
-  matching step), not enforced here as a code check.
+- **Does not fetch or validate that the URL resolves.** Pure string
+  construction; no network (§9). It does check that `site` and `baseUrl`
+  agree by host family, and refuses a retired host (§3.2) — both decidable
+  from the call's own arguments, so neither is left to the skill's judgment.
 - **A future addition to the launch-scope list follows the same path.** The
   per-site table in §4 is additive, so a new site (or a re-check of one of
   the six in §3.10) extends it without touching this spec's existing rows.

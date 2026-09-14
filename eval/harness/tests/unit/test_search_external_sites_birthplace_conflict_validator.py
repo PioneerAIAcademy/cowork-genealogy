@@ -35,30 +35,22 @@ review, round 2). Both helpers convert an unexpected `Skipped` into an
 explicit `pytest.fail(...)`, which cannot be mistaken for a pass.
 """
 
-import importlib.util
+import copy
 import json
 import sys
 from pathlib import Path
 
 import pytest
 
+from harness.validator_runner import _import_validator_module
+
 _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
-
-def _load_validator_unrewritten():
-    path = _VALIDATORS_DIR / "test_search_external_sites.py"
-    spec = importlib.util.spec_from_file_location(
-        "_ses_validator_unrewritten", path
-    )
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-_VALIDATOR = _load_validator_unrewritten()
+_VALIDATOR = _import_validator_module(
+    _VALIDATORS_DIR / "test_search_external_sites.py", "_ses_validator_unrewritten"
+)
 _check = _VALIDATOR.test_resolved_birthplace_conflict_rejected_value_not_encoded
 
 _RESEARCH = json.loads(
@@ -351,3 +343,58 @@ def test_hand_composed_check_does_not_crash_on_a_tool_call_with_no_tool_name():
     })
     calls = [{"tool": None, "args": {}}] + _tool_calls("Ireland")
     _HAND_COMPOSED_CHECK(before, after, calls, {"type": "positive"})  # must not raise
+
+
+def test_hand_composed_check_skips_a_user_reported_nil_with_no_tool_call():
+    """SKILL.md step 6: a nil the user reports without a capture re-logs the
+    step-4 URL as `negative` / `capture_received: false`; rubric.md says the
+    tool is not expected on that turn, so this check has nothing to grade."""
+    before, after = _states({
+        "id": "log_999", "tool": "external_site", "outcome": "negative",
+        "external_site": {"site": "newspapers", "url_generated": "https://www.newspapers.com/search/?query=Flynn", "capture_received": False},
+    })
+    with pytest.raises(pytest.skip.Exception):
+        _HAND_COMPOSED_CHECK(before, after, [], {"type": "positive"})
+
+
+# --- second review round: the conflict validator's own edge cases ------
+
+def test_conflict_check_does_not_crash_on_a_tool_call_with_no_tool_name():
+    """The same `{"tool": None}` partial capture the hand-composed check
+    guards against; the real call beside it must still be graded normally."""
+    calls = [{"tool": None, "args": {}}] + _tool_calls("Ireland")
+    _expect_passes(calls, {"type": "positive"})
+
+
+def test_passes_a_correct_death_place_on_a_site_with_no_birthplace_fallback():
+    """Pennsylvania is c_001's REJECTED birthplace but the fixture's accepted
+    death place. On findagrave nothing falls back to deathPlace, so a death
+    search naming it is correct and must not read as the rejected birthplace."""
+    _expect_passes(_tool_calls(site="findagrave", deathPlace="Pennsylvania"), {"type": "positive"})
+
+
+def test_passes_death_place_when_birth_place_fills_the_fallback_slot():
+    """On antenati deathPlace reaches `localita` only when birthPlace is absent."""
+    _expect_passes(_tool_calls("Ireland", site="antenati", deathPlace="Pennsylvania"), {"type": "positive"})
+
+
+def test_fires_on_a_finer_unit_prepended_to_the_rejected_place():
+    """"Philadelphia, Pennsylvania" encodes the rejected "Pennsylvania" at a
+    finer grain — the converse of a resolver appending broader context."""
+    _expect_fires(
+        _tool_calls("Philadelphia, Pennsylvania"),
+        {"type": "positive"},
+        "attributes.birthPlace='Philadelphia, Pennsylvania'",
+    )
+
+
+def test_a_case_variant_of_the_preferred_value_is_not_a_rejected_value():
+    """A competing assertion reading "IRELAND" agrees with the preferred
+    "Ireland" (a transcription's casing); it must not become a rejected value
+    that then casefold-matches the correctly encoded "Ireland"."""
+    research = copy.deepcopy(_RESEARCH)
+    for assertion in research["assertions"]:
+        if assertion["id"] == "a_009":
+            assertion["place"] = "IRELAND"
+    states = ({"research_json": research}, {"research_json": research})
+    _check(*states, _tool_calls("Ireland"), {"type": "positive"})  # must not raise

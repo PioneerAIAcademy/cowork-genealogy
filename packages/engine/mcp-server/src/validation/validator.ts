@@ -32,6 +32,7 @@ import {
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { isNonNegativeInteger } from "../utils/search-helpers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -945,7 +946,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // `plan_item_id` above: match the schema, for every writer of `log[]`.
     if ("results_examined" in entry) {
       const n = entry.results_examined;
-      if (typeof n !== "number" || !Number.isInteger(n) || n < 0) {
+      if (!isNonNegativeInteger(n)) {
         addError(report, lp, `results_examined must be a non-negative integer; got ${JSON.stringify(n)}`);
       }
     }

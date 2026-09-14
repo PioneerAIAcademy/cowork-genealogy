@@ -48,10 +48,11 @@ instead of rebuilding it.**
 
 ## B. Tools
 
-8. Only five MCP tools may ever be called: `place_search`,
-   `collections_search`, `external_links_search`, `research_log_append`,
-   `research_append`. Anything else violates `allowed-tools:`.
-9. Must not fetch, load, scrape, or otherwise open any of the five supported
+8. Only six MCP tools may ever be called: `place_search`,
+   `collections_search`, `external_links_search`, `build_external_search_url`,
+   `research_log_append`, `research_append`. Anything else violates
+   `allowed-tools:`.
+9. Must not fetch, load, scrape, or otherwise open any of the fifteen supported
    sites. The sites have no public API and prohibit automated access; the
    user's browser is the only access path.
 10. Must not call `validate_research_schema` — `research_log_append` and

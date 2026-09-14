@@ -31,7 +31,7 @@ import {
 } from "../utils/project-io.js";
 import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import { isHttpUrl } from "../utils/search-helpers.js";
+import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -248,12 +248,14 @@ async function applyLogAppendOp(
   if (externalSite && !EXTERNAL_SITE_VALUES.has(externalSite.site)) {
     throw new LogAppendError(`externalSite.site '${externalSite.site}' is not a valid site`);
   }
-  // `urlGenerated` is the string the skill presents as the clickable link
-  // and persists verbatim into `research.json` — the same caller-composed,
-  // URL-shaped input `build_external_search_url` rejects as `invalid_base_url`
-  // when it is a plain label or a `javascript:`/`data:` value, and until now
-  // the only such field with no check at all on the way to disk.
-  if (externalSite && externalSite.urlGenerated != null && !isHttpUrl(externalSite.urlGenerated)) {
+  // `urlGenerated` is the string the skill presents as the clickable link and
+  // persists into `research.json` — the same caller-composed, URL-shaped
+  // input `build_external_search_url` rejects as `invalid_base_url`. Trimmed
+  // before both the check and the write: `new URL()` strips padding itself,
+  // so a padded value would pass here and persist with its spaces.
+  const urlGenerated =
+    typeof externalSite?.urlGenerated === "string" ? externalSite.urlGenerated.trim() : externalSite?.urlGenerated;
+  if (externalSite && urlGenerated != null && !isHttpUrl(String(urlGenerated))) {
     throw new LogAppendError(
       `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
     );
@@ -261,25 +263,16 @@ async function applyLogAppendOp(
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
   }
-  // Coerced the same way `resultsAvailable` is below: a model that
-  // stringifies numeric args (`resultsExamined: "5"`) otherwise hard-fails
-  // the integer check under it for a value whose intent is unambiguous.
-  // `coerceJsonArg` leaves a genuinely non-numeric string untouched, so
-  // `"five"` still reaches that check and is rejected with its own text.
+  // Coerced the same way `resultsAvailable` is below (a model that
+  // stringifies numeric args sends `"5"`); a genuinely non-numeric string is
+  // left as-is and rejected by the check under it. That check runs before the
+  // `external_links_search` gate because the gate's `> 0` comparison is
+  // `false` for both `NaN` and a negative number. `validator.ts` enforces the
+  // same bound on the persisted `results_examined` for every writer of
+  // `log[]`; this is the fail-fast under the caller's own parameter name, the
+  // same split `planItemId` above uses.
   const resultsExamined = coerceJsonArg(op.resultsExamined);
-  // `resultsExamined` had no validation of its own anywhere in this tool —
-  // `NaN`, a negative number, or a fraction all reached `research.json`
-  // unrejected (`NaN` specifically persists as `null`, since
-  // `JSON.stringify(NaN) === "null"`, which the schema validator then
-  // rejects downstream with no connection back to the actual bad input).
-  // Rejected here, before the check below, because that check's own
-  // `resultsExamined > 0` comparison is `false` for both `NaN` and a
-  // negative number — silently passing validation instead of catching the
-  // bad value it was built to catch. `validator.ts` enforces the same bound
-  // on the persisted `results_examined` for every writer of `log[]`; this is
-  // the fail-fast under the caller's own parameter name, the same split
-  // `planItemId` above already uses.
-  if (typeof resultsExamined !== "number" || !Number.isInteger(resultsExamined) || resultsExamined < 0) {
+  if (!isNonNegativeInteger(resultsExamined)) {
     throw new LogAppendError(
       `resultsExamined must be a non-negative integer; got ${JSON.stringify(op.resultsExamined)}`,
     );
@@ -319,7 +312,7 @@ async function applyLogAppendOp(
     external_site: externalSite
       ? {
           site: externalSite.site,
-          url_generated: externalSite.urlGenerated,
+          url_generated: urlGenerated,
           capture_received: externalSite.captureReceived,
           ...(externalSite.captureFilename !== undefined
             ? { capture_filename: externalSite.captureFilename }

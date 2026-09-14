@@ -28,6 +28,15 @@ export function isHttpUrl(u: string): boolean {
 }
 
 /**
+ * True for a non-negative integer no greater than `max` (unbounded by default).
+ * The one predicate behind `results_examined` (writer and validator alike) and
+ * `build_external_search_url`'s bounded tuning knobs, so the rule cannot drift.
+ */
+export function isNonNegativeInteger(n: unknown, max = Number.POSITIVE_INFINITY): n is number {
+  return typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= max;
+}
+
+/**
  * A display date range from a `startYear`/`endYear` pair.
  *
  * One format for every search tool that shows a span, so two tools cannot

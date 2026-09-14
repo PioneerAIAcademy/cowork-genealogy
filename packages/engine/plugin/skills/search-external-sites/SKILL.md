@@ -35,11 +35,8 @@ the user clicks it in their own browser, captures the page as a PDF, and
 uploads it back. The agent supplies the genealogical expertise; the user's
 browser supplies the access.
 
-`build_external_search_url`'s response names each site's access requirement
-in its `access` field — read it from there, every time, rather than from
-memory or a hand-maintained list: a site absent from a written-out list is a
-site the model improvises about, which is how an alpha tester was told
-FindAGrave needs a subscription when it is free.
+Read each site's access requirement from `build_external_search_url`'s
+`access` field, every time — never from memory or a list.
 
 - **`"subscription"`** — no public API, automated access prohibited, and the
   user needs their own access (see the subscription table below).
@@ -142,18 +139,14 @@ account. Use it as a tie-breaker, never as a gate.
 | FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
 | Newspapers.com | `Newspapers.com` |
 | any of the above | `FamilySearch-Partner`, `LibraryAccess` — may cover it |
-| Chronicling America | free — no subscription, and no access route needed |
-| Utah Digital Newspapers and other state/regional archives | free — no subscription, and no access route needed |
-| National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, Italian Genealogy forum | free — no subscription, and no access route needed |
-| American Ancestors (NEHGS) | free to search; a subscription may be needed to view full results |
 
 `FamilySearch-Partner` and `LibraryAccess` are access *routes*, not
 sites: which sites each unlocks varies by institution and changes. Treat
 neither as access to a named site, and neither as `none`. Generate the
 URL and note the route instead of flagging a paywall the researcher may
 not hit — "a family history centre often carries [SITE]; worth checking
-before you pay." The two free archives are outside all of this: they need
-no subscription and no route, so never raise access for them at all.
+before you pay." A site the tool reports as `free` or `free_bot_protected`
+needs no subscription and no route — never raise access for it.
 
 - If a plan item is repository-agnostic, prefer a site the researcher
   has access to — that search is immediately actionable.
@@ -170,32 +163,6 @@ no subscription and no route, so never raise access for them at all.
 proof), a digitized original (carries evidentiary weight), or
 user-contributed content (a lead only)? Read the collection description —
 titles mislead about scope and completeness.
-
-## Supported sites
-
-Which parameters each site accepts is `build_external_search_url`'s own table
-(step 3 below), not repeated here — a second copy would drift from the tool
-that actually builds the URL. Same for access: each site's `access` value
-(free / free-but-bot-protected / subscription) comes from that same tool
-call, not from this table.
-
-| Site | Notes |
-|------|-------|
-| Ancestry.com | Largest indexed collection |
-| MyHeritage.com | Independent indexing |
-| FindMyPast.com | Strong UK/Ireland coverage |
-| FindAGrave.com | Cemetery records. User-contributed — treat as compiled source |
-| Newspapers.com | Historical newspapers. Ancestry-owned |
-| Chronicling America | US digitised newspaper pages 1798–1963, Library of Congress |
-| State/regional digital newspaper archives | e.g. Utah Digital Newspapers, California Digital Newspaper Collection — the specific archive's URL is not fixed; pass it as `baseUrl` (step 3) |
-| National Archives Catalog (archives.gov) | US federal records, name-authority search |
-| Internet Archive (archive.org) | Keyword only — no structured name/date fields |
-| BillionGraves | Cemetery records, GPS-tagged. User-contributed — treat as compiled source |
-| Digitalarkivet | Norwegian National Archives, person search |
-| Portale Antenati | Italian civil/parish records. One year field for whichever record matched (not separate birth/death years) |
-| Library and Archives Canada | Census search only — no death data (census records the living) |
-| American Ancestors (NEHGS) | Keyword only — the site's own name fields do not bind via URL |
-| Italian Genealogy forum | A discussion forum, not a records database — keyword search over posts only |
 
 Ancestry and FindMyPast also have UK-locale domains (ancestry.co.uk,
 findmypast.co.uk) — pass `locale: "uk"` to `build_external_search_url` for
@@ -318,24 +285,23 @@ build_external_search_url({
 |--------|---------------------|-------|
 | `ancestry` | `givenName`/`surname`, `birthYear`/`birthPlace`, `deathYear`/`deathPlace`, `marriageYear`, `residenceYear`/`residencePlace`, `father*`/`mother*`/`spouse*` | |
 | `myheritage` | `givenName`/`surname`, `birthYear`/`birthPlace`, `marriageYear`/`marriagePlace`, `deathYear`/`deathPlace`, `father*`/`mother*` | No residence field |
-| `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace`/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) |
+| `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace` (or `marriagePlace`/`deathPlace`/`residencePlace`)/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) — pass that event's place too; the site has one place field, filled birth-first |
 | `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear` | No place parameter |
 | `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` also accepts a hyphenated range (`"1880-1905"`) when the exact year isn't known. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
-| `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | Free. Digitised page coverage runs **1798–1963**, title-by-title and complete for no state — a nil result never means no newspaper covered the event. Target date outside 1798–1963: do not call this site. Say the page corpus does not reach that period, and route to the state/regional archive for the place (coverage differs) or to a paid site instead |
-| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | Free. **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
-| `archives_gov` | `givenName`/`surname`, `keywords`, `birthPlace`/`deathPlace` | Free. National Archives Catalog — `keywords` is free text (a record type), not the name |
-| `archive_org` | `givenName`/`surname`/`keywords` | Free. Internet Archive — no structured name/date/place fields; the name is only a free-text term here |
-| `billiongraves` | `givenName`/`surname`, `birthYear`/`deathYear` | Free. Cemetery records, GPS-tagged |
-| `digitalarkivet` | `givenName`/`surname`, `birthYear`, `birthPlace`/`residencePlace` | Free. Norwegian National Archives — `residencePlace` maps to the site's own domicile field |
-| `antenati` | `givenName`/`surname`, `birthYear`/`deathYear`, `birthPlace`/`deathPlace` | Free. Italian civil/parish records — one year/place field for whichever record type matched, not separate birth/death fields; `birthYear`/`birthPlace` preferred when both are known |
-| `library_archives_canada` | `givenName`/`surname`, `birthYear` | Free. Census search only — no death data (census records the living) |
-| `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Free to search; a subscription may be needed to view full results. Keyword-only — the site's own structured name fields do not bind |
-| `italian_genealogy` | `givenName`/`surname`/`keywords` | Free. A discussion forum, not a records database — keyword search over posts only |
+| `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | Pass the plan item's whole `date_range` as the window, never one year of it. On `outside_coverage`, say the page corpus (1798–1963) does not reach that period and route to the state/regional archive for the place or a paid site |
+| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
+| `archives_gov` | `givenName`/`surname`, `keywords`, `birthPlace`/`deathPlace` | National Archives Catalog — `keywords` is free text (a record type), not the name |
+| `archive_org` | `givenName`/`surname`/`keywords` | Internet Archive — no structured name/date/place fields; the name is only a free-text term here |
+| `billiongraves` | `givenName`/`surname`, `birthYear`/`deathYear` | Cemetery records, GPS-tagged |
+| `digitalarkivet` | `givenName`/`surname`, `birthYear`, `birthPlace`/`residencePlace` | Norwegian National Archives — `residencePlace` maps to the site's own domicile field |
+| `antenati` | `givenName`/`surname`, `birthYear`/`deathYear`, `birthPlace`/`deathPlace` | Italian civil/parish records — one year/place field for whichever record type matched, not separate birth/death fields; `birthYear`/`birthPlace` preferred when both are known |
+| `library_archives_canada` | `givenName`/`surname`, `birthYear` | Census search only — no death data (census records the living) |
+| `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Keyword-only — the site's own structured name fields do not bind |
+| `italian_genealogy` | `givenName`/`surname`/`keywords` | A discussion forum, not a records database — keyword search over posts only |
 
-A supplied attribute the target site doesn't read comes back in the response's
-`notes` (e.g. `"'deathYear' is not used by chronicling_america — supplied but
-ignored"`) rather than silently vanishing — read `notes` and narrate anything
-it flags.
+Every observation the tool makes — an attribute the site doesn't read, a
+value it rejected, a site's standing caution — comes back in the response's
+`notes`. Relay each note to the user alongside the URL.
 
 **Parameter strategy** (full guidance in
 `references/search-strategy-external.md`):
@@ -440,10 +406,7 @@ If the call returns `{ ok: false, errors }`, surface the errors and fix
 the inputs rather than retrying blindly or hand-writing the entry; nothing
 was written. On success the response carries the `logId` it assigned.
 
-Then present the URL. For a user-contributed site (`findagrave`,
-`billiongraves`), add one line with it now, before any capture arrives:
-entries are user-contributed — a lead, not proof; photographed evidence
-will outweigh contributor-entered text once a capture comes back.
+Then present the URL, with every note from the tool's response.
 
 ---
 

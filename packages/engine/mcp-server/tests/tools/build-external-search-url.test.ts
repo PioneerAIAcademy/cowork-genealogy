@@ -813,7 +813,9 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toMatch(/father=Michael(&|$)/);
+      // Positional: a lone given name keeps its underscore so it stays in the
+      // given-name slot (`father=Michael_`), not Ancestry's surname slot.
+      expect(r.url).toMatch(/father=Michael_(&|$)/);
     });
   });
 
@@ -1010,6 +1012,220 @@ describe("build_external_search_url", () => {
       if (!r.ok) return;
       expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn");
     });
+  });
+
+  describe("second review round (2026-09-14)", () => {
+    it("trims padding on string attributes so it never reaches the URL as an encoded plus", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: { givenName: " Patrick ", surname: "Flynn ", birthPlace: " Ireland" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/?name=Patrick_Flynn&birthplace=Ireland");
+    });
+
+    it("keeps Ancestry's positional underscore when one half of a pair is absent", () => {
+      // `name=Flynn` is a given-name search on Ancestry; a surname-only search
+      // is `name=_Flynn`, as the hand-filled template always produced.
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: { surname: "Flynn", residencePlace: "Pennsylvania" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/?name=_Flynn&residence=_Pennsylvania");
+    });
+
+    it("rejects a FindMyPast call carrying only a tuning knob — a knob without its slot is not a search", () => {
+      const r = buildExternalSearchUrl({ site: "findmypast", attributes: { birthYearOffset: 2 } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+    });
+
+    it("notes a FindMyPast knob supplied without its slot on an otherwise valid call", () => {
+      const r = buildExternalSearchUrl({
+        site: "findmypast",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYearOffset: 2 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("yearofbirth_offset=");
+      expect(r.notes.some((n) => /'birthYearOffset' has no effect without birthYear/.test(n))).toBe(true);
+    });
+
+    it("lets a FindMyPast marriage search name its place through keywordsplace", () => {
+      const r = buildExternalSearchUrl({
+        site: "findmypast",
+        attributes: { givenName: "Patrick", surname: "Flynn", eventYear: 1870, marriagePlace: "Schuylkill County, Pennsylvania" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("keywordsplace=Schuylkill+County%2C+Pennsylvania");
+      expect(r.notes.some((n) => /'marriagePlace' is not used/.test(n))).toBe(false);
+    });
+
+    it("notes a supplied attribute shadowed by a site's single-field fallback", () => {
+      const r = buildExternalSearchUrl({
+        site: "antenati",
+        attributes: { givenName: "Giovanni", surname: "Strada", birthYear: 1850, deathYear: 1910, birthPlace: "Milano", deathPlace: "Torino" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("anno=1850");
+      expect(r.url).toContain("localita=Milano");
+      expect(r.notes.some((n) => /'deathYear' is not used by antenati when birthYear is supplied/.test(n))).toBe(true);
+      expect(r.notes.some((n) => /'deathPlace' is not used by antenati when birthPlace is supplied/.test(n))).toBe(true);
+    });
+
+    it("notes when this call's value replaces one already in the curated baseUrl", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/?name=John_Smith",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn");
+      expect(r.notes.some((n) => /'name' already in baseUrl was replaced/.test(n))).toBe(true);
+    });
+
+    it("applies no Chronicling America window when the start year is after the end year", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "Patrick", surname: "Flynn", searchStartYear: 1910, searchEndYear: 1900 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("dates=");
+      expect(r.notes.some((n) => /searchStartYear is after searchEndYear/.test(n))).toBe(true);
+    });
+
+    it("refuses a Chronicling America window entirely outside the 1798–1963 corpus", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "John", surname: "Flynn", searchStartYear: 1970, searchEndYear: 1975 },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("outside_coverage");
+      expect(r.errors.join(" ")).toMatch(/1798–1963/);
+    });
+
+    it("notes a Chronicling America window that only partly overlaps the corpus", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "John", surname: "Flynn", searchStartYear: 1960, searchEndYear: 1970 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("dates=1960%2F1970");
+      expect(r.notes.some((n) => /extends past the 1798–1963 page corpus/.test(n))).toBe(true);
+    });
+
+    it("rejects a baseUrl whose host belongs to a different site", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.myheritage.com/research?collection=123",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+      expect(r.errors.join(" ")).toMatch(/does not belong to ancestry/);
+    });
+
+    it("rejects the retired chroniclingamerica.loc.gov host, whose parameters are ignored", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        baseUrl: "https://chroniclingamerica.loc.gov/search/pages/results/?state=Pennsylvania",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+      expect(r.errors.join(" ")).toMatch(/retired/);
+    });
+
+    it("accepts a curated baseUrl on a sibling subdomain or the UK variant of the site", () => {
+      const sub = buildExternalSearchUrl({
+        site: "american_ancestors",
+        baseUrl: "https://www.americanancestors.org/search/database-search",
+        attributes: { surname: "Flynn" },
+      });
+      expect(sub.ok).toBe(true);
+      const uk = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.co.uk/search/collections/8054/",
+        attributes: { surname: "Flynn" },
+      });
+      expect(uk.ok).toBe(true);
+    });
+
+    it("rejects a non-string baseUrl instead of throwing", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: ["https://www.ancestry.com/search/"] as any,
+        attributes: { surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+      expect(r.errors.join(" ")).toMatch(/must be a string; got array/);
+    });
+
+    it("coerces a JSON-stringified attributes object instead of reporting no_attributes", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: JSON.stringify({ givenName: "Patrick", surname: "Flynn" }) as any,
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/?name=Patrick_Flynn");
+    });
+
+    it("names the shape problem when attributes is not an object at all", () => {
+      const r = buildExternalSearchUrl({ site: "ancestry", attributes: 42 as any });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+      expect(r.errors.join(" ")).toMatch(/attributes must be an object; got number/);
+    });
+
+    it("carries the attribute notes into a no_attributes error so the caller learns why", () => {
+      const r = buildExternalSearchUrl({ site: "ancestry", attributes: { birthYear: 99999 } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+      expect(r.errors.some((e) => /'birthYear' was supplied but is not a valid year/.test(e))).toBe(true);
+    });
+
+    it("coerces a numeric string in a year attribute the way research_log_append coerces resultsExamined", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: "1845" as any },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("birth=1845");
+    });
+
+    it("emits each site's standing note from the tool, not from skill prose", () => {
+      const grave = buildExternalSearchUrl({ site: "findagrave", attributes: { givenName: "Patrick", surname: "Flynn" } });
+      expect(grave.ok).toBe(true);
+      if (!grave.ok) return;
+      expect(grave.notes.some((n) => /user-contributed — a lead, not proof/.test(n))).toBe(true);
+      const dna = buildExternalSearchUrl({
+        site: "digital_newspaper_archive",
+        baseUrl: "https://newspapers.lib.utah.edu/search",
+        attributes: { keywords: "obituary" },
+      });
+      expect(dna.ok).toBe(true);
+      if (!dna.ok) return;
+      expect(dna.url).toBe("https://newspapers.lib.utah.edu/search?q=obituary");
+      expect(dna.notes.some((n) => /no date filter/.test(n))).toBe(true);
+    });
 
     it("rejects a non-negative-integer birthYearOffset/placeProximityMiles rather than sharing the year bound", () => {
       const r = buildExternalSearchUrl({
@@ -1025,11 +1241,14 @@ describe("build_external_search_url", () => {
     it("accepts a valid birthYearOffset/placeProximityMiles", () => {
       const r = buildExternalSearchUrl({
         site: "findmypast",
-        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthYearOffset: 3, placeProximityMiles: 10 },
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthYearOffset: 3, birthPlace: "Ireland", placeProximityMiles: 10 },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
+      // Each knob rides only with its slot: the offset with yearofbirth, the
+      // radius with keywordsplace.
       expect(r.url).toContain("yearofbirth_offset=3");
+      expect(r.url).toContain("keywordsplace=Ireland");
       expect(r.url).toContain("keywordsplace_proximity=10");
     });
   });

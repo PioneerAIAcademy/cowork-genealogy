@@ -85,30 +85,31 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
 
 
 def _place_matches_rejected(birth_place: str, rejected_place: str) -> bool:
-    """True when `birth_place` names the same place as `rejected_place`,
-    tolerating a place-resolution tool appending broader jurisdiction context
-    a raw fixture assertion's `place` field never carries ("Pennsylvania" vs
-    "Pennsylvania, United States") — but not so loose that two different
-    places sharing only a leading segment collide ("Paris, Texas, United
-    States" vs the rejected "Paris, France": a genuine same-leaf-different-
-    jurisdiction pair, common in genealogy for towns named after Old World
-    cities). Comparing just the first comma-segment on both sides (an earlier
-    version of this function) flagged that correctly-reformatted, correct
-    answer as if it encoded the rejected fact.
-
-    Compares exactly as many of `birth_place`'s leading comma-segments as
-    `rejected_place` itself has, both casefolded — so a rejected value that
-    already carries its own disambiguating context ("Paris, France", two
-    segments) requires `birth_place` to match on that same context, not just
-    the leaf name. Does not catch the converse reformatting (a resolver
-    prepending a finer unit, e.g. "Philadelphia, Pennsylvania" for a rejected
-    bare "Pennsylvania") — a false negative, left to the LLM judge, and a much
-    safer failure mode than the false positive this replaces."""
-    rejected_segments = [s.strip().casefold() for s in rejected_place.split(",")]
-    birth_segments = [s.strip().casefold() for s in birth_place.split(",")]
-    if len(birth_segments) < len(rejected_segments):
+    """True when `birth_place` names the same place as `rejected_place`: the
+    same string, the rejected place with broader jurisdiction appended by a
+    resolver ("Pennsylvania" vs "Pennsylvania, United States"), or the rejected
+    place with a finer unit prepended ("Philadelphia, Pennsylvania" encodes the
+    rejected "Pennsylvania" at a finer grain). Compared casefolded on exactly
+    as many comma-segments as `rejected_place` itself has — leading or
+    trailing — so two different places sharing only a leaf name ("Paris,
+    Texas, United States" vs the rejected "Paris, France", a common pair for
+    towns named after Old World cities) do not collide: the rejected value's
+    own context has to line up too."""
+    rejected = _place_key(rejected_place)
+    segments = _place_key(birth_place)
+    if len(segments) < len(rejected):
         return False
-    return birth_segments[: len(rejected_segments)] == rejected_segments
+    return segments[: len(rejected)] == rejected or segments[-len(rejected):] == rejected
+
+
+def _place_key(place: str) -> tuple[str, ...]:
+    """A place string's comma-segments, stripped and casefolded."""
+    return tuple(s.strip().casefold() for s in place.split(","))
+
+
+#: Sites whose table fills the birthplace slot from `deathPlace` when
+#: `birthPlace` is absent (`str(birthPlace) ?? str(deathPlace)`).
+_BIRTHPLACE_FALLBACK_SITES = frozenset({"antenati", "archives_gov", "american_ancestors"})
 
 
 def test_resolved_birthplace_conflict_rejected_value_not_encoded(
@@ -168,7 +169,7 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
 
     calls = [
         c for c in (tool_calls or [])
-        if c.get("tool", "").split("__")[-1] == "build_external_search_url"
+        if _bare_tool_name(c.get("tool")) == "build_external_search_url"
     ]
     if not calls:
         pytest.skip("no build_external_search_url call")
@@ -185,12 +186,17 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         # sources (this fixture's a_002/a_009 both say "Ireland" — only a_012's
         # "Pennsylvania" actually disagrees), so the comparison is by place
         # value against the preferred assertion's own value, not by id.
+        # Compared by normalized place key, not raw string: a competing
+        # assertion reading "IRELAND" (a census transcription) agrees with a
+        # preferred "Ireland" and must not become a rejected value that then
+        # casefold-matches the correctly encoded one.
+        preferred_key = _place_key(preferred_place)
         rejected_places = {
             assertions_by_id[i]["place"]
             for i in (c.get("competing_assertion_ids") or [])
             if i in assertions_by_id
-            and assertions_by_id[i].get("place")
-            and assertions_by_id[i]["place"] != preferred_place
+            and isinstance(assertions_by_id[i].get("place"), str)
+            and _place_key(assertions_by_id[i]["place"]) != preferred_key
         }
         if not rejected_places:
             continue
@@ -212,22 +218,23 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         for call in calls:
             args = call.get("args") or {}
             attrs = args.get("attributes") or {}
-            # `deathPlace` is checked too, not just `birthPlace`: on
-            # antenati/archives_gov/american_ancestors the tool's own
-            # `str(birthPlace) ?? str(deathPlace)` fallback means deathPlace
-            # BECOMES the effective birthplace slot whenever birthPlace is
-            # absent — a rejected value routed through that fallback field
-            # reached the URL exactly as if it had been passed as birthPlace,
-            # and this check has to follow it there to mean what its own name
-            # says. Guarded with `isinstance(..., str)` — a model emitting a
-            # non-string (`birthPlace: 1845`) is real, live tool input
-            # (the tool accepts and templates whatever it's given), and an
-            # unguarded `.split()` inside `_place_matches_rejected` turned
-            # that into an `AttributeError` indistinguishable in the outcome
-            # column from a genuine rejected-value violation.
-            for field in ("birthPlace", "deathPlace"):
+            # `deathPlace` matters only where the tool falls back to it for
+            # the birthplace slot, and only when birthPlace is absent there —
+            # a rejected value routed through that fallback reaches the URL
+            # exactly as if passed as birthPlace. Anywhere else a death place
+            # naming the rejected BIRTHplace is a correct death search: this
+            # fixture's own accepted death is in Pennsylvania.
+            fields = ["birthPlace"]
+            birth_place = attrs.get("birthPlace")
+            if args.get("site") in _BIRTHPLACE_FALLBACK_SITES and not (
+                isinstance(birth_place, str) and birth_place.strip()
+            ):
+                fields.append("deathPlace")
+            for field in fields:
                 value = attrs.get(field)
-                if not isinstance(value, str) or not value:
+                # A non-string value (`birthPlace: 1845`) is real live input;
+                # noting it is the tool's job, not this check's to crash on.
+                if not isinstance(value, str) or not value.strip():
                     continue
                 if any(_place_matches_rejected(value, p) for p in rejected_places):
                     errors.append(
@@ -256,13 +263,12 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
     different search) — only whether the tool was used at all, which is
     what "hand-wrote instead of calling the tool" actually means.
 
-    Excludes exactly what the sibling `test_the_url_logged_is_the_url_presented`
-    (V4) excludes, for the same reason: step 6 appends a new entry that
-    re-logs the step-4 URL without presenting it again — the capture-arrival
-    entry (`capture_received: true`, analyzing a returned PDF) and the
-    no-access entry (`outcome: "error"`, asking whether to skip the site).
-    Neither is a fresh generation this turn, so neither requires a fresh
-    tool call this turn.
+    Grades only step 4's own entry — `outcome: "partial"`, no capture — the
+    same scoping the sibling `test_url_generation_log_entry_shape` uses. Every
+    step-6 re-log (the capture arrival, the user-reported nil with no capture,
+    the no-access `error` entry) carries the step-4 URL again without
+    generating one, and rubric.md grades the tool as not expected on those
+    turns.
 
     Also excludes `site: "familysearch_web"` — the one `external_site` enum
     value the tool has no template for (its SUPPORTED_SITES is a subset of
@@ -280,9 +286,9 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
         url = detail.get("url_generated")
         if not isinstance(url, str) or not url.strip():
             return False
-        if detail.get("capture_received") is True:
+        if entry.get("outcome") != "partial":
             return False
-        if entry.get("outcome") == "error":
+        if detail.get("capture_received") is True:
             return False
         if detail.get("site") == "familysearch_web":
             return False
