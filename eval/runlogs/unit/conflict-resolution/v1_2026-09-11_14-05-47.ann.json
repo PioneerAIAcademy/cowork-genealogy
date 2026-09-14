@@ -428,14 +428,6 @@
     },
     {
       "test_id": "ut_conflict_resolution_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "There must be a resolution of which subject is our candidate when there are possible competing candidates. "
-    },
-    {
-      "test_id": "ut_conflict_resolution_006",
       "dimension_source": "rubric",
       "dimension_name": "Resolution completeness",
       "llm_score": 2,
@@ -443,12 +435,12 @@
       "comment": "The identity of the actual candidate must be finalized based on indirect evidence that agrees with the found facts"
     },
     {
-      "test_id": "ut_conflict_resolution_013",
+      "test_id": "ut_conflict_resolution_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": "Decline is expected"
+      "comment": "There must be a resolution of which subject is our candidate when there are possible competing candidates. "
     },
     {
       "test_id": "ut_conflict_resolution_013",
@@ -457,6 +449,14 @@
       "llm_score": 1,
       "corrected_score": 3,
       "comment": "Good job"
+    },
+    {
+      "test_id": "ut_conflict_resolution_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Decline is expected: the skill did not activate, hypothesis-tracking (the fixture's correct_skill) was invoked, and an empty response is the judge prompt's stated pass condition for a routing negative — terseness is explicitly not a deduction. The harness flagged it as routing_negative_judge_fail."
     }
   ]
 }
