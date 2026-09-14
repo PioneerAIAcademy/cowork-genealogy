@@ -141,10 +141,7 @@ Read:
 
 Then **call `wiki_read`** for the jurisdiction's registration start date —
 `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
-otherwise — and do not begin Step 2 until it has returned or failed. This is a
-tool call, not a recollection: Step 2's `repository_breadth` and
-`overturn_risk`, and Step 3's decisive-record gate, each cite the value this
-call returned, and a start date you did not read is not one of them.
+otherwise — and do not begin Step 2 until it has returned or failed.
 
 ## 2. Assess the 7-Point Stop Criteria
 
