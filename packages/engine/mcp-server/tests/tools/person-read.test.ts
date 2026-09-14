@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -372,7 +373,7 @@ describe("personReadTool", () => {
   // 1. Returns simplified person for valid ID
   it("returns simplified person for a valid ID", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons).toHaveLength(1);
     expect(result.persons[0].id).toBe("KNDX-MKG");
     expect(result.persons[0].gender).toBe("Male");
@@ -384,7 +385,7 @@ describe("personReadTool", () => {
   // 2. Includes relatives in persons[] and relationships[] when flag set
   it("includes relatives when relatives flag is set", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
     expect(result.persons.length).toBeGreaterThan(1);
     expect(result.relationships.length).toBeGreaterThan(0);
     // The relatives flag must be encoded into the request URL.
@@ -394,7 +395,7 @@ describe("personReadTool", () => {
   // 3. Includes sources[] when flag set
   it("includes sources when sourceDescriptions flag is set", async () => {
     mockOk(WITH_SOURCES);
-    const result = await personReadTool({ personId: "KNDX-MKG", sourceDescriptions: true });
+    const result = await personReadTool({ personId: "KNDX-MKG", sourceDescriptions: true }, LOCAL);
     expect(result.sources.length).toBeGreaterThan(0);
     // The sourceDescriptions flag must be encoded into the request URL.
     expect(String(mockFetch.mock.calls[0][0])).toContain(
@@ -405,7 +406,7 @@ describe("personReadTool", () => {
   // 3b. Omits flags from the URL when not requested
   it("omits flags from the request URL when not set", async () => {
     mockOk(PERSON_ONLY);
-    await personReadTool({ personId: "KNDX-MKG" });
+    await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     const url = String(mockFetch.mock.calls[0][0]);
     expect(url).not.toContain("relatives=true");
     expect(url).not.toContain("sourceDescriptions=true");
@@ -422,7 +423,7 @@ describe("personReadTool", () => {
       personId: "KNDX-MKG",
       relatives: true,
       sourceDescriptions: true,
-    });
+    }, LOCAL);
     expect(result.persons.length).toBeGreaterThan(1);
     expect(result.relationships.length).toBeGreaterThan(0);
     expect(result.sources.length).toBeGreaterThan(0);
@@ -431,7 +432,7 @@ describe("personReadTool", () => {
   // 5. Returns empty relationships/sources when flags are false
   it("returns empty relationships and sources when flags are unset", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.relationships).toEqual([]);
     expect(result.sources).toEqual([]);
   });
@@ -439,7 +440,7 @@ describe("personReadTool", () => {
   // 6. Strips URI prefixes from fact types
   it("strips URI prefixes from fact types", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     const facts = result.persons[0].facts ?? [];
     expect(facts.find((f) => f.type === "Birth")).toBeDefined();
     expect(facts.find((f) => f.type === "Occupation")).toBeDefined();
@@ -448,7 +449,7 @@ describe("personReadTool", () => {
   // 7. Handles data: prefix custom fact types
   it("strips data:, prefix from custom fact types", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     const facts = result.persons[0].facts ?? [];
     expect(facts.find((f) => f.type === "Elected")).toBeDefined();
     expect(facts.find((f) => f.type.startsWith("data:,"))).toBeUndefined();
@@ -457,7 +458,7 @@ describe("personReadTool", () => {
   // 8. Extracts given/surname from name parts
   it("extracts given and surname from name parts", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons[0].names[0].given).toBe("George");
     expect(result.persons[0].names[0].surname).toBe("Washington");
   });
@@ -483,7 +484,7 @@ describe("personReadTool", () => {
       ],
     };
     mockOk(onlySurname);
-    const result = await personReadTool({ personId: "X" });
+    const result = await personReadTool({ personId: "X" }, LOCAL);
     expect(result.persons[0].names[0].surname).toBe("Flynn");
     expect(result.persons[0].names[0].given).toBe("");
   });
@@ -494,7 +495,7 @@ describe("personReadTool", () => {
     const result = await personReadTool({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
-    });
+    }, LOCAL);
     const sdIds = result.sources.filter((s) => s.id.startsWith("SD_"));
     expect(sdIds).toHaveLength(0);
     expect(result.sources).toHaveLength(2);
@@ -506,7 +507,7 @@ describe("personReadTool", () => {
     const result = await personReadTool({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
-    });
+    }, LOCAL);
     const s = result.sources.find((x) => x.id === "7X6N-4WR");
     expect(s).toBeDefined();
     expect(s?.title).toBe("Revolutionary War Rosters");
@@ -517,7 +518,7 @@ describe("personReadTool", () => {
   // 12. Converts childAndParentsRelationships to ParentChild
   it("converts childAndParentsRelationships to ParentChild entries", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
     const pc = result.relationships.filter((r) => r.type === "ParentChild");
     expect(pc.length).toBeGreaterThan(0);
     const aug = pc.find(
@@ -529,7 +530,7 @@ describe("personReadTool", () => {
   // 13. Converts couple relationships with marriage facts
   it("converts couple relationships with marriage facts", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
     const couples = result.relationships.filter((r) => r.type === "Couple");
     expect(couples).toHaveLength(1);
     expect(couples[0].person1).toBe("KNDX-MKG");
@@ -556,7 +557,7 @@ describe("personReadTool", () => {
       ],
     };
     mockOk(withExtra);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
     const extraneous = result.relationships.find(
       (r) => r.type === "ParentChild" && r.parent === "OTHR-PRT",
     );
@@ -566,7 +567,7 @@ describe("personReadTool", () => {
   // 15. Extracts subtype from parent facts
   it("extracts subtype from parent facts (Biological, Step, etc.)", async () => {
     mockOk(WITH_RELATIVES);
-    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true });
+    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
     const aug = result.relationships.find(
       (r) =>
         r.type === "ParentChild" &&
@@ -588,7 +589,7 @@ describe("personReadTool", () => {
       ],
     };
     mockOk(noFacts);
-    const result = await personReadTool({ personId: "C", relatives: true });
+    const result = await personReadTool({ personId: "C", relatives: true }, LOCAL);
     const pc = result.relationships.find((r) => r.type === "ParentChild");
     expect(pc?.subtype).toBeUndefined();
   });
@@ -596,7 +597,7 @@ describe("personReadTool", () => {
   // 17. Extracts prefix and suffix from name parts
   it("extracts prefix and suffix from name parts", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons[0].names[0].prefix).toBe("President");
     expect(result.persons[0].names[0].suffix).toBe("Jr.");
   });
@@ -607,7 +608,7 @@ describe("personReadTool", () => {
     const result = await personReadTool({
       personId: "KNDX-MKG",
       sourceDescriptions: true,
-    });
+    }, LOCAL);
     const s = result.sources.find((x) => x.id === "7X6N-4WR");
     expect(s?.notes).toEqual(["Note 1", "Note 2"]);
     // Source without notes shouldn't have the field at all.
@@ -620,7 +621,7 @@ describe("personReadTool", () => {
     mockedGetValidToken.mockRejectedValueOnce(
       new Error("Call the login tool to authenticate."),
     );
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(
+    await expect(personReadTool({ personId: "X" }, LOCAL)).rejects.toThrow(
       /login tool/,
     );
   });
@@ -628,7 +629,7 @@ describe("personReadTool", () => {
   // 20. Throws on 404
   it("throws on 404 person-not-found", async () => {
     mockStatus(404);
-    await expect(personReadTool({ personId: "ZZZZ-ZZZ" })).rejects.toThrow(
+    await expect(personReadTool({ personId: "ZZZZ-ZZZ" }, LOCAL)).rejects.toThrow(
       /not found in the FamilySearch Family Tree/,
     );
   });
@@ -636,7 +637,7 @@ describe("personReadTool", () => {
   // 21. Throws on 410
   it("throws on 410 person-deleted", async () => {
     mockStatus(410);
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(
+    await expect(personReadTool({ personId: "X" }, LOCAL)).rejects.toThrow(
       /has been deleted/,
     );
   });
@@ -644,7 +645,7 @@ describe("personReadTool", () => {
   // 22. Throws on 403 restricted
   it("throws on 403 restricted person", async () => {
     mockStatus(403);
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(
+    await expect(personReadTool({ personId: "X" }, LOCAL)).rejects.toThrow(
       /restricted and cannot be viewed/,
     );
   });
@@ -676,7 +677,7 @@ describe("personReadTool", () => {
         },
       ],
     });
-    const result = await personReadTool({ personId: "K2QT-J56" });
+    const result = await personReadTool({ personId: "K2QT-J56" }, LOCAL);
     expect(result.persons[0].id).toBe("GDZW-NZZ");
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
@@ -684,7 +685,7 @@ describe("personReadTool", () => {
   // 24. Returns living=true on 204 response
   it("returns a stub person with living:true on 204", async () => {
     mockStatus(204);
-    const result = await personReadTool({ personId: "PQD1-2T4" });
+    const result = await personReadTool({ personId: "PQD1-2T4" }, LOCAL);
     expect(result.persons).toHaveLength(1);
     expect(result.persons[0].id).toBe("PQD1-2T4");
     expect(result.persons[0].living).toBe(true);
@@ -696,12 +697,33 @@ describe("personReadTool", () => {
   // 25. Throws on 401 with re-authentication guidance
   it("throws on 401 with login guidance", async () => {
     mockStatus(401);
-    await expect(personReadTool({ personId: "X" })).rejects.toThrow(/login tool/);
+    await expect(personReadTool({ personId: "X" }, LOCAL)).rejects.toThrow(/login tool/);
+  });
+
+  // 25a. Recovery: 429 then 200 → returns the successful result
+  it("recovers from a transient 429 and returns the person", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: "Too Many Requests",
+        json: () => Promise.resolve({}),
+        headers: new Headers(),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(PERSON_ONLY),
+        headers: new Headers(),
+      });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
+    expect(result.persons[0].id).toBe("KNDX-MKG");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   // 26. Rejects an empty personId before making any request
   it("rejects an empty personId without fetching", async () => {
-    await expect(personReadTool({ personId: "  " })).rejects.toThrow(
+    await expect(personReadTool({ personId: "  " }, LOCAL)).rejects.toThrow(
       /non-empty personId/,
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -710,14 +732,14 @@ describe("personReadTool", () => {
   // 27. Surfaces the canonical ARK lifted from the Persistent identifier
   it("surfaces ark from the Persistent identifier", async () => {
     mockOk(MULTI_NAME);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons[0].ark).toBe("ark:/61903/4:1:KNDX-MKG");
   });
 
   // 28. Omits ark entirely when FS supplies no Persistent identifier
   it("omits ark when no Persistent identifier is present", async () => {
     mockOk(PERSON_ONLY);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons[0].ark).toBeUndefined();
     expect("ark" in result.persons[0]).toBe(false);
   });
@@ -725,7 +747,7 @@ describe("personReadTool", () => {
   // 29. Keeps every name FS returned, not just the first
   it("keeps all names rather than collapsing to the first", async () => {
     mockOk(MULTI_NAME);
-    const result = await personReadTool({ personId: "KNDX-MKG" });
+    const result = await personReadTool({ personId: "KNDX-MKG" }, LOCAL);
     expect(result.persons[0].names).toHaveLength(2);
     expect(result.persons[0].names.map((n) => n.given)).toEqual([
       "George",
@@ -736,7 +758,7 @@ describe("personReadTool", () => {
   // 30. Preferred name lands first and keeps its flag; alternates do not
   it("orders the preferred name first and flags only it", async () => {
     mockOk(MULTI_NAME);
-    const [person] = (await personReadTool({ personId: "KNDX-MKG" })).persons;
+    const [person] = (await personReadTool({ personId: "KNDX-MKG" }, LOCAL)).persons;
     expect(person.names[0].preferred).toBe(true);
     expect(person.names[0].type).toBe("BirthName");
     expect(person.names[1].preferred).toBeUndefined();
@@ -746,7 +768,7 @@ describe("personReadTool", () => {
   // 31. Prefix/suffix are carried per name, not only on the first
   it("carries prefix and suffix on the name that has them", async () => {
     mockOk(MULTI_NAME);
-    const [person] = (await personReadTool({ personId: "KNDX-MKG" })).persons;
+    const [person] = (await personReadTool({ personId: "KNDX-MKG" }, LOCAL)).persons;
     expect(person.names[0].prefix).toBe("President");
     expect(person.names[0].suffix).toBe("Jr.");
     expect(person.names[1].prefix).toBeUndefined();
@@ -757,7 +779,7 @@ describe("personReadTool", () => {
   // omitted rather than faked when FS supplies none.
   it("carries the name id through, omitting it when absent", async () => {
     mockOk(MULTI_NAME);
-    const [person] = (await personReadTool({ personId: "KNDX-MKG" })).persons;
+    const [person] = (await personReadTool({ personId: "KNDX-MKG" }, LOCAL)).persons;
     expect(person.names[0].id).toBe("name-birth-1");
     expect(person.names[1].id).toBeUndefined();
     expect("id" in person.names[1]).toBe(false);
@@ -771,7 +793,7 @@ describe("personReadTool", () => {
       ],
     };
     mockOk(nameless);
-    const result = await personReadTool({ personId: "X" });
+    const result = await personReadTool({ personId: "X" }, LOCAL);
     expect(result.persons[0].names).toEqual([{ given: "", surname: "" }]);
   });
 
@@ -784,7 +806,7 @@ describe("personReadTool", () => {
     const result = await personReadTool({
       personId: "LHKH-XKK",
       relatives: true,
-    });
+    }, LOCAL);
     const rel = result.persons.find((p) => p.id === "LZPL-493");
     expect(rel).toBeDefined();
     expect(rel!.names[0].given).toBe("Robert Blake");
@@ -799,7 +821,7 @@ describe("personReadTool", () => {
     const result = await personReadTool({
       personId: "LHKH-XKK",
       relatives: true,
-    });
+    }, LOCAL);
     const rel = result.persons.find((p) => p.id === "LZPL-493")!;
     expect(rel.names).toHaveLength(3);
     expect(rel.names.map((n) => n.given)).toEqual([
@@ -818,7 +840,7 @@ describe("personReadTool", () => {
     const result = await personReadTool({
       personId: "LHKH-XKK",
       relatives: true,
-    });
+    }, LOCAL);
     expect(result.persons.find((p) => p.id === "LHKH-XKK")!.ark).toBe(
       "ark:/61903/4:1:LHKH-XKK",
     );
@@ -834,7 +856,7 @@ describe("personReadTool", () => {
     const result = await personReadTool({
       personId: "LHKH-XKK",
       relatives: true,
-    });
+    }, LOCAL);
     const anchor = result.persons.find((p) => p.id === "LHKH-XKK")!;
     expect(anchor.names.map((n) => n.given)).toEqual(["Clorinda", "C"]);
     expect(anchor.names[0].preferred).toBe(true);

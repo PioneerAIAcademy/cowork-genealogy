@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../src/auth/tokenManager.js", () => ({
@@ -17,7 +18,7 @@ describe("logoutTool", () => {
   it("clears stored tokens and reports success", async () => {
     mockedClearTokens.mockResolvedValueOnce(undefined);
 
-    const result = await logoutTool();
+    const result = await logoutTool({}, LOCAL);
 
     expect(mockedClearTokens).toHaveBeenCalledTimes(1);
     expect(result.success).toBe(true);
@@ -27,7 +28,7 @@ describe("logoutTool", () => {
   it("still reports success when no tokens were present (idempotent)", async () => {
     mockedClearTokens.mockResolvedValueOnce(undefined);
 
-    const result = await logoutTool();
+    const result = await logoutTool({}, LOCAL);
 
     expect(result).toEqual({
       success: true,

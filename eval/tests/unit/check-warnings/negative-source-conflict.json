@@ -2,23 +2,24 @@
   "test": {
     "id": "ut_check_warnings_011",
     "skill": "check-warnings",
-    "name": "Source-vs-source disagreement should route to conflict-resolution",
+    "name": "Source-vs-source disagreement should route to conflict-resolution silently",
     "type": "negative",
-    "description": "User describes two sources disagreeing on a fact for the same person (Ireland vs. County Cork). That's a conflict between sources, not a single-person impossibility, so it belongs to conflict-resolution. Tests the boundary between check-warnings (single-person impossibilities) and conflict-resolution (multi-source disagreements). The brief explicitly names this boundary.",
-    "tags": ["negative", "boundary", "conflict-resolution"]
+    "description": "User describes two sources giving mutually exclusive values for the same fact (County Kerry vs County Cork — two Irish counties at the same administrative level, not a container/contained pair). That is a source conflict, not a single-person impossibility, so it belongs to conflict-resolution. SKILL.md requires a completely silent handoff: zero tool calls, empty response, conflict-resolution in skills_invoked. grade_on_invariant: true hands the verdict to the tag-gated validator (test_conflict_resolution_handoff_is_silent) and drops the judge to diagnostic, stopping the 1/1 grading that occurred on 3 of 5 compliant runs. The pair was changed from 'Ireland vs County Cork' (a container/contained pair whose premise was contested) to two same-level counties; the prior user_message was also a near-verbatim quote of SKILL.md:43, making a pass indistinguishable from recall of a sentence the model just read. See unit-test-spec.md § 'Negative tests' and issue #1965.",
+    "tags": ["negative", "boundary", "conflict-resolution", "silent-handoff"]
   },
   "input": {
-    "user_message": "One census says he was born in Ireland, the death cert says County Cork -- flag that mismatch.",
+    "user_message": "One census says he was born in County Kerry, the death cert says County Cork -- flag that mismatch.",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["person-warnings-no-warnings"],
   "negative": {
     "correct_skill": ["conflict-resolution"],
-    "explanation": "A source-vs-source disagreement is a conflict, not a warning. Warnings are about a single person's data violating physical/biological/temporal constraints; conflicts are about two sources giving different answers for the same fact. The skills' references/warnings-as-identity-signals.md draws this boundary explicitly: 'Conflicts: two or more sources disagree about the same fact for the same person... handled by conflict-resolution.'"
+    "grade_on_invariant": true,
+    "explanation": "A source-vs-source disagreement is a conflict, not a warning. Warnings are about a single person's data violating physical/biological/temporal constraints; conflicts are about two sources giving different answers for the same fact. County Kerry and County Cork are two distinct Irish counties at the same administrative level — not a container/contained pair — so they are genuinely mutually exclusive values. The skills' references/warnings-as-identity-signals.md draws this boundary explicitly: 'Conflicts: two or more sources disagree about the same fact for the same person... handled by conflict-resolution.' SKILL.md forbids any tool calls, any text response, and any response text — the handoff is completely silent."
   },
   "judge_context": [
-    "Should NOT invoke person_warnings -- the user isn't asking about a single-person impossibility",
-    "Should route to conflict-resolution because the prompt describes two sources disagreeing on the same fact",
-    "If the skill is invoked anyway, it should hand off to conflict-resolution without running the warning checks"
+    "Should NOT invoke person_warnings -- the user is not asking about a single-person impossibility",
+    "Should route to conflict-resolution silently: zero tool calls, empty response, conflict-resolution in skills_invoked",
+    "Any text response — even a one-line explanation of the handoff — is a violation of SKILL.md's silence requirement"
   ]
 }

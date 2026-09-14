@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../src/auth/login.js", () => ({
@@ -29,7 +30,7 @@ describe("loginTool", () => {
       message: "Login successful.",
     });
 
-    const result = await loginTool();
+    const result = await loginTool({}, LOCAL);
 
     expect(result).toEqual({ success: true, message: "Login successful." });
     expect(mockedPerformLogin).toHaveBeenCalledWith();
@@ -41,7 +42,7 @@ describe("loginTool", () => {
       message: "Login timed out after 5 minutes. Call the login tool again to retry.",
     });
 
-    const result = await loginTool();
+    const result = await loginTool({}, LOCAL);
 
     expect(result.success).toBe(false);
     expect(result.message).toMatch(/timed out/);
@@ -52,7 +53,7 @@ describe("loginTool", () => {
     // starting it would return a confident but false "a browser tab opened".
     mockedIsHostedMode.mockResolvedValue(true);
 
-    const result = await loginTool();
+    const result = await loginTool({}, LOCAL);
 
     expect(result.success).toBe(false);
     expect(result.message).toBe(HOSTED_REAUTH_INSTRUCTION);

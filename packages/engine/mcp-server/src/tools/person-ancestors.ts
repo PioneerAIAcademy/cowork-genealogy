@@ -1,7 +1,8 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import type { GedcomX, SimplifiedRelationship } from "../types/gedcomx.js";
 import type {
   AncestorPerson,
@@ -82,9 +83,10 @@ export const personAncestorsToolSchema = {
 
 export async function personAncestorsTool(
   input: PersonAncestorsInput,
+  principal: Principal,
 ): Promise<PersonAncestorsResult> {
   validateInput(input);
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   // Resolve the root: the supplied personId, or the logged-in user's own
   // tree person when it's omitted/empty.
   const provided =
@@ -113,7 +115,7 @@ function validateInput(input: PersonAncestorsInput): void {
 // Inline here for the single caller; promote to src/auth/ if a second tool
 // needs it.
 async function getCurrentUserPersonId(token: string): Promise<string> {
-  const res = await fetchWithTimeout(FS_CURRENT_USER_URL, {
+  const res = await fetchWithRetry(FS_CURRENT_USER_URL, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
@@ -151,7 +153,7 @@ async function fetchAndMap(
   redirectsFollowed: number,
 ): Promise<PersonAncestorsResult> {
   const url = buildUrl(input, pid);
-  const res = await fetchWithTimeout(url, {
+  const res = await fetchWithRetry(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,

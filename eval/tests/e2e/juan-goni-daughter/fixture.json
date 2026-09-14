@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 6, hint-samples.csv row 230, flag adds_daughter, confidence 3). Draft transcribed from an 1872 Navarrese marriage index entry; unverified. The batch CSV labels this row Cuba; every event on the tree person and the hint record is in Elizondo, Baztán, Navarra, and the fixture is tagged ES-NA accordingly."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 6, hint-samples.csv row 230, flag adds_daughter, confidence 3). Resolved 2026-09-10 to a true match: the hint's 1872 marriage index names the bride's father only as a bare \"Juan Jose\", and what identifies him is Martina Eulalia's own christening (10 Dec 1845, Elizondo, ark:/61903/1:1:664D-73X6), whose four grandparents match those on the tree's own source for the known daughter Engracia Ygnacia. See README \"Notes for reviewers\". The batch CSV labels this row Cuba, as does the live tree's standardization of Engracia's Birth place; every event on the tree person and the hint record is in Elizondo, Baztán, Navarra, and the fixture is tagged ES-NA accordingly."
 }
