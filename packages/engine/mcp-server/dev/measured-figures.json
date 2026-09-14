@@ -1909,9 +1909,20 @@
       "total": 5822,
       "error": null
     },
+    "T6:q.fullName=Virginia A. Blackman (NLP name control)": {
+      "found": true,
+      "total": 1975180,
+      "error": null
+    },
+    "T7:q.fullName=executor (non-name word)": {
+      "found": false,
+      "total": 229,
+      "error": null
+    },
     "verdict:q.text searches transcript": "CONFIRMED",
     "verdict:q.recordPlace searches": "metadata only",
     "verdict:f.recordPlace searches": "metadata only",
-    "measured_at": "2026-09-11T15:58:12.144Z"
+    "verdict:q.fullName searches": "name fields only",
+    "measured_at": "2026-09-14T11:34:02.316Z"
   }
 }

@@ -23,9 +23,10 @@
  *     `<event>Year` family was measured". Its third question — what happens to
  *     records carrying NO indexed year — is answered only for `.exact=on`
  *     (it drops them); the unqualified case is OPEN and the section says so.
- *   SECTION J — Fulltext search: what `q.recordPlace` and `f.recordPlace*`
- *     actually search (transcript content vs collection metadata vs both).
- *     Uses a discriminating-document strategy against the fulltext endpoint.
+ *   SECTION J — Fulltext search: what `q.recordPlace`, `f.recordPlace*`, and
+ *     `q.fullName` actually search (transcript content vs collection metadata
+ *     vs both). Uses a discriminating-document strategy against the fulltext
+ *     endpoint.
  *
  * EVERY CONCLUSION LINE IS COMPUTED FROM THE RUN, never a literal. Section F
  * used to end in a hardcoded `console.log` asserting "gibberish -> 0" — it
@@ -5504,7 +5505,7 @@ async function sectionQ(): Promise<void> {
   await runRecordsFamily(RECORDS_RESIDENCE_FAM, { pool: US_CENSUS_CONTROL, keyPrefix: "bands:records-uscensus" });
 }
 
-// --- SECTION J — fulltext: what q.recordPlace and f.recordPlace* search ---
+// --- SECTION J — fulltext: what q.recordPlace, f.recordPlace*, and q.fullName search ---
 
 interface FulltextEntry {
   id: string;
@@ -5512,6 +5513,8 @@ interface FulltextEntry {
   collectionTitle: string;
   recordPlace: string;
   textDocument: string;
+  /** NLP-recognized person names from `content.entities` (type `NAME`). */
+  names: string[];
 }
 
 interface FulltextHit {
@@ -5547,6 +5550,7 @@ async function fulltextSearch(query: string, count = 5): Promise<FulltextHit> {
       content?: {
         recordPlace?: string;
         textDocument?: string;
+        entities?: Array<{ type?: string; value?: string }>;
       };
     }>;
   };
@@ -5561,6 +5565,9 @@ async function fulltextSearch(query: string, count = 5): Promise<FulltextHit> {
     collectionTitle: e.collectionTitle ?? "",
     recordPlace: e.content?.recordPlace ?? "",
     textDocument: e.content?.textDocument ?? "",
+    names: (e.content?.entities ?? [])
+      .filter((ent) => ent.type === "NAME" && ent.value)
+      .map((ent) => ent.value!),
   }));
   return {
     total: typeof parsed.results === "number" ? parsed.results : null,
@@ -5609,13 +5616,22 @@ async function fulltextGetUSRegionId(baseQuery: string): Promise<string | null> 
 }
 
 /**
- * Section J — Fulltext search: what `q.recordPlace` and `f.recordPlace*`
- * actually search (transcript content vs collection metadata vs both).
+ * Section J — Fulltext search: what `q.recordPlace`, `f.recordPlace*`, and
+ * `q.fullName` actually search (transcript content vs collection metadata
+ * vs both).
  *
  * Strategy: find a DISCRIMINATING document — one where a place name appears
  * in the transcript but NOT in the collection metadata. Then test whether
  * `q.recordPlace` and `f.recordPlace*` find that document when given the
  * transcript-only place name vs the metadata place name.
+ *
+ * `q.fullName` is tested with T6 (an NLP-recognized name from the anchor)
+ * and T7 (a non-name word "executor" known to be in the transcript). If T7
+ * finds the anchor, `q.fullName` searches full transcript text; if not, it
+ * is restricted to name fields. Note: if T7 returns "not found", the verdict
+ * cannot distinguish "searches name fields only" from "applies NLP name
+ * recognition to the query input, rejecting non-name terms"; the simpler
+ * interpretation is assumed.
  *
  * `f.recordPlace1` accepts only the NUMERIC IDs returned by the facets API
  * (e.g. `f.recordPlace1=10,Alabama`), not plain text values. Passing plain
@@ -5623,18 +5639,20 @@ async function fulltextGetUSRegionId(baseQuery: string): Promise<string | null> 
  * artifact. Phase 2 obtains the correct numeric IDs from the facets response
  * before using `f.recordPlace*`.
  *
- * Three verdicts:
+ * Four verdicts:
  *   - verdict:q.text searches transcript
  *   - verdict:q.recordPlace searches
  *   - verdict:f.recordPlace searches
+ *   - verdict:q.fullName searches
  */
 async function sectionJ(): Promise<void> {
-  console.log("\n=== J. Fulltext search: what q.recordPlace and f.recordPlace* actually search ===");
+  console.log("\n=== J. Fulltext search: what q.recordPlace, f.recordPlace*, and q.fullName actually search ===");
 
   const NOT_MEASURED = (): void => {
     record("J", "verdict:q.text searches transcript", "NOT MEASURED");
     record("J", "verdict:q.recordPlace searches", "NOT MEASURED");
     record("J", "verdict:f.recordPlace searches", "NOT MEASURED");
+    record("J", "verdict:q.fullName searches", "NOT MEASURED");
   };
 
   // --- Phase 1: Discovery ---
@@ -5828,6 +5846,62 @@ async function sectionJ(): Promise<void> {
   console.log(`     anchor found: ${t5Found}  (total: ${t5Total}, error: ${t5Error})`);
   record("J", `T5:f.recordPlace1=${metadataState} (metadata place)`, { found: t5Found, total: t5Total, error: t5Error });
 
+  // Test 6: q.fullName with an NLP-recognized name from the anchor's transcript.
+  // If q.fullName works at all for name queries, this should find the anchor.
+  // The name is extracted from content.entities (type NAME) — the same field
+  // fulltext-search.ts:112-116 already uses.
+  const anchorName = anchor.names.length > 0 ? anchor.names[0] : null;
+  let t6Found = false;
+  let t6Total: number | null = null;
+  let t6Error: string | null = null;
+  if (!anchorName) {
+    t6Error = "anchor has no NAME entities";
+    console.log("  T6 q.fullName — SKIPPED: anchor has no NLP-recognized NAME entities");
+  } else {
+    const t6 = await fulltextSearch(
+      "q.fullName=" + encodeURIComponent(anchorName) +
+      "&f.collectionId=" + encodeURIComponent(cid),
+      20
+    );
+    t6Found = !t6.error && containsAnchor(t6);
+    t6Total = t6.total;
+    t6Error = t6.error;
+    console.log(`  T6 q.fullName=${anchorName}, f.collectionId=${cid}`);
+    console.log(`     anchor found: ${t6Found}  (total: ${t6Total}, error: ${t6Error})`);
+  }
+  record("J", `T6:q.fullName=${anchorName ?? "(none)"} (NLP name control)`, { found: t6Found, total: t6Total, error: t6Error });
+
+  // Test 7: q.fullName with a non-name word ("executor") known to be in the
+  // transcript (the discovery query uses +executor +Virginia). "executor" is a
+  // legal role, not a person name. If q.fullName finds the anchor with this
+  // term, it searches the full transcript text — not just name fields.
+  //
+  // Ambiguity note: if T7 returns "not found", the verdict cannot distinguish
+  // "searches name fields only" from "searches all fields but applies NLP name
+  // recognition to the query input, rejecting non-name terms". The simpler
+  // interpretation (name fields only) is assumed.
+  let t7Found = false;
+  let t7Total: number | null = null;
+  let t7Error: string | null = null;
+  if (!anchorName) {
+    // If T6 could not run, skip T7 too — we need the name control to anchor
+    // the verdict.
+    t7Error = "skipped (T6 could not run)";
+    console.log("  T7 q.fullName=executor — SKIPPED: T6 could not run (no name control)");
+  } else {
+    const t7 = await fulltextSearch(
+      "q.fullName=" + encodeURIComponent("executor") +
+      "&f.collectionId=" + encodeURIComponent(cid),
+      20
+    );
+    t7Found = !t7.error && containsAnchor(t7);
+    t7Total = t7.total;
+    t7Error = t7.error;
+    console.log(`  T7 q.fullName=executor, f.collectionId=${cid}`);
+    console.log(`     anchor found: ${t7Found}  (total: ${t7Total}, error: ${t7Error})`);
+  }
+  record("J", "T7:q.fullName=executor (non-name word)", { found: t7Found, total: t7Total, error: t7Error });
+
   // --- Phase 3: Compute verdicts ---
   console.log("\n  Phase 3: verdicts");
 
@@ -5872,6 +5946,24 @@ async function sectionJ(): Promise<void> {
   }
   record("J", "verdict:f.recordPlace searches", v3);
   console.log(`  verdict:f.recordPlace searches — ${v3}`);
+
+  // Verdict 4: q.fullName searches ...
+  // T6 (NLP name from anchor) tells us if q.fullName works at all.
+  // T7 ("executor", a non-name word) tells us if it reaches the full transcript.
+  let v4: string;
+  if (t6Error !== null) {
+    v4 = "NOT MEASURED";
+  } else if (!t6Found) {
+    v4 = "NOT MEASURED — name control failed (anchor not found by its own NLP name)";
+  } else if (t7Error !== null) {
+    v4 = "NOT MEASURED";
+  } else if (t7Found) {
+    v4 = "full transcript (same as q.text)";
+  } else {
+    v4 = "name fields only";
+  }
+  record("J", "verdict:q.fullName searches", v4);
+  console.log(`  verdict:q.fullName searches — ${v4}`);
 }
 
 const SECTIONS: Record<string, () => Promise<void>> = {

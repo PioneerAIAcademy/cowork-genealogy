@@ -572,6 +572,18 @@ describe("measured figures stay traceable to the probe artifact", () => {
         /f\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text)/i,
       why: "section J measured f.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
     },
+    {
+      // Section J measured q.fullName against the same anchor. A non-name
+      // word ("executor") known to be in the transcript was NOT found by
+      // q.fullName, while an NLP-recognized name (Virginia A. Blackman) WAS
+      // found. So q.fullName searches name fields only, not the full
+      // transcript. Guard against prose that claims it searches transcripts.
+      verdict: "J.verdict:q.fullName searches",
+      activeWhen: /^name fields only$/,
+      mustNotSay:
+        /q\.fullName[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text|entire)/i,
+      why: "section J measured q.fullName as name-fields-only; these phrasings assert it reaches the full transcript",
+    },
   ];
 
   for (const rule of FORBIDDEN_WHEN) {
