@@ -24,6 +24,7 @@ import pytest
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
+    extract_year,
 )
 
 
@@ -1030,9 +1031,11 @@ def test_check_warnings_runs_after_a_write(
 #
 # Both are tier-2 (report_) validators: they raise AssertionError to produce
 # an observation the judge reads as context, never a gate. A gating validator
-# that fires on ut_024 would suppress the judge and zero all Confidence
-# calibration dimension scores (issue #2057). The report_ prefix is detected by
-# validator_runner.py at line 200 (`is_report = attr_name.startswith("report_")`).
+# that fires on ut_024 would exclude the Confidence calibration scores from the
+# aggregated grading — since #2444 (fixes #2057) the judge still runs, but a
+# gating failure drops its scores from aggregated_dimensions, leaving the rubric
+# dimension blank. The report_ prefix is detected by validator_runner.py at line
+# 200 (`is_report = attr_name.startswith("report_")`).
 
 
 def report_informant_fields_not_in_pe_confidence_reason(before_state, after_state):
@@ -1082,12 +1085,11 @@ def report_informant_fields_not_in_pe_confidence_reason(before_state, after_stat
 def _parse_year(date_str: str) -> int | None:
     """Parse the first 4-digit year from a date string.
 
-    Handles '~1845', '12 March 1858', 'c. 1850', 'Abt 1845', '1858', etc.
-    Returns None when no 4-digit year is found.
+    Delegates to validators_lib.extract_year (the shared helper), returning
+    an int rather than a string so callers can do gap arithmetic.
     """
-    import re as _re
-    m = _re.search(r"\b(1[0-9]{3}|20[0-9]{2})\b", str(date_str or ""))
-    return int(m.group(1)) if m else None
+    s = extract_year(date_str)
+    return int(s) if s is not None else None
 
 
 def _record_persona_facts_from_sp(sp_args: dict, persona_id: str) -> list[dict]:
