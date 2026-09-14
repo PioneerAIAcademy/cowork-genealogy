@@ -571,7 +571,7 @@ that carry it). If the gate's holdout comparison is ever revived, it must select
 **automatically** from run-log history (stability across committed runs, shape spread) — a
 human picking 2-3 by hand does not give real regression coverage.
 
-**Reserved tag: `grade:trigger`** (issue #2156). Tags are freeform except this one,
+**Reserved tag: `grade:trigger`.** Tags are freeform except this one,
 which changes how a **positive** test is graded. A positive test tagged
 `grade:trigger` is graded on **activation alone** — it passes once the skill under
 test fired (present in `skills_invoked`) and its validators passed; the judge
