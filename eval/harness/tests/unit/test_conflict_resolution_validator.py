@@ -1746,7 +1746,9 @@ def test_v4_reports_the_reply_text_as_well_as_the_persisted_fields():
     fields = {"weighing_analysis": 0, "resolution_rationale": 0, "the reply text": 0}
     for _, _, msg in _replay_v4():
         for f in fields:
-            fields[f] += msg.count(f" {f} attaches a certainty marker to '")
+            # No leading space: the reply-text observation is not prefixed with
+            # `conflicts[...]` any more, so its label opens the line.
+            fields[f] += msg.count(f"{f} attaches a certainty marker to '")
     assert all(v > 0 for v in fields.values()), (
         f"V4 reported nothing from at least one field: {fields}"
     )
@@ -1837,6 +1839,32 @@ def test_v4_ignores_prose_the_run_did_not_author():
 
     # Paired: authoring the prose in the same turn IS reported.
     _fires(*_v4_states(_HEDGED_INFORMANT, after_prose=_UPGRADE_SENTENCE))
+
+
+def test_v4_one_reply_upgrade_is_one_observation_across_many_conflicts():
+    """The reply text is ONE document, so a single upgrade in it is a single
+    observation however many conflicts the turn wrote.
+
+    Scanned inside the per-conflict loop it produced one observation per
+    written conflict, each under a different conflict id, only one of which was
+    about that conflict. Latent on today's corpus -- the one run writing two
+    conflicts carries no hedged name -- so no corpus test covers it and the
+    field counts are unchanged either way.
+    """
+    a = {"id": "a_002", "source_id": "src_001", "informant": _HEDGED_INFORMANT,
+         "information_quality": "indeterminate"}
+    mk = lambda cid: {"id": cid, "status": "unresolved", "conflict_type": "fact",
+                      "competing_assertion_ids": ["a_002"],
+                      "preferred_assertion_id": None,
+                      "independence_analysis": None, "weighing_analysis": None,
+                      "resolution_rationale": None}
+    before = {"research_json": {"conflicts": [], "assertions": [a]}}
+    after = {"research_json": {"conflicts": [mk("c_one"), mk("c_two")],
+                               "assertions": [a]}}
+    msg = _fires(before, after, "The informant was almost certainly Thomas Flynn.")
+    assert msg.count("attaches a certainty marker to") == 1, msg
+    # Traceability survives: both written conflicts are named in the one message.
+    assert "c_one" in msg and "c_two" in msg, msg
 
 
 def test_v4_population_is_prose_authored_not_v6s_analysis_set():

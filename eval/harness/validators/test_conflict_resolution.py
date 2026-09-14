@@ -942,6 +942,10 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
     before_by_id = _conflicts_by_id(before)
 
     observations = []
+    # Names contributed by every written conflict, for the single reply-text
+    # scan after the loop, plus the ids that contributed them.
+    reply_names: dict[str, str] = {}
+    written_ids: list[str] = []
     for c in _conflicts_written(before, after):
         cid = c.get("id", "?")
         prev = before_by_id.get(cid)
@@ -994,12 +998,15 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
         # authored. Does not fire on today's corpus (all 36 prose edits
         # write both fields in one turn) but 33 of the 42 fixture conflicts
         # already carry prose in both, so one single-field revision trips it.
+        written_ids.append(str(cid))
+        for _n, _src in names.items():
+            reply_names.setdefault(_n, _src)
+
         texts = {
             f: str(c.get(f) or "")
             for f in _V4_TEXT_FIELDS
             if prev is None or c.get(f) != prev.get(f)
         }
-        texts["the reply text"] = str(text_response or "")
         for field, txt in texts.items():
             for name, span in _certainty_upgrades(txt, set(names)):
                 observations.append(
@@ -1017,6 +1024,29 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
                     f"informant is \"{names[name]}\". An undetermined informant "
                     f"cannot be the ground of a resolution. Quoted: “{span[:200]}”"
                 )
+
+    # The reply text is ONE document, not one per conflict. Scanned inside the
+    # loop above it emitted the same upgrade once per conflict the turn wrote,
+    # under a different conflict id each time -- only one of which was about
+    # that conflict. Latent on today's corpus (ut_002 in
+    # v1_2026-08-18_19-42-11 is the only run writing two conflicts and its
+    # competing assertions carry no hedged name), so the field counts above are
+    # unchanged by this. Scanned once here over the union of every hedged name
+    # the written conflicts contributed; the ids ride in the message, so the
+    # observation stays traceable without being attributed to one conflict it
+    # may not be about.
+    if reply_names:
+        for name, span in _certainty_upgrades(
+            str(text_response or ""), set(reply_names)
+        ):
+            observations.append(
+                f"the reply text attaches a certainty marker to '{name}', "
+                f"but the record names that informant only under a hedge: "
+                f"informant is \"{reply_names[name]}\". An undetermined "
+                f"informant cannot be the ground of a resolution. Conflicts "
+                f"written this turn: {', '.join(written_ids)}. "
+                f"Quoted: “{span[:200]}”"
+            )
 
     if observations:
         raise AssertionError("\n".join(observations))
