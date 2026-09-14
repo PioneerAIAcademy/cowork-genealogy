@@ -380,6 +380,22 @@ query shape.
    still unguarded; it is the fulltext collection-scoping decision's
    to land.
 
+6. **Name parameter behaviour** (measured 2026-09-14,
+   `dev/probe-search-qualifiers.ts` section J, artifact
+   `dev/measured-figures.json`): `q.fullName` searches **name fields
+   only**, not the full transcript. Confirmed by the same
+   discriminating-document anchor (Bullock County, Alabama probate):
+   `q.fullName=Virginia A. Blackman` (an NLP-recognized NAME entity
+   from the anchor's transcript) found the anchor;
+   `q.fullName=executor` (a non-name word known to be in the
+   transcript) did not — T7 paginated the full result set (229
+   entries, all examined) so the negative is airtight, not a paging
+   artifact. Note: the verdict cannot distinguish "name
+   fields only" from "applies NLP name recognition to the query
+   input, rejecting non-name terms" — the simpler interpretation is
+   assumed. Guarded by `tests/packaging/measured-figures.test.ts`
+   (`FORBIDDEN_WHEN` rule for `J.verdict:q.fullName searches`).
+
 ## Files to create/modify
 
 | File | Action |
