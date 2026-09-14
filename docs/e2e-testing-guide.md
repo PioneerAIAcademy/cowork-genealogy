@@ -33,7 +33,7 @@ Which steps are yours depends on how you got here:
 | 2 Scope *(1b only)* | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
 | 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
 | 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
-| 5 Run | `make e2e-run TEST=<slug>` — one fixture, median 54 min / $7.47 (n=158/146, range 30–103 min / $0.06–$25) | ⌨️ Terminal |
+| 5 Run | `make e2e-run TEST=<slug>` — one fixture, median 56 min / $7.47 (n=172/147, range 35–108 min / $0.06–$25) | ⌨️ Terminal |
 | 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
 | 7 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
 | 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
@@ -59,11 +59,14 @@ strips a focused subset (the "answer"), and asks the agent — via
 `/research --autonomous` — to recover what was removed. The judge grades the
 final state `pass` / `partial` / `fail`.
 
-**Runs are expensive: median 54 minutes and $7.47 each, and the tails run
-longer — p10–p90 is 30–103 minutes across the committed corpus (n=158 for
-time, n=146 for cost; re-derive with `make e2e-latency SINCE=all` for wall
-clock, or a scan of `usage.total_cost_usd` across `eval/runlogs/e2e/*/run-*.json`
-for cost). Run one at a time — the orchestrator's own cap is
+**Runs are expensive: median 56 minutes and $7.47 each, and the tails run
+longer — p10–p90 is 35–108 minutes across the committed corpus (n=172 for
+time, n=147 for cost; re-derive both with one scan of
+`eval/runlogs/e2e/*/run-*.json` (the git-tracked ones — an uncommitted local
+run log skews the sample), reading `usage.wall_clock_seconds` for time and
+`usage.total_cost_usd` for cost — note that `make e2e-latency SINCE=all`
+reports one run per fixture and prints no median, so it will not reproduce
+these). Run one at a time — the orchestrator's own cap is
 `max_cost_usd = 15.0` (`eval/harness/e2e/orchestrator.py`), so a single run
 can still land near or past this section's median on its own.**
 
@@ -312,7 +315,7 @@ detail: spec §§2–3, §6.2.
 ## Step 4 — Debug `/research` live, before you pay for a run 🖥️ Cowork + Viewer
 
 A headless run can't show you *why* the agent stopped or skipped a step — and
-it charges you a median 54 minutes to not tell you (see Step 5's cost/time
+it charges you a median 56 minutes to not tell you (see Step 5's cost/time
 note for the full spread). Watch a run live in Cowork, fix
 what you see, and save the headless run for the verdict.
 
