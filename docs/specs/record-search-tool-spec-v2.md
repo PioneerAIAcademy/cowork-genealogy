@@ -91,13 +91,40 @@ but the anchor rule above must be satisfied.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `surname` | string | Family name. The strongest anchor for genealogy queries. |
+| `surname` | string | Family name. The strongest anchor for genealogy queries. Sent verbatim, including any particle and its spaces (`van der Linde`, `Mc Kee`) — see *Particle surnames* below. |
 | `givenName` | string | Given (first) name. |
 | `surnameAlt` | string | Alternate family name (e.g., maiden name when also searching by married name). |
 | `givenNameAlt` | string | Alternate given name. |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` is normalized to `"Male"`. |
 | `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Applies to `surnameAlt` too when both are set. **Narrows the count, reorders the records it keeps, and can drop the target**: read over complete sets the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). |
 | `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Applies to `givenNameAlt` too. Excludes period diminutives (`Betty` for `Elizabeth`); pass a variant as its own `givenName` instead. **The exclusion direction is the lead's (2026-08-17), not measured**: the artifact records only the fuzzy REACH — `N.verdict:diminutiveReach` = REACHED, and section E's membership tests — never that `.exact` drops them. The ruling sourced it, which is why the description states it flatly. |
+
+#### Particle surnames
+
+A surname carrying a particle or an internal space is passed through **verbatim**,
+percent-encoded and **unquoted**. Nothing is stripped, concatenated, split across
+`surname`/`surnameAlt`, or wrapped in literal quotes.
+
+Three things were measured on one hard-scoped pool (given name `Marinus`, the
+Netherlands, births 1800–1810; 558 rows, read a page at a time), section K of
+`dev/probe-search-qualifiers.ts`:
+
+- **Literal quotes are inert.** `"van der Linde"` returns the identical result
+  set as `van der Linde`, and an *unbalanced* quote returns the same unscoped
+  total as the bare form, so the server strips them before matching rather than
+  honouring them. `search-records/references/name-search-mechanics.md`
+  prescribes quoting; it neither helps nor hurts, and the tool does not send it.
+- **The particle is not required to match.** `vanderlinde` and `Van Der Linde`
+  return the identical set as `van der Linde`. Dropping the particle entirely
+  (`Linde`) returns a pool of the same size whose composition differs, so it is
+  a different query, not a normalization of the same one.
+- **Control.** `Mc Kee` and `McKee` are equivalent, which is the claim already
+  in the plugin's reference file. A probe that could not reproduce it would have
+  an instrument problem rather than a finding.
+
+The unit tests pin the **string the tool builds** (rule 20a), never that
+FamilySearch honours it; the live half is the probe's, and its figures are in
+`dev/measured-figures.json` under `K`.
 
 #### The exact-match rule
 

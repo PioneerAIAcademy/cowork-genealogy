@@ -1913,5 +1913,20 @@
     "verdict:q.recordPlace searches": "metadata only",
     "verdict:f.recordPlace searches": "metadata only",
     "measured_at": "2026-09-11T15:58:12.144Z"
+  },
+  "K": {
+    "pool:van der Linde": 558,
+    "pool:\"van der Linde\"": 558,
+    "pool:vanderlinde": 558,
+    "pool:Van Der Linde": 558,
+    "pool:Linde": 558,
+    "unscopedBare": 900650,
+    "unscopedUnbalancedQuote": 900650,
+    "mcKeeSpaced": 6342813,
+    "mcKeeJoined": 6342813,
+    "verdict:literal quotes change the result set": "NO — the server strips quotes before matching, so guidance prescribing them is inert",
+    "verdict:the particle is required to match": "NO — 'vanderlinde' and 'Van Der Linde' return the identical set as 'van der Linde'",
+    "verdict:control Mc Kee equals McKee": "REPRODUCES",
+    "measured_at": "2026-09-14T11:16:29.566Z"
   }
 }
