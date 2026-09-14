@@ -35,7 +35,7 @@ novel; where the system takes an opinionated position, it says so.
         Resolve conflicts    Track hypotheses     │         │
               └─────────┬─────────┘               │         │
                         ▼                         │         │
-          Is the research exhaustive? ── not yet ─┴─────────┘
+               Reasonably exhaustive? ── not yet ─┴─────────┘
                         │ yes
                         ▼
               Write the conclusion
@@ -124,9 +124,12 @@ assumptions have genuinely been invalidated.
 Four modes, chosen by what the records actually are.
 
 **Indexed search** is the default. Queries go broad to narrow, always anchored
-on surname or country, and never narrowed by dropping the given name. Spelling
-variants are tried explicitly first — so it can be said which letter changed —
-and a wildcard follows, to catch the shape nobody could guess. Every search is
+on surname or country. Spelling variants are tried explicitly first, so it can
+be said which letter changed. Only once those are exhausted does the system
+start dropping a criterion — the given name, the surname, a relative's name —
+on the theory that *that* field is the mistranscribed one, with wildcards after
+that for the shape nobody could guess. A drop is always paired with a
+compensating tighten elsewhere, since it widens the pool. Every search is
 logged, including the ones that find nothing: a negative result is a
 finding, and the query behind it is recorded so it isn't repeated blindly.
 
@@ -142,19 +145,25 @@ sites.
 
 **Full-text search** covers documents transcribed by machine but never
 name-indexed. This is the only way to find someone as a witness, executor,
-appraiser, bondsman, heir, or neighbor rather than as the principal of a
-record. It behaves nothing like an indexed search: no fuzzy matching, no
-Soundex, no abbreviation expansion in `keywords`/`place` — *Wm* and
+appraiser, bondsman, heir, or neighbor — and the only way to find anyone at
+all, principal included, in a paragraph-style record that was never
+name-indexed. It behaves nothing like an indexed search: no fuzzy matching,
+no Soundex, no abbreviation expansion in `keywords`/`place` — *Wm* and
 *William* are separate `keywords` searches (the `name` field
 auto-expands recognized English given names). Three rules come from repeated failures:
 
 - Search by **name only**, then filter for place. Putting the place in the
   query matches the collection's description, not the document.
-- **Don't scope to a single collection.** A Cantabrian baptism found by an
-  unscoped name search returned nothing when scoped to its own collection.
+- **Don't scope to a single collection.** The full-text corpus is
+  partitioned into collections of its own, so an id borrowed from indexed
+  record search can name a partition that does not hold the document: a
+  Cantabrian baptism found by an unscoped name search returned nothing when
+  scoped that way.
 - **Decompose compound surnames into co-occurrence, not an exact phrase.**
   In the parents' own records the father carries the paternal surname and
-  the mother the maternal one, so the two never appear adjacent.
+  the mother the maternal one, so the two sit on different people. The phrase
+  form matches only where the child's compound name is written out, and misses
+  exactly the parentage records you want.
 
 Full-text hits are derivative — an original, photographed, then read by
 machine, with meaningful error — so a hit is always confirmed against the
@@ -182,18 +191,24 @@ not just the fact that prompted the search. Extraction is always a
 deliberate pass over the record; the system will not extract in passing,
 however small the record looks.
 
-The three GPS layers are classified **independently and per claim, never per
-record**:
+The three GPS layers are classified **independently**, and they do not all
+attach at the same level — source type is a property of the source, which is
+the record *as you reached it*, while information and evidence are judged per
+assertion:
 
-- **Source** — original, derivative, or authored
-- **Information** — primary, secondary, or undetermined
-- **Evidence** — direct, indirect, or negative
+- **Source** — original, derivative, or authored — *per source*
+- **Information** — primary, secondary, or undetermined — *per assertion*
+- **Evidence** — direct, indirect, or negative — *per assertion*
+
+The same record reached two ways is two sources with two classifications: the
+1850 census is *original* read from the image and *derivative* read as an
+index entry.
 
 A contemporaneous death certificate is an *original* source even when the
 informant's knowledge of the deceased's birthplace is secondhand; that
-secondhand-ness is captured at the information layer, on that claim, rather
-than by downgrading the whole document. Different claims within one record
-routinely carry different classifications.
+secondhand-ness is captured at the information layer, on that assertion,
+rather than by downgrading the whole document. Different assertions within
+one record routinely carry different classifications.
 
 These classifications are first and final. There is no later refinement
 pass, and everything downstream — conflict analysis, the exhaustiveness
@@ -248,8 +263,10 @@ residence, are not conflicts and are not manufactured into them.
 Resolution requires real analysis of source independence: information items
 tracing back to a common origin get no more credibility than their strongest
 single member, however many of them there are. The written resolution names
-the two or three factors that actually decided it rather than scoring all
-seven mechanically, and its final part explains **why the less reliable
+the two or three of the seven weighing factors — relevance, record
+category, format, informant proximity, directness, consistency,
+plausibility — that actually decided it, rather than scoring all seven
+mechanically, and its final part explains **why the less reliable
 evidence exists** — naming the historical pattern and the informant's
 position that produced the error. A resolution missing that reasoning is not
 recorded as resolved.
@@ -264,7 +281,7 @@ and *ruled out*. A new hypothesis starts active even when the evidence
 already leans toward it; promotion is a separate judgment against stated
 criteria — no unresolved contradictions naming the hypothesis's own
 evidence, no chronological impossibility, and either one supporting
-direct-evidence claim or two supporting indirect claims from two distinct
+direct-evidence assertion or two supporting indirect assertions from two
 sources. An indirect argument resting on a single source doesn't clear that
 floor; it concludes through a proof conclusion instead of promotion.
 
@@ -273,9 +290,9 @@ ordinary noise: census age rounding and a few years' drift in a reported
 birth year are not grounds for reopening it. Ruling a hypothesis out
 requires a stated reason.
 
-### Testing whether the research is exhaustive
+### Testing whether the research is reasonably exhaustive
 
-Two things are checked before anything else: every claim bearing on the
+Two things are checked before anything else: every assertion bearing on the
 question carries real, reasoned classifications, and every person the
 judgment depends on has had their identity resolved. Then the GPS threshold
 questions, then seven stop criteria, each answered in a sentence or two and
@@ -292,7 +309,7 @@ completeness question — "did they have *any other* children?" — cannot
 conclude without enumerating the sources that would show them.
 
 Stopping early is allowed, but it is recorded as a non-exhaustive stop.
-Research that stopped short is never labeled exhaustive.
+Research that stopped short is never labeled reasonably exhaustive.
 
 ### Writing the conclusion
 
@@ -354,7 +371,10 @@ plausible-sounding holdings.
 
 **A timeline.** Every known event for a person in order, with gaps marked
 and geographic feasibility checked: a person in two places too far apart for
-the era's travel, or one person enumerated twice in a census year.
+the era's travel. One person enumerated twice in a census year is common
+rather than impossible, so it is tested before it is read as two people:
+the household composition must match, and the distance is measured from the
+enumeration dates written on the pages, not from the census year.
 Single-person logical impossibilities — an event before birth or after
 death — are check-warnings' job, not the timeline's. Gap boundaries are the
 dates of the bounding events, never rounded out to January 1st. A timeline can span two
