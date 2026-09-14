@@ -55,18 +55,27 @@ historical-context.
 
 ## Calling `convert_calendar`
 
-The tool does only arithmetic — your job is the judgment: identify the
-regime (jurisdiction, era, calendar in force) from the tables below,
-decide which corrections the user actually asked for, and request
-exactly those.
+The tool holds the adoption table and identifies the regime when you pass
+`jurisdiction`. Your judgment is which corrections the user actually asked
+for — request exactly those, and no others.
 
-If the date is already expressed in the calendar the user asked about —
-no jurisdiction's transition applies to it — say so directly and skip
-the call. `corrections` must always name at least one real conversion.
+**Decide whether a conversion is in play before you call.** The tool answers
+a calendar question; it is not how you find out whether there is one. Where a
+record post-dates its own jurisdiction's transition by a wide margin, say the
+date already stands in the modern calendar and stop, with no call.
+
+Judge that margin per jurisdiction, not by century: some jurisdictions stayed
+Julian well into the twentieth century, so a late date is not by itself past
+its transition. When the margin is not plainly wide, or you are not certain
+where that jurisdiction's transition falls, call and let the tool answer — a
+needless call costs a turn, a skipped one produces a wrong date.
+
+`corrections` must always name at least one real conversion.
 
 ```
 convert_calendar({
   date: { year, month?, day?, doubleYear? },
+  jurisdiction?: "England",                  // the place the record names
   corrections: {
     doubleDatedYear?: true,                  // resolve "1750/1" → later year
     osNsYear?: true,                         // Jan 1–Mar 24 → year + 1
@@ -105,20 +114,6 @@ always preserve both the original and converted forms.
 `convert_calendar` holds the adoption table. Pass `jurisdiction` with the
 place the record names and it identifies which calendar was in force, where
 the civil year began, and whether the correction you asked for applies.
-
-**Decide whether a conversion is in play before you call.** The tool answers
-a calendar question; it is not how you find out whether there is one. Where a
-record post-dates its own jurisdiction's transition by a wide margin, there is
-no question: say the date already stands in the modern calendar and stop, with
-no call. Calling to confirm a non-question spends a turn and presents a
-conversion nobody asked for.
-
-Judge that margin per jurisdiction, not by century: some jurisdictions stayed
-Julian well into the twentieth century, so a late date is not by itself past
-its transition. When the margin is not plainly wide — the record sits near a
-transition, or you are not certain where that jurisdiction's transition falls
-— call, and let the tool answer. Calling needlessly costs a turn; skipping a
-call that was needed produces a wrong date, so resolve doubt by calling.
 
 - Pass the place as the record gives it (`England`, `Gelderland`, `Sweden`,
   `Scotland`). Case and punctuation do not matter. An unrecognized place

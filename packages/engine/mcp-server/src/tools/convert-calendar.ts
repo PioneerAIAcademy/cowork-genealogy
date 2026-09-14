@@ -154,9 +154,15 @@ function cmpYmd(a: Ymd, b: Ymd): number {
   return a.year - b.year || a.month - b.month || a.day - b.day;
 }
 
-// Every jurisdiction row from convert-dates/SKILL.md:107–124, plus the three
-// rows review flagged as not being plain adoption dates. Each row carries a
-// unit test in tests/tools/convert-calendar.test.ts.
+// Every jurisdiction row that convert-dates/SKILL.md carried before this
+// change (see 610f59f3^ for the table it replaced), plus the three rows review
+// flagged as not being plain adoption dates. The spec section that now owns
+// this is convert-calendar-tool-spec.md §4.5.
+//
+// Coverage is asserted, not asserted-in-prose: a case per row in
+// tests/tools/convert-calendar.test.ts, and a test there fails if any key here
+// has no case. An earlier version of this comment claimed per-row coverage
+// while `Catholic German states` had none.
 const JURISDICTIONS: Jurisdiction[] = [
   {
     key: "Catholic Europe",

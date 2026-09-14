@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { convertCalendar } from "../../src/tools/convert-calendar.js";
+import {convertCalendar, acceptedJurisdictions} from "../../src/tools/convert-calendar.js";
 
 describe("convert_calendar", () => {
   describe("doubleDatedYear", () => {
@@ -230,6 +230,7 @@ describe("convert_calendar", () => {
     // wiki route lost: a year alone cannot place 30 Jun 1700 in Gelderland.
     const ROWS: Array<[string, [number, number, number], [number, number, number]]> = [
       ["France", [1582, 12, 9], [1582, 12, 20]],
+      ["Catholic German states", [1582, 12, 31], [1583, 1, 1]],
       ["Protestant German states", [1700, 2, 18], [1700, 3, 1]],
       ["Zeeland", [1582, 12, 14], [1582, 12, 25]],
       ["Holland", [1583, 1, 1], [1583, 1, 12]],
@@ -375,6 +376,21 @@ describe("convert_calendar", () => {
       if (!r.ok) return;
       expect(r.applied.map((a) => a.correction)).toContain("julianToGregorianDay");
       expect(r.converted).toEqual({ year: 1800, month: 6, day: 13 });
+    });
+
+    // The comment above claims a case per row. Nothing enforced that, and the
+    // claim was already false -- `Catholic German states` had no case at all.
+    // This makes the guarantee fail loudly instead of reading as coverage.
+    it("every jurisdiction the tool accepts is covered by a case above", () => {
+      const covered = new Set<string>([
+        ...ROWS.map(([place]) => place),
+        "Catholic Europe",
+        "Sweden",
+        "Scotland",
+        "Groningen",
+      ]);
+      const missing = acceptedJurisdictions().filter((k) => !covered.has(k));
+      expect(missing, `jurisdiction rows with no test case: ${missing.join(", ")}`).toEqual([]);
     });
 
     it("an unrecognized jurisdiction is an error that lists the accepted keys", () => {

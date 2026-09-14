@@ -157,6 +157,16 @@ def test_day_offset_calls_name_a_jurisdiction(tool_calls, test):
     figure here describes the eval corpus, not production
     (docs/architecture.md 9.4).
     """
+    # The skill body sanctions one omission: "Omit `jurisdiction` only when the
+    # record names no place." A test whose record genuinely names none declares
+    # it with this tag, and the check stands down -- otherwise the guard fails
+    # the model for following its own instructions. No fixture carries the tag
+    # today; every day-offset record in the corpus names a place. It exists so
+    # that a placeless one can be added without the guard misfiring, rather than
+    # the guard passing by luck.
+    if "record-names-no-place" in (test.get("tags") or []):
+        pytest.skip("the record names no place; the body permits omitting jurisdiction")
+
     offenders = []
     for tc in _calendar_calls(tool_calls):
         args = tc.get("args") or tc.get("arguments") or {}
