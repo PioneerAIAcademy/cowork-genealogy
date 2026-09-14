@@ -53,7 +53,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Freeform tags for filtering and grouping. May be empty."
+          "description": "Freeform tags for filtering and grouping. May be empty. One reserved tag changes grading: `grade:trigger` (positive tests only) grades on activation ALONE — the test passes once the skill under test fired and its validators passed, and the judge dimensions are recorded but diagnostic-only (grading_mode `trigger`, dimensions_gate_outcome false), unlike the default `dimensions` grading where a 1 or 2 forces a partial/fail. Use it for a routing/handoff test whose delegated sub-skills are stubbed, so an outcome score would measure the stub not the skill. It REQUIRES a non-empty execution.stub_skills (the runnability gate refuses a grade:trigger test that stubs nothing — otherwise the callees run for real and the tag silences the judge over a real execution, a vacuous pass, the same failure mode grade_on_invariant guards on the negative side); a skipped/errored judge does NOT fail a trigger test; and it does NOT relax the activation requirement. See docs/specs/unit-test-spec.md."
         },
         "holdout": {
           "type": "boolean",
