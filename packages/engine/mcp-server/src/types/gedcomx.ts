@@ -79,9 +79,17 @@ export interface GedcomXQualifier {
 
 export interface GedcomXSourceDescription {
   id?: string;
+  resourceType?: string;
   titles?: { value: string }[];
   citations?: { value: string }[];
   about?: string;
+  coverage?: GedcomXCoverage[];
+}
+
+export interface GedcomXCoverage {
+  spatial?: { description?: string };
+  temporal?: { original?: string; formal?: string };
+  recordType?: string;
 }
 
 export interface GedcomXPlaceDescription {

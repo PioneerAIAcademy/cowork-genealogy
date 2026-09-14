@@ -533,6 +533,50 @@ GedcomX qualifier.
 
 The top-level array is renamed `sourceDescriptions` ↔ `sources`.
 
+#### Fields stripped by `simplifySourceDescription`
+
+The raw GedcomX `sourceDescriptions` from the recapi persona endpoint carry
+two fields that `simplifySourceDescription` does not propagate:
+
+- **`resourceType`** — identifies the source description kind
+  (e.g. `"http://gedcomx.org/DigitalArtifact"`, `"http://gedcomx.org/Record"`).
+  9 of 12 probed records carried a `DigitalArtifact` entry; without `resourceType`
+  the simplified output gives no way to distinguish it from the other 6–7
+  source descriptions a persona returns.
+
+- **`coverage[]`** — volume-level provenance on `DigitalArtifact` entries:
+  `spatial.description` (a place-description id resolvable via `getPlaceById`),
+  `temporal` (date range of the scanned register), and `recordType`.
+  Coverage describes **the volume the image sits in**, not the event — on 4 of
+  9 records with coverage, the coverage place or date range contradicted the
+  record's own facts (e.g. Tallapoosa county coverage on a Talladega birth;
+  `Birth 1841–1890` coverage on an 1848 marriage record). Agreement rate among
+  records with coverage: 4/9 (44%) agree, 4/9 partial, 1/9 disagree.
+
+  Measured 2026-09-14, `npx tsx dev/probe-record-read-artifact-coverage.ts`,
+  n=12 records across 4 families (2 returned 404). The probe changes no
+  behaviour and writes nothing. Whether to carry these fields through is
+  gated on this measurement.
+
+#### Persona role fields stripped before simplification
+
+The raw GedcomX persons from FamilySearch carry role information that
+`toSimplified` does not propagate (it operates on `GedcomXPerson`, which has
+no `display` or `principal` field):
+
+- **`display.role`** — the persona's role on the record (`"Principal"`,
+  `"Father"`, `"Mother"`, `"Spouse"`, `"Other"`). Present on **100% of search
+  personas** (2655/2655 across 3 collections) but **0% of recapi personas**
+  (0/50). The search endpoint populates it; the recapi persona endpoint does not.
+
+- **`principal`** — boolean marking the record's principal subject. Present on
+  **100% of both endpoints** (50/50 recapi, 2655/2655 search).
+
+  Measured 2026-09-14, `npx tsx dev/probe-persona-role-coverage.ts`,
+  n=50 recapi personas + 2655 search personas across 3 search pools.
+  The recapi gap means `record_read` cannot surface `display.role` from its
+  own endpoint — only `principal` is available there.
+
 ### 12. Place descriptions
 
 ```
