@@ -48,11 +48,12 @@ def _git_repo(tmp_path, monkeypatch):
     """A throwaway git repo + ``commit(*rel_paths) -> head_sha``, with
     ``check_e2e_fixtures.REPO_ROOT`` repointed at it.
 
-    Repointing REPO_ROOT is load-bearing, not bookkeeping: ``_in_head_tree`` and
-    ``_head_is_resolvable`` both shell with ``cwd=REPO_ROOT``, and against a bare
-    ``tmp_path`` git exits 128 for every call. Every "exempt" / "no violation"
-    row would then pass without git ever being consulted, and ``main()`` would
-    return 1 before running any check at all.
+    Repointing REPO_ROOT is load-bearing, not bookkeeping: ``_in_head_tree``
+    shells with ``cwd=REPO_ROOT``, and against a bare ``tmp_path`` git exits 128
+    for every call, so every "exempt" / "no violation" row would pass without git
+    ever being consulted. `test_in_head_tree_true_for_a_committed_file` is what
+    stops that: it is the only row here that reds when the probe answers False to
+    everything, and the four `== []` rows rely on it.
     """
     if shutil.which("git") is None:
         pytest.skip("git is not available")
@@ -287,54 +288,78 @@ def test_main_skips_without_pr_context(monkeypatch):
     assert check_e2e_fixtures.main() == 0
 
 
-def test_main_errors_on_unresolvable_head_sha(tmp_path, monkeypatch, capsys):
-    """A HEAD_SHA that names no commit fails the job loudly.
+def test_main_refuses_an_unresolvable_head_sha(tmp_path, monkeypatch, capsys):
+    """A HEAD_SHA that names no commit must refuse, with a line worth reading.
 
-    Without the guard every `git cat-file -e` would exit 128 — indistinguishable
-    from "the file is absent" — so every run would be exempted as treeless and
-    the gate would print OK and exit 0. That is issue #2469's own shape with a
-    new cause, so it must red, not pass.
+    Deliberately does NOT stub `git_added_e2e_runlogs`: the failure happens
+    inside it, and stubbing it out is what previously made this test pass while
+    the real path raised an uncaught CalledProcessError and printed a traceback
+    instead of an ::error::.
     """
     repo, commit = _git_repo(tmp_path, monkeypatch)
     rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
     tree, _ann = _siblings(rel)
-    commit(rel.as_posix(), tree)
+    monkeypatch.setenv("BASE_SHA", commit(rel.as_posix(), tree))
     monkeypatch.setenv("HEAD_SHA", "0" * 40)  # valid shape, absent from this repo
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "could not diff" in out, out
+    assert "added run log(s) checked" not in out, "must not report a count it never read"
+
+
+def test_main_refuses_when_repo_root_is_not_a_repo(tmp_path, monkeypatch, capsys):
+    """The other broken environment, isolated from the one above.
+
+    The sha is REAL and resolvable in its own repo; only REPO_ROOT is wrong. The
+    earlier version of this test set both a bogus sha and a non-repo root, so it
+    passed identically with either cause removed — it was a duplicate wearing a
+    different name.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)
+    not_a_repo = tmp_path / "elsewhere"
+    not_a_repo.mkdir()
+    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", not_a_repo)
+    monkeypatch.setenv("BASE_SHA", head)
+    monkeypatch.setenv("HEAD_SHA", head)
     assert check_e2e_fixtures.main() == 1
     assert "::error::" in capsys.readouterr().out
 
 
-def test_main_errors_when_repo_root_is_not_a_repo(tmp_path, monkeypatch, capsys):
-    """Same guard, the other broken environment: a checkout that is not a repo."""
-    monkeypatch.setattr(check_e2e_fixtures, "REPO_ROOT", tmp_path)
-    rel = _make_e2e_run(tmp_path, "smith", TS, tree=True, ann=False)
-    monkeypatch.setenv("HEAD_SHA", "0" * 40)
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
-    assert check_e2e_fixtures.main() == 1
-    assert "::error::" in capsys.readouterr().out
+def test_the_gate_reads_the_HEAD_SHA_tree_not_the_checkout_s_HEAD(tmp_path, monkeypatch):
+    """The `head` argument must be what is consulted, not the working HEAD.
 
-
-def test_main_head_guard_does_not_swallow_the_warn_loops(tmp_path, monkeypatch, capsys):
-    """The head guard is an exit-1 path, so it must sit BELOW the warn loops.
-
-    `test_main_drift_warning_prints_even_when_grading_gate_fails` pins that
-    invariant for the *grading* gate, but cannot see this one: its head is
-    resolvable, so hoisting the guard above the loops leaves it green. Here the
-    head is unresolvable AND a warning is due, which is the only arrangement
-    that separates the two orderings.
+    CI checks out the MERGE commit while HEAD_SHA is the PR head, so the two
+    trees genuinely differ there: an annotation present on the base branch is in
+    the merge tree and absent at HEAD_SHA. Every other test here builds its repo
+    so the commit it makes IS HEAD, which makes the two indistinguishable —
+    swapping `head` for the literal "HEAD" left the whole suite green.
     """
     repo, commit = _git_repo(tmp_path, monkeypatch)
     rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
     tree, ann = _siblings(rel)
-    _write_fixture_readme(repo, "smith", draft=True)
-    commit(rel.as_posix(), tree, ann)
-    monkeypatch.setenv("HEAD_SHA", "0" * 40)  # guard will reject
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
-    assert check_e2e_fixtures.main() == 1
-    out = capsys.readouterr().out
-    assert "::warning::" in out, "the draft warning must print before the exit-1 return"
-    assert "::error::" in out
+    graded_head = commit(rel.as_posix(), tree, ann)
+    # A LATER commit removes the annotation, so the working HEAD no longer has it.
+    (repo / ann).unlink()
+    commit(ann)
+    # Judged at `graded_head` the run is graded; judged at HEAD it is a violation.
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], graded_head) == []
+
+
+def test_the_gate_does_not_credit_an_annotation_added_after_HEAD_SHA(tmp_path, monkeypatch):
+    """The other direction: an ann that arrives only in a LATER commit does not
+    count at `head`. Together with the test above this pins the argument in both
+    signs — one fails if `head` is ignored, the other if it is ignored the other
+    way."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    tree, ann = _siblings(rel)
+    ungraded_head = commit(rel.as_posix(), tree)
+    (repo / ann).write_text("{}", encoding="utf-8")
+    commit(ann)
+    assert len(check_e2e_fixtures.check_added_runlogs_graded([rel], ungraded_head)) == 1
 
 
 def test_main_draft_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys):

@@ -94,6 +94,14 @@ def _is_primary_runlog(name: str) -> bool:
     )
 
 
+class GateUnavailable(RuntimeError):
+    """The gate could not read the tree it must check.
+
+    Raised rather than returning a sentinel so the caller cannot mistake it for
+    "no run logs were added" -- the failure mode this whole check exists to stop.
+    """
+
+
 def git_added_e2e_runlogs() -> list[Path] | None:
     """PR-added primary run logs under eval/runlogs/e2e/, as repo-relative Paths.
 
@@ -105,12 +113,33 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     head = os.environ.get("HEAD_SHA")
     if not base or not head:
         return None
-    out = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=A", base, head],
-        text=True,
-        encoding="utf-8",
-        cwd=REPO_ROOT,
-    )
+    # An unfetched sha, a shallow clone or a cwd that is not a repo all die HERE,
+    # in the selection step, before any sibling is looked up -- `check_output`
+    # raises on a non-zero exit. Left uncaught that surfaces as a six-frame
+    # traceback naming `subprocess`, which says nothing about what to do. Caught
+    # here it becomes the one actionable line, at the only place the failure can
+    # actually occur.
+    try:
+        out = subprocess.check_output(
+            ["git", "diff", "--name-only", "--diff-filter=A", base, head],
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise GateUnavailable(
+            f"could not diff {base}..{head} in this checkout (git exited "
+            f"{exc.returncode}), so the grading gate cannot see which run logs this "
+            "PR added. Either the commit was never fetched (CI uses fetch-depth: 0) "
+            "or this directory is not a git repository. Refusing rather than "
+            "reporting zero added run logs."
+        ) from exc
+    except FileNotFoundError as exc:  # git itself absent
+        raise GateUnavailable(
+            "git is not on PATH, so the grading gate cannot read the tree it must "
+            "check. Refusing rather than reporting zero added run logs."
+        ) from exc
     added: list[Path] = []
     for line in out.splitlines():
         path = line.strip()
@@ -126,27 +155,12 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     return added
 
 
-def _head_is_resolvable(head: str) -> bool:
-    """True when ``head`` names a commit reachable from REPO_ROOT's git dir.
-
-    ``git cat-file -e`` exits 128 for *every* failure -- a missing path, an
-    unknown sha, a cwd that is not a repo -- so without this check a broken
-    environment reads as "no final tree", every run is exempted as treeless,
-    and the gate prints OK and exits 0. That is issue #2469's own shape with a
-    new cause, so an unresolvable head fails the job loudly instead.
-    """
-    proc = subprocess.run(
-        ["git", "rev-parse", "--verify", f"{head}^{{commit}}"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-    )
-    return proc.returncode == 0
-
-
 def _in_head_tree(head: str, rel: Path) -> bool:
     """True when ``rel`` (repo-relative) exists in the git tree at ``head``.
 
-    Only meaningful once ``_head_is_resolvable(head)`` has passed -- see there.
+    Only reached once `git_added_e2e_runlogs` has already diffed against ``head``
+    from this same cwd, so a 128 here is a missing PATH rather than a broken
+    checkout -- that case refuses in the selection step above.
     Paths are POSIX-joined because git addresses ``<sha>:<path>`` with forward
     slashes on every platform. Binary mode: only the returncode is read, so the
     child's bytes are never decoded.
@@ -353,7 +367,14 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
 
 def main() -> int:
     # --- Grading gate (blocking) — PR-added run logs with a tree need an ann ---
-    added = git_added_e2e_runlogs()
+    try:
+        added = git_added_e2e_runlogs()
+    except GateUnavailable as exc:
+        # Before the warn loops, unavoidably: they take `added`, which does not
+        # exist on this path. Nothing is swallowed because nothing has run.
+        print(f"::error::{exc}")
+        print(f"  - {exc}", file=sys.stderr)
+        return 1
     if added is None:
         print("E2E grading gate skipped (no PR context: BASE_SHA/HEAD_SHA unset).")
         return 0
@@ -370,20 +391,6 @@ def main() -> int:
     for w in check_matched_vs_components(added):
         print(f"::warning::{w}")
         print(f"  ! {w}", file=sys.stderr)
-
-    # Below the warn loops on purpose: they read the working directory and need
-    # no resolvable head, and an early return here would swallow their output —
-    # the reorder test_main_drift_warning_prints_even_when_grading_gate_fails
-    # exists to catch.
-    if not _head_is_resolvable(head):
-        msg = (
-            f"HEAD_SHA {head!r} does not resolve to a commit in this checkout, "
-            "so the grading gate cannot read the tree it must check. Fetch the "
-            "commit (CI uses fetch-depth: 0) and re-run."
-        )
-        print(f"::error::{msg}")
-        print(f"  - {msg}", file=sys.stderr)
-        return 1
 
     grade_violations = check_added_runlogs_graded(added, head)
     if grade_violations:

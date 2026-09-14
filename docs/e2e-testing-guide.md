@@ -486,11 +486,10 @@ BASE_SHA="$(git merge-base origin/main HEAD)" HEAD_SHA="$(git rev-parse HEAD)" \
   python3 eval/harness/scripts/check_e2e_fixtures.py
 ```
 
-Brace the variables. Bare `"$H:eval/…"` in zsh eats the `e` as a `:e` modifier
-and git reports `Not a valid object name val/…`.
-
 With `BASE_SHA`/`HEAD_SHA` unset it prints `skipped` and exits 0 — **a run with
-no env set is not a pass.** And it reds on an ungraded run until the annotation
+no env set is not a pass.** If it cannot diff the two shas at all (an unfetched
+commit, or a directory that is not a repo) it refuses with an `::error::` rather
+than reporting zero added run logs. And it reds on an ungraded run until the annotation
 is *committed*, which is the gate working, not a regression.
 
 ## Step 9 — Land it ⌨️ Terminal / GitHub
