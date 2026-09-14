@@ -317,14 +317,10 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
 **After changing anything under `hooks/`, run `make hook-smoke`.**
 `plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
-proves a runtime *binds* it, and because the script must never raise, a hook that
-stopped binding is indistinguishable from one with no opinion — no error, no log,
-no red test. It is a live billed probe (two short sessions), hard-errors without a
-key, and no CI job runs it. It covers the **hosted** loader only. Cowork's loader
-was probed live on 2026-07-30 (ADR-0005) — but with a broader matcher, and only
-for `Write` and `Bash`, three weeks before `.*research_append` entered the
-matcher (2026-08-21). That arm is still unmeasured there and stays on the
-`nothing-checks` register.
+proves a runtime *binds* it, and since the script must never raise, a hook that
+stopped binding looks exactly like one with no opinion. It is live, billed, and
+run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
+`nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).
 
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a

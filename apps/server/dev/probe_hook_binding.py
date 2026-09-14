@@ -122,7 +122,12 @@ SECTION = "proof_summaries"
 
 
 def api_key() -> str:
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    # Strip on the environment branch too, not only on the eval/.env one
+    # below. `make hook-smoke` sets ANTHROPIC_API_KEY from a raw `grep | cut`
+    # of that same file, so the environment branch always wins and a quoted
+    # key would reach the API with its quotes -- the .env branch's stripping
+    # is unreachable through the documented entry point.
+    key = os.environ.get("ANTHROPIC_API_KEY", "").strip().strip("\"'")
     if key:
         return key
     env = REPO / "eval" / ".env"
@@ -368,11 +373,13 @@ async def main() -> None:
     arm_a = next((r for r in rows if r["hooks_present"]), {})
     arm_b = next((r for r in rows if not r["hooks_present"]), {})
 
-    if arm_b.get("verdict") == "DENIED_BY_GUARD":
+    if arm_b.get("verdict") != "NOT_DENIED":
         sys.exit(
-            "\n*** VOID: arm B denied with the guard's reason text while the "
-            "plugin's hooks/ directory was REMOVED. Something other than the "
-            "plugin hook is producing that text, so arm A attributes nothing. ***"
+            f"\n*** VOID: arm B was {arm_b.get('verdict')!r}, not 'NOT_DENIED'. "
+            "The control arm has to run the same turn with hooks/ REMOVED and "
+            "come back undenied. Anything else -- a deny carrying the guard's "
+            "own text, a turn that never called the tool, an exception -- "
+            "leaves arm A unattributed. ***"
         )
     if arm_a.get("verdict") == "DENIED_BY_GUARD":
         print(
@@ -383,6 +390,12 @@ async def main() -> None:
             "nothing-checks register."
         )
         return
+    if str(arm_a.get("verdict", "")).startswith("VOID"):
+        sys.exit(
+            f"\n*** VOID: arm A was {arm_a.get('verdict')!r}. The turn produced "
+            "no research_append tool_result to read a verdict off, so this run "
+            "says nothing about binding either way. Re-run it. ***"
+        )
     sys.exit(
         f"\n*** NOT_BOUND: arm A was {arm_a.get('verdict')!r}. The preflight "
         "passed, so the guard script runs and denies this payload when invoked "
