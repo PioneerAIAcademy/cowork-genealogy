@@ -17,7 +17,7 @@ Milestone A is complete — `wikipedia_search` and `place_search` tools work thr
 | 2 | `src/auth/config.ts` | **Create** — OAuth URLs, port, paths, `loadConfig`/`saveConfig` for the per-user `~/.familysearch-mcp/config.json`, and `getClientId()` that reads the bundled `config/familysearch.json` |
 | 3 | `src/auth/pkce.ts` | **Create** — PKCE code_verifier/code_challenge + state generation |
 | 4 | `src/auth/tokenManager.ts` | **Create** — Save/load/clear tokens from `~/.familysearch-mcp/tokens.json` |
-| 5 | `src/auth/refresh.ts` | **Create** — Token exchange, refresh, and `getValidToken()` |
+| 5 | `src/auth/refresh.ts` | **Create** — Token exchange, refresh, and `getValidToken(principal)` |
 | 6 | `src/auth/login.ts` | **Create** — Full OAuth flow (HTTP callback server + browser launch) |
 | 7 | `src/tools/login.ts` | **Create** — MCP `login` tool wrapper |
 | 8 | `src/tools/logout.ts` | **Create** — MCP `logout` tool wrapper |
@@ -97,7 +97,7 @@ Constants + two distinct config sources.
 
 **Functions:**
 
-- `loadConfig()` -> `AppConfig` — reads the **per-user** JSON config; returns `{}` on missing/corrupt/wrong-shape (never throws). Holds tunables like `wikiApiUrl`. Does not hold the client ID.
+- `loadConfig(principal)` -> `AppConfig` — reads the **per-user** JSON config; returns `{}` on missing/corrupt/wrong-shape (never throws). Holds tunables like `wikiApiUrl`. Does not hold the client ID.
 - `saveConfig(patch: Partial<AppConfig>)` — merges `patch` into existing per-user config, `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600`. Preserves any keys the user has set that are not in `patch`.
 - `getClientId()` -> `string` — reads the **bundled** `config/familysearch.json` at runtime and returns `clientId` (trimmed). On missing/unreadable/malformed/empty, throws a packaging error:
   ```
@@ -134,11 +134,16 @@ File-based token persistence.
 
 ## Step 5: Token Exchange & Refresh (`src/auth/refresh.ts`)
 
-The core auth logic. **`getValidToken()` is the single entry point all authenticated tools will call.**
+The core auth logic. **`getValidToken(principal)` is the single entry point all authenticated tools will call.**
+The `principal` (`src/auth/principal.ts`) says who the call acts as: `LOCAL` reads and
+refreshes the per-user files described here; a bearer principal carries the request's
+access token and per-user config and is used as given — no refresh, no file — because
+in a hosted deployment the web tier owns the grant. `loadConfig`, `saveConfig`,
+`isHostedMode` and the config getters take the same parameter.
 
 - `exchangeCodeForTokens(code, codeVerifier)` -> `TokenStore` — POST to token URL with `grant_type=authorization_code`
 - `refreshAccessToken(refreshToken)` -> `TokenStore` — POST with `grant_type=refresh_token`, keeps old refresh token if new one not issued
-- `getValidToken()` -> `string` (access token) — loads tokens, refreshes if expired, throws instructive error if no tokens or refresh fails:
+- `getValidToken(principal)` -> `string` (access token) — loads tokens, refreshes if expired, throws instructive error if no tokens or refresh fails:
   - No tokens: `"User is not logged in to FamilySearch. Call the login tool to authenticate."`
   - Expired + refresh fails: `"FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."`
   - Expired + no refresh token: `"FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."`
@@ -151,7 +156,7 @@ replaced by `HOSTED_REAUTH_INSTRUCTION`, which routes the user to the web app's
 `login` flow cannot complete in the VM (its callback binds the sandbox's
 `127.0.0.1:1837`, while the registered redirect resolves on the user's laptop),
 so `loginTool` likewise short-circuits to that instruction in hosted mode
-instead of starting a doomed flow. `isHostedMode()` gates both; the desktop
+instead of starting a doomed flow. `isHostedMode(principal)` gates both; the desktop
 `.mcpb` never sets the flag, so its behavior is unchanged.
 
 ---

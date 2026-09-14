@@ -196,8 +196,8 @@ person-evidence at link time via `materialize_facts`.
 **Match checks belong to the extractor, not you.** When the user asks
 to check FamilySearch matches, relay it as the flag above — never call
 `record_person_matches` / `record_record_matches` yourself (they are
-not in this skill's allowed-tools, and the persona `id` they key on
-lives with the agent's extraction).
+not in this skill's allowed-tools, and the extractor already holds the
+`recordId` they key on).
 
 **Check the calendar before delegating, not after.** When a record's
 date may fall before its jurisdiction adopted the Gregorian calendar,

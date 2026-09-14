@@ -439,7 +439,6 @@ describe("materialize_facts", () => {
         ],
       }),
     );
-    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
 
     const result = await materializeFacts({
       projectPath: dir,
@@ -459,9 +458,9 @@ describe("materialize_facts", () => {
     const t = await readTree();
     expect(findPerson(t, "I2")).toBeTruthy();
     expect(findPerson(t, "I3").facts).toHaveLength(1);
-    // Exactly one write cycle: the .bak captures the pre-batch state, not an
-    // intermediate one between the two ops.
-    expect(await readFile(join(dir, "tree.gedcomx.json.bak"), "utf-8")).toBe(before);
+    // One atomic write cycle for the whole batch, and no readable `.bak` copy
+    // left beside the tree.
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
   });
 
   it("(15) batch all-or-nothing: op[1] failing writes NOTHING, not even op[0]'s facts", async () => {
@@ -1133,7 +1132,7 @@ describe("materialize_facts", () => {
   it("(36) REFUSES when the named role already has its own persona on that record", async () => {
     // The common case, not an edge case: measured over eval/**/research.json the
     // role a relationship/marriage assertion names already has its own persona
-    // on the same record in 52 of 162 cases. The persona arm mints her WITH her
+    // on the same record in 93 of 167 cases (55.7%). The persona arm mints her WITH her
     // facts; this arm would leave a name-only shell, which is the symptom the
     // spec exists to cure.
     await writeProject(
@@ -1715,6 +1714,306 @@ describe("materialize_facts", () => {
     const p = findPerson(await readTree(), "I2");
     for (const f of p.facts ?? []) {
       expect(f.type).not.toMatch(/[Pp]arent/);
+    }
+  });
+
+  it("(53) a sibling persona with no NAME assertion does not block the named-party arm", async () => {
+    // The writable-by-neither-arm gap this closes: siblingCanMint used to accept
+    // a persona carrying only a gender or only a fact, but the persona arm
+    // refuses to mint a person it cannot name. Steering there errored, this arm
+    // refused and pointed back at it, and add_person is prohibited for a
+    // record-derived person, so nothing could write her.
+    for (const sibling of [
+      assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "gender", value: "Female" }),
+      assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1820" }),
+    ]) {
+      await writeProject(
+        tree(),
+        research({
+          sources: [S1],
+          assertions: [
+            assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+            sibling,
+          ],
+        }),
+      );
+      const r = single(
+        await materializeFacts({
+          projectPath: dir,
+          assertionId: "a_001",
+          relatedRole: "bride",
+          name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+      expect(r.ok, String(sibling.fact_type)).toBe(true);
+      if (!r.ok) continue;
+      expect(r.namesAdded).toBe(1);
+    }
+
+    // But a sibling WITH a name still blocks it: the persona arm does better there.
+    await writeProject(
+      tree(),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+          assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "name", value: "Mary Doyle" }),
+        ],
+      }),
+    );
+    const blocked = single(
+      await materializeFacts({
+        projectPath: dir,
+        assertionId: "a_001",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.errors[0]).toContain("already has its own persona");
+  });
+
+  it("(54) a nameless persona's sourced FACTS are written too, not just her name", async () => {
+    // The regression test 53 did not have: it pinned namesAdded and said nothing
+    // about facts, so narrowing siblingCanMint traded a loud refusal for a quiet
+    // half-write. The bride the register gives a persona for but never names
+    // carries a birth that has NO other route into the tree — the persona arm
+    // refuses her for want of a name, and add_person is prohibited for a
+    // record-derived person — so dropping it here drops it everywhere.
+    const namelessBride = () => [
+      assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M", date: "1860", structured_value: { related_person_role: "bride" } }),
+      assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+    ];
+
+    await writeProject(tree(), research({ sources: [S1], assertions: namelessBride() }));
+    const r = single(
+      await materializeFacts({
+        projectPath: dir,
+        assertionId: "a_001",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+        nameType: "BirthName",
+      }),
+    );
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.created).toBe(true);
+    expect(r.namesAdded).toBe(1); // her name is not double-written by the second pass
+    expect(r.factsAdded).toBe(1); // the 1839 birth, which used to be dropped
+
+    const her = findPerson(await readTree(), r.personId);
+    expect(her.facts.map((f: any) => [f.type, f.date])).toEqual([["Birth", "1839"]]);
+    expect(her.names).toHaveLength(1);
+    assertWrittenNodesHaveRefs(await readTree(), her); // the birth arrives WITH its ref
+
+    // Idempotent: the same call again enriches nothing and duplicates nothing.
+    const again = single(
+      await materializeFacts({
+        projectPath: dir,
+        personId: r.personId,
+        assertionId: "a_001",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+        nameType: "BirthName",
+      }),
+    );
+    expect(again.ok).toBe(true);
+    if (!again.ok) return;
+    expect(again.factsAdded).toBe(0);
+    expect(again.namesAdded).toBe(0);
+    expect(findPerson(await readTree(), r.personId).facts).toHaveLength(1);
+
+    // The live corpus shape is [birth, marriage], not birth alone, and §4.5's
+    // guarantee has to survive the second pass: the marriage assertion must NOT
+    // become a person-level fact just because a different arm reached it. It
+    // does not, because the second pass IS the persona arm and SKIP_TYPES drops
+    // it there exactly as on any other persona.
+    await writeProject(
+      tree(),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M", date: "1860", structured_value: { related_person_role: "bride" } }),
+          assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+          assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "marriage", value: "M married T", date: "1860" }),
+        ],
+      }),
+    );
+    const withMarriage = single(
+      await materializeFacts({
+        projectPath: dir,
+        assertionId: "a_001",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(withMarriage.ok).toBe(true);
+    if (!withMarriage.ok) return;
+    expect(withMarriage.factsAdded).toBe(1); // the birth, and only the birth
+    const bride = findPerson(await readTree(), withMarriage.personId);
+    expect(bride.facts.map((f: any) => f.type)).toEqual(["Birth"]);
+    expect(bride.facts.some((f: any) => String(f.type).toLowerCase() === "marriage")).toBe(false);
+  });
+
+  it("(56) the fact pass covers EVERY spelling the guard matched, not just the first", async () => {
+    // `siblings` is selected through normNamePart, so it can span spellings that
+    // normalize equal, while the persona arm filters with exact equality.
+    // Driving the second pass from siblings[0] alone handed it a subset and
+    // dropped the rest with no error and no count, which fact survived being
+    // decided by array order.
+    for (const order of [
+      [
+        assertion("a_002", { record_id: "REC-MARR", record_role: "Bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+        assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "death", date: "1901", place: "Cork, Ireland" }),
+      ],
+      // Reversed: under the old code this flipped WHICH fact was lost.
+      [
+        assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "death", date: "1901", place: "Cork, Ireland" }),
+        assertion("a_003", { record_id: "REC-MARR", record_role: "Bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+      ],
+      // A trailing space normalizes equal too.
+      [
+        assertion("a_002", { record_id: "REC-MARR", record_role: "bride ", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+        assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "death", date: "1901", place: "Cork, Ireland" }),
+      ],
+    ]) {
+      const label = order.map((a: any) => `${a.record_role}:${a.fact_type}`).join("+");
+      await writeProject(
+        tree(),
+        research({
+          sources: [S1],
+          assertions: [
+            assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M", structured_value: { related_person_role: "bride" } }),
+            ...order,
+          ],
+        }),
+      );
+      const r = single(
+        await materializeFacts({
+          projectPath: dir,
+          assertionId: "a_001",
+          relatedRole: "bride",
+          name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+      expect(r.ok, label).toBe(true);
+      if (!r.ok) continue;
+      expect(r.factsAdded, label).toBe(2);
+      // factsEnriched is snapshotted against the OP, not against each pass. A
+      // second pass seeing the first pass's brand-new fact must not report it
+      // "enriched" on a person this same op created.
+      expect(r.factsEnriched, label).toBe(0);
+      const her = findPerson(await readTree(), r.personId);
+      expect([...her.facts.map((f: any) => f.type)].sort(), label).toEqual(["Birth", "Death"]);
+      assertWrittenNodesHaveRefs(await readTree(), her);
+    }
+
+    // The exact shape that lied: the same birth under two spellings, one of
+    // them carrying an extra place, so pass 2 MERGES into what pass 1 created.
+    await writeProject(
+      tree(),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M", structured_value: { related_person_role: "bride" } }),
+          assertion("a_002", { record_id: "REC-MARR", record_role: "Bride", fact_type: "birth", date: "1839" }),
+          assertion("a_003", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1839", place: "Cork, Ireland" }),
+        ],
+      }),
+    );
+    const merged = single(
+      await materializeFacts({
+        projectPath: dir,
+        assertionId: "a_001",
+        relatedRole: "bride",
+        name: { given: "Mary", surname: "Doyle" },
+      }),
+    );
+    expect(merged.ok).toBe(true);
+    if (!merged.ok) return;
+    expect(merged.created).toBe(true);
+    expect(merged.factsAdded).toBe(1);
+    expect(merged.factsEnriched).toBe(0); // nothing existed before this op
+  });
+
+  it("(57) an UNCORROBORATED relatedRole writes the name only, never another person's facts", async () => {
+    // relatedRole is caller-supplied free text and is never persisted, so a
+    // wrong one that names a REAL other role selects a real persona: a
+    // different individual's. Minting a duplicate name under that mistake was
+    // the pre-existing, spec-accepted risk. Writing that individual's vitals
+    // under it is categorically worse, because each lands with a genuine
+    // resolved ref and the misattribution looks provenanced.
+    const will = (over: Record<string, unknown>) => [
+      assertion("a_001", { record_id: "REC-WILL", record_role: "testator", fact_type: "parentage", value: "names his daughter Ann", ...over }),
+      assertion("a_010", { record_id: "REC-WILL", record_role: "heir", fact_type: "birth", date: "1802", place: "Kent, England" }),
+      assertion("a_011", { record_id: "REC-WILL", record_role: "heir", fact_type: "death", date: "1871", place: "Kent, England" }),
+    ];
+    const cases: Array<[string, Record<string, unknown>, number]> = [
+      // No structured_value at all: nothing corroborates the role.
+      ["no structured_value", {}, 0],
+      // Corroboration present but naming a DIFFERENT role: the caller is wrong.
+      ["names another role", { structured_value: { related_person_role: "daughter" } }, 0],
+      // Corroboration present and agreeing: the facts are hers, write them.
+      ["corroborated", { structured_value: { related_person_role: "heir" } }, 2],
+    ];
+    for (const [label, over, expected] of cases) {
+      await writeProject(tree(), research({ sources: [S1], assertions: will(over) }));
+      const r = single(
+        await materializeFacts({
+          projectPath: dir,
+          assertionId: "a_001",
+          relatedRole: "heir",
+          name: { given: "Ann", surname: "Weller" },
+          gender: "Female",
+        }),
+      );
+      expect(r.ok, label).toBe(true);
+      if (!r.ok) continue;
+      expect(r.namesAdded, label).toBe(1); // the name is written either way
+      expect(r.factsAdded, label).toBe(expected);
+      const her = findPerson(await readTree(), r.personId);
+      expect((her.facts ?? []).length, label).toBe(expected);
+      assertWrittenNodesHaveRefs(await readTree(), her);
+    }
+  });
+
+  it("(55) the fact pass is scoped: no persona, gender-only, and negative evidence each write no fact", async () => {
+    // The other direction of the same guard. Writing her facts must not start
+    // writing facts that are not hers, are not facts, or are not positive
+    // evidence — each of these returns a clean factsAdded: 0 rather than an
+    // error or a spurious fact.
+    const cases: Array<[string, any[]]> = [
+      // No persona for the role at all: the pure named-party case, unchanged.
+      ["no persona", [
+        assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+      ]],
+      // A persona carrying only gender: gender is a scalar, never a fact node.
+      ["gender only", [
+        assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+        assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "gender", value: "Female" }),
+      ]],
+      // Negative evidence is not a positive tree write (§7.1 (4)).
+      ["negative evidence", [
+        assertion("a_001", { record_id: "REC-MARR", record_role: "groom", fact_type: "marriage", value: "T married M" }),
+        assertion("a_002", { record_id: "REC-MARR", record_role: "bride", fact_type: "birth", date: "1839", evidence_type: "negative" }),
+      ]],
+    ];
+    for (const [label, assertions] of cases) {
+      await writeProject(tree(), research({ sources: [S1], assertions }));
+      const r = single(
+        await materializeFacts({
+          projectPath: dir,
+          assertionId: "a_001",
+          relatedRole: "bride",
+          name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+      expect(r.ok, label).toBe(true);
+      if (!r.ok) continue;
+      expect(r.factsAdded, label).toBe(0);
+      expect(r.namesAdded, label).toBe(1);
+      const her = findPerson(await readTree(), r.personId);
+      expect(her.facts ?? [], label).toHaveLength(0);
     }
   });
 });

@@ -3072,7 +3072,7 @@ describe("research_append (composite persist + enforcement)", () => {
     });
     const research = await readResearch();
     expect(research.sources[1].gedcomx_source_description_id).toBe("S1");
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true); // one-deep tree backup
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false); // no readable .bak copy of the tree
   });
 
   it("accepts a sources append that reuses an existing S id (multi-repository pattern); tree untouched", async () => {
@@ -3535,6 +3535,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/record_persona_id/);
     expect(r.errors[0]).toMatch(/Re-run the search WITH projectPath/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
@@ -3560,6 +3561,28 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/record_persona_id/);
+  });
+
+  it("hard-errors when a fulltext_search returned results but staged no sidecar", async () => {
+    const research = baseResearch();
+    research.log = [{ ...searchLogEntry(null), tool: "fulltext_search" }] as any;
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...noId(validAssertion("x", "src_001")), log_entry_id: "log_001" },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/retained transcript/);
+    expect(r.errors[0]).not.toMatch(/record_persona_id/);
   });
 
   it("does NOT fire for a nil/negative producer search with no sidecar (legit — no false positive)", async () => {

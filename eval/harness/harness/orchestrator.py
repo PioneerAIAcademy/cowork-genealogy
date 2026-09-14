@@ -33,6 +33,8 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
+from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN
+from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
     JudgeResult,
@@ -573,6 +575,11 @@ async def _execute_single_run(
             # the declaration the validator reads a legal hand-off as a
             # violation (issue #1012).
             "execution": spec.execution,
+            # Also threaded in: `user_message` (from input.user_message), so
+            # validators can verify whether a figure in the response was
+            # supplied by the user rather than derived from a tool call.
+            # Used by report_unsourced_year_in_response (issue #1965 V2).
+            "user_message": spec.raw.get("input", {}).get("user_message", ""),
         },
     )
     validators_passed = compute_validators_passed(
@@ -604,7 +611,7 @@ async def _execute_single_run(
     # so these are folded into the SKILL-level `output.warnings` instead,
     # via _build_warnings below, alongside its other advisory kinds.
     judge_dimension_warnings: list[dict[str, Any]] = []
-    if validators_passed and result.aborted_reason is None:
+    if result.aborted_reason is None:
         _judge_start = time.perf_counter()
         try:
             judge_output = _run_judge(
@@ -660,9 +667,16 @@ async def _execute_single_run(
         has_expected_classifications=bool(spec.raw.get("expected_classifications")),
     )
 
-    # A judge FAIL on a correctly-routed negative test is REPORTED, not floored:
-    # the corpus says the judge is usually right (20 of 24 human-confirmed), and
-    # these dimensions never gated the outcome anyway.
+    # A judge FAIL on a correctly-routed negative test is COERCED to N/A (#2196):
+    # routing already decided the outcome, so these dimensions never gated it,
+    # and the judge was grading a transcript the harness usually truncated at
+    # the hand-off. NOT floored to 2 - that shipped once and the corpus refuted
+    # it (20 of 24 cells human-confirmed at 1). The original score and rationale
+    # survive in output.warnings, which is what keeps the 1 trendable.
+    #
+    # Runs unconditionally, OUTSIDE the judge gate above, and before #2057 that
+    # was invisible: a validator-failing run had no dimensions, so this
+    # no-opped on the whole class. It now fires there too.
     flag_routing_negative_judge_fail(
         judge_result.dimensions,
         spec=spec,
@@ -715,6 +729,7 @@ async def _execute_single_run(
         cache_creation_input_tokens=skill_cache_write,
         output_tokens=skill_output,
         model_usage=per_model,
+        no_result_message=result.no_result_message,
         skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
@@ -1060,7 +1075,62 @@ def _build_warnings(
             "observation": obs_text,
         })
 
+    # Harness node-subprocess timeout (#2025). A live tool whose compiled-code
+    # bridge trips the node timeout returns a write/validation failure the skill
+    # then has to recover from — a harness flake, not a skill defect, and one
+    # that otherwise lives only inside a `response` string nobody greps. Scan the
+    # recorded live-tool responses for the sentinel and surface it as a warning
+    # so the next occurrence is legible in run.output.warnings. Gated on a live
+    # match reporting failure so a tool's own error prose can't false-trip it.
+    timed_out_tools = sorted({
+        c["tool"]
+        for c in tool_calls
+        if (c.get("matched") or {}).get("kind") == "live"
+        and _response_hit_node_timeout(c.get("response"))
+    })
+    if timed_out_tools:
+        warnings.append({
+            "kind": "harness_node_timeout",
+            "advisory": (
+                f"{len(timed_out_tools)} live MCP tool(s) hit the harness "
+                f"node-subprocess timeout ({NODE_EVAL_TIMEOUT_LONG}s) and returned a "
+                "write/validation failure the skill then had to recover from — a "
+                "harness flake, not a skill defect (#2025). Do not grade the "
+                f"recovery as a skill error. Tools: {timed_out_tools}."
+            ),
+            "tools": timed_out_tools,
+        })
+
+    # Single chokepoint: every output.warnings entry — this function's own, the
+    # judge's (folded in via judge_warnings), and any built elsewhere and folded
+    # in — is the return value of this call. Validate each kind by value against
+    # the registry so an unregistered kind fails loudly on first emission from
+    # ANY file, literal or const, rather than silently printing nowhere (#2025).
+    validate_warning_kinds(warnings)
     return warnings
+
+
+def _response_hit_node_timeout(response: Any) -> bool:
+    """Whether a recorded live-tool response is a node-subprocess timeout (#2025).
+
+    A tripped node subprocess lands in the tool's failure envelope
+    (`ok: false` / `valid: false`) with the `subprocess.TimeoutExpired` string
+    in `errors`/`message`. Keyed on the failure flag AND the seconds-anchored
+    pattern so neither a tool's own error prose nor an upstream `...ms` fetch
+    timeout false-trips it (see NODE_EVAL_TIMEOUT_PATTERN).
+    """
+    if not isinstance(response, dict):
+        return False
+    if response.get("ok") is not False and response.get("valid") is not False:
+        return False
+    texts: list[str] = []
+    errs = response.get("errors")
+    if isinstance(errs, list):
+        texts.extend(str(e) for e in errs)
+    message = response.get("message")
+    if isinstance(message, str):
+        texts.append(message)
+    return any(NODE_EVAL_TIMEOUT_PATTERN.search(t) for t in texts)
 
 
 # Judge dimensions whose subject is checked deterministically by the
@@ -1120,7 +1190,48 @@ def apply_deterministic_deference(dimensions, validator_results, *, has_expected
 def flag_routing_negative_judge_fail(
     dimensions, *, spec, activated, skills_invoked, warnings=None
 ):
-    """Report a judge FAIL on a correctly-routed negative test. Change no score.
+    """Coerce a judge FAIL on a correctly-routed negative test to N/A (#2196).
+
+    On this signature the harness usually stops the run the instant the right
+    skill fires, so the judge is handed a truncated transcript and still asked
+    to grade Correctness and Completeness. Since the 2026-09-02 ruling those two
+    dimensions are coerced from 1 to `None` and the original score and rationale
+    are preserved in an `output.warnings[]` entry, following `judge.py`'s
+    `coerced_tool_arguments_to_na`.
+
+    **"Usually" is measured, and the exception matters.** The coercion fires on
+    the routing signature alone and does NOT check whether the run produced
+    anything, per #2196's stated signature. On 4 of the 47 runs it fires on in
+    the committed corpus the skill under test HAD produced real output before
+    routing: ut_timeline_008 (1355 chars, extraction_append x2 + research_log
+    _append, judge rationale "extracting 11 new assertions"), ut_person_evidence
+    _003 (710 chars, 4 calls, and its 1 is HUMAN-CONFIRMED with a written
+    comment), and two ut_citation_003 runs. On those the 1 names a real defect
+    that the `pass` outcome already hides. The score still goes to null there;
+    what preserves the signal is the warning above plus
+    `review_sample.is_mandatory`'s third trigger, not the dimension.
+
+    **Do not "fix" this by gating on empty output.** That is the gate
+    unit-test-spec.md §5.10 forbids, on evidence that still applies: 4 of the
+    old floor's overrides had an empty `text_response` and zero turns, but so
+    did 6 of its 20 confirmations, so an empty-output gate would have fired on
+    10 cells and been wrong on 6. It would suppress this over-fire and keep
+    coercing the confirmations whose output happened to be empty, which is not
+    a clean fix - it trades a measurable 4 for an unmeasured 6. The signature
+    is #2196's, deliberately. Tracked as issue #2443, whose first step is
+    adjudicating those 4 runs rather than changing this function.
+
+    **This is not the deleted floor.** The floor rewrote a 1 to a 2 — a claim
+    that the skill did better than the judge said. N/A is a refusal to grade a
+    field the harness left blank, and routing alone still decides these tests
+    (`_compute_outcome`). A `2` is left alone, which keeps `is_mandatory`'s
+    first trigger working on it unchanged.
+
+    The old `routing_negative_judge_fail` warning is NOT also emitted: it fires
+    on the identical condition, so a cell would be tallied twice, and its
+    advisory ("read it before overriding it") is about a score that no longer
+    exists once it is null. Its guidance is carried into the advisory below and
+    its registry row stays, because committed run logs carry the kind.
 
     This used to FLOOR Correctness/Completeness from 1 to 2 here, on the theory
     that the judge was grading the routed-to skill's execution rather than
@@ -1154,9 +1265,12 @@ def flag_routing_negative_judge_fail(
     work inline (a real defect this suite would otherwise miss) or the judge
     misreading a clean decline.
 
-    Returns `dimensions` unmodified; appends to `warnings` when given. No-op
-    unless the test is negative with a non-empty `correct_skill`, the skill under
-    test did not activate, and an accepted skill is in `skills_invoked`.
+    Mutates matching dimensions in place (score -> None, rationale prefixed) and
+    appends to `warnings` when given; the rewritten rationale names the original
+    score, so a caller that passes no warnings list still leaves a trace. Never
+    raises. No-op unless the test is negative with a non-empty `correct_skill`,
+    the skill under test did not activate, and an accepted skill is in
+    `skills_invoked`.
     """
     if not dimensions:
         return dimensions
@@ -1181,21 +1295,49 @@ def flag_routing_negative_judge_fail(
         return dimensions
     for dd in dimensions:
         if dd.get("name") in _ROUTING_DIAGNOSTIC_DIMENSIONS and dd.get("score") == 1:
+            # Append BEFORE mutating: the warning is the only place the judge's
+            # original score and reasoning survive intact.
             if warnings is not None:
                 warnings.append({
-                    "kind": "routing_negative_judge_fail",
+                    "kind": "coerced_routing_negative_to_na",
                     "advisory": (
                         f"judge scored {dd['name']} 1 on a negative test whose "
-                        f"outcome is decided by routing. Across the committed "
-                        f"corpus a human confirmed this 1 in 20 of 24 such "
-                        f"cells, so read it before overriding it: if the skill "
-                        f"under test carried out its own task inline, the 1 is "
-                        f"right and the routing pass is hiding a real defect."
+                        f"outcome is decided by routing; coerced to null. "
+                        f"Across the committed corpus a human confirmed this 1 "
+                        f"in 20 of 24 such cells, so read it before confirming "
+                        f"the N/A: if the skill under test carried out its own "
+                        f"task inline, the 1 is right and the routing pass is "
+                        f"hiding a real defect. The coercion does NOT check "
+                        f"whether the run produced output, and on 4 of the 47 "
+                        f"runs it fires on in the committed corpus it did "
+                        f"(ut_timeline_008 wrote 11 assertions via "
+                        f"extraction_append; ut_person_evidence_003's 1 is "
+                        f"human-confirmed)."
                     ),
                     "name": dd["name"],
                     "score": dd.get("score"),
+                    # `or ""` deliberately: this field is the only durable record of
+                    # the judge's reasoning, and a null here is indistinguishable
+                    # from "the judge said nothing" to whoever reads the log.
                     "rationale": dd.get("rationale") or "",
                 })
+            # Rewrite the rationale as well as the score, following
+            # apply_deterministic_deference and coerced_tool_arguments_to_na. A
+            # null sitting beside a rationale still arguing the skill failed
+            # reads as a harness bug to whoever opens the run log, and the CRUD
+            # UI never surfaces output.warnings.
+            orig = dd.get("rationale") or ""
+            dd["rationale"] = (
+                f"[coerced-to-na] this is a correctly-routed negative test, whose "
+                f"outcome is decided by routing alone, so {dd['name']} is N/A and "
+                f"the judge's 1 was coerced to null. READ THE ORIGINAL BELOW "
+                f"BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed "
+                f"corpus the skill under test produced real output first (up to "
+                f"1355 chars and 5 tool calls, including writes), and there a 1 "
+                f"names a genuine defect the routing pass hides. "
+                f"Original judge rationale: {orig}"
+            )
+            dd["score"] = None
     return dimensions
 
 
@@ -1355,8 +1497,16 @@ def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:
       (`correct_skill: []`), where "no skill fired" holds whether the model
       cleanly declined or answered the request itself, so the base dimensions
       are the only thing telling those apart and they DO gate.
+    - `"trigger"` — a positive test tagged `grade:trigger` (opt-in). The verdict
+      is activation alone (the skill under test fired, checked in
+      `_compute_outcome`'s positive branch); the judge runs base-only and
+      diagnostically and does NOT gate. For a test whose sub-skills are stubbed,
+      an outcome score would measure the stub, not the skill (issue #2156;
+      mirrors #2023's stubbed-run principle).
     """
     if spec.type == "positive":
+        if "grade:trigger" in (getattr(spec, "tags", None) or []):
+            return "trigger", False
         return "dimensions", True
     negative = spec.negative or {}
     if negative.get("grade_on_invariant"):
@@ -1379,8 +1529,11 @@ def _compute_outcome(
 ) -> str:
     """v1 per-run outcome per spec §7.
 
-    `judge_skipped` is True iff the judge layer didn't grade (validators
-    failed OR judge raised an error). For positive tests, when validators
+    `judge_skipped` is True iff the judge layer didn't grade. Since #2057
+    that means an aborted run or a judge that raised — a validator failure
+    no longer skips the judge, and `if not validators_passed: return "fail"`
+    below runs AHEAD of every `judge_skipped` branch, so the outcome is
+    unchanged by that. For positive tests, when validators
     passed but the judge was still skipped, that's a judge-crash path —
     the run can't be scored as pass because spec §7 says pass requires
     "every judge dimension scored pass" and zero dimensions can't satisfy
@@ -1417,7 +1570,19 @@ def _compute_outcome(
     # explicitly. Negative tests are routing-determined (see the negative
     # branch below) — their judge call is base-only and diagnostic, so a
     # judge crash doesn't gate their outcome.
-    if judge_skipped and spec.type == "positive":
+    #
+    # grade:trigger positive tests are the exception on the positive side:
+    # they are graded on activation alone (grading_mode "trigger",
+    # dimensions_gate_outcome=False), so their judge call is diagnostic just
+    # like a negative's. A judge crash must NOT gate them — the trigger
+    # verdict in the positive branch below owns the outcome, after the same
+    # activation + skills_invoked checks every positive test runs. Without
+    # this exemption a run log could show dimensions_gate_outcome=False beside
+    # a fail the (skipped) dimensions caused (issue #2156).
+    _is_trigger_positive = spec.type == "positive" and "grade:trigger" in (
+        getattr(spec, "tags", None) or []
+    )
+    if judge_skipped and spec.type == "positive" and not _is_trigger_positive:
         return "fail"
 
     if spec.type == "positive":
@@ -1438,6 +1603,15 @@ def _compute_outcome(
         # docs/specs/unit-test-spec-v2.md for v2 fidelity work.
         if spec.skill not in skills_invoked:
             return "fail"
+        if "grade:trigger" in (getattr(spec, "tags", None) or []):
+            # grade:trigger (issue #2156): the deterministic contract for this
+            # positive test is activation alone — checked just above. Its
+            # sub-skills are stubbed, so the judge's outcome dimensions measure
+            # the stub, not the skill (mirrors the #2023 stubbed-run principle);
+            # they still run and are recorded but do not gate. Kept in step with
+            # grading_mode_for's "trigger" mode (dimensions_gate_outcome=False),
+            # enforced by test_grading_mode_matches_what_compute_outcome_does.
+            return "pass"
     else:  # negative
         # Invariant grading (opt-in via `negative.grade_on_invariant`).
         # The test is graded SOLELY on its deterministic invariant
@@ -1448,8 +1622,18 @@ def _compute_outcome(
         # refuse-new-source), the skill may or may not fire, but no run
         # may harm state, and the validator is what enforces that. The
         # invariant must be backed by a tag-gated validator that actually
-        # runs; a `grade_on_invariant` test with no such validator passes
-        # vacuously (see docs/specs/unit-test-spec.md).
+        # runs; a `grade_on_invariant` test with no such validator would pass
+        # vacuously, which `runnability.py` blocks at load time by matching the
+        # test's tags against the validator file's gate tags. Do not add a
+        # second, runtime check of the same thing here — replayed over the
+        # committed corpus it fires on one run, already fixed (measured
+        # 2026-09-10: 1 of 71 `grade_on_invariant` runs was vacuous,
+        # `search-wikipedia/v1_2026-06-23_16-05-24`, which predates
+        # `test_no_wiki_no_write`, the tag-gated validator added 2026-07-29).
+        # Note what the load-time gate does and does not prove: that a
+        # validator GATES ON the test's tags, never that it EXECUTES. A
+        # tag-gated validator with a second, state-dependent skip could still
+        # go vacuous. None does today, and nothing checks for one.
         if (spec.negative or {}).get("grade_on_invariant"):
             return "pass"
         # Fail iff the skill under test ACTIVATED. A bare entry in

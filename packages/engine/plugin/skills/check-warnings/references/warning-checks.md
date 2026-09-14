@@ -54,7 +54,9 @@ Always investigate.
   record fires this tag is the fact TYPE it was attached as, not
   its date: the same estate file is silent as a Probate fact and
   fires as a Residence fact.
-- Action: check person_evidence links for the post-death event.
+- Action: recommend the researcher check which attached source
+  carries the post-death event, and whether that record belongs to
+  this person.
 
 ### `hasAgeRangeGreaterThan120`
 - Rule: latest possible death year minus latest possible birth

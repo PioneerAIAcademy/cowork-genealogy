@@ -50,7 +50,7 @@ below. A clean captured sample lives at
 not shipped).
 
 > Note: dev testing exercised the beta-bearer-token path against `sg30p0`. The
-> tool uses `getValidToken()` (production `familysearch.org` OAuth tokens) at
+> tool uses `getValidToken(principal)` (production `familysearch.org` OAuth tokens) at
 > runtime; a full production-token run through OAuth login was not exercised in
 > design, but `sg30p0` is the sanctioned host per review.
 
@@ -60,7 +60,7 @@ not shipped).
 
 ### Auth & headers
 
-- **Token:** `getValidToken()` from `src/auth/refresh.ts` — the single
+- **Token:** `getValidToken(principal)` from `src/auth/refresh.ts` — the single
   entry point. It auto-refreshes and throws the standard LLM-instruction
   error ("Call the login tool to authenticate.") when no valid session
   exists; the handler lets that propagate. Do **not** re-implement token
@@ -256,7 +256,7 @@ inferred from the schema.
 | Condition | Behavior |
 |-----------|----------|
 | `personId` missing / empty | MCP input schema rejects (`required`); also validate for a clear message. |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error ("Call the login tool…"). |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error ("Call the login tool…"). |
 | API returns **401** | Throw: `"FamilySearch rejected the access token (401). The session may have expired or been revoked — call the login tool to re-authenticate."` |
 | API returns **200** with `visibility: "CALCULATING"`, `isValid: false` (no `personScores`) | The score is computed **asynchronously** and isn't ready yet. **Retry** after a short delay (tool: up to 5 attempts, 2 s apart); the score lands on a later request. If still calculating after the retries, throw `"FamilySearch is still calculating the quality score for ${personId}. Try again in a few seconds."` |
 | API returns **200** with `visibility: "TOMBSTONED"` (no `personScores`) | The person was **deleted or merged** into another profile (confirmed with FS). **Terminal — do not retry** (unlike CALCULATING). Throw: `"Person ${personId} is tombstoned in the FamilySearch tree — it has been deleted or merged into another profile — so it has no quality score."` Note: a *merge* may instead surface the surviving profile with a link; a bare `TOMBSTONED` (as observed on `KD96-TV5`) is a true delete. Contrast `NOT_FOUND` (never existed). |

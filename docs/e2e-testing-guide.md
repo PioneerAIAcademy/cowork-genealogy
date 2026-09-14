@@ -33,7 +33,7 @@ Which steps are yours depends on how you got here:
 | 2 Scope *(1b only)* | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
 | 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
 | 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
-| 5 Run | `make e2e-run TEST=<slug>` — one fixture, 20–60 min, $3–10 | ⌨️ Terminal |
+| 5 Run | `make e2e-run TEST=<slug>` — one fixture, median 56 min / $7.47 (n=172/147, range 35–108 min / $0.06–$25) | ⌨️ Terminal |
 | 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
 | 7 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
 | 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
@@ -59,7 +59,16 @@ strips a focused subset (the "answer"), and asks the agent — via
 `/research --autonomous` — to recover what was removed. The judge grades the
 final state `pass` / `partial` / `fail`.
 
-**Runs are expensive: 20–60 minutes and $3–10 each. Run one at a time.**
+**Runs are expensive: median 56 minutes and $7.47 each, and the tails run
+longer — p10–p90 is 35–108 minutes across the committed corpus (n=172 for
+time, n=147 for cost; re-derive both with one scan of
+`eval/runlogs/e2e/*/run-*.json` (the git-tracked ones — an uncommitted local
+run log skews the sample), reading `usage.wall_clock_seconds` for time and
+`usage.total_cost_usd` for cost — note that `make e2e-latency SINCE=all`
+reports one run per fixture and prints no median, so it will not reproduce
+these). Run one at a time — the orchestrator's own cap is
+`max_cost_usd = 15.0` (`eval/harness/e2e/orchestrator.py`), so a single run
+can still land near or past this section's median on its own.**
 
 This is a capability benchmark, not a regression suite — per-PR regression
 coverage is the unit tests in `eval/tests/unit/`. The verdict measures *fact
@@ -306,7 +315,8 @@ detail: spec §§2–3, §6.2.
 ## Step 4 — Debug `/research` live, before you pay for a run 🖥️ Cowork + Viewer
 
 A headless run can't show you *why* the agent stopped or skipped a step — and
-it charges you 20–60 minutes to not tell you. Watch a run live in Cowork, fix
+it charges you a median 56 minutes to not tell you (see Step 5's cost/time
+note for the full spread). Watch a run live in Cowork, fix
 what you see, and save the headless run for the verdict.
 
 1. **Build and install both artifacts**, so Cowork has the genealogy tools.
@@ -551,10 +561,17 @@ instead of describing whichever fixtures someone happened to touch:
 `eval/tests/e2e/anders-monsen-ancestry/` and `eval/tests/e2e/cruz-corona-ancestry/`.
 
 The lead runs `/file-e2e-panel` whenever more panel work is wanted — there is no
-fixed cadence, and every run files **four more issues, one per fixture**, each an
-unassigned half-day any genealogist can pick up. Four parallel tasks rather than
-one bundle is what stops the tier having a single operator. Take one the same way
-you would any assigned fixture, on the "Running a panel fixture" route above.
+fixed cadence, though in practice a batch lands about once a week. Every run files
+**four more issues, one per fixture**, each an unassigned half-day any genealogist
+can pick up. Four parallel tasks rather than one bundle is what stops the tier
+having a single operator. Take one the same way you would any assigned fixture, on
+the "Running a panel fixture" route above.
+
+**Weekly filing is what fills the monthly window.** A batch is one run per fixture,
+so filing about weekly puts roughly four runs per fixture inside the report's 28
+days — the "at least 4 runs" its acceptance check asks for. Read the same panel over
+one week instead and every fixture reports a single run, which is the small-sample
+window the panel exists to escape.
 
 A panel run is landed at whatever verdict it earned — `pass`, `partial` or `fail`
 — because the panel counts runs and a failed run is the data point; re-run only

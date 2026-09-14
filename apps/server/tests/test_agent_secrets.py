@@ -11,6 +11,8 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from _fakes import FakeSDKClient
+
 from app.agent import real_agent
 from app.agent_secrets import secrets_bytes
 from app.config import get_settings
@@ -72,22 +74,10 @@ def test_secrets_path_agrees_with_the_control_plane_constant():
 
 # ── live-client rotation ─────────────────────────────────────────
 
-class _FakeClient:
-    """Stands in for ClaudeSDKClient: records connect/disconnect only."""
-
-    instances: list["_FakeClient"] = []
-
-    def __init__(self, options=None):
-        self.options = options
-        self.connected = False
-        self.disconnected = False
-        _FakeClient.instances.append(self)
-
-    async def connect(self):
-        self.connected = True
-
-    async def disconnect(self):
-        self.disconnected = True
+class _FakeClient(FakeSDKClient):
+    """The shared stand-in (tests/_fakes.py), subclassed so `instances` is this
+    file's own registry and so the two `monkeypatch.setattr` calls below land on
+    a class no other file uses."""
 
 
 @pytest.fixture
@@ -194,3 +184,26 @@ def test_connect_rewrites_the_secrets_file(monkeypatch):
         assert json.loads(secrets.read_text(encoding="utf-8")) == {
             "anthropic_api_key": "sk-ant-rotated"
         }
+
+
+async def test_closing_the_client_resets_the_respawn_flag(tmp_path, monkeypatch, fake_sdk):
+    """`_close_client` must clear `_stream_dirty` along with the client.
+
+    Left set, a close from any path other than the abandoned-stream one costs the
+    NEXT turn a redundant rebuild, which makes the flag mean "maybe dirty" rather
+    than "dirty". Raised in review on issue #2062.
+    """
+    secrets = tmp_path / "session.json"
+    secrets.write_bytes(secrets_bytes("sk-ant-old"))
+    _point_at(monkeypatch, secrets)
+
+    agent = real_agent.RealAgent(tmp_path)
+    await agent._ensure_client()
+    agent._stream_dirty = True
+
+    await agent._close_client()
+
+    assert agent._stream_dirty is False, (
+        "the respawn flag survived the client it describes, so the next turn "
+        "rebuilds a client that was never dirty"
+    )

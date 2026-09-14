@@ -4,7 +4,7 @@
     "skill": "record-extraction",
     "name": "Check tree attachment after extraction using record_person_matches",
     "type": "positive",
-    "description": "After a record_search result is handed over, the user asks whether the record is already attached to a tree person. Tests that record-extraction calls record_person_matches with the record persona ID and correctly reports the accepted match — informing the user the record is already linked to Patrick Flynn (LZNY-BRF) in the FamilySearch tree.",
+    "description": "After a record_search result is handed over, the user asks whether the record is already attached to a tree person. Tests that record-extraction calls record_person_matches with the recordId and correctly reports the accepted match — informing the user the record is already linked to Patrick Flynn (LZNY-BRF) in the FamilySearch tree.",
     "tags": [
       "extraction",
       "record-person-matches",
@@ -21,7 +21,7 @@
     "validate-research-schema"
   ],
   "judge_context": [
-    "Should call record_person_matches with id MXHY-TP4 (the record persona ID from the search result)",
+    "Should call record_person_matches with id MXHY-TP4 — the recordId's own pid, from ark:/61903/1:1:MXHY-TP4, NOT the sidecar's internal record_persona_id (p_…) which the tool rejects",
     "Should report that the record is already accepted-matched to tree person LZNY-BRF (Patrick Flynn) in the FamilySearch tree",
     "Should still extract assertions from the record — the match check is supplemental, not a replacement for extraction",
     "Should write assertions to research.json with record_persona_id set to P1 for the focus person; the persisted record_id should be an ARK form of this record (any submitted ARK form is acceptable — extraction_append canonicalizes sidecar-backed record_ids, so do not penalize bare vs full-URL form)",

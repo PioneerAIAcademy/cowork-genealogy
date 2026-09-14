@@ -55,5 +55,15 @@ export interface MatchApiResponse {
   results?: number;
   title?: string;
   updated?: string;
-  links?: { self?: { href?: string } };
+  // `not-found` is present when the service could not resolve the id in the
+  // target system. It is the ONLY thing distinguishing "this persona has no
+  // matches" from "this id names no persona": both answer 200 with
+  // `entries: []` and `results: 0`, and both carry the same `title`. (An epoch
+  // `updated` of 1970-01-01T00:00:00.001Z is a second tell, but the link is the
+  // explicit one.) Measured 2026-09-10 — `dev/probe-match-not-found.ts`.
+  links?: {
+    self?: { href?: string };
+    "not-found"?: { href?: string };
+    "target-system"?: { href?: string };
+  };
 }

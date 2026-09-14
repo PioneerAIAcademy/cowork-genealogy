@@ -688,7 +688,7 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 | `tier` | `proof_tier` | yes | Confidence tier |
 | `vehicle` | `proof_vehicle` | yes | Proof vehicle |
 | `supporting_assertion_ids` | string[] | yes | `a_` references forming the body of evidence |
-| `resolved_conflict_ids` | string[] | yes | `c_` references to conflicts resolved in this proof (may be empty) |
+| `resolved_conflict_ids` | string[] | yes | `c_` references to the conflicts this conclusion **accounts for** (may be empty) — it does not settle them; per `ownership.json` only `conflict-resolution` writes `conflicts[]`. Each ID must reference an existing `conflicts[]` entry whose `status` is `resolved` or `moot` — enforced by `validator.ts`. Same pair as the hypothesis transition in § Status transitions above, but stricter in effect: an `unresolved` conflict cannot be cited here at all. `proof-conclusion` is the only skill permitted to write this field. **Re-opening a cited conflict is order-dependent, on the hook plane.** Two separate calls must remove the citation first and re-open the conflict second: re-opening while the citation stands is refused by `validator.ts`, and `conflict-resolution` cannot remove the citation itself because `ownership.json` bars it from writing `proof_summaries`. A SINGLE call carrying both edits validates — `research_append` checks the end state — so what forbids the combined form is the plugin's `PreToolUse` hook, which routes `research_append` by caller and denies a batch op-by-op. That hook ships in the plugin zip (`package-plugin.mjs`'s `INCLUDE`) and **not** in the desktop `.mcpb`, so on a `.mcpb` install the combined call is the one-step route |
 | `exhaustive_search_summary` | string | yes | Brief summary of search scope, referencing log entries |
 | `narrative_markdown` | string | yes | Self-contained GPS conclusion narrative |
 | `claims` | `proof_claim[]` | no | Optional per-claim tier breakdown — see below |
@@ -825,7 +825,7 @@ timelines
 proof_summaries
   ├─ question_id ────────────────────────────────► questions[].id
   ├─ supporting_assertion_ids ───────────────────► assertions[].id
-  ├─ resolved_conflict_ids ─────────────────────► conflicts[].id
+  ├─ resolved_conflict_ids (status resolved|moot) ► conflicts[].id
   ├─ claims[].supporting_assertion_ids ─────────► assertions[].id
   └─ claims[].relationship.parent / .child ─────► tree.gedcomx.json persons[].id
 

@@ -131,8 +131,8 @@ this workflow; each pair drives one per-persona `materialize_facts` write
   merge-mode warnings are **MCP tools** (host). Skills orchestrate them; they
   never compute matches or warnings in the VM.
 - **Recovery, not undo (§12).** A research project is a single run; the
-  recovery model for a bad merge is "start over." Backups (`*.bak`) are
-  retained for accidents but there is no merge receipt / programmatic unmerge.
+  recovery model for a bad merge is "start over." The tools write no `*.bak`;
+  there is no merge receipt / programmatic unmerge.
 
 ---
 
@@ -185,8 +185,11 @@ The matching step produces the `merges` pair-set. For each record persona:
    catches independent-pairwise incoherence (John↔treeJohn but Susan↔a
    *different* tree woman) that no single `same_person` call sees.
 5. **New-person handling.** A persona with no acceptable match (Mary) is given a
-   tree id — a name-only stub (`tree_edit add_person`) — so the pair-set carries
-   a tree id the coherence gate can score. `materialize_facts` create-or-enrich
+   tree id so the pair-set carries one the coherence gate can score. **Superseded
+   2026-09-10 on the tool:** person-evidence mints her with `materialize_facts`,
+   not `tree_edit add_person`, which enforces no source-ref on names and leaves a
+   record-derived person provenance-less (`tree-materialization-spec.md` section
+   4.6). `materialize_facts` create-or-enrich
    then lands her census facts *onto that stub* after the gate clears (§5.5), so
    — unlike the old empty-stub path — she never stays fact-less
    (`tree-materialization-spec.md` §4.3).
@@ -536,9 +539,11 @@ under Block — corrected to match.)
 ## 12. Reversibility & recovery
 
 "Recovery, not undo." A project is a single research run; the recovery model for
-a wrong merge is **start over**. `*.bak` backups are retained for accidents.
-There is no merge receipt and no programmatic unmerge — deliberately, given the
-start-over model and the cost of maintaining reversibility metadata.
+a wrong merge is **start over**. The tools write no `*.bak` — nothing read it and
+the feedback bundler shipped it unredacted — so recovery falls back on the project
+folder's version history (git or the viewer's snapshots). There is no merge
+receipt and no programmatic unmerge — deliberately, given the start-over model and
+the cost of maintaining reversibility metadata.
 
 ---
 

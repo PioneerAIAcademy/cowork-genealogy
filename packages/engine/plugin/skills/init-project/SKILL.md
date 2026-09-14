@@ -160,6 +160,10 @@ Build the simplified-GedcomX document in memory — you pass it to `project_crea
 ```json
 { "id": "F1", "type": "Birth", "date": "~1845", "standard_date": "Abt 1845", "place": "Ireland", "standard_place": "Ireland", "sources": [{ "ref": "S1", "quality": 1 }] }
 ```
+A relationship needs its OWN `sources` ref too — on the relationship object itself, not only on facts nested inside it:
+```json
+{ "id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "facts": [ ... ], "sources": [{ "ref": "S1", "quality": 1 }] }
+```
 
 The top-level `sources[]` array you already surveyed above is not the same thing as this per-fact `sources` ref — a fact with no ref yet just means you haven't attached one, not that no sources exist at all. If `person_read`'s result is too large to `Read` directly, count `len(sources)` on the top-level array before drawing any conclusion about how many sources are attached.
 
@@ -216,6 +220,16 @@ Record it **only** when the researcher volunteers access unprompted — the ques
 
 ### 5. Pedigree analysis and project summary
 
+**First, call `Skill("check-warnings")` once, naming the subject and every
+imported relative by their LOCAL tree id from Step 3 (`I1`, `I2`… — never
+the FamilySearch PID or `ark`, even when the tree summary below lists both),
+and asking it to check all of them.** Fold what it returns into the findings
+below exactly as check-warnings frames it — never restate a timeline
+impossibility as one more line on the "Obvious error detection" list below,
+which is a smaller, separate check. `person_quality` will not fire for a
+local id (check-warnings skips it silently); the offline `person_warnings`
+half still runs and still reports.
+
 Analyze imported data before presenting results:
 
 **Minimum information check** — per person: full name (given + surname)? Specific date (not just ~year)? Specific place (county/parish, not just country)?
@@ -264,9 +278,10 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. Build the tree in memory — all persons, relationships, sources (quality: 1).
 4. `project_create({ projectPath, objective, title, subjectPersonIds: ["I1"], tree })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (from their answers, not defaults) and one per volunteered holding.
-6. Pedigree analysis + summary. Mary Kelly and the children are tree context
-   only — their gaps are noted, not queued. Offer the first research question
-   in plain language.
+6. `Skill("check-warnings")` for I1, Mary Kelly, James, and Margaret. Pedigree
+   analysis + summary, folding in whatever it returns. Mary Kelly and the
+   children are tree context only — their gaps are noted, not queued. Offer
+   the first research question in plain language.
 
 ## Important rules
 

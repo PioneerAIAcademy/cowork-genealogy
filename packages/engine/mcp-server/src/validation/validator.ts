@@ -5,8 +5,8 @@
  * Port of plugin/skills/validate-schema/scripts/validate_project.py
  */
 
-import { readFile, readdir } from "fs/promises";
-import { join, resolve, basename } from "path";
+import { basename } from "path";
+import { getProjectStore } from "../store/project-store.js";
 import type {
   ValidationReport,
   ValidationResult,
@@ -185,23 +185,21 @@ export const ID_PREFIXES: Record<string, string> = {
  */
 export async function validateProject(projectPath: string): Promise<ValidationResult> {
   const report = createReport();
-
-  const researchPath = resolve(projectPath, "research.json");
-  const treePath = resolve(projectPath, "tree.gedcomx.json");
+  const store = getProjectStore();
 
   let research: any;
   let tree: any;
 
   // Load files
   try {
-    const researchText = await readFile(researchPath, "utf-8");
+    const researchText = await store.readText(projectPath, "research.json");
     research = JSON.parse(researchText);
   } catch (error) {
     addError(report, "", `research.json not found or invalid JSON: ${error}`);
   }
 
   try {
-    const treeText = await readFile(treePath, "utf-8");
+    const treeText = await store.readText(projectPath, "tree.gedcomx.json");
     tree = JSON.parse(treeText);
   } catch (error) {
     addError(report, "", `tree.gedcomx.json not found or invalid JSON: ${error}`);
@@ -375,6 +373,46 @@ function checkIsoDate(
   }
 }
 
+/**
+ * The conflict statuses that count as SETTLED for
+ * `proof_summaries[].resolved_conflict_ids` (issue #1972 V5).
+ *
+ * `moot` is included, which deviates from the deep dive's rule text
+ * (docs/deep-dives/conflict-resolution-findings-2026-08-27.md § V5 says
+ * `resolved` only). Four shipped sites already treat the pair as jointly
+ * terminal, and one of them is this engine instructing the agent:
+ * research-append.ts:1434 ("'resolved' and 'moot' both settle a conflict"),
+ * research-append.ts:1478-1479 (the completion-gate error says set it to
+ * "'resolved' … or 'moot'"), research-schema-spec.md:261 and :616, and
+ * eval/harness/validators/test_hypothesis_tracking.py:152.
+ *
+ * The harm V5 names is a proof summary claiming an OPEN conflict is settled.
+ * `moot` is not open, so the harm does not reach it — while a `resolved`-only
+ * rule would refuse a write the moment an agent follows the instruction above,
+ * with no field anywhere to record that a moot conflict was accounted for.
+ * Rejecting a legitimate citation costs a blocked write; permitting a slightly
+ * imprecise one costs nothing downstream.
+ *
+ * Tightening is NOT a one-entry change, which an earlier version of this comment
+ * claimed. It is TEN sites: this constant, three comment sites (this block, the
+ * conflicts-loop note, and the proof_summaries block), the shipped error text,
+ * the `research-schema-spec.md` row, and the four fixture READMEs. (Eleven was
+ * the reviewed count and included a hand-copied predicate in the corpus scan;
+ * the `export` below eliminated it, so ten is right.)
+ *
+ * `export`ed so `validator.test.ts`'s corpus scan imports it rather than
+ * hand-copying the predicate. What that buys is a single source of truth, NOT
+ * detection: narrowing this constant to `["resolved"]` leaves that scan green,
+ * because zero shipped fixtures cite a `moot` conflict — the pre-existing
+ * "accepts a citation of a MOOT conflict" test is what catches the narrowing.
+ * An earlier version of this comment claimed the scan was the one site a test
+ * guarded and therefore the one that would fail silently; that was false, and
+ * it was the same class of defect the round was written to fix. The scan's
+ * `moot` half becomes load-bearing only once a fixture cites one; the synthetic
+ * join test alongside it covers that in the meantime.
+ */
+export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
+
 function checkRefExists(
   refId: string,
   validIds: Set<string>,
@@ -426,6 +464,13 @@ interface ResearchIds {
   assertions: Set<string>;
   person_evidence: Set<string>;
   conflicts: Set<string>;
+  /**
+   * Conflicts in a terminal state — `resolved` or `moot`. Separate from
+   * `conflicts` because `proof_summaries[].resolved_conflict_ids` must reference
+   * a conflict that both EXISTS and is settled, and `checkRefExists` only
+   * answers the first half (issue #1972 V5).
+   */
+  settled_conflicts: Set<string>;
   hypotheses: Set<string>;
   timelines: Set<string>;
   proof_summaries: Set<string>;
@@ -581,6 +626,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     assertions: new Set(),
     person_evidence: new Set(),
     conflicts: new Set(),
+    settled_conflicts: new Set(),
     hypotheses: new Set(),
     timelines: new Set(),
     proof_summaries: new Set(),
@@ -1022,6 +1068,12 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("status" in c) {
       checkEnum(c.status, "conflict_status", cp, report);
+      // Collected here, and read by the proof_summaries block below. Safe
+      // because validateResearch is a single sequential pass and conflicts
+      // precede proof_summaries in it.
+      if (SETTLED_CONFLICT_STATUSES.has(c.status) && typeof c.id === "string") {
+        ids.settled_conflicts.add(c.id);
+      }
     }
 
     const ct = c.conflict_type;
@@ -1137,6 +1189,154 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
+    }
+
+    // resolved_conflict_ids -> conflicts[].id, and that conflict must be
+    // SETTLED (issue #1972 V5, labelled nothing-checks). Before this, the field
+    // was checked for presence and shape only, so a proof summary could claim
+    // an open conflict was settled and no tool, schema or eval check could see
+    // it — the state four shipped fixtures were in.
+    //
+    // The message deliberately does NOT name the conflict's live status.
+    // `introduced-errors.ts`'s diff key is the normalized path PLUS the message
+    // text, so a varying message makes an unchanged defect read as newly
+    // introduced and refuses the write — a self-inflicted freeze on exactly the
+    // pre-existing drift that module exists to tolerate.
+    //
+    // The reason is NOT "only one status can fail, so the text cannot vary" —
+    // that was the first version of this comment and it is false. MANY document
+    // states reach this error with one byte-identical message; ten were run
+    // (`unresolved`, absent, `null`, `42`, `"x"`, `true`, `[]`, `{}`, `""`,
+    // `"Resolved"`) and all ten agree. `unresolved`, an absent `status` key,
+    // `null`, a number and an out-of-enum string are EXAMPLES rather than the
+    // count. A status-naming message would differ across them.
+    //
+    // Which makes the decision MORE load-bearing than a latency argument, not
+    // less. `status` absent -> `unresolved` is a strict improvement to the
+    // document, and it returns `valid: true` only because the message is
+    // status-free. Measured both ways: embedding the status alone reds the
+    // message test; embedding it AND dropping `moot` — the deep dive's rule
+    // text plus a naturally informative message — reds
+    // introduced-errors.test.ts's `unresolved -> moot` test, where `valid` goes
+    // false on an unchanged defect. So the two decisions are coupled, and
+    // shipping the dive verbatim with this message would have frozen such a
+    // project.
+    // The CONTAINER type, not just the entries. Without this the whole V5 rule
+    // is bypassed by dropping two brackets: measured through the real
+    // `researchAppend` on a project whose `c_001` is unresolved, at
+    // `tier: "not_proved"` so the tier cap is not what answers —
+    //
+    //   ["c_001"]        ok=false   refused by V5, correctly
+    //   "c_001"          ok=true    persisted verbatim, c_001 still unresolved
+    //   "[\"c_001\"]"     ok=true    persisted verbatim
+    //   [123]            ok=false   refused by the entry-type check below
+    //
+    // So the refused write became a legal write, asserting exactly the false
+    // thing V5 exists to forbid. `coerceJsonArg` is applied to `entry` as a
+    // whole (`research-append.ts`) but not to fields inside it, which is why the
+    // JSON-string form survives.
+    //
+    // It also breaks a downstream reader: `ProofSummariesSection.tsx` guards on
+    // `.length > 0` and then calls `.map`, and a bare string has truthy length
+    // while `.map` throws. The sibling `claims` field is guarded the
+    // same way further down this same block (85 lines by `addError`), so this
+    // was a deviation from a local convention rather than a new idea. Two
+    // earlier versions of this sentence said 38 and then 1347 — the first
+    // matched no anchor, the second came from a shell variable that silently
+    // evaluated to empty. A line count is a poor thing to cite in a file this
+    // merge-prone; the field name is the durable half.
+    if (
+      "resolved_conflict_ids" in ps &&
+      ps.resolved_conflict_ids !== null &&
+      !Array.isArray(ps.resolved_conflict_ids)
+    ) {
+      // The value is embedded for the same reason the entry check below embeds
+      // its own: `errorKey` is the normalized path PLUS the message, so a
+      // static message keys identically before and after, and a change from one
+      // non-array to a DIFFERENT non-array is demoted as pre-existing and
+      // written. Measured: `"c_001"` -> `"c_002"`, `-> 42` and
+      // `-> '["c_002"]'` all persisted under a static message and are refused
+      // with the value in it, while an unchanged value stays tolerated so there
+      // is no self-inflicted freeze.
+      addError(
+        report,
+        psp,
+        `'resolved_conflict_ids' must be an array (got ` +
+          `${JSON.stringify(ps.resolved_conflict_ids)})`
+      );
+    }
+    // `supporting_assertion_ids` gets the SAME THREE checks, because the class
+    // is what recurs rather than the field: every array-typed field on a proof
+    // summary needs a container-type guard, an entry-type check, and a
+    // referential check where it holds ids — each embedding the offending value.
+    //
+    // It had none of the three. Measured through the real `researchAppend`
+    // before this: `"a_001"`, `{0:"a_001"}`, `["a_999"]` (dangling) and `[42]`
+    // were ALL accepted and persisted, with no error at all. The dangling case
+    // is the one that matters — it is the same shape V5 exists to remove, on
+    // the sibling field, feeding the same reader (`ProofSummariesSection.tsx`
+    // guards `.length > 0` then calls `.map`).
+    //
+    // Zero shipped documents break: two independent scans put it at 185-186
+    // documents carrying the field and 2,123-2,131 references, with zero
+    // dangling, non-string or non-array. That is what makes it a fix here
+    // rather than a card.
+    if (
+      "supporting_assertion_ids" in ps &&
+      ps.supporting_assertion_ids !== null &&
+      !Array.isArray(ps.supporting_assertion_ids)
+    ) {
+      addError(
+        report,
+        psp,
+        `'supporting_assertion_ids' must be an array (got ` +
+          `${JSON.stringify(ps.supporting_assertion_ids)})`
+      );
+    }
+    if (Array.isArray(ps.supporting_assertion_ids)) {
+      for (const aid of ps.supporting_assertion_ids) {
+        if (typeof aid !== "string") {
+          addError(
+            report,
+            psp,
+            `supporting_assertion_ids contains a non-string entry ` +
+              `(${JSON.stringify(aid)}); every entry must be an 'a_' assertion id`
+          );
+          continue;
+        }
+        checkRefExists(aid, ids.assertions, "assertion", psp, report);
+      }
+    }
+
+    if (Array.isArray(ps.resolved_conflict_ids)) {
+      for (const cid of ps.resolved_conflict_ids) {
+        if (typeof cid !== "string") {
+          // Previously a silent skip. Both schema trees declare an array of
+          // `^c_` strings and the runtime validator does not load them, so
+          // `[123]`, `[null]` and `[{...}]` added no error anywhere — measured
+          // as a delta against an otherwise-valid document. This is the
+          // cheapest place to close that.
+          addError(
+            report,
+            psp,
+            `resolved_conflict_ids contains a non-string entry ` +
+              `(${JSON.stringify(cid)}); every entry must be a 'c_' conflict id`
+          );
+          continue;
+        }
+        if (!ids.conflicts.has(cid)) {
+          checkRefExists(cid, ids.conflicts, "conflict", psp, report);
+        } else if (!ids.settled_conflicts.has(cid)) {
+          addError(
+            report,
+            psp,
+            `resolved_conflict_ids references conflict '${cid}' which is not ` +
+              `settled ('resolved' or 'moot' required); settle it first, or ` +
+              `have the citation removed before re-opening it, ` +
+              `proof-conclusion owns resolved_conflict_ids`
+          );
+        }
+      }
     }
 
     // Per-claim tier breakdown (optional, additive). Nothing walked into a
@@ -1699,7 +1899,7 @@ async function validateSidecars(
   projectPath: string,
   report: ValidationReport
 ): Promise<void> {
-  const resultsDir = join(projectPath, "results");
+  const store = getProjectStore();
   const logById = new Map<string, any>();
   const log = Array.isArray(research.log) ? research.log : [];
 
@@ -1725,7 +1925,6 @@ async function validateSidecars(
     }
 
     referenced.add(basename(ref));
-    const scPath = join(projectPath, ref);
 
     // Guard against path traversal: results_ref must resolve inside projectPath
     // (it is user-influenced; in multi-tenant it must not read outside the dir).
@@ -1736,7 +1935,7 @@ async function validateSidecars(
 
     let sc: any;
     try {
-      const scText = await readFile(scPath, "utf-8");
+      const scText = await store.readText(projectPath, ref);
       sc = JSON.parse(scText);
     } catch (error) {
       addError(report, lp, `results_ref points at '${ref}' which does not exist or is invalid JSON`);
@@ -1774,15 +1973,12 @@ async function validateSidecars(
   }
 
   // Orphan sidecars: a results/ file that no log entry references
-  try {
-    const files = await readdir(resultsDir);
-    for (const f of files) {
-      if (f.endsWith(".json") && !referenced.has(f)) {
-        addError(report, `results/${f}`, "orphan sidecar — no log entry references it");
-      }
+  // An absent results/ directory lists as empty — not an error if no log
+  // entries reference sidecars.
+  for (const { name: f } of await store.list(projectPath, "results")) {
+    if (f.endsWith(".json") && !referenced.has(f)) {
+      addError(report, `results/${f}`, "orphan sidecar — no log entry references it");
     }
-  } catch {
-    // results/ directory doesn't exist — not an error if no log entries reference sidecars
   }
 
   // D5: every assertion carrying a record_persona_id must resolve it to a

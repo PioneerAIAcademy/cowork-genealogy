@@ -13,8 +13,6 @@
   },
   "mcp_fixtures": ["person-warnings-no-warnings"],
   "judge_context": [
-    "Should examine all assertions linked to person I1 via person_evidence (a_001-a_005 from 1850 census, a_008-a_010 from 1860 census, a_011-a_013 from death cert)",
-    "Should confirm the timeline is consistent: birth ~1845, age 5 in 1850 (consistent with 1845 birth), age 15 in 1860 (consistent), died 1908 -- no chronological impossibilities",
     "Should NOT flag the resolved birthplace conflict c_001 as a current warning -- conflicts that are `status: resolved` are no longer active issues",
     "Should NOT flag the 48-year gap between 1860 and 1908 as an impossibility -- gaps are timeline territory, not check-warnings territory"
   ]

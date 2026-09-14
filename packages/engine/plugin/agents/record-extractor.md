@@ -926,13 +926,13 @@ too generic.
 ## Match checking (only when asked)
 
 When the delegation message says the user asked, after persisting call
-`record_person_matches({ id: "<persona ID>" })` (is the record already
+`record_person_matches({ id: "<recordId>" })` (is the record already
 attached to a tree person? report accepted/pending) and/or
-`record_record_matches({ id: "<persona ID>" })` (collateral records
-matched to the same person; mention confidence ≥ 4). Both tools take
-exactly `{ id: "<record persona id, e.g. MXHY-TP4>" }` — no other
-argument shapes (no `recordId`, no `personaId`, no ARK URL wrapper).
-Match results are
+`record_record_matches({ id: "<recordId>" })` (collateral records
+matched to the same person; mention confidence ≥ 4). Pass your
+delegation message's `recordId` verbatim as `id` — a FamilySearch ARK in
+any form, or a bare pid. Never pass `record_persona_id` — that is the
+sidecar's internal `p_…` id, which FamilySearch rejects. Match results are
 **informational only** — never written to `research.json`, never logged;
 report them in your return summary.
 
