@@ -461,6 +461,19 @@ tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
 search-records uses for triage. Treat that as corroboration of the
 correlation assessment, not a replacement for it.
 
+**Thin-subject scores.** A subject that is a sparse local stub — few facts,
+such as a not-yet-in-FS tree person added from earlier research — can score
+uniformly near-zero against every candidate. The cause is **thin content in
+the subject document**, not an unresolvable id or a missing ARK. When the
+same-person engine has very little to match on (a name stub with no birth
+year, no place, no family context), it correctly returns a low score because
+it genuinely cannot distinguish candidates. In that situation a low score is
+uninformative, not negative evidence: the qualitative correlation analysis
+carries the decision. A strong qualitative match on name, generation, and
+family position should still link at `probable` even if the score is near
+zero; the score may improve once `materialize_facts` lands more facts on
+the stub.
+
 **Never auto-merge persons.** person-evidence creates LINKS (pe_
 entries), not merges. If two GedcomX persons are determined to be
 the same individual, that's a conclusion for proof-conclusion to
@@ -481,7 +494,15 @@ than retrying blindly.
 - `assertion_id`: The `a_` ID of the assertion being linked
 - `person_id`: The GedcomX person ID in tree.gedcomx.json
 - `confidence`: `confident`, `probable`, or `speculative` — governed
-  by the match threshold policy (Step 3)
+  by the match threshold policy (Step 3). This field measures **identity
+  certainty**: how sure we are that this record's role IS the tree person.
+  It is NOT a measure of the source's informant quality. A death certificate
+  with a primary informant present at the event is a high-quality source,
+  but if it is the only source linking this record to this tree person it is
+  still `probable` on the identity scale, not `confident`. Do not cite
+  `information_quality` or `informant_proximity` as the basis for this
+  tier; cite corroboration of identity, name match, location, and the
+  absence of contradicting evidence instead.
 - `rationale`: WHY this assertion's record_role is believed to be
   this person. Must include the specific evidence that supports the
   identification: name match, age compatibility, location match,
@@ -532,7 +553,13 @@ the groom's marriage register). Take the first that applies:
    `name` assertion: the persona arm refuses to mint a person it cannot name,
    so a persona carrying only a gender, a birth, or other facts goes to 3.
    Enriching an existing `personId` needs no name assertion. Gender comes from
-   her `gender`/`sex` assertions; absent one it is `Unknown`.
+   her `gender`/`sex` assertions; absent one it is `Unknown`. **Caveat on
+   page-level record_ids:** `{ recordId, recordRole }` selects one person per
+   role per record. For a register page whose `recordId` covers multiple entries
+   (multiple brides, multiple baptism subjects), the same `record_role` can
+   belong to more than one distinct individual; verify from the assertion's
+   `record_persona_id` that you are targeting the correct persona before
+   calling.
 3. **Otherwise** — `materialize_facts({ assertionId, relatedRole,
    name: { given, surname }, gender?, nameType?, personId? })`. `assertionId`
    is the `relationship`/`marriage`/`parentage`/`parentchild` assertion naming
@@ -547,8 +574,10 @@ the groom's marriage register). Take the first that applies:
    usable name is recoverable, do not mint: link what you can and say so.
    Where that role has a persona the record never names, this call also writes
    that persona's facts, but only when the assertion's
-   `structured_value.related_person_role` names that same role. `factsAdded: 0`
-   in the reply means it did not, and only her name was written.
+   `structured_value.related_person_role` names that same role. `factsAdded`
+   counts what was written, not whether the role was corroborated: it is also 0
+   when the role has no persona, when its persona carries nothing writable, and
+   on a repeat call.
 
 Never `tree_edit add_person` for a person the record names. If you pick 3
 where 2 applied, the tool refuses and names the `{ recordId, recordRole }` to
