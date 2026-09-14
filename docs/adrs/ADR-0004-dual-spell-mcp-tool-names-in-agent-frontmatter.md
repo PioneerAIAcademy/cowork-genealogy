@@ -74,7 +74,7 @@ The deny side needs the same treatment, though **for a weaker reason than this
 ADR originally gave.** It said `disallowedTools:` binds even under
 `bypassPermissions` while an omission alone does not, making the deny "the last
 line" keeping `record-extractor` off the broad `research_append`. The first half
-is true; the second is false. Probed 2026-08-30 against Claude Code 2.1.251 /
+is true; the second is false. Probed 2026-08-30 against Claude Code 2.1.220 /
 SDK 0.2.128 (`make probe-agent-binding`, reproduced twice): under
 `bypassPermissions` a tool merely **omitted** from `tools:` is absent from the
 agent, exactly as a denied one is. The omission is the load-bearing half; the

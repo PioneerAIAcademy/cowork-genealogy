@@ -6,6 +6,7 @@
  *   npx tsx dev/try-image-read.ts "<ark>" [projectPath]       # e.g. ark:/61903/3:1:3Q9M-CSNL-S98H-M
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { imageReadTool } from "../src/tools/image-read.js";
 
 const value = process.argv[2];
@@ -21,7 +22,7 @@ const isImageId = /^\d+_\d+$/.test(value);
 const result = await imageReadTool({
   ...(isImageId ? { imageId: value } : { ark: value }),
   ...(projectPath ? { projectPath } : {}),
-});
+}, LOCAL);
 
 // Print metadata only — printing base64 would flood the terminal
 console.log("Metadata:", JSON.stringify(result.metadata, null, 2));

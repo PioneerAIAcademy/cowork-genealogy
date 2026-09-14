@@ -22,6 +22,10 @@ from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import (
     assert_capture_pending_item_not_terminal as _assert_capture_pending_item_not_terminal,
 )
+from validators_lib import assert_log_append_only as _assert_log_append_only
+from validators_lib import (
+    assert_only_writes_to_sections as _assert_only_writes_to_sections,
+)
 
 
 # --- Structural rules from SKILL.md -----------------------------------
@@ -231,3 +235,278 @@ def test_capture_pending_item_not_terminal(before_state, after_state, test):
     `completed`/`skipped`. Shared with the other suite that can reach this
     state; the assertion lives in validators_lib."""
     _assert_capture_pending_item_not_terminal(before_state, after_state, test)
+
+
+# --- #1950 Half 1: V2, V3, V4, V6, V7, V8 ------------------------------
+#
+# FIELD NAMES ARE snake_case HERE, NOT the camelCase issue #1950 quotes.
+# The issue states each rule in the MCP tool's parameter spelling
+# (`stagedResultsRef`, `resultsExamined`, `planItemId`), because that is what a
+# `research_log_append` call carries. These validators read `after_state`, the
+# PERSISTED document, and CLAUDE.md's casing rule makes the tool boundary the
+# seam between the two. Mapping taken from
+# `docs/specs/schemas/research.schema.json`, not guessed:
+#
+#   stagedResultsRef -> results_ref      (NOT staged_results_ref)
+#   resultsExamined  -> results_examined
+#   planItemId       -> plan_item_id
+#   externalSite     -> external_site
+#
+# `results_ref` is the one that bites: writing the issue's name verbatim gives a
+# validator that never fires, which is the silently-green failure its own "what
+# proves this worked" section warns about — nothing in CI runs these against a
+# real run.
+#
+# `external_site` and `results_ref` are both nullable in the schema, so "must
+# not carry" is a truthiness check: absent and explicitly-null are the same
+# thing to a reader of the audit trail.
+
+
+def _new_external_entries(before_state, after_state, tool):
+    """New log entries for one tool, or [] — shared preamble of V2/V3/V4."""
+    return [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == tool
+    ]
+
+
+def _plan_items(state):
+    """Every plan item in a state, keyed by id."""
+    research = state.get("research_json") or {}
+    return {
+        item.get("id"): item
+        for plan in (research.get("plans") or [])
+        for item in (plan.get("items") or [])
+        if item.get("id")
+    }
+
+
+def test_log_entries_do_not_carry_each_others_fields(before_state, after_state, test):
+    """V2. SKILL.md step 4 writes two entries per search, each owning one field.
+
+    The `external_links_search` entry carries the staged handle and must not
+    carry `external_site` (SKILL.md: "Do not pass externalSite here - that field
+    is only for external_site entries"); the `external_site` entry carries the
+    site detail and must not carry the handle ("that handle belongs on the
+    external_links_search entry above").
+
+    No corpus violation yet - this guards a rule the skill states twice and
+    nothing enforced.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    errors = []
+    for entry in _new_external_entries(before_state, after_state, "external_links_search"):
+        if entry.get("external_site"):
+            errors.append(
+                f"log[{entry.get('id')}] is an external_links_search entry but "
+                f"carries external_site - that field belongs only on an "
+                f"external_site entry"
+            )
+    for entry in _new_external_entries(before_state, after_state, "external_site"):
+        if entry.get("results_ref"):
+            errors.append(
+                f"log[{entry.get('id')}] is an external_site entry but carries "
+                f"results_ref - the staged handle belongs on the "
+                f"external_links_search entry"
+            )
+    assert not errors, (
+        "log entries carrying each other's fields:\n  - " + "\n  - ".join(errors)
+    )
+
+
+def test_curated_links_fetch_with_results_is_not_logged_as_nil(
+    before_state, after_state, test
+):
+    """V3. On an `external_links_search` entry, results_examined > 0 requires
+    outcome "positive".
+
+    The entry grades the FETCH, not the search. Logging "none of these links fit
+    my record type" as a nil records "FamilySearch curates nothing here", which
+    sends a researcher to another repository; the truth - "curates plenty, none
+    relevant" - sends them to a wider year window. Collapsing the two loses that
+    distinction permanently in the audit trail.
+
+    Measured 2026-09-10 against the five run logs this branch commits, reading
+    `file_changes["research.json"].diff.log.added`: **4 of 66
+    external_links_search entries, across three tests
+    (ut_search_external_sites_002, _005, _006) and three of the five logs.**
+    Issue #1950's own census said 9 of 48; the corpus has since turned over,
+    so that figure is stale rather than wrong. Re-derive rather than reword.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    errors = []
+    for entry in _new_external_entries(before_state, after_state, "external_links_search"):
+        examined = entry.get("results_examined")
+        if isinstance(examined, int) and examined > 0 and entry.get("outcome") != "positive":
+            errors.append(
+                f"log[{entry.get('id')}] examined {examined} curated link(s) but "
+                f"is logged outcome={entry.get('outcome')!r} - a fetch that "
+                f"returned links is not a nil result"
+            )
+    assert not errors, (
+        "curated-links fetches mis-logged as nil:\n  - " + "\n  - ".join(errors)
+    )
+
+
+def test_the_url_logged_is_the_url_presented(
+    before_state, after_state, text_response, test
+):
+    """V4. external_site.url_generated must appear verbatim in the reply.
+
+    The log entry is the audit trail; the link is what the user clicks. If they
+    differ, research.json records a search nobody ran and the user runs a search
+    nobody recorded - and every other validator still passes, because each half
+    is individually well-formed. This is the guard that makes the other seven
+    mean something.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    reply = text_response or ""
+    errors = []
+    for entry in _new_external_entries(before_state, after_state, "external_site"):
+        detail = entry.get("external_site") or {}
+        # Step 6 appends a NEW entry that re-logs the step-4 URL without
+        # presenting it: the capture-arrival entry (SKILL.md:439), whose reply
+        # analyses the returned PDF, and the no-access entry (SKILL.md:584,
+        # outcome "error"), whose reply asks whether to skip the site. The
+        # schema requires url_generated on both, so without this they read as
+        # a URL logged but never shown. Not scoped on outcome == "partial"
+        # instead: the autonomous-defer path logs "negative" and DOES present
+        # the URL, where this holds on 10 of 10 committed runs (#2345 review).
+        if detail.get("capture_received") is True or entry.get("outcome") == "error":
+            continue
+        url = detail.get("url_generated")
+        if not isinstance(url, str) or not url.strip():
+            continue  # shape is test_url_generation_log_entry_shape's job
+        if url not in reply:
+            errors.append(
+                f"log[{entry.get('id')}].external_site.url_generated is not in "
+                f"the reply the user sees: {url}"
+            )
+    assert not errors, "URL logged but never presented:\n  - " + "\n  - ".join(errors)
+
+
+def report_no_plan_item_status_written_when_no_entry_names_one(
+    before_state, after_state, test
+):
+    """V6. When every new log entry has plan_item_id null, no plan item's status
+    may change.
+
+    **Reporting-only, deliberately: SKILL.md does not state this rule.** An
+    earlier draft claimed step 7 sets a status only on a turn that names a plan
+    item. It does not — `planItemId` appears twice in the 605-line body,
+    :387 and :418, both as the template literal `"<pli_XXX or null>"`, and
+    step 7 at :541 keys the status write on `planId` and the `entryId`, not on
+    the log entry. The schema puts no description on `plan_item_id` either.
+    Nine of nine corpus runs that moved a status did also write
+    `plan_item_id`, but that is model habit, not a contract (#2345 review).
+
+    Gating on a rule the shipped skill never states would fail runs for
+    behaviour nobody asked for. Landing the rule in SKILL.md first would need
+    a paid run and belongs with the URL-tool work on issue #1980; until then
+    this observes and the judge decides.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    new_entries = _new_log_entries(before_state, after_state)
+    if not new_entries:
+        pytest.skip("no new log entries")
+    if any(e.get("plan_item_id") for e in new_entries):
+        pytest.skip("a new log entry names a plan item - status writes are in scope")
+
+    before_items = _plan_items(before_state)
+    changed = [
+        item_id
+        for item_id, item in _plan_items(after_state).items()
+        if item_id in before_items
+        and item.get("status") != before_items[item_id].get("status")
+    ]
+    assert not changed, (
+        f"no new log entry names a plan item, but these plan items had their "
+        f"status changed: {sorted(changed)}. A search that matches no plan item "
+        f"records no plan progress."
+    )
+
+
+def test_plan_items_are_updated_never_appended(before_state, after_state, test):
+    """V7. The skill may update an existing plan item's status; never append one.
+
+    An executing skill records what it did. It does not add work to the plan,
+    and it certainly does not add work in order to have something to mark
+    finished - a manufactured item marked `skipped` reads downstream as an
+    avenue considered and closed (#1226, with the item invented as well).
+
+    **No committed run reproduces this today — measured 0 across all 80 runs
+    in the five logs on this branch (2026-09-10).** An earlier draft cited
+    v1_2026-08-20_22-45-06 and v1_2026-08-27_00-08-56 at "roughly two runs in
+    five"; both have since been pruned by the newest-five retention this file
+    describes above, so that claim can no longer be checked from anything
+    committed and is not repeated here. The guard stays because the defect it
+    describes is real when it happens (#1226, where the item was invented as
+    well), not because the corpus currently shows it.
+
+    Deliberately NOT assert_only_writes_to_sections(owned={"log","plans"}),
+    which the issue originally specified: that permits ANY write to `plans`,
+    appends included, so it would pass the defect this exists to catch. The
+    helper is wired separately below as the adjacent boundary check.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+
+    before_ids = set(_plan_items(before_state))
+    appended = sorted(set(_plan_items(after_state)) - before_ids)
+    assert not appended, (
+        f"search-external-sites appended plan item(s) {appended}. It may update "
+        f"the status of an item that already existed; it may never add one."
+    )
+
+
+def test_writes_only_to_log_and_plans(before_state, after_state, test):
+    """V7, second half. The adjacent boundary: a write to `sources` or
+    `assertions` is out of this skill's lane entirely.
+
+    Gives assert_only_writes_to_sections its first call site repo-wide - it had
+    zero before this. Separate from the append check above, which it cannot
+    substitute for.
+    """
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests record log entries")
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    _assert_only_writes_to_sections(
+        before_state.get("research_json") or {},
+        after_state.get("research_json") or {},
+        owned={"log", "plans"},
+        skill_name="search-external-sites",
+    )
+
+
+def test_the_log_is_append_only(before_state, after_state, test):
+    """V8. SKILL.md says it three times: append a new entry, never edit a prior
+    one. This skill writes two entries per turn and appends a third when a
+    capture returns, so it has more opportunity to violate this than any other.
+
+    Gives assert_log_append_only its second call site repo-wide.
+    """
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json in scenario")
+    _assert_log_append_only(
+        before_state.get("research_json") or {},
+        after_state.get("research_json") or {},
+    )

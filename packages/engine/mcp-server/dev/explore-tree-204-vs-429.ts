@@ -33,6 +33,7 @@
  *
  * Run: `npx tsx dev/explore-tree-204-vs-429.ts` from `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
@@ -42,7 +43,7 @@ const R = "m.queryRequireDefault=on";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function probe(label: string, qs: string, base = TREE): Promise<void> {
   await sleep(3000);
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
   // its own, and these scripts page for tens of minutes against an endpoint that
   // throttles. `volume_search` once hung for 236 minutes on exactly this

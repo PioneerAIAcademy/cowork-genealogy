@@ -11,8 +11,9 @@
  *      Code's port-forward for 1837 makes the redirect reach this box.
  *   4. After you sign in, FS redirects back; the script exchanges the
  *      code for tokens and saves them to ~/.familysearch-mcp/tokens.json.
- *   5. Probe scripts that use getValidToken() will now work.
+ *   5. Probe scripts that use getValidToken(LOCAL) will now work.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { loginTool } from "../src/tools/login.js";
 
 // No argument: the FamilySearch client id comes from the bundled
@@ -25,7 +26,7 @@ console.log("---");
 
 // Takes no input: the FamilySearch client id is read from the bundled
 // config/familysearch.json by getClientId(), never passed in.
-const result = await loginTool();
+const result = await loginTool({}, LOCAL);
 console.log("---");
 console.log("Login result:");
 console.log(JSON.stringify(result, null, 2));

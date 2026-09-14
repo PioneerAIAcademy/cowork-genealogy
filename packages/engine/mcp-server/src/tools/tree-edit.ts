@@ -2,7 +2,7 @@
 //
 // The sibling of the merge tools: where those collapse persons, this one does
 // the add/correct/remove edits the tree-edit skill performs by hand today. It
-// reuses the shipped write layer (atomicWriteJson, backupIfExists, validateIntroduced)
+// reuses the shipped write layer (atomicWriteJson, validateIntroduced)
 // and the shared id allocator, so the LLM passes only the content judgment and
 // the tool does id assignment, the primary/preferred swaps, standard_place
 // resolution, validate-before-persist, and the atomic write. Writes only
@@ -16,7 +16,6 @@
 // tree_edit is structurally unable to rewrite identity (the ut_013 rename
 // incident), instead of merely prose-forbidden from it.
 
-import { join } from "path";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -30,7 +29,6 @@ import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
-  backupIfExists,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -670,7 +668,7 @@ export async function treeEdit(input: TreeEditInput): Promise<TreeEditResult> {
 }
 
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
- *  id-assignment, validate-on-write, and `.bak` semantics; only the admitted
+ *  id-assignment, and validate-on-write semantics; only the admitted
  *  op set (the gate) differs. */
 export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promise<TreeEditResult> {
   const { projectPath } = input;
@@ -704,7 +702,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
     // section it never touched (#1572).
     const beforeTree = structuredClone(tree);
 
-    const treePath = join(projectPath, "tree.gedcomx.json");
 
     // ─── Batch form: apply every op in-memory, then validate + write once ─────
     if (input.ops !== undefined) {
@@ -735,8 +732,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       if (!validation.valid) {
         return { ok: false, errors: formatIssues(validation.errors) };
       }
-      await backupIfExists(treePath);
-      await atomicWriteJson(treePath, tree);
+      await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
       return {
         ok: true,
         results,
@@ -761,8 +757,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate): Promis
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
-    await backupIfExists(treePath);
-    await atomicWriteJson(treePath, tree);
+    await atomicWriteJson(projectPath, "tree.gedcomx.json", tree);
 
     const result: TreeEditResult = {
       ok: true,
@@ -812,7 +807,7 @@ export const treeEditSchema = {
     "Pick the `operation` and supply the content (snake_case simplified-GedcomX " +
     "fields) WITHOUT ids — the tool assigns the next F/N/I/R/S id, swaps the " +
     "primary/preferred flag, resolves standard_place for a place, validates the " +
-    "whole project, and writes only tree.gedcomx.json (with a one-deep .bak). " +
+    "whole project, and writes only tree.gedcomx.json. " +
     "Returns a compact summary (the assigned ids); on a validation failure nothing " +
     "is written and `{ ok: false, errors }` is returned. Run check-warnings after " +
     "for genealogical-plausibility checks.\n" +

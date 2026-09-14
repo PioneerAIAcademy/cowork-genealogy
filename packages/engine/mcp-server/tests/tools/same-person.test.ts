@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { samePerson } from "../../src/tools/same-person.js";
 import { notHaving } from "../helpers/narrow.js";
@@ -79,7 +80,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.matched).toBe(true);
       expect(result.confidence).toBe(5);
@@ -101,7 +102,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", "https://familysearch.org/ark:/61903/4:1:NONMATCH"),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.matched).toBe(false);
       expect(result.confidence).toBeUndefined();
@@ -120,7 +121,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }, LOCAL);
 
       expect(mockFetch).toHaveBeenCalledOnce();
       const [url, opts] = mockFetch.mock.calls[0];
@@ -145,7 +146,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I7", CANDIDATE_ARK),
         primaryId2: "I7",
-      });
+      }, LOCAL);
 
       const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
       const entry1Gedcomx = body.entries[0].content.gedcomx;
@@ -173,7 +174,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }, LOCAL);
 
       const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
       const persistent =
@@ -196,7 +197,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      });
+      }, LOCAL);
 
       const body = JSON.parse((mockFetch.mock.calls[0][1] as { body: string }).body);
       const [persistent] =
@@ -223,7 +224,7 @@ describe("samePerson", () => {
           primaryId1: "I99",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/primaryId "I99" not found in gedcomx1/);
     });
 
@@ -234,7 +235,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I99",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/primaryId "I99" not found in gedcomx2/);
     });
 
@@ -245,7 +246,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/gedcomx1 has no persons\[\]/);
     });
 
@@ -261,7 +262,7 @@ describe("samePerson", () => {
           primaryId1: "wrong",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/Available ids in gedcomx1: I1, I2/);
     });
   });
@@ -281,7 +282,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/call the login tool/i);
     });
 
@@ -299,7 +300,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/blocked by WAF/i);
     });
 
@@ -317,7 +318,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/Required header 'Authorization' is not present/);
     });
 
@@ -333,7 +334,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/returned no entries\[\]/);
     });
 
@@ -346,7 +347,7 @@ describe("samePerson", () => {
           primaryId1: "I1",
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/Could not reach FamilySearch matchTwoExamples API/);
     });
   });
@@ -399,7 +400,7 @@ describe("samePerson", () => {
         gedcomx2: side2,
         primaryId2: "I2",
         matchRelatives: true,
-      });
+      }, LOCAL);
 
       expect(mockFetch).toHaveBeenCalledTimes(3);
       if (!("matchRelatives" in result)) throw new Error("expected relatives result");
@@ -438,7 +439,7 @@ describe("samePerson", () => {
         gedcomx2: side2,
         primaryId2: "I2",
         matchRelatives: true,
-      });
+      }, LOCAL);
 
       if (!("matchRelatives" in result)) throw new Error("expected relatives result");
       expect(result.matches).toHaveLength(2);
@@ -453,7 +454,7 @@ describe("samePerson", () => {
           gedcomx2: side2,
           primaryId2: "I2",
           matchRelatives: true,
-        }),
+        }, LOCAL),
       ).rejects.toThrow(/primaryId "BOGUS" not found in gedcomx1/);
     });
   });
@@ -470,7 +471,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.queryArk).toBe("ark:/61903/4:1:KGS8-LY1");
     });
@@ -489,7 +490,7 @@ describe("samePerson", () => {
         primaryId1: "I1",
         gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
         primaryId2: "I1",
-      }), "matchRelatives");
+      }, LOCAL), "matchRelatives");
 
       expect(result.queryArk).toBe("ark:/61903/4:1:MMMM-MMM");
     });

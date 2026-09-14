@@ -716,7 +716,7 @@ and the config + tokens files show up in
 The refresh path (where an expired token gets renewed behind the
 scenes) isn't directly callable from the MCP tools yet — it only
 kicks in when an **authenticated** tool like `collections_search` calls
-`getValidToken()`. The unit tests cover it thoroughly. To verify it
+`getValidToken(principal)`. The unit tests cover it thoroughly. To verify it
 end-to-end against the live FamilySearch token endpoint:
 
 1. Log in successfully so `tokens.json` exists.
@@ -731,7 +731,7 @@ end-to-end against the live FamilySearch token endpoint:
 
    ```bash
    cd ~/cowork-genealogy/packages/engine/mcp-server
-   npx tsx -e 'import("./src/auth/refresh.js").then(m => m.getValidToken().then(t => console.log("got:", t.slice(0,8)+"…"), e => console.error("err:", e.message)))'
+   npx tsx -e 'import("./src/auth/refresh.js").then(m => m.getValidToken(principal).then(t => console.log("got:", t.slice(0,8)+"…"), e => console.error("err:", e.message)))'
    ```
 
 4. Check `tokens.json` — `expiresAt` should now be in the future

@@ -1,6 +1,7 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
 import type {
   ImageSearchInput,
   ImageSearchResult,
@@ -32,7 +33,7 @@ async function resolveGroupId(
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(
+    response = await fetchWithRetry(
       `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(imageGroupNumber)}/apid`,
       { headers: headers(token) }
     );
@@ -58,7 +59,7 @@ async function fetchChildren(
 ): Promise<ChildrenNamesResponse> {
   let response: Response;
   try {
-    response = await fetchWithTimeout(
+    response = await fetchWithRetry(
       `${ARTIFACT_BASE}/artifact/group/${encodeURIComponent(groupId)}/children/names`,
       { headers: headers(token) }
     );
@@ -110,13 +111,14 @@ function usableImageIds(data: ChildrenNamesResponse): {
 }
 
 export async function imageSearchTool(
-  input: ImageSearchInput
+  input: ImageSearchInput,
+  principal: Principal
 ): Promise<ImageSearchResult> {
   if (!input.imageGroupNumber) {
     throw new Error("image_search requires an imageGroupNumber.");
   }
 
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   const groupId = await resolveGroupId(input.imageGroupNumber, token);
 
   let best = usableImageIds(await fetchChildren(groupId, token));

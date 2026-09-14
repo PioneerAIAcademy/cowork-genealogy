@@ -792,7 +792,9 @@ does not run, does not count toward the tool-call cap, and does not stop
 the run** — the agent is told to use records instead and continues. Every
 denied attempt is recorded in the run log's `blocked_tree_reads` array
 (`{tool, args, blocked_by}` per entry, `blocked_by` ∈ `"tree"` |
-`"fixture"`), so a reviewer can see whether the agent *tried* to
+`"fixture"` | `"shell"` | `"path"` — the last two are the opt-in
+filesystem denials below; both add `reason`, and `"path"` adds the resolved
+`path`), so a reviewer can see whether the agent *tried* to
 shortcut research and which block source denied it. A non-empty
 `blocked_tree_reads` doesn't invalidate a `pass` (the answer was still
 earned from records, since the read was blocked), but it's worth a look.
@@ -812,6 +814,23 @@ Denials are recorded in the same `blocked_tree_reads` array with
 apart. Note the asymmetry this creates with production (`/research`
 normally has the tool) and keep the list minimal — blocking a tool the
 answer does NOT leak through just handicaps the benchmark.
+
+**Filesystem denials (`--deny-shell`, `--deny-project-reads`).** Two
+opt-in flags, both off by default, applied by the same `PreToolUse` hook
+with the same semantics (the denied call doesn't run, doesn't count toward
+the cap, doesn't stop the run). `--deny-shell` denies `Bash` and
+`PowerShell`, recorded as `"blocked_by": "shell"`. `--deny-project-reads`
+denies a `Read`, `Grep` or `Glob` whose target is under the project folder
+— except under its `.claude/`, which holds the staged skills and agents —
+and always allows `$CLAUDE_CONFIG_DIR/projects/**/tool-results/**`, where
+the CLI spills an oversized tool result for the model to read back; a
+`Glob` with no `path` is treated as the project root. Recorded as
+`"blocked_by": "path"` with the resolved `path`. Both entries carry the
+`reason` the agent was shown, which names the MCP route that replaces the
+read: `record_read({recordId, resultsRef})` for a `results/` sidecar,
+`research_query` for `research.json` and `evaluations/`, `project_context`
+otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
+with it on is not comparable to one without.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
 recoverable *from records alone*. A real validity run (§14) proves
@@ -1542,7 +1561,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `stop_reason` | Why the run ended. §6.5. |
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
-| `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
+| `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
 | `blocked_context_calls[]` | Denied main-thread calls to a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read`) — the router substituting for a failed subagent spawn. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
@@ -1555,6 +1574,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
 | `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
+| `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
+| `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
 | `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
@@ -1564,7 +1585,10 @@ Together the five reasoning-config fields (`agent_model` through `cli_version`)
 make an A/B across model × effort × output-budget self-describing from the log
 alone. `person_evidence_guard` is a sixth self-describing field but not a
 reasoning knob — it records an enforcement posture, and is the one field here
-that changes what a *verdict* means rather than what produced it.
+that changes what a *verdict* means rather than what produced it. `deny_shell`
+and `deny_project_reads` are the same kind of field — an enforcement posture,
+not a reasoning knob — and are there so a run that had no shell, or no direct
+project reads, is never compared against one that did.
 
 #### 8.1.1 `tool_calls[]` — the joined keys
 
