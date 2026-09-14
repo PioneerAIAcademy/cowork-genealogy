@@ -128,6 +128,13 @@ class SingleRun:
     # record of what the pin actually cost. `{}` on the abort path and on
     # any CLI old enough not to emit `modelUsage`.
     model_usage: dict[str, Any] = field(default_factory=dict)
+    # True when the run ended before a ResultMessage arrived even though it
+    # is NOT an abort — currently only the negative-test routing short-circuit
+    # (issue #2189). num_turns above is real on that path (turns_seen survives
+    # regardless of exit path); output_tokens is not (no partial token count
+    # exists pre-ResultMessage) — this says why 0 there isn't "used no
+    # tokens," rather than leaving it indistinguishable from a genuine zero.
+    no_result_message: bool = False
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -404,6 +411,7 @@ def assemble_test_entry(
             "cache_creation_input_tokens": r.cache_creation_input_tokens,
             "output_tokens": r.output_tokens,
             "model_usage": r.model_usage,
+            "no_result_message": r.no_result_message,
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {
