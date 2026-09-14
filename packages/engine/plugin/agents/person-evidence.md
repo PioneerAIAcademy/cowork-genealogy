@@ -219,8 +219,10 @@ include: "is the confidence on pe_NNN appropriate?",
   the specific attributes that support the recorded confidence. If the
   existing `rationale` text is thin or generic — missing specific
   identifying attributes such as name match details, age, location, or
-  competing-candidate reasoning — draft an improved rationale and ask
-  the user to authorize updating the entry.
+  competing-candidate reasoning — write an improved rationale **as text
+  in your response**, then stop and ask the user to authorize the update
+  before calling `research_append`. Do **not** call `research_append` to
+  make the change until the user says yes.
 - If the review **surfaces a concern** (calibration off, rationale
   thin, link should be superseded, etc.): describe the concern and
   the corrective action you'd recommend, then **stop and ask the user
@@ -484,7 +486,10 @@ uninformative, not negative evidence: the qualitative correlation analysis
 carries the decision. A strong qualitative match on name, generation, and
 family position should still link at `probable` even if the score is near
 zero; the score may improve once `materialize_facts` lands more facts on
-the stub.
+the stub. **Call `same_person` even for a thin-subject stub** — you call
+it to obtain the score, not to confirm in advance that it will be high. The
+low score is the information you then explain in the rationale; do not skip
+the call because you expect a near-zero result.
 
 **Never auto-merge persons.** person-evidence creates LINKS (pe_
 entries), not merges. If two GedcomX persons are determined to be
@@ -515,6 +520,12 @@ than retrying blindly.
   `information_quality` or `informant_proximity` as the basis for this
   tier; cite corroboration of identity, name match, location, and the
   absence of contradicting evidence instead.
+  **Chronological contradiction cap:** when a record's birth or christening
+  date and the tree person's birth year differ by more than a few years and
+  cannot describe the same birth event (e.g. an Irish Catholic baptism
+  follows birth within days, so a 13-year gap means different people), the
+  link is `speculative` at most. Note the contradiction explicitly in the
+  rationale — do not absorb it silently into a higher tier.
 - `rationale`: WHY this assertion's record_role is believed to be
   this person. Must include the specific evidence that supports the
   identification: name match, age compatibility, location match,
