@@ -758,16 +758,18 @@ def report_resolution_precedes_identity(before_state, after_state):
 # re-proposed:
 #
 # ARM 1, firsthand/eyewitness attribution -- NOT SHIPPED. The spec calls it "a
-# literal-phrase check ... not a reading of the argument". Measured over the 4
-# committed logs: of 49 sentences carrying a firsthand phrase, 31 (63%) are
-# NEGATED and are correct reasoning about the LOSING informant --
+# literal-phrase check ... not a reading of the argument". Re-derived
+# 2026-09-14 over the 5 committed logs, scanning the two persisted prose fields
+# and the reply text, counting sentences that contain `firsthand`/`first-hand`/
+# `eyewitness`: of 75 such sentences, 59 (79%) are NEGATED and are correct
+# reasoning about the LOSING informant --
 #   "he had no firsthand access to birth facts"          CORRECT
 #   "James Brown could not have had any firsthand knowledge"  CORRECT
 #   "the census informants (likely Thomas Flynn or his wife) were household
 #    members with firsthand knowledge"                    VIOLATION
 # -- and negation filtering does not rescue it: a survivor is "reporting the
 # family's American context rather than a witnessed fact", correct and
-# distinguished only by "rather than". The true FP rate is >=63%. Separating
+# distinguished only by "rather than". The true FP rate is >=79%. Separating
 # these IS a reading of the argument, so the spec's own ground for calling this
 # mechanical does not hold for this arm.
 #
@@ -792,7 +794,7 @@ _HEDGE_WORDS = re.compile(r"\b(unknown|possibly|likely|most likely)\b", re.I)
 #   prose "reported uncertainly Mary Ann was present"               -> reported
 #     (`certainly` matched inside `uncertainly`)
 # Latent — the whole corpus yields one distinct hedged name (`Thomas Flynn`) and
-# zero instances of either shape across 51 runs. The trailing `\b` deliberately
+# zero instances of either shape across 64 runs. The trailing `\b` deliberately
 # still allows a surname to be ADDED ("almost certainly Mary Ann Sullivan", the
 # same woman), which is correct; only the Ann/Anne substitution stops.
 _CERTAINTY = r"\b(?:almost certainly|undoubtedly|definitely|certainly)"
@@ -860,7 +862,9 @@ def _certainty_upgrades(text: str, names: set[str]) -> list[tuple[str, str]]:
 
     STRICT ADJACENCY: the marker, separators only, then the name. Measured
     against the looser readings, with `text_response` included --
-    adjacency 15, up-to-3-words 16, same-sentence 17, same-field 21. The
+    adjacency 19, up-to-3-words 20, same-sentence 21, same-field 26 -- the
+    loosest counted one hit per (name, field), not per marker occurrence.
+    Re-derived 2026-09-14 over the 5 committed logs. The
     tightest is shipped; it still catches the spec's exemplar, and the 1 hit it
     gives up versus 3-words is the stated cost of not reading the argument.
     """
@@ -905,20 +909,23 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
     failing tier-1 validator suppresses the LLM judge (the `validators_passed`
     gate in orchestrator.py), and
     the grader is the only thing that can read whether the upgrade was justified.
-    `Evidence weighing` and `Resolution completeness` scored 3 on all 28 runs
-    where either was graded -- neither has ever discriminated -- which is both
+    `Evidence weighing` scored 3 on all 35 runs where it was graded, and
+    `Resolution completeness` on 34 of 35 -- its one 2 is ut_006 in
+    v1_2026-09-11_14-05-47 -- which is both
     this check's marginal value and the reason not to silence the grader.
 
-    HONEST PRECISION. Every persisted-field hit in the corpus is one template:
+    HONEST PRECISION. 16 of the 19 corpus hits are the disjunctive template
     "almost certainly Thomas Flynn or his wife", upgrading the record's "likely
     Thomas Flynn or wife" over the same two-person set. That is the DISJUNCTIVE
-    reading, and it is what ships. A reviewer who rejects it drops the precision
-    claim to near zero, so it is stated here rather than buried. Three of the
-    four certainty markers have zero corpus support.
+    reading, and it is what ships. The other 3 are singular, and one of them is
+    in a persisted field -- ut_conflict_resolution_006's resolution_rationale in
+    v1_2026-09-11_14-05-47, "almost certainly Thomas Flynn himself as head" --
+    so rejecting the disjunctive reading leaves real signal rather than none.
+    Three of the four certainty markers have zero corpus support.
 
     Population is `_conflicts_written` -- every after-state conflict whose prose
     this run authored -- not V3's `_resolutions_this_run`, which requires
-    `status` to reach `resolved` and would drop the 11 corpus writes that
+    `status` to reach `resolved` and would drop the 13 corpus writes that
     authored prose without touching it.
     """
     before = before_state.get("research_json")
@@ -951,7 +958,7 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
             # per the spec, and it is NOT a no-op. It supplies no name of its
             # own, but it lifts the segment scoping, which is the only thing
             # that reaches a name sitting in a hedge-free parenthetical. It
-            # supplies 4 of the 11 flagged runs on today's corpus. Removing it
+            # supplies 4 of the 13 flagged runs on today's corpus. Removing it
             # reds test_v4_the_indeterminate_arm_is_load_bearing_not_a_no_op.
             #
             # An earlier version of this comment called it a no-op, reasoning
@@ -984,8 +991,8 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
         # turn -- telling a genealogist the run wrote prose it did not
         # write, the same defect class as the truncated quote. `prev is
         # None` is a conflict this turn created, where every field is
-        # authored. Does not fire on today's corpus (all 29 prose edits
-        # write both fields in one turn) but 34 of the 42 fixture conflicts
+        # authored. Does not fire on today's corpus (all 36 prose edits
+        # write both fields in one turn) but 33 of the 42 fixture conflicts
         # already carry prose in both, so one single-field revision trips it.
         texts = {
             f: str(c.get(f) or "")
@@ -997,12 +1004,13 @@ def report_informant_certainty_upgrade(before_state, after_state, text_response)
             for name, span in _certainty_upgrades(txt, set(names)):
                 observations.append(
                     # "attaches a certainty marker to" rather than "asserts":
-                    # 13 of the 15 corpus matches are DISJUNCTIVE ("almost
+                    # 16 of the 19 corpus matches are DISJUNCTIVE ("almost
                     # certainly Thomas Flynn or his wife"), so the prose names no
                     # single person — it keeps the record's two-person
                     # disjunction and raises the confidence on it. "asserts
                     # 'Thomas Flynn'" told a genealogist the run named someone it
-                    # did not name. Both singular matches are in the reply text.
+                    # did not name. Two of the three singular matches are in the
+                    # reply text; the third is in a resolution_rationale.
                     f"conflicts[{cid}] {field} attaches a certainty marker to "
                     f"'{name}', "
                     f"but the record names that informant only under a hedge: "

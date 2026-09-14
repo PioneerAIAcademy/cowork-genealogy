@@ -1392,7 +1392,7 @@ def test_v4_fires_on_a_certainty_upgrade_in_the_REPLY_TEXT():
     `v1_2026-08-19_15-24-31` / `ut_conflict_resolution_008` /
     `output.text_response` — and in NO `weighing_analysis` or
     `resolution_rationale`. A check reading only the persisted fields fires on
-    none of it; 6 of the 15 corpus observations are in this field.
+    none of it; 7 of the 19 corpus observations are in this field.
     """
     reply = ("**Decisive finding:** The census informant — almost certainly "
              "Thomas Flynn, Patrick's father — reported Ireland within 5–15 "
@@ -1574,7 +1574,7 @@ def test_v4_is_tier_2_reporting_not_gating():
 # The house pattern, and the thing whose absence let three different hit counts
 # (9 / 10 / 11 / 15) circulate in the plan before any code existed. `_replay`
 # above cannot serve: it calls `validator(before, after)` with two arguments and
-# V4 needs `text_response`, which is where 6 of the 15 observations live.
+# V4 needs `text_response`, which is where 7 of the 19 observations live.
 
 
 def _replay_v4():
@@ -1693,7 +1693,7 @@ def _independently_v4_hits():
                                 names |= {n for n in name.findall(s)
                                           if not notperson.search(n)}
                         # The `indeterminate` arm, which is NOT a no-op — it
-                        # supplies 4 of the 11 flagged runs on its own. See
+                        # supplies 4 of the 13 flagged runs on its own. See
                         # test_v4_the_indeterminate_arm_is_load_bearing.
                         if a.get("information_quality") == "indeterminate":
                             names |= {n for n in name.findall(inf)
@@ -1740,7 +1740,7 @@ def test_v4_catches_the_specs_own_worked_example_in_the_corpus():
 
 
 def test_v4_reports_the_reply_text_as_well_as_the_persisted_fields():
-    """40% of the corpus signal is in the reply text. A regression that dropped
+    """37% of the corpus signal is in the reply text. A regression that dropped
     that field would leave the two tests above green if the persisted hits
     survived, so the field split is asserted directly."""
     fields = {"weighing_analysis": 0, "resolution_rationale": 0, "the reply text": 0}
@@ -1767,8 +1767,8 @@ def test_v4_the_indeterminate_arm_is_load_bearing_not_a_no_op():
 
     The name sits in a parenthetical whose own segment has NO hedge word, so
     segment-scoped extraction yields nothing and only the `indeterminate` arm
-    reaches it. It supplies `ut_conflict_resolution_001` in all four committed
-    logs — 4 of the 11 flagged runs.
+    reaches it. It supplies `ut_conflict_resolution_001` in four of the five
+    committed logs — 4 of the 13 flagged runs.
 
     The corpus re-derivation test found this within a minute of being written,
     which is the argument for having it.
@@ -1940,8 +1940,8 @@ def test_v4_does_not_report_an_upgrade_in_a_field_this_turn_did_not_touch():
     `test_v4_ignores_prose_the_run_did_not_author`, which holds NEITHER field
     changed. Both stayed green with the bug present.
 
-    Does not fire on today's corpus -- all 29 prose-writing edits move both
-    fields in one turn -- but 34 of the 42 conflict entries across the scenario
+    Does not fire on today's corpus -- all 36 prose-writing edits move both
+    fields in one turn -- but 33 of the 42 conflict entries across the scenario
     fixtures already carry prose in both, so the first single-field revision
     reaches it.
     """
@@ -2071,7 +2071,7 @@ def test_v4_the_certainty_pattern_is_anchored_at_both_ends():
     """Neither end was anchored, and both shapes fired before `\\b` was added.
 
     Latent — the whole corpus yields one distinct hedged name (`Thomas Flynn`)
-    and zero instances of either shape across 51 runs — so this is pinned by
+    and zero instances of either shape across 64 runs — so this is pinned by
     argument rather than by a corpus hit.
     """
     inf = "Unknown household member (likely Mary Ann or wife)"
