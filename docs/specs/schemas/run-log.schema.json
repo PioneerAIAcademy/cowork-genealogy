@@ -272,6 +272,7 @@
           "additionalProperties": { "type": "object" },
           "description": "The SDK's per-model token ledger for this run, keyed by model id, verbatim (inputTokens / outputTokens / cacheReadInputTokens / cacheCreationInputTokens per entry). The run's own token fields are its column sums. More than one key means the run delegated to a plugin agent on its own model: pin — the only record of what that pin cost. Optional: absent on the abort path and in logs written before it was captured."
         },
+        "no_result_message": { "type": "boolean", "description": "True when the run ended before a ResultMessage arrived even though it is not an abort — currently only the negative-test routing short-circuit. num_turns is real here (see its own description); output_tokens is 0 because no real count exists, not because the skill used none. Optional, defaults to absent/false in logs written before it was captured." },
         "skill_cost_usd": { "type": "number", "minimum": 0 },
         "output": { "$ref": "#/$defs/run_output" },
         "validators": { "$ref": "#/$defs/validator_results" },

@@ -438,8 +438,8 @@ const DimensionRow = memo(function DimensionRow({
 
   return (
     <Card withBorder padding="xs">
-      <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <Box style={{ flex: 1 }}>
+      <Group justify="space-between" align="flex-start" wrap="wrap">
+        <Box style={{ flex: '1 1 240px', minWidth: 0 }}>
           <Group gap={6} mb={2}>
             <Badge color="gray" variant="outline" size="xs">{dim.source}</Badge>
             <Text fw={500}>{dim.name}</Text>
@@ -449,11 +449,11 @@ const DimensionRow = memo(function DimensionRow({
               <Badge color="orange" variant="outline" size="xs">unreviewed</Badge>
             )}
           </Group>
-          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap' }}>
+          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             {judgeRationale || '(no rationale)'}
           </Text>
         </Box>
-        <Stack gap={4} align="flex-end">
+        <Stack gap={4} align="flex-end" style={{ flex: '0 0 auto' }}>
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
             <Tooltip label={SCORE_SCALE_HINT} openDelay={600} withArrow>
