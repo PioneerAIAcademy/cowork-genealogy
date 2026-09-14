@@ -24,9 +24,11 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * read the paragraph above as a standing claim.
  *
  * #2071 then added the particle-surname clause to BOTH `surname` descriptions
- * (`record_search` 14,469 -> 14,653, `person_search` 5,003 -> 5,187), combined
- * 19,840. Same direction again, and for the same reason: the clause records a
- * measured equivalence (section K) that a model would otherwise guess at. The ruling on #1323 was to name
+ * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,406), combined
+ * 20,278. Same direction again, and for the same reason: the clause records a
+ * measured result (section K) that a model would otherwise guess at.
+ *
+ * The ruling on #1323 was to name
  * both roles and when each applies instead of recommending omission, and naming
  * the relative-discovery route is what that guidance exists to do. Recorded as an
  * increase rather than argued away.
@@ -138,8 +140,8 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14653],
-  ["person_search", 5187],
+  ["record_search", 14872],
+  ["person_search", 5406],
 ];
 
 /**

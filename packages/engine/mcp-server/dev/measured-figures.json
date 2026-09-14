@@ -1920,13 +1920,16 @@
     "pool:vanderlinde": 558,
     "pool:Van Der Linde": 558,
     "pool:Linde": 558,
-    "unscopedBare": 900650,
-    "unscopedUnbalancedQuote": 900650,
-    "mcKeeSpaced": 6342813,
-    "mcKeeJoined": 6342813,
+    "pool:Linde, van der": 993,
+    "verdict:dropping the particle returns the same set": "YES — 'Linde' enumerates the identical set as 'van der Linde'",
+    "verdict:the inverted form reaches the same set": "NO — 'Linde, van der' enumerates a different set",
+    "unscopedBare": 900756,
+    "unscopedUnbalancedQuote": 900756,
+    "mcKeeSpaced": 6342823,
+    "mcKeeJoined": 6342823,
     "verdict:literal quotes change the result set": "NO — the server strips quotes before matching, so guidance prescribing them is inert",
-    "verdict:the particle is required to match": "NO — 'vanderlinde' and 'Van Der Linde' return the identical set as 'van der Linde'",
+    "verdict:spacing and case change the result set": "NO — 'vanderlinde' (space removed) and 'Van Der Linde' enumerate the identical set as 'van der Linde', so spacing and capitalisation carry no signal. This says nothing about DROPPING the particle; that leg is recorded separately.",
     "verdict:control Mc Kee equals McKee": "REPRODUCES",
-    "measured_at": "2026-09-14T11:16:29.566Z"
+    "measured_at": "2026-09-14T19:12:58.467Z"
   }
 }

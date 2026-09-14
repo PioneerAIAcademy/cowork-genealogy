@@ -105,22 +105,33 @@ A surname carrying a particle or an internal space is passed through **verbatim*
 percent-encoded and **unquoted**. Nothing is stripped, concatenated, split across
 `surname`/`surnameAlt`, or wrapped in literal quotes.
 
-Three things were measured on one hard-scoped pool (given name `Marinus`, the
-Netherlands, births 1800–1810; 558 rows, read a page at a time), section K of
-`dev/probe-search-qualifiers.ts`:
+Measured on one hard-scoped pool (given name `Marinus`, the Netherlands, births
+1800–1810), **enumerated to exhaustion** — 558 rows, 558 distinct, no duplicate
+serving — in section K of `dev/probe-search-qualifiers.ts`:
 
-- **Literal quotes are inert.** `"van der Linde"` returns the identical result
-  set as `van der Linde`, and an *unbalanced* quote returns the same unscoped
-  total as the bare form, so the server strips them before matching rather than
-  honouring them. `search-records/references/name-search-mechanics.md`
-  prescribes quoting; it neither helps nor hurts, and the tool does not send it.
-- **The particle is not required to match.** `vanderlinde` and `Van Der Linde`
-  return the identical set as `van der Linde`. Dropping the particle entirely
-  (`Linde`) returns a pool of the same size whose composition differs, so it is
-  a different query, not a normalization of the same one.
+- **Literal quotes are inert.** `"van der Linde"` returns the identical set as
+  `van der Linde`, and an *unbalanced* quote returns the same unscoped total as
+  the bare form, so the server strips them before matching rather than honouring
+  them. `search-records/references/name-search-mechanics.md` prescribes quoting;
+  it neither helps nor hurts, and the tool does not send it.
+- **Spacing, case and the particle itself carry no signal.** `vanderlinde`,
+  `Van Der Linde` and even `Linde` — the particle dropped entirely — each
+  enumerate the **identical 558-row set** as `van der Linde`. All five are one
+  fuzzy equivalence class.
+- **The inverted form is a different query.** `Linde, van der` — the shape Dutch
+  and Belgian indexes commonly use, alphabetising under the root with the
+  *tussenvoegsel* trailing — enumerates **993 rows**, a different set. This is
+  the one spelling that changes what comes back, and it is the card's leg 2.
 - **Control.** `Mc Kee` and `McKee` are equivalent, which is the claim already
   in the plugin's reference file. A probe that could not reproduce it would have
   an instrument problem rather than a finding.
+
+**An earlier revision of this section asserted the opposite of the third bullet**
+— that dropping the particle yielded "a pool of the same size whose composition
+differs, so it is a different query". That came from comparing the first 100-row
+page of a 558-row pool. Two reviewers independently identified it, and the
+enumerated re-run refuted it: an identical total over a different first page is
+what a *re-ranking of one set* looks like, which is what it was.
 
 The unit tests pin the **string the tool builds** (rule 20a), never that
 FamilySearch honours it; the live half is the probe's, and its figures are in

@@ -5907,42 +5907,84 @@ async function sectionK(): Promise<void> {
     "q.givenName=Marinus&f.recordCountry=Netherlands" +
     "&q.birthLikeDate.from=1800&q.birthLikeDate.to=1810";
 
-  const readPool = async (surname: string): Promise<{ total: number; ids: string[] } | null> => {
-    const r = await search(
-      `q.surname=${encodeURIComponent(surname)}&${POOL}&count=100&${REQUIRE_SWITCH}`
+  // RULE 0: enumerate, never compare first pages. `count` maxes at 100 and this
+  // pool is ~558, so the original single-request version compared PAGES and
+  // called the result a set comparison. `scanIds` pages to exhaustion and hands
+  // back a DEDUPED Set, which also removes a second bug for free: this pool is a
+  // date-range query, and date-range pools in this file re-serve the same
+  // persona at many offsets (section N: 4,900 rows for 1,100 distinct).
+  const readPool = async (
+    surname: string
+  ): Promise<{ total: number; ids: Set<string>; rows: number } | null> => {
+    const r = await scanIds(
+      `q.surname=${encodeURIComponent(surname)}&${POOL}&${REQUIRE_SWITCH}`,
+      1000
     );
-    if (errored(r) || r.total === null || r.personas.length === 0) return null;
-    return { total: r.total, ids: r.personas.map((x) => x.id) };
+    if (!r.complete || r.total === null || r.ids.size === 0) return null;
+    return { total: r.total, ids: r.ids, rows: r.rows };
   };
 
-  const FORMS = ["van der Linde", '"van der Linde"', "vanderlinde", "Van Der Linde", "Linde"];
-  const pools = new Map<string, { total: number; ids: string[] } | null>();
+  // "Linde, van der" is the card's leg 2 and was missing: Dutch and Belgian
+  // indexes routinely alphabetise under the root with the tussenvoegsel
+  // trailing, so it is the form a Dutch researcher actually meets.
+  const FORMS = [
+    "van der Linde",
+    '"van der Linde"',
+    "vanderlinde",
+    "Van Der Linde",
+    "Linde",
+    "Linde, van der",
+  ];
+  const pools = new Map<string, { total: number; ids: Set<string>; rows: number } | null>();
   for (const f of FORMS) {
     const got = await readPool(f);
     pools.set(f, got);
     record("K", `pool:${f}`, got ? got.total : null);
     console.log(
-      `  q.surname=${JSON.stringify(f).padEnd(18)} ${got ? fmt(got.total) : "  ERROR"}  read=${got?.ids.length ?? 0}`
+      `  q.surname=${JSON.stringify(f).padEnd(18)} ${got ? fmt(got.total) : "NOT ENUMERATED"}  rows=${got?.rows ?? 0} distinct=${got?.ids.size ?? 0}`
     );
   }
 
   const baseline = pools.get("van der Linde") ?? null;
+  // Set-against-Set. The earlier form compared a merged Set's SIZE against an
+  // array LENGTH, so any pool serving a persona twice reported two identical
+  // scans as DIFFERENT.
   const sameSetAs = (f: string): boolean | null => {
     const a = pools.get(f) ?? null;
     if (!baseline || !a) return null;
-    if (a.ids.length !== baseline.ids.length) return false;
-    return new Set([...a.ids, ...baseline.ids]).size === baseline.ids.length;
+    if (a.ids.size !== baseline.ids.size) return false;
+    return [...a.ids].every((id) => baseline.ids.has(id));
   };
 
   const quotedSame = sameSetAs('"van der Linde"');
   const concatSame = sameSetAs("vanderlinde");
   const casedSame = sameSetAs("Van Der Linde");
   const bareLindeSame = sameSetAs("Linde");
+  const invertedSame = sameSetAs("Linde, van der");
+  record(
+    "K",
+    "verdict:dropping the particle returns the same set",
+    bareLindeSame === null
+      ? "NOT MEASURED"
+      : bareLindeSame
+        ? "YES — 'Linde' enumerates the identical set as 'van der Linde'"
+        : "NO — 'Linde' enumerates a different set"
+  );
+  record(
+    "K",
+    "verdict:the inverted form reaches the same set",
+    invertedSame === null
+      ? "NOT MEASURED"
+      : invertedSame
+        ? "YES — 'Linde, van der' enumerates the identical set"
+        : "NO — 'Linde, van der' enumerates a different set"
+  );
   for (const [label, v] of [
     ['"van der Linde" (quoted)', quotedSame],
-    ["vanderlinde (no particle)", concatSame],
+    ["vanderlinde (space removed)", concatSame],
     ["Van Der Linde (cased)", casedSame],
     ["Linde (particle dropped)", bareLindeSame],
+    ["Linde, van der (inverted)", invertedSame],
   ] as Array<[string, boolean | null]>) {
     console.log(
       `    vs baseline set — ${label.padEnd(26)} ${v === null ? "NOT MEASURED" : v ? "IDENTICAL" : "DIFFERENT"}`
@@ -5958,8 +6000,17 @@ async function sectionK(): Promise<void> {
   const unbal = await search(
     `q.surname=${encodeURIComponent('"van der Linde')}&count=3&${REQUIRE_SWITCH}`
   );
+  // The row-count guard `mcSame` below already had, and this leg did not. Two
+  // zero-row reads with non-null totals compare equal, which would print
+  // "quotes are stripped" -- the single sentence the no-code-change decision
+  // rests on -- out of two failed reads.
   const stripped =
-    errored(bareBig) || errored(unbal) || bareBig.total === null || unbal.total === null
+    errored(bareBig) ||
+    errored(unbal) ||
+    bareBig.total === null ||
+    unbal.total === null ||
+    bareBig.personas.length === 0 ||
+    unbal.personas.length === 0
       ? null
       : bareBig.total === unbal.total;
   record("K", "unscopedBare", errored(bareBig) ? null : bareBig.total);
@@ -6001,12 +6052,12 @@ async function sectionK(): Promise<void> {
   );
   record(
     "K",
-    "verdict:the particle is required to match",
+    "verdict:spacing and case change the result set",
     concatSame === null || casedSame === null
       ? "NOT MEASURED"
       : concatSame && casedSame
-        ? "NO — 'vanderlinde' and 'Van Der Linde' return the identical set as 'van der Linde'"
-        : "YES — a particle form reaches records the concatenated form does not"
+        ? "NO — 'vanderlinde' (space removed) and 'Van Der Linde' enumerate the identical set as 'van der Linde', so spacing and capitalisation carry no signal. This says nothing about DROPPING the particle; that leg is recorded separately."
+        : "YES — respacing or recasing the particle changes the set"
   );
   record(
     "K",
