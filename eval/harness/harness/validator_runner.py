@@ -41,6 +41,10 @@ class ValidatorRunResult:
     # `outcome` is the field that can; keep it the discriminator rather than
     # re-deriving one from the `error` prose.
     skipped: bool = False
+    # True when the report_* function's signature contains none of the
+    # response-derived arguments (text_response, tool_calls, activated,
+    # skills_invoked) — it reads only persisted project state.
+    state_derived: bool = False
 
     @property
     def outcome(self) -> str:
@@ -204,6 +208,8 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
         if not callable(fn):
             continue
         sig = inspect.signature(fn)
+        _RESPONSE_ARGS = {"text_response", "tool_calls", "activated", "skills_invoked"}
+        is_state_derived = is_report and not (set(sig.parameters) & _RESPONSE_ARGS)
         try:
             kwargs = {
                 name: available_args[name]
@@ -237,6 +243,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
             out.append(ValidatorRunResult(
                 name=attr_name, passed=True, error=None,
                 reporting_only=is_report,
+                state_derived=is_state_derived,
             ))
         except AssertionError as e:
             out.append(
@@ -244,6 +251,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                     name=attr_name, passed=False,
                     error=str(e) or "assertion failed",
                     reporting_only=is_report,
+                    state_derived=is_state_derived,
                 )
             )
         except Skipped as e:
@@ -264,6 +272,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                     error=f"skipped: {e}",
                     reporting_only=is_report,
                     skipped=True,
+                    state_derived=is_state_derived,
                 )
             )
         except Exception as e:  # noqa: BLE001 — validator bug, surface verbatim
@@ -297,16 +306,29 @@ def as_dicts(results: list[ValidatorRunResult]) -> list[dict[str, Any]]:
     ]
 
 
-def split_observations(results: list[ValidatorRunResult]) -> list[str]:
+def split_observations(
+    results: list[ValidatorRunResult],
+) -> tuple[list[str], list[str]]:
     """Extract anonymous observation texts from tier-2 report_* results.
 
-    Returns r.error (the observation text) for every reporting-only result
-    that failed and has an error message. Passing report_* results are
-    excluded (only fired findings appear). r.name (the function name) is
-    never included — it is a verdict, not an observation, and handing it
-    to the judge would anchor the grade.
+    Returns (response_observations, state_observations). Each list carries
+    r.error (the observation text) for every reporting-only result that
+    failed and has an error message. The partition is by function signature:
+    a report_* whose parameters include none of text_response, tool_calls,
+    activated, skills_invoked is state-derived (reads only persisted project
+    state); the rest are response-derived.
+
+    Passing report_* results are excluded (only fired findings appear).
+    r.name (the function name) is never included — it is a verdict, not
+    an observation, and handing it to the judge would anchor the grade.
     """
-    return [
-        r.error for r in results
-        if r.reporting_only and not r.passed and r.error
-    ]
+    response_obs: list[str] = []
+    state_obs: list[str] = []
+    for r in results:
+        if not (r.reporting_only and not r.passed and r.error):
+            continue
+        if r.state_derived:
+            state_obs.append(r.error)
+        else:
+            response_obs.append(r.error)
+    return response_obs, state_obs

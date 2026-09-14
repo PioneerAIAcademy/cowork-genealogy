@@ -595,7 +595,7 @@ async def _execute_single_run(
     # Reporting observations (tier 2, report_*): pass r.error (the
     # observation text), NOT r.name (which is a verdict). The function name
     # goes only to the run log for traceability, never the judge.
-    harness_observations = split_observations(validator_results)
+    harness_observations, state_observations = split_observations(validator_results)
     # For _build_warnings: (name, observation) tuples so the run log records
     # which report_* function fired.
     _harness_observation_pairs = [
@@ -619,6 +619,7 @@ async def _execute_single_run(
                 # grades a conclusion by agreeing with it.
                 validator_failures=validator_failures,
                 harness_observations=harness_observations,
+                state_observations=state_observations,
                 spec=spec,
                 rubric=rubric,
                 scenario_readme=scenario_readme,
@@ -1595,6 +1596,7 @@ def _run_judge(
     judge_model: str,
     validator_failures: list[str] | None = None,
     harness_observations: list[str] | None = None,
+    state_observations: list[str] | None = None,
 ) -> JudgeOutput:
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
@@ -1626,6 +1628,7 @@ def _run_judge(
         before_state=_summarize_before_state(before_snapshot),
         validator_failures=validator_failures,
         harness_observations=harness_observations,
+        state_observations=state_observations,
     )
 
 
