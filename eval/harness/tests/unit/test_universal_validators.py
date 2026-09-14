@@ -151,11 +151,31 @@ def test_tree_owner_writing_persons_passes():
     check_tree(tree(), tree(persons=entry("I1")), {"name": "person-evidence"}, POSITIVE)
 
 
-def test_record_extraction_may_write_tree_sources_but_not_tree_persons():
+def test_record_extraction_may_write_tree_sources_and_persons_but_not_relationships():
+    """`persons` was added by #2472; `relationships` deliberately was not.
+
+    record-extraction reaches `sources` through the composite sourceDescription
+    persist, and `persons` through the assertion-`update` rewrite: correcting an
+    assertion's place/standard_place/date/value also rewrites any fact carrying
+    that assertion's `assertion_id`. Facts live on persons, so the write lands
+    in that section even though the tool mints no person and no fact.
+
+    `relationships` stays refused, and the asymmetry is the point rather than an
+    oversight. Nothing can stamp a relationship fact — `materialize_facts` never
+    writes relationship facts and `tree_edit` rejects a caller-supplied
+    `assertion_id` — so the rewrite can never reach one, and that row's own
+    `requires` says record-extraction "is assertion-only here: it writes the
+    inferred relationship-type assertion and never the edge."
+
+    This test previously asserted `persons` was refused. That is what the
+    ownership widening changed, and the widening is declared as `TREE_WIDENED`
+    in test_ownership_manifest.py with its reason.
+    """
     check_tree(tree(), tree(sources=entry("S1")), {"name": "record-extraction"}, POSITIVE)
+    check_tree(tree(), tree(persons=entry("I1")), {"name": "record-extraction"}, POSITIVE)
     with pytest.raises(AssertionError) as e:
-        check_tree(tree(), tree(persons=entry("I1")), {"name": "record-extraction"}, POSITIVE)
-    assert "persons" in str(e.value)
+        check_tree(tree(), tree(relationships=entry("R1")), {"name": "record-extraction"}, POSITIVE)
+    assert "relationships" in str(e.value)
 
 
 def test_person_evidence_may_not_write_tree_sources():

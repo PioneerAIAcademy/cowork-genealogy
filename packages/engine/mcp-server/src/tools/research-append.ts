@@ -51,7 +51,12 @@ export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
-import type { SimplifiedGedcomX } from "../types/gedcomx.js";
+import {
+  ASSERTION_FACT_ATTRS,
+  assertionFactAttr,
+  type AssertionFactAttr,
+} from "./materialize-facts.js";
+import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -1015,6 +1020,133 @@ interface AppliedOp {
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
   warnings?: string[];
+}
+
+// ─── #2472: carry an assertion correction onto the fact it minted ────────────
+
+interface FactRewriteResult {
+  /** True when at least one fact attribute actually changed. */
+  mutated: boolean;
+  warnings: string[];
+  /** Restore every touched fact to its pre-rewrite attributes. */
+  undo: () => void;
+}
+
+/**
+ * Rewrite the mirrored attributes of every tree fact carrying the
+ * `assertion_id` of an assertion this call updated.
+ *
+ * Why a post-apply pass and not part of `applyOne` or `prepareOps`: `prepareOps`
+ * runs BEFORE the apply loop, and `applyOne` receives `research` only — no
+ * `tree`, and no way to report a tree mutation. It reads values off the
+ * assertion entry in `research` AFTER apply rather than off `op.fields`, because
+ * `normalizeDateFields` and `canonicalizeAssertionLabels` run inside `applyOne`
+ * and a rewrite keyed on the raw payload would persist the un-normalized form.
+ *
+ * Person facts only. Nothing can stamp a relationship fact — `materialize_facts`
+ * never writes relationship facts, and `tree_edit` rejects a caller-supplied
+ * `assertion_id` — so scanning them would be dead code. The harness's
+ * tree-fact/assertion agreement check scans both anyway; a validator with a
+ * blind spot is worse than one that can never fire there.
+ */
+function rewriteLinkedFacts(
+  applied: AppliedOp[],
+  ops: ResearchAppendOp[],
+  research: any,
+  tree: SimplifiedGedcomX,
+): FactRewriteResult {
+  const warnings: string[] = [];
+  const undos: Array<() => void> = [];
+  let mutated = false;
+
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  const allFacts: SimplifiedFact[] = (tree?.persons ?? []).flatMap((p) => p.facts ?? []);
+
+  /** Snapshot the mirrored attributes so a failed validation can roll back. */
+  const snapshot = (fact: SimplifiedFact) => {
+    const before = new Map<AssertionFactAttr, string | undefined>(
+      ASSERTION_FACT_ATTRS.map((a) => [a, fact[a]]),
+    );
+    undos.push(() => {
+      for (const [a, v] of before) {
+        if (v === undefined) delete fact[a];
+        else fact[a] = v;
+      }
+    });
+  };
+
+  for (let i = 0; i < applied.length; i++) {
+    const a = applied[i];
+    if (a.section !== "assertions" || a.op !== "update" || a.noop) continue;
+    const fields = ops[i]?.fields;
+    if (!fields || typeof fields !== "object") continue;
+    // `Object.hasOwn`, not truthiness: `place: null` is a real correction — it
+    // withdraws the claim — and must clear the fact's place, not be skipped.
+    const touched = ASSERTION_FACT_ATTRS.filter((attr) => Object.hasOwn(fields, attr));
+    if (touched.length === 0) continue;
+
+    const assertion = assertions.find((e: any) => e && e.id === a.entryId);
+    if (!assertion) continue;
+
+    const linked = allFacts.filter((f) => f.assertion_id === a.entryId);
+    if (linked.length === 0) {
+      // Scoped to THIS op, deliberately. Every fact written before the backlink
+      // existed lacks the field, so a warning phrased as "a fact has no
+      // assertion_id" would fire on essentially every call. No heuristic
+      // fallback either — the point of the backlink is that the join stops
+      // being a guess.
+      warnings.push(
+        `assertion '${a.entryId}' was corrected but no tree fact is linked to it, so nothing ` +
+          "in tree.gedcomx.json was updated. If this assertion has been materialized, the fact " +
+          "predates the assertion_id backlink — re-check it with person_read and correct it " +
+          "with tree_correct.",
+      );
+      continue;
+    }
+
+    for (const fact of linked) {
+      snapshot(fact);
+      for (const attr of touched) {
+        const action = assertionFactAttr(assertion, attr, fact.type);
+        // null: materialize would never have written this attribute (a `value`
+        // on an event fact, #711). Leave whatever is there alone.
+        if (action === null) continue;
+        if ("clear" in action) {
+          if (fact[attr] !== undefined) {
+            delete fact[attr];
+            mutated = true;
+          }
+          continue;
+        }
+        if (fact[attr] !== action.set) {
+          fact[attr] = action.set;
+          mutated = true;
+        }
+      }
+      // Country-contradiction guard on the pair this rewrite just produced.
+      // Clears + warns, mirroring tree-edit.ts's guard on the same object;
+      // research_append's own append-path guard errors and gedcomx-convert's
+      // read path omits. No shipped path writes a contradicting standard_place,
+      // and this must not become the first. Clearing does not read as drift to
+      // the agreement check either: that compares only where both sides hold a
+      // value, so an absent standard_place is skipped.
+      if (
+        typeof fact.place === "string" &&
+        typeof fact.standard_place === "string" &&
+        countryConsistency(fact.place, fact.standard_place) === "contradiction"
+      ) {
+        warnings.push(
+          `standard_place '${fact.standard_place}' contradicts place '${fact.place}' on fact ` +
+            `'${fact.id}' (from assertion '${a.entryId}') — the place text names a different ` +
+            "country; cleared (left unset). Correct the assertion's standard_place.",
+        );
+        delete fact.standard_place;
+        mutated = true;
+      }
+    }
+  }
+
+  return { mutated, warnings, undo: () => undos.forEach((u) => u()) };
 }
 
 /**
@@ -2507,9 +2639,11 @@ export async function researchAppend(
         )
         .map((e: any) => e.target_id as string),
     );
-    // Heal legacy tree shapes in memory; the healed document is what a
-    // composite write persists (same one-shot migration as tree_edit). A
-    // research-only call still never writes the tree.
+    // Heal legacy tree shapes in memory; the healed document is what a tree
+    // write persists (same one-shot migration as tree_edit). Two things write
+    // it: the composite `sourceDescription` S entry, and an assertion `update`
+    // that rewrites the fact minted from it (#2472). A call doing neither
+    // still never writes the tree.
     const sanitized = sanitizeTree(await readJson(projectPath, "tree.gedcomx.json"));
     const tree = sanitized.tree;
     // Pre-mutation snapshot (applyOne and prepareOps mutate research and tree
@@ -2622,8 +2756,17 @@ export async function researchAppend(
     // failure and merging them there loses nothing and reports everything.
     const misrouted = emptyCreatedPlanErrors(ops, research, applied);
 
+    // #2472: carry an assertion correction onto the fact materialize_facts
+    // minted from it, in this same call's atomic composite persist.
+    const rewrite = rewriteLinkedFacts(applied, ops, research, tree);
+
     const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
-    const anyMutation = applied.some((a) => !a.noop) || prep.treeMutated;
+    // Folded into locals rather than mutated onto `prep`: both the mutation test
+    // and the write branch below have to see the rewrite's tree write, and the
+    // degrade path below can take it back.
+    let treeMutated = prep.treeMutated || rewrite.mutated;
+    let rewriteWarnings = rewrite.warnings;
+    const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
     // THIS call sets project.status = "completed" — the same trigger the mentor
@@ -2643,7 +2786,28 @@ export async function researchAppend(
     let validationWarnings: string[] = [];
     let filesWritten: string[] = [];
     if (anyMutation) {
-      const validation = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
+      let validation = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
+      // A fact rewrite is call-INTRODUCED, so a rewritten fact that fails
+      // validation would refuse the assertion correction itself — the write the
+      // caller actually asked for, and the legitimate one (writers block on
+      // call-introduced errors only, commit 7cd6a19b9). Roll the rewrite back
+      // and re-validate; if that clears it, the correction lands and the dropped
+      // rewrite degrades to a warning. The retry runs only on a path that was
+      // already failing, so it costs nothing in the normal case.
+      if (!validation.valid && rewrite.mutated) {
+        rewrite.undo();
+        const retry = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
+        if (retry.valid) {
+          validation = retry;
+          treeMutated = prep.treeMutated;
+          rewriteWarnings = [
+            ...rewrite.warnings,
+            "the linked tree fact(s) could not be updated from this correction — the rewritten " +
+              "fact failed validation, so it was rolled back and only research.json was written. " +
+              "The assertion is corrected; the fact still holds the earlier reading.",
+          ];
+        }
+      }
       if (!validation.valid) {
         // Shape errors surface here (the document validator, not applyOne), so
         // this is the site the evaluations/known_holdings rejections land on.
@@ -2679,7 +2843,7 @@ export async function researchAppend(
       if (holdMs > 0 && options.toolName === "extraction_append") {
         await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
       }
-      if (prep.treeMutated) {
+      if (treeMutated) {
         await atomicWriteBoth(projectPath, [
           { ref: "tree.gedcomx.json", data: tree }, // tree first —
           { ref: "research.json", data: research }, // — then research (commit order)
@@ -2715,7 +2879,7 @@ export async function researchAppend(
     const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
@@ -2851,7 +3015,10 @@ export const researchAppendSchema = {
       op: {
         type: "string",
         enum: ["append", "update"],
-        description: "append a new entry (tool assigns the id) or update an existing one by id.",
+        description:
+          "append a new entry (tool assigns the id) or update an existing one by id. " +
+          "Correcting an assertion's place/standard_place/date/value also updates the " +
+          "tree fact materialized from it — no separate tree_correct call.",
       },
       entry: {
         type: "object",
@@ -2883,7 +3050,13 @@ export const researchAppendSchema = {
               enum: [...RESEARCH_APPEND_SECTIONS],
               description: "The research.json section this op writes.",
             },
-            op: { type: "string", enum: ["append", "update"], description: "append (tool assigns id) or update by id." },
+            op: {
+              type: "string",
+              enum: ["append", "update"],
+              description:
+                "append (tool assigns id) or update by id. An assertions update also " +
+                "updates the tree fact materialized from that assertion.",
+            },
             entry: { type: "object", description: "append: the new entry in snake_case, WITHOUT an id." },
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },
             fields: { type: "object", description: "update: fields to shallow-merge (the id is immutable)." },

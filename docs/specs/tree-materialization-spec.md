@@ -294,6 +294,84 @@ something was lost.
 - `materialize_facts` **does not** write `conflicts` entries — that stays
   `conflict-resolution`'s job. The tool reports; the skill routes.
 
+#### The `assertion_id` backlink — corrections reach the fact
+
+A minted fact carries `assertion_id`: the id of the assertion it was minted
+from. `research_append`'s assertion `update` op then rewrites the linked fact's
+`place`, `standard_place`, `date` and `value` in the same atomic composite
+persist, so a place corrected on an assertion reaches the fact instead of
+leaving the earlier reading on it. The op lives in the shared
+`research-append.ts`, so this fires for `extraction_append` too.
+
+**Stamped on the mint branch only** (§4.2's coexist arm). Not on the
+corroboration arm above, and never filled in when absent there.
+`factsEquivalent` is a deliberately *loose* **dedupe** predicate — an absent
+date or place counts as compatible, and a place chain that is a prefix of the
+other counts as compatible — not an identity one. A fill-when-absent rule would
+therefore attach a backlink to a bare `tree_edit add_fact` conclusion a
+researcher entered by hand, and a later assertion update would then silently
+rewrite it. The backlink means "this fact was minted from this assertion"; it is
+set once and never inferred.
+
+**Why this is a write and not a refusal.** ADR-0011 makes a refusal at the
+write boundary the default shape for a new gate, and this is deliberately not
+one. The write being made — correcting an assertion — is the legitimate write,
+so there is nothing for the boundary to refuse; and ADR-0009 constraint 6 is
+the test it fails, because there is no call shape the agent could produce
+instead. In the run that produced this card the agent had *already* corrected
+the assertion and still did not touch the fact, so a refusal would report the
+divergence and leave the repair unverified. This also beat a `validateCrossFile`
+error, which blocks nothing: writers block on call-introduced errors only
+(commit `7cd6a19b9`), so a divergence created by an earlier call is pre-existing
+drift. And it beat a heuristic join on (person, fact type, source ref), which is
+ambiguous wherever one source yields two facts of the same type — two residences
+in one census, a second marriage. The backlink makes the join exact, and a fact
+with no backlink is **warned about, never guessed at**.
+
+**What it knowingly does not fix.** A correction made on a *corroborating*
+assertion does not reach the fact: the fact carries the minting assertion's id,
+not the corroborator's. That is the narrower residue of the same bug and it is
+accepted. It bounds at **175 of 7225 person facts** in the committed e2e trees
+carrying more than one source ref (measured 2026-09-14; recount by counting
+facts with `len(sources) > 1` across
+`eval/runlogs/e2e/*/*final-tree.gedcomx.json`), and a multi-source fact is only
+*potentially* affected — the corroborators usually agree.
+
+**The backlink is dropped, not kept, in three places**, because a fact that no
+longer answers to its assertion must stop claiming to:
+
+- `tree_edit` / `tree_correct` `update_fact`, when the op sets any
+  `FACT_STRING_FIELDS` member. A human correcting the fact directly is recording
+  their own conclusion, exactly as `add_fact` does. It warns when it detaches,
+  because the cost is real: that fact is now outside the automatic update, which
+  re-opens this bug for it. **31 of 114 `update_fact` ops** in the committed e2e
+  run logs set one of those fields and would detach (109 `tree_correct`, 5
+  `tree_edit`, across 80 calls; measured 2026-09-14).
+- a fact merge (`mergeFactGroup`), unless every member carries the same
+  backlink. The merged fact takes its best date and best place from possibly
+  different members, so keeping the first member's id would leave it claiming an
+  assertion whose place it no longer carries.
+- `tree_edit` refuses a caller-supplied `assertion_id` outright, on every fact
+  write path. Admitting the field to the tree schema also made it settable by a
+  model, and a forged backlink is one `research_append` would later rewrite.
+
+**The rewrite never fails the call it rides on.** A fact rewrite is
+call-introduced, so a rewritten fact that failed validation would refuse the
+assertion correction itself. The rewrite is rolled back, validation re-run, and
+the dropped rewrite degrades to a warning. It also never writes a
+country-contradicting `standard_place`: on a contradiction it clears the fact's
+`standard_place` and warns, the same as `tree_edit` does on the same object
+(`research_append`'s append arm errors, `gedcomx-convert` omits — no path
+fabricates one).
+
+**What makes this checkable at all.** Before the backlink there was no
+machine-readable link from a fact to the assertion it came from, so "this fact
+disagrees with its source" could not be computed and no writer tool, validator
+or CI job surfaced it. With `assertion_id` present it is a property, and
+`eval/harness/validators/test_universal.py::test_tree_facts_agree_with_linked_assertions`
+asserts it: for every backlinked fact, where both the fact and its assertion
+hold a value for `place`/`standard_place`/`date`/`value`, the two must agree.
+
 ### 4.5 What it never does
 
 Never sets `primary`/`preferred`; never resolves conflicts; never collapses

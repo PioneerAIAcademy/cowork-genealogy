@@ -114,6 +114,268 @@ describe("research_append (Phase 1)", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
+  // ─── #2472: an assertion correction reaches the fact minted from it ─────────
+  //
+  // Shapes chosen from the committed e2e corpus, not from what is easiest to
+  // assert: of the 145 assertion-`update` ops touching the mirrored four,
+  // 127 set `standard_place` alone, 6 `value` alone, 6 `date`+`value`,
+  // 4 `place`+`date`+`value`, and 2 `place`+`standard_place`+`value`
+  // (re-measured 2026-09-14 over eval/runlogs/e2e/*/run-*.json).
+
+  describe("assertion update rewrites the linked tree fact (#2472)", () => {
+    /** An assertion carrying a place/date/value, with the schema's required fields. */
+    const backlinkAssertion = (over: Record<string, unknown> = {}) => ({
+      id: "a_011",
+      source_id: "src_001",
+      record_id: "rec1",
+      record_role: "principal",
+      fact_type: "immigration",
+      value: "Immigrated to Canada, 1924; destination Odessa, Saskatchewan",
+      date: "1924",
+      place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+      standard_place: "Thames Centre Township, Middlesex, Ontario, Canada",
+      information_quality: "primary",
+      informant: "self",
+      informant_proximity: "self",
+      evidence_type: "direct",
+      extracted_for_question_ids: [],
+      ...over,
+    });
+
+    /** A tree whose I1 holds one backlinked fact. */
+    const treeWithBacklink = (fact: Record<string, unknown> = {}) => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F4",
+              type: "Immigration",
+              date: "1924",
+              place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+              standard_place: "Thames Centre Township, Middlesex, Ontario, Canada",
+              assertion_id: "a_011",
+              sources: [{ ref: "SD-001", quality: 3 }],
+              ...fact,
+            },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+    });
+
+    const withAssertion = (a: Record<string, unknown>) => {
+      const r = baseResearch();
+      r.assertions = [a];
+      return r;
+    };
+
+    const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    const factF4 = async () =>
+      (await readTree()).persons.find((p: any) => p.id === "I1").facts.find((f: any) => f.id === "F4");
+
+    it("(1) the dominant shape: `standard_place` alone is rewritten, `place` left alone", async () => {
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.filesWritten).toContain("tree.gedcomx.json");
+
+      const f = await factF4();
+      expect(f.standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      // Untouched by this op, so it still mirrors the assertion.
+      expect(f.place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
+      expect(f.assertion_id).toBe("a_011");
+    });
+
+    it("(2) `place`+`date`+`value` on an EVENT fact rewrites place and date but NOT value", async () => {
+      // #711: `factCandidate` never copies an assertion's `value` onto an event
+      // fact, so neither may the rewrite — the assertion's value is a prose
+      // sentence, and writing it into an Immigration fact's `value` would be a
+      // fresh defect rather than a fix.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: {
+          place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+          date: "1925",
+          value: "Immigrated to Canada, 1925; destination Odessa, Saskatchewan (manifest image)",
+        },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.date).toBe("1925");
+      expect(f.value).toBeUndefined();
+    });
+
+    it("(3) `place`+`standard_place`+`value` on a VALUE-BEARING fact rewrites all three", async () => {
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+        treeWithBacklink({ type: "Occupation", value: "Labourer" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: {
+          place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+          standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+          value: "Blacksmith",
+        },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.value).toBe("Blacksmith");
+    });
+
+    it("(4) a country contradiction clears the fact's standard_place and warns, without failing", async () => {
+      // No shipped path writes a contradicting standard_place: research_append's
+      // append arm errors, tree_edit clears + warns, gedcomx-convert omits. This
+      // rewrite must not become the first.
+      await writeProject(
+        withAssertion(backlinkAssertion({ standard_place: "Bamenda, Mezam, Northwest Region, Cameroon" })),
+        treeWithBacklink(),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "West Bromwich, England" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("West Bromwich, England");
+      expect(f.standard_place).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared \(left unset\)/);
+    });
+
+    it("(5) `place: null` clears the fact's place rather than writing a null", async () => {
+      // The tree schema types these `string` with no null branch, so assigning
+      // null would make the fact invalid. `Object.hasOwn`, not truthiness, is
+      // what makes a null count as a correction at all.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: null },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect("place" in f).toBe(false);
+      expect(f.standard_place).toBe("Thames Centre Township, Middlesex, Ontario, Canada");
+    });
+
+    it("(6) warns — scoped to the op — when the corrected assertion has no linked fact", async () => {
+      const tree = treeWithBacklink();
+      delete (tree.persons[0].facts[0] as any).assertion_id;
+      await writeProject(withAssertion(backlinkAssertion()), tree);
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.join(" ")).toMatch(/no tree fact is linked to it/);
+      expect(r.filesWritten).not.toContain("tree.gedcomx.json");
+    });
+
+    it("(7) stays silent when the op touches no mirrored field", async () => {
+      // Every fact in every pre-backlink project lacks assertion_id, so an
+      // unscoped warning would fire on essentially every call.
+      const tree = treeWithBacklink();
+      delete (tree.persons[0].facts[0] as any).assertion_id;
+      await writeProject(withAssertion(backlinkAssertion()), tree);
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { informant: "official" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.join(" ")).not.toMatch(/no tree fact is linked/);
+      expect(r.filesWritten).not.toContain("tree.gedcomx.json");
+    });
+
+    it("(8) fires through extraction_append too, not just research_append", async () => {
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await extractionAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+    });
+
+    it("(9) rewrites every fact carrying the id, and no fact carrying another", async () => {
+      const tree = treeWithBacklink();
+      tree.persons[0].facts.push(
+        { id: "F5", type: "Immigration", place: "Wellburn, Ontario, Canada", assertion_id: "a_011", sources: [{ ref: "SD-001" }] } as any,
+        { id: "F6", type: "Immigration", place: "Wellburn, Ontario, Canada", assertion_id: "a_999", sources: [{ ref: "SD-001" }] } as any,
+      );
+      await writeProject(withAssertion(backlinkAssertion()), tree);
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const facts = (await readTree()).persons[0].facts;
+      const by = (id: string) => facts.find((f: any) => f.id === id);
+      expect(by("F4").place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(by("F5").place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(by("F6").place).toBe("Wellburn, Ontario, Canada");
+    });
+  });
+
   it("a pre-existing unrelated drift does not block a write; it rides as a warning (#1572)", async () => {
     // `project` carries a legacy additionalProperties key this call never touches
     // (the call updates an assertion). Before #1572 the whole-document validation

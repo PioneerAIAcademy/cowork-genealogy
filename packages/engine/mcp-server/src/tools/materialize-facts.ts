@@ -289,6 +289,50 @@ function factCandidate(assertion: any): FactCandidate {
   return cand;
 }
 
+/**
+ * The tree-fact attributes an assertion supplies — the mirrored set a later
+ * assertion correction rewrites on the fact it minted (#2472).
+ *
+ * Deliberately NOT `standard_date`: an assertion has no such field (the
+ * research schema stops at `date`), so there is nothing to mirror. And not
+ * `fact_type`: retyping an assertion is a re-classification, not an attribute
+ * correction, and rewriting a fact's `type` under it would silently change what
+ * the fact claims.
+ */
+export const ASSERTION_FACT_ATTRS = ["date", "place", "standard_place", "value"] as const;
+export type AssertionFactAttr = (typeof ASSERTION_FACT_ATTRS)[number];
+
+/**
+ * What a rewrite should do to one tree-fact attribute, given the assertion the
+ * fact was minted from and the fact's own tree type.
+ *
+ * This is `factCandidate`'s rule, lifted rather than copied, because
+ * `research_append`'s rewrite has to agree with what minted the fact in the
+ * first place. `tree-forget.ts` already imports from this module and
+ * `research-append.ts` already imports `treeDiff` from a sibling tool, so the
+ * cross-tool import is the established shape here rather than a new util.
+ *
+ *   - `null`  — materialize would never have written this attribute, so leave
+ *     whatever is there alone. Exactly one case: `value` on an event type,
+ *     which `factCandidate` excludes (#711). An assertion's `value` is a prose
+ *     sentence ("Immigrated to Canada, 1924; destination Odessa…"), and writing
+ *     that into an Immigration fact's `value` is a fresh defect, not a fix.
+ *   - `{ clear: true }` — the assertion asserts nothing here (null, absent or
+ *     blank). Delete the key rather than writing `null`: the tree schema types
+ *     these `string`, with no null branch, so assigning one makes the fact
+ *     invalid.
+ *   - `{ set }` — the assertion's value, to write.
+ */
+export function assertionFactAttr(
+  assertion: any,
+  attr: AssertionFactAttr,
+  treeFactType: string | undefined,
+): { set: string } | { clear: true } | null {
+  if (attr === "value" && EVENT_TREE_TYPES.has(String(treeFactType ?? ""))) return null;
+  const v = str(assertion?.[attr]);
+  return v === undefined ? { clear: true } : { set: v };
+}
+
 /** A SimplifiedFact view of a candidate for factsEquivalent(). */
 function candAsFact(cand: FactCandidate): SimplifiedFact {
   const f: SimplifiedFact = { type: cand.type };
@@ -460,6 +504,16 @@ function applyMaterializeOp(
       if (cand.place !== undefined) fact.place = cand.place;
       if (cand.standard_place !== undefined) fact.standard_place = cand.standard_place;
       if (cand.value !== undefined) fact.value = cand.value;
+      // The backlink (#2472). MINT ONLY — deliberately not set on the
+      // corroboration branch above, and never filled in when absent there.
+      // `factsEquivalent` is a loose DEDUPE predicate (an absent date or place
+      // counts as compatible, and a place chain that is a prefix of the other
+      // counts as compatible), not an identity one, so a fill-when-absent rule
+      // would attach a backlink to a hand-entered `tree_edit add_fact`
+      // conclusion and a later assertion update would then silently rewrite it.
+      // The field means "this fact was minted from this assertion"; it is set
+      // once and never inferred. See tree-materialization-spec.md section 4.4.
+      if (typeof a.id === "string" && a.id !== "") fact.assertion_id = a.id;
       fact.sources = [ref];
       person.facts.push(fact);
       createdFactIds.add(fact.id!);

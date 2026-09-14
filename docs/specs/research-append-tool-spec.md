@@ -144,6 +144,33 @@ camelCase convenience fields the same way `research_log_append` does.
   the id and never removing the entry**. A status transition (e.g. a plan →
   `superseded`, a question → `resolved`) is an `update`. There is **no delete op** —
   the supersede-not-delete rule is structural (`research-schema-spec.md:143`).
+- **`update` on an `assertions` entry also rewrites the tree fact it minted.**
+  When the op sets `place`, `standard_place`, `date` or `value`, every
+  fact in `tree.gedcomx.json` carrying that assertion's `assertion_id` has the
+  **same fields** rewritten, in this call's existing atomic composite persist —
+  so `filesWritten` gains `tree.gedcomx.json`. Four rules bind:
+  - **Membership is by backlink, never by guess.** A fact with no `assertion_id`
+    is warned about (§5.3), not matched heuristically.
+  - **The fact mirrors the assertion.** A field the assertion no longer asserts
+    (`null`, absent, blank) is **deleted** from the fact rather than written as
+    `null` — the tree schema types these `string` with no null branch.
+    Membership is tested with `Object.hasOwn`, so `place: null` counts as a
+    correction rather than being skipped.
+  - **`value` is not written to an event fact.** `materialize_facts` never puts
+    an assertion's `value` on an event-type fact, and neither does this:
+    an assertion's `value` is a prose sentence, and a Birth fact's `value` is a
+    qualifier. The mapping is shared with `materialize_facts` rather than
+    restated, so the two cannot disagree about what minted the fact.
+  - **It never fails the call, and never fabricates a place.** A rewrite that
+    fails validation is rolled back and degrades to a warning, because writers
+    block on call-introduced errors only (commit `7cd6a19b9`) and refusing here
+    would refuse the assertion correction itself — the legitimate write. A
+    resulting `place`/`standard_place` pair that contradicts on country clears
+    the fact's `standard_place` and warns, matching `tree_edit`.
+
+  This is a **write, not a refusal**, deliberately: see
+  `tree-materialization-spec.md` §4.4 for why ADR-0011's write-boundary-refusal
+  default does not apply and what ADR-0009 constraint 6 rules out.
 - **`update` on a singleton section** — `project` and `researcher_profile` are each
   one object, not a list, so neither has an id or an `append`: `op:"update"`
   shallow-merges `fields` (restricted to that section's `allowedFields`) onto the
@@ -187,7 +214,8 @@ camelCase convenience fields the same way `research_log_append` does.
     sId: string | null,            // the tree S entry the source cites
   },
   resolvedPlaces?: [{ place, standardPlace, source: "sidecar" | "geocoded" }], // §3.6
-  filesWritten: ["research.json"], // + "tree.gedcomx.json" first, when §3.4 wrote the S entry
+  filesWritten: ["research.json"], // + "tree.gedcomx.json" first, when §3.4 wrote the S
+                                   //   entry or §3.1's assertion-update rewrote a fact
   validation: { valid: true, warnings: string[] },
 }
 // on failure: { ok: false, errors: string[] } — nothing written
@@ -567,8 +595,8 @@ Mirrors `research_log_append` minus the sidecar:
    is discarded too). A pre-existing error the call did not introduce is demoted
    to a warning and does not block.
 6. Commit:
-   - **No tree mutation** (every call without `sourceDescription`): write only
-     `research.json` with `atomicWriteJson`. No `.bak` — this section is
+   - **No tree mutation** (no `sourceDescription` S entry and no §3.1 fact
+     rewrite): write only `research.json` with `atomicWriteJson`. No `.bak` — this section is
      append/supersede with full history-in-file, so the GPS audit trail is the
      recovery mechanism (consistent with `research_log_append`).
    - **Composite (§3.4) tree mutation:** commit **both files with
@@ -795,6 +823,31 @@ tool against the write-once `starting-tree.gedcomx.json` baseline.
   than treating every fact as new. Fires only on the call that *sets* `completed`,
   so it never re-warns on a later write to an already-completed project.
 
+### 5.3 Corrected-assertion-with-no-linked-fact nudge (warning, not a precondition)
+
+A **warning** — never a rejection — emitted when this call's `assertions`
+`update` op sets `place`, `standard_place`, `date` or `value` **and no fact in
+`tree.gedcomx.json` carries that assertion's `assertion_id`**. It rides
+`validation.warnings` and never touches `ok`, the same shape as §5.1 and §5.2.
+
+- **Scoped to the op, because the unscoped form fires on everything.** Every
+  fact written before the backlink existed lacks the field, so a warning phrased
+  as "a fact has no `assertion_id`" would fire on essentially every call in every
+  existing project. The trigger is this op, this assertion, these four fields;
+  an op touching none of them is silent, and so is a project with no tree facts.
+- **No heuristic fallback.** The rejected alternative joined on (person, fact
+  type, source ref), which is ambiguous wherever one source yields two facts of
+  the same type. The point of the backlink is that the join stops being a guess,
+  so where the backlink is absent the tool says so rather than picking.
+- **Why warn and not deny.** The write being made is the legitimate one. A
+  refusal would block a correct assertion correction over the state of a
+  *different* file, and there is no call shape the agent could produce instead
+  (ADR-0009 constraint 6). The actionable route is in the message: re-check the
+  fact with `person_read` and correct it with `tree_correct`.
+- **A detach is warned about too**, at the other end: `tree_edit`/`tree_correct`
+  `update_fact` says when a direct correction has unlinked a fact from its
+  assertion, because that fact is then outside the automatic update.
+
 ---
 
 ## 6. Decisions recorded
@@ -838,7 +891,12 @@ plain entry write fits here, the computed build may warrant its own tool),
 (written once by `init-project`).
 
 **Out of scope:** `log[]` + sidecars (shipped: `research_log_append`);
-`tree.gedcomx.json` (the merge tools + `tree_edit`, `tree-edit-tool-spec.md`).
+`tree.gedcomx.json` **as a section this tool writes** — persons, relationships
+and facts are authored by the merge tools, `tree_edit` and `materialize_facts`
+(`tree-edit-tool-spec.md`). The two exceptions are both derived from a
+`research.json` write rather than authored here: the §3.4 `S` entry for a source,
+and the §3.1 rewrite of a fact already carrying the corrected assertion's
+`assertion_id`. Neither adds a person, a fact, a name or a ref.
 
 ---
 
@@ -939,6 +997,23 @@ this tool's landing.
 `record-extractor` agent owns: **`sources` and `assertions`**. Same
 implementation, same input surface, same validate-once/write-once semantics; the
 other eleven sections are simply not reachable through it.
+
+**"Same implementation" includes the tree writes.** Two behaviours reach
+`tree.gedcomx.json` through this tool, and both are `research_append`'s,
+unchanged: the composite `sourceDescription` persist (§3.4) writes the tree `S`
+entry, and an `assertions` `update` op rewrites the tree fact minted from that
+assertion (§3.1). Neither is a widening of the lane — the sections this
+tool may write are still `sources` and `assertions` — but both mean a successful
+`extraction_append` can return `tree.gedcomx.json` in `filesWritten`, and the
+ownership manifest names `record-extraction` as a `tree.gedcomx.json`/`persons`
+caller for exactly that reason. The rewrite is not a rare path here: of the
+assertion-`update` ops touching one of the four mirrored fields in the committed
+e2e corpus, **60 arrive through `extraction_append` and 85 through
+`research_append`** (measured 2026-09-14; recount by walking
+`tool_calls[].args.ops` for `section: "assertions", op: "update"` over
+`eval/runlogs/e2e/*/run-*.json` — excluding the `.ann.json`,
+`.final-research.json` and `.final-tree.gedcomx.json` siblings that glob also
+matches — and grouping by `tool`).
 
 ### 11.1 Why a second tool and not a parameter
 

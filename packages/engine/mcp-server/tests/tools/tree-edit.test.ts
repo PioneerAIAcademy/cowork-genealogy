@@ -154,6 +154,102 @@ describe("tree_edit", () => {
     expect(f1.id).toBe("F1");
   });
 
+  // ─── #2472: the assertion backlink is stamped, never supplied, and detaches ──
+
+  describe("assertion_id backlink (#2472)", () => {
+    const backlinked = () => {
+      const t = onePerson();
+      (t.persons[0].facts[0] as any).assertion_id = "a_011";
+      return t;
+    };
+
+    it("update_fact drops the backlink when a correction sets a mirrored attribute, and warns", async () => {
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { date: "1849" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.date).toBe("1849");
+      expect(f1.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'/);
+    });
+
+    it("update_fact drops it on a `standard_date` correction too — the trigger is all of FACT_STRING_FIELDS", async () => {
+      // `standard_date` is not one of the four mirrored attributes, but a
+      // human's standard form must not survive beside a later assertion `date`
+      // rewrite landing on the same fact.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { standard_date: "1849" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect((await readTree()).persons[0].facts[0].assertion_id).toBeUndefined();
+    });
+
+    it("update_fact KEEPS the backlink when the correction touches no fact string field", async () => {
+      // The other direction: clearing `primary` is not a re-reading of the
+      // record, so the fact is still the one that assertion minted.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { primary: false },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.primary).toBeUndefined();
+      expect(f1.assertion_id).toBe("a_011");
+    });
+
+    it("rejects a caller-supplied assertion_id on update_fact", async () => {
+      await writeProject(onePerson());
+      const r = await treeCorrect({
+        projectPath: dir,
+        operation: "update_fact",
+        personId: "I1",
+        factId: "F1",
+        fact: { assertion_id: "a_011" } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(JSON.stringify(r)).toMatch(/`assertion_id` is not settable/);
+    });
+
+    it("rejects a caller-supplied assertion_id on add_fact", async () => {
+      await writeProject(onePersonSourced());
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Death", date: "1900", assertion_id: "a_011", sources: [{ ref: "S1" }] } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(JSON.stringify(r)).toMatch(/`assertion_id` is not settable/);
+    });
+  });
+
   it("add_fact: nulls an AUTO-RESOLVED standard_place that contradicts the place text's country, with a warning", async () => {
     // Regression test for the "West Bromwich" -> "West, Cameroon" incident
     // (hannah-earnest-children e2e rerun, 2026-07-22): resolveStandardPlace

@@ -242,6 +242,19 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
         "`true` makes it the primary of its type, `false` clears the flag",
     );
   }
+  // The assertion backlink is stamped by `materialize_facts`, never supplied
+  // (#2472). Admitting `assertion_id` to TREE_FACT_FIELDS also made it
+  // caller-settable here — `fact` is a freeform object and every key is assigned
+  // straight onto the fact — so without this a caller could forge a link the
+  // spec says is set once and never inferred, and `research_append` would then
+  // silently rewrite that hand-entered fact from an assertion it never came from.
+  if ((fact as Record<string, unknown>).assertion_id !== undefined) {
+    throw new TreeEditError(
+      `${op}: fact \`assertion_id\` is not settable — it is the backlink ` +
+        "`materialize_facts` stamps on a fact it mints from an assertion, and it is " +
+        "never supplied by a caller. Materialize the assertion instead, or omit the field.",
+    );
+  }
   for (const field of FACT_STRING_FIELDS) {
     const v = (fact as Record<string, unknown>)[field];
     if (v !== undefined && typeof v !== "string") {
@@ -414,6 +427,26 @@ async function applyOperation(
           continue;
         }
         (existing as any)[k] = v;
+      }
+      // A human correcting any mirrored attribute detaches the fact from the
+      // assertion it was minted from (#2472). The same reading the spec already
+      // applies to `add_fact`: a researcher's own conclusion carries no
+      // backlink. Leaving it attached would make the fact permanently disagree
+      // with its assertion — indistinguishable from the drift the agreement
+      // check reports — and let the next assertion update silently revert the
+      // correction. The trigger is the whole of FACT_STRING_FIELDS, not the four
+      // mirrored attributes: a corrected `standard_date` must not survive beside
+      // a later assertion `date` rewrite.
+      if (
+        existing.assertion_id !== undefined &&
+        FACT_STRING_FIELDS.some((f) => Object.hasOwn(input.fact as object, f))
+      ) {
+        warnings.push(
+          `fact '${existing.id}' is no longer linked to assertion '${existing.assertion_id}' — ` +
+            "a direct correction detaches it, so a later correction to that assertion will not " +
+            "reach this fact. Correct the assertion instead if the record was misread.",
+        );
+        delete existing.assertion_id;
       }
       if (factHadRef && !hasNonNullRef(existing)) {
         throw new TreeEditError(

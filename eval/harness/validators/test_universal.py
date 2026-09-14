@@ -122,6 +122,97 @@ def test_tree_gedcomx_json_validates_schema(after_state):
     )
 
 
+def test_tree_facts_agree_with_linked_assertions(after_state):
+    """A materialized fact must not disagree with the assertion it came from.
+
+    Issue #2472: a place corrected on a `research.json` assertion did not reach
+    the tree fact already materialised from the earlier reading. The stale value
+    stayed on the fact and nothing reported the divergence -- in the run that
+    produced the card, person I1's Immigration fact kept "Wellburn, Thames
+    Centre, Middlesex, Ontario, Canada" and a `standard_place` of "Thames Centre
+    Township" while the assertion already held the corrected Odessa,
+    Saskatchewan. A wrong reading reached a place-AUTHORITY value, not only a
+    display string, so anything joining on `standard_place` put her in the wrong
+    province.
+
+    That was uncheckable until the fact carried a backlink. With `assertion_id`
+    on it, "this fact disagrees with its own source assertion" is a computable
+    property, and this is it.
+
+    Compared only where BOTH sides hold a non-empty string, which is what keeps
+    it free of false positives in three directions that are all legitimate:
+
+      - assertion side absent: the corroboration branch can fill an attribute on
+        a backlinked fact from a DIFFERENT assertion, so "fact has it, linked
+        assertion does not" is not drift.
+      - fact side absent: an event fact never carries the assertion's `value`
+        (#711, `factCandidate`), so comparing it would fail every event fact --
+        and skipping means this needs no copy of `EVENT_TREE_TYPES` in Python.
+      - `assertion_id` naming nothing: there is no assertion to compare against,
+        so it is skipped rather than failed. Referential integrity for this field
+        is not this check's job.
+
+    Facts corrected by hand (`tree_correct`) and facts merged from differently
+    backlinked members carry no `assertion_id` by then -- both writers drop it --
+    so neither reads as drift here.
+
+    Scans relationship facts as well as person facts. Nothing can stamp a
+    relationship fact today, so that arm cannot fire; a validator with a blind
+    spot is worse than one that is silent where nothing happens, and a backlink
+    appearing there is exactly the thing worth being told about.
+    """
+    research = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("both research.json and tree.gedcomx.json required")
+
+    by_id = {
+        a.get("id"): a
+        for a in (research.get("assertions") or [])
+        if isinstance(a, dict)
+    }
+
+    def text(value):
+        """The comparable form of a field, or None when there is nothing to compare."""
+        return value.strip() if isinstance(value, str) and value.strip() else None
+
+    def facts_of(container):
+        for item in container or []:
+            if not isinstance(item, dict):
+                continue
+            for fact in item.get("facts") or []:
+                if isinstance(fact, dict):
+                    yield item.get("id"), fact
+
+    mismatches = []
+    for owner_id, fact in [
+        *facts_of(tree.get("persons")),
+        *facts_of(tree.get("relationships")),
+    ]:
+        linked_id = fact.get("assertion_id")
+        if not linked_id:
+            continue
+        assertion = by_id.get(linked_id)
+        if assertion is None:
+            continue
+        for field in ("place", "standard_place", "date", "value"):
+            on_fact = text(fact.get(field))
+            on_assertion = text(assertion.get(field))
+            if on_fact is None or on_assertion is None:
+                continue
+            if on_fact != on_assertion:
+                mismatches.append(
+                    f"{owner_id}/{fact.get('id')} {field}: fact has "
+                    f"'{on_fact}' but assertion {linked_id} has '{on_assertion}'"
+                )
+
+    assert not mismatches, (
+        "tree fact(s) disagree with the assertion they were materialized from — "
+        "a correction to the assertion never reached the fact (#2472):\n  - "
+        + "\n  - ".join(mismatches)
+    )
+
+
 def test_project_files_pass_full_validation(after_state):
     """research.json + tree.gedcomx.json must pass the FULL runtime validator,
     not just jsonschema.
