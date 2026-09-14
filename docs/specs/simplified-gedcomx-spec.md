@@ -125,6 +125,7 @@ Array of person objects.
 |-------|------|----------|-------------|
 | `id` | string | yes | Person ID. In snapshot-derived documents, the FamilySearch PID when the person is in the FS tree (`KNS4-P6W`), otherwise a synthesized id (`I1`); project trees synthesize `I` ids for all persons. See Section 3 |
 | `gender` | string | yes | `Male`, `Female`, or `Unknown` |
+| `principal` | boolean | no | True when the person is the principal (focus) persona on a historical record. Set by `record_read` and `record_search` (via `toSimplified`); absent on tree persons. Stripped by `sanitizeCandidate` before merge — a tree person has no record role |
 | `living` | boolean | no | True when FamilySearch reports the person as living. `person_read` sets it on every person it returns; hand-built trees may omit it. Living people must never appear in a committed e2e fixture (FamilySearch ToS) — the living-person gate in `eval/harness/e2e/author.py` treats both `true` **and** a missing field as a refusal |
 | `names` | object[] | yes | At least one name. See below |
 | `facts` | object[] | no | Person facts (birth, death, etc.). May be empty or omitted for stub persons |
@@ -210,10 +211,12 @@ Array of source description objects. These are the simplified equivalents of Ged
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Source ID. The FamilySearch PID when FS supplied one (`MS88-FLK`), otherwise synthesized (`S1`). See Section 3 |
+| `resource_type` | string | no | The kind of digital artifact (e.g. `DigitalArtifact`). Stripped URI prefix from raw GedcomX's `resourceType`. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge |
 | `title` | string | yes | Human-readable title of the source |
 | `citation` | string | no | Formatted citation string. Populated by the proof-conclusion workflow at upload time (copied from `research.json` `sources[].citation`). Omit during active research |
 | `author` | string | no | Creator, agency, or author |
 | `url` | string | no | URL to the digital source |
+| `coverage` | object | no | Volume-level metadata from the digital artifact's first coverage entry. Describes the scanned volume the image sits in, not the individual record's event. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge. Fields: `standard_place` (resolved place name), `place_id` (FamilySearch place id, resolved to `standard_place` by `record_read`), `date_range` (temporal coverage, GEDCOM formal date), `record_type` (stripped URI prefix, e.g. `Census`) |
 
 **`person_read` returns are not directly persistable.** The tool's sources
 may additionally carry a `notes` string array (user-attached FamilySearch

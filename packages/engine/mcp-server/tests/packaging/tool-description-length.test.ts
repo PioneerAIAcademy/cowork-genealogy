@@ -26,6 +26,9 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * the relative-discovery route is what that guidance exists to do. Recorded as an
  * increase rather than argued away.
  *
+ * #2367/#2336 added 67 characters to `isPrincipal` (mentioning `role` on search
+ * results and `principal` on record_read persons), `record_search` 14,469 -> 14,536.
+ *
  * #1771 brought `record_search.birthYearExact` from 475 down to 214
  * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
  * and deleted its exemption. What this lint buys is that the shared rule is stated
@@ -133,7 +136,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14469],
+  ["record_search", 14536],
   ["person_search", 5003],
 ];
 
