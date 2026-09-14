@@ -26,6 +26,14 @@ export interface ConvertCalendarCorrections {
 export interface ConvertCalendarInput {
   date: ConvertCalendarDate;
   corrections: ConvertCalendarCorrections;
+  /**
+   * Optional place whose calendar regime governs the date. Offline matched
+   * lookup against the table below — deliberately NOT a `standardPlace`:
+   * resolving one would pull `place-resolver.ts` and the FamilySearch Places
+   * API into a tool this spec declares "not a network tool", and would break
+   * its live handler in eval/harness/harness/mock_mcp.py.
+   */
+  jurisdiction?: string;
 }
 
 interface AppliedCorrection {
@@ -89,6 +97,240 @@ function gregorianFromJDN(jdn: number): { year: number; month: number; day: numb
 
 // ─── Tool ────────────────────────────────────────────────────────────────────
 
+// ─── Jurisdiction regimes (issue #2260) ─────────────────────────────────────
+// The adoption table moved here from `convert-dates/SKILL.md` by lead ruling
+// 2026-09-07. The wiki route was the alternative and lost on measurement:
+// `Julian_and_Gregorian_Calendars` gives the Dutch provinces as a bare year,
+// with no month and no offset, which cannot decide a Gelderland date in
+// Jan–Jun 1700.
+//
+// SCOPE, narrowed from the ruling's wording by review (2026-09-09). The tool
+// identifies the REGIME; the caller still names the QUESTION. `corrections`
+// stays required. Full auto-selection was rejected because it over-converts
+// `ut_convert_dates_007` (a slash-notation question would also get an OS/NS
+// year and a day shift) and forces a call on `ut_convert_dates_008`, whose
+// validator fails the run if `convert_calendar` is called at all.
+//
+// The offset itself is NOT in this table and never was — `julianToGregorianDay`
+// derives it from Julian Day Numbers, which gets the 1700/1800/1900 thresholds
+// right for free. What a jurisdiction adds is which calendar was in force at
+// that moment, and where the civil year began.
+
+interface Ymd {
+  year: number;
+  month: number;
+  day: number;
+}
+
+type DayReckoning = "julian" | "gregorian" | "swedish";
+
+interface RegimeSpan {
+  /** First date, AS WRITTEN, governed by `calendar`. `null` = from the start. */
+  from: Ymd | null;
+  calendar: DayReckoning;
+}
+
+interface Jurisdiction {
+  key: string;
+  /** Match keys, compared after `normalizeJurisdiction`. */
+  aliases: string[];
+  /**
+   * Ordered spans. `regimeAt` takes the LAST span whose `from` is on or before
+   * the date, so a non-monotone history (Groningen) is expressible.
+   */
+  spans: RegimeSpan[];
+  /** Year the civil year began on 1 January. `null` = not modelled here. */
+  yearStartJan1From: number | null;
+  note?: string;
+}
+
+/**
+ * Comparison is on the date AS WRITTEN, which is what a genealogist has: the
+ * record says "30 June 1700" and the question is which calendar that was. At a
+ * changeover the written date is genuinely ambiguous for the few days that were
+ * skipped; `regimeAt` resolves to the later span and `convertCalendar` notes it.
+ */
+function cmpYmd(a: Ymd, b: Ymd): number {
+  return a.year - b.year || a.month - b.month || a.day - b.day;
+}
+
+// Every jurisdiction row from convert-dates/SKILL.md:107–124, plus the three
+// rows review flagged as not being plain adoption dates. Each row carries a
+// unit test in tests/tools/convert-calendar.test.ts.
+const JURISDICTIONS: Jurisdiction[] = [
+  {
+    key: "Catholic Europe",
+    aliases: ["catholic europe", "spain", "portugal", "italy", "poland", "papal states"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1582, month: 10, day: 15 }, calendar: "gregorian" }],
+    yearStartJan1From: 1582,
+    note: "Adopted at the Gregorian introduction: 4 Oct 1582 was followed by 15 Oct 1582.",
+  },
+  {
+    key: "France",
+    aliases: ["france", "french"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1582, month: 12, day: 20 }, calendar: "gregorian" }],
+    yearStartJan1From: 1582,
+    note: "9 Dec 1582 was followed by 20 Dec 1582.",
+  },
+  {
+    key: "Catholic German states",
+    aliases: ["catholic german states", "catholic germany", "bavaria", "austria"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1583, month: 1, day: 1 }, calendar: "gregorian" }],
+    yearStartJan1From: 1583,
+    note: "Adoption varied by state across 1583–1585; a date in that window needs the specific state, not this row.",
+  },
+  {
+    key: "Protestant German states",
+    aliases: ["protestant german states", "protestant germany", "wurttemberg", "württemberg", "prussia", "saxony"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 3, day: 1 }, calendar: "gregorian" }],
+    yearStartJan1From: 1700,
+    note: "18 Feb 1700 was followed by 1 Mar 1700.",
+  },
+  {
+    key: "Zeeland",
+    aliases: ["zeeland", "brabant", "zeeland and brabant"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1582, month: 12, day: 25 }, calendar: "gregorian" }],
+    yearStartJan1From: 1583,
+    note: "14 Dec 1582 was followed by 25 Dec 1582.",
+  },
+  {
+    key: "Holland",
+    aliases: ["holland", "north holland", "south holland"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1583, month: 1, day: 12 }, calendar: "gregorian" }],
+    yearStartJan1From: 1583,
+    note: "Adopted at the turn of the year, after Zeeland and Brabant.",
+  },
+  {
+    key: "Gelderland",
+    aliases: ["gelderland", "guelders"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 7, day: 12 }, calendar: "gregorian" }],
+    yearStartJan1From: 1700,
+    note: "30 Jun 1700 was followed by 12 Jul 1700, so a 1700 date up to 30 Jun is still Old Style.",
+  },
+  {
+    key: "Utrecht",
+    aliases: ["utrecht", "overijssel", "utrecht and overijssel"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 12, day: 12 }, calendar: "gregorian" }],
+    yearStartJan1From: 1700,
+    note: "30 Nov 1700 was followed by 12 Dec 1700, so a 1700 date up to 30 Nov is still Old Style.",
+  },
+  {
+    key: "Friesland",
+    aliases: ["friesland", "frisia"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1701, month: 1, day: 12 }, calendar: "gregorian" }],
+    yearStartJan1From: 1701,
+    note: "31 Dec 1700 was followed by 12 Jan 1701.",
+  },
+  {
+    // Non-monotone, and the reason `spans` is a list rather than one date.
+    key: "Groningen",
+    aliases: ["groningen"],
+    spans: [
+      { from: null, calendar: "julian" },
+      { from: { year: 1583, month: 1, day: 1 }, calendar: "gregorian" },
+      { from: { year: 1594, month: 1, day: 1 }, calendar: "julian" },
+      { from: { year: 1701, month: 1, day: 12 }, calendar: "gregorian" },
+    ],
+    yearStartJan1From: 1701,
+    note: "Groningen used Gregorian 1583–1594, REVERTED to Julian, then adopted again with Friesland. A 1590 Groningen date is Gregorian; a 1600 one is not.",
+  },
+  {
+    key: "Drenthe",
+    aliases: ["drenthe"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1701, month: 5, day: 12 }, calendar: "gregorian" }],
+    yearStartJan1From: 1701,
+    note: "30 Apr 1701 was followed by 12 May 1701, so a 1701 date up to 30 Apr is still Old Style.",
+  },
+  {
+    key: "Denmark",
+    aliases: ["denmark", "norway", "denmark-norway", "denmark and norway"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 3, day: 1 }, calendar: "gregorian" }],
+    yearStartJan1From: 1700,
+    note: "18 Feb 1700 was followed by 1 Mar 1700.",
+  },
+  {
+    key: "England",
+    aliases: ["england", "great britain", "britain", "wales", "ireland", "british colonies", "american colonies", "colonial america"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1752, month: 9, day: 14 }, calendar: "gregorian" }],
+    yearStartJan1From: 1752,
+    note: "2 Sep 1752 was followed by 14 Sep 1752. Before 1752 the civil year began 25 March, which is what osNsYear and double dating are about.",
+  },
+  {
+    // Year-start and day-reckoning move INDEPENDENTLY here — the row review
+    // flagged. Scotland moved its year start in 1600 but kept Julian days
+    // until the 1752 British correction, so a 14 Feb 1730 Edinburgh date is
+    // already year-1730 (no OS/NS shift) yet still needs the day offset.
+    key: "Scotland",
+    aliases: ["scotland", "scottish"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1752, month: 9, day: 14 }, calendar: "gregorian" }],
+    yearStartJan1From: 1600,
+    note: "Year start moved to 1 January in 1600, but day reckoning stayed Julian until the 1752 British correction. The two dates are not the same event.",
+  },
+  {
+    // A THIRD day-reckoning, not a late adoption. Sweden omitted leap days
+    // from 1700 to run 1 day ahead of Julian, then reverted by inserting
+    // 30 February 1712 — a real date in real registers.
+    key: "Sweden",
+    aliases: ["sweden", "swedish", "finland"],
+    spans: [
+      { from: null, calendar: "julian" },
+      { from: { year: 1700, month: 3, day: 1 }, calendar: "swedish" },
+      { from: { year: 1712, month: 3, day: 1 }, calendar: "julian" },
+      { from: { year: 1753, month: 3, day: 1 }, calendar: "gregorian" },
+    ],
+    yearStartJan1From: 1700,
+    note: "1 Mar 1700–30 Feb 1712 Sweden ran its own calendar, 1 day ahead of Julian and 10 behind Gregorian. 30 Feb 1712 is a REAL Swedish date, inserted to revert to Julian: Swedish 30 Feb 1712 = Julian 29 Feb 1712 = Gregorian 11 Mar 1712. Gregorian from 1753 (17 Feb 1753 was followed by 1 Mar 1753).",
+  },
+  {
+    key: "Russia",
+    aliases: ["russia", "russian empire", "ussr", "soviet union"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1918, month: 2, day: 14 }, calendar: "gregorian" }],
+    yearStartJan1From: 1700,
+    note: "31 Jan 1918 was followed by 14 Feb 1918.",
+  },
+  {
+    key: "Greece",
+    aliases: ["greece", "greek"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1923, month: 3, day: 1 }, calendar: "gregorian" }],
+    yearStartJan1From: 1923,
+    note: "16 Feb 1923 was followed by 1 Mar 1923.",
+  },
+];
+
+/** Lowercase, strip punctuation and collapse whitespace, so "Württemberg,"
+ *  "wurttemberg" and "  Württemberg " all match the same row. Diacritics are
+ *  kept — the alias list carries both spellings where they differ. */
+function normalizeJurisdiction(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[.,;:()'"]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function lookupJurisdiction(raw: string): Jurisdiction | null {
+  const n = normalizeJurisdiction(raw);
+  if (!n) return null;
+  for (const j of JURISDICTIONS) {
+    if (normalizeJurisdiction(j.key) === n) return j;
+    if (j.aliases.some((a) => normalizeJurisdiction(a) === n)) return j;
+  }
+  return null;
+}
+
+/** Every accepted spelling, for the unmatched-jurisdiction error. */
+export function acceptedJurisdictions(): string[] {
+  return JURISDICTIONS.map((j) => j.key);
+}
+
+function regimeAt(j: Jurisdiction, at: Ymd): DayReckoning {
+  let current: DayReckoning = j.spans[0].calendar;
+  for (const s of j.spans) {
+    if (s.from === null || cmpYmd(at, s.from) >= 0) current = s.calendar;
+  }
+  return current;
+}
+
 export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarResult {
   const { date, corrections } = input ?? {};
   if (!date || !Number.isInteger(date.year)) {
@@ -110,11 +352,70 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
     return { ok: false, errors: ["corrections must request at least one conversion"] };
   }
 
+  // ── Regime resolution (issue #2260) ──────────────────────────────────────
+  // An unmatched string is a caller error and returns ok:false. It is NOT
+  // silently treated as "no jurisdiction": convert_calendar is in
+  // OK_FALSE_IS_FAILURE, so this surfaces to the model as an error it must fix,
+  // which is the point — a silent fallback would apply a correction under the
+  // WRONG regime and read as success.
+  let place: Jurisdiction | null = null;
+  if (input.jurisdiction !== undefined) {
+    if (typeof input.jurisdiction !== "string" || !input.jurisdiction.trim()) {
+      return { ok: false, errors: ["jurisdiction must be a non-empty string when supplied"] };
+    }
+    place = lookupJurisdiction(input.jurisdiction);
+    if (!place) {
+      return {
+        ok: false,
+        errors: [
+          `jurisdiction ${JSON.stringify(input.jurisdiction)} is not one this tool knows. ` +
+            `Pass one of: ${acceptedJurisdictions().join(", ")}. ` +
+            `Matching ignores case and punctuation and accepts common alternates ` +
+            `(e.g. "Great Britain" for England, "Württemberg" for the Protestant German states). ` +
+            `If the record's place is not on that list, omit jurisdiction and decide the regime yourself.`,
+        ],
+      };
+    }
+  }
+
   let year = date.year;
   let month = date.month;
   let day = date.day;
   const applied: AppliedCorrection[] = [];
   const notes: string[] = [];
+
+  // What the regime says about the date AS WRITTEN. Both flags mean "the
+  // caller asked for a correction that does not apply here" — the tool reports
+  // it and declines to apply, rather than applying a correction nobody should
+  // want or silently dropping the request.
+  let dayOffsetNotApplicable = false;
+  let osNsNotApplicable = false;
+  let swedishShiftDays = 0;
+  if (place) {
+    const at = { year, month: month ?? 1, day: day ?? 1 };
+    const reckoning = regimeAt(place, at);
+    notes.push(`${place.key}: ${reckoning} day reckoning on the date as written. ${place.note ?? ""}`.trim());
+    if (c.julianToGregorianDay && reckoning === "gregorian") {
+      dayOffsetNotApplicable = true;
+      notes.push(
+        `julianToGregorianDay not applied: ${place.key} was already on the Gregorian calendar for this date, so there is no offset to remove.`,
+      );
+    }
+    if (reckoning === "swedish") {
+      // Sweden 1 Mar 1700 – 30 Feb 1712 ran one day AHEAD of Julian. Convert
+      // to Julian first, then the normal Julian→Gregorian path applies.
+      swedishShiftDays = -1;
+      notes.push(
+        "Swedish calendar in force: one day ahead of Julian, ten behind Gregorian. Reduced to its Julian equivalent before the day offset.",
+      );
+    }
+    if (c.osNsYear && place.yearStartJan1From !== null && year >= place.yearStartJan1From) {
+      osNsNotApplicable = true;
+      notes.push(
+        `osNsYear not applied: ${place.key} began its civil year on 1 January from ${place.yearStartJan1From}, so a ${year} date needs no Old Style year shift.`,
+      );
+    }
+  }
 
   // 1. Double-dated year → the later (New Style) year. Inside the Jan 1–Mar 24
   //    window the New-Style year is always +1; outside it there is nothing to
@@ -164,7 +465,7 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
 
   // 2. Old Style → New Style year: dates Jan 1–Mar 24 in a March-25 year-start
   //    jurisdiction belong to the following year by modern reckoning.
-  if (c.osNsYear) {
+  if (c.osNsYear && !osNsNotApplicable) {
     if (month === undefined) {
       return { ok: false, errors: ["osNsYear requires date.month"] };
     }
@@ -238,7 +539,7 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
   }
 
   // 4. Julian → Gregorian day offset, via JDN round-trip.
-  if (c.julianToGregorianDay) {
+  if (c.julianToGregorianDay && !dayOffsetNotApplicable) {
     if (month === undefined || day === undefined) {
       notes.push(
         "julianToGregorianDay needs a full day-month-year date; day offset not applied",
@@ -253,7 +554,11 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
         ],
       };
     } else {
-      const jdn = julianToJDN(year, month, day);
+      // swedishShiftDays is -1 only inside Sweden's 1700–1712 window. Feb 30
+      // survives this arithmetic: the Fliegel formula is linear, so Julian
+      // "30 Feb 1712" is 1 Mar 1712, and -1 day lands on 29 Feb 1712 — the
+      // real Julian date behind the real Swedish one.
+      const jdn = julianToJDN(year, month, day) + swedishShiftDays;
       const offsetDays = jdn - gregorianToJDN(year, month, day);
       const g = gregorianFromJDN(jdn);
       year = g.year;
@@ -285,8 +590,10 @@ export const convertCalendarSchema = {
     "'1750/1') or a Quaker numbered month appears, or when a date seems off by a " +
     "year/days because of a calendar transition.\n" +
     "\n" +
-    "You decide the regime (jurisdiction, era, whether conversion is even needed) " +
-    "and request ONLY the correction(s) the user asked for via `corrections` — the " +
+    "Pass `jurisdiction` whenever the record names a place and the tool identifies " +
+    "the regime for you — which calendar was in force, where the civil year began, " +
+    "and whether a requested correction applies at all. You still decide WHICH " +
+    "question to ask: request ONLY the correction(s) the user asked for via `corrections` — the " +
     "tool does just those, in a fixed order, and never bundles a correction you " +
     "didn't request. Pass `date` as structured year/month/day; `month` is the " +
     "Quaker ordinal when you request `quakerMonth`. Returns the converted date, the " +
@@ -312,6 +619,11 @@ export const convertCalendarSchema = {
           },
         },
         required: ["year"],
+      },
+      jurisdiction: {
+        type: "string",
+        description:
+          "Optional. The place the record comes from, so the tool can identify which calendar was in force — pass it whenever the record names one. Offline matched lookup, NOT a standardPlace: England, Scotland, France, Sweden, Russia, Greece, Denmark, Holland, Zeeland, Gelderland, Utrecht, Friesland, Groningen, Drenthe, Catholic Europe, Catholic German states, Protestant German states. Case and punctuation are ignored and common alternates are accepted (\"Great Britain\", \"Württemberg\", \"Moscow\" is NOT — pass \"Russia\"). An unrecognized string is an error listing the accepted keys. When supplied, the tool declines a correction the regime says does not apply (an already-Gregorian date, or an Old Style year shift in a place whose year already began 1 January) and says so in notes.",
       },
       corrections: {
         type: "object",

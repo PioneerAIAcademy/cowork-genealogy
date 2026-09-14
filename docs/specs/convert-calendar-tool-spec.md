@@ -31,8 +31,9 @@ turns "15 February 1720" into 1721. The century-dependent Julian→Gregorian off
 are equally mechanical and equally easy to get wrong by a day or a month. A wrong
 result also propagates: `conflict-resolution` uses the *expected* offset to decide
 whether two dates that differ are a real conflict or a calendar artifact
-(`SKILL.md:31–36`, `convert-dates/references/calendar-conflicts.md`) — a
-miscomputed offset silently suppresses a real conflict or fabricates a fake one.
+(`SKILL.md:31–36`; `convert-dates/references/calendar-conflicts.md` carried this
+until it was deleted, its numbers having moved into §4.5) — a miscomputed
+offset silently suppresses a real conflict or fabricates a fake one.
 
 This is exactly the "pure arithmetic the LLM does in-context" anti-pattern: the
 rules are fixed tables, the inputs are a date plus a regime, and the output is
@@ -67,6 +68,13 @@ convert_calendar({
     day?: number,         // 1–31; required for the day-offset conversion
     doubleYear?: number,  // the "/N" of a double-dated year, e.g. 1 for "1750/1"
   },
+
+  // Optional. The place the record names, matched offline against §4.5's
+  // table. Supplying it lets the tool identify the REGIME (§5). NOT a
+  // standardPlace: resolving one would pull place-resolver.ts and the
+  // FamilySearch Places API into a tool §6 declares "not a network tool",
+  // and would break its live handler in eval/harness/harness/mock_mcp.py.
+  jurisdiction?: string,
 
   // Which corrections to apply, in this fixed order: doubleDatedYear → osNsYear
   // → quakerMonth → julianToGregorianDay. Request only what was asked (§5b).
@@ -165,11 +173,49 @@ Output is the Gregorian `year/month/day`.
 
 ---
 
+### 4.5 `jurisdiction` — the regime lookup
+
+Added by lead ruling 2026-09-07, which moved the Gregorian adoption table out
+of `convert-dates/SKILL.md` and into this tool.
+
+**The wiki route was the alternative and lost on measurement.** Routing the
+table to `Julian_and_Gregorian_Calendars` was the competing option under
+ADR-0012; that page gives the Dutch provinces as a bare **year**, with no
+month and no offset, which cannot decide a Gelderland date in Jan–Jun 1700 —
+precisely the case the table exists for.
+
+Each row is a list of **spans**, not a single adoption date, because three
+rows are not plain adoptions:
+
+| Row | Shape |
+|---|---|
+| Sweden | A **third** day-reckoning. 1 Mar 1700 – 30 Feb 1712 Sweden ran one day ahead of Julian and ten behind Gregorian; 30 Feb 1712 is a real date, inserted to revert to Julian. Julian again until 1753, Gregorian after. |
+| Scotland | Year-start moved to 1 January in **1600**, day reckoning stayed Julian until the 1752 British correction. The two facts move independently. |
+| Groningen | **Non-monotone**: Gregorian 1583–1594, reverted to Julian, adopted again with Friesland in 1701. |
+
+A flat `jurisdiction → {date, offset}` map cannot hold any of the three.
+
+**The offset is not in this table and never was.** §4.4 derives it by JDN
+round-trip, which gets the 1700/1800/1900 thresholds right by construction.
+What a jurisdiction adds is *which calendar was in force* and *where the civil
+year began*.
+
+Matching is case- and punctuation-insensitive over a canonical key plus
+alternates (`Great Britain` → England, `Württemberg` → Protestant German
+states). A jurisdiction is a **jurisdiction, not a town**: `Moscow` does not
+match, `Russia` does. An unrecognized string is an **error** listing the
+accepted keys (§7), never a silent fallback to "no regime" — `convert_calendar`
+is in `OK_FALSE_IS_FAILURE`, so the error surfaces to the model as something to
+fix, whereas a silent fallback would apply a correction under the wrong regime
+and read as success.
+
+---
+
 ## 5. What the tool owns vs. what the caller decides
 
 | Owned by the tool (mechanical) | Decided by the caller (judgment) |
 |--------------------------------|----------------------------------|
-| The offset value for a Julian date; the ≤Mar-24 year bump; the Quaker month/year roll; double-date resolution | The jurisdiction and era; whether the source date is Julian vs. Gregorian; whether conversion is needed at all; **which** corrections to request |
+| The offset value for a Julian date; the ≤Mar-24 year bump; the Quaker month/year roll; double-date resolution; **and, when `jurisdiction` is supplied, the regime** — which calendar was in force, where the civil year began, and whether a requested correction applies at all (§4.5) | **Which** corrections to request; whether conversion is needed at all; the jurisdiction string itself (and the era, where no jurisdiction is passed) |
 
 ### 5b. Single-correction discipline
 The `corrections` object is how the spec's "answer only the calendar question that
@@ -177,6 +223,15 @@ was asked" rule (`SKILL.md:220–229`) becomes structural: the caller passes exa
 the corrections the user asked for, and the tool applies exactly those. Asking for
 the New-Style **year** of "15 February 1750/1" → `{ doubleDatedYear: true }` (or
 `{ osNsYear: true }`) and nothing else; the day offset is not applied unprompted.
+
+**The tool identifies the regime; the caller still names the question.**
+`corrections` stays required. Full auto-selection — deriving the corrections
+from jurisdiction and date alone — was considered and **rejected**: it
+over-converts `ut_convert_dates_007` (a slash-notation question would also
+receive an OS/NS year and a day shift, the over-conversion this section
+forbids) and it forces a call on `ut_convert_dates_008`, whose validator fails
+the run if `convert_calendar` is called at all. The reversal the ruling makes
+is to the **regime**, not to the **question**.
 
 The date matters here: this example previously read "25 March 1750/1", which §4.1's
 window precondition now makes an input error under `doubleDatedYear` while §4.2
@@ -191,9 +246,13 @@ to illustrate that they agree.
   returns the conversion; it does not touch `research.json` or `tree.gedcomx.json`
   (`SKILL.md:231–238`). Assertions keep the original record date; the conversion is
   interpretation shown to the user. (No project write layer, no validation pass.)
-- **Does not identify the regime.** It will not infer jurisdiction or guess whether
-  a date is Julian — that is the caller's judgment and the source of the "flag the
-  ambiguity rather than guess" rule (`SKILL.md:162–163`).
+- **Identifies the regime when told the place — reversed 2026-09-07.** This
+  section previously read "Does not identify the regime". With
+  `jurisdiction` supplied the tool now says which calendar was in force, where
+  the civil year began, and whether a requested correction applies (§4.5). With
+  it omitted the old behaviour stands unchanged: the tool applies what was
+  asked and infers nothing. What the tool still does **not** do is choose the
+  question — see §5b.
 - **No free-text date parsing as the primary path.** The caller passes structured
   `year/month/day`; a future convenience overload that accepts a raw string via
   `stdDate` is out of scope for v1.
@@ -213,6 +272,10 @@ to illustrate that they agree.
 | `julianToGregorianDay` on a Julian date before 1582-10-15 | **input error** — the Gregorian calendar did not exist before its introduction, so there is no meaningful day offset to apply (the other corrections, if requested, are unaffected) |
 | `quakerMonth.era` not exactly `pre_1752` / `post_1752` | input error (the shift is era-dependent; the exported function is called outside the MCP enum guard) |
 | `doubleYear` given but inconsistent with `year + 1` | input error (a real double date always spans consecutive years) |
+| `jurisdiction` supplied but not a known key | **input error** listing the accepted keys, noting that matching ignores case and punctuation and that a town is not a jurisdiction. Never a silent fallback — §4.5 |
+| `jurisdiction` supplied as an empty or whitespace-only string | input error (an empty string is a caller bug, not "no jurisdiction"; omit the field instead) |
+| `julianToGregorianDay` requested where the regime says the date is already Gregorian | **not an error**: the correction is declined, `applied` omits it, `converted` equals the input, and `notes` says why |
+| `osNsYear` requested where the regime's civil year already began 1 January | **not an error**: declined the same way, with the year that place moved named in `notes` |
 | `doubleDatedYear` on a date provably outside Jan 1 – Mar 24 (`month > 3`, or March with `day > 24`) | **input error** — under the **English Lady Day convention** (England, Wales, Ireland and the colonies; also Florence and Pisa) the legal year began 25 March, so from that date the Old-Style and New-Style years agree and a slash has nothing to disambiguate. **Scope note:** other year-start conventions existed — Venice 1 March, the Byzantine and pre-1700 Russian 1 September, the French *mos gallicanus* Easter start — under which a slashed year outside Jan–Mar can be legitimate. Nothing in the corpus exercises those, so the guard is deliberately scoped to the Lady Day convention; widening it is a scope decision, not a bug fix |
 
 ---
@@ -230,11 +293,31 @@ to illustrate that they agree.
 - **Combined** — OS/NS year then day offset on one call, applied in order, both reflected in `applied`.
 - **Missing day** — `julianToGregorianDay` with no `day` skips the offset and notes it; other requested corrections still apply.
 - **Purity / idempotence** — same input → same output; input object not mutated.
+- **Jurisdiction, row per adoption (§4.5)** — for each row, the last Old Style
+  date still converts and the first New Style date is declined with a note.
+  `Catholic Europe` is tested separately: its last Old Style date is 4 Oct 1582,
+  the day before the Gregorian calendar existed anywhere, so §7's pre-1582 rule
+  refuses it and that refusal is the correct answer.
+- **Jurisdiction, the three irregular rows** — Sweden `30 Feb 1712` → `11 Mar
+  1712`, and plain Julian again after the revert; Scotland takes the day offset
+  in 1730 but declines `osNsYear` (year start moved 1600) where England accepts
+  it; Groningen declines inside 1583–1594 and converts again in 1600.
+- **Jurisdiction matching** — case, padding and punctuation ignored; alternates
+  accepted; an unknown key is an error naming the accepted keys; an empty string
+  is an error; **omitting `jurisdiction` reproduces the earlier behaviour
+  exactly**, including emitting no regime note.
 
 ---
 
 ## 9. Consumers
 
+- **`eval/harness/validators/test_convert_dates.py`** — `test_day_offset_calls_name_a_jurisdiction`
+  asserts that a `julianToGregorianDay` call carries a `jurisdiction`. Gated on
+  the correction rather than on the `requires-tool-conversion` tag, because
+  `ut_convert_dates_001` carries that tag and names no place at all ("3rd day of
+  2nd month 1845") — a tag-gated check would fail it for a jurisdiction that does
+  not exist. Nothing else can see this: vitest proves the tool HONOURS a
+  jurisdiction, only a run log shows whether the model PASSED one.
 - `convert-dates` skill — replaces the in-context arithmetic; SKILL.md becomes
   "identify the regime, call `convert_calendar` with the requested corrections,
   present original + converted." Its regime tables stay as reference for the
