@@ -1,8 +1,8 @@
 """Skill-specific validators for the search-external-sites skill.
 
-search-external-sites generates pre-filled search URLs for commercial
-genealogy sites (Ancestry, MyHeritage, FindMyPast, FindAGrave,
-Newspapers.com) and walks the user through the click-capture workflow.
+search-external-sites generates pre-filled search URLs for the fifteen
+external sites `build_external_search_url` supports (five subscription sites
+and ten free archives) and walks the user through the click-capture workflow.
 
 URL composition quality and capture-guidance narrative live in the
 rubric — graded by the LLM judge. Mechanical checks (a log entry was
@@ -89,17 +89,20 @@ def _place_matches_rejected(birth_place: str, rejected_place: str) -> bool:
     same string, the rejected place with broader jurisdiction appended by a
     resolver ("Pennsylvania" vs "Pennsylvania, United States"), or the rejected
     place with a finer unit prepended ("Philadelphia, Pennsylvania" encodes the
-    rejected "Pennsylvania" at a finer grain). Compared casefolded on exactly
-    as many comma-segments as `rejected_place` itself has — leading or
-    trailing — so two different places sharing only a leaf name ("Paris,
-    Texas, United States" vs the rejected "Paris, France", a common pair for
-    towns named after Old World cities) do not collide: the rejected value's
-    own context has to line up too."""
+    rejected "Pennsylvania" at a finer grain), or both at once — the shape a
+    place resolver actually returns ("Philadelphia, Pennsylvania, United
+    States"). Compared casefolded as a contiguous run of exactly as many
+    comma-segments as `rejected_place` itself has, at any offset — so two
+    different places sharing only a leaf name ("Paris, Texas, United States"
+    vs the rejected "Paris, France", a common pair for towns named after Old
+    World cities) do not collide: the rejected value's own context has to
+    line up too."""
     rejected = _place_key(rejected_place)
     segments = _place_key(birth_place)
-    if len(segments) < len(rejected):
+    n = len(rejected)
+    if len(segments) < n:
         return False
-    return segments[: len(rejected)] == rejected or segments[-len(rejected):] == rejected
+    return any(segments[i : i + n] == rejected for i in range(len(segments) - n + 1))
 
 
 def _place_key(place: str) -> tuple[str, ...]:

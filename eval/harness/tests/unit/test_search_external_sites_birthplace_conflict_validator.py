@@ -388,6 +388,28 @@ def test_fires_on_a_finer_unit_prepended_to_the_rejected_place():
     )
 
 
+def test_fires_on_the_rejected_place_in_the_middle_of_a_resolved_string():
+    """The shape place_search actually returns: a finer unit prepended AND the
+    broader jurisdiction appended. Neither a leading- nor a trailing-segment
+    match sees "Pennsylvania" here; only a contiguous window at any offset does."""
+    _expect_fires(
+        _tool_calls("Philadelphia, Pennsylvania, United States"),
+        {"type": "positive"},
+        "attributes.birthPlace='Philadelphia, Pennsylvania, United States'",
+    )
+
+
+def test_passes_a_place_sharing_only_a_leaf_name_with_the_rejected_value():
+    """"Paris, Texas, United States" against a rejected "Paris, France": the
+    rejected value's own second segment must line up too, at whatever offset."""
+    research = copy.deepcopy(_RESEARCH)
+    for assertion in research["assertions"]:
+        if assertion["id"] == "a_012":
+            assertion["place"] = "Paris, France"
+    states = ({"research_json": research}, {"research_json": research})
+    _expect_passes(_tool_calls("Paris, Texas, United States"), {"type": "positive"}, states=states)
+
+
 def test_a_case_variant_of_the_preferred_value_is_not_a_rejected_value():
     """A competing assertion reading "IRELAND" agrees with the preferred
     "Ireland" (a transcription's casing); it must not become a rejected value

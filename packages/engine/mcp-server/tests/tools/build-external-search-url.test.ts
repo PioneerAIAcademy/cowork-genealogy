@@ -1227,6 +1227,40 @@ describe("build_external_search_url", () => {
       expect(dna.notes.some((n) => /no date filter/.test(n))).toBe(true);
     });
 
+    it("names null and array attributes precisely in the no_attributes error", () => {
+      const nul = buildExternalSearchUrl({ site: "ancestry", attributes: null as any });
+      expect(nul.ok).toBe(false);
+      if (nul.ok) return;
+      expect(nul.errors.join(" ")).toMatch(/attributes must be an object; got null/);
+      const arr = buildExternalSearchUrl({ site: "ancestry", attributes: [] as any });
+      expect(arr.ok).toBe(false);
+      if (arr.ok) return;
+      expect(arr.errors.join(" ")).toMatch(/attributes must be an object; got array/);
+    });
+
+    it("notes a replaced curated key once even when the curated query repeats it", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/?name=A_B&name=C_D",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn");
+      expect(r.notes.filter((n) => /'name' already in baseUrl/.test(n))).toHaveLength(1);
+    });
+
+    it("coerces only a plain decimal numeric string, not a hex or exponent literal", () => {
+      const hex = buildExternalSearchUrl({
+        site: "ancestry",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: "0x733" as any },
+      });
+      expect(hex.ok).toBe(true);
+      if (!hex.ok) return;
+      expect(hex.url).not.toContain("birth=");
+      expect(hex.notes.some((n) => /'birthYear' was supplied but is not a valid year/.test(n))).toBe(true);
+    });
+
     it("rejects a non-negative-integer birthYearOffset/placeProximityMiles rather than sharing the year bound", () => {
       const r = buildExternalSearchUrl({
         site: "findmypast",

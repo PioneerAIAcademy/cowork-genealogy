@@ -538,7 +538,7 @@ function appendToBaseUrl(
     const key = token.split("=", 1)[0];
     if (key.toLowerCase() === "sid") return false;
     if (overriddenKeys.has(key)) {
-      overridden.push(key);
+      if (!overridden.includes(key)) overridden.push(key);
       return false;
     }
     return true;
@@ -601,6 +601,10 @@ const KIND_LABEL: Record<AttributeKind, string> = {
   smallNumber: "valid number",
 };
 
+function describeType(v: unknown): string {
+  return v === null ? "null" : Array.isArray(v) ? "array" : typeof v;
+}
+
 function isSuppliedValue(v: unknown): boolean {
   if (v === undefined || v === null) return false;
   return typeof v === "string" ? v.trim().length > 0 : true;
@@ -608,19 +612,16 @@ function isSuppliedValue(v: unknown): boolean {
 
 // A model that stringifies a number (`birthYear: "1845"`) meant the number —
 // the same slip research_log_append coerces on `resultsExamined`. Only the
-// year/number attributes are coerced; a number in a string attribute stays a
+// year/number attributes are coerced, and only a plain decimal literal:
+// `Number()` would also read `"0x733"` as 1843 or `"1e3"` as 1000, neither of
+// which a model means as a year. A number in a string attribute stays a
 // wrong-typed value and gets its note.
 function coerceNumericStrings(a: BuildExternalSearchUrlAttributes): BuildExternalSearchUrlAttributes {
   const out: Record<string, unknown> = { ...a };
   for (const key of Object.keys(out) as Array<keyof BuildExternalSearchUrlAttributes>) {
     const kind = ATTRIBUTE_KIND[key];
     const v = out[key];
-    if (
-      (kind === "year" || kind === "smallNumber") &&
-      typeof v === "string" &&
-      v.trim() !== "" &&
-      Number.isFinite(Number(v))
-    ) {
+    if ((kind === "year" || kind === "smallNumber") && typeof v === "string" && /^\s*-?\d+(\.\d+)?\s*$/.test(v)) {
       out[key] = Number(v);
     }
   }
@@ -766,7 +767,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
     return {
       ok: false,
       reason: "invalid_base_url",
-      errors: [`baseUrl must be a string; got ${Array.isArray(rawBaseUrl) ? "array" : typeof rawBaseUrl}`],
+      errors: [`baseUrl must be a string; got ${describeType(rawBaseUrl)}`],
     };
   }
   // The TRIMMED value is used, not merely checked: `new URL()` strips padding
@@ -834,7 +835,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
       reason: "no_attributes",
       errors: [
         `no attributes supplied for ${site} produced any parameter`,
-        ...(attributesIsObject ? [] : [`attributes must be an object; got ${typeof input?.attributes}`]),
+        ...(attributesIsObject ? [] : [`attributes must be an object; got ${describeType(input?.attributes)}`]),
         ...notes,
       ],
     };

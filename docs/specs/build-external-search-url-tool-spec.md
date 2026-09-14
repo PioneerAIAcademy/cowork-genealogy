@@ -130,9 +130,8 @@ build_external_search_url({
     eventYear?: number,            // FindMyPast's generic eventyear slot, for a
                                     // search whose target event isn't birth
 
-    // Free-text terms appended alongside the name. Only read by the three
-    // sites whose site-wide search is a single free-text query field rather
-    // than structured name parameters — see §3.5.
+    // Free-text terms appended alongside the name. Read by the seven sites
+    // whose search carries a free-text field — see §3.5.
     keywords?: string,
 
     // Newspapers.com's generic date-range/place slots (no single named event
@@ -523,7 +522,7 @@ generally, not verified per archive:
   documented parameter names with the correct join/encoding.
 - **Chronicling America's corrections** — `dates=YYYY/YYYY` (never
   `start_date`/`end_date`), and `q` (never `qs`).
-- **`keywords`** — appended on the three free-text sites; produces a "not
+- **`keywords`** — appended on the seven free-text sites; produces a "not
   used" note on a structured-name site; an exact quoted phrase survives
   encoding unmangled.
 - **`searchYear` accepts a range** — a hyphenated string passes through
