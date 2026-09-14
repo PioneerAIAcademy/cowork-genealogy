@@ -81,4 +81,23 @@ describe('foldChatEvent', () => {
     expect(msgs[0].text).toBe('Here are the results.\n\nChat unavailable: unknown error')
     expect(msgs[0].error).toBe(true)
   })
+
+  // Why ChatPane must return early for every non-content kind (#2371 review).
+  // foldChatEvent's contract is "append onto the streaming assistant message",
+  // so ANY kind reaching it opens a bubble -- including a lifecycle frame that
+  // carries no content. `turn_start` fell through and did exactly that. The
+  // empty bubble is invisible whenever the reply fills it, and stays on screen
+  // when a turn ends with no content: a Stop before the first token.
+  //
+  // This pins the HAZARD, not the guard. The guard is an early return inside
+  // ChatPane's `applyEvent`, and apps/web has no jsdom project (see
+  // vitest.config.ts), so nothing here can render the component to prove it.
+  it('opens an assistant bubble for a lifecycle kind that carries no content', () => {
+    const before: ChatMessage[] = [{ role: 'user', text: 'hello', tools: [] }]
+    const after = foldChatEvent(before, 'turn_start', { kind: 'turn_start', queued: false })
+
+    expect(after).toHaveLength(2)
+    expect(after[1]).toMatchObject({ role: 'assistant', text: '' })
+  })
+
 })
