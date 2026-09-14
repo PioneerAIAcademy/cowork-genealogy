@@ -315,6 +315,28 @@ def test_main_errors_when_repo_root_is_not_a_repo(tmp_path, monkeypatch, capsys)
     assert "::error::" in capsys.readouterr().out
 
 
+def test_main_head_guard_does_not_swallow_the_warn_loops(tmp_path, monkeypatch, capsys):
+    """The head guard is an exit-1 path, so it must sit BELOW the warn loops.
+
+    `test_main_drift_warning_prints_even_when_grading_gate_fails` pins that
+    invariant for the *grading* gate, but cannot see this one: its head is
+    resolvable, so hoisting the guard above the loops leaves it green. Here the
+    head is unresolvable AND a warning is due, which is the only arrangement
+    that separates the two orderings.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
+    tree, ann = _siblings(rel)
+    _write_fixture_readme(repo, "smith", draft=True)
+    commit(rel.as_posix(), tree, ann)
+    monkeypatch.setenv("HEAD_SHA", "0" * 40)  # guard will reject
+    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::warning::" in out, "the draft warning must print before the exit-1 return"
+    assert "::error::" in out
+
+
 def test_main_draft_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys):
     """An unresolved-draft fixture warns but must never change the exit code —
     20 people working drafts in parallel can't have this blocking their PRs."""
