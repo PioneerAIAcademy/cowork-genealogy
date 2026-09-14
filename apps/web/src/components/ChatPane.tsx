@@ -161,6 +161,12 @@ export default function ChatPane({
       setActivity(null)
       return
     }
+    // Deliberately inert here. Busy is set in send() and on a `turn_active`
+    // status, never from this frame -- but without an explicit return it falls
+    // through to foldChatEvent, which appends an empty assistant bubble. That
+    // is invisible whenever the reply fills it, and stays on screen when a turn
+    // ends with no content: a Stop taken before the first token.
+    if (kind === 'turn_start') return
     // Subagent lifecycle. Not chat content — this drives the status line, so a
     // long delegation reads as "record-extractor · person_read · 12 tools"
     // instead of an unattributed spinner.

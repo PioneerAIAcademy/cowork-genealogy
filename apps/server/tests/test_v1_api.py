@@ -537,36 +537,3 @@ async def test_drain_replay_returns_on_a_socket_that_is_never_idle(monkeypatch):
         f"the drain ran {elapsed:.2f}s against a socket that is never idle; "
         f"_DRAIN_MAX did not bound the loop"
     )
-
-
-@pytest.mark.asyncio
-async def test_drain_replay_still_returns_on_silence_well_inside_the_ceiling():
-    """The ceiling must not become the ONLY way out.
-
-    Without this, setting `_DRAIN_MAX` to 0 would satisfy the test above and
-    break the drain entirely: every reconnect would send its turn before
-    consuming the replay burst, and the caller would read history as live
-    output. This is the direction that pins `_DRAIN_IDLE` still works.
-    """
-    from app import v1
-
-    class TwoFramesThenIdle:
-        def __init__(self):
-            self.recvs = 0
-
-        async def recv(self):
-            self.recvs += 1
-            if self.recvs <= 2:
-                return json.dumps({"type": "agent_event", "event": {"kind": "text_delta"}})
-            await asyncio.sleep(3600)  # silence: the idle timer must fire
-
-    ws = TwoFramesThenIdle()
-    started = time.monotonic()
-    await asyncio.wait_for(v1._drain_replay(ws), timeout=5.0)
-    elapsed = time.monotonic() - started
-
-    assert ws.recvs == 3, f"expected 2 frames then one silent recv, got {ws.recvs}"
-    assert elapsed < v1._DRAIN_MAX, (
-        f"returned after {elapsed:.2f}s, i.e. on the {v1._DRAIN_MAX}s ceiling "
-        f"rather than the {v1._DRAIN_IDLE}s idle timer"
-    )

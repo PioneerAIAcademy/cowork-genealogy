@@ -185,8 +185,11 @@ The matching step produces the `merges` pair-set. For each record persona:
    catches independent-pairwise incoherence (John↔treeJohn but Susan↔a
    *different* tree woman) that no single `same_person` call sees.
 5. **New-person handling.** A persona with no acceptable match (Mary) is given a
-   tree id — a name-only stub (`tree_edit add_person`) — so the pair-set carries
-   a tree id the coherence gate can score. `materialize_facts` create-or-enrich
+   tree id so the pair-set carries one the coherence gate can score. **Superseded
+   2026-09-10 on the tool:** person-evidence mints her with `materialize_facts`,
+   not `tree_edit add_person`, which enforces no source-ref on names and leaves a
+   record-derived person provenance-less (`tree-materialization-spec.md` section
+   4.6). `materialize_facts` create-or-enrich
    then lands her census facts *onto that stub* after the gate clears (§5.5), so
    — unlike the old empty-stub path — she never stays fact-less
    (`tree-materialization-spec.md` §4.3).

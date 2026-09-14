@@ -53,7 +53,7 @@ export interface NamedPartyName {
  *  reaching for this one on a parentage assertion.
  *
  *  The caller supplies the name because the assertion usually does not carry
- *  one in machine-readable form (8 of 162 corpus `relationship`/`marriage`
+ *  one in machine-readable form (8 of 167 corpus `relationship`/`marriage`
  *  assertions put it in `structured_value`, under five distinct key shapes).
  *  The tool
  *  supplies the source-ref, resolved from the assertion's own `source_id`, and
@@ -70,7 +70,10 @@ export interface MaterializeFactsNamedPartyOp {
    *  `record_role` on that record: if a persona with this role exists and could
    *  be materialized instead, the call is refused and names the
    *  `{ recordId, recordRole }` to use, because that form writes her facts too.
-   *  Otherwise unused — nothing on a tree person holds a role, and this tool
+   *  Used twice more after that guard: it selects the sibling personas whose facts
+   *  the fact pass writes, and the corroboration gate compares
+   *  `structured_value.related_person_role` against it. Never persisted, though —
+   *  nothing on a tree person holds a role, and this tool
    *  never writes research.json. Required rather than optional because a guard
    *  a caller can skip by omitting it is not a guard, and best-effort because
    *  both roles are free text (spec section 4.6). */
