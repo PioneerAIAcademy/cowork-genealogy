@@ -581,7 +581,7 @@ describe("measured figures stay traceable to the probe artifact", () => {
       verdict: "J.verdict:q.fullName searches",
       activeWhen: /^name fields only$/,
       mustNotSay:
-        /q\.fullName[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|document text|full[- ]?text(?!\s+(?:search|endpoint|API|index))|entire (?:transcript|document|record))/i,
+        /q\.fullName[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|document text|full[- ]?text(?!(?:\s+\w+)?\s+(?:endpoint|API|service))|entire (?:transcript|document|record))/i,
       why: "section J measured q.fullName as name-fields-only; these phrasings assert it reaches the full transcript",
     },
   ];
@@ -652,6 +652,8 @@ describe("measured figures stay traceable to the probe artifact", () => {
     ["contrast with q.text", "q.fullName matches name fields, not the transcript."],
     ["names the endpoint", "q.fullName searches name fields on the fulltext endpoint."],
     ["entire, of a name field", "q.fullName searches the entire name field."],
+    ["endpoint behind a qualifier", "q.fullName covers indexed names in the full-text search API."],
+    ["service noun", "q.fullName matches names on the full-text search service."],
   ] as const) {
     it(`section J q.fullName guard accepts correct prose: ${label}`, () => {
       const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.fullName searches")!;
