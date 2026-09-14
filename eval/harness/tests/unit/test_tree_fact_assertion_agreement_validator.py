@@ -108,7 +108,7 @@ def test_drift_on_a_relationship_fact_fails_too():
     """Nothing can stamp one today; the arm must still work if anything ever does."""
     after = state(
         [fact(id="F9", type="Marriage", place="Wellburn, Ontario, Canada", assertion_id="a_011")],
-        [assertion("a_011")],
+        [assertion("a_011", fact_type="marriage")],
         on_relationship=True,
     )
     with pytest.raises(AssertionError, match="never reached the fact"):
@@ -260,6 +260,27 @@ def test_a_single_source_fact_still_fires():
             )
         ],
         [assertion("a_011")],
+    )
+    with pytest.raises(AssertionError, match="never reached the fact"):
+        check(after)
+
+
+def test_a_retyped_assertion_is_skipped():
+    """The rewrite refuses a fact whose type no longer matches its assertion,
+    precisely because the two no longer describe the same thing. Firing here
+    would report that refusal as drift, with no tool able to clear it."""
+    after = state(
+        [fact(type="Occupation", value="Farmer", assertion_id="a_011")],
+        [assertion("a_011", fact_type="birth", value="1850")],
+    )
+    check(after)
+
+
+def test_the_type_match_is_case_and_underscore_aware():
+    """`cause_of_death` PascalCases to `CauseOfDeath`, so it must still compare."""
+    after = state(
+        [fact(type="CauseOfDeath", value="Typhoid", assertion_id="a_011")],
+        [assertion("a_011", fact_type="cause_of_death", value="Cholera")],
     )
     with pytest.raises(AssertionError, match="never reached the fact"):
         check(after)

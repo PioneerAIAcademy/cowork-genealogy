@@ -467,7 +467,7 @@ describe("research_append (Phase 1)", () => {
     });
 
     it("(14) stays silent for a fact_type that can never become a person fact", async () => {
-      // 21 of the 145 corpus ops correct a name/relationship/marriage/age/sex
+      // 24 of the 145 corpus ops correct a name/relationship/marriage/age/sex
       // assertion. None of those materializes as a person fact, so "re-check it
       // with person_read" sends the caller after something that cannot exist.
       const tree = treeWithBacklink();
@@ -583,6 +583,35 @@ describe("research_append (Phase 1)", () => {
       expect(f.type).toBe("Occupation");
       expect(f.value).toBe("Farmer");
       expect(r.validation.warnings.join(" ")).toMatch(/is a Birth, so the fact was left alone/);
+    });
+
+    it("(19) a fold the TOOL made is not a re-classification, so the correction still lands", async () => {
+      // `canonicalizeAssertionLabels` folds `fact_type` through FACT_TYPE_ALIASES
+      // on every assertion update whether or not the op names it, so a stored
+      // `birthplace` becomes `birth` mid-call. Keyed on the folded value, the
+      // retype guard refused the tool's own change: the correction never reached
+      // the fact, which is this card's bug, and the message blamed the
+      // researcher. 80 person-fact-eligible corpus assertions would fold.
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "birthplace", value: "Ireland" })),
+        treeWithBacklink({ type: "Birthplace" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      // The tool folded the assertion to `birth`...
+      expect((await readResearch()).assertions[0].fact_type).toBe("birth");
+      // ...and the correction still reached the fact.
+      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(r.validation.warnings.join(" ")).not.toMatch(/so the fact was left alone/);
     });
   });
 

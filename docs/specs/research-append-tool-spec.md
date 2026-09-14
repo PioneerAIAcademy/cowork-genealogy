@@ -148,7 +148,8 @@ camelCase convenience fields the same way `research_log_append` does.
   When the op sets `place`, `standard_place`, `date` or `value`, every
   fact in `tree.gedcomx.json` carrying that assertion's `assertion_id` has the
   **same fields** rewritten, in this call's existing atomic composite persist —
-  so `filesWritten` gains `tree.gedcomx.json`. Four rules bind:
+  so `filesWritten` gains `tree.gedcomx.json` — except where a rule below leaves
+  the fact alone, in which case only `research.json` is written. Seven rules bind:
   - **Membership is by backlink, never by guess.** A fact with no `assertion_id`
     is warned about (§5.3), not matched heuristically.
   - **The fact mirrors the assertion.** A field the assertion no longer asserts
@@ -862,8 +863,12 @@ A **warning** — never a rejection — emitted when this call's `assertions`
 - **Why warn and not deny.** The write being made is the legitimate one. A
   refusal would block a correct assertion correction over the state of a
   *different* file, and there is no call shape the agent could produce instead
-  (ADR-0009 constraint 6). The actionable route is in the message: re-check the
-  fact with `person_read` and correct it with `tree_correct`.
+  (ADR-0009 constraint 6). The actionable route is in the message: read the fact
+  in `tree.gedcomx.json` and correct it with `tree_correct`. It does **not** name
+  `person_read`, which reads the FamilySearch tree by PID and cannot see a local
+  document (`architecture.md` §6.3: there is no query surface over
+  `tree.gedcomx.json`) — an unfollowable remedy does not meet ADR-0011's
+  "a gate PR owes an actionable error".
 - **A detach is warned about too**, at the other end: `tree_edit`/`tree_correct`
   `update_fact` says when a direct correction has unlinked a fact from its
   assertion, because that fact is then outside the automatic update.
@@ -872,10 +877,19 @@ A **warning** — never a rejection — emitted when this call's `assertions`
   `relationship`/`marriage`/`parentage`/`age` are two-party links or non-facts.
   Negative evidence is skipped for the same reason. **24 of the 145** corpus ops
   correct an assertion of one of those kinds (relationship 9, marriage 6, name 6,
-  age 2, sex 1; negative evidence 0), and telling that caller to "re-check it
-  with `person_read`" sends them after a fact that cannot exist. Recount: resolve
-  each op's `entryId` against its own run's `.final-research.json` and group by
-  `fact_type`.
+  age 2, sex 1; negative evidence 0), and telling that caller to re-check a fact
+  sends them after something that cannot exist. Recount: resolve each op's
+  `entryId` against its own run's `.final-research.json` and group by `fact_type`.
+
+  **A residue this silencing creates, knowingly.** Two of those kinds do
+  materialize, just not as a person *fact*: a `name` assertion becomes a tree
+  **name** and `gender`/`sex` sets the person's gender scalar. Correcting one
+  now produces no warning at all, and the tree name or scalar keeps the earlier
+  reading — the same shape as the bug this card fixes, one object over. 7 of the
+  145 corpus ops are in that set (name 6, sex 1). Extending the backlink to names
+  is a larger change than this card: `upsertName` unions a ref onto an equivalent
+  existing name rather than minting per assertion, so a name routinely answers to
+  several, and the one-assertion backlink would be the wrong shape for it.
 
 ---
 

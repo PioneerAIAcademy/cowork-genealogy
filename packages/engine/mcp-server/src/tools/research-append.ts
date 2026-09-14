@@ -1131,8 +1131,8 @@ function rewriteLinkedFacts(
       warnings.push(
         `assertion '${a.entryId}' was corrected but no tree fact is linked to it, so nothing ` +
           "in tree.gedcomx.json was updated. If this assertion has been materialized, the fact " +
-          "predates the assertion_id backlink — re-check it with person_read and correct it " +
-          "with tree_correct.",
+          "predates the assertion_id backlink — read the fact in tree.gedcomx.json and correct " +
+          "it with tree_correct.",
       );
       continue;
     }
@@ -1153,8 +1153,20 @@ function rewriteLinkedFacts(
       // false, so the event/value-bearing gate would let the assertion's prose
       // `value` through. A typeless fact is already schema-invalid, but the
       // rewrite must not be the thing that compounds it.
+      //
+      // ONLY when the CALLER retyped it. `canonicalizeAssertionLabels` folds
+      // `fact_type` through FACT_TYPE_ALIASES on every assertion update whether
+      // or not the op named it, so a stored `birthplace` silently becomes
+      // `birth` mid-call. Keyed on the folded value, this guard refused the
+      // tool's own re-classification: the correction never reached the fact,
+      // which is bug #2472 itself, and the message blamed the researcher for a
+      // retype they did not make. 80 person-fact-eligible assertions in the
+      // committed corpus would fold on their next update. A fold the caller did
+      // not ask for leaves the fact's own type as the one that was minted,
+      // which is what the event/value-bearing gate should keep reading.
+      const retypedByCaller = Object.hasOwn(fields, "fact_type");
       const assertionType = assertionTreeFactType(assertion.fact_type);
-      if (assertionType !== "" && fact.type !== assertionType) {
+      if (retypedByCaller && assertionType !== "" && fact.type !== assertionType) {
         warnings.push(
           `fact '${fact.id}' is a ${fact.type ?? "(typeless)"} but assertion '${a.entryId}' is a ` +
             `${assertionType}, so the fact was left alone. Re-materialize the assertion, or ` +

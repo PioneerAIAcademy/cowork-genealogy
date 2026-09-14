@@ -426,7 +426,7 @@ async function applyOperation(
       // Pre-assignment values of the fields a correction can detach on, so the
       // detach below keys on an actual CHANGE rather than on the key merely
       // being present. Re-stating a field at the value it already holds is not
-      // a correction, and 7 of the 31 detaching ops in the committed e2e corpus
+      // a correction, and 7 of the 31 ops that SET one in the committed corpus
       // also carry `primary` (the conclude-a-fact shape), which is exactly where
       // an unchanged echo rides along with a real edit.
       const factStringsBefore = new Map<string, unknown>(

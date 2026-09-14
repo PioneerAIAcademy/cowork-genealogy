@@ -363,9 +363,9 @@ export function assertionFactAttr(
  *  `research_append` does not tell a caller to go re-check a fact that could
  *  not exist. */
 export function materializesToPersonFact(assertion: any): boolean {
-  // Mirrors the materialize loop's own three skips, in its order: negative
-  // evidence stays an argument and never becomes a positive fact; `name` becomes
-  // a tree name; `gender`/`sex` set the scalar; SKIP_TYPES are two-party links.
+  // Mirrors the materialize loop's own four skips, in its order: negative
+  // evidence stays an argument and never becomes a positive fact; `gender`/`sex`
+  // set the scalar; `name` becomes a tree name; SKIP_TYPES are two-party links.
   if (assertion?.evidence_type === "negative") return false;
   const t = String(assertion?.fact_type ?? "").toLowerCase();
   return t !== "" && !NAME_TYPES.has(t) && !GENDER_TYPES.has(t) && !SKIP_TYPES.has(t);

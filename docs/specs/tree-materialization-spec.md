@@ -337,7 +337,7 @@ facts with `len(sources) > 1` across
 `eval/runlogs/e2e/*/*final-tree.gedcomx.json`), and a multi-source fact is only
 *potentially* affected — the corroborators usually agree.
 
-**The backlink is dropped, not kept, in three places**, because a fact that no
+**The backlink is dropped, or refused, in four places**, because a fact that no
 longer answers to its assertion must stop claiming to:
 
 - `tree_edit` / `tree_correct` `update_fact`, when the op **changes** any of the

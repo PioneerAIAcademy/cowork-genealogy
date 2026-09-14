@@ -131,8 +131,8 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
     stayed on the fact and nothing reported the divergence -- in the run that
     produced the card, person I1's Immigration fact kept "Wellburn, Thames
     Centre, Middlesex, Ontario, Canada" and a `standard_place` of "Thames Centre
-    Township" while the assertion already held the corrected Odessa,
-    Saskatchewan. A wrong reading reached a place-AUTHORITY value, not only a
+    Township, Middlesex, Ontario, Canada" while the assertion already held the
+    corrected "Odessa, Francis No. 127, Saskatchewan, Canada". A wrong reading reached a place-AUTHORITY value, not only a
     display string, so anything joining on `standard_place` put her in the wrong
     province.
 
@@ -140,8 +140,9 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
     on it, "this fact disagrees with its own source assertion" is a computable
     property, and this is it.
 
-    Compared only where BOTH sides hold a non-empty string, and only on a fact
-    citing a SINGLE source. Four false-positive directions, all legitimate:
+    Compared only where BOTH sides hold a non-empty string, only on a fact
+    citing a SINGLE source, and only while the fact's type still matches its
+    assertion's. Five false-positive directions, all legitimate:
 
       - assertion side absent: the corroboration branch can fill an attribute on
         a backlinked fact from a DIFFERENT assertion, so "fact has it, linked
@@ -218,6 +219,18 @@ def test_tree_facts_agree_with_linked_assertions(after_state):
             continue
         refs = [r for r in (fact.get("sources") or []) if isinstance(r, dict)]
         if len(refs) > 1:
+            continue
+        # A fact whose type no longer matches its assertion's is not comparable:
+        # the rewrite refuses it precisely because the two no longer describe the
+        # same thing, so firing here would report the refusal as drift. PascalCase
+        # the assertion's snake_case fact_type the way `toTreeFactType` does.
+        fact_type = fact.get("type")
+        want_type = "".join(
+            w[:1].upper() + w[1:]
+            for w in re.split(r"[_\s]+", str(assertion.get("fact_type") or ""))
+            if w
+        )
+        if want_type and isinstance(fact_type, str) and fact_type != want_type:
             continue
         for field in ("place", "standard_place", "date", "value"):
             on_fact = text(fact.get(field))
@@ -806,7 +819,13 @@ def _fact_identity(fact: dict) -> tuple:
             if isinstance(r, dict) and isinstance(r.get("ref"), str)
         )
     )
-    return (fact.get("id"), fact.get("type"), fact.get("primary"),
+    # `primary` normalized: the sanitizer deletes a stored `primary: false`
+    # (`pruneFlag`), so absent and False are the same claim and only `true` is a
+    # real flag. `id` is deliberately absent from this tuple for the same reason
+    # -- the sanitizer MINTS a missing one -- and the per-person zip already
+    # pins fact order and count, so an id cannot be swapped without the rest of
+    # the fact moving with it.
+    return (fact.get("type"), fact.get("primary") is True,
             fact.get("standard_date"), fact.get("assertion_id"), refs)
 
 
@@ -816,12 +835,17 @@ def _person_identity(person: dict) -> tuple:
         # Everything but `id`, which `sanitizeTree` mints when a legacy name
         # lacks one. Comparing four keys let a name's prefix, suffix and source
         # refs change and ride the authorization through.
-        tuple(sorted((k, repr(v)) for k, v in n.items() if k != "id"))
+        tuple(sorted((k, repr(v)) for k, v in n.items() if k not in _SANITIZER_MINTED_KEYS))
         for n in (person.get("names") or [])
         if isinstance(n, dict)
     )
     return (person.get("id"), person.get("gender"), person.get("ark"),
             person.get("living"), names)
+
+
+#: Keys `sanitizeTree` may add or remove on its own, so a difference in one is a
+#: heal rather than a write. Everything else on a name is compared.
+_SANITIZER_MINTED_KEYS = frozenset({"id"})
 
 
 def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected) -> bool:
@@ -833,7 +857,7 @@ def _explained_by_fact_rewrite(before_section, after_section, research_after, co
     authorized by tool identity instead, exactly as `merge_tree_persons` is on
     the research side. Anything the rewrite does not explain still fails.
 
-    Four things are checked, and the last two are what stop the path becoming a
+    Three things are checked, and the last two are what stop the path becoming a
     blanket grant:
 
       - no person and no fact added or removed, and each person's identity

@@ -110,7 +110,7 @@ _PERSON_FIELDS = ("id", "ark", "gender", "living", "names", "facts")
 _NAME_FIELDS = ("id", "preferred", "given", "surname", "prefix", "suffix", "type", "sources")
 _FACT_FIELDS = (
     "id", "type", "primary", "date", "standard_date", "place",
-    "standard_place", "value", "sources",
+    "standard_place", "value", "assertion_id", "sources",
 )
 _PARENT_CHILD_FIELDS = ("id", "type", "parent", "child", "subtype", "notes", "sources")
 _COUPLE_FIELDS = ("id", "type", "person1", "person2", "facts", "notes", "sources")

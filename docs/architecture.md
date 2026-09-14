@@ -1242,8 +1242,13 @@ tool and it belongs in that module**, so there is no second copy to drift.
 memory and block only on errors the call itself introduces** — pre-existing
 schema drift in a section the call does not touch is demoted to a warning rather
 than freezing the write (`validation/introduced-errors.ts`); a call that
-introduces an error still writes nothing. The tools assign all ids; callers never
-predict them.
+introduces an error still writes nothing. **One exception, and it is the only
+one:** `research_append`'s assertion-`update` op also rewrites the tree fact
+that assertion minted, and a rewrite that fails validation is rolled back and
+degraded to a warning rather than refusing the assertion correction, which is
+the legitimate write the caller asked for. So that call writes `research.json`
+and not the tree. `tree-materialization-spec.md` §4.4 says why refusing would be
+wrong. The tools assign all ids; callers never predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the
 writer tools. Defensive validate passes between writer-tool steps are explicitly

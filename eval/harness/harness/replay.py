@@ -61,6 +61,15 @@ from typing import Any
 # `tree_edit` / `tree_correct` / `materialize_facts` / `merge_tree_persons` have
 # op-shaped semantics this module would have to model rather than read back, and
 # no current consumer needs tree state. They are reported as unmodelled.
+#
+# ONE KNOWN GAP, stated rather than fixed. Since #2472 `research_append` and
+# `extraction_append` also write `tree.gedcomx.json` when an assertion `update`
+# corrects a fact's place/standard_place/date/value. That happens on the research
+# path, so those two stay in this set and the replay reads their research.json
+# effect back correctly — but the tree half is neither modelled NOR reported as
+# unmodelled, because `note_unmodelled` is only reached for a tool OUTSIDE this
+# set. A consumer that needed tree state would silently get the pre-call tree.
+# None does today; the moment one does, split the tree half out explicitly.
 RESEARCH_WRITERS = frozenset(
     {"research_append", "research_log_append", "extraction_append"}
 )
