@@ -38,6 +38,7 @@ from test_person_evidence import (  # noqa: E402
     test_check_warnings_runs_after_a_write as check_warnings_after_write,
     test_matched_persona_is_materialized_onto_its_person as check_materialized,
     test_same_person_called_when_persona_meets_existing_candidate as check_scored,
+    test_stub_person_created_and_linked as check_stub,
 )
 
 
@@ -656,3 +657,120 @@ def test_scored_still_fires_when_the_log_entry_has_a_results_ref():
               "log": after["log"]}
     with pytest.raises(AssertionError):
         check_scored(_state(before, _tree("I1")), _state(after, _tree("I1")), [])
+
+
+# --- check_stub: the minted-by rule ---------------------------------------
+#
+# The eval suite does not exercise this assertion: neutering it left
+# `make harness-test` at an identical pass count. It is also the one most worth
+# a meta-test, because its first version was DEFEATED in review. That version
+# checked the after-state for "a name with some ref", and `tree_edit
+# add_person` copies a caller-supplied `names[].sources` through untouched (its
+# mandatory-ref guard covers inline FACTS only), so a hand-written ref naming
+# the wrong record passed the guard meant to catch exactly that.
+
+_STUB_TAG = {"tags": ["stub-creation"]}
+_SOURCED = [{"id": "N3", "given": "Mary", "surname": "Doyle",
+             "sources": [{"ref": "S5", "quality": 3}]}]
+_BARE = [{"id": "N3", "given": "Mary", "surname": "Doyle"}]
+_MF_NAMED = [{"tool": "mcp__genealogy__materialize_facts",
+              "args": {"assertionId": "a_005", "relatedRole": "bride"}}]
+_MF_PERSONA = [{"tool": "mcp__genealogy__materialize_facts",
+                "args": {"recordId": "REC", "recordRole": "mother"}}]
+_ADD_PERSON = [{"tool": "mcp__genealogy__tree_edit",
+                "args": {"operation": "add_person", "person": {"gender": "Female"}}}]
+
+
+def _stub_verdict(names, calls, test=None):
+    """True when the check accepts. A downstream skip counts as acceptance: it
+    means a LATER, unrelated rule (match_score reachability) skipped."""
+    person = {"id": "I1", "gender": "Male",
+              "names": [{"id": "N1", "given": "Thomas", "surname": "Flynn"}]}
+    assertions = [{"id": "a_005", "record_persona_id": None, "fact_type": "name"}]
+    before = _state({"assertions": assertions, "person_evidence": [], "log": []},
+                    {"persons": [person]})
+    after = _state({"assertions": assertions,
+                    "person_evidence": [{"id": "pe_9", "assertion_id": "a_005",
+                                         "person_id": "I3", "match_score": None}],
+                    "log": []},
+                   {"persons": [person, {"id": "I3", "gender": "Female",
+                                         "names": names}]})
+    try:
+        check_stub(before, after, calls, test or _STUB_TAG)
+        return True
+    except AssertionError:
+        return False
+    except BaseException as exc:  # pytest.skip
+        if type(exc).__name__.endswith("Skipped"):
+            return True
+        raise
+
+
+@pytest.mark.parametrize("calls", [_MF_NAMED, _MF_PERSONA])
+def test_stub_accepts_either_materialize_arm(calls):
+    """Both arms resolve the ref from the assertion, so both are correct on an
+    untagged stub-creation fixture. (Until the `named-party` gate below existed
+    these two cases asserted the same thing: the check read only the tool name,
+    never the args, so the parametrization was decorative.)"""
+    assert _stub_verdict(_SOURCED, calls) is True
+
+
+_NAMED_PARTY_TAG = {"tags": ["stub-creation", "named-party"]}
+
+
+def test_named_party_fixture_requires_the_named_party_ARM():
+    """The one behaviour this change introduces. Without this, nothing
+    distinguishes branch 3 from branch 2 and the arm goes unverified by
+    anything but a human reading a transcript."""
+    assert _stub_verdict(_SOURCED, _MF_NAMED, test=_NAMED_PARTY_TAG) is True
+    # the persona form is the WRONG arm on a fixture the record gives no persona
+    assert _stub_verdict(_SOURCED, _MF_PERSONA, test=_NAMED_PARTY_TAG) is False
+
+
+def test_stub_rejects_add_person_carrying_a_hand_written_ref():
+    """The defeat this check was rewritten for: the ref can name any record."""
+    assert _stub_verdict(_SOURCED, _ADD_PERSON) is False
+
+
+def test_stub_rejects_add_person_with_no_ref():
+    assert _stub_verdict(_BARE, _ADD_PERSON) is False
+
+
+def test_stub_rejects_add_person_used_alongside_materialize_facts():
+    """Calling the right tool somewhere does not license the wrong one here."""
+    assert _stub_verdict(_SOURCED, _MF_NAMED + _ADD_PERSON) is False
+
+
+def test_stub_rejects_a_mint_with_no_tool_call_at_all():
+    assert _stub_verdict(_SOURCED, []) is False
+
+
+def test_stub_accepts_a_tree_edit_that_merely_mentions_add_person():
+    """False-fail guard. The first version matched "add_person" anywhere in the
+    serialized args, so an unrelated tree_edit whose text happens to contain the
+    word was refused. A check that blocks correct work is worse than the gap."""
+    mentions = [
+        {"tool": "mcp__genealogy__tree_edit",
+         "args": {"operation": "add_fact",
+                  "fact": {"type": "Occupation", "value": "clerk (not via add_person)"}}},
+    ]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + mentions) is True
+
+
+def test_stub_still_catches_add_person_inside_a_BATCH():
+    """The batch form is how this skill is told to write, so the check has to
+    see into `ops[]` rather than only the flat call."""
+    batched = [{"tool": "mcp__genealogy__tree_edit",
+                "args": {"ops": [{"operation": "add_relationship"},
+                                 {"operation": "add_person", "person": {"gender": "Female"}}]}}]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + batched) is False
+
+
+def test_stub_catches_add_person_inside_a_STRINGIFIED_batch():
+    """The shape a hand-rolled isinstance(list) check misses. The mock records
+    raw model args and models do stringify a large `ops`, which is why the
+    shared `_ops_arg` recovers it; a private normalizer that did not would let
+    a disallowed mint through silently."""
+    stringified = [{"tool": "mcp__genealogy__tree_edit",
+                    "args": {"ops": '[{"operation": "add_person", "person": {"gender": "Female"}}]'}}]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + stringified) is False
