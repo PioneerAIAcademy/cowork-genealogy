@@ -13,7 +13,8 @@
 // and CANNOT be dropped — the structural cure for the cruz "0/13 facts carried a
 // ref" leak.
 //
-// NAMED-PARTY arm ({ projectPath, assertionId, relatedRole, name, gender? }) —
+// NAMED-PARTY arm ({ projectPath, assertionId, relatedRole, name, gender?,
+//   nameType?, personId? }) —
 // for a party a relationship/marriage assertion NAMES but gives no persona of
 // her own (the bride in the groom's marriage register is the canonical case). There is no recordRole to reference, so this arm necessarily takes
 // one piece of caller-supplied DATA — her name — and nothing else. The
@@ -1062,7 +1063,10 @@ export const materializeFactsSchema = {
     "ONLY when the assertion's structured_value.related_person_role names that same role: " +
     "relatedRole is free text this tool cannot otherwise check, and a wrong one that happens " +
     "to name a real OTHER role would attach that individual's facts to this name under a " +
-    "genuine ref. factsAdded: 0 means it was not corroborated and only the name was written. " +
+    "genuine ref. factsAdded: 0 does NOT single out that case: it is also what you get when the " +
+    "role has no persona at all (the arm's canonical shape), when its persona carries nothing " +
+    "writable, and on a repeat call. The reply carries no corroboration flag, so do not infer " +
+    "one from a count. " +
     "Your `gender` WINS over the persona's own gender/sex assertions when you supply one; " +
     "omit it to take the record's. Never a relationship. " +
     "The marriage event still belongs on the Couple via tree_edit " +
@@ -1150,7 +1154,7 @@ export const materializeFactsSchema = {
           "Batch form: apply many ops in one validate-once/write-once call (all-or-nothing). " +
           "When present, the top-level per-op fields are ignored. Each op is either the " +
           "persona form `{ personId?, recordId, recordRole }` or the named-party form " +
-          "`{ assertionId, relatedRole, name, gender?, personId? }`; the two may be mixed in " +
+          "`{ assertionId, relatedRole, name, gender?, nameType?, personId? }`; the two may be mixed in " +
           "one batch, but not merged into one op.",
         items: {
           type: "object",

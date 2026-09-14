@@ -442,7 +442,9 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   including `flynn-baptism-names-mother` — the "father named in a child's
   baptism" shape this section leads with. The narrow check missed every one.
 
-  `relatedRole` is otherwise validated and never persisted: nothing on a tree
+  `relatedRole` is never persisted, but it is not otherwise unused: it selects the
+  `siblings` set whose facts the second pass writes, and the corroboration gate is
+  `related_person_role` normalized against it. Nothing on a tree
   person holds a role and this tool never writes `research.json`. It is required
   rather than optional because a guard a caller can skip by omitting it is not a
   guard.
@@ -508,21 +510,24 @@ here so it is not re-derived. Measured 2026-09-07 by walking
 | relationship + marriage assertions in the corpus | **167** |
 | carrying the other party's **name** in `structured_value` | **8 (4.8%)**, under five distinct key *shapes* (nine distinct key strings), **7 of the 8 assertions distinct** |
 | carrying `related_person_role` | **146 (87.4%)** |
-| …of those, where `related_person_role` holds the **persona's own** `record_role` | 39 raw, but only **5 distinct** assertion shapes |
+| …of those, where `related_person_role` holds the **persona's own** `record_role` | 40 raw, but only **5 distinct** `(record_role, fact_type, value)` shapes, 7 compared byte for byte |
 
-The last row needs its caveat stated or it misleads: 35 of those 39 are one
-byte-identical assertion cloned across 35 `flynn-*` scenario fixtures. Counted
-over the wider `eval/**/*research.json` set (which adds the e2e starting
-documents) the raw rate falls to 45 of 1550, across 11 distinct shapes and ten
-different role values. **The rate is a fixture-cloning artifact; the
+The last row needs its caveat stated or it misleads: 34 of those 40 are one
+byte-identical assertion cloned across 34 scenario fixtures, 17 named `flynn-*`
+and 17 named `mid-research-flynn*`, which a `flynn-*` glob does not match.
+Counted
+over the wider `eval/**/*research.json` set (which adds the agent-produced
+`final-research` run logs; the 137 `starting-research.json` files all carry
+`assertions: []` and widen nothing) the raw rate falls to 50 of 1730, across 17
+distinct shapes and ten different role values. **The rate is a fixture-cloning artifact; the
 phenomenon is not.** The name row survives the same widening and strengthens
-(23 name-carrying of 1760, 21 of them distinct), which is why it, and not the
+(31 name-carrying of 1989, 29 of them distinct), which is why it, and not the
 rate, carries the argument below.
 
 - **Rejected: have the tool read a standardized `structured_value` name key.**
-  The name is there 4.9% of the time under five distinct key shapes, and the shape
+  The name is there 4.8% of the time under five distinct key shapes, and the shape
   this repo's own schema spec recommends (`spouse_given`/`spouse_surname`)
-  occurs in 1 of 162. Standardizing one would mean changing record-extraction's
+  occurs in 1 of 167. Standardizing one would mean changing record-extraction's
   prose — a second paid eval run and a second reviewer — and every project
   written before that change would stay unmintable. `structured_value` is
   `type: object` with no properties, is deliberately not deep-checked by the
@@ -530,7 +535,7 @@ rate, carries the argument below.
   contract, so **no lint would report a key that had gone missing.**
 - **Rejected: cross-check the caller's `relatedRole` against
   `structured_value.related_person_role`.** That key is present often enough to
-  look tempting (88.3%), but it holds the persona's **own** role rather than the
+  look tempting (87.4%), but it holds the persona's **own** role rather than the
   other party's in eleven distinct assertion shapes spanning ten role values
   (`baptized_child`, `child`, `child_1`, `child_2`, `deceased`, `father`,
   `head_of_household`, `mother`, `testator`, `wife`). A refusal keyed on it

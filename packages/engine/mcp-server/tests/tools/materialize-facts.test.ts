@@ -1132,7 +1132,7 @@ describe("materialize_facts", () => {
   it("(36) REFUSES when the named role already has its own persona on that record", async () => {
     // The common case, not an edge case: measured over eval/**/research.json the
     // role a relationship/marriage assertion names already has its own persona
-    // on the same record in 52 of 162 cases. The persona arm mints her WITH her
+    // on the same record in 93 of 167 cases (55.7%). The persona arm mints her WITH her
     // facts; this arm would leave a name-only shell, which is the symptom the
     // spec exists to cure.
     await writeProject(

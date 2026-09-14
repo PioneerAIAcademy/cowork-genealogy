@@ -70,7 +70,10 @@ export interface MaterializeFactsNamedPartyOp {
    *  `record_role` on that record: if a persona with this role exists and could
    *  be materialized instead, the call is refused and names the
    *  `{ recordId, recordRole }` to use, because that form writes her facts too.
-   *  Otherwise unused — nothing on a tree person holds a role, and this tool
+   *  Used twice more after that guard: it selects the sibling personas whose facts
+   *  the fact pass writes, and the corroboration gate compares
+   *  `structured_value.related_person_role` against it. Never persisted, though —
+   *  nothing on a tree person holds a role, and this tool
    *  never writes research.json. Required rather than optional because a guard
    *  a caller can skip by omitting it is not a guard, and best-effort because
    *  both roles are free text (spec section 4.6). */
