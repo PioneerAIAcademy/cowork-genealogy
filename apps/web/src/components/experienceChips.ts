@@ -69,5 +69,14 @@ export function shouldShowExperienceChips(
   isNew: boolean,
   messages: readonly { role: string }[]
 ): boolean {
-  return isNew && messages.filter((m) => m.role === 'user').length === 1
+  // The assistant clause is what keeps the chips from leading the question.
+  // `turn_start` is inert in `applyEvent`, so between `send(OPENING_TURN)` and
+  // the first content token `messages` is exactly one user entry — four bare
+  // chips under the user's own message with nothing on screen asking anything.
+  // Still counts messages only; it never reaches for project state.
+  return (
+    isNew &&
+    messages.filter((m) => m.role === 'user').length === 1 &&
+    messages.some((m) => m.role === 'assistant')
+  )
 }

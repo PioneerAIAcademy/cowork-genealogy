@@ -350,10 +350,6 @@ export default function ChatPane({
               )}
             </div>
           ))}
-          {/* One status line, three distinct states. Reconnecting is shown even
-              when a turn wasn't running, because a dropped socket is worth knowing
-              about; it takes priority over "working" so a stall never masquerades
-              as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {/* Selectable answers for init-project's opening-turn experience-level
               question (#1932). Held entirely in the client: no new event kind,
               no server plumbing, and the agent cannot emit them. Clicking fills
@@ -378,6 +374,10 @@ export default function ChatPane({
               ))}
             </div>
           )}
+          {/* One status line, three distinct states. Reconnecting is shown even
+              when a turn wasn't running, because a dropped socket is worth knowing
+              about; it takes priority over "working" so a stall never masquerades
+              as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {connState === 'reconnecting' ? (
             <div className="typing">●●● Reconnecting…</div>
           ) : (

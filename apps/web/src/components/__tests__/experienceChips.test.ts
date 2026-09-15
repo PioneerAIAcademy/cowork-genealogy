@@ -70,9 +70,14 @@ describe('shouldShowExperienceChips', () => {
   const user = { role: 'user' }
   const assistant = { role: 'assistant' }
 
-  it('shows while the auto-sent opening turn is the only user message', () => {
-    expect(shouldShowExperienceChips(true, [user])).toBe(true)
+  it('shows once the assistant has started answering the opening turn', () => {
     expect(shouldShowExperienceChips(true, [user, assistant])).toBe(true)
+  })
+
+  it('hides until the assistant has started answering', () => {
+    // The window between send(OPENING_TURN) and the first content token, where
+    // the chips would otherwise answer a question not yet on screen.
+    expect(shouldShowExperienceChips(true, [user])).toBe(false)
   })
 
   it('hides once the user has answered', () => {
