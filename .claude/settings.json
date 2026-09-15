@@ -18,7 +18,6 @@
     "allow": [
       "Bash(git ls-tree *)",
       "Bash(git merge-base *)",
-      "Bash(git grep *)",
       "mcp__genealogy__record_read",
       "mcp__genealogy__record_search"
     ]
