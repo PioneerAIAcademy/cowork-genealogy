@@ -46,6 +46,21 @@ class TestSpec:
     judge_reads_files: bool = False
     source_path: Path | None = None
     raw: dict[str, Any] = field(default_factory=dict)
+    # Direct-agent arm: the exact text handed to the pair's agent, in place of a
+    # user turn. The schema makes `user_message` and `delegation` mutually
+    # exclusive (`input.oneOf`), so exactly one of the two is ever set and
+    # `user_message` is "" on a direct test.
+    delegation: str | None = None
+
+    @property
+    def is_direct(self) -> bool:
+        """Whether this test reaches its agent by a direct spawn, not via the skill.
+
+        The single predicate every direct-arm branch keys on — the workspace
+        (no skills staged), the prompt the runner sends, the outcome rule
+        (`agents_spawned` rather than `skills_invoked`), and the judge framing.
+        """
+        return bool(self.delegation)
 
 
 @lru_cache(maxsize=1)
@@ -84,7 +99,7 @@ def load_test_from_dict(raw: dict[str, Any]) -> TestSpec:
         type=test["type"],
         description=test["description"],
         tags=list(test.get("tags", [])),
-        user_message=input_block["user_message"],
+        user_message=input_block.get("user_message", ""),
         scenario=input_block.get("scenario"),
         scenario_notes=input_block.get("scenario_notes"),
         mcp_fixtures=list(raw.get("mcp_fixtures", [])),
@@ -96,5 +111,6 @@ def load_test_from_dict(raw: dict[str, Any]) -> TestSpec:
         execution=dict(raw.get("execution", {})),
         intentionally_invalid=bool(raw.get("intentionally_invalid", False)),
         judge_reads_files=bool(raw.get("judge_reads_files", False)),
+        delegation=input_block.get("delegation"),
         raw=raw,
     )
