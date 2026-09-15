@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-09-10_14-33-15.json",
-  "annotator": "florencemashipei4@gmail.com",
+  "run_log": "v1_2026-09-14_09-08-03.json",
+  "annotator": "edmondoware70@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_006",
       "dimension_source": "rubric",
       "dimension_name": "Gate reasoning",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_006",
       "dimension_source": "rubric",
       "dimension_name": "Declaration honesty",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_003",
+      "test_id": "ut_research_exhaustiveness_006",
       "dimension_source": "rubric",
       "dimension_name": "Stop criteria coverage",
       "llm_score": 3,
@@ -51,23 +51,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
+      "test_id": "ut_research_exhaustiveness_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
+      "test_id": "ut_research_exhaustiveness_d1a",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_001",
+      "test_id": "ut_research_exhaustiveness_d1a",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d1a",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d1a",
       "dimension_source": "rubric",
       "dimension_name": "Gate reasoning",
       "llm_score": 3,
@@ -75,51 +91,19 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "test_id": "ut_research_exhaustiveness_d1a",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "test_id": "ut_research_exhaustiveness_d1a",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -142,6 +126,22 @@
       "test_id": "ut_research_exhaustiveness_004",
       "dimension_source": "rubric",
       "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -155,15 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_002",
+      "test_id": "ut_research_exhaustiveness_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -171,15 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_research_exhaustiveness_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
+      "test_id": "ut_research_exhaustiveness_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,39 +179,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Gate reasoning",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Declaration honesty",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_005",
-      "dimension_source": "rubric",
-      "dimension_name": "Stop criteria coverage",
+      "test_id": "ut_research_exhaustiveness_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_016",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_016",
+      "test_id": "ut_research_exhaustiveness_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -235,7 +195,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_016",
+      "test_id": "ut_research_exhaustiveness_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
       "dimension_source": "rubric",
       "dimension_name": "Gate reasoning",
       "llm_score": 3,
@@ -243,7 +235,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_016",
+      "test_id": "ut_research_exhaustiveness_012",
       "dimension_source": "rubric",
       "dimension_name": "Declaration honesty",
       "llm_score": 3,
@@ -251,20 +243,52 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The one page the agent body instructs Iowa Vital_Records matched the two fixture_not_found misses Iowa_Marriage_Records, Iowa_Census_Records read as fixture-coverage gaps rather than malformed arguments."
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_exhaustiveness_016",
+      "test_id": "ut_research_exhaustiveness_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "The facts are right and the write is valid. The only thing it did not do is declare, which is the fixture's premise rather than an error by the agent. Held at 2 so the disagreement with the scenario stays visible."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "It persisted all seven stop criteria, log_entry_ids and a justification. The judge's stated reason, that it wrote only a partial assessment, is not what the write contains."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": " It named repository_breadth as the blocker and the gap under it, grounded in pli_008 and a named collection. That is the pass bullet's own example shape."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "An unsearched decisive record type, declared false, gaps listed. That is the pass bullet. The fail bullet describes declaring true with known gaps, which is the opposite."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d5e",
       "dimension_source": "rubric",
       "dimension_name": "Stop criteria coverage",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "the blocking item was named with substance and the other six were absent partial under rubric line 34 (#1843), taking the tentative value stop as a decline rather than a precondition refusal"
+      "corrected_score": 3,
+      "comment": "All seven present, honest about the blocker, and the justification names it. The deduction came from the scenario's premise, not from the coverage."
     }
   ]
 }

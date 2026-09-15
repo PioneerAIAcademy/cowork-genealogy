@@ -1,6 +1,6 @@
 ---
 name: merge-recent-issues
-description: Use when the lead wants the last couple of days' new issues checked against the open pool for merges — "merge recent issues", "did we file any duplicates", "check the new issues against the backlog", "anything filed today that belongs on an existing issue", or a bare "/merge-recent-issues". Takes an optional day count (`/merge-recent-issues 5`); defaults to 2 days. Reads every issue filed in the window and asks one question each — does this belong on an issue that already exists? Compares only against Backlog, unassigned Ready, and icebox, so it never steals a card someone has started. Run it daily, right after /triage-standup files the day's inflow. Verdicts and merge doctrine come from /audit-board, which owns them; this is the cheap daily catcher, not a second opinion. Proposes first and applies only what the lead approves; never starts the work, and never writes the project board.
+description: Use when the lead wants the last couple of days' new issues checked against the open pool for merges — "merge recent issues", "did we file any duplicates", "check the new issues against the backlog", "anything filed today that belongs on an existing issue", or a bare "/merge-recent-issues". Takes an optional day count (`/merge-recent-issues 5`); defaults to 2 days. Reads every issue filed in the window and asks one question each — does this belong on an issue that already exists? Compares only against Backlog, unassigned Ready, and icebox, so it never steals a card someone has started. Run it daily, right after /triage-standup files the day's inflow. Verdicts and merge doctrine come from /merge-issues, which owns them; this is the cheap daily catcher, not a second opinion. Proposes first and applies only what the lead approves; never starts the work, and never writes the project board.
 allowed-tools:
   - Read
   - Bash
@@ -10,20 +10,20 @@ allowed-tools:
 
 # Merge recent issues
 
-`/audit-board` is the weekly whole-pool pass and it **owns merge doctrine**. This
-skill owns *selection and cadence*: it looks only at what was filed in the last
-couple of days, while the reason for each filing is still recoverable and before
-a duplicate gets ranked, promoted and assigned.
+`/merge-issues` **owns merge doctrine**. This skill owns *selection and cadence*:
+it looks only at what was filed in the last couple of days, while the reason for
+each filing is still recoverable and before a duplicate gets ranked, promoted and
+assigned.
 
-**Run this daily; do not run `/audit-board` daily instead.** A new issue landing
+**Run this daily; do not run `/merge-issues` daily instead.** A new issue landing
 on top of an existing one is the case that decays fastest and the cheapest to
-check. Two *old* issues colliding, obsolescence, clusters, eval-slot queues and
-board hygiene are what `/audit-board` is for.
+check. N *old* issues queued on one eval slot is what `/merge-issues` is for, and
+obsolescence, clusters and board hygiene are `/audit-board`'s.
 
-**Read `.claude/skills/audit-board/SKILL.md`'s merge section before proposing
-anything, and use its verdicts verbatim.** Do not invent a verdict here and do
-not restate its rules in your own words. If this file and that one ever disagree,
-that one wins and the disagreement is a finding to report.
+**Read `.claude/skills/merge-issues/SKILL.md` before proposing anything, and use
+its verdicts verbatim.** Do not invent a verdict here and do not restate its
+rules in your own words. If this file and that one ever disagree, that one wins
+and the disagreement is a finding to report.
 
 **You propose, then apply what is approved.** No branches, no PRs, no code edits.
 You have no `Edit` or `Write` tool on purpose.
@@ -72,16 +72,16 @@ is a different action from a merge and should never be reported as one.
 
 ## 2. The verdicts
 
-Read `/audit-board`'s merge section and use its four verdicts — duplicate,
-absorb, batch, and the lane split — plus the close-as-duplicate-of-active-work
-above. Everything it says about **which** verdict applies binds here unchanged;
-do not re-derive it from this file.
+Read `/merge-issues` and use its four verdicts — duplicate, absorb, batch, and
+the lane split — plus the close-as-duplicate-of-active-work above. Everything it
+says about **which** verdict applies binds here unchanged; do not re-derive it
+from this file.
 
 Three of its rules decide most of what this pass sees:
 
-- **Search by fix site, not by topic.** Read the `**Touches:**` line first; fall
-  back to its grep for older bodies. Issues that collide almost never share a
-  title — they want different lines in one file.
+- **Search by fix site, not by topic.** Read the `**Touches:**` line first.
+  Issues that collide almost never share a title — they want different lines in
+  one file. A body with no such line is not "touches nothing"; read it by hand.
 - **Never replace N issues with one issue holding N rows.** No trackers, no
   umbrellas, no index issues.
 - **The default is merge.** Same decision, same files, same paid eval run, same
@@ -163,7 +163,7 @@ merge is worse than no note.
 ## 5. Output shape
 
 1. **Merges** — one block each: the pair, the shared fix site with the lines you
-   read, the verdict from `/audit-board`, which issue survives and why, whether it
+   read, the verdict from `/merge-issues`, which issue survives and why, whether it
    costs an eval run, and any assignee being moved.
 2. **Close as duplicate of active work** — separately, with who holds the card.
 3. **Body edits** — one-way mechanical dependencies, with the exact replacement

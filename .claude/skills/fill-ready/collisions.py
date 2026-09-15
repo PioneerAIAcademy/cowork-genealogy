@@ -15,113 +15,29 @@ Usage:
 Three guards keep the output from becoming a constant. Each is here because the
 version without it fired on nearly every candidate; see the table in SKILL.md.
 Do not relax one without re-measuring the pair count on a real board.
+
+Guard 2 (a bare directory pairs only when it names a unit) and the `**Touches:**`
+parsing itself live in ../lib/touches.py, shared with /merge-issues' slots.py so
+the two passes cannot disagree about which paths an issue names.
 """
 
 import json
-import re
-import subprocess
+import os
 import sys
 
-ROOTS = ("packages/", "eval/", "docs/", "apps/", "scripts/", ".github/", ".claude/")
-_TOKEN = re.compile(r"(?:" + "|".join(re.escape(r) for r in ROOTS) + r")[A-Za-z0-9_./*-]+")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 
-# Guard 2. A bare directory pairs only when it names a UNIT -- a directory that is
-# itself the thing being worked on, so naming it really does mean "all of this".
-# Everything else is a CONTAINER, where naming it means "a file in here" and
-# pairing it against its own siblings is a false positive.
-#
-# This replaced a tracked-file-count threshold (<= 10 files) on 2026-08-27. Size is
-# a proxy for the distinction and gets it wrong in both directions: measured over
-# the 27 bare-directory Touches entries then on the board, `apps/server/app/sandbox`
-# (5 files) and `eval/app/tests/unit` (6) passed the threshold and are containers,
-# while `eval/runlogs/unit/<skill>` (11) failed it and is a unit. The false pair it
-# produced: issue #1959 says `apps/server/app/sandbox/ (LocalProvider WS path)` --
-# i.e. local.py -- and was paired against #1729 and #1489, which name e2b.py.
-_UNIT_DIRS = (
-    re.compile(r"^packages/engine/plugin/skills/[a-z0-9-]+$"),
-    re.compile(r"^eval/tests/unit/[a-z0-9-]+$"),
-    re.compile(r"^eval/tests/e2e/[a-z0-9-]+$"),
-    re.compile(r"^eval/fixtures/scenarios/[a-z0-9-]+$"),
-    re.compile(r"^eval/runlogs/unit/[a-z0-9-]+$"),
-    re.compile(r"^eval/runlogs/e2e/[a-z0-9-]+$"),
+from touches import (  # noqa: E402
+    in_snapshot,
+    paths_from_touches,
+    pairable,
+    tracked_count,
+    under,
 )
 
 # Guard 3. A concrete file named by more than this many candidates is a hub, not a
 # collision. Pairing on it emits N-squared rows nobody reads.
 _HUB_MAX = 3
-
-# Paths inside a skill's eval run-log snapshot. A collision here is Gate 4 (hard,
-# costs a second paid run); anything else is Gate 3 (sequence + reciprocal notes).
-# Mirrors `build_snapshot` in eval/harness/harness/snapshot.py, which deliberately
-# excludes packages/engine/mcp-server/src/** -- an eval run never executes it.
-SNAPSHOT = (
-    re.compile(r"^packages/engine/plugin/skills/[a-z0-9-]+/"),
-    re.compile(r"^eval/tests/unit/[a-z0-9-]+/"),
-    re.compile(r"^packages/engine/plugin/agents/[a-z0-9-]+\.md$"),
-    re.compile(r"^eval/fixtures/(scenarios|mcp)/"),
-)
-
-
-def in_snapshot(path):
-    return any(r.search(path) for r in SNAPSHOT)
-
-
-_count_cache = {}
-
-
-def tracked_count(prefix):
-    """Number of git-tracked files under `prefix`."""
-    if prefix not in _count_cache:
-        out = subprocess.run(
-            ["git", "ls-files", prefix],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-        ).stdout
-        _count_cache[prefix] = len([ln for ln in out.split("\n") if ln.strip()])
-    return _count_cache[prefix]
-
-
-def is_unit_dir(path):
-    return any(r.match(path) for r in _UNIT_DIRS)
-
-
-def pairable(kind, path):
-    """A file always pairs. A directory pairs only if everything inside it is in
-    scope: a snapshot path (any file under it dirties a run log -- Gate 4), or a
-    unit dir (the directory *is* the thing being worked on)."""
-    if kind == "file":
-        return True
-    return in_snapshot(path + "/") or is_unit_dir(path)
-
-
-def parse(entry):
-    """-> ('file', path) | ('prefix', dir).
-
-    A glob, or a last segment with no dot, means the entry names a directory.
-    """
-    p = entry.rstrip("/")
-    if "*" in p:
-        return ("prefix", p.split("*")[0].rstrip("/"))
-    last = p.rsplit("/", 1)[-1]
-    return ("file", p) if "." in last else ("prefix", p)
-
-
-def paths_from_touches(body):
-    m = re.search(r"\*\*Touches:\*\*(.*?)(?:\n\n|\Z)", body or "", re.S)
-    if not m:
-        return set()
-    seg = m.group(1).replace("`", " ").replace("·", " ")
-    out = set()
-    for tok in _TOKEN.findall(seg):
-        tok = tok.rstrip(".,;:)").rstrip("/")
-        if tok:
-            out.add(parse(tok))
-    return out
-
-
-def under(path, prefix):
-    return path == prefix or path.startswith(prefix + "/")
 
 
 def overlap(entries, paths):
@@ -168,7 +84,9 @@ def main(board_path, open_path, prs_path, statuses):
         if not entries:
             continue
         cand[n] = entries
-        wide = [p for k, p in entries if k == "prefix" and not pairable(k, p)]
+        # sorted() because `entries` is a set -- without it the row order of the
+        # "too broad to pair" list changes between runs on identical input.
+        wide = sorted(p for k, p in entries if k == "prefix" and not pairable(k, p))
         if wide:
             broad[n] = wide
 
