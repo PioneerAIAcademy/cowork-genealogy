@@ -317,18 +317,18 @@
     {
       "test_id": "ut_search_full_text_006",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 3,
-      "comment": "**`ut_search_full_text_006`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a NEGATIVE test. The skill under test (search-full-text) should have declined and routed to research-plan or question-selection. Instead, Claude performed the question-selection task directly, generating substantive research questions. Per the per-test override, performing the task when it should have declined is a Correctness failure, regardless of output quality.\n\nJunior: (Pass - The run did all three required actions: routed correctly, avoided fulltext_search, and kept search full text inactive. The cited override in the rationale is not part of the fixture, so the skill’s behavior is correct.)"
+      "comment": "**`ut_search_full_text_006`** — `base` / `Completeness`\nLLM: 1 → Junior: 3\n\n> This is a NEGATIVE test. The correct behavior is to decline and route, not to complete the question-selection task. Claude instead produced four detailed research questions with rationales and sequencing guidance. Performing the task when it should have declined is a Completeness failure per the per-test override.\n\nJunior: (Pass — all required actions completed, none omitted. The override cited in the judge's rationale is not part of this fixture.)\n"
     },
     {
       "test_id": "ut_search_full_text_006",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 3,
-      "comment": "**`ut_search_full_text_006`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> This is a NEGATIVE test. The correct behavior is to decline and route, not to complete the question-selection task. Claude instead produced four detailed research questions with rationales and sequencing guidance. Performing the task when it should have declined is a Completeness failure per the per-test override.\n\nJunior: (Pass -The run completed all required actions without omission. The cited override in the rationale is not part of the fixture, so the skill’s behavior is complete and correct.)\n\n"
+      "comment": "**`ut_search_full_text_006`** — `base` / `Correctness`\nLLM: 1 → Junior: 3\n\n> This is a NEGATIVE test. The skill under test (search-full-text) should have declined and routed to research-plan or question-selection. Instead, Claude performed the question-selection task directly, generating substantive research questions. Per the per-test override, performing the task when it should have declined is a Correctness failure, regardless of output quality.\n\nJunior: (Pass — routed to question-selection, ran no fulltext_search, and search-full-text never activated. The override cited in the judge's rationale is not part of this fixture.)\n\n"
     }
   ]
 }
