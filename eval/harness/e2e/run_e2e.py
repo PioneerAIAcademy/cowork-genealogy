@@ -275,6 +275,18 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--context-1m",
+        action="store_true",
+        help=(
+            "Request the 1M-token context window (SDK beta "
+            "'context-1m-2025-08-07'). Default OFF: it changes run behaviour — a "
+            "1M window compacts differently, so a run made with it is NOT "
+            "comparable to the corpus and must not be committed under "
+            "eval/runlogs/e2e/. Deliberately absent from eval/RunE2E.bat. "
+            "Recorded in the runlog's usage block as `betas`."
+        ),
+    )
+    parser.add_argument(
         "--deny-shell",
         action="store_true",
         help=(
@@ -347,6 +359,7 @@ def main(argv: list[str] | None = None) -> int:
         "person_evidence_guard": args.person_evidence_guard,
         "deny_shell": args.deny_shell,
         "deny_project_reads": args.deny_project_reads,
+        "context_1m": args.context_1m,
     }
 
     results: list[E2eResult] = []
