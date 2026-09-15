@@ -1,6 +1,6 @@
 name: Check e2e fixtures + grading
 
-# One e2e discipline check on committed files (eval/harness/scripts/check_e2e_fixtures.py):
+# Two e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py):
 #
 # Grading gate (BLOCKING): every run log ADDED in this PR that produced a
 # final tree must ship its run-<ts>.ann.json in the same PR. Grading is
@@ -66,7 +66,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Check e2e grading gate (blocking)
+      - name: Check e2e grading + 1M-window gates (blocking)
         if: steps.scope.outputs.relevant == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

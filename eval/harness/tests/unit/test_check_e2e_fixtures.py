@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -260,16 +261,278 @@ def test_two_runs_of_one_draft_fixture_warn_once(tmp_path, monkeypatch):
     assert len(check_e2e_fixtures.check_added_runlogs_resolved(rels)) == 1
 
 
+# --- 1M-window gate (blocking, #2581) --------------------------------------
+
+_1M = ["context-1m-2025-08-07"]
+QDIR = "eval/runlogs/_2491-exploratory-quarantine"
+
+
+def _write_log(repo: Path, rel: str, usage) -> Path:
+    """Write a run log at an arbitrary repo-relative path. `usage` is placed
+    verbatim, so a caller can hand it a non-dict to exercise a wrong shape."""
+    p = repo / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    body = {"verdict": "pass"}
+    if usage is not _ABSENT:
+        body["usage"] = usage
+    p.write_text(json.dumps(body), encoding="utf-8")
+    return Path(rel)
+
+
+_ABSENT = object()
+
+
+def _ar(repo, commit, monkeypatch, *rels: str) -> tuple[list, str]:
+    """Commit `rels` and return (selector output, head) with the env set the way
+    main() sees it. Drives the REAL selector — never a stub.
+
+    `monkeypatch.setenv`, never `os.environ[...] = `: a direct assignment leaks
+    BASE_SHA/HEAD_SHA into every later test in the file, which silently flips
+    four main() tests that stub only the A-selector into running the real
+    AR one. Caught the hard way.
+    """
+    head = commit(*rels)
+    base = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD~1"],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    ).stdout.strip()
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    return check_e2e_fixtures.git_ar_e2e_runlogs(), head
+
+
+def test_1m_run_added_to_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)
+    assert len(v) == 1, v
+    assert f"run-{TS}.json" in v[0]
+    # The error must name the sanctioned home (#2581 requires it). Assert the
+    # mechanism substring, not the whole sentence, so a reflow cannot red this.
+    assert "outside eval/runlogs/e2e/" in v[0], v[0]
+
+
+def test_1m_run_RENAMED_into_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    """The case `--diff-filter=A` cannot see: promotion out of quarantine."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": _1M})
+    commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert [p.as_posix() for p in sel] == [dst], sel
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+    # The A-scoped selector the grading gate uses cannot see this at all.
+    assert check_e2e_fixtures.git_added_e2e_runlogs() == []
+
+
+def test_a_1m_log_left_in_quarantine_is_not_selected(tmp_path, monkeypatch):
+    """Selector-level on purpose: the path filter lives there, so calling the
+    CHECK directly with a quarantine path would red a correct implementation."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert sel == []
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_moving_a_run_OUT_of_the_corpus_is_not_a_violation(tmp_path, monkeypatch):
+    """The false-positive direction, and the remediation path a reddened
+    developer takes. Under a selector that took the rename's SOURCE this reds."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    commit(src.as_posix())
+    dst = f"{QDIR}/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert sel == []
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_the_rule_reads_the_HEAD_TREE_not_the_working_directory(tmp_path, monkeypatch):
+    """Committed clean, then edited on disk to look like a 1M run.
+
+    A `Path.read_text` implementation reds here. Every other row in this block
+    writes AND commits, so without this one the issue's central requirement --
+    read from the HEAD_SHA tree -- is falsified by nothing.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    (repo / rel).write_text(json.dumps({"usage": {"betas": _1M}}), encoding="utf-8")
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_a_1m_run_committed_then_blanked_on_disk_still_reds(tmp_path, monkeypatch):
+    """The inverse. A working-directory read would go green here."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    (repo / rel).write_text(json.dumps({"usage": {"betas": []}}), encoding="utf-8")
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+
+
+def test_a_1m_log_written_but_never_committed_is_not_selected(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    head = commit("seed.txt")
+    _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    monkeypatch.setenv("BASE_SHA", head)
+    monkeypatch.setenv("HEAD_SHA", head)
+    assert check_e2e_fixtures.git_ar_e2e_runlogs() == []
+
+
+@pytest.mark.parametrize("usage", [
+    {"betas": []},            # the shape spriggs-parents-1898 actually carries
+    _ABSENT,                  # 174 of the 175 committed runs
+    {},                       # usage present, betas absent
+    {"betas": None},
+    {"betas": "context-1m-2025-08-07"},   # truthy NON-list
+    {"betas": {}},
+    None,                     # usage null
+    [],                       # usage not a dict
+    5,
+])
+def test_shapes_that_are_not_a_1m_run_pass_without_crashing(tmp_path, monkeypatch, usage):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", usage)
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_malformed_json_is_skipped_not_crashed(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = Path(f"eval/runlogs/e2e/smith/run-{TS}.json")
+    (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+    (repo / rel).write_text("{not json", encoding="utf-8")
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_not_1m(sel, head) == []
+
+
+def test_a_sibling_carrying_betas_is_not_selected(tmp_path, monkeypatch):
+    """`.ann.json` / `.final-*` are excluded by `_is_primary_runlog`."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    a = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.ann.json", {"betas": _1M})
+    t = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.final-tree.gedcomx.json", {"betas": _1M})
+    sel, _head = _ar(repo, commit, monkeypatch, a.as_posix(), t.as_posix())
+    assert sel == []
+
+
 # --- main() exit-code behavior --------------------------------------------
+
+def test_main_fails_on_a_1m_run_and_does_not_claim_OK(tmp_path, monkeypatch, capsys):
+    """Drives main() through the REAL selectors — no stub on either.
+
+    Without this the exit-code wiring is untested: replacing the rule's result
+    with `[]` in main() left all 57 other tests green. The OK-line assertion is
+    the separate half — "wired the return but forgot to move the success line"
+    is its own defect, and it prints a pass banner on a failing run.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    tree, ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    (repo / ann).write_text("{}", encoding="utf-8")   # graded, so ONLY the 1M rule fires
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "1M context window" in out, out
+    assert "E2E grading gate OK" not in out, "claimed OK on a run it failed"
+
+
+def test_main_reports_BOTH_gates_when_both_fire(tmp_path, monkeypatch, capsys):
+    """The issue requires the new rule's output stay visible when the grading
+    gate also fails, and this is the realistic shape: the quarantine's runs
+    carry a tree and no annotation, so an added 1M run trips both.
+
+    An implementation that appended the beta block after the grading gate's
+    early `return 1` passes every other row in this file.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    tree, _ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")   # tree, NO ann -> grading gate fires too
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert f"run-{TS}.ann.json" in out, "grading-gate error missing"
+    assert "1M context window" in out, "1M error missing"
+
+
+def test_promoting_an_UNGRADED_run_out_of_quarantine_is_caught(tmp_path, monkeypatch, capsys):
+    """The grading gate reads the AR set, so a rename-in no longer slips past.
+
+    Every run in eval/runlogs/_2491-exploratory-quarantine/ has a final tree and
+    no annotation (measured: 4 trees, 0 anns), so this is the exact population
+    the gate rejects arriving by the one route `--diff-filter=A` cannot see.
+    Point the gate back at the A set and this row reds on its own.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = Path(f"{QDIR}/smith/run-{TS}.json")
+    src_tree = Path(f"{QDIR}/smith/run-{TS}.final-tree.gedcomx.json")
+    for q in (src, src_tree):
+        (repo / q).parent.mkdir(parents=True, exist_ok=True)
+        (repo / q).write_text("{}", encoding="utf-8")
+    base = commit(src.as_posix(), src_tree.as_posix())
+
+    dst = Path(f"eval/runlogs/e2e/smith/run-{TS}.json")
+    dst_tree, _dst_ann = _siblings(dst)
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    shutil.move(str(repo / src_tree), str(repo / dst_tree))
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(
+        src.as_posix(), src_tree.as_posix(), dst.as_posix(), dst_tree))
+    assert check_e2e_fixtures.main() == 1
+    assert f"run-{TS}.ann.json" in capsys.readouterr().out
+
+
+def test_main_OK_line_reports_both_denominators(tmp_path, monkeypatch, capsys):
+    """A pure quarantine->corpus rename adds nothing, so an N-only line would
+    read `OK (0 added run log(s) checked)` on a run that checked one file."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": []})
+    base = commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(src.as_posix(), dst))
+    assert check_e2e_fixtures.main() == 0
+    out = capsys.readouterr().out
+    assert re.search(r"1 added-or-renamed run log\(s\) checked; 0 of them newly added", out), out
+
+
+
 
 
 def test_main_grading_gate_blocks_missing_ann(tmp_path, monkeypatch):
     """A PR-added run log with a committed tree but no ann fails main()."""
     repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
     rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
     tree, _ann = _siblings(rel)
+    # Both selectors real, no stub: the grading gate reads the AR set now, and
+    # stubbing only the A one would leave the gate looking at an empty list.
+    monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 1
 
 
@@ -629,6 +892,8 @@ def test_main_drift_warning_prints_even_when_grading_gate_fails(tmp_path, monkey
     visible even on the exit-1 path (a tree with no committed ann fails the
     gate). Guards against a later reorder silently swallowing the warning."""
     repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
     rel = _write_e2e_run_with_findings(
         repo, "smith", TS,
         [{"finding_id": "f1", "matched": "partial", "components": [_link("supported")]}],
@@ -637,8 +902,8 @@ def test_main_drift_warning_prints_even_when_grading_gate_fails(tmp_path, monkey
     tree, _ann = _siblings(rel)
     (repo / tree).write_text("{}", encoding="utf-8")
     _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 1
     out = capsys.readouterr().out
     assert "::warning::" in out and "f1" in out
