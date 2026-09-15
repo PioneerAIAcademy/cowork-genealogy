@@ -64,6 +64,27 @@ def _print_compliance(result: E2eResult) -> None:
         print(f"    - {text}")
 
 
+def _print_blocked_context_calls(result: E2eResult) -> None:
+    """Count the per-context denials, as a fact — not as a gate.
+
+    Printed from the call site rather than from inside `_print_compliance`,
+    for two reasons. That function returns early on the pass branch, so a line
+    added after its compliance line would be unreachable on exactly the runs
+    where the two axes disagree; and its own docstring says it is "the one axis
+    it is safe to print here", which a second fact does not join.
+
+    Silent at zero. 146 of the 172 committed runs predate the field entirely, so
+    a printed `0` would read as a measured zero rather than a structural one.
+
+    The per-deny lines already stream during the run (`orchestrator.py`); this
+    is the end-of-run total, so someone who scrolled past them still sees it.
+    """
+    n = len(result.blocked_context_calls)
+    if not n:
+        return
+    print(f"  [blocked context call] {n}    (denied, not a gate — compliance is unaffected)")
+
+
 # The verdicts that mean the judge actually reached a conclusion.
 #
 # A deliberate local literal, NOT an import from result.py. Gradedness and
@@ -133,8 +154,11 @@ async def _run_one(fixture_dir: Path, **kwargs) -> E2eResult:
     # start. `stop_reason` and `compliance` are harness facts and are safe;
     # everything else is what /interpret-e2e-result exists to walk them
     # through, from the final tree rather than from the judge (issue #972).
+    # `blocked_context_calls` joins them as a harness fact (issue #1281): a
+    # denied tool call is not a genealogical conclusion, and it moves no gate.
     print(f"  stop_reason: {result.stop_reason}")
     _print_compliance(result)
+    _print_blocked_context_calls(result)
     print(f"  result: {paths['result']}")
     # Two independent axes, reported separately (#1245). Fusing them is what
     # made a judge crash unreadable: "the judge didn't run" was printed as a

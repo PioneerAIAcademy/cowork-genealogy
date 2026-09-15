@@ -135,19 +135,27 @@ from records). Each entry is a denied attempt.
   autonomous run. Repeated attempts may indicate the skill is leaning on
   tree-reading instead of records, which is worth a look at the `/research` primer.
 
-Then check `blocked_context_calls` — the twin denied by a different guard. Each
-entry is a main-thread call to a subagent-only tool the harness blocked
-(`blocked_by: "context"`): the router doing a subagent's own work because that
-subagent failed to spawn. Two tools land here — an `extraction_append` (the
-record-extractor's write, #942) or an `image_read` (the image reader's read,
-which would overflow the transport). Read the entry's `tool` to see which. Same
-shape as above (`{tool, args, blocked_by}`), and the denied attempt also shows
-up in `narration[]` with `kind: "blocked"`.
+Then check `blocked_context_calls` — the twin denied by a different guard. Every
+entry carries `blocked_by: "context"`, but **two different guards land here and
+`blocked_by` cannot tell them apart. Read the entry's `tool`:**
+
+- **`research_append`** — an owned-section write: the main thread wrote a section
+  a specific subagent owns. This is the arm that actually fires; every entry in
+  the committed corpus is one. It is **not** evidence of a spawn failure, and the
+  shipped plugin hook holds the same rule, so a user would hit it too.
+- **`extraction_append`** or **`image_read`** — a subagent-only tool called on the
+  main thread, which *does* suggest the owning subagent failed to spawn
+  (record-extractor for the write, the image reader for the read). Neither has
+  been observed in the committed corpus.
+
+Same shape as above (`{tool, args, blocked_by}`), and the denied attempt also
+shows up in `narration[]` with `kind: "blocked"`.
 
 - **Empty** — normal; say nothing.
-- **Non-empty** — the router tried to substitute for a failed spawn and was
-  blocked, so the subagent's work was not done on the main thread. Flag it: it
-  points at a spawn failure for the tool's owning subagent (`record-extractor`
+- **Non-empty** — a call was denied and the work was not done on the main thread.
+  Flag it, but say which arm: an owned-section `research_append` is a routing
+  slip, not a spawn failure. Only the subagent-only tools point at a spawn
+  failure for their owning subagent (`record-extractor`
   for `extraction_append`), not a records gap. No agent owns `image_read` since
   `image-reader-opus` was retired, so a blocked `image_read` is the router
   reaching for a scan instead of delegating to `image-reader`.
