@@ -54,8 +54,8 @@ def ws_server(tmp_path, request):
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
         encoding="utf-8",
     )
-    t0 = time.time()
-    deadline = t0 + 60  # generous budget, not a retry (PR #1759 precedent)
+    budget, t0 = 60, time.time()  # generous budget, not a retry (PR #1759 precedent)
+    deadline = t0 + budget
     while time.time() < deadline:
         line = proc.stdout.readline()
         if "listening" in line:
@@ -63,8 +63,9 @@ def ws_server(tmp_path, request):
         if proc.poll() is not None:
             raise RuntimeError("server died:\n" + proc.stdout.read())
     else:
+        proc.kill()
         raise RuntimeError(
-            f"server did not print 'listening' within the 60s startup budget "
+            f"server did not print 'listening' within the {budget}s startup budget "
             f"(elapsed {time.time() - t0:.1f}s)"
         )
     yield port, proj
@@ -94,8 +95,10 @@ async def _drive(port, proj):
         texts, saw_done, end = [], False, t0 + budget
         while time.time() < end and not saw_done:
             try:
-                m = json.loads(await asyncio.wait_for(ws.recv(), budget))
-            except asyncio.TimeoutError:
+                m = json.loads(await asyncio.wait_for(
+                    ws.recv(), max(0.0, end - time.time())
+                ))
+            except (asyncio.TimeoutError, websockets.ConnectionClosed):
                 break
             ev = m.get("event", {}) if m.get("type") == "agent_event" else {}
             if ev.get("kind") == "text":
@@ -114,7 +117,9 @@ async def _drive(port, proj):
         end = t0 + budget
         while time.time() < end and not got_delta:
             try:
-                m = json.loads(await asyncio.wait_for(ws.recv(), budget))
+                m = json.loads(await asyncio.wait_for(
+                    ws.recv(), max(0.0, end - time.time())
+                ))
                 if m.get("type") == "research_updated":
                     got_delta = True
             except (asyncio.TimeoutError, websockets.ConnectionClosed):
@@ -174,8 +179,8 @@ def test_local_connect_waits_until_ws_server_accepting():
             conn.close()
         except ConnectionRefusedError:
             raise AssertionError(
-                "TCP connect refused — the WS server is not accepting connections "
-                "despite _wait_until_accepting returning success"
+                "TCP connect refused — the readiness gate in expose_port "
+                "timed out or its result was discarded"
             )
         except socket.timeout:
             raise AssertionError(
@@ -326,7 +331,9 @@ def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
             pings, end = 0, t0 + budget
             while time.time() < end and pings < 2:
                 try:
-                    m = json.loads(await asyncio.wait_for(ws.recv(), budget))
+                    m = json.loads(await asyncio.wait_for(
+                        ws.recv(), max(0.0, end - time.time())
+                    ))
                 except asyncio.TimeoutError:
                     break
                 if m.get("type") == "ping":
@@ -343,11 +350,13 @@ def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
             f"ws://127.0.0.1:{port}/?token={_token()}", open_timeout=10
         )
         try:
-            budget, t0 = 10, time.time()  # generous budget, not a retry (PR #1759 precedent)
+            budget, t0 = 2, time.time()  # replay is pre-buffered; 2s is generous
             replayed, end = [], t0 + budget
             while time.time() < end:
                 try:
-                    replayed.append(json.loads(await asyncio.wait_for(ws2.recv(), budget)))
+                    replayed.append(json.loads(await asyncio.wait_for(
+                        ws2.recv(), max(0.0, end - time.time())
+                    )))
                 except (asyncio.TimeoutError, websockets.ConnectionClosed):
                     break
             # Live pings arrive during the drain too; only the replay is at issue,
