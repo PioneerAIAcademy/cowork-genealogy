@@ -260,13 +260,13 @@ describe("imageReadTool — input validation", () => {
   it("rejects when both imageId and ark are provided", async () => {
     await expect(
       imageReadTool({ imageId: "004884748_02613", ark: "ark:/61903/1:2:HSJG-CLNF" }, LOCAL)
-    ).rejects.toThrow(/either imageId or ark, not both/i);
+    ).rejects.toThrow(/exactly one of imageId, ark, or memoryArtifactUrl/i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("rejects when neither imageId nor ark is provided", async () => {
     await expect(imageReadTool({}, LOCAL)).rejects.toThrow(
-      /requires either imageId or ark/i
+      /requires one of imageId, ark, or memoryArtifactUrl/i
     );
     expect(mockFetch).not.toHaveBeenCalled();
   });

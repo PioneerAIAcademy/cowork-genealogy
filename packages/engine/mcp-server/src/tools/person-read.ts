@@ -112,11 +112,26 @@ async function mergeMemories(
   principal: Principal,
 ): Promise<TreeSource[]> {
   try {
-    const [all, portraitId] = await Promise.all([
+    // allSettled, NOT all. Both of these go through fetchWithRetry, which
+    // retries a transient failure on a JITTERED TIMER under a 10s budget.
+    // Promise.all rejects the instant the memories leg fails and abandons the
+    // portrait leg mid-retry -- still running, no longer awaited, firing its
+    // next attempt after person_read has already returned. Measured: that
+    // escaped fetch made an unrelated test in person-read.test.ts fail 4 runs
+    // in 10 by consuming the response its own retry was queued to get.
+    // allSettled also stops a portrait failure from discarding every memory:
+    // the portrait id only suppresses the profile photo, so losing it costs
+    // one unwanted row, where the old shape lost the whole merge.
+    const [memoriesResult, portraitResult] = await Promise.allSettled([
       fetchMemories(pid, principal),
       fetchPortraitId(pid, principal),
     ]);
-    const kept = rankForTranscription(filterSourceStyle(all, portraitId));
+    if (memoriesResult.status === "rejected") throw memoriesResult.reason;
+    const portraitId =
+      portraitResult.status === "fulfilled" ? portraitResult.value : null;
+    const kept = rankForTranscription(
+      filterSourceStyle(memoriesResult.value, portraitId),
+    );
     // No dedupe against tree sources: the two id spaces are DISJOINT, measured
     // (tree `SD_PERSON_KWCJ-RN4` vs memory `3475`, 0 overlap on both persons
     // sampled). An id-keyed dedupe could never fire, so it is not written.

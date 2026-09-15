@@ -169,3 +169,59 @@ describe("person_read + memories", () => {
     expect(out.sources.find((s) => s.id === "f2")!.title).toBe("FamilySearch memory f2");
   });
 });
+
+/**
+ * Acceptance 10 — the memories phase must not outlive person_read.
+ *
+ * fetchMemories and fetchPortraitId both go through fetchWithRetry, which
+ * re-attempts a transient failure on a jittered timer. Under Promise.all a
+ * memories rejection abandons the portrait leg mid-retry, and its next attempt
+ * lands after the tool has returned -- in the suite that showed up as an
+ * unrelated person-read.test.ts case failing 4 runs in 10. Dispatch is by URL,
+ * not call order: the two legs are issued concurrently and race.
+ */
+describe("person_read memories — nothing outlives the call", () => {
+  it("waits for the portrait leg even when the memories leg fails", async () => {
+    let portraitSettled = false;
+    fetchMock.mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.includes("/memories")) {
+        // A 200 whose body read rejects. fetchWithRetry only re-attempts a
+        // thrown fetch or a retryable STATUS, so this propagates immediately
+        // instead of spending ~700ms in backoff -- which is what lets the
+        // portrait delay below actually discriminate the two shapes.
+        return {
+          ok: true,
+          status: 200,
+          headers: new Headers(),
+          text: () => Promise.reject(new TypeError("memories body unreadable")),
+        };
+      }
+      if (u.includes("/portrait")) {
+        return await new Promise((resolve) =>
+          setTimeout(() => {
+            portraitSettled = true;
+            resolve(new Response(null, { status: 404 }));
+          }, 150),
+        );
+      }
+      return new Response(JSON.stringify(person()), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    const result = await personReadTool(
+      { personId: PID, sourceDescriptions: true },
+      LOCAL,
+    );
+
+    // The assertion that pins allSettled. Under Promise.all the tool returns
+    // the instant the memories leg rejects -- roughly 150ms before the portrait
+    // leg settles -- so this reads false there and true here.
+    expect(portraitSettled).toBe(true);
+    // Fail-soft still holds: the read succeeds and carries no memory rows.
+    expect(result.persons[0].id).toBe(PID);
+    expect((result.sources ?? []).some((s) => s.id === "m1")).toBe(false);
+  });
+});

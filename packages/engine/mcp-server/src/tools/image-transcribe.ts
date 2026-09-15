@@ -203,7 +203,7 @@ export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
 ): Promise<ImageTranscribeResult> {
-  const { url, label, fallbackUrl } = resolveFsImageInput(
+  const { url, label, fallbackUrl, memoryShape } = resolveFsImageInput(
     input,
     "image_transcribe",
   );
@@ -218,6 +218,7 @@ export async function imageTranscribeTool(
     url,
     fallbackUrl,
     principal,
+    memoryShape,
   );
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
   // Expand recognized given names in lookingFor with historical diminutives
@@ -422,9 +423,11 @@ export const imageTranscribeToolSchema = {
     "OCR a FamilySearch page scan and return the transcription as TEXT. Use " +
     "this for large scans that image_read refuses (over its inline size cap): " +
     "the image is OCR'd host-side and never enters the conversation, so there " +
-    "is no size limit. Provide exactly one of imageId or ark. Requires " +
-    "FamilySearch auth (call login) and an OpenRouter API key (set in " +
-    "~/.familysearch-mcp/config.json if it reports no key).",
+    "is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
+    "(memoryArtifactUrl), including a PDF. Provide exactly one of imageId, " +
+    "ark, or memoryArtifactUrl. Requires FamilySearch auth (call login) " +
+    "except for memoryArtifactUrl, which is public, and an OpenRouter API " +
+    "key (set in ~/.familysearch-mcp/config.json if it reports no key).",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -446,6 +449,15 @@ export const imageTranscribeToolSchema = {
           "URL carrying i=/cc=/groupId= query parameters (e.g. from the browser or " +
           "a citation), pass the FULL URL including them, not just the bare ARK — " +
           "those parameters are preserved and select the correct image.",
+      },
+      memoryArtifactUrl: {
+        type: "string",
+        description:
+          "A FamilySearch memory artifact URL, as carried by a person_read " +
+          "source that came from a person's memories (a scanned will, " +
+          "certificate, obituary clipping or compiled history uploaded by a " +
+          "relative). PDFs are supported here as well as images. Needs no " +
+          "FamilySearch login.",
       },
       lookingFor: {
         type: "string",

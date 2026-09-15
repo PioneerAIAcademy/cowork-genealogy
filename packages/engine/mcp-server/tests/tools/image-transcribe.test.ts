@@ -189,6 +189,9 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=112&cc=1858355&groupId=1858355",
       "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X",
       LOCAL,
+      // memoryShape — false for an ark, so the artifact content-type widening
+      // and the no-token path stay off for every pre-existing caller.
+      false,
     ]);
   });
 });
@@ -503,7 +506,7 @@ describe("imageTranscribeTool — OpenRouter failures", () => {
 describe("imageTranscribeTool — input validation", () => {
   it("rejects when neither imageId nor ark is given (before any fetch)", async () => {
     await expect(imageTranscribeTool({}, LOCAL)).rejects.toThrow(
-      /image_transcribe requires either imageId or ark/
+      /image_transcribe requires one of imageId, ark, or memoryArtifactUrl/
     );
     expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
@@ -515,7 +518,7 @@ describe("imageTranscribeTool — input validation", () => {
         imageId: "004884748_02613",
         ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M",
       }, LOCAL)
-    ).rejects.toThrow(/either imageId or ark, not both/);
+    ).rejects.toThrow(/exactly one of imageId, ark, or memoryArtifactUrl/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });

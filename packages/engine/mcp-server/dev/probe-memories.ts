@@ -29,8 +29,13 @@
  *       {displayState, filename, height, qualifiers, screeningState, size, width}.
  *       So the filter can only ever be a proxy, exactly as the issue warns.
  *   4.  Story text in the payload is a 200-CHARACTER PREVIEW, cut mid-word. The
- *       full text is a separate artifact fetch, and it is NOT reliably there:
- *       of the two text/plain stories, one served 2592 chars and one 404'd.
+ *       full text is a separate artifact fetch, and it is mostly there:
+ *       5 of the 6 text/plain stories served 311..12239 chars, 1 404'd.
+ *       CORRECTED 2026-09-15. The first pass read "one of two served, one
+ *       404'd" off a partial corpus -- an ad-hoc pager that saw 92 of the 221
+ *       memories. Re-measured through the shipping fetchMemories, the rate is
+ *       5/6, not 1/2, so story text is worth fetching and must be fail-soft
+ *       PER STORY rather than treated as unavailable.
  *   5.  Record-type language by kind: Document 5/45 (11%), Photo 9/167 (5%),
  *       Story 1/9 (11%). Both directions of the proxy fail — see the table.
  *   6.  `?type=photo|document|story` DOES filter server-side, across the whole
@@ -46,6 +51,21 @@
  *   10. Largest person carried 116 memories (5 pages). Largest artifact 14.4MB.
  *   11. MIME spread: image/jpeg 179, application/pdf 29, text/plain 6,
  *       image/png 4, audio/mpeg 3.
+ *   13. (2026-09-15, for the OCR phase) Every one of the 221 `about` URLs is on
+ *       sg30p0.familysearch.org with a path ending /dist.<ext>, where the ext
+ *       tracks the MIME exactly (jpg/png/pdf/mp3/txt). 221 of 221 -- so the
+ *       host is validated rather than trusted before any fetch, since the value
+ *       arrives inside an upstream response body.
+ *   14. (2026-09-15) Re-confirms 9 with all three header sets on one artifact:
+ *       no headers at all -> 200, UA only -> 200, bearer+UA -> 200.
+ *   15. (2026-09-15) THE OCR MODEL READS A PDF handed to it as an ordinary
+ *       `image_url` data URL -- 1222 chars off the smallest memory PDF, no
+ *       file-parser plugin and no second request shape. This reverses the
+ *       assumption the phase was about to be built on. It matters because PDFs
+ *       are 29 of 221 and dominate the kept set (wills, certificates, compiled
+ *       histories); skipping them would have dropped the highest-value records
+ *       silently. The only thing that ever blocked them was this repo's own
+ *       image/*-only content-type guard in fs-image-fetch.ts.
  *
  * Consequences the issue's plan did not anticipate are listed at the end of the
  * report under "CONFLICTS WITH THE CARD" and are what the lead gate needs.
