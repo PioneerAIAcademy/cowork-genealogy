@@ -508,6 +508,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // Every tree writer is denied, not just `tree_edit`. This agent writes one
   // field on one question and must never reach the tree; a deny naming one of
   // five writers fails open on the other four, silently, and no CI job sees it.
+  //
+  // `research_append` JOINED that set (#2472): its assertion-`update` op rewrites
+  // the tree fact the assertion minted, so the broad writer this agent holds can
+  // now reach `tree.gedcomx.json`. Nothing here changes, because nothing here
+  // ever restricted it — the hook's caller check plus AGENT_WRITABLE_SECTIONS is
+  // what keeps this agent to `questions`, and an op on `assertions` is denied
+  // there before the rewrite can run. What IS worth knowing is that the hook
+  // binds in Cowork and the hosted path and in NEITHER harness, so a harness run
+  // is not evidence about this. The count in the sentence above is now seven.
   "research-exhaustiveness.md": {
     tools: ["Read", "project_context", "research_append", "research_query", "wiki_read"],
     denies: [],

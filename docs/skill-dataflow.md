@@ -210,7 +210,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `proof_summaries` | `proof-conclusion` | — | `research_append` | unit + hook — the hook denies the op unless the caller is the proof-conclusion **agent** |
 | | `evaluations` | `gps-mentor` (agent) | — | `research_append` | **nothing** in the shipped hook: `evaluations` is in no owner map. But since 2026-09-02 the unit plane records the hook's `owner_denied` verdict (issue #2022), and `evaluations` is outside `proof-conclusion`'s lane, so a `proof-conclusion` write there IS now denied and gated on that plane — the "can only see a calling *skill*" limit no longer holds |
 | | `localities` | `locality-guide` | — | `research_append` | unit |
-| `tree.gedcomx.json` | `persons` | none by design — four co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget` | unit |
+| `tree.gedcomx.json` | `persons` | none by design — four co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget`, plus `research_append`/`extraction_append` for the assertion-backlink fact rewrite only (authorized by tool identity, not by adding a caller — `tree-materialization-spec.md` §4.4) | unit |
 | | `relationships` | none by design — same four | same four | same, less `materialize_facts` | unit + tool |
 | | `sources` | `record-extraction` | `init-project`, `tree-edit`, `proof-conclusion` | `project_create`, `research_append`, `extraction_append`, `tree_edit`, `tree_correct` | unit |
 
