@@ -1616,42 +1616,6 @@ have to be excluded from every count anyway. A reader looking for it should
 filter `guardrail_shadow_violations` on that `kind`, not scan the `blocked_*`
 lists.
 
-#### 8.1.4 `usage.message_usage` and `usage.thread_windows`
-
-Written on **every** run — both the `result_message` and `streamed_fallback`
-paths — from the same per-message accumulator the fallback block sums.
-
-`message_usage` is one row per deduped assistant message,
-`[thread, input, cache_read, cache_creation]`. The three token fields are the
-**context window** that message was sent against: what the model had to read to
-produce it. `thread_windows` summarises them per thread — `main` carries
-`peak_window_tokens` (the **max** of that thread's windows, not the sum) and
-`message_count`; `sub` carries `message_count` only.
-
-Three things a reader has to know:
-
-- **There is no output column, deliberately.** The stream reports per-message
-  `output_tokens` as a message-*start* snapshot — 1–33 tokens on every message
-  across the four runs this shape was recovered from, against a real
-  main-thread emit of ~27,500 tokens a run. A per-message output figure
-  measures nothing on either thread, so none is persisted.
-- **`sub` carries no peak.** It would be computed over only those subagent
-  messages that surface on the main SDK stream — measured at 150–250× below the
-  real subagent totals captured in `subagents[].turns[]`. `sub.message_count`
-  counts **subagent messages that reached the main stream**, not subagent turns:
-  it exists to show the thread tag populated at all, not to size subagent work.
-- **The thread tag is exact.** It reads `AssistantMessage.parent_tool_use_id`:
-  `None` on the main thread, the spawning Task's id on a subagent. Confirmed on
-  a real run (`ogletree-children`, 2026-09-15): **95 main / 98 subagent
-  messages**. A trivial one-subagent probe against the same CLI showed no tagged
-  `AssistantMessage` at all and is a **false negative** — a subagent that
-  answers in one turn does not produce enough stream traffic to surface one.
-  Do not re-probe this with a toy task. This is *not* the
-  `system:task_progress` adjacency heuristic in `e2e/cache_window.py` — that one
-  exists because `cache_window` reads committed logs, which carry no message
-  object to ask. **A zero `sub.message_count` means no subagent message reached
-  the accumulator, never that no subagent ran.**
-
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
 Every abort path (wall-clock timeout, inactivity silence, no-progress stall) cuts
@@ -1743,6 +1707,42 @@ record-visibility changes show up directly. (Note the one-time capture-format
 change before diffing across it — see §15, "Evidence to read, in order", step 4.)
 
 ---
+
+#### 8.1.4 `usage.message_usage` and `usage.thread_windows`
+
+Written on **every** run — both the `result_message` and `streamed_fallback`
+paths — from the same per-message accumulator the fallback block sums.
+
+`message_usage` is one row per deduped assistant message,
+`[thread, input, cache_read, cache_creation]`. The three token fields are the
+**context window** that message was sent against: what the model had to read to
+produce it. `thread_windows` summarises them per thread — `main` carries
+`peak_window_tokens` (the **max** of that thread's windows, not the sum) and
+`message_count`; `sub` carries `message_count` only.
+
+Three things a reader has to know:
+
+- **There is no output column, deliberately.** The stream reports per-message
+  `output_tokens` as a message-*start* snapshot — 1–33 tokens on every message
+  across the four runs this shape was recovered from, against a real
+  main-thread emit of ~27,500 tokens a run. A per-message output figure
+  measures nothing on either thread, so none is persisted.
+- **`sub` carries no peak.** It would be computed over only those subagent
+  messages that surface on the main SDK stream — measured at 150–250× below the
+  real subagent totals captured in `subagents[].turns[]`. `sub.message_count`
+  counts **subagent messages that reached the main stream**, not subagent turns:
+  it exists to show the thread tag populated at all, not to size subagent work.
+- **The thread tag is exact.** It reads `AssistantMessage.parent_tool_use_id`:
+  `None` on the main thread, the spawning Task's id on a subagent. Confirmed on
+  a real run (`ogletree-children`, 2026-09-15): **95 main / 98 subagent
+  messages**. A trivial one-subagent probe against the same CLI showed no tagged
+  `AssistantMessage` at all and is a **false negative** — a subagent that
+  answers in one turn does not produce enough stream traffic to surface one.
+  Do not re-probe this with a toy task. This is *not* the
+  `system:task_progress` adjacency heuristic in `e2e/cache_window.py` — that one
+  exists because `cache_window` reads committed logs, which carry no message
+  object to ask. **A zero `sub.message_count` means no subagent message reached
+  the accumulator, never that no subagent ran.**
 
 ## 9. Roll-up Report
 
