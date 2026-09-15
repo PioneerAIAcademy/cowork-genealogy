@@ -37,6 +37,14 @@ from touches import (  # noqa: E402
 # number is a forcing function, not a measurement, and SKILL.md owns what it means.
 MUST_CLEAR = 4
 
+# The --limit every SKILL.md that calls this script passes to `gh project
+# item-list`. A pull is truncated silently iff it returns exactly this many rows,
+# so the guard below must test this number and not a smaller one: warning early
+# means warning on every run through the whole range where the pull is fine, with
+# the same message used when truncation is real -- and telling the operator to
+# "re-pull with a higher --limit" when 2000 is already what they passed.
+BOARD_LIMIT = 2000
+
 # A file named by more than this many pool issues is a hub -- docs/architecture.md
 # is the repo's map and everyone edits it, in different sections. Still printed,
 # because suppressing it hides real pairs; marked, because pairing on it is noise.
@@ -70,9 +78,10 @@ def main(board_path, open_path, prs_path):
     prs = json.load(open(prs_path, encoding="utf-8"))
     status = {(it.get("content") or {}).get("number"): it.get("status") for it in board}
 
-    if len(board) >= 1500:
-        print(f"!! board.json holds {len(board)} items -- re-pull with a higher --limit; "
-              "gh truncates silently and every count below is then wrong.\n")
+    if len(board) >= BOARD_LIMIT:
+        print(f"!! board.json holds {len(board)} items, the --limit the callers pass -- "
+              "re-pull with a higher one; gh truncates silently and every count below "
+              "is then wrong.\n")
 
     entries, pool, holders = {}, [], {}
     for n, issue in issues.items():
@@ -169,6 +178,12 @@ def main(board_path, open_path, prs_path):
 
     blind = [n for n in pool if not entries[n]]
     on_slot = {n for m in queues.values() for n in m}
+    # Everything the operator has actually been shown. A pool issue reaching none
+    # of the three sections is invisible, and SKILL.md tells them this block is the
+    # record of what the script could not see -- so it has to name them, not just
+    # the ones missing a Touches: line.
+    shown = on_slot | set(blind) | {n for ns in conv.values() for n in ns}
+    unshown = sorted(set(pool) - shown)
     print(f"\n=== coverage ===")
     print(f"  pool                                {len(pool)}")
     print(f"  on at least one eval slot           {len(on_slot)}")
@@ -178,6 +193,9 @@ def main(board_path, open_path, prs_path):
     if blind:
         for n in sorted(blind):
             print(describe(n))
+    print(f"  in no section above -- READ BY HAND  {len(unshown)}")
+    for n in unshown:
+        print(describe(n))
 
 
 if __name__ == "__main__":

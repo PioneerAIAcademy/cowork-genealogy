@@ -40,11 +40,13 @@ python3 .claude/skills/merge-issues/slots.py /tmp/board.json /tmp/open.json /tmp
 
 `--limit` truncates silently. The board carries well over 1200 items; a returned
 count equal to the limit means rows were lost and every depth below is wrong.
-The script says so itself at 1500, but check the issue and PR pulls by hand.
+The script says so itself at 2000, but check the issue and PR pulls by hand.
 
-**Read the coverage block at the bottom before anything else.** Issues with no
-`**Touches:**` line do not appear in any queue — they are listed there instead,
-and they are the half of the pool the script is blind to. Read them by hand and
+**Read the coverage block at the bottom before anything else.** It names two
+buckets, and between them they are the part of the pool the script cannot judge:
+issues with **no `**Touches:**` line**, which reach no queue at all, and issues
+**in no section above** — a body naming only a broad container directory, or only
+paths no second issue touches. Both are listed by number. Read them by hand and
 say in the report how many you got through.
 
 The pool is **non-icebox Backlog plus unassigned Ready**. An assigned card, an
@@ -245,8 +247,8 @@ the runs bought back, and the gap where one remains.
    because they buy a reviewer and a rebase, never a run.
 5. **Hand to `/audit-board`** — sets that want a `cluster:*` label or a `next run:`
    issue rather than a merge.
-6. **Not checked** — the no-`Touches:`-line issues you did not get through, and any
-   slot whose agent failed.
+6. **Not checked** — both coverage buckets you did not get through (no
+   `Touches:` line, and in no section above), and any slot whose agent failed.
 
 Then stop and wait for approval. Apply only what he approves. Do not begin any of
 the work the issues describe.
