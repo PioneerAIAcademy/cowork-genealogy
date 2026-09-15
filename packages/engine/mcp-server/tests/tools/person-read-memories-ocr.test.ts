@@ -199,7 +199,7 @@ describe("person_read — transcription phase", () => {
     route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
     const out = await read({ projectPath: "/tmp/proj" });
     expect(transcribe.mock.calls[0][0]).toMatchObject({ projectPath: "/tmp/proj" });
-    expect(out.sources.find((s) => s.id === "d1")?.imageRef).toBe("images/d1.jpg");
+    expect(out.sources.find((s) => s.id === "d1")?.image_ref).toBe("images/d1.jpg");
   });
 
   it("omits projectPath entirely when the caller gave none", async () => {

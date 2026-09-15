@@ -447,9 +447,42 @@ def test_v6_passes_when_the_note_is_dropped_and_the_source_kept():
 def test_v6_fires_when_the_note_is_copied_through():
     after = _tree(sources=[{"id": "S2", "title": _NOTED_SOURCE["title"],
                             "notes": _NOTED_SOURCE["notes"]}])
-    assert "has notes" in _fails(
+    assert "carries ['notes']" in _fails(
         check_notes, after, [_person_read_call(sources=[_NOTED_SOURCE])]
     )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("text", "Patrick came over from County Mayo in 1867..."),
+        ("image_ref", "images/228755097.jpg"),
+    ],
+)
+def test_v6_fires_on_a_memory_field_copied_through(field, value):
+    """`notes` was the first field person_read emitted that a tree source may not
+    carry; a memory's `text` and `image_ref` are the second and third. The
+    validator checks the ALLOW-LIST, so it catches these without being taught
+    their names -- this is what proves that, rather than assuming it."""
+    source = {"id": "228755097", "title": "A family story", field: value}
+    after = _tree(sources=[{"id": "S3", "title": source["title"], field: value}])
+    assert f"carries ['{field}']" in _fails(
+        check_notes, after, [_person_read_call(sources=[source])]
+    )
+
+
+def test_v6_passes_when_the_memory_is_written_with_only_allowed_fields():
+    """The other direction: stripping the extra field and keeping the source is
+    exactly the right behaviour and must not be flagged."""
+    source = {
+        "id": "228755097",
+        "title": "A family story",
+        "url": "https://www.familysearch.org/memories/228755097",
+        "text": "Patrick came over from County Mayo in 1867...",
+    }
+    after = _tree(sources=[{"id": "S3", "title": source["title"],
+                            "url": source["url"]}])
+    check_notes(after, [_person_read_call(sources=[source])])
 
 
 def test_v6_fires_when_the_whole_source_is_dropped_to_dodge_the_rejection():

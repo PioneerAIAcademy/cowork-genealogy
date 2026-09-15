@@ -729,3 +729,59 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
     expect(result.nameExpansion).toBeUndefined();
   });
 });
+
+/**
+ * Memory artifacts — issue #1689 acceptance 12.
+ *
+ * The retry route for a memory the person_read budget skipped, the filter
+ * missed, or the OCR failed on.
+ */
+describe("imageTranscribeTool — memory artifacts", () => {
+  const ARTIFACT =
+    "https://sg30p0.familysearch.org/ark:/61903/3:1:ABCD/v2/12345/dist.jpg?ctx=x";
+
+  it("accepts a memory artifact URL and returns its text", async () => {
+    mockOpenRouterOk("Last Will and Testament of Almon G. Clegg");
+    const result = await imageTranscribeTool({ memoryArtifactUrl: ARTIFACT }, LOCAL);
+    expect(result.transcription).toBe("Last Will and Testament of Almon G. Clegg");
+    // passed through untouched, and flagged as the memory shape so the fetcher
+    // skips the token and accepts a PDF
+    expect(fetchFsImageBytesMock.mock.calls[0]).toEqual([
+      ARTIFACT,
+      undefined,
+      LOCAL,
+      true,
+    ]);
+  });
+
+  it("transcribes a memory PDF", async () => {
+    fetchFsImageBytesMock.mockResolvedValue({
+      bytes: new Uint8Array([1, 2, 3]),
+      contentType: "application/pdf",
+      sizeBytes: 3,
+      resolvedUrl: ARTIFACT,
+    });
+    mockOpenRouterOk("Things I learned From My Father");
+    const result = await imageTranscribeTool(
+      { memoryArtifactUrl: ARTIFACT.replace("dist.jpg", "dist.pdf") },
+      LOCAL,
+    );
+    expect(result.transcription).toBe("Things I learned From My Father");
+    // the data URL must carry the PDF media type, not a hardcoded image one
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.messages[0].content[1].image_url.url).toMatch(
+      /^data:application\/pdf;base64,/,
+    );
+  });
+
+  it("refuses an artifact URL on another host before any fetch", async () => {
+    await expect(
+      imageTranscribeTool(
+        { memoryArtifactUrl: "https://evil.example.com/v2/1/dist.jpg" },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/Unrecognized memoryArtifactUrl/);
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+});
+

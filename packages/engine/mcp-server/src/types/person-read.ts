@@ -22,7 +22,7 @@ export interface PersonReadToolInput {
   sourceDescriptions?: boolean;
   /** Absolute project-folder path. When given, a memory scan transcribed during
    *  this read is retained under images/ and its ref returned as the source's
-   *  `imageRef`. A path is not a mode flag, so decision 1's "no third flag"
+   *  `image_ref`. A path is not a mode flag, so decision 1's "no third flag"
    *  does not reach it. */
   projectPath?: string;
 }
@@ -101,7 +101,7 @@ export interface TreeSource {
    * `project_create` validates without sanitizing, so one stray key aborts the
    * whole project write.
    */
-  imageRef?: string;
+  image_ref?: string;
 }
 
 export interface PersonReadResult {

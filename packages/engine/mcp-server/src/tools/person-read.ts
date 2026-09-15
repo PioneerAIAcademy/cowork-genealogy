@@ -76,7 +76,7 @@ export const personReadToolSchema = {
         description:
           "Optional absolute path to the project folder. When set, any memory " +
           "scan transcribed during this read is saved under images/ and its " +
-          "project-relative path returned on that source as imageRef, so a " +
+          "project-relative path returned on that source as image_ref, so a " +
           "retained source can cite it. Without it the scan is transcribed but " +
           "not kept.",
       },
@@ -195,7 +195,7 @@ async function transcribeMemories(
    */
   const finished = new Map<
     string,
-    { text?: string; imageRef?: string; notes?: string[] }
+    { text?: string; image_ref?: string; notes?: string[] }
   >();
 
   const work = mapWithConcurrency(kept, OCR_CONCURRENCY, async (m) => {
@@ -227,7 +227,7 @@ async function transcribeMemories(
       );
       finished.set(m.id, {
         ...(out.transcription.trim() ? { text: out.transcription } : {}),
-        ...(out.imageRef ? { imageRef: out.imageRef } : {}),
+        ...(out.imageRef ? { image_ref: out.imageRef } : {}),
         ...(out.truncated && out.truncationNotice
           ? { notes: [out.truncationNotice] }
           : {}),
@@ -277,7 +277,7 @@ async function transcribeMemories(
       continue;
     }
     if (result.text) source.text = result.text;
-    if (result.imageRef) source.imageRef = result.imageRef;
+    if (result.image_ref) source.image_ref = result.image_ref;
     if (result.notes) source.notes = [...(source.notes ?? []), ...result.notes];
   }
 }

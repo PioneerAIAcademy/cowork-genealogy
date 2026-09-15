@@ -29,7 +29,8 @@ etc.) and is out of scope for v1.
 |-------|------|----------|-------------|
 | `personId` | string | **Yes** | FamilySearch person ID (e.g., `"KNDX-MKG"`). |
 | `relatives` | boolean | No | Include parents, spouses, and children. Defaults to `false`. |
-| `sourceDescriptions` | boolean | No | Include attached source citations. Defaults to `false`. |
+| `sourceDescriptions` | boolean | No | Include attached source citations — and, for a non-living subject, that person's source-style memories. Defaults to `false`. |
+| `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`. A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept. |
 
 Examples:
 
@@ -47,6 +48,10 @@ Examples:
 
 ```json
 { "personId": "KNDX-MKG", "relatives": true, "sourceDescriptions": true }
+```
+
+```json
+{ "personId": "KNDX-MKG", "sourceDescriptions": true, "projectPath": "/home/me/projects/clegg" }
 ```
 
 ---
@@ -136,7 +141,52 @@ Present when `sourceDescriptions: true`. Each source object:
 | `title` | string | yes | Source title |
 | `citation` | string | no | Formatted citation string |
 | `url` | string | no | URL to the source (ark URL or external URL) |
-| `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Omit when empty. |
+| `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Also carries the tool's own note when a memory was not transcribed (see below). Omit when empty. |
+| `text` | string | no | A memory's text: a story's own words, or OCR of a scan. Absent for an ordinary tree source, and absent for a memory that was not transcribed. |
+| `image_ref` | string | no | Project-relative path (`images/<key>.jpg`) of a retained memory scan. Present only when `projectPath` was supplied and the save succeeded. |
+
+#### Memories are merged into `sources[]`
+
+For a **non-living subject**, `sourceDescriptions: true` also returns that
+person's **source-style memories** as ordinary entries in `sources[]` — nothing
+else changes. The top level stays `{persons, relationships, sources}`: there is
+no new key and **no memory-vs-source discriminator**, so no downstream reader
+has to branch on where a source came from (lead, 2026-08-21). Memory ids and
+tree source-description ids are disjoint id spaces (`3475` vs
+`SD_PERSON_KWCJ-RN4`, measured 0 overlap), so the two never collide.
+
+**The filter is a proxy on media kind, not an exact test.** FamilySearch
+classifies a memory as photo / document / story / audio, **the uploader chooses
+it**, and it is not derived from content — no field in the payload answers "is
+this a source". So the tool returns *most* source-style memories and *only
+rarely* a non-source one, and **it will miss a record scan filed under Photos**.
+The one payload-verifiable non-source marker is the person's designated
+portrait, which is excluded. Audio and video are dropped.
+
+**Scope: the subject only.** Memories are never fetched for relatives, whatever
+`relatives` is set to.
+
+**Transcription (decisions 3 and 4).** Every memory the filter keeps is
+transcribed inside the read: a story's full text is fetched from its artifact,
+and a scan or PDF is OCR'd through the same `image_transcribe` path. Both land
+in `text`, so nothing downstream branches on how the text was obtained, and
+both reach `research.json` `sources[].transcription` by the same route. A
+story's payload text is a 200-character preview cut mid-word, so the artifact is
+the only route to the whole story; when that artifact is unavailable the field
+is left **absent rather than filled with the preview**, which would read as a
+complete short story.
+
+The phase runs under **one ~40s wall-clock budget for the whole phase**, about
+five transcriptions in flight, in record-language rank order, with **no count
+cap**. The budget exists for the Cowork device bridge's 60s abort on every MCP
+call: an unbudgeted phase does not cost a transcription, it costs the whole
+person read. **Anything the budget did not reach still comes back** — as a
+metadata entry whose `notes` says why, never dropped. **No OCR failure can fail
+the read**: a missing OpenRouter key, an OpenRouter error, a timeout, or a 403
+on the artifact all degrade to a metadata-only entry.
+
+A memory the budget skipped, the filter missed, or the OCR failed on can be read
+directly with `image_transcribe`'s `memoryArtifactUrl` input.
 
 ### Example output
 
