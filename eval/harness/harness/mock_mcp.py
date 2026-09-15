@@ -125,6 +125,10 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
+    # Same rationale as convert_calendar: pure URL-templating, no workspace or
+    # network dependency, so a canned fixture would supply the exact URL string
+    # search-external-sites' eval exists to measure.
+    "build_external_search_url",
 }
 
 # Path to the compiled MCP server build output, used by live tool handlers.
@@ -162,6 +166,10 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
     # failure the agent must see as one, not a verdict like merge_warnings' dry run.
     "convert_calendar",
+    # Its `ok: false` means the requested URL could not be built (an unsupported
+    # site, a missing baseUrl on digital_newspaper_archive, or no attributes at
+    # all) - a real failure, not a verdict about the search's subject.
+    "build_external_search_url",
 }
 
 
@@ -790,6 +798,27 @@ def create_mock_server(
     return server, call_log, tools_by_name
 
 
+#: Tools served by `_make_compiled_tool_handler`: tool name -> (compiled file
+#: under build/tools/, exported function). The generic handler injects the
+#: workspace as `projectPath`; a tool that reads no projectPath
+#: (convert_calendar, build_external_search_url) ignores the inert extra key.
+#: extraction_append's lane restriction (issue #695) lives inside its export,
+#: so calling it directly here — bypassing index.ts — still enforces the lane.
+_COMPILED_TOOLS: dict[str, tuple[str, str]] = {
+    "extraction_append": ("extraction-append.js", "extractionAppend"),
+    "tree_edit": ("tree-edit.js", "treeEdit"),
+    "tree_correct": ("tree-correct.js", "treeCorrect"),
+    "materialize_facts": ("materialize-facts.js", "materializeFacts"),
+    "merge_warnings": ("merge-warnings.js", "mergeWarnings"),
+    "person_warnings": ("person-warnings.js", "personWarningsTool"),
+    "project_context": ("project-context.js", "projectContext"),
+    "research_query": ("research-query.js", "researchQuery"),
+    "project_create": ("project-create.js", "projectCreate"),
+    "convert_calendar": ("convert-calendar.js", "convertCalendar"),
+    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrl"),
+}
+
+
 def _make_live_handler(
     tool_name: str,
     workspace: Path | None,
@@ -802,48 +831,10 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
-    if tool_name == "extraction_append":
-        # The record-extraction lane's writer (issue #695). Uses the generic
-        # compiled-tool handler: the lane restriction lives inside the exported
-        # extractionAppend function, so calling it directly here — as this
-        # harness does, bypassing index.ts — still enforces the lane.
-        return _make_compiled_tool_handler(
-            "extraction_append", "extraction-append.js", "extractionAppend", workspace, call_log
-        )
-    if tool_name == "tree_edit":
-        return _make_compiled_tool_handler("tree_edit", "tree-edit.js", "treeEdit", workspace, call_log)
-    if tool_name == "tree_correct":
-        return _make_compiled_tool_handler("tree_correct", "tree-correct.js", "treeCorrect", workspace, call_log)
-    if tool_name == "materialize_facts":
-        return _make_compiled_tool_handler(
-            "materialize_facts", "materialize-facts.js", "materializeFacts", workspace, call_log
-        )
-    if tool_name == "merge_warnings":
-        return _make_compiled_tool_handler(
-            "merge_warnings", "merge-warnings.js", "mergeWarnings", workspace, call_log
-        )
-    if tool_name == "person_warnings":
-        return _make_compiled_tool_handler(
-            "person_warnings", "person-warnings.js", "personWarningsTool", workspace, call_log
-        )
-    if tool_name == "project_context":
-        return _make_compiled_tool_handler(
-            "project_context", "project-context.js", "projectContext", workspace, call_log
-        )
-    if tool_name == "research_query":
-        return _make_compiled_tool_handler(
-            "research_query", "research-query.js", "researchQuery", workspace, call_log
-        )
-    if tool_name == "project_create":
-        return _make_compiled_tool_handler(
-            "project_create", "project-create.js", "projectCreate", workspace, call_log
-        )
-    if tool_name == "convert_calendar":
-        # Takes no projectPath; the generic handler injects one and convertCalendar
-        # reads only `date` and `corrections`, so the extra key is inert.
-        return _make_compiled_tool_handler(
-            "convert_calendar", "convert-calendar.js", "convertCalendar", workspace, call_log
-        )
+    compiled = _COMPILED_TOOLS.get(tool_name)
+    if compiled is not None:
+        js_file, export_name = compiled
+        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 

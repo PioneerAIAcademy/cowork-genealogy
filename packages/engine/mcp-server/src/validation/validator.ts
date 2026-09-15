@@ -32,6 +32,7 @@ import {
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { isNonNegativeInteger } from "../utils/search-helpers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -120,6 +121,12 @@ const EXTERNAL_SITE_VALUES = new Set([
   // same click-capture loop as the paid sites. `digital_newspaper_archive` is
   // the bucket for state/regional archives; which one is in `url_generated`.
   "chronicling_america", "digital_newspaper_archive",
+  // Added for issue #1980's wiki-top-20 launch scope. `library_archives_canada`
+  // names the specific LAC census search the tool builds for, not the shared
+  // gc.ca domain suffix (which many unrelated agencies use). `american_ancestors`
+  // and `italian_genealogy` are keyword-only — see build-external-search-url.ts.
+  "archives_gov", "archive_org", "billiongraves", "digitalarkivet",
+  "antenati", "library_archives_canada", "american_ancestors", "italian_genealogy",
 ]);
 
 /**
@@ -931,6 +938,17 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // direction).
     if (entry.plan_item_id) {
       checkIdPrefix(entry.plan_item_id, ID_PREFIXES.plan_items, lp, report);
+    }
+    // `results_examined` is `integer, minimum: 0` in the JSON Schema; this
+    // validator only ever checked the key was present, so `NaN` (which
+    // persists as `null`), a negative, or a fraction passed here and failed
+    // only in the schema validator downstream. Same drift class, same fix as
+    // `plan_item_id` above: match the schema, for every writer of `log[]`.
+    if ("results_examined" in entry) {
+      const n = entry.results_examined;
+      if (!isNonNegativeInteger(n)) {
+        addError(report, lp, `results_examined must be a non-negative integer; got ${JSON.stringify(n)}`);
+      }
     }
 
     const ext = entry.external_site;

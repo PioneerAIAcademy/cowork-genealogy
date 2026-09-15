@@ -364,6 +364,107 @@ describe("research_log_append", () => {
     expect(research.log).toHaveLength(0);
   });
 
+  it("rejects an external_links_search entry logged negative despite returning results", async () => {
+    // This entry grades the curated-links FETCH, not the search: a model
+    // that recognizes none of the returned links fit the target site/record
+    // type has been observed logging outcome "negative" anyway — collapsing
+    // "FamilySearch curates nothing here" and "curates plenty, none
+    // relevant" into the same value, which loses the distinction permanently
+    // in the audit trail. Enforced here rather than left to the model, since
+    // it was a repeat, measured miss in practice.
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "negative",
+      resultsExamined: 2,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/outcome must be 'positive'/);
+    const research = await readJson("research.json");
+    expect(research.log).toHaveLength(0);
+  });
+
+  it("accepts an external_links_search entry logged positive when it returned results", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "positive",
+      resultsExamined: 2,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts an external_links_search entry logged negative when it genuinely returned nothing", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "negative",
+      resultsExamined: 0,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it.each([NaN, -3, 1.5])(
+    "rejects resultsExamined=%s instead of silently bypassing the outcome check (review finding)",
+    async (bad) => {
+      // NaN and negative values both make `resultsExamined > 0` false in JS,
+      // so the outcome-consistency check above silently passed a bad
+      // outcome/resultsExamined pair through — this must be caught before
+      // that check ever runs.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "external_links_search",
+        query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+        outcome: "negative",
+        resultsExamined: bad,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toMatch(/resultsExamined must be a non-negative integer/);
+      const research = await readJson("research.json");
+      expect(research.log).toEqual([]);
+    },
+  );
+
+  it("coerces a stringified resultsExamined the way resultsAvailable already is, rather than rejecting it", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: "5" as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].results_examined).toBe(5);
+  });
+
+  it("rejects an externalSite.urlGenerated that is not an absolute http(s) URL (review finding)", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_site",
+      query: { name: "Patrick Flynn" },
+      outcome: "partial",
+      resultsExamined: 0,
+      externalSite: { site: "ancestry", urlGenerated: "javascript:alert(1)", captureReceived: false, captureFilename: null },
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/urlGenerated .* is not an absolute http\(s\) URL/);
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
+  });
+
   it("accepts a null planItemId (opportunistic search) and a valid pli_ id", async () => {
     await writeProject(baseResearch());
     const optOut = await researchLogAppend({

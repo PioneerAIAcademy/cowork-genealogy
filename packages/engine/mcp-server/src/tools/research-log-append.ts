@@ -31,6 +31,7 @@ import {
 } from "../utils/project-io.js";
 import { finalizeStagedResults, STAGING_CAPABLE_TOOLS } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -247,8 +248,49 @@ async function applyLogAppendOp(
   if (externalSite && !EXTERNAL_SITE_VALUES.has(externalSite.site)) {
     throw new LogAppendError(`externalSite.site '${externalSite.site}' is not a valid site`);
   }
+  // `urlGenerated` is the string the skill presents as the clickable link and
+  // persists into `research.json` — the same caller-composed, URL-shaped
+  // input `build_external_search_url` rejects as `invalid_base_url`. Trimmed
+  // before both the check and the write: `new URL()` strips padding itself,
+  // so a padded value would pass here and persist with its spaces.
+  const urlGenerated =
+    typeof externalSite?.urlGenerated === "string" ? externalSite.urlGenerated.trim() : externalSite?.urlGenerated;
+  if (externalSite && urlGenerated != null && !isHttpUrl(String(urlGenerated))) {
+    throw new LogAppendError(
+      `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
+    );
+  }
   if (!OUTCOME_VALUES.has(op.outcome)) {
     throw new LogAppendError(`outcome '${op.outcome}' is not one of positive/negative/partial/error`);
+  }
+  // Coerced the same way `resultsAvailable` is below (a model that
+  // stringifies numeric args sends `"5"`); a genuinely non-numeric string is
+  // left as-is and rejected by the check under it. That check runs before the
+  // `external_links_search` gate because the gate's `> 0` comparison is
+  // `false` for both `NaN` and a negative number. `validator.ts` enforces the
+  // same bound on the persisted `results_examined` for every writer of
+  // `log[]`; this is the fail-fast under the caller's own parameter name, the
+  // same split `planItemId` above uses.
+  const resultsExamined = coerceJsonArg(op.resultsExamined);
+  if (!isNonNegativeInteger(resultsExamined)) {
+    throw new LogAppendError(
+      `resultsExamined must be a non-negative integer; got ${JSON.stringify(op.resultsExamined)}`,
+    );
+  }
+  // This entry grades the curated-links FETCH, not the search: any links
+  // returned is a positive fetch, even when none fit the plan item's record
+  // type (that goes in notes instead). Enforced mechanically — rather than
+  // left to the model's own judgment call — because it was measured to be
+  // wrong often enough in practice to need a hard gate, not another
+  // reminder in prose. Scoped to `external_links_search` only: no other
+  // tool value shares this fetch-vs-search distinction, and it is the only
+  // one search-external-sites (its sole caller) uses this way.
+  if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {
+    throw new LogAppendError(
+      `tool 'external_links_search' returned ${resultsExamined} result(s), so outcome must be ` +
+        `'positive' (this entry grades the fetch, not the search); got '${op.outcome}'. Note which ` +
+        `results didn't fit the plan item's record type in 'notes' instead.`,
+    );
   }
 
   if (!Array.isArray(research.log)) {
@@ -266,11 +308,11 @@ async function applyLogAppendOp(
     tool: op.tool,
     query,
     outcome: op.outcome,
-    results_examined: op.resultsExamined,
+    results_examined: resultsExamined,
     external_site: externalSite
       ? {
           site: externalSite.site,
-          url_generated: externalSite.urlGenerated,
+          url_generated: urlGenerated,
           capture_received: externalSite.captureReceived,
           ...(externalSite.captureFilename !== undefined
             ? { capture_filename: externalSite.captureFilename }
