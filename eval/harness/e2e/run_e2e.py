@@ -283,7 +283,7 @@ def main(argv: list[str] | None = None) -> int:
             "1M window compacts differently, so a run made with it is NOT "
             "comparable to the corpus and must not be committed under "
             "eval/runlogs/e2e/. Deliberately absent from eval/RunE2E.bat. "
-            "Recorded in the runlog's usage block as `betas`."
+            "Recorded in the runlog's usage block as `betas`. CI now REJECTS such a run committed under eval/runlogs/e2e/ (check_e2e_fixtures.py)."
         ),
     )
     parser.add_argument(

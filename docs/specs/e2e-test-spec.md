@@ -1581,7 +1581,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `subagent_model_override` | Non-null when `--agent-model` forced every staged subagent off its own `.md` pin. Null = each used its pin. |
 | `effort_level` | Pinned via a project setting; default `high`. |
 | `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
-| `betas` | SDK betas the run requested (`--context-1m` → `["context-1m-2025-08-07"]`); `[]` when off. **A run with a non-empty `betas` is not comparable to the corpus** — a 1M window changes the compaction count and the cache-gap structure, which is what `e2e-compaction` and `e2e-cache-window` measure. Not one of the five reasoning-config fields below: it changes the context budget, not the reasoning. |
+| `betas` | SDK betas the run requested (`--context-1m` → `["context-1m-2025-08-07"]`); `[]` when off. **A run with a non-empty `betas` is not comparable to the corpus** — a 1M window changes the compaction count and the cache-gap structure, which is what `e2e-compaction` and `e2e-cache-window` measure. Not one of the five reasoning-config fields below: it changes the context budget, not the reasoning. **Enforced since #2581:** `check_e2e_fixtures.py` rejects a PR-added-or-renamed run log under `eval/runlogs/e2e/` whose `betas` is non-empty. |
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
 | `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
@@ -1915,7 +1915,8 @@ acting.
   axis (§7) is a single rubric-graded score, not a multi-layer
   human-verified grade
 - CI integration of the *live run* — e2e runs are too expensive to gate
-  PRs. (One cheap artifact check runs in CI — a blocking grading gate;
+  PRs. (Two cheap artifact checks run in CI — a blocking grading gate and a
+  blocking 1M-window gate;
   fixture validity is a non-CI authoring practice, see §14.)
 - Multi-run statistical scoring (N=3) — single run, accepted noise.
   **At project start this is a deliberate "good enough to catch the big
@@ -1983,8 +1984,8 @@ flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
 warning was removed because it re-flagged every un-run fixture in the repo on
 every e2e PR (pure noise).
 
-The `check-e2e-fixtures` workflow instead runs only the **blocking grading
-gate** (§7.4): a run log *added in the PR* that produced a final tree must
+The `check-e2e-fixtures` workflow instead runs two **blocking** checks — the grading
+gate (§7.4) and the 1M-window gate (§7.5): a run log *added in the PR* that produced a final tree must
 ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
 exempt). It reads only committed files and does **not** trigger a live e2e
 run (those stay out of CI per §12).

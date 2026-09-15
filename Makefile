@@ -648,7 +648,10 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
 	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
 	#   DENY_PROJECT_READS 1                             (default off; P2 — deny Read/Grep/Glob of the project folder)
-	#   CONTEXT_1M         1                             (default off; ask for the 1M context window — NOT corpus-comparable, see below)
+	#   CONTEXT_1M         1                             (default off; ask for the 1M context window)
+#                                                    NOT corpus-comparable: a 1M window changes the compaction count and
+#                                                    cache-gap structure. Do NOT commit the run under eval/runlogs/e2e/ —
+#                                                    CI rejects it (check_e2e_fixtures.py). Keep it in a sibling directory.
 	# A/B these to find what clears a runaway-thinking subagent freeze
 	# (check subagents[].runaway_thinking; if it is empty, read
 	# subagent_capture_status before reading that as 'no runaway').
