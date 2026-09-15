@@ -12,7 +12,8 @@
       "conflict-resolution",
       "decline-declaration",
       "stop-criteria",
-      "declaration-honesty"
+      "declaration-honesty",
+      "no-exhaustive-declaration"
     ]
   },
   "input": {

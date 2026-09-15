@@ -34,6 +34,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validators as tests of this module and error on their
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_search_familysearch_wiki import (  # noqa: E402
+    report_reply_does_not_restate_the_saved_file as check_brevity,
     test_expected_slug as check_slug,
     test_no_file_on_empty_results as check_no_file_on_empty,
     test_no_wiki_no_write as check_no_wiki_no_write,
@@ -316,3 +317,154 @@ def test_sources_still_fires_on_a_fabricated_url_outside_a_comment():
             _wiki_call(RESULT_A),
             _tags("fs-wiki"),
         )
+
+
+# --- report_reply_does_not_restate_the_saved_file (tier 2) -------------
+
+# Both replies below are byte-for-byte what the model produced, copied out of
+# the committed run logs -- full length, original punctuation, nothing tidied.
+# The violating one recites the saved document into chat after a correct
+# closing sentence; the compliant one carries the same required narration
+# preambles and stops.
+#
+# Keep them exact. An earlier revision shortened the reciting reply to a third
+# of its length and flattened an em dash to a hyphen while still calling both
+# verbatim (caught in review on #2577). The narration guard's whole value is
+# that it is the reply the model actually produced rather than a tidied one,
+# and the non-ASCII these carry -- an u-umlaut in "Kirchenbuecher", an en dash,
+# an em dash -- is exactly what a construct regex could one day care about.
+# If you ever need a shortened version, call it an excerpt.
+_SAVED = {"files": {"german-church-records.md": "x"}}
+
+# ut_search_wiki_003, run v1_2026-08-19_13-00-35.
+_RECITING_REPLY = (
+    "Searching complete. Now let me read the template and save the summary.Now I'll write the summary file.The guidance has been saved to **`german-church-records.md`**, which includes a **Sources** section citing the wiki pages used. Here's a summary of what the wiki says:\n"
+    "\n"
+    "---\n"
+    "\n"
+    "**German Church Records (Kirchenbücher)** are the key source for German ancestry before civil registration. Catholic and Protestant parishes each kept their own registers of baptisms, marriages, and burials — many starting in the 1600s, with some Catholic registers going back to the mid-1500s. Because records are organized by **parish, not town**, your first step is identifying which parish served your ancestor's village.\n"
+    "\n"
+    "**Finding the right parish:** Use a gazetteer — specifically *Meyers Orts- und Verkehrs-Lexikon des Deutschen Reichs*, which covers every place in the 1871–1918 German Empire and names the Catholic and Protestant parishes for each locality.\n"
+    "\n"
+    "**Where to access the records:**\n"
+    "- **FamilySearch Catalog** — search by parish or town name for microfilmed/digitized records\n"
+    "- **Archion** (subscription) — Protestant church records\n"
+    "- **Matricula** (subscription) — Catholic church records\n"
+    "- **Regional church archives** (Landeskirchliches Archiv or Kirchenbuchamt) — for records not yet digitized"
+)
+
+# ut_search_wiki_006, run v1_2026-08-19_14-53-19 - narration present,
+# no recitation.
+_COMPLIANT_REPLY = (
+    "Now I have everything I need. Let me write the summary file.The FamilySearch Wiki guidance has been saved to **`marriage-records.md`**. It covers where marriage records were kept (county clerks, churches, or state vital records offices depending on era), the shift from church to civil registration in the late 1800s, and the types of documents you may encounter — licenses, certificates, bonds, and banns. The file includes a **Sources** section citing the two wiki pages used."
+)
+
+
+def test_brevity_fires_on_the_observed_ut_003_recitation():
+    """The observed violation: a correct closing sentence, then the document
+    recited back with a horizontal rule and bullets."""
+    with pytest.raises(AssertionError, match="Keep it brief"):
+        check_brevity(EMPTY, _SAVED, _RECITING_REPLY)
+
+
+def test_brevity_passes_on_the_observed_compliant_reply():
+    """The guard that kept this check off the file for months: SKILL.md:24
+    mandates a one-line preamble per action and `text_response` carries every
+    turn, so a naive length rule fires on required narration. This reply has
+    both preambles and passes."""
+    check_brevity(EMPTY, _SAVED, _COMPLIANT_REPLY)
+
+
+def test_brevity_skips_when_no_file_was_saved():
+    """The rule is scoped to runs that saved a file - the empty-results path
+    and the boundary negatives must not be reported on."""
+    with pytest.raises(pytest.skip.Exception):
+        check_brevity(EMPTY, EMPTY, _RECITING_REPLY)
+
+
+def test_brevity_reports_a_recitation_inside_a_fence():
+    """A fenced block is scanned like any other text.
+
+    An earlier revision stripped fences first, by analogy with the
+    HTML-comment strip in the Sources check. The analogy did not hold: that
+    strip covers a real, observed case, while no run in the corpus contains a
+    fence at all. Stripping bought nothing and opened the likeliest bypass —
+    "here is the file" inside a fenced markdown block (#2577 review).
+    """
+    with pytest.raises(AssertionError, match="Keep it brief"):
+        check_brevity(
+            EMPTY,
+            _SAVED,
+            "Saved to **`x.md`**. Here is the file:\n\n"
+            "```markdown\n# Heading\n\n- one\n- two\n```\n",
+        )
+
+
+@pytest.mark.parametrize(
+    "construct, reply",
+    [
+        ("heading", "Saved.\n\n## Summary\n\nProse."),
+        ("table row", "Saved.\n\n| Repo | Years |\n|---|---|\n| A | 1850 |\n"),
+        ("horizontal rule", "Saved.\n\n---\n\nProse."),
+        ("list marker", "Saved.\n\n- one\n- two\n"),
+        # The #2577 blocker: 4 runs recited as a numbered list and scored
+        # clean, and the list arm was the only arm with any hits at all.
+        ("list marker", "Saved.\n\n1. one\n2. two\n"),
+        ("list marker", "Saved.\n\n1) one\n2) two\n"),
+    ],
+)
+def test_brevity_fires_on_each_construct(construct, reply):
+    """Each of the four arms fires on its own, so a regression in one regex
+    cannot hide behind the others."""
+    with pytest.raises(AssertionError, match=construct):
+        check_brevity(EMPTY, _SAVED, reply)
+
+def test_brevity_validator_is_tier_two_through_the_real_runner():
+    """Pin the PROPERTY, not the spelling.
+
+    An earlier revision asserted the function's name began with `report_`,
+    which `validator_runner.py:209` does use to decide the tier. But the name
+    is not the only way to lose it: renaming the third parameter to something
+    the harness does not supply makes the runner skip it, and `reporting_only`
+    is then never observed at all, while every direct-call test in this file
+    stays green (#2577 review).
+
+    So run it through `run_validators` and require the harness itself to
+    report it as tier 2. Same shape as
+    `test_search_external_sites_validator.py`'s `test_v6_is_tier_2_and_cannot_gate_a_run`.
+    """
+    from pathlib import Path
+
+    from harness.validator_runner import run_validators
+
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=Path(__file__).resolve().parents[2] / "validators",
+        before_state={"files": {}, "research_json": None, "tree_gedcomx_json": None},
+        after_state={
+            "files": {"german-church-records.md": "x"},
+            "research_json": None,
+            "tree_gedcomx_json": None,
+        },
+        tool_calls=[],
+        skill_frontmatter={"name": "search-familysearch-wiki"},
+        test={"type": "positive", "tags": []},
+        text_response=_RECITING_REPLY,
+    )
+    brevity = next(
+        (r for r in results
+         if r.name == "report_reply_does_not_restate_the_saved_file"),
+        None,
+    )
+    assert brevity is not None, (
+        "the brevity validator did not run; the harness did not collect it"
+    )
+    assert brevity.reporting_only is True, (
+        "the brevity validator is gating the run. It fires on 57 of 60 "
+        "file-saving runs, so as tier 1 it would mark ~95% of this skill's "
+        "positives failed for a reporting-grade observation (issue #1749)."
+    )
+    assert brevity.passed is False, (
+        "it should have fired on the reciting reply; if it passed, this test "
+        "proves nothing about the tier of a firing validator"
+    )

@@ -1,0 +1,25 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search about a stepfather appointed guardian of his wife's minor children by a prior marriage (issue #2283). Danish record, not US -- the closest live match after the named page (\"United States Guardianship Records\") proved dead; see the deep-dive doc and PR for the full search trail.",
+  "args": { "query": "~guardianship" },
+  "response": {
+    "query": "widow remarried stepfather guardian children keep surname",
+    "total_chunks_searched": 1240565,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.648438,
+        "chunk_text": "And , excuse me, this particular entry, , is regarding a little, a girl, , or a young woman. Her name is Anna, , Christina Anderson. And it tells you where she was born, I mean, when she was born, 18th of February, 1808. And she was asking the court to allow her stepfather, , Hans Peter Larsson of Elsig in Lindahl to be her legal guardian since her father had died. So here in this particular record, you then get the information that her mom has remarried and you're getting his full name and residence, which is wonderful. And then you can then pursue him with that information. So all of these, , gives you clues to where to go and when to look for the records . Here is, , an interesting record, , where you get three siblings. You have Tia Victoria, Christine, Cathrine, don't you love the names? Carol, and that she was born the 1st October in 1887. And then it says, and Victor Emanuel August, and it tells you when he was born. And they are getting their brother, so here's the third sibling, Christian Stearns and given the permission to act as the legal guardian. So in this one, well, half a page barely, not even that, you're getting a name, so three different siblings with exact birth information for two of them. And that can help you go back and gather the whole family. And by this record, , it is to be assumed that both parents have died, at least the father, since the one, , son is, is taking over legal guardianship. I guess mom could still be alive, but gives you some clues of where to go and, and, , wonderful and wonderfully helpful And this is another, this is a district guardianship record.And you have a Christiana Matia where, , it is giving you the information, full information of, , her parents, Jacob Mullers and Hanne Balis Fedrickyvandel. And then she is, , two and one seventh years old. And then you have Soren Sorensen, details to when he was christened. Of course, they do in the Latin these days, and gives you the name of mother and father and brother. And they have died, and she has then inheritance rights. So just wonderful records that I, I really recommend you looking into. And this, I'm not gonna say much about except, , it is telling you the names of the person, when they were christened, and who the probate is after. So this is not the, the probate itself, but it's giving you the probate information, including the names of the guardians. And very often the guardian is a relative,and, , it can be, , a father himself, or it can be a grandparents, uncle or an in-law",
+        "page_title": "Little Used Records on Arkivalieronline",
+        "section_heading": "Guardianship Records And Inheritance Clues *(19:40 – 25:47)*",
+        "source_url": "https://www.familysearch.org/en/help/helpcenter/lessons/little-used-records-on-arkivalieronline#Guardianship_Records_And_Inheritance_Clues_*(19:40_–_25:47)*"
+      }
+    ],
+    "query_time_ms": 419.91,
+    "timing": {
+      "embed_ms": 0.0,
+      "search_ms": 164.41,
+      "rerank_ms": 255.39
+    }
+  }
+}

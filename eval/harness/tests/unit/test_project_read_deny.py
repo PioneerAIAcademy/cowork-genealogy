@@ -46,10 +46,26 @@ def test_results_sidecar_is_denied_and_routed_to_record_read():
     assert "record_read({recordId, resultsRef})" in reason
 
 
-def test_evaluations_is_denied_and_routed_to_research_query():
+def test_evaluations_is_denied_and_routed_to_sidecar_read():
+    # research_query returns the evaluations[] entry but not the verdict body
+    # its file_path names; sidecar_read is the reader for the body.
     reason = denied("Read", {"file_path": f"{ROOT}/evaluations/q1.json"})
     assert reason is not None
-    assert "research_query" in reason
+    assert "sidecar_read({projectPath, ref})" in reason
+    assert "research_query" not in reason
+
+
+def test_uploads_is_denied_and_routed_to_sidecar_read():
+    reason = denied("Read", {"file_path": f"{ROOT}/uploads/Grandma's notes 1923.txt"})
+    assert reason is not None
+    assert "sidecar_read({projectPath, ref})" in reason
+    assert "project_context" not in reason
+
+
+def test_nested_upload_is_routed_to_sidecar_read():
+    reason = denied("Grep", {"pattern": "burial", "path": "uploads/scans"})
+    assert reason is not None
+    assert "sidecar_read" in reason
 
 
 def test_relative_grep_path_resolves_against_cwd():

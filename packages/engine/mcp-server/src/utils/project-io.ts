@@ -17,6 +17,7 @@
 
 import type { ValidationError } from "../validation/types.js";
 import { getProjectStore } from "../store/project-store.js";
+import { ProjectEscapeError } from "../store/paths.js";
 import type {
   JsonWrite,
   ProjectPathClass,
@@ -166,7 +167,10 @@ export async function readProjectJson(projectPath: string, filename: string): Pr
   let text: string;
   try {
     text = await getProjectStore().readText(projectPath, filename);
-  } catch {
+  } catch (e) {
+    // The store refused a file that EXISTS but resolves outside the project (a
+    // symlinked research.json). Reporting that as "not found" would be false.
+    if (e instanceof ProjectEscapeError) throw e;
     throw new Error(`${filename} not found in projectPath`);
   }
   try {
