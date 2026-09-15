@@ -269,10 +269,12 @@ on `gh issue list`, `gh pr create`, and malformed input. CI runs it too, in
 fail-open design means a broken gate is otherwise indistinguishable from a
 working one.
 
-Do not agonise past that one search. `/audit-board` merges, rewrites and drops
-issues across the whole pool weekly, which is the only vantage point from which
-every duplicate is visible. A duplicate costs one comment to close; an unfiled
-finding costs a rediscovery.
+Do not agonise past that one search. `/merge-recent-issues` reads the day's
+filings against the open pool, `/merge-issues` merges the Backlog down by eval
+slot, and `/audit-board` rewrites and drops what is stale — between them every
+duplicate is visible from some vantage point, and none of them is yours to
+anticipate. A duplicate costs one comment to close; an unfiled finding costs a
+rediscovery.
 
 **Do not park these in a to-do file, under any name.** That was tried:
 `docs/TODOs.md`, retired 2026-08-02 as issues #1117–#1157. Its exit event — "an
