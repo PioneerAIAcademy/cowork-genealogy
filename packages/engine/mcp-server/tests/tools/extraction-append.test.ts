@@ -7,12 +7,20 @@ import { tmpdir } from "os";
 // Same offline place-resolver stub the research_append suite uses. It doubles as
 // the probe for "did the lane gate run before the network pre-pass?" — a rejected
 // call must leave this mock untouched.
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  resolveStandardPlace: vi.fn(async (text: string) => {
-    if (text === "Schuylkill County, Pennsylvania") return "Schuylkill, Pennsylvania, United States";
-    return null;
-  }),
-}));
+// Spreads the real module rather than replacing it: `countryConsistency` lives
+// there too and research_append imports it, so a bare replacement leaves it
+// `undefined` and any path that reaches it throws a TypeError instead of
+// exercising the guard.
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    ...actual,
+    resolveStandardPlace: vi.fn(async (text: string) => {
+      if (text === "Schuylkill County, Pennsylvania") return "Schuylkill, Pennsylvania, United States";
+      return null;
+    }),
+  };
+});
 
 import { extractionAppend, EXTRACTION_SECTIONS } from "../../src/tools/extraction-append.js";
 import { researchAppend } from "../../src/tools/research-append.js";
@@ -253,6 +261,63 @@ describe("extraction_append (issue #695 lane enforcement)", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(single(r).entryId).toBe("pe_001");
+  });
+
+  it("carries an assertion correction onto the linked tree fact (#2472)", async () => {
+    // The rewrite lives in the shared research-append module, so it fires for
+    // BOTH entry points. Of the assertion-`update` ops touching a mirrored
+    // attribute in the committed e2e corpus, 60 arrive through
+    // `extraction_append` and 85 through `research_append` (2026-09-14).
+    const research = baseResearch();
+    research.assertions = [
+      {
+        ...validAssertion("a_011"),
+        fact_type: "immigration",
+        place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+        standard_place: "Thames Centre Township, Middlesex, Ontario, Canada",
+      } as unknown as ReturnType<typeof validAssertion>,
+    ];
+    const tree = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F4",
+              type: "Immigration",
+              place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+              standard_place: "Thames Centre Township, Middlesex, Ontario, Canada",
+              assertion_id: "a_011",
+              sources: [{ ref: "SD-001" }],
+            },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+    };
+    await writeProject(research, tree);
+
+    const r = await extractionAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_011",
+      fields: {
+        place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+        standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+      },
+    });
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.filesWritten).toContain("tree.gedcomx.json");
+    const f4 = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"))
+      .persons[0].facts[0];
+    expect(f4.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+    expect(f4.standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
   });
 });
 
