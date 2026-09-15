@@ -217,7 +217,8 @@ describe("annotateResultsWithRanking", () => {
 describe("#1212 payload", () => {
   const ROWS = 50;
 
-  /** A row with the fields a real staged (post-compaction) search row carries. */
+  /** A row as it leaves compaction: `collectionTitle` has been HOISTED into the
+   *  response-level `collections` map, so the row carries only `collectionId`. */
   const row = (i: number) => ({
     recordId: `ark:/61903/1:1:ABCD-${String(i).padStart(3, "0")}`,
     primaryId: `p${i}`,
@@ -239,50 +240,81 @@ describe("#1212 payload", () => {
     confidence: 3,
   });
 
-  /** The ranked stub this branch emits: the row plus rank/score, minus FS relevance. */
-  const stub = (i: number) => {
+  /** The stub the DROP shape emitted. Note `collectionTitle`: the stub put back
+   *  on every scored row the exact string compaction had just hoisted out of the
+   *  rows — the duplication that made the old -4.6% figure wrong. */
+  const oldStub = (i: number) => {
     const { score: _s, confidence: _c, ...rest } = row(i);
-    return { matchRank: i + 1, searchRank: i + 1, ...rest, matchScore: 0.9, matchConfidence: 7 };
+    return {
+      matchRank: i + 1,
+      searchRank: i + 1,
+      ...rest,
+      collectionTitle: "Pennsylvania Deaths and Burials, 1720-1999",
+      matchScore: 0.9,
+      matchConfidence: 7,
+      candidateFactCount: 4,
+    };
   };
 
-  it("is smaller than the results-plus-top-10-ranked shape it replaces", () => {
-    const before = JSON.stringify({
-      results: Array.from({ length: ROWS }, (_, i) => row(i)),
-      ranked: {
-        subjectId: "KNS4-P6W",
-        scoredCount: ROWS,
-        returnedCount: 10,
-        // the old lean stub: no events/collectionId/recordTitle/treeMatches
-        matches: Array.from({ length: 10 }, (_, i) => {
-          const { events: _e, collectionId: _ci, recordTitle: _rt, treeMatches: _tm, ...lean } = stub(i);
-          return lean;
-        }),
-      },
-    }).length;
+  /** Option B: the row itself, annotated. No second copy of anything. */
+  const annotated = (i: number) => ({
+    ...row(i),
+    matchRank: i + 1,
+    searchRank: i + 1,
+    matchScore: 0.9,
+    matchConfidence: 7,
+    candidateFactCount: 4,
+  });
 
-    const after = JSON.stringify({
+  const collections = { "2000123": "Pennsylvania Deaths and Burials, 1720-1999" };
+
+  it("is smaller than the drop shape it replaces, because nothing is duplicated", () => {
+    // BEFORE — the drop shape: rows gone, every scored candidate re-emitted as a
+    // stub that re-carries the hoisted collection title.
+    const before = JSON.stringify({
+      collections,
       ranked: {
         subjectId: "KNS4-P6W",
         scoredCount: ROWS,
         returnedCount: ROWS,
-        matches: Array.from({ length: ROWS }, (_, i) => stub(i)),
+        matches: Array.from({ length: ROWS }, (_, i) => oldStub(i)),
       },
     }).length;
 
+    // AFTER — Option B: one annotated row list, `ranked` metadata only.
+    const after = JSON.stringify({
+      collections,
+      results: Array.from({ length: ROWS }, (_, i) => annotated(i)),
+      ranked: { subjectId: "KNS4-P6W", scoredCount: ROWS, returnedCount: ROWS },
+    }).length;
+
     // Measured on this branch at 50 rows, not quoted from the issue:
-    //   before 34,147   after 32,585   delta -1,562 (-4.6%)
-    // Bounds are loose enough to survive a field-width edit and tight enough
-    // that swapping either shape for the other fails.
-    expect(before).toBeGreaterThan(33_000);
-    expect(before).toBeLessThan(35_500);
-    expect(after).toBeGreaterThan(31_500);
-    expect(after).toBeLessThan(34_000);
+    //   before 36,956   after 35,206   delta -1,750 (-4.7%)
+    //
+    // The saving is STRUCTURAL: the drop shape's stub re-introduced
+    // `collectionTitle` on every scored row after compaction had just hoisted it
+    // into `collections`. Option B has no stub, so it cannot reintroduce
+    // anything. That is also why the PR's original -4.6% was wrong — the
+    // fixture it was measured on had no `collectionTitle` to duplicate, so it
+    // priced a saving the real shape never had (review: about +2.7% against
+    // production's shape, i.e. the drop shape was BIGGER).
+    //
+    // Floor is 3%, under the measured 4.7%, so a field-width edit does not red
+    // this while a regression that reintroduces duplication does.
     expect(after).toBeLessThan(before);
-    // "Flat or better" (#1212 ask 5) — and it IS only ~5%, because the saving
-    // is the deduplication, not the stub being lean: a rich stub (645 B) is
-    // WIDER than a full row (607 B). Asserted as a floor so a future field
-    // added to the stub without a matching saving turns this red rather than
-    // quietly eating the margin.
     expect((before - after) / before).toBeGreaterThan(0.03);
   });
+
+  it("the ranking annotation is a small fraction of the row it rides on", () => {
+    // Guards the other direction: if a future field makes the annotation heavy,
+    // "annotate in place" stops being obviously the cheaper shape.
+    // Measured: bare row 607 B, annotated 696 B — the ranking costs 89 B
+    // (14.7%) per row. Ceiling 25% leaves room for one more score field before
+    // this needs re-thinking, and reds if the annotation starts rivalling the
+    // row it rides on.
+    const bare = JSON.stringify(row(0)).length;
+    const withScore = JSON.stringify(annotated(0)).length;
+    expect(withScore - bare).toBeLessThan(bare * 0.25);
+  });
 });
+

@@ -314,8 +314,8 @@ Those two arguments do all of Step 4 for you:
 - `projectPath` stages the raw results host-side and returns a
   `staged.resultsRef` handle (pass it to `research_log_append` in Step 5), with
   the bulk per-result GedcomX left in the staged file. When you also pass
-  `subjectId`, the inline results are dropped entirely and `ranked` carries
-  them instead (Step 4).
+  `subjectId`, those same rows come back **scored and ordered best first**
+  (Step 4) — one list, not two.
 - `subjectId` makes the tool **rank the candidates for you** against that subject
   and return them under `ranked` (see Step 4). You do not call
   `rank_search_matches` yourself in the normal flow.
@@ -387,12 +387,18 @@ by hand for that one search.
 Whichever path produced it, the ranking scores **every** staged candidate against
 the subject with FamilySearch's own matcher (the engine `same_person` uses),
 re-orders by real match quality — **not** FamilySearch's search rank, which is
-unreliable — and returns **every scored candidate** in `matches[]`, best first.
-They replace `results`, which is omitted when the ranking is usable. Each carries `matchRank`,
-`searchRank` (its original position — shows how far the ranker missed),
-`matchScore` (0–1), `matchConfidence` (1–10), the key facts, and `attachedToSubject` /
-`attachedToOther`. The bulk GedcomX stays host-side, and a per-result
-`same_person` loop plus a separate `source_attachments` call are both unnecessary.
+unreliable — and annotates **every scored candidate** in `results[]`, returned
+best first. There is one row list: the rows you already know, now carrying
+`matchRank`, `searchRank` (their original FamilySearch position — shows how far
+the ranker missed), `matchScore` (0–1), `matchConfidence` (1–10),
+`candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
+carries counts and diagnostics only. The bulk GedcomX stays host-side, and a
+per-result `same_person` loop plus a separate `source_attachments` call are both
+unnecessary.
+
+Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
+highest. A row the ranker could not score keeps its search position, has no
+`matchScore`, and sorts last — it is still there, not dropped.
 
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
