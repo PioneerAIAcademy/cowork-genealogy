@@ -475,6 +475,34 @@ def test_main_reports_BOTH_gates_when_both_fire(tmp_path, monkeypatch, capsys):
     assert "1M context window" in out, "1M error missing"
 
 
+def test_promoting_an_UNGRADED_run_out_of_quarantine_is_caught(tmp_path, monkeypatch, capsys):
+    """The grading gate reads the AR set, so a rename-in no longer slips past.
+
+    Every run in eval/runlogs/_2491-exploratory-quarantine/ has a final tree and
+    no annotation (measured: 4 trees, 0 anns), so this is the exact population
+    the gate rejects arriving by the one route `--diff-filter=A` cannot see.
+    Point the gate back at the A set and this row reds on its own.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = Path(f"{QDIR}/smith/run-{TS}.json")
+    src_tree = Path(f"{QDIR}/smith/run-{TS}.final-tree.gedcomx.json")
+    for q in (src, src_tree):
+        (repo / q).parent.mkdir(parents=True, exist_ok=True)
+        (repo / q).write_text("{}", encoding="utf-8")
+    base = commit(src.as_posix(), src_tree.as_posix())
+
+    dst = Path(f"eval/runlogs/e2e/smith/run-{TS}.json")
+    dst_tree, _dst_ann = _siblings(dst)
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    shutil.move(str(repo / src_tree), str(repo / dst_tree))
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(
+        src.as_posix(), src_tree.as_posix(), dst.as_posix(), dst_tree))
+    assert check_e2e_fixtures.main() == 1
+    assert f"run-{TS}.ann.json" in capsys.readouterr().out
+
+
 def test_main_OK_line_reports_both_denominators(tmp_path, monkeypatch, capsys):
     """A pure quarantine->corpus rename adds nothing, so an N-only line would
     read `OK (0 added run log(s) checked)` on a run that checked one file."""
@@ -488,7 +516,7 @@ def test_main_OK_line_reports_both_denominators(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("HEAD_SHA", commit(src.as_posix(), dst))
     assert check_e2e_fixtures.main() == 0
     out = capsys.readouterr().out
-    assert re.search(r"0 added run log\(s\) checked; 1 added-or-renamed", out), out
+    assert re.search(r"1 added-or-renamed run log\(s\) checked; 0 of them newly added", out), out
 
 
 
@@ -497,10 +525,14 @@ def test_main_OK_line_reports_both_denominators(tmp_path, monkeypatch, capsys):
 def test_main_grading_gate_blocks_missing_ann(tmp_path, monkeypatch):
     """A PR-added run log with a committed tree but no ann fails main()."""
     repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
     rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
     tree, _ann = _siblings(rel)
+    # Both selectors real, no stub: the grading gate reads the AR set now, and
+    # stubbing only the A one would leave the gate looking at an empty list.
+    monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 1
 
 
@@ -860,6 +892,8 @@ def test_main_drift_warning_prints_even_when_grading_gate_fails(tmp_path, monkey
     visible even on the exit-1 path (a tree with no committed ann fails the
     gate). Guards against a later reorder silently swallowing the warning."""
     repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
     rel = _write_e2e_run_with_findings(
         repo, "smith", TS,
         [{"finding_id": "f1", "matched": "partial", "components": [_link("supported")]}],
@@ -868,8 +902,8 @@ def test_main_drift_warning_prints_even_when_grading_gate_fails(tmp_path, monkey
     tree, _ann = _siblings(rel)
     (repo / tree).write_text("{}", encoding="utf-8")
     _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree))
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 1
     out = capsys.readouterr().out
     assert "::warning::" in out and "f1" in out

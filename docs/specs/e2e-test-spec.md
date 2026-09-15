@@ -1985,8 +1985,8 @@ warning was removed because it re-flagged every un-run fixture in the repo on
 every e2e PR (pure noise).
 
 The `check-e2e-fixtures` workflow instead runs two **blocking** checks — the grading
-gate (§7.4) and the 1M-window gate (§7.5): a run log *added in the PR* that produced a final tree must
-ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
+gate (§7.4) and the 1M-window gate (§7.5): a run log *added in the PR, or renamed into it,* that produced a final tree
+must ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
 exempt). It reads only committed files and does **not** trigger a live e2e
 run (those stay out of CI per §12).
 

@@ -537,7 +537,14 @@ def main() -> int:
         print(f"::warning::{w}")
         print(f"  ! {w}", file=sys.stderr)
 
-    grade_violations = check_added_runlogs_graded(added, head)
+    # Both gates read the AR set. For the grading gate that closes a real hole:
+    # a run promoted out of quarantine arrives as a RENAME, and every run in
+    # eval/runlogs/_2491-exploratory-quarantine/ has a final tree and no
+    # annotation -- the exact population this gate rejects, arriving by the one
+    # route `--diff-filter=A` cannot see. This is NOT the widening #2581
+    # forbids: the shared selector is untouched and the two warn loops above
+    # still read it, so only this one blocking gate changes what it sees.
+    grade_violations = check_added_runlogs_graded(ar_runlogs, head)
     beta_violations = check_added_runlogs_not_1m(ar_runlogs, head)
 
     # Both blocking rules report before either returns. A second rule that
@@ -564,13 +571,13 @@ def main() -> int:
     if grade_violations or beta_violations:
         return 1
 
-    # Both denominators. A pure quarantine->corpus rename adds nothing, so an
-    # `N`-only line would read `OK (0 added run log(s) checked)` on a run that
-    # checked one file -- the cheerful zero eval/CLAUDE.md's denominator
-    # doctrine exists to prevent.
+    # Report the set the gates actually read. A pure quarantine->corpus rename
+    # adds nothing, so an `added`-only denominator would read
+    # `OK (0 added run log(s) checked)` on a run that checked one file -- the
+    # cheerful zero eval/CLAUDE.md's denominator doctrine exists to prevent.
     print(
-        f"E2E grading gate OK ({len(added)} added run log(s) checked; "
-        f"{len(ar_runlogs)} added-or-renamed checked for a 1M window)."
+        f"E2E gates OK ({len(ar_runlogs)} added-or-renamed run log(s) checked; "
+        f"{len(added)} of them newly added)."
     )
     return 0
 
