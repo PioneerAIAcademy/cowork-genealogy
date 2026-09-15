@@ -56,6 +56,7 @@ def build_workspace(
     target_dir: Path,
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
     effort_level: str | None = DEFAULT_EFFORT_LEVEL,
+    stage_skills: bool = True,
 ) -> Path:
     """Populate target_dir with scenario files and a .claude/skills/ tree.
 
@@ -65,6 +66,14 @@ def build_workspace(
     so a skill's `@plugin:<name>` delegation via the Task tool resolves to
     the real agent instead of an improvised generic subagent. The SDK loads
     them via setting_sources=["project"].
+
+    ``stage_skills=False`` builds a workspace holding the plugin AGENTS and no
+    skills at all — the direct-agent arm (issue #2246). That is the conversion
+    doc's acceptance check made literal: "delete the routing skill from the
+    workspace; the agent must reach the same outcome from its arguments alone"
+    (``docs/skill-to-agent-pair-conversion.md`` §0). Nothing downstream needs the
+    skill on disk — ``orchestrator`` reads its SKILL.md frontmatter from the
+    repo, not from here.
 
     ``effort_level`` pins the run's reasoning effort through a project-level
     ``.claude/settings.json``, exactly as the e2e orchestrator does. Left
@@ -93,11 +102,14 @@ def build_workspace(
         if results_src.is_dir():
             shutil.copytree(results_src, target / "results", dirs_exist_ok=True)
 
-    skills_target = target / ".claude" / "skills"
-    skills_target.mkdir(parents=True, exist_ok=True)
-    for skill_dir in Path(skills_dir).iterdir():
-        if skill_dir.is_dir() and not skill_dir.name.startswith("."):
-            shutil.copytree(skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True)
+    if stage_skills:
+        skills_target = target / ".claude" / "skills"
+        skills_target.mkdir(parents=True, exist_ok=True)
+        for skill_dir in Path(skills_dir).iterdir():
+            if skill_dir.is_dir() and not skill_dir.name.startswith("."):
+                shutil.copytree(
+                    skill_dir, skills_target / skill_dir.name, dirs_exist_ok=True
+                )
 
     # Stage plugin subagents as project subagents (.claude/agents/<name>.md),
     # exactly as the e2e orchestrator does.

@@ -101,7 +101,7 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open \
 
 **Search by fix site, not by symptom.** Issues that collide almost never share a
 title — they want different lines in the same file. Read `**Touches:**` lines.
-`/audit-board` owns merge doctrine; use its verdicts, do not invent one here.
+`/merge-issues` owns merge doctrine; use its verdicts, do not invent one here.
 
 Search the open pool once, then stop. A second search rarely finds what the first
 missed, and this skill is not the whole-board pass.
@@ -136,7 +136,8 @@ none of your context, and `/review-ready` will read it before a junior does.
 **Retitle it first.** A submission is titled `[feedback] 2026-08-25T22:22Z`,
 which is a filing stamp, not a task. It reaches Ready as an ordinary issue and
 someone self-serves from that column by reading titles — and `/fill-ready`,
-`/audit-board` and `/merge-recent-issues` all rank, cluster and search on them.
+`/audit-board`, `/merge-issues` and `/merge-recent-issues` all rank, cluster and
+search on them.
 Give it the same shape as every other issue on the board: what is wrong, stated
 so it can be recognised without opening it.
 
@@ -148,8 +149,9 @@ gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy \
 Write into the body:
 
 - **`**Touches:**`** — the files the work would change, repo-relative,
-  comma-separated, one line, near the top. This is what `/audit-board` and
-  `/merge-recent-issues` search on later.
+  comma-separated, one line, near the top. This is what `/merge-issues`,
+  `/merge-recent-issues` and `/fill-ready`'s collision detector search on later;
+  an issue without one is invisible to every one of them.
 - **What the tester saw**, kept as evidence — leave the reproduced prose in place.
 - **What you verified**, with paths, and which claims you refuted.
 - **What to do about it**, concretely enough to start: the approach, the files,

@@ -58,7 +58,15 @@ from harness.skill_stubs import stub_denial
 # BASELINE_ALLOWED_TOOLS): plugin subagents are staged into every workspace
 # and a skill delegates via `@plugin:<name>` only when its SKILL.md says to —
 # the model doesn't spawn subagents unprompted, so no per-test flag is needed.
-BASELINE_ALLOWED = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Task"]
+# "Agent" sits beside "Task" because the CLI emits `Agent`: across the committed
+# unit corpus there are 383 `Agent` records and zero `Task`. Measured caveat, and
+# the plan asserts no more than the measurement — all 141 `Agent` calls in the two
+# paired suites carry no `agent_id` (main-thread spawns) under an allowlist that
+# does NOT list `Agent`, so the main thread can already spawn one today and this
+# entry is insurance, not a fix. Why it works is undetermined; do not claim one.
+BASELINE_ALLOWED = [
+    "Read", "Write", "Edit", "Glob", "Grep", "Skill", "Task", "Agent",
+]
 DISALLOWED_BACKSTOP = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -231,7 +239,128 @@ BUILTIN_ARG_TRUNCATE = 200
 # instruct identity-confidence assignment; pass project_path; phrase
 # looking_for as a search key; carry recordId/logId/open question ids) were
 # consequently unauditable from any committed run log.
+#
+# The direct-agent arm (#2246) also reads this field: its verbatim assertion
+# `test_direct_delegation_relayed_verbatim` compares the recorded prompt against
+# the test's `input.delegation`, so a cut here is a false red on a run that
+# relayed perfectly.
 _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
+
+
+
+# Direct-agent arm: the prompt the MAIN THREAD receives, wrapping the test's own
+# `input.delegation`. The test author writes only the delegation; this wrapper is
+# harness-owned so no test can weaken the relay instruction.
+#
+# Scope, which is load-bearing: every instruction here addresses "You" — the main
+# thread. NONE of it reaches the spawned agent, which receives only the `prompt`
+# argument (the delegation verbatim). That matters because the agent must still
+# use its own tools: four of the five research-exhaustiveness twins are gated by
+# `test_fetches_registration_start_date`, which requires a `wiki_read` call from
+# the AGENT. A reader who mistakes "call no other tool" for a session-wide rule
+# would fail those four on a check unrelated to this arm.
+#
+# The markers exist so the relay is copyable as a block, and so
+# `test_direct_delegation_relayed_verbatim`'s failure message can show what the
+# main thread had in front of it.
+DIRECT_DISPATCH_PROMPT = """\
+You are relaying one message to a subagent. Do exactly this, and nothing else:
+
+1. Call the Agent tool with subagent_type "{agent}".
+2. Pass, as the `prompt`, the text between the DELEGATION markers below — copied
+   character for character. Do not summarise, reword, soften, add to, or omit any
+   part of it. Do not include the markers themselves.
+3. When the subagent returns, reply with its response, and stop.
+
+You yourself must not read any file, call any other tool, or do any part of the
+task. The subagent does the work; you only carry the message and hand back what
+it returns.
+
+--- BEGIN DELEGATION ---
+{delegation}
+--- END DELEGATION ---
+"""
+
+
+def direct_dispatch_prompt(agent: str, delegation: str) -> str:
+    """The main-thread prompt for a direct-agent test.
+
+    `agent` is the test's `skill` — the three pairs in scope name their agent
+    identically. The orchestrator asserts the agent file exists before calling
+    this, so a pair whose agent is named differently (record-extraction ->
+    record-extractor) fails loudly rather than spawning nothing.
+    """
+    return DIRECT_DISPATCH_PROMPT.format(agent=agent, delegation=delegation)
+
+
+# Tool names the CLI uses to spawn a subagent. Both are matched because the name
+# has moved: `BASELINE_ALLOWED` was written for `Task`, and every spawn in the
+# committed corpus is `Agent`.
+SPAWN_TOOL_NAMES = ("Agent", "Task")
+
+
+def spawned_agents(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
+    """Subagent names spawned during the run, in call order.
+
+    Derived from `builtin_tool_calls` rather than collected a second time in the
+    hook: those records already carry `subagent_type`, already reach the
+    orchestrator, and are already persisted, so a parallel list could only drift
+    from them.
+
+    `subagent_type` may be ABSENT — a general-purpose spawn carries only
+    {description, prompt} (e.g. `ut_research_plan_wzk` in
+    eval/runlogs/unit/research-plan/v1_2026-09-01_13-24-52.json). Such a call is
+    skipped rather than raising: it spawned no *named* agent, which is exactly
+    what the direct arm's assertion needs to know.
+
+    **Main-thread spawns only.** `agent_id` is present on a record only when the
+    hook fired inside a subagent (`builtin_call_record`), so its ABSENCE is what
+    marks the main thread — membership, never truthiness. The direct arm's claim
+    is specifically that the MAIN THREAD spawned the pair's agent and relayed the
+    delegation; a nested spawn would otherwise satisfy `_compute_outcome`,
+    `derive_activated` and both gating validators without that ever being true.
+    No pair's agent holds a spawn tool today, so this filters nothing in the
+    committed corpus (all 8 spawns in v1_2026-09-14_23-01-14 carry no `agent_id`)
+    — it is the guard for the first agent that gains one.
+    """
+    out: list[str] = []
+    for call in builtin_tool_calls or []:
+        if call.get("tool") not in SPAWN_TOOL_NAMES or "agent_id" in call:
+            continue
+        name = (call.get("args") or {}).get("subagent_type")
+        if name:
+            out.append(str(name))
+    return out
+
+
+def spawn_prompts(
+    builtin_tool_calls: list[dict[str, Any]], agent: str | None = None
+) -> list[str]:
+    """The `prompt` argument of every subagent spawn, in call order, untruncated.
+
+    Untruncated because `_UNTRUNCATED_ARGS` exempts ("Agent", "prompt"); a `Task`
+    spawn would still be cut at BUILTIN_ARG_TRUNCATE, which the verbatim
+    validator's failure message names so a cut is never mistaken for a reword.
+    """
+    out: list[str] = []
+    for call in builtin_tool_calls or []:
+        # Main-thread spawns only — see `spawned_agents`.
+        if call.get("tool") not in SPAWN_TOOL_NAMES or "agent_id" in call:
+            continue
+        args = call.get("args") or {}
+        # `agent` ANCHORS the prompt to the spawn that received it. Without
+        # it the caller gets a flat list of every prompt, and the verbatim
+        # check passes when the delegation went to a DIFFERENT agent while
+        # the pair's own agent got a reword — measured on two shapes, and
+        # reachable: 9 of the 394 committed runs that spawned anything made
+        # more than one main-thread spawn, one of them naming two different
+        # agents. None today, which is how it stays invisible.
+        if agent is not None and args.get("subagent_type") != agent:
+            continue
+        prompt = args.get("prompt")
+        if prompt is not None:
+            out.append(str(prompt))
+    return out
 
 
 def builtin_call_record(
@@ -416,7 +545,9 @@ class SkillRunResult:
     unread_skill_calls: list[list[str]] = field(default_factory=list)
     # Every built-in (non-MCP) tool call the run emitted, as
     # {"tool", "args", "agent_id"?} — see builtin_call_record for why this
-    # exists. Telemetry only: nothing reads it to gate, grade, or abort.
+    # exists. Telemetry for every tool EXCEPT `Agent`/`Task`: the direct-agent arm
+    # derives `spawned_agents` and `spawn_prompts` from those records, and two
+    # gating universal validators read them, so this field now decides outcomes.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
     # True when the run ended before a ResultMessage ever arrived even though
     # it is NOT an abort — currently only the negative-test routing

@@ -7,7 +7,7 @@ import { srcFiles, srcSource, withoutComments } from "./src-files.js";
 // backend that is not a directory. So the import is banned everywhere but the
 // file backend itself, auth (per-user files under ~/.familysearch-mcp, which
 // are not project state) and the bundled-data reader. Porting every tool proves
-// forty-eight existentials; this proves the universal.
+// forty-nine existentials; this proves the universal.
 
 const EXEMPT = new Set([
   "store/fs-project-store.ts",
