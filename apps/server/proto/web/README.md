@@ -64,6 +64,15 @@ and drops the one the 202's `seq` names; everything else relays.
   stream A (the driver says so in its own table).
 - **From the venv** (`make proto-web`): the same tier via `uvicorn --app-dir proto
   web.app:app` against the compose postgres (`:5434`) and elasticmq (`:9324`).
+- **The SPA** (`make web-proto`, Chrome on `127.0.0.1:5173`) — **verified in review on
+  the compose stack 2026-09-14**: the auth stubs answer, sessions list and create, two
+  messages round-trip POST → queue → shim → worker → `turn_done` → SSE with exactly two
+  user bubbles in the DOM (the echo drop), the spinner clears on `turn_done`, and a reload
+  halfway through a hand-seeded 25 s turn replays the whole transcript with no duplicates
+  and comes back on **Stop** — the `status turn_active` frame landing after the replay.
+  Tool chips, the thinking block, the phase rail and the live session title all render off
+  SSE frames. Still to come: a real worker's turn driving the SPA (D17), which is also the
+  run where the driver's strong "B resumed at A's last seq + 1" check returns.
 
 `QUEUE_URL` unset → `NullQueue`: the turn is recorded (a `turns` row, a `user_msg` event)
 and never enqueued, logged loudly at start. Under `NullQueue` nothing completes a turn, so

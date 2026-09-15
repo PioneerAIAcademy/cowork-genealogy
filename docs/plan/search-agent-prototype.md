@@ -1145,7 +1145,13 @@ without whichever Bedrock refuses.
   2026-09-14: the image builds and comes up healthy, `make proto-smoke` passes 14/14
   through `proto-up-core`, `003_web.sql` applies to a pre-existing volume, and a turn
   round-trips POST → queue → shim → worker → `turn_done` → SSE. No CI job runs any proto
-  compose target, so it stays a hand check. `--worker` runs the same checks against a real
+  compose target, so it stays a hand check. The SPA on that stack (`make web-proto`) was
+  driven in the same review: two turns round-tripped with exactly two user bubbles, the
+  spinner cleared on `turn_done`, and a reload halfway through a hand-seeded 25 s turn
+  replayed the transcript without duplicates and came back busy — the replay-then-
+  `turn_active` order doing its job. What no run has yet exercised is a real worker's turn
+  driving the SPA; that is D17, and the run where the driver's strong resume check
+  (`B resumed at A's last seq + 1`) binds again. `--worker` runs the same checks against a real
   worker for D17.
 - **D14** Kill-resume test **against the mock agent**, not a real fixture. Twenty
   debug iterations on a real run is $147 and 18 hours; the mock is ~90 s and free,
