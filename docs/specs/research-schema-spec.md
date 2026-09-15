@@ -147,7 +147,7 @@ The following are **open enums** — recommended values that skills should prefe
 | `record_role` | See naming convention below | assertions |
 | `repository` | `FamilySearch`, `Ancestry`, `MyHeritage`, `FindMyPast`, `NARA`, `state_archives`, `county_courthouse`, `other` | plan items, sources. Use the same spelling between plans and sources so searches can match plan items to their resulting sources. |
 
-**`record_role` naming convention:** Use lowercase_with_underscores. Numbered roles use the pattern `{role}_{n}` (e.g., `child_1`, `child_2`, `heir_1`). Standard roles: `head_of_household`, `wife`, `child_{n}`, `deceased`, `informant`, `father_of_bride`, `mother_of_bride`, `father_of_groom`, `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_{n}`, `witness_{n}`, `godparent_{n}`, `absent` (for negative evidence — a person expected but not found in the record). **Enforced:** `evidence_type: "negative"` requires exactly `absent` here, and `absent` is reserved for negative evidence (see "Negative evidence" below).
+**`record_role` naming convention:** Use lowercase_with_underscores. Numbered roles use the pattern `{role}_{n}` (e.g., `child_1`, `child_2`, `heir_1`). Standard roles: `head_of_household`, `wife`, `child_{n}`, `deceased`, `informant`, `father_of_bride`, `mother_of_bride`, `father_of_groom`, `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_{n}`, `witness_{n}`, `godparent_{n}`, `absent` (for negative evidence — a person expected but not found in the record). **Enforced:** `evidence_type: "negative"` requires exactly `absent` here (validator, both schema trees, and `research_append`); the converse, `absent` reserved for negative evidence, is enforced **by `research_append` only** (see "Negative evidence" below).
 
 ---
 

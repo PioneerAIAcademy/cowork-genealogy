@@ -58,8 +58,18 @@ def tracked_json_files() -> list[str]:
     return [f for f in out.split("\0") if f and "node_modules" not in f]
 
 
+SKIPPED: list[tuple[str, str]] = []
+
+
 def find_negatives(path: str) -> list[tuple[str, dict]]:
-    """Every object with evidence_type == "negative", however deeply nested."""
+    """Every object with evidence_type == "negative", however deeply nested.
+
+    A file that cannot be parsed is RECORDED, not silently dropped. This script
+    is the durable evidence for an `enforcing` row, so a file that contributed
+    nothing because it failed to parse must not be indistinguishable from one
+    that genuinely held no negatives: a silent under-count reads as a measured
+    zero.
+    """
     found: list[tuple[str, dict]] = []
 
     def walk(node, where: str, depth: int = 0) -> None:
@@ -82,7 +92,8 @@ def find_negatives(path: str) -> list[tuple[str, dict]]:
     try:
         with open(path, encoding="utf-8") as handle:
             walk(json.load(handle), "")
-    except (ValueError, OSError):
+    except (ValueError, OSError) as exc:
+        SKIPPED.append((path, type(exc).__name__))
         return []
     return found
 
@@ -91,6 +102,10 @@ def already_refused(assertion: dict) -> str | None:
     """Why the document is rejected TODAY, independently of this gate."""
     if "record_role" not in assertion:
         return "checkRequired (no record_role)"
+    if "informant_proximity" not in assertion:
+        # checkEnum is guarded by `if ("informant_proximity" in a)`, so an
+        # absent key is refused by checkRequired, not by the enum check.
+        return "checkRequired (no informant_proximity)"
     if assertion.get("informant_proximity") not in PROXIMITY_ENUM:
         return "checkEnum (proximity off-enum)"
     return None
@@ -111,7 +126,12 @@ def main() -> int:
     old = [(p, w, a) for p, w, a in violating if already_refused(a)]
     new = [(p, w, a) for p, w, a in violating if not already_refused(a)]
 
-    print(f"git-tracked JSON files scanned : {len(files)}")
+    print(f"git-tracked JSON files scanned : {len(files) - len(SKIPPED)}"
+          f" of {len(files)} tracked")
+    if SKIPPED:
+        print(f"  UNPARSEABLE, contributed nothing : {len(SKIPPED)}")
+        for path, kind in SKIPPED:
+            print(f"     {path}  ({kind})")
     print(f"negative-assertion objects     : {len(negatives)}")
     print(f"violating objects              : {len(violating)}")
     print(f"  already refused today        : {len(old)}")

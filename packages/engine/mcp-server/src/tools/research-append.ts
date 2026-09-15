@@ -1800,7 +1800,7 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
 }
 
 /** Assertions with `evidence_type: "negative"` must set `record_role` to the
- *  exact string `"absent"` (research-schema-spec.md §5.6) — and vice versa —
+ *  exact string `"absent"` (research-schema-spec.md §5.6, "Negative evidence") — and vice versa —
  *  and must set `informant_proximity` to `"researcher"`: no record informant
  *  reported an absence, whatever the record type, so a negative is always the
  *  researcher's own conclusion. None of these are independent judgment calls;
@@ -1834,8 +1834,16 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   if (typeof entry.evidence_type !== "string") return;
   const isNegative = entry.evidence_type === "negative";
   const roleIsAbsent = entry.record_role === "absent";
+  // Both arms are COLLECTED, not thrown one at a time. An entry wrong on both
+  // fields is the commonest violating shape in the corpus (a_012's pre-retag
+  // state is exactly it), and throwing the role arm first hid the proximity
+  // error until the caller had already spent a round trip fixing the role.
+  // That is this change's own thesis applied to itself: a refusal that names
+  // one field at a time buys a relabel rather than a fix. The document tier
+  // already reports both.
+  const errors: string[] = [];
   if (isNegative && !roleIsAbsent) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
         `— negative evidence always uses the literal record_role "absent", and that ` +
         `holds even when the record NAMES the person: an obituary's "preceded in death ` +
@@ -1846,17 +1854,20 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
         `together, not just this one. A blank field on a present person (no surname, no ` +
         `occupation) is silence: write no assertion. If it is an absence, keep the ` +
         `person's identity in \`value\` (e.g. "Walter Whitaker preceded Harold Dean ` +
-        `Whitaker in death"), not a generic value shared across multiple people.`,
+        `Whitaker in death"), not a generic value shared across multiple people. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
     );
   }
   if (roleIsAbsent && !isNegative) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
         `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
     );
   }
   if (isNegative && entry.informant_proximity !== "researcher") {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has evidence_type "negative" but informant_proximity ` +
         `'${entry.informant_proximity}' — negative evidence is the researcher's own ` +
         `conclusion, so it always takes informant_proximity "researcher": no record ` +
@@ -1865,9 +1876,13 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
         `informant_proximity to "researcher". Only if the finding is not an absence at ` +
         `all — a fact about a person present in the record — is "negative" the wrong ` +
         `evidence_type, and then record_role must change from "absent" to that person's ` +
-        `real role in the same edit; changing evidence_type alone is refused.`,
+        `real role in the same edit; changing evidence_type alone is refused. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
     );
   }
+  if (errors.length) throw new ResearchAppendError(errors);
 }
 
 function applyOne(

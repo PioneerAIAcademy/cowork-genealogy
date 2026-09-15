@@ -5802,6 +5802,78 @@ describe("research_append — negative evidence role invariant", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("reports BOTH arms at once when an entry is wrong on both fields", async () => {
+    // a_012's pre-retag shape. Throwing the role arm first hid the proximity
+    // error until the caller had spent a round trip, which is this change's own
+    // thesis (a one-field refusal buys a relabel) turned on itself.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "deceased",
+            informant_proximity: "family_not_present",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // ARM-UNIQUE phrases. `record_role "absent"` now appears in BOTH messages,
+    // because each one spells out the conforming shape — so matching it counts
+    // two and proves nothing about which arms fired.
+    expect(r.errors.filter((e) => /always uses the literal record_role/.test(e))).toHaveLength(1);
+    expect(r.errors.filter((e) => /changing evidence_type alone is refused/.test(e))).toHaveLength(1);
+  });
+
+  // ── The field-ABSENT shape. Both arms decide it deliberately (no presence
+  // guard, so `!==` is true for a missing key and the rule still fires), and
+  // nothing pinned that: two different ways of adding a presence guard each
+  // left all 298 tests green.
+
+  it("still refuses a negative whose record_role key is missing entirely", async () => {
+    await writeProject();
+    const entry: Record<string, unknown> = {
+      ...noId(validAssertion("x", "src_001")),
+      informant_proximity: "researcher",
+      evidence_type: "negative",
+    };
+    delete entry.record_role;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "assertions", op: "append", entry } as any],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // Assert THIS arm fired, not merely that the call failed: the document
+    // tier's checkRequired refuses a missing record_role anyway, so `ok ===
+    // false` stays true with a presence guard added here and proves nothing.
+    // Break-testing caught exactly that.
+    expect(r.errors.some((e) => /always uses the literal record_role/.test(e))).toBe(true);
+  });
+
+  it("still refuses a negative whose informant_proximity key is missing entirely", async () => {
+    await writeProject();
+    const entry: Record<string, unknown> = {
+      ...noId(validAssertion("x", "src_001")),
+      record_role: "absent",
+      evidence_type: "negative",
+    };
+    delete entry.informant_proximity;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "assertions", op: "append", entry } as any],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => /changing evidence_type alone is refused/.test(e))).toBe(true);
+  });
+
   it("does not fire for non-assertion sections (no evidence_type field)", async () => {
     await writeProject();
     const r = await researchAppend({

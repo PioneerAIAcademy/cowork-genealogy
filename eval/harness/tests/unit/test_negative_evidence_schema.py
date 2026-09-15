@@ -9,7 +9,7 @@ vitest suites; the schema arm carried none.
 That gap was not theoretical. The only document in the repo the conditional
 rejected was `flynn-parentage-not-proved` `a_012`, and the same change retags
 it — so after the retag, deleting the `allOf` from both trees left `make
-engine-test` (3492) and `make harness-test` (3859) entirely green. A check
+engine-test` (3494) and `make harness-test` (3859) entirely green. A check
 that cannot fail reads as coverage and is worse than no check at all
 (CLAUDE.md, "A new lint must be proven to fail").
 
