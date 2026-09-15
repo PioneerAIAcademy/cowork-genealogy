@@ -916,9 +916,11 @@ against the harness's arbitrary dict key rather than the product's name. The
 bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
 `record-extractor` was refused outright with all 16 of its entries named
 unrecognized, and the lint agreed with the omission because it derived its expected
-prefixes from the two registrars we knew about. (`gps-mentor` is the exception: it
-declares a bare `Read`, which always resolves, so it would spawn holding that
-alone rather than be refused.) Listing every
+prefixes from the two registrars we knew about. (An agent that declares the
+built-in `Read` bare is the exception: `Read` always resolves, so it spawns
+holding that alone rather than be refused. Today that is `proof-conclusion` and
+`research-exhaustiveness`; every other agent, `gps-mentor` included, is MCP-only
+and a registrar miss refuses it.) Listing every
 spelling is safe because unrecognized entries are ignored so long as one resolves.
 
 **`disallowedTools:` was never the load-bearing layer — and this half of the

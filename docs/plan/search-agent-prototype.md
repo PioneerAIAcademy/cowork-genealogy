@@ -1,9 +1,12 @@
 # Search Agent prototype — hosted architecture, one month
 
 **Status:** IN PROGRESS — P1, the three D1–2 probes, P3 and P2 measured 2026-09-10 (PR
-#2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); D11–13 built
-2026-09-14 ahead of D6–10 (PR #2548; the web tier, the SSE transport in
-`apps/web`, the headless driver — driven against seeded rows until the worker exists); FamilySearch's
+#2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); the `sidecar_read`
+half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant with `Read`
+removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
+issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
+(PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
+against seeded rows until the worker exists); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -1070,6 +1073,17 @@ without whichever Bedrock refuses.
   `agent-tool-names`, `agent-delegation-framing`, `gps-mentor-craft-doctrine`,
   `skill-name-resolution` and `doc-links` (there is no per-agent unit suite; `eval/tests/unit/`
   holds skill directories only).
+  **Done 2026-09-14 (PR #2567), as its own PR ahead of the `PgS3ProjectStore` half.** The
+  tool reads through `getProjectStore()`; its page is bounded on the JSON-escaped body so
+  the envelope never crosses the CLI's 50,000-char spill; existence is decided by reading,
+  not `exists()`. `gps-mentor` holds it under all three spellings and **`Read` left its
+  `tools:`** — the two body instructions and the spec's sites now name `sidecar_read`, and
+  the e2e read-deny hook routes `evaluations/` and `uploads/` to it. Of the five packaging
+  tests named above only `agent-tool-names` fired; none of the four `Read` sites sits in
+  the craft slice or on a delegation edge. The `research/SKILL.md` glob rewrite named under
+  P2 is split out to issue #2568 (the skill's edits are sequenced one paid run at a time).
+  One shared-seam change came with it: `FsProjectStore.readText` re-checks containment on
+  the real path, so a symlink under `uploads/` cannot read outside the project.
   **The ledger was a day, not half** — the dispatch extraction above was the bulk of it,
   and is cut with it. No schema change: the ledger was store state, not a `research.json` section, which keeps it off
   the four-site + `packages/schema` + `ownership.json` blast radius.
@@ -1378,8 +1392,9 @@ red-lined it went with the ledger on 2026-09-10 — and fails on the
 `sidecar_read` addition; `readme-catalog.test.ts` fires twice on it — every registered
 tool must appear in `README.md`, and the stated count must match reality; `README.md`
 states it **twice** ("48 tools" and "48 MCP tools") and both move by one (48→49, or
-49→50 if PR #2397 lands first); five more fire on the `gps-mentor.md` and
-`research/SKILL.md` body rewrites rather than on the dispatch or manifest change:
+49→50 if PR #2397 lands first); five more were expected to fire on the `gps-mentor.md` and
+`research/SKILL.md` body rewrites rather than on the dispatch or manifest change (on the
+`gps-mentor.md` half, only `agent-tool-names` did — D6–8, 2026-09-14):
 `agent-tool-names`, `agent-delegation-framing`, `gps-mentor-craft-doctrine`,
 `skill-name-resolution` and `doc-links`; the agent-tool-names test is a permission snapshot that fails on *any* change
 to an agent's tools list, in all three server spellings.
