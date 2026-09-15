@@ -1022,6 +1022,12 @@ def _uncoerce_routing_negative(dims: list[dict], run: dict) -> list[dict]:
     `coerced_routing_negative_to_na` warning (`name` + `score`). Reverse that so
     a replay sees the judge's raw draw. Returns `dims` unchanged when no such
     warning is present, so every non-coerced draw replays exactly as before.
+
+    Raises `judge.JudgeError` when a coercion warning names a dimension but
+    carries no `score`: the preserved score is the only record of what the judge
+    returned, so without it the draw cannot be replayed at all. Raised as
+    JudgeError, not KeyError, so the replay loop reports it as a diagnostic
+    instead of dying on it.
     """
     restored = {}
     for w in (run.get("output") or {}).get("warnings") or []:
@@ -1057,6 +1063,17 @@ def _uncoerce_routing_negative(dims: list[dict], run: dict) -> list[dict]:
 
 def _replay_draw(dims: list[dict], run: dict, rubric, tool_calls):
     """Replay one STORED judge draw as the raw response it was extracted from.
+
+    `judge._extract_dimensions` validates a RAW judge response, but a run log
+    stores dimensions the ORCHESTRATOR has already post-processed: for a
+    correctly-routed negative test it nulls Correctness/Completeness
+    (orchestrator.py `_ROUTING_DIAGNOSTIC_DIMENSIONS`) and records the judge's
+    original score on a `coerced_routing_negative_to_na` warning. Replaying the
+    stored draw as-is asks the raw-response validator to accept an artifact it
+    never sees in production, and it correctly refuses: only Tool Arguments may
+    be null. Restoring the preserved score replays what the judge actually
+    returned, which is what the corpus test is for. This does NOT widen the null
+    policy — a null with no coercion warning behind it still raises.
 
     The corpus loop and the tests both go through here, so the un-coercion has
     one call site rather than a line in a loop body that no test reaches — the
@@ -1164,7 +1181,9 @@ def test_replay_still_raises_on_the_same_draw_with_no_coercion_warning(
 ):
     """Same nulls, no warning behind them — still a malformed draw."""
     dims, _ = _coerced_negative_draw()
-    with pytest.raises(judge.JudgeError):
+    # match=, not a bare JudgeError: the malformed-warning raise above is also a
+    # JudgeError, so an unanchored assertion would pass on the wrong error.
+    with pytest.raises(judge.JudgeError, match="returned null score"):
         _replay_draw(dims, {"output": {"warnings": []}}, record_extraction_rubric,
                      tool_calls=[{"tool": "x"}])
 
@@ -1248,19 +1267,9 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 run_tool_calls = (r.get("output") or {}).get("tool_calls") or []
                 if not run_tool_calls:
                     zero_call_draws += 1
-                # Un-coerce before replaying. `_extract_dimensions` validates a
-                # RAW judge response, but a run log stores dimensions the
-                # ORCHESTRATOR has already post-processed: for a correctly-routed
-                # negative test it nulls Correctness/Completeness
-                # (orchestrator.py `_ROUTING_DIAGNOSTIC_DIMENSIONS`) and records
-                # the judge's original score on a
-                # `coerced_routing_negative_to_na` warning. Replaying the stored
-                # draw as-is asks the raw-response validator to accept an
-                # artifact it never sees in production, and it correctly refuses:
-                # only Tool Arguments may be null. Restoring the preserved score
-                # replays what the judge actually returned, which is what this
-                # test is for. This does NOT widen the null policy — a null with
-                # no coercion warning behind it still raises (issue #2584).
+                # Replays the STORED draw as the raw response it came from —
+                # see `_replay_draw` and `_uncoerce_routing_negative` for why
+                # those are not the same artifact (issue #2584).
                 try:
                     out, warns = _replay_draw(dims, r, rub, run_tool_calls)
                     dropped_total += len(warns)
