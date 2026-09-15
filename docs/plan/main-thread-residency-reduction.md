@@ -17,168 +17,97 @@ goal is to move work off the main thread, not to buy a bigger window.
 problem at 5× and improves nothing about subagent windows or cost; every lever
 below improves all three.
 
-## What is measured, and how well
+## What is measured
 
-From the 172 committed e2e runs on `main` (exact) and the four instrumented runs
-on `origin/2491-harness-closeout` (marked):
+Superseded 2026-09-15 by the first instrumented run (`ogletree-children`,
+`run-2026-09-15_08-02-58`, $15.39, 93.8 min, 5 compactions, `end_turn`). Every
+earlier table in this document was computed on **truncated** results and ranked
+the wrong things. These figures are exact.
 
 | fact | value |
 |---|---|
-| Tokens added to the main thread per run | **449,000** median, 436k–695k (n=4, instrumented) |
-| Main-thread window ceiling | ~167–172k = 83.6–85.9% of **200,000** — auto-compaction, not a 1M window |
-| Share of tool calls made on the main thread | **71%** (133/run main vs 53/run all subagents, n=33) |
-| Baseline before the first tool call | **~27,000** — 16% of the window, spent standing still |
-| All skill bodies, resident | ~48,000/run (11% of the total) |
+| Main-thread tool bytes | **451,080 tokens**, exact — `result_chars`, no cap |
+| Main-thread peak window | 164,235 (5 compactions) |
+| Messages | 95 main / **98 subagent** |
+| Total main-thread window growth | 412,447 |
 
-Main-thread bytes by tool (args + captured result, n=33). **The args half is
-exact; the result half is a floor**, capped at `_RUNLOG_MAX_CHARS = 4000`:
+**Main-thread tool bytes, by tool, one run:**
 
-| tool | calls/run | ~tok/run | share |
+| tool | calls | ~tok | share |
 |---|---|---|---|
-| `research_append` | 17.5 | **15,614** | 28.0% |
-| `record_search` | 15.0 | 8,839 | 15.9% |
-| `Agent` | 11.7 | 8,455 | 15.2% |
-| `research_log_append` | 8.8 | 4,504 | 8.1% |
-| `research_query` | 9.8 | 3,408 | 6.1% |
-| `record_read` | 5.9 | 2,920 | 5.2% |
-| `Read` | 10.6 | 1,802 | 3.2% |
+| **`wiki_place_page`** | 16 | **82,422** | 18.3% |
+| `record_search` | 23 | 68,955 | 15.3% |
+| **`external_links_search`** | 5 | **55,746** | 12.4% |
+| **`wiki_read`** | 8 | **54,192** | 12.0% |
+| `volume_search` | 4 | 41,424 | 9.2% |
+| **`wiki_search`** | 4 | **37,743** | 8.4% |
+| `Agent` | 17 | 25,295 | 5.6% |
+| `Read` | 15 | 19,062 | 4.2% |
+| `research_append` | 15 | 16,112 | 3.6% |
+| `record_read` | 10 | 12,080 | 2.7% |
 
-Captured total ≈ **55,700 tok/run**, against 449k added. So roughly **88% of what
-fills the main thread is still unattributed** — truncated result bodies, subagent
-return payloads, thinking, and narration.
+**The wiki/external tools are 229,528 tokens — 51% of all main-thread tool
+bytes**, and **34 of those calls follow a `Skill: locality-guide` invocation.**
+Single results run enormous: `volume_search` 12,680 tokens in one call,
+`external_links_search` averaging **11,127 tokens per call** across five.
 
-**That table is pooled across an architectural transition** and its
-`research_append` row is therefore wrong for the current code — three pair
-conversions landed inside its window. Lever 1 has the split. **Split every rate
-in this document on the run's own `git_sha`, never on its date**: run logs before
-2026-08-09 carry no sha, and several runs dated after a conversion were still
-executing pre-conversion code. Two earlier drafts of lever 1 got this wrong in
-two different directions.
+**`research_append` is 3.6%, not the 28% this document led with.** The pooled
+table that produced 28% measured args exactly and results at a 4,000-char cap,
+so it ranked the one tool whose payload is mostly arguments. Every
+result-heavy tool was invisible. That error is the reason `result_chars` exists.
 
-**`Read` is the most understated row in that table.** 452 of 2,160 research.json
-reads (21%) pass no `offset`/`limit`, and the file is a median 76 KB / max 356 KB
-— ~20k tokens a read, ~91k at worst, almost all of it hidden behind the cap.
-
-## What the first instrumented run settles
-
-Run one baseline `ogletree-children` with the new fields, then read:
-
-1. **`result_chars` on the saturated rows** — the true size of `record_search`,
-   `record_read` and full `Read` payloads. This re-ranks levers 3–5 and is the
-   only thing that can.
-2. **Window growth minus result size, per turn** — `message_usage` gives
-   per-message window growth; `result_chars` gives the tool bytes in that turn;
-   the difference is **thinking + narration**. This is the only measurement that
-   says whether thinking is a residency problem at all.
-3. **`thread_windows.sub.message_count`** — expected `0` on CLI 2.1.271
-   (measured: subagent turns never surface as `AssistantMessage`).
-
-**Do not size the thinking levers before (2) exists.** Thinking tokens are
-*output*; whether they occupy the window afterward depends on whether the runtime
-replays prior-turn thinking. If it does not, lowering `effort` cuts cost and
-latency but not residency — and `effort: high` is pinned to match Cowork, so it
-trades quality for a saving that may not exist.
+**Thinking is not a major residency term.** Tool bytes (451,080) exceed total
+main-thread window growth (412,447) on their own, so tool payloads account for
+the whole of it and thinking plus narration are swamped. Lowering `effort` is
+not a residency lever. (The two totals are not directly subtractable — five
+compactions evict content mid-run — but the direction is unambiguous.)
 
 ## The levers
 
 Ranked by measured size over confidence. Each names what it touches and what
 would falsify it.
 
-### 1. Finish the pair-conversion queue — `search-records` first, then `research-plan`
+### 1. Convert `locality-guide` (#2117). It is half the main thread.
 
-Measured on the four pair-present runs, main-thread footprint per run —
-**traffic** (args + captured result) plus the **resident skill body** (size ×
-invocation rate):
+Measured exactly on the instrumented run, main-thread tool bytes by the skill
+that drove them:
 
-| lever | traffic tok/run | resident body | total |
+| conversion | drives | tok/run | share of main tool bytes |
 |---|---|---|---|
-| **#2243 `search-records`** (blocked on **#2123**) | **12,573** (floor) | **19,914** | **32,487** |
-| **#2116 `research-plan`** | 3,277 | 9,004 | 12,281 |
+| **#2117 `locality-guide`** | `wiki_place_page`, `wiki_read`, `wiki_search`, `external_links_search` | **229,528** | **51%** |
+| #2243 `search-records` (blocked on #2123) | `record_search`, `record_read`, `volume_search` | 122,459 | 27% |
+| #2116 `research-plan` | `plan_items` / `plans` writes | 16,112 | 3.6% |
 
-**`search-records` is ~2.6× the lever, and its number only moves up.** Its
-traffic is dominated by `record_search` at 9,870 tok/run against a 4,000-char
-result cap that 51 of 520 results saturate; `research-plan`'s is mostly args,
-which are recorded exactly. `record_read` adds another 1,941.
+**34 of the 35 wiki/external calls on the main thread follow a
+`Skill: locality-guide` invocation.** The per-call payloads are the largest in
+the run: `external_links_search` averages **11,127 tokens a call**,
+`wiki_place_page` 5,134 across 16 calls, `wiki_read` 6,755 across 8.
 
-**An earlier draft of this document ranked `research-plan` first. That was
-wrong, and wrong in a way worth naming:** it ranked by *operation count* —
-`plan_items` at 27.2 ops/run looked dominant — when operations are not tokens.
-Those 29.5 plan ops average ~111 tokens each; `search-records`' 17.2 calls carry
-far more per call. Rank levers by bytes.
+`locality-guide` is a skill, so it runs **inline in the main session** and every
+one of those results lands in the orchestrator's window. Converting it to a pair
+moves all 229,528 tokens into an agent window that is discarded when the agent
+returns — the single largest change available, and it is already on the board,
+unblocked, in `cluster:pair-conversion`.
 
-**Sequencing cuts the other way, though.** #2243 is blocked on #2123 (move the
-reference layer onto the wiki, then fold or delete the rest of a 60,807-byte
-body) — real work. #2116 is unblocked and can start now. So: **#2123 → #2243 is
-the priority; #2116 is what to take while #2123 is in flight.**
+- **Action:** prioritise **#2117**. Then **#2123 → #2243** (search-records, 27%).
+  **#2116** (`research-plan`) is now a distant third at 3.6%.
+- **Acceptance:** main-thread `result_chars` for the wiki/external tools falls
+  below 50,000 tok/run on an instrumented run, from 229,528, with no loss in
+  locality findings.
 
-### 1a. `research-plan` (#2116) — the unblocked half
+#### This ranking replaces two earlier ones, both wrong, in instructive ways
 
-`research_append` writes go through the thread whose only job is routing. The
-fix is the pair conversion queue, and **most of it is already done** — the
-remaining main-thread write traffic is overwhelmingly one unconverted section.
+- The **first** ranked `research_append` at 28% and first place. That table
+  measured args exactly and results at a 4,000-char cap, so it ranked the one
+  tool whose payload is mostly *arguments* and made every result-heavy tool
+  invisible. `research_append` is really **3.6%**.
+- The **second** ranked by *operation count* (`plan_items` at 27.2 ops/run) when
+  operations are not tokens — those ops average ~111 tokens each.
 
-#### How this figure was reached, because the first two attempts were wrong
+Both are the same error in different clothes: ranking on the quantity that was
+easy to measure rather than the one that mattered. **Rank on `result_chars`.**
 
-Split runs by **whether the `person-evidence` agent existed at the run's own
-`git_sha`** — not by date. The date proxy failed twice over: run logs older than
-2026-08-09 carry no `git_sha` at all, and several runs *dated* after the
-conversion were still executing pre-conversion code.
-
-| pair present at that commit? | runs | main pe ops/run | sub pe ops/run | delegated |
-|---|---|---|---|---|
-| **yes** | 4 | **0.5** | **123.0** | **99.6%** |
-| no | 14 | 55.1 | 0.0 | 0% |
-| unresolvable sha | 15 | 57.4 | 4.0 | 6.5% |
-
-**The pair works essentially perfectly: 55.1 → 0.5 main-thread ops/run.** Two
-earlier passes in this document reported 25.3% and then 51.8% delegated. Both
-were pooling artifacts. 99.6% is the number.
-
-The `same_person` concern an earlier draft raised dies with it. On pair-present
-runs the main thread makes **0.00** `same_person` calls a run and the agent makes
-**11.00** — the identity check did not go missing, it moved into the agent that
-owns it, exactly as designed. Do not repeat the "43 : 1 possible bypass" framing;
-it was an artifact of averaging in runs where the agent did not exist.
-
-#### What is actually left
-
-On the four pair-present runs, main-thread `research_append` operations by
-section:
-
-| section | main ops/run | delegated |
-|---|---|---|
-| **`plan_items`** | **27.2** | **0%** |
-| `plans` | 2.2 | 0% |
-| `conflicts` | 2.0 | 0% |
-| `assertions` | 1.2 | 0% |
-| `questions` | 1.2 | 66.7% |
-| `project` | 1.0 | 71.4% |
-| `proof_summaries` | 0.2 | 87.5% |
-| `person_evidence` | 0.5 | 99.6% |
-| **total** | **38.2** | |
-
-Total main-thread write operations across the conversions: **91.3 → 38.2 per
-run, a 58% cut.** `plan_items` alone is 71% of what remains, and it belongs to
-`research-plan` — **#2116**, already on the board, already in the
-`cluster:pair-conversion` queue.
-
-- **Action:** none new. Prioritise #2116, then `conflict-resolution` (#1852) and
-  the rest of the queue. This document's contribution is the measurement that
-  says the queue is worth finishing and which item to take first.
-- **Acceptance:** main-thread `research_append` operations per run fall below 15
-  on a pair-present instrumented run, from 38.2.
-
-#### Two caveats, both load-bearing
-
-- **n=4.** The effect (55.1 → 0.5) is far too large to be noise, but the
-  section-by-section table under it is four runs deep. Re-derive after the next
-  few instrumented runs.
-- **15 of 33 runs have an unresolvable `git_sha`.** Ten predate the field; five
-  name commits that no longer exist, because PR branches are squash-merged. So
-  run provenance silently degrades over time, and any future analysis that keys
-  on `git_sha` inherits the same 45% hole. Worth a `nothing-checks` card on its
-  own.
-
+#### `research-plan` (#2116) — still worth doing, now third
 ### 2. Route `Read` of research.json to `research_query`
 
 The scoped accessor already exists and is already used 9.8×/run. 2.6 full reads
@@ -210,8 +139,8 @@ feature.
 
 ### 4. (folded into lever 1)
 
-`search-records` was originally ranked fourth here on the pooled table. Measured
-on pair-present runs it is the **largest** lever in this document — see lever 1.
+`search-records` is the **second** largest lever at 27% of main-thread tool
+bytes — see lever 1 for the measured comparison against `locality-guide`.
 
 ### 5. Decompose the ~27k baseline
 
@@ -283,17 +212,17 @@ change.
 
 ## Sequencing
 
-1. The baseline instrumented run (in progress) → read the three items above.
-   `result_chars` is what turns `search-records`' 12,573 tok/run floor into a
-   real number, and it can only move up.
-2. **Start #2123** (the `search-records` reference layer) — it gates the largest
-   lever and is the long pole.
-3. **Take #2116 (`research-plan`) in parallel** — unblocked, no dependency on
-   the run, and the second-largest conversion left.
-4. Lever 2 (`Read` → `research_query`) needs no eval slot and no architecture
-   change; scope it from `result_chars`.
-5. Answer lever 3's "tuning or feature?" question free, from the same run.
-6. Levers 5–6 follow the measurement, not this doc's ranking.
+1. ~~The baseline instrumented run~~ — **done** (2026-09-15). Every figure above
+   is from it.
+2. **#2117 `locality-guide`** — 51% of main-thread tool bytes, unblocked, on the
+   board. Take it first.
+3. **#2123 → #2243 `search-records`** — 27%. #2123 is the long pole; start it in
+   parallel with #2117.
+4. **Lever 2 (`Read` → `research_query`)** — 19,062 tok/run, no eval slot, no
+   architecture change.
+5. **#2116 `research-plan`** — 3.6%. Worth doing, no longer urgent.
+6. Levers 3, 5 and 6 follow; **thinking/effort is off the list** — the run showed
+   tool payloads account for essentially all window growth.
 
 Re-rank after step 1. Four of the six levers are ranked on a floor, and the run
 exists to replace it.
