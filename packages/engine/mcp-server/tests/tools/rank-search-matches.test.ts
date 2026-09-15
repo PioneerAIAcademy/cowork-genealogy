@@ -960,4 +960,38 @@ describe("rank_search_matches", () => {
     expect(out.relativeTermNote).not.toMatch(/\b10\b/);
   });
 
+
+  // Carried over from the #1212 ruling: the standalone tool is advertised in the
+  // manifest and dispatched with an unchecked cast, so it must range-check `top`
+  // itself rather than relying on record_search having done it.
+  describe("top — range checked on this tool, not only on record_search", () => {
+    it.each([-1, 0, 1.5, Number.NaN])("rejects top: %s", async (bad) => {
+      await expect(
+        rankSearchMatches(
+          {
+            projectPath: "/tmp/p",
+            stagedResultsRef: "results/.staging/x.json",
+            subjectId: "I1",
+            top: bad as number,
+          },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/top must be a positive integer/);
+    });
+
+    it("rejects BEFORE reading the staged file, so a bad top cannot do work", async () => {
+      // If the guard sat after the read, an unreadable ref would mask it.
+      await expect(
+        rankSearchMatches(
+          {
+            projectPath: "/nonexistent-project",
+            stagedResultsRef: "results/.staging/missing.json",
+            subjectId: "I1",
+            top: -1,
+          },
+          LOCAL,
+        ),
+      ).rejects.toThrow(/top must be a positive integer/);
+    });
+  });
 });

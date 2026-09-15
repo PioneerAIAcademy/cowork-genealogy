@@ -39,6 +39,18 @@ export async function rankSearchMatches(
 ): Promise<RankSearchMatchesResult> {
   const { projectPath, stagedResultsRef, subjectId } = input;
 
+  // `top` is range-checked HERE, not only on record_search. This tool is
+  // advertised in the manifest and dispatched with an unchecked cast, so a
+  // caller reaches it directly. Unguarded, `scored.slice(0, input.top)` treats a
+  // negative as an offset from the end: `top: -1` against 5 candidates returned
+  // 4 of them and reported `returnedCount: 4`, silently dropping the last and
+  // describing the truncation as the whole answer.
+  if (input.top !== undefined) {
+    if (!Number.isInteger(input.top) || input.top < 1) {
+      throw new Error("top must be a positive integer.");
+    }
+  }
+
   // ── 1. Read the staged (or finalized) results file (read-only) ─────────────
   const results = (await readStagedResults(
     projectPath,
