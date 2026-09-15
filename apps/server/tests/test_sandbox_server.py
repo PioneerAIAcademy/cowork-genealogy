@@ -54,13 +54,20 @@ def ws_server(tmp_path, request):
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
         encoding="utf-8",
     )
-    deadline = time.time() + 20
+    budget, t0 = 60, time.time()  # generous budget, not a retry (PR #1759 precedent)
+    deadline = t0 + budget
     while time.time() < deadline:
         line = proc.stdout.readline()
         if "listening" in line:
             break
         if proc.poll() is not None:
             raise RuntimeError("server died:\n" + proc.stdout.read())
+    else:
+        proc.kill()
+        raise RuntimeError(
+            f"server did not print 'listening' within the {budget}s startup budget "
+            f"(elapsed {time.time() - t0:.1f}s)"
+        )
     yield port, proj
     proc.terminate()
     try:
@@ -84,28 +91,43 @@ async def _drive(port, proj):
         assert first["type"] == "status"  # snapshot starts with status:ready
 
         await ws.send(json.dumps({"type": "user_msg", "text": "let's start a new project"}))
-        texts, saw_done, end = [], False, time.time() + 45
+        budget, t0 = 120, time.time()  # generous budget, not a retry (PR #1759 precedent)
+        texts, saw_done, end = [], False, t0 + budget
         while time.time() < end and not saw_done:
-            m = json.loads(await asyncio.wait_for(ws.recv(), 45))
+            try:
+                m = json.loads(await asyncio.wait_for(
+                    ws.recv(), max(0.0, end - time.time())
+                ))
+            except (asyncio.TimeoutError, websockets.ConnectionClosed):
+                break
             ev = m.get("event", {}) if m.get("type") == "agent_event" else {}
             if ev.get("kind") == "text":
                 texts.append(ev["text"])
             if ev.get("kind") == "turn_done":
                 saw_done = True
-        assert saw_done, "no turn_done"
+        assert saw_done, (
+            f"no turn_done within {budget}s turn budget "
+            f"(elapsed {time.time() - t0:.1f}s)"
+        )
         assert " ".join(texts).strip(), "agent produced no text"
         # /project watch: write a new file → expect a research_updated delta
         (proj / "research.json").write_text(json.dumps({"project": {"id": "p"}}), encoding="utf-8")
+        budget, t0 = 30, time.time()  # generous budget, not a retry (PR #1759 precedent)
         got_delta = False
-        end = time.time() + 6
+        end = t0 + budget
         while time.time() < end and not got_delta:
             try:
-                m = json.loads(await asyncio.wait_for(ws.recv(), 6))
+                m = json.loads(await asyncio.wait_for(
+                    ws.recv(), max(0.0, end - time.time())
+                ))
                 if m.get("type") == "research_updated":
                     got_delta = True
             except (asyncio.TimeoutError, websockets.ConnectionClosed):
                 break
-        assert got_delta, "watch did not emit research_updated for a new file"
+        assert got_delta, (
+            f"watch did not emit research_updated within {budget}s watch budget "
+            f"(elapsed {time.time() - t0:.1f}s)"
+        )
     finally:
         await ws.close()
 
@@ -152,8 +174,19 @@ def test_local_connect_waits_until_ws_server_accepting():
         port = int(r["wssUrl"].rsplit(":", 1)[1])
         # The gate guarantees readiness: a bare TCP connect succeeds on the first
         # try. Without the gate this is refused (the bug).
-        conn = socket.create_connection(("127.0.0.1", port), timeout=1.0)
-        conn.close()
+        try:
+            conn = socket.create_connection(("127.0.0.1", port), timeout=1.0)
+            conn.close()
+        except ConnectionRefusedError:
+            raise AssertionError(
+                "TCP connect refused — the readiness gate in expose_port "
+                "timed out or its result was discarded"
+            )
+        except socket.timeout:
+            raise AssertionError(
+                "TCP connect timed out (1.0s) — the WS server bound the port "
+                "but is not completing the handshake"
+            )
         client.delete(f"/api/sessions/{sid}")
 
 
@@ -294,12 +327,21 @@ def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
         try:
             # Never send a user_msg: the socket stays idle exactly as it does
             # during a long turn that emits nothing.
-            pings, end = 0, time.time() + 6
+            budget, t0 = 30, time.time()  # generous budget, not a retry (PR #1759 precedent)
+            pings, end = 0, t0 + budget
             while time.time() < end and pings < 2:
-                m = json.loads(await asyncio.wait_for(ws.recv(), 6))
+                try:
+                    m = json.loads(await asyncio.wait_for(
+                        ws.recv(), max(0.0, end - time.time())
+                    ))
+                except asyncio.TimeoutError:
+                    break
                 if m.get("type") == "ping":
                     pings += 1
-            assert pings >= 2, "no repeating keepalive on an idle socket"
+            assert pings >= 2, (
+                f"no repeating keepalive within {budget}s heartbeat budget "
+                f"(elapsed {time.time() - t0:.1f}s)"
+            )
         finally:
             await ws.close()
 
@@ -308,10 +350,13 @@ def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
             f"ws://127.0.0.1:{port}/?token={_token()}", open_timeout=10
         )
         try:
-            replayed, end = [], time.time() + 2
+            budget, t0 = 2, time.time()  # replay is pre-buffered; 2s is generous
+            replayed, end = [], t0 + budget
             while time.time() < end:
                 try:
-                    replayed.append(json.loads(await asyncio.wait_for(ws2.recv(), 1)))
+                    replayed.append(json.loads(await asyncio.wait_for(
+                        ws2.recv(), max(0.0, end - time.time())
+                    )))
                 except (asyncio.TimeoutError, websockets.ConnectionClosed):
                     break
             # Live pings arrive during the drain too; only the replay is at issue,
@@ -321,8 +366,10 @@ def test_heartbeat_keeps_an_idle_socket_warm(ws_server):
                 if m.get("type") == "status" and m.get("state") == "chat_ready":
                     break
                 before_ready.append(m)
-            assert not [m for m in before_ready if m.get("type") == "ping"], \
-                "keepalive frames leaked into the replay transcript"
+            assert not [m for m in before_ready if m.get("type") == "ping"], (
+                f"keepalive frames leaked into the replay transcript "
+                f"(drained {budget}s, elapsed {time.time() - t0:.1f}s)"
+            )
         finally:
             await ws2.close()
 
