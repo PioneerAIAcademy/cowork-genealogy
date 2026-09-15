@@ -202,6 +202,15 @@ function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
 export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
+  /**
+   * Internal only — not on the MCP schema, so no caller across the tool
+   * boundary can set it. person_read's memories phase runs every OCR under one
+   * ~40s wall-clock budget; without a cap here a single call would keep its own
+   * 180s hang-catcher and go on running after the phase had already given up on
+   * it, burning an OpenRouter call nothing will read. Capping the underlying
+   * fetch aborts it for real rather than abandoning the promise.
+   */
+  opts: { ocrTimeoutMs?: number } = {},
 ): Promise<ImageTranscribeResult> {
   const { url, label, fallbackUrl, memoryShape } = resolveFsImageInput(
     input,
@@ -261,7 +270,7 @@ export async function imageTranscribeTool(
             ],
           }),
         },
-        OCR_TIMEOUT_MS,
+        Math.max(1, Math.min(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS)),
       );
       break;
     } catch (error) {

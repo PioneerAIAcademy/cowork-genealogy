@@ -196,3 +196,50 @@ export async function fetchPortraitId(personId: string, principal: Principal): P
     return null;
   }
 }
+
+/** A story artifact is small text, not a multi-MB scan; it needs none of the
+ *  image legs' headroom. */
+const STORY_TEXT_TIMEOUT_MS = 15_000;
+
+/**
+ * A story's full text, straight off its artifact.
+ *
+ * The payload's own `descriptions[].value` is a 200-CHARACTER PREVIEW cut
+ * mid-word, and the single-memory fetch returns the same 200, so the artifact is
+ * the only route to the whole story. Measured 2026-09-15 across the probe
+ * corpus: 5 of 6 text/plain artifacts served (311..12239 chars against that flat
+ * 200) and 1 404'd. So this is worth doing and MUST fail soft per story -- one
+ * missing artifact cannot cost the other five their text.
+ *
+ * Returns null rather than the preview on failure, deliberately: a 200-character
+ * fragment cut mid-word, handed back in the same `text` field that elsewhere
+ * carries a full transcription, reads as a complete short story to anyone (and
+ * anything) downstream. Absent beats silently truncated.
+ */
+export async function fetchStoryText(m: Memory): Promise<string | null> {
+  if (!m.artifactUrl) return null;
+  try {
+    // No credential: memory artifacts are public (measured -- no headers at all
+    // returns 200), and nothing should hand a token to a URL that arrived
+    // inside a response body.
+    const res = await fetchWithRetry(m.artifactUrl, {}, STORY_TEXT_TIMEOUT_MS);
+    if (res.status !== 200) return null;
+    const text = (await res.text()).trim();
+    return text.length > 0 ? text : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Media the OCR leg can read. Measured 2026-09-15: the model transcribes a PDF
+ *  handed to it as an ordinary image_url data URL, so PDFs belong here -- they
+ *  are 29 of the 221-memory corpus and carry the wills and certificates. */
+export function isTranscribable(m: Memory): boolean {
+  const t = m.mediaType.toLowerCase();
+  return t.startsWith("image/") || t === "application/pdf";
+}
+
+/** A story carries its own words; it is fetched, not OCR'd. */
+export function isStoryText(m: Memory): boolean {
+  return m.mediaType.toLowerCase() === "text/plain";
+}

@@ -20,6 +20,11 @@ export interface PersonReadToolInput {
   personId: string;
   relatives?: boolean;
   sourceDescriptions?: boolean;
+  /** Absolute project-folder path. When given, a memory scan transcribed during
+   *  this read is retained under images/ and its ref returned as the source's
+   *  `imageRef`. A path is not a mode flag, so decision 1's "no third flag"
+   *  does not reach it. */
+  projectPath?: string;
 }
 
 export interface TreeName {
@@ -86,6 +91,17 @@ export interface TreeSource {
    * V6). `init-project`'s SKILL.md carries the matching exclusion.
    */
   text?: string;
+  /**
+   * Project-relative path of a retained memory scan (images/<key>.jpg), set only
+   * when `person_read` was given `projectPath` and the save succeeded. It is
+   * what a retained source's `image_filename` wants.
+   *
+   * MUST NEVER REACH `tree.gedcomx.json`, for the same reason as `text` above:
+   * `TREE_SOURCE_FIELDS` is `{id, title, citation, author, url}` and
+   * `project_create` validates without sanitizing, so one stray key aborts the
+   * whole project write.
+   */
+  imageRef?: string;
 }
 
 export interface PersonReadResult {

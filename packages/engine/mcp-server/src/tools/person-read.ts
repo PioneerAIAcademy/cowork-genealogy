@@ -5,10 +5,15 @@ import { fetchWithRetry } from "../utils/http.js";
 import {
   fetchMemories,
   fetchPortraitId,
+  fetchStoryText,
   filterSourceStyle,
+  isStoryText,
+  isTranscribable,
   rankForTranscription,
   type Memory,
 } from "../utils/memories.js";
+import { mapWithConcurrency } from "../utils/place-resolver.js";
+import { imageTranscribeTool } from "./image-transcribe.js";
 import type {
   GedcomX,
   GedcomXFact,
@@ -46,7 +51,10 @@ export const personReadToolSchema = {
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
     "Set relatives=true to include parents, spouses, and children. " +
-    "Set sourceDescriptions=true to include attached sources. " +
+    "Set sourceDescriptions=true to include attached sources — for a " +
+    "non-living subject this also returns source-style memories (scanned " +
+    "wills, certificates, obituaries, family stories), transcribed where the " +
+    "read's time budget allowed. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -63,6 +71,15 @@ export const personReadToolSchema = {
         type: "boolean",
         description: "Include attached source citations. Defaults to false.",
       },
+      projectPath: {
+        type: "string",
+        description:
+          "Optional absolute path to the project folder. When set, any memory " +
+          "scan transcribed during this read is saved under images/ and its " +
+          "project-relative path returned on that source as imageRef, so a " +
+          "retained source can cite it. Without it the scan is transcribed but " +
+          "not kept.",
+      },
     },
     required: ["personId"],
   },
@@ -71,7 +88,12 @@ export const personReadToolSchema = {
 // ─── Entry point ──────────────────────────────────────────────────────────
 
 export async function personReadTool(input: PersonReadToolInput, principal: Principal): Promise<PersonReadResult> {
-  const { personId, relatives = false, sourceDescriptions = false } = input;
+  const {
+    personId,
+    relatives = false,
+    sourceDescriptions = false,
+    projectPath,
+  } = input;
   if (typeof personId !== "string" || personId.trim() === "") {
     throw new Error(
       "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
@@ -93,7 +115,12 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   // A living person (204) has no memories to fetch and no sources array to
   // merge into.
   if (sourceDescriptions && result.persons.some((p) => p.id === pid && !p.living)) {
-    result.sources = await mergeMemories(pid, result.sources, principal);
+    result.sources = await mergeMemories(
+      pid,
+      result.sources,
+      principal,
+      projectPath,
+    );
   }
   return result;
 }
@@ -106,10 +133,160 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
  * about. Any throw here returns the tree sources untouched, logged to stderr.
  * Recorded in the spec's error table as a deliberate silent degradation.
  */
+/**
+ * The transcription phase's wall-clock budget, for the WHOLE phase rather than
+ * per memory.
+ *
+ * Sized under the Cowork device bridge's 60s abort on every MCP call
+ * (docs/architecture.md, "Other environment differences that bite"), with the
+ * tree read and the memories fetch already spent inside the same call. An
+ * unbudgeted phase does not cost a transcription -- it costs the whole person
+ * read, which in Cowork is init-project's first real call.
+ *
+ * image_transcribe measures p50 18.7s / p90 40.6s / max 50.1s over 59 live
+ * reads (2026-09-08, current default model). So 40s clears a typical scan and
+ * abandons a pathological one, which is the intended trade. Do NOT re-size this
+ * from OCR_TIMEOUT_MS (180s), which is a hang-catcher, nor from the spec's old
+ * p90 79s figure, which came from run-log timelines measured per SDK message
+ * rather than per tool call.
+ */
+const OCR_PHASE_BUDGET_MS = 40_000;
+
+/**
+ * In-flight transcriptions. A bandwidth ceiling for simultaneous multi-MB
+ * downloads, NOT a limit on how much work gets done -- there is deliberately no
+ * count cap (ruled 2026-09-15 on probe item 10: the risk is artifact size, not
+ * count, and the 14.4MB outlier is audio, which the filter drops before OCR is
+ * ever reached).
+ */
+const OCR_CONCURRENCY = 5;
+
+/**
+ * Transcribe the kept memories in place, under one phase budget.
+ *
+ * Every failure degrades to a metadata-only entry and NOTHING here throws: no
+ * OpenRouter key, an OCR error, a per-image timeout, a 403 on the artifact --
+ * person_read must never fail for an OCR reason. That is acceptance 6's
+ * fail-soft rule extended to this leg.
+ *
+ * Whatever the budget did not reach comes back as metadata with a note saying
+ * so, rather than being dropped. The note goes on the source itself because
+ * decision 2 fixed the top level at {persons, relationships, sources} -- no new
+ * key, nothing for a consumer to switch on -- and `notes` is already carried and
+ * already excluded from the tree write.
+ */
+async function transcribeMemories(
+  kept: Memory[],
+  sources: TreeSource[],
+  principal: Principal,
+  projectPath: string | undefined,
+): Promise<void> {
+  const byId = new Map(sources.map((s) => [s.id, s]));
+  const deadline = Date.now() + OCR_PHASE_BUDGET_MS;
+
+  /**
+   * Workers publish here rather than writing straight to the sources.
+   *
+   * The phase stops at the deadline whether or not every worker has finished,
+   * so a straggler can still settle after person_read has returned its result.
+   * Writing to the source objects directly would mutate a payload the caller
+   * already holds; writing here means a late finisher updates a map nobody
+   * reads again.
+   */
+  const finished = new Map<
+    string,
+    { text?: string; imageRef?: string; notes?: string[] }
+  >();
+
+  const work = mapWithConcurrency(kept, OCR_CONCURRENCY, async (m) => {
+    // Never START work the budget cannot pay for.
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return;
+    try {
+      if (isStoryText(m)) {
+        if (!m.artifactUrl) return void finished.set(m.id, {});
+        const text = await fetchStoryText(m);
+        finished.set(
+          m.id,
+          text ? { text } : { notes: ["Story text unavailable."] },
+        );
+        return;
+      }
+      // Nothing to transcribe is not a failure: no artifact URL, or media the
+      // OCR leg cannot read. Recorded as done-with-nothing so it does not
+      // later read as something the budget failed to reach.
+      if (!isTranscribable(m) || !m.artifactUrl) return void finished.set(m.id, {});
+      const out = await imageTranscribeTool(
+        { memoryArtifactUrl: m.artifactUrl, ...(projectPath ? { projectPath } : {}) },
+        principal,
+        // Cap this call at what is left of the phase so a straggler aborts its
+        // own OCR fetch rather than running on after the phase gave up on it.
+        // This does NOT reach the artifact download leg, which carries its own
+        // 90s budget -- which is why the phase-level stop below exists too.
+        { ocrTimeoutMs: remaining },
+      );
+      finished.set(m.id, {
+        ...(out.transcription.trim() ? { text: out.transcription } : {}),
+        ...(out.imageRef ? { imageRef: out.imageRef } : {}),
+        ...(out.truncated && out.truncationNotice
+          ? { notes: [out.truncationNotice] }
+          : {}),
+      });
+    } catch (err) {
+      // Deliberately swallowed, per memory. mapWithConcurrency runs its workers
+      // under Promise.all, so a rejection here would abandon the others mid-
+      // flight -- the same escape that made the portrait leg outlive the call.
+      process.stderr.write(
+        `person_read: transcription failed for memory ${m.id}: ${String(err)}\n`,
+      );
+      finished.set(m.id, {
+        notes: [
+          "Not transcribed: the transcription attempt failed. Retry with " +
+            "image_transcribe (memoryArtifactUrl).",
+        ],
+      });
+    }
+  });
+
+  // The phase-level stop. Checking the budget only before starting an item
+  // bounds nothing once several are already in flight, and the per-call cap
+  // above cannot reach the artifact download's own 90s timeout. This is what
+  // actually holds the read under the Cowork bridge's 60s abort.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expiry = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, Math.max(0, deadline - Date.now()));
+  });
+  try {
+    await Promise.race([work, expiry]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+
+  for (const m of kept) {
+    const source = byId.get(m.id);
+    if (!source) continue;
+    const result = finished.get(m.id);
+    if (!result) {
+      // Not reached before the budget expired. It still comes back -- as
+      // metadata, saying why, per decision 4.
+      source.notes = [
+        ...(source.notes ?? []),
+        "Not transcribed: the read's transcription budget ran out. Transcribe " +
+          "it directly with image_transcribe (memoryArtifactUrl).",
+      ];
+      continue;
+    }
+    if (result.text) source.text = result.text;
+    if (result.imageRef) source.imageRef = result.imageRef;
+    if (result.notes) source.notes = [...(source.notes ?? []), ...result.notes];
+  }
+}
+
 async function mergeMemories(
   pid: string,
   treeSources: TreeSource[],
   principal: Principal,
+  projectPath?: string,
 ): Promise<TreeSource[]> {
   try {
     // allSettled, NOT all. Both of these go through fetchWithRetry, which
@@ -135,7 +312,9 @@ async function mergeMemories(
     // No dedupe against tree sources: the two id spaces are DISJOINT, measured
     // (tree `SD_PERSON_KWCJ-RN4` vs memory `3475`, 0 overlap on both persons
     // sampled). An id-keyed dedupe could never fire, so it is not written.
-    return [...treeSources, ...kept.map(toTreeSource)];
+    const memorySources = kept.map(toTreeSource);
+    await transcribeMemories(kept, memorySources, principal, projectPath);
+    return [...treeSources, ...memorySources];
   } catch (err) {
     process.stderr.write(
       `person_read: memories fetch failed for ${pid}, returning tree sources only: ${String(err)}\n`,
