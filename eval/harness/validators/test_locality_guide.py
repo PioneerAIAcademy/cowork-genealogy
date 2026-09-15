@@ -23,14 +23,13 @@ guard the structural properties a validator can settle without judgment
     hole the schema leaves open (validator.ts:1490-1492).
   - test_persisted_collection_ids_trace_to_tool_response (VR2) — every
     persisted collection id must be grounded in a same-run tool response.
-  - report_digitization_label_requires_volume_search (VR3) — non-gating
-    observation: a closed digitization label should be backed by a
-    volume_search call.
-  - report_survey_run_calls_both_collections_and_volume_search (VR4) —
-    non-gating observation: a survey that called one Step-3 search should
-    have called both. Non-gating because the skill skips volume_search on
-    survey runs today; gating it needs a SKILL.md change + fixtures + a
-    paid run (deferred, issue #1886).
+  - test_digitization_label_requires_volume_search (VR3) — gating: a closed
+    digitization label must be backed by a volume_search call.
+  - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
+    a survey that called one Step-3 search must have called both. Gating became
+    safe once every survey test declared a volume-search fixture (this PR): the
+    tool is now in the model's toolset, so a one-sided survey is a real defect
+    rather than a fixture gap (issue #1886).
 
 See `test_universal.py` module docstring for the full validator
 function-signature contract. The `test` argument is the parsed test
@@ -253,16 +252,16 @@ def test_persisted_collection_ids_trace_to_tool_response(
         )
 
 
-def report_digitization_label_requires_volume_search(text_response, tool_calls):
-    """VR3 (report_*, non-gating) — a closed digitization-level label in the
-    narrative should be backed by a volume_search call: Step 4 derives the level
-    from volume_search's recordSearchablePercent (SKILL.md:119-122).
+def test_digitization_label_requires_volume_search(text_response, tool_calls):
+    """VR3 (gating) — a closed digitization-level label in the narrative must be
+    backed by a volume_search call: Step 4 derives the level from volume_search's
+    recordSearchablePercent (SKILL.md:119-122). A label without the call is an
+    ungrounded classification.
 
-    Non-gating on purpose. Across the five committed logs, 28 of 76 label-using
-    runs made no volume_search call, and every such test is one of the nine that
-    ship no volume-search fixture — the skill could not have called it. Gating
-    this would fail those tests for a fixture gap; adding the fixtures and
-    promoting this to test_* is deferred to VR4 (issue #1886).
+    Gating became safe once every survey test declared a volume-search fixture
+    (this PR): the tool is now in the model's toolset, so a run that uses a label
+    without calling volume_search is a real defect, not a fixture gap. Runs that
+    use no closed label make no claim to back and pass.
     """
     text = (text_response or "").casefold()
     used = [lbl for lbl in DIGITIZATION_LABELS if lbl in text]  # labels are lowercase
@@ -277,19 +276,18 @@ def report_digitization_label_requires_volume_search(text_response, tool_calls):
     )
 
 
-def report_survey_run_calls_both_collections_and_volume_search(tool_calls):
-    """VR4 (report_*, non-gating) — a records-availability survey that called one
-    of the Step-3 searches should have called both. collections_search AND
-    volume_search are both required Step-3 calls ('drop none'). Observation only.
+def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
+    """VR4 (gating) — a records-availability survey that called one of the Step-3
+    searches must have called both: collections_search AND volume_search are both
+    required Step-3 calls ('drop none', SKILL.md Step 3).
 
     A run that called neither search is not a records survey (standalone Q&A,
-    wiki-only, or a decline) and is not flagged. Non-gating on purpose: the skill
-    currently skips volume_search on survey runs (35 of 35 runs across the five
-    committed logs for the seven single-search survey tests), so this is a
-    skill-behavior gap a clean run would NOT pass today, not a validator to gate
-    on. Promoting it to test_* is coupled to a SKILL.md change that makes the
-    survey call both, plus per-place volume-search fixtures and a paid eval run —
-    deferred, not done here (issue #1886).
+    wiki-only, or a decline) and is not flagged. Gating became safe once every
+    survey test declared a volume-search fixture (this PR): before that the tool
+    was absent from the model's toolset — it narrated "volume_search is not
+    available in this environment" and moved on (35 of 35 runs), which was a
+    fixture gap, not a skill choice. With the fixture present the model calls it,
+    so a one-sided survey is now a real defect.
     """
     tools = {bare_tool_name(tc.get("tool")) for tc in (tool_calls or [])}
     called_cs = "collections_search" in tools

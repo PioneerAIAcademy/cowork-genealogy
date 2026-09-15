@@ -1,0 +1,62 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes covering Virginia in the Revolutionary War era (late 1700s), including land bounty and county court images. Mixed indexing.",
+  "args": {
+    "standardPlace": "~Virginia"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Virginia, United States",
+      "startYear": 1775,
+      "endYear": 1800
+    },
+    "totalResults": 3,
+    "results": [
+      {
+        "imageGroupNumber": "005301447",
+        "imageGroupPrefix": "005301447",
+        "imageCount": 341,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Virginia, United States",
+            "dateRange": "1779-1800",
+            "recordType": "Revolutionary War land bounty warrants (browse-only images)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "005301448",
+        "imageGroupPrefix": "005301448",
+        "imageCount": 158,
+        "recordSearchablePercent": 61,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Augusta, Virginia, United States",
+            "dateRange": "1775-1795",
+            "recordType": "County court order books (partially name-indexed)"
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "005301449",
+        "imageGroupPrefix": "005301449",
+        "imageCount": 87,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Virginia, United States",
+            "dateRange": "1782-1799",
+            "recordType": "State enumerations / tax lists (full-text searchable)"
+          }
+        ]
+      }
+    ]
+  }
+}

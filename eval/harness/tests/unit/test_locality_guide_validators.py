@@ -32,10 +32,10 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # otherwise collect the imported validators as tests of this module and error on
 # their harness-supplied fixtures. Same pattern as test_person_evidence_validators.py.
 from test_locality_guide import (  # noqa: E402
-    report_digitization_label_requires_volume_search as check_label,
-    report_survey_run_calls_both_collections_and_volume_search as check_both_searches,
+    test_digitization_label_requires_volume_search as check_label,
     test_persisted_collection_ids_trace_to_tool_response as check_ids,
     test_persisted_localities_entry_shape as check_shape,
+    test_survey_run_calls_both_collections_and_volume_search as check_both_searches,
 )
 
 
@@ -272,7 +272,7 @@ def test_ids_ignores_a_pre_existing_seed_id():
         check_ids(_state([seed]), _state([seed]), [])
 
 
-# --- VR3: report_digitization_label_requires_volume_search --------------
+# --- VR3: test_digitization_label_requires_volume_search ---------------
 
 
 def test_label_fires_without_volume_search():
@@ -302,7 +302,7 @@ def test_label_matches_case_insensitively():
         check_label("The set is Indexed + Images for this range.", [])
 
 
-# --- VR4: report_survey_run_calls_both_collections_and_volume_search -----
+# --- VR4: test_survey_run_calls_both_collections_and_volume_search ------
 
 
 def test_both_searches_fires_when_only_collections_search_called():
