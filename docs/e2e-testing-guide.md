@@ -33,7 +33,7 @@ Which steps are yours depends on how you got here:
 | 2 Scope *(1b only)* | one question, 1–5 findings; keep the search anchors | 🤖 Claude Code |
 | 3 Validate *(1b only)* | check the answer is findable; `make e2e-validate TEST=<slug>` | ⌨️ Terminal |
 | 4 Debug live | `make e2e-project`, then `/research` in Cowork with the Viewer open | 🖥️ Cowork + Viewer |
-| 5 Run | `make e2e-run TEST=<slug>` — one fixture, 20–60 min, $3–10 | ⌨️ Terminal |
+| 5 Run | `make e2e-run TEST=<slug>` — one fixture, median 56 min / $7.47 (n=172/147, range 35–108 min / $0.06–$25) | ⌨️ Terminal |
 | 6 Read | `/interpret-e2e-result`; `make e2e-view` for the visual pass | 🤖 Claude Code |
 | 7 Attribute | read `narration[]` + `tool_calls[]`, fix in Step 4; `/mine-unit-test --e2e-run …` for a skill miss | 🤖 Claude Code |
 | 8 Grade | `/grade-e2e-run` → commit the `.ann.json` (CI-enforced) | 🤖 Claude Code |
@@ -59,7 +59,16 @@ strips a focused subset (the "answer"), and asks the agent — via
 `/research --autonomous` — to recover what was removed. The judge grades the
 final state `pass` / `partial` / `fail`.
 
-**Runs are expensive: 20–60 minutes and $3–10 each. Run one at a time.**
+**Runs are expensive: median 56 minutes and $7.47 each, and the tails run
+longer — p10–p90 is 35–108 minutes across the committed corpus (n=172 for
+time, n=147 for cost; re-derive both with one scan of
+`eval/runlogs/e2e/*/run-*.json` (the git-tracked ones — an uncommitted local
+run log skews the sample), reading `usage.wall_clock_seconds` for time and
+`usage.total_cost_usd` for cost — note that `make e2e-latency SINCE=all`
+reports one run per fixture and prints no median, so it will not reproduce
+these). Run one at a time — the orchestrator's own cap is
+`max_cost_usd = 15.0` (`eval/harness/e2e/orchestrator.py`), so a single run
+can still land near or past this section's median on its own.**
 
 This is a capability benchmark, not a regression suite — per-PR regression
 coverage is the unit tests in `eval/tests/unit/`. The verdict measures *fact
@@ -306,7 +315,8 @@ detail: spec §§2–3, §6.2.
 ## Step 4 — Debug `/research` live, before you pay for a run 🖥️ Cowork + Viewer
 
 A headless run can't show you *why* the agent stopped or skipped a step — and
-it charges you 20–60 minutes to not tell you. Watch a run live in Cowork, fix
+it charges you a median 56 minutes to not tell you (see Step 5's cost/time
+note for the full spread). Watch a run live in Cowork, fix
 what you see, and save the headless run for the verdict.
 
 1. **Build and install both artifacts**, so Cowork has the genealogy tools.
@@ -466,6 +476,21 @@ the `.ann.json`.
 
 Annotation format, the ≥80% agreement gate, and how to read a calibration
 report: spec §7.4.
+
+**Check the gate the way the gate works.** It resolves both siblings from the
+`HEAD_SHA` tree, so an annotation you have written but not yet committed does
+not count — run it after committing:
+
+```bash
+BASE_SHA="$(git merge-base origin/main HEAD)" HEAD_SHA="$(git rev-parse HEAD)" \
+  python3 eval/harness/scripts/check_e2e_fixtures.py
+```
+
+With `BASE_SHA`/`HEAD_SHA` unset it prints `skipped` and exits 0 — **a run with
+no env set is not a pass.** If it cannot diff the two shas at all (an unfetched
+commit, or a directory that is not a repo) it refuses with an `::error::` rather
+than reporting zero added run logs. And it reds on an ungraded run until the annotation
+is *committed*, which is the gate working, not a regression.
 
 ## Step 9 — Land it ⌨️ Terminal / GitHub
 

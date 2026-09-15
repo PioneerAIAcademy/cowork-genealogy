@@ -285,6 +285,36 @@ write-time check attributes the error to the offending op (`ops[i]: …` in a ba
 instead of a persons-index path — this closed the e2e failure where an accepted
 malformed nested date later crashed `person_warnings` date parsing.
 
+**`assertion_id` is refused outright on every fact write path.** It is the
+backlink `materialize_facts` stamps on a fact it mints from an assertion
+(`tree-materialization-spec.md` §4.4), and it is never supplied by a caller: a
+forged one would make `research_append`'s assertion-`update` rewrite silently
+overwrite a hand-entered fact from an assertion it never came from. A hard
+refusal rather than a silent strip, because nothing legitimate sends it, so there
+is no correct call it can deny. Its one cost is that echoing a whole fact back
+from a read is now rejected; no shipped skill does that, and the error says what
+to remove.
+
+**`update_fact` DETACHES a fact from its assertion when it changes one of the
+fact's own fields** — any of `date`, `standard_date`, `place`, `standard_place`,
+`value`, or `type`. A researcher correcting the fact directly is recording their
+own conclusion, exactly as `add_fact` does, and a fact left attached would
+permanently disagree with its assertion while the next assertion correction
+silently reverted the human's edit. Three details the contract turns on:
+
+- It keys on an actual **change**, not on the key being present: re-stating a
+  field at the value it already holds is not a correction, and the
+  conclude-a-fact shape (`primary` alongside an echoed date) is where that rides.
+- It runs **after** `standard_place` re-resolution, so a sidecar the resolver
+  rewrites counts as a change even when the caller never named the field.
+- `type` is in the trigger although it is not a string-shape field: a
+  re-classification moves the fact across the event / value-bearing line that
+  decides whether an assertion's `value` may be written to it at all.
+
+It **warns** when it detaches, naming the fields that changed, because that fact
+then leaves the automatic-update set. 31 of 114 `update_fact` ops in the
+committed e2e corpus set one of those fields.
+
 ### 4.2 Return value (compact — never the tree)
 
 ```typescript

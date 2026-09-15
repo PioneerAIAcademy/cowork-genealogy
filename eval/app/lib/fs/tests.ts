@@ -336,28 +336,7 @@ export async function nextTestId(skill: string): Promise<string> {
  * wrinkle to design around: the re-run is what produces a log that reads
  * `xfail` instead of `fail`.
  */
-export const GRADING_RELEVANT_FIELDS = [
-  'input.user_message',
-  'input.scenario',
-  'mcp_fixtures',
-  'judge_context',
-  'negative',
-  'test.holdout',
-  'test.expected_outcome',
-  'test.xfail_reason',
-  'judge_reads_files',
-] as const;
-
-/** True if any grading-relevant field differs between `before` and `after`. */
-export function hasGradingRelevantChange(before: UnitTestFile, after: UnitTestFile): boolean {
-  if (before.input.user_message !== after.input.user_message) return true;
-  if ((before.input.scenario ?? null) !== (after.input.scenario ?? null)) return true;
-  if (JSON.stringify(before.mcp_fixtures ?? []) !== JSON.stringify(after.mcp_fixtures ?? [])) return true;
-  if (JSON.stringify(before.judge_context) !== JSON.stringify(after.judge_context)) return true;
-  if (JSON.stringify(before.negative ?? null) !== JSON.stringify(after.negative ?? null)) return true;
-  if ((before.test.holdout ?? false) !== (after.test.holdout ?? false)) return true;
-  if ((before.test.expected_outcome ?? 'pass') !== (after.test.expected_outcome ?? 'pass')) return true;
-  if ((before.test.xfail_reason ?? '') !== (after.test.xfail_reason ?? '')) return true;
-  if ((before.judge_reads_files ?? false) !== (after.judge_reads_files ?? false)) return true;
-  return false;
-}
+// Moved to ../gradingRelevance so the authoring UI (a 'use client' component
+// that cannot import this node:fs module) shares one definition instead of a
+// hand-synced copy. Re-exported for existing callers and tests.
+export { GRADING_RELEVANT_FIELDS, hasGradingRelevantChange } from '../gradingRelevance';
