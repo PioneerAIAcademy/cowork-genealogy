@@ -27,6 +27,9 @@
  *     `q.fullName` actually search (transcript content vs collection metadata
  *     vs both). Uses a discriminating-document strategy against the fulltext
  *     endpoint.
+ *   SECTION K — Particle surnames. Whether the literal quotes
+ *     `name-search-mechanics.md` prescribes change anything (they are
+ *     stripped before matching), and whether the particle is needed to match.
  *
  * EVERY CONCLUSION LINE IS COMPUTED FROM THE RUN, never a literal. Section F
  * used to end in a hardcoded `console.log` asserting "gibberish -> 0" — it
@@ -6005,6 +6008,198 @@ async function sectionJ(): Promise<void> {
   console.log(`  verdict:q.fullName searches — ${v4}`);
 }
 
+// --- SECTION K — particle surnames ----------------------------------------
+
+/**
+ * SECTION K — particle surnames (`van der Linde`, `Mc Kee`), issue #2071.
+ *
+ * Two claims were in the tree and neither had a measurement:
+ *   - `search-records/references/name-search-mechanics.md` prescribes LITERAL
+ *     QUOTES around a multi-word surname. The tool does not send them.
+ *   - The issue originally claimed `record_search` "cannot express" a particle
+ *     surname at all. Review found that false before this probe ran; this
+ *     section is what replaced the anecdote with a number.
+ *
+ * METHOD. A top-N comparison cannot tell ABSENT from OUTRANKED, which has
+ * already invalidated one probe in this file (section E). So every leg here is
+ * a SET comparison on one hard-scoped pool, ENUMERATED with `scanIds` rather
+ * than sampled. `count` is capped at 100 by the endpoint — asking for 200 returns a 400
+ * and ZERO rows, and a set comparison over two empty arrays reports "identical"
+ * for free. That is why `readPool` returns null on an errored OR EMPTY read and
+ * every verdict below falls to NOT MEASURED rather than to agreement.
+ */
+async function sectionK(): Promise<void> {
+  console.log("\n=== K. particle surnames: does quoting matter, does the particle? ===");
+
+  // Hard-scoped: one given name, one country, a ten-year window. ~558 rows at
+  // the time of writing, which is small enough to ENUMERATE -- the point of the
+  // scoping -- rather than to sample. An earlier version of this comment called
+  // a 100-row page "a real sample", and that reasoning is what produced the
+  // wrong answer about `Linde`.
+  const POOL =
+    "q.givenName=Marinus&f.recordCountry=Netherlands" +
+    "&q.birthLikeDate.from=1800&q.birthLikeDate.to=1810";
+
+  // RULE 0: enumerate, never compare first pages. `count` maxes at 100 and this
+  // pool is ~558, so the original single-request version compared PAGES and
+  // called the result a set comparison. `scanIds` pages to exhaustion and hands
+  // back a DEDUPED Set, which also removes a second bug for free: this pool is a
+  // date-range query, and date-range pools in this file re-serve the same
+  // persona at many offsets (section N: 4,900 rows for 1,100 distinct).
+  const readPool = async (
+    surname: string
+  ): Promise<{ total: number; ids: Set<string>; rows: number } | null> => {
+    const r = await scanIds(
+      // No REQUIRE_SWITCH here -- scanIds appends it to every page it fetches.
+      `q.surname=${encodeURIComponent(surname)}&${POOL}`,
+      1000
+    );
+    if (!r.complete || r.total === null || r.ids.size === 0) return null;
+    return { total: r.total, ids: r.ids, rows: r.rows };
+  };
+
+  // "Linde, van der" is the card's leg 2 and was missing: Dutch and Belgian
+  // indexes routinely alphabetise under the root with the tussenvoegsel
+  // trailing, so it is the form a Dutch researcher actually meets.
+  const FORMS = [
+    "van der Linde",
+    '"van der Linde"',
+    "vanderlinde",
+    "Van Der Linde",
+    "Linde",
+    "Linde, van der",
+  ];
+  const pools = new Map<string, { total: number; ids: Set<string>; rows: number } | null>();
+  for (const f of FORMS) {
+    const got = await readPool(f);
+    pools.set(f, got);
+    record("K", `pool:${f}`, got ? got.total : null);
+    console.log(
+      `  q.surname=${JSON.stringify(f).padEnd(18)} ${got ? fmt(got.total) : "NOT ENUMERATED"}  rows=${got?.rows ?? 0} distinct=${got?.ids.size ?? 0}`
+    );
+  }
+
+  const baseline = pools.get("van der Linde") ?? null;
+  // Set-against-Set. The earlier form compared a merged Set's SIZE against an
+  // array LENGTH, so any pool serving a persona twice reported two identical
+  // scans as DIFFERENT.
+  const sameSetAs = (f: string): boolean | null => {
+    const a = pools.get(f) ?? null;
+    if (!baseline || !a) return null;
+    if (a.ids.size !== baseline.ids.size) return false;
+    return [...a.ids].every((id) => baseline.ids.has(id));
+  };
+
+  const quotedSame = sameSetAs('"van der Linde"');
+  const concatSame = sameSetAs("vanderlinde");
+  const casedSame = sameSetAs("Van Der Linde");
+  const bareLindeSame = sameSetAs("Linde");
+  const invertedSame = sameSetAs("Linde, van der");
+  record(
+    "K",
+    "verdict:dropping the particle returns the same set",
+    bareLindeSame === null
+      ? "NOT MEASURED"
+      : bareLindeSame
+        ? "YES — 'Linde' enumerates the identical set as 'van der Linde'"
+        : "NO — 'Linde' enumerates a different set"
+  );
+  record(
+    "K",
+    "verdict:the inverted form reaches the same set",
+    invertedSame === null
+      ? "NOT MEASURED"
+      : invertedSame
+        ? "YES — 'Linde, van der' enumerates the identical set"
+        : "NO — 'Linde, van der' enumerates a different set"
+  );
+  for (const [label, v] of [
+    ['"van der Linde" (quoted)', quotedSame],
+    ["vanderlinde (space removed)", concatSame],
+    ["Van Der Linde (cased)", casedSame],
+    ["Linde (particle dropped)", bareLindeSame],
+    ["Linde, van der (inverted)", invertedSame],
+  ] as Array<[string, boolean | null]>) {
+    console.log(
+      `    vs baseline set — ${label.padEnd(26)} ${v === null ? "NOT MEASURED" : v ? "IDENTICAL" : "DIFFERENT"}`
+    );
+  }
+
+  // CONTROL — are the quotes even parsed? If the server strips them, leg 1's
+  // "identical" is trivially true and says nothing about quoting. An unbalanced
+  // quote matching the bare total is the tell.
+  const bareBig = await search(
+    `q.surname=${encodeURIComponent("van der Linde")}&count=3&${REQUIRE_SWITCH}`
+  );
+  const unbal = await search(
+    `q.surname=${encodeURIComponent('"van der Linde')}&count=3&${REQUIRE_SWITCH}`
+  );
+  // The row-count guard `mcSame` below already had, and this leg did not. Two
+  // zero-row reads with non-null totals compare equal, which would print
+  // "quotes are stripped" -- the single sentence the no-code-change decision
+  // rests on -- out of two failed reads.
+  const stripped =
+    errored(bareBig) ||
+    errored(unbal) ||
+    bareBig.total === null ||
+    unbal.total === null ||
+    bareBig.personas.length === 0 ||
+    unbal.personas.length === 0
+      ? null
+      : bareBig.total === unbal.total;
+  record("K", "unscopedBare", errored(bareBig) ? null : bareBig.total);
+  record("K", "unscopedUnbalancedQuote", errored(unbal) ? null : unbal.total);
+  console.log(`  control: bare ${fmt(bareBig.total)} vs UNBALANCED quote ${fmt(unbal.total)}`);
+  console.log(
+    `    -> quotes ${stripped === null ? "NOT MEASURED" : stripped ? "are STRIPPED before matching" : "change the query"}`
+  );
+
+  // LEG 3 — the control the issue asks for: a claim already in the plugin. If
+  // this does not reproduce, the instrument is wrong and nothing above counts.
+  const mcSpaced = await search(`q.surname=${encodeURIComponent("Mc Kee")}&count=20&${REQUIRE_SWITCH}`);
+  const mcJoined = await search(`q.surname=${encodeURIComponent("McKee")}&count=20&${REQUIRE_SWITCH}`);
+  const mcSame =
+    errored(mcSpaced) || errored(mcJoined) || mcSpaced.total === null || mcJoined.total === null
+      ? null
+      : mcSpaced.total === mcJoined.total &&
+        mcSpaced.personas.length > 0 &&
+        new Set([
+          ...mcSpaced.personas.map((x) => x.id),
+          ...mcJoined.personas.map((x) => x.id),
+        ]).size === mcSpaced.personas.length;
+  record("K", "mcKeeSpaced", errored(mcSpaced) ? null : mcSpaced.total);
+  record("K", "mcKeeJoined", errored(mcJoined) ? null : mcJoined.total);
+  console.log(
+    `  control 'Mc Kee' ${fmt(mcSpaced.total)} vs 'McKee' ${fmt(mcJoined.total)} -> ${mcSame === null ? "NOT MEASURED" : mcSame ? "EQUIVALENT (reference reproduces)" : "DIFFER (instrument problem)"}`
+  );
+
+  record(
+    "K",
+    "verdict:literal quotes change the result set",
+    quotedSame === null || stripped === null
+      ? "NOT MEASURED"
+      : stripped
+        ? "NO — the server strips quotes before matching, so guidance prescribing them is inert"
+        : quotedSame
+          ? "NO — quoted and bare return the identical set"
+          : "YES — quoting changes the set; buildSearchUrl has a real defect"
+  );
+  record(
+    "K",
+    "verdict:spacing and case change the result set",
+    concatSame === null || casedSame === null
+      ? "NOT MEASURED"
+      : concatSame && casedSame
+        ? "NO — 'vanderlinde' (space removed) and 'Van Der Linde' enumerate the identical set as 'van der Linde', so spacing and capitalisation carry no signal. This says nothing about DROPPING the particle; that leg is recorded separately."
+        : "YES — respacing or recasing the particle changes the set"
+  );
+  record(
+    "K",
+    "verdict:control Mc Kee equals McKee",
+    mcSame === null ? "NOT MEASURED" : mcSame ? "REPRODUCES" : "DOES NOT REPRODUCE — instrument problem"
+  );
+}
+
 const SECTIONS: Record<string, () => Promise<void>> = {
   A: sectionA,
   B: sectionB,
@@ -6016,6 +6211,7 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   H: sectionH,
   I: sectionI,
   J: sectionJ,
+  K: sectionK,
   N: sectionN,
   P: sectionP,
   Q: sectionQ,
