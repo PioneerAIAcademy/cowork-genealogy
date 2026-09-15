@@ -526,12 +526,28 @@ describe("convert_calendar", () => {
         jurisdiction: place,
       });
 
-    it("Christmas-style: says the correction is the opposite sign", () => {
-      const r = jan10("Denmark", 1500);
+    it("Christmas-style: refuses in the 25–31 December window, naming the opposite sign", () => {
+      // The affected window for a 25 December year start is 25–31 December
+      // ONLY — that is where the year number differs, and it differs by MINUS
+      // one. A January date needs nothing under this convention.
+      const r = convertCalendar({
+        date: { year: 1500, month: 12, day: 28 },
+        corrections: { osNsYear: true },
+        jurisdiction: "Denmark",
+      });
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(r.errors[0]).toMatch(/began on 25 DECEMBER/);
       expect(r.errors[0]).toMatch(/opposite sign/);
+    });
+
+    it("Christmas-style: a January date is a plain no-op, not an error", () => {
+      // Refusing here would reject a question that has a perfectly good answer.
+      const r = jan10("Denmark", 1500);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1500);
+      expect(r.notes.join(" ")).toMatch(/outside the window where that could matter/);
     });
 
     it("Easter-style: says the boundary moves", () => {
@@ -574,6 +590,20 @@ describe("convert_calendar", () => {
         if (r.ok) return;
         expect(r.errors[0]).toMatch(/covers territories whose civil years began on different dates/);
       }
+    });
+
+    it("a mixed row still answers a date no convention would move", () => {
+      // 14 September is after every candidate year start in that row, so the
+      // answer is the same whichever was in force. This is the regression the
+      // first version of the refusal introduced: it errored on Madrid 1582.
+      const r = convertCalendar({
+        date: { year: 1582, month: 9, day: 14 },
+        corrections: { osNsYear: true },
+        jurisdiction: "Catholic Europe",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1582);
     });
 
     it("`italy` is refused for the same reason — the alias is too coarse", () => {

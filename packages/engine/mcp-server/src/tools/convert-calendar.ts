@@ -383,6 +383,52 @@ function normalizeJurisdiction(s: string): string {
  * do instead. Each names the real usage rather than saying "unsupported", so a
  * researcher can tell whether their record needs a different correction or none.
  */
+/**
+ * Could this jurisdiction's PRIOR year start change the year for this date?
+ *
+ * Refusing whenever the style is non-Annunciation is too blunt: for most of the
+ * year every one of these conventions agrees, and a caller asking for a
+ * correction that is a no-op should get the ordinary "not applied" note, not a
+ * hard error. A 14 September 1582 Madrid date needs no year shift under a 25
+ * December, 1 January, 1 March or 25 March year start alike -- erroring on it
+ * would refuse a question that has a perfectly good answer.
+ *
+ * So the refusal is scoped to the window where the answer genuinely depends on
+ * which style was in force.
+ */
+function priorStartCouldMatter(
+  style: Jurisdiction["priorYearStart"],
+  month: number | undefined,
+  day: number | undefined,
+): boolean {
+  // With no month we cannot place the date, so treat it as possibly affected.
+  if (month === undefined) return true;
+  switch (style) {
+    case "annunciation":
+      return month < 3 || (month === 3 && (day === undefined || day <= 24));
+    case "christmas":
+      // Only 25-31 December differs, and in the opposite direction.
+      return month === 12 && (day === undefined || day >= 25);
+    case "easter":
+      // Easter falls 22 March - 25 April, so anything up to 25 April may sit
+      // on the wrong side of a boundary that moves year to year.
+      return month < 4 || (month === 4 && (day === undefined || day <= 25));
+    case "march1":
+      // Venetian more veneto: the year turned on 1 March.
+      return month < 3;
+    case "september":
+      // An Anno Mundi era shifts the whole year, not a window.
+      return true;
+    case "mixed":
+      // The union of the above, since the row's members used several.
+      return (
+        month < 4 ||
+        (month === 4 && (day === undefined || day <= 25)) ||
+        (month === 12 && (day === undefined || day >= 25))
+      );
+  }
+}
+
 const PRIOR_YEAR_START_REFUSALS: Record<
   Exclude<Jurisdiction["priorYearStart"], "annunciation">,
   (place: Jurisdiction, year: number) => string
@@ -507,7 +553,8 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
         "Swedish calendar in force: one day ahead of Julian, ten behind Gregorian. Reduced to its Julian equivalent before the day offset.",
       );
     }
-    if (c.osNsYear && place.priorYearStart === "mixed") {
+    const priorMatters = priorStartCouldMatter(place.priorYearStart, month, day);
+    if (c.osNsYear && place.priorYearStart === "mixed" && priorMatters) {
       // Checked BEFORE the suppression arm: on a row whose members moved
       // centuries apart, suppressing is as much a guess as shifting. Catholic
       // Europe would otherwise stay silent on a 1600 Florentine date that
@@ -522,7 +569,11 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
       notes.push(
         `osNsYear not applied: ${place.key} began its civil year on 1 January from ${place.yearStartJan1From}, so a ${year} date needs no Old Style year shift.`,
       );
-    } else if (c.osNsYear && place.priorYearStart !== "annunciation") {
+    } else if (
+      c.osNsYear &&
+      place.priorYearStart !== "annunciation" &&
+      priorMatters
+    ) {
       // REFUSE rather than shift. The +1 Jan–Mar rule is the Annunciation
       // (25 March) case and nothing else. Applying it to a jurisdiction that
       // displaced a different style produces a year that is off by one and
@@ -532,6 +583,11 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
         ok: false,
         errors: [PRIOR_YEAR_START_REFUSALS[place.priorYearStart](place, year)],
       };
+    } else if (c.osNsYear && place.priorYearStart !== "annunciation") {
+      osNsNotApplicable = true;
+      notes.push(
+        `osNsYear not applied: ${place.key} did not start its civil year on 25 March, and this date falls outside the window where that could matter, so no year correction applies either way.`,
+      );
     }
   }
 
