@@ -549,6 +549,37 @@ For each entry in `sourceDescriptions[]`:
 **Filter:** Skip entries where `id.startsWith("SD_")` — these are
 metadata, not real sources.
 
+##### Memories (same array, subject only, non-living only)
+
+A second call to `GET /platform/tree/persons/{pid}/memories` runs under the same
+flag. It **pages to completion** — the endpoint pages at 25 and the last page is
+a **204 with an empty body**, so a pager that calls `.json()` unconditionally
+throws on the final hop. Each kept memory converts to the same source shape:
+
+| Memories field | Simplified field | Conversion |
+|-------------------|-----------------|------------|
+| `id` | `id` | Copy directly. Memory ids and `sourceDescription` ids are disjoint id spaces (`3475` vs `SD_PERSON_KWCJ-RN4`, measured 0 overlap), so no dedupe is possible or needed. |
+| `titles[0].value` | `title` | Flatten; fall back to `artifactMetadata[0].filename`, then to `FamilySearch memory <id>`. Never empty — an empty title fails the downstream write. |
+| `links.memory.href` | `url` | The user-visible memory URL, **not** `about` (which is the bytes URL). |
+| story text / OCR | `text` | See the transcription paragraph above. Absent when not transcribed. |
+| — | `image_ref` | Set only when `projectPath` was given and the scan was retained. |
+| — | `notes` | The tool's own note when a memory was not transcribed. |
+
+**Kept:** `application/pdf`; anything of media kind `Document` or `Story`; and
+anything whose title or description preview matches record-document language.
+**Dropped:** `audio/*` and `video/*` unconditionally, and the person's
+designated portrait (`/tree/persons/{pid}/portrait`). The media kind comes from
+`artifactMetadata[].qualifiers[].name`
+(`http://familysearch.org/v1/{Photo,Document,Story}`) and **the uploader chose
+it** — hence the proxy caveat above.
+
+**Scope:** the subject only, never per relative, whatever `relatives` is set to.
+Skipped entirely when the subject is living, and when `sourceDescriptions` is
+false.
+
+**Fail-soft:** any failure of the memories fetch returns the tree sources alone.
+`person_read` never fails because of memories or transcription.
+
 ---
 
 ## Error Handling
@@ -563,6 +594,11 @@ metadata, not real sources.
 | Living person (204) | Return result with the person having `living: true`, no facts |
 | Rate limited (429) | Throw: `"FamilySearch rate limit reached. Wait a moment and try again."` |
 | Non-OK status (other) | Throw: `"FamilySearch tree API error: {status}"` |
+| Memories fetch fails (any status, timeout, or throw) | **Never throws.** Return the tree sources alone and write one line to stderr. The person read is the contract; memories are an enrichment. |
+| Portrait fetch fails | **Never throws.** Treated as "no portrait", so the merge still runs — at worst one profile photo is not suppressed. Losing it must not cost the whole merge. |
+| Transcription fails for one memory (no `openRouterApiKey`, OpenRouter error, timeout, artifact 403) | **Never throws.** That memory degrades to a metadata-only entry carrying a `notes` line naming `image_transcribe` as the retry route. Other memories are unaffected. |
+| Transcription budget expires | **Never throws.** Memories not reached come back as metadata-only entries with a `notes` line saying the budget ran out. Nothing is dropped, and the budget is not extended. |
+| Story artifact unavailable | `text` is left **absent** rather than filled with the payload's 200-character preview, which is cut mid-word. A `notes` line records it. |
 
 ---
 
