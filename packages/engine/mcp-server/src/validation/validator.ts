@@ -1633,7 +1633,11 @@ function checkTreeFact(
   checkTrueFlag(fact, "primary", path, report);
   checkTreeStrings(
     fact,
-    ["date", "standard_date", "place", "standard_place", "value"],
+    // `assertion_id` rides here and not only in TREE_FACT_FIELDS: that set
+    // admits the key, and this is the only thing that says it must be a string.
+    // Without it `assertion_id: 123` passes the runtime validator and fails the
+    // JSON Schema, and tree-shape-drift.test.ts compares key NAMES only.
+    ["date", "standard_date", "place", "standard_place", "value", "assertion_id"],
     path,
     report
   );
