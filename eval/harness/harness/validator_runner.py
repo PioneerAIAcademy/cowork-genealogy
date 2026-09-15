@@ -42,8 +42,9 @@ class ValidatorRunResult:
     # re-deriving one from the `error` prose.
     skipped: bool = False
     # True when the report_* function's signature draws only from
-    # before_state, after_state, test, and skill_frontmatter — it reads
-    # only persisted project state, not the response.
+    # before_state, after_state, test, and skill_frontmatter AND reads
+    # at least one of before_state/after_state — it reads persisted
+    # project state, not the response.
     state_derived: bool = False
 
     @property
@@ -197,6 +198,10 @@ def _import_validator_module(path: Path, name: str):
                 pass
 
 
+_STATE_ARGS = frozenset({"before_state", "after_state", "test", "skill_frontmatter"})
+_READS_STATE = frozenset({"before_state", "after_state"})
+
+
 def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResult]:
     out: list[ValidatorRunResult] = []
     for attr_name in dir(module):
@@ -208,8 +213,10 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
         if not callable(fn):
             continue
         sig = inspect.signature(fn)
-        _STATE_ARGS = {"before_state", "after_state", "test", "skill_frontmatter"}
-        is_state_derived = is_report and set(sig.parameters) <= _STATE_ARGS
+        params = set(sig.parameters)
+        is_state_derived = (
+            is_report and params <= _STATE_ARGS and bool(params & _READS_STATE)
+        )
         try:
             kwargs = {
                 name: available_args[name]
@@ -315,8 +322,9 @@ def split_observations(
     r.error (the observation text) for every reporting-only result that
     failed and has an error message. The partition is by function signature:
     a report_* whose parameters draw only from before_state, after_state,
-    test, and skill_frontmatter is state-derived (reads only persisted
-    project state); the rest are response-derived.
+    test, and skill_frontmatter AND include at least one of before_state or
+    after_state is state-derived (reads persisted project state); the rest
+    are response-derived.
 
     Passing report_* results are excluded (only fired findings appear).
     r.name (the function name) is never included — it is a verdict, not

@@ -1883,9 +1883,12 @@ def test_state_observations_appear_in_the_prompt():
 
 
 def test_no_state_observations_renders_a_neutral_marker():
-    out = _minimal_prompt(state_observations=[])
-    assert "persisted project state" in out
-    assert "(no observations)" in out
+    out = _minimal_prompt(
+        state_observations=[], harness_observations=["a response observation"]
+    )
+    section = out.split("## Harness observations on persisted project state", 1)[1]
+    assert section.lstrip().startswith("(no observations)")
+    assert "{state_observations}" not in out
 
 
 def test_state_and_response_observations_coexist():

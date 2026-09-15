@@ -284,10 +284,12 @@ state, not that the skill is wrong, and a pattern can match correct state.
 **Only matches appear here** — a check that found nothing is deliberately not
 listed.
 
-Weigh each against the file changes summary and the tool calls you already have
-above, the same way you would weigh anything you noticed yourself. A match does
-not require a deduction of any size, and none of them names a dimension or a
-score. If a match is unrelated to the dimension you are scoring, ignore it.
+Weigh each on its own terms, against the file changes summary and the tool calls
+above where those carry enough detail — the summary may show only which sections
+changed, not what was written. Treat the observation as describing the persisted
+document directly. A match does not require a deduction of any size, and none of
+them names a dimension or a score. If a match is unrelated to the dimension you
+are scoring, ignore it.
 
 ────────────────────────────────────────
 # Critical: Negative tests (decline / routing / non-activation)

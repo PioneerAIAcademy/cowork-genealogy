@@ -2562,6 +2562,28 @@ def test_response_derived_observation_lands_in_response_list(tmp_path):
     assert state_obs == []
 
 
+def test_non_state_non_response_arg_lands_in_response_list(tmp_path):
+    """A report_* taking before_state + num_turns is NOT state-derived: num_turns
+    is outside _STATE_ARGS.  This pins the positive predicate — the old negative
+    form (\"no response args\") would misclassify it as state-derived."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_run_shape(before_state, num_turns):\n"
+        "    raise AssertionError('run used too many turns')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello", num_turns=5,
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["run used too many turns"]
+    assert state_obs == []
+
+
 def test_standalone_pytest_collects_report_validators():
     """python_functions must collect report_* or `pytest validators/ -v` — the
     debugging path unit-test-spec.md points developers at — silently runs none
