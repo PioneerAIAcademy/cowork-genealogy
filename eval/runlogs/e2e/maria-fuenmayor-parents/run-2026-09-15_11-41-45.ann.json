@@ -1,12 +1,12 @@
 {
   "per_finding": {
     "f1": "true",
-    "f2": "false"
+    "f2": "partial"
   },
   "proof_quality_score": 1,
   "notes": {
     "f1": "Both parent links present and sourced: R6 ParentChild I2 'Juan Fuenmayor' -> GMH9-3BJ and R7 ParentChild I3 'Graciliana Fuenmayor' -> GMH9-3BJ. Recovered by indirect correlation of five sibling/collateral records rather than the expected direct marriage-entry source; ps_001 rates the parentage 'probable' and notes no direct baptism or birth entry for the subject was found. Graded on the links, which are right. Proof-summary soundness for q_001 graded 2 (thin).",
-    "f2": "Not recovered. The Couple link R8 (GMHM-LXG + GMH9-3BJ) carries a Marriage fact, but its date is the interval 'after 13 January 1912, before 10 May 1913' -- not 13 January 1912 -- and the place is inferential. The agent retrieved the expected source (ark QVMV-ZVBD) and rejected the identity, treating it as Eduardo Berrueta's prior marriage to a different woman and minting separate persons I6 'Eduardo Berrueta' and I7 'Maria Tereza Fuenmayor'; ps_002 concludes 'No direct marriage record has been located' at tier 'possible'. The interval's lower bound coincides with the true date only because of that rejection, so the marriage claim is not recovered. Proof-summary soundness for q_002 graded 1 (unsound)."
+    "f2": "Partial. The tree carries the right couple and the expected place but not the claimed date: R8 Couple(GMHM-LXG, GMH9-3BJ) has a Marriage fact at 'Maracaibo, Zulia, Venezuela' dated 'after 13 January 1912, before 10 May 1913' rather than 13 January 1912. Weighed against 'false' because the couple link is starting state, not a recovery -- R1 Couple(GMHM-LXG, GMH9-3BJ) is already in starting-tree.gedcomx.json (no facts), and R8 duplicates it -- and because the agent retrieved the expected source (ark QVMV-ZVBD), rejected the identity as a different woman, minted separate persons I6 'Eduardo Berrueta' and I7 'Maria Tereza Fuenmayor', and concluded in ps_002 that 'No direct marriage record has been located' at tier 'possible'. Graded partial on the rubric's letter (right person, weaker facts); the place is the only component the run actually contributed, and the agent calls it inferential. Proof-summary soundness for q_002 graded 1 (unsound)."
   },
   "findings_hash": "cb62b7d53c3ac92c694bcba3de866eb3d8aeaccd2473169d118ae8e440466490"
 }

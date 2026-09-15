@@ -39,10 +39,12 @@ starting tree lacks entirely.
 Berrueta is the son of **Andrés Berrueta and María del Rosario Fernández** —
 exactly what the tree's spelling of the husband, **Eduardo Berrueta Fernández**,
 encodes under the Venezuelan two-surname convention, and the tree gives that name
-from the children's baptisms without ever naming his parents. Husband, in-laws,
-date and place all match. The date works cleanly too: 13 January 1912 comes
-sixteen months before the couple's first recorded child, María del Rosario
-Berrueta Fuenmayor, baptised 10 May 1913 in the same parish complex.
+from the children's baptisms without ever naming his parents. The husband matches
+outright, and the in-laws only by that inference. The date and place the tree does
+not carry at all, which is what makes them new information rather than
+confirmation — and the date fits: 13 January 1912 comes sixteen months before the
+couple's first recorded child, María del Rosario Berrueta Fuenmayor, baptised
+10 May 1913 in the same parish complex.
 
 **The bride's given name is an indexing variant, and this collection's indexing
 is demonstrably loose.** The record indexes her as *María Tereza*; the tree
@@ -52,16 +54,18 @@ already on the starting tree are all from this same collection and already spell
 her four different ways — *María Concepción*, *Concepción*, *María*, and *María
 Concepcion Fuenmayor de Berrueta* — while mangling the groom across the same
 entries as *Eudardo*, *Eudaldo*, *Enidaldo*, *Berreta* and *Barueta*. A given-name
-variant here carries very little weight against a four-way match on the groom's
-parents, the date and the parish. The competing reading — two Fuenmayor brides
-marrying an Eduardo Berrueta in Maracaibo in the same window — was looked for and
-not found.
+variant here carries very little weight against a three-way match on the groom's
+parents and the parish. The competing reading — two Fuenmayor brides marrying an
+Eduardo Berrueta in Maracaibo in the same window — was looked for and not found.
 
 **The hint is not a re-indexing of a source she already has.** None of the 14
-sources on the committed snapshot is `QVMV-ZVBD`; twelve are baptism entries for
-the couple's children (1913–1930) and two are unrelated Urdaneta entries. So the
-marriage and the parents are both genuinely new information relative to the
-starting tree, which is what makes this fixture gradeable.
+sources on the committed snapshot is `QVMV-ZVBD`; twelve concern the couple's
+children (1913–1938) — mostly baptisms, but including the adult marriages of Luis
+Alberto (26 Mar 1938) and Angel Robinson (31 Dec 1936), and with two pairs that
+are duplicate re-indexings of one event (10 Feb 1924, 16 Jan 1915) — and two are
+unrelated Urdaneta entries. So the marriage and the parents are both genuinely new
+information relative to the starting tree, which is what makes this fixture
+gradeable.
 
 **One note for anyone re-deriving this against the live tree.** The record is now
 attached to the `GMH9-3BJ` profile on familysearch.org, but it was **not** attached
