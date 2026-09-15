@@ -724,7 +724,7 @@ def test_the_third_trigger_returns_exactly_what_coercion_removes():
     # this lands carries the new one.
     assert kept_by_trigger >= touched - 2, (
         f"only {kept_by_trigger} of {touched} affected entries are kept mandatory "
-        f"by the third trigger (49 of 51 on 2026-09-14). A number near zero means "
+        f"by the third trigger (47 of 49 on 2026-09-15). A number near zero means "
         f"the trigger is not doing the work it was added for, and the two "
         f"assertions above would pass anyway."
     )

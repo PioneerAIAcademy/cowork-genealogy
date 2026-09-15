@@ -629,6 +629,44 @@ def test_chrono_passes_when_record_persona_has_no_birth_class_fact():
     )
 
 
+def test_chrono_fires_on_uri_fact_type():
+    """URI fact types (http://gedcomx.org/Christening) must be matched the same
+    as bare names — 9 of 10 facts in v1_2026-09-15_08-11-26.json use this form."""
+    sp_call = _sp_call_with_gedcomx(
+        "BP1", "I1", "http://gedcomx.org/Christening", "12 March 1858"
+    )
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+            _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+            [sp_call],
+        )
+    assert "pe_001" in str(exc.value)
+
+
+def test_chrono_fires_on_dict_date():
+    """Dict dates ({\"original\": \"abt 1845\"}) must not cause TypeError — the same
+    corpus carries this form on both record and tree facts."""
+    sp_call = _sp_call_with_gedcomx(
+        "BP1", "I1", "http://gedcomx.org/Christening", {"original": "12 March 1858"}
+    )
+    tree = {
+        "persons": [
+            {
+                "id": "I1",
+                "facts": [{"type": "http://gedcomx.org/Birth", "date": {"original": "abt 1845"}}],
+            }
+        ]
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, tree),
+            _state(_CHRONO_AFTER_BAD, tree),
+            [sp_call],
+        )
+    assert "pe_001" in str(exc.value)
+
+
 def test_chrono_fires_when_record_persona_id_is_null():
     """The flynn-baptism-names-mother shape: assertion has no record_persona_id
     (came from record_read with no search sidecar), so the validator must fall

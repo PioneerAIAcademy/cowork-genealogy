@@ -1046,9 +1046,11 @@ def report_informant_fields_not_in_pe_confidence_reason(before_state, after_stat
     how certain we are that this record's role IS the tree person. Informant
     reliability (`information_quality`, `informant_proximity`) belongs on the
     assertion that classified the source, not on the identity link. Conflating
-    them is the pe_005 bug: a rationale that assigns `confident` because
-    "information_quality is primary" is grading source reliability, not
-    corroborated identity.
+    them this way is the pe_005 defect. This catches only the literal field
+    names in a NEW link's rationale — 1 hit in 261 pe_ entries across five
+    runs. It does NOT cover ut_person_evidence_001, which reviews pe_005 in
+    review mode and writes no new entry; that case is graded by the rubric's
+    Confidence calibration dimension alone.
 
     Tier-2 (report_) because prose-level checks have a non-zero false-positive
     rate and a gating failure here would short-circuit the judge and zero the
@@ -1114,6 +1116,11 @@ def _record_persona_facts_from_sp(sp_args: dict, persona_id: str) -> list[dict]:
 _BIRTH_CLASS_TYPES = frozenset({"birth", "christening", "baptism", "naturalbirth"})
 
 
+def _fact_type(fact: dict) -> str:
+    """Bare name or full GedcomX URI — both appear in same_person args."""
+    return str(fact.get("type") or "").strip().rsplit("/", 1)[-1].lower()
+
+
 def report_chronological_contradiction_not_speculative(
     before_state, after_state, tool_calls
 ):
@@ -1164,9 +1171,12 @@ def report_chronological_contradiction_not_speculative(
         if not pid:
             continue
         for fact in (person.get("facts") or []):
-            ft = str(fact.get("type") or "").strip().lower()
+            ft = _fact_type(fact)
             if ft == "birth":
-                yr = _parse_year(fact.get("date") or "")
+                date_val = fact.get("date") or ""
+                if isinstance(date_val, dict):
+                    date_val = date_val.get("original") or date_val.get("formal") or ""
+                yr = _parse_year(date_val)
                 if yr is not None:
                     tree_birth_year[pid] = yr
                     break
@@ -1200,9 +1210,12 @@ def report_chronological_contradiction_not_speculative(
         record_facts = _record_persona_facts_from_sp(sp_args, record_persona_id)
         record_year: int | None = None
         for fact in record_facts:
-            ft = str(fact.get("type") or "").strip().lower()
+            ft = _fact_type(fact)
             if ft in _BIRTH_CLASS_TYPES:
-                yr = _parse_year(fact.get("date") or "")
+                date_val = fact.get("date") or ""
+                if isinstance(date_val, dict):
+                    date_val = date_val.get("original") or date_val.get("formal") or ""
+                yr = _parse_year(date_val)
                 if yr is not None:
                     record_year = yr
                     break
