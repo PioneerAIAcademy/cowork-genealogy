@@ -542,10 +542,7 @@ than retrying blindly.
 **Relationship edges — write vs. defer:**
 - **Household record** (census, probate with co-enumerated household
   members): after writing `pe_` links, write the parent-child and couple
-  edges via `tree_edit add_relationship` (step 7.4). For every
-  relationship assertion in the record, write pe_ entries for **both**
-  parties — the child and the parent, both spouses — not only the
-  primary subject.
+  edges via `tree_edit add_relationship` (step 7.4).
 - **Non-household relationship record** (a baptism naming a parent, a
   marriage register, a will's parentage/relationship assertion for a
   person already in the tree): write `pe_` links for **both** parties the
@@ -728,10 +725,9 @@ hands a merge set to proof-conclusion to fold. For a household record:
      affected `pe_` rationale and proceed.
 
    When working from **pre-extracted assertions** (no candidate record
-   document available), skip the gate and note in **each affected pe_
-   rationale** that the coherence dry-run was not possible because the
-   source document is not available in candidate form. A skipped gate
-   with no explanation in the rationale is treated as an error.
+   document available), skip the gate and note in the rationale that
+   the coherence dry-run was not possible because the source document
+   is not available in candidate form.
 3. **Materialize every member in ONE batched call.** Only after the gate
    clears the error tier: collect every persona that **needs**
    materializing — the subject *and* each sibling/spouse — as one `ops`
