@@ -31,3 +31,24 @@ Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
 - **Row 16**: who writes `project.status = "completed"` — the routing table,
   the ownership validator, the tool comments, and the empirical run logs all
   disagree. Cannot test until the ruling lands.
+
+## No `routes-to:` test may name a paired row
+
+`research-exhaustiveness`, `proof-conclusion` and `person-evidence` are routed
+by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075). The
+harness observes routing only through `Skill`:
+`eval/harness/harness/skill_runner.py:654` gates both `skills_invoked` (`:660`)
+and stub application (`:684`) on `if tool_name == "Skill"`. So a `routes-to:`
+assertion naming one of those three cannot fail — it would grade a call the
+harness never sees.
+
+The three names are dropped from `route-shortcut-guard.json`'s `stub_skills`
+for the same reason: a stub that can never be applied is not a control. The
+other nine fixtures in this directory still carry them as inert entries, which
+`test_runnability.py` accepts because the names are real skill directories;
+they are left alone deliberately rather than swept, since only this fixture's
+stated purpose names a paired row.
+
+Issue #2246 holds the harness work that would let a unit suite observe an
+`Agent` spawn. Until it lands, the route these three take is graded by no unit
+test — a live `make e2e-run` is the only instrument.

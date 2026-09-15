@@ -274,6 +274,97 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "with a run that can measure it.",
     },
   },
+
+  // The three rows /research routes by spawning the agent directly (#2075).
+  // All three share one caller-side paragraph, because the failure they guard
+  // against is the same one: on the direct route the agent's own body is not
+  // loaded in the caller's context, so every rule the THIN SKILL used to state
+  // to the orchestrator is off. The paragraph puts those rules back on the only
+  // side that still reads them.
+  "research -> research-exhaustiveness": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   else and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+    ],
+  },
+
+  "research -> proof-conclusion": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   else and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "**Including when your own delegation message tells you to write one.**",
+      },
+    ],
+  },
+
+  "research -> person-evidence": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "**always the agent, never inline.**",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "Do not\n   override a decline: when an agent blocks on a precondition, route to the\n   skill it names",
+      },
+    ],
+    exempt: {
+      // person-evidence became a pair on 2026-09-09 (PR #2151). Its agent body
+      // carries no caller-pressure sentence yet. Pin it and delete this entry
+      // when it gains one.
+      side: "agent",
+      reason:
+        "agents/person-evidence.md states no caller-pressure rule. The caller side " +
+        "carries two — the row's own 'never inline' clause and the shared " +
+        "do-not-override-a-decline rule — and the identity decision the agent owns " +
+        "is already held by a write boundary rather than by prose: extraction_append " +
+        "refuses the person_evidence section outright, so a slanted delegation cannot " +
+        "produce the fabricated link this file exists to prevent. Not fixed here: the " +
+        "agent body sits behind a paid person-evidence eval gate, and PR #2538 is " +
+        "already open against it.",
+      mitigation: {
+        side: "caller",
+        excerpt:
+          "person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links",
+      },
+    },
+  },
+
+  "research-plan -> research-exhaustiveness": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The call site is one edge-cases table row that names the artifact (the " +
+        "question) and the criterion (the GPS stop criteria) and nothing else — it " +
+        "carries no read of whether the question IS exhaustive, which is the lane the " +
+        "agent owns. There is no caller judgement to keep out of it. If the row ever " +
+        "gains a recommendation, pin it and delete this entry.",
+      mitigation: {
+        side: "caller",
+        excerpt:
+          "spawn `@plugin:research-exhaustiveness` to evaluate the question against the GPS stop criteria",
+      },
+    },
+  },
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the

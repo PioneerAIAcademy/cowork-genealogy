@@ -57,12 +57,19 @@ const NOT_SKILL_NAMES = new Set([
 ]);
 
 /**
- * Lowercase kebab-case inside backticks: two or more `-`-joined segments.
- * Single-word names — `citation`, `research`, `timeline`, `translation` —
- * are therefore out of range. Widening to bare words would match ordinary
- * prose, so this guard covers hyphenated names only.
+ * Lowercase kebab-case inside backticks: two or more `-`-joined segments,
+ * optionally behind the `@plugin:` prefix an agent spawn spells. Single-word
+ * names — `citation`, `research`, `timeline`, `translation` — are therefore
+ * out of range. Widening to bare words would match ordinary prose, so this
+ * guard covers hyphenated names only.
+ *
+ * The `@plugin:` arm exists because `research/SKILL.md` routes its paired rows
+ * by spawning the agent (`@plugin:proof-conclusion`) rather than calling the
+ * same-named thin skill. Without it the `@` is the first character inside the
+ * backtick, the token never matches, and a cell naming an agent that does not
+ * ship passes this test and refuses to spawn at runtime (issue #2075).
  */
-const KEBAB_IN_BACKTICKS = /`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g;
+const KEBAB_IN_BACKTICKS = /`(?:@plugin:)?([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g;
 
 function shippedNames(): Set<string> {
   const skills = readdirSync(join(pluginRoot, "skills")).filter((n) =>
@@ -89,6 +96,23 @@ function pluginMarkdown(): string[] {
 }
 
 describe("plugin prose names only skills and agents that ship", () => {
+  // The matcher's own arms, asserted directly. Without this the `@plugin:`
+  // widening is unfalsifiable: a prefix arm that matched nothing would leave
+  // every suite green while the hole it was added to close stayed open, which
+  // is the shape CLAUDE.md § "A new lint must be proven to fail" names.
+  it("extracts the tail of an @plugin: spawn, and the bare form unchanged", () => {
+    const tokens = (s: string) => [...s.matchAll(KEBAB_IN_BACKTICKS)].map((m) => m[1]);
+
+    expect(tokens("spawn `@plugin:proof-conclusion` now")).toEqual(["proof-conclusion"]);
+    expect(tokens("route to `research-plan`")).toEqual(["research-plan"]);
+    expect(tokens("`@plugin:person-evidence` and `record-extraction`")).toEqual([
+      "person-evidence",
+      "record-extraction",
+    ]);
+    // A bare `@plugin:` with no kebab tail must not match at all.
+    expect(tokens("`@plugin:research`")).toEqual([]);
+  });
+
   it("resolves every backticked kebab-case token", () => {
     const known = shippedNames();
     const offenders: string[] = [];
