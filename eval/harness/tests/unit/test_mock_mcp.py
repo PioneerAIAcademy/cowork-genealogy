@@ -720,6 +720,41 @@ def test_successful_call_carries_no_is_error(tmp_path):
     assert "is_error" not in result
 
 
+def test_sidecar_read_runs_live_against_the_workspace(tmp_path):
+    """The live arm reads the WORKSPACE's own evaluations/ file — a canned
+    fixture could only drift from what the mentor actually wrote. Also pins
+    the module path / export symbol the arm names, which nothing else checks:
+    a typo there is `build not found` at eval time, graded as the skill's
+    fault. Skips only when the compiled build is absent (environmental)."""
+    if not (BUILD_TOOLS / "sidecar-read.js").exists():
+        pytest.skip("compiled MCP build absent")
+    _seed_project(tmp_path)
+    (tmp_path / "evaluations").mkdir()
+    (tmp_path / "evaluations" / "proof-critique-ps_001.json").write_text(
+        json.dumps({"verdict": "not craft", "note": "Kraków"}), encoding="utf-8"
+    )
+    server, call_log, tools_by_name = create_mock_server(
+        [], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "sidecar_read",
+        {"projectPath": "/somewhere/else", "ref": "evaluations/proof-critique-ps_001.json"},
+    )
+    body = _extract_response_dict(result)
+    assert body.get("ok") is True, body
+    assert json.loads(body["content"]) == {"verdict": "not craft", "note": "Kraków"}
+    assert body["truncated"] is False
+    assert "is_error" not in result
+    assert call_log[-1]["matched"] == {"kind": "live", "index": None}
+
+    missing = _invoke(
+        tools_by_name, "sidecar_read", {"ref": "evaluations/nope.json"}
+    )
+    assert _extract_response_dict(missing).get("reason") == "not_found"
+    assert missing.get("is_error") is True
+
+
 def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():
     """The Python gate set must equal OK_FALSE_IS_FAILURE ∩ LIVE_TOOLS.
 

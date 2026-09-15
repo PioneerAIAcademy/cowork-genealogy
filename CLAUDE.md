@@ -315,6 +315,13 @@ entitled to make. `scripts/package-plugin.mjs`'s `INCLUDE` list must carry
 `"hooks"` or the directory never ships, which looks identical to the runtime
 refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
+**After changing anything under `hooks/`, run `make hook-smoke`.**
+`plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
+proves a runtime *binds* it, and since the script must never raise, a hook that
+stopped binding looks exactly like one with no opinion. It is live, billed, and
+run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
+`nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).
+
 **Allow-lists are subtractive; hooks are not.** A per-agent `tools:` list can
 only narrow what the session already holds — the session's tool set is always a
 superset — so no allow-list can deny the *main thread* a tool one of its
@@ -382,7 +389,7 @@ Per-project context about the researcher (experience level, paid
 subscriptions, derived narration guidance) lives in a
 `researcher_profile` section of `research.json`. `init-project` writes
 it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. 26 of the 27 skills
+the project's research objective at project start. 27 of the 28 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
