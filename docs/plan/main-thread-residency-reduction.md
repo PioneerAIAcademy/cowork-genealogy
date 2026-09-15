@@ -47,10 +47,13 @@ Captured total ≈ **55,700 tok/run**, against 449k added. So roughly **88% of w
 fills the main thread is still unattributed** — truncated result bodies, subagent
 return payloads, thinking, and narration.
 
-**That table is pooled across an architectural transition** — three pair
-conversions landed inside its window — so its `research_append` row overstates
-the current state. See 1a for the split. Every rate in this document carries the
-same caveat.
+**That table is pooled across an architectural transition** and its
+`research_append` row is therefore wrong for the current code — three pair
+conversions landed inside its window. Lever 1 has the split. **Split every rate
+in this document on the run's own `git_sha`, never on its date**: run logs before
+2026-08-09 carry no sha, and several runs dated after a conversion were still
+executing pre-conversion code. Two earlier drafts of lever 1 got this wrong in
+two different directions.
 
 **`Read` is the most understated row in that table.** 452 of 2,160 research.json
 reads (21%) pass no `offset`/`limit`, and the file is a median 76 KB / max 356 KB
@@ -81,108 +84,73 @@ trades quality for a saving that may not exist.
 Ranked by measured size over confidence. Each names what it touches and what
 would falsify it.
 
-### 1. Finish moving the writes into the agents that already exist
+### 1. Convert `research-plan` (#2116). That is the whole lever.
 
-`research_append` + `research_log_append` are **writes** — content pushed through
-the thread whose only job is routing, by a caller that did not author it. The
-agents that did already hold the tools: `person-evidence`, `record-extractor`,
-`proof-conclusion` and `research-exhaustiveness` all declare `research_append`;
-`record-extractor` declares `research_log_append`.
+`research_append` writes go through the thread whose only job is routing. The
+fix is the pair conversion queue, and **most of it is already done** — the
+remaining main-thread write traffic is overwhelmingly one unconverted section.
 
-**Read 1a before scoping this.** The first cut of this lever put it at 36% of
-captured main bytes from a pooled 33-run sample. That figure is wrong: three
-pair conversions landed inside the window, and split on the current era the
-remaining work is smaller and differently shaped.
+#### How this figure was reached, because the first two attempts were wrong
 
-- **Touches:** `research/SKILL.md`, plus whichever sub-skill bodies write inline.
-- **Acceptance:** main-thread `research_append` **operations** per run (not
-  calls — most calls carry an `ops[]` array) fall below 40 on an instrumented
-  run, from 76.2 today, with no drop in what lands in `research.json`.
-- **Risk:** `docs/specs/schemas/ownership.json` governs who may write each
-  section, and any move has to keep its rows true. The `log` row is already
-  stale — five `skill:` callers, no `agent:` one, while `record-extractor` has
-  written the log 9 times across 7 committed runs.
+Split runs by **whether the `person-evidence` agent existed at the run's own
+`git_sha`** — not by date. The date proxy failed twice over: run logs older than
+2026-08-09 carry no `git_sha` at all, and several runs *dated* after the
+conversion were still executing pre-conversion code.
 
-### 1a. The falsifier was run twice, and the second run corrected the first
+| pair present at that commit? | runs | main pe ops/run | sub pe ops/run | delegated |
+|---|---|---|---|---|
+| **yes** | 4 | **0.5** | **123.0** | **99.6%** |
+| no | 14 | 55.1 | 0.0 | 0% |
+| unresolvable sha | 15 | 57.4 | 4.0 | 6.5% |
 
-Most `research_append` calls carry an `ops[]` array, so the unit is the
-**operation**, not the call.
+**The pair works essentially perfectly: 55.1 → 0.5 main-thread ops/run.** Two
+earlier passes in this document reported 25.3% and then 51.8% delegated. Both
+were pooling artifacts. 99.6% is the number.
 
-**The first pass pooled 33 runs and was wrong.** Three pair conversions landed
-*inside* that window — `proof-conclusion` (#1819, 2026-08-21),
-`research-exhaustiveness` (#1847, 2026-08-23) and `person-evidence` (#1853,
-2026-09-01) — so every "% delegated" figure computed over the pool is an average
-of a period when the mechanism did not exist and a period when it did. It
-understates the current state, badly.
+The `same_person` concern an earlier draft raised dies with it. On pair-present
+runs the main thread makes **0.00** `same_person` calls a run and the agent makes
+**11.00** — the identity check did not go missing, it moved into the agent that
+owns it, exactly as designed. Do not repeat the "43 : 1 possible bypass" framing;
+it was an artifact of averaging in runs where the agent did not exist.
 
-**Split at 2026-09-01** (21 runs before, 12 after):
+#### What is actually left
 
-| section | before, main ops/run | after, main ops/run | after, delegated |
-|---|---|---|---|
-| `person_evidence` | 53.3 | **42.8** | **51.8%** |
-| `plan_items` | 21.9 | **24.8** | **0%** |
-| `conflicts` | 1.5 | 2.2 | 0% |
-| `plans` | 1.8 | 1.9 | 0% |
-| `localities` | 1.0 | 1.1 | 0% |
-| `questions` | 3.6 | 1.1 | 70.5% |
-| `project` | 1.5 | 0.9 | 68.6% |
-| `proof_summaries` | 2.7 | **0.2** | **88.9%** |
-| **total main-thread ops/run** | **91.3** | **76.2** | |
+On the four pair-present runs, main-thread `research_append` operations by
+section:
 
-**The conversions work.** `proof_summaries` went to 88.9% delegated and 0.2
-main ops/run; `questions` and `project` are around 70%. Total main-thread write
-operations fell 91.3 → 76.2, a ~17% cut, from three conversions alone. That is
-the strongest evidence in this document that the pair mechanism does what it is
-meant to do, and it argues for finishing the `cluster:pair-conversion` queue
-rather than inventing something new.
+| section | main ops/run | delegated |
+|---|---|---|
+| **`plan_items`** | **27.2** | **0%** |
+| `plans` | 2.2 | 0% |
+| `conflicts` | 2.0 | 0% |
+| `assertions` | 1.2 | 0% |
+| `questions` | 1.2 | 66.7% |
+| `project` | 1.0 | 71.4% |
+| `proof_summaries` | 0.2 | 87.5% |
+| `person_evidence` | 0.5 | 99.6% |
+| **total** | **38.2** | |
 
-**So lever 1 is smaller than first stated, and its shape is two residues:**
+Total main-thread write operations across the conversions: **91.3 → 38.2 per
+run, a 58% cut.** `plan_items` alone is 71% of what remains, and it belongs to
+`research-plan` — **#2116**, already on the board, already in the
+`cluster:pair-conversion` queue.
 
-- **`plan_items`, 24.8 ops/run at 0% delegated** — now the largest fully
-  undelegated section. It belongs to `research-plan`, which is not a pair yet
-  (#2116). Straightforward: it is waiting its turn in a queue that already
-  exists.
-- **`person_evidence`, 42.8 ops/run at only 51.8%** — the interesting one. Its
-  pair landed and half the writes still bypass it, where `proof-conclusion`'s
-  reached 89%. Two converted pairs, very different adherence. **That gap is the
-  question worth asking**, and the answer probably generalises to every
-  conversion still queued.
+- **Action:** none new. Prioritise #2116, then `conflict-resolution` (#1852) and
+  the rest of the queue. This document's contribution is the measurement that
+  says the queue is worth finishing and which item to take first.
+- **Acceptance:** main-thread `research_append` operations per run fall below 15
+  on a pair-present instrumented run, from 38.2.
 
-### 1b. The `person_evidence` residue, as a question
+#### Two caveats, both load-bearing
 
-`research/SKILL.md` is categorical: the orchestrator *"never writes
-`person_evidence` entries … person-evidence owns the identity decision and
-scores every cross-record link with `same_person` before it links. Writing `pe_`
-links inline skips that check — it is exactly how a same-named stranger's record
-gets attached to the subject (a b. 1814 man was given a 1918 death, age 104,
-this way)."*
-
-Post-conversion, main-thread `person_evidence` ops outnumber main-thread
-`same_person` calls **25.6 : 1** (42.8 against 1.67 per run). Pre-conversion it
-was 62 : 1, so it is moving the right way.
-
-**Recorded as a question, not a verdict.** `same_person` is required before every
-*cross-record* link, not before every entry, so the expected ratio is above 1 : 1
-and nobody has established what it should be. Establish that first. This repo
-has repeatedly found a striking number to be an instrument artifact — including
-the first pass of this very lever, one section above.
-
-A real attribution limit sits under it too: `agent_id: None` means "not inside a
-subagent", which covers the orchestrator **and** any skill it invoked, since
-skills run inline. So the log cannot yet separate a doctrine violation from a
-thin-routing skill doing load-bearing work. Both are worth fixing; only one is a
-correctness issue.
-
-**What settles it:** read the tool ordering around a main-thread
-`person_evidence` write on the pending instrumented run. If it is real, this
-stops being a residency lever and becomes a `nothing-checks` item — the shipped
-hook already routes `research_append` by caller identity through
-`AGENT_WRITABLE_SECTIONS`, so the enforcement plane exists and the rule is
-simply not written into it.
-
-**Standing caution for every figure in this document.** The committed corpus
-spans an architectural transition. Any rate computed across it is an average of
-two regimes. Split on the relevant landing date before quoting one.
+- **n=4.** The effect (55.1 → 0.5) is far too large to be noise, but the
+  section-by-section table under it is four runs deep. Re-derive after the next
+  few instrumented runs.
+- **15 of 33 runs have an unresolvable `git_sha`.** Ten predate the field; five
+  name commits that no longer exist, because PR branches are squash-merged. So
+  run provenance silently degrades over time, and any future analysis that keys
+  on `git_sha` inherits the same 45% hole. Worth a `nothing-checks` card on its
+  own.
 
 ### 2. Route `Read` of research.json to `research_query`
 
