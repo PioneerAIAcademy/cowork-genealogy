@@ -1223,6 +1223,29 @@ describe("tree_forget", () => {
     expect(r.errors[0]).toMatch(/already has a plan/);
   });
 
+  it("refuses even when the only plan is completed (not active)", async () => {
+    const researchWithCompletedPlan = {
+      ...minimalResearch,
+      plans: [
+        {
+          id: "pl_002",
+          question_id: "q_001",
+          status: "completed",
+          items: [{ id: "pi_001", action: "search", description: "Test", status: "completed" }],
+        },
+      ],
+    };
+    await writeProject(family(), researchWithCompletedPlan);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/already has a plan/);
+  });
+
   it("allows forgetting when plans is empty", async () => {
     await writeProject(family(), { ...minimalResearch, plans: [] });
     const r = await treeForget({

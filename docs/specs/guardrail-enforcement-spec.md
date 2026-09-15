@@ -810,9 +810,9 @@ Implemented as a `TreeForgetError` thrown after the project-file reads and
 before the dry-run exit, in
 `packages/engine/mcp-server/src/tools/tree-forget.ts`.
 
-**Corpus figure.** `grep -rl "tree_forget" eval/runlogs/` returns no files
-(measured 2026-09-15) — no committed run has ever called this tool, so the
-refusal cannot regress a graded run.
+**Corpus figure.** `grep -rl '"tool": "mcp__genealogy__tree_forget"' eval/runlogs/`
+returns no files (measured 2026-09-15) — no committed run has ever called this
+tool, so the refusal cannot regress a graded run.
 
 ### Blocking conflicts before completion
 
