@@ -113,6 +113,13 @@ function str(s: unknown): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+// Newspapers.com's `dr_year`: a plain year or a hyphenated range, nothing
+// else — `dr_year=banana` used to ship because the field is string-typed.
+function yearOrRange(s: unknown): string | undefined {
+  const t = str(s);
+  return t !== undefined && /^\d{4}(-\d{4})?$/.test(t) ? t : undefined;
+}
+
 // Joins the present parts; absent parts drop out. A `" "` separator is what
 // the free-text fields want — `toQueryString` encodes it as `+` (spec §3.6).
 function joinPresent(sep: string, ...parts: unknown[]): string | undefined {
@@ -130,7 +137,34 @@ function positional(left: unknown, right: unknown): string | undefined {
   return `${l ?? ""}_${r ?? ""}`;
 }
 
-// ─── Chronicling America's date window ───────────────────────────────────────
+// ─── Chronicling America's date window and state facet ───────────────────────
+
+// The bare `location_state=<state>` parameter does not filter: two live
+// measurements (2026-09-15) left the hit count identical with and without it
+// (401,243 and 2,101), while the facet form `fa=location_state:pennsylvania`
+// filtered (8,045 and 16) and is the form loc.gov's own `search.facet_limits`
+// names. The facet value is the full lowercase state name — a postal
+// abbreviation (`ny`) measures 0 — so one is expanded here. Multi-word names
+// (`new york`) are unverified against the facet (spec §9).
+const US_STATE_NAMES: Record<string, string> = {
+  al: "alabama", ak: "alaska", az: "arizona", ar: "arkansas", ca: "california",
+  co: "colorado", ct: "connecticut", de: "delaware", fl: "florida", ga: "georgia",
+  hi: "hawaii", id: "idaho", il: "illinois", in: "indiana", ia: "iowa", ks: "kansas",
+  ky: "kentucky", la: "louisiana", me: "maine", md: "maryland", ma: "massachusetts",
+  mi: "michigan", mn: "minnesota", ms: "mississippi", mo: "missouri", mt: "montana",
+  ne: "nebraska", nv: "nevada", nh: "new hampshire", nj: "new jersey", nm: "new mexico",
+  ny: "new york", nc: "north carolina", nd: "north dakota", oh: "ohio", ok: "oklahoma",
+  or: "oregon", pa: "pennsylvania", ri: "rhode island", sc: "south carolina",
+  sd: "south dakota", tn: "tennessee", tx: "texas", ut: "utah", vt: "vermont",
+  va: "virginia", wa: "washington", wv: "west virginia", wi: "wisconsin", wy: "wyoming",
+  dc: "district of columbia",
+};
+
+function usStateFacet(v: unknown): string | undefined {
+  const s = str(v)?.toLowerCase();
+  if (s === undefined) return undefined;
+  return US_STATE_NAMES[s] ?? s;
+}
 
 // The Library of Congress page corpus; a window entirely outside it cannot
 // return a page, and a URL for it would log a nil as evidence of absence.
@@ -237,18 +271,20 @@ function siteWideParams(
     case "newspapers":
       return {
         query: joinPresent(" ", a.givenName, a.surname, a.keywords),
-        dr_year: str(a.searchYear),
+        dr_year: yearOrRange(a.searchYear),
         dr_place: str(a.searchPlace),
       };
     case "chronicling_america": {
       const window = chroniclingAmericaWindow(a);
+      const state = usStateFacet(a.usState);
       return {
         // `q` filters; `qs` is dead on the live site (a nonsense value returns
         // the whole corpus). `dates=YYYY/YYYY` replaced the dead
-        // start_date/end_date pair. Spec "What nothing checks" has the caveat.
+        // start_date/end_date pair, and `fa=location_state:<name>` the dead
+        // bare `location_state=` parameter. Spec §9 has each measurement.
         q: joinPresent(" ", a.givenName, a.surname, a.keywords),
         dates: window.dates,
-        location_state: str(a.usState)?.toLowerCase(),
+        fa: state !== undefined ? `location_state:${state}` : undefined,
       };
     }
     case "digital_newspaper_archive":
@@ -460,15 +496,37 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
 
 // A curated `baseUrl` must belong to the requested site: a MyHeritage link
 // with `site: "ancestry"` would carry Ancestry's parameter names to a host
-// that ignores them. Compared by domain family, so a sibling subdomain
-// (`app.americanancestors.org` ~ `www.americanancestors.org`) and the UK
-// variant both pass. A site with no fixed host is exempt.
-function hostFamily(url: string): string {
-  return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+// that ignores them. Compared on the site host's registrable domain, so a
+// sibling subdomain (`app.americanancestors.org` ~ `www.americanancestors.org`)
+// and the UK variant pass while a bare registry suffix (`gc.ca` for
+// `recherche-collection-search.bac-lac.gc.ca`) does not.
+function hostOf(url: string): string {
+  return new URL(url).hostname.toLowerCase();
 }
 
-function sameHostFamily(a: string, b: string): boolean {
-  return a === b || a.endsWith(`.${b}`) || b.endsWith(`.${a}`);
+// Two-label public suffixes that occur among the supported hosts; every other
+// host is treated as <name>.<tld>.
+const TWO_LABEL_SUFFIXES = new Set(["co.uk", "gc.ca", "gov.it"]);
+
+function registrableDomain(host: string): string {
+  const labels = host.split(".");
+  const keep = TWO_LABEL_SUFFIXES.has(labels.slice(-2).join(".")) ? 3 : 2;
+  return labels.slice(-keep).join(".");
+}
+
+function inDomainOf(host: string, siteHost: string): boolean {
+  const reg = registrableDomain(siteHost);
+  return host === reg || host.endsWith(`.${reg}`);
+}
+
+// The site, if any, whose own domain a host belongs to.
+function siteOwningHost(host: string): ExternalSearchSite | undefined {
+  for (const site of SUPPORTED_SITES) {
+    for (const u of [SITE_BASE_URL[site], UK_BASE_URL[site]]) {
+      if (u !== null && u !== undefined && inDomainOf(host, hostOf(u))) return site;
+    }
+  }
+  return undefined;
 }
 
 // Hosts a site has retired: the page still loads, but the parameters this
@@ -479,19 +537,30 @@ const RETIRED_HOSTS: Partial<Record<ExternalSearchSite, string[]>> = {
 
 function baseUrlHostError(site: ExternalSearchSite, baseUrl: string): string | undefined {
   const siteUrl = SITE_BASE_URL[site];
-  if (siteUrl === null) return undefined;
-  const host = hostFamily(baseUrl);
-  if (RETIRED_HOSTS[site]?.includes(host)) {
+  const host = hostOf(baseUrl);
+  if (siteUrl === null) {
+    // No fixed host of its own — but a supported site's own domain passed
+    // here would carry that site's `access` wrongly (newspapers.com is a
+    // subscription site; this class is `free_bot_protected`) and persist the
+    // wrong `site` into the log. Route it to its own table instead.
+    const owner = siteOwningHost(host);
+    if (owner !== undefined) {
+      return (
+        `baseUrl host "${host}" is ${owner}'s own domain — pass site: "${owner}" so its parameter ` +
+        `table and access classification apply`
+      );
+    }
+    return undefined;
+  }
+  if (RETIRED_HOSTS[site]?.includes(host.replace(/^www\./, ""))) {
     return (
       `baseUrl host "${host}" is retired for ${site} — its parameters are ignored and the ` +
       `search runs unscoped; use ${siteUrl}`
     );
   }
-  const allowed = [siteUrl, UK_BASE_URL[site]]
-    .filter((u): u is string => u !== undefined)
-    .map(hostFamily);
-  if (!allowed.some((h) => sameHostFamily(host, h))) {
-    return `baseUrl host "${host}" does not belong to ${site} (expected ${allowed.join(" or ")})`;
+  const allowed = [siteUrl, UK_BASE_URL[site]].filter((u): u is string => u !== undefined).map(hostOf);
+  if (!allowed.some((h) => inDomainOf(host, h))) {
+    return `baseUrl host "${host}" does not belong to ${site} (expected ${allowed.map(registrableDomain).join(" or ")})`;
   }
   return undefined;
 }
@@ -501,8 +570,10 @@ function baseUrlHostError(site: ExternalSearchSite, baseUrl: string): string | u
 // application/x-www-form-urlencoded: a space becomes `+`, everything else is
 // percent-encoded. `encodeURIComponent` alone would turn a literal `+` into
 // `%2B`, which is why joins use a real space rather than inserting `+`.
+// `:` stays literal — RFC 3986 permits it in a query, and loc.gov's facet form
+// (`fa=location_state:pennsylvania`) was measured in exactly that shape.
 function encodeFormValue(v: string): string {
-  return encodeURIComponent(v).replace(/%20/g, "+");
+  return encodeURIComponent(v).replace(/%20/g, "+").replace(/%3A/g, ":");
 }
 
 function toQueryString(entries: Array<[string, string]>): string {
@@ -521,7 +592,7 @@ function toQueryString(entries: Array<[string, string]>): string {
 function appendToBaseUrl(
   baseUrl: string,
   params: Record<string, string | undefined>,
-): { url: string; overridden: string[] } {
+): { url: string; overridden: string[]; semicolonGroups: string[] } {
   const hashIndex = baseUrl.indexOf("#");
   const fragment = hashIndex === -1 ? "" : baseUrl.slice(hashIndex);
   const withoutFragment = hashIndex === -1 ? baseUrl : baseUrl.slice(0, hashIndex);
@@ -533,10 +604,19 @@ function appendToBaseUrl(
   const defined = Object.entries(params).filter((entry): entry is [string, string] => entry[1] !== undefined);
   const overriddenKeys = new Set(defined.map(([k]) => k));
   const overridden: string[] = [];
+  const semicolonGroups: string[] = [];
   const existingTokens = existingQuery.length > 0 ? existingQuery.split("&") : [];
   const preservedTokens = existingTokens.filter((token) => {
-    const key = token.split("=", 1)[0];
+    // Compared decoded: `birt%68` is the same key as `birth`.
+    const key = decodeKey(token.split("=", 1)[0]);
     if (key.toLowerCase() === "sid") return false;
+    // A `;`-joined group (`birth=1800;name=X`) is one token here; treating its
+    // first key as the whole token's key destroyed every other parameter in
+    // the group. Preserve it whole and say the key may now appear twice.
+    if (token.includes(";")) {
+      if (overriddenKeys.has(key) && !semicolonGroups.includes(key)) semicolonGroups.push(key);
+      return true;
+    }
     if (overriddenKeys.has(key)) {
       if (!overridden.includes(key)) overridden.push(key);
       return false;
@@ -547,19 +627,27 @@ function appendToBaseUrl(
   const appended = toQueryString(defined);
   const combinedQuery = [preservedTokens.join("&"), appended].filter((s) => s.length > 0).join("&");
   const query = combinedQuery.length > 0 ? `?${combinedQuery}` : "";
-  return { url: `${path}${query}${fragment}`, overridden };
+  return { url: `${path}${query}${fragment}`, overridden, semicolonGroups };
+}
+
+function decodeKey(k: string): string {
+  try {
+    return decodeURIComponent(k);
+  } catch {
+    return k;
+  }
 }
 
 // ─── Attribute kinds and notes (spec §3.1, §3.7) ─────────────────────────────
 
-type AttributeKind = "string" | "year" | "smallNumber";
+type AttributeKind = "string" | "yearRange" | "year" | "smallNumber";
 
 // One kind per attribute, exhaustive over the interface (`-?`), and the
 // conditional type ties each kind to the field's declared type — a new
 // attribute with no entry, or a year field marked "string", fails `tsc`.
 const ATTRIBUTE_KIND: {
   [K in keyof BuildExternalSearchUrlAttributes]-?: NonNullable<BuildExternalSearchUrlAttributes[K]> extends string
-    ? "string"
+    ? "string" | "yearRange"
     : "year" | "smallNumber";
 } = {
   givenName: "string",
@@ -582,7 +670,7 @@ const ATTRIBUTE_KIND: {
   placeProximityMiles: "smallNumber",
   eventYear: "year",
   keywords: "string",
-  searchYear: "string",
+  searchYear: "yearRange",
   searchPlace: "string",
   searchStartYear: "year",
   searchEndYear: "year",
@@ -591,12 +679,14 @@ const ATTRIBUTE_KIND: {
 
 const VALIDATE_BY_KIND: Record<AttributeKind, (v: unknown) => string | undefined> = {
   string: str,
+  yearRange: yearOrRange,
   year: numYear,
   smallNumber: numSmall,
 };
 
 const KIND_LABEL: Record<AttributeKind, string> = {
   string: "usable string",
+  yearRange: "plain year or hyphenated range (YYYY or YYYY-YYYY)",
   year: "valid year",
   smallNumber: "valid number",
 };
@@ -857,9 +947,17 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   }
 
   const combinedParams = { ...(SITE_FIXED_PARAMS[site] ?? {}), ...params };
-  const { url, overridden } = appendToBaseUrl(baseUrl ?? (resolvedSiteUrl as string), combinedParams);
+  const { url, overridden, semicolonGroups } = appendToBaseUrl(baseUrl ?? (resolvedSiteUrl as string), combinedParams);
   for (const key of overridden) {
     notes.push(`'${key}' already in baseUrl was replaced by this call's own value`);
+  }
+  for (const key of semicolonGroups) {
+    notes.push(
+      `'${key}' is already in baseUrl inside a ';'-joined group, which was left untouched — the parameter may appear twice`,
+    );
+  }
+  if (baseUrl !== undefined && new URL(baseUrl).protocol === "http:") {
+    notes.push("baseUrl uses http:, which the desktop viewer does not open — prefer the https form of this link");
   }
 
   return { ok: true, url, notes, access: SITE_ACCESS[site] };

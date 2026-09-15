@@ -53,8 +53,8 @@ instead of rebuilding it.**
    `research_log_append`, `research_append`. Anything else violates
    `allowed-tools:`.
 9. Must not fetch, load, scrape, or otherwise open any of the fifteen supported
-   sites. The sites have no public API and prohibit automated access; the
-   user's browser is the only access path.
+   sites. Whatever a site's own terms or APIs allow, this skill's only access
+   path is the user's browser: it hands over a URL and reads back a capture.
 10. Must not call `validate_research_schema` — `research_log_append` and
     `research_append` validate before persisting.
 11. Must not hand-edit `research.json`. Every write goes through

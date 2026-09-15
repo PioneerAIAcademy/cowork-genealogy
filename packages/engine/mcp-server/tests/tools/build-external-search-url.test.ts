@@ -82,7 +82,7 @@ describe("build_external_search_url", () => {
       );
     });
 
-    it("chronicling_america: q space-joined, dates=YYYY/YYYY, location_state lowercased, dl=page fixed", () => {
+    it("chronicling_america: q space-joined, dates=YYYY/YYYY, state as the fa= facet, dl=page fixed", () => {
       const r = buildExternalSearchUrl({
         site: "chronicling_america",
         attributes: {
@@ -96,7 +96,7 @@ describe("build_external_search_url", () => {
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.url).toBe(
-        "https://www.loc.gov/collections/chronicling-america/?dl=page&q=Patrick+Flynn&dates=1900%2F1910&location_state=pennsylvania",
+        "https://www.loc.gov/collections/chronicling-america/?dl=page&q=Patrick+Flynn&dates=1900%2F1910&fa=location_state:pennsylvania",
       );
     });
 
@@ -985,7 +985,7 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).not.toContain("location_state=");
+      expect(r.url).not.toContain("fa=");
       expect(r.notes.some((n) => /'usState' was supplied but is not a usable string/.test(n))).toBe(true);
     });
 
@@ -1248,6 +1248,99 @@ describe("build_external_search_url", () => {
       if (!r.ok) return;
       expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn");
       expect(r.notes.filter((n) => /'name' already in baseUrl/.test(n))).toHaveLength(1);
+    });
+
+    it("emits Chronicling America's state as the fa= facet with a postal abbreviation expanded (round-4 B1)", () => {
+      // The bare location_state= parameter measured as a no-op on the live
+      // site; only the facet form filters, and only on the full lowercase name.
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { givenName: "Patrick", surname: "Flynn", usState: "NY" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("fa=location_state:new+york");
+      expect(r.url).not.toContain("location_state=");
+    });
+
+    it("refuses a digital_newspaper_archive baseUrl on another supported site's own domain (round-4 B3)", () => {
+      const r = buildExternalSearchUrl({
+        site: "digital_newspaper_archive",
+        baseUrl: "https://www.newspapers.com/search/",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+      expect(r.errors.join(" ")).toMatch(/newspapers'?s own domain/);
+    });
+
+    it("matches a curated host on the site's registrable domain, never on a bare registry suffix", () => {
+      const suffix = buildExternalSearchUrl({
+        site: "library_archives_canada",
+        baseUrl: "https://gc.ca/anything",
+        attributes: { surname: "Flynn" },
+      });
+      expect(suffix.ok).toBe(false);
+      const sibling = buildExternalSearchUrl({
+        site: "library_archives_canada",
+        baseUrl: "https://www.bac-lac.gc.ca/eng/census/Pages/census.aspx",
+        attributes: { surname: "Flynn" },
+      });
+      expect(sibling.ok).toBe(true);
+    });
+
+    it("compares curated keys decoded, so a percent-encoded key is still overridden once", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/?birt%68=1800",
+        attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845");
+      expect(r.notes.some((n) => /'birth' already in baseUrl was replaced/.test(n))).toBe(true);
+    });
+
+    it("preserves a ';'-joined curated group instead of destroying its other parameters", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/collections/8054/?birth=1800;name=X",
+        attributes: { birthYear: 1850 },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?birth=1800;name=X&birth=1850");
+      expect(r.notes.some((n) => /'birth' is already in baseUrl inside a ';'-joined group/.test(n))).toBe(true);
+    });
+
+    it("rejects a searchYear that is neither a plain year nor a hyphenated range", () => {
+      const bad = buildExternalSearchUrl({
+        site: "newspapers",
+        attributes: { givenName: "Patrick", surname: "Flynn", searchYear: "banana" },
+      });
+      expect(bad.ok).toBe(true);
+      if (!bad.ok) return;
+      expect(bad.url).not.toContain("dr_year=");
+      expect(bad.notes.some((n) => /'searchYear' was supplied but is not a plain year or hyphenated range/.test(n))).toBe(true);
+      const range = buildExternalSearchUrl({
+        site: "newspapers",
+        attributes: { givenName: "Patrick", surname: "Flynn", searchYear: "1880-1905" },
+      });
+      expect(range.ok).toBe(true);
+      if (!range.ok) return;
+      expect(range.url).toContain("dr_year=1880-1905");
+    });
+
+    it("notes an http: baseUrl, which the desktop viewer does not open", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "http://www.ancestry.com/search/collections/8054/",
+        attributes: { surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.notes.some((n) => /uses http:/.test(n))).toBe(true);
     });
 
     it("coerces only a plain decimal numeric string, not a hex or exponent literal", () => {

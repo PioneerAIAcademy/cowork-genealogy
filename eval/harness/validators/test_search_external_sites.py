@@ -110,9 +110,27 @@ def _place_key(place: str) -> tuple[str, ...]:
     return tuple(s.strip().casefold() for s in place.split(","))
 
 
-#: Sites whose table fills the birthplace slot from `deathPlace` when
-#: `birthPlace` is absent (`str(birthPlace) ?? str(deathPlace)`).
-_BIRTHPLACE_FALLBACK_SITES = frozenset({"antenati", "archives_gov", "american_ancestors"})
+#: The attributes each site's table feeds, in order, into the field a
+#: rejected birthplace would reach: `birthPlace` first everywhere, then the
+#: fallbacks the tool applies when it is absent — `str(birthPlace) ??
+#: str(deathPlace)` on three sites, and FindMyPast's single `keywordsplace`
+#: running the longer chain (spec §4). A site not listed has no fallback.
+_PLACE_SLOT_CHAIN = {
+    "antenati": ("birthPlace", "deathPlace"),
+    "archives_gov": ("birthPlace", "deathPlace"),
+    "american_ancestors": ("birthPlace", "deathPlace"),
+    "findmypast": ("birthPlace", "marriagePlace", "deathPlace", "residencePlace"),
+}
+
+
+def _effective_place_field(site, attrs):
+    """The one attribute whose value actually reaches the site's place slot,
+    or None when nothing does — the same first-present rule the tool applies."""
+    for field in _PLACE_SLOT_CHAIN.get(site, ("birthPlace",)):
+        value = attrs.get(field)
+        if isinstance(value, str) and value.strip():
+            return field
+    return None
 
 
 def test_resolved_birthplace_conflict_rejected_value_not_encoded(
@@ -221,24 +239,17 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         for call in calls:
             args = call.get("args") or {}
             attrs = args.get("attributes") or {}
-            # `deathPlace` matters only where the tool falls back to it for
-            # the birthplace slot, and only when birthPlace is absent there —
-            # a rejected value routed through that fallback reaches the URL
-            # exactly as if passed as birthPlace. Anywhere else a death place
-            # naming the rejected BIRTHplace is a correct death search: this
-            # fixture's own accepted death is in Pennsylvania.
-            fields = ["birthPlace"]
-            birth_place = attrs.get("birthPlace")
-            if args.get("site") in _BIRTHPLACE_FALLBACK_SITES and not (
-                isinstance(birth_place, str) and birth_place.strip()
-            ):
-                fields.append("deathPlace")
-            for field in fields:
-                value = attrs.get(field)
-                # A non-string value (`birthPlace: 1845`) is real live input;
-                # noting it is the tool's job, not this check's to crash on.
-                if not isinstance(value, str) or not value.strip():
-                    continue
+            # Only the attribute that actually reaches the site's place slot
+            # is judged — birthPlace where present, else the first fallback the
+            # tool's own table applies (`_PLACE_SLOT_CHAIN`). A rejected value
+            # routed through a fallback reaches the URL exactly as if passed
+            # as birthPlace; anywhere else a death place naming the rejected
+            # BIRTHplace is a correct death search (this fixture's own accepted
+            # death is in Pennsylvania). A non-string value (`birthPlace:
+            # 1845`) is real live input the tool notes; it is skipped here.
+            field = _effective_place_field(args.get("site"), attrs)
+            if field is not None:
+                value = attrs[field]
                 if any(_place_matches_rejected(value, p) for p in rejected_places):
                     errors.append(
                         f"build_external_search_url call's attributes.{field}="

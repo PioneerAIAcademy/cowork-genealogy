@@ -142,7 +142,7 @@ build_external_search_url({
     // Chronicling America's date window and state
     searchStartYear?: number,      // dates= lower bound
     searchEndYear?: number,        // dates= upper bound
-    usState?: string,              // location_state (lowercased by the tool)
+    usState?: string,              // fa=location_state:<full lowercase name>; a postal abbreviation is expanded
   },
 })
 ```
@@ -247,16 +247,23 @@ branch, which silently dropped Chronicling America's required `dl=page` and
 MyHeritage's `action=query` on exactly the curated-link path SKILL.md's Case
 A uses first.
 
-`baseUrl` must also belong to the requested site, compared by domain family
-(`app.americanancestors.org` and `www.americanancestors.org` agree, and the
-UK variants agree with their sites): a MyHeritage link passed with `site:
-"ancestry"` would carry Ancestry's parameter names to a host that ignores
-them, and is `invalid_base_url`. A retired host is refused the same way —
-`chroniclingamerica.loc.gov`'s legacy search form still loads but ignores
+`baseUrl` must also belong to the requested site, compared on the site host's
+registrable domain (`app.americanancestors.org` and `www.americanancestors.org`
+agree; the UK variants agree with their sites; a bare registry suffix such as
+`gc.ca` does not stand in for `bac-lac.gc.ca`): a MyHeritage link passed with
+`site: "ancestry"` would carry Ancestry's parameter names to a host that
+ignores them, and is `invalid_base_url`. A retired host is refused the same
+way — `chroniclingamerica.loc.gov`'s legacy search form still loads but ignores
 every parameter this tool appends, so the search would run unscoped and its
-nil be logged as evidence of absence. `digital_newspaper_archive`, which has
-no fixed host, is exempt. Both checks read only the call's own arguments; the
-tool still fetches nothing (§9).
+nil be logged as evidence of absence. `digital_newspaper_archive` has no fixed
+host of its own, so any archive passes — except a host that is another
+supported site's own domain, which is refused naming that site (its parameter
+table and `access` value apply there, §4.1). Existing curated keys are
+compared percent-decoded (`birt%68` is `birth`), and a `;`-joined group in the
+curated query is preserved whole rather than having its first key treated as
+the whole group's, with a note. An `http:` link is accepted with a note that
+the desktop viewer does not open it. All of this reads only the call's own
+arguments; the tool still fetches nothing (§9).
 
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
@@ -414,7 +421,7 @@ here — this section documents the same mapping the implementation embeds.
 | `findmypast` | `https://www.findmypast.com/search/results` | — | `firstname`, `lastname`, `yearofbirth` (`birthYear`), `yearofbirth_offset` (`birthYearOffset`, only with `yearofbirth`), `keywordsplace` (`birthPlace`, falling back to `marriagePlace`, `deathPlace`, `residencePlace` — the site's one place field, so a marriage or death search scoped by `eventyear` can still name its place), `keywordsplace_proximity` (`placeProximityMiles`, only with `keywordsplace`), `eventyear` (`eventYear`), `fatherfirstname`, `motherfirstname` — ported exactly: the template names only `fatherfirstname`/`motherfirstname`, no `*lastname` counterpart |
 | `findagrave` | `https://www.findagrave.com/memorial/search` | — | `firstname`, `lastname`, `birthyear` (`birthYear`), `deathyear` (`deathYear`). No place parameter — **removed by live verification**: `location` is a free-text autocomplete box whose real filter keys off a hidden `locationId` resolved from a dropdown, not the text itself; four different `location=` values (absent, a real place, a nonsense string, and the exact address copied from a matching result) all returned byte-identical result sets |
 | `newspapers` | `https://www.newspapers.com/search/` | — | `query` (`givenName`+`surname`+`keywords`, space-joined), `dr_year` (`searchYear` — a year or a range, passed through unparsed), `dr_place` (`searchPlace`) |
-| `chronicling_america` | `https://www.loc.gov/collections/chronicling-america/` | `dl=page` (required — without it the search returns newspaper titles, not digitised pages) | `q` (`givenName`+`surname`+`keywords`, space-joined — **correction #2**: the site-wide template's `qs` is dead, `q` is what filters, §9) , `dates` (`searchStartYear`/`searchEndYear` → **`YYYY/YYYY`, correction #1** — not `start_date`/`end_date`), `location_state` (`usState`, lowercased) |
+| `chronicling_america` | `https://www.loc.gov/collections/chronicling-america/` | `dl=page` (required — without it the search returns newspaper titles, not digitised pages) | `q` (`givenName`+`surname`+`keywords`, space-joined — **correction #2**: the site-wide template's `qs` is dead, `q` is what filters, §9) , `dates` (`searchStartYear`/`searchEndYear` → **`YYYY/YYYY`, correction #1** — not `start_date`/`end_date`), `fa` (`usState` → `location_state:<full lowercase state name>`, a postal abbreviation expanded — **correction #3**: the bare `location_state=` parameter does not filter, §9) |
 | `digital_newspaper_archive` | none — `baseUrl` required (§3.3) | — | `q` (`givenName`+`surname`+`keywords`, space-joined; any one suffices) |
 | `archives_gov` | `https://catalog.archives.gov/search` | `dataSource=authority`, `availableOnline=false` (scopes to person/org name-authority records; without them the same `personOrOrg` field is read by the archival-description search instead) | `personOrOrg` (`givenName`+`surname`, space-joined), `q` (`keywords` only — free text, not the name), `geographicReference` (`birthPlace`, falling back to `deathPlace`) |
 | `archive_org` | `https://archive.org/search` | — | `query` (`givenName`+`surname`+`keywords`, space-joined). No structured date/place fields — Dublin-Core metadata (creator/date/subject/title), not a vital-records schema |
@@ -454,10 +461,12 @@ faithful port.
 
 ### 4.1 Access classification per site
 
-The static `access` value each site returns (§3.1) — `digital_newspaper_archive`
-inherits the classification of whichever archive `baseUrl` points at, so it is
-listed here as the same `"free_bot_protected"` state-archive sites carry
-generally, not verified per archive:
+The static `access` value each site returns (§3.1). `digital_newspaper_archive`
+returns the class value state archives carry generally, `"free_bot_protected"`,
+for whichever archive `baseUrl` names — not verified per archive — and refuses
+a `baseUrl` on another supported site's own domain (`invalid_base_url` naming
+that site, §3.2), so this constant can never be handed out for a subscription
+site such as newspapers.com:
 
 | Site | `access` |
 |------|----------|
@@ -613,12 +622,15 @@ any of this tool's other fourteen parameter tables against a live site
 either — a vitest case can only assert the tool's own constant against
 itself. The six sites ported from the original prose (`ancestry`,
 `myheritage`, `findmypast`, `findagrave`, `newspapers`,
-`digital_newspaper_archive`) carry this risk unmitigated: they are unverified
-ports of prose that was itself never mechanically checked against the live
-sites. The eight sites added in this PR were each checked live once before
-being written in, at one of the two confidence tiers §10 records — narrower
-than a CI-enforced check, but not the same unaddressed-risk category as the
-six ported sites.
+`digital_newspaper_archive`) were ported from prose that was itself never
+mechanically checked against the live sites. Three of them have since been
+checked (§10): `ancestry` and `findmypast` on their `.co.uk` variants, whose
+parameter names were confirmed to be the `.com` ones, and `findagrave` in the
+`location` fix. `myheritage`, `newspapers` and `digital_newspaper_archive`
+carry the risk unmitigated. The eight sites added in this PR were each checked
+live once before being written in, at one of the two confidence tiers §10
+records — narrower than a CI-enforced check, but not the same
+unaddressed-risk category as the three unchecked ports.
 
 **The one live check this PR does record**, from review (2026-09-09), against
 the exact URL shape `chronicling_america`'s Case B branch builds:
@@ -651,6 +663,31 @@ this tool, its spec, the skill, a test fixture, and committed run logs all
 now encode the same error. Treat any future re-measurement (by someone with
 a working browser session against loc.gov) as the first independent check
 this claim has ever had.
+
+**Re-measured independently (review round 4, 2026-09-15), by two passes:**
+`qs` dead (23,814,389 unchanged under a nonsense value), `q` live (0),
+`dates=1907/1910` live, `start_date`/`end_date` dead, and the percent-encoded
+`dates=1900%2F1910` behaves identically to the literal slash. The warning
+above is discharged: the `q`/`dates` claims now rest on three measurements
+by two people.
+
+**The same round found the third parameter dead — correction #3.** The bare
+`location_state=pennsylvania` parameter leaves the hit count unchanged on two
+different queries (401,243 → 401,243; 2,101 → 2,101), while the facet form
+`fa=location_state:pennsylvania` filters (8,045; 16) and is the form loc.gov's
+own `search.facet_limits` names. It fails both of the nonsense-value tests
+that declared `qs` dead. §4's table now emits `fa=location_state:<name>`. The
+value is the full lowercase state name — `fa=location_state:ny` measures 0 —
+so the tool expands a postal abbreviation. The colon is emitted literally
+(RFC 3986 permits it in a query; that is the shape measured).
+
+**Still unverified against the live site**, and recorded here rather than
+assumed: the facet value for a multi-word state (`new york` — emitted with the
+form-encoded space, `new+york`), and Newspapers.com's `dr_year` accepting a
+hyphenated range (`1880-1905`), which the original prose asserted and which
+sits behind Cloudflare. The tool constrains `searchYear` to `YYYY` or
+`YYYY-YYYY` so nothing else ships, but whether the range form filters is a
+site-behaviour claim with no recorded measurement.
 
 Any future correction to a parameter name discovered the same way — by
 someone with a real browser and reproducible counts, not by re-reading
@@ -708,6 +745,11 @@ exercise past the page shell):
   `EventDeathYear` are confirmed two ways: the live form's own `<input
   name=...>` attributes, and the exact submit-handler object decompiled from
   the site's own shipped JS. No place field exists on this form at all.
+- **`american_ancestors`** — `Keywords`, `Location`, `FromYear`, `ToYear`
+  confirmed to bind by GET round-trip: each value came back reflected in the
+  search form's own `value=` attribute (the paragraph below records the two
+  name fields that did **not**). Result filtering behind the client-rendered
+  app is unconfirmed.
 - **`library_archives_canada`** — `FirstName`, `LastName`, `YearOfBirth`,
   and the required `DataSource`/`ST` fixed params were read directly out of
   the search form's own shipped JavaScript (`fnResultRedirect()`), which

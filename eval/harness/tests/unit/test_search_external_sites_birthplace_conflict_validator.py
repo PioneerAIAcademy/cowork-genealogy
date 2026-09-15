@@ -89,10 +89,10 @@ def _tool_calls(birth_place=None, *, site="myheritage", **extra_attributes):
     ]
 
 
-def _expect_fires(tool_calls, test, match, states=None):
+def _expect_fires(tool_calls, test, match, states=None, check=None):
     before, after = states or _states()
     try:
-        _check(before, after, tool_calls, test)
+        (check or _check)(before, after, tool_calls, test)
     except pytest.skip.Exception:
         pytest.fail(
             f"expected AssertionError (match={match!r}), but the validator "
@@ -104,10 +104,10 @@ def _expect_fires(tool_calls, test, match, states=None):
     pytest.fail(f"expected AssertionError (match={match!r}), but the validator raised nothing")
 
 
-def _expect_passes(tool_calls, test, states=None):
+def _expect_passes(tool_calls, test, states=None, check=None):
     before, after = states or _states()
     try:
-        _check(before, after, tool_calls, test)
+        (check or _check)(before, after, tool_calls, test)
     except pytest.skip.Exception:
         pytest.fail(
             "expected the validator to run and pass, but it skipped instead "
@@ -274,20 +274,21 @@ def test_fires_when_a_url_generation_entry_exists_with_no_tool_call():
     the tool rather than hand-writing a URL — this fires exactly that case:
     a log entry recording a generated URL, but no build_external_search_url
     call anywhere in the run."""
-    before, after = _states({
+    states = _states({
         "id": "log_999", "tool": "external_site", "outcome": "partial",
         "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn"},
     })
-    with pytest.raises(AssertionError, match="hand-composed"):
-        _HAND_COMPOSED_CHECK(before, after, [], {"type": "positive"})
+    # Through the skip-proof helper, not a bare `pytest.raises`: a gate that
+    # over-matched would otherwise turn this into a silent SKIP at exit 0.
+    _expect_fires([], {"type": "positive"}, "hand-composed", states=states, check=_HAND_COMPOSED_CHECK)
 
 
 def test_passes_when_the_tool_was_actually_called():
-    before, after = _states({
+    states = _states({
         "id": "log_999", "tool": "external_site", "outcome": "partial",
         "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn"},
     })
-    _HAND_COMPOSED_CHECK(before, after, _tool_calls("Ireland"), {"type": "positive"})  # must not raise
+    _expect_passes(_tool_calls("Ireland"), {"type": "positive"}, states=states, check=_HAND_COMPOSED_CHECK)
 
 
 def test_hand_composed_check_skips_when_no_url_generation_entry_this_run():
@@ -337,12 +338,12 @@ def test_hand_composed_check_does_not_crash_on_a_tool_call_with_no_tool_name():
     a partial capture `{"tool": None}` returned `None` and `.split()` raised —
     reported by validator_runner as `passed=False`, indistinguishable from a
     real violation. Must grade normally: the real call is still present."""
-    before, after = _states({
+    states = _states({
         "id": "log_999", "tool": "external_site", "outcome": "partial",
         "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn"},
     })
     calls = [{"tool": None, "args": {}}] + _tool_calls("Ireland")
-    _HAND_COMPOSED_CHECK(before, after, calls, {"type": "positive"})  # must not raise
+    _expect_passes(calls, {"type": "positive"}, states=states, check=_HAND_COMPOSED_CHECK)
 
 
 def test_hand_composed_check_skips_a_user_reported_nil_with_no_tool_call():
@@ -396,6 +397,37 @@ def test_fires_on_the_rejected_place_in_the_middle_of_a_resolved_string():
         _tool_calls("Philadelphia, Pennsylvania, United States"),
         {"type": "positive"},
         "attributes.birthPlace='Philadelphia, Pennsylvania, United States'",
+    )
+
+
+def test_fires_on_findmypast_death_place_reaching_its_single_place_field():
+    """FindMyPast has one place field, `keywordsplace`, filled birth-first and
+    then from marriage/death/residence — so a rejected birthplace passed as
+    deathPlace ships in the site's only place field (round-4 B2)."""
+    _expect_fires(
+        _tool_calls(site="findmypast", deathPlace="Pennsylvania"),
+        {"type": "positive"},
+        "attributes.deathPlace='Pennsylvania'",
+    )
+
+
+def test_fires_on_findmypast_marriage_and_residence_places_too():
+    _expect_fires(
+        _tool_calls(site="findmypast", marriagePlace="Pennsylvania"),
+        {"type": "positive"},
+        "attributes.marriagePlace='Pennsylvania'",
+    )
+    _expect_fires(
+        _tool_calls(site="findmypast", residencePlace="Pennsylvania"),
+        {"type": "positive"},
+        "attributes.residencePlace='Pennsylvania'",
+    )
+
+
+def test_passes_findmypast_death_place_when_birth_place_fills_the_slot():
+    _expect_passes(
+        _tool_calls("Ireland", site="findmypast", deathPlace="Pennsylvania"),
+        {"type": "positive"},
     )
 
 
