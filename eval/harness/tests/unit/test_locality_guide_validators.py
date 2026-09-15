@@ -16,7 +16,9 @@ reproducible — committed logs strip tool responses to empty — so its numbers
 come from grounding persisted ids to fixture files):
   - VR1: 12 persister tests / 19 entries / 0 violations (a regression guard).
   - VR2: 58 persisted collection ids, all grounded.
-  - VR3: 76 runs use a closed label; 28 made no volume_search call.
+  - VR4: 7 survey tests declared no volume-search fixture; with one added the
+    model calls volume_search (a VR3 label-check was considered and dropped —
+    a wiki-grounded digitization label is legitimate per SKILL.md Step 4).
 """
 
 import sys
@@ -32,7 +34,6 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # otherwise collect the imported validators as tests of this module and error on
 # their harness-supplied fixtures. Same pattern as test_person_evidence_validators.py.
 from test_locality_guide import (  # noqa: E402
-    test_digitization_label_requires_volume_search as check_label,
     test_persisted_collection_ids_trace_to_tool_response as check_ids,
     test_persisted_localities_entry_shape as check_shape,
     test_survey_run_calls_both_collections_and_volume_search as check_both_searches,
@@ -270,36 +271,6 @@ def test_ids_ignores_a_pre_existing_seed_id():
     seed = _entry(lid="loc_seed", collections=[{"id": "5555555", "title": "seed"}])
     with pytest.raises(pytest.skip.Exception):
         check_ids(_state([seed]), _state([seed]), [])
-
-
-# --- VR3: test_digitization_label_requires_volume_search ---------------
-
-
-def test_label_fires_without_volume_search():
-    with pytest.raises(AssertionError) as exc:
-        check_label(
-            "Vermont Vital Records 1720-1908 — indexed + images.",
-            [_call("collections_search")],
-        )
-    assert "volume_search" in str(exc.value)
-
-
-def test_label_passes_with_volume_search():
-    check_label(
-        "Vermont Vital Records 1720-1908 — indexed + images.",
-        [_call("volume_search"), _call("collections_search")],
-    )
-
-
-def test_label_passes_when_no_label_present():
-    """The other direction: prose with no closed label makes no claim to back,
-    so VR3 must stand down even with zero volume_search calls."""
-    check_label("Records for this county are widely available online.", [])
-
-
-def test_label_matches_case_insensitively():
-    with pytest.raises(AssertionError):
-        check_label("The set is Indexed + Images for this range.", [])
 
 
 # --- VR4: test_survey_run_calls_both_collections_and_volume_search ------

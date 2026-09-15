@@ -23,13 +23,17 @@ guard the structural properties a validator can settle without judgment
     hole the schema leaves open (validator.ts:1490-1492).
   - test_persisted_collection_ids_trace_to_tool_response (VR2) — every
     persisted collection id must be grounded in a same-run tool response.
-  - test_digitization_label_requires_volume_search (VR3) — gating: a closed
-    digitization label must be backed by a volume_search call.
   - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
     a survey that called one Step-3 search must have called both. Gating became
     safe once every survey test declared a volume-search fixture (this PR): the
     tool is now in the model's toolset, so a one-sided survey is a real defect
     rather than a fixture gap (issue #1886).
+
+    (A VR3 "digitization label requires a volume_search call" check was
+    considered and dropped: SKILL.md Step 4 allows classifying from the
+    FamilySearch Wiki when volume_search has no match, so the premise does not
+    hold — a wiki-grounded label with no volume_search call is legitimate, not a
+    defect.)
 
 See `test_universal.py` module docstring for the full validator
 function-signature contract. The `test` argument is the parsed test
@@ -60,17 +64,6 @@ JURISDICTION_ALLOWED_KEYS = {"name", "date_range"}
 JURISDICTION_REQUIRED_KEYS = {"name"}
 COLLECTION_ALLOWED_KEYS = {"id", "title", "date_range"}
 COLLECTION_REQUIRED_KEYS = {"id", "title"}
-
-# Closed digitization-level label set. Source of truth:
-# packages/engine/plugin/skills/locality-guide/SKILL.md:119-122 (Step 4).
-# Not co-located with references/output-format.md (only two of the four appear
-# there), and nothing checks the two stay in sync.
-DIGITIZATION_LABELS = (
-    "indexed + images",
-    "full-text searchable, not name-indexed",
-    "browse-only images",
-    "microfilm or physical only",
-)
 
 
 def _written_localities(before_state, after_state):
@@ -250,30 +243,6 @@ def test_persisted_collection_ids_trace_to_tool_response(
             "this run — a persisted collection id must trace to a tool result "
             "(an id-valued field or a text mention), not be fabricated"
         )
-
-
-def test_digitization_label_requires_volume_search(text_response, tool_calls):
-    """VR3 (gating) — a closed digitization-level label in the narrative must be
-    backed by a volume_search call: Step 4 derives the level from volume_search's
-    recordSearchablePercent (SKILL.md:119-122). A label without the call is an
-    ungrounded classification.
-
-    Gating became safe once every survey test declared a volume-search fixture
-    (this PR): the tool is now in the model's toolset, so a run that uses a label
-    without calling volume_search is a real defect, not a fixture gap. Runs that
-    use no closed label make no claim to back and pass.
-    """
-    text = (text_response or "").casefold()
-    used = [lbl for lbl in DIGITIZATION_LABELS if lbl in text]  # labels are lowercase
-    if not used:
-        return
-    called_volume_search = any(
-        bare_tool_name(tc.get("tool")) == "volume_search" for tc in (tool_calls or [])
-    )
-    assert called_volume_search, (
-        f"output uses digitization label(s) {used} but made no volume_search call — "
-        "the level must derive from volume_search (SKILL.md:119-122)"
-    )
 
 
 def test_survey_run_calls_both_collections_and_volume_search(tool_calls):

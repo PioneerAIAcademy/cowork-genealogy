@@ -1,0 +1,32 @@
+{
+  "tool": "volume_search",
+  "description": "volume_search — digitized volumes filed under Mississippi Territory (the jurisdiction that covered pre-statehood Alabama, 1798-1817). Early territorial records survive as browse-only microfilm.",
+  "args": {
+    "standardPlace": "~Mississippi Territory"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Mississippi Territory, United States",
+      "startYear": 1798,
+      "endYear": 1817
+    },
+    "totalResults": 1,
+    "results": [
+      {
+        "imageGroupNumber": "004498712",
+        "imageGroupPrefix": "004498712",
+        "imageCount": 143,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": ["en"],
+        "coverages": [
+          {
+            "place": "Mississippi Territory, United States",
+            "dateRange": "1799-1817",
+            "recordType": "Territorial land and court records (browse-only microfilm)"
+          }
+        ]
+      }
+    ]
+  }
+}
