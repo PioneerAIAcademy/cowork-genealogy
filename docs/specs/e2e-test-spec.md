@@ -828,8 +828,9 @@ the CLI spills an oversized tool result for the model to read back; a
 `"blocked_by": "path"` with the resolved `path`. Both entries carry the
 `reason` the agent was shown, which names the MCP route that replaces the
 read: `record_read({recordId, resultsRef})` for a `results/` sidecar,
-`research_query` for `research.json` and `evaluations/`, `project_context`
-otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
+`sidecar_read({projectPath, ref})` for a verdict body under `evaluations/` or a
+text upload under `uploads/`, `research_query` for `research.json`,
+`project_context` otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
 with it on is not comparable to one without.
 
 **Consequence for authoring:** a fixture is only valid if its answer is

@@ -144,7 +144,9 @@ flaky tests that the conversion exposed. The conversion made them unstable.
 
 **So: do not start a conversion by assuming the suite was already shaky.** Pull
 the last few run logs first and write down which tests are stable. That baseline
-is the only thing that tells you later whether you are fixing or breaking.
+is the only thing that tells you later whether you are fixing or breaking — and
+recording it is not a licence to convert over a red suite. Clear the failures
+first, per step 1 of "The process, in order".
 
 ## 2. A prose gate weakens when it crosses a delegation boundary
 
@@ -278,23 +280,46 @@ measures.
 
 ## 6. A unit suite exercises the doorway the orchestrator does not use
 
-The unit harness reaches an agent only by invoking its routing skill, so a
-paired skill's suite grades the skill-then-agent path. Production research
-grades the agent alone. A pair can therefore be green on every unit test and
-still be wrong in the loop, and this is invisible from the suite.
+**Closed by the direct-agent arm (issue #2246).** The unit harness used to reach
+an agent only by invoking its routing skill, so a paired skill's suite graded the
+skill-then-agent path while production research grades the agent alone — a pair
+could be green on every unit test and still be wrong in the loop, invisibly.
 
-Two consequences for a conversion:
+A test may now carry `input.delegation` instead of `input.user_message`
+(`docs/specs/unit-test-spec.md` §5.2.1). The harness stages the agents and **no
+skills**, has a bare main thread relay the delegation verbatim into
+`Agent{subagent_type: "<skill>"}`, and decides the outcome on the spawn rather
+than on `skills_invoked`. **The delete-the-skill acceptance check is therefore a
+suite result, not a reading task** — any behaviour that passes routed and fails
+direct is a rule sitting in the wrong file.
 
-- **A unit suite cannot confirm the delete-the-skill acceptance check.** Applying
-  that check is a reading task on the agent body, done by hand, per conversion.
-- **The e2e corpus is the only instrument that sees the real route.** Its
+Two things this does NOT close:
+
+- **A routing skill that grows a gate back is invisible on the direct arm**,
+  because the skill is not in that workspace at all. That is issue #2244, and
+  the "Nothing enforces the routing-skill contents list" bullet below stays open.
+- **The e2e corpus is still the only instrument that sees the real loop.** Its
   attribution reads the agent that made the write
-  (`eval/harness/harness/skill_invocation.py`), so that is where a direct
-  delegation shows up at all.
+  (`eval/harness/harness/skill_invocation.py`).
 
 ## The process, in order
 
-1. Record the pre-conversion baseline from existing run logs.
+1. **Green the suite before the refactor, not merely baseline it.** A suite is
+   green before a refactor — a wiki move, a pair conversion, a model+effort floor
+   search — and after it. Only **failures** count; partials are fine and need no
+   annotation to justify them. One exception, part of the rule rather than a
+   per-card ruling: a red whose cause is the thing the refactor changes — name it
+   and carry it forward. Explicitly **not** exceptions: "the remedy is contested"
+   and "nobody has measured it yet". Both are reasons to do the work, not to skip
+   the bar.
+
+   **Jitter.** Fix one thing per paid run, then a single **three-run, all-pass**
+   confirmation for the final verdict — not three runs per fix. Three-per-fix
+   triples every step, and again wherever a fix reaches another skill's suite;
+   one run cannot distinguish a fix from a lucky roll on a suite whose reds flip
+   on an unchanged body. Record the pre-refactor baseline from existing run logs
+   as part of this step — it is what tells you later whether you are fixing or
+   breaking. (Lead ruling, 2026-09-09, issue #2271.)
 2. Audit that skill's fixtures for self-contradiction and unsatisfiability.
 3. Move locality-specific and record-type-specific guidance onto the wiki
    (ADR-0012). This is its own card and its own paid run, before the fold; the
@@ -312,9 +337,27 @@ Two consequences for a conversion:
    the agent". The delegation message now comes from the orchestrator, which the
    conversion does not own — so the agent must be correct under a delegation that
    names the artifact and pre-states the answer, not merely a well-phrased one.
-8. Apply the delete-the-skill acceptance check: delete the routing skill and read
-   the agent as the orchestrator will reach it. Anything that changes goes into
-   the agent before you run.
+8. Apply the delete-the-skill acceptance check — now mechanically. **Author a
+   direct twin**: copy the gate-bearing positive test byte for byte, give it a
+   new `test.id` and name, replace `input.user_message` with an
+   `input.delegation` carrying the adversarial phrasing (name the artifact,
+   pre-state the answer), append `direct-arm` to its tags, and keep everything
+   else — `tags` gate the deterministic validators and branch the rubric,
+   `execution` carries the wall clock, `judge_reads_files` decides whether the
+   judge can see a persisted narrative. Add one happy-path twin per pair with the
+   orchestrator's normal phrasing. Negatives get none: routing is the router's
+   job, and a direct test has no router. Take the twin's own outcome as the
+   verdict, and read a disagreement with its routed original by cause: a rule the
+   router holds and the agent does not is a rule in the wrong file — move it into
+   the agent before you run; a step the agent's own body names and the run skips
+   is an agent-body defect, which belongs to the pair's eval slot rather than the
+   conversion PR, so mark the twin `expected_outcome: "xfail"` with the cause, a
+   dated measurement, and the removal condition — never a live rate, since
+   `xfail_reason` is snapshot-tracked and a rate is falsified by the run log that
+   ships beside it (`ut_research_exhaustiveness_d3c` is the worked example, and
+   `docs/specs/unit-test-spec.md` §5.2.1 carries the rule). Read neither off one
+   run: settling the first five twins took ten, and both of the two that moved
+   reversed on a later run.
 9. Run once, unchanged. Compare against step 1.
 10. Fix one thing per run.
 
@@ -346,6 +389,13 @@ Two consequences for a conversion:
   as an unmeasured paid comparison. (After #2490 strips acquisition paths 2–4
   from the skill, the question may re-enter as a free **doctrine** call inside
   #2490's own design — never again as a paid comparison.)
-- **The direct route is measured on two runs.** Whether the orchestrator reaches
-  every paired agent that way, or only the ones it has a strong prior about, is
-  not known.
+- **The direct route dominates but does not displace the routed one.** Over
+  every committed e2e run dated on or after 2026-08-20: 15 runs reach
+  `research-exhaustiveness`, 14 spawn it directly and one reaches it only via
+  `Skill` (`hannah-earnest-children/run-2026-08-23_03-37-12`, a completed passing
+  run), with six taking both routes in one run. Counting every (run, pair) reach
+  across all pairs: 66 of 76 direct, 10 skill-only. Re-derive by scanning each
+  `eval/runlogs/e2e/*/run-<ts>.json` for an `Agent`/`Task` call whose
+  `subagent_type` names a pair versus a `Skill` call naming one. Whether the
+  orchestrator reaches every paired agent directly, or only the ones it has a
+  strong prior about, is still not known.

@@ -60,7 +60,8 @@ instead of a decision.
 |---|---|---|
 | Daily | Richard | `triage-standup` → `merge-recent-issues` → `fill-ready` (calls `review-ready`) |
 | Daily | Dallan | `make-decisions` — answer what the day's reviews queued |
-| Mon | Richard | `audit-board`, before that day's `fill-ready` |
+| Mon, Thu | Richard | `merge-issues`, before that day's `fill-ready` |
+| Mon | Richard | `audit-board`, after `merge-issues` and before `fill-ready` |
 | Mon | Dallan | `find-big-wins`, after `audit-board` |
 | Tue / Fri | Dallan | `review-icebox` |
 | Fri | Both | `audit-merged-prs` — Richard takes process compliance, Dallan takes architectural drift |
@@ -77,8 +78,9 @@ produce a report and change nothing.
 them, `/make-decisions` answers them daily, and nothing treats an
 already-answered decision as a defect any more.
 
-**Still open:** the terminal approval gate in `fill-ready`, `audit-board` and
-`merge-recent-issues` — apply the reversible things now, queue the rest.
+**Still open:** the terminal approval gate in `fill-ready`, `audit-board`,
+`merge-issues` and `merge-recent-issues` — apply the reversible things now, queue
+the rest.
 
 Then: give Richard a position in `fill-ready`'s routing, move roster maintenance
 to whoever runs the skill, send replies in Richard's own name, and record the
