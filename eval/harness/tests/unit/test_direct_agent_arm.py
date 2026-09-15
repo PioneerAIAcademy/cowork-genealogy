@@ -344,6 +344,37 @@ def test_verbatim_validator_fails_three_ways(prompt_or_none):
         _universal().test_direct_delegation_relayed_verbatim(DIRECT_TEST, calls)
 
 
+@pytest.mark.parametrize(
+    "calls",
+    [
+        [
+            _agent_call(subagent_type="proof-conclusion", prompt=DELEGATION),
+            _agent_call(subagent_type="research-exhaustiveness", prompt="have a look"),
+        ],
+        [
+            _agent_call(description="d", prompt=DELEGATION),
+            _agent_call(subagent_type="research-exhaustiveness", prompt="have a look"),
+        ],
+    ],
+    ids=["wrong_agent_got_it", "general_purpose_got_it"],
+)
+def test_verbatim_validator_fails_when_another_spawn_got_the_delegation(calls):
+    """Two spawns, and the pair's agent is not the one that received the text.
+
+    `spawned_agents` and `spawn_prompts` are separate walks, so before the agent
+    anchor both gating validators passed on these: one spawn satisfied "my agent
+    ran" while a different one satisfied "some prompt carried my text". That is
+    precisely the substitution `test_direct_delegation_relayed_verbatim` exists
+    to refuse. Reachable rather than theoretical — 9 of the 394 committed runs
+    that spawned anything made more than one main-thread spawn, one naming two
+    different agents.
+    """
+    tu = _universal()
+    tu.test_direct_test_spawned_its_agent(DIRECT_TEST, calls)  # this half still passes
+    with pytest.raises(AssertionError):
+        tu.test_direct_delegation_relayed_verbatim(DIRECT_TEST, calls)
+
+
 def test_verbatim_validator_fails_when_the_delegation_went_to_another_argument():
     calls = [
         _agent_call(

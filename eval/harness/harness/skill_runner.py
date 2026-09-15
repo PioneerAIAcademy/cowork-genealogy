@@ -333,7 +333,9 @@ def spawned_agents(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
     return out
 
 
-def spawn_prompts(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
+def spawn_prompts(
+    builtin_tool_calls: list[dict[str, Any]], agent: str | None = None
+) -> list[str]:
     """The `prompt` argument of every subagent spawn, in call order, untruncated.
 
     Untruncated because `_UNTRUNCATED_ARGS` exempts ("Agent", "prompt"); a `Task`
@@ -345,7 +347,17 @@ def spawn_prompts(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
         # Main-thread spawns only — see `spawned_agents`.
         if call.get("tool") not in SPAWN_TOOL_NAMES or "agent_id" in call:
             continue
-        prompt = (call.get("args") or {}).get("prompt")
+        args = call.get("args") or {}
+        # `agent` ANCHORS the prompt to the spawn that received it. Without
+        # it the caller gets a flat list of every prompt, and the verbatim
+        # check passes when the delegation went to a DIFFERENT agent while
+        # the pair's own agent got a reword — measured on two shapes, and
+        # reachable: 9 of the 394 committed runs that spawned anything made
+        # more than one main-thread spawn, one of them naming two different
+        # agents. None today, which is how it stays invisible.
+        if agent is not None and args.get("subagent_type") != agent:
+            continue
+        prompt = args.get("prompt")
         if prompt is not None:
             out.append(str(prompt))
     return out

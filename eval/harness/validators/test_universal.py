@@ -1348,10 +1348,16 @@ def test_activated_run_produces_response(
 # `input.delegation`; a routed test has none and skips.
 
 
-def _spawn_records(builtin_tool_calls):
+def _spawn_records(builtin_tool_calls, agent=None):
     from harness.skill_runner import spawn_prompts, spawned_agents
 
-    return spawned_agents(builtin_tool_calls), spawn_prompts(builtin_tool_calls)
+    # `agent` anchors the prompts to the spawn that received them. The two
+    # lists are otherwise separate walks, and an unanchored verbatim check
+    # passes when one spawn carried the delegation and a DIFFERENT one was
+    # the pair's agent.
+    return spawned_agents(builtin_tool_calls), spawn_prompts(
+        builtin_tool_calls, agent
+    )
 
 
 def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
@@ -1389,7 +1395,7 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     delegation = test.get("delegation")
     if not delegation:
         pytest.skip("not a direct-agent test")
-    _, prompts = _spawn_records(builtin_tool_calls)
+    _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
     if any(delegation in p for p in prompts):
         return
     from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
@@ -1422,7 +1428,7 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
     delegation = test.get("delegation")
     if not delegation:
         pytest.skip("not a direct-agent test")
-    _, prompts = _spawn_records(builtin_tool_calls)
+    _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
     extras = []
     for p in prompts:
         if delegation not in p:
