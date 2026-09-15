@@ -1459,3 +1459,101 @@ describe("fsmcp:quality boundaries", () => {
     expect(JSON.stringify(seven)).not.toContain('"fsmcp:quality"');
   });
 });
+
+describe("gedcomx-convert — source description coverage and resource_type", () => {
+  it("carries resource_type and coverage through toSimplified", () => {
+    const raw: GedcomX = {
+      persons: [],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          resourceType: "http://gedcomx.org/DigitalArtifact",
+          titles: [{ value: "Some Record" }],
+          coverage: [
+            {
+              spatial: { description: "#12345" },
+              temporal: { original: "1850/1860", formal: "+1850/+1860" },
+              recordType: "http://gedcomx.org/Census",
+            },
+          ],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    const sd = simplified.sources?.[0];
+    expect(sd?.resource_type).toBe("DigitalArtifact");
+    expect(sd?.coverage).toEqual({
+      place_id: "12345",
+      date_range: "1850/1860",
+      record_type: "Census",
+    });
+  });
+
+  it("falls back to temporal.formal when temporal.original is absent", () => {
+    const raw: GedcomX = {
+      persons: [],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          resourceType: "http://gedcomx.org/DigitalArtifact",
+          titles: [{ value: "Some Record" }],
+          coverage: [
+            {
+              spatial: { description: "#12345" },
+              temporal: { formal: "+1850/+1860" },
+              recordType: "http://gedcomx.org/Census",
+            },
+          ],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.sources?.[0]?.coverage?.date_range).toBe("+1850/+1860");
+  });
+
+  it("omits coverage when absent on raw source description", () => {
+    const raw: GedcomX = {
+      persons: [],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          titles: [{ value: "Plain Source" }],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.sources?.[0]?.resource_type).toBeUndefined();
+    expect(simplified.sources?.[0]?.coverage).toBeUndefined();
+  });
+});
+
+describe("gedcomx-convert — person principal field", () => {
+  it("carries principal: true through toSimplified", () => {
+    const raw: GedcomX = {
+      persons: [
+        {
+          id: "P1",
+          principal: true,
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ nameForms: [{ fullText: "John Smith" }] }],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.persons?.[0]?.principal).toBe(true);
+  });
+
+  it("omits principal when false or absent", () => {
+    const raw: GedcomX = {
+      persons: [
+        {
+          id: "P1",
+          gender: { type: "http://gedcomx.org/Female" },
+          names: [{ nameForms: [{ fullText: "Jane Doe" }] }],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.persons?.[0]?.principal).toBeUndefined();
+  });
+});

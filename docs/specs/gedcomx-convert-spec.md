@@ -538,6 +538,56 @@ GedcomX qualifier.
 
 The top-level array is renamed `sourceDescriptions` ↔ `sources`.
 
+#### Source description fields carried by `simplifySourceDescription`
+
+The raw GedcomX `sourceDescriptions` from the recapi persona endpoint carry
+two fields that `simplifySourceDescription` now propagates into the simplified
+format as `resource_type` and `coverage`:
+
+- **`resourceType`** → `resource_type` — identifies the source description kind
+  (e.g. `"DigitalArtifact"`, `"Record"`, with the URI prefix stripped).
+  9 of 12 probed records carried a `DigitalArtifact` entry; without `resourceType`
+  the simplified output gives no way to distinguish it from the other 6–7
+  source descriptions a persona returns.
+
+- **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
+  `DigitalArtifact` entries: `place_id` (from `spatial.description`, resolvable
+  via `getPlaceById`; `record_read` resolves it to `standard_place`),
+  `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
+  Coverage describes **the volume the image sits in**, not the event — on 4 of
+  9 records with coverage, the coverage place or date range contradicted the
+  record's own facts (e.g. Tallapoosa county coverage on a Talladega birth;
+  `Birth 1841–1890` coverage on an 1848 marriage record). Agreement rate among
+  records with coverage: 4/9 (44%) agree, 4/9 partial, 1/9 disagree.
+
+  Measured 2026-09-14, `npx tsx dev/probe-record-read-artifact-coverage.ts`,
+  n=12 records across 4 families (2 returned 404). The probe changes no
+  behaviour and writes nothing.
+
+These fields are record-only: `sanitizeCandidate` strips both before a merge
+write (§5b.2 of `merge-gedcomx-spec.md`), and the tree validator rejects them
+on tree sources (`TREE_SOURCE_FIELDS` does not include them).
+
+#### Persona role fields carried through simplification
+
+The raw GedcomX persons from FamilySearch carry role information:
+
+- **`principal`** — boolean marking the record's principal subject, now carried
+  through `toSimplified` onto `SimplifiedPerson.principal`. Present on
+  **100% of both endpoints** (50/50 recapi, 2655/2655 search).
+  `sanitizeCandidate` strips it before a merge write; the tree validator
+  rejects it on tree persons (`TREE_PERSON_FIELDS` does not include it).
+
+- **`display.role`** — the persona's role on the record (`"Principal"`,
+  `"Father"`, `"Mother"`, `"Spouse"`, `"Other"`). Present on **100% of search
+  personas** (2655/2655 across 3 collections) but **0% of recapi personas**
+  (0/50). The search endpoint populates it; the recapi persona endpoint does not.
+  `record_search` surfaces it as a flat `role` field on each result (survives
+  the staged slim block). Not on `SimplifiedPerson` — it is search-only.
+
+  Measured 2026-09-14, `npx tsx dev/probe-persona-role-coverage.ts`,
+  n=50 recapi personas + 2655 search personas across 3 search pools.
+
 ### 12. Place descriptions
 
 ```
