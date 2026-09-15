@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "True match. One baptism recorded twice -- Kirchenbuch D43H-7DN2 and Kirchenbuchduplikat D43D-J2MM, same informant, not two independent sources -- both correctly linked to the right parents in the tree. Three things worth noting, none weakening the identification: (1) premarital conception -- marriage 7 Feb 1869, Rosina born 3 May 1869 (~85 days later), conception preceded the marriage by roughly six months, common and unremarkable for the period; (2) no single source names Anna Maria Eva and Rosina together as siblings -- each is attested by her own independent baptismal entry, and the sibling relationship is inferred by correlating the same parents' names across the two records, not a direct documentary link; (3) Rosina died the same day she was baptized (verified: ark:/61903/1:1:D4W6-2G3Z, death 3 May 1869, burial 5 May 1869) -- without this, the ~10-month gap to Anna Maria Eva's birth could read as an argument against a shared mother."
+  },
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "findings_hash": "b48527808dbc558eedd045ee594c7453986c14aa0c789f369ecd22c7a319943b"
+}

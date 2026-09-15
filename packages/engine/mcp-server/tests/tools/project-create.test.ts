@@ -45,6 +45,54 @@ describe("project_create", () => {
 
   // ── The headline case ────────────────────────────────────────────────────
 
+  it("refuses a starting tree carrying a forged assertion_id (#2472)", async () => {
+    // This tool copies the caller's tree verbatim and the document validator
+    // type-checks `assertion_id` without knowing it was forged, so it was the
+    // one unguarded fact write path. A forged backlink would persist into BOTH
+    // tree.gedcomx.json and the write-once starting-tree baseline, after which
+    // research_append rewrites a hand-entered fact from an assertion it never
+    // came from. `tree_edit` refuses the same thing on its four paths.
+    for (const holderKey of ["persons", "relationships"] as const) {
+      const fact = { id: "F1", type: "Birth", date: "1850", assertion_id: "a_011" };
+      const tree =
+        holderKey === "persons"
+          ? { persons: [{ ...SUBJECT, facts: [fact] }], relationships: [], sources: [TREE_SOURCE] }
+          : {
+              persons: [SUBJECT, { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Doyle" }] }],
+              relationships: [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ ...fact, type: "Marriage" }] }],
+              sources: [TREE_SOURCE],
+            };
+
+      const r = await projectCreate({
+        projectPath: dir,
+        objective: "Identify the parents of Patrick Flynn",
+        title: "Patrick Flynn's parents",
+        subjectPersonIds: ["I1"],
+        tree,
+      } as never);
+
+      expect(r.ok, holderKey).toBe(false);
+      expect(JSON.stringify(r), holderKey).toMatch(/`assertion_id` on a fact of/);
+      expect(await exists("tree.gedcomx.json"), holderKey).toBe(false);
+      expect(await exists("starting-tree.gedcomx.json"), holderKey).toBe(false);
+    }
+  });
+
+  it("still accepts a starting tree whose facts carry no backlink", async () => {
+    const r = await projectCreate({
+      projectPath: dir,
+      objective: "Identify the parents of Patrick Flynn",
+      title: "Patrick Flynn's parents",
+      subjectPersonIds: ["I1"],
+      tree: {
+        persons: [{ ...SUBJECT, facts: [{ id: "F1", type: "Birth", date: "1850" }] }],
+        relationships: [],
+        sources: [TREE_SOURCE],
+      },
+    } as never);
+    expect(r.ok).toBe(true);
+  });
+
   it("creates both documents in an empty directory", async () => {
     const r = await projectCreate({
       projectPath: dir,
