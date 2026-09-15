@@ -20,6 +20,8 @@ from e2e.orchestrator import (
     FixtureCaps,
     _accumulate_usage,
     _fallback_usage,
+    _raw_result_chars,
+    _thread_usage,
     _render_user_message,
     _RUNLOG_MAX_CHARS,
     _RUNLOG_VERBATIM_MAX,
@@ -1123,3 +1125,114 @@ def test_mcp_unavailable_error_carries_the_operator_message():
     assert "re-research" in text
 
 
+# --- result_chars: the untruncated payload size ---
+# `response_summary` caps at _RUNLOG_MAX_CHARS, so a saturated capture is a
+# floor, not a measurement. These pin BOTH paths: the truncating one, and the
+# short one that returns verbatim.
+
+
+def test_raw_result_chars_measures_past_the_summary_cap():
+    """A payload well over the cap reports its true length, not the cap."""
+    content = "x" * 12_000
+    assert len(_summarize_tool_response(content)) <= _RUNLOG_MAX_CHARS
+    assert _raw_result_chars(content) == 12_000
+
+
+def test_raw_result_chars_is_exact_on_the_verbatim_path():
+    """The other direction: a payload SHORTER than _RUNLOG_VERBATIM_MAX comes
+    back verbatim, and the field must still be its true length. A field that is
+    only correct when truncation happens is half a measurement."""
+    content = "y" * 200
+    assert len(content) < _RUNLOG_VERBATIM_MAX
+    assert _summarize_tool_response(content) == content
+    assert _raw_result_chars(content) == 200
+
+
+def test_raw_result_chars_counts_serialized_json_not_the_object():
+    """Non-str content is measured as the harness serializes it."""
+    content = [{"text": "abc"}]
+    assert _raw_result_chars(content) == len(json.dumps(content))
+
+
+# --- _thread_usage: column semantics, window arithmetic, thread split ---
+
+
+def _acc(*cache_reads):
+    """One accumulator entry per cache_read value. input/output/cache_creation
+    are held at 1/2/4 so a transposed or dropped column is visible."""
+    return {
+        f"m{i}": {
+            "input_tokens": 1,
+            "output_tokens": 2,
+            "cache_read_input_tokens": cr,
+            "cache_creation_input_tokens": 4,
+        }
+        for i, cr in enumerate(cache_reads)
+    }
+
+
+def test_thread_usage_columns_windows_and_split():
+    """Four distinct field values so no transposition survives, and three
+    messages on one thread with windows 8/35/8 so `peak` cannot be satisfied by
+    first, last or min.
+
+    Two same-valued messages would make max == first == last == min, and
+    `windows[t] = w` — the likeliest one-token slip — would pass every
+    assertion. That is the defect this shape exists to catch.
+    """
+    acc = _acc(3, 30, 3)  # windows 1+3+4=8, 1+30+4=35, 8
+    acc["s0"] = {
+        "input_tokens": 1,
+        "output_tokens": 2,
+        "cache_read_input_tokens": 3,
+        "cache_creation_input_tokens": 4,
+    }
+    rows, windows = _thread_usage(
+        acc, {"m0": "main", "m1": "main", "m2": "main", "s0": "sub"}
+    )
+
+    # Column order and semantics: [thread, input, cache_read, cache_creation].
+    # `output` is absent by design - the stream reports it as a message-start
+    # snapshot, so a per-message output figure measures nothing on either thread.
+    assert rows[0] == ["main", 1, 3, 4]
+    assert rows[1] == ["main", 1, 30, 4]
+    assert rows[3] == ["sub", 1, 3, 4]
+    assert all(len(r) == 4 for r in rows)
+
+    # Peak is the MAX of a thread's windows - never the sum (51), never the
+    # first or last (8).
+    assert windows["main"]["peak_window_tokens"] == 35
+    assert windows["main"]["message_count"] == 3
+    assert windows["sub"]["message_count"] == 1
+
+    # `sub` carries no peak: it would be computed over only those subagent
+    # messages that reach the main stream, which undercounts 150-250x.
+    assert "peak_window_tokens" not in windows["sub"]
+
+
+def test_thread_usage_defaults_untagged_messages_to_main():
+    """A message the tagger never saw must not vanish from the series."""
+    rows, windows = _thread_usage(_acc(3), {})
+    assert rows == [["main", 1, 3, 4]]
+    assert windows["main"]["message_count"] == 1
+    assert windows["sub"]["message_count"] == 0
+
+
+def test_apply_tool_result_records_the_untruncated_length():
+    """The WIRING, not the helper.
+
+    Three tests above pin `_raw_result_chars` itself, and every one of them
+    still passes if `apply_tool_result` writes `len(summary)` instead — which
+    is the whole defect, since `summary` is capped at `_RUNLOG_MAX_CHARS` and a
+    saturated capture is exactly the case the field exists to measure. Asserting
+    on the entry is what makes the break-test fail.
+    """
+    content = "z" * 9_000
+    summary = _summarize_tool_response(content)
+    assert len(summary) <= _RUNLOG_MAX_CHARS < len(content)  # the cap really bit
+
+    entry = {"tool": "mcp__genealogy__record_search", "args": {}, "response_summary": None}
+    apply_tool_result(entry, ToolResultBlock(tool_use_id="tu_1", content=content), summary)
+
+    assert entry["result_chars"] == 9_000
+    assert entry["result_chars"] > len(entry["response_summary"])

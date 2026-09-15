@@ -595,6 +595,17 @@ function mergeFactGroup(members: SimplifiedFact[]): SimplifiedFact {
   const valued = members.find((m) => m.value !== undefined && m.value !== "");
   setOrDelete(rep, "value", valued?.value);
 
+  // The assertion backlink survives only if EVERY member agrees on it (#2472).
+  // `rep` is a clone of members[0], but `date` and `place` above are taken from
+  // whichever member is best — possibly a different one — so keeping member[0]'s
+  // backlink would leave the fact claiming to have been minted from an assertion
+  // whose place it no longer carries. Two consequences, both real: the merged
+  // fact reads as drift to the tree-fact/assertion agreement check, and the next
+  // correction to that assertion overwrites the merged, most-specific value with
+  // its own narrower one.
+  const backlinks = new Set(members.map((m) => m.assertion_id));
+  setOrDelete(rep, "assertion_id", backlinks.size === 1 ? members[0].assertion_id : undefined);
+
   if (members.some((m) => m.primary === true)) rep.primary = true;
   else delete rep.primary;
 
