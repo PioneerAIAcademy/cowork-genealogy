@@ -215,6 +215,16 @@ export function validateInput(input: RecordSearchInput): void {
       throw new Error("offset must be non-negative.");
     }
   }
+  // `top` now decides whether the ROWS are visible at all, not merely how many
+  // stubs come back, so an out-of-range value hides evidence silently. Measured
+  // before this guard: top: -1 returned 4 of 5 candidates and reported
+  // returnedCount: 4; top: 1.5 returned 1. count and offset were already
+  // range-checked directly above; top was the one new input with nothing.
+  if (input.top !== undefined) {
+    if (!Number.isInteger(input.top) || input.top < 1) {
+      throw new Error("top must be a positive integer.");
+    }
+  }
   // Ranking active (subjectId supplied) justifies a deep pool: every row comes
   // back scored and ordered, so the model never triages 50 raw stubs by hand.
   // (It is not cut back host-side — since #1212 ranking returns every scored

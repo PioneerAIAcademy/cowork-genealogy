@@ -331,6 +331,17 @@ describe("recordSearchTool input validation", () => {
   });
 });
 
+  it("16. rejects a non-positive or fractional `top`", async () => {
+    // `top` decides whether the ROWS come back at all, so a bad value hides
+    // evidence rather than merely shortening a list. Measured before the guard:
+    // top:-1 returned 4 of 5 and reported returnedCount:4; top:1.5 returned 1.
+    for (const bad of [-1, 0, 1.5, NaN, Infinity]) {
+      await expect(
+        recordSearchTool({ surname: "Flynn", top: bad }, LOCAL),
+      ).rejects.toThrow(/top must be a positive integer/);
+    }
+  });
+
 describe("buildSearchUrl param mapping", () => {
   it("14. maps q.* params correctly", () => {
     const url = buildSearchUrl({

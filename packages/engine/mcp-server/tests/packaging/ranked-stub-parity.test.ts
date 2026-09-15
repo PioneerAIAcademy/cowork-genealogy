@@ -135,7 +135,13 @@ describe("ranked stub / search row field parity", () => {
       "utf-8",
     );
     const assigned = new Set(
-      [...src.matchAll(/\bstub\.([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]),
+      // Requires an ASSIGNMENT, not a mention. The first version of this matched
+      // any `stub.X`, so `// stub.events is set downstream by the caller.` in a
+      // comment satisfied it -- the reviewer who handed me the snippet found
+      // that themselves and sent the correction.
+      [...src.matchAll(/\bstub\.([A-Za-z_][A-Za-z0-9_]*)\s*(?:\?\?)?=[^=]/g)].map(
+        (m) => m[1],
+      ),
     );
     const lit = src.match(/const stub:\s*RankedMatch\s*=\s*\{([\s\S]*?)\n\s*\};/);
     if (lit) {
