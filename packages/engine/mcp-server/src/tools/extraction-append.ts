@@ -86,7 +86,9 @@ export const extractionAppendSchema = {
   description:
     "Persist ONE extracted record to research.json — its source entry plus one " +
     "assertion per extracted fact. This is the record-extraction lane's writer: " +
-    "it writes `sources` and `assertions` and nothing else.\n" +
+    "it writes the `sources` and `assertions` SECTIONS and no others. Correcting " +
+    "an assertion's place/standard_place/date/value also updates the tree fact " +
+    "materialized from it.\n" +
     "\n" +
     "Supply each entry in its persisted snake_case shape WITHOUT an id; the tool " +
     "assigns the next `<prefix>NNN`, stamps tool-owned timestamps, validates the " +
