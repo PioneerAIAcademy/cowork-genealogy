@@ -2,6 +2,13 @@ import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { fetchWithRetry } from "../utils/http.js";
+import {
+  fetchMemories,
+  fetchPortraitId,
+  filterSourceStyle,
+  rankForTranscription,
+  type Memory,
+} from "../utils/memories.js";
 import type {
   GedcomX,
   GedcomXFact,
@@ -71,13 +78,69 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
     );
   }
   const token = await getValidToken(principal);
-  return fetchAndConvert(
-    token,
-    personId.trim(),
-    relatives,
-    sourceDescriptions,
-    0,
-  );
+  const pid = personId.trim();
+  const result = await fetchAndConvert(token, pid, relatives, sourceDescriptions, 0);
+
+  // Memories ride the EXISTING sourceDescriptions flag (lead, 2026-08-19): a
+  // third flag was declined because init-project already shipped a bug from
+  // omitting one of the two that exist (issue #1475).
+  //
+  // SUBJECT ONLY, never relatives. With Half 1's parent fan-out a per-relative
+  // memories fetch would be unbounded -- the 63-child subject in feedback issue
+  // #1795 is the case that makes it unaffordable. This is what acceptance 7
+  // forbids; it does NOT forbid paging the subject's own memories.
+  //
+  // A living person (204) has no memories to fetch and no sources array to
+  // merge into.
+  if (sourceDescriptions && result.persons.some((p) => p.id === pid && !p.living)) {
+    result.sources = await mergeMemories(pid, result.sources, principal);
+  }
+  return result;
+}
+
+/**
+ * Fetch, filter and merge this person's memories into the tree sources.
+ *
+ * FAIL-SOFT BY CONTRACT. A memories outage must never fail the read: project
+ * creation would be blocked entirely by a subsystem the caller did not ask
+ * about. Any throw here returns the tree sources untouched, logged to stderr.
+ * Recorded in the spec's error table as a deliberate silent degradation.
+ */
+async function mergeMemories(
+  pid: string,
+  treeSources: TreeSource[],
+  principal: Principal,
+): Promise<TreeSource[]> {
+  try {
+    const [all, portraitId] = await Promise.all([
+      fetchMemories(pid, principal),
+      fetchPortraitId(pid, principal),
+    ]);
+    const kept = rankForTranscription(filterSourceStyle(all, portraitId));
+    // No dedupe against tree sources: the two id spaces are DISJOINT, measured
+    // (tree `SD_PERSON_KWCJ-RN4` vs memory `3475`, 0 overlap on both persons
+    // sampled). An id-keyed dedupe could never fire, so it is not written.
+    return [...treeSources, ...kept.map(toTreeSource)];
+  } catch (err) {
+    process.stderr.write(
+      `person_read: memories fetch failed for ${pid}, returning tree sources only: ${String(err)}\n`,
+    );
+    return treeSources;
+  }
+}
+
+/** A memory as an ordinary source row. No discriminator field and no new
+ *  top-level key: the response stays exactly {persons, relationships, sources}
+ *  so no downstream reader has to branch on memory-vs-source (lead, 2026-08-21). */
+function toTreeSource(m: Memory): TreeSource {
+  return {
+    id: m.id,
+    // Never empty: a tree source with an empty title fails the write
+    // downstream. `Memory.title` already falls back to filename, then to
+    // "FamilySearch memory <id>".
+    title: m.title,
+    ...(m.url !== undefined ? { url: m.url } : {}),
+  };
 }
 
 async function fetchAndConvert(

@@ -72,6 +72,20 @@ export interface TreeSource {
   citation?: string;
   url?: string;
   notes?: string[];
+  /**
+   * A memory's text: a story's own words, or OCR of a scan the filter kept.
+   *
+   * Named `text`, not `transcription`, deliberately: the destination field in
+   * `research.json` is `transcription`, but a story told by a family member is
+   * not a transcription of anything, and the spec row says so.
+   *
+   * MUST NEVER REACH `tree.gedcomx.json`. `TREE_SOURCE_FIELDS` is
+   * `{id, title, citation, author, url}` and `project_create` validates with
+   * `validateParsed` WITHOUT sanitizing, so one stray key aborts the whole
+   * project write -- the `notes` defect PR #1800 fixed (finding F7, validator
+   * V6). `init-project`'s SKILL.md carries the matching exclusion.
+   */
+  text?: string;
 }
 
 export interface PersonReadResult {
