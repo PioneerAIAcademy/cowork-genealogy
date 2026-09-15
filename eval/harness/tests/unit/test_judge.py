@@ -259,6 +259,27 @@ def test_na_rule_leaves_null_alone_when_tool_calls_happened():
     assert warnings == []
 
 
+def _outcome_spec(**overrides):
+    """A real `TestSpec` for `_compute_outcome`, not a `SimpleNamespace`.
+
+    `_compute_outcome` reads `spec.is_direct` (issue #2246), which is a property
+    on the dataclass, so a namespace stand-in raises AttributeError. These two
+    tests already imported `TestSpec` to assert "the spec shape is real"; this
+    builds one, so the assertion is load-bearing instead of decorative.
+    """
+    from harness.loader import TestSpec
+
+    base = dict(
+        id="t", skill="citation", name="n", type="positive", description="d",
+        tags=[], user_message="m", scenario=None, scenario_notes=None,
+        mcp_fixtures=[], judge_context=[], negative=None,
+        expected_outcome="pass", xfail_reason=None, runs_per_test=1,
+        execution={},
+    )
+    base.update(overrides)
+    return TestSpec(**base)
+
+
 def test_na_rule_coercion_flips_a_positive_test_outcome():
     """DELIBERATE consequence, pinned so it reads as a decision.
 
@@ -276,7 +297,7 @@ def test_na_rule_coercion_flips_a_positive_test_outcome():
     assert ta["score"] is None
     assert warnings[0]["score"] == 1
 
-    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    spec = _outcome_spec(type="positive", skill="citation", negative=None)
     before = _compute_outcome(
         spec=spec, validators_passed=True, aborted_reason=None, activated=True,
         skills_invoked=["citation"],
@@ -316,7 +337,7 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     assert ta["score"] is None
     assert warnings[0]["score"] == 1
 
-    spec = SimpleNamespace(
+    spec = _outcome_spec(
         type="negative", skill="search-wikipedia",
         negative={"correct_skill": []},
     )
@@ -346,7 +367,7 @@ def test_na_rule_coercion_flips_a_positive_test_from_partial():
     assert ta["score"] is None
     assert warnings[0]["score"] == 2
 
-    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    spec = _outcome_spec(type="positive", skill="citation", negative=None)
     kw = dict(
         spec=spec, validators_passed=True, aborted_reason=None,
         activated=True, skills_invoked=["citation"],
@@ -1260,6 +1281,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     zero_call_draws = 0
     na_coerced: set[tuple[str, str]] = set()
     na_leaked: list[str] = []
+    restored_coerced_cells = 0
 
     for p in log_paths:
         d = json.loads(p.read_text(encoding="utf-8"))
@@ -1281,6 +1303,33 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 dims = jd.get("dimensions") or []
                 if not dims:
                     continue
+                # A `coerced_routing_negative_to_na` run carries dimensions the
+                # ORCHESTRATOR nulled after the judge returned (orchestrator.py).
+                # Replaying those as-is feeds harness output back in as though it
+                # were a judge draw, and judge.py's base-null rule rightly rejects
+                # it. Restore the judge's original score from the warning — which
+                # orchestrator.py appends BEFORE mutating precisely so it survives
+                # — and replay the whole draw. Restoring rather than skipping keeps
+                # the draw's OTHER cells under test; skipping the draw would narrow
+                # the guard a little more with every coerced run. A null with no
+                # warning behind it still raises, which is the property worth
+                # keeping. Contrast `coerced_tool_arguments_to_na`, which
+                # _extract_dimensions performs ITSELF and so replays cleanly.
+                coerced = {
+                    w["name"]: w["score"]
+                    for w in ((r.get("output") or {}).get("warnings") or [])
+                    if (w or {}).get("kind") == "coerced_routing_negative_to_na"
+                    and w.get("name") is not None
+                    and w.get("score") is not None
+                }
+                if coerced:
+                    dims = [
+                        {**dim, "score": coerced[dim["name"]]}
+                        if dim.get("name") in coerced and dim.get("score") is None
+                        else dim
+                        for dim in dims
+                    ]
+                    restored_coerced_cells += len(coerced)
                 total_draws += 1
                 # The run's OWN tool calls, never a stand-in: the #1406
                 # N/A rule keys on this list being empty, so substituting
@@ -1319,6 +1368,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     print(
         f"\ncorpus replay: {len(log_paths)} run logs, {total_draws} judge draws, "
         f"{dropped_total} dimension(s) dropped-with-warning, "
+        f"{restored_coerced_cells} orchestrator-coerced cell(s) restored, "
         f"{len(unexpected_raises)} unexpected raise(s)"
     )
     # #1361 review (S2): without these two, the loop above can silently
