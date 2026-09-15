@@ -514,6 +514,12 @@ def test_an_all_blind_corpus_reports_truncation_not_measurable(tmp_path: Path):
     out = format_report(r)
     assert "truncated (capped mid-read): NOT MEASURABLE" in out
     assert "predates 733a2c7" in out
+    # The line must NOT assert every call predates the marker: `tm == 0` also
+    # fires when a sha (or 733a2c7 itself, in a shallow clone) is unresolvable,
+    # where that absolute claim is false (#2501 round-3 review). Pin the honest
+    # phrasing so a regression to the absolute one is caught.
+    assert "every call in range predates" not in out
+    assert "cannot resolve" in out
     # No bare percentage over a denominator that cannot produce the numerator.
     assert "of 2 marker-capable" not in out
 

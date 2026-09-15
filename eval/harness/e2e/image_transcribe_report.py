@@ -499,10 +499,17 @@ def format_report(result: ScanResult) -> str:
                 "excluded above"
             )
     else:
+        # `tm == 0` has three causes that must not be conflated: every call
+        # genuinely predates the marker, every run's sha is unresolvable here,
+        # or 733a2c7 itself is unresolvable (a shallow/partial checkout) so every
+        # capability check returns 128 and reads blind. The line states only what
+        # this checkout can actually know — that none could be *placed* at or
+        # after the marker — rather than asserting they all predate it.
         out.append(
-            "  truncated (capped mid-read): NOT MEASURABLE — every call in "
-            "range predates 733a2c7 (#2168), when the marker began to be "
-            "emitted"
+            "  truncated (capped mid-read): NOT MEASURABLE — no call in "
+            "range ran an engine this checkout can place at or after 733a2c7 "
+            "(#2168), when the marker began to be emitted: each one either "
+            "predates 733a2c7 or ran a commit this checkout cannot resolve"
         )
     out.append("")
 
