@@ -365,14 +365,38 @@ consistent across schema, manifest, and skill.)*
 {
   imageId?: string    // DGS Image Group Number "NUMBER_NUMBER", e.g. 004884748_02613
   ark?: string        // FamilySearch document-image ARK / resolver URL / dist URL
+  memoryArtifactUrl?: string // FamilySearch MEMORY artifact URL
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
   projectPath?: string // absolute project-folder path; supply to save the JPEG (§8.5)
 }
 ```
 
-- Exactly one of `imageId` / `ark`, resolved **identically to `image_read`**
-  (§8 shares the resolver). Accept the same shapes `image_read` accepts
-  today (`3:1:`/`3:2:` ARKs, resolver URLs, `/$dist`, `dgs:.../dist.jpg`).
+- Exactly one of `imageId` / `ark` / `memoryArtifactUrl`. The first two resolve
+  **identically to `image_read`** (§8 shares the resolver). Accept the same
+  shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, resolver URLs,
+  `/$dist`, `dgs:.../dist.jpg`).
+- `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
+  `person_read` source that came from the memories API — a scanned will,
+  certificate, obituary clipping or compiled history uploaded by a relative. It
+  is the retry route for a memory the `person_read` transcription budget
+  skipped, the filter missed, or the OCR failed on; there is no other way to
+  read one, since a memory URL is neither an image-group `imageId` nor a
+  `3:1:`/`3:2:` ARK. Three things make it unlike the other two shapes:
+  - It is **already a direct bytes URL**, so it is passed through rather than
+    resolved, and carries no `fallbackUrl`.
+  - It is fetched with **no Authorization header and needs no FamilySearch
+    login**. Measured 2026-09-15 on one artifact with three header sets: no
+    headers at all → 200, UA only → 200, bearer+UA → 200. Sending a token would
+    also mean handing a credential to a URL that arrived inside a response
+    body, which is why the host is **validated, not trusted**: it must be
+    `sg30p0.familysearch.org` with a path ending `/dist.<ext>` (221 of 221 in
+    the probe corpus), and anything else is refused before any fetch.
+  - **`application/pdf` is accepted here**, unlike the image-only page-scan
+    shapes. PDFs are 29 of that 221 and carry the wills and certificates.
+    Measured the same day: the model transcribes a PDF handed to it as an
+    ordinary `image_url` data URL — 1222 chars off the smallest memory PDF — so
+    no file-parser plugin and no second request shape are needed. `audio/*` and
+    `video/*` are still refused.
 - `lookingFor` mirrors the `image-reader` subagent's parameter: a search key
   only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
   §6.2); it **never** shortens or slants the full transcription, and any

@@ -133,20 +133,59 @@ _INIT_EMPTY_SECTIONS = (
 )
 
 
-def test_init_empty_sections(after_state, test):
+def test_init_empty_sections(after_state, test, tool_calls):
     """Tag-gated: at init time, every research.json array section must be
     empty. The init-project workflow surveys known information but does
-    not formulate questions or plans — those are downstream skills."""
+    not formulate questions or plans — those are downstream skills.
+
+    `sources` IS ALLOWED to carry memory transcriptions, and only those. A
+    memory's text is not something the skill formulated — it arrives with the
+    tree read, like the tree sources themselves — and the lead ruled it is
+    persisted at init, to `sources[].transcription`. Every other section, and
+    this one on a person with no memories, is unchanged.
+
+    The exemption is deliberately narrow: an entry qualifies only if its
+    `transcription` is VERBATIM one of the texts `person_read` actually
+    returned, or is null (the memory the transcription budget did not reach,
+    which still gets its entry). So the skill cannot write a source it invented,
+    and the same check doubles as the verbatim requirement.
+    """
     if "init-empty-sections" not in test.get("tags", []):
         pytest.skip("not an init-empty-sections scenario")
     research = after_state.get("research_json")
     if research is None:
         assert False, "init-empty-sections requires research.json to exist"
+
+    returned_texts = {
+        s["text"]
+        for response in _responses(tool_calls, "person_read")
+        for s in (response.get("sources") or [])
+        if isinstance(s, dict) and isinstance(s.get("text"), str) and s["text"].strip()
+    }
+
     non_empty = []
     for section in _INIT_EMPTY_SECTIONS:
         value = research.get(section, [])
-        if value:
-            non_empty.append(f"{section} ({len(value)} entries)")
+        if not value:
+            continue
+        if section == "sources" and returned_texts:
+            stray = [
+                e.get("gedcomx_source_description_id") or "<no id>"
+                for e in value
+                if not isinstance(e, dict)
+                or (
+                    e.get("transcription") is not None
+                    and e.get("transcription") not in returned_texts
+                )
+            ]
+            if not stray:
+                continue
+            non_empty.append(
+                f"sources ({len(stray)} entries whose transcription is not "
+                f"verbatim from person_read: {stray})"
+            )
+            continue
+        non_empty.append(f"{section} ({len(value)} entries)")
     assert not non_empty, (
         f"research.json sections not empty at init: {non_empty}. "
         f"init-project should leave questions/plans/log/sources/assertions/"
@@ -622,10 +661,17 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
 # --- V6: the note is dropped, not the source ----------------------------
 
 def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
-    """`person_read` emits `notes` on a source; `TREE_SOURCE_FIELDS` rejects the
-    field, so a verbatim copy fails the `project_create` write. The plausible
-    wrong fix is to drop the whole source -- silently losing evidence the survey
-    found. Drop the note, keep the source.
+    """`person_read` emits fields a tree source may not carry -- `notes`, and now
+    `text` and `image_ref` on a memory; `TREE_SOURCE_FIELDS` rejects them, so a
+    verbatim copy fails the `project_create` write. The plausible wrong fix is to
+    drop the whole source -- silently losing evidence the survey found. Drop the
+    extra field, keep the source.
+
+    Checked against the ALLOW-LIST rather than against a list of known-bad names:
+    `notes` was the first field to do this and `text`/`image_ref` are the second
+    and third, so a name-by-name check would go stale the next time person_read
+    grows a field. Mirrors TREE_SOURCE_FIELDS in
+    packages/engine/mcp-server/src/validation/tree-shape.ts.
 
     Joined on `title`, because the skill re-ids sources to S1... on the way in.
     """
@@ -639,8 +685,12 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
     written = _written_tree(after_state).get("sources") or []
     titles = {s.get("title") for s in written}
 
+    allowed = {"id", "title", "citation", "author", "url"}
     bad = [
-        f"{s.get('id')}: has notes {s['notes']!r}" for s in written if s.get("notes")
+        f"{s.get('id')}: carries {sorted(set(s) - allowed)!r}, which "
+        f"project_create rejects"
+        for s in written
+        if isinstance(s, dict) and set(s) - allowed
     ]
     bad += [
         f"{s.get('id')} {s.get('title')!r}: returned by person_read but absent "
@@ -648,7 +698,8 @@ def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
         for s in returned if s.get("title") not in titles
     ]
     assert not bad, (
-        "drop the note, keep the source -- the survey found it: " + "; ".join(bad)
+        "drop the extra field, keep the source -- the survey found it: "
+        + "; ".join(bad)
     )
 
 

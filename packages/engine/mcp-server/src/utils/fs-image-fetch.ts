@@ -69,6 +69,33 @@ function extractImageContextQuery(raw: string): string {
 export interface FsImageInput {
   imageId?: string;
   ark?: string;
+  /** A FamilySearch *memory* artifact URL (the `about` of a memory
+   *  sourceDescription). Unlike imageId/ark, this is already a direct bytes
+   *  URL, so it is passed through rather than resolved. Host-validated below. */
+  memoryArtifactUrl?: string;
+}
+
+// A memory artifact URL, as served by the memories API's `about`. Measured
+// 2026-09-15 over the 221-memory / 3-person probe corpus: 221 of 221 sat on
+// sg30p0.familysearch.org with a path ending `/dist.<ext>` and a `ctx` query
+// param. Validated rather than trusted because it arrives as data from an
+// upstream response; an unvalidated URL here would be a fetch of an
+// arbitrary host driven by an external service's payload.
+const MEMORY_ARTIFACT_PATTERN =
+  /^https:\/\/sg30p0\.familysearch\.org\/.+\/dist\.[A-Za-z0-9]+(\?.*)?$/;
+
+// Memory artifacts are NOT all images: the same corpus carried application/pdf
+// (29 of 221), and a PDF is exactly the high-value record type here (wills,
+// certificates, compiled histories). Measured 2026-09-15: the OCR model reads a
+// PDF handed to it as an ordinary `image_url` data URL — 1222 chars off the
+// smallest one — so no separate request shape is needed, only permission to
+// carry the bytes this far. audio/* and video/* never reach here: memories.ts
+// drops them before the artifact is ever resolved.
+const MEMORY_ARTIFACT_CONTENT_TYPES = ["image/", "application/pdf"];
+
+function isAcceptableArtifactType(contentType: string, memoryShape: boolean): boolean {
+  if (contentType.startsWith("image/")) return true;
+  return memoryShape && MEMORY_ARTIFACT_CONTENT_TYPES.some((t) => contentType.startsWith(t));
 }
 
 function imageIdToUrl(imageId: string): string {
@@ -115,18 +142,42 @@ function arkToImageUrl(ark: string): { url: string; fallbackUrl?: string } {
 export function resolveFsImageInput(
   input: FsImageInput,
   caller: string
-): { url: string; label: string; fallbackUrl?: string } {
-  if (input.imageId !== undefined && input.ark !== undefined) {
-    throw new Error("Provide either imageId or ark, not both.");
+): { url: string; label: string; fallbackUrl?: string; memoryShape: boolean } {
+  const given = [input.imageId, input.ark, input.memoryArtifactUrl].filter(
+    (v) => v !== undefined
+  ).length;
+  if (given > 1) {
+    throw new Error(
+      "Provide exactly one of imageId, ark, or memoryArtifactUrl."
+    );
+  }
+  if (input.memoryArtifactUrl !== undefined) {
+    if (!MEMORY_ARTIFACT_PATTERN.test(input.memoryArtifactUrl)) {
+      throw new Error(
+        "Unrecognized memoryArtifactUrl. Expected a FamilySearch memory " +
+          "artifact URL on sg30p0.familysearch.org ending in /dist.<ext>."
+      );
+    }
+    return {
+      url: input.memoryArtifactUrl,
+      label: input.memoryArtifactUrl,
+      memoryShape: true,
+    };
   }
   if (input.imageId !== undefined) {
-    return { url: imageIdToUrl(input.imageId), label: input.imageId };
+    return {
+      url: imageIdToUrl(input.imageId),
+      label: input.imageId,
+      memoryShape: false,
+    };
   }
   if (input.ark !== undefined) {
     const { url, fallbackUrl } = arkToImageUrl(input.ark);
-    return { url, label: input.ark, fallbackUrl };
+    return { url, label: input.ark, fallbackUrl, memoryShape: false };
   }
-  throw new Error(`${caller} requires either imageId or ark.`);
+  throw new Error(
+    `${caller} requires one of imageId, ark, or memoryArtifactUrl.`
+  );
 }
 
 export interface FetchedFsImage {
@@ -154,14 +205,20 @@ interface FetchAttempt {
 
 async function attemptFsImageFetch(
   url: string,
-  token: string
+  token: string | null,
+  memoryShape: boolean
 ): Promise<FetchAttempt> {
   const response = await fetchWithTimeout(
     url,
     {
       headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "image/*,*/*",
+        // A memory artifact is served publicly: measured 2026-09-15, the same
+        // artifact returned 200 with no headers at all, with a UA only, and
+        // with bearer+UA alike. No token is requested for this shape, so a
+        // caller with no FamilySearch session can still read one -- and no
+        // credential is sent to a URL that arrived in a response body.
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Accept: memoryShape ? "image/*,application/pdf,*/*" : "image/*,*/*",
         "User-Agent": BROWSER_USER_AGENT,
       },
     },
@@ -171,7 +228,7 @@ async function attemptFsImageFetch(
     return { ok: false, status: response.status, statusText: response.statusText };
   }
   const rawContentType = response.headers.get("content-type") ?? "image/jpeg";
-  if (!rawContentType.startsWith("image/")) {
+  if (!isAcceptableArtifactType(rawContentType, memoryShape)) {
     return {
       ok: false,
       status: response.status,
@@ -210,21 +267,25 @@ async function attemptFsImageFetch(
 export async function fetchFsImageBytes(
   url: string,
   fallbackUrl: string | undefined,
-  principal: Principal
+  principal: Principal,
+  memoryShape = false
 ): Promise<FetchedFsImage> {
-  const token = await getValidToken(principal);
+  // A memory artifact needs no credential (measured), and asking for one would
+  // make a public read fail for an unauthenticated caller with an auth error.
+  const token = memoryShape ? null : await getValidToken(principal);
 
-  let attempt = await attemptFsImageFetch(url, token);
+  let attempt = await attemptFsImageFetch(url, token, memoryShape);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, token);
+    attempt = await attemptFsImageFetch(fallbackUrl, token, memoryShape);
     resolvedUrl = fallbackUrl;
   }
 
   if (!attempt.ok || !attempt.bytes || attempt.contentType === undefined) {
     if (attempt.nonImageContentType !== undefined) {
       throw new Error(
-        `Expected an image response but got content-type: ${attempt.nonImageContentType}`
+        `Expected ${memoryShape ? "an image or PDF" : "an image"} response ` +
+          `but got content-type: ${attempt.nonImageContentType}`
       );
     }
     throw new Error(
