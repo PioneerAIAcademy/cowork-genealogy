@@ -465,7 +465,13 @@ change, with different (and easy-to-undercount) site lists:
   `packages/engine/mcp-server/src/validation/tree-shape.ts` must be edited —
   the validator enforces `additionalProperties: false` from those sets, so an
   unlisted field makes every writer tool (`tree_edit`, `tree_correct`, the
-  merge tools, `research_append`'s tree write) reject the write. The legacy
+  merge tools, `research_append`'s tree write) reject the write. Two more
+  engine sites go with it: the matching `Simplified*` interface in
+  `src/types/gedcomx.ts`, and the field's **type** check in `validator.ts`'s
+  `checkTree*` function — the allow-list admits the key, and only that says what
+  type it must be, so a field in one and not the other is accepted by the
+  runtime validator and rejected by the JSON Schema with nothing catching it
+  (`tree-shape-drift.test.ts` compares field NAMES). The legacy
   healer (`tree-sanitize.ts`) reads the same sets; check whether the change
   needs a heal rule for pre-change trees.
 
