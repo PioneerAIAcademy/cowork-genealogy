@@ -544,6 +544,55 @@ def test_a_run_log_with_no_git_sha_is_incapable(tmp_path: Path):
     assert r.truncation_measurable == 0, "no git_sha means the marker era is unknown -> incapable"
 
 
+def test_the_truncation_rate_never_exceeds_its_denominator(tmp_path: Path):
+    """#2501 round-4. The numerator (`truncated_reads`) and the denominator
+    (`truncation_measurable`) must draw from the SAME population — marker-capable
+    calls. A capped read on an unplaceable call otherwise sits in the numerator
+    but not the denominator and prints a rate above 100% (`2 of 1`). Here one
+    capped read is placeable and one is not: the rate is 1 of 1, and the
+    unplaceable one is disclosed, not dropped."""
+    capable = _run(tmp_path / "new", "run-2026-09-10_00-00-00.json",
+                   ['{"transcription":"half","truncated":true}'], git_sha="a" * 40)
+    unplaceable = _run(tmp_path / "old", "run-2026-08-01_00-00-00.json",
+                       ['{"transcription":"half","truncated":true}'])  # no git_sha
+    r = scan([capable, unplaceable], author_of=_authors({}),
+             marker_capable_of=_capable_if_sha)
+
+    assert r.truncation_measurable == 1
+    assert r.truncated_reads == 1, "numerator counts only marker-capable truncated reads"
+    assert r.truncated_unplaceable == 1
+    assert r.truncated_reads <= r.truncation_measurable, "the rate can never exceed 100%"
+
+    out = format_report(r)
+    assert "truncated (capped mid-read): 1 of 1 marker-capable (100.0%)" in out
+    # The unplaceable read is disclosed, not silently dropped from the numerator.
+    assert "1 further capped read(s) observed on calls this checkout cannot place" in out
+    # Never the over-100% shape the bug produced.
+    assert "2 of 1" not in out
+    # Both truncated reads still show in the By-cause count column (bucket-based).
+    assert any(
+        line.strip().startswith("truncated") and line.strip().endswith("of 2")
+        for line in out.splitlines()
+    ), "By cause counts every truncated read, placeable or not"
+
+
+def test_an_unplaceable_capped_read_is_disclosed_even_when_nothing_is_measurable(tmp_path: Path):
+    """The NOT MEASURABLE branch's join. In a checkout where no call is
+    placeable but a capped read was observed (the depth-1-clone shape), the read
+    must still be surfaced — it belongs in By cause but not in a rate that cannot
+    be computed."""
+    unplaceable = _run(tmp_path / "old", "run-2026-08-01_00-00-00.json",
+                       ['{"transcription":"half","truncated":true}', "ok"])  # no git_sha
+    r = scan([unplaceable], author_of=_authors({}), marker_capable_of=_capable_if_sha)
+
+    assert r.truncation_measurable == 0
+    assert r.truncated_reads == 0, "no placeable call, so nothing enters the rate"
+    assert r.truncated_unplaceable == 1
+    out = format_report(r)
+    assert "truncated (capped mid-read): NOT MEASURABLE" in out
+    assert "1 further capped read(s) observed on calls this checkout cannot place" in out
+
+
 def test_the_word_none_is_not_treated_as_an_absent_summary():
     """`scan` never calls `str()`, so no infrastructure path produces the summary
     "none" — the only thing that arm could ever match is a genuine transcription

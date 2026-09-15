@@ -242,12 +242,29 @@ class ScanResult(NamedTuple):
 
     @property
     def truncated_reads(self) -> int:
-        return sum(1 for c in self.calls if c.bucket == TRUNCATED)
+        """The truncation-rate NUMERATOR — capped reads on marker-capable calls
+        only, so it draws from the same population as `truncation_measurable`
+        below. A capped read on a call this checkout cannot place would otherwise
+        sit in the numerator but not the denominator, printing a rate above 100%
+        (`2 of 1 marker-capable`). Such reads are disclosed via
+        `truncated_unplaceable`, not dropped."""
+        return sum(
+            1 for c in self.calls if c.bucket == TRUNCATED and c.marker_capable
+        )
+
+    @property
+    def truncated_unplaceable(self) -> int:
+        """Capped reads on calls this checkout cannot place at or after the
+        marker — kept out of the rate (they are not in the denominator) but
+        disclosed so they are not silently dropped from the numerator."""
+        return sum(
+            1 for c in self.calls if c.bucket == TRUNCATED and not c.marker_capable
+        )
 
     @property
     def truncation_measurable(self) -> int:
-        """Calls whose engine could have emitted the marker — the only honest
-        denominator for the truncation rate."""
+        """The truncation-rate DENOMINATOR — calls whose engine could have
+        emitted the marker, the only honest population to take the rate over."""
         return sum(1 for c in self.calls if c.marker_capable)
 
 
@@ -510,6 +527,16 @@ def format_report(result: ScanResult) -> str:
             "range ran an engine this checkout can place at or after 733a2c7 "
             "(#2168), when the marker began to be emitted: each one either "
             "predates 733a2c7 or ran a commit this checkout cannot resolve"
+        )
+    # Applies to both branches: a capped read on an unplaceable call is real but
+    # is not in the rate's denominator, so it is disclosed here rather than
+    # dropped from the numerator — where it would either push the rate over 100%
+    # or vanish silently.
+    if result.truncated_unplaceable:
+        out.append(
+            f"    {result.truncated_unplaceable} further capped read(s) "
+            "observed on calls this checkout cannot place at or after "
+            "733a2c7 — counted in By cause below, NOT in the rate above"
         )
     out.append("")
 
