@@ -1253,11 +1253,39 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 # census mortality prose. Measured on `v1_2026-09-09_17-11-04`: under the
 # unanchored pattern all four "passing" runs passed on exactly these
 # accidents (#2390 review).
-_POSITION_RE = re.compile(
-    r"(?:\b(?:record|document|doc|item|page|file|extracting)\s+)(\d{1,3})\s*(?:of|/)\s*(\d{1,3})\b"
-    r"|(?<![\w/])(\d{1,3})\s*(?:of|/)\s*(\d{1,3})\s*:",
+#
+# **The anchor is proximity to a delegation verb, not a keyword list.** The
+# keyword-or-colon anchor this replaces was calibrated against a corpus with
+# no announcements in it — the rule only reached `main` with PR #2391 — so it
+# was tuned against absence. Re-calibrated here on `v1_2026-09-11_18-49-21`,
+# the first run made WITH the rule:
+#
+#     keyword-or-colon anchor   real 23/26   false positives 6/17
+#     proximity anchor (this)   real 25/26   false positives 0/17
+#
+# The false-positive set is the accident list above plus the six Praise
+# raised in the #2390 round-2 review (`page 1 of 2 of the schedule`,
+# `Step 1 of 3:`, `Checklist item 1 of 4:`, `file 1 of 2.`, `doc 1 of 2`,
+# `1 of 3: q_001 only`) and three ARK cases, since `ark:/61903/1:1:…`
+# contains `61903/1` and sits next to extraction language constantly.
+#
+# Three deliberate narrowings, each of which costs nothing measured:
+#   - the separator is the WORD `of`, never `/`: every remaining accident
+#     (`confidence 4/5`, `~48/45`, `9/14/1880`, `Age 5/12`) is slash-shaped,
+#     and the skill's own prescribed wording is "3 of 12".
+#   - `(?<![\d/])` and `(?![\d/])` keep the marker out of longer numbers.
+#   - the window is ±60 rather than ±120. ±120 reaches 26/26 but admits
+#     `lists 2 of 3 children as surviving; extraction follows`. A false
+#     positive scores a run that never announced as compliant, which is the
+#     check-that-cannot-fail shape; a false negative is only noise, and this
+#     validator is `report_` tier and gates nothing. The single miss at ±60 is
+#     pinned in `test_position_marker_known_false_negative`.
+_MARKER_RE = re.compile(
+    r"(?<![\d/])[*_`]{0,2}(\d{1,3})\s+of\s+(\d{1,3})\b(?![\d/])",
     re.IGNORECASE,
 )
+_DELEGATION_RE = re.compile(r"\b(?:delegat|extract|invok)\w*", re.IGNORECASE)
+_ANCHOR_WINDOW = 60
 
 
 def _records_extracted(before_state, after_state):
@@ -1283,12 +1311,23 @@ def _announced_positions(text_response, n):
     three-record run names a batch that is not the one being run. Above `n` is
     accepted - announcing three and extracting two is a dropped record, a
     different defect this check should not also fail for.
+
+    A marker counts only when a delegation verb sits within `_ANCHOR_WINDOW`
+    characters of it - see the calibration note above `_MARKER_RE`. The window
+    is measured on the raw text rather than per sentence: the skill routinely
+    puts the log-entry confirmation between the verb and the marker
+    ("Logged as `log_001`. Now delegating - **1 of 1:** 1850 U.S. Census"),
+    and sentence splitting drops those.
     """
+    text = text_response or ""
     found = set()
-    for m in _POSITION_RE.finditer(text_response or ""):
-        k, total = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
-        if int(total) >= n:
-            found.add(int(k))
+    for m in _MARKER_RE.finditer(text):
+        lo = max(0, m.start() - _ANCHOR_WINDOW)
+        hi = min(len(text), m.end() + _ANCHOR_WINDOW)
+        if not _DELEGATION_RE.search(text[lo:hi]):
+            continue
+        if int(m.group(2)) >= n:
+            found.add(int(m.group(1)))
     return found
 
 

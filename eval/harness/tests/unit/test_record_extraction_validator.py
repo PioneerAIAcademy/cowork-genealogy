@@ -282,15 +282,58 @@ def test_batch_progress_quiet_on_the_single_record_announcement():
 
 def test_batch_progress_quiet_when_each_of_two_is_announced():
     before, after = _states(2)
-    reply = "Two documents.\nRecord 1 of 2: the 1880 census.\nRecord 2 of 2: the register."
+    reply = (
+        "Two documents. Now delegating — **1 of 2: the 1880 census.**\n"
+        "Now delegating — **2 of 2: the parish register.**"
+    )
     _checked(reply, before, after, POSITIVE)
 
 
-def test_batch_progress_accepts_the_slash_spelling():
-    """A legitimate variant the check must not reject, or it gets `skip`ped
-    within a month."""
-    before, after = _states(2)
-    _checked("Extracting.\n1/2: the census.\n2/2: the register.", before, after, POSITIVE)
+# --- legitimate variants the check must NOT reject ------------------------
+#
+# Every string below is verbatim from `v1_2026-09-11_18-49-21`, the first run
+# made with the SKILL.md rule (PR #2391). Synthetic phrasings were what let the
+# previous anchor look calibrated while matching none of them (#2390 review).
+
+
+def test_batch_progress_accepts_the_emphasised_spelling():
+    """`**1 of 1: <record>`, the skill's most common shape. The previous
+    anchor required a bare digit against a keyword or a colon, so every
+    emphasised marker read as an accident."""
+    before, after = _states(1)
+    _checked(
+        "Log entry `log_001` created. Now delegating — **1 of 1: Vine Street "
+        "Hill Cemetery burial register**",
+        before,
+        after,
+        POSITIVE,
+    )
+
+
+def test_batch_progress_accepts_emphasis_closing_before_the_colon():
+    """`**1 of 1:** <record>` - the emphasis closes between the digits and the
+    colon, which the colon branch of the previous anchor could not reach."""
+    before, after = _states(1)
+    _checked(
+        "Log entry **log_001** created. **1 of 1:** Delegating the 1850 US "
+        "Federal Census",
+        before,
+        after,
+        POSITIVE,
+    )
+
+
+def test_batch_progress_accepts_a_marker_with_no_colon_at_all():
+    """`delegating **1 of 1** to the record-extractor` carries no colon and no
+    keyword from the old list, so it matched nothing before."""
+    before, after = _states(1)
+    _checked(
+        "Logged as `log_001`. Now delegating **1 of 1** to the "
+        "record-extractor agent.",
+        before,
+        after,
+        POSITIVE,
+    )
 
 
 # --- the anchor: ratios this skill narrates are not position markers ----
@@ -336,7 +379,10 @@ def test_batch_progress_fires_when_a_middle_position_is_skipped():
     two markers for two records and pass, even though record 1 was never
     announced (#2390 review)."""
     before, after = _states(2)
-    reply = "Record 2 of 2: the register.\nRecord 2 of 2: again."
+    reply = (
+        "Now delegating — **2 of 2: the register.**\n"
+        "Now delegating — **2 of 2: again.**"
+    )
     with pytest.raises(AssertionError, match=r"position\(s\) \[1\] were never"):
         _checked(reply, before, after, POSITIVE)
 
@@ -354,7 +400,11 @@ def test_batch_progress_accepts_a_denominator_above_the_record_count():
     """Announcing three and extracting two is a dropped record - a different
     defect, which this validator must not also fail for."""
     before, after = _states(2)
-    _checked("Record 1 of 3: the census.\nRecord 2 of 3: the register.", before, after, POSITIVE)
+    reply = (
+        "Now delegating — **1 of 3: the census.**\n"
+        "Now delegating — **2 of 3: the register.**"
+    )
+    _checked(reply, before, after, POSITIVE)
 
 
 # --- counting records ---------------------------------------------------
@@ -371,7 +421,9 @@ def test_batch_progress_counts_a_retry_as_one_record():
 
 def test_batch_progress_ignores_sources_that_already_existed():
     before, after = _states(1, n_before=3)
-    _checked("**1 of 1:** the 1850 census.", before, after, POSITIVE)
+    _checked(
+        "Now delegating — **1 of 1:** the 1850 census.", before, after, POSITIVE
+    )
 
 
 def test_batch_progress_skips_when_nothing_was_extracted():
@@ -464,3 +516,66 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
             f"{passed[:5]}. Those are false positives - the pattern is "
             f"matching narration that is not a position marker."
         )
+
+
+# --- the anchor, pinned in both directions (#2390 round-2 review) ---------
+
+
+def test_position_marker_rejects_ratio_accidents():
+    """Every accident the anchor exists to reject, in one place.
+
+    The first six are @Praise-Enato's round-2 list; the rest are the ratio
+    family the module comment names. The previous keyword-or-colon anchor
+    accepted all six of the first group - `page`, `file`, `doc` and `item`
+    were keywords, and `Step 1 of 3:` reached the colon branch. Delete the
+    proximity requirement and this dies.
+    """
+    before, after = _states(1)
+    for reply in (
+        "The household spans page 1 of 2 of the 1850 schedule.",
+        "Step 1 of 3: read the project context.",
+        "Checklist item 1 of 4: log the record.",
+        "Citation: NARA microfilm M432, roll 444, file 1 of 2.",
+        "the entry is on doc 1 of 2 in the packet",
+        "Coverage of the stated questions is 1 of 3: q_001 only.",
+        "record_person_matches returned confidence 4/5",
+        "ages ~48/45 in the household",
+        "born 9/14/1880 per the certificate",
+        "Age 5/12 at death",
+        "enumeration district 12/3",
+        "2 of 3 children survived",
+    ):
+        with pytest.raises(AssertionError, match=r"were never"):
+            _checked(reply, before, after, POSITIVE)
+
+
+def test_position_marker_rejects_an_ark_beside_extraction_language():
+    """`ark:/61903/1:1:CRYM-V53Z` contains `61903/1`, and an ARK sits next to
+    extraction language constantly - so proximity alone is not enough. What
+    keeps these out is the separator being the WORD `of` plus the digit
+    guards. Allow `/` back as a separator and this dies.
+    """
+    before, after = _states(1)
+    for reply in (
+        "Extracting the record at ark:/61903/1:1:CRYM-V53Z now",
+        "Delegating extraction of ark:/61903/1:1:M62F-BST to the agent",
+    ):
+        with pytest.raises(AssertionError, match=r"were never"):
+            _checked(reply, before, after, POSITIVE)
+
+
+def test_position_marker_known_false_negative():
+    """One real announcement in `v1_2026-09-11_18-49-21` sits further than
+    `_ANCHOR_WINDOW` from its delegation verb, and is missed. Recorded rather
+    than fixed: widening to +/-120 recovers it but admits
+    `lists 2 of 3 children as surviving; extraction follows`, and a false
+    positive scores an unannounced run as compliant - the failure mode this
+    check exists to prevent. Verbatim from that run.
+    """
+    before, after = _states(1)
+    reply = (
+        "No open questions, no prior sources. Log entry: **log_001**.  "
+        "**1 of 1:** 1870 U.S. Census, household of Patrick Flynn"
+    )
+    with pytest.raises(AssertionError, match=r"were never"):
+        _checked(reply, before, after, POSITIVE)
