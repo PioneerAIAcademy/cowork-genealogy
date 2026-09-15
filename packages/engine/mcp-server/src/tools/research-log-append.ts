@@ -127,6 +127,69 @@ export type ResearchLogAppendResult =
 class LogAppendError extends Error {}
 
 /**
+ * Refuse a pre-1880 US census note that states household structure as fact.
+ *
+ * 1850/1860/1870 carry NO "relationship to head" column. Every "head" / "wife" /
+ * "son" read off such a household -- and the record's own ParentChild/Couple
+ * edges, which are the indexer's inference from the same signals -- is an
+ * inference, not something the census stated. A note asserting it flat records a
+ * relationship the source cannot support, and a later reader has no way to tell
+ * it from a stated one.
+ *
+ * ENFORCED HERE RATHER THAN IN PROSE because it is decidable from the note
+ * alone, which is ADR-0011's test for a writer-tool precondition. The prose rule
+ * has been in search-records/SKILL.md since issue #1284 and adherence is
+ * measurably partial: across the five committed run logs the marker appears in
+ * 32 of 43 logged searches, and issue #1912's flat "plus sons Thos T McElwee and
+ * Stephen McElwee" is real production text.
+ *
+ * DELIBERATELY NARROWER THAN THE EVAL VALIDATOR, whose pattern sets have been
+ * re-tuned three times (#1284, #1642, #1912) for false positives and negatives.
+ * Porting them wholesale into a hard refusal would inherit that history, and a
+ * wrong refusal blocks a researcher mid-write. This fires only where all three
+ * parts are unambiguous, and a note that trips it can always be fixed by saying
+ * what is true -- so the refusal is always actionable.
+ */
+export function requirePre1880CensusHedge(notes: string): void {
+  const text = notes.toLowerCase();
+  if (!/\bcensus\b/.test(text)) return;
+  if (!/\b18[0-7]\d\b/.test(text)) return;
+
+  const describesHousehold =
+    /\b(household|dwelling|co-?resident|enumerated with|living with)\b/.test(text);
+  // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
+  // and Stephen". The lookbehind excludes the possessive form -- "searched for
+  // his wife Catherine" names a TREE-side relative who may be absent from the
+  // return, which is a statement about the tree and not about what the census
+  // stated. That carve-out is the eval validator's too, and dropping it made
+  // this refuse a compliant note.
+  const assertsKinship =
+    /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/.test(notes) ||
+    /\bhead\s+of\s+household\b/.test(text);
+  if (!describesHousehold && !assertsKinship) return;
+
+  const hedged =
+    /infer/.test(text) ||
+    /\bnot\s+(?:a\s+)?stated\b/.test(text) ||
+    /\bunstated\b/.test(text) ||
+    /\bimplied\b/.test(text) ||
+    /\bpresum\w*/.test(text) ||
+    /no\s+relationship\s+(?:to\s+head\s+)?column/.test(text) ||
+    /relationship\s+column[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b/.test(text);
+  if (hedged) return;
+
+  throw new LogAppendError(
+    "This note describes a pre-1880 US census household but states the family " +
+      "structure as fact. 1850/1860/1870 censuses have NO relationship-to-head " +
+      "column, so the structure is an inference from surname, ages and listing " +
+      "order -- as are any ParentChild/Couple edges on the record, which the " +
+      "indexer inferred the same way. Say so in the note, e.g. \"...in one " +
+      "dwelling; family structure inferred from surname, ages and order, not " +
+      "stated.\" Then re-send.",
+  );
+}
+
+/**
  * Coerce an object-typed tool argument that a model emitted as a JSON string
  * back into an object. Some models stringify nested-object params (observed
  * with `externalSite`: the call arrives as `"{\"site\":...}"` rather than an
@@ -296,6 +359,7 @@ async function applyLogAppendOp(
     entry.results_available = resultsAvailableCoerced as number;
   }
   if (op.notes !== undefined && op.notes !== null) {
+    requirePre1880CensusHedge(op.notes);
     entry.notes = op.notes;
   }
 
