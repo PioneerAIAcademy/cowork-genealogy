@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { mkdir, mkdtemp, rm, readdir, symlink, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FsProjectStore } from "../../src/store/fs-project-store.js";
+import { readProjectJson } from "../../src/utils/project-io.js";
 import { getProjectStore, setProjectStore } from "../../src/store/project-store.js";
 import { runProjectStoreConformance } from "./conformance.js";
 
@@ -100,6 +102,30 @@ describe("FsProjectStore specifics", () => {
         await expect(store.readText(project, "uploads/nope.txt")).rejects.toMatchObject({
           code: "ENOENT",
         });
+        // The refusal is its own class, so readProjectJson can let it through
+        // instead of rewriting it to "not found" — the file exists.
+        await symlink(join(outsideDir, "secret.txt"), join(project, "research.json"));
+        await writeFile(join(project, "tree.gedcomx.json"), "{}", "utf-8");
+        await expect(readProjectJson(project, "research.json")).rejects.toThrow(
+          /escapes the project/,
+        );
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "readText refuses a FIFO instead of blocking on it forever",
+    async () => {
+      // readFile on a named pipe blocks in open() until a writer appears; the
+      // call would never settle and the process could not exit.
+      const root = await mkdtemp(join(tmpdir(), "fs-store-"));
+      try {
+        await mkdir(join(root, "uploads"), { recursive: true });
+        execFileSync("mkfifo", [join(root, "uploads", "pipe")]);
+        const store = new FsProjectStore();
+        await expect(store.readText(root, "uploads/pipe")).rejects.toThrow(/not a regular file/);
       } finally {
         await rm(root, { recursive: true, force: true });
       }

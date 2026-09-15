@@ -118,8 +118,8 @@ Two lookups no projection carries. A verdict body under `evaluations/`:
 `sidecar_read({ projectPath, ref })`, where `ref` is the entry's `file_path`
 exactly as stored; while the result says `truncated: true`, call again with
 `offset: nextOffset`. A specific entry you have already located by id:
-`research_query` on that entry's section, paging with `offset` (50 per page),
-and match the `id` yourself. Neither is the opening move.
+`research_query` on that entry's section, paging with `offset` as above, and
+match the `id` yourself. Neither is the opening move.
 
 ## Invocation contract
 
@@ -719,8 +719,7 @@ not abstract.
   Replaces reading `research.json`. Remember the unfiltered `conflicts` /
   `hypotheses` count checks, and check `count` against the 50-item cap.
 - **`sidecar_read`** — A prior verdict body: `ref` is the `evaluations[]`
-  entry's `file_path` as stored. Nothing else — not `research.json`, not
-  `results/`, not images.
+  entry's `file_path` as stored.
 - **`collections_search`** — When flagging missing record types,
   call this and quote what FamilySearch actually offers for the
   jurisdiction. "FamilySearch has 'Pennsylvania Probate Records,
@@ -747,12 +746,11 @@ not abstract.
   surfaces as a must-address regardless of focus.
 
 You do NOT have search tools (`record_search`, `fulltext_search`,
-`person_read`). `project_context` and `research_query` are read-only
-projections of what the researcher already recorded, and `sidecar_read`
-returns only verdicts already written — none is an exception to this. You
-evaluate the evidence the researcher has gathered; you do not gather new
-evidence yourself. If new evidence
-is needed, recommend the appropriate skill in `suggested_skill`.
+`person_read`). `project_context`, `research_query` and `sidecar_read` are
+read-only projections of what the researcher already recorded — not an
+exception to this. You evaluate the evidence the researcher has gathered; you
+do not gather new evidence yourself. If new evidence is needed, recommend the
+appropriate skill in `suggested_skill`.
 
 ## Important rules
 

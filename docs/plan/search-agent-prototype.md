@@ -1351,8 +1351,9 @@ red-lined it went with the ledger on 2026-09-10 — and fails on the
 `sidecar_read` addition; `readme-catalog.test.ts` fires twice on it — every registered
 tool must appear in `README.md`, and the stated count must match reality; `README.md`
 states it **twice** ("48 tools" and "48 MCP tools") and both move by one (48→49, or
-49→50 if PR #2397 lands first); five more fire on the `gps-mentor.md` and
-`research/SKILL.md` body rewrites rather than on the dispatch or manifest change:
+49→50 if PR #2397 lands first); five more were expected to fire on the `gps-mentor.md` and
+`research/SKILL.md` body rewrites rather than on the dispatch or manifest change (on the
+`gps-mentor.md` half, only `agent-tool-names` did — D6–8, 2026-09-14):
 `agent-tool-names`, `agent-delegation-framing`, `gps-mentor-craft-doctrine`,
 `skill-name-resolution` and `doc-links`; the agent-tool-names test is a permission snapshot that fails on *any* change
 to an agent's tools list, in all three server spellings.

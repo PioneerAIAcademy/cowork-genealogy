@@ -918,11 +918,9 @@ bare `display_name` registration repeated the shape one registrar later — that
 unrecognized, and the lint agreed with the omission because it derived its expected
 prefixes from the two registrars we knew about. (An agent that declares the
 built-in `Read` bare is the exception: `Read` always resolves, so it spawns
-holding that alone rather than be refused. `gps-mentor` was one until
-2026-09-14, when `sidecar_read` replaced the grant and it joined the MCP-only
-agents that a registrar miss refuses; `proof-conclusion` and
-`research-exhaustiveness` still declare `Read`.)
-Listing every
+holding that alone rather than be refused. Today that is `proof-conclusion` and
+`research-exhaustiveness`; every other agent, `gps-mentor` included, is MCP-only
+and a registrar miss refuses it.) Listing every
 spelling is safe because unrecognized entries are ignored so long as one resolves.
 
 **`disallowedTools:` was never the load-bearing layer — and this half of the

@@ -157,10 +157,9 @@ const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.dis
 // third registrar was issue #1341: record-extractor was refused there, with all 16
 // of its declared entries named unrecognized. An agent declaring the built-in
 // `Read` bare is exempt from that refusal — `Read` always resolves, so it spawns
-// holding that alone. gps-mentor was one such agent until 2026-09-14, when
-// `sidecar_read` replaced the grant; it is now MCP-only and refused on a
-// registrar miss like record-extractor. proof-conclusion and
-// research-exhaustiveness still declare `Read`.
+// holding that alone. Today that is proof-conclusion and research-exhaustiveness;
+// every other agent (gps-mentor included) is MCP-only and a registrar miss
+// refuses it, as it did record-extractor.
 const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
 
 // Longest-first so that a prefix which is itself the prefix of another can never

@@ -22,7 +22,7 @@ import { realpathSync } from "node:fs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { basename, dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { assertInsideProject, isInsideProject } from "./paths.js";
+import { assertInsideProject, isInsideProject, ProjectEscapeError } from "./paths.js";
 import type {
   JsonWrite,
   ProjectDirState,
@@ -264,7 +264,15 @@ export class FsProjectStore implements ProjectStore {
     // have raised, so callers that classify by code see no difference.
     const real = await realpath(abs);
     if (!isInsideProject(await realpath(resolve(projectPath)), real)) {
-      throw new Error(`path '${ref}' escapes the project directory (through a symlink)`);
+      throw new ProjectEscapeError(`path '${ref}' escapes the project directory (through a symlink)`);
+    }
+    // A FIFO or device node under the project would make readFile block in
+    // open() until a writer appears — the call never returns and the process
+    // cannot exit. Only regular files are read; a directory is left to readFile
+    // so callers still see EISDIR.
+    const s = await stat(real);
+    if (!s.isFile() && !s.isDirectory()) {
+      throw new Error(`path '${ref}' is not a regular file`);
     }
     return readFile(real, "utf-8");
   }

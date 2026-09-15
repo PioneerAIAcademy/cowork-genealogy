@@ -224,8 +224,9 @@ model; do not silently downgrade below Sonnet-5-class analytical reasoning.
 
 **Tools list is closed:** The agent does not have `record_search`, `fulltext_search`,
 `person_read`, or any write tool. It evaluates evidence the researcher has gathered; it
-does not gather new evidence itself. `research_query` and `project_context` are not an
-exception — they are read-only projections of what the researcher already recorded.
+does not gather new evidence itself. `research_query`, `project_context` and `sidecar_read`
+are not an exception — the first two are read-only projections of what the researcher
+already recorded, and the third returns only verdicts already written.
 
 **Why the two read tools are on the list (added 2026-07-31, issue #693).** Without
 them the agent's only way to see project state was `Read`, and its body told it to

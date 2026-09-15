@@ -196,12 +196,13 @@ the file's length. Two in a short file still do.
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors: [NO_PROJECT_MESSAGE_READ] }` — an answer, not a failure; `writerToolResult` leaves `isError` unset — the no-project contract `noProjectResult` in `utils/project-io.ts` owns, shared with `research_query` |
 | `offset` present and not a non-negative whole number — including a string `"50"` | **throws**, not coerced (mirrors `research_query`) |
 | `maxChars` present and not a positive whole number | **throws**, not coerced |
-| `maxChars` above 40,000 | clamped to 40,000, no error |
+| `maxChars` a finite whole number above 40,000 | clamped to 40,000, no error |
 | `ref` fails §3 | `{ ok: false, reason: "invalid_ref", errors }` |
 | `ref` names a directory (`EISDIR`) | `{ ok: false, reason: "invalid_ref", errors }` — "names a directory" |
-| `ref` is absent (`ENOENT`) | `{ ok: false, reason: "not_found", errors }` — the message says where a ref comes from (verdict paths from `research_query({section: "evaluations"})`'s `file_path`; uploads named in the conversation by the researcher) and that this tool does not list directories |
+| `ref` is longer than the filesystem allows (`ENAMETOOLONG` — a segment over 255 bytes, or the whole path over the platform limit) | `{ ok: false, reason: "invalid_ref", errors }` — no file can have this name |
+| `ref` is absent (`ENOENT`), or a segment of the path is a regular file (`ENOTDIR`) | `{ ok: false, reason: "not_found", errors }` — the message says where a ref comes from (verdict paths from `research_query({section: "evaluations"})`'s `file_path`; uploads named in the conversation by the researcher) and that this tool does not list directories |
 | the file is binary / non-UTF-8 (§5) | `{ ok: false, reason: "not_text", errors }` |
-| the file exists but cannot be read (`EACCES`, …) | **throws** → the dispatch arm's `catch`, loud. Never `not_found` |
+| the file exists but cannot be read (`EACCES`, …), or is not a regular file (a FIFO, a device node) | **throws** → the dispatch arm's `catch`, loud. Never `not_found` |
 | `offset ≥ totalChars` | `{ ok: true, content: "", truncated: false }` |
 
 The classification order is: argument validation (throws), then §3 ref
@@ -216,10 +217,13 @@ strings to that one file.
 every `access()` failure as `false`, so an unreadable verdict would read as
 absent and the mentor's existing-verdict skip would re-evaluate over a live
 one. Instead the tool calls `readText` and classifies the thrown error by its
-`code`: `ENOENT` → `not_found`; `EISDIR` → `invalid_ref`; anything else
-propagates. `FsProjectStore.readText` is a bare `readFile(...)`, so the raw
-`fs` error and its `.code` reach the tool intact (verified 2026-09-14; the store
-contract — "the caller owns the message" — permits the raw rethrow).
+`code`: `ENOENT` / `ENOTDIR` → `not_found`; `EISDIR` / `ENAMETOOLONG` →
+`invalid_ref`; anything else propagates. `FsProjectStore.readText` is
+`realpath`, the containment check and the regular-file check (§8), then
+`readFile`, with no wrapping — `realpath` raises the same coded `fs` error for
+an absent or over-long path that `readFile` would, so `.code` reaches the tool
+intact (verified 2026-09-14; the store contract — "the caller owns the message"
+— permits the raw rethrow).
 
 Every `{ ok: false }` other than `no_project` is a failure the caller must see
 as one, so `sidecar_read` is in `OK_FALSE_IS_FAILURE` (`src/tool-result.ts`)
@@ -251,10 +255,14 @@ Every byte comes through `getProjectStore().readText(projectPath, ref)`. The
 tool imports nothing from `fs` (`no-fs-outside-store.test.ts`), so a hosted
 backend installed with `setProjectStore()` serves it with no tool change.
 `FsProjectStore.abs` → `assertInsideProject` remains the second traversal
-guard behind the tool's own §3 check, and `FsProjectStore.readText` adds the
-real-path check that catches a symlink leaving the project (§3), pinned by
-`tests/store/fs-project-store.test.ts`. `realpath` raises `ENOENT` for an
-absent file with `.code` intact, so the §6 classification is unchanged.
+guard behind the tool's own §3 check, and `FsProjectStore.readText` adds two
+checks of its own, pinned by `tests/store/fs-project-store.test.ts`: the
+real-path check that catches a symlink leaving the project (§3), thrown as
+`ProjectEscapeError` so `readProjectJson` reports it as the refusal it is rather
+than as "not found"; and a regular-file check, because `readFile` on a FIFO or a
+device node blocks in `open()` until a writer appears and the call never
+settles. `realpath` raises `ENOENT` for an absent file with `.code` intact, so
+the §6 classification is unchanged.
 
 ## 9. Consumers
 
@@ -265,8 +273,8 @@ absent file with `.code` intact, so the §6 classification is unchanged.
   three spellings and **`Read` leaves the list**. Two consequences, recorded in
   `gps-mentor-agent-spec.md`: the mentor no longer holds any route to a project
   file other than the MCP tools, and it is now exposed to a registrar move
-  exactly as the other MCP-only agents (`record-extractor`, `image-reader*`)
-  are — the built-in `Read` is a grant that can never miss, so an agent
+  exactly as the other MCP-only agents (`record-extractor`, `image-reader`,
+  `person-evidence`) are — the built-in `Read` is a grant that can never miss, so an agent
   holding it spawns with `Read` alone on a registrar miss instead of being
   refused. gps-mentor was one such agent; `proof-conclusion` and
   `research-exhaustiveness` still declare a bare `Read` and still are.
@@ -319,10 +327,14 @@ an unreadable file (mode 0, skipped on win32) is **not** `not_found` (written
 red-first); reads go through the installed store (`setProjectStore` a stub,
 assert `readText(projectPath, ref)`).
 
+Also: a path through a regular file (`ENOTDIR`) is `not_found`; a 300-byte
+segment (`ENAMETOOLONG`) is `invalid_ref`.
+
 `tests/store/fs-project-store.test.ts`: `readText` refuses a file symlink and
 a directory symlink that leave the project, follows one that stays inside,
-reads a project through an alias of its own path, and still raises `ENOENT`
-for an absent ref.
+reads a project through an alias of its own path, still raises `ENOENT` for an
+absent ref, surfaces a symlinked `research.json` through `readProjectJson` as
+the escape it is (not "not found"), and refuses a FIFO instead of blocking.
 
 `tests/tools/no-project.test.ts` carries it in `CALLS` and `READERS`;
 `writer-tool-results.test.ts`, `manifest.test.ts`, `readme-catalog.test.ts`

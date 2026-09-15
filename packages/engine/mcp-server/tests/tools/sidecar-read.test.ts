@@ -335,6 +335,27 @@ describe("sidecar_read", () => {
     expect(r.errors[0]).toMatch(/does not list directories/);
   });
 
+  it("a path THROUGH a regular file (ENOTDIR) is not_found, not a raw fs error", async () => {
+    await put("uploads/x.txt", "a file, not a directory");
+    const r = await sidecarRead({ projectPath: dir, ref: "uploads/x.txt/more.txt" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe("not_found");
+  });
+
+  it.skipIf(process.platform === "win32")(
+    "a segment longer than the filesystem allows (ENAMETOOLONG) is invalid_ref, not loud",
+    async () => {
+      // The parent must exist, or realpath fails with ENOENT on `uploads` first.
+      await put("uploads/ok.txt", "ok");
+      const r = await sidecarRead({ projectPath: dir, ref: "uploads/" + "a".repeat(300) });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_ref");
+      expect(r.errors[0]).toMatch(/longer than the filesystem allows/);
+    },
+  );
+
   const BINARY: Array<[string, Buffer]> = [
     ["NUL bytes", Buffer.from("ab\u0000cd", "utf-8")],
     ["a JPEG header", Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01])],
@@ -397,7 +418,9 @@ describe("sidecar_read", () => {
 
   // ── unreadable is not absent ────────────────────────────────────────────────
 
-  it.skipIf(process.platform === "win32")(
+  // chmod 0 does not deny read to uid 0, so under a root runner the read would
+  // succeed and this would fail for the wrong reason.
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
     "an unreadable file stays loud — it is NOT reported as not_found",
     async () => {
       // `store.exists` swallows EACCES as "absent"; a verdict that exists but

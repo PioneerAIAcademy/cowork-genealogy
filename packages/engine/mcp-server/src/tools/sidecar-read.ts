@@ -247,7 +247,9 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
     try {
       raw = await getProjectStore().readText(projectPath, ref);
     } catch (e: any) {
-      if (e?.code === "ENOENT") {
+      // ENOTDIR: an intermediate segment is a regular file — the ref is absent
+      // by any reading, not an unreadable file.
+      if (e?.code === "ENOENT" || e?.code === "ENOTDIR") {
         throw new SidecarReadFailure(
           "not_found",
           `${ref} does not exist in this project. A verdict's path comes from ` +
@@ -257,6 +259,15 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
       }
       if (e?.code === "EISDIR") {
         throw new SidecarReadFailure("invalid_ref", `ref '${ref}' names a directory, not a file.`);
+      }
+      if (e?.code === "ENAMETOOLONG") {
+        // A segment over NAME_MAX or a whole path over PATH_MAX: no file can
+        // have this name, so it is a ref problem, not an unreadable file.
+        throw new SidecarReadFailure(
+          "invalid_ref",
+          `ref '${ref}' is longer than the filesystem allows (a single segment over 255 bytes, ` +
+            `or the whole path over the platform limit). No file can have this name.`,
+        );
       }
       throw e; // EACCES and friends stay loud
     }
