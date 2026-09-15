@@ -382,25 +382,35 @@ def test_brevity_skips_when_no_file_was_saved():
         check_brevity(EMPTY, EMPTY, _RECITING_REPLY)
 
 
-def test_brevity_ignores_fenced_code():
-    """A `#` or `|` inside a fenced block is not recitation. Same class of
-    false positive as the HTML-comment strip in the Sources check, which
-    failed every positive test on its first live run."""
-    check_brevity(
-        EMPTY,
-        _SAVED,
-        "Saved to **`x.md`** with a Sources section.\n\n"
-        "```\n# not a heading\n| not a table\n- not a bullet\n```\n",
-    )
+def test_brevity_reports_a_recitation_inside_a_fence():
+    """A fenced block is scanned like any other text.
+
+    An earlier revision stripped fences first, by analogy with the
+    HTML-comment strip in the Sources check. The analogy did not hold: that
+    strip covers a real, observed case, while no run in the corpus contains a
+    fence at all. Stripping bought nothing and opened the likeliest bypass —
+    "here is the file" inside a fenced markdown block (#2577 review).
+    """
+    with pytest.raises(AssertionError, match="Keep it brief"):
+        check_brevity(
+            EMPTY,
+            _SAVED,
+            "Saved to **`x.md`**. Here is the file:\n\n"
+            "```markdown\n# Heading\n\n- one\n- two\n```\n",
+        )
 
 
 @pytest.mark.parametrize(
     "construct, reply",
     [
         ("heading", "Saved.\n\n## Summary\n\nProse."),
-        ("table row", "Saved.\n\n| Repo | Years |\n|---|---|\n"),
+        ("table row", "Saved.\n\n| Repo | Years |\n|---|---|\n| A | 1850 |\n"),
         ("horizontal rule", "Saved.\n\n---\n\nProse."),
         ("list marker", "Saved.\n\n- one\n- two\n"),
+        # The #2577 blocker: 4 runs recited as a numbered list and scored
+        # clean, and the list arm was the only arm with any hits at all.
+        ("list marker", "Saved.\n\n1. one\n2. two\n"),
+        ("list marker", "Saved.\n\n1) one\n2) two\n"),
     ],
 )
 def test_brevity_fires_on_each_construct(construct, reply):
@@ -409,50 +419,52 @@ def test_brevity_fires_on_each_construct(construct, reply):
     with pytest.raises(AssertionError, match=construct):
         check_brevity(EMPTY, _SAVED, reply)
 
+def test_brevity_validator_is_tier_two_through_the_real_runner():
+    """Pin the PROPERTY, not the spelling.
 
-def test_brevity_validator_is_still_tier_two():
-    """The safety argument for this whole check is the `report_` prefix, and
-    nothing else carries it. `validator_runner.py:200` decides the tier with
-    `is_report = attr_name.startswith("report_")`, so renaming this function to
-    `test_*` would silently convert it into a gate and mark 53 of the 60
-    file-saving runs failed — while every other test in this file kept passing,
-    because they call the function directly and never go through the runner.
+    An earlier revision asserted the function's name began with `report_`,
+    which `validator_runner.py:209` does use to decide the tier. But the name
+    is not the only way to lose it: renaming the third parameter to something
+    the harness does not supply makes the runner skip it, and `reporting_only`
+    is then never observed at all, while every direct-call test in this file
+    stays green (#2577 review).
 
-    That is the #1757 failure shape one layer out: a rename changing behaviour
-    with nothing red. Pin the prefix, and pin the consequence.
+    So run it through `run_validators` and require the harness itself to
+    report it as tier 2. Same shape as
+    `test_search_external_sites_validator.py`'s `test_v6_is_tier_2_and_cannot_gate_a_run`.
     """
-    import test_search_familysearch_wiki as validators
+    from pathlib import Path
 
-    matching = sorted(
-        n for n in dir(validators) if n.endswith("restate_the_saved_file")
+    from harness.validator_runner import run_validators
+
+    results = run_validators(
+        skill="search-familysearch-wiki",
+        validators_dir=Path(__file__).resolve().parents[2] / "validators",
+        before_state={"files": {}, "research_json": None, "tree_gedcomx_json": None},
+        after_state={
+            "files": {"german-church-records.md": "x"},
+            "research_json": None,
+            "tree_gedcomx_json": None,
+        },
+        tool_calls=[],
+        skill_frontmatter={"name": "search-familysearch-wiki"},
+        test={"type": "positive", "tags": []},
+        text_response=_RECITING_REPLY,
     )
-    assert matching == ["report_reply_does_not_restate_the_saved_file"], (
-        "the brevity validator must keep its `report_` prefix; as `test_` it "
-        f"becomes a gating validator. Found: {matching}"
+    brevity = next(
+        (r for r in results
+         if r.name == "report_reply_does_not_restate_the_saved_file"),
+        None,
     )
-
-
-def test_tier_two_failure_does_not_gate_the_run():
-    """The other half of the same argument: that a failing tier-2 result is
-    filtered out of the outcome. If `compute_validators_passed` ever stopped
-    honouring `reporting_only`, the prefix above would be pinned and mean
-    nothing."""
-    from types import SimpleNamespace
-
-    from harness.orchestrator import compute_validators_passed
-
-    failing_tier2 = SimpleNamespace(
-        name="report_reply_does_not_restate_the_saved_file",
-        passed=False,
-        reporting_only=True,
+    assert brevity is not None, (
+        "the brevity validator did not run; the harness did not collect it"
     )
-    assert compute_validators_passed(
-        [failing_tier2], intentionally_invalid=False
-    ), "a failed report_* result must never gate the run outcome (issue #1749)"
-
-    failing_tier1 = SimpleNamespace(
-        name="test_expected_slug", passed=False, reporting_only=False
+    assert brevity.reporting_only is True, (
+        "the brevity validator is gating the run. It fires on 57 of 60 "
+        "file-saving runs, so as tier 1 it would mark ~95% of this skill's "
+        "positives failed for a reporting-grade observation (issue #1749)."
     )
-    assert not compute_validators_passed(
-        [failing_tier1], intentionally_invalid=False
-    ), "a failed test_* result must still gate — otherwise this proves nothing"
+    assert brevity.passed is False, (
+        "it should have fired on the reciting reply; if it passed, this test "
+        "proves nothing about the tier of a firing validator"
+    )
