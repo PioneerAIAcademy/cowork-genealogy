@@ -828,8 +828,9 @@ the CLI spills an oversized tool result for the model to read back; a
 `"blocked_by": "path"` with the resolved `path`. Both entries carry the
 `reason` the agent was shown, which names the MCP route that replaces the
 read: `record_read({recordId, resultsRef})` for a `results/` sidecar,
-`research_query` for `research.json` and `evaluations/`, `project_context`
-otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
+`sidecar_read({projectPath, ref})` for a verdict body under `evaluations/` or a
+text upload under `uploads/`, `research_query` for `research.json`,
+`project_context` otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
 with it on is not comparable to one without.
 
 **Consequence for authoring:** a fixture is only valid if its answer is
@@ -875,10 +876,16 @@ recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
 
-This is harness-only. The plugin ships a `PreToolUse` hook that does bind in
-Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
-binds even under `bypassPermissions`), but its matcher covers the raw file-write
-tools and the device bridge's `device_commit_files` — it never sees an
+This is harness-only. The plugin ships a `PreToolUse` hook that binds on the
+hosted path — **measured**, by `make hook-smoke` — and binds in Cowork, probed
+live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
+`.*research_append` arm entered the matcher 2026-08-21 and is unmeasured there;
+Cowork is a different loader and has no instrument but a live
+session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
+`bypassPermissions`). Its matcher is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`: the raw
+file-write tools, the device bridge's `device_commit_files`, and — since the
+caller-ownership rules shipped — `research_append`. It still never sees an
 `extraction_append`-shaped MCP tool call. Porting the per-context policy there
 is pending, and would mean widening the matcher to the MCP tool names as well as
 adding the rule; the harness comments carry the pointer.
@@ -1580,7 +1587,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
-| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
+| `subagent_capture_status` | Why `subagents[]` is empty, so `[]` stops meaning three distinct things. `captured` — at least one transcript summarized. `matched_no_transcripts` — the directory resolved but held no subagent transcript. **This is the ordinary "no subagent ran" value**: a session that started always leaves its own parent transcript in that directory, so the directory exists whether or not any subagent was dispatched. It also covers a transcript that is present but unusable. `no_cache_dir` — no candidate spelling of the cache directory exists at all; the cache was cleaned, or the run never reached the agent. `error` — the lookup itself failed; recorded, never raised, because capture must not cost a completed run its log. `unknown` — nobody recorded one; the default, and not a claim that capture succeeded. The field is absent altogether on runs logged before it existed. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
 | `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
 

@@ -11,7 +11,8 @@
       "birth-record",
       "civil-registration",
       "era-condition",
-      "parentage"
+      "parentage",
+      "no-exhaustive-declaration"
     ]
   },
   "input": {

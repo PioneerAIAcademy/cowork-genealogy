@@ -148,7 +148,7 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **enforcing (fails the run)** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run) |
-| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload) |
+| §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
@@ -164,7 +164,7 @@ depends on another shipping first.
 | n/a | Assertion correction reaches its materialized fact | engine (MCP tool) — so Cowork, hosted, both harnesses | a `place`/`standard_place`/`date`/`value` corrected on an assertion never reaching the tree fact already materialized from it | **enforcing as a WRITE, not a refusal** — the write being made is the legitimate one, so there is nothing for a boundary check to refuse, and ADR-0009 constraint 6 rules out a gate no call shape can satisfy. Eight advisories ride it, none blocking: no fact carries the backlink; the fact holds a value this assertion never asserted (another source corroborated it); the assertion's value is malformed rather than withdrawn; the assertion has been re-classified so the fact no longer matches its type; a field was DELETED from the fact; the rewritten fact is `primary` (a concluded value a proof summary may cite); a `place` corrected without its `standard_place`; and a `date` corrected without its `standard_date`. A ninth, the country-contradiction clear, rides the same channel. Every advisory that describes a CHANGE is discarded if the rewrite is rolled back |
 | below | Tree fact agrees with its linked assertion | unit harness only, and only inside a paid per-skill run | a backlinked fact whose `place`/`standard_place`/`date`/`value` disagrees with the assertion it was minted from | **enforcing there, nowhere else.** The card it closes was filed off an **e2e** run, and the e2e plane runs no universal validators at all, so this does not reach the plane the defect was observed on. It is also green by construction on today's unit corpus, where the two populations are disjoint: all 51 `materialize_facts` calls are person-evidence's and every four-field assertion `update` is record-extraction's. Its falsifiable half is `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py` |
 | below | Fact rewrite authorized by tool identity | unit harness only, and only inside a paid per-skill run | record-extraction touching `tree.gedcomx.json`'s `persons` for anything other than that rewrite. The skill is deliberately NOT added to the row's `callers`, which would also authorize adding an unsourced person and setting `primary`; `research_append`/`extraction_append` are authorized as TOOLS, and only when the whole persons delta is mirrored attributes on facts that already carried the same backlink | **enforcing there, nowhere else** (the same reasoning that authorizes `merge_tree_persons` on the research side — anything the substitution does not explain still fails) |
-| §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload) |
+| §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
 > 2026-08-15: in Cowork with a connected folder the lockdown never fires, because
@@ -1150,13 +1150,17 @@ before — in Cowork, the one environment the closure was built for. Every test
 was green, including the one named "matches every tool the guard script itself
 denies", which restated the three raw-write tool names inline instead of reading
 them from the script. The matcher is now
-`Write|Edit|NotebookEdit|.*device_commit_files` — `.*`-prefixed so it binds
-under an anchored full match as well as a substring search, and against both the
-bare and the `mcp__remote-devices__`-namespaced spelling — and
-`tests/packaging/plugin-hooks.test.ts` derives the expected tool set from
-`guard_project_files.py`'s own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`,
-hard-erroring if either constant is renamed rather than silently checking
-nothing. **The general rule: a guardrail's matcher is part of the guardrail.**
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append` — `.*`-prefixed on the
+namespaced arms so they bind under an anchored full match as well as a substring
+search, and against both the bare and the `mcp__remote-devices__`-namespaced
+spelling — and `tests/packaging/plugin-hooks.test.ts` derives the expected tool
+set from the script's own constants, hard-erroring if one is renamed rather than
+silently checking nothing. **Three** sources, not two: `FILE_WRITE_TOOLS`,
+`DEVICE_WRITE_TOOLS`, and — since the caller-ownership rules shipped —
+`research_append`, required whenever `OWNED_SECTIONS` is non-empty
+(`ownerRoutedTools` in that test). The `.*research_append` arm is what carries
+§4's two caller rows, so it is part of the guardrail on exactly the same
+footing. **The general rule: a guardrail's matcher is part of the guardrail.**
 Widening a predicate without widening what reaches it is a no-op that tests
 cannot see.
 
@@ -1477,6 +1481,91 @@ change: the parity test forces all three shipping copies to protect the *same*
 set, so a hosted-only entry needs a per-path protected-set design first. Tracked
 as separate follow-up work; the unit-harness rule stands
 on its own.
+
+### 6.4 What proves the hook BINDS — `make hook-smoke`
+
+Everything above specifies what the hook *decides*. Two separable
+things could be checked, and until this landed only one was:
+
+| | Checked by |
+|---|---|
+| The guard script's **decisions** — given a `Write` on `research.json`, does `guard_project_files.py` deny? | `plugin-hooks.test.ts` (runs the real script as a subprocess), `test_write_lockdown_parity.py` (three copies, one vector set), `test_write_lockdown.py`, `test_e2e_tree_block.py` |
+| The hook's **binding** — does a runtime read `hooks/hooks.json`, match a real tool call, shell the command, parse `hookSpecificOutput.permissionDecision` and block? | `make hook-smoke`, for the hosted SDK loader only |
+
+**The gap was silent by construction.** §6's own rule is that the script must
+never raise and every failure path falls through to allowing the call. So a hook
+that stops binding is indistinguishable from a hook with no opinion: no error, no
+log, no red test, just an unguarded `research.json`.
+
+The three design questions this target's card left to the implementer, answered:
+
+**1. What the target is.** `make hook-smoke` →
+`apps/server/dev/probe_hook_binding.py`. It lives in `dev/` beside
+`probe_agent_binding.py`, not in `apps/server/tests/`, because it is a live
+billed probe rather than a check — the same reason `probe-agent-binding` is not a
+test. It calls the **real** `real_agent.build_options` against a temp copy of the
+shipped plugin and mutates only the object that returns; a probe that assembles
+its own `plugins=[…]` dict would prove that *some* plugin directory loads hooks,
+which is precisely the assumption that was disproved for agents, where SDK
+plugin loading registered them only under a namespaced name while every
+delegation used the bare one.
+
+**2. What it provokes: a main-thread `research_append` on `proof_summaries`.**
+Not a raw `Write` to `research.json`, which is the weakest available probe —
+§6.1 measured that in Cowork with a connected folder `Write` cannot reach the
+user's files at all. `proof_summaries` routing has **no redundant copy in the
+hosted path** (`real_agent._pretool_hook` implements only
+`direct_project_file_write`), so it is the arm whose binding failure is invisible
+everywhere else. The main thread carries no `agent_id` key, so `owner_denied`
+reads `caller == ""` and denies.
+
+**3. Whether the e2e orchestrator should load the plugin: NO, not decided here.**
+That option deletes one of the three copies §6 rules must stay, which was
+declined (closed not-planned) and would drop `IMPLEMENTATIONS` in
+`test_write_lockdown_parity.py` from three to two. Reopening it is a separate ask
+to amend §6, not a call the implementer makes. So binding stays a target someone
+runs, not a standing signal.
+
+**Attribution is not optional, and is enforced three ways.** A deny on its own
+proves nothing — it could come from the SDK-side `_pretool_hook` or from
+`research_append`'s own validation.
+
+- `options.hooks` is **cleared** on the returned object, so the SDK-side hook is
+  out of the picture for the probe's duration.
+- The expected reason text is **imported** from the shipped guard script and
+  formatted (`OWNER_REASON`, `OWNED_SECTIONS`), never pasted into the probe. A
+  reword of the deny text therefore cannot make the probe silently report
+  NOT_BOUND.
+- **Arm B** re-runs the same turn against a plugin copy with `hooks/` removed. If
+  the deny text appears there too, the run reports VOID rather than letting arm A
+  be read.
+
+**The confound ruled out first.** The hook command is `python3
+${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py`. A negative could be `python3`
+missing from PATH or the script erroring rather than the loader failing to bind,
+so a preflight runs the script directly with a synthetic payload and requires a
+deny back; a packaging problem reports as VOID (preflight), never as "does not
+bind". The preflight was proven to fail four ways — script absent, script always
+allowing, script exiting non-zero, script printing non-JSON.
+
+**Measured 2026-09-09** (Claude Code 2.1.258, agent SDK 0.2.128): the hosted SDK
+loader **does** bind it. Arm A came back `DENIED_BY_GUARD` with `OWNER_REASON` on
+the `research_append` tool_result; arm B, the same turn with `hooks/` removed,
+came back `NOT_DENIED`.
+
+> **Arm B earned its place on the first run, and it is the reason the
+> read-the-structured-result rule is not merely stylistic.** With `hooks/`
+> removed the model still reported `PROBE_RESULT: DENIED` — but that refusal was
+> `research_append`'s own "This folder is not a research project", produced by the
+> **tool**, not the hook. A probe reading the model's prose would have scored arm
+> B as a deny, and would then either have voided a run that was actually clean or
+> let arm A stand on a deny it had never attributed. Keying on the guard's own
+> imported reason text is what tells the two apart.
+
+**What a pass does not prove.** The hosted SDK loader is not Cowork's loader, and
+Cowork is where this hook is the *only* guardrail. Per `docs/architecture.md`
+§9.4, no CI job can verify binding in any environment. **The Cowork gap stays on
+the `nothing-checks` register whatever this target reports.**
 
 ## 7. Caller-attributed recency check (shadow mode)
 
