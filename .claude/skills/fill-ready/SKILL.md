@@ -242,6 +242,14 @@ back down. State the arithmetic either way so the lead can overrule it:
 **Promoting zero is a valid answer** when both pools are at target and nothing in
 Backlog outranks what is there. Say so plainly rather than padding to a number.
 
+**Return every Ready card that has gained `needs-decision` since it was promoted,
+senior or not, at any pool depth.** It is not a swap and does not wait for
+something to displace it — below target there is no swap for it to lose, and it
+is still a card nobody can pick up for a reason the card does not show. The
+Backlog exclusion cannot reach a card already in Ready, and `/review-ready` hands
+this case over by design ("on a standing-pool run the item is already in Ready;
+report it for the swap").
+
 ### What loses a swap
 
 Rank the unassigned Ready items with the same heuristics you rank Backlog with.
@@ -560,9 +568,11 @@ designs without choosing, is **not Ready** regardless of its dependencies. A
 junior handed it either guesses at a decision that was the lead's, or stalls.
 
 These are not blocked on a task — they are blocked on a decision only the lead
-can make. **Label them `needs-decision`, not `senior`**: the work behind the fork
-is frequently junior, and calling it senior sends a sentence looking for a scarce
-person. Leave them in Backlog and name, in your report, the decision and the
+can make. **Label them `needs-decision`**: the work behind the fork is frequently
+junior, and reaching for `senior` on an item that is merely undecided sends a
+sentence looking for a scarce person. Add `senior` **as well** when the work
+would still be hard after the answer — the two are orthogonal, and an item that
+is both carries both. Leave them in Backlog and name, in your report, the decision and the
 Ready-able task it unblocks. That pairing is the highest-value line you
 produce — one answer turns a stuck item into a junior task.
 
@@ -602,7 +612,9 @@ python3 .claude/skills/fill-ready/collisions.py \
 ```
 
 **Three guards keep it from firing on almost everything. Do not remove one
-without re-measuring.**
+without re-measuring.** Guard 2 and the `**Touches:**` parsing live in
+`.claude/skills/lib/touches.py`, shared with `/merge-issues`' `slots.py` — a
+change there moves both passes, so re-run each after editing it.
 
 | Guard | What it means |
 |---|---|
@@ -781,7 +793,7 @@ silently — it is the lead's call.
 
 **A queue three or more deep is a finding, not a schedule.** Report it. The fix is
 to merge those issues into fewer, larger ones so one run carries what would have
-been three — that happens in `/audit-board`, not here. Note it and move on.
+been three — that happens in `/merge-issues`, not here. Note it and move on.
 
 ## 4. Split before you promote
 
@@ -950,12 +962,12 @@ junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
 `needs-a-decision` verdict on an item you had ranked junior is a seniority miss
-caught in time. **The two get different labels** (`senior` vs `needs-decision`)
-and different remedies, and the verdict tells you which: `needs-a-decision` means
-one answer unblocks it, so it leaves the ranking until `/make-decisions` drains
-it; `senior` means it is hard regardless, so it keeps its place in its lane's
-pool and is promoted with the label on. Running the gate after promotion instead
-works, but pays for the same deep read twice.
+caught in time. **The two labels answer different questions, and a verdict can
+earn both:** `needs-a-decision` means one answer unblocks it, so it leaves the
+ranking until `/make-decisions` drains it; `senior` means it is hard regardless,
+so it keeps its place in its lane's pool and is promoted with the label on. An
+item that is both waits for the answer and then goes to a senior. Running the
+gate after promotion instead works, but pays for the same deep read twice.
 
 ## 6. Above the junior pools — three states, not one
 
@@ -975,17 +987,21 @@ and behave completely differently**, and telling them apart decides who can star
 **`needs-decision` is the one state that is never ranked.** The other two are
 promoted into their lane's pool once startable. A `needs-decision` card in Ready
 would be a card nobody can pick up for a reason the card does not show, which is
-the failure the labels exist to prevent. Carrying both labels puts an item in
-neither state; see "Do not label both" below.
+the failure the labels exist to prevent. This holds **senior or not** — § 0
+"Board facts" already excludes the label from the ranking unconditionally.
 
 **`needs-decision` is a distinct verdict, not a softer `senior`.** It is the
 label form of `task-reviewer`'s `needs-a-decision` verdict. An item that is
 merely undecided, labelled `senior`, is the worst case: it looks like it needs a
 rare person when it needs a sentence.
 
-**Do not label both.** If the decision is the only thing in the way, it is
-`needs-decision` — the work behind it may well be junior. Reach for `senior` only
-when the item would still be hard *after* every open question is answered.
+**The two labels are orthogonal — label both when both are true.** `senior`
+answers *who does the work* once the item is startable; `needs-decision` answers
+*what is blocking it now*. A hard item waiting on one answer is genuinely both:
+it stays out of the ranking until the lead rules, and then goes to a senior in
+its lane rather than into the junior pool. The table's three rows are the common
+cases, not an exclusive partition. The mistake to avoid is the one named above —
+`senior` on an item that is only undecided — not the pairing itself.
 
 ### Which lane a `senior` item goes to
 
@@ -1062,8 +1078,9 @@ Report each separately — they have different remedies:
 - **Which of either gate a milestone**, and how long they have sat.
 
 You do not assign from either queue. You **do** rank the `senior` one — those
-items rank in their lane's pool like anything else. The `needs-decision` queue
-you neither rank nor assign; it is `/make-decisions`' to drain.
+items rank in their lane's pool like anything else, unless they also carry
+`needs-decision`. The `needs-decision` queue you neither rank nor assign; it is
+`/make-decisions`' to drain.
 
 ### The milestones depend on both queues moving
 
@@ -1232,7 +1249,7 @@ list it does not appear in. Add state when it matters.
 6b. **Skill slots** — one line per skill whose slot is held by an **open** issue
    in Ready, In Progress or Review: the holder, its idle days, and how many are
    queued behind it. Flag a holder idle ~10 days as a reclaim proposal, and a
-   queue three or more deep as a merge candidate for `/audit-board`. A holder
+   queue three or more deep as a merge candidate for `/merge-issues`. A holder
    whose issue has closed frees the slot immediately — report it as freed, name
    what is now promotable behind it, and do not wait for the card to move. Skip
    the heading when every slot is free.

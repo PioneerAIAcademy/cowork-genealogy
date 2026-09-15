@@ -163,12 +163,11 @@ description: >-
   components") goes through the proof-conclusion skill.
 model: claude-sonnet-5
 tools:
-  - Read
-  # Then these ten, each under all three server spellings:
-  #   research_query, project_context, research_append, validate_research_schema,
-  #   place_search, place_distance, collections_search, external_links_search,
-  #   wiki_place_page, wiki_search
-  # The full 31-entry list is NOT repeated here. The authoritative copy is the
+  # These eleven, each under all three server spellings:
+  #   research_query, project_context, sidecar_read, research_append,
+  #   validate_research_schema, place_search, place_distance, collections_search,
+  #   external_links_search, wiki_place_page, wiki_search
+  # The full 33-entry list is NOT repeated here. The authoritative copy is the
   # agent file, packages/engine/plugin/agents/gps-mentor.md — nothing lints
   # spec-to-agent agreement, so a second literal copy goes stale silently (it
   # already has). Spellings and rationale: ADR-0004.
@@ -199,8 +198,22 @@ to `record-extractor` when its entries missed the live spelling, before
 the third spelling was added. Unrecognized entries are ignored so long as one
 resolves, so
 listing all three is safe. Enforced by
-`tests/packaging/agent-tool-names.test.ts`. `Read` is a built-in Cowork
-tool, not an MCP tool, so it stays bare.
+`tests/packaging/agent-tool-names.test.ts`.
+
+**No built-in tool since 2026-09-14.** `Read` — a built-in Cowork tool, listed
+bare — left the list when `sidecar_read` (`docs/specs/sidecar-read-tool-spec.md`)
+took over the one read it still served, the verdict body under `evaluations/`.
+Two consequences, both deliberate. First, the mentor now holds **no route to a
+project file**: `research.json` and the tree reach it only as `project_context` /
+`research_query` projections, and a verdict body only through
+`sidecar_read({ projectPath, ref })`, which serves `evaluations/` and `uploads/`
+and nothing else. Second, every entry is now an MCP tool, so the agent is
+**exposed to a registrar move exactly as the other MCP-only agents are** — the
+bare `Read` used to resolve under every registrar, which meant a session whose
+spelling missed every MCP entry would still spawn the mentor, holding
+`Read` alone, instead of refusing it outright. That guaranteed spawn is gone;
+what protects the mentor now is the same three-spelling insurance that protects
+`record-extractor`.
 
 **Model requirement:** `claude-sonnet-5`. The gates read and cross-reference large research
 files with careful analytical reasoning. Sonnet 5 — released after this spec was first written —
@@ -211,8 +224,9 @@ model; do not silently downgrade below Sonnet-5-class analytical reasoning.
 
 **Tools list is closed:** The agent does not have `record_search`, `fulltext_search`,
 `person_read`, or any write tool. It evaluates evidence the researcher has gathered; it
-does not gather new evidence itself. `research_query` and `project_context` are not an
-exception — they are read-only projections of what the researcher already recorded.
+does not gather new evidence itself. `research_query`, `project_context` and `sidecar_read`
+are not an exception — the first two are read-only projections of what the researcher
+already recorded, and the third returns only verdicts already written.
 
 **Why the two read tools are on the list (added 2026-07-31, issue #693).** Without
 them the agent's only way to see project state was `Read`, and its body told it to
@@ -222,9 +236,12 @@ made the mentor the **largest single reader of `research.json` in the system —
 once per proof, at the point in a run where the file is largest. One captured
 delegation (`wilkins-marriage`) spent 15 reads before its single write. In 10 of 10
 captured delegations the agent's first tool call was a bare `Read(research.json)`. The
-grant plus the **Reading project state** section of the agent body replaces that scan;
-`Read` stays for the rare body no projection carries (a verdict file under
-`evaluations/`, an entry already located by id).
+grant plus the **Reading project state** section of the agent body replaces that scan.
+`Read` stayed for the rare body no projection carries (a verdict file under
+`evaluations/`, an entry already located by id) until 2026-09-14, when `sidecar_read`
+took the verdict read and the by-id case became a `research_query` on the entry's
+section, paged with `offset` and matched on `id` by the agent (only `questions` and
+`sources` carry an own-id filter).
 
 **What the scan was silently providing, and how it is preserved.** A whole-file read
 also showed the agent *project-wide absences* — the `wilkins-marriage` verdict's
@@ -723,8 +740,10 @@ focus + target_id combination:
 research_query({ projectPath, section: "evaluations", targetId, focus })
 ```
 
-It then selects the entry whose `superseded_by` is `null` and `Read`s that entry's
-`file_path` for the prior verdict body.
+It then selects the entry whose `superseded_by` is `null` and calls
+`sidecar_read({ projectPath, ref: <that entry's file_path> })` for the prior verdict
+body — `ref` is the `file_path` string exactly as stored, and a body longer than one
+page is followed with `offset: nextOffset` while `truncated` is `true`.
 
 **The null check is the agent's step, not the tool's** — deliberately.
 `research_query`'s filter layer compares a string against a field, and
@@ -748,8 +767,8 @@ verdict that never looked at the prose. The user asked for a craft read by name;
 them one.
 
 This exempts the *skip*, not all reading of prior verdicts: §12.3 still has the craft
-run open the candidate entry's sidecar to check its `craft` flag before deciding
-supersession.
+run call `sidecar_read` on the candidate entry's `file_path` to check its `craft`
+flag before deciding supersession.
 
 ### 10.1 Interactive mode behavior
 
@@ -874,12 +893,13 @@ leaves a craft one alone. They share the `on-demand` focus but review different 
 and marking an evidence review superseded by a style review — or the reverse — would
 misreport the audit trail.
 
-**How to tell them apart.** Read the candidate entry's `file_path` sidecar and check
-its `craft` flag (§7.1). This is the one place a craft run must open a prior verdict,
-and it is why the flag exists: focus + target_id cannot discriminate. A sidecar written
-before the flag existed, or unreadable, counts as **not** craft — so an old evidentiary
-verdict is left alone, which is the safe direction. This costs one `Read`; it is not a
-reason to skip the check and supersede blindly.
+**How to tell them apart.** Call `sidecar_read({ projectPath, ref: <candidate
+file_path> })` and check the body's `craft` flag (§7.1). This is the one place a craft
+run must open a prior verdict, and it is why the flag exists: focus + target_id cannot
+discriminate. A sidecar written before the flag existed, or one the tool cannot return
+(`ok: false` — `not_found`, `not_text`, `invalid_ref`), counts as **not** craft — so an
+old evidentiary verdict is left alone, which is the safe direction. This costs one
+`sidecar_read`; it is not a reason to skip the check and supersede blindly.
 
 ### 12.4 research-schema-spec.md changes
 
@@ -970,7 +990,7 @@ specific, not as a box-checking ritual.
 |------|-------------|
 | `project_context` | The opening call of every invocation — project status, open questions, tree persons with the sources they cite, sources with their record ids, locality knowledge. Replaces the orientation the agent used to get by scanning `research.json`. |
 | `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `count` against the 50-item cap before calling a set complete. |
-| `Read` | Exception only — a body no projection carries (a verdict file under `evaluations/`, an entry already located by id). **Never** `research.json` front-to-back. |
+| `sidecar_read` | A prior verdict body only — `ref` is the `evaluations[]` entry's `file_path` as stored; page with `offset: nextOffset` while `truncated`. It serves `evaluations/` and `uploads/` and refuses every other path (`invalid_ref`), so it is not a route back to `research.json`, the tree, `results/`, or images. Spec: `docs/specs/sidecar-read-tool-spec.md`. An entry already located by id is a `research_query` on its section, paged with `offset` and matched on `id` by the agent. |
 | `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
 | `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
 | `wiki_place_page` (`section: "research_tips"`) | When flagging repository diversity gaps or suggesting strategy improvements. |
