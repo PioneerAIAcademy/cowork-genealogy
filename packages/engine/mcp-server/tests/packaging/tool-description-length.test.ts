@@ -25,7 +25,11 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  *
  * #2071 then added the particle-surname clause to BOTH `surname` descriptions
  * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,292), combined
- * 20,164. Same direction again, and for the same reason: the clause records a
+ * 20,164.
+ *
+ * #1212 then added the `top`-hides-rows clause to `record_search` alone
+ * (14,872 -> 15,344, +472), combined 20,636. `top` now decides whether the
+ * rows are visible at all, so the description has to say so. Same direction again, and for the same reason: the clause records a
  * measured result (section K) that a model would otherwise guess at.
  *
  * The ruling on #1323 was to name
@@ -140,7 +144,7 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14872],
+  ["record_search", 15280],
   ["person_search", 5292],
 ];
 
