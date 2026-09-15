@@ -1014,6 +1014,73 @@ def _rubric_for_snapshot(skill: str, snapshot_text, disk_rubrics: dict):
     return disk_rubrics.get(skill)
 
 
+def _uncoerce_routing_negative(dims: list[dict], run: dict) -> list[dict]:
+    """Return `dims` with orchestrator-coerced scores restored from the warnings.
+
+    The orchestrator nulls a routing-decided negative's Correctness/Completeness
+    and preserves the judge's original score on a
+    `coerced_routing_negative_to_na` warning (`name` + `score`). Reverse that so
+    a replay sees the judge's raw draw. Returns `dims` unchanged when no such
+    warning is present, so every non-coerced draw replays exactly as before.
+    """
+    restored = {
+        w["name"]: w["score"]
+        for w in ((run.get("output") or {}).get("warnings") or [])
+        if isinstance(w, dict)
+        and w.get("kind") == "coerced_routing_negative_to_na"
+        and w.get("name") is not None
+    }
+    if not restored:
+        return dims
+    return [
+        {**d, "score": restored[d["name"]]}
+        if d.get("name") in restored and d.get("score") is None
+        else d
+        for d in dims
+    ]
+
+
+def _coerced_run(name="Correctness", score=1):
+    return {"output": {"warnings": [{
+        "kind": "coerced_routing_negative_to_na", "name": name, "score": score,
+        "advisory": "x", "rationale": "y",
+    }]}}
+
+
+def test_uncoerce_restores_the_orchestrator_nulled_score():
+    """The replay must see the judge's raw draw, not the post-coercion one.
+
+    Pinned standalone rather than left to the corpus: whether any committed run
+    log carries a `coerced_routing_negative_to_na` warning varies with pruning,
+    so a corpus-only check would silently stop exercising this (issue #2584).
+    """
+    dims = [{"source": "base", "name": "Correctness", "score": None}]
+    assert _uncoerce_routing_negative(dims, _coerced_run())[0]["score"] == 1
+
+
+def test_uncoerce_leaves_a_null_with_no_coercion_warning_alone():
+    """A null nobody coerced is still a malformed draw — the guard must catch it."""
+    dims = [{"source": "base", "name": "Correctness", "score": None}]
+    run = {"output": {"warnings": []}}
+    assert _uncoerce_routing_negative(dims, run)[0]["score"] is None
+
+
+def test_uncoerce_does_not_restore_a_dimension_the_warning_does_not_name():
+    """Restoration is keyed to the warning's own `name`, never applied broadly."""
+    dims = [
+        {"source": "base", "name": "Correctness", "score": None},
+        {"source": "base", "name": "Completeness", "score": None},
+    ]
+    out = _uncoerce_routing_negative(dims, _coerced_run(name="Correctness"))
+    assert [d["score"] for d in out] == [1, None]
+
+
+def test_uncoerce_does_not_overwrite_a_score_that_survived():
+    """Only a null is restored; a real score is never replaced by the warning's."""
+    dims = [{"source": "base", "name": "Correctness", "score": 3}]
+    assert _uncoerce_routing_negative(dims, _coerced_run(score=1))[0]["score"] == 3
+
+
 def test_corpus_replay_never_raises_on_committed_run_logs():
     """Feed every committed unit run log's real judge output through
     _extract_dimensions. Must NEVER raise JudgeError for a naming/
@@ -1093,6 +1160,20 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 run_tool_calls = (r.get("output") or {}).get("tool_calls") or []
                 if not run_tool_calls:
                     zero_call_draws += 1
+                # Un-coerce before replaying. `_extract_dimensions` validates a
+                # RAW judge response, but a run log stores dimensions the
+                # ORCHESTRATOR has already post-processed: for a correctly-routed
+                # negative test it nulls Correctness/Completeness
+                # (orchestrator.py `_ROUTING_DIAGNOSTIC_DIMENSIONS`) and records
+                # the judge's original score on a
+                # `coerced_routing_negative_to_na` warning. Replaying the stored
+                # draw as-is asks the raw-response validator to accept an
+                # artifact it never sees in production, and it correctly refuses:
+                # only Tool Arguments may be null. Restoring the preserved score
+                # replays what the judge actually returned, which is what this
+                # test is for. This does NOT widen the null policy — a null with
+                # no coercion warning behind it still raises (issue #2584).
+                dims = _uncoerce_routing_negative(dims, r)
                 try:
                     out, warns = judge._extract_dimensions(
                         _tool_use_response(dims), rub,
