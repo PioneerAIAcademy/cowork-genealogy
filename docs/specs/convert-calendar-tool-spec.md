@@ -224,6 +224,17 @@ the corrections the user asked for, and the tool applies exactly those. Asking f
 the New-Style **year** of "15 February 1750/1" → `{ doubleDatedYear: true }` (or
 `{ osNsYear: true }`) and nothing else; the day offset is not applied unprompted.
 
+**`yearStartJan1From` is not the Julian→Gregorian adoption year.** Every
+jurisdiction in the table except England changed the two things decades or
+centuries apart — Scotland moved its year start in 1600 and its days in 1752,
+Venice its days in 1582 and its year in 1797, Denmark its year in 1559 and its
+days in 1700. Deriving this column from the day-reckoning date is what made the
+tool silently add a year to dates that were already New Style, which review
+measured on France, Greece, Denmark and the Protestant German states. The column
+is derived from year-start history, and each row additionally records **what the
+year started on before** — which decides whether the correction is even the
+right operation.
+
 **The tool identifies the regime; the caller still names the question.**
 `corrections` stays required. Full auto-selection — deriving the corrections
 from jurisdiction and date alone — was considered and **rejected**: it
@@ -276,6 +287,8 @@ to illustrate that they agree.
 | `jurisdiction` supplied as an empty or whitespace-only string | input error (an empty string is a caller bug, not "no jurisdiction"; omit the field instead) |
 | `julianToGregorianDay` requested where the regime says the date is already Gregorian | **not an error**: the correction is declined, `applied` omits it, `converted` equals the input, and `notes` says why |
 | `osNsYear` requested where the regime's civil year already began 1 January | **not an error**: declined the same way, with the year that place moved named in `notes` |
+| `osNsYear` requested where the jurisdiction's PRIOR year start was not the Annunciation (25 March) | **input error** naming what that place actually used, and what the right correction is. The `+1` inside 1 Jan – 24 Mar is the Annunciation rule and nothing else: a **Christmas** (25 Dec) start needs −1 for 25–31 December, the opposite sign; an **Easter** start has a movable boundary that no fixed window expresses; **Venice** turned its year on 1 March, so the window is 1 Jan – 28/29 Feb; **pre-1700 Russia** needs an Anno Mundi era conversion. Refusing beats guessing here because the failure mode is a year that is off by one and reads as entirely ordinary |
+| `osNsYear` requested on a row that aggregates territories with different year starts (`Catholic Europe`, `Greece`) | **input error at any year**, not just before the row's date. Suppressing would be as much a guess as shifting: Florence and Pisa kept 25 March until 1750 while Poland was on 1 January by c.1450, so no single answer is right for the row. Name the specific territory |
 | `doubleDatedYear` on a date provably outside Jan 1 – Mar 24 (`month > 3`, or March with `day > 24`) | **input error** — under the **English Lady Day convention** (England, Wales, Ireland and the colonies; also Florence and Pisa) the legal year began 25 March, so from that date the Old-Style and New-Style years agree and a slash has nothing to disambiguate. **Scope note:** other year-start conventions existed — Venice 1 March, the Byzantine and pre-1700 Russian 1 September, the French *mos gallicanus* Easter start — under which a slashed year outside Jan–Mar can be legitimate. Nothing in the corpus exercises those, so the guard is deliberately scoped to the Lady Day convention; widening it is a scope decision, not a bug fix |
 
 ---

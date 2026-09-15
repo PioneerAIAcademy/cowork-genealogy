@@ -139,8 +139,43 @@ interface Jurisdiction {
    * the date, so a non-monotone history (Groningen) is expressible.
    */
   spans: RegimeSpan[];
-  /** Year the civil year began on 1 January. `null` = not modelled here. */
+  /**
+   * Year the civil year began on 1 January. `null` = not modelled here.
+   *
+   * THIS IS NOT THE JULIAN-TO-GREGORIAN ADOPTION YEAR. Every row here except
+   * England changed the two things decades or centuries apart, and copying the
+   * day-reckoning year into this column is what made the tool silently add 1 to
+   * years that were already New Style.
+   */
   yearStartJan1From: number | null;
+  /**
+   * What the civil year started on BEFORE `yearStartJan1From` — which decides
+   * whether the `osNsYear` correction (add 1 inside 1 Jan – 24 Mar) is even the
+   * right operation.
+   *
+   * - `annunciation`  25 March. The +1 Jan–Mar rule is exactly this case.
+   * - `christmas`     25 December. The correction is MINUS 1 for 25–31 Dec, the
+   *                   OPPOSITE SIGN, and nothing in the Jan–Mar window needs
+   *                   touching at all.
+   * - `easter`        Movable. The boundary is Easter, not 25 March, so the
+   *                   window cannot be expressed as a fixed date range.
+   * - `march1`        1 March (Venetian more veneto). Window is 1 Jan – 28/29
+   *                   Feb, not 1 Jan – 24 Mar.
+   * - `september`     1 September, with an Anno Mundi era (pre-1700 Russia).
+   *                   Needs an era conversion, not a year shift.
+   * - `mixed`         The row aggregates territories that genuinely differed.
+   *
+   * Only `annunciation` may be shifted. Every other value REFUSES rather than
+   * guessing, because the failure it would otherwise produce is a year that is
+   * off by one and looks perfectly ordinary.
+   */
+  priorYearStart:
+    | "annunciation"
+    | "christmas"
+    | "easter"
+    | "march1"
+    | "september"
+    | "mixed";
   note?: string;
 }
 
@@ -168,63 +203,72 @@ const JURISDICTIONS: Jurisdiction[] = [
     key: "Catholic Europe",
     aliases: ["catholic europe", "spain", "portugal", "italy", "poland", "papal states"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1582, month: 10, day: 15 }, calendar: "gregorian" }],
-    yearStartJan1From: 1582,
-    note: "Adopted at the Gregorian introduction: 4 Oct 1582 was followed by 15 Oct 1582.",
+    yearStartJan1From: 1556,
+    priorYearStart: "mixed",
+    note: "Adopted at the Gregorian introduction: 4 Oct 1582 was followed by 15 Oct 1582. THE YEAR START IS NOT UNIFORM ACROSS THIS ROW: its members moved to 1 January centuries apart (Poland by c.1450, Spain and Portugal c.1556, Florence and Pisa not until 1750, Venice not until 1797), which is why osNsYear is refused here rather than guessed. `italy` in particular is too coarse to carry a year-start rule — name the city or state.",
   },
   {
     key: "France",
     aliases: ["france", "french"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1582, month: 12, day: 20 }, calendar: "gregorian" }],
-    yearStartJan1From: 1582,
+    yearStartJan1From: 1567,
+    priorYearStart: "easter",
     note: "9 Dec 1582 was followed by 20 Dec 1582.",
   },
   {
     key: "Catholic German states",
     aliases: ["catholic german states", "catholic germany", "bavaria", "austria"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1583, month: 1, day: 1 }, calendar: "gregorian" }],
-    yearStartJan1From: 1583,
+    yearStartJan1From: 1544,
+    priorYearStart: "christmas",
     note: "Adoption varied by state across 1583–1585; a date in that window needs the specific state, not this row.",
   },
   {
     key: "Protestant German states",
     aliases: ["protestant german states", "protestant germany", "wurttemberg", "württemberg", "prussia", "saxony"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 3, day: 1 }, calendar: "gregorian" }],
-    yearStartJan1From: 1700,
+    yearStartJan1From: 1559,
+    priorYearStart: "christmas",
     note: "18 Feb 1700 was followed by 1 Mar 1700.",
   },
   {
     key: "Zeeland",
     aliases: ["zeeland", "brabant", "zeeland and brabant"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1582, month: 12, day: 25 }, calendar: "gregorian" }],
-    yearStartJan1From: 1583,
+    yearStartJan1From: 1576,
+    priorYearStart: "easter",
     note: "14 Dec 1582 was followed by 25 Dec 1582.",
   },
   {
     key: "Holland",
     aliases: ["holland", "north holland", "south holland"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1583, month: 1, day: 12 }, calendar: "gregorian" }],
-    yearStartJan1From: 1583,
+    yearStartJan1From: 1576,
+    priorYearStart: "easter",
     note: "Adopted at the turn of the year, after Zeeland and Brabant.",
   },
   {
     key: "Gelderland",
     aliases: ["gelderland", "guelders"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 7, day: 12 }, calendar: "gregorian" }],
-    yearStartJan1From: 1700,
+    yearStartJan1From: 1583,
+    priorYearStart: "christmas",
     note: "30 Jun 1700 was followed by 12 Jul 1700, so a 1700 date up to 30 Jun is still Old Style.",
   },
   {
     key: "Utrecht",
     aliases: ["utrecht", "overijssel", "utrecht and overijssel"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 12, day: 12 }, calendar: "gregorian" }],
-    yearStartJan1From: 1700,
+    yearStartJan1From: 1583,
+    priorYearStart: "christmas",
     note: "30 Nov 1700 was followed by 12 Dec 1700, so a 1700 date up to 30 Nov is still Old Style.",
   },
   {
     key: "Friesland",
     aliases: ["friesland", "frisia"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1701, month: 1, day: 12 }, calendar: "gregorian" }],
-    yearStartJan1From: 1701,
+    yearStartJan1From: 1583,
+    priorYearStart: "christmas",
     note: "31 Dec 1700 was followed by 12 Jan 1701.",
   },
   {
@@ -237,21 +281,24 @@ const JURISDICTIONS: Jurisdiction[] = [
       { from: { year: 1594, month: 1, day: 1 }, calendar: "julian" },
       { from: { year: 1701, month: 1, day: 12 }, calendar: "gregorian" },
     ],
-    yearStartJan1From: 1701,
+    yearStartJan1From: 1583,
+    priorYearStart: "christmas",
     note: "Groningen used Gregorian 1583–1594, REVERTED to Julian, then adopted again with Friesland. A 1590 Groningen date is Gregorian; a 1600 one is not.",
   },
   {
     key: "Drenthe",
     aliases: ["drenthe"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1701, month: 5, day: 12 }, calendar: "gregorian" }],
-    yearStartJan1From: 1701,
+    yearStartJan1From: 1583,
+    priorYearStart: "christmas",
     note: "30 Apr 1701 was followed by 12 May 1701, so a 1701 date up to 30 Apr is still Old Style.",
   },
   {
     key: "Denmark",
     aliases: ["denmark", "norway", "denmark-norway", "denmark and norway"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1700, month: 3, day: 1 }, calendar: "gregorian" }],
-    yearStartJan1From: 1700,
+    yearStartJan1From: 1559,
+    priorYearStart: "christmas",
     note: "18 Feb 1700 was followed by 1 Mar 1700.",
   },
   {
@@ -259,6 +306,7 @@ const JURISDICTIONS: Jurisdiction[] = [
     aliases: ["england", "great britain", "britain", "wales", "ireland", "british colonies", "american colonies", "colonial america"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1752, month: 9, day: 14 }, calendar: "gregorian" }],
     yearStartJan1From: 1752,
+    priorYearStart: "annunciation",
     note: "2 Sep 1752 was followed by 14 Sep 1752. Before 1752 the civil year began 25 March, which is what osNsYear and double dating are about.",
   },
   {
@@ -270,6 +318,7 @@ const JURISDICTIONS: Jurisdiction[] = [
     aliases: ["scotland", "scottish"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1752, month: 9, day: 14 }, calendar: "gregorian" }],
     yearStartJan1From: 1600,
+    priorYearStart: "annunciation",
     note: "Year start moved to 1 January in 1600, but day reckoning stayed Julian until the 1752 British correction. The two dates are not the same event.",
   },
   {
@@ -284,7 +333,8 @@ const JURISDICTIONS: Jurisdiction[] = [
       { from: { year: 1712, month: 3, day: 1 }, calendar: "julian" },
       { from: { year: 1753, month: 3, day: 1 }, calendar: "gregorian" },
     ],
-    yearStartJan1From: 1700,
+    yearStartJan1From: 1559,
+    priorYearStart: "christmas",
     note: "1 Mar 1700–30 Feb 1712 Sweden ran its own calendar, 1 day ahead of Julian and 10 behind Gregorian. 30 Feb 1712 is a REAL Swedish date, inserted to revert to Julian: Swedish 30 Feb 1712 = Julian 29 Feb 1712 = Gregorian 11 Mar 1712. Gregorian from 1753 (17 Feb 1753 was followed by 1 Mar 1753).",
   },
   {
@@ -292,14 +342,28 @@ const JURISDICTIONS: Jurisdiction[] = [
     aliases: ["russia", "russian empire", "ussr", "soviet union"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1918, month: 2, day: 14 }, calendar: "gregorian" }],
     yearStartJan1From: 1700,
+    priorYearStart: "september",
     note: "31 Jan 1918 was followed by 14 Feb 1918.",
+  },
+  {
+    // Split out of the Catholic Europe row, whose `italy` alias swept Venice in.
+    // That was the table's worst silent corruption: a Venetian January date
+    // would have had its year suppressed from 1582 when Venice did not start
+    // its civil year on 1 January until 1797.
+    key: "Venice",
+    aliases: ["venice", "venezia", "republic of venice", "veneto"],
+    spans: [{ from: null, calendar: "julian" }, { from: { year: 1582, month: 10, day: 15 }, calendar: "gregorian" }],
+    yearStartJan1From: 1797,
+    priorYearStart: "march1",
+    note: "Venice took Gregorian DAY reckoning with the rest of Catholic Europe in 1582, but its civil year began on 1 MARCH (more veneto) until the Republic fell in 1797. The two facts are 215 years apart. Because the year turned on 1 March, the affected window is 1 January to 28/29 February — a March date needs no shift.",
   },
   {
     key: "Greece",
     aliases: ["greece", "greek"],
     spans: [{ from: null, calendar: "julian" }, { from: { year: 1923, month: 3, day: 1 }, calendar: "gregorian" }],
-    yearStartJan1From: 1923,
-    note: "16 Feb 1923 was followed by 1 Mar 1923.",
+    yearStartJan1From: 1821,
+    priorYearStart: "mixed",
+    note: "16 Feb 1923 was followed by 1 Mar 1923 — that is the DAY reckoning, and it is the value this column wrongly carried. The 1923 reform was explicitly lay-only and changed no year start. 1821 is a floor for the modern Greek state, not a dated decree, which is why this row is `mixed` and refuses osNsYear rather than acting on the number. The year here is documentation; it does not drive behaviour.",
   },
 ];
 
@@ -313,6 +377,34 @@ function normalizeJurisdiction(s: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/**
+ * Why `osNsYear` is refused for each non-Annunciation year start, and what to
+ * do instead. Each names the real usage rather than saying "unsupported", so a
+ * researcher can tell whether their record needs a different correction or none.
+ */
+const PRIOR_YEAR_START_REFUSALS: Record<
+  Exclude<Jurisdiction["priorYearStart"], "annunciation">,
+  (place: Jurisdiction, year: number) => string
+> = {
+  christmas: (p, y) =>
+    `osNsYear does not apply to ${p.key} for ${y}: before ${p.yearStartJan1From} its civil year began on 25 DECEMBER, not 25 March. ` +
+    `The correction there is minus one for dates from 25 to 31 December, the opposite sign — a 1 January to 24 March date needs no year shift at all. ` +
+    `Re-run without osNsYear, or supply the specific territory if it used the Annunciation style.`,
+  easter: (p, y) =>
+    `osNsYear does not apply to ${p.key} for ${y}: before ${p.yearStartJan1From} its civil year began at EASTER, which moves. ` +
+    `The shift window is bounded by Easter that year, not by 24 March, so it cannot be applied from the date alone. ` +
+    `Resolve the year against Easter for ${y} and set the year directly.`,
+  march1: (p, y) =>
+    `osNsYear does not apply to ${p.key} for ${y}: before ${p.yearStartJan1From} its civil year began on 1 MARCH (more veneto). ` +
+    `The affected window is 1 January to 28/29 February, not 1 January to 24 March, so a March date needs no shift and this rule would wrongly move it.`,
+  september: (p, y) =>
+    `osNsYear does not apply to ${p.key} for ${y}: before ${p.yearStartJan1From} the year began on 1 SEPTEMBER and was counted in the Anno Mundi era. ` +
+    `That needs an era conversion (subtract 5508 for January–August, 5509 for September–December), not a one-year shift.`,
+  mixed: (p, y) =>
+    `osNsYear cannot be applied to ${p.key} for ${y}: this row covers territories whose civil years began on different dates centuries apart, ` +
+    `so no single rule is correct for it. Name the specific territory instead.`,
+};
 
 export function lookupJurisdiction(raw: string): Jurisdiction | null {
   const n = normalizeJurisdiction(raw);
@@ -415,11 +507,31 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
         "Swedish calendar in force: one day ahead of Julian, ten behind Gregorian. Reduced to its Julian equivalent before the day offset.",
       );
     }
+    if (c.osNsYear && place.priorYearStart === "mixed") {
+      // Checked BEFORE the suppression arm: on a row whose members moved
+      // centuries apart, suppressing is as much a guess as shifting. Catholic
+      // Europe would otherwise stay silent on a 1600 Florentine date that
+      // genuinely needed the shift (Florence kept 25 March until 1750).
+      return {
+        ok: false,
+        errors: [PRIOR_YEAR_START_REFUSALS.mixed(place, year)],
+      };
+    }
     if (c.osNsYear && place.yearStartJan1From !== null && year >= place.yearStartJan1From) {
       osNsNotApplicable = true;
       notes.push(
         `osNsYear not applied: ${place.key} began its civil year on 1 January from ${place.yearStartJan1From}, so a ${year} date needs no Old Style year shift.`,
       );
+    } else if (c.osNsYear && place.priorYearStart !== "annunciation") {
+      // REFUSE rather than shift. The +1 Jan–Mar rule is the Annunciation
+      // (25 March) case and nothing else. Applying it to a jurisdiction that
+      // displaced a different style produces a year that is off by one and
+      // looks entirely ordinary -- the one output a genealogist cannot catch by
+      // reading the result, which is why this errors instead of noting.
+      return {
+        ok: false,
+        errors: [PRIOR_YEAR_START_REFUSALS[place.priorYearStart](place, year)],
+      };
     }
   }
 
@@ -488,12 +600,26 @@ export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarRes
       }
     }
     if (bump) {
+      const beforeShift = year;
       year += 1;
       applied.push({
         correction: "osNsYear",
         rule: "Date falls Jan 1–Mar 24 in an Old-Style (year starts March 25) jurisdiction; New-Style year is +1",
         yearAdjusted: true,
       });
+      // Say so when the shift IS applied, not only when it is suppressed.
+      // A silently incremented year is the one output a genealogist cannot
+      // catch by reading the result: +1 on a year that was already New Style
+      // looks exactly like a correct answer. The suppression path has always
+      // explained itself; this is the arm that changes the number.
+      notes.push(
+        place
+          ? `osNsYear applied: ${beforeShift} → ${year}. ${place.key} began its civil year on 1 January from ` +
+            `${place.yearStartJan1From === null ? "no recorded date" : place.yearStartJan1From}, so a ${beforeShift} date in the ` +
+            `1 January–24 March window is Old Style.`
+          : `osNsYear applied: ${beforeShift} → ${year}. No jurisdiction was given, so this assumes a civil year ` +
+            `beginning 25 March. Pass \`jurisdiction\` to have that checked against the place's own year-start history.`,
+      );
     } else if (month !== 3 || day !== undefined) {
       applied.push({
         correction: "osNsYear",

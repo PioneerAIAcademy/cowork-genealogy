@@ -385,6 +385,11 @@ describe("convert_calendar", () => {
       const covered = new Set<string>([
         ...ROWS.map(([place]) => place),
         "Catholic Europe",
+        // Venice shares Catholic Europe's 1582 changeover, and the tool refuses
+        // julianToGregorianDay before that date, so the ROWS pair cannot express
+        // it. Venice is a row because its YEAR start is 215 years later; its own
+        // cases live in the osNsYear refusal block.
+        "Venice",
         "Sweden",
         "Scotland",
         "Groningen",
@@ -424,6 +429,158 @@ describe("convert_calendar", () => {
       if (!without.ok) return;
       expect(without.converted).toEqual({ year: 1750, month: 2, day: 25 });
       expect(without.notes.join(" ")).not.toMatch(/day reckoning/);
+    });
+  });
+
+  // The shift that CHANGES the number must explain itself, not only the one
+  // that declines to. Review: "a silently incremented year is the one output a
+  // genealogist cannot catch by reading the result."
+  describe("osNsYear — the applied path says so", () => {
+    it("names the before and after year, and the jurisdiction's year start", () => {
+      const r = convertCalendar({
+        date: { year: 1650, month: 1, day: 10 },
+        corrections: { osNsYear: true },
+        jurisdiction: "England",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1651);
+      expect(r.notes.join(" ")).toMatch(/osNsYear applied: 1650 → 1651/);
+      expect(r.notes.join(" ")).toMatch(/England began its civil year on 1 January from 1752/);
+    });
+
+    it("says the year start was assumed when no jurisdiction was given", () => {
+      const r = convertCalendar({
+        date: { year: 1650, month: 1, day: 10 },
+        corrections: { osNsYear: true },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1651);
+      expect(r.notes.join(" ")).toMatch(/assumes a civil year beginning 25 March/);
+    });
+
+    it("stays silent about applying it when the shift was declined", () => {
+      const r = convertCalendar({
+        date: { year: 1800, month: 1, day: 10 },
+        corrections: { osNsYear: true },
+        jurisdiction: "England",
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1800);
+      expect(r.notes.join(" ")).not.toMatch(/osNsYear applied/);
+      expect(r.notes.join(" ")).toMatch(/osNsYear not applied/);
+    });
+  });
+
+  // Review: `yearStartJan1From` was being set from the DAY-RECKONING adoption
+  // date on nearly every row, and the year start is a different fact. Setting it
+  // too late applies the OS/NS shift where none belongs, silently. These are the
+  // four cases the review measured as wrong, plus the two rows that were right.
+  describe("osNsYear — year start is not the day-reckoning adoption date", () => {
+    const jan10 = (place: string, year: number) =>
+      convertCalendar({
+        date: { year, month: 1, day: 10 },
+        corrections: { osNsYear: true },
+        jurisdiction: place,
+      });
+
+    it.each([
+      ["France", 1570],
+      ["Denmark", 1650],
+      ["Protestant German states", 1650],
+    ])("%s %d is already New Style and is NOT shifted", (place, year) => {
+      const r = jan10(place as string, year as number);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(year);
+    });
+
+    it.each([
+      ["England", 1650, 1651],
+      ["Scotland", 1580, 1581],
+    ])("%s %d still shifts to %d", (place, year, expected) => {
+      const r = jan10(place as string, year as number);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(expected);
+    });
+
+    it("Scotland after 1600 is not shifted, though its days stay Julian to 1752", () => {
+      const r = jan10("Scotland", 1650);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1650);
+    });
+  });
+
+  // The +1 Jan–Mar rule IS the Annunciation case. Applying it to a jurisdiction
+  // that displaced a different style produces an off-by-one year that reads as
+  // perfectly ordinary, so the tool refuses instead of guessing.
+  describe("osNsYear — refuses where the Annunciation rule does not apply", () => {
+    const jan10 = (place: string, year: number) =>
+      convertCalendar({
+        date: { year, month: 1, day: 10 },
+        corrections: { osNsYear: true },
+        jurisdiction: place,
+      });
+
+    it("Christmas-style: says the correction is the opposite sign", () => {
+      const r = jan10("Denmark", 1500);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/began on 25 DECEMBER/);
+      expect(r.errors[0]).toMatch(/opposite sign/);
+    });
+
+    it("Easter-style: says the boundary moves", () => {
+      const r = jan10("France", 1560);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/began at EASTER, which moves/);
+    });
+
+    it("Venice: names the 1 March year start and the narrower window", () => {
+      const r = jan10("Venice", 1600);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/began on 1 MARCH/);
+      expect(r.errors[0]).toMatch(/28\/29 February/);
+    });
+
+    it("Venice after 1797 is fine and is not shifted", () => {
+      const r = jan10("Venice", 1850);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.converted.year).toBe(1850);
+    });
+
+    it("Russia pre-1700: names the Anno Mundi era, not a year shift", () => {
+      const r = jan10("Russia", 1650);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/1 SEPTEMBER/);
+      expect(r.errors[0]).toMatch(/5508/);
+    });
+
+    it("a mixed row refuses at ANY year, because suppressing is a guess too", () => {
+      // Catholic Europe spans Poland c.1450 to Venice 1797. A 1600 Florentine
+      // date genuinely needed the shift (Florence kept 25 March until 1750),
+      // so staying silent would be as wrong as shifting.
+      for (const year of [1500, 1600, 1700, 1900]) {
+        const r = jan10("Catholic Europe", year);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors[0]).toMatch(/covers territories whose civil years began on different dates/);
+      }
+    });
+
+    it("`italy` is refused for the same reason — the alias is too coarse", () => {
+      const r = jan10("italy", 1600);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/Name the specific territory/i);
     });
   });
 });
