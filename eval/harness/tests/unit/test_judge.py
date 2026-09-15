@@ -1087,6 +1087,25 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 if not dims:
                     continue
                 total_draws += 1
+                # Restore original pre-coercion scores for coerced_routing_negative_to_na
+                # draws: the harness overwrites the stored dimension scores with null,
+                # but the warning records the original judge score. Replaying null
+                # Correctness through _extract_dimensions raises JudgeError under the
+                # drop-with-warning redesign, which is a false positive — the judge
+                # never actually emitted null; the harness did.
+                output_warnings = (r.get("output") or {}).get("warnings") or []
+                coercion_restore = {
+                    w["name"]: w["score"]
+                    for w in output_warnings
+                    if w.get("kind") == "coerced_routing_negative_to_na"
+                    and w.get("score") is not None
+                }
+                if coercion_restore:
+                    dims = [
+                        {**d, "score": coercion_restore[d["name"]]}
+                        if d.get("name") in coercion_restore else d
+                        for d in dims
+                    ]
                 # The run's OWN tool calls, never a stand-in: the #1406
                 # N/A rule keys on this list being empty, so substituting
                 # a placeholder here would measure the placeholder.
