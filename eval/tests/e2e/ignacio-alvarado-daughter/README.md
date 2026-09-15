@@ -115,9 +115,7 @@ against the register images rather than the index: the burial page
 (`ark:/61903/3:1:S3HT-63K2-3Z`, entry 814) for the age phrase and the stated
 parentage, the baptism page (`ark:/61903/3:1:S3HY-DYZS-JNJ`) for the 27 Mar 1879
 entry, and the christening page (`ark:/61903/3:1:S3HT-69BQ-SRL`) for the single
-entry behind both `NQV5-DPB` and `6ZPT-KTZR`. The father-identity question was
-raised in review rather than found in drafting, and is answered in the paragraph
-above.
+entry behind both `NQV5-DPB` and `6ZPT-KTZR`.
 
 Second opinion: EdmondOware, 2026-09-12, concurs with outcome 1 — true match on
 the relationship. He corrected the birth reading: "about April 1879" postdates
