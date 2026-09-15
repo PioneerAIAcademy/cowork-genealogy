@@ -49,7 +49,7 @@ try {
   await client.connect(transport);
 
   const { tools } = await client.listTools();
-  report("tools/list", tools.length >= 48, `${tools.length} tools advertised`);
+  report("tools/list", tools.length >= 49, `${tools.length} tools advertised`);
 
   const status = await call("auth_status", {});
   report("auth_status", !status.isError && typeof status.body.loggedIn === "boolean", JSON.stringify(status.body));
