@@ -350,7 +350,19 @@ Two consequences for a conversion:
   written before the rule and both violate it. `record-extraction` is the third
   pair and is not one of these: it acquires, triages and logs before batching one
   extractor per record, so the list above does not describe it and the
-  orchestrator still routes it as a skill.
+  orchestrator still routes it as a skill. **This is a settled ruling, not an
+  open question (#2491, 2026-09-15): the fan-out loop stays in the skill as the
+  sanctioned exception.** It was tested — moving the loop into `/research`
+  (Shape B) vs leaving it in the skill (Shape A) — and the measured effect
+  ceiling is ~0.1%: `record-extraction/SKILL.md` is ~15.5 KB (~4k tokens),
+  invoked 0–2× per run (0× in 50 committed runs, 1× in 105, 2× in 17), against a
+  median main-thread `cache_read_input_tokens` of 8.0M — so the entire
+  main-thread saving is ≤~8k tokens against ~8M, which is why the run's
+  peak-window metric saturated at the SDK auto-compaction ceiling and could not
+  discriminate the two shapes at any affordable sample size. Do not re-open this
+  as an unmeasured paid comparison. (After #2490 strips acquisition paths 2–4
+  from the skill, the question may re-enter as a free **doctrine** call inside
+  #2490's own design — never again as a paid comparison.)
 - **The direct route is measured on two runs.** Whether the orchestrator reaches
   every paired agent that way, or only the ones it has a strong prior about, is
   not known.

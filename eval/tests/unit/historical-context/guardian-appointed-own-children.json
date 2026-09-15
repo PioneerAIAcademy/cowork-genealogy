@@ -5,7 +5,7 @@
     "name": "Natural parent appointed guardian of own children",
     "type": "positive",
     "description": "Tests whether the skill correctly explains that a natural parent named as legal guardian of their own minor children in a probate/guardianship record reflects inheritance law, not evidence the child was orphaned, estranged, or unrelated to the petitioner. Guards against the most likely real-world misreading of the historical-broad-context guardianship bullet (issue #1618).",
-    "tags": ["guardianship", "probate", "legal-terms", "inheritance", "issue-1618"]
+    "tags": ["guardianship", "probate", "legal-terms", "inheritance", "issue-1618", "topical-fixture-required"]
   },
   "input": {
     "user_message": "I found an 1851 probate record where William Whitfield petitioned the orphans' court to be appointed legal guardian of his own son Thomas, age 9, after Thomas's mother died and left him a small inheritance. Doesn't a guardianship appointment usually mean the child was orphaned, or that William wasn't really his father? What does this record actually tell me?",

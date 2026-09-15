@@ -284,6 +284,38 @@ describe("materialize_facts", () => {
     for (const f of occ) expect(f.sources).toEqual([{ ref: "S1", quality: 3 }]);
   });
 
+  // #2028's second acceptance clause: two Immigration facts on one person
+  // surface no conflict. A member of an 1856 rescue company made repeat
+  // Atlantic crossings; the agent reported the second as conflicting with the
+  // first. The tool was already right — Immigration sits in EVENT_TREE_TYPES,
+  // not in the single-valued vital set — and nothing asserted it until now.
+  it.each([["immigration", "Immigration"], ["emigration", "Emigration"], ["naturalization", "Naturalization"]])(
+    "(6b) repeat %s events coexist WITHOUT surfacing a conflict",
+    async (factType, treeType) => {
+      const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Repeat", surname: "Crosser" }] };
+      await writeProject(
+        tree({ persons: [stub] }),
+        research({
+          sources: [S1],
+          assertions: [
+            assertion("a_001", { record_id: "REC6B", record_role: "principal", fact_type: factType, value: "1853", date: "1853" }),
+            assertion("a_002", { record_id: "REC6B", record_role: "principal", fact_type: factType, value: "1856", date: "1856-12-15" }),
+          ],
+        }),
+      );
+
+      const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC6B", recordRole: "principal" }));
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.factsAdded).toBe(2); // both crossings kept
+      expect(result.conflicts_surfaced).toHaveLength(0); // not a vital type
+
+      const p = findPerson(await readTree(), "I2");
+      expect(p.facts.filter((f: any) => f.type === treeType)).toHaveLength(2);
+    },
+  );
+
   it("(7) a missing tree S-entry is an ERROR (never a silent null ref), writes nothing", async () => {
     // The research source points at S99, which is absent from the tree.
     await writeProject(
