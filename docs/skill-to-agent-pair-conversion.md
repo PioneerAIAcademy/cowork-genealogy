@@ -359,14 +359,26 @@ Two things this does NOT close:
   written before the rule and both violate it. `record-extraction` is the third
   pair and is not one of these: it acquires, triages and logs before batching one
   extractor per record, so the list above does not describe it and the
-  orchestrator still routes it as a skill.
+  orchestrator still routes it as a skill. **This is a settled ruling, not an
+  open question (#2491, 2026-09-15): the fan-out loop stays in the skill as the
+  sanctioned exception.** It was tested — moving the loop into `/research`
+  (Shape B) vs leaving it in the skill (Shape A) — and the measured effect
+  ceiling is ~0.1%: `record-extraction/SKILL.md` is ~15.5 KB (~4k tokens),
+  invoked 0–2× per run (0× in 50 committed runs, 1× in 105, 2× in 17), against a
+  median main-thread `cache_read_input_tokens` of 8.0M — so the entire
+  main-thread saving is ≤~8k tokens against ~8M, which is why the run's
+  peak-window metric saturated at the SDK auto-compaction ceiling and could not
+  discriminate the two shapes at any affordable sample size. Do not re-open this
+  as an unmeasured paid comparison. (After #2490 strips acquisition paths 2–4
+  from the skill, the question may re-enter as a free **doctrine** call inside
+  #2490's own design — never again as a paid comparison.)
 - **The direct route dominates but does not displace the routed one.** Over
   every committed e2e run dated on or after 2026-08-20: 15 runs reach
   `research-exhaustiveness`, 14 spawn it directly and one reaches it only via
-  `Skill` (`hannah-earnest-children/run-2026-08-23_03-37-12`), with six taking
-  both routes in one run. Counting every (run, pair) reach across all pairs: 66
-  of 76 direct, 10 skill-only — re-derive by scanning each
+  `Skill` (`hannah-earnest-children/run-2026-08-23_03-37-12`, a completed passing
+  run), with six taking both routes in one run. Counting every (run, pair) reach
+  across all pairs: 66 of 76 direct, 10 skill-only. Re-derive by scanning each
   `eval/runlogs/e2e/*/run-<ts>.json` for an `Agent`/`Task` call whose
-  `subagent_type` names a pair versus a `Skill` call naming one). Whether the
-  orchestrator reaches every paired agent that way, or only the ones it has a
+  `subagent_type` names a pair versus a `Skill` call naming one. Whether the
+  orchestrator reaches every paired agent directly, or only the ones it has a
   strong prior about, is still not known.
