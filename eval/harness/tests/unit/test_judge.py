@@ -259,6 +259,27 @@ def test_na_rule_leaves_null_alone_when_tool_calls_happened():
     assert warnings == []
 
 
+def _outcome_spec(**overrides):
+    """A real `TestSpec` for `_compute_outcome`, not a `SimpleNamespace`.
+
+    `_compute_outcome` reads `spec.is_direct` (issue #2246), which is a property
+    on the dataclass, so a namespace stand-in raises AttributeError. These two
+    tests already imported `TestSpec` to assert "the spec shape is real"; this
+    builds one, so the assertion is load-bearing instead of decorative.
+    """
+    from harness.loader import TestSpec
+
+    base = dict(
+        id="t", skill="citation", name="n", type="positive", description="d",
+        tags=[], user_message="m", scenario=None, scenario_notes=None,
+        mcp_fixtures=[], judge_context=[], negative=None,
+        expected_outcome="pass", xfail_reason=None, runs_per_test=1,
+        execution={},
+    )
+    base.update(overrides)
+    return TestSpec(**base)
+
+
 def test_na_rule_coercion_flips_a_positive_test_outcome():
     """DELIBERATE consequence, pinned so it reads as a decision.
 
@@ -276,7 +297,7 @@ def test_na_rule_coercion_flips_a_positive_test_outcome():
     assert ta["score"] is None
     assert warnings[0]["score"] == 1
 
-    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    spec = _outcome_spec(type="positive", skill="citation", negative=None)
     before = _compute_outcome(
         spec=spec, validators_passed=True, aborted_reason=None, activated=True,
         skills_invoked=["citation"],
@@ -316,7 +337,7 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     assert ta["score"] is None
     assert warnings[0]["score"] == 1
 
-    spec = SimpleNamespace(
+    spec = _outcome_spec(
         type="negative", skill="search-wikipedia",
         negative={"correct_skill": []},
     )
@@ -346,7 +367,7 @@ def test_na_rule_coercion_flips_a_positive_test_from_partial():
     assert ta["score"] is None
     assert warnings[0]["score"] == 2
 
-    spec = SimpleNamespace(type="positive", skill="citation", negative=None)
+    spec = _outcome_spec(type="positive", skill="citation", negative=None)
     kw = dict(
         spec=spec, validators_passed=True, aborted_reason=None,
         activated=True, skills_invoked=["citation"],

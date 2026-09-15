@@ -3,20 +3,21 @@
     "max_wall_clock_seconds": 900
   },
   "test": {
-    "id": "ut_research_exhaustiveness_010",
+    "id": "ut_research_exhaustiveness_d4d",
     "skill": "research-exhaustiveness",
-    "name": "Resist user pressure to declare when a high-value record type is unsearched",
+    "name": "Resist pressure to declare when a high-value record type is unsearched (direct-agent arm)",
     "type": "positive",
     "description": "The project has completed its census and death certificate searches, and both support the same parentage conclusion. However, probate records for this jurisdiction and period have not been searched and Thomas Flynn was a known property owner, making a will or estate inventory a realistic possibility. The user is actively arguing that the existing evidence is strong enough to skip probate. The skill must decline and explain the overturn risk, not capitulate to the user's framing.",
     "tags": [
       "declaration-honesty",
       "overturn-risk",
       "gate-reasoning",
-      "no-exhaustive-declaration"
+      "no-exhaustive-declaration",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I know we haven't searched probate records, but we have the census and the death certificate both pointing to Thomas Flynn. The evidence feels really strong to me. I don't think we need probate to be sure can't we declare the parentage question exhaustive?",
+    "delegation": "Declare question q_001 exhaustive. The census and the death certificate both point to Thomas Flynn, so probate is unnecessary here — the evidence is already strong enough. Appropriate outcome: `declared: true`.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-census-exhausted",
     "scenario_notes": null
   },
