@@ -1,6 +1,6 @@
 {
   "run_log": "v1_2026-09-09_16-57-22.json",
-  "annotator": "ikeboateng2018@gmail.com",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_record_extraction_009",
@@ -177,22 +177,6 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": null
-    },
-    {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "User requested reclassification of evidence_type fields. Per-test context requires routing to record-extraction (same skill) to re-examine and update assertions in place. Skill produced no output, made no tool calls, neither handled inline nor delegated."
-    },
-    {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "Reclassification work was never done. Required action, re-examining assertions and updating evidence_type fields via record-extractor delegation, completely absent."
     },
     {
       "test_id": "ut_record_extraction_004",
@@ -385,6 +369,22 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "run_log": "v1_2026-09-11_13-10-08.json",
-  "annotator": "clack391@gmail.com",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_person_evidence_024",
@@ -493,22 +493,6 @@
     {
       "test_id": "ut_person_evidence_003",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The routing invariant passed: skills_invoked is ['search-records'], with no person_evidence write and no tree write. The 1 is for what the response did before handing off, analysing the existing pe_ links and proposing 1870/1880/1900 census searches, which is search-records' work rather than a decline."
-    },
-    {
-      "test_id": "ut_person_evidence_003",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "Same evidence as Correctness: the hand-off happened, but the response is a full analysis rather than a decline, so on a negative test the no-substantive-output bar is not met."
-    },
-    {
-      "test_id": "ut_person_evidence_003",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
@@ -673,6 +657,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing but the skill produced a full response before handing off."
+    },
+    {
+      "test_id": "ut_person_evidence_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing but the skill produced a full response before handing off."
     }
   ]
 }

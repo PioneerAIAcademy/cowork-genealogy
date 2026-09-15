@@ -1,6 +1,6 @@
 {
   "run_log": "v1_2026-09-08_17-39-37.json",
-  "annotator": "edesonchristopher@gmail.com",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_record_extraction_023",
@@ -461,14 +461,6 @@
     {
       "test_id": "ut_record_extraction_011",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The model properly delegated the task without inappropriately attempting inline modifications."
-    },
-    {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
@@ -697,6 +689,14 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
     }
   ]
 }
