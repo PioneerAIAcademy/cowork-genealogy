@@ -110,22 +110,37 @@ def _place_key(place: str) -> tuple[str, ...]:
     return tuple(s.strip().casefold() for s in place.split(","))
 
 
-#: The attributes each site's table feeds, in order, into the field a
-#: rejected birthplace would reach: `birthPlace` first everywhere, then the
-#: fallbacks the tool applies when it is absent — `str(birthPlace) ??
-#: str(deathPlace)` on three sites, and FindMyPast's single `keywordsplace`
-#: running the longer chain (spec §4). A site not listed has no fallback.
+#: The attributes that reach a *birthplace* slot, per site, in the order the
+#: tool's own table falls back through them (spec §4). Only the sites with a
+#: fallback are listed; every other site is `("birthPlace",)`.
+#:
+#: `birthPlace` is judged on EVERY site, including the six whose table has no
+#: place field at all. That is deliberate and is pinned by
+#: `test_fires_on_any_site_regardless_of_its_own_url_parameter_name`: passing
+#: a rejected birthplace is the model asserting a fact the project already
+#: resolved against, and it is that judgement this check grades — not whether
+#: the target site happened to have a slot to drop it into. A review pass
+#: read the no-slot sites as false positives and was wrong on exactly this
+#: point.
+#:
+#: The narrowing applies only to the FALLBACK fields. `deathPlace` is a
+#: correct fact in this fixture (Patrick died in Pennsylvania, the rejected
+#: BIRTHplace), so it is judged only where the tool's own `?? deathPlace`
+#: makes it become the birthplace slot. A site's generic event-scope place
+#: (newspapers' `searchPlace`, chronicling_america's `usState`) is excluded
+#: for the same reason.
 _PLACE_SLOT_CHAIN = {
-    "antenati": ("birthPlace", "deathPlace"),
-    "archives_gov": ("birthPlace", "deathPlace"),
-    "american_ancestors": ("birthPlace", "deathPlace"),
     "findmypast": ("birthPlace", "marriagePlace", "deathPlace", "residencePlace"),
+    "archives_gov": ("birthPlace", "deathPlace"),
+    "antenati": ("birthPlace", "deathPlace"),
+    "american_ancestors": ("birthPlace", "deathPlace"),
 }
 
 
 def _effective_place_field(site, attrs):
-    """The one attribute whose value actually reaches the site's place slot,
-    or None when nothing does — the same first-present rule the tool applies."""
+    """The one attribute whose value actually reaches the site's birthplace
+    slot, or None when nothing does — the same first-present rule the tool
+    applies."""
     for field in _PLACE_SLOT_CHAIN.get(site, ("birthPlace",)):
         value = attrs.get(field)
         if isinstance(value, str) and value.strip():

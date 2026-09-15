@@ -114,10 +114,14 @@ function str(s: unknown): string | undefined {
 }
 
 // Newspapers.com's `dr_year`: a plain year or a hyphenated range, nothing
-// else — `dr_year=banana` used to ship because the field is string-typed.
+// else — `dr_year=banana` used to ship because the field is string-typed. An
+// inverted range is rejected too, for the same reason `chroniclingAmericaWindow`
+// rejects one: it returns nothing, and a nil from it reads as evidence.
 function yearOrRange(s: unknown): string | undefined {
   const t = str(s);
-  return t !== undefined && /^\d{4}(-\d{4})?$/.test(t) ? t : undefined;
+  if (t === undefined || !/^\d{4}(-\d{4})?$/.test(t)) return undefined;
+  const [from, to] = t.split("-");
+  return to !== undefined && Number(from) > Number(to) ? undefined : t;
 }
 
 // Joins the present parts; absent parts drop out. A `" "` separator is what
@@ -146,7 +150,10 @@ function positional(left: unknown, right: unknown): string | undefined {
 // names. The facet value is the full lowercase state name — a postal
 // abbreviation (`ny`) measures 0 — so one is expanded here. Multi-word names
 // (`new york`) are unverified against the facet (spec §9).
-const US_STATE_NAMES: Record<string, string> = {
+// `Object.create(null)`, not a plain literal: a plain object inherits
+// `constructor`, `toString` and friends, so `usState: "constructor"` looked up
+// a function and shipped `location_state:function Object() { [native code] }`.
+const US_STATE_NAMES: Record<string, string> = Object.assign(Object.create(null) as Record<string, string>, {
   al: "alabama", ak: "alaska", az: "arizona", ar: "arkansas", ca: "california",
   co: "colorado", ct: "connecticut", de: "delaware", fl: "florida", ga: "georgia",
   hi: "hawaii", id: "idaho", il: "illinois", in: "indiana", ia: "iowa", ks: "kansas",
@@ -158,12 +165,27 @@ const US_STATE_NAMES: Record<string, string> = {
   sd: "south dakota", tn: "tennessee", tx: "texas", ut: "utah", vt: "vermont",
   va: "virginia", wa: "washington", wv: "west virginia", wi: "wisconsin", wy: "wyoming",
   dc: "district of columbia",
-};
+});
 
+const US_STATE_FULL_NAMES = new Set(Object.values(US_STATE_NAMES));
+
+// Accepts a state name, a postal abbreviation, or a full place string — every
+// place in `research.json` is comma-qualified ("Schuylkill, Pennsylvania,
+// United States"), and passing one straight through shipped
+// `location_state:pennsylvania%2C+united+states`, a facet that matches nothing.
+// Each comma segment is tried; anything with no recognized state in it yields
+// no facet and a note, rather than a URL whose zero hits read as evidence.
 function usStateFacet(v: unknown): string | undefined {
-  const s = str(v)?.toLowerCase();
-  if (s === undefined) return undefined;
-  return US_STATE_NAMES[s] ?? s;
+  const raw = str(v);
+  if (raw === undefined) return undefined;
+  for (const segment of raw.split(",")) {
+    const s = segment.trim().toLowerCase();
+    if (s.length === 0) continue;
+    const expanded = US_STATE_NAMES[s];
+    if (expanded !== undefined) return expanded;
+    if (US_STATE_FULL_NAMES.has(s)) return s;
+  }
+  return undefined;
 }
 
 // The Library of Congress page corpus; a window entirely outside it cannot
@@ -606,23 +628,33 @@ function appendToBaseUrl(
   const overridden: string[] = [];
   const semicolonGroups: string[] = [];
   const existingTokens = existingQuery.length > 0 ? existingQuery.split("&") : [];
-  const preservedTokens = existingTokens.filter((token) => {
+  const preservedTokens: string[] = [];
+  for (const token of existingTokens) {
+    // A `;`-joined group (`birth=1800;name=X`) is one token here. Treating its
+    // first key as the whole token's key destroyed every other parameter in
+    // the group — including when that first key was `sid`, which sent the
+    // whole group through the strip below. Only the `sid` members are
+    // removed; the rest is preserved whole, since `;` is not a separator this
+    // tool may assume the site honours.
+    if (token.includes(";")) {
+      const kept = token.split(";").filter((sub) => decodeKey(sub.split("=", 1)[0]).toLowerCase() !== "sid");
+      if (kept.length === 0) continue;
+      for (const sub of kept) {
+        const subKey = decodeKey(sub.split("=", 1)[0]);
+        if (overriddenKeys.has(subKey) && !semicolonGroups.includes(subKey)) semicolonGroups.push(subKey);
+      }
+      preservedTokens.push(kept.join(";"));
+      continue;
+    }
     // Compared decoded: `birt%68` is the same key as `birth`.
     const key = decodeKey(token.split("=", 1)[0]);
-    if (key.toLowerCase() === "sid") return false;
-    // A `;`-joined group (`birth=1800;name=X`) is one token here; treating its
-    // first key as the whole token's key destroyed every other parameter in
-    // the group. Preserve it whole and say the key may now appear twice.
-    if (token.includes(";")) {
-      if (overriddenKeys.has(key) && !semicolonGroups.includes(key)) semicolonGroups.push(key);
-      return true;
-    }
+    if (key.toLowerCase() === "sid") continue;
     if (overriddenKeys.has(key)) {
       if (!overridden.includes(key)) overridden.push(key);
-      return false;
+      continue;
     }
-    return true;
-  });
+    preservedTokens.push(token);
+  }
 
   const appended = toQueryString(defined);
   const combinedQuery = [preservedTokens.join("&"), appended].filter((s) => s.length > 0).join("&");
@@ -686,7 +718,7 @@ const VALIDATE_BY_KIND: Record<AttributeKind, (v: unknown) => string | undefined
 
 const KIND_LABEL: Record<AttributeKind, string> = {
   string: "usable string",
-  yearRange: "plain year or hyphenated range (YYYY or YYYY-YYYY)",
+  yearRange: "plain year or ordered hyphenated range (YYYY or YYYY-YYYY)",
   year: "valid year",
   smallNumber: "valid number",
 };
@@ -805,6 +837,9 @@ function siteNotes(
       }
       if (window.inverted) {
         notes.push("searchStartYear is after searchEndYear — no date window was applied");
+      }
+      if (str(a.usState) !== undefined && usStateFacet(a.usState) === undefined) {
+        notes.push("'usState' names no US state this site can facet on — no state filter was applied");
       }
       const { first, last } = CHRONICLING_AMERICA_COVERAGE;
       if (window.start !== undefined && window.end !== undefined && (window.start < first || window.end > last)) {

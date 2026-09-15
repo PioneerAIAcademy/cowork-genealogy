@@ -1250,6 +1250,52 @@ describe("build_external_search_url", () => {
       expect(r.notes.filter((n) => /'name' already in baseUrl/.test(n))).toHaveLength(1);
     });
 
+    it("reads the state out of a comma-qualified place string, as research.json stores it", () => {
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { surname: "Flynn", usState: "Schuylkill, Pennsylvania, United States" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("fa=location_state:pennsylvania");
+      expect(r.url).not.toContain("%2C");
+    });
+
+    it("emits no state facet, with a note, when usState names no US state", () => {
+      for (const usState of ["constructor", "Ontario, Canada"]) {
+        const r = buildExternalSearchUrl({
+          site: "chronicling_america",
+          attributes: { surname: "Flynn", usState },
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).not.toContain("fa=");
+        expect(r.notes.some((n) => /'usState' names no US state/.test(n))).toBe(true);
+      }
+    });
+
+    it("keeps a ';'-joined group's other parameters when the group leads with sid", () => {
+      const r = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/?sid=abc;gsfn=Keepme;gsln=Also",
+        attributes: { surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toBe("https://www.ancestry.com/search/?gsfn=Keepme;gsln=Also&name=_Flynn");
+    });
+
+    it("rejects an inverted searchYear range, as the Chronicling America window does", () => {
+      const r = buildExternalSearchUrl({
+        site: "newspapers",
+        attributes: { surname: "Flynn", searchYear: "1905-1880" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).not.toContain("dr_year=");
+      expect(r.notes.some((n) => /'searchYear' was supplied but is not a plain year or ordered hyphenated range/.test(n))).toBe(true);
+    });
+
     it("emits Chronicling America's state as the fa= facet with a postal abbreviation expanded (round-4 B1)", () => {
       // The bare location_state= parameter measured as a no-op on the live
       // site; only the facet form filters, and only on the full lowercase name.
@@ -1322,7 +1368,7 @@ describe("build_external_search_url", () => {
       expect(bad.ok).toBe(true);
       if (!bad.ok) return;
       expect(bad.url).not.toContain("dr_year=");
-      expect(bad.notes.some((n) => /'searchYear' was supplied but is not a plain year or hyphenated range/.test(n))).toBe(true);
+      expect(bad.notes.some((n) => /'searchYear' was supplied but is not a plain year or ordered hyphenated range/.test(n))).toBe(true);
       const range = buildExternalSearchUrl({
         site: "newspapers",
         attributes: { givenName: "Patrick", surname: "Flynn", searchYear: "1880-1905" },

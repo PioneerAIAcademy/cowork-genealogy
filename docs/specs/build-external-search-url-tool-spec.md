@@ -142,7 +142,9 @@ build_external_search_url({
     // Chronicling America's date window and state
     searchStartYear?: number,      // dates= lower bound
     searchEndYear?: number,        // dates= upper bound
-    usState?: string,              // fa=location_state:<full lowercase name>; a postal abbreviation is expanded
+    usState?: string,              // fa=location_state:<full lowercase name>; a postal abbreviation
+                                    // or a comma-qualified place resolves to its state, and a
+                                    // value naming no US state yields no facet and a note
   },
 })
 ```
