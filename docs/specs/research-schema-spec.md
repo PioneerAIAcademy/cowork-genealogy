@@ -289,7 +289,15 @@ never a name-only stub — and writes the parent-child / spouse edges via
 `add_relationship` (see Section 8). `record-extraction` is
 **assertion-only**: it writes `sources` (the GedcomX `S` entry that
 mirrors each `src_` it appends to `research.json`) plus the assertions,
-and does **not** write `persons` or `relationships`. The harness's
+and is **not a writer of `persons` or `relationships`**. One derived
+exception, and it is authorized by tool identity rather than by adding
+the skill to the `persons` writer set: correcting an assertion's
+`place`/`standard_place`/`date`/`value` through
+`research_append`/`extraction_append` rewrites the same attributes on a
+fact already carrying that assertion's `assertion_id`
+(`tree-materialization-spec.md` §4.4). It adds or removes no person,
+fact, name or ref, and the validator admits only that exact delta, so
+adding an unsourced person or setting `primary` stays refused. The harness's
 `test_tree_ownership_table` universal validator enforces this ownership, reading
 the same `docs/specs/schemas/ownership.json` as the research.json half — and only
 inside a paid per-skill eval run, which is the whole of this rule's enforcement

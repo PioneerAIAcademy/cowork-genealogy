@@ -83,6 +83,10 @@
         "place": { "type": "string" },
         "standard_place": { "type": "string" },
         "value": { "type": "string" },
+        "assertion_id": {
+          "type": "string",
+          "description": "The research.json assertion this fact was minted from. Stamped by materialize_facts on the MINT branch only — never on corroboration, never inferred from a match, never supplied by a caller. Dropped when a human corrects the fact directly (tree_edit/tree_correct update_fact) and when a merge folds facts that do not ALL carry the same backlink, which includes folding a backlinked fact with an unbacklinked one. Simplified-format only: dropped on reverse conversion, like standard_date. See docs/specs/tree-materialization-spec.md section 4.4."
+        },
         "sources": {
           "type": "array",
           "items": { "$ref": "#/$defs/source_reference" }
