@@ -34,6 +34,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validators as tests of this module and error on their
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_search_familysearch_wiki import (  # noqa: E402
+    report_reply_does_not_restate_the_saved_file as check_brevity,
     test_expected_slug as check_slug,
     test_no_file_on_empty_results as check_no_file_on_empty,
     test_no_wiki_no_write as check_no_wiki_no_write,
@@ -316,3 +317,86 @@ def test_sources_still_fires_on_a_fabricated_url_outside_a_comment():
             _wiki_call(RESULT_A),
             _tags("fs-wiki"),
         )
+
+
+# --- report_reply_does_not_restate_the_saved_file (tier 2) -------------
+
+# Both replies below are verbatim from committed run logs, not invented.
+# The violating one recites the saved document into chat after a correct
+# closing sentence; the compliant one carries the same required narration
+# preambles and stops.
+_SAVED = {"files": {"german-church-records.md": "x"}}
+
+# ut_search_wiki_003, run v1_2026-08-19_13-00-35.
+_RECITING_REPLY = (
+    "Searching complete. Now let me read the template and save the summary."
+    "Now I'll write the summary file.The guidance has been saved to "
+    "**`german-church-records.md`**, which includes a **Sources** section "
+    "citing the wiki pages used. Here's a summary of what the wiki says:\n"
+    "\n---\n\n**German Church Records** are the key source for German "
+    "ancestry before civil registration.\n\n- Catholic and Protestant "
+    "parishes each kept their own registers\n- Records are organized by "
+    "parish, not town\n"
+)
+
+# ut_search_wiki_006, run v1_2026-08-19_14-53-19 - narration present,
+# no recitation.
+_COMPLIANT_REPLY = (
+    "Now I have everything I need. Let me write the summary file.The "
+    "FamilySearch Wiki guidance has been saved to **`marriage-records.md`**. "
+    "It covers where marriage records were kept (county clerks, churches, or "
+    "state vital records offices depending on era), the shift from church to "
+    "civil registration in the late 1800s, and the types of documents you may "
+    "encounter - licenses, certificates, bonds, and banns. The file includes "
+    "a **Sources** section citing the two wiki pages used."
+)
+
+
+def test_brevity_fires_on_the_observed_ut_003_recitation():
+    """The observed violation: a correct closing sentence, then the document
+    recited back with a horizontal rule and bullets."""
+    with pytest.raises(AssertionError, match="Keep it brief"):
+        check_brevity(EMPTY, _SAVED, _RECITING_REPLY)
+
+
+def test_brevity_passes_on_the_observed_compliant_reply():
+    """The guard that kept this check off the file for months: SKILL.md:24
+    mandates a one-line preamble per action and `text_response` carries every
+    turn, so a naive length rule fires on required narration. This reply has
+    both preambles and passes."""
+    check_brevity(EMPTY, _SAVED, _COMPLIANT_REPLY)
+
+
+def test_brevity_skips_when_no_file_was_saved():
+    """The rule is scoped to runs that saved a file - the empty-results path
+    and the boundary negatives must not be reported on."""
+    with pytest.raises(pytest.skip.Exception):
+        check_brevity(EMPTY, EMPTY, _RECITING_REPLY)
+
+
+def test_brevity_ignores_fenced_code():
+    """A `#` or `|` inside a fenced block is not recitation. Same class of
+    false positive as the HTML-comment strip in the Sources check, which
+    failed every positive test on its first live run."""
+    check_brevity(
+        EMPTY,
+        _SAVED,
+        "Saved to **`x.md`** with a Sources section.\n\n"
+        "```\n# not a heading\n| not a table\n- not a bullet\n```\n",
+    )
+
+
+@pytest.mark.parametrize(
+    "construct, reply",
+    [
+        ("heading", "Saved.\n\n## Summary\n\nProse."),
+        ("table row", "Saved.\n\n| Repo | Years |\n|---|---|\n"),
+        ("horizontal rule", "Saved.\n\n---\n\nProse."),
+        ("list marker", "Saved.\n\n- one\n- two\n"),
+    ],
+)
+def test_brevity_fires_on_each_construct(construct, reply):
+    """Each of the four arms fires on its own, so a regression in one regex
+    cannot hide behind the others."""
+    with pytest.raises(AssertionError, match=construct):
+        check_brevity(EMPTY, _SAVED, reply)

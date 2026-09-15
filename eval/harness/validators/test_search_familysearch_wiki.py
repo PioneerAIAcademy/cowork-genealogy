@@ -26,13 +26,16 @@ Note: the FamilySearch wiki tool is `wiki_search`; search-wikipedia's tool
 is `wikipedia_search` (which does NOT contain the substring "wiki_search"),
 so `.endswith("wiki_search")` cleanly targets only the FS-wiki tool.
 
-Deliberately NOT enforced here — the closing-message brevity rule (SKILL.md
-step 5, "Keep it brief"). It is violated in 59 of 59 file-saving runs across
-five committed run logs, so landing it as an assertion would fail every
-positive test at once and, because a failing validator fails the test outright
-(`_compute_outcome`: `if not validators_passed: return "fail"`), would also
-destroy the dimension scores that diagnose the skill. It stays on #1755 until
-the file-visibility fix removes the incentive to recite the file into chat.
+The closing-message rule (SKILL.md step 5, "Keep it brief") is enforced here
+as **tier 2** — `report_reply_does_not_restate_the_saved_file`. It was held off
+this file for months on the grounds that it would "fail every positive test at
+once" and, via `_compute_outcome`, destroy the dimension scores that diagnose
+the skill. That reasoning applies only to a gating `test_*` validator.
+`compute_validators_passed` skips tier-2 results outright
+(`if not r.reporting_only  # tier-2 never gates`, issue #1749), so a `report_*`
+version measures the violation and hands it to the judge as an observation
+without ever reddening a run or suppressing the judge. See that function's
+docstring for the corpus evidence.
 """
 
 from __future__ import annotations
@@ -294,3 +297,83 @@ def test_sources_section_matches_wiki_results(before_state, after_state, tool_ca
         "the saved file must contain no URL the wiki response did not "
         f"return; invented: {invented}"
     )
+
+
+# --- Tier 2: reporting only (never gates; issue #1749) -----------------
+
+# Markdown constructs that only appear in a reply when the saved document is
+# being recited back into chat. Re-derived over the five committed run logs on
+# 2026-09-15: 60 file-saving runs, 53 carry at least one of these, word range
+# 75-242. The corpus rotates -- re-derive rather than quoting those figures.
+_RECITATION_CONSTRUCTS = (
+    ("list marker", re.compile(r"^[ \t]*[-*+] ", re.M)),
+    ("heading", re.compile(r"^#{1,6} ", re.M)),
+    ("horizontal rule", re.compile(r"^[ \t]*(?:---|\*\*\*|___)[ \t]*$", re.M)),
+    ("table row", re.compile(r"^[ \t]*\|", re.M)),
+)
+
+_FENCED_CODE_RE = re.compile(r"```.*?```", re.DOTALL)
+
+
+def report_reply_does_not_restate_the_saved_file(
+    before_state, after_state, text_response
+):
+    """SKILL.md step 5: name the file and the fact of a Sources section, and
+    "Keep it brief". Tier 2 by design.
+
+    On a run that saved a file, a list marker, heading, table row or horizontal
+    rule in the reply is the saved document being recited back into chat, which
+    step 5 asks for instead of a recap and the body's "Never duplicate" rule
+    forbids. 53 of the 60 file-saving runs in the five committed run logs carry
+    at least one.
+
+    **Why tier 2, not tier 1.** A failing gating validator returns "fail" and
+    skips the judge entirely, so a `test_*` version would fire on ~88% of
+    file-saving runs and take the Correctness / Summary-faithful grading down
+    with it -- the craft signal this skill is diagnosed by. `report_*` results
+    are filtered out of `compute_validators_passed` (issue #1749), so this
+    reports without gating.
+
+    **Why this does not fire on required narration.** `SKILL.md:24` mandates a
+    one-line preamble per action, and `text_response` is every assistant turn,
+    not the closing message alone -- the objection that held this check off the
+    file. Checked against the corpus: all 7 construct-free file-saving runs do
+    carry their preambles ("Searching the FamilySearch Research Wiki now.",
+    "Now let me read the template before saving.") and score zero constructs.
+    Narration is prose; it does not emit these four constructs.
+
+    **No word ceiling.** Those same 7 compliant runs span 75-185 words, so
+    length and recitation are independent signals and a ceiling would be an
+    arbitrary second rule. Constructs only, which is the unambiguous half.
+
+    Gated on the file diff rather than a tag, so it cannot be silently
+    disarmed by a tag rename (#1757).
+    """
+    saved = sorted(_new_md_files(before_state, after_state))
+    if not saved:
+        pytest.skip("no file saved; the closing-message rule does not apply")
+
+    # Fenced code is stripped first: a `#` comment or a `|` inside a block
+    # quote is not recitation. Same class of false positive as the HTML-comment
+    # strip above, which failed every positive test on its first live run.
+    scannable = _FENCED_CODE_RE.sub("", text_response or "")
+
+    counts = []
+    for label, pattern in _RECITATION_CONSTRUCTS:
+        n = len(pattern.findall(scannable))
+        if n:
+            counts.append(f"{n} {label}{'' if n == 1 else 's'}")
+    if not counts:
+        return
+
+    words = len(scannable.split())
+    # State counts as fact and quote the rule; no verdict. split_observations
+    # passes this text to the judge verbatim, so a conclusion here would
+    # anchor the grade.
+    assert False, (
+        f"the reply on a run that saved {saved[0].split('/')[-1]} carries "
+        f"{', '.join(counts)} and runs to {words} words. SKILL.md step 5 asks "
+        "for the filename and the fact of a Sources section, and says "
+        '"Keep it brief".'
+    )
+
