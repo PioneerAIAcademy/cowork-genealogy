@@ -44,6 +44,7 @@ criteria-demotion rollout.
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -76,14 +77,42 @@ def _localities(state):
     return research.get("localities") or []
 
 
-def _new_localities(before_state, after_state):
-    """localities[] entries present in after_state but not before_state, keyed
-    by id. Validating only the entries THIS run wrote (rather than locs[-1])
-    keeps a fixture-seeded pre-existing entry from being graded as the skill's
-    output.
+def _written_localities(before_state, after_state):
+    """localities[] entries this run CREATED or MODIFIED: an entry whose id is
+    absent from before_state, or present but with changed content. Validating
+    only what this run wrote (rather than locs[-1]) keeps a fixture-seeded
+    pre-existing entry from being graded as the skill's output; including the
+    modified case catches an in-place update (research_append op:"update")
+    that reuses an id, which a new-id-only diff would skip entirely. A non-dict
+    entry is returned as-is so the shape check can report it rather than crash.
     """
-    before_ids = {e.get("id") for e in _localities(before_state)}
-    return [e for e in _localities(after_state) if e.get("id") not in before_ids]
+    before = {
+        e.get("id"): e for e in _localities(before_state) if isinstance(e, dict)
+    }
+    out = []
+    for e in _localities(after_state):
+        if not isinstance(e, dict) or before.get(e.get("id")) != e:
+            out.append(e)
+    return out
+
+
+_ID_KEYS = {"id", "collectionId", "collection_id"}
+
+
+def _harvest_id_values(obj, acc):
+    """Collect the string form of every value stored under an id-bearing key
+    anywhere in a tool response (collections_search collections[].id,
+    volume_search rows, a record_search row's collectionId). Exact values, so a
+    persisted id is matched against the whole field, never a numeric substring.
+    """
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k in _ID_KEYS and isinstance(v, (str, int)):
+                acc.add(str(v))
+            _harvest_id_values(v, acc)
+    elif isinstance(obj, list):
+        for v in obj:
+            _harvest_id_values(v, acc)
 
 
 def test_localities_persisted_with_full_page_coverage(after_state, test):
@@ -126,46 +155,59 @@ def test_persisted_localities_entry_shape(before_state, after_state):
     schema leaves at validator.ts:1490-1492; the top-level keys are already
     closed at write time.
 
-    Skips when the run persisted no new entry (standalone Q&A / decline).
-    Persistence itself is asserted only by the tag-gated test above, so a skill
-    that stops persisting fails there, never silently here.
+    Skips when the run wrote no entry (standalone Q&A / decline). Persistence
+    itself is asserted only by the tag-gated test above, so a skill that stops
+    persisting fails there, never silently here.
     """
-    new_entries = _new_localities(before_state, after_state)
-    if not new_entries:
-        pytest.skip("no new localities entry persisted this run")
-    for loc in new_entries:
+    written = _written_localities(before_state, after_state)
+    if not written:
+        pytest.skip("no localities entry created or modified this run")
+    for loc in written:
+        assert isinstance(loc, dict), f"localities entry is not an object: {loc!r}"
         lid = loc.get("id")
         assert loc.get("source") == "locality-guide", (
             f"localities[{lid}] source should be 'locality-guide', got {loc.get('source')!r}"
         )
-        sections = {p.get("section") for p in (loc.get("pages_read") or [])}
+        pages = loc.get("pages_read") or []
+        assert all(isinstance(p, dict) for p in pages), (
+            f"localities[{lid}] pages_read has a non-object item: {pages!r}"
+        )
+        sections = {p.get("section") for p in pages}
         missing = REQUIRED_WIKI_SECTIONS - sections
         assert not missing, (
             f"localities[{lid}] pages_read is missing wiki sections {sorted(missing)} — "
             "must attempt all four (home / getting_started / online_records / research_tips)"
         )
-        for j in (loc.get("jurisdictions") or []):
-            keys = set(j)
-            stray = keys - JURISDICTION_ALLOWED_KEYS
-            assert not stray, (
-                f"localities[{lid}] jurisdictions entry has stray keys {sorted(stray)} — "
-                f"allowed keys are {sorted(JURISDICTION_ALLOWED_KEYS)}"
-            )
-            missing_req = JURISDICTION_REQUIRED_KEYS - keys
-            assert not missing_req, (
-                f"localities[{lid}] jurisdictions entry missing required keys {sorted(missing_req)}"
-            )
-        for c in (loc.get("collections") or []):
-            keys = set(c)
-            stray = keys - COLLECTION_ALLOWED_KEYS
-            assert not stray, (
-                f"localities[{lid}] collections entry has stray keys {sorted(stray)} — "
-                f"allowed keys are {sorted(COLLECTION_ALLOWED_KEYS)}"
-            )
-            missing_req = COLLECTION_REQUIRED_KEYS - keys
-            assert not missing_req, (
-                f"localities[{lid}] collections entry missing required keys {sorted(missing_req)}"
-            )
+        _check_nested_items(
+            loc.get("jurisdictions") or [], lid, "jurisdictions",
+            JURISDICTION_ALLOWED_KEYS, JURISDICTION_REQUIRED_KEYS,
+        )
+        _check_nested_items(
+            loc.get("collections") or [], lid, "collections",
+            COLLECTION_ALLOWED_KEYS, COLLECTION_REQUIRED_KEYS,
+        )
+
+
+def _check_nested_items(items, lid, kind, allowed_keys, required_keys):
+    """Assert each nested jurisdictions/collections item is an object whose keys
+    are within `allowed_keys` (no stray) and include `required_keys`. A non-dict
+    item is reported cleanly rather than crashing on set()/`.get` — the runtime
+    schema validator does not type-check these nested items (validator.ts).
+    """
+    for item in items:
+        assert isinstance(item, dict), (
+            f"localities[{lid}] {kind} entry is not an object: {item!r}"
+        )
+        keys = set(item)
+        stray = keys - allowed_keys
+        assert not stray, (
+            f"localities[{lid}] {kind} entry has stray keys {sorted(stray)} — "
+            f"allowed keys are {sorted(allowed_keys)}"
+        )
+        missing_req = required_keys - keys
+        assert not missing_req, (
+            f"localities[{lid}] {kind} entry missing required keys {sorted(missing_req)}"
+        )
 
 
 def test_persisted_collection_ids_trace_to_tool_response(
@@ -178,11 +220,16 @@ def test_persisted_collection_ids_trace_to_tool_response(
     Traces against ALL same-run tool responses, not just
     collections_search/volume_search. compactStagedRecordSearch keeps
     collectionId on every row (staged-compaction.ts:72-85) and wiki_place_page
-    can surface a collection id in its markdown, so a narrower scope would
-    false-fail a legitimately grounded id. Matches ids by substring over the
-    serialized responses, which catches an id wherever it appears (a JSON id
-    field OR inline in wiki markdown) and biases a gating check toward the safe
-    direction (a coincidental match passes; a real fabrication still fails).
+    can surface a collection id inside its markdown, so a narrower scope would
+    false-fail a legitimately grounded id. Grounding is checked two ways: first
+    an EXACT match against every id-valued field harvested from the responses
+    (so a fabricated id that is a numeric substring of a longer real id — "196"
+    inside "1999196" — is NOT accepted); then, for an id that appears only in
+    prose, a digit-boundary search over the serialized responses (so a
+    markdown-cited id still grounds while a digit-substring still does not). The
+    residual is a fabricated id equal to a bare number bounded by non-digits
+    (e.g. a 4-digit year in a date range) — negligible for multi-digit
+    collection ids.
 
     Reads tc['response'] — the full fixture payload the mock served at
     validation time (mock_mcp.py:742; precedent
@@ -190,21 +237,30 @@ def test_persisted_collection_ids_trace_to_tool_response(
     responses to empty, so this validator's verdict on a real run is observable
     only live, never replayed from a committed log (register gap #2479).
     """
-    new_entries = _new_localities(before_state, after_state)
+    written = _written_localities(before_state, after_state)
     persisted = [
         (loc.get("id"), c.get("id"))
-        for loc in new_entries
+        for loc in written
+        if isinstance(loc, dict)
         for c in (loc.get("collections") or [])
-        if c.get("id") is not None
+        if isinstance(c, dict) and c.get("id") is not None
     ]
     if not persisted:
         pytest.skip("no persisted collection ids this run")
-    blob = json.dumps([tc.get("response") for tc in (tool_calls or [])], default=str)
+    responses = [tc.get("response") for tc in (tool_calls or [])]
+    grounded = set()
+    for r in responses:
+        _harvest_id_values(r, grounded)
+    blob = json.dumps(responses, default=str)
     for lid, cid in persisted:
-        assert str(cid) in blob, (
+        cid = str(cid)
+        traced = cid in grounded or bool(
+            re.search(rf"(?<!\d){re.escape(cid)}(?!\d)", blob)
+        )
+        assert traced, (
             f"localities[{lid}] collection id {cid!r} appears in no tool response "
-            "this run — a persisted collection id must trace to a tool result, "
-            "not be fabricated"
+            "this run — a persisted collection id must trace to a tool result "
+            "(an id-valued field or a text mention), not be fabricated"
         )
 
 

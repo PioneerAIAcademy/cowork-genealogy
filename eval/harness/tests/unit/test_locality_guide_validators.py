@@ -165,6 +165,39 @@ def test_shape_validates_only_the_new_entry_alongside_a_bad_seed():
     check_shape(_state([bad_seed]), _state([bad_seed, new_ok]))
 
 
+def test_shape_fires_on_an_in_place_update_of_an_existing_entry():
+    """An entry rewritten in place (same id) with a bad nested key must be
+    caught — the modified case a new-id-only diff would skip (review finding).
+    A `skip` here is a FAILURE, not a pass: reverting the fix makes the diff
+    return nothing, and a plain `pytest.raises` would let that skip read green.
+    """
+    good = _entry(lid="loc_001")
+    modified = _entry(lid="loc_001", jurisdictions=[{"name": "X", "county": "Y"}])
+    try:
+        check_shape(_state([good]), _state([modified]))
+    except AssertionError as exc:
+        assert "stray keys" in str(exc) and "county" in str(exc)
+    except pytest.skip.Exception:
+        pytest.fail("VR1 skipped a modified same-id entry instead of validating it")
+    else:
+        pytest.fail("VR1 did not fire on a modified same-id entry")
+
+
+def test_shape_reports_a_null_nested_item_cleanly_not_as_a_crash():
+    """A null jurisdictions item (which passes write-validation — validator.ts
+    does not type-check nested items) must raise a clean AssertionError, not a
+    TypeError from set(None) (review finding)."""
+    with pytest.raises(AssertionError) as exc:
+        check_shape(_state([]), _state([_entry(jurisdictions=[None])]))
+    assert "not an object" in str(exc.value)
+
+
+def test_shape_reports_a_string_collection_item_cleanly_not_as_a_crash():
+    with pytest.raises(AssertionError) as exc:
+        check_shape(_state([]), _state([_entry(collections=["1999196"])]))
+    assert "not an object" in str(exc.value)
+
+
 # --- VR2: test_persisted_collection_ids_trace_to_tool_response ----------
 
 
@@ -189,6 +222,29 @@ def test_ids_passes_when_id_in_record_search_collectionId():
     """compactStagedRecordSearch keeps collectionId on every row."""
     calls = [_call("record_search", response={
         "results": [{"collectionId": "1999196", "title": "A record"}]
+    })]
+    check_ids(_state([]), _state([_entry()]), calls)
+
+
+def test_ids_fires_when_persisted_id_is_only_a_substring_of_a_longer_real_id():
+    """A fabricated short id that is a numeric substring of a longer legit id in
+    a response must NOT be accepted as grounded — the exact/id-field + digit-
+    boundary trace closes the raw-substring false-negative (review finding)."""
+    calls = [_call("collections_search", response={
+        "collections": [{"id": "1999196", "title": "PA Probate"}]
+    })]
+    with pytest.raises(AssertionError) as exc:
+        check_ids(_state([]), _state([_entry(
+            collections=[{"id": "196", "title": "fabricated"}],
+        )]), calls)
+    assert "196" in str(exc.value)
+
+
+def test_ids_exact_field_match_does_not_depend_on_prose():
+    """A structured id-field value grounds even when the serialized text has no
+    other mention — exact harvest, not substring."""
+    calls = [_call("volume_search", response={
+        "results": [{"collectionId": "1999196"}]
     })]
     check_ids(_state([]), _state([_entry()]), calls)
 
