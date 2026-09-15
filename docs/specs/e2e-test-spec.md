@@ -1640,21 +1640,17 @@ Three things a reader has to know:
   real subagent totals captured in `subagents[].turns[]`. `sub.message_count`
   counts **subagent messages that reached the main stream**, not subagent turns:
   it exists to show the thread tag populated at all, not to size subagent work.
-- **The thread tag is exact where it appears, and on the CLI measured today it
-  never appears.** It reads `AssistantMessage.parent_tool_use_id`: `None` on
-  the main thread, the spawning Task's id on a subagent. Probed live against
-  CLI 2.1.271 with and without `include_partial_messages`, a subagent's turns
-  did **not** surface as `AssistantMessage` at all — they arrive as
-  `TaskStartedMessage` / `TaskNotificationMessage`, and the only tagged object
-  on the stream was a `UserMessage`. So on that CLI the accumulator sees
-  main-thread messages only, `sub.message_count` is `0`, and `message_usage`
-  is a faithful record of the main thread and silent about subagents.
-  **Read a zero `sub.message_count` as "no subagent message reached the
-  accumulator", never as "no subagent ran."** This is *not* the
-  `system:task_progress` adjacency heuristic in `e2e/cache_window.py` — that
-  one exists because `cache_window` reads committed logs, which carry no
-  message object to ask, and it is the fallback if subagent messages ever do
-  surface and need attributing.
+- **The thread tag is exact.** It reads `AssistantMessage.parent_tool_use_id`:
+  `None` on the main thread, the spawning Task's id on a subagent. Confirmed on
+  a real run (`ogletree-children`, 2026-09-15): **95 main / 98 subagent
+  messages**. A trivial one-subagent probe against the same CLI showed no tagged
+  `AssistantMessage` at all and is a **false negative** — a subagent that
+  answers in one turn does not produce enough stream traffic to surface one.
+  Do not re-probe this with a toy task. This is *not* the
+  `system:task_progress` adjacency heuristic in `e2e/cache_window.py` — that one
+  exists because `cache_window` reads committed logs, which carry no message
+  object to ask. **A zero `sub.message_count` means no subagent message reached
+  the accumulator, never that no subagent ran.**
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
