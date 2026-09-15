@@ -5,6 +5,14 @@ import type { SessionConnection, WsMessage } from '../transport/SessionConnectio
 import { api, ApiError } from '../api'
 import { foldChatEvent, type ChatMessage } from './chatEvents'
 
+import {
+  EXPERIENCE_CHIPS,
+  chipMessage,
+  applyChip,
+  shouldShowExperienceChips
+} from './experienceChips'
+import type { ExperienceLevel } from '@genealogy/schema'
+
 const OPENING_TURN = "Let's start a new genealogy research project."
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
@@ -140,6 +148,9 @@ export default function ChatPane({
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
+  // Last experience chip written into the composer, so a second click replaces
+  // it instead of stacking a contradictory second answer (#1932).
+  const [lastChip, setLastChip] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -250,6 +261,7 @@ export default function ChatPane({
     conn.send({ type: 'user_msg', text: trimmed })
     setBusy(true)
     setInput('')
+    setLastChip(null)
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
     // the user had scrolled up to compose against something further back.
     scrollToBottom()
@@ -342,6 +354,30 @@ export default function ChatPane({
               when a turn wasn't running, because a dropped socket is worth knowing
               about; it takes priority over "working" so a stall never masquerades
               as progress (the failure mode that hid the 2026-07-20 disconnect). */}
+          {/* Selectable answers for init-project's opening-turn experience-level
+              question (#1932). Held entirely in the client: no new event kind,
+              no server plumbing, and the agent cannot emit them. Clicking fills
+              the composer but never sends — the lead's ruling (option A) is that
+              the onramp stays non-blocking, so a picker must not become a
+              stop-and-wait. Hosted web only; Cowork renders its own chat UI. */}
+          {shouldShowExperienceChips(isNew, messages) && (
+            <div className="optionChips" role="group" aria-label="Your genealogy experience">
+              {(Object.keys(EXPERIENCE_CHIPS) as ExperienceLevel[]).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="optionChip"
+                  onClick={() => {
+                    const next = chipMessage(value)
+                    setInput((prev) => applyChip(prev, lastChip, next))
+                    setLastChip(next)
+                  }}
+                >
+                  {EXPERIENCE_CHIPS[value]}
+                </button>
+              ))}
+            </div>
+          )}
           {connState === 'reconnecting' ? (
             <div className="typing">●●● Reconnecting…</div>
           ) : (
