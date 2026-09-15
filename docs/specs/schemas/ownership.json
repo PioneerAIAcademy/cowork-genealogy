@@ -346,7 +346,7 @@
       "artifact": "tree.gedcomx.json",
       "section": "persons",
       "owner": null,
-      "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`.",
+      "reason": "Four co-equal writers with disjoint jobs and no structural owner: init-project mints the starting stubs, person-evidence owns the household skeleton and mints a person the moment a persona matches nobody, tree-edit applies user-directed changes, and proof-conclusion lands the concluded value. The permitted writers are listed in `callers`. record-extraction is deliberately NOT one of them: it reaches this section only through `research_append`/`extraction_append`'s assertion-update rewrite, which is authorized by TOOL identity instead, and only for the exact delta that rewrite can produce.",
       "callers": [
         "skill:init-project",
         "skill:tree-edit",
@@ -359,12 +359,14 @@
         "tree_correct",
         "materialize_facts",
         "merge_tree_persons",
-        "tree_forget"
+        "tree_forget",
+        "research_append",
+        "extraction_append"
       ],
       "enforceableAt": [
         "unit"
       ],
-      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub — except the party a relationship/marriage assertion NAMES that the record never names through a persona (materialize_facts's named-party form, tree-materialization-spec.md section 4.6). That arm writes a sourced name, and where the role does have a persona the record leaves unnamed AND the assertion's related_person_role corroborates the role, it writes that persona's facts too. The mandatory ref binds either way. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else. tree-edit may CLEAR `primary` (`primary: false`, never stored) to retire a concluded value while a conflict is open; it may not set one.",
+      "requires": "A minted person arrives with its first sourced evidence facts, never as a name-only stub — except the party a relationship/marriage assertion NAMES that the record never names through a persona (materialize_facts's named-party form, tree-materialization-spec.md section 4.6). That arm writes a sourced name, and where the role does have a persona the record leaves unnamed AND the assertion's related_person_role corroborates the role, it writes that persona's facts too. The mandatory ref binds either way. Only proof-conclusion sets `primary`/`proof_tier` — materialization adds sourced evidence and nothing else. tree-edit may CLEAR `primary` (`primary: false`, never stored) to retire a concluded value while a conflict is open; it may not set one. research_append/extraction_append write here ONLY through the assertion-`update` rewrite: they may change `place`, `standard_place`, `date` and `value` on a fact that ALREADY carries that assertion's `assertion_id`, and may add or remove no person, fact, name or ref. That narrowness is enforced, not just stated: they are absent from `callers`, and the unit-plane check authorizes them by tool identity only when the whole persons delta is that rewrite. A fact with no backlink is warned about, never guessed at.",
       "failure": "This file is the upload target. An unsourced person written here is uploaded to FamilySearch as fact.",
       "remedy": "Mint through person-evidence with the record's facts attached; correct through tree-edit; conclude through proof-conclusion.",
       "override": "none"

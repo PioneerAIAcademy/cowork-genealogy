@@ -177,6 +177,32 @@ export async function projectCreate(
       sources: Array.isArray(input.tree?.sources) ? input.tree.sources : [],
     };
 
+    // `assertion_id` is stamped by `materialize_facts`, never supplied. This
+    // tool copies the caller's tree verbatim, and the document validator type-
+    // checks the field but cannot know it was forged — so without this it is the
+    // one unguarded fact write path, and a forged backlink would persist into
+    // BOTH tree.gedcomx.json and the write-once starting-tree baseline, after
+    // which an assertion correction rewrites a hand-entered fact from an
+    // assertion it never came from. `tree_edit` refuses the same thing on its
+    // four paths; a seeding tree (a FamilySearch snapshot, a hand-built stub)
+    // has no assertions to point at, so nothing legitimate carries one.
+    const forged: string[] = [];
+    for (const holder of [...tree.persons, ...tree.relationships]) {
+      for (const fact of (holder as { facts?: unknown[] })?.facts ?? []) {
+        if (fact && typeof fact === "object" && "assertion_id" in fact) {
+          forged.push(String((holder as { id?: unknown }).id ?? "(unnamed)"));
+        }
+      }
+    }
+    if (forged.length > 0) {
+      throw new ProjectCreateError(
+        `the starting tree carries \`assertion_id\` on a fact of ${[...new Set(forged)].join(", ")} — ` +
+          "that field is the backlink `materialize_facts` stamps on a fact it mints from a " +
+          "research.json assertion, and a tree seeded here has no assertions to point at. " +
+          "Remove it; materialize the evidence once the project exists.",
+      );
+    }
+
     const stamp = today();
     const research: Record<string, unknown> = {
       project: {

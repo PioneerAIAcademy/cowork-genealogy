@@ -227,7 +227,7 @@ lead to approve *before* anything is filed, tagged with who should do it:
 
 | Owner tag | What belongs to them |
 |---|---|
-| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority. **This tag means the decision is his, not that he will implement it** — he takes no issues, so these file with `--label needs-decision` and **no assignee**, and wait in Backlog for `/make-decisions`, which runs daily and answers them. Use `--label senior` instead only when the work would still be hard after he answers |
+| **Lead** | Spend decisions (any paid eval run), doctrine calls, architecture, anything overriding another person's work, security triage, anything needing his authority. **This tag means the decision is his, not that he will implement it** — he takes no issues, so these file with `--label needs-decision` and **no assignee**, and wait in Backlog for `/make-decisions`, which runs daily and answers them. Add `--label senior` as well when the work would still be hard after he answers — the two are orthogonal, not alternatives |
 | **Junior genealogist** | Fixture adjudication, run-log annotation, record research, and doctrine *questions* you have prepared for them (see below) |
 | **Junior developer** | Lints, CI, validators, refactors, test fixes, tooling bugs, anything with a mechanical pass/fail |
 

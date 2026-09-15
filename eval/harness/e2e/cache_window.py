@@ -34,7 +34,11 @@ SDK ResultMessage's run TOTAL (`cache_read_input_tokens`,
 `iterations` array is a single entry in every run that carries it (138 of 163,
 measured 2026-09-11), not a per-call ledger; `subagents[].turns[]` carries
 `output_tokens` only. The orchestrator reads per-message usage off the stream
-(`_accumulate_usage`) but persists only the sums. So the timing comes from
+(`_accumulate_usage`) but, on runs written before `usage.message_usage`
+shipped, persisted only the sums. Runs carrying `message_usage` have real
+per-message window figures a future reader could use directly — **this module
+does not yet, and still distributes over every run**, so its output is heuristic
+even on a run that carries exact figures. So the timing comes from
 `usage.timeline`, and the run's cache-read tokens are distributed over the
 calls that timeline yields.
 
