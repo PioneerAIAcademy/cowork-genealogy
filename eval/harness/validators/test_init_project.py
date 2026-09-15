@@ -133,20 +133,59 @@ _INIT_EMPTY_SECTIONS = (
 )
 
 
-def test_init_empty_sections(after_state, test):
+def test_init_empty_sections(after_state, test, tool_calls):
     """Tag-gated: at init time, every research.json array section must be
     empty. The init-project workflow surveys known information but does
-    not formulate questions or plans — those are downstream skills."""
+    not formulate questions or plans — those are downstream skills.
+
+    `sources` IS ALLOWED to carry memory transcriptions, and only those. A
+    memory's text is not something the skill formulated — it arrives with the
+    tree read, like the tree sources themselves — and the lead ruled it is
+    persisted at init, to `sources[].transcription`. Every other section, and
+    this one on a person with no memories, is unchanged.
+
+    The exemption is deliberately narrow: an entry qualifies only if its
+    `transcription` is VERBATIM one of the texts `person_read` actually
+    returned, or is null (the memory the transcription budget did not reach,
+    which still gets its entry). So the skill cannot write a source it invented,
+    and the same check doubles as the verbatim requirement.
+    """
     if "init-empty-sections" not in test.get("tags", []):
         pytest.skip("not an init-empty-sections scenario")
     research = after_state.get("research_json")
     if research is None:
         assert False, "init-empty-sections requires research.json to exist"
+
+    returned_texts = {
+        s["text"]
+        for response in _responses(tool_calls, "person_read")
+        for s in (response.get("sources") or [])
+        if isinstance(s, dict) and isinstance(s.get("text"), str) and s["text"].strip()
+    }
+
     non_empty = []
     for section in _INIT_EMPTY_SECTIONS:
         value = research.get(section, [])
-        if value:
-            non_empty.append(f"{section} ({len(value)} entries)")
+        if not value:
+            continue
+        if section == "sources" and returned_texts:
+            stray = [
+                e.get("gedcomx_source_description_id") or "<no id>"
+                for e in value
+                if not isinstance(e, dict)
+                or (
+                    e.get("transcription") is not None
+                    and e.get("transcription") not in returned_texts
+                )
+            ]
+            if not stray:
+                continue
+            non_empty.append(
+                f"sources ({len(stray)} entries whose transcription is not "
+                f"verbatim from person_read: {stray})"
+            )
+            continue
+        non_empty.append(f"{section} ({len(value)} entries)")
     assert not non_empty, (
         f"research.json sections not empty at init: {non_empty}. "
         f"init-project should leave questions/plans/log/sources/assertions/"

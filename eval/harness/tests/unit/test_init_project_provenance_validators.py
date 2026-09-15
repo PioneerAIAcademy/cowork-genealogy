@@ -27,6 +27,7 @@ from test_init_project import (  # noqa: E402
     test_every_fact_and_relationship_is_sourced as check_sourced,
     test_narration_guidance_is_verbatim_for_the_level as check_narration,
     test_person_read_passes_both_flags as check_flags,
+    test_init_empty_sections as check_empty,
     test_returned_sources_reach_the_tree_without_notes as check_notes,
     test_search_before_stubs as check_search,
     test_standard_date_survives_from_the_tool as check_std_date,
@@ -571,3 +572,71 @@ def test_v7_fires_when_a_tagged_test_stubs_without_searching():
 def test_v7_skips_when_no_tree_person_was_written():
     with pytest.raises(pytest.skip.Exception):
         check_search([], _tree(), SEARCH_TAGGED)
+
+
+# --- init-empty-sections: the memory-transcription exemption --------------
+
+_STORY = "Patrick came over from County Mayo in 1867, a boy of nineteen."
+_EMPTY_TAGGED = {"type": "positive", "tags": ["init-empty-sections"]}
+
+
+def _after(research):
+    return {"research_json": research}
+
+
+def _blank(**over):
+    r = {s: [] for s in (
+        "questions", "plans", "log", "sources", "assertions",
+        "person_evidence", "conflicts", "hypotheses", "timelines",
+        "proof_summaries",
+    )}
+    r.update(over)
+    return r
+
+
+def test_empty_sections_allows_a_verbatim_memory_transcription():
+    """The ruled behaviour: a memory's text is persisted at init."""
+    calls = [_person_read_call(sources=[{"id": "228755097", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S3",
+                                    "transcription": _STORY}]))
+    check_empty(after, _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_allows_the_untranscribed_memory_with_a_null():
+    """A memory the budget did not reach still gets its entry."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S4",
+                                    "transcription": None}]))
+    check_empty(after, _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_still_fires_on_an_invented_transcription():
+    """The exemption must not become a hole: a transcription person_read never
+    returned is exactly the fabrication the empty-sections rule exists to stop."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S3",
+                                    "transcription": "I made this up."}]))
+    assert "not verbatim from person_read" in _fails(check_empty, after,
+                                                     _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_unchanged_when_no_memories_came_back():
+    """Every pre-existing test takes this path: no memory text, so `sources`
+    must still be empty and the original message still fires."""
+    calls = [_person_read_call(sources=[{"id": "S1", "title": "A census"}])]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S1"}]))
+    assert "sources (1 entries)" in _fails(check_empty, after,
+                                           _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_still_fires_on_the_other_sections():
+    """The exemption is scoped to `sources` alone."""
+    calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
+                                         "text": _STORY}])]
+    after = _after(_blank(questions=[{"id": "Q1"}]))
+    assert "questions (1 entries)" in _fails(check_empty, after,
+                                             _EMPTY_TAGGED, calls)
+
