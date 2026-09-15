@@ -84,7 +84,34 @@ trades quality for a saving that may not exist.
 Ranked by measured size over confidence. Each names what it touches and what
 would falsify it.
 
-### 1. Convert `research-plan` (#2116). That is the whole lever.
+### 1. Finish the pair-conversion queue — `search-records` first, then `research-plan`
+
+Measured on the four pair-present runs, main-thread footprint per run —
+**traffic** (args + captured result) plus the **resident skill body** (size ×
+invocation rate):
+
+| lever | traffic tok/run | resident body | total |
+|---|---|---|---|
+| **#2243 `search-records`** (blocked on **#2123**) | **12,573** (floor) | **19,914** | **32,487** |
+| **#2116 `research-plan`** | 3,277 | 9,004 | 12,281 |
+
+**`search-records` is ~2.6× the lever, and its number only moves up.** Its
+traffic is dominated by `record_search` at 9,870 tok/run against a 4,000-char
+result cap that 51 of 520 results saturate; `research-plan`'s is mostly args,
+which are recorded exactly. `record_read` adds another 1,941.
+
+**An earlier draft of this document ranked `research-plan` first. That was
+wrong, and wrong in a way worth naming:** it ranked by *operation count* —
+`plan_items` at 27.2 ops/run looked dominant — when operations are not tokens.
+Those 29.5 plan ops average ~111 tokens each; `search-records`' 17.2 calls carry
+far more per call. Rank levers by bytes.
+
+**Sequencing cuts the other way, though.** #2243 is blocked on #2123 (move the
+reference layer onto the wiki, then fold or delete the rest of a 60,807-byte
+body) — real work. #2116 is unblocked and can start now. So: **#2123 → #2243 is
+the priority; #2116 is what to take while #2123 is in flight.**
+
+### 1a. `research-plan` (#2116) — the unblocked half
 
 `research_append` writes go through the thread whose only job is routing. The
 fix is the pair conversion queue, and **most of it is already done** — the
@@ -181,17 +208,10 @@ feature.
 - **Acceptance:** `record_search` `result_chars` p90 drops materially with no
   loss in records triaged per run.
 
-### 4. Convert `search-records` to a skill-agent pair
+### 4. (folded into lever 1)
 
-Already on the board: **#2123** (move the reference layer onto the wiki) gates
-**#2243** (the conversion) and **#2241**. 60,807-byte body — 41% of all skill
-resident mass at ~19,900 tok/run — *and* it drives the `record_search` /
-`record_read` traffic in rows 2 and 6. Both halves leave main together.
-
-Ranked fourth only because it needs a paid eval slot and is already sequenced
-behind #2123. **Do not re-file it.** The `cluster:pair-conversion` items
-(#2115–#2121, #2263–#2270) cover skill *bodies*; nothing on the board covers
-main-thread *traffic*, which is what levers 1–3 are.
+`search-records` was originally ranked fourth here on the pooled table. Measured
+on pair-present runs it is the **largest** lever in this document — see lever 1.
 
 ### 5. Decompose the ~27k baseline
 
@@ -264,10 +284,16 @@ change.
 ## Sequencing
 
 1. The baseline instrumented run (in progress) → read the three items above.
-2. Scope levers 1 and 2 from `result_chars`; they need no eval slot and no
-   architecture change.
-3. Answer lever 3's "tuning or feature?" question free, from the same run.
-4. Levers 4–6 follow the measurement, not this doc's ranking.
+   `result_chars` is what turns `search-records`' 12,573 tok/run floor into a
+   real number, and it can only move up.
+2. **Start #2123** (the `search-records` reference layer) — it gates the largest
+   lever and is the long pole.
+3. **Take #2116 (`research-plan`) in parallel** — unblocked, no dependency on
+   the run, and the second-largest conversion left.
+4. Lever 2 (`Read` → `research_query`) needs no eval slot and no architecture
+   change; scope it from `result_chars`.
+5. Answer lever 3's "tuning or feature?" question free, from the same run.
+6. Levers 5–6 follow the measurement, not this doc's ranking.
 
 Re-rank after step 1. Four of the six levers are ranked on a floor, and the run
 exists to replace it.
