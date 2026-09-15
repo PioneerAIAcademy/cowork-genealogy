@@ -150,7 +150,7 @@ def test_slug_ignores_a_descriptive_slug_tag():
     this helper scanned for the `slug-` prefix and so resolved the expected
     file to `normalization.md` while the test writes `census-records.md`,
     failing a green test and taking the judge down with it (a failing
-    validator skips grading). Verified against both committed run logs at the
+    validator fails the test outright). Verified against both committed run logs at the
     time: 11 matched, this one did not.
 
     The prefix is now `expects-file-`, which cannot collide with a

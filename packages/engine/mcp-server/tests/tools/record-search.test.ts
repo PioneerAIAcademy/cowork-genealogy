@@ -347,6 +347,34 @@ describe("buildSearchUrl param mapping", () => {
     expect(url).toContain("q.birthLikePlace=Kentucky");
   });
 
+  // Issue #2071. A particle surname is passed through VERBATIM, percent-encoded
+  // and unquoted. No unit test passed a surname containing a space before this.
+  //
+  // This pins the STRING THE TOOL BUILDS, which is the only half CI can see
+  // (spec row 20a). That FamilySearch honours it is a separate, live claim, and
+  // it is measured in section K of dev/probe-search-qualifiers.ts, not here.
+  //
+  // The probe is also why this test asserts the ABSENCE of quotes rather than
+  // adding them: `name-search-mechanics.md` prescribes literal quotes, and the
+  // server strips them before matching (bare and unbalanced-quote queries both
+  // return 900,650). Quoting is inert, so emitting it would add an encoded pair
+  // of `%22`s to every multi-word surname for no measured gain.
+  it("15a. a particle surname is sent verbatim, space-encoded and unquoted", () => {
+    const url = buildSearchUrl({ surname: "van der Linde" });
+    expect(url).toContain("q.surname=van%20der%20Linde");
+    expect(url).not.toContain("%22");
+    // Not split into surname + surnameAlt, and not concatenated.
+    expect(url).not.toContain("q.surname.1=");
+    expect(url).not.toContain("vanderLinde");
+  });
+
+  it("15b. the space survives round-tripping the built URL", () => {
+    const url = buildSearchUrl({ surname: "van der Linde", givenName: "Marinus" });
+    const parsed = new URL(url);
+    expect(parsed.searchParams.get("q.surname")).toBe("van der Linde");
+    expect(parsed.searchParams.get("q.givenName")).toBe("Marinus");
+  });
+
   it("15. surnameExact + surnameAlt emits both .exact=on and .exact.1=on", () => {
     const url = buildSearchUrl({
       surname: "Smith",
