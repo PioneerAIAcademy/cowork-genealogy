@@ -44,6 +44,13 @@ validation errors in `research.json`):
 > choose a narrower slice (fact-level selectors like `birth-of` or
 > `death-of` instead of `person`).
 
+## When this skill applies
+
+This is a **project-start** exercise. `tree_forget` refuses the call once
+`research.json` holds any plan — the project has moved past setup. If the
+researcher asks to forget mid-project, tell them to start a new project seeded
+from the same FamilySearch person.
+
 ## The two halves — both are required
 
 Stripping the local tree is only half the mechanism.
@@ -160,7 +167,7 @@ sub-skills. If the forgotten slice isn't already covered by an open research
 question, create or reopen one (via `question-selection`) that targets exactly
 what was forgotten, and let it drive a plan — do not fall back to ad-hoc
 `record_search` calls with no `plan_item_id`. A forgotten relationship is a new
-question in its own right, even when an unrelated question is mid-plan.
+question in its own right.
 
 **Extract everything a record documents, not only the fact the
 researcher asked about.** A record found while deriving the answer routinely
@@ -228,7 +235,8 @@ to the tree. `dryRun` writes neither file.
 **On re-invocation,** forgetting is additive: a second call strips a further
 slice from the already-stripped tree. Dry-run first every time regardless — the
 cascade depends on the tree's *current* shape, so the second call's blast radius
-is not the first one's.
+is not the first one's. Both calls must happen before any plan is written —
+once `research.json` holds a plan, `tree_forget` refuses.
 
 **The restore file is written once and never overwritten,** so it always holds
 the tree as it was before the *first* forget. A second forget does not disturb
