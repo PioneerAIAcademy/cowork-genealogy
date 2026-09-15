@@ -1065,6 +1065,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     zero_call_draws = 0
     na_coerced: set[tuple[str, str]] = set()
     na_leaked: list[str] = []
+    orchestrator_coerced_draws = 0
 
     for p in log_paths:
         d = json.loads(p.read_text(encoding="utf-8"))
@@ -1085,6 +1086,24 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                     continue
                 dims = jd.get("dimensions") or []
                 if not dims:
+                    continue
+                # A `coerced_routing_negative_to_na` run carries dimensions the
+                # ORCHESTRATOR rewrote after the judge returned
+                # (orchestrator.py, `coerced_routing_negative_to_na`): base
+                # Correctness/Completeness are nulled on a routing-decided
+                # negative test. Replaying those through _extract_dimensions
+                # feeds harness output back in as though it were a judge draw,
+                # and judge.py's base-null rule rightly rejects it — so the
+                # raise says nothing about any historical draw, which is all
+                # this test guards. Contrast `coerced_tool_arguments_to_na`,
+                # which _extract_dimensions performs ITSELF and so replays
+                # cleanly; that asymmetry is why only this kind is exempt.
+                # Counted and printed, never silently dropped.
+                if any(
+                    (w or {}).get("kind") == "coerced_routing_negative_to_na"
+                    for w in ((r.get("output") or {}).get("warnings") or [])
+                ):
+                    orchestrator_coerced_draws += 1
                     continue
                 total_draws += 1
                 # The run's OWN tool calls, never a stand-in: the #1406
@@ -1124,6 +1143,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     print(
         f"\ncorpus replay: {len(log_paths)} run logs, {total_draws} judge draws, "
         f"{dropped_total} dimension(s) dropped-with-warning, "
+        f"{orchestrator_coerced_draws} orchestrator-coerced draw(s) exempted, "
         f"{len(unexpected_raises)} unexpected raise(s)"
     )
     # #1361 review (S2): without these two, the loop above can silently
