@@ -31,7 +31,10 @@ researcher why, based on the failure mode:
 > The `tree_forget` tool is not available in your current MCP server.
 > Rebuild and reinstall the extension from a current repo pull, then retry.
 
-**If the tool is present but returns `{ok: false}`** (most commonly due to
+**If the error names the project's plan,** relay it and stop — see "When this
+skill applies" below. No selector avoids it and clearing entries will not help.
+
+**If the tool returns `{ok: false}` for any other reason** (most commonly
 validation errors in `research.json`):
 
 > `tree_forget` failed with the following error:
