@@ -23,9 +23,13 @@
  *     `<event>Year` family was measured". Its third question — what happens to
  *     records carrying NO indexed year — is answered only for `.exact=on`
  *     (it drops them); the unqualified case is OPEN and the section says so.
- *   SECTION J — Fulltext search: what `q.recordPlace` and `f.recordPlace*`
- *     actually search (transcript content vs collection metadata vs both).
- *     Uses a discriminating-document strategy against the fulltext endpoint.
+ *   SECTION J — Fulltext search: what `q.recordPlace`, `f.recordPlace*`, and
+ *     `q.fullName` actually search (transcript content vs collection metadata
+ *     vs both). Uses a discriminating-document strategy against the fulltext
+ *     endpoint.
+ *   SECTION K — Particle surnames. Whether the literal quotes
+ *     `name-search-mechanics.md` prescribes change anything (they are
+ *     stripped before matching), and whether the particle is needed to match.
  *
  * EVERY CONCLUSION LINE IS COMPUTED FROM THE RUN, never a literal. Section F
  * used to end in a hardcoded `console.log` asserting "gibberish -> 0" — it
@@ -5504,7 +5508,7 @@ async function sectionQ(): Promise<void> {
   await runRecordsFamily(RECORDS_RESIDENCE_FAM, { pool: US_CENSUS_CONTROL, keyPrefix: "bands:records-uscensus" });
 }
 
-// --- SECTION J — fulltext: what q.recordPlace and f.recordPlace* search ---
+// --- SECTION J — fulltext: what q.recordPlace, f.recordPlace*, and q.fullName search ---
 
 interface FulltextEntry {
   id: string;
@@ -5512,6 +5516,8 @@ interface FulltextEntry {
   collectionTitle: string;
   recordPlace: string;
   textDocument: string;
+  /** NLP-recognized person names from `content.entities` (type `NAME`). */
+  names: string[];
 }
 
 interface FulltextHit {
@@ -5525,8 +5531,8 @@ interface FulltextHit {
  * `searchOnce`/`search` use for the indexed endpoint) per issue #1829's mandate.
  * Always appends `m.queryRequireDefault=on`.
  */
-async function fulltextSearch(query: string, count = 5): Promise<FulltextHit> {
-  const url = `${FULLTEXT_URL}?${query}&${REQUIRE_SWITCH}&count=${count}`;
+async function fulltextSearch(query: string, count = 5, offset = 0): Promise<FulltextHit> {
+  const url = `${FULLTEXT_URL}?${query}&${REQUIRE_SWITCH}&count=${count}&offset=${offset}`;
   const res = await fetchRetry(url, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -5547,6 +5553,7 @@ async function fulltextSearch(query: string, count = 5): Promise<FulltextHit> {
       content?: {
         recordPlace?: string;
         textDocument?: string;
+        entities?: Array<{ type?: string; value?: string }>;
       };
     }>;
   };
@@ -5561,6 +5568,9 @@ async function fulltextSearch(query: string, count = 5): Promise<FulltextHit> {
     collectionTitle: e.collectionTitle ?? "",
     recordPlace: e.content?.recordPlace ?? "",
     textDocument: e.content?.textDocument ?? "",
+    names: (e.content?.entities ?? [])
+      .filter((ent) => ent.type === "NAME" && ent.value)
+      .map((ent) => ent.value!),
   }));
   return {
     total: typeof parsed.results === "number" ? parsed.results : null,
@@ -5609,13 +5619,25 @@ async function fulltextGetUSRegionId(baseQuery: string): Promise<string | null> 
 }
 
 /**
- * Section J — Fulltext search: what `q.recordPlace` and `f.recordPlace*`
- * actually search (transcript content vs collection metadata vs both).
+ * Section J — Fulltext search: what `q.recordPlace`, `f.recordPlace*`, and
+ * `q.fullName` actually search (transcript content vs collection metadata
+ * vs both).
  *
  * Strategy: find a DISCRIMINATING document — one where a place name appears
  * in the transcript but NOT in the collection metadata. Then test whether
  * `q.recordPlace` and `f.recordPlace*` find that document when given the
  * transcript-only place name vs the metadata place name.
+ *
+ * `q.fullName` is tested with T6 (an NLP-recognized name from the anchor)
+ * and T7 (a non-name word "executor" known to be in the transcript). T7
+ * paginates the full result set (count=100, offset stepping) so the negative
+ * is airtight — a `found=false` with unexamined entries is a paging artifact,
+ * not a measurement. If the full set cannot be exhausted, the soundness guard
+ * in verdict 4 falls to NOT MEASURED. If T7 finds the anchor, `q.fullName`
+ * searches full transcript text; if not (over the full set), it is restricted
+ * to name fields. Note: a "not found" negative cannot distinguish "searches
+ * name fields only" from "applies NLP name recognition to the query input,
+ * rejecting non-name terms"; the simpler interpretation is assumed.
  *
  * `f.recordPlace1` accepts only the NUMERIC IDs returned by the facets API
  * (e.g. `f.recordPlace1=10,Alabama`), not plain text values. Passing plain
@@ -5623,18 +5645,20 @@ async function fulltextGetUSRegionId(baseQuery: string): Promise<string | null> 
  * artifact. Phase 2 obtains the correct numeric IDs from the facets response
  * before using `f.recordPlace*`.
  *
- * Three verdicts:
+ * Four verdicts:
  *   - verdict:q.text searches transcript
  *   - verdict:q.recordPlace searches
  *   - verdict:f.recordPlace searches
+ *   - verdict:q.fullName searches
  */
 async function sectionJ(): Promise<void> {
-  console.log("\n=== J. Fulltext search: what q.recordPlace and f.recordPlace* actually search ===");
+  console.log("\n=== J. Fulltext search: what q.recordPlace, f.recordPlace*, and q.fullName actually search ===");
 
   const NOT_MEASURED = (): void => {
     record("J", "verdict:q.text searches transcript", "NOT MEASURED");
     record("J", "verdict:q.recordPlace searches", "NOT MEASURED");
     record("J", "verdict:f.recordPlace searches", "NOT MEASURED");
+    record("J", "verdict:q.fullName searches", "NOT MEASURED");
   };
 
   // --- Phase 1: Discovery ---
@@ -5828,6 +5852,90 @@ async function sectionJ(): Promise<void> {
   console.log(`     anchor found: ${t5Found}  (total: ${t5Total}, error: ${t5Error})`);
   record("J", `T5:f.recordPlace1=${metadataState} (metadata place)`, { found: t5Found, total: t5Total, error: t5Error });
 
+  // Test 6: q.fullName with an NLP-recognized name from the anchor's transcript.
+  // If q.fullName works at all for name queries, this should find the anchor.
+  // The name is extracted from content.entities (type NAME) — the same field
+  // fulltext-search.ts:112-116 already uses.
+  const anchorName = anchor.names.length > 0 ? anchor.names[0] : null;
+  let t6Found = false;
+  let t6Total: number | null = null;
+  let t6Error: string | null = null;
+  if (!anchorName) {
+    t6Error = "anchor has no NAME entities";
+    console.log("  T6 q.fullName — SKIPPED: anchor has no NLP-recognized NAME entities");
+  } else {
+    const t6 = await fulltextSearch(
+      "q.fullName=" + encodeURIComponent(anchorName) +
+      "&f.collectionId=" + encodeURIComponent(cid),
+      20
+    );
+    t6Found = !t6.error && containsAnchor(t6);
+    t6Total = t6.total;
+    t6Error = t6.error;
+    console.log(`  T6 q.fullName=${anchorName}, f.collectionId=${cid}`);
+    console.log(`     anchor found: ${t6Found}  (total: ${t6Total}, error: ${t6Error})`);
+  }
+  record("J", `T6:q.fullName=${anchorName ?? "(none)"} (NLP name control)`, { found: t6Found, total: t6Total, error: t6Error });
+  // Note: T6 often returns a much larger total than other collection-scoped
+  // queries (e.g. ~1.9M vs ~5.8K for T1/T3/T5), suggesting f.collectionId may
+  // not constrain q.fullName the same way. This does not invalidate the
+  // positive control (the anchor IS in the result set) but is worth recording.
+  if (t6Total !== null && t1.total !== null && t6Total > t1.total * 10) {
+    console.log(`     NOTE: T6 total (${t6Total}) is >10× the T1 total (${t1.total}) — f.collectionId may not constrain q.fullName`);
+  }
+
+  // Test 7: q.fullName with a non-name word ("executor") known to be in the
+  // transcript (the discovery query uses +executor +Virginia). "executor" is a
+  // legal role, not a person name. If q.fullName finds the anchor with this
+  // term, it searches the full transcript text — not just name fields.
+  //
+  // Paginates the full result set so the negative is airtight: a `found=false`
+  // with `total > entries examined` is a paging artifact, not a measurement
+  // (every other section-J negative returns total=0). If pagination cannot
+  // exhaust the set, the soundness guard in verdict 4 falls to NOT MEASURED.
+  //
+  // Ambiguity note: if T7 returns "not found" over the full set, the verdict
+  // cannot distinguish "searches name fields only" from "searches all fields
+  // but applies NLP name recognition to the query input, rejecting non-name
+  // terms". The simpler interpretation (name fields only) is assumed.
+  let t7Found = false;
+  let t7Total: number | null = null;
+  let t7Error: string | null = null;
+  let t7Examined = 0;
+  if (!anchorName) {
+    // If T6 could not run, skip T7 too — we need the name control to anchor
+    // the verdict.
+    t7Error = "skipped (T6 could not run)";
+    console.log("  T7 q.fullName=executor — SKIPPED: T6 could not run (no name control)");
+  } else {
+    const t7Query =
+      "q.fullName=" + encodeURIComponent("executor") +
+      "&f.collectionId=" + encodeURIComponent(cid);
+    const PAGE_SIZE = 100;
+    let offset = 0;
+    while (true) {
+      const page = await fulltextSearch(t7Query, PAGE_SIZE, offset);
+      if (page.error) {
+        t7Error = page.error;
+        break;
+      }
+      if (t7Total === null) t7Total = page.total;
+      t7Examined += page.entries.length;
+      if (page.entries.some((e) => e.id === anchorId)) {
+        t7Found = true;
+        break;
+      }
+      // Last page or empty page — done.
+      if (page.entries.length < PAGE_SIZE) break;
+      offset += page.entries.length;
+      // Safety cap: don't paginate beyond 1000 entries.
+      if (offset >= 1000) break;
+    }
+    console.log(`  T7 q.fullName=executor, f.collectionId=${cid}`);
+    console.log(`     anchor found: ${t7Found}  (total: ${t7Total}, examined: ${t7Examined}, error: ${t7Error})`);
+  }
+  record("J", "T7:q.fullName=executor (non-name word)", { found: t7Found, total: t7Total, examined: t7Examined, error: t7Error });
+
   // --- Phase 3: Compute verdicts ---
   console.log("\n  Phase 3: verdicts");
 
@@ -5872,6 +5980,224 @@ async function sectionJ(): Promise<void> {
   }
   record("J", "verdict:f.recordPlace searches", v3);
   console.log(`  verdict:f.recordPlace searches — ${v3}`);
+
+  // Verdict 4: q.fullName searches ...
+  // T6 (NLP name from anchor) tells us if q.fullName works at all.
+  // T7 ("executor", a non-name word) tells us if it reaches the full transcript.
+  //
+  // Soundness guard: a T7 negative is only airtight when the probe examined
+  // every result (t7Examined >= t7Total). A negative with unexamined entries
+  // is a paging artifact (the anchor could rank beyond the examined window).
+  const t7NegativeSound =
+    t7Total !== null && t7Total >= 0 && t7Examined >= t7Total;
+  let v4: string;
+  if (t6Error !== null) {
+    v4 = "NOT MEASURED";
+  } else if (!t6Found) {
+    v4 = "NOT MEASURED — name control failed (anchor not found by its own NLP name)";
+  } else if (t7Error !== null) {
+    v4 = "NOT MEASURED";
+  } else if (t7Found) {
+    v4 = "full transcript (same as q.text)";
+  } else if (!t7NegativeSound) {
+    v4 = `NOT MEASURED — T7 negative unsound (examined ${t7Examined} of ${t7Total})`;
+  } else {
+    v4 = "name fields only";
+  }
+  record("J", "verdict:q.fullName searches", v4);
+  console.log(`  verdict:q.fullName searches — ${v4}`);
+}
+
+// --- SECTION K — particle surnames ----------------------------------------
+
+/**
+ * SECTION K — particle surnames (`van der Linde`, `Mc Kee`), issue #2071.
+ *
+ * Two claims were in the tree and neither had a measurement:
+ *   - `search-records/references/name-search-mechanics.md` prescribes LITERAL
+ *     QUOTES around a multi-word surname. The tool does not send them.
+ *   - The issue originally claimed `record_search` "cannot express" a particle
+ *     surname at all. Review found that false before this probe ran; this
+ *     section is what replaced the anecdote with a number.
+ *
+ * METHOD. A top-N comparison cannot tell ABSENT from OUTRANKED, which has
+ * already invalidated one probe in this file (section E). So every leg here is
+ * a SET comparison on one hard-scoped pool, ENUMERATED with `scanIds` rather
+ * than sampled. `count` is capped at 100 by the endpoint — asking for 200 returns a 400
+ * and ZERO rows, and a set comparison over two empty arrays reports "identical"
+ * for free. That is why `readPool` returns null on an errored OR EMPTY read and
+ * every verdict below falls to NOT MEASURED rather than to agreement.
+ */
+async function sectionK(): Promise<void> {
+  console.log("\n=== K. particle surnames: does quoting matter, does the particle? ===");
+
+  // Hard-scoped: one given name, one country, a ten-year window. ~558 rows at
+  // the time of writing, which is small enough to ENUMERATE -- the point of the
+  // scoping -- rather than to sample. An earlier version of this comment called
+  // a 100-row page "a real sample", and that reasoning is what produced the
+  // wrong answer about `Linde`.
+  const POOL =
+    "q.givenName=Marinus&f.recordCountry=Netherlands" +
+    "&q.birthLikeDate.from=1800&q.birthLikeDate.to=1810";
+
+  // RULE 0: enumerate, never compare first pages. `count` maxes at 100 and this
+  // pool is ~558, so the original single-request version compared PAGES and
+  // called the result a set comparison. `scanIds` pages to exhaustion and hands
+  // back a DEDUPED Set, which also removes a second bug for free: this pool is a
+  // date-range query, and date-range pools in this file re-serve the same
+  // persona at many offsets (section N: 4,900 rows for 1,100 distinct).
+  const readPool = async (
+    surname: string
+  ): Promise<{ total: number; ids: Set<string>; rows: number } | null> => {
+    const r = await scanIds(
+      // No REQUIRE_SWITCH here -- scanIds appends it to every page it fetches.
+      `q.surname=${encodeURIComponent(surname)}&${POOL}`,
+      1000
+    );
+    if (!r.complete || r.total === null || r.ids.size === 0) return null;
+    return { total: r.total, ids: r.ids, rows: r.rows };
+  };
+
+  // "Linde, van der" is the card's leg 2 and was missing: Dutch and Belgian
+  // indexes routinely alphabetise under the root with the tussenvoegsel
+  // trailing, so it is the form a Dutch researcher actually meets.
+  const FORMS = [
+    "van der Linde",
+    '"van der Linde"',
+    "vanderlinde",
+    "Van Der Linde",
+    "Linde",
+    "Linde, van der",
+  ];
+  const pools = new Map<string, { total: number; ids: Set<string>; rows: number } | null>();
+  for (const f of FORMS) {
+    const got = await readPool(f);
+    pools.set(f, got);
+    record("K", `pool:${f}`, got ? got.total : null);
+    console.log(
+      `  q.surname=${JSON.stringify(f).padEnd(18)} ${got ? fmt(got.total) : "NOT ENUMERATED"}  rows=${got?.rows ?? 0} distinct=${got?.ids.size ?? 0}`
+    );
+  }
+
+  const baseline = pools.get("van der Linde") ?? null;
+  // Set-against-Set. The earlier form compared a merged Set's SIZE against an
+  // array LENGTH, so any pool serving a persona twice reported two identical
+  // scans as DIFFERENT.
+  const sameSetAs = (f: string): boolean | null => {
+    const a = pools.get(f) ?? null;
+    if (!baseline || !a) return null;
+    if (a.ids.size !== baseline.ids.size) return false;
+    return [...a.ids].every((id) => baseline.ids.has(id));
+  };
+
+  const quotedSame = sameSetAs('"van der Linde"');
+  const concatSame = sameSetAs("vanderlinde");
+  const casedSame = sameSetAs("Van Der Linde");
+  const bareLindeSame = sameSetAs("Linde");
+  const invertedSame = sameSetAs("Linde, van der");
+  record(
+    "K",
+    "verdict:dropping the particle returns the same set",
+    bareLindeSame === null
+      ? "NOT MEASURED"
+      : bareLindeSame
+        ? "YES — 'Linde' enumerates the identical set as 'van der Linde'"
+        : "NO — 'Linde' enumerates a different set"
+  );
+  record(
+    "K",
+    "verdict:the inverted form reaches the same set",
+    invertedSame === null
+      ? "NOT MEASURED"
+      : invertedSame
+        ? "YES — 'Linde, van der' enumerates the identical set"
+        : "NO — 'Linde, van der' enumerates a different set"
+  );
+  for (const [label, v] of [
+    ['"van der Linde" (quoted)', quotedSame],
+    ["vanderlinde (space removed)", concatSame],
+    ["Van Der Linde (cased)", casedSame],
+    ["Linde (particle dropped)", bareLindeSame],
+    ["Linde, van der (inverted)", invertedSame],
+  ] as Array<[string, boolean | null]>) {
+    console.log(
+      `    vs baseline set — ${label.padEnd(26)} ${v === null ? "NOT MEASURED" : v ? "IDENTICAL" : "DIFFERENT"}`
+    );
+  }
+
+  // CONTROL — are the quotes even parsed? If the server strips them, leg 1's
+  // "identical" is trivially true and says nothing about quoting. An unbalanced
+  // quote matching the bare total is the tell.
+  const bareBig = await search(
+    `q.surname=${encodeURIComponent("van der Linde")}&count=3&${REQUIRE_SWITCH}`
+  );
+  const unbal = await search(
+    `q.surname=${encodeURIComponent('"van der Linde')}&count=3&${REQUIRE_SWITCH}`
+  );
+  // The row-count guard `mcSame` below already had, and this leg did not. Two
+  // zero-row reads with non-null totals compare equal, which would print
+  // "quotes are stripped" -- the single sentence the no-code-change decision
+  // rests on -- out of two failed reads.
+  const stripped =
+    errored(bareBig) ||
+    errored(unbal) ||
+    bareBig.total === null ||
+    unbal.total === null ||
+    bareBig.personas.length === 0 ||
+    unbal.personas.length === 0
+      ? null
+      : bareBig.total === unbal.total;
+  record("K", "unscopedBare", errored(bareBig) ? null : bareBig.total);
+  record("K", "unscopedUnbalancedQuote", errored(unbal) ? null : unbal.total);
+  console.log(`  control: bare ${fmt(bareBig.total)} vs UNBALANCED quote ${fmt(unbal.total)}`);
+  console.log(
+    `    -> quotes ${stripped === null ? "NOT MEASURED" : stripped ? "are STRIPPED before matching" : "change the query"}`
+  );
+
+  // LEG 3 — the control the issue asks for: a claim already in the plugin. If
+  // this does not reproduce, the instrument is wrong and nothing above counts.
+  const mcSpaced = await search(`q.surname=${encodeURIComponent("Mc Kee")}&count=20&${REQUIRE_SWITCH}`);
+  const mcJoined = await search(`q.surname=${encodeURIComponent("McKee")}&count=20&${REQUIRE_SWITCH}`);
+  const mcSame =
+    errored(mcSpaced) || errored(mcJoined) || mcSpaced.total === null || mcJoined.total === null
+      ? null
+      : mcSpaced.total === mcJoined.total &&
+        mcSpaced.personas.length > 0 &&
+        new Set([
+          ...mcSpaced.personas.map((x) => x.id),
+          ...mcJoined.personas.map((x) => x.id),
+        ]).size === mcSpaced.personas.length;
+  record("K", "mcKeeSpaced", errored(mcSpaced) ? null : mcSpaced.total);
+  record("K", "mcKeeJoined", errored(mcJoined) ? null : mcJoined.total);
+  console.log(
+    `  control 'Mc Kee' ${fmt(mcSpaced.total)} vs 'McKee' ${fmt(mcJoined.total)} -> ${mcSame === null ? "NOT MEASURED" : mcSame ? "EQUIVALENT (reference reproduces)" : "DIFFER (instrument problem)"}`
+  );
+
+  record(
+    "K",
+    "verdict:literal quotes change the result set",
+    quotedSame === null || stripped === null
+      ? "NOT MEASURED"
+      : stripped
+        ? "NO — the server strips quotes before matching, so guidance prescribing them is inert"
+        : quotedSame
+          ? "NO — quoted and bare return the identical set"
+          : "YES — quoting changes the set; buildSearchUrl has a real defect"
+  );
+  record(
+    "K",
+    "verdict:spacing and case change the result set",
+    concatSame === null || casedSame === null
+      ? "NOT MEASURED"
+      : concatSame && casedSame
+        ? "NO — 'vanderlinde' (space removed) and 'Van Der Linde' enumerate the identical set as 'van der Linde', so spacing and capitalisation carry no signal. This says nothing about DROPPING the particle; that leg is recorded separately."
+        : "YES — respacing or recasing the particle changes the set"
+  );
+  record(
+    "K",
+    "verdict:control Mc Kee equals McKee",
+    mcSame === null ? "NOT MEASURED" : mcSame ? "REPRODUCES" : "DOES NOT REPRODUCE — instrument problem"
+  );
 }
 
 const SECTIONS: Record<string, () => Promise<void>> = {
@@ -5885,6 +6211,7 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   H: sectionH,
   I: sectionI,
   J: sectionJ,
+  K: sectionK,
   N: sectionN,
   P: sectionP,
   Q: sectionQ,
