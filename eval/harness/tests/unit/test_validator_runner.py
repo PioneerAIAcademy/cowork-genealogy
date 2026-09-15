@@ -2584,6 +2584,28 @@ def test_non_state_non_response_arg_lands_in_response_list(tmp_path):
     assert state_obs == []
 
 
+def test_neutral_only_signature_lands_in_response_list(tmp_path):
+    """A report_* taking only (test) — a tolerated neutral with no before_state
+    or after_state — is NOT state-derived.  This pins the _READS_STATE clause:
+    without it, the subset test alone would misroute this into the state slot."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_no_state_read(test):\n"
+        "    raise AssertionError('the test JSON declares no scenario')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello", test={"id": "ut_example_001"},
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["the test JSON declares no scenario"]
+    assert state_obs == []
+
+
 def test_standalone_pytest_collects_report_validators():
     """python_functions must collect report_* or `pytest validators/ -v` — the
     debugging path unit-test-spec.md points developers at — silently runs none
