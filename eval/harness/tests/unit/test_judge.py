@@ -1043,7 +1043,12 @@ def _uncoerce_routing_negative(dims: list[dict], run: dict) -> list[dict]:
         # diagnostic; restoring `None` instead would leave the dimension null
         # and make the failure read as a malformed JUDGE draw, when what is
         # actually malformed is the warning that lost its preserved score.
-        if "score" not in w:
+        # Absent key AND present-but-null both mean the preserved score is
+        # gone. `not in` alone would let `{"score": None}` — an older or
+        # hand-edited log — through to restore None over None, a silent no-op
+        # that leaves the dimension null and misattributes the failure to the
+        # judge draw, which is the exact thing this raise exists to prevent.
+        if w.get("score") is None:
             raise judge.JudgeError(
                 f"coerced_routing_negative_to_na warning for {name!r} carries "
                 f"no 'score': the orchestrator's preserved score is missing, so "
@@ -1116,6 +1121,22 @@ def test_uncoerce_blames_the_warning_when_it_carries_no_score():
     dims = [{"source": "base", "name": "Correctness", "score": None}]
     run = {"output": {"warnings": [{
         "kind": "coerced_routing_negative_to_na", "name": "Correctness",
+    }]}}
+    with pytest.raises(judge.JudgeError, match="warning is malformed"):
+        _uncoerce_routing_negative(dims, run)
+
+
+def test_uncoerce_blames_the_warning_when_its_score_is_present_but_null():
+    """`{"score": None}` is the same loss as a missing key, and must fail alike.
+
+    A `"score" not in w` guard passes this shape, restores None over None as a
+    silent no-op, and lets the null reach `_extract_dimensions` — which then
+    blames the judge draw for what is a malformed warning.
+    """
+    dims = [{"source": "base", "name": "Correctness", "score": None}]
+    run = {"output": {"warnings": [{
+        "kind": "coerced_routing_negative_to_na", "name": "Correctness",
+        "score": None,
     }]}}
     with pytest.raises(judge.JudgeError, match="warning is malformed"):
         _uncoerce_routing_negative(dims, run)
