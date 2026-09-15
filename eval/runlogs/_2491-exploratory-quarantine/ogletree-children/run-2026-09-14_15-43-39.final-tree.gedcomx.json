@@ -1,0 +1,2315 @@
+{
+  "persons": [
+    {
+      "id": "GW4W-DTG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N1",
+          "given": "Lewis Washington",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N15",
+          "given": "Lewis",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N26",
+          "given": "L W",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N37",
+          "given": "Lewis W",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            },
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8e33fbb3-5cd7-40dc-a0c1-8f233bb204dc",
+          "type": "Birth",
+          "date": "8 August 1882",
+          "standard_date": "8 Aug 1882",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S8",
+              "quality": 3
+            },
+            {
+              "ref": "S9",
+              "quality": 3
+            },
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "707cb23a-d647-44c7-8086-8faad5011918",
+          "type": "Death",
+          "date": "28 March 1955",
+          "standard_date": "28 Mar 1955",
+          "place": "Riverdale, Cook, Illinois, United States",
+          "standard_place": "Riverdale, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "2d33794d-a7ea-4885-9120-b3be43c4209a",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "94130094-8f6f-423e-8218-c5e1f7dc0338",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "2e431271-0a82-4957-9599-781b46b2e954",
+          "type": "Military Draft Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "53445e43-24ca-419b-ac7e-c85af9e5dac7",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            },
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "64f0c8ad-1f03-4133-985f-4e6bc9e886d4",
+          "type": "Military Draft Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "ee4042ef-c79a-40d4-b4b8-6dc07a65ce24",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "7ececaae-9088-49d1-9a68-37d0988fde90",
+          "type": "Burial",
+          "date": "2 April 1955",
+          "standard_date": "2 Apr 1955",
+          "place": "Worth, Cook, Illinois, United States",
+          "standard_place": "Worth, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "0c270163-76e8-429f-b537-a7fbf965f6b3",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "700ebd2c-2924-48e1-8924-fc0324249c90",
+          "type": "Residence",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "date": "1942",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "372ecfcf-d9a9-4ab7-b261-388904eb7a57",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "F8",
+          "type": "Birth",
+          "date": "Aug 1885",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Race",
+          "value": "Black",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F41",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F62",
+          "type": "Event",
+          "date": "1942",
+          "place": "Chicago, Cook, Illinois",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "value": "Registered for WWII draft, Chicago, Cook, Illinois, 1942",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F63",
+          "type": "Race",
+          "value": "Negro",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F64",
+          "type": "Citizenship",
+          "value": "United States",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F65",
+          "type": "Registration",
+          "date": "1917/1918",
+          "place": "Chicago, Cook County, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "value": "Registered for WWI draft, Chicago, Illinois, 1917\u20131918",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F66",
+          "type": "Occupation",
+          "value": "Laborer",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F67",
+          "type": "Birth",
+          "date": "~1893",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GWXS-RXR",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N6",
+          "given": "Mattie",
+          "surname": "Pearcy",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N25",
+          "given": "Hattie L",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N27",
+          "given": "Mattie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N40",
+          "given": "Hattie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bd27261b-bfe3-4a03-988e-8c17261ec291",
+          "type": "Birth",
+          "date": "November 1886",
+          "standard_date": "Nov 1886",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ]
+        },
+        {
+          "id": "3a75f134-e941-4047-8731-5f54e1a74cd8",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Militia District 1066, Akins, Spalding, Georgia, United States",
+          "standard_place": "District 1066, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "dc957d0f-baf1-47e3-8443-aa8f12049691",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Orrs, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "42a6682f-e9c6-4ca8-82b9-d8d7f3abbdb2",
+          "type": "Death"
+        },
+        {
+          "id": "d0e373fc-03b0-4602-be01-fb3074d7faa4",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "F37",
+          "type": "Birth",
+          "date": "~1900",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F38",
+          "type": "Race",
+          "value": "Negro",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F39",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F40",
+          "type": "Residence",
+          "date": "1930",
+          "place": "Chicago (Districts 0001-0250), Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            },
+            {
+              "ref": "S9",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F42",
+          "type": "Birth",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F43",
+          "type": "MaritalStatus",
+          "value": "Married",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F44",
+          "type": "Race",
+          "value": "Black",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GJZY-622",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N7",
+          "given": "Nellie Mae",
+          "surname": "Ogletree"
+        }
+      ],
+      "facts": [
+        {
+          "id": "db9b0fa2-285f-44c5-a834-d5156fc7018f",
+          "type": "Birth",
+          "date": "1893",
+          "standard_date": "1893",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "fee36b0a-23e0-4e53-b63f-0151f41d2377",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "857d3d13-4264-424d-b9e4-f0452354363c",
+          "type": "Residence",
+          "date": "10 April 1950",
+          "standard_date": "10 Apr 1950",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "e29b9f84-6690-49bc-a769-0d9e0d9aedc6",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K45Y-CC5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "N8",
+          "given": "Harriett",
+          "surname": "Haygood"
+        },
+        {
+          "id": "N14",
+          "given": "Mattie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N39",
+          "given": "Hattie",
+          "surname": "Haygood",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "May 1856",
+          "standard_date": "May 1856",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "911176aa-bd73-43fc-aa76-e2a288dd84e8",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Monroe, Georgia, United States",
+          "standard_place": "Monroe, Georgia, United States"
+        },
+        {
+          "id": "aa2b8b8e-70e9-4011-8c0b-0cc49022b27d",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "District 1066, Spalding, Georgia, United States",
+          "standard_place": "District 1066, Spalding, Georgia, United States"
+        },
+        {
+          "id": "60c135b6-baa2-4db8-8850-0bbc609aa0ca",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "26 August 1929",
+          "standard_date": "26 Aug 1929",
+          "place": "Griffin, Spalding, Georgia, United States",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "dd431b78-1428-44ca-8ef4-0d21b466b3da",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "adbf6e48-6436-4ba0-af46-3f1c7d1209cd",
+          "type": "Burial",
+          "place": "Griffin, Spalding, Georgia, United States",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "e82149e4-0664-49be-ac82-1c94d80fb1a2",
+          "type": "Residence",
+          "place": "Chicago, Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States"
+        },
+        {
+          "id": "4c35b660-a35c-4f22-9316-248e2f8e7ab4",
+          "type": "Residence",
+          "place": "Griffin, Georgia",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "1f4cac09-df79-4533-ab00-a9ff9fa8e979",
+          "type": "Ethnicity",
+          "value": "American"
+        },
+        {
+          "id": "2471eb9d-db49-47c0-8d8f-5afda5aa1d62",
+          "type": "Marital Status",
+          "value": "Married"
+        },
+        {
+          "id": "0a5641ed-76e3-454d-8f80-1b6ac9ed2386",
+          "type": "Ethnicity",
+          "value": "Black"
+        }
+      ]
+    },
+    {
+      "id": "L5D9-KXT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "N9",
+          "given": "Lewis",
+          "surname": "Ogletree"
+        },
+        {
+          "id": "N13",
+          "given": "L W",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N38",
+          "given": "Lewis W",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "49fa974b-181c-4448-bb6c-e611049e6d81",
+          "type": "Birth",
+          "date": "August 1856",
+          "standard_date": "Aug 1856",
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "e1bdd6b9-bf80-4398-aca4-a1f11a1b6bfb",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "District 595, Monroe, Georgia, United States",
+          "standard_place": "District 595, Monroe, Georgia, United States"
+        },
+        {
+          "id": "75b895b3-03a5-433e-9dba-206c5b208787",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "District 1066, Spalding, Georgia, United States",
+          "standard_place": "District 1066, Spalding, Georgia, United States"
+        },
+        {
+          "id": "2f468b3a-f1bc-47e0-bbf5-fb1e00f4732e",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Militia District 1065, Orr, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "5d23dedc-3324-4e09-9edf-40d8cf4974c8",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States"
+        },
+        {
+          "id": "81244b0d-a894-437e-a394-982fd98aeded",
+          "type": "Burial",
+          "date": "September 1937",
+          "standard_date": "Sep 1937",
+          "place": "Orchard Hill Baptist Church Cemetery, Orchard Hill, Spalding, Georgia, United States",
+          "standard_place": "Orchard Hill Baptist Church Cemetery, Orchard Hill, Spalding, Georgia, United States"
+        },
+        {
+          "id": "9c37e26a-35d9-4bbd-bb69-b01bd36c47c9",
+          "type": "Death",
+          "date": "19 September 1937",
+          "standard_date": "19 Sep 1937",
+          "place": "Griffin, Spalding, Georgia, United States",
+          "standard_place": "Griffin, Spalding, Georgia, United States"
+        },
+        {
+          "id": "4a83bd91-7677-41e4-864d-57243062eabe",
+          "type": "Ethnicity",
+          "value": "Black or African American"
+        },
+        {
+          "id": "2c95d378-acee-4156-a396-244728093a83",
+          "type": "Slave"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N10",
+          "given": "John",
+          "surname": "Pearcy",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "Nov 1884",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1066, Spalding, Georgia",
+          "standard_place": "District 1066, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N11",
+          "given": "Pinkney",
+          "surname": "Pearcy",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "Mar 1888",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1066, Spalding, Georgia",
+          "standard_place": "District 1066, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N12",
+          "given": "Annie",
+          "surname": "Pearcy",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F6",
+          "type": "Birth",
+          "date": "Jan 1890",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1066, Spalding, Georgia",
+          "standard_place": "District 1066, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N16",
+          "given": "Samuel",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Birth",
+          "date": "Jun 1886",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N17",
+          "given": "Osduines",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F13",
+          "type": "Birth",
+          "date": "Nov 1887",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N18",
+          "given": "James E",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Birth",
+          "date": "Oct 1896",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N19",
+          "given": "Keattie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N30",
+          "given": "Hattie L",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Birth",
+          "date": "Jun 1898",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F53",
+          "type": "Birth",
+          "date": "~1900",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F54",
+          "type": "Race",
+          "value": "Negro",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F55",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F56",
+          "type": "Residence",
+          "date": "1930",
+          "place": "Chicago (Districts 0001-0250), Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N20",
+          "given": "Walker",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F19",
+          "type": "Birth",
+          "date": "Jun 1899",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Residence",
+          "date": "1900",
+          "place": "District 1065, Spalding, Georgia, United States",
+          "standard_place": "District 1065, Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N21",
+          "given": "Louise",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F21",
+          "type": "Birth",
+          "date": "~1910",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Race",
+          "value": "Negro",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Residence",
+          "date": "1930",
+          "place": "Chicago (Districts 0001-0250), Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N22",
+          "given": "Girard",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N31",
+          "given": "Girard W",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F25",
+          "type": "Birth",
+          "date": "~1911",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Race",
+          "value": "Negro",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F27",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F28",
+          "type": "Residence",
+          "date": "1930",
+          "place": "Chicago (Districts 0001-0250), Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F57",
+          "type": "Birth",
+          "date": "1909",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I11",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N23",
+          "given": "Willie M",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N32",
+          "given": "Willa Mae",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F29",
+          "type": "Birth",
+          "date": "~1913",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            },
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F30",
+          "type": "Race",
+          "value": "Negro",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F31",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F32",
+          "type": "Residence",
+          "date": "1930",
+          "place": "Chicago (Districts 0001-0250), Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I12",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N24",
+          "given": "Lewis W",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F33",
+          "type": "Birth",
+          "date": "~1916",
+          "place": "Georgia",
+          "standard_place": "Georgia, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F34",
+          "type": "Race",
+          "value": "Negro",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F35",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F36",
+          "type": "Residence",
+          "date": "1930",
+          "place": "Chicago (Districts 0001-0250), Cook, Illinois, United States",
+          "standard_place": "Chicago, Cook, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I13",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N28",
+          "given": "Annie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F45",
+          "type": "Birth",
+          "date": "~1908",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ],
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F46",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F47",
+          "type": "Race",
+          "value": "Black",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F48",
+          "type": "Residence",
+          "place": "Spalding County, Georgia, United States",
+          "standard_place": "Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I14",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N29",
+          "given": "Guyson",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F49",
+          "type": "Birth",
+          "date": "~1909",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 2
+            }
+          ],
+          "place": "Georgia, United States",
+          "standard_place": "Georgia, United States"
+        },
+        {
+          "id": "F50",
+          "type": "MaritalStatus",
+          "value": "Single",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F51",
+          "type": "Race",
+          "value": "Black",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "F52",
+          "type": "Residence",
+          "place": "Spalding County, Georgia, United States",
+          "standard_place": "Spalding, Georgia, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I15",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N33",
+          "given": "Nettie",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F58",
+          "type": "Birth",
+          "date": "~1910",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I16",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N34",
+          "given": "Autherine",
+          "surname": "Pirtle",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F59",
+          "type": "Birth",
+          "date": "1912",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I17",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N35",
+          "given": "Wilbon",
+          "surname": "McClerkin",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F60",
+          "type": "Birth",
+          "date": "1901",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I18",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N36",
+          "given": "Johnie",
+          "surname": "Felt",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F61",
+          "type": "Birth",
+          "date": "~1907",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I19",
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N41",
+          "given": "Otis",
+          "surname": "Ogletree",
+          "sources": [
+            {
+              "ref": "S10",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GW4W-DTG",
+      "person2": "GWXS-RXR",
+      "facts": [
+        {
+          "id": "675cdc07-0708-4bda-af93-e4dad87420b8",
+          "type": "Marriage",
+          "date": "1 November 1905",
+          "standard_date": "1 Nov 1905",
+          "place": "Spalding, Georgia, United States",
+          "standard_place": "Spalding, Georgia, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GW4W-DTG",
+      "person2": "GJZY-622",
+      "facts": [
+        {
+          "id": "1ae2cf8a-61c1-443c-8fa2-9a0b0a4a506f",
+          "type": "Marriage",
+          "date": "16 June 1924",
+          "standard_date": "16 Jun 1924",
+          "place": "Cook, Illinois, United States",
+          "standard_place": "Cook, Illinois, United States"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "L5D9-KXT",
+      "person2": "K45Y-CC5",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "23 Dec 1876",
+          "standard_date": "23 Dec 1876",
+          "place": "Monroe, Georgia, United States",
+          "standard_place": "Monroe, Georgia, United States"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "GW4W-DTG"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "GW4W-DTG"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "I4",
+      "id": "R6",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "I4",
+      "id": "R7",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "I5",
+      "id": "R8",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "I5",
+      "id": "R9",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "I6",
+      "id": "R10",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "I6",
+      "id": "R11",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "I7",
+      "id": "R12",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "I7",
+      "id": "R13",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "I8",
+      "id": "R14",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "I8",
+      "id": "R15",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "L5D9-KXT",
+      "child": "GW4W-DTG",
+      "id": "R16",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "K45Y-CC5",
+      "child": "GW4W-DTG",
+      "id": "R17",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R18"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R19"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R20"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R21"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R22"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "I11",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R23"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R24"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "I12",
+      "sources": [
+        {
+          "ref": "S4"
+        }
+      ],
+      "id": "R25"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "I13",
+      "id": "R26",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "I13",
+      "id": "R27",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GW4W-DTG",
+      "child": "I14",
+      "id": "R28",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "GWXS-RXR",
+      "child": "I14",
+      "id": "R29",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "9FVY-KHT",
+      "title": "Lucas Ogletree, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3V7-51P : Tue Oct 21 18:28:27 UTC 2025), Entry for L W Ogletree and Mattie Ogletree, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3V7-51R"
+    },
+    {
+      "id": "SP5G-G8W",
+      "title": "Lewis W Ogletree, \"Illinois, Cook County Deaths, 1871-1998\"",
+      "citation": "\"Illinois, Cook County Deaths, 1871-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2MH-RQXZ : Sat Aug 23 01:57:25 UTC 2025), Entry for Lewis W Ogletree and Lewis W Ogletree, 28 Mar 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2MH-RQXZ"
+    },
+    {
+      "id": "QM6D-97R",
+      "title": "Lewis W Ogletree, \"Illinois, Cook County Marriages, 1871-1969\"",
+      "citation": "\"Illinois, Cook County Marriages, 1871-1969\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q21J-C1FN : Sat Mar 09 13:26:04 UTC 2024), Entry for Lewis W Ogletree and Nellie May Chapman, 16 Jun 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21J-C1FN"
+    },
+    {
+      "id": "QM6D-MZ8",
+      "title": "Lewis W Ogletree, \"United States, Census, 1950\"",
+      "citation": "\"United States, Census, 1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6X1Z-DPBR : Tue Mar 18 02:11:35 UTC 2025), Entry for Lewis W Ogletree and Nellie M Ogletree, 10 April 1950.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6X1Z-DPBR"
+    },
+    {
+      "id": "QM6D-921",
+      "title": "Louis Ogletree, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XST7-D3D : Fri Mar 27 02:08:54 UTC 2026), Entry for Howard D Chapman and Alberta Chapman, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XST7-D3X"
+    },
+    {
+      "id": "QWT8-KWY",
+      "title": "Louis Ogletree, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KQM-JTSR : Mon Jul 06 13:54:20 UTC 2026), Entry for Lewis Ogletree, Jr and Louis Ogletree.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KQM-JT39"
+    },
+    {
+      "id": "QM68-B5D",
+      "title": "Lewis W Ogletree, \"United States, World War II Draft Registration Cards, 1942\"",
+      "citation": "\"United States, World War II Draft Registration Cards, 1942\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V1K8-W4X : Sun Mar 29 19:02:07 UTC 2026), Entry for Lewis W Ogletree, 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V1K8-W4X"
+    },
+    {
+      "id": "QM68-1WS",
+      "title": "Lewis Washington Ogletree, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K686-3N7 : Thu Nov 20 09:46:03 UTC 2025), Entry for Lewis Washington Ogletree, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K686-3N7"
+    },
+    {
+      "id": "QM68-18D",
+      "title": "Lewis Washington Ogletree, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QRP3-T2N2 : Thu Nov 20 09:46:03 UTC 2025), Entry for Lewis Washington Ogletree and Hattie Ogletree, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QRP3-T2N2"
+    },
+    {
+      "id": "37GS-162",
+      "title": "L W Ogletree, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MLLW-J7F : Wed Mar 25 03:18:27 UTC 2026), Entry for L W Ogletree and Mattie Ogletree, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MLLW-J7F"
+    },
+    {
+      "id": "3KZ7-S78",
+      "title": "L W Ogletree, \"Georgia, County Marriages, 1785-1950\"",
+      "citation": "\"Georgia, County Marriages, 1785-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28M-XKFV : Fri Oct 17 01:39:11 UTC 2025), Entry for L W Ogletree and Mattie Pearcy, 1 Nov 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28M-XKFV"
+    },
+    {
+      "id": "QWT8-VY6",
+      "title": "Lewis W. Ogletree, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6V7H-JY4M : Sat Jul 18 02:20:16 UTC 2026), Entry for Lewis W. Ogletree.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6V7H-JY4M"
+    },
+    {
+      "id": "S1",
+      "title": "Household of Richmond Taylor, \"United States, Census, 1900\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M3V7-2TL"
+    },
+    {
+      "id": "S2",
+      "title": "Household of L W Ogletree, United States Census, 1900, District 1065, Spalding, Georgia",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M3V7-51R"
+    },
+    {
+      "id": "S3",
+      "title": "L W Ogletree household, District 1065, Spalding County, Georgia, 1910 US Census",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MLLW-J7F"
+    },
+    {
+      "id": "S4",
+      "title": "Household of Hattie L Ogletree, United States Census, 1930",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSTQ-2BF"
+    },
+    {
+      "id": "S5",
+      "title": "Entry for Girard W Ogletree and Autherine Pirtle, Illinois, Cook County Marriages, 1871-1969",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q21V-GLZ8"
+    },
+    {
+      "id": "S6",
+      "title": "Entry for Johnie Felt and Nettie Ogletree, \"Illinois, Cook County Marriages, 1871-1969\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q21K-KH41"
+    },
+    {
+      "id": "S7",
+      "title": "Entry for Willa Mae Ogletree and Wilbon McClerkin, \"Illinois, Cook County Marriages, 1871-1969\", FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q21K-G576"
+    },
+    {
+      "id": "S8",
+      "title": "Lewis W Ogletree in United States, World War II Draft Registration Cards, 1942",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:V1K8-W4X"
+    },
+    {
+      "id": "S9",
+      "title": "United States, World War I Draft Registration Cards, 1917-1918, Lewis Washington Ogletree",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QRP3-T2N2"
+    },
+    {
+      "id": "S10",
+      "title": "Illinois, Cook County Deaths, 1871-1998 \u2014 Lewis W Ogletree death certificate (28 Mar 1955)",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q2MH-RQXZ"
+    },
+    {
+      "id": "S11",
+      "title": "Illinois, Cook County Deaths, 1871\u20131998, entry for Walter Ogletree, 14 Jan 1924",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QL45-BLF6"
+    },
+    {
+      "id": "S12",
+      "title": "Illinois, Cook County Deaths, 1871\u20131998, entry for Girard Ogletree, 03 May 1986",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QV9K-6916"
+    }
+  ]
+}
