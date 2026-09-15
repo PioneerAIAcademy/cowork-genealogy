@@ -543,25 +543,56 @@ describe("personReadTool", () => {
 
   // 14. Keeps all relationships (no focal-person filtering)
   it("keeps all relationships even when not involving the focal person", async () => {
-    // Add an extra relationship that doesn't involve KNDX-MKG.
+    // The intent of this test is that a relationship BETWEEN OTHER RETURNED
+    // PEOPLE is kept — it is not about the focal person at all. It originally
+    // expressed that with two ids absent from persons[], which conflated
+    // "not involving the focal person" with "dangling". Both endpoints are now
+    // returned persons, so it tests the thing it names; the dangling case is
+    // asserted separately below.
     const withExtra: FSTreeResponse = {
       ...WITH_RELATIVES,
       childAndParentsRelationships: [
         ...(WITH_RELATIVES.childAndParentsRelationships ?? []),
-        // Augustine's other family (not involving KNDX-MKG directly as
-        // child or parent)
         {
-          parent1: { resourceId: "OTHR-PRT" },
-          child: { resourceId: "OTHR-CHD" },
+          parent1: { resourceId: "KNDX-MFX" },
+          child: { resourceId: "KNZC-6QV" },
         },
       ],
     };
     mockOk(withExtra);
     const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
     const extraneous = result.relationships.find(
-      (r) => r.type === "ParentChild" && r.parent === "OTHR-PRT",
+      (r) =>
+        r.type === "ParentChild" &&
+        r.parent === "KNDX-MFX" &&
+        r.child === "KNZC-6QV",
     );
     expect(extraneous).toBeDefined();
+  });
+
+  it("drops a relationship whose endpoint is not a returned person", async () => {
+    // FamilySearch's relationship arrays reach one hop further than persons[].
+    // An unresolvable endpoint is a HARD validator error and project_create —
+    // which never calls sanitizeTree — refuses the ENTIRE write, so the edge
+    // cannot be passed through.
+    const withDangling: FSTreeResponse = {
+      ...WITH_RELATIVES,
+      childAndParentsRelationships: [
+        ...(WITH_RELATIVES.childAndParentsRelationships ?? []),
+        { parent1: { resourceId: "OTHR-PRT" }, child: { resourceId: "OTHR-CHD" } },
+      ],
+    };
+    mockOk(withDangling);
+    const result = await personReadTool({ personId: "KNDX-MKG", relatives: true }, LOCAL);
+    const ids = new Set(result.persons.map((p) => p.id));
+    for (const r of result.relationships) {
+      for (const endpoint of [r.parent, r.child, r.person1, r.person2]) {
+        if (endpoint !== undefined) expect(ids.has(endpoint)).toBe(true);
+      }
+    }
+    expect(
+      result.relationships.some((r) => r.parent === "OTHR-PRT"),
+    ).toBe(false);
   });
 
   // 15. Extracts subtype from parent facts
@@ -1133,7 +1164,7 @@ describe("personReadTool — sibling fan-out", () => {
     expect(out.persons.map((p) => p.id)).toContain(SUBJECT);
   });
 
-  it("carries a Couple through the fan-out without inventing or dropping endpoints", async () => {
+  it("drops a Couple whose partner the response never returned", async () => {
     // Every other fixture in this block sets `relationships: []`, so nothing
     // here exercised a Couple at all. This one does, and it pins the honest
     // contract rather than the one the old loop appeared to assert: the
@@ -1158,12 +1189,11 @@ describe("personReadTool — sibling fan-out", () => {
       { personId: SUBJECT, relatives: true },
       LOCAL,
     );
-    const couple = out.relationships.find((r) => r.type === "Couple");
-    expect(couple).toBeDefined();
-    expect(couple?.person2).toBe(spouse);
-    // Documented, not asserted-away: the endpoint dangles, and the fan-out is
-    // not what would fix it.
+    // The spouse was never returned as a person, so the Couple would dangle —
+    // and a dangling Couple fails project_create exactly as a dangling
+    // ParentChild does (validator.ts:1777/1782). It is dropped.
     expect(out.persons.map((p) => p.id)).not.toContain(spouse);
+    expect(out.relationships.some((r) => r.person2 === spouse)).toBe(false);
   });
 
   it("emits ONE edge per parent-child pair when a sibling carries two CAPRs", async () => {

@@ -694,10 +694,17 @@ async function convertResponse(
   // (add `living` from raw, narrow names, filter SD_* metadata sources).
   // Fact-level URI cleanup and value preservation now happen inside
   // toSimplified, so the converter's facts flow straight through.
+  const persons = shapePersons(simplified.persons ?? [], body.persons ?? []);
+  const personIds = new Set(
+    persons.map((p) => p.id).filter((id): id is string => Boolean(id)),
+  );
   return {
-    persons: shapePersons(simplified.persons ?? [], body.persons ?? []),
+    persons,
     relationships: relatives
-      ? shapeRelationships(simplified.relationships ?? [])
+      ? dropDanglingEdges(
+          shapeRelationships(simplified.relationships ?? []),
+          personIds,
+        )
       : [],
     sources: sourceDescriptions
       ? shapeSources(simplified.sources ?? [], body.sourceDescriptions ?? [])
@@ -809,6 +816,40 @@ function shapePersons(
 }
 
 // ─── Shape relationships ─────────────────────────────────────────────────
+
+/**
+ * Drop any relationship with an endpoint that is not a returned person.
+ *
+ * FamilySearch's relationship arrays reach ONE HOP FURTHER than its persons
+ * array: a read names the subject's great-grandparents, a child's spouse, or a
+ * non-spouse co-parent without returning a person record for them. Its refs even
+ * carry an absolute-URL form used, in this file's own words, "when the person
+ * isn't in this response".
+ *
+ * Emitting those edges is not free. `validate_research_schema` treats an
+ * unresolvable endpoint as a HARD error on all four spellings -- `parent` and
+ * `child` (validator.ts:1751/1756), `person1` and `person2` (1777/1782) -- and
+ * `project_create`, alone among the tree writers in never calling
+ * `sanitizeTree`, refuses the ENTIRE write on any error. So one edge pointing a
+ * hop past the data costs the user their whole project, and the failure names a
+ * person they never asked about.
+ *
+ * Dropping the edge loses nothing a caller could have used: the far endpoint is
+ * not in `persons[]`, so there is no person to link to. What is lost is the hint
+ * that some further relative exists -- the trade the card's rule 4 makes
+ * deliberately, now made for every emitted edge rather than only for the ones
+ * the sibling fan-out contributes.
+ */
+function dropDanglingEdges(
+  relationships: TreeRelationship[],
+  personIds: Set<string>,
+): TreeRelationship[] {
+  return relationships.filter((r) =>
+    [r.parent, r.child, r.person1, r.person2].every(
+      (endpoint) => endpoint === undefined || personIds.has(endpoint),
+    ),
+  );
+}
 
 function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],

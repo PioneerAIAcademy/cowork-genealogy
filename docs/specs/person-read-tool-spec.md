@@ -354,8 +354,9 @@ from that parent and is not retried beyond `fetchWithRetry`'s normal budget.
 Note that `relationships[]` and `childAndParentsRelationships[]` reach **one hop
 further than `persons[]`** in any FamilySearch response — a parent's read names
 the subject's great-grandparents and the siblings' spouses without returning
-person records for them. The fan-out therefore emits an edge only when both of
-its endpoints are persons it actually imported.
+person records for them. Every such edge is dropped before the response is
+returned, so the tool's output is endpoint-closed on all four endpoint spellings
+(`parent`, `child`, `person1`, `person2`).
 
 Both can be combined in a single call.
 
@@ -585,30 +586,38 @@ relationship. Rather than enumerate those exclusions, the filter keeps exactly
 one category — persons who are children of the parent being read — and
 everything else drops out in one move.
 
-**Every endpoint of every edge the fan-out ADDS is a person in `persons[]`.** A
-CAPR expands to one edge *per parent*, so a sibling whose other parent was not
-imported would otherwise emit an edge pointing at a person who is not there.
+**Every endpoint of every relationship in the response is a person in
+`persons[]`.** The response is endpoint-closed: a caller can resolve any
+`parent`, `child`, `person1` or `person2` against `persons[]` and will always
+find it.
 
-Note the exact scope of that guarantee: it covers the edges the fan-out
-contributes, **not** the tool's whole output. The subject's own
-`childAndParentsRelationships[]` and `relationships[]` pass through as they
-always have, and both can still name a person the response did not return —
-FamilySearch's own refs carry an absolute-URL form used precisely "when the
-person isn't in this response". A subject CAPR naming a non-spouse co-parent,
-and a `Couple` whose partner was not returned, therefore still emit dangling
-endpoints. That is **pre-existing behaviour, deliberately tested** ("keeps all
-relationships even when not involving the focal person") and unchanged here, but
-it means a caller must not assume the whole response is endpoint-closed.
+This is enforced on the whole output, not only on the edges the fan-out
+contributes. FamilySearch's relationship arrays reach **one hop further than its
+persons array** — a read names the subject's great-grandparents, a child's
+spouse, or a non-spouse co-parent without returning a person record for them,
+and its refs carry an absolute-URL form used precisely "when the person isn't in
+this response". Any such edge is dropped.
+
+The reason is that emitting one is not free. `validate_research_schema` treats an
+unresolvable endpoint as a hard error on all four spellings — `parent` and
+`child`, `person1` and `person2` — and `project_create`, alone among the tree
+writers in never calling `sanitizeTree`, refuses the **entire write** on any
+error. A single edge pointing one hop past the data therefore costs the user
+their whole project, and the failure names a person they never asked about.
+
+Dropping the edge loses nothing a caller could have used: the far endpoint is not
+in `persons[]`, so there is no person to link to. What is lost is the hint that
+some further relative exists.
+
+A half-sibling consequently arrives linked to the shared parent only, and a CAPR
+naming a child whose person record the response omitted is skipped entirely —
+both for the same reason.
 `validate_research_schema` treats that as a hard error (`parent '…' not found in
 persons`, and the same for `child`, `person1` and `person2`), and
 `project_create` — alone among the tree writers, it never calls `sanitizeTree` —
 refuses the **entire write**. One leaked edge would cost the user their whole
 project, so the rule is enforced on the edge rather than left to a healer that
 does not run.
-
-Consequently **a half-sibling arrives linked to the shared parent only.** That
-is the truth of what was imported, not a loss. A CAPR naming a child whose
-person record the response omitted is skipped entirely, for the same reason.
 
 **A failing parent read degrades; it never throws.** 403, 404, 410, 429, a
 timeout, a transport error, or a 204 living-person stub each mean "no siblings
