@@ -341,7 +341,7 @@ def test_cache_dir_found_when_the_cli_keyed_on_an_unresolved_spelling(
     `C--Users-KWESIA-1-…` while the home in the same string is
     `C:\\Users\\KWESI ASANTE`, so the CLI never expanded the 8.3 short name.
     Python's realpath does, so a resolved-only key misses every time — three
-    operators, eleven logs, all of which capture fine under a leaf match.
+    operators, nine logs, all of which capture fine under a leaf match.
 
     Reproduced here with a symlink, which is the same divergence on a platform
     CI can actually run. Seeds the cache under the LITERAL spelling and asserts
@@ -357,9 +357,15 @@ def test_cache_dir_found_when_the_cli_keyed_on_an_unresolved_spelling(
 
     literal_key = re.sub(r"[^A-Za-z0-9]", "-", str(workspace))
     assert literal_key != _key(workspace), "symlink did not produce a divergence"
-    (config / "projects" / literal_key).mkdir(parents=True)
+    correct = config / "projects" / literal_key
+    correct.mkdir(parents=True)
+    # Without a decoy the leaf backstop answers this too, and the literal
+    # candidate could be deleted with the test still green.
+    decoy = config / "projects" / ("-aaa-stale-" + re.sub(r"[^A-Za-z0-9]", "-", workspace.name))
+    decoy.mkdir(parents=True)
+    assert decoy.name < correct.name, "decoy must sort first to exercise the scan"
 
-    assert sdk_cache_dir(workspace) is not None
+    assert sdk_cache_dir(workspace) == correct
 
 
 def test_an_exact_key_wins_over_a_decoy_that_also_ends_with_the_leaf(
