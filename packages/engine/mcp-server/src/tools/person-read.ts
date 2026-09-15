@@ -216,14 +216,23 @@ async function transcribeMemories(
       // OCR leg cannot read. Recorded as done-with-nothing so it does not
       // later read as something the budget failed to reach.
       if (!isTranscribable(m) || !m.artifactUrl) return void finished.set(m.id, {});
+      // Retention is for SCANS only. imageFilenameFor hardcodes `.jpg` and
+      // gcUnreferencedImages sweeps `images/*.jpg`, so retaining a PDF here
+      // would write a PDF under a .jpg name -- unreadable to the viewer and
+      // mis-swept by the GC. A PDF is still transcribed; its text is the point,
+      // and `url` always leads back to the artifact.
+      const retain = projectPath && m.mediaType.toLowerCase().startsWith("image/");
       const out = await imageTranscribeTool(
-        { memoryArtifactUrl: m.artifactUrl, ...(projectPath ? { projectPath } : {}) },
+        {
+          memoryArtifactUrl: m.artifactUrl,
+          ...(retain ? { projectPath } : {}),
+        },
         principal,
         // Cap this call at what is left of the phase so a straggler aborts its
         // own OCR fetch rather than running on after the phase gave up on it.
         // This does NOT reach the artifact download leg, which carries its own
         // 90s budget -- which is why the phase-level stop below exists too.
-        { ocrTimeoutMs: remaining },
+        { ocrTimeoutMs: remaining, imageKey: m.id },
       );
       finished.set(m.id, {
         ...(out.transcription.trim() ? { text: out.transcription } : {}),

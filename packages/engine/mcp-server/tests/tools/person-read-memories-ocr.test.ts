@@ -202,6 +202,28 @@ describe("person_read — transcription phase", () => {
     expect(out.sources.find((s) => s.id === "d1")?.image_ref).toBe("images/d1.jpg");
   });
 
+  it("keys the retained scan by memory id, not by the artifact URL", async () => {
+    transcribe.mockResolvedValue({
+      transcription: "OCR TEXT",
+      imageRef: "images/d1.jpg",
+    } as never);
+    route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
+    await read({ projectPath: "/tmp/proj" });
+    // Without this the key is the caller's input verbatim -- a whole URL, which
+    // sanitizes to a ~70-character filename carrying the host and ctx param.
+    expect(transcribe.mock.calls[0][2]).toMatchObject({ imageKey: "d1" });
+  });
+
+  it("does NOT retain a memory PDF, because the store writes .jpg only", async () => {
+    route([mem("p1", "application/pdf", "Document", "Probate file", "pdf")]);
+    const out = await read({ projectPath: "/tmp/proj" });
+    // still transcribed -- the text is the point ...
+    expect(out.sources.find((s) => s.id === "p1")?.text).toBe("OCR TEXT");
+    // ... but not saved, or it would land under a .jpg name the viewer cannot
+    // render and gcUnreferencedImages would mis-sweep.
+    expect(transcribe.mock.calls[0][0]).not.toHaveProperty("projectPath");
+  });
+
   it("omits projectPath entirely when the caller gave none", async () => {
     route([mem("d1", "image/jpeg", "Document", "Will", "jpg")]);
     await read();

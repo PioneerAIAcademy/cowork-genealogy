@@ -210,7 +210,7 @@ export async function imageTranscribeTool(
    * it, burning an OpenRouter call nothing will read. Capping the underlying
    * fetch aborts it for real rather than abandoning the promise.
    */
-  opts: { ocrTimeoutMs?: number } = {},
+  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
 ): Promise<ImageTranscribeResult> {
   const { url, label, fallbackUrl, memoryShape } = resolveFsImageInput(
     input,
@@ -385,7 +385,11 @@ export async function imageTranscribeTool(
     try {
       imageRef = await saveSourceImage({
         projectPath: input.projectPath,
-        imageKey: label,
+        // `label` is the caller's input verbatim, which for a memory artifact
+        // is a whole URL -- it sanitizes to a ~70-character filename carrying
+        // the host and the ctx param. person_read passes the memory id
+        // instead, so the scan lands at images/<memory id>.jpg.
+        imageKey: opts.imageKey ?? label,
         bytes,
       });
     } catch {

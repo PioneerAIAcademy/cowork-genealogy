@@ -562,7 +562,7 @@ throws on the final hop. Each kept memory converts to the same source shape:
 | `titles[0].value` | `title` | Flatten; fall back to `artifactMetadata[0].filename`, then to `FamilySearch memory <id>`. Never empty — an empty title fails the downstream write. |
 | `links.memory.href` | `url` | The user-visible memory URL, **not** `about` (which is the bytes URL). |
 | story text / OCR | `text` | See the transcription paragraph above. Absent when not transcribed. |
-| — | `image_ref` | Set only when `projectPath` was given and the scan was retained. |
+| — | `image_ref` | Set only when `projectPath` was given and the scan was retained. Retention covers `image/*` ONLY, and the file is keyed by the **memory id** (`images/<memory id>.jpg`). A PDF is transcribed but not retained: `imageFilenameFor` writes `.jpg` and `gcUnreferencedImages` sweeps `images/*.jpg`, so a retained PDF would sit under a name the viewer cannot render and the GC mis-handles. Its `url` always leads back to the artifact. |
 | — | `notes` | The tool's own note when a memory was not transcribed. |
 
 **Kept:** `application/pdf`; anything of media kind `Document` or `Story`; and
