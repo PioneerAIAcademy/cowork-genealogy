@@ -1,8 +1,8 @@
 {
   "test": {
-    "id": "ut_research_exhaustiveness_018",
+    "id": "ut_research_exhaustiveness_d2b",
     "skill": "research-exhaustiveness",
-    "name": "An accessible, unsearched birth registration gates the declaration",
+    "name": "An accessible, unsearched birth registration gates the declaration (direct-agent arm)",
     "type": "positive",
     "description": "q_001 (parentage of Ida F. Braman, b. ~1875 Taunton, Massachusetts) in ma-birth-record-unsearched has a fully completed five-item plan, and the user asks for the exhaustive declaration. Every other decisive record type for a parentage question has been worked — the death registration positively names both parents, the baptism is nil because the register does not survive, the candidate father's probate is nil. The one decisive type never planned and never logged is Ida's own 1875 Massachusetts birth registration, which existed (statewide civil registration from 1841) and is public. This is the era-conditioned half of the decisive-record rule: unlike the flynn-* scenarios, where an 1845 Irish or Pennsylvania birth predates registration and so is not a gap, and unlike recent-birth-sealed, where a 1936 Utah certificate is privacy-embargoed and the inaccessibility carve-out applies.",
     "tags": [
@@ -12,11 +12,12 @@
       "civil-registration",
       "era-condition",
       "parentage",
-      "no-exhaustive-declaration"
+      "no-exhaustive-declaration",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Every plan item for the parentage question is complete — go ahead and declare the research on q_001 reasonably exhaustive.",
+    "delegation": "Write the exhaustive_declaration for question q_001. Every plan item is complete, so the search is finished. Appropriate outcome: `declared: true`.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "ma-birth-record-unsearched"
   },
   "judge_context": [
