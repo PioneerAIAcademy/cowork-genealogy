@@ -433,7 +433,22 @@
           "type": "array",
           "items": { "type": "string", "pattern": "^q_" }
         }
-      }
+      },
+      "allOf": [
+        {
+          "$comment": "Negative evidence is the researcher's own conclusion that a person expected in a record is missing from it, so record_role is the literal 'absent' and informant_proximity is 'researcher' — no record informant reported an absence, whatever the record type. Forward direction only: the converse (absent implies negative) is an unexercised branch and is left to research_append's own precondition. `informant` is not constrained; it is free text. The `required` below is load-bearing: without it an assertion missing `evidence_type` matches the `if` vacuously and collects a spurious second error.",
+          "if": {
+            "required": ["evidence_type"],
+            "properties": { "evidence_type": { "const": "negative" } }
+          },
+          "then": {
+            "properties": {
+              "record_role": { "const": "absent" },
+              "informant_proximity": { "const": "researcher" }
+            }
+          }
+        }
+      ]
     },
     "person_evidence_entry": {
       "type": "object",
