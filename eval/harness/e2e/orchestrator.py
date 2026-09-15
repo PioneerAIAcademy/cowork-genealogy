@@ -88,7 +88,7 @@ from e2e.stop_checker import (
     read_tree_json,
     should_continue_run,
 )
-from e2e.subagent_capture import collect_subagents
+from e2e.subagent_capture import collect_subagents, sdk_cache_dir
 from e2e import judge as judge_module
 
 
@@ -1041,7 +1041,9 @@ def build_workspace(
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
     # freeze the run; lower it here to A/B whether that clears (read the runlog's
-    # `subagents[].runaway_thinking`). Valid: low | medium | high | xhigh | max.
+    # `subagents[].runaway_thinking`; an empty list means read
+    # `subagent_capture_status` before concluding no runaway).
+    # Valid: low | medium | high | xhigh | max.
     if effort_level is not None:
         claude_dir = target / ".claude"
         claude_dir.mkdir(parents=True, exist_ok=True)
@@ -2727,30 +2729,32 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
     The SDK runs Claude Code as a subprocess, which writes a session transcript
-    to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
+    to ``<config-root>/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
     the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
     is otherwise only discoverable by hand. It is strictly richer than the
     runlog's own structured trace: only the JSONL has
     per-message timestamps, per-turn token/cache usage, thinking blocks, and
     untruncated tool payloads — everything needed to diagnose latency and cost.
 
-    Matched on the unique tempdir leaf (``e2e-<id>-<rand>``), which appears
-    verbatim in the slug, so this does not depend on the exact path-slug
-    transform. Returns the newest matching JSONL, or None if none is found.
+    Resolved through ``subagent_capture.sdk_cache_dir``, which asks the SDK for
+    the key. An earlier version matched on the tempdir leaf and claimed it
+    "appears verbatim in the slug, so this does not depend on the exact path-slug
+    transform" — that was wrong in both halves, and it silently cost this file
+    its sibling ``.session.jsonl`` on roughly one run in five (#2468).
+
+    Returns the newest matching JSONL, or None if none is found. Never raises:
+    a failure here must not cost the run its log.
     """
-    projects = Path.home() / ".claude" / "projects"
-    if not projects.is_dir():
+    try:
+        cache = sdk_cache_dir(workspace)
+        if cache is None:
+            return None
+        candidates = list(cache.glob("*.jsonl"))
+        if not candidates:
+            return None
+        return max(candidates, key=lambda p: p.stat().st_mtime)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         return None
-    leaf = workspace.name
-    candidates = [
-        p
-        for d in projects.iterdir()
-        if d.is_dir() and d.name.endswith(leaf)
-        for p in d.glob("*.jsonl")
-    ]
-    if not candidates:
-        return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
 async def run_e2e_test(
@@ -3018,10 +3022,11 @@ async def run_e2e_test(
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)
         # from the SDK's ephemeral cache while `workspace` is still in scope (the
-        # cache lives outside the tempdir, keyed on workspace.name). Best-effort;
+        # cache lives outside the tempdir; see sdk_cache_dir for how it is
+        # located). Best-effort;
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
-        subagents = collect_subagents(workspace)
+        subagents, subagent_capture_status = collect_subagents(workspace)
 
         result = E2eResult(
             test_id=fixture.id,
@@ -3040,6 +3045,7 @@ async def run_e2e_test(
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
             subagents=subagents,
+            subagent_capture_status=subagent_capture_status,
             git_sha=run_git_sha,
             skills_hash=run_skills_hash,
         )

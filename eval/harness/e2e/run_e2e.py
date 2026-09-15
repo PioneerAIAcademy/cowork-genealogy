@@ -228,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
             "not the only lever — ClaudeAgentOptions.effort also works — but it "
             "is the one proven to reach subagents. Vary it to test whether a "
             "runaway-thinking subagent freeze clears (see "
-            "subagents[].runaway_thinking)."
+            "subagents[].runaway_thinking; if empty, read subagent_capture_status)."
         ),
     )
     parser.add_argument(
