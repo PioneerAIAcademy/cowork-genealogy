@@ -164,18 +164,17 @@ QUARANTINE_HINT = (
 def git_ar_e2e_runlogs() -> list[Path] | None:
     """PR-added OR renamed-into-place primary e2e run logs.
 
-    Deliberately NOT a widening of `git_added_e2e_runlogs()`. Issue #2581 forbids
-    that: three checks read it (the grading gate, the unresolved-draft warn, the
-    component-derivation warn) and would change behaviour.
+    Deliberately NOT a widening of the shared `git_added_e2e_runlogs()`, which
+    the two warn-only checks still read: widening that one would change what
+    they report as well. Both BLOCKING gates read this selector instead.
 
-    RESIDUAL GAP, tracked as issue #2606 rather than left as a note here:
-    because the grading gate selects with `--diff-filter=A`, promoting a run out
-    of quarantine by RENAME is invisible to it. Measured 2026-09-15 —
+    Why renames matter, and why the grading gate reads this too: promoting a run
+    out of quarantine arrives as a RENAME, which `--diff-filter=A` does not
+    report at all. Measured 2026-09-15 —
     eval/runlogs/_2491-exploratory-quarantine/ holds four runs, every one with a
-    `.final-tree.gedcomx.json` and ZERO `.ann.json` — so such a promotion lands a
-    tree-producing, ungraded run in the calibration corpus. Widening the shared
-    selector is forbidden by #2581; whether the grading gate should gain its own
-    AR arm is a ruling, which is what #2606 asks for.
+    `.final-tree.gedcomx.json` and ZERO `.ann.json` — so before this selector
+    existed, that promotion landed a tree-producing, ungraded run in the
+    calibration corpus by the one route neither gate could see.
 
     `-c diff.renames=true` is not decoration. With `diff.renames=false` in a
     developer's gitconfig, git reports a rename as a plain `A <destination>`,
