@@ -1218,7 +1218,8 @@ def report_chronological_contradiction_not_speculative(
             f"person_evidence link(s) are non-speculative despite a "
             f"chronological contradiction (gap > {THRESHOLD} yr between the "
             "record persona's birth/christening year and the tree person's "
-            "birth year) — a gap this large rules out the same birth event; "
-            "the link must be `speculative` at most:\n"
+            "birth year) — a gap this large is a presumptive contradiction; "
+            "unless the record itself explains the delay (e.g. conditional or "
+            "adult baptism) the link must be `speculative` at most:\n"
             + "\n".join(offenders)
         )

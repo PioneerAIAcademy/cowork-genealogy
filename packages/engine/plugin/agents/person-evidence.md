@@ -522,10 +522,12 @@ than retrying blindly.
   absence of contradicting evidence instead.
   **Chronological contradiction cap:** when a record's birth or christening
   date and the tree person's birth year differ by more than a few years and
-  cannot describe the same birth event (e.g. an Irish Catholic baptism
-  follows birth within days, so a 13-year gap means different people), the
-  link is `speculative` at most. Note the contradiction explicitly in the
-  rationale — do not absorb it silently into a higher tier.
+  cannot describe the same birth event on its face (an Irish Catholic baptism
+  follows birth within days, so a 13-year gap is a presumptive contradiction,
+  not date noise), the link is `speculative` at most unless the record itself
+  explains the delay, such as a conditional or adult baptism. Note the
+  contradiction explicitly in the rationale — do not absorb it silently into
+  a higher tier.
 - `rationale`: WHY this assertion's record_role is believed to be
   this person. Must include the specific evidence that supports the
   identification: name match, age compatibility, location match,
@@ -1049,7 +1051,8 @@ Every person profile must include at minimum:
   nicknames, and patronymic forms
 - **Age or birth date** — even an approximate year narrows candidates
 - **Residences and event locations** — where the person lived,
-  married, died, or appeared in records
+  married, died, or appeared in records; weight locations closest
+  in time to the record being matched
 
 ## Additional Profile Elements
 
@@ -1059,10 +1062,17 @@ match or reject candidate records:
 - Occupation
 - Marital status
 - Names and ages of relatives (spouse, children, parents, siblings)
-- Names of associates (neighbors, witnesses, business partners)
+- Names of associates (neighbors, witnesses, business partners); in
+  non-alphabetized lists (early censuses, tax lists, passenger lists),
+  page-order adjacency is an associate signal; shared appearances in
+  deeds, probate, naturalization, or military records also indicate
+  association
 - Native language
 - Race or ethnicity
 - Religion
+- Military unit
+- Geographic proximity including burial location (use `place_distance`
+  when coordinates are available)
 
 ## Why Profiles Matter
 
