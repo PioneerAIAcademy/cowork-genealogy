@@ -46,8 +46,10 @@ the wrong things. These figures are exact.
 | `research_append` | 15 | 16,112 | 3.6% |
 | `record_read` | 10 | 12,080 | 2.7% |
 
-**The wiki/external tools are 229,528 tokens — 51% of all main-thread tool
-bytes**, and **34 of those calls follow a `Skill: locality-guide` invocation.**
+**The wiki/external tools are 230,104 tokens — 51% of all main-thread tool
+bytes**, and **32 of those 33 calls follow a `Skill: locality-guide`
+invocation.** (Args plus result, over the four tools in the table.
+`wikipedia_search` adds 2 calls and 44 tokens and is excluded.)
 Single results run enormous: `volume_search` 12,680 tokens in one call,
 `external_links_search` averaging **11,127 tokens per call** across five.
 
@@ -74,7 +76,7 @@ that drove them:
 
 | conversion | drives | tok/run | share of main tool bytes |
 |---|---|---|---|
-| **#2117 `locality-guide`** | `wiki_place_page`, `wiki_read`, `wiki_search`, `external_links_search` | **229,528** | **51%** |
+| **#2117 `locality-guide`** | `wiki_place_page`, `wiki_read`, `wiki_search`, `external_links_search` | **230,104** | **51%** |
 | #2243 `search-records` (blocked on #2123) | `record_search`, `record_read`, `volume_search` | 122,459 | 27% |
 | #2116 `research-plan` | `plan_items` / `plans` writes | 16,112 | 3.6% |
 
@@ -120,16 +122,27 @@ it — it drives **15.3% of all wiki/external calls**, and 90.7% of the wiki
 traffic on runs where `locality-guide` never runs. Second-order to #2117, but
 not the distant third its write share suggested.
 
+**Every conversion in this document is gated on issue #2246.** #2117, #2116 and
+#2243 each open with the same lead ruling (2026-09-07): *"the direct-agent
+unit-harness arm lands before any skill→agent conversion starts … Do not start
+this card until issue #2246 is closed."* #2246 is open. **#2123 is the only item
+here that is unblocked.**
+
+That does not weaken the case — it relocates it. **This measurement is the
+argument for prioritising #2246**, because #2246 gates a queue whose top item is
+51% of the main thread.
+
 `locality-guide` is a skill, so it runs **inline in the main session** and every
 one of those results lands in the orchestrator's window. Converting it to a pair
-moves all 229,528 tokens into an agent window that is discarded when the agent
+moves all 230,104 tokens into an agent window that is discarded when the agent
 returns — the single largest change available, and it is already on the board,
 unblocked, in `cluster:pair-conversion`.
 
-- **Action:** prioritise **#2117**. Then **#2123 → #2243** (search-records, 27%).
-  **#2116** (`research-plan`) is now a distant third at 3.6%.
+- **Action:** prioritise **#2246** — it gates all three conversions. Start
+  **#2123** alongside it (unblocked, and it gates #2243). Then **#2117**
+  (51%), **#2243** (27%), **#2116** (3.6% of writes but 15.3% of wiki calls).
 - **Acceptance:** main-thread `result_chars` for the wiki/external tools falls
-  below 50,000 tok/run on an instrumented run, from 229,528, with no loss in
+  below 50,000 tok/run on an instrumented run, from 230,104, with no loss in
   locality findings.
 
 #### This ranking replaces two earlier ones, both wrong, in instructive ways
@@ -144,26 +157,22 @@ unblocked, in `cluster:pair-conversion`.
 Both are the same error in different clothes: ranking on the quantity that was
 easy to measure rather than the one that mattered. **Rank on `result_chars`.**
 
-#### `research-plan` (#2116) — still worth doing, now third
 ### 2. Route `Read` of research.json to `research_query`
 
-The scoped accessor already exists and is already used 9.8×/run. 2.6 full reads
-of a 76 KB file per run is ~52k tokens to obtain three routing fields.
+The scoped accessor already exists and is already used 9.8×/run. All `Read`
+calls on the instrumented run came to **19,062 tokens across 15 calls** — an
+upper bound on what routing-field reads of `research.json` cost.
 
 - **Touches:** `research/SKILL.md` routing prose, and any sub-skill that reads
   the file directly.
 - **Acceptance:** zero full-file `Read`s of `research.json` on an instrumented
   run (`result_chars` makes this checkable for the first time).
-- **Why it's second despite being cheapest:** its true size is behind the cap.
-  If `result_chars` shows those reads are mostly small, it drops. **This is the
-  lever most likely to be re-ranked upward by the run.**
-
 ### 3. Use the staging sidecars that already exist
 
 `stageSearchResults` (`record-search.ts:1074`) already writes full results to
 `results/<log_id>.json` and returns a `resultsRef` handle;
 `compactStagedRecordSearch` already slims what the agent sees. `search-records`
-references `staged.resultsRef` in its body. Yet `record_search` is still 15.9% of
+references `staged.resultsRef` in its body. Yet `record_search` is still 15.3% of
 captured main bytes with 51 of 520 results saturating the cap.
 
 So either the compaction is not aggressive enough, or triage pulls the full set
@@ -201,29 +210,33 @@ new run needed): **median 18,210 chars ≈ 4,552 tokens/run**, mean 5,078, max
 12,295, across a median **57 assistant narration turns averaging 358 chars
 each**.
 
-Be honest about the size: that is **~1% of the 449k** added to the main thread.
+Be honest about the size: that is **~1%** of the main thread's traffic (451,080 tokens of tool payload on the instrumented run).
 It will not move the compaction count. Two reasons to do it anyway:
 
 - **It costs a prose edit.** No architecture, no eval slot, no measurement
   dependency. The cheapest item in this document.
-- **The shipped instruction is already being violated.** 26 of 27 skills say
-  *"default to a one-line preamble per action"*; 358 chars is three to five
-  lines, a ~4× overshoot. And `search-records` already carries the tighter rule
-  the others lack — *"one short preamble per phase / per record … Under
+- **The shipped instruction is already being violated.** **23 of the 28 skills**
+  say *"default to a one-line preamble per action"*; 358 chars is three to five
+  lines, a ~4× overshoot. And **`research/SKILL.md:22` — the orchestrator skill
+  every autonomous run enters through** — already carries the tighter rule the
+  others lack: *"one short preamble per phase / per record … Under
   `--autonomous` mode, suppress per-entry preambles entirely — the audit trail
   lives in the persisted `rationale`/`notes` fields, not in chat"*. **The e2e
   corpus is autonomous-only**, so on every run measured above that suppression
-  should have applied and 57 narration turns should have been near zero.
+  should have applied and 57 narration turns should have been near zero. It is
+  not a missing rule; it is a rule the orchestrator states about itself and does
+  not follow.
 
 So the work is not "write a shorter rule" — it is "find out why the rule that
 exists is not binding", which is a lane-4 question under `docs/skill-lifecycle.md`
 (a rule the model reads is not a rule the model follows) before it is a wording
 change.
 
-- **Touches:** the `**Narration:**` line in the 26 skills that carry the loose
+- **Touches:** the `**Narration:**` line in the 23 skills that carry the loose
   default. Re-derive the exact list with
-  `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` —
-  `search-wikipedia` is a deliberate exception and must not gain the line.
+  `grep -l 'default to a one-line preamble per action' packages/engine/plugin/skills/*/SKILL.md`
+  — `grep -rL` returns files *without* a match and yields only `search-wikipedia`,
+  which is a deliberate exception and must not gain the line.
 - **Acceptance:** median narration chars/run falls below 6,000 on an
   instrumented autonomous run, with no dimension regression in the affected
   skills' suites.
@@ -238,28 +251,28 @@ change.
   API oversized — the CLI manages context itself). Settling it properly needs a
   long run where the autocompact threshold is observable. At 5× headroom it would
   hide the problem rather than fix it.
-- **Lowering `effort`.** Gated on measurement (2). It is a quality trade against
-  a saving not yet shown to exist.
+- **Lowering `effort`.** Measured and dropped: tool bytes (451,080) exceed total
+  main-thread window growth (412,447) on their own, so thinking is not a
+  residency term.
 - **Compaction as a designed checkpoint.** Project state already persists to
   `research.json` and `tree.gedcomx.json`, so the durable answer is on disk, not
   in the window — a deliberate checkpoint-and-restart could reload only what is
   needed instead of an SDK prose summary. It is the only idea here that attacks
-  the 449k total rather than shaving items off it, and it is too speculative to
+  the whole 451,080 rather than shaving items off it, and it is too speculative to
   plan until levers 1–3 are measured.
 
 ## Sequencing
 
 1. ~~The baseline instrumented run~~ — **done** (2026-09-15). Every figure above
    is from it.
-2. **#2117 `locality-guide`** — 51% of main-thread tool bytes, unblocked, on the
-   board. Take it first.
-3. **#2123 → #2243 `search-records`** — 27%. #2123 is the long pole; start it in
-   parallel with #2117.
-4. **Lever 2 (`Read` → `research_query`)** — 19,062 tok/run, no eval slot, no
-   architecture change.
-5. **#2116 `research-plan`** — 3.6%. Worth doing, no longer urgent.
-6. Levers 3, 5 and 6 follow; **thinking/effort is off the list** — the run showed
-   tool payloads account for essentially all window growth.
-
-Re-rank after step 1. Four of the six levers are ranked on a floor, and the run
-exists to replace it.
+2. **#2246** — the direct-agent unit-harness arm. It gates #2117, #2116 and
+   #2243 by lead ruling, so it is the critical path for everything in lever 1.
+3. **#2123** (`search-records` reference layer) — the only unblocked item here,
+   and it gates #2243. Run it in parallel with #2246.
+4. **#2117 `locality-guide`** — 51% of main-thread tool bytes, the moment #2246
+   closes.
+5. **Lever 2 (`Read` → `research_query`)** — 19,062 tok/run, no eval slot, no
+   architecture change, no dependency on #2246.
+6. **#2243** (27%), then **#2116**.
+7. **Thinking/effort is off the list** — the run showed tool payloads account for
+   essentially all window growth.

@@ -382,7 +382,7 @@ Per-project context about the researcher (experience level, paid
 subscriptions, derived narration guidance) lives in a
 `researcher_profile` section of `research.json`. `init-project` writes
 it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. 26 of the 27 skills
+the project's research objective at project start. 27 of the 28 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
