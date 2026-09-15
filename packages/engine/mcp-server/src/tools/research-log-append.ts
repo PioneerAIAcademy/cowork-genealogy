@@ -335,6 +335,19 @@ async function applyLogAppendOp(
     // rebuilds the entry from arguments and does NOT coerce, by its own renames-only
     // contract, so a replayed entry differs from a live one for a stringly-typed
     // value. Left that way deliberately: the replay contract is a harness decision.
+    // Same bound as `results_examined` above, from the same shared predicate
+    // and for the same reason: the schema declares this `integer, minimum: 0`,
+    // and the comment above says `validator.ts` carries it in field-name
+    // allow-lists with no type check — so a NaN (which persists as `null`), a
+    // negative or a fraction reached the document unchallenged. Adding the
+    // bound to one of the two sibling fields and not the other was the second
+    // instance of one class; CLAUDE.md asks for one shared guard (review
+    // round 5).
+    if (!isNonNegativeInteger(resultsAvailableCoerced)) {
+      throw new LogAppendError(
+        `resultsAvailable must be a non-negative integer; got ${JSON.stringify(op.resultsAvailable)}`,
+      );
+    }
     entry.results_available = resultsAvailableCoerced as number;
   }
   if (op.notes !== undefined && op.notes !== null) {

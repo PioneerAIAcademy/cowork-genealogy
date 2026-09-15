@@ -434,6 +434,46 @@ describe("research_log_append", () => {
     },
   );
 
+  it.each([NaN, -3, 1.5])(
+    "rejects resultsAvailable=%s, the same bound its sibling gets (review round 5)",
+    async (bad) => {
+      // The schema declares `results_available` as `integer, minimum: 0`, and
+      // `validator.ts` carried it in field-name allow-lists with no type check
+      // — so NaN (which persists as `null`), a negative or a fraction reached
+      // the document unchallenged. Guarding `results_examined` and not this was
+      // the second instance of one class; CLAUDE.md asks for one shared guard.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Flynn" },
+        outcome: "positive",
+        resultsExamined: 3,
+        resultsAvailable: bad,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toMatch(/resultsAvailable must be a non-negative integer/);
+      const research = await readJson("research.json");
+      expect(research.log).toEqual([]);
+    },
+  );
+
+  it("still accepts a null and an omitted resultsAvailable, which the schema allows", async () => {
+    await writeProject(baseResearch());
+    for (const value of [null, undefined]) {
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Flynn" },
+        outcome: "positive",
+        resultsExamined: 3,
+        ...(value === undefined ? {} : { resultsAvailable: value }),
+      });
+      expect(result.ok).toBe(true);
+    }
+  });
+
   it("coerces a stringified resultsExamined the way resultsAvailable already is, rather than rejecting it", async () => {
     await writeProject(baseResearch());
     const result = await researchLogAppend({

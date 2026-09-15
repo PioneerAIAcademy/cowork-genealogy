@@ -950,6 +950,17 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         addError(report, lp, `results_examined must be a non-negative integer; got ${JSON.stringify(n)}`);
       }
     }
+    // Its sibling, same bound, same reason. The schema declares
+    // `results_available` as `integer, minimum: 0` with a null branch, so null
+    // is allowed here and anything else non-integer is not. Guarding one of the
+    // two and not the other was the second instance of one class (review
+    // round 5).
+    if ("results_available" in entry && entry.results_available !== null) {
+      const n = entry.results_available;
+      if (!isNonNegativeInteger(n)) {
+        addError(report, lp, `results_available must be a non-negative integer or null; got ${JSON.stringify(n)}`);
+      }
+    }
 
     const ext = entry.external_site;
     if (entry.tool === "external_site" && ext === null) {

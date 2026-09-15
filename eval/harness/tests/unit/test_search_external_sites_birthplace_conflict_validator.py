@@ -60,15 +60,18 @@ _RESEARCH = json.loads(
 )
 
 
-def _states(new_log_entry=None):
-    """Identical before/after by default. With `new_log_entry`, the after
-    side carries it as one extra log[] entry — enough for `_new_log_entries`'s
-    before/after-length comparison to see it as new."""
-    if new_log_entry is None:
+def _states(*new_log_entries):
+    """Identical before/after by default. With entries, the after side carries
+    them as extra log[] entries — enough for `_new_log_entries`'s before/after-
+    length comparison to see them as new. Takes more than one so a test can
+    build the real two-entry step-4-then-step-6 shape, which is what tells a
+    re-log apart from a fresh generation."""
+    entries = [e for e in new_log_entries if e is not None]
+    if not entries:
         return {"research_json": _RESEARCH}, {"research_json": _RESEARCH}
     before_log = list(_RESEARCH.get("log") or [])
     before = {"research_json": {**_RESEARCH, "log": before_log}}
-    after = {"research_json": {**_RESEARCH, "log": before_log + [new_log_entry]}}
+    after = {"research_json": {**_RESEARCH, "log": before_log + entries}}
     return before, after
 
 
@@ -349,13 +352,61 @@ def test_hand_composed_check_does_not_crash_on_a_tool_call_with_no_tool_name():
 def test_hand_composed_check_skips_a_user_reported_nil_with_no_tool_call():
     """SKILL.md step 6: a nil the user reports without a capture re-logs the
     step-4 URL as `negative` / `capture_received: false`; rubric.md says the
-    tool is not expected on that turn, so this check has nothing to grade."""
-    before, after = _states({
-        "id": "log_999", "tool": "external_site", "outcome": "negative",
-        "external_site": {"site": "newspapers", "url_generated": "https://www.newspapers.com/search/?query=Flynn", "capture_received": False},
-    })
+    tool is not expected on that turn, so this check has nothing to grade.
+
+    Built as the REAL two-entry shape — step 4's `partial` and step 6's
+    `negative` carrying the same URL — because that is what makes the second
+    one a re-log. The one-entry version this used to assert was not a shape a
+    run produces: a lone `negative` entry carrying a URL nothing else in the
+    log has is the autonomous-defer path, which does generate a URL, and
+    excluding it by outcome was what let that path go ungraded (review
+    round 5)."""
+    url = "https://www.newspapers.com/search/?query=Flynn"
+    before, after = _states(
+        {
+            "id": "log_998", "tool": "external_site", "outcome": "partial",
+            "external_site": {"site": "newspapers", "url_generated": url, "capture_received": False},
+        },
+        {
+            "id": "log_999", "tool": "external_site", "outcome": "negative",
+            "external_site": {"site": "newspapers", "url_generated": url, "capture_received": False},
+        },
+    )
+    # Step 4's own entry is still a fresh generation and is graded; the step-6
+    # re-log adds no second grading target. With the tool called, that passes.
+    _expect_passes(
+        _tool_calls("Ireland"), {"type": "positive"}, states=(before, after), check=_HAND_COMPOSED_CHECK
+    )
+    # And the re-log alone, with step 4 already in the log before this run,
+    # has nothing to grade at all.
+    prior = {
+        "id": "log_998", "tool": "external_site", "outcome": "partial",
+        "external_site": {"site": "newspapers", "url_generated": url, "capture_received": False},
+    }
+    before_log = list(_RESEARCH.get("log") or []) + [prior]
+    relog_only = (
+        {"research_json": {**_RESEARCH, "log": before_log}},
+        {"research_json": {**_RESEARCH, "log": before_log + [{
+            "id": "log_999", "tool": "external_site", "outcome": "negative",
+            "external_site": {"site": "newspapers", "url_generated": url, "capture_received": False},
+        }]}},
+    )
     with pytest.raises(pytest.skip.Exception):
-        _HAND_COMPOSED_CHECK(before, after, [], {"type": "positive"})
+        _HAND_COMPOSED_CHECK(*relog_only, [], {"type": "positive"})
+
+
+def test_hand_composed_check_grades_an_autonomous_defer_negative_entry():
+    """The autonomous-defer path logs ONE `negative` entry carrying a freshly
+    generated URL and presents it. Measured live on 2 of 13 positive tests in
+    v1_2026-09-15_09-57-05.json (`_013`, `_008`), where the old
+    `outcome != "partial"` gate skipped this check entirely. It must grade:
+    pass when the tool was called, fire when it was not."""
+    states = _states({
+        "id": "log_999", "tool": "external_site", "outcome": "negative",
+        "external_site": {"site": "ancestry", "url_generated": "https://www.ancestry.com/search/?name=Flynn", "capture_received": False},
+    })
+    _expect_passes(_tool_calls("Ireland"), {"type": "positive"}, states=states, check=_HAND_COMPOSED_CHECK)
+    _expect_fires([], {"type": "positive"}, "hand-composed", states=states, check=_HAND_COMPOSED_CHECK)
 
 
 # --- second review round: the conflict validator's own edge cases ------

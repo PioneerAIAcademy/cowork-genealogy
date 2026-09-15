@@ -137,14 +137,34 @@ _PLACE_SLOT_CHAIN = {
 }
 
 
-def _effective_place_field(site, attrs):
+def _effective_place_field(site, attrs, accepted_keys=frozenset()):
     """The one attribute whose value actually reaches the site's birthplace
     slot, or None when nothing does — the same first-present rule the tool
-    applies."""
-    for field in _PLACE_SLOT_CHAIN.get(site, ("birthPlace",)):
+    applies.
+
+    `birthPlace` is always judged: naming a place there IS the birthplace
+    assertion, whatever the site does with it.
+
+    A FALLBACK field is judged only when its value is not a place the project
+    itself accepts. That exemption is what the module docstring above is about:
+    this fixture's accepted death and residence places are all "Schuylkill
+    County, Pennsylvania", which contains the rejected birthplace
+    "Pennsylvania", so without it a legitimate marriage, death or residence
+    search on a fallback site is flagged for naming its own correct place.
+    `tests/tools/build-external-search-url.test.ts` asserts that exact call is
+    correct ("lets a FindMyPast marriage search name its place through
+    keywordsplace"), so the two halves of this PR contradicted each other
+    (review round 5). Bare "Pennsylvania" through a fallback still fires: it
+    matches no accepted assertion.
+    """
+    chain = _PLACE_SLOT_CHAIN.get(site, ("birthPlace",))
+    for field in chain:
         value = attrs.get(field)
-        if isinstance(value, str) and value.strip():
-            return field
+        if not (isinstance(value, str) and value.strip()):
+            continue
+        if field != "birthPlace" and _place_key(value) in accepted_keys:
+            return None
+        return field
     return None
 
 
@@ -236,6 +256,17 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         }
         if not rejected_places:
             continue
+        # Places the project holds as facts, for the fallback-field exemption
+        # in `_effective_place_field`: every assertion place for this scenario
+        # that is not one of THIS conflict's rejected values. Keyed, so the
+        # comparison matches the one the rejected set uses.
+        rejected_keys = {_place_key(p) for p in rejected_places}
+        accepted_keys = {
+            _place_key(a["place"])
+            for a in assertions_by_id.values()
+            if isinstance(a.get("place"), str) and a["place"].strip()
+            and _place_key(a["place"]) not in rejected_keys
+        }
         # A place-resolution tool commonly hands back a broader-context
         # string ("Pennsylvania, United States") for what the fixture's own
         # assertion records as the bare place name ("Pennsylvania") — the
@@ -262,7 +293,7 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
             # BIRTHplace is a correct death search (this fixture's own accepted
             # death is in Pennsylvania). A non-string value (`birthPlace:
             # 1845`) is real live input the tool notes; it is skipped here.
-            field = _effective_place_field(args.get("site"), attrs)
+            field = _effective_place_field(args.get("site"), attrs, accepted_keys)
             if field is not None:
                 value = attrs[field]
                 if any(_place_matches_rejected(value, p) for p in rejected_places):
@@ -310,23 +341,57 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
 
+    new_entries = _new_external_entries(before_state, after_state, "external_site")
+
+    # A step-6 re-log carries an EARLIER entry's URL again. That is what makes
+    # it a re-log, and it is the property to test — not the outcome.
+    #
+    # This gate used to be `outcome != "partial"`, which excluded every
+    # `negative` entry. The sibling `test_the_url_logged_is_the_url_presented`
+    # says in terms why that is wrong ("the autonomous-defer path logs
+    # 'negative' and DOES present the URL, where this holds on 10 of 10
+    # committed runs", #2345 review), and it was measured wrong here too:
+    # in v1_2026-09-15_09-57-05.json, ut_search_external_sites_013 and _008
+    # each logged a single `negative` entry carrying a freshly generated URL,
+    # and this check skipped both — 2 of 13 positive tests. Neither was a real
+    # violation (the tool was called in both), so nothing escaped; the hole was
+    # that the check issue #1980 asks for by name did not grade that path at
+    # all. Re-log detection closes it without re-admitting the cases the three
+    # tests below pin (review round 5).
+    prior_log = ((before_state.get("research_json") or {}).get("log") or [])
+    seen_before = {
+        (e.get("external_site") or {}).get("url_generated")
+        for e in prior_log
+        if isinstance((e.get("external_site") or {}).get("url_generated"), str)
+    }
+    new_ids = {id(e) for e in new_entries}
+
     def _is_fresh_url_generation(entry):
         detail = entry.get("external_site") or {}
         url = detail.get("url_generated")
         if not isinstance(url, str) or not url.strip():
             return False
-        if entry.get("outcome") != "partial":
-            return False
         if detail.get("capture_received") is True:
+            return False
+        if entry.get("outcome") == "error":
             return False
         if detail.get("site") == "familysearch_web":
             return False
+        # Already in the log before this run, or re-logged alongside the entry
+        # that generated it this run: a re-log either way.
+        if url in seen_before:
+            return False
+        if any(
+            id(other) in new_ids
+            and other is not entry
+            and (other.get("external_site") or {}).get("url_generated") == url
+            and other.get("outcome") == "partial"
+            for other in new_entries
+        ):
+            return False
         return True
 
-    url_generation_entries = [
-        e for e in _new_external_entries(before_state, after_state, "external_site")
-        if _is_fresh_url_generation(e)
-    ]
+    url_generation_entries = [e for e in new_entries if _is_fresh_url_generation(e)]
     if not url_generation_entries:
         pytest.skip("no URL-generation external_site log entry this run")
 

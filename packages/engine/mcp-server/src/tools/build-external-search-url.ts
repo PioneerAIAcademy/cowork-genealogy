@@ -121,6 +121,13 @@ function yearOrRange(s: unknown): string | undefined {
   const t = str(s);
   if (t === undefined || !/^\d{4}(-\d{4})?$/.test(t)) return undefined;
   const [from, to] = t.split("-");
+  // Each half goes through the SAME bound the numeric year fields use, rather
+  // than resting on `\d{4}` alone: the pattern admits 0000-0999, so `dr_year`
+  // took years that `birthYear` rejects. `numYear`'s own comment says "one
+  // rule rather than two that drift" and this is the one that drifted
+  // (review round 5).
+  if (!isFourDigitYear(Number(from))) return undefined;
+  if (to !== undefined && !isFourDigitYear(Number(to))) return undefined;
   return to !== undefined && Number(from) > Number(to) ? undefined : t;
 }
 
@@ -319,18 +326,25 @@ function siteWideParams(
       // `q` is appended: an invented facet or date parameter is silently
       // ignored or errors the page on these archives.
       return { q: joinPresent(" ", a.givenName, a.surname, a.keywords) };
-    case "archives_gov": {
+    case "archives_gov":
       // `personOrOrg` (with the fixed `dataSource=authority`) is the catalog's
       // person-name field; `q` is free text only. From the catalog's own live
       // JS field registry (spec live-check section).
-      const birthPlace = str(a.birthPlace);
-      const deathPlace = str(a.deathPlace);
+      //
+      // No place parameter — `geographicReference` was REMOVED by live
+      // verification (review round 5, 2026-09-15), the same way findagrave's
+      // `location` was: it does not narrow the search, it empties it. Measured
+      // against the catalog's own backend, `personOrOrg=Flynn` returns 43 under
+      // `description` and 19 under the shipped `authority`, and ADDING
+      // `geographicReference=Pennsylvania` returns 0 in BOTH. Alone the field
+      // does filter under `description` (164,604, nonsense 0) but is dead under
+      // `authority` (0 for a real value). A place therefore cost the researcher
+      // the whole result set, and the nil read as evidence of absence. Spec §4
+      // and §9 carry the measurement.
       return {
         personOrOrg: joinPresent(" ", a.givenName, a.surname),
         q: str(a.keywords),
-        geographicReference: birthPlace ?? deathPlace,
       };
-    }
     case "archive_org":
       // Dublin-Core metadata, no vital-records fields; `query` is the one
       // real parameter and a name is only a free-text term here.
@@ -473,7 +487,14 @@ const SITE_ACCESS: Record<ExternalSearchSite, AccessClassification> = {
   billiongraves: "free",
   digitalarkivet: "free",
   antenati: "free",
-  library_archives_canada: "free",
+  // Free to search, but Cloudflare challenges an automated fetch: measured
+  // 2026-09-15, the results URL, /eng and / all return HTTP 403 with
+  // `cf-mitigated: challenge` and a "Just a moment..." interstitial, under
+  // three different user agents including none. That is the same measurement
+  // that puts chronicling_america in this tier, and the tier's whole purpose is
+  // that a blocked capture is narrated as expected rather than as a nil.
+  // Measured from one network vantage; a second vantage would settle it.
+  library_archives_canada: "free_bot_protected",
   // The search is free; viewing full results may need a subscription — the
   // permanent note in SITE_NOTES carries what the 3-value enum cannot.
   american_ancestors: "free",
@@ -510,13 +531,32 @@ const USER_CONTRIBUTED_NOTE =
 // per-site list in SKILL.md prose the model has to remember to apply.
 const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
   american_ancestors: "search is free; a subscription may still be required to view full results",
+  // The shipped `dataSource=authority` scope is the catalog's name-authority
+  // index of record CREATORS, not the archival descriptions that hold records:
+  // measured 2026-09-15, `personOrOrg` returns 19 there against 43 under
+  // `description` for Flynn, and 89 against 10,420 for Lincoln. A nil is
+  // therefore expected for an ordinary person and must not be logged as
+  // evidence of absence.
+  archives_gov:
+    "this searches the catalog's name-authority index (record creators), not the archival " +
+    "descriptions — a nil here is expected for an ordinary person and is not evidence the " +
+    "record does not exist; it also has no place filter, so scope by place in the site's own UI",
   findagrave: USER_CONTRIBUTED_NOTE,
   billiongraves: USER_CONTRIBUTED_NOTE,
   chronicling_america:
     `digitised page coverage runs ${CHRONICLING_AMERICA_COVERAGE.first}–${CHRONICLING_AMERICA_COVERAGE.last}, ` +
     "title-by-title and complete for no state — a nil result never means no newspaper covered the event",
+  // The `access` value for this site is the class default, not a fact about
+  // the archive in `baseUrl`. A baseUrl on another SUPPORTED site's domain is
+  // refused (baseUrlHostError), but every other host falls through, so a paid
+  // archive outside the fifteen still reports `free_bot_protected` — measured
+  // 2026-09-15 for genealogybank.com, newspaperarchive.com, newsbank.com and
+  // britishnewspaperarchive.co.uk. SKILL.md tells the model never to raise
+  // access for a site reported free, so the hedge has to travel with the value.
   digital_newspaper_archive:
-    "this archive's URL carries no date filter — tell the user which date range to set in the site's own UI",
+    "this archive's URL carries no date filter — tell the user which date range to set in the site's own UI. " +
+    "The access classification is this class's default, NOT checked against this archive: if it turns out to " +
+    "need a subscription, say so rather than treating it as settled",
 };
 
 // ─── baseUrl host agreement (spec §3.2) ──────────────────────────────────────
@@ -861,16 +901,9 @@ function siteNotes(
         ...shadowedNotes(site, "localita", [["birthPlace", a.birthPlace], ["deathPlace", a.deathPlace]], str),
       );
       break;
-    case "archives_gov":
-      notes.push(
-        ...shadowedNotes(
-          site,
-          "geographicReference",
-          [["birthPlace", a.birthPlace], ["deathPlace", a.deathPlace]],
-          str,
-        ),
-      );
-      break;
+    // `archives_gov` has no shadowed-field arm: its one place parameter was
+    // removed (see siteWideParams), so a supplied birthPlace/deathPlace is
+    // simply unrecognized and `unusedAttributeNotes` reports it.
     case "american_ancestors":
       notes.push(
         ...shadowedNotes(site, "Location", [["birthPlace", a.birthPlace], ["deathPlace", a.deathPlace]], str),

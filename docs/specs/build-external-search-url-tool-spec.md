@@ -425,7 +425,7 @@ here — this section documents the same mapping the implementation embeds.
 | `newspapers` | `https://www.newspapers.com/search/` | — | `query` (`givenName`+`surname`+`keywords`, space-joined), `dr_year` (`searchYear` — a year or a range, passed through unparsed), `dr_place` (`searchPlace`) |
 | `chronicling_america` | `https://www.loc.gov/collections/chronicling-america/` | `dl=page` (required — without it the search returns newspaper titles, not digitised pages) | `q` (`givenName`+`surname`+`keywords`, space-joined — **correction #2**: the site-wide template's `qs` is dead, `q` is what filters, §9) , `dates` (`searchStartYear`/`searchEndYear` → **`YYYY/YYYY`, correction #1** — not `start_date`/`end_date`), `fa` (`usState` → `location_state:<full lowercase state name>`, a postal abbreviation expanded — **correction #3**: the bare `location_state=` parameter does not filter, §9) |
 | `digital_newspaper_archive` | none — `baseUrl` required (§3.3) | — | `q` (`givenName`+`surname`+`keywords`, space-joined; any one suffices) |
-| `archives_gov` | `https://catalog.archives.gov/search` | `dataSource=authority`, `availableOnline=false` (scopes to person/org name-authority records; without them the same `personOrOrg` field is read by the archival-description search instead) | `personOrOrg` (`givenName`+`surname`, space-joined), `q` (`keywords` only — free text, not the name), `geographicReference` (`birthPlace`, falling back to `deathPlace`) |
+| `archives_gov` | `https://catalog.archives.gov/search` | `dataSource=authority`, `availableOnline=false` (scopes to person/org name-authority records; without them the same `personOrOrg` field is read by the archival-description search instead) | `personOrOrg` (`givenName`+`surname`, space-joined), `q` (`keywords` only — free text, not the name). No place parameter — **removed by live verification** (§9, correction #4): `geographicReference` is dead in the `authority` scope and empties the result set when combined with `personOrOrg` in either scope |
 | `archive_org` | `https://archive.org/search` | — | `query` (`givenName`+`surname`+`keywords`, space-joined). No structured date/place fields — Dublin-Core metadata (creator/date/subject/title), not a vital-records schema |
 | `billiongraves` | `https://billiongraves.com/search/results` | — | `GivenNames`, `FamilyName`, `EventBirthYear` (`birthYear`), `EventDeathYear` (`deathYear`). No place field exists on this site's form |
 | `digitalarkivet` | `https://www.digitalarkivet.no/en/search/persons/advanced` | — | `firstname`, `lastname`, `birth_year_from`/`birth_year_to` (both set to `birthYear` — a range field, no separate single-year input), `birth_place` (`birthPlace`), `domicile` (`residencePlace` — the site's own name for a residence field, not birth or death) |
@@ -465,16 +465,33 @@ faithful port.
 
 The static `access` value each site returns (§3.1). `digital_newspaper_archive`
 returns the class value state archives carry generally, `"free_bot_protected"`,
-for whichever archive `baseUrl` names — not verified per archive — and refuses
-a `baseUrl` on another supported site's own domain (`invalid_base_url` naming
-that site, §3.2), so this constant can never be handed out for a subscription
-site such as newspapers.com:
+for whichever archive `baseUrl` names — **not verified per archive** — and
+refuses a `baseUrl` on another supported site's own domain (`invalid_base_url`
+naming that site, §3.2). That refusal covers the other fourteen sites and
+nothing else: a **subscription archive outside** the fifteen still receives the
+class default, measured 2026-09-15 returning `free_bot_protected` for
+genealogybank.com, newspaperarchive.com, newsbank.com and
+britishnewspaperarchive.co.uk. This matters because `SKILL.md` instructs the
+model never to raise access for a site the tool reports as free, so the value
+cannot be silently wrong — the site's permanent note therefore states that the
+classification is the class default and not a fact about this archive. An
+earlier draft of this section claimed the constant "can never be handed out for
+a subscription site"; that was false for every host outside the fifteen (review
+round 5).
 
 | Site | `access` |
 |------|----------|
 | `ancestry`, `myheritage`, `findmypast`, `newspapers` | `subscription` |
-| `chronicling_america`, `digital_newspaper_archive` | `free_bot_protected` |
-| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy` | `free` |
+| `chronicling_america`, `digital_newspaper_archive`, `library_archives_canada` | `free_bot_protected` |
+| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy` | `free` |
+
+`library_archives_canada` moved into `free_bot_protected` on 2026-09-15: the
+collection-search host answers HTTP 403 with `cf-mitigated: challenge` and a
+Cloudflare "Just a moment..." interstitial on the results URL, `/eng` and `/`,
+under three different user agents including none. That is the same measurement
+that places `chronicling_america` in this tier, and the tier exists so a blocked
+capture is narrated as expected rather than logged as a nil. Measured from one
+network vantage; a second vantage would settle it.
 
 ---
 
@@ -683,13 +700,46 @@ value is the full lowercase state name — `fa=location_state:ny` measures 0 —
 so the tool expands a postal abbreviation. The colon is emitted literally
 (RFC 3986 permits it in a query; that is the shape measured).
 
+**The multi-word state facet is now verified** (review round 5, 2026-09-15), by
+two independent passes on different queries: `fa=location_state:new+york`
+returned 26,358 and 8,370, and `fa=location_state:district+of+columbia`
+returned 59,984, each well below the same query's unfacetted count. The
+form-encoded space binds. The facet is also case-insensitive
+(`Pennsylvania` = `pennsylvania`).
+
 **Still unverified against the live site**, and recorded here rather than
-assumed: the facet value for a multi-word state (`new york` — emitted with the
-form-encoded space, `new+york`), and Newspapers.com's `dr_year` accepting a
-hyphenated range (`1880-1905`), which the original prose asserted and which
-sits behind Cloudflare. The tool constrains `searchYear` to `YYYY` or
-`YYYY-YYYY` so nothing else ships, but whether the range form filters is a
-site-behaviour claim with no recorded measurement.
+assumed: Newspapers.com's `dr_year` accepting a hyphenated range
+(`1880-1905`), which the original prose asserted and which sits behind
+Cloudflare. The tool constrains `searchYear` to `YYYY` or `YYYY-YYYY`, each
+half within `isFourDigitYear`'s bound, so nothing else ships, but whether the
+range form filters is a site-behaviour claim with no recorded measurement.
+
+**Correction #4 — `archives_gov`'s place parameter is dead in the scope the
+tool ships, and poisons the search in either scope** (2026-09-15, against the
+catalog's own `proxy/records/search` backend, the endpoint its UI calls). The
+tool pairs `dataSource=authority` with `geographicReference`, and:
+
+| query | `authority` | `description` |
+|---|---|---|
+| `geographicReference=Pennsylvania` | 0 | 164,604 |
+| `geographicReference=zzqqnonsense` | 0 | 0 |
+| `personOrOrg=Flynn` | 19 | 43 |
+| `personOrOrg=Flynn` + `geographicReference=Pennsylvania` | 0 | 0 |
+
+So the field fails the nonsense-value test in the shipped scope (a real value
+and a nonsense value both return nothing), and combining it with the name field
+empties the result set in **both** scopes. It is no longer emitted, the same
+remedy FindAGrave's `location` got. A supplied `birthPlace`/`deathPlace` is now
+reported as unused rather than silently costing the researcher every hit.
+
+Left as it is, and flagged rather than changed: `dataSource=authority` itself.
+That scope is the catalog's name-authority index of record **creators**, where
+NARA's own default is `description`, the archival descriptions that hold
+records — `personOrOrg` returns 19 against 43 for Flynn, 89 against 10,420 for
+Lincoln, 439 against 53,826 for Smith. §4's table argues the authority choice
+deliberately, so switching it is the author's call and not a review's; what the
+review does require is that a near-always-nil search say so, which `SITE_NOTES`
+now does.
 
 Any future correction to a parameter name discovered the same way — by
 someone with a real browser and reproducible counts, not by re-reading
@@ -739,10 +789,15 @@ production JavaScript, but end-to-end result filtering NOT independently
 confirmed** (each is a client-rendered app that a non-browser fetch cannot
 exercise past the page shell):
 
-- **`archives_gov`** — `personOrOrg`, `q`, `geographicReference`, and the
+- **`archives_gov`** — `personOrOrg`, `q`, and the
   `dataSource`/`availableOnline` fixed params are the field ids the National
   Archives Catalog's own currently-shipping JS bundle wires into its query
   string (read directly from the production bundle, not guessed).
+  `geographicReference` is in that bundle too but is **no longer emitted** —
+  correction #4 below measured it dead in the shipped scope. Reading a field id
+  out of the bundle establishes that the name is real, **not** that it binds in
+  the scope the tool pairs it with; that gap is what correction #4 closes and is
+  worth carrying to the other sites listed here.
 - **`billiongraves`** — `GivenNames`, `FamilyName`, `EventBirthYear`,
   `EventDeathYear` are confirmed two ways: the live form's own `<input
   name=...>` attributes, and the exact submit-handler object decompiled from

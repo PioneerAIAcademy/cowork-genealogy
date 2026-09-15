@@ -111,17 +111,37 @@ describe("build_external_search_url", () => {
       expect(r.url).toBe("https://newspapers.lib.utah.edu/search?q=Patrick+Flynn");
     });
 
-    it("archives_gov: personOrOrg + fixed dataSource=authority", () => {
+    it("archives_gov: personOrOrg + fixed dataSource=authority, and NO place parameter", () => {
       const r = buildExternalSearchUrl({
         site: "archives_gov",
         attributes: { givenName: "Patrick", surname: "Flynn", birthPlace: "Ireland" },
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
+      // `geographicReference` was removed by live verification (review round 5),
+      // the same way findagrave's `location` was: measured against the catalog's
+      // own backend, `personOrOrg=Flynn` returns 43 under `description` and 19
+      // under the shipped `authority`, and adding
+      // `geographicReference=Pennsylvania` returns 0 in BOTH. A supplied place
+      // cost the researcher the whole result set.
       expect(r.url).toBe(
         "https://catalog.archives.gov/search?dataSource=authority&availableOnline=false" +
-          "&personOrOrg=Patrick+Flynn&geographicReference=Ireland",
+          "&personOrOrg=Patrick+Flynn",
       );
+      expect(r.url).not.toContain("geographicReference");
+      // The dropped attribute is reported, not swallowed.
+      expect(r.notes.some((n) => /'birthPlace' is not used by archives_gov/.test(n))).toBe(true);
+    });
+
+    it("archives_gov carries the scope caution, since a nil there is expected", () => {
+      const r = buildExternalSearchUrl({
+        site: "archives_gov",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.notes.some((n) => /name-authority index \(record creators\)/.test(n))).toBe(true);
+      expect(r.notes.some((n) => /not evidence the record does not exist/.test(n))).toBe(true);
     });
 
     it("archive_org: query is the only field, space-joined", () => {
@@ -844,7 +864,11 @@ describe("build_external_search_url", () => {
       ["billiongraves", "free"],
       ["digitalarkivet", "free"],
       ["antenati", "free"],
-      ["library_archives_canada", "free"],
+      // Free to search, but Cloudflare challenges an automated fetch: measured
+      // 2026-09-15, HTTP 403 with `cf-mitigated: challenge` on the results URL,
+      // /eng and /, under three different user agents (review round 5). Same
+      // measurement that puts chronicling_america in this tier.
+      ["library_archives_canada", "free_bot_protected"],
       ["american_ancestors", "free"],
       ["italian_genealogy", "free"],
     ] as const)("%s reports access %s", (site, access) => {
@@ -866,6 +890,50 @@ describe("build_external_search_url", () => {
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.access).toBe("free_bot_protected");
+    });
+
+    it("digital_newspaper_archive hedges the access value it cannot verify", () => {
+      // The host check refuses another SUPPORTED site's domain, but every other
+      // host falls through to the class default — measured 2026-09-15 returning
+      // free_bot_protected for genealogybank.com, newspaperarchive.com,
+      // newsbank.com and britishnewspaperarchive.co.uk, all subscription
+      // archives. SKILL.md tells the model never to raise access for a site
+      // reported free, so the hedge has to ride with the value (review round 5).
+      const r = buildExternalSearchUrl({
+        site: "digital_newspaper_archive",
+        baseUrl: "https://www.genealogybank.com/explore/newspapers/all/usa",
+        attributes: { givenName: "Patrick", surname: "Flynn" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.access).toBe("free_bot_protected");
+      expect(r.notes.some((n) => /NOT checked against this archive/.test(n))).toBe(true);
+    });
+
+    it("searchYear shares isFourDigitYear's bound instead of a second rule", () => {
+      // `/^\d{4}(-\d{4})?$/` alone admits 0000-0999, which the numeric year
+      // fields reject — two rules where the file's own comment claims one
+      // (review round 5).
+      for (const bad of ["0000", "0999", "0500-0999", "0999-1850"]) {
+        const r = buildExternalSearchUrl({
+          site: "newspapers",
+          attributes: { surname: "Flynn", searchYear: bad },
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).not.toContain("dr_year=");
+        expect(r.notes.some((n) => /'searchYear' was supplied but is not a plain year/.test(n))).toBe(true);
+      }
+      // The legitimate direction still passes.
+      for (const good of ["1000", "1880", "1880-1905", "9999"]) {
+        const r = buildExternalSearchUrl({
+          site: "newspapers",
+          attributes: { surname: "Flynn", searchYear: good },
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).toContain(`dr_year=${good}`);
+      }
     });
 
     it("american_ancestors is 'free' but still notes the results-viewing caveat", () => {
