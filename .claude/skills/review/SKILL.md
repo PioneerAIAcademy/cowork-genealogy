@@ -183,6 +183,35 @@ against **Acceptance check** and **Didn't change** specifically — a diff that
 touched the thing the author said they left alone is a finding. Informational —
 it never blocks.
 
+**Then read the issue, not only the PR body.** The stated intent is the author's
+own account of scope, so a PR that narrows scope in its first line passes the
+check above trivially. Open the issue and walk its item list — the numbered
+"What to do", any blocks merged in from other cards, and any scope added in a
+comment *after* the body was written. Name every item the diff does not address.
+The finding is never "split this PR" — that is ceremony, and the rule against it
+still holds. It is either finish the remaining items here, or make sure the card
+survives the merge, which is the next check.
+
+**Check what the PR will actually close. It is not what the body says.**
+
+```sh
+gh pr view $PR --repo $R --json closingIssuesReferences --jq '[.closingIssuesReferences[].number]'
+```
+
+Both directions block, unlike the intent check above. A PR that closes an issue
+it only partly implements loses the remainder silently: PR #2397 was set to close
+issue #1980 with six of the twenty launch-scope domains untemplated and a lead
+ruling outstanding. A PR that finishes its issue and links nothing leaves the card
+to be closed by hand, which is how issue #2189 closed at the merge minute of PR
+#2356 with two of its three prescribed PRs unbuilt, and had to be reopened.
+
+**Removing the keyword does not remove an established link.** GitHub records one
+as a `ConnectedEvent` that survives body edits, and no API deletes it — the
+GraphQL schema offers `deleteLinkedBranch` and no issue equivalent. It comes off
+only in the PR's Development sidebar. So after any de-scoping edit, re-run the
+command above and confirm it is empty: PR #2397 kept a live `Closes #1980` link
+for two days after its author had rewritten that line to "Part of #1980".
+
 ## 4. Verify by running, not by reading
 
 Never write "tests cover this" or "this is probably fine". Run it, or mark it
