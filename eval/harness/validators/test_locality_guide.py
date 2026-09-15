@@ -48,6 +48,8 @@ import re
 
 import pytest
 
+from validators_lib import bare_tool_name, written_entries
+
 REQUIRED_WIKI_SECTIONS = {"home", "getting_started", "online_records", "research_tips"}
 
 # jurisdictions[] / collections[] item shapes mirror the closed schema at
@@ -72,28 +74,17 @@ DIGITIZATION_LABELS = (
 )
 
 
-def _localities(state):
-    research = (state or {}).get("research_json") or {}
-    return research.get("localities") or []
-
-
 def _written_localities(before_state, after_state):
-    """localities[] entries this run CREATED or MODIFIED: an entry whose id is
-    absent from before_state, or present but with changed content. Validating
-    only what this run wrote (rather than locs[-1]) keeps a fixture-seeded
-    pre-existing entry from being graded as the skill's output; including the
-    modified case catches an in-place update (research_append op:"update")
-    that reuses an id, which a new-id-only diff would skip entirely. A non-dict
-    entry is returned as-is so the shape check can report it rather than crash.
+    """localities[] entries this run created or modified in place. The shared
+    helper handles both (localities is updatable via research_append
+    op:"update", so `include_modified` catches an in-place rewrite a new-id-only
+    diff would skip); the top-level entry is always an object (validator.ts
+    isObjectEntry rejects a non-object at write time), so no entry-level guard
+    is needed here.
     """
-    before = {
-        e.get("id"): e for e in _localities(before_state) if isinstance(e, dict)
-    }
-    out = []
-    for e in _localities(after_state):
-        if not isinstance(e, dict) or before.get(e.get("id")) != e:
-            out.append(e)
-    return out
+    return written_entries(
+        before_state, after_state, "localities", include_modified=True
+    )
 
 
 _ID_KEYS = {"id", "collectionId", "collection_id"}
@@ -163,7 +154,6 @@ def test_persisted_localities_entry_shape(before_state, after_state):
     if not written:
         pytest.skip("no localities entry created or modified this run")
     for loc in written:
-        assert isinstance(loc, dict), f"localities entry is not an object: {loc!r}"
         lid = loc.get("id")
         assert loc.get("source") == "locality-guide", (
             f"localities[{lid}] source should be 'locality-guide', got {loc.get('source')!r}"
@@ -241,7 +231,6 @@ def test_persisted_collection_ids_trace_to_tool_response(
     persisted = [
         (loc.get("id"), c.get("id"))
         for loc in written
-        if isinstance(loc, dict)
         for c in (loc.get("collections") or [])
         if isinstance(c, dict) and c.get("id") is not None
     ]
@@ -276,11 +265,11 @@ def report_digitization_label_requires_volume_search(text_response, tool_calls):
     promoting this to test_* is deferred to VR4 (issue #1886).
     """
     text = (text_response or "").casefold()
-    used = [lbl for lbl in DIGITIZATION_LABELS if lbl.casefold() in text]
+    used = [lbl for lbl in DIGITIZATION_LABELS if lbl in text]  # labels are lowercase
     if not used:
         return
     called_volume_search = any(
-        "volume_search" in (tc.get("tool") or "") for tc in (tool_calls or [])
+        bare_tool_name(tc.get("tool")) == "volume_search" for tc in (tool_calls or [])
     )
     assert called_volume_search, (
         f"output uses digitization label(s) {used} but made no volume_search call — "
@@ -302,7 +291,7 @@ def report_survey_run_calls_both_collections_and_volume_search(tool_calls):
     survey call both, plus per-place volume-search fixtures and a paid eval run —
     deferred, not done here (issue #1886).
     """
-    tools = {(tc.get("tool") or "").split("__")[-1] for tc in (tool_calls or [])}
+    tools = {bare_tool_name(tc.get("tool")) for tc in (tool_calls or [])}
     called_cs = "collections_search" in tools
     called_vs = "volume_search" in tools
     if not (called_cs or called_vs):

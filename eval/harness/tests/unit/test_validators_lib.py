@@ -18,7 +18,53 @@ from validators_lib import (  # noqa: E402
     assert_log_append_only,
     assert_no_section_deletions,
     assert_only_writes_to_sections,
+    new_log_entries,
+    written_entries,
 )
+
+
+def _wrap(section, entries):
+    return {"research_json": {section: entries}}
+
+
+# --- written_entries ------------------------------------------------------
+
+
+def test_written_entries_returns_only_new_by_id():
+    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
+    after = _wrap("localities", [{"id": "loc_001", "place": "A"}, {"id": "loc_002", "place": "B"}])
+    got = written_entries(before, after, "localities")
+    assert [e["id"] for e in got] == ["loc_002"]
+
+
+def test_written_entries_ignores_unchanged_existing_entry():
+    same = [{"id": "loc_001", "place": "A"}]
+    assert written_entries(_wrap("localities", same), _wrap("localities", same), "localities") == []
+
+
+def test_written_entries_without_include_modified_ignores_an_inplace_change():
+    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
+    after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
+    assert written_entries(before, after, "localities") == []
+
+
+def test_written_entries_include_modified_catches_an_inplace_change():
+    before = _wrap("localities", [{"id": "loc_001", "place": "A"}])
+    after = _wrap("localities", [{"id": "loc_001", "place": "B"}])
+    got = written_entries(before, after, "localities", include_modified=True)
+    assert [e["place"] for e in got] == ["B"]
+
+
+def test_written_entries_skips_non_dict_entries():
+    after = _wrap("localities", [None, "junk", {"id": "loc_001"}])
+    got = written_entries(_wrap("localities", []), after, "localities", include_modified=True)
+    assert got == [{"id": "loc_001"}]
+
+
+def test_new_log_entries_delegates_new_only_on_log_section():
+    before = _wrap("log", [{"id": "log_001"}])
+    after = _wrap("log", [{"id": "log_001"}, {"id": "log_002"}])
+    assert [e["id"] for e in new_log_entries(before, after)] == ["log_002"]
 
 
 # --- assert_no_section_deletions ------------------------------------------

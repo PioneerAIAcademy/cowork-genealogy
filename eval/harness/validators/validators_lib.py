@@ -158,6 +158,36 @@ def assert_foreign_keys_valid(
     assert not errors, "Dangling references:\n  - " + "\n  - ".join(errors)
 
 
+def written_entries(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    section: str,
+    *,
+    include_modified: bool = False,
+) -> list[dict]:
+    """Entries in `section` this run created (id absent from before) or, when
+    `include_modified` is set, also modified in place (same id, changed content).
+
+    Takes the wrapped per-run state dicts ({"research_json": {...}, ...}). Use
+    `include_modified=True` for a section a skill can update in place (e.g.
+    `localities` via research_append op:"update") so an in-place rewrite is not
+    silently skipped; leave it False for an append-only section like `log`.
+    """
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    prior = {
+        e.get("id"): e for e in before.get(section, []) if isinstance(e, dict)
+    }
+    out = []
+    for e in after.get(section, []):
+        if not isinstance(e, dict):
+            continue
+        eid = e.get("id")
+        if eid not in prior or (include_modified and prior[eid] != e):
+            out.append(e)
+    return out
+
+
 def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -> list[dict]:
     """Log entries present in `after_state` but not `before_state`, by id.
 
@@ -171,13 +201,7 @@ def new_log_entries(before_state: dict[str, Any], after_state: dict[str, Any]) -
     with no logic change, rather than matching the unwrapped convention
     the two helpers above use.
     """
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    before_ids = {e.get("id") for e in before.get("log", []) if isinstance(e, dict)}
-    return [
-        e for e in after.get("log", [])
-        if isinstance(e, dict) and e.get("id") not in before_ids
-    ]
+    return written_entries(before_state, after_state, "log")
 
 
 def assert_log_append_only(
