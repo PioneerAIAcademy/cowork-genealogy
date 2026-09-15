@@ -199,18 +199,21 @@ gh pr view $PR --repo $R --json closingIssuesReferences --jq '[.closingIssuesRef
 ```
 
 Both directions block, unlike the intent check above. A PR that closes an issue
-it only partly implements loses the remainder silently: PR #2397 was set to close
-issue #1980 with six of the twenty launch-scope domains untemplated and a lead
-ruling outstanding. A PR that finishes its issue and links nothing leaves the card
-to be closed by hand, which is how issue #2189 closed at the merge minute of PR
-#2356 with two of its three prescribed PRs unbuilt, and had to be reopened.
+it only partly implements loses the remainder silently. Raising it on PR #2397 —
+six of issue #1980's twenty launch-scope domains untemplated — is what produced
+the lead's 2026-09-15 ruling that the six were rightly out of scope. Ask even
+when the answer comes back fine. A PR that finishes its issue and links nothing
+leaves the card to be closed by hand, which is easy to forget once the branch is
+gone.
 
 **Removing the keyword does not remove an established link.** GitHub records one
 as a `ConnectedEvent` that survives body edits, and no API deletes it — the
 GraphQL schema offers `deleteLinkedBranch` and no issue equivalent. It comes off
 only in the PR's Development sidebar. So after any de-scoping edit, re-run the
-command above and confirm it is empty: PR #2397 kept a live `Closes #1980` link
-for two days after its author had rewritten that line to "Part of #1980".
+command above and confirm it is empty. PR #2356's body said "Issue #2189 stays
+open for PR B and PR C" and carried no closing keyword at all, but the link from
+its original body was still live, and the merge closed the card one second later
+with two of the three PRs unbuilt. It had to be reopened by hand.
 
 ## 4. Verify by running, not by reading
 
@@ -413,6 +416,7 @@ Review: PR #N — <branch>, <full pass | short pass>, <X> commits behind main
 
 Does: <what the diff actually does, 1-2 lines>
 Intent: <what it was for> — <matches / drifts, how>
+Closes: <issues the merge will close, or "nothing"> — <right / wrong, why>
 Checks: <pass/fail per required check, and any that did not run on this head>
 Still needs: <code-owner teams GitHub is waiting on, or "nothing">
 Verified: <suites run, with counts — or "not run", and why>
