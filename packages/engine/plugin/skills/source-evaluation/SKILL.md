@@ -80,6 +80,8 @@ Three kinds, and the recommendation follows the kind:
 
 **Report the disagreement; do not narrate a mechanism you cannot see.** That a year is "a transposed digit", that a `5` was "misread as a 7", that a clerk "misheard the name" — these are guesses about a page you have not opened. State the two values and what kind of record each came from, and let the re-read settle how the error happened. An explanation offered with the confidence of a finding is the same defect as a backend artifact offered as a to-do.
 
+**Every specific you offer has to come from a record you read.** A distance between two places, an age, a relative age — if no tool response carries it, you supplied it, and a finding resting on it rests on nothing. Where the record is silent, name the silence rather than filling it: that an entry carries no age is what makes a case undecidable, and supplying one to decide it is the same defect as narrating the mechanism.
+
 **(c) FamilySearch backend metadata — not a to-do.** Artifacts of how FamilySearch stores the data rather than defects a researcher can fix: repeated internal fact or conclusion ids across persons, resource-type markers, contributor bookkeeping.
 
 **These are not findings. Do not list them as problems, do not number them among the errors, and do not recommend an action for them.** Mention one only if it explains something the user can see, and then as context in a closing note — never in the findings list. A user who is handed backend metadata alongside real errors has to triage the list you were supposed to triage for them.
