@@ -2048,4 +2048,84 @@ describe("materialize_facts", () => {
       expect(her.facts ?? [], label).toHaveLength(0);
     }
   });
+  // ─── #2472: the assertion backlink ──────────────────────────────────────────
+
+  describe("assertion_id backlink (#2472)", () => {
+    it("stamps the originating assertion id on a MINTED fact", async () => {
+      await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }));
+
+      const r = single(
+        await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const son = findPerson(await readTree(), "I2");
+      const birth = son.facts.find((f: any) => f.type === "Birth");
+      // a_003 is the birth assertion in enrichPersona().
+      expect(birth.assertion_id).toBe("a_003");
+    });
+
+    it("does NOT stamp on the corroboration branch, and does not fill it in when absent", async () => {
+      // I2 already holds the Birth, minted earlier from a DIFFERENT assertion
+      // and carrying its backlink. A second record corroborating the same fact
+      // must union the ref and leave the backlink pointing where it was.
+      const existing = {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "Robert", surname: "Smith" }],
+        facts: [
+          {
+            id: "F9",
+            type: "Birth",
+            date: "1855",
+            place: "Provo, Utah, United States",
+            assertion_id: "a_900",
+            sources: [{ ref: "S1" }],
+          },
+        ],
+      };
+      await writeProject(
+        tree({ persons: [existing] }),
+        research({ sources: [S1], assertions: enrichPersona() }),
+      );
+
+      const r = single(
+        await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const birth = findPerson(await readTree(), "I2").facts.find((f: any) => f.id === "F9");
+      expect(birth.assertion_id).toBe("a_900");
+    });
+
+    it("leaves a corroborated fact that has NO backlink without one", async () => {
+      // The fill-when-absent rule this rejects: `factsEquivalent` is a loose
+      // DEDUPE predicate, so it would attach a backlink to a hand-entered
+      // tree_edit conclusion, which a later assertion update would then rewrite.
+      const handEntered = {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "Robert", surname: "Smith" }],
+        facts: [{ id: "F9", type: "Birth", date: "1855", sources: [{ ref: "S1" }] }],
+      };
+      await writeProject(
+        tree({ persons: [handEntered] }),
+        research({ sources: [S1], assertions: enrichPersona() }),
+      );
+
+      const r = single(
+        await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const birth = findPerson(await readTree(), "I2").facts.find((f: any) => f.id === "F9");
+      // The corroboration branch filled `place` (it was absent) — that is the
+      // documented behaviour — but must NOT have minted a backlink.
+      expect(birth.place).toBe("Provo, Utah, United States");
+      expect(birth.assertion_id).toBeUndefined();
+    });
+  });
 });
