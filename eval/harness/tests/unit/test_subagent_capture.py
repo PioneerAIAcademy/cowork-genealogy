@@ -362,6 +362,68 @@ def test_cache_dir_found_when_the_cli_keyed_on_an_unresolved_spelling(
     assert sdk_cache_dir(workspace) is not None
 
 
+def test_an_exact_key_wins_over_a_decoy_that_also_ends_with_the_leaf(
+    tmp_path: Path, monkeypatch
+):
+    """Resolution is by key; the leaf is only the backstop.
+
+    Every realistic key ends with the workspace leaf, so the backstop alone
+    answers every other case in this file - and answers this one wrong. A stale
+    cache dir from an earlier run of the same scenario under a different parent
+    ends with the same leaf, and `iterdir` order decides which one a leaf-only
+    lookup returns. Without this, dropping both whole-path candidates leaves the
+    suite green and the harness silently back on leaf matching (#2468).
+    """
+    workspace = tmp_path / "e2e-frederick-8fu_3bbk"
+    workspace.mkdir()
+    config = tmp_path / "cfg"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
+    projects = config / "projects"
+
+    correct = projects / _key(workspace)
+    # Sorts before the real key, so a leaf-only scan returns it instead.
+    decoy = projects / ("-aaa-stale-" + re.sub(r"[^A-Za-z0-9]", "-", workspace.name))
+    correct.mkdir(parents=True)
+    decoy.mkdir(parents=True)
+    assert decoy.name < correct.name, "decoy must sort first to exercise the scan"
+
+    assert sdk_cache_dir(workspace) == correct
+
+
+@pytest.mark.skipif(
+    os.name == "nt", reason="symlink creation needs a privilege on Windows"
+)
+def test_the_resolved_key_wins_when_it_is_the_only_correct_spelling(
+    tmp_path: Path, monkeypatch
+):
+    """The mirror of the unresolved-spelling case: here the CLI DID resolve.
+
+    macOS `/var` vs `/private/var` is the live shape. The literal spelling
+    misses, so only `project_key_for_directory` can land it - and with a decoy
+    present the leaf backstop lands on the wrong directory rather than none,
+    which is the failure an `is not None` assertion cannot see.
+    """
+    real = tmp_path / "real"
+    real.mkdir()
+    (tmp_path / "link").symlink_to(real)
+    workspace = tmp_path / "link" / "e2e-frederick-8fu_3bbk"
+    workspace.mkdir()
+    config = tmp_path / "cfg"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(config))
+    projects = config / "projects"
+
+    literal_key = re.sub(r"[^A-Za-z0-9]", "-", str(workspace))
+    assert literal_key != _key(workspace), "symlink did not produce a divergence"
+
+    correct = projects / _key(workspace)
+    decoy = projects / ("-aaa-stale-" + re.sub(r"[^A-Za-z0-9]", "-", workspace.name))
+    correct.mkdir(parents=True)
+    decoy.mkdir(parents=True)
+    assert decoy.name < correct.name, "decoy must sort first to exercise the scan"
+
+    assert sdk_cache_dir(workspace) == correct
+
+
 def test_cache_dir_falls_back_to_the_leaf_when_no_whole_path_key_matches(
     tmp_path: Path, monkeypatch
 ):
