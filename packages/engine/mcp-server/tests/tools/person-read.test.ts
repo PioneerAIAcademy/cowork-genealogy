@@ -1053,10 +1053,21 @@ describe("personReadTool — sibling fan-out", () => {
       LOCAL,
     );
     const ids = new Set(out.persons.map((p) => p.id));
-    // THE RULE: every endpoint of every emitted edge is in persons[].
-    // validator.ts:1751/1756 make a dangling one a hard error and
-    // project_create — which never calls sanitizeTree — refuses the whole write.
-    for (const r of out.relationships) {
+    // THE RULE, and its exact scope: every endpoint of every edge THE FAN-OUT
+    // ADDS is in persons[]. validator.ts:1751/1756 make a dangling one a hard
+    // error and project_create — which never calls sanitizeTree — refuses the
+    // whole write. The subject's OWN edges are not covered by this and can
+    // still dangle; that is pre-existing and separately tested.
+    //
+    // Scoped by child id rather than by looping every relationship: the loop
+    // form read as a whole-output guarantee it does not make, and every fixture
+    // in this block sets `relationships: []`, so the person1/person2 half of it
+    // never evaluated anything at all.
+    const fanOutEdges = out.relationships.filter(
+      (r) => r.child === halfSib || r.parent === halfSib,
+    );
+    expect(fanOutEdges.length).toBeGreaterThan(0);
+    for (const r of fanOutEdges) {
       for (const endpoint of [r.parent, r.child, r.person1, r.person2]) {
         if (endpoint !== undefined) expect(ids.has(endpoint)).toBe(true);
       }
@@ -1120,6 +1131,39 @@ describe("personReadTool — sibling fan-out", () => {
       LOCAL,
     );
     expect(out.persons.map((p) => p.id)).toContain(SUBJECT);
+  });
+
+  it("carries a Couple through the fan-out without inventing or dropping endpoints", async () => {
+    // Every other fixture in this block sets `relationships: []`, so nothing
+    // here exercised a Couple at all. This one does, and it pins the honest
+    // contract rather than the one the old loop appeared to assert: the
+    // fan-out does not touch the subject's Couples, so a Couple naming a
+    // person FamilySearch did not return still comes back dangling.
+    const spouse = "SPOUSE-700";
+    route({
+      [SUBJECT]: {
+        persons: [person(SUBJECT, "Subject Person"), person(DAD, "Dad")],
+        relationships: [
+          {
+            type: "http://gedcomx.org/Couple",
+            person1: { resourceId: SUBJECT },
+            person2: { resourceId: spouse },
+          },
+        ],
+        childAndParentsRelationships: [capr(SUBJECT, DAD)],
+      },
+      [DAD]: { persons: [person(DAD, "Dad")], relationships: [], childAndParentsRelationships: [] },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    const couple = out.relationships.find((r) => r.type === "Couple");
+    expect(couple).toBeDefined();
+    expect(couple?.person2).toBe(spouse);
+    // Documented, not asserted-away: the endpoint dangles, and the fan-out is
+    // not what would fix it.
+    expect(out.persons.map((p) => p.id)).not.toContain(spouse);
   });
 
   it("harvests a child of THIS parent only — not one the other parent's read owns", async () => {

@@ -585,9 +585,20 @@ relationship. Rather than enumerate those exclusions, the filter keeps exactly
 one category — persons who are children of the parent being read — and
 everything else drops out in one move.
 
-**Every endpoint of every emitted relationship is a person in `persons[]`.** A
+**Every endpoint of every edge the fan-out ADDS is a person in `persons[]`.** A
 CAPR expands to one edge *per parent*, so a sibling whose other parent was not
 imported would otherwise emit an edge pointing at a person who is not there.
+
+Note the exact scope of that guarantee: it covers the edges the fan-out
+contributes, **not** the tool's whole output. The subject's own
+`childAndParentsRelationships[]` and `relationships[]` pass through as they
+always have, and both can still name a person the response did not return —
+FamilySearch's own refs carry an absolute-URL form used precisely "when the
+person isn't in this response". A subject CAPR naming a non-spouse co-parent,
+and a `Couple` whose partner was not returned, therefore still emit dangling
+endpoints. That is **pre-existing behaviour, deliberately tested** ("keeps all
+relationships even when not involving the focal person") and unchanged here, but
+it means a caller must not assume the whole response is endpoint-closed.
 `validate_research_schema` treats that as a hard error (`parent '…' not found in
 persons`, and the same for `child`, `person1` and `person2`), and
 `project_create` — alone among the tree writers, it never calls `sanitizeTree` —
