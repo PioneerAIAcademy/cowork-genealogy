@@ -247,6 +247,12 @@ Backlog outranks what is there. Say so plainly rather than padding to a number.
 Rank the unassigned Ready items with the same heuristics you rank Backlog with.
 What tends to lose:
 
+- **Anything that has gained `needs-decision` since it was promoted** — it loses
+  automatically, senior or not, and it is the one entry here that is not a
+  judgment call. The Backlog exclusion cannot reach a card already in Ready, and
+  `/review-ready` hands this case over by design ("on a standing-pool run the
+  item is already in Ready; report it for the swap"). Left there it is a card
+  nobody can pick up for a reason the card does not show.
 - An item whose body is a bare pointer to a plan doc — it cannot be chosen off a
   menu without opening something else.
 - An item that is really a question, not a task ("I'm not sure if this is an
