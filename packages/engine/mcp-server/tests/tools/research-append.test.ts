@@ -293,6 +293,29 @@ describe("research_append (Phase 1)", () => {
       expect("transcription_truncated" in persisted).toBe(false);
     });
 
+    it("clears a stale true on an update after the image is re-read whole — tri-state (#2457 ruling amendment a)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const app = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: imageSource({}) });
+      expect(app.ok).toBe(true);
+      if (!app.ok) return;
+      const id = singleOk(app).entryId;
+      expect((await readResearch()).sources.find((s: any) => s.id === id).transcription_truncated).toBe(true);
+      // A later clean image_transcribe of the same image records it whole (false),
+      // not absent — that false is what lets the update clear the persisted true.
+      recordImageReadCap(dir, "images/x.jpg", false);
+      const upd = await researchAppend({
+        projectPath: dir,
+        section: "sources",
+        op: "update",
+        entryId: id,
+        fields: { image_filename: "images/x.jpg", transcription: "the complete page text now" },
+      } as any);
+      expect(upd.ok).toBe(true);
+      const after = (await readResearch()).sources.find((s: any) => s.id === id);
+      expect(after.transcription_truncated).toBe(false); // pre-fix (Set): stayed true forever
+    });
+
     it("does not discard a good op when a sibling capped op carries no transcription (#2457 review, blocker 1)", async () => {
       await writeProject();
       recordImageReadCap(dir, "images/x.jpg", true);

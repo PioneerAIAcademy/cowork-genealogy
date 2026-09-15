@@ -27,6 +27,7 @@ import {
 } from "../../src/tools/image-transcribe.js";
 import {
   wasSourceImageTruncated,
+  sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
 
@@ -407,7 +408,10 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
       }, LOCAL);
       expect(result.truncated).toBeUndefined();
       expect(result.imageRef).toBe("images/004884748_02613.jpg");
+      // Records verified-whole (false), not absent — that distinction is what lets
+      // a later write clear a stale true (#2457 ruling amendment a).
       expect(wasSourceImageTruncated(dir, result.imageRef!)).toBe(false);
+      expect(sourceImageCapState(dir, result.imageRef!)).toBe(false);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

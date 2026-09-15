@@ -38,7 +38,7 @@ import {
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { exampleHints } from "./research-append-examples.js";
-import { gcUnreferencedImages, wasSourceImageTruncated } from "../utils/image-store.js";
+import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
@@ -2421,11 +2421,11 @@ async function prepareOps(
   // ── Derive transcription_truncated at the write boundary (#2457) ──
   // The truncation of an image read is known to image_transcribe, not to
   // record-extractor (which only holds the relayed text). So research_append is
-  // authoritative for it on any image-backed source: set it true iff this
-  // process capped the read of the cited image, and otherwise strip any value —
-  // the field is DERIVED here, never asserted by the agent. A source with no
-  // image_filename (not image-backed, or the scan was never persisted) has
-  // nothing to join and is left untouched; that no-persist gap is the §8.6
+  // authoritative for it on any image-backed source — DERIVED here, never asserted
+  // by the agent. The cap store is tri-state (#2457 ruling amendment a): the cited
+  // image is verified partial (true), verified whole (false), or not established
+  // (undefined). Absent means UNKNOWN, not whole. A source with no image_filename
+  // has nothing to join and is left untouched; that no-persist gap is the §8.6
   // limitation. Runs after the reuse rewrite above so it sees the final op shape
   // (an append folded into an update carries its image_filename in `fields`).
   for (const op of ops) {
@@ -2434,23 +2434,27 @@ async function prepareOps(
       | Record<string, unknown>
       | undefined;
     if (!bag || typeof bag !== "object") continue;
-    // Derived here, never asserted by the agent — so strip any caller-supplied
-    // value FIRST, even on a source with no joinable image_filename (where the
-    // agent's guess would otherwise persist verbatim, exactly where it is least
-    // reliable). Then set it true only on a cache hit against the cited image
-    // AND when this op carries the non-empty transcription the marker qualifies:
-    // `transcription_truncated: true` beside empty/null transcription is a state
-    // validate_research_schema rejects (matching its .trim()), so deriving it
-    // would make the tool fail its own write — and, batched, discard every good
-    // op alongside it. An update that attaches image_filename without carrying
-    // the text (it lives in the persisted entry, unreadable pre-merge) is left
-    // unmarked rather than risking that rejection (#2457 review, blocker 1).
+    // Strip any caller-supplied value FIRST — the field is derived, so an agent's
+    // guess never persists, even on a source with no joinable image_filename.
     delete bag.transcription_truncated;
     const ref = bag.image_filename;
     if (typeof ref !== "string" || ref.length === 0) continue;
-    const text = bag.transcription;
-    if (typeof text !== "string" || text.trim() === "") continue;
-    if (wasSourceImageTruncated(projectPath, ref)) bag.transcription_truncated = true;
+    const cap = sourceImageCapState(projectPath, ref);
+    if (cap === undefined) continue; // not established → leave absent (unknown)
+    if (cap === true) {
+      // Verified partial — but only mark it beside the non-empty transcription the
+      // marker qualifies. `true` beside empty/null transcription is a state
+      // validate_research_schema rejects (matching its .trim()), so deriving it
+      // would make the tool fail its own write — and, batched, discard every good
+      // op with it. An update attaching image_filename without the text (it lives
+      // in the persisted entry, unreadable pre-merge) is left as-is (#2457 rev B1).
+      const text = bag.transcription;
+      if (typeof text === "string" && text.trim() !== "") bag.transcription_truncated = true;
+    } else {
+      // Verified whole — write false so an `update` clears any stale `true` the
+      // merge would otherwise keep (a Set could set the flag but never unset it).
+      bag.transcription_truncated = false;
+    }
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);

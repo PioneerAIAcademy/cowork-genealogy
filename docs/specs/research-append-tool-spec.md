@@ -547,36 +547,43 @@ splintering into inconsistent labels, over a form the model added:
 ### 3.8 `transcription_truncated` — derived, never asserted
 
 On every `sources` op the tool **owns** `sources[].transcription_truncated` in
-the op payload, after the §3.4 reuse rewrite so it sees the final op shape:
+the op payload, after the §3.4 reuse rewrite so it sees the final op shape. The
+field is **three-valued**, and absence means *unknown*, not *whole*:
+
+| value | meaning |
+|---|---|
+| `true` | verified **partial** — a read of the cited image hit the OCR output-token cap |
+| `false` | verified **whole** — a read of the cited image completed |
+| absent | **not established** — no read of this image reached the write boundary |
+
+Derivation, per op:
 
 - Any caller-supplied value **in the op** is stripped first — including on a
-  source with no `image_filename` to join. The truncation of an OCR read is
-  known to `image_transcribe`, not to the agent relaying the text, so an
-  agent-asserted flag is a guess and is dropped rather than persisted.
-- The flag is then set `true` **only** when all three hold: this process capped
-  the read of the cited image (joined by `image_filename` against the image-store
-  cap set, `wasSourceImageTruncated`); the op carries a non-empty `transcription`;
-  and — for an update — that text rides in the same op. Otherwise the op leaves
-  the field absent. The non-empty guard is load-bearing: `true` beside empty/null
-  `transcription` is a state `validate_research_schema` rejects, so deriving it
-  would make the tool fail its own write (and, in a batch, discard every good op
-  with it). See `image-transcribe-tool-spec.md` §8.6 for the record side and the
+  source with no `image_filename` to join. The truncation of an OCR read is known
+  to `image_transcribe`, not to the agent relaying the text, so an agent-asserted
+  value is a guess and is dropped rather than persisted.
+- The op is then joined by `image_filename` against the image-store cap map
+  (`sourceImageCapState` — tri-state: `true` partial, `false` whole, `undefined`
+  not established). On `undefined` the op leaves the field absent.
+- On a **verified-partial** hit, the flag is set `true` **only** when the op also
+  carries a non-empty `transcription`. That guard is load-bearing: `true` beside
+  empty/null `transcription` is a state `validate_research_schema` rejects, so
+  deriving it would make the tool fail its own write (and, batched, discard every
+  good op with it). An update that attaches `image_filename` without carrying the
+  text — which lives in the persisted entry, unreadable pre-merge — is left as-is.
+- On a **verified-whole** hit the op sets the field `false`. Writing `false`
+  rather than deleting is what lets an `update` **retract a stale `true`**: the
+  merge (`applyOne`) keeps a persisted value the patch omits, so only an
+  overwrite clears it. This is why the cap store is a `Map`, not a `Set` — a
+  present/absent set can set the flag but never unset it. See
+  `image-transcribe-tool-spec.md` §8.6 for the record side and the
   no-`projectPath` limitation.
 
-Two limits follow, both **at the op level, not the persisted entry**, and both
-tracked with the join-key follow-on:
-
-- **The tool owns the op, not the stored value.** On an `update`, stripping the
-  key means the merge (`applyOne`) leaves the persisted value untouched, not
-  cleared — so a `true` recorded on an earlier op is **not retracted** by a later
-  clean update, even one carrying the complete text. Retraction is currently
-  reachable only by re-running a clean `image_transcribe` of the same image
-  before an *append* that cites it. A capped-then-corrected page can therefore
-  stay marked partial; this is a known limitation of keying on an agent-supplied
-  `image_filename`, and is part of what the join-key ruling is deciding.
-- An update that attaches `image_filename` **without** carrying the transcription
-  text (it lives in the persisted entry, which the derivation cannot read
-  pre-merge) is left unmarked rather than risk the rejection above.
+One limit remains, tracked with the join-key follow-on: retraction still needs a
+subsequent op that **carries the `image_filename`** to re-derive against, so an
+update touching only other fields of a stale-`true` source does not clear it.
+Re-run a clean `image_transcribe` of the image and cite it in the next
+`sources` op (append or update) to retract.
 
 Unlike §3.6, this override **echoes nothing** — the response carries no signal
 that a caller-supplied value was dropped. The persisted-side invariant

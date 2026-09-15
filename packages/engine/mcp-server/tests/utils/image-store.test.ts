@@ -16,6 +16,7 @@ import {
   imageFilenameFor,
   recordImageReadCap,
   wasSourceImageTruncated,
+  sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
 
@@ -119,6 +120,16 @@ describe("truncated-source-image cache (#2457)", () => {
     expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
     recordImageReadCap("/proj", "images/x.jpg", false);
     expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(false);
+  });
+
+  it("is tri-state: partial=true, whole=false, not-established=undefined (#2457 ruling amendment a)", () => {
+    // absent must be distinguishable from verified-whole — a Set collapses the two,
+    // and that is what leaves a stale true unclearable on an update.
+    expect(sourceImageCapState("/proj", "images/never.jpg")).toBeUndefined();
+    recordImageReadCap("/proj", "images/partial.jpg", true);
+    expect(sourceImageCapState("/proj", "images/partial.jpg")).toBe(true);
+    recordImageReadCap("/proj", "images/whole.jpg", false);
+    expect(sourceImageCapState("/proj", "images/whole.jpg")).toBe(false); // NOT undefined
   });
 
   it("is keyed by project — one project's cap does not leak into another", () => {
