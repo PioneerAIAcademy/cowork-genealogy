@@ -242,17 +242,19 @@ back down. State the arithmetic either way so the lead can overrule it:
 **Promoting zero is a valid answer** when both pools are at target and nothing in
 Backlog outranks what is there. Say so plainly rather than padding to a number.
 
+**Return every Ready card that has gained `needs-decision` since it was promoted,
+senior or not, at any pool depth.** It is not a swap and does not wait for
+something to displace it — below target there is no swap for it to lose, and it
+is still a card nobody can pick up for a reason the card does not show. The
+Backlog exclusion cannot reach a card already in Ready, and `/review-ready` hands
+this case over by design ("on a standing-pool run the item is already in Ready;
+report it for the swap").
+
 ### What loses a swap
 
 Rank the unassigned Ready items with the same heuristics you rank Backlog with.
 What tends to lose:
 
-- **Anything that has gained `needs-decision` since it was promoted** — it loses
-  automatically, senior or not, and it is the one entry here that is not a
-  judgment call. The Backlog exclusion cannot reach a card already in Ready, and
-  `/review-ready` hands this case over by design ("on a standing-pool run the
-  item is already in Ready; report it for the swap"). Left there it is a card
-  nobody can pick up for a reason the card does not show.
 - An item whose body is a bare pointer to a plan doc — it cannot be chosen off a
   menu without opening something else.
 - An item that is really a question, not a task ("I'm not sure if this is an
@@ -983,8 +985,8 @@ and behave completely differently**, and telling them apart decides who can star
 **`needs-decision` is the one state that is never ranked.** The other two are
 promoted into their lane's pool once startable. A `needs-decision` card in Ready
 would be a card nobody can pick up for a reason the card does not show, which is
-the failure the labels exist to prevent. This holds **senior or not** — the
-ranking query at §2 already excludes the label unconditionally.
+the failure the labels exist to prevent. This holds **senior or not** — § 0
+"Board facts" already excludes the label from the ranking unconditionally.
 
 **`needs-decision` is a distinct verdict, not a softer `senior`.** It is the
 label form of `task-reviewer`'s `needs-a-decision` verdict. An item that is
@@ -1074,8 +1076,9 @@ Report each separately — they have different remedies:
 - **Which of either gate a milestone**, and how long they have sat.
 
 You do not assign from either queue. You **do** rank the `senior` one — those
-items rank in their lane's pool like anything else. The `needs-decision` queue
-you neither rank nor assign; it is `/make-decisions`' to drain.
+items rank in their lane's pool like anything else, unless they also carry
+`needs-decision`. The `needs-decision` queue you neither rank nor assign; it is
+`/make-decisions`' to drain.
 
 ### The milestones depend on both queues moving
 

@@ -224,7 +224,8 @@ gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --body-file body.md
 #    and a recorded ruling does not void it. Never write a marker onto an issue
 #    that was never reviewed: that forges a review and wins a permanent skip.
 
-# 4. the label comes off, and the item ranks in a junior pool like anything else
+# 4. the label comes off and the item ranks in its lane's pool like anything
+#    else — as junior work, unless it also carries `senior`, which stays on
 gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --remove-label needs-decision
 ```
 
