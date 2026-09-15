@@ -444,8 +444,15 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
 .PHONY: proto-up
-proto-up: ## D3 prototype: build + start postgres/minio/elasticmq/worker/shim and wait for health
+proto-up: ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web and wait for health
 	$(PROTO_COMPOSE) up -d --build
+	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web
+
+# The D3 services only. proto-smoke never touches the web tier, so it must not be gated
+# on the web image building (a network pip install) or its healthcheck.
+.PHONY: proto-up-core
+proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
+	$(PROTO_COMPOSE) up -d --build postgres minio minio-init elasticmq worker shim
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
 .PHONY: proto-down
@@ -461,12 +468,35 @@ proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS
 	cd apps/server && uv run python proto/enqueue.py $(ARGS)
 
 .PHONY: proto-smoke
-proto-smoke: proto-up ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
+proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
 	cd apps/server && uv run python proto/smoke.py
 
 .PHONY: proto-test
-proto-test: ## D3 offline tests: compose/conf/schema shape + the shim's pure decide()
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py
+proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py
+
+# ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────
+# The tier runs in compose as `web` (:8085). proto-web runs it from the venv against
+# the compose postgres/elasticmq instead; proto-drive is the D13 acceptance driver,
+# self-contained by default (embedded Postgres via the `proto` dependency group, the
+# tier in-process, no queue, the seeder standing in for the worker). BASE=… points it
+# at a running stack in --worker mode — a stack has a worker (the D3 stub counts), and a
+# worker racing the seeder is exactly what --seed refuses. PG_DSN defaults to the
+# compose postgres. web-proto is the SPA on the SSE transport against :8085.
+PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
+
+.PHONY: proto-web
+proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
+	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
+	  uv run uvicorn --app-dir proto web.app:app --host 127.0.0.1 --port 8085
+
+.PHONY: proto-drive
+proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Event-ID, miss nothing (embedded Postgres + seeder; BASE=http://localhost:8085 runs --worker against a stack)
+	cd apps/server && uv run --group proto python proto/drive.py $(if $(BASE),--base $(BASE) --pg-dsn $(or $(PG_DSN),$(PROTO_PG_DSN)) --worker,--embedded-pg) $(ARGS)
+
+.PHONY: web-proto
+web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype web tier (:8085)
+	cd apps/web && VITE_API_TARGET=http://localhost:8085 VITE_SESSION_TRANSPORT=sse pnpm dev
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
