@@ -1358,7 +1358,7 @@ outside this list and outside every check.)*
 | 1 | `docs/specs/schemas/research.schema.json` | `make engine-test` |
 | 2 | the prose table in `docs/specs/research-schema-spec.md` | **nothing** |
 | 3 | `src/validation/validator.ts` `RESEARCH_SHAPES` (hand-maintained — it does **not** load the JSON Schema) | `make engine-test` |
-| 4 | `packages/schema/schemas/research.schema.json` | **`make harness-test`** only |
+| 4 | `packages/schema/schemas/research.schema.json` | `make engine-test` — held **byte-identical** to site 1 by `enum-drift.test.ts` (so a field in one copy and not the other fails there) — plus `make harness-test` |
 | 5 | `packages/schema/src/index.ts` — the TS `interface` | field **names and optionality** (schema `required` vs the TS `?`, both directions) for the `$defs` and the two document roots, via `make test-js` (`packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`); still unchecked — the *value types* (`\| null` nullability, a closed enum typed as `string`) and the three interfaces mirroring inline `items` objects, which neither half of that lint reaches. One value-type constraint is now held, by a type-level assertion in that package's own `tsc` rather than by this lint: `Plan.items` is a non-empty tuple, mirroring the schema's only property-level `minItems` (`packages/schema/src/type-assertions.ts`) |
 | 6 | `src/tools/research-append-examples.ts` — the worked-example registry | round-trip validity only |
 | 7 | `packages/viewer-ui/src/components/sections/<X>Section.tsx` (+ `.module.css`) | `make engine-test` (`field-render-drift.test.ts`) — but only as a **sibling outlier**: if the object renders nothing at all, nothing fires |

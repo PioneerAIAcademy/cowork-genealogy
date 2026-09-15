@@ -654,6 +654,86 @@ describe("Project Validator", () => {
     });
   });
 
+  describe("transcription_truncated invariant (#2457)", () => {
+    const validSource = (over: Record<string, unknown> = {}) => ({
+      id: "src_001",
+      gedcomx_source_description_id: "SD-001",
+      citation: "Test",
+      citation_detail: {
+        who: "Test", what: "Test", when_created: "2020",
+        when_accessed: "2026-01-01", where: "Test", where_within: "Test",
+      },
+      source_classification: "original",
+      repository: "Test",
+      access_date: "2026-01-01",
+      ...over,
+    });
+    const tree = {
+      persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] }],
+      relationships: [],
+      sources: [{ id: "SD-001", title: "Test Source" }],
+    };
+    const truncErr = (result: { errors: { path: string; message: string }[] }) =>
+      result.errors.some(
+        (e) => e.path.includes("sources[0]") && e.message.includes("transcription_truncated"),
+      );
+
+    it("rejects transcription_truncated: true beside an empty transcription", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: true, transcription: "", image_filename: "images/x.jpg" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(truncErr(result)).toBe(true);
+    });
+
+    it("rejects transcription_truncated: true beside a null transcription", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: true, transcription: null })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(truncErr(result)).toBe(true);
+    });
+
+    it("rejects a non-boolean transcription_truncated", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: "yes", transcription: "some text" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("transcription_truncated must be a boolean"))).toBe(true);
+    });
+
+    it("accepts transcription_truncated: true beside real partial text", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription_truncated: true, transcription: "first half of the page", image_filename: "images/x.jpg" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts the field absent (absent means whole)", async () => {
+      const research = {
+        ...minimalResearch,
+        sources: [validSource({ transcription: "full text" })],
+      };
+      await writeProject(research, tree);
+      const result = await validateProject(testDir);
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe("Cross-file reference validation", () => {
     it("reports source referencing non-existent gedcomx source", async () => {
       const research = {

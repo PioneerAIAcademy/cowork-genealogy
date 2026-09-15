@@ -14,6 +14,10 @@ import {
   saveSourceImage,
   gcUnreferencedImages,
   imageFilenameFor,
+  recordImageReadCap,
+  wasSourceImageTruncated,
+  sourceImageCapState,
+  __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
 
 const dirs: string[] = [];
@@ -96,5 +100,62 @@ describe("gcUnreferencedImages", () => {
   it("is a no-op when there is no images/ dir", async () => {
     const dir = await tmp();
     await gcUnreferencedImages(dir, new Set()); // must not throw
+  });
+});
+
+describe("truncated-source-image cache (#2457)", () => {
+  afterEach(() => __clearTruncatedSourceImagesForTests());
+
+  it("records a capped read so a source citing that image_filename reads truncated", () => {
+    recordImageReadCap("/proj", "images/004884748_02613.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "images/004884748_02613.jpg")).toBe(true);
+  });
+
+  it("reports false for an image never recorded", () => {
+    expect(wasSourceImageTruncated("/proj", "images/never-seen.jpg")).toBe(false);
+  });
+
+  it("a later clean read retracts a stale cap (add-or-remove, not add-only)", () => {
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
+    recordImageReadCap("/proj", "images/x.jpg", false);
+    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(false);
+  });
+
+  it("is tri-state: partial=true, whole=false, not-established=undefined (#2457 ruling amendment a)", () => {
+    // absent must be distinguishable from verified-whole — a Set collapses the two,
+    // and that is what leaves a stale true unclearable on an update.
+    expect(sourceImageCapState("/proj", "images/never.jpg")).toBeUndefined();
+    recordImageReadCap("/proj", "images/partial.jpg", true);
+    expect(sourceImageCapState("/proj", "images/partial.jpg")).toBe(true);
+    recordImageReadCap("/proj", "images/whole.jpg", false);
+    expect(sourceImageCapState("/proj", "images/whole.jpg")).toBe(false); // NOT undefined
+  });
+
+  it("is keyed by project — one project's cap does not leak into another", () => {
+    recordImageReadCap("/proj-a", "images/shared.jpg", true);
+    expect(wasSourceImageTruncated("/proj-a", "images/shared.jpg")).toBe(true);
+    expect(wasSourceImageTruncated("/proj-b", "images/shared.jpg")).toBe(false);
+  });
+
+  it("an ARK read is joinable too — its imageRef is what a source cites", () => {
+    // saveSourceImage sanitizes an ARK label to this ref; the cache keys on the
+    // same string, so an ARK read is NOT a join blind spot (only a no-persist
+    // read is). Mirrors imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL").
+    const ref = `images/${imageFilenameFor("ark:/61903/3:1:3Q9M-CSNL")}`;
+    recordImageReadCap("/proj", ref, true);
+    expect(wasSourceImageTruncated("/proj", ref)).toBe(true);
+  });
+
+  it("joins across a trailing separator on projectPath — record `/p/`, query `/p` (#2457 review, blocker 4a)", () => {
+    // projectPath arrives raw from an LLM relay, so record and query can spell
+    // the same project with and without a trailing slash. The key must normalize
+    // both or a capped read reads back clean.
+    recordImageReadCap("/proj/", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "images/x.jpg")).toBe(true);
+    // …and the other direction.
+    __clearTruncatedSourceImagesForTests();
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("/proj/", "images/x.jpg")).toBe(true);
   });
 });

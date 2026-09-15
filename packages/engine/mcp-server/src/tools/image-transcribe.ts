@@ -4,7 +4,7 @@ import {
   resolveFsImageInput,
   fetchFsImageBytes,
 } from "../utils/fs-image-fetch.js";
-import { saveSourceImage } from "../utils/image-store.js";
+import { saveSourceImage, recordImageReadCap } from "../utils/image-store.js";
 import { fetchWithTimeout, isFetchTimeout } from "../utils/http.js";
 import { expandLookingFor } from "../utils/name-variants.js";
 import type {
@@ -378,6 +378,11 @@ export async function imageTranscribeTool(
         imageKey: label,
         bytes,
       });
+      // Record the cap against the persisted image so research_append can derive
+      // transcription_truncated when a source cites it (#2457). Only reachable
+      // with a persisted image — an imageRef is exactly what a source's
+      // image_filename joins on.
+      recordImageReadCap(input.projectPath, imageRef, truncated);
     } catch {
       imageRef = undefined;
     }

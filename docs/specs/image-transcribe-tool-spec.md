@@ -902,6 +902,54 @@ method (absent → no scan shown). Both adapters implement it:
 **Sequencing.** The core text-returning tool (§5–§7) ships first and is useful
 on its own; image persistence + the Electron and hosted-web viewers followed.
 
+### 8.6 Deriving `sources[].transcription_truncated` at the write boundary
+
+The truncation of a read is known **here**, at `image_transcribe` (§6.2), but the
+consumer that persists a source is not: `record-extractor` does not hold
+`image_transcribe` (only `image-reader` does), so it receives the transcription
+*text* relayed across a subagent boundary, with the `truncated` flag gone. A
+model asked to set `transcription_truncated` from that relayed text can only
+guess from prose — and was observed to set it while saving no transcription at
+all. So the field is **derived at the write boundary, never
+asserted by the agent**:
+
+- **Record (write side).** On a read that both capped *and* persisted an image,
+  `image_transcribe` records the cap against that image:
+  `recordImageReadCap(projectPath, imageRef, truncated)` in
+  `src/utils/image-store.ts`. It is a module-level `Set<string>` keyed
+  `${projectPath}\0${imageRef}` — the same `images/<key>.jpg` string a source
+  cites as `image_filename` (§8.5). Add-or-remove, not add-only, so a later clean
+  read of the same image (e.g. after an OCR model change) retracts a stale cap.
+  It lives in `image-store.ts`, not `image-transcribe.ts`, because both the
+  writer (`image_transcribe`) and the reader (`research_append`) already import
+  that module — the alternative is a tool→tool import — and `image_filename` is
+  exactly the `imageRef` this module mints. Process-lifetime, never persisted,
+  keyed by project for the same reason `browseBudgetSeen` is (§5.8).
+- **Derive (persist side).** In `research_append`'s `prepareOps`, after the
+  source-reuse rewrite, every `sources` op carrying an `image_filename` has
+  `transcription_truncated` set from `wasSourceImageTruncated(projectPath,
+  image_filename)` — **authoritative**: true on a cache hit, stripped otherwise,
+  so an agent-asserted value is overridden by the tool's own record.
+- **Invariant.** `validate_research_schema` rejects `transcription_truncated:
+  true` beside an empty or null `transcription` — the persisted-side mirror of
+  the tool's own guarantee that a zero-content capped read throws rather than
+  returning `truncated: true` (§6.2).
+
+**Known limitation — the join needs a persisted image.** Like the browse
+budget's ARK blind spot (§5.8), this derivation has a hole, but a *different*
+one, because the key is `image_filename`, not imageId:
+
+- A read with no `projectPath` persists no scan, so its source has no
+  `image_filename` to join on — its truncation is **not** marked. (A truncated
+  read is still visible in the tool response; only the persisted marker is lost.)
+- The cache is process-lifetime and never persisted, so a cap recorded in one
+  MCP-server process is lost if the process restarts before the `research_append`
+  that cites the image — the same boundedness the browse budget carries.
+- An **ARK** read is *not* a blind spot here: `saveSourceImage` mints an
+  `image_filename` for an ARK label just as for an imageId, so it joins. This is
+  the one place this mechanism reaches further than the imageId-keyed browse
+  budget it is modelled on.
+
 ## 9. Wiring (standard MCP-tool checklist)
 
 - `src/tools/image-transcribe.ts` — tool + `imageTranscribeToolSchema`.
