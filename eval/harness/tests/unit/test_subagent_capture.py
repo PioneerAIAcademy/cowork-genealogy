@@ -473,6 +473,10 @@ _GOOD_TURN = (
     [
         ("json_but_not_an_object", b'"a string"\n', None, "matched_no_transcripts"),
         ("meta_is_not_a_dict", _GOOD_TURN, b"[1,2]", "captured"),
+        # `read_text(encoding="utf-8")` raises rather than replacing, so the
+        # meta catch must name UnicodeDecodeError - dropping it left the
+        # suite green while a cp1252 meta file crashed the whole capture.
+        ("meta_is_invalid_utf8", _GOOD_TURN, b'{"agentType": "\xff\xfe"}', "captured"),
         ("truncated_utf8_tail", _GOOD_TURN + b"\xe2\x82", None, "captured"),
         ("healthy_control", _GOOD_TURN, None, "captured"),
     ],
