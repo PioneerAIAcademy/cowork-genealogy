@@ -215,7 +215,8 @@ Sequence inside each tool:
 
 1. Read `tree.gedcomx.json` (and, for `merge_tree_persons`, `research.json`).
    **`merge_record_into_tree` only:** sanitize the inline candidate first —
-   drop top-level `places[]` and person-level `sources[]` (legal in tool
+   drop top-level `places[]`, person-level `sources[]`, person-level
+   `principal`, and source-level `resource_type`/`coverage` (legal in tool
    output like `record_read`'s `gedcomx`, not in the tree format) with a
    warning per stripped kind, then validate the sanitized candidate
    (`sanitizeCandidate` + `validateCandidateGedcomx` in `merge-shared.ts`).

@@ -538,20 +538,22 @@ GedcomX qualifier.
 
 The top-level array is renamed `sourceDescriptions` ↔ `sources`.
 
-#### Fields stripped by `simplifySourceDescription`
+#### Source description fields carried by `simplifySourceDescription`
 
 The raw GedcomX `sourceDescriptions` from the recapi persona endpoint carry
-two fields that `simplifySourceDescription` does not propagate:
+two fields that `simplifySourceDescription` now propagates into the simplified
+format as `resource_type` and `coverage`:
 
-- **`resourceType`** — identifies the source description kind
-  (e.g. `"http://gedcomx.org/DigitalArtifact"`, `"http://gedcomx.org/Record"`).
+- **`resourceType`** → `resource_type` — identifies the source description kind
+  (e.g. `"DigitalArtifact"`, `"Record"`, with the URI prefix stripped).
   9 of 12 probed records carried a `DigitalArtifact` entry; without `resourceType`
   the simplified output gives no way to distinguish it from the other 6–7
   source descriptions a persona returns.
 
-- **`coverage[]`** — volume-level provenance on `DigitalArtifact` entries:
-  `spatial.description` (a place-description id resolvable via `getPlaceById`),
-  `temporal` (date range of the scanned register), and `recordType`.
+- **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
+  `DigitalArtifact` entries: `place_id` (from `spatial.description`, resolvable
+  via `getPlaceById`; `record_read` resolves it to `standard_place`),
+  `date_range` (from `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
   9 records with coverage, the coverage place or date range contradicted the
   record's own facts (e.g. Tallapoosa county coverage on a Talladega birth;
@@ -560,27 +562,31 @@ two fields that `simplifySourceDescription` does not propagate:
 
   Measured 2026-09-14, `npx tsx dev/probe-record-read-artifact-coverage.ts`,
   n=12 records across 4 families (2 returned 404). The probe changes no
-  behaviour and writes nothing. Whether to carry these fields through is
-  gated on this measurement.
+  behaviour and writes nothing.
 
-#### Persona role fields stripped before simplification
+These fields are record-only: `sanitizeCandidate` strips both before a merge
+write (§5b.2 of `merge-gedcomx-spec.md`), and the tree validator rejects them
+on tree sources (`TREE_SOURCE_FIELDS` does not include them).
 
-The raw GedcomX persons from FamilySearch carry role information that
-`toSimplified` does not propagate (it operates on `GedcomXPerson`, which has
-no `display` or `principal` field):
+#### Persona role fields carried through simplification
+
+The raw GedcomX persons from FamilySearch carry role information:
+
+- **`principal`** — boolean marking the record's principal subject, now carried
+  through `toSimplified` onto `SimplifiedPerson.principal`. Present on
+  **100% of both endpoints** (50/50 recapi, 2655/2655 search).
+  `sanitizeCandidate` strips it before a merge write; the tree validator
+  rejects it on tree persons (`TREE_PERSON_FIELDS` does not include it).
 
 - **`display.role`** — the persona's role on the record (`"Principal"`,
   `"Father"`, `"Mother"`, `"Spouse"`, `"Other"`). Present on **100% of search
   personas** (2655/2655 across 3 collections) but **0% of recapi personas**
   (0/50). The search endpoint populates it; the recapi persona endpoint does not.
-
-- **`principal`** — boolean marking the record's principal subject. Present on
-  **100% of both endpoints** (50/50 recapi, 2655/2655 search).
+  `record_search` surfaces it as a flat `role` field on each result (survives
+  the staged slim block). Not on `SimplifiedPerson` — it is search-only.
 
   Measured 2026-09-14, `npx tsx dev/probe-persona-role-coverage.ts`,
   n=50 recapi personas + 2655 search personas across 3 search pools.
-  The recapi gap means `record_read` cannot surface `display.role` from its
-  own endpoint — only `principal` is available there.
 
 ### 12. Place descriptions
 

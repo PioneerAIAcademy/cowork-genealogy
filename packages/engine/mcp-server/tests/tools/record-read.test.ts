@@ -14,11 +14,18 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
 });
 
+vi.mock("../../src/utils/place-api.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../src/utils/place-api.js")>();
+  return { ...actual, getPlaceById: vi.fn() };
+});
+
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { recordReadTool, extractEntityId } from "../../src/tools/record-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { getPlaceById } from "../../src/utils/place-api.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 
@@ -501,5 +508,69 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
     }, LOCAL);
     expect(out.persons).toHaveLength(2);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("#2367 resolveCoveragePlaces", () => {
+  const mockedGetPlaceById = vi.mocked(getPlaceById);
+
+  const recordWithCoverage: GedcomX = {
+    persons: [
+      {
+        id: "P1",
+        principal: true,
+        gender: { type: "http://gedcomx.org/Male" },
+        names: [{ nameForms: [{ fullText: "John Smith" }] }],
+      },
+    ],
+    sourceDescriptions: [
+      {
+        id: "SD1",
+        resourceType: "http://gedcomx.org/DigitalArtifact",
+        titles: [{ value: "Alabama Deaths" }],
+        coverage: [
+          {
+            spatial: { description: "#12345" },
+            temporal: { formal: "+1850/+1860" },
+            recordType: "http://gedcomx.org/Census",
+          },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    mockedGetPlaceById.mockReset();
+  });
+
+  it("resolves coverage place_id to standard_place on a live read", async () => {
+    mockedGetPlaceById.mockResolvedValueOnce({
+      placeRepId: "12345",
+      name: "Talladega",
+      fullName: "Talladega, Alabama, United States",
+      type: "County",
+    });
+    mockOk(recordWithCoverage);
+    const out = await recordReadTool({ recordId: "P1" }, LOCAL);
+    expect(mockedGetPlaceById).toHaveBeenCalledWith("12345");
+    const sd = out.sources?.find((s: any) => s.coverage);
+    expect(sd?.coverage?.standard_place).toBe("Talladega");
+  });
+
+  it("leaves standard_place absent when getPlaceById returns null", async () => {
+    mockedGetPlaceById.mockResolvedValueOnce(null);
+    mockOk(recordWithCoverage);
+    const out = await recordReadTool({ recordId: "P1" }, LOCAL);
+    const sd = out.sources?.find((s: any) => s.coverage);
+    expect(sd?.coverage?.standard_place).toBeUndefined();
+  });
+
+  it("swallows getPlaceById errors (best-effort)", async () => {
+    mockedGetPlaceById.mockRejectedValueOnce(new Error("network timeout"));
+    mockOk(recordWithCoverage);
+    const out = await recordReadTool({ recordId: "P1" }, LOCAL);
+    const sd = out.sources?.find((s: any) => s.coverage);
+    expect(sd?.coverage?.standard_place).toBeUndefined();
+    expect(out.persons).toHaveLength(1);
   });
 });
