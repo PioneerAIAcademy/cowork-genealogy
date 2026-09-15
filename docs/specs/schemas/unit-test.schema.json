@@ -98,11 +98,23 @@
       "type": "object",
       "oneOf": [
         {
+          "type": "object",
+          "properties": {
+            "user_message": {
+              "type": "string"
+            }
+          },
           "required": [
             "user_message"
           ]
         },
         {
+          "type": "object",
+          "properties": {
+            "delegation": {
+              "type": "string"
+            }
+          },
           "required": [
             "delegation"
           ]

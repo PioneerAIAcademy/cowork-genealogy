@@ -43,6 +43,7 @@ import { useQuery } from '@tanstack/react-query';
 import { notifications } from '@mantine/notifications';
 import { useSelectedSkill } from '@/lib/useSelectedSkill';
 import { hasGradingRelevantChange } from '@/lib/gradingRelevance';
+import { stripUnusedInputKey } from '@/lib/testInput';
 import type { ExpectedOutcome, SkillInfo, UnitTestFile, UnitTestListEntry } from '@/lib/types';
 
 interface TestFormProps {
@@ -218,6 +219,8 @@ export function TestForm({ mode, initialValues, onSaved }: TestFormProps) {
     // Empty string scenarios → null so the API/file shape matches the schema.
     if (payload.input.scenario === '') payload.input.scenario = null;
     if (payload.input.scenario_notes === '') payload.input.scenario_notes = null;
+    // A test is routed OR direct; the unused key must be absent, not blank.
+    stripUnusedInputKey(payload.input);
     // Strip empty judge-context entries.
     payload.judge_context = (payload.judge_context ?? []).map((s) => s.trim()).filter(Boolean);
 

@@ -312,10 +312,20 @@ def spawned_agents(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
     eval/runlogs/unit/research-plan/v1_2026-09-01_13-24-52.json). Such a call is
     skipped rather than raising: it spawned no *named* agent, which is exactly
     what the direct arm's assertion needs to know.
+
+    **Main-thread spawns only.** `agent_id` is present on a record only when the
+    hook fired inside a subagent (`builtin_call_record`), so its ABSENCE is what
+    marks the main thread — membership, never truthiness. The direct arm's claim
+    is specifically that the MAIN THREAD spawned the pair's agent and relayed the
+    delegation; a nested spawn would otherwise satisfy `_compute_outcome`,
+    `derive_activated` and both gating validators without that ever being true.
+    No pair's agent holds a spawn tool today, so this filters nothing in the
+    committed corpus (all 8 spawns in v1_2026-09-14_23-01-14 carry no `agent_id`)
+    — it is the guard for the first agent that gains one.
     """
     out: list[str] = []
     for call in builtin_tool_calls or []:
-        if call.get("tool") not in SPAWN_TOOL_NAMES:
+        if call.get("tool") not in SPAWN_TOOL_NAMES or "agent_id" in call:
             continue
         name = (call.get("args") or {}).get("subagent_type")
         if name:
@@ -332,7 +342,8 @@ def spawn_prompts(builtin_tool_calls: list[dict[str, Any]]) -> list[str]:
     """
     out: list[str] = []
     for call in builtin_tool_calls or []:
-        if call.get("tool") not in SPAWN_TOOL_NAMES:
+        # Main-thread spawns only — see `spawned_agents`.
+        if call.get("tool") not in SPAWN_TOOL_NAMES or "agent_id" in call:
             continue
         prompt = (call.get("args") or {}).get("prompt")
         if prompt is not None:
