@@ -63,6 +63,7 @@ def run_validators(
     blocked_owned_section_writes: list[dict[str, Any]] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
+    builtin_tool_calls: list[dict[str, Any]] | None = None,
     text_response: str | None = None,
     activated: bool | None = None,
     num_turns: int | None = None,
@@ -87,6 +88,14 @@ def run_validators(
         # the LLM judge, which has misread it (a judge scored "failed to call
         # search-external-sites" on a run where the hook recorded the call).
         "skills_invoked": list(skills_invoked or []),
+        # Every built-in (non-MCP) tool call the run made, as
+        # {"tool", "args", "agent_id"?} — see skill_runner.builtin_call_record.
+        # The direct-agent arm (issue #2246) reads the `Agent`/`Task` records out
+        # of this to assert the spawn happened and that the delegation was
+        # relayed verbatim; `skills_invoked` cannot answer either, because a
+        # direct test invokes no skill at all. Derive with
+        # skill_runner.spawned_agents / spawn_prompts rather than re-walking it.
+        "builtin_tool_calls": list(builtin_tool_calls or []),
         # Main-thread calls to subagent-only tools that the PreToolUse hook
         # denied (harness.context_policy). Non-empty means the skill broke the
         # context boundary. Note this is the *denied* set: because the hook
@@ -119,9 +128,10 @@ def run_validators(
         # test-specific checks on test["tags"], e.g.
         #   if "slug-apostrophe" not in test.get("tags", []): pytest.skip(...)
         "test": test or {},
-        # Every assistant text block concatenated, not the final reply alone
-        # — the same string the run log stores as `output.text_response` and
-        # the judge grades.
+        # Every assistant turn's text, not the final reply alone — turns
+        # joined with "\n\n", blocks within one turn with no separator — the
+        # same string the run log stores as `output.text_response` and the
+        # judge grades.
         #
         # Here so a reply-shape rule can be decided mechanically instead of
         # inferred. Several skill bodies state one ("One sentence only", "do

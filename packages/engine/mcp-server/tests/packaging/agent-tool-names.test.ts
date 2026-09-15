@@ -155,8 +155,11 @@ const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.dis
 // (bare live in #1341, absent in three later censuses — macOS and Windows on
 // 2026-08-15, and a Windows session via #1732). Missing this
 // third registrar was issue #1341: record-extractor was refused there, with all 16
-// of its declared entries named unrecognized. gps-mentor is the exception — its
-// bare `Read` always resolves, so it would spawn holding that alone.
+// of its declared entries named unrecognized. An agent declaring the built-in
+// `Read` bare is exempt from that refusal — `Read` always resolves, so it spawns
+// holding that alone. Today that is proof-conclusion and research-exhaustiveness;
+// every other agent (gps-mentor included) is MCP-only and a registrar miss
+// refuses it, as it did record-extractor.
 const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
 
 // Longest-first so that a prefix which is itself the prefix of another can never
@@ -448,7 +451,6 @@ describe("plugin agent/skill bodies", () => {
 const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> = {
   "gps-mentor.md": {
     tools: [
-      "Read",
       "collections_search",
       "external_links_search",
       "place_distance",
@@ -456,6 +458,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "project_context",
       "research_append",
       "research_query",
+      "sidecar_read",
       "validate_research_schema",
       "wiki_place_page",
       "wiki_search",
@@ -505,6 +508,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // Every tree writer is denied, not just `tree_edit`. This agent writes one
   // field on one question and must never reach the tree; a deny naming one of
   // five writers fails open on the other four, silently, and no CI job sees it.
+  //
+  // `research_append` JOINED that set (#2472): its assertion-`update` op rewrites
+  // the tree fact the assertion minted, so the broad writer this agent holds can
+  // now reach `tree.gedcomx.json`. Nothing here changes, because nothing here
+  // ever restricted it — the hook's caller check plus AGENT_WRITABLE_SECTIONS is
+  // what keeps this agent to `questions`, and an op on `assertions` is denied
+  // there before the rewrite can run. What IS worth knowing is that the hook
+  // binds in Cowork and the hosted path and in NEITHER harness, so a harness run
+  // is not evidence about this. The count in the sentence above is now seven.
   "research-exhaustiveness.md": {
     tools: ["Read", "project_context", "research_append", "research_query", "wiki_read"],
     denies: [],

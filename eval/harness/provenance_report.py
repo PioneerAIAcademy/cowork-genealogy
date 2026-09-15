@@ -80,7 +80,11 @@ def candidate_identifiers(text: str) -> set[str]:
 
 def sources_for(spec: dict) -> str:
     """Everything the run could legitimately have read an identifier from."""
-    parts = [spec.get("input", {}).get("user_message", "") or ""]
+    _input = spec.get("input", {}) or {}
+    # A direct-agent test (issue #2246) has no user turn — the delegation is the
+    # only text the run was handed, so an identifier supplied there would read as
+    # invented without this.
+    parts = [(_input.get("user_message") or "") or (_input.get("delegation") or "")]
     scenario = (spec.get("input") or {}).get("scenario")
     if scenario:
         d = SCENARIOS / scenario

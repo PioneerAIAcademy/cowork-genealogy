@@ -773,3 +773,81 @@ describe("mergeGedcomx — id uniqueness under same-id arrays", () => {
     assertIntegrity(out); // would fail if both kept id "F9"
   });
 });
+
+describe("assertion_id across a fact merge (#2472)", () => {
+  /** Two persons whose Birth facts merge, each backlinked as `ids` says. */
+  const doc = (ids: [string | undefined, string | undefined]): SimplifiedGedcomX => ({
+    persons: [
+      {
+        id: "I1",
+        names: [{ id: "N1", given: "John", surname: "Smith" }],
+        facts: [
+          {
+            id: "F1",
+            type: "Birth",
+            date: "1850",
+            // Shorter place chain, so the merge takes I2's place instead.
+            place: "Pennsylvania, United States",
+            ...(ids[0] !== undefined ? { assertion_id: ids[0] } : {}),
+            sources: [{ ref: "S1" }],
+          },
+        ],
+      },
+      {
+        id: "I2",
+        names: [{ id: "N2", given: "John", surname: "Smith" }],
+        facts: [
+          {
+            id: "F2",
+            type: "Birth",
+            date: "1850",
+            place: "Schuylkill County, Pennsylvania, United States",
+            ...(ids[1] !== undefined ? { assertion_id: ids[1] } : {}),
+            sources: [{ ref: "S1" }],
+          },
+        ],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "1850 U.S. Census" }],
+  });
+
+  const mergedBirth = (ids: [string | undefined, string | undefined]) => {
+    const out = mergeGedcomx(doc(ids), null, [["I1", "I2"]]);
+    assertIntegrity(out);
+    const facts = out.persons!.find((p) => p.id === "I1")!.facts!;
+    expect(facts).toHaveLength(1);
+    return facts[0];
+  };
+
+  it("drops the backlink when the members disagree", () => {
+    // `mergeFactGroup` clones members[0] but takes the best place from whichever
+    // member has the longer chain — here I2's. Keeping I1's backlink would leave
+    // the fact claiming to come from an assertion whose place it no longer
+    // carries: drift to the agreement check, and the next correction to that
+    // assertion would overwrite the merged, most-specific value.
+    const f = mergedBirth(["a_001", "a_002"]);
+    expect(f.place).toBe("Schuylkill County, Pennsylvania, United States");
+    expect(f.assertion_id).toBeUndefined();
+  });
+
+  it("drops it when only one member carries one, and that conservatism is the point", () => {
+    // The tempting narrowing is "drop only when two members carry DIFFERENT
+    // non-empty backlinks". It is wrong, and this case is why: I1 carries the
+    // backlink, I2 carries none, and the merge takes I2's longer place chain.
+    // Under that rule the survivor would keep a_001 while carrying a place
+    // a_001 never asserted, which is precisely the drift the agreement check
+    // reports. The merge cannot consult research.json to tell the benign case
+    // apart, so it drops the link rather than guess.
+    const f = mergedBirth(["a_001", undefined]);
+    expect(f.place).toBe("Schuylkill County, Pennsylvania, United States");
+    expect(f.assertion_id).toBeUndefined();
+    expect(mergedBirth([undefined, "a_002"]).assertion_id).toBeUndefined();
+  });
+
+  it("KEEPS it when every member agrees", () => {
+    // The other direction: a merge of two facts minted from the same assertion
+    // is still that assertion's fact, and must stay updatable.
+    expect(mergedBirth(["a_001", "a_001"]).assertion_id).toBe("a_001");
+  });
+});

@@ -12,6 +12,7 @@ import {
   mkdir,
   readdir,
   readFile,
+  realpath,
   rename,
   stat,
   unlink,
@@ -21,7 +22,7 @@ import { realpathSync } from "node:fs";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { basename, dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { assertInsideProject } from "./paths.js";
+import { assertInsideProject, isInsideProject, ProjectEscapeError } from "./paths.js";
 import type {
   JsonWrite,
   ProjectDirState,
@@ -252,7 +253,28 @@ export class FsProjectStore implements ProjectStore {
   }
 
   async readText(projectPath: string, ref: string): Promise<string> {
-    return readFile(this.abs(projectPath, ref), "utf-8");
+    const abs = this.abs(projectPath, ref);
+    // `abs` reasons about the STRING: a symlink placed inside the project that
+    // points outside it resolves "inside" and readFile would follow it. This is
+    // the method that hands file bytes back for a model-supplied ref
+    // (sidecar_read, record_read's resultsRef), so it re-checks containment on
+    // the real path — both sides realpath'd, because the project itself may be
+    // reached through an alias (see the lock-key test). realpath throws ENOENT
+    // for an absent file with `.code` intact, the same error readFile would
+    // have raised, so callers that classify by code see no difference.
+    const real = await realpath(abs);
+    if (!isInsideProject(await realpath(resolve(projectPath)), real)) {
+      throw new ProjectEscapeError(`path '${ref}' escapes the project directory (through a symlink)`);
+    }
+    // A FIFO or device node under the project would make readFile block in
+    // open() until a writer appears — the call never returns and the process
+    // cannot exit. Only regular files are read; a directory is left to readFile
+    // so callers still see EISDIR.
+    const s = await stat(real);
+    if (!s.isFile() && !s.isDirectory()) {
+      throw new Error(`path '${ref}' is not a regular file`);
+    }
+    return readFile(real, "utf-8");
   }
 
   async list(projectPath: string, dirRef: string): Promise<ProjectEntry[]> {
