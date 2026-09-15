@@ -612,8 +612,14 @@ skill never fired still fails.
 
 A **paired** skill is a thin routing skill plus an agent. Production research
 spawns the agent **directly** and never loads the routing skill (lead's ruling of
-2026-08-31; `docs/skill-to-agent-pair-conversion.md` §0), measured at 14 of 14
-committed e2e runs dated on or after 2026-08-20. A test carrying `delegation`
+2026-08-31; `docs/skill-to-agent-pair-conversion.md` §0) — **usually, not
+always**. Of the 15 committed e2e runs dated on or after 2026-08-20 that reach
+`research-exhaustiveness`, 14 spawn it directly and one
+(`hannah-earnest-children/run-2026-08-23_03-37-12`, a completed passing run)
+reaches it only through the routing skill; six take both routes in the same run.
+Counting every (run, pair) reach across all pairs in that window: 66 of 76 are
+direct, 10 skill-only. So the direct route dominates and the routed one is still
+live — which is the argument for grading both arms rather than replacing one. A test carrying `delegation`
 grades that route; a test carrying `user_message` grades the skill-then-agent
 route a user takes when they name the skill. **Both are real and both stay
 graded** — a direct test is a separate file with its own `test.id`, not a second

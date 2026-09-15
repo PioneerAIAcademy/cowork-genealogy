@@ -360,9 +360,12 @@ Two things this does NOT close:
   pair and is not one of these: it acquires, triages and logs before batching one
   extractor per record, so the list above does not describe it and the
   orchestrator still routes it as a skill.
-- **The direct route is measured on fourteen runs** (every committed e2e run
-  dated on or after 2026-08-20; all fourteen spawn a paired agent via `Agent`,
-  and eleven also call a router via `Skill` — re-derive by scanning each
+- **The direct route dominates but does not displace the routed one.** Over
+  every committed e2e run dated on or after 2026-08-20: 15 runs reach
+  `research-exhaustiveness`, 14 spawn it directly and one reaches it only via
+  `Skill` (`hannah-earnest-children/run-2026-08-23_03-37-12`), with six taking
+  both routes in one run. Counting every (run, pair) reach across all pairs: 66
+  of 76 direct, 10 skill-only — re-derive by scanning each
   `eval/runlogs/e2e/*/run-<ts>.json` for an `Agent`/`Task` call whose
   `subagent_type` names a pair versus a `Skill` call naming one). Whether the
   orchestrator reaches every paired agent that way, or only the ones it has a

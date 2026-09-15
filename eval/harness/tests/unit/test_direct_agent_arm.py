@@ -2,8 +2,10 @@
 
 Issue #2246. The unit harness could previously reach an agent only by invoking
 its routing skill, so a paired skill's suite graded the skill-then-agent path
-while production research spawns the agent directly — measured at 14 of 14
-committed e2e runs dated on or after 2026-08-20. These tests pin the wiring of
+while production research usually spawns the agent directly — of the 15
+committed e2e runs dated on or after 2026-08-20 that reach
+`research-exhaustiveness`, 14 spawn it directly and one reaches it only through
+the routing skill. These tests pin the wiring of
 the other arm.
 
 They are the arm's COMMITTED proof. The live behaviour they cannot reach is what

@@ -1819,6 +1819,10 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
     spec.raw["test"]["skill"] = "research-exhaustiveness"
     spec.raw["input"]["delegation"] = "DELEGATION-SENTINEL"
     spec.delegation = "DELEGATION-SENTINEL"
+    # Clear the routed fixture's own user_message, or the fallback never fires
+    # here and the assertion below would pass on the wrong value.
+    spec.raw["input"].pop("user_message", None)
+    spec.user_message = ""
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
@@ -1856,6 +1860,15 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
     assert captured["test"].get("delegation") == "DELEGATION-SENTINEL", (
         "orchestrator did not thread spec.delegation into run_validators' test "
         "dict; all three direct-arm validators would skip on every direct test"
+    )
+    # The THIRD threading hop, and the one with no guard until now. `user_message`
+    # is threaded for report_unsourced_year_in_response (#1965) and falls back to
+    # the delegation on a direct test — without the fallback a year the delegation
+    # supplied reads as invented. Removing it left the whole harness suite green.
+    assert captured["test"].get("user_message") == "DELEGATION-SENTINEL", (
+        "orchestrator did not fall back to spec.delegation for the threaded "
+        "`user_message`; on a direct test the delegation is the only text the "
+        "run was given, so a figure it supplied would be reported as invented"
     )
     assert captured.get("builtin_tool_calls"), (
         "orchestrator did not pass builtin_tool_calls to run_validators; the "
