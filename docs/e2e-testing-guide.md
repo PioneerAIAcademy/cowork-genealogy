@@ -380,7 +380,9 @@ It reads the run-log files and explains in plain language: which expected
 findings the tree actually contains and which it doesn't, what proof
 conclusion the agent wrote (described, not scored), any blocked tree-reads
 or blocked context calls
-(did it try to shortcut?), whether a finding came from a bundled PDF rather
+(did it try to shortcut?), any blocked context calls (a caller wrote a section
+it does not own, or reached a subagent-only tool), whether a finding came from a
+bundled PDF rather
 than live research, the stop reason translated into something actionable,
 any GPS guardrail skills the run bypassed, and — when findings are missing —
 the most likely cause.

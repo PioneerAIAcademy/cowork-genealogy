@@ -139,10 +139,14 @@ Then check `blocked_context_calls` — the twin denied by a different guard. Eve
 entry carries `blocked_by: "context"`, but **two different guards land here and
 `blocked_by` cannot tell them apart. Read the entry's `tool`:**
 
-- **`research_append`** — an owned-section write: the main thread wrote a section
-  a specific subagent owns. This is the arm that actually fires; every entry in
-  the committed corpus is one. It is **not** evidence of a spawn failure, and the
-  shipped plugin hook holds the same rule, so a user would hit it too.
+- **`research_append`** — an owned-section write: a caller wrote a section it does
+  not own. This is the arm that actually fires; every entry in the committed
+  corpus is one. **Not** evidence of a spawn failure, and the shipped plugin hook
+  holds the same rule, so a user would hit it too. Do not assume the main thread:
+  `owner_denied` has two rules, and `out_of_lane` fires for a **named subagent**
+  reaching outside its own sections. `tool` is `research_append` for both, so it
+  cannot tell them apart — read `narration[]` for the rule and `tool_calls[]` for
+  the caller.
 - **`extraction_append`** or **`image_read`** — a subagent-only tool called on the
   main thread, which *does* suggest the owning subagent failed to spawn
   (record-extractor for the write, the image reader for the read). Neither has
@@ -152,14 +156,16 @@ Same shape as above (`{tool, args, blocked_by}`), and the denied attempt also
 shows up in `narration[]` with `kind: "blocked"`.
 
 - **Empty** — normal; say nothing.
-- **Non-empty** — a call was denied and the work was not done on the main thread.
-  Flag it, but say which arm: an owned-section `research_append` is a routing
-  slip, not a spawn failure. Only the subagent-only tools point at a spawn
-  failure for their owning subagent (`record-extractor`
-  for `extraction_append`), not a records gap. No agent owns `image_read` since
-  `image-reader-opus` was retired, so a blocked `image_read` is the router
-  reaching for a scan instead of delegating to `image-reader`.
-  Read the matching `narration[]` turn to see where the spawn failed.
+- **Non-empty** — a call was denied and that work was not done. Flag it, and say
+  which arm: an owned-section `research_append` is an ownership slip, not a spawn
+  failure, so name the caller from `tool_calls[]` rather than assuming the main
+  thread. Only the subagent-only tools point at a spawn failure for their owning
+  subagent (`record-extractor` for `extraction_append`), not a records gap. No
+  agent owns `image_read` since `image-reader-opus` was retired, so a blocked
+  `image_read` is the router reaching for a scan instead of delegating to
+  `image-reader`. Read the matching `narration[]` turn: for a subagent-only tool
+  it shows where the spawn failed, and for an owned-section write it names which
+  rule fired.
 
 ### Step 2d — Note any GPS guardrail bypasses
 

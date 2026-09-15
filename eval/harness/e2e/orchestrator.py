@@ -1441,10 +1441,12 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
-    # Every denied main-thread `extraction_append` — the router doing the
-    # record-extractor's job because the subagent failed to spawn (#942). The
-    # attempt itself is in `tool_calls` (streamed from the ToolUseBlock before
-    # the PreToolUse deny); this list is the record that it did not run.
+    # Every call the per-context policy denied — BOTH arms, not just the one this
+    # comment used to name: a main-thread `extraction_append`/`image_read` (the
+    # router doing a subagent's job after a failed spawn, #942), and an
+    # owned-section `research_append` (#1273), which fires for a named subagent
+    # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
+    # before the PreToolUse deny); this list is the record that it did not run.
     blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then

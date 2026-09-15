@@ -880,8 +880,11 @@ Cowork and on the hosted path (`packages/engine/plugin/hooks/hooks.json`; a deny
 binds even under `bypassPermissions`), but its matcher covers the raw file-write
 tools and the device bridge's `device_commit_files` — it never sees an
 `extraction_append`-shaped MCP tool call. Porting the tool-level policy there was
-**declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending; do
-not re-file without evidence that the sub-700 KB band is being hit.
+**declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
+decline is scoped to `image_read`: do not re-file *it* without evidence the
+sub-700 KB band is being hit. §6.1.1 covers `extraction_append` too, and ADR-0006
+rules on neither it nor the band criterion, which an `extraction_append` port
+could never satisfy.
 
 This guard covers only the *main-thread* half of the `extraction_append`
 policy. The complementary *delegate* half — a general-purpose or otherwise
@@ -909,13 +912,18 @@ Beyond the detector itself, `make e2e-guardrail-shadow` reports this family acro
 the committed corpus, stored plus a `REPLAY=1` recompute, with the
 attribution denominator; it stays a reported signal, not a graduation count.
 
-### 6.1.2 Main-thread owned-section write block
+### 6.1.2 Owned-section write block
 
 The second arm that appends to `blocked_context_calls[]`, and the only one with
 entries in the committed corpus. `research_append` writes a named section, and
-some sections are owned by a specific subagent — so a main-thread call writing
-one is the router doing a delegate's job. The orchestrator denies it and records
-the attempt.
+`AGENT_WRITABLE_SECTIONS` reserves some sections to a specific subagent.
+
+**This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
+easy to describe as "the router doing a delegate's job" because that is the
+`routed` rule, and miss that `owner_denied` has a second. `out_of_lane` fires
+for a **named** subagent reaching outside its own declared sections, so an entry
+here does not imply a main-thread caller. One of the six committed entries is
+exactly that case.
 
 **Unlike §6.1.1, this is not harness-only.** The shipped plugin hook holds the
 same rule in Cowork and on the hosted path: `hooks/hooks.json` matches
@@ -1586,7 +1594,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, is_error, agent_id, agent_type }`. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Denied main-thread calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1. |
+| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
