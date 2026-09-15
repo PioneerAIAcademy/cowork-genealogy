@@ -83,6 +83,43 @@ that drove them:
 the run: `external_links_search` averages **11,127 tokens a call**,
 `wiki_place_page` 5,134 across 16 calls, `wiki_read` 6,755 across 8.
 
+**Corpus check on the n=1 figure (all 173 committed runs).** Wiki/external
+calls attributed to the last skill invoked:
+
+| skill | calls | share |
+|---|---|---|
+| **`locality-guide`** | **803** | **78.8%** |
+| `research-plan` | 156 | 15.3% |
+| `search-external-sites` | 27 | 2.6% |
+| everything else | 33 | 3.3% |
+
+`locality-guide` is invoked in 47% of runs, but it is *why* wiki traffic is
+heavy at all: the 91 runs that never invoke it make **1.8** wiki calls a run,
+against 35 in the instrumented run that did. So the n=1 51% is directionally
+confirmed, and #2117 captures 78.8% of the traffic corpus-wide.
+
+**`locality-guide` is skipped in 53% of runs, against its own routing rule.**
+`research/SKILL.md:139` routes to it whenever a question has no plan and **no
+`localities` entry yet for its jurisdiction**. Of the 91 runs that never invoke
+it, **zero** had a pre-existing `localities` entry — so all 91 were rule
+violations, not correct skips.
+
+That gate failure is already tracked: issue #2039 (two production tester
+reports) was absorbed into **#2475**. What this adds is the denominator — the
+board had two anecdotes, the corpus has **91 of 173 runs**.
+
+**It also sharpens the sequencing.** Fixing the gate makes main-thread residency
+**worse**, because `locality-guide` would then run on every run instead of half
+of them, roughly doubling the wiki traffic that lands inline. So **#2117 should
+land before or alongside any fix to #2475's gate**, not after it. The 51%
+measured on a run where `locality-guide` did fire is the steady state the system
+is supposed to be in.
+
+**This also raises `research-plan` (#2116).** Its 3.6% write share understated
+it — it drives **15.3% of all wiki/external calls**, and 90.7% of the wiki
+traffic on runs where `locality-guide` never runs. Second-order to #2117, but
+not the distant third its write share suggested.
+
 `locality-guide` is a skill, so it runs **inline in the main session** and every
 one of those results lands in the orchestrator's window. Converting it to a pair
 moves all 229,528 tokens into an agent window that is discarded when the agent
