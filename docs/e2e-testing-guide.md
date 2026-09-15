@@ -379,7 +379,10 @@ session in this checkout:
 It reads the run-log files and explains in plain language: which expected
 findings the tree actually contains and which it doesn't, what proof
 conclusion the agent wrote (described, not scored), any blocked tree-reads
-(did it try to shortcut?), whether a finding came from a bundled PDF rather
+or blocked context calls
+(did it try to shortcut?), any blocked context calls (a caller wrote a section
+it does not own, or reached a subagent-only tool), whether a finding came from a
+bundled PDF rather
 than live research, the stop reason translated into something actionable,
 any GPS guardrail skills the run bypassed, and — when findings are missing —
 the most likely cause.
@@ -388,13 +391,14 @@ It deliberately does **not** report the judge's grade: not the verdict, not
 the `proof_quality` score, not the `outcome` gate. You grade the run blind
 right afterwards with `/grade-e2e-run`, and seeing the judge's labels first
 would corrupt the calibration number. For the same reason `make e2e-run`
-prints only the stop reason and the compliance result when a run finishes.
+prints only the stop reason, the compliance result, and a
+`[blocked context call] N` count when that array is non-empty, when a run finishes.
 
 If you'd rather read the files yourself, each run writes three:
 
 | File | What's in it |
 |---|---|
-| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, `narration[]` (the agent's prose between tool calls), blocked tree-reads. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
+| `run-<ts>.json` | The structured result: the three axes (`verdict` = genealogy, `compliance` = guardrails, `outcome` = the combined gate), stop reason, judge output, usage, tool calls, `narration[]` (the agent's prose between tool calls), blocked tree-reads, and `blocked_context_calls[]` — main-thread calls the per-context policy refused, a union of two arms (spec §6.1.1, §6.1.2) that `blocked_by` cannot tell apart; only `tool` does. Sparse by construction: of 172 committed runs, 146 predate the field entirely, 26 are eligible, 5 carry any entry and there are 6 in total, all `research_append` (measured 2026-09-14). Any `SUBAGENT_ONLY_TOOLS` or `AGENT_WRITABLE_SECTIONS` change moves that. If you are about to grade this run, read the two `final-*` files instead — this one holds the judge's grade |
 | `run-<ts>.final-tree.gedcomx.json` | The agent's final tree — what the judge graded |
 | `run-<ts>.final-research.json` | The agent's final `research.json` |
 
