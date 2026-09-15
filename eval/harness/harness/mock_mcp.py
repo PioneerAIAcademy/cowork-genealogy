@@ -64,6 +64,10 @@ Current live tools:
   research orchestrator were pointed at it in place of whole-file Reads;
   without it, a skill that follows that instruction hits an uncovered tool
   call and grades badly for doing the right thing.
+- sidecar_read: a paged read of one sidecar text file under the workspace's
+  own `evaluations/` or `uploads/` — deterministic in workspace state like
+  research_query, so a fixture could only drift from what was actually
+  written. gps-mentor reads a prior verdict body through it.
 """
 
 from __future__ import annotations
@@ -106,6 +110,11 @@ LIVE_TOOLS: set[str] = {
     # whole-file Reads; without it a skill following that instruction hits an
     # uncovered tool call and grades badly for doing the right thing.
     "research_query",
+    # The reader for the two sidecar classes research_query cannot serve — a
+    # verdict body under evaluations/ and a text upload under uploads/. Same
+    # deterministic-in-workspace-state rationale as research_query; the
+    # gps-mentor agent's existing-verdict skip depends on it being live.
+    "sidecar_read",
     # The only route by which a project comes into existence. init-project's
     # tests start from an EMPTY workspace, so a fixture cannot serve this: what
     # is graded is whether both files end up on disk and valid, and only the
@@ -141,8 +150,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
 # LIVE_TOOLS — the two that are not live here (`merge_tree_persons`,
 # `tree_forget`) have no handler to mirror. The drift lint in
-# tests/unit/test_mock_mcp.py pins that intersection, so a twelfth tool added on
-# the TypeScript side fails here rather than silently going unmirrored.
+# tests/unit/test_mock_mcp.py pins that intersection, so a fourteenth tool added
+# on the TypeScript side fails here rather than silently going unmirrored.
 #
 # `merge_warnings` is deliberately absent: its `ok: false` is a dry-run verdict
 # about a merge, not the tool failing. Marking it would tell the agent a working
@@ -156,6 +165,9 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "materialize_facts",
     "project_context",
     "research_query",
+    # Every `ok: false` but `no_project` (invalid_ref, not_found, not_text) is
+    # the read not happening — a failure the agent must see as one.
+    "sidecar_read",
     "project_create",
     # Its `ok: false` means the requested correction could not be applied (an
     # impossible date, a doubleYear inconsistent with the year, a quakerMonth
@@ -833,6 +845,10 @@ def _make_live_handler(
     if tool_name == "research_query":
         return _make_compiled_tool_handler(
             "research_query", "research-query.js", "researchQuery", workspace, call_log
+        )
+    if tool_name == "sidecar_read":
+        return _make_compiled_tool_handler(
+            "sidecar_read", "sidecar-read.js", "sidecarRead", workspace, call_log
         )
     if tool_name == "project_create":
         return _make_compiled_tool_handler(
