@@ -493,9 +493,7 @@ canonical form above), not a persona; making persona auto-fill work for full-tex
 was measured and rejected. `external_links_search` is likewise persona-less but is
 **not** covered by this rejection: a results-bearing `external_links_search` entry
 with no sidecar is not rejected here. Legitimate sidecar-less entries
-(`record_read`/PDF/image/pasted, and nil/negative searches) do not trip it. (The
-shipped rejection message still frames the loss as `record_persona_id` even for
-`fulltext_search`; correcting that wording is an engine-lane follow-up.)
+(`record_read`/PDF/image/pasted, and nil/negative searches) do not trip it.
 
 ### 3.6 `standard_place` levers — resolution, echo, country guard
 

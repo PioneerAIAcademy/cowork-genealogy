@@ -73,6 +73,7 @@ from e2e.validate_fixture import (
     index_tree,
     tree_integrity_errors,
 )
+from harness.dates import extract_year
 from harness.schema_validator import (
     SCHEMAS_DIR,
     validate_research_json,
@@ -100,8 +101,6 @@ GENRES = ("strip", "record-hint")
 PRESUMED_LIVING_YEARS = 110
 DEATH_FACT_TYPES = frozenset({"Death", "Burial", "Cremation"})
 BIRTH_FACT_TYPES = frozenset({"Birth", "Christening", "Baptism"})
-
-_YEAR = re.compile(r"\b(1\d{3}|20\d{2})\b")
 
 # Field allow-lists, in the key order we emit. Mirrors
 # docs/specs/schemas/tree-gedcomx.schema.json. Persons carry no `sources` —
@@ -462,9 +461,9 @@ def _birth_year(person: dict[str, Any]) -> int | None:
         if str(fact.get("type", "")) not in BIRTH_FACT_TYPES:
             continue
         for value in (fact.get("standard_date"), fact.get("date")):
-            match = _YEAR.search(str(value or ""))
-            if match:
-                return int(match.group(1))
+            year = extract_year(str(value or ""))
+            if year is not None:
+                return int(year)
     return None
 
 

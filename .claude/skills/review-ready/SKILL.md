@@ -284,9 +284,13 @@ Rules on the writes:
 - **Never answer a fork yourself, and never record one as answered.** Every
   surviving question gets written down and labelled `needs-decision`.
   `/make-decisions` is the only place a ruling is taken and applied.
-- **Never apply both `senior` and `needs-decision`.** They are different states
-  with different remedies (`fill-ready` §6): one wants a person, the other wants
-  an answer. An item carrying both tells the board neither.
+- **`senior` and `needs-decision` are orthogonal — apply both when both are
+  true.** They answer different questions (`fill-ready` §6): `senior` says *who*
+  does the work once it is startable, `needs-decision` says *what* is blocking it
+  now. An item can be hard **and** waiting on one answer; label it both, and it
+  stays out of the ranking until the answer lands, then goes to a senior.
+  What you must not do is reach for `senior` on an item that is merely
+  undecided — that sends a sentence looking for a scarce person.
 
 Deleting an issue needs the lead to say so for that specific issue. Never batch
 a delete under a general approval.

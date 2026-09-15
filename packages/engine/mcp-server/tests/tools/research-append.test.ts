@@ -4036,6 +4036,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/record_persona_id/);
     expect(r.errors[0]).toMatch(/Re-run the search WITH projectPath/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
@@ -4061,6 +4062,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/record_persona_id/);
   });
 
   it("hard-errors when a fulltext_search returned results but staged no sidecar", async () => {
@@ -4080,6 +4082,8 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/retained transcript/);
+    expect(r.errors[0]).not.toMatch(/record_persona_id/);
   });
 
   it("does NOT fire for a nil/negative producer search with no sidecar (legit — no false positive)", async () => {
