@@ -60,6 +60,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -108,6 +109,43 @@ UNCLASSIFIED = "unclassified"
 
 #: The two buckets #1594 counts as "lost to reachability, not to content".
 REACHABILITY_BUCKETS = (UNREACHABLE, TIMEOUT)
+
+# `image_transcribe` began emitting the `truncated` key in this commit
+# (#2168, 7 September). A run from any older engine files a capped read as
+# `success` however badly it was cut off, so it can never appear in the
+# truncated numerator — and counting it in the denominator prints the rate
+# over calls that could not have produced it, the exact mistake this module's
+# header spends thirty lines rejecting for the strip. So the truncation rate
+# is taken only over marker-capable runs.
+MARKER_COMMIT = "733a2c7"
+
+
+def commit_emits_truncation_marker(git_sha: str | None) -> bool:
+    """Whether the engine at `git_sha` could emit the `truncated` marker.
+
+    True iff the run's commit contains #2168 (`MARKER_COMMIT`). A run log with
+    no `git_sha` is always incapable — and that is provably safe, not merely
+    cautious: `git_sha` itself landed 2026-08-06, a month before the marker, so
+    a log missing it is always from the blind era. A `git_sha` this checkout
+    cannot resolve (a partial fetch, a squash-deleted branch — `git` returns
+    128) also reads as incapable: unverifiable is treated as blind so the rate
+    is never inflated by a call we cannot place. Injected into `scan` so the
+    unit tests stay hermetic.
+    """
+    if not git_sha:
+        return False
+    try:
+        return (
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", MARKER_COMMIT, git_sha],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).returncode
+            == 0
+        )
+    except (OSError, ValueError):
+        return False
 
 
 def classify(response_summary: str) -> str:
@@ -181,6 +219,11 @@ class Call(NamedTuple):
     day: str
     author: str
     sample: str
+    # Whether this call's engine could emit the `truncated` key (#2168). A call
+    # from an older engine is blind to truncation, so it is kept out of the
+    # truncation-rate denominator. Defaulted so hand-built Call() test fixtures
+    # for the reachability paths need not name it.
+    marker_capable: bool = False
 
 
 class ScanResult(NamedTuple):
@@ -201,13 +244,21 @@ class ScanResult(NamedTuple):
     def truncated_reads(self) -> int:
         return sum(1 for c in self.calls if c.bucket == TRUNCATED)
 
+    @property
+    def truncation_measurable(self) -> int:
+        """Calls whose engine could have emitted the marker — the only honest
+        denominator for the truncation rate."""
+        return sum(1 for c in self.calls if c.marker_capable)
+
 
 def scan(
     paths: list[Path],
     author_of: Callable[[Path], str] = commit_author,
+    marker_capable_of: Callable[[str | None], bool] = commit_emits_truncation_marker,
 ) -> ScanResult:
     """Classify every `image_transcribe` call whose captures survive, and tally
-    the two kinds of call that cannot be classified.
+    the two kinds of call that cannot be classified, and mark each with whether
+    its engine could emit the `truncated` marker.
 
     A run past the 14-day capture window carries `captures_stripped: true` and no
     `response_summary`, so its calls are counted as `stripped` and NOT run
@@ -216,7 +267,8 @@ def scan(
     Unreadable run logs are tallied too: a corpus that is entirely stripped or
     unreadable must not print "no calls found" and read as clean.
 
-    `author_of` is injectable so tests need not shell out to git.
+    `author_of` and `marker_capable_of` are injectable so tests need not shell
+    out to git.
     """
     calls: list[Call] = []
     unreadable = stripped_calls = stripped_runs = 0
@@ -244,6 +296,7 @@ def scan(
             d = run_date(p)
             day = d.isoformat() if d else "undated"
             author = author_of(p)
+            capable = marker_capable_of(doc.get("git_sha"))
             for tc in doc.get("tool_calls") or []:
                 if not isinstance(tc, dict):
                     continue
@@ -255,7 +308,14 @@ def scan(
                 rs = tc.get("response_summary")
                 rs = rs if isinstance(rs, str) else json.dumps(rs)
                 run_calls.append(
-                    Call(run, classify(rs), day, author, rs[:160].replace("\n", " "))
+                    Call(
+                        run,
+                        classify(rs),
+                        day,
+                        author,
+                        rs[:160].replace("\n", " "),
+                        capable,
+                    )
                 )
         except (
             OSError,
@@ -398,14 +458,6 @@ def format_report(result: ScanResult) -> str:
         f"  lost to reachability:        {fails} of {m} measurable "
         f"({round(100 * fails / m, 1)}%)"
     )
-    # The #2457 rate: partial reads that reached the service but stopped at the
-    # cap. Distinct from a reachability failure — the page was read, just not to
-    # the end — so it gets its own line rather than folding into the loss above.
-    trunc = result.truncated_reads
-    out.append(
-        f"  truncated (capped mid-read): {trunc} of {m} measurable "
-        f"({round(100 * trunc / m, 1)}%)"
-    )
     if result.stripped_calls:
         lo = round(100 * fails / total_seen, 1)
         hi = round(100 * (fails + result.stripped_calls) / total_seen, 1)
@@ -419,6 +471,38 @@ def format_report(result: ScanResult) -> str:
         # same failure as understating it.
         out.append(
             "  true rate over this window:  exact — no captures stripped in range"
+        )
+    # The #2457 rate: partial reads that reached the service but stopped at the
+    # cap. Distinct from a reachability failure — the page was read, just not to
+    # the end — so it gets its own line. Taken only over marker-capable calls:
+    # `image_transcribe` began emitting `truncated` in 733a2c7 (#2168), and a
+    # call from an older engine files as `success` however badly it was capped,
+    # so it can never produce the numerator and must not sit in the denominator.
+    # Sits BELOW the true-rate block, which is computed from the reachability
+    # count alone — above it, this line would read as covering both rates.
+    trunc = result.truncated_reads
+    tm = result.truncation_measurable
+    if tm:
+        out.append(
+            f"  truncated (capped mid-read): {trunc} of {tm} marker-capable "
+            f"({round(100 * trunc / tm, 1)}%)"
+        )
+        if tm < m:
+            # The excluded set is calls whose engine could not have carried the
+            # marker: either genuinely pre-#2168, or a `git_sha` this checkout
+            # cannot resolve (a partial fetch, a squash-deleted branch) which is
+            # treated as incapable rather than assumed capable — the safe
+            # direction for a rate that must not be inflated.
+            out.append(
+                f"    {m - tm} of {m} measurable calls predate 733a2c7 "
+                "(#2168) or ran an engine this checkout cannot resolve — "
+                "excluded above"
+            )
+    else:
+        out.append(
+            "  truncated (capped mid-read): NOT MEASURABLE — every call in "
+            "range predates 733a2c7 (#2168), when the marker began to be "
+            "emitted"
         )
     out.append("")
 

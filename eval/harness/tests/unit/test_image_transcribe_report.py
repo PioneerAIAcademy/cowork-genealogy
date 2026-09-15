@@ -26,7 +26,14 @@ from e2e.image_transcribe_report import (
 )
 
 
-def _run(dir_: Path, name: str, summaries: list[str], *, stripped: bool = False) -> Path:
+def _run(
+    dir_: Path,
+    name: str,
+    summaries: list[str],
+    *,
+    stripped: bool = False,
+    git_sha: str | None = None,
+) -> Path:
     """One committed run log holding `image_transcribe` calls."""
     calls = []
     for s in summaries:
@@ -37,6 +44,8 @@ def _run(dir_: Path, name: str, summaries: list[str], *, stripped: bool = False)
     doc: dict = {"tool_calls": calls}
     if stripped:
         doc["captures_stripped"] = True
+    if git_sha is not None:
+        doc["git_sha"] = git_sha
     p = dir_ / name
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(doc), encoding="utf-8")
@@ -45,6 +54,13 @@ def _run(dir_: Path, name: str, summaries: list[str], *, stripped: bool = False)
 
 def _authors(mapping: dict[str, str]):
     return lambda p: mapping.get(p.name, "someone")
+
+
+#: A hermetic marker-capability proxy: a run is capable iff its log carries a
+#: git_sha at all. Keeps the truncation-denominator tests off git while still
+#: honouring "no git_sha means incapable".
+def _capable_if_sha(git_sha: str | None) -> bool:
+    return bool(git_sha)
 
 
 # --- the defect this report exists to close ---------------------------------
@@ -437,21 +453,89 @@ def test_a_transcription_that_quotes_the_word_truncated_is_still_a_success():
 def test_a_truncated_read_is_reported_but_is_not_a_reachability_failure(tmp_path: Path):
     """It reached the service and returned content, so it is measurable and NOT
     lost to reachability — it gets its own rate line so the #2457 marker's real
-    load-bearing frequency is visible rather than hidden inside `success`."""
+    load-bearing frequency is visible rather than hidden inside `success`. The
+    run is marker-capable (post-#2168), so the rate is taken over all four."""
     p = _run(tmp_path / "fix", "run-2026-08-20_00-00-00.json",
-             ['{"transcription":"half a page","truncated":true}', "ok", "ok", "ok"])
-    r = scan([p], author_of=_authors({}))
+             ['{"transcription":"half a page","truncated":true}', "ok", "ok", "ok"],
+             git_sha="a" * 40)
+    r = scan([p], author_of=_authors({}), marker_capable_of=_capable_if_sha)
 
     assert r.truncated_reads == 1
     assert r.reachability_failures == 0
     assert r.measurable == 4
+    assert r.truncation_measurable == 4
     out = format_report(r)
-    assert "truncated (capped mid-read): 1 of 4 measurable (25.0%)" in out
+    assert "truncated (capped mid-read): 1 of 4 marker-capable (25.0%)" in out
     # And it appears as its own By-cause bucket (whitespace-tolerant on the column).
     assert any(
         line.strip().startswith("truncated") and line.strip().endswith("of 4")
         for line in out.splitlines()
     ), "the truncated bucket must show in the By-cause table"
+
+
+# --- the truncation rate is taken only over marker-capable calls (#2501 review) ---
+
+
+def test_pre_marker_calls_are_excluded_from_the_truncation_denominator(tmp_path: Path):
+    """`image_transcribe` began emitting `truncated` in 733a2c7 (#2168). A capped
+    read on an older engine files as `success`, so counting it in the denominator
+    prints the rate over calls that could never have produced the numerator — the
+    exact strip-denominator mistake this module's header rejects. Here one capable
+    truncated read sits beside three blind (pre-marker) calls: the honest rate is
+    1 of 1, not 1 of 4."""
+    capable = _run(tmp_path / "new", "run-2026-09-10_00-00-00.json",
+                   ['{"transcription":"half","truncated":true}'], git_sha="a" * 40)
+    blind = _run(tmp_path / "old", "run-2026-08-01_00-00-00.json",
+                 ["ok", "ok", "ok"])  # no git_sha -> incapable
+    r = scan([capable, blind], author_of=_authors({}), marker_capable_of=_capable_if_sha)
+
+    assert r.measurable == 4
+    assert r.truncation_measurable == 1
+    assert r.truncated_reads == 1
+    out = format_report(r)
+    assert "truncated (capped mid-read): 1 of 1 marker-capable (100.0%)" in out
+    # The blind majority is disclosed, not silently dropped.
+    assert "3 of 4 measurable calls predate 733a2c7" in out
+    # And the rate line is NOT printed over the full measurable set — the pre-fix
+    # bug. (Bare "1 of 4" legitimately appears in the By-cause count column, so
+    # pin the rate-line wording specifically.)
+    assert "truncated (capped mid-read): 1 of 4" not in out
+
+
+def test_an_all_blind_corpus_reports_truncation_not_measurable(tmp_path: Path):
+    """When every call predates the marker, a `0 of N` line would read as "no
+    truncation happened" over calls that could not have reported it either way.
+    The honest statement is that the rate cannot be measured at all."""
+    blind = _run(tmp_path / "old", "run-2026-08-01_00-00-00.json", ["ok", "ok"])
+    r = scan([blind], author_of=_authors({}), marker_capable_of=_capable_if_sha)
+
+    assert r.measurable == 2
+    assert r.truncation_measurable == 0
+    out = format_report(r)
+    assert "truncated (capped mid-read): NOT MEASURABLE" in out
+    assert "predates 733a2c7" in out
+    # No bare percentage over a denominator that cannot produce the numerator.
+    assert "of 2 marker-capable" not in out
+
+
+def test_a_run_log_with_no_git_sha_is_incapable(tmp_path: Path):
+    """The default capability function must count a missing `git_sha` as incapable
+    — provably safe because `git_sha` landed a month before the marker, so a log
+    without it is always from the blind era. Short-circuits before any git call,
+    so this stays hermetic even under the real default."""
+    from e2e.image_transcribe_report import commit_emits_truncation_marker
+
+    assert commit_emits_truncation_marker(None) is False
+    assert commit_emits_truncation_marker("") is False
+    # An unresolvable sha (git returncode 128) is incapable too — unverifiable is
+    # treated as blind, never assumed capable.
+    assert commit_emits_truncation_marker("deadbeefdeadbeefdeadbeefdeadbeefdeadbeef") is False
+
+    # And through scan() with the real default: no git_sha -> truncation blind.
+    p = _run(tmp_path / "fix", "run-2026-09-10_00-00-00.json",
+             ['{"transcription":"half","truncated":true}'])
+    r = scan([p], author_of=_authors({}))
+    assert r.truncation_measurable == 0, "no git_sha means the marker era is unknown -> incapable"
 
 
 def test_the_word_none_is_not_treated_as_an_absent_summary():
