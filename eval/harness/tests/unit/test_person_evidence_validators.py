@@ -629,6 +629,36 @@ def test_chrono_passes_when_record_persona_has_no_birth_class_fact():
     )
 
 
+def test_chrono_fires_when_record_persona_id_is_null():
+    """The flynn-baptism-names-mother shape: assertion has no record_persona_id
+    (came from record_read with no search sidecar), so the validator must fall
+    back to scanning sp_by_pair by person_id rather than skipping silently."""
+    before = {
+        "assertions": [{"id": "a_002"}],  # record_persona_id absent/null
+        "person_evidence": [],
+    }
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_002",
+                "assertion_id": "a_002",
+                "person_id": "I1",
+                "confidence": "confident",
+                "rationale": "Name match.",
+            }
+        ],
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(before, _CHRONO_TREE_1845),
+            _state(after, _CHRONO_TREE_1845),
+            [_CHRONO_SP_CALL],  # primaryId1=BP1, primaryId2=I1 — same_person call exists
+        )
+    assert "pe_002" in str(exc.value)
+    assert "1858" in str(exc.value)
+
+
 def test_chrono_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
         check_chrono(_state(None), _state(None), [])

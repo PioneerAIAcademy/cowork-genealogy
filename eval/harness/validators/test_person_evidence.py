@@ -1179,12 +1179,21 @@ def report_chronological_contradiction_not_speculative(
         if pe.get("confidence") == "speculative":
             continue
         assertion = assertions.get(pe.get("assertion_id") or "") or {}
-        record_persona_id = assertion.get("record_persona_id")
         person_id = pe.get("person_id")
-        if not record_persona_id or not person_id:
+        if not person_id:
             continue
 
-        sp_args = sp_by_pair.get((record_persona_id, person_id))
+        record_persona_id = assertion.get("record_persona_id")
+        sp_args = (
+            sp_by_pair.get((record_persona_id, person_id))
+            if record_persona_id
+            else None
+        )
+        if sp_args is None:
+            for (side_a, side_b), args in sp_by_pair.items():
+                if side_b == person_id:
+                    record_persona_id, sp_args = side_a, args
+                    break
         if sp_args is None:
             continue  # no same_person call found for this pairing — cannot verify
 
