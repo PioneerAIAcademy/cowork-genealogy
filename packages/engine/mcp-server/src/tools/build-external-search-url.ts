@@ -173,12 +173,17 @@ const US_STATE_FULL_NAMES = new Set(Object.values(US_STATE_NAMES));
 // place in `research.json` is comma-qualified ("Schuylkill, Pennsylvania,
 // United States"), and passing one straight through shipped
 // `location_state:pennsylvania%2C+united+states`, a facet that matches nothing.
-// Each comma segment is tried; anything with no recognized state in it yields
-// no facet and a note, rather than a URL whose zero hits read as evidence.
+//
+// Segments are tried RIGHT-TO-LEFT, because a place string runs narrow to
+// broad and a finer unit can share a state's name: "Indiana, Pennsylvania,
+// United States" is a borough in Pennsylvania, and "Washington, District of
+// Columbia" is a city in DC — left-to-right scanning scoped both to the wrong
+// state, silently. A value with no recognized state in it yields no facet and
+// a note, rather than a URL whose zero hits read as evidence of absence.
 function usStateFacet(v: unknown): string | undefined {
   const raw = str(v);
   if (raw === undefined) return undefined;
-  for (const segment of raw.split(",")) {
+  for (const segment of raw.split(",").reverse()) {
     const s = segment.trim().toLowerCase();
     if (s.length === 0) continue;
     const expanded = US_STATE_NAMES[s];

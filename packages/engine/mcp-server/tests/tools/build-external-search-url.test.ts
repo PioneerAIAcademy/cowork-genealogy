@@ -1261,6 +1261,25 @@ describe("build_external_search_url", () => {
       expect(r.url).not.toContain("%2C");
     });
 
+    it("resolves the state from the right, so a finer unit sharing a state's name cannot win", () => {
+      // "Indiana, Pennsylvania" is a borough IN Pennsylvania, and "Washington,
+      // District of Columbia" a city in DC — a left-to-right scan scoped both
+      // to the wrong state with no note.
+      for (const [usState, expected] of [
+        ["Indiana, Pennsylvania, United States", "pennsylvania"],
+        ["Washington, District of Columbia, United States", "district+of+columbia"],
+        ["Kansas City, Missouri, United States", "missouri"],
+      ] as const) {
+        const r = buildExternalSearchUrl({
+          site: "chronicling_america",
+          attributes: { surname: "Flynn", usState },
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).toContain(`fa=location_state:${expected}`);
+      }
+    });
+
     it("emits no state facet, with a note, when usState names no US state", () => {
       for (const usState of ["constructor", "Ontario, Canada"]) {
         const r = buildExternalSearchUrl({
