@@ -77,7 +77,8 @@ class SidecarReadFailure extends Error {
 
 const NOT_TEXT_MESSAGE =
   "binary or non-UTF-8 text (a PDF, an image, or UTF-16 — re-save as UTF-8); " +
-  "for images use `image_read`/`image_transcribe`";
+  "`image_read`/`image_transcribe` read a FamilySearch scan by imageId or ark " +
+  "and take no path, so neither can read this file";
 
 /** The tool that serves a rejected ref's class, so the message points somewhere. */
 function servedElsewhere(ref: string): string | null {

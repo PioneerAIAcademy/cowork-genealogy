@@ -180,7 +180,8 @@ The tool refuses non-text as `not_text` when either holds:
   or PDF header hits this even where it carries no NUL).
 
 Message: "binary or non-UTF-8 text (a PDF, an image, or UTF-16 — re-save as
-UTF-8); for images use `image_read`/`image_transcribe`". The 1% sample rule,
+UTF-8); `image_read`/`image_transcribe` read a FamilySearch scan by imageId or
+ark and take no path, so neither can read this file". The 1% sample rule,
 not a zero-tolerance one, so a UTF-8 file with one damaged byte still reads.
 The floor of one is what makes that true below 100 characters, where 1% is
 under one: a single U+FFFD — one damaged byte in a short note, or the literal
@@ -239,8 +240,10 @@ wrapper's exemption.
   browser, which is the surface the P2 posture removes.
 - **No `results/`.** Served by `record_read` / `rank_search_matches`; a second
   route would let a skill dodge the compaction and ranking those apply.
-- **No images.** `image_read` / `image_transcribe` own that class; a binary
-  upload is refused as `not_text` with a pointer to them.
+- **No images.** `image_read` / `image_transcribe` own the FamilySearch scan
+  class, by imageId or ark — neither takes a path, so an uploaded image has no
+  reader at all. A binary upload is refused as `not_text` and the message says
+  that, rather than pointing at a tool that cannot serve it.
 - **No `research.json`, no tree.** `research_query` / `project_context` own
   those; a `ref` naming either is `invalid_ref` with a pointer.
 - **No spill recovery.** The CLI's oversized-result spill lives in a temp tree
