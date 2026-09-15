@@ -243,6 +243,41 @@ async function main(): Promise<void> {
   const largest = Math.max(...corpus.map(({ m }) => sizeOf(m)));
   console.log(`  --- item 10 --- largest artifact ${(largest / 1e6).toFixed(1)}MB`);
 
+  // ── item 12: MIME x media kind (lead ruling 2026-09-15) ───────────────────
+  // The two axes were reported separately, so nobody could say how many PDFs are
+  // already inside the Documents. That decides the SIZE of what lands in
+  // sources[] -- the floor (Document + Story - audio) plus the keyword-matched
+  // Photos, versus that plus however many PDFs sit outside it. The rule does not
+  // depend on this; the spec sentence does.
+  console.log("\n  --- item 12, MIME x media kind ---");
+  const kinds = ["Photo", "Document", "Story", "(none)"];
+  const mimeList = [...new Set(corpus.map(({ m }) => String(m.mediaType)))].sort();
+  console.log(`    ${"".padEnd(18)}${kinds.map((k) => k.padStart(10)).join("")}${"total".padStart(10)}`);
+  for (const mime of mimeList) {
+    const row = kinds.map((k) => corpus.filter(({ m }) => String(m.mediaType) === mime && kindOf(m) === k).length);
+    console.log(`    ${mime.padEnd(18)}${row.map((n) => String(n).padStart(10)).join("")}${String(row.reduce((a, b) => a + b, 0)).padStart(10)}`);
+  }
+  const colTotals = kinds.map((k) => corpus.filter(({ m }) => kindOf(m) === k).length);
+  console.log(`    ${"total".padEnd(18)}${colTotals.map((n) => String(n).padStart(10)).join("")}${String(corpus.length).padStart(10)}`);
+
+  // What the ruling's filter actually keeps, applied to this corpus.
+  const isAV = (m: Json) => /^(audio|video)\//.test(String(m.mediaType));
+  const kept = corpus.filter(({ m }) => {
+    if (isAV(m)) return false;                                   // stage 1: drop
+    if (String(m.mediaType) === "application/pdf") return true;   // stage 2: keep
+    if (kindOf(m) === "Document" || kindOf(m) === "Story") return true;
+    return RECORD.test(textOf(m));
+  });
+  const floor = corpus.filter(({ m }) => !isAV(m) && (kindOf(m) === "Document" || kindOf(m) === "Story"));
+  const pdfOutside = kept.filter(({ m }) => String(m.mediaType) === "application/pdf" && kindOf(m) !== "Document" && kindOf(m) !== "Story");
+  const kwOnly = kept.filter(({ m }) => String(m.mediaType) !== "application/pdf" && kindOf(m) !== "Document" && kindOf(m) !== "Story");
+  console.log("\n  --- what the ruled filter keeps, on this corpus ---");
+  console.log(`    floor (Document/Story, audio dropped) .... ${floor.length}`);
+  console.log(`    + PDFs outside that floor ................ ${pdfOutside.length}`);
+  console.log(`    + keyword-only (any kind) ................ ${kwOnly.length}`);
+  console.log(`    = kept ................................... ${kept.length} of ${corpus.length} (${((kept.length / corpus.length) * 100).toFixed(0)}%)`);
+  console.log(`    dropped as audio/video ................... ${corpus.filter(({ m }) => isAV(m)).length}`);
+
   console.log("\n" + "=".repeat(74));
   console.log("ITEM 7 — overlap with ?sourceDescriptions=true");
   console.log("=".repeat(74));
@@ -277,19 +312,25 @@ async function main(): Promise<void> {
   console.log("  read. It is a floor, not a rate, and says nothing about FamilySearch at large.");
 
   console.log("\n" + "=".repeat(74));
-  console.log("CONFLICTS WITH THE CARD — for the lead gate");
+  console.log("HOW THE RULING (2026-09-15) SETTLED EACH CONFLICT THIS PROBE RAISED");
   console.log("=".repeat(74));
-  console.log("  a. 'omit photo, audio and video, keep story' cannot be done on media kind:");
-  console.log("     3 of 5 Story-qualified memories on the primary are audio/mpeg MP3s.");
-  console.log("     Kind and MIME are orthogonal; the rule needs both axes.");
-  console.log("  b. Acceptance 7 wants AT MOST ONE memories call. The endpoint pages at 25");
-  console.log("     and the largest sampled person has 116 memories = 5 calls.");
-  console.log("  c. Decision 3 persists story text. The payload carries only a 200-char");
-  console.log("     preview, and the full-text artifact 404'd on 1 of 2 text stories.");
-  console.log("  d. 'dedupe by id' cannot fire: the two id spaces are disjoint.");
-  console.log("  e. ?type= filters server-side and exactly, which decision 2 assumed was");
-  console.log("     unavailable. The tool can ask for document+story and never see a photo —");
-  console.log("     but that is also what makes the 9 record scans filed under Photo invisible.");
+  console.log("  a. 'keep story, omit audio' was not expressible on media kind alone --");
+  console.log("     3 of 5 Story-qualified memories are MP3s. RULED: audio/* and video/*");
+  console.log("     are a GLOBAL exclusion that runs first, not a clause on one arm.");
+  console.log("  b. Acceptance 7 read as 'at most one memories call'. RULED: it meant never");
+  console.log("     fetch PER RELATIVE. Page the subject's memories to completion, and mind");
+  console.log("     the 204-with-empty-body last page this probe found.");
+  console.log("  c. Story text is a 200-char preview and the artifact 404'd on 1 of 2.");
+  console.log("     Unchanged by the ruling: best effort, degrade to metadata-only.");
+  console.log("  d. 'dedupe by id' cannot fire -- the id spaces are disjoint. Superseded:");
+  console.log("     the memories fetch is its own list, nothing to dedupe against.");
+  console.log("  e. ?type= filters server-side and exactly. NOT USED: the ruled filter needs");
+  console.log("     keyword matches on Photo-kind memories, which ?type=document,story");
+  console.log("     would make unreachable. Page everything, filter client-side.");
+  console.log("");
+  console.log("  The keyword arm WIDENS and never narrows, which is why it survives the");
+  console.log("  2026-08-19 objection: PDF and media kind are uploader choices, not text,");
+  console.log("  so a non-English tree still gets every PDF and every Document.");
 }
 
 void main();
