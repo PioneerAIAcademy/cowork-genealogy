@@ -2425,7 +2425,7 @@ async function prepareOps(
   // process capped the read of the cited image, and otherwise strip any value —
   // the field is DERIVED here, never asserted by the agent. A source with no
   // image_filename (not image-backed, or the scan was never persisted) has
-  // nothing to join and is left untouched; that no-persist gap is the §5.8
+  // nothing to join and is left untouched; that no-persist gap is the §8.6
   // limitation. Runs after the reuse rewrite above so it sees the final op shape
   // (an append folded into an update carries its image_filename in `fields`).
   for (const op of ops) {
@@ -2437,10 +2437,19 @@ async function prepareOps(
     // Derived here, never asserted by the agent — so strip any caller-supplied
     // value FIRST, even on a source with no joinable image_filename (where the
     // agent's guess would otherwise persist verbatim, exactly where it is least
-    // reliable). Then set it true only on a cache hit against the cited image.
+    // reliable). Then set it true only on a cache hit against the cited image
+    // AND when this op carries the non-empty transcription the marker qualifies:
+    // `transcription_truncated: true` beside empty/null transcription is a state
+    // validate_research_schema rejects (matching its .trim()), so deriving it
+    // would make the tool fail its own write — and, batched, discard every good
+    // op alongside it. An update that attaches image_filename without carrying
+    // the text (it lives in the persisted entry, unreadable pre-merge) is left
+    // unmarked rather than risking that rejection (#2457 review, blocker 1).
     delete bag.transcription_truncated;
     const ref = bag.image_filename;
     if (typeof ref !== "string" || ref.length === 0) continue;
+    const text = bag.transcription;
+    if (typeof text !== "string" || text.trim() === "") continue;
     if (wasSourceImageTruncated(projectPath, ref)) bag.transcription_truncated = true;
   }
 

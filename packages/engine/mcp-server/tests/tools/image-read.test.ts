@@ -113,22 +113,22 @@ describe("imageReadTool — imageId input", () => {
     expect(result.metadata.imageRef).toBeUndefined();
   });
 
-  it("clears a stale truncation cap left by a prior image_transcribe of the same page (#2457 review, note N5)", async () => {
-    // image_read returns the whole scan, so a source built from it is complete.
-    // A capped image_transcribe of the same page earlier left a cap against the
-    // same imageRef; image_read must retract it, else the complete transcription
-    // persists as transcription_truncated: true.
+  it("does NOT touch the truncation cap — image_read returns bytes, not a transcription, so clearing a prior image_transcribe cap would drop a real truncation marker (#2457 review, blocker 3)", async () => {
+    // The earlier design cleared the cap here; that fires only on the main thread
+    // (no agent declares image_read) and turns a capped transcribe-then-read into
+    // a complete-looking persisted transcription — a false negative worse than
+    // the guesswork it replaced. image_read must leave the cap untouched.
     const dir = await mkdtemp(join(tmpdir(), "imgr-cap-"));
     try {
       recordImageReadCap(dir, "images/004884748_02613.jpg", true);
-      expect(wasSourceImageTruncated(dir, "images/004884748_02613.jpg")).toBe(true);
       mockImageResponse(new Uint8Array([1, 2, 3]));
       const result = await imageReadTool({
         imageId: "004884748_02613",
         projectPath: dir,
       }, LOCAL);
       expect(result.metadata.imageRef).toBe("images/004884748_02613.jpg");
-      expect(wasSourceImageTruncated(dir, "images/004884748_02613.jpg")).toBe(false);
+      // The cap the prior image_transcribe recorded still stands.
+      expect(wasSourceImageTruncated(dir, "images/004884748_02613.jpg")).toBe(true);
     } finally {
       __clearTruncatedSourceImagesForTests();
       await rm(dir, { recursive: true, force: true });

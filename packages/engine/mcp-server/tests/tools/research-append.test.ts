@@ -280,6 +280,37 @@ describe("research_append (Phase 1)", () => {
       const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
       expect("transcription_truncated" in persisted).toBe(false);
     });
+
+    it("does not derive (and so does not self-reject) a capped image whose op carries no transcription text (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(r.ok).toBe(true); // pre-fix: false — true beside no transcription is rejected
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false);
+    });
+
+    it("does not discard a good op when a sibling capped op carries no transcription (#2457 review, blocker 1)", async () => {
+      await writeProject();
+      recordImageReadCap(dir, "images/x.jpg", true);
+      const before = (await readResearch()).sources.length;
+      const good = imageSource({ image_filename: "images/other.jpg", transcription: "the complete page text" });
+      const bad = imageSource({});
+      delete (bad as Record<string, unknown>).transcription;
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "sources", op: "append", entry: good },
+          { section: "sources", op: "append", entry: bad },
+        ],
+      } as any);
+      expect(r.ok).toBe(true); // pre-fix: false — the whole batch is discarded, losing `good` too
+      const after = (await readResearch()).sources.length;
+      expect(after - before).toBe(2);
+    });
   });
 
   it("appends an assertion referencing an existing source", async () => {

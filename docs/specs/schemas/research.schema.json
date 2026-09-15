@@ -376,7 +376,7 @@
         "required": ["transcription_truncated"]
       },
       "then": {
-        "properties": { "transcription": { "type": "string", "minLength": 1 } },
+        "properties": { "transcription": { "type": "string", "pattern": "\\S" } },
         "required": ["transcription"]
       }
     },

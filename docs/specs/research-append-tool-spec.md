@@ -546,24 +546,44 @@ splintering into inconsistent labels, over a form the model added:
 
 ### 3.8 `transcription_truncated` — derived, never asserted
 
-On every `sources` op the tool **owns** `sources[].transcription_truncated`,
-after the §3.4 reuse rewrite so it sees the final op shape:
+On every `sources` op the tool **owns** `sources[].transcription_truncated` in
+the op payload, after the §3.4 reuse rewrite so it sees the final op shape:
 
-- Any caller-supplied value is **stripped first**, unconditionally — including on
-  a source with no `image_filename` to join. The truncation of an OCR read is
+- Any caller-supplied value **in the op** is stripped first — including on a
+  source with no `image_filename` to join. The truncation of an OCR read is
   known to `image_transcribe`, not to the agent relaying the text, so an
   agent-asserted flag is a guess and is dropped rather than persisted.
-- The flag is then set `true` **only** when this process capped the read of the
-  cited image, joined by `image_filename` against the image-store cap set
-  (`wasSourceImageTruncated`); otherwise it stays absent. See
-  `image-transcribe-tool-spec.md` §8.6 for the record side and the
+- The flag is then set `true` **only** when all three hold: this process capped
+  the read of the cited image (joined by `image_filename` against the image-store
+  cap set, `wasSourceImageTruncated`); the op carries a non-empty `transcription`;
+  and — for an update — that text rides in the same op. Otherwise the op leaves
+  the field absent. The non-empty guard is load-bearing: `true` beside empty/null
+  `transcription` is a state `validate_research_schema` rejects, so deriving it
+  would make the tool fail its own write (and, in a batch, discard every good op
+  with it). See `image-transcribe-tool-spec.md` §8.6 for the record side and the
   no-`projectPath` limitation.
+
+Two limits follow, both **at the op level, not the persisted entry**, and both
+tracked with the join-key follow-on:
+
+- **The tool owns the op, not the stored value.** On an `update`, stripping the
+  key means the merge (`applyOne`) leaves the persisted value untouched, not
+  cleared — so a `true` recorded on an earlier op is **not retracted** by a later
+  clean update, even one carrying the complete text. Retraction is currently
+  reachable only by re-running a clean `image_transcribe` of the same image
+  before an *append* that cites it. A capped-then-corrected page can therefore
+  stay marked partial; this is a known limitation of keying on an agent-supplied
+  `image_filename`, and is part of what the join-key ruling is deciding.
+- An update that attaches `image_filename` **without** carrying the transcription
+  text (it lives in the persisted entry, which the derivation cannot read
+  pre-merge) is left unmarked rather than risk the rejection above.
 
 Unlike §3.6, this override **echoes nothing** — the response carries no signal
 that a caller-supplied value was dropped. The persisted-side invariant
-(`transcription_truncated: true` requires a non-empty `transcription`) is
-enforced by both `validate_research_schema` and the two `research.schema.json`
-mirrors (an `if`/`then` on the `source` object).
+(`transcription_truncated: true` requires a `transcription` with a non-whitespace
+character) is enforced by both `validate_research_schema` (via `.trim()`) and the
+two `research.schema.json` mirrors (an `if`/`then` whose `then` requires
+`transcription` match `\S`).
 
 ---
 
