@@ -408,3 +408,51 @@ def test_brevity_fires_on_each_construct(construct, reply):
     cannot hide behind the others."""
     with pytest.raises(AssertionError, match=construct):
         check_brevity(EMPTY, _SAVED, reply)
+
+
+def test_brevity_validator_is_still_tier_two():
+    """The safety argument for this whole check is the `report_` prefix, and
+    nothing else carries it. `validator_runner.py:200` decides the tier with
+    `is_report = attr_name.startswith("report_")`, so renaming this function to
+    `test_*` would silently convert it into a gate and mark 53 of the 60
+    file-saving runs failed — while every other test in this file kept passing,
+    because they call the function directly and never go through the runner.
+
+    That is the #1757 failure shape one layer out: a rename changing behaviour
+    with nothing red. Pin the prefix, and pin the consequence.
+    """
+    import test_search_familysearch_wiki as validators
+
+    matching = sorted(
+        n for n in dir(validators) if n.endswith("restate_the_saved_file")
+    )
+    assert matching == ["report_reply_does_not_restate_the_saved_file"], (
+        "the brevity validator must keep its `report_` prefix; as `test_` it "
+        f"becomes a gating validator. Found: {matching}"
+    )
+
+
+def test_tier_two_failure_does_not_gate_the_run():
+    """The other half of the same argument: that a failing tier-2 result is
+    filtered out of the outcome. If `compute_validators_passed` ever stopped
+    honouring `reporting_only`, the prefix above would be pinned and mean
+    nothing."""
+    from types import SimpleNamespace
+
+    from harness.orchestrator import compute_validators_passed
+
+    failing_tier2 = SimpleNamespace(
+        name="report_reply_does_not_restate_the_saved_file",
+        passed=False,
+        reporting_only=True,
+    )
+    assert compute_validators_passed(
+        [failing_tier2], intentionally_invalid=False
+    ), "a failed report_* result must never gate the run outcome (issue #1749)"
+
+    failing_tier1 = SimpleNamespace(
+        name="test_expected_slug", passed=False, reporting_only=False
+    )
+    assert not compute_validators_passed(
+        [failing_tier1], intentionally_invalid=False
+    ), "a failed test_* result must still gate — otherwise this proves nothing"
