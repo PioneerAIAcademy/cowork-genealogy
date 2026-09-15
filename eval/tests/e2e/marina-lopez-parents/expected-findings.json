@@ -3,48 +3,34 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Marina López was the daughter of Manuel López and Carmen Nelia Casado.",
+      "description": "Marina López was the daughter of Manuel López G. and Carmen Nelia Casado.",
       "details": {
         "subject_person": "Marina López (P874-7BV)",
         "relation": "parents",
         "target_person": {
-          "name": "Manuel López and Carmen Nelia Casado"
+          "name": "Manuel López G. and Carmen Nelia Casado"
         }
       },
       "supporting_sources": [
-        "República Dominicana, Registro Civil, 1744-2019 — marriage entry for Juan De Dias Chalas and Manna López, 7 Oct 1927, naming her parents"
+        "República Dominicana, Registro Civil, 1744-2019 — civil marriage act n.º 64, San José de Ocoa, recording the bride as 'hija legítima de Manuel López G. y Carmen Nelia Casado' (ark:/61903/1:1:6RPF-Q4K7; register image ark:/61903/3:1:3Q9M-CS18-834Z-4). The bride's given name is written ambiguously and may read Manna or Marina.",
+        "República Dominicana, Registro Civil, 1744-2019 — civil death act n.º 255, San José de Ocoa, 7 Nov 1978, for Juan de Dios Pichardo Chalas, naming his mother as Fidelina Chalas and his spouse as Marina López, which ties the groom of the 1937 marriage act to the tree person (ark:/61903/1:1:66H3-5D6G)"
       ],
       "required": true
     },
     {
       "id": "f2",
       "type": "fact",
-      "description": "Marina López married Juan de Dios Chalas on 7 October 1927 in San José de Ocoa, Dominican Republic.",
+      "description": "Marina López married Juan de Dios Pichardo Chalas on 7 October 1937 in San José de Ocoa, Peravia, Dominican Republic.",
       "details": {
         "subject_person": "Marina López (P874-7BV)",
         "fact_type": "Marriage",
-        "date": "7 October 1927",
-        "place": "San José de Ocoa, Dominican Republic"
+        "date": "7 October 1937",
+        "place": "San José de Ocoa, Peravia, Dominican Republic"
       },
       "supporting_sources": [
-        "República Dominicana, Registro Civil, 1744-2019 — marriage entry for Juan De Dias Chalas and Manna López, 7 Oct 1927"
+        "República Dominicana, Registro Civil, 1744-2019 — civil marriage act n.º 64, San José de Ocoa, 'a los sete dias del mes de Octúbre del año mil novecientos treintaisiete' (ark:/61903/1:1:6RPF-Q4K7; register image ark:/61903/3:1:3Q9M-CS18-834Z-4). FamilySearch's index of this record gives the year as 1927; the register reads 1937."
       ],
       "required": true
-    },
-    {
-      "id": "f3",
-      "type": "fact",
-      "description": "Marina López was born about 1903.",
-      "details": {
-        "subject_person": "Marina López (P874-7BV)",
-        "fact_type": "Birth",
-        "date": "about 1903",
-        "place": "Dominican Republic"
-      },
-      "supporting_sources": [
-        "República Dominicana, Registro Civil, 1744-2019 — marriage entry, 7 Oct 1927, giving the bride's age"
-      ],
-      "required": false
     }
   ]
 }

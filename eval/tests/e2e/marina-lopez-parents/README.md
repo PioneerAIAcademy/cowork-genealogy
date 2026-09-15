@@ -28,19 +28,72 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 8, `hint-samples.csv` row 283,
-flag `adds_father,adds_mother,adds_birth,adds_marriage`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "República Dominicana, Registro Civil, 1744-2019", a 7 October 1927 marriage entry for Juan De Dias Chalas (b. 1894) and Manna López (b. 1903), naming the bride's parents as Manuel López and Carmen Nelia Casado and the groom's mother as Lidelina Chalas.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Manuel López and Carmen Nelia Casado as her parents, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-09-15 — outcome 2 (the hint's relationships are right, its
+dates are wrong).** This fixture came from a hint batch
+(`filtered-list-samples-2.csv` row 8, `hint-samples.csv` row 283, flag
+`adds_father,adds_mother,adds_birth,adds_marriage`, confidence 3) in which
+roughly half the hint records are false matches. The draft transcribed the hint
+index verbatim. Adjudicated by Emruthwill, who also gave the independent second
+opinion on the parents.
 
-"Manna López" reads as an indexing slip for Marina López, and the groom — "Juan De Dias Chalas" — is recognisably the tree's Juan de Dios Pichardo Chalas, in the right town. The couple's known children (b. 1934 and 1935) sit comfortably after a 1927 marriage.
+**The year is 1937, not 1927, and that is the key to the whole fixture.** The
+register page (`ark:/61903/3:1:3Q9M-CS18-834Z-4`) reads *"a los sete dias del
+mes de Octúbre del año mil novecientos treintaisiete"* — act n.º 64, San José
+de Ocoa. FamilySearch's index read it as 1927 and then **derived both birth
+years from that wrong year**: the groom's "b. 1894" is age 33 subtracted from
+1927, and the bride's "b. 1903" is age 24 subtracted from 1927. Neither birth
+year is stated anywhere in the document; only the two ages are. This is why the
+draft's apparent 8-year conflict with the tree's 8 Dec 1902 birth for Juan de
+Dios was never real evidence.
 
-The discriminator to check is the groom's birth year: the record says 1894, the tree says 8 December 1902, and the tree's own christening entry (6 May 1913) does not settle which is right. The tree also already carries a "Manuel Lopez" source from this same civil-registration collection attached to Marina, so establish whether the hinted father is genuinely new information or a re-index of a record already attached.
+**The identification is documentary, not onomastic.** The groom of the marriage
+act is recorded as *hijo natural de Fidelina Chalas*, holding *Cédula personal
+de Identidad # 159, Serie 13*. The 1978 civil death act for the tree's Juan de
+Dios Pichardo Chalas (`ark:/61903/1:1:66H3-5D6G`, register image
+`ark:/61903/3:1:9396-YN6L-V`) records the same mother, **Fidelina Chalas**, the
+same **cédula 159 serie 13**, a birth year of **1902**, and his spouse as
+**Marina López**. The mother's-name match runs from a direct reading of the
+marriage register to FamilySearch's own index of the death act, so it does not
+depend on any machine transcription. The tree's compound surname corroborates
+it independently: a Dominican surname is father's + mother's, so *Pichardo
+Chalas* requires a Chalas mother. Born 1902, he is 33–34 across 1935–37, which
+fits the act's "treintaitres años"; in 1927 he would have been 24.
 
-Four claims ride on this single record — both parents, her 1903 birth year, and the 1927 marriage — and they can be true or false separately. If the identification holds but the index is unreliable on dates, outcome (b) with the marriage kept and the birth year dropped is the likely shape.
+**Name-variant caveat, deliberately left in.** The bride's given name on the
+register is written ambiguously and reads as *Manna* about as readily as
+*Marina*. The identification rests on the groom's cédula and mother, on the
+death act naming his spouse as Marina López, and on the tree already recording
+Marina as his wife — not on an exact-name match. Documented here as a
+name-variant correlation rather than asserted as identity.
+
+**The "is this a re-index?" question is answered.** The tree carries Juan de
+Dios's death act **twice**, both entries resolving to image
+`ark:/61903/3:1:9396-YN6L-V`: `WWBW-2YJ` (`1:1:66H3-5D6G`, spouse indexed
+*Marina Lopez*) and `WWBW-PPB` (`1:1:6TMN-HQ5T`, the same spouse slot garbled to
+*"Manuel Lopez"*). The "Manuel Lopez" source that prompted the original
+author's question is a duplicate index of the death act with a mangled spouse
+name — it was never the hinted father.
+
+**Her birth year is deliberately unanswered.** The `researcher_question` asks
+"when was she born and married?"; the marriage clause is answered and the birth
+clause is not. She is recorded as 24 at the marriage, which would place her
+birth around 1912–13, but no record states it and the draft's `f3` (b. about
+1903) was an artifact of the misread year. It was dropped rather than replaced
+with a derived figure. Searched and came up empty for her own birth or baptism:
+"Dominican Republic, Civil Registration, 1744-2019" and "Dominican Republic,
+Catholic Church Records, 1590-2022", 1898–1913, with and without the parents'
+names. Every parish hit returned from Santiago, Tamboril or Distrito Nacional
+and none from San José de Ocoa or Peravia, so indexed coverage for that
+locality in this period looks thin — this is a coverage gap, not a negative
+finding, and only index searching was done (no image-level browsing of the
+registers).
+
+**Not independently corroborated:** her parents are attested by the marriage
+act alone. The death act corroborates *who the groom was*, not *who her parents
+were*. No record naming Manuel López G. or Carmen Nelia Casado was found
+elsewhere.
+
+**The live tree was not modified.** The hint was not accepted, no source was
+attached, no parents were added. `snapshot --check` on 2026-09-15 reported four
+DRIFT lines, all of them a name `type` changing from `""` to `"BirthName"` — no
+source drift, no relationship drift.
