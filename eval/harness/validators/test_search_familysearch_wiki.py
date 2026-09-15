@@ -26,13 +26,24 @@ Note: the FamilySearch wiki tool is `wiki_search`; search-wikipedia's tool
 is `wikipedia_search` (which does NOT contain the substring "wiki_search"),
 so `.endswith("wiki_search")` cleanly targets only the FS-wiki tool.
 
-Deliberately NOT enforced here — the closing-message brevity rule (SKILL.md
-step 5, "Keep it brief"). It is violated in 59 of 59 file-saving runs across
-five committed run logs, so landing it as an assertion would fail every
-positive test at once and, because a failing validator fails the test outright
-(`_compute_outcome`: `if not validators_passed: return "fail"`), would also
-destroy the dimension scores that diagnose the skill. It stays on #1755 until
-the file-visibility fix removes the incentive to recite the file into chat.
+The closing-message rule (SKILL.md step 5, "Keep it brief") is enforced here
+as **tier 2** — `report_reply_does_not_restate_the_saved_file`. It was held off
+this file for months on the grounds that it would "fail every positive test at
+once" and, via `_compute_outcome`, destroy the dimension scores that diagnose
+the skill. Half of that is now out of date and half still stands:
+
+  - The dimension-score half died with #2057 (PR #2444, merged 2026-09-14).
+    A validator failure no longer skips the judge — see `_compute_outcome`'s
+    own docstring, `orchestrator.py:1597`. The grading would survive.
+  - The outcome half stands. `if not validators_passed: return "fail"`
+    (`orchestrator.py:1626`) runs AHEAD of every other branch, so a `test_*`
+    version would still mark ~88% of file-saving runs failed.
+
+`compute_validators_passed` filters tier-2 results out entirely
+(`if not r.reporting_only  # tier-2 never gates`, issue #1749), so a `report_*`
+version measures the violation and hands it to the judge as an observation
+without reddening a single run. See that function's docstring for the corpus
+evidence.
 """
 
 from __future__ import annotations
@@ -294,3 +305,123 @@ def test_sources_section_matches_wiki_results(before_state, after_state, tool_ca
         "the saved file must contain no URL the wiki response did not "
         f"return; invented: {invented}"
     )
+
+
+# --- Tier 2: reporting only (never gates; issue #1749) -----------------
+
+# Markdown constructs that only appear in a reply when the saved document is
+# being recited back into chat. Re-derived over the five committed run logs on
+# 2026-09-15: 60 file-saving runs, 57 carry at least one. The corpus rotates --
+# re-derive rather than quoting that figure.
+#
+# The list arm carries ordered items as well as bullets, and that is the whole
+# measurement rather than a detail: per-arm over the same 60 runs the counts are
+# list 56, horizontal rule 8, heading 0, table row 0, so every arm but the first
+# could be deleted without changing the total. Four runs recited the document as
+# `1.`/`2.`/`3.` and scored clean until this was widened (#2577 review) -- a
+# skill switching from `-` to `1.` would have dropped off the instrument
+# entirely. `report_no_framework_walkthrough` in test_citation.py already
+# carried the ordered-item alternative.
+_RECITATION_CONSTRUCTS = (
+    ("list marker", re.compile(r"^[ \t]*(?:[-*+]|\d+[.)]) ", re.M)),
+    ("heading", re.compile(r"^#{1,6} ", re.M)),
+    ("horizontal rule", re.compile(r"^[ \t]*(?:---|\*\*\*|___)[ \t]*$", re.M)),
+    # Excludes the `|---|---|` separator, which is not a row of content.
+    # Counting it reported a one-data-row table to the judge as "3 table rows"
+    # (#2577 review), and `split_observations` hands that text to the judge
+    # verbatim -- a wrong count is a false statement to the grader.
+    ("table row", re.compile(r"^[ \t]*\|(?![-: |]*\|?[ \t]*$)", re.M)),
+)
+
+
+def report_reply_does_not_restate_the_saved_file(
+    before_state, after_state, text_response
+):
+    """SKILL.md step 5: name the file and the fact of a Sources section, and
+    "Keep it brief". Tier 2 by design.
+
+    On a run that saved a file, a list marker (bulleted or numbered), heading,
+    table row or horizontal rule in the reply is the saved document being
+    recited back into chat, which step 5 asks the skill not to do. 57 of the 60
+    file-saving runs in the five committed run logs carry at least one.
+
+    Attributing the prohibition to the body's "Never duplicate" rule, as an
+    earlier revision did, was wrong: `SKILL.md:65` is about not creating a
+    second file for the same topic-slug. Step 5 carries this point alone.
+
+    **Why tier 2, not tier 1.** A failing gating validator still forces the
+    run's outcome: `if not validators_passed: return "fail"`
+    (`orchestrator.py:1626`) runs ahead of every other branch. A `test_*`
+    version would fire on 57 of the 60 file-saving runs in the corpus, marking
+    ~88% of this skill's positives failed for what is a reporting-grade
+    observation. (It would no longer cost the dimension scores as well --
+    since #2057 a validator failure does not skip the judge -- but an outcome
+    of "fail" on 88% of positives is reason enough.) `report_*` results are
+    filtered out of `compute_validators_passed` (issue #1749), so this reports
+    without gating.
+
+    **Why this does not fire on required narration.** `SKILL.md:24` mandates a
+    one-line preamble per action, and `text_response` is every assistant turn,
+    not the closing message alone -- the objection that held this check off the
+    file. Checked against the corpus: the runs that stay clean carry their
+    preambles ("Searching the FamilySearch Research Wiki now.", "Now let me
+    read the template before saving.") and score zero constructs. Narration is
+    prose; it does not emit them.
+
+    **No word ceiling** -- and not because length carries no signal, which is
+    what an earlier revision of this docstring claimed. That rested on calling
+    all 7 non-firing runs "compliant"; 4 of them recited the document as a
+    numbered list and 2 more under bold run-in headings (#2577 review). Of the
+    3 that still stay clean, only `ut_search_wiki_006` at 75 words is genuinely
+    brief, and every reported run is 98 words or more -- so here length and
+    recitation separate almost perfectly rather than independently. The ceiling
+    is omitted because request 4's author sanctioned shipping the constructs
+    alone and one compliant datapoint cannot size one.
+
+    Still uncaught: the 2 remaining clean runs recite under bold run-in
+    headings (`**Union Soldiers:**`). Not added as a fifth arm here -- bold is
+    common in legitimate brief replies, so it wants its own evidence.
+
+    Gated on the file diff rather than a tag, so it cannot be silently
+    disarmed by a tag rename (#1757).
+
+    Known gap, unfixed here: `_new_md_files` is a set difference, so a repeat
+    invocation -- which `SKILL.md:63` tells the skill to satisfy by overwriting
+    in place -- creates no new file and skips this check entirely. No fixture in
+    the corpus exercises that path, so a fix could not be proven to fail
+    (#2577 review).
+    """
+    saved = sorted(_new_md_files(before_state, after_state))
+    if not saved:
+        pytest.skip("no file saved; the closing-message rule does not apply")
+
+    # Scanned as-is, deliberately. An earlier revision stripped fenced code
+    # first by analogy with the HTML-comment strip above, but that precedent
+    # covers a real, observed case (the template ships a comment carrying a
+    # placeholder URL) and this covered none: zero of the 80 runs in the five
+    # committed logs contain a fence. It bought nothing and opened the likeliest
+    # bypass, since "here is the file" inside a fenced markdown block is how a
+    # recitation would arrive (#2577 review). It also made the word count below
+    # describe the post-strip text, so a 13-word reply wrapping a fenced
+    # document was reported to the judge as "runs to 3 words".
+    scannable = text_response or ""
+
+    counts = []
+    for label, pattern in _RECITATION_CONSTRUCTS:
+        n = len(pattern.findall(scannable))
+        if n:
+            counts.append(f"{n} {label}{'' if n == 1 else 's'}")
+    if not counts:
+        return
+
+    words = len(scannable.split())
+    # State counts as fact and quote the rule; no verdict. split_observations
+    # passes this text to the judge verbatim, so a conclusion here would
+    # anchor the grade.
+    assert False, (
+        f"the reply on a run that saved {saved[0].split('/')[-1]} carries "
+        f"{', '.join(counts)} and runs to {words} words. SKILL.md step 5 asks "
+        "for the filename and the fact of a Sources section, and says "
+        '"Keep it brief".'
+    )
+
