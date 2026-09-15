@@ -67,9 +67,21 @@ def test_topical_fixture_actually_used(tool_calls, test):
     fallback content, not the subject-matter fixture the test exists to
     exercise -- the same failure mode the fixture was added to fix.
     """
-    if "topical-fixture-required" not in test.get("tags", []):
-        pytest.skip("not a topical-fixture-required test")
+    tags = test.get("tags", [])
     test_id = test.get("id")
+    # Check the map -> tag direction BEFORE the skip, or the skip swallows it.
+    # `ValidatorRunResult` keeps `passed=True` on a skip (validator_runner.py:38),
+    # so dropping the tag from a test spec silently disarms this guard and the
+    # run log still reads `passed`. Nothing else anywhere checks that direction:
+    # `topical-fixture-required` appears only in the two test specs and here.
+    assert test_id not in _TOPICAL_FIXTURE_BY_TEST_ID or (
+        "topical-fixture-required" in tags
+    ), (
+        f"{test_id} has a _TOPICAL_FIXTURE_BY_TEST_ID entry but no "
+        "'topical-fixture-required' tag - restore the tag or delete the entry"
+    )
+    if "topical-fixture-required" not in tags:
+        pytest.skip("not a topical-fixture-required test")
     expected = _TOPICAL_FIXTURE_BY_TEST_ID.get(test_id)
     assert expected is not None, (
         f"{test_id} carries 'topical-fixture-required' but has no entry in "
