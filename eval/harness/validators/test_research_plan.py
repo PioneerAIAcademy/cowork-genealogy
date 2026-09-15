@@ -789,7 +789,7 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     -- separately and more importantly -- the predicate can be satisfied by
     a response that read nothing (see the false-positive shapes below),
     which a tier-1 pass would have hidden from the judge entirely
-    (`orchestrator.py` gates the judge on `validators_passed`).
+    (only a tier-2 finding is fed to the judge as an observation).
 
     Live alpha-feedback report: a first plan for a "why did the family move"
     question never surfaced a sibling's already-sourced 1875 land purchase in

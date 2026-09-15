@@ -794,7 +794,8 @@ def test_birth_year_rule_tolerates_a_second_year_in_the_label():
     """A label carrying an enumeration year besides the birth year must not
     fire when the birth year IS captured on a sibling. `search` took the FIRST
     year, so "1870 census: born in Ohio" failed on 1870 even though ~1845 sat
-    correctly on the sibling — and a validator failure suppresses the judge,
+    correctly on the sibling — and a validator failure fails the test outright
+    and drops its scores from aggregated_dimensions,
     so that false positive cost the whole test's grade."""
     result = _run_birth_year_rule(
         [
@@ -1006,7 +1007,8 @@ def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
         # Relation words that are really surnames or titles, OUTSIDE brackets.
         # All three fired under the first version of this rule (senior review,
         # 2026-08-16). A false positive costs the test's whole grade, because a
-        # failing validator suppresses the judge.
+        # failing validator fails the test outright and drops its scores from
+        # aggregated_dimensions.
         "Joseph Parent of Quebec",   # Parent is a common surname
         "Julia Child of Boston",     # Child is a surname
         "Mary, Mother of Sorrows",   # a devotional name
@@ -1182,7 +1184,8 @@ def test_rel_agreement_accepts_category_equivalents(rel_type, value):
 def test_rel_agreement_skips_what_it_cannot_compare(rel_type, value):
     """Fails OPEN. An unrecognised relationship_type or a value naming no
     relation is not evidence of disagreement, and guessing would cost the whole
-    test's grade — a failing validator suppresses the judge."""
+    test's grade — a failing validator fails the test outright and drops its
+    scores from aggregated_dimensions."""
     result = _run_rel_agreement(_rel(rel_type, value))
     assert result.passed is True, result.error
 
