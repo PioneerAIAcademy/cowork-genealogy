@@ -114,11 +114,66 @@ POST /v1/.../messages {stream?} ─────▶  acquire per-session turn loc
 ```
 
 **Why this is correct on retry without a "drain-owns-the-lock" task:** the in-sandbox
-runner is sequential (it won't read the next `user_msg` until the current turn emits
-`turn_done`). If a sync turn times out (504) and the lock releases, a retry opens a
-*fresh* WS and drains-until-idle — but the prior turn is still emitting frames, so
-there is no idle gap and the drain simply waits the prior turn out before sending.
-The retry therefore never mis-reads the prior turn's trailing frames as its own reply.
+runner is sequential (it won't start the next `user_msg`'s turn until the current one
+emits `turn_done`). **That was an assumption this page rested on and the runner did not
+hold**: `serve` dropped a `user_msg` arriving mid-turn with a bare `continue`, while
+`Hub.handle` had already recorded it into the replay history, so the message was in the
+user's transcript and never answered. It is now enforced rather than assumed - the
+message is queued and run in order, bounded by `MAX_QUEUED_TURNS` with an explicit error
+on overflow rather than a silent drop, and pinned by
+`apps/server/tests/test_runner_turn_queue.py`, whose first case fails on the old
+drop-on-busy behaviour. If a sync turn times out (504) and the lock releases, a retry opens a
+*fresh* WS and drains before sending.
+
+**Drain-until-idle was not enough once turns queue, and this page said it was.**
+The claim used to be that "the prior turn is still emitting frames, so there is
+no idle gap". A queued turn breaks it: it emits `turn_start` and then goes quiet
+for a full SDK round trip before its first real frame, so a drain that returns on
+quiet can return *inside* a running turn, send its message behind it, and read
+that turn's `turn_done` as its own reply. That is exactly the mis-attribution
+this paragraph exists to rule out, and the queue introduced it.
+
+So the drain is turn-aware rather than idle-aware: `turn_start` marks a turn in
+flight, its `turn_done` clears it, and the quiet timer only ends the drain while
+nothing is running (`_drain_replay`, `app/v1.py`, bounded by `_DRAIN_MAX` so a
+wedged agent cannot hang it). Pinned by
+`apps/server/tests/test_v1_drain.py::test_the_drain_waits_out_a_turn_that_started_while_it_was_draining`,
+which fails on a drain that returns during the quiet stretch. Only then does the
+retry never mis-read another turn's frames as its own reply.
+
+**`turn_start` (`{"kind": "turn_start", "queued": <bool>}`)** is emitted when
+**every** turn begins; `queued` says whether it came off the backlog. Nothing in
+this repo reads `queued` - it is produced in `runner.py` and consumed only by
+tests. It stays on the frame for the audience this document is written for: an
+external client of the public REST API, which has no other way to tell a turn it
+asked for from one that was waiting. Named here so the next reader does not hunt
+for an internal consumer. It fired
+only for queued turns at first, on the reasoning that a first turn's sender
+already knows it started - but the consumer that matters is the *drain*, which is
+a different connection from the sender. A sync `POST /messages` starts an
+unqueued turn, so on its 504 retry there was no `turn_start`, `in_flight` stayed
+0, and the drain returned inside the running turn. Two consumers need it: the
+drain above, and `sandbox_server`, which converts it. The web client does NOT
+read this frame - `ChatPane` returns early on it - it reads the converted
+`status: turn_active` below. The conversion is what the busy gate needs:
+`turn_done` fires once per *turn*, not once per backlog, so a client that went
+idle on it would report idle while messages were still waiting and invite the
+user to send more. `sandbox_server`
+re-arms `_turn_active` on it **and broadcasts a `status: turn_active` frame**:
+`_turn_active` alone reaches a client only at connect time, so an
+already-connected client - precisely the one that built the backlog - would never
+learn the gate was re-armed.
+
+`_DRAIN_MAX` is **additive**, not a share of the turn budget: `_collect_sync`
+drains before it computes its deadline, so a caller can pay up to `_DRAIN_MAX` on
+top of `v1_turn_timeout_seconds`.
+
+**A stop discards the backlog.** `interrupt` clears every queued message before
+cancelling the running turn, so messages sent while the agent was busy are
+dropped rather than answered after the stop. This is externally visible and a
+REST client reasoning from this page would not otherwise expect it: "Stop means
+stop" applies to what the user queued, not only to what is running. Pinned by
+`test_a_stop_discards_the_backlog_it_was_pressed_on`.
 
 ## API contract (`/v1`, bearer-only)
 
@@ -207,8 +262,9 @@ Lets the team release sandbox resources promptly.
 ## Implementation (as shipped)
 
 - **`config.py`** — `api_keys: str` (comma-separated `key:email`) + `api_key_map`
-  property; `v1_turn_timeout_seconds: int = 120` (sync cap; streaming uses heartbeats);
-  `v1_turn_lock_stale_seconds: int = 600` (turn-lock staleness TTL).
+  property; `v1_turn_timeout_seconds: int = 120` (sync cap);
+  `v1_stream_idle_seconds: int = 300` (streaming **silence** cap - see "The streaming
+  contract" below); `v1_turn_lock_stale_seconds: int = 600` (turn-lock staleness TTL).
 - **`auth.py`** — `get_api_client(Security(HTTPBearer(auto_error=False)), …)`:
   reject non-bearer (`401`), `hmac.compare_digest` against each configured key,
   resolve email → `_upsert_user`. **Deliberately NOT gated on `_is_allowed`**: API
@@ -249,9 +305,48 @@ Lets the team release sandbox resources promptly.
 
 1. Two send-endpoints → one with `stream:true`. 2. Don't return our session object —
 lean `{session_id,title,model,created_at}`. 3. Bearer keys, not cookies. 4. Steer to
-streaming for real (tool-running) turns; sync is capped (`504`). 5. One message at a
+streaming for real (tool-running) turns; sync is capped on DURATION (`504`) while
+streaming is capped only on SILENCE. 5. One message at a
 time per session (`409` → retry after a short backoff). 6. We add `DELETE`. 7.
 Consistent `{error:{code,message}}` envelope.
+
+### The streaming contract
+
+**Streaming has no cap on how long a turn may take, and that is the point of it.**
+Callers are steered here precisely for long tool-running turns, so a total cap
+would truncate exactly the requests this transport exists to serve. What streaming
+*is* bounded on is **silence**: `v1_stream_idle_seconds` (default 300) is the
+longest a stream may go without a single frame from the sandbox that is not the
+Hub's heartbeat. On exceeding it the stream emits an `event: error` naming the
+`turn_timeout` code, then the normal terminal `event: done` with
+`finish_reason: "error"`, and closes. **`finish_reason` stays `"stop" | "error"`** -
+no third value, because the error text already distinguishes the case and a new
+enum member would break published clients.
+
+Two things about that clock are easy to get wrong, and both were:
+
+1. **It cannot be reset by any frame.** The in-sandbox Hub broadcasts
+   `{"type":"ping"}` to every connected client every `WS_HEARTBEAT_INTERVAL`
+   seconds. `/v1`'s WS client receives those and `_normalize` drops them from the
+   public stream, so a clock reset on receipt is reset forever - whether the agent
+   is working or dead. `_is_liveness` excludes pings for this reason.
+2. **It cannot count only public events.** A healthy turn is silent of `text` and
+   `tool` frames for minutes while a subagent works - the reason the heartbeat loop
+   exists at all - so a clock fed only by what `_normalize` returns would fire on a
+   working turn. `status` frames and viewer deltas are dropped from the public
+   stream but are still proof the sandbox is doing something, so they count.
+
+An unparseable frame counts as liveness: it is not a ping, and ending a legitimate
+turn is the worse error.
+
+**A floor on the heartbeat interval, and nothing enforces it.** The drain's quiet
+timer is described above - it ends the drain only while no turn is in flight, and
+`_DRAIN_MAX` bounds the whole thing. A `WS_HEARTBEAT_INTERVAL` at or below
+`_DRAIN_IDLE` means the socket never goes silent at all, so the quiet timer can
+never fire and every turn pays the full `_DRAIN_MAX` before it is sent - a 30s
+tax per turn rather than the indefinite hang it used to be. Unreachable at the
+shipped defaults (15s against 0.5s); any future heartbeat speed-up has to stay
+clear of it.
 
 Explicitly **not** built (over-engineering for a POC): DB-backed key table / hashing /
 rotation / scopes / rate limits, message-history endpoints, idempotency keys,
@@ -280,5 +375,5 @@ Runs fully on mocks (`agent_mode=mock`, `sandbox=local`).
 - `apps/server/app/auth.py` — `get_api_client` bearer dependency
 - `apps/server/app/sessions.py` — `create_project(...)` + `_owned`
 - `apps/server/app/models.py` — `Project.turn_locked_at` (the DB lock column)
-- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds` / `v1_turn_lock_stale_seconds`
+- `apps/server/app/config.py` — `api_keys` / `api_key_map` / `v1_turn_timeout_seconds` / `v1_stream_idle_seconds` / `v1_turn_lock_stale_seconds`
 - `apps/server/app/main.py` — register `v1.router` + the `/v1` error envelope handlers

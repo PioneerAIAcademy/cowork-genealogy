@@ -21,7 +21,18 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * #1323 then added 426 characters to `isPrincipal` (438 -> 864, so `record_search`
  * 14,043 -> 14,469), putting the combined figure at 19,472. That is 218 ABOVE the
  * 19,254 the family started at, so the 208 saving is spent and then some: do not
- * read the paragraph above as a standing claim. The ruling on #1323 was to name
+ * read the paragraph above as a standing claim.
+ *
+ * #2071 then added the particle-surname clause to BOTH `surname` descriptions
+ * (`record_search` 14,469 -> 14,872, `person_search` 5,003 -> 5,292), combined
+ * 20,164.
+ *
+ * #1212 then added the `top`-hides-rows clause to `record_search` alone
+ * (14,872 -> 15,344, +472), combined 20,636. `top` now decides whether the
+ * rows are visible at all, so the description has to say so. Same direction again, and for the same reason: the clause records a
+ * measured result (section K) that a model would otherwise guess at.
+ *
+ * The ruling on #1323 was to name
  * both roles and when each applies instead of recommending omission, and naming
  * the relative-discovery route is what that guidance exists to do. Recorded as an
  * increase rather than argued away.
@@ -133,8 +144,8 @@ const SMALLEST_HISTORICAL_OFFENDER = 255;
  * The BEFORE pair (15,509 / 3,745) is a property of `origin/main` and cannot drift.
  */
 const DOCUMENTED_TOTALS: Array<[string, number]> = [
-  ["record_search", 14941],
-  ["person_search", 5003],
+  ["record_search", 15344],
+  ["person_search", 5292],
 ];
 
 /**

@@ -1909,9 +1909,39 @@
       "total": 5822,
       "error": null
     },
+    "T6:q.fullName=Virginia A. Blackman (NLP name control)": {
+      "found": true,
+      "total": 1975180,
+      "error": null
+    },
+    "T7:q.fullName=executor (non-name word)": {
+      "found": false,
+      "total": 229,
+      "examined": 229,
+      "error": null
+    },
     "verdict:q.text searches transcript": "CONFIRMED",
     "verdict:q.recordPlace searches": "metadata only",
     "verdict:f.recordPlace searches": "metadata only",
-    "measured_at": "2026-09-11T15:58:12.144Z"
+    "verdict:q.fullName searches": "name fields only",
+    "measured_at": "2026-09-14T12:23:18.691Z"
+  },
+  "K": {
+    "pool:van der Linde": 558,
+    "pool:\"van der Linde\"": 558,
+    "pool:vanderlinde": 558,
+    "pool:Van Der Linde": 558,
+    "pool:Linde": 558,
+    "pool:Linde, van der": 993,
+    "verdict:dropping the particle returns the same set": "YES — 'Linde' enumerates the identical set as 'van der Linde'",
+    "verdict:the inverted form reaches the same set": "NO — 'Linde, van der' enumerates a different set",
+    "unscopedBare": 900756,
+    "unscopedUnbalancedQuote": 900756,
+    "mcKeeSpaced": 6342823,
+    "mcKeeJoined": 6342823,
+    "verdict:literal quotes change the result set": "NO — the server strips quotes before matching, so guidance prescribing them is inert",
+    "verdict:spacing and case change the result set": "NO — 'vanderlinde' (space removed) and 'Van Der Linde' enumerate the identical set as 'van der Linde', so spacing and capitalisation carry no signal. This says nothing about DROPPING the particle; that leg is recorded separately.",
+    "verdict:control Mc Kee equals McKee": "REPRODUCES",
+    "measured_at": "2026-09-14T19:12:58.467Z"
   }
 }

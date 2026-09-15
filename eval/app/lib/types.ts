@@ -46,7 +46,14 @@ export interface UnitTestFile {
 }
 
 export type DimensionSource = 'base' | 'rubric';
-/** 1 = fail, 2 = partial, 3 = pass, null = N/A (Tool Arguments only). */
+/**
+ * 1 = fail, 2 = partial, 3 = pass, null = N/A.
+ *
+ * N/A comes from three places: Tool Arguments on a run with zero MCP tool
+ * calls, any rubric dimension the fixture never exercised, and
+ * Correctness/Completeness coerced by the harness on a correctly-routed
+ * negative test (`coerced_routing_negative_to_na`).
+ */
 export type Score = 1 | 2 | 3 | null;
 
 /**
@@ -80,13 +87,34 @@ export const NULLABLE_BASE_DIMENSIONS: ReadonlySet<string> = new Set([
  *     null-vs-3 "disagreement" that is really just a UI gap.
  *  2. It is a nullable base dimension (Tool Arguments) — the reviewer may
  *     set *or override to* N/A even when the judge emitted a 1/2/3.
+ *  3. The run log says this test's dimensions DO NOT GATE its outcome
+ *     (`dimensions_gate_outcome: false`, i.e. a `routing` or `invariant`
+ *     test). An N/A there asserts nothing about pass/fail, and the reviewer
+ *     needs it to correct a diagnostic `1` that graded a field the harness
+ *     blanked at the hand-off.
+ *
+ * Case 3 exists because cases 1 and 2 cover only run logs written AFTER the
+ * N/A coercion shipped, where the judge score is already `null` and case 1
+ * lights the button on its own. On an ALREADY-COMMITTED log the score is a
+ * recorded `1`, so no case matched and the button never appeared — which made
+ * the re-grade issue #2375 exists to perform impossible to enter, the CRUD UI
+ * being the only sanctioned writer of a unit `.ann.json`. That is not
+ * hypothetical: an annotator hit it on `ut_record_extraction_011` and both
+ * cells went in as `corrected_score: 1`, adding the corpus damage #2375 is
+ * meant to repair.
+ *
+ * `dimensionsGateOutcome` is REQUIRED rather than optional on purpose. A
+ * defaulted parameter would let a future call site omit it and silently lose
+ * case 3 again, which is exactly how this gap shipped. Pass `undefined`
+ * explicitly for a pre-sampling log that records no gating field; `undefined`
+ * is not `false`, so it does not widen anything.
  */
 /**
  * The tests a run log's annotation must cover, or `null` for "all of them".
  *
- * Variable length: five chosen picks plus every test that failed or scored a 1 or
- * 2 on any dimension, so a run with a low score anywhere exceeds 5. Never assume
- * a fixed size here.
+ * Variable length: five chosen picks plus every test that failed, scored a 1 or
+ * 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning, so
+ * a run with a low score anywhere exceeds 5. Never assume a fixed size here.
  *
  * A run log written before sampling shipped — every committed one today — has
  * no `review_sample` and keeps the original every-dimension rule. Keep this the
@@ -109,7 +137,9 @@ export function sampledTestIds(log: RunLogFile): Set<string> | null {
   // three guards reopened it for the third case.
   const known = new Set(log.tests.map((t) => t.test_id));
   for (const id of ids) if (!known.has(id)) return null;
-  // A sample naming only tests whose judge was skipped would require nothing —
+  // A sample naming only tests with no aggregated dimensions would require
+  // nothing (aborted, judge raised, or a validator failed and its scores were
+  // excluded from the modal) —
   // and this also covers an EMPTY sample, since `.some()` over no ids is false.
   // An explicit `ids.size === 0` guard was tried here and was unreachable: it
   // left its own test unable to fail, the same way three redundant guards did
@@ -194,6 +224,7 @@ export function dimensionAllowsNa(
   source: DimensionSource,
   name: string,
   judgeScore: Score,
+  dimensionsGateOutcome: boolean | undefined,
 ): boolean {
   // N/A is always available on rubric dimensions regardless of the judge score:
   // the judge can score a rubric dimension 3 on a fixture that never exercised
@@ -202,7 +233,8 @@ export function dimensionAllowsNa(
   return (
     judgeScore === null ||
     source === 'rubric' ||
-    (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name))
+    (source === 'base' && NULLABLE_BASE_DIMENSIONS.has(name)) ||
+    dimensionsGateOutcome === false
   );
 }
 
@@ -288,6 +320,15 @@ export interface TestEntry {
   mcp_fixtures: string[];
   outcome: TestOutcome;
   flaky: boolean;
+  /** What decided this test's outcome. Optional: absent from the schema's
+   *  `required` and from every run log written before it shipped. */
+  grading_mode?: 'dimensions' | 'invariant' | 'routing';
+  /** Whether the judge dimensions could change this outcome for a test that ran
+   *  to completion. FALSE on `invariant` and `routing` tests, where routing or a
+   *  tag-gated validator decides and the dimensions are diagnostic only. It
+   *  describes the test's grading DESIGN, so an aborted entry still says how the
+   *  test would have been graded. Optional, as above. */
+  dimensions_gate_outcome?: boolean;
   outcome_summary: {
     per_run_outcomes: Array<'pass' | 'partial' | 'fail' | 'aborted'>;
     aggregated_dimensions: RunLogDimension[];
@@ -310,8 +351,9 @@ export type RunInvocation = 'skill' | 'test' | 'tag';
  * candidate pruning destroys the annotation history it would otherwise be
  * derived from.
  *
- * `tests` has no fixed length — the harness adds every test that failed or
- * scored a 1 or 2 on any dimension to the five it chooses.
+ * `tests` has no fixed length — the harness adds every test that failed,
+ * scored a 1 or 2 on any dimension, or carries a
+ * `coerced_routing_negative_to_na` warning, to the five it chooses.
  */
 export interface ReviewSample {
   tests: string[];

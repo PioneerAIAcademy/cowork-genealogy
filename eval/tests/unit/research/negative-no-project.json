@@ -13,7 +13,8 @@
   },
   "negative": {
     "correct_skill": ["init-project"],
-    "explanation": "There is no research.json yet (the scenario is an empty folder). The research orchestrator requires an existing project to route from. init-project creates the project first."
+    "grade_on_invariant": true,
+    "explanation": "There is no research.json yet (the scenario is an empty folder). The research orchestrator requires an existing project to route from. init-project creates the project first. Graded on the invariant (no project is created) rather than routing: with an empty folder the state-safe outcomes are several — auto-route to init-project, or load research and decline via AskUserQuestion — and the routing check fails the correct decline. The tag-gated invariant validator is test_research.py::test_creates_no_project_when_none_exists (gated on research-vs-init-project)."
   },
   "judge_context": [
     "Should route to init-project — no research.json exists in the project directory",

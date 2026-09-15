@@ -134,6 +134,12 @@ export interface SimplifiedFact {
   // free-text places. Dropped on `toGedcomX`, like `standard_date`.
   standard_place?: string;
   value?: string;
+  // The `research.json` assertion this fact was minted from — the backlink an
+  // assertion correction joins on to find the fact it produced (#2472).
+  // Stamped by `materialize_facts` on the MINT branch only; never on
+  // corroboration, never inferred, never caller-supplied. Dropped on
+  // `toGedcomX`, like `standard_date`.
+  assertion_id?: string;
   sources?: SimplifiedSourceReference[];
 }
 

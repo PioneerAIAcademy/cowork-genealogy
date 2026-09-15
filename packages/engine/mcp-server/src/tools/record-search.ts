@@ -1283,7 +1283,7 @@ export const recordSearchToolSchema = {
   inputSchema: {
     type: "object",
     properties: {
-      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied." },
+      surname: { type: "string", description: "Family name of the searched person. Strongest anchor for genealogy queries. At least one of `surname`, `recordCountry` or `batchNumber` must be supplied. Send a particle surname as written, spaces and all (`van der Linde`). Quotes are stripped server-side, and spacing, case and the particle itself carry no signal — `vanderlinde`, `Van Der Linde` and `Linde` all return the identical set. The one form that differs is the INVERTED `Linde, van der` (how Dutch and Belgian indexes often alphabetise): send that only if the record itself is written that way." },
       givenName: { type: "string", description: "Given (first) name of the searched person." },
       surnameAlt: { type: "string", description: "Alternate family name (e.g., a woman's maiden name when also searching by married surname). Triggers a UNION search — results match either `surname` OR `surnameAlt`. The tool auto-fills `givenNameAlt = givenName` if only this side is supplied." },
       givenNameAlt: { type: "string", description: "Alternate given name. UNION with `givenName`. The tool auto-fills `surnameAlt = surname` if only this side is supplied." },
