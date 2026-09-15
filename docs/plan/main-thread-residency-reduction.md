@@ -96,9 +96,86 @@ it already hold the tools: `person-evidence`, `record-extractor` and
   section. Any move has to keep the ownership row true, and the `log` row is
   already stale (it lists five `skill:` callers and no `agent:` one, while
   `record-extractor` has written the log 9 times across 7 committed runs).
-- **Cheapest falsifier:** if most of those 17.5 calls are sections only the
-  orchestrator may write, the lever is much smaller than 28%. Check the
-  `section` argument distribution before scoping.
+### 1a. The falsifier was run, and it changes the shape of this lever
+
+Most `research_append` calls carry an `ops[]` array, so the unit is the
+**operation**, not the call: **85.8 ops/run, ~13,644 tok/run** of payload on the
+main thread. By section, with where each is written from (n=33):
+
+| section | main ops/run | subagent ops/run | delegated |
+|---|---|---|---|
+| `person_evidence` | **49.52** | 16.73 | 25.3% |
+| `plan_items` | **22.94** | 0.00 | **0%** |
+| `questions` | 2.70 | 1.06 | 28.2% |
+| `hypotheses` | 1.91 | 0.00 | 0% |
+| `plans` | 1.85 | 0.00 | 0% |
+| `proof_summaries` | 1.76 | 0.64 | 26.6% |
+| `assertions` | 1.00 | 1.18 | 54.2% |
+
+Subagents that do write `research_append` corpus-wide: `person-evidence` (552),
+`proof-conclusion` (68), `gps-mentor` (55), `general-purpose` (42),
+`research-exhaustiveness` (20).
+
+**This is not "move the writes to agents". Two different problems:**
+
+- **`person_evidence` — a pair that already exists, bypassed 3 times in 4.**
+  `person-evidence` is a converted pair (2,937-byte routing skill, 57,063-byte
+  agent) and the agent holds `research_append`, `same_person` and `tree_edit`.
+  It demonstrably runs — 552 writes corpus-wide. Yet **49.52 of every 66.25
+  `person_evidence` ops per run are written from the main thread.**
+- **`plan_items` at 22.94 ops/run is 100% main-thread**, and belongs to
+  `research-plan`, which is not a pair yet (#2116).
+
+### 1b. Investigate `person_evidence` as a correctness question first
+
+`research/SKILL.md` is unambiguous: *"person-evidence — **always the skill, never
+inline.** You (the orchestrator) never write `person_evidence` entries … person-
+evidence owns the identity decision and scores every cross-record link with
+`same_person` before it links. Writing `pe_` links inline skips that check — it
+is exactly how a same-named stranger's record gets attached to the subject (a
+b. 1814 man was given a 1918 death, age 104, this way)."*
+
+Three quarters of `person_evidence` writes are landing outside the agent that
+owns that check. **Whether that is a real bypass or an artifact of attribution
+has to be settled before anything is scoped**, because the two readings have
+opposite consequences:
+
+- `agent_id: None` means "not inside a subagent", which covers the orchestrator
+  **and** any skill it invoked — skills run inline in the main session. If the
+  writes come from the `person-evidence` *routing skill*, it is doing
+  load-bearing work the pair doctrine says belongs in the agent (`docs/skill-to-
+  agent-pair-conversion.md` notes nothing enforces the routing-skill contents
+  list), and the `same_person` check may still have run.
+- If they come from the **orchestrator**, it is the inline-write the doctrine
+  names as a data-corruption path, and the residency saving is the smaller half
+  of why it matters.
+
+The run log cannot tell these apart today. Read the narration and tool ordering
+around a main-thread `person_evidence` write on the pending instrumented run, or
+add the caller to the hook's existing `research_append` routing
+(`AGENT_WRITABLE_SECTIONS` already routes this tool by caller identity).
+
+**A first number, offered as a question and not a verdict.** Across the same 33
+runs: **1,634 main-thread `person_evidence` ops (49.5/run) against 38
+main-thread `same_person` calls (1.15/run) — a ratio of 43 : 1.** Subagents make
+another 1.58 `same_person` calls a run.
+
+That is not proof of a bypass. The doctrine requires `same_person` before every
+**cross-record** link, not before every `person_evidence` entry, so the expected
+ratio is above 1 : 1 — a person's first link is not cross-record. But 43 : 1 is
+far enough from any plausible expected value to be worth settling, and it is the
+kind of striking number this repo has repeatedly found to be an instrument
+artifact rather than a finding. **Establish the expected ratio before treating
+this as a defect.**
+
+**Acceptance for this half is correctness, not tokens:** every cross-record `pe_`
+link on a committed run is preceded by a `same_person` call in the same thread,
+or is written by the `person-evidence` agent.
+
+If it turns out to be real, this stops being a residency lever and becomes a
+`nothing-checks` item — the hook already routes `research_append` by caller
+identity via `AGENT_WRITABLE_SECTIONS`, so the enforcement plane exists and the
+rule simply is not written into it.
 
 ### 2. Route `Read` of research.json to `research_query`
 
