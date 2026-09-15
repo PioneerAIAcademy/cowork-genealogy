@@ -335,10 +335,12 @@ const GRANDFATHERED_LINE_CITES: Record<string, string[]> = {
   ],
   "docs/record-search-compaction-scope.md": ["results-staging.ts:108-124"],
   "docs/specs/match-merge-workflow-spec.md": ["gedcomx.ts:161"],
+  // Two of the three went symbolic when #2472 rewrote the `SimplifiedFact` row
+  // and the `SimplifiedRelationship` row beside it: both line numbers had
+  // already drifted (`:120` landed inside `SimplifiedName`), which is the exact
+  // failure this list exists to shrink toward.
   "docs/specs/merge-gedcomx-spec.md": [
     "packages/engine/mcp-server/src/types/gedcomx.ts:112",
-    "packages/engine/mcp-server/src/types/gedcomx.ts:120",
-    "packages/engine/mcp-server/src/types/gedcomx.ts:139",
   ],
   "docs/specs/rank-search-matches-tool-spec.md": [
     "relatives.ts:34",

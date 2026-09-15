@@ -229,6 +229,14 @@ function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: st
  * path so the error names the op and the expected shape.
  */
 const FACT_STRING_FIELDS = ["date", "standard_date", "place", "standard_place", "value"] as const;
+/** The fields whose change detaches a fact from the assertion it was minted
+ *  from. `type` rides along with the strings because a RE-CLASSIFICATION is the
+ *  strongest correction a researcher can make: it changes what the fact claims,
+ *  and it also moves the fact across the event / value-bearing line that decides
+ *  whether an assertion's `value` may be written to it at all. Left attached, a
+ *  retyped fact and its assertion disagree about their own type, and the
+ *  disagreement is unreachable by any later correction. */
+const FACT_DETACH_FIELDS = [...FACT_STRING_FIELDS, "type"] as const;
 function requireFactShape(fact: SimplifiedFact, op: string): void {
   // `primary` carries an instruction, so a near-miss spelling must not be
   // assigned and left for the document validator: its message is "omit it
@@ -240,6 +248,19 @@ function requireFactShape(fact: SimplifiedFact, op: string): void {
     throw new TreeEditError(
       `${op}: fact \`primary\` must be the boolean true or false, got ${got} — ` +
         "`true` makes it the primary of its type, `false` clears the flag",
+    );
+  }
+  // The assertion backlink is stamped by `materialize_facts`, never supplied
+  // (#2472). Admitting `assertion_id` to TREE_FACT_FIELDS also made it
+  // caller-settable here — `fact` is a freeform object and every key is assigned
+  // straight onto the fact — so without this a caller could forge a link the
+  // spec says is set once and never inferred, and `research_append` would then
+  // silently rewrite that hand-entered fact from an assertion it never came from.
+  if ((fact as Record<string, unknown>).assertion_id !== undefined) {
+    throw new TreeEditError(
+      `${op}: fact \`assertion_id\` is not settable — it is the backlink ` +
+        "`materialize_facts` stamps on a fact it mints from an assertion, and it is " +
+        "never supplied by a caller. Materialize the assertion instead, or omit the field.",
     );
   }
   for (const field of FACT_STRING_FIELDS) {
@@ -402,6 +423,15 @@ async function applyOperation(
       // ref" — touching an already-ref-less legacy fact without removing anything
       // is allowed.
       const factHadRef = hasNonNullRef(existing);
+      // Pre-assignment values of the fields a correction can detach on, so the
+      // detach below keys on an actual CHANGE rather than on the key merely
+      // being present. Re-stating a field at the value it already holds is not
+      // a correction, and 7 of the 31 ops that SET one in the committed corpus
+      // also carry `primary` (the conclude-a-fact shape), which is exactly where
+      // an unchanged echo rides along with a real edit.
+      const factStringsBefore = new Map<string, unknown>(
+        FACT_DETACH_FIELDS.map((f) => [f, (existing as Record<string, unknown>)[f]]),
+      );
       for (const [k, v] of Object.entries(input.fact)) {
         if (k === "id") continue;
         // `primary: false` clears the flag rather than storing a false — the
@@ -423,6 +453,36 @@ async function applyOperation(
         );
       }
       if (input.fact.place !== undefined) await maybeResolvePlace(existing, input.fact.standard_place !== undefined);
+      // A human CHANGING any of the fact's own string fields detaches it from
+      // the assertion it was minted from (#2472) — the same reading the spec
+      // already applies to `add_fact`: a researcher's own conclusion carries no
+      // backlink. Left attached, the fact would permanently disagree with its
+      // assertion (indistinguishable from the drift the agreement check reports)
+      // and the next assertion update would silently revert the correction.
+      //
+      // Runs AFTER maybeResolvePlace so it sees the final `standard_place`: a
+      // place change that re-resolves the sidecar is a change to this fact even
+      // when the caller never named `standard_place`.
+      //
+      // The trigger is FACT_DETACH_FIELDS, wider than the four mirrored
+      // attributes: a corrected `standard_date` must not survive beside a later
+      // assertion `date` rewrite, and a retyped fact must not keep a backlink
+      // whose assertion still carries the old type.
+      if (existing.assertion_id !== undefined) {
+        const changed = FACT_DETACH_FIELDS.filter(
+          (f) => (existing as Record<string, unknown>)[f] !== factStringsBefore.get(f),
+        );
+        if (changed.length > 0) {
+          warnings.push(
+            `fact '${existing.id}' is no longer linked to assertion '${existing.assertion_id}' ` +
+              `(${changed.join(", ")} changed) — an edit here detaches the fact, so a later ` +
+              "correction to that assertion will not reach it. Correct the assertion instead " +
+              "if the record was misread. (`standard_place` can change on its own when the " +
+              "resolver re-runs, which detaches for the same reason.)",
+          );
+          delete existing.assertion_id;
+        }
+      }
       if (existing.primary === true) clearPrimaryOfType(holder, existing.type, existing.id);
       break;
     }

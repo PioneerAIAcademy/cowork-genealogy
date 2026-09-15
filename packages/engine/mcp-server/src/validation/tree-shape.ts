@@ -12,7 +12,7 @@ export const TREE_NAME_FIELDS = new Set([
 ]);
 export const TREE_FACT_FIELDS = new Set([
   "id", "type", "primary", "date", "standard_date", "place",
-  "standard_place", "value", "sources",
+  "standard_place", "value", "assertion_id", "sources",
 ]);
 // ParentChild/Couple sets include the other type's endpoint keys so the
 // bespoke "should use 'parent'/'child'" style errors stay the single report
