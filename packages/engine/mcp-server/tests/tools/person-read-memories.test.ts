@@ -146,6 +146,47 @@ describe("person_read + memories", () => {
     expect(out.sources.map((s) => s.id).filter((i) => !i.startsWith("SD_"))).toEqual(["d1", "d2"]);
   });
 
+  it("acceptance 7: fetches memories for the SUBJECT ONLY with relatives:true", async () => {
+    // Five relatives come back; the memories endpoint must still be hit once,
+    // for the subject. The 63-child subject in feedback issue #1795 is the case
+    // that makes a per-relative fetch unaffordable.
+    const relatives = ["R1", "R2", "R3", "R4", "R5"];
+    routes({
+      person: {
+        persons: [
+          { id: PID, living: false, names: [{ nameForms: [{ fullText: "Almon Giles Clegg" }] }] },
+          ...relatives.map((id) => ({
+            id,
+            living: false,
+            names: [{ nameForms: [{ fullText: `Relative ${id}` }] }],
+          })),
+        ],
+        relationships: relatives.map((id, i) => ({
+          id: `rel${i}`,
+          type: "http://gedcomx.org/Couple",
+          person1: { resourceId: PID },
+          person2: { resourceId: id },
+        })),
+        sourceDescriptions: [{ id: "SD_PERSON_" + PID, titles: [{ value: "tree source" }] }],
+      },
+      pages: [[memory({ id: "d1", artifactMetadata: qualifier("Document") })]],
+    });
+
+    await personReadTool(
+      { personId: PID, relatives: true, sourceDescriptions: true },
+      LOCAL,
+    );
+
+    const memoryCalls = fetchMock.mock.calls
+      .map(([u]) => String(u))
+      .filter((u) => u.includes("/memories"));
+    expect(memoryCalls).toHaveLength(1);
+    expect(memoryCalls[0]).toContain(PID);
+    for (const id of relatives) {
+      expect(memoryCalls[0]).not.toContain(id);
+    }
+  });
+
   it("makes NO memories call when sourceDescriptions is false", async () => {
     routes({ pages: [[memory({ id: "d1", artifactMetadata: qualifier("Document") })]] });
     await personReadTool({ personId: PID, sourceDescriptions: false }, LOCAL);
