@@ -560,9 +560,11 @@ designs without choosing, is **not Ready** regardless of its dependencies. A
 junior handed it either guesses at a decision that was the lead's, or stalls.
 
 These are not blocked on a task — they are blocked on a decision only the lead
-can make. **Label them `needs-decision`, not `senior`**: the work behind the fork
-is frequently junior, and calling it senior sends a sentence looking for a scarce
-person. Leave them in Backlog and name, in your report, the decision and the
+can make. **Label them `needs-decision`**: the work behind the fork is frequently
+junior, and reaching for `senior` on an item that is merely undecided sends a
+sentence looking for a scarce person. Add `senior` **as well** when the work
+would still be hard after the answer — the two are orthogonal, and an item that
+is both carries both. Leave them in Backlog and name, in your report, the decision and the
 Ready-able task it unblocks. That pairing is the highest-value line you
 produce — one answer turns a stuck item into a junior task.
 
@@ -950,12 +952,12 @@ junior.
 
 Promote what comes back `ready` or `ready-after-edit`. A `senior` or
 `needs-a-decision` verdict on an item you had ranked junior is a seniority miss
-caught in time. **The two get different labels** (`senior` vs `needs-decision`)
-and different remedies, and the verdict tells you which: `needs-a-decision` means
-one answer unblocks it, so it leaves the ranking until `/make-decisions` drains
-it; `senior` means it is hard regardless, so it keeps its place in its lane's
-pool and is promoted with the label on. Running the gate after promotion instead
-works, but pays for the same deep read twice.
+caught in time. **The two labels answer different questions, and a verdict can
+earn both:** `needs-a-decision` means one answer unblocks it, so it leaves the
+ranking until `/make-decisions` drains it; `senior` means it is hard regardless,
+so it keeps its place in its lane's pool and is promoted with the label on. An
+item that is both waits for the answer and then goes to a senior. Running the
+gate after promotion instead works, but pays for the same deep read twice.
 
 ## 6. Above the junior pools — three states, not one
 
@@ -975,17 +977,21 @@ and behave completely differently**, and telling them apart decides who can star
 **`needs-decision` is the one state that is never ranked.** The other two are
 promoted into their lane's pool once startable. A `needs-decision` card in Ready
 would be a card nobody can pick up for a reason the card does not show, which is
-the failure the labels exist to prevent. Carrying both labels puts an item in
-neither state; see "Do not label both" below.
+the failure the labels exist to prevent. This holds **senior or not** — the
+ranking query at §2 already excludes the label unconditionally.
 
 **`needs-decision` is a distinct verdict, not a softer `senior`.** It is the
 label form of `task-reviewer`'s `needs-a-decision` verdict. An item that is
 merely undecided, labelled `senior`, is the worst case: it looks like it needs a
 rare person when it needs a sentence.
 
-**Do not label both.** If the decision is the only thing in the way, it is
-`needs-decision` — the work behind it may well be junior. Reach for `senior` only
-when the item would still be hard *after* every open question is answered.
+**The two labels are orthogonal — label both when both are true.** `senior`
+answers *who does the work* once the item is startable; `needs-decision` answers
+*what is blocking it now*. A hard item waiting on one answer is genuinely both:
+it stays out of the ranking until the lead rules, and then goes to a senior in
+its lane rather than into the junior pool. The table's three rows are the common
+cases, not an exclusive partition. The mistake to avoid is the one named above —
+`senior` on an item that is only undecided — not the pairing itself.
 
 ### Which lane a `senior` item goes to
 

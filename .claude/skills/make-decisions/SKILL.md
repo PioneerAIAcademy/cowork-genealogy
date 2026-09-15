@@ -76,9 +76,12 @@ gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 
   -q '.[] | "\(.updatedAt[0:10])\t#\(.number)\t\(.title)"' | sort
 ```
 
-**`senior` is not your queue.** Those are hard regardless of any open question
-and go to a senior in the matching lane. Never carry both labels; `/fill-ready`
-§ "Above the junior pools" owns the split.
+**`senior` alone is not your queue.** An item labelled `senior` and nothing else
+is hard regardless of any open question and goes to a senior in the matching
+lane — nothing for you to answer. But an item carrying **both** labels is yours:
+the two are orthogonal, so a hard item can also be waiting on one ruling from
+you. Answer it like any other, drop `needs-decision`, and leave `senior` on —
+`/fill-ready` then ranks it into its lane's senior work.
 
 ## 2. Present each question
 
@@ -249,7 +252,12 @@ reader — a junior picking the issue up, `/audit-board`, a later run of this sk
   own results (which reframed the card), and a proposed logging destination turned
   out not to exist. Twice the honest answer was "you are right, and here is the
   part that does not work" — say both halves.
-- **"This is hard either way."** Swap `needs-decision` for `senior`. Never both.
+- **"This is hard either way."** Add `senior` and drop `needs-decision` — the
+  fork is settled, the difficulty is not. Keep both only while the answer is
+  still outstanding: the two labels are orthogonal (`senior` says who does it,
+  `needs-decision` says what is blocking it), so an item that is hard *and*
+  waiting on you carries both until you rule, and loses `needs-decision` when
+  you do.
 - **"Don't do this."** Close it: `gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy --reason
   "not planned" --comment "<why>"`. The label goes with the issue.
 
