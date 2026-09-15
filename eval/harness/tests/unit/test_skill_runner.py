@@ -139,11 +139,34 @@ def test_builtin_call_record_truncates_long_arguments():
     assert len(record["args"]["content"]) == BUILTIN_ARG_TRUNCATE
 
 
+def test_builtin_call_record_does_not_truncate_the_agent_prompt():
+    """Issue #2189/#2020: the Agent tool's `prompt` is the delegation contract
+    between a routing skill and its agent, not a Read/Grep/Write argument —
+    200 chars keeps a greeting and drops the contract. Measured at 4a6cfad44
+    over the five committed record-extraction run logs
+    (`git ls-files eval/runlogs/unit/record-extraction`, no `.ann.json`): 143
+    of 145 Agent prompts were exactly 200 characters long."""
+    from harness.skill_runner import builtin_call_record, BUILTIN_ARG_TRUNCATE
+
+    record = builtin_call_record(
+        "Agent", {"tool_input": {"prompt": "x" * 5000}}
+    )
+    assert len(record["args"]["prompt"]) == 5000
+
+    # The exemption is scoped to (Agent, prompt), not to the whole tool: a
+    # sibling key on the same call still gets the cap that protects the
+    # committed corpus from whole-argument bodies.
+    record = builtin_call_record(
+        "Agent", {"tool_input": {"description": "x" * 5000}}
+    )
+    assert len(record["args"]["description"]) == BUILTIN_ARG_TRUNCATE
+
+
 class _HookDrivingStream:
     """An async message stream that first drives the registered PreToolUse hook
     with scripted inputs, then yields its messages so run_skill completes."""
 
-    def __init__(self, hook, hook_inputs, messages, returns=None):
+    def __init__(self, hook, hook_inputs, messages, returns=None, hook_tool_use_id="tool-use-id"):
         self._hook = hook
         self._hook_inputs = hook_inputs
         self._messages = messages
@@ -153,6 +176,11 @@ class _HookDrivingStream:
         # visible in the return value, so a test asserting on the deny needs
         # this; widened rather than copied (issue #2022 review).
         self._returns = returns
+        # The SDK's own hook request type carries `tool_use_id: str | None` —
+        # defaults to the fixed id every other test in this file keys its
+        # ToolUseBlock on, but a test proving the tool_use_id-absent fallback
+        # needs to drive the hook with None instead (review of #2189, round 4).
+        self._hook_tool_use_id = hook_tool_use_id
 
     def __aiter__(self):
         return self
@@ -161,7 +189,7 @@ class _HookDrivingStream:
         if not self._started:
             self._started = True
             for inp in self._hook_inputs:
-                out = await self._hook(inp, "tool-use-id", None)
+                out = await self._hook(inp, self._hook_tool_use_id, None)
                 if self._returns is not None:
                     self._returns.append(out)
         if self._i >= len(self._messages):
@@ -610,6 +638,405 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
     ] == [("questions.exhaustive_declaration", "declaration")]
 
 
+# --- routing short-circuit: the hand-off message must not be dropped (#2189) ---
+#
+# _HookDrivingStream drives every scripted hook input to completion BEFORE
+# yielding any message (see its __anext__ above). For a short-circuit skill
+# that deterministically reproduces the race's worst case: routing_resolved
+# is already True before the very message that caused it is ever delivered to
+# the consumer loop — the same ordering the real SDK produces in the majority
+# of negative runs, per the corpus measurement in issue #2189.
+
+
+def _routing_short_circuit_stream(tool_use_id="tool-use-id"):
+    """A Skill hook-input for `record-extraction`, and the AssistantMessage
+    that (in the real SDK) carries both the hand-off narration and the tool
+    use in the same turn.
+
+    `tool_use_id` defaults to "tool-use-id" to match _HookDrivingStream's own
+    hardcoded id (see its __anext__ above) — the source's short-circuit now
+    keys the stop point on this id actually appearing in the ToolUseBlock, so
+    the two must agree or the hook's deny is never recognized as belonging to
+    this message.
+    """
+    from claude_agent_sdk import AssistantMessage, TextBlock, ToolUseBlock
+
+    hook_inputs = [{"tool_name": "Skill", "tool_input": {"skill": "record-extraction"}}]
+    handoff_message = AssistantMessage(
+        content=[
+            TextBlock(text="Routing this to record-extraction."),
+            ToolUseBlock(
+                id=tool_use_id,
+                name="Skill",
+                input={"skill": "record-extraction"},
+            ),
+        ],
+        model="stub",
+    )
+    return hook_inputs, handoff_message
+
+
+async def _run_short_circuit_with_prefix(monkeypatch, tmp_path, prefix):
+    """Like `_run_short_circuit`, but yields `prefix` BEFORE the hand-off.
+
+    `_HookDrivingStream` drives every hook input before message one, so the
+    plain helper can only ever produce the ordering where the flag is already
+    up and the very first message carries the routed call. Both new guards —
+    the `if not usage:` check and the `tool_use_id` match — are no-ops under
+    that ordering, so a test built on it cannot tell whether either is there
+    (review of #2189, round 2: both mutations left all 46 tests green).
+    """
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(hook, hook_inputs, [*prefix, handoff_message])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        routing_short_circuit_skills={"record-extraction"},
+    )
+
+
+def test_a_result_message_already_seen_keeps_its_real_telemetry(tmp_path, monkeypatch):
+    """The `if not usage:` guard, isolated.
+
+    A ResultMessage consumed before the hand-off populates `usage` with the
+    SDK's own count. The short-circuit must not overwrite it, and must not
+    claim no ResultMessage arrived. Without the guard `num_turns` becomes the
+    manufactured `turns_seen` and `no_result_message` lies — the same
+    self-contradicting telemetry this PR exists to remove, pointing the other
+    way.
+    """
+    import asyncio
+    from claude_agent_sdk import ResultMessage
+
+    early = ResultMessage(
+        subtype="result", duration_ms=1, duration_api_ms=1,
+        is_error=False, num_turns=7, session_id="S1",
+    )
+    result = asyncio.run(_run_short_circuit_with_prefix(monkeypatch, tmp_path, [early]))
+
+    assert result.no_result_message is False, (
+        "a ResultMessage did arrive, so the field must not say otherwise"
+    )
+    assert result.usage.get("num_turns") == 7, (
+        "the SDK's own num_turns must survive the short-circuit, not be "
+        "replaced by the manufactured turns_seen count"
+    )
+
+
+def test_the_stop_point_keys_on_the_routed_tool_use_id(tmp_path, monkeypatch):
+    """The `block.id == routing_resolved["tool_use_id"]` match, isolated.
+
+    An earlier turn carrying a DIFFERENT tool use must not be mistaken for the
+    routed hand-off. Stopping on "any tool use once the flag is up" drops the
+    hand-off turn entirely — the narration the routing test's judge_context
+    asks for, which is the defect this PR fixes.
+    """
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock, ToolUseBlock
+
+    earlier = AssistantMessage(
+        content=[
+            TextBlock(text="Reading the plan first."),
+            ToolUseBlock(id="some-other-id", name="Read", input={"file_path": "p.md"}),
+        ],
+        model="stub",
+    )
+    result = asyncio.run(_run_short_circuit_with_prefix(monkeypatch, tmp_path, [earlier]))
+
+    assert "Routing this to record-extraction." in result.text_response, (
+        "stopped on a non-routed ToolUseBlock; the hand-off turn was dropped"
+    )
+
+
+async def _run_short_circuit(monkeypatch, tmp_path, messages):
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(hook, hook_inputs, [handoff_message, *messages])
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        routing_short_circuit_skills={"record-extraction"},
+    )
+
+
+def test_the_handoff_message_is_not_dropped_by_the_short_circuit(tmp_path, monkeypatch):
+    """Before the fix, the loop checked routing_resolved["v"] before
+    processing the message — so the very message that set the flag (the one
+    carrying the routing narration) was never read. Reproduces
+    ut_search_records_003's committed shape: a routing test whose
+    judge_context asks for "a one-line acknowledgment like 'Routing this to
+    record-extraction'" that the transcript never carried."""
+    import asyncio
+
+    result = asyncio.run(_run_short_circuit(monkeypatch, tmp_path, []))
+
+    assert "Routing this to record-extraction." in result.text_response
+
+
+def test_a_message_after_the_denied_handoff_is_not_counted(tmp_path, monkeypatch):
+    """The hook's deny does not end the SDK's turn — `_run_short_circuit`'s
+    docstring notes the SDK does not honor `continue_: False`, it just
+    retries other tools. If the model reacts to the denial with a further
+    turn before the run_skill loop actually stops, that reaction is
+    harness-manufactured narration, not the skill's own behaviour, and must
+    not be counted (review of #2189, round 2). The stop point is keyed on the
+    routed ToolUseBlock's own id appearing in the CURRENT message, not on
+    "whatever arrives next" once the flag is visible."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    reaction = AssistantMessage(
+        content=[TextBlock(text="Let me try a different approach.")], model="stub"
+    )
+    result = asyncio.run(_run_short_circuit(monkeypatch, tmp_path, [reaction]))
+
+    assert "Let me try a different approach." not in result.text_response
+    assert result.usage.get("num_turns") == 1
+
+
+def test_a_message_after_the_denied_handoff_is_not_counted_when_the_hook_gets_no_id(
+    tmp_path, monkeypatch
+):
+    """The exact stop point (`block.id == routing_resolved["tool_use_id"]`)
+    cannot fire when the SDK gives the hook `tool_use_id=None` — the SDK's own
+    hook request type is `str | None`, so there is no id to match against.
+    Without a fallback for this case the model's reaction to the denial keeps
+    being consumed and counted, exactly the defect
+    `test_a_message_after_the_denied_handoff_is_not_counted` proves is fixed
+    for the has-an-id case (review of #2189, round 4). The fallback is gated
+    on the id being absent, so it cannot reintroduce the flag-only misfire a
+    plain `routing_resolved["v"]` check had — that check fired before the
+    hand-off message itself was processed, dropping it entirely."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+    reaction = AssistantMessage(
+        content=[TextBlock(text="Let me try a different approach.")], model="stub"
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook, hook_inputs, [handoff_message, reaction], hook_tool_use_id=None
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            routing_short_circuit_skills={"record-extraction"},
+        )
+    )
+
+    assert "Routing this to record-extraction." in result.text_response
+    assert "Let me try a different approach." not in result.text_response
+    assert result.usage.get("num_turns") == 1
+
+
+def test_a_rate_limit_event_before_the_handoff_does_not_drop_it_when_the_hook_gets_no_id(
+    tmp_path, monkeypatch
+):
+    """Combines the two id-absent risks the previous fallback conflated
+    (review of #2189, round 3). With `tool_use_id=None`, the deleted fallback
+    fired on whichever message arrived first once the flag was up — for a
+    RateLimitEvent arriving before the hand-off, that was the RateLimitEvent
+    itself, returning with `text_response=""` and `num_turns=0` before the
+    hand-off message was ever processed. The fix matches the hand-off's own
+    Skill ToolUseBlock against `_short_circuit` by name (not by id, which is
+    None), inside the AssistantMessage branch — a RateLimitEvent has no such
+    branch to fire from, so it cannot short-circuit the loop on its own."""
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+    early = _rate_limit_event("allowed")
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook, hook_inputs, [early, handoff_message], hook_tool_use_id=None
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            routing_short_circuit_skills={"record-extraction"},
+        )
+    )
+
+    assert "Routing this to record-extraction." in result.text_response, (
+        "the hand-off was dropped — the RateLimitEvent-first ordering "
+        "reintroduced the bug this PR fixes"
+    )
+    assert result.usage.get("num_turns") == 1
+
+
+def test_a_turn_boundary_separates_two_assistant_messages(tmp_path, monkeypatch):
+    """A closing turn's text must not run together with an earlier turn's
+    text — the run-together-boundary half of #2189 (measured at 4a6cfad44
+    over every committed run log under eval/runlogs/unit/, no `.ann.json`:
+    1,385 of 1,755 texted runs in the corpus carried one), measured across
+    ordinary runs generally, not specific to the routing short-circuit
+    (which stops consuming after
+    its one hand-off message and never reaches a second turn at all)."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    first_turn = AssistantMessage(
+        content=[TextBlock(text="Checking the census index.")], model="stub"
+    )
+    second_turn = AssistantMessage(
+        content=[TextBlock(text="Found the record.")], model="stub"
+    )
+
+    async def fake_query(*, prompt, options):
+        yield first_turn
+        yield second_turn
+        yield ResultMessage(
+            subtype="result",
+            duration_ms=1,
+            duration_api_ms=1,
+            is_error=False,
+            num_turns=2,
+            session_id="S1",
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        )
+    )
+
+    naive = "Checking the census index." + "Found the record."
+    assert result.text_response != naive
+    assert "census index.\n\nFound the record." in result.text_response
+
+
+def test_two_text_blocks_in_one_turn_are_not_split(tmp_path, monkeypatch):
+    """One utterance delivered as two TextBlocks is one turn — no `\n\n`
+    between them. Reverting the per-turn grouping to
+    `text_chunks.extend(turn_text_parts)` leaves every other test green."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    one_turn = AssistantMessage(
+        content=[TextBlock(text="Found the record"), TextBlock(text=" in the index.")],
+        model="stub",
+    )
+
+    async def fake_query(*, prompt, options):
+        yield one_turn
+        yield ResultMessage(subtype="result", duration_ms=1, duration_api_ms=1,
+                            is_error=False, num_turns=1, session_id="S1")
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(sr.run_skill(
+        user_message="go", workspace=tmp_path, fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    ))
+
+    assert result.text_response == "Found the record in the index."
+
+
+def test_num_turns_is_real_not_a_manufactured_zero_on_short_circuit(tmp_path, monkeypatch):
+    """Mirrors the existing wall-clock-timeout precedent (turns_seen survives
+    regardless of exit path) — before the fix this read 0 because `usage` is
+    only ever populated in the ResultMessage branch, which a short-circuited
+    run never reaches."""
+    import asyncio
+
+    result = asyncio.run(_run_short_circuit(monkeypatch, tmp_path, []))
+
+    assert result.usage.get("num_turns") == 1
+
+
+def test_no_result_message_is_true_only_on_the_short_circuit(tmp_path, monkeypatch):
+    """Discriminates rather than always firing: true on the short-circuit
+    path (no ResultMessage ever arrives), false on an ordinary run that ends
+    in one."""
+    import asyncio
+    from claude_agent_sdk import ResultMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    result = asyncio.run(_run_short_circuit(monkeypatch, tmp_path, []))
+    assert result.no_result_message is True
+
+    def fake_query_normal(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            [],
+            [
+                ResultMessage(
+                    subtype="result",
+                    duration_ms=1,
+                    duration_api_ms=1,
+                    is_error=False,
+                    num_turns=1,
+                    session_id="S1",
+                )
+            ],
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query_normal)
+    normal_result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        )
+    )
+    assert normal_result.no_result_message is False
+
+
 # ─── Quota aborts are not transient (#2192) ────────────────────────────────
 #
 # Driven through the REAL run_skill with fabricated SDK messages, for the
@@ -878,3 +1305,44 @@ def test_an_anthropic_429_body_is_not_read_as_a_subscription_quota(
         [_result_message(result="429 rate limit exceeded, please retry")],
     )
     assert result.aborted_reason == "error"
+
+
+def test_a_quota_during_a_routing_short_circuit_survives_the_clean_clear(
+    tmp_path, monkeypatch
+):
+    """The classification in the ResultMessage branch never runs on this
+    path — the loop stops on the routed AssistantMessage itself — so a quota
+    signalled by an earlier RateLimitEvent has to be checked again at the
+    short-circuit's own stop point, or it goes undetected rather than merely
+    retried. And once classified, the routing short-circuit's own clean-up
+    must not wipe it: #2192 depends on aborted_reason surviving so the
+    suite-level breaker can see it and stop submitting, regardless of whether
+    the same run also happened to resolve its routing verdict."""
+    import asyncio
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    hook_inputs, handoff_message = _routing_short_circuit_stream()
+    rate_limit_event = _rate_limit_event("rejected")
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook, hook_inputs, [rate_limit_event, handoff_message]
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    result = asyncio.run(
+        sr.run_skill(
+            user_message="go",
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            routing_short_circuit_skills={"record-extraction"},
+        )
+    )
+
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+    assert "rate_limit_status=rejected" in (result.error or "")

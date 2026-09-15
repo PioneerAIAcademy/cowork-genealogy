@@ -572,6 +572,18 @@ describe("measured figures stay traceable to the probe artifact", () => {
         /f\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text)/i,
       why: "section J measured f.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
     },
+    {
+      // Section J measured q.fullName against the same anchor. A non-name
+      // word ("executor") known to be in the transcript was NOT found by
+      // q.fullName, while an NLP-recognized name (Virginia A. Blackman) WAS
+      // found. So q.fullName searches name fields only, not the full
+      // transcript. Guard against prose that claims it searches transcripts.
+      verdict: "J.verdict:q.fullName searches",
+      activeWhen: /^name fields only$/,
+      mustNotSay:
+        /q\.fullName[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|document text|full[- ]?text(?!(?:\s+\w+)?\s+(?:endpoint|API|service))|entire (?:transcript|document|record))/i,
+      why: "section J measured q.fullName as name-fields-only; these phrasings assert it reaches the full transcript",
+    },
   ];
 
   for (const rule of FORBIDDEN_WHEN) {
@@ -627,6 +639,24 @@ describe("measured figures stay traceable to the probe artifact", () => {
   ] as const) {
     it(`section J q.recordPlace guard accepts correct prose: ${label}`, () => {
       const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.recordPlace searches")!;
+      expect(rule.mustNotSay.test(sentence)).toBe(false);
+    });
+  }
+
+  // Converse arm for the q.fullName guard: correct prose that names the
+  // fulltext endpoint or describes name-field behaviour must NOT be rejected.
+  // Without this, a pattern tightening that blocks the wrong direction can
+  // silently block the right direction too.
+  for (const [label, sentence] of [
+    ["plain name-fields-only", "q.fullName searches name fields only."],
+    ["contrast with q.text", "q.fullName matches name fields, not the transcript."],
+    ["names the endpoint", "q.fullName searches name fields on the fulltext endpoint."],
+    ["entire, of a name field", "q.fullName searches the entire name field."],
+    ["endpoint behind a qualifier", "q.fullName covers indexed names in the full-text search API."],
+    ["service noun", "q.fullName matches names on the full-text search service."],
+  ] as const) {
+    it(`section J q.fullName guard accepts correct prose: ${label}`, () => {
+      const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.fullName searches")!;
       expect(rule.mustNotSay.test(sentence)).toBe(false);
     });
   }

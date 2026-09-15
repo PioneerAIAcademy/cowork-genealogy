@@ -1,0 +1,185 @@
+{
+  "run_log": "v1_2026-09-14_16-11-02.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "grade:trigger (#2156): activation is the deterministic gate and passed; the judge dimensions are diagnostic and non-gating on this stubbed run, so this score reflects the stubbed downstream sub-skills, not the research skill under test."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "grade:trigger (#2156): activation is the deterministic gate and passed; the judge dimensions are diagnostic and non-gating on this stubbed run, so this score reflects the stubbed downstream sub-skills, not the research skill under test."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Documented slash-command xfail: /research entry records no Skill call, so skills_invoked never holds `research` and the positive activation check fails it (expected_outcome=xfail). With the turn budget raised to 30 the run completed rather than aborting; the partial dimension reflects that known-limitation shape, not a skill defect."
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Documented slash-command xfail: /research entry records no Skill call, so skills_invoked never holds `research` and the positive activation check fails it (expected_outcome=xfail). With the turn budget raised to 30 the run completed rather than aborting; the partial dimension reflects that known-limitation shape, not a skill defect."
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Documented slash-command xfail: /research entry records no Skill call, so skills_invoked never holds `research` and the positive activation check fails it (expected_outcome=xfail). With the turn budget raised to 30 the run completed rather than aborting; the partial dimension reflects that known-limitation shape, not a skill defect."
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Manufactured fail, not ratified (#2189, reopened): the router routed correctly to locality-guide (its routes-to target, a stubbed/denied callee — the routing validator passed), then the judge scored 1 for the work the stub denied. The router's own work was correct; corrected to 3. Outcome stays fail; the judge score is the harness's artifact."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Manufactured fail, not ratified (#2189, reopened): the router routed correctly to locality-guide (its routes-to target, a stubbed/denied callee — the routing validator passed), then the judge scored 1 for the work the stub denied. The router's own work was correct; corrected to 3. Outcome stays fail; the judge score is the harness's artifact."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Manufactured fail, not ratified (#2189, reopened): the router routed correctly to research-plan (its routes-to target, a stubbed/denied callee — the routing validator passed), then the judge scored 1 for the work the stub denied. The router's own work was correct; corrected to 3. Outcome stays fail; the judge score is the harness's artifact."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Manufactured fail, not ratified (#2189, reopened): the router routed correctly to research-plan (its routes-to target, a stubbed/denied callee — the routing validator passed), then the judge scored 1 for the work the stub denied. The router's own work was correct; corrected to 3. Outcome stays fail; the judge score is the harness's artifact."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Manufactured fail, not ratified (#2189, reopened): the router routed correctly to search-records (its routes-to target, a stubbed/denied callee — the routing validator passed), then the judge scored 1 for the work the stub denied. The router's own work was correct; corrected to 3. Outcome stays fail; the judge score is the harness's artifact. Same mechanism as _012/_013; _014 also passed clean in both prior runs (judge jitter on a stubbed router). Corrected pending @DallanQ's explicit ruling (posted on #2156) — he can overrule."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Manufactured fail, not ratified (#2189, reopened): the router routed correctly to search-records (its routes-to target, a stubbed/denied callee — the routing validator passed), then the judge scored 1 for the work the stub denied. The router's own work was correct; corrected to 3. Outcome stays fail; the judge score is the harness's artifact. Same mechanism as _012/_013; _014 also passed clean in both prior runs (judge jitter on a stubbed router). Corrected pending @DallanQ's explicit ruling (posted on #2156) — he can overrule."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3
+    }
+  ]
+}
