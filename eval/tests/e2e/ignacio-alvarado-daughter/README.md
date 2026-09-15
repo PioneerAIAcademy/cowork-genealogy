@@ -137,3 +137,17 @@ warrant. Under §3.4.2 only `link` components score, so the corrected year sits
 in `details` as
 an identifying detail. The `researcher_question` is unchanged — it is the hint
 record's own spelling of the mother's name and stays answerable.
+
+## Changelog
+
+- **2026-09-07** — fixture authored as a `record-hint` draft (`e13a4f2f5`), one of
+  30 drawn from `filtered-list-samples-2.csv`. `expected-findings.json` transcribed
+  the hint record unverified: a burial of 20 June 1880 at El Carmen for the infant
+  "Angela Charado Duran", born 1880, naming Ygnacio Alvarado and Teodosia Duran.
+- **2026-09-15** — adjudicated a true match on the relationship, with the birth year
+  corrected 1880 to the week of 21–27 March 1879 (#2298, PR #2412). The burial
+  register states the parentage outright and gives her age as one year and two
+  months, which places the birth between 21 March and 20 April 1879; her own
+  baptism of 27 March 1879 falls inside that window. The DRAFT marker was removed,
+  which activates `validate_fixture`'s issue-#970 ark check on
+  `supporting_sources` from this point on.
