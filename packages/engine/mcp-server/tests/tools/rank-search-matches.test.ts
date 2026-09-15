@@ -889,7 +889,10 @@ describe("rank_search_matches", () => {
     expect(out.returnedCount).toBe(3);
   });
 
-  it("carries the four triage fields that let `ranked` replace the inline rows", async () => {
+  it("does NOT carry the row's own fields — the row is annotated instead", async () => {
+    // Under the #1212 ruling the search row IS the row, annotated in place, so
+    // duplicating events/collectionId/recordTitle/treeMatches onto the stub is
+    // the duplication the ruling removed. The stub carries the SCORE.
     await writeTree();
     const ref = await stage([
       {
@@ -901,18 +904,20 @@ describe("rank_search_matches", () => {
       },
     ]);
     scorePairMock.mockImplementation(async () => scoreResult(0.9, 7));
-
+  
     const out = await rankSearchMatches({
       projectPath: dir,
       stagedResultsRef: ref,
       subjectId: SUBJECT_ID,
     }, LOCAL);
-
+  
     const m = out.matches[0];
-    expect(m.events).toEqual([{ type: "Birth", date: "1850", place: "Ohio" }]);
-    expect(m.collectionId).toBe("2000123");
-    expect(m.recordTitle).toBe("Ohio Births and Christenings");
-    expect(m.treeMatches).toEqual([{ id: "KWZZ-XYZ", name: "A B" }]);
+    for (const f of ["events", "collectionId", "recordTitle", "treeMatches"]) {
+      expect(m).not.toHaveProperty(f);
+    }
+    // What it does carry: the score, and the auditable original position.
+    expect(m.matchScore).toBe(0.9);
+    expect(m.searchRank).toBe(1);
     // FamilySearch's own relevance is deliberately NOT carried — matchScore
     // supersedes it, and shipping both invites triage on the weaker number.
     expect(m).not.toHaveProperty("score");

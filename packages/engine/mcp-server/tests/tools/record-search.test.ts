@@ -1984,7 +1984,7 @@ describe("#1592 batchNumber on results", () => {
     }
   });
 
-  it("carries treeMatches onto the ranked stubs, the shape a subjectId search reads", async () => {
+  it("keeps treeMatches on the annotated row, the shape a subjectId search reads", async () => {
     // record_search advertises "Family-Tree-person match suggestions" in its own
     // tool description, and a subject-named search reads `ranked`, not
     // `results`. Before the stub carried treeMatches, the dominant call shape
@@ -2014,13 +2014,18 @@ describe("#1592 batchNumber on results", () => {
         subjectId: "I1",
       }, LOCAL);
 
-      expect(out.ranked!.matches[0].treeMatches?.length).toBeGreaterThan(0);
+      // Under the #1212 ruling the row IS the row: treeMatches stays where it
+      // always was, and the row now also carries the score. `ranked` has no
+      // matches list to carry it onto.
+      expect(out.results[0].treeMatches?.length).toBeGreaterThan(0);
+      expect(out.results[0].matchScore).not.toBeUndefined();
+      expect((out.ranked as { matches?: unknown }).matches).toBeUndefined();
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
   });
 
-  it("reaches the ranked stubs, the projection a subjectId search actually reads", async () => {
+  it("reaches the annotated row, the shape a subjectId search actually reads", async () => {
     const dir = await mkdtemp(join(tmpdir(), "record-search-batch-rank-"));
     try {
       await writeFile(
@@ -2047,7 +2052,8 @@ describe("#1592 batchNumber on results", () => {
       }, LOCAL);
 
       expect(out.ranked).toBeTruthy();
-      expect(out.ranked!.matches[0].batchNumber).toBe("M01048-5");
+      expect(out.results[0].batchNumber).toBe("M01048-5");
+      expect(out.results[0].matchRank).toBe(1);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

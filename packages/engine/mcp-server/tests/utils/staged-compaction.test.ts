@@ -16,7 +16,7 @@ import { describe, it, expect } from "vitest";
 import {
   compactStagedRecordSearch,
   compactStagedFulltextSearch,
-  dropInlineResultsWhenRanked,
+  annotateResultsWithRanking,
 } from "../../src/utils/staged-compaction.js";
 import type { RecordSearchToolResponse } from "../../src/types/record-search.js";
 import type { FulltextSearchResponse } from "../../src/types/fulltext-search.js";
@@ -143,82 +143,77 @@ describe("compactStagedFulltextSearch", () => {
  * condition is positive and two-part; each arm below is a distinct production
  * shape, and a length-only condition silently fails the last one.
  */
-describe("dropInlineResultsWhenRanked", () => {
-  const row = { recordId: "ark:/61903/1:1:AAAA-AA1" };
+describe("annotateResultsWithRanking", () => {
+  const rowA = { recordId: "ark:/61903/1:1:AAAA-AA1", events: [] };
+  const rowB = { recordId: "ark:/61903/1:1:BBBB-BB2", events: [] };
 
-  /** A response carrying `results`, plus whatever `ranked` the case needs. */
-  function resp(ranked?: unknown): RecordSearchToolResponse {
-    return {
-      results: [row],
-      ...(ranked === undefined ? {} : { ranked }),
-    } as unknown as RecordSearchToolResponse;
-  }
+  const resp = (ranked?: unknown) =>
+    ({ results: [rowA, rowB].map((r) => ({ ...r })), ...(ranked ? { ranked } : {}) }) as never;
 
-  const rankedWith = (matches: unknown[], extra: Record<string, unknown> = {}) => ({
-    subjectId: "KNS4-P6W",
-    scoredCount: matches.length,
-    returnedCount: matches.length,
-    matches,
-    ...extra,
+  const rankedWith = (matches: unknown[], extra: Record<string, unknown> = {}) =>
+    ({ subjectId: "I1", scoredCount: matches.length, returnedCount: matches.length, matches, ...extra });
+
+  it("annotates the rows in place and returns them best first", () => {
+    // B scores higher, so it comes back first — and its ORIGINAL position
+    // survives on searchRank, which is what makes the re-order auditable.
+    const out = annotateResultsWithRanking(
+      resp(rankedWith([
+        { recordId: rowB.recordId, matchRank: 1, searchRank: 2, matchScore: 0.9, matchConfidence: 9 },
+        { recordId: rowA.recordId, matchRank: 2, searchRank: 1, matchScore: 0.2 },
+      ])),
+    );
+    expect(out.results.map((r) => r.recordId)).toEqual([rowB.recordId, rowA.recordId]);
+    expect(out.results[0]).toMatchObject({ matchRank: 1, searchRank: 2, matchScore: 0.9, matchConfidence: 9 });
+    expect(out.results[1]).toMatchObject({ matchRank: 2, searchRank: 1, matchScore: 0.2 });
   });
 
-  it("drops `results` when ranking produced usable rows", () => {
-    const out = dropInlineResultsWhenRanked(resp(rankedWith([{ matchRank: 1 }])));
-    expect(out.results).toBeUndefined();
-    expect(out.ranked).toBeTruthy();
+  it("gives up the duplicate row list: `ranked` keeps metadata, not matches", () => {
+    const out = annotateResultsWithRanking(
+      resp(rankedWith([{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.5 }])),
+    );
+    expect(out.ranked).toBeDefined();
+    expect((out.ranked as { matches?: unknown }).matches).toBeUndefined();
+    expect(out.ranked).toMatchObject({ subjectId: "I1", scoredCount: 1 });
   });
 
-  it("keeps `results` when ranking never ran (`ranked` absent)", () => {
-    // No staged ref, no subjectId, or no projectPath — record-search.ts never
-    // assigns `ranked`, and this is also the shape a thrown ranking leaves
-    // behind (`rankingError` set, `ranked` never assigned).
-    expect(dropInlineResultsWhenRanked(resp()).results).toEqual([row]);
+  it("never drops a row — results is always present and complete", () => {
+    for (const ranked of [
+      undefined,
+      rankedWith([]),
+      rankedWith([{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.1 }], { subjectResolvable: false }),
+    ]) {
+      const out = annotateResultsWithRanking(resp(ranked));
+      expect(out.results).toHaveLength(2);
+    }
   });
 
-  it("keeps `results` when the ranking was withheld (`matches` emptied)", () => {
-    const ranked = rankedWith([], {
-      subjectResolvable: false,
-      diagnostic: "subject carries no dated or placed fact",
-    });
-    expect(dropInlineResultsWhenRanked(resp(ranked)).results).toEqual([row]);
+  it("keeps an unscored row, sorted after the scored ones", () => {
+    // Only A was scored. B is not dropped and not promoted — it trails.
+    const out = annotateResultsWithRanking(
+      resp(rankedWith([{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.5 }])),
+    );
+    expect(out.results.map((r) => r.recordId)).toEqual([rowA.recordId, rowB.recordId]);
+    expect(out.results[1].matchRank).toBeUndefined();
   });
 
-  it("keeps `results` on a scoreable subject with a genuine no-match, though `matches` is POPULATED", () => {
-    // The arm a length-only condition gets wrong. `subjectResolvable: false`
-    // here means "every candidate scored at or below the degenerate floor" —
-    // the rows exist but must not be triaged as a ranking. Dropping `results`
-    // would leave the caller holding search order wearing match scores, which
-    // is what the withheld branch exists to refuse.
-    const ranked = rankedWith([{ matchRank: 1 }, { matchRank: 2 }], {
-      subjectResolvable: false,
-      diagnostic: "no candidate scored above the floor — a real negative",
-    });
-    const out = dropInlineResultsWhenRanked(resp(ranked));
-    expect(out.results).toEqual([row]);
-    expect(out.ranked).toBeTruthy();
+  it("matches on the bare id, so a bare-vs-canonical ARK still annotates", () => {
+    // Fixtures predate canonical ARKs and carry `AAAA-AA1` against
+    // `ark:/61903/1:1:AAAA-AA1`. Exact matching would annotate nothing.
+    const out = annotateResultsWithRanking(
+      resp(rankedWith([{ recordId: "AAAA-AA1", matchRank: 1, searchRank: 1, matchScore: 0.7 }])),
+    );
+    expect(out.results[0]).toMatchObject({ recordId: rowA.recordId, matchScore: 0.7 });
   });
 
   it("is idempotent", () => {
-    const r = resp(rankedWith([{ matchRank: 1 }]));
-    expect(dropInlineResultsWhenRanked(dropInlineResultsWhenRanked(r)).results)
-      .toBeUndefined();
-    const keep = resp(rankedWith([], { subjectResolvable: false }));
-    expect(dropInlineResultsWhenRanked(dropInlineResultsWhenRanked(keep)).results)
-      .toEqual([row]);
+    const once = annotateResultsWithRanking(
+      resp(rankedWith([{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.5 }])),
+    );
+    const twice = annotateResultsWithRanking({ ...once } as never);
+    expect(twice.results).toEqual(once.results);
   });
 });
 
-/**
- * #1212 ask 5: "keep the payload flat or better". Asserted with both numbers in
- * the test rather than described, because a byte claim with no bound and no
- * baseline is not falsifiable.
- *
- * The comparison is against the shape `origin/main` sends for the SAME search:
- * every row inline in `results`, PLUS a top-10 `ranked` block holding the first
- * ten of them again in a leaner stub. That duplication is what this change
- * removes, and it is why enriching the stub with four more fields still comes
- * out ahead.
- */
 describe("#1212 payload", () => {
   const ROWS = 50;
 

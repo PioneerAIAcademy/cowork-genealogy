@@ -379,7 +379,33 @@ reads the record.
 | Field | Type | Description |
 |-------|------|-------------|
 | `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side — `count` is what bounds the response, and `top` is the caller's opt-in to fewer. |
-| `top` | number | Forwarded to `rank_search_matches` as its `top`: a cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful alongside `subjectId` and `projectPath`, since ranking does not otherwise run. **`top` hides rows as well as shortening the ranked list:** when the ranking is usable the full `results` rows are dropped, so `top: 10` against a pool of 50 returns 10 stubs and no rows — the other 40 are scored, paid for and invisible. Raise it or omit it to see them. |
+| `top` | number | Forwarded to `rank_search_matches` as its `top`: a cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful alongside `subjectId` and `projectPath`, since ranking does not otherwise run. **There is ONE row list.** `results` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom: the rows it cuts are the worst-scoring ones, not a second hidden copy. |
+
+### The response is re-ordered; the staged sidecar is not
+
+When a search ranks, `results` comes back **annotated in place** — each row
+carries `matchRank`, `searchRank`, `matchScore`, and where available
+`matchConfidence`, `candidateFactCount` and the `attachedTo*` flags — and the
+list is ordered **best first**. `ranked` carries metadata only; it has no row
+list of its own. There is one set of rows, never two.
+
+`searchRank` is what keeps that re-ordering **auditable rather than lossy**.
+Sorting by match score discards FamilySearch's own ordering, so without the
+original position recorded on each row it would be unrecoverable from the
+response.
+
+**The staged sidecar keeps FamilySearch's search order and is NOT re-sorted.**
+It is an audit record of what the repository returned, and re-sorting an audit
+trail by a score computed afterwards is the thing to regret later. This is a
+real divergence, not a theoretical one: the sidecar is written *before* ranking
+runs, so the response and the sidecar genuinely differ in order. A reader
+comparing the two should expect that — the sidecar answers "what did
+FamilySearch return, and in what order", the response answers "which of these
+best matches this subject".
+
+A row the ranker did not score keeps its search position, gains no score fields,
+and sorts after every scored row. It is never dropped.
+
 | `offset` | number | Pagination offset. Default 0. The combined value `offset + count` must be at most 4999. |
 
 ### Examples

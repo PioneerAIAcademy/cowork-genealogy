@@ -46,7 +46,7 @@ import {
 } from "../utils/results-staging.js";
 import {
   compactStagedRecordSearch,
-  dropInlineResultsWhenRanked,
+  annotateResultsWithRanking,
 } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -1140,12 +1140,12 @@ export async function recordSearchTool(
     } catch (error) {
       out.rankingError = error instanceof Error ? error.message : String(error);
     }
-    // Same rows, two shapes, on every subject-named search until now.
-    // Outside the try/catch because a failure to drop is not a ranking failure
-    // and must not be reported as one. Note this is not what protects `results`
-    // when ranking throws — `out.ranked` is simply never assigned on that path,
-    // so the drop no-ops wherever it sits.
-    dropInlineResultsWhenRanked(out);
+    // Annotate the rows with the ranking and return them best first. One row
+    // list, never two (#1212 ruling). Outside the try/catch because a failure
+    // to annotate is not a ranking failure and must not be reported as one —
+    // and `out.ranked` is simply never assigned when ranking threw, so this
+    // no-ops there regardless of where it sits.
+    annotateResultsWithRanking(out);
   }
 
   // A nil marriage search is a prompt, not a finding. Same reasoning as the
@@ -1363,7 +1363,7 @@ export const recordSearchToolSchema = {
 
       subjectId: { type: "string", description: "A `persons[].id` from the project's tree.gedcomx.json (e.g. `\"I1\"`). Supply it together with `projectPath` and the tool ALSO ranks the results against that subject with FamilySearch's own matcher and returns them under `ranked` — match-scored, attachment-checked, best first. This replaces a separate `rank_search_matches` call. Supply it for any search where you know which tree person you are looking for, which is nearly all of them. Ranking never fails the search: on a ranking error you still get `results`, plus `rankingError`. Omit it only when the search is not about a specific tree person (a broad survey, or a person not yet in the tree)." },
       count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — every row comes back scored and ordered, so fetching a deep pool is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
-      top: { type: "number", description: "Cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful with `subjectId` and `projectPath`, since ranking does not otherwise run. When the ranking is usable the full `results` rows are dropped from the response, so `top` hides rows as well as shortening the ranked list: `top: 10` against a pool of 50 returns 10 stubs and no rows, where the other 40 are scored but invisible. Raise it or omit it to see them." },
+      top: { type: "number", description: "Cap on how many ranked stubs come back. Omit for every scored candidate, which is the default. Only meaningful with `subjectId` and `projectPath`, since ranking does not otherwise run. There is ONE row list: `results` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom — the rows it cuts are the worst-scoring ones, not a second hidden copy." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
       projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: results come back inline at full fidelity but nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },

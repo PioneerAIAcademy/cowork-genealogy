@@ -79,7 +79,7 @@ needs-review band; it does not accept/reject. (Design notes, guardrails.)
 | `projectPath` | string | yes | Absolute path to the active project directory. |
 | `stagedResultsRef` | string | yes | The `staged.resultsRef` handle from `record_search` (`results/.staging/<uuid>.json`). A finalized `results/<log_id>.json` ref is also accepted. |
 | `subjectId` | string | yes | A `persons[].id` in the project's `tree.gedcomx.json` — the research subject to match against. |
-| `top` | number | no | Cap on how many top-ranked stubs to return. **Omit for every scored candidate**, which is the default. A fixed count, not a score threshold (a good threshold is not yet known — see the score log). **`top` hides rows as well as shortening the ranked list:** when the ranking is usable the full `results` rows are dropped, so `top: 10` against a pool of 50 returns 10 stubs and no rows — the other 40 are scored, paid for and invisible. Raise it or omit it to see them. |
+| `top` | number | no | Cap on how many top-ranked stubs to return. **Omit for every scored candidate**, which is the default. A fixed count, not a score threshold (a good threshold is not yet known — see the score log). **There is ONE row list.** `results` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom: the rows it cuts are the worst-scoring ones, not a second hidden copy. |
 | `checkAttachments` | boolean | no | Default `false`. When `true`, fold one batch `source_attachments` call in host-side to set `attachedToSubject` / `attachedToOther` on the returned stubs. |
 
 `subjectId`, `projectPath`, `stagedResultsRef` are camelCase (MCP wire

@@ -453,17 +453,14 @@ def _stage_and_compact_search_results(
     backlog read before this call staged anything — handles, not a count, because
     the note names the refs (empty when unavailable).
 
-    The fourth element says whether production would drop the inline `results`
-    block because `ranked` replaces it (#1212). `ranked` is passed IN rather than
-    folded afterwards so the decision is made by the compiled
-    `dropInlineResultsWhenRanked` inside the process already running — a second
-    node process per search is the cost #2025 warns about, and a Python
-    restatement of the condition is what eval/CLAUDE.md forbids. The condition is
-    subtle enough to be worth not restating: `ranked` present with populated
-    `matches` is NOT sufficient, because the scoreable-subject/no-match branch
-    populates `matches` while telling the caller not to triage on them. The
-    caller applies the drop so this function keeps owning staging alone and the
-    response's key order stays where it was.
+    The fourth element is retained as always-False: production no longer drops
+    the inline `results` block. Under the #1212 ruling (2026-09-15) the rows are
+    ANNOTATED IN PLACE with the match score and returned best first, and `ranked`
+    keeps metadata only — one row list, never two. `ranked` is still passed IN so
+    the annotation runs through the compiled `annotateResultsWithRanking` inside
+    the process already running: a second node process per search is the cost
+    #2025 warns about, and a Python restatement of the shaping is what
+    eval/CLAUDE.md forbids.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
@@ -484,26 +481,23 @@ def _stage_and_compact_search_results(
 
     if ranked is not None and compactor_js.exists():
         compact_import += (
-            "import { dropInlineResultsWhenRanked, projectRowFieldsOntoRanked }"
+            "import { annotateResultsWithRanking }"
             f" from '{_url(compactor_js)}';"
         )
-        # The rank fixtures are hand-written and lean: they were authored when
-        # `ranked` shipped ALONGSIDE `results` and could afford to omit the
-        # triage fields. Production builds each stub FROM the row, so it never
-        # has that gap. Projecting the row fields on before the drop is what
-        # keeps the mock serving production's shape rather than strictly less
-        # than it — without this, every test that drops `results` grades the
-        # skill's triage on data production would really have sent.
+        # Production annotates the search rows with the ranking and returns them
+        # best first (#1212 ruling, 2026-09-15). The mock runs the SAME compiled
+        # function so the agent sees production's shape — one row list, scored
+        # and ordered — rather than a hand-written approximation of it. There is
+        # no longer a drop decision to probe: `results` is always present.
         drop_probe = (
-            " let dropResults = false;"
             " let rankedOut = input.ranked;"
             " if (r && input.ranked) {"
-            "   rankedOut = projectRowFieldsOntoRanked("
-            "     input.ranked, input.response.results ?? []);"
-            "   const probe = { ...input.response, ranked: rankedOut };"
-            "   dropInlineResultsWhenRanked(probe);"
-            "   dropResults = probe.results === undefined;"
+            "   const shaped = { ...input.response, ranked: input.ranked };"
+            "   annotateResultsWithRanking(shaped);"
+            "   input.response.results = shaped.results;"
+            "   rankedOut = shaped.ranked;"
             " }"
+            " const dropResults = false;"
         )
     else:
         drop_probe = " const dropResults = false; const rankedOut = input.ranked;"

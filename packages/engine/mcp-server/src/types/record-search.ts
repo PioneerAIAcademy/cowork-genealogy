@@ -257,6 +257,37 @@ export interface RecordSearchResult {
   deathDate?: string;
   deathPlace?: string;
   events: RecordSearchEvent[];
+  // ── Ranking annotations ─────────────────────────────────────────────────
+  // Present only when the search ranked (subjectId + projectPath + staged).
+  // They live on the row rather than on a parallel list because two lists of
+  // the same records, in two shapes, is what the #1212 ruling removed.
+  //
+  // `score`/`confidence` above are FAMILYSEARCH's own search score. These are
+  // the MATCHER's, computed against the subject — different numbers from a
+  // different system, which is why they do not share a name.
+  /** 1-based rank by match score; the order `results` is returned in. */
+  matchRank?: number;
+  /**
+   * The row's original 1-based position in FamilySearch's search order.
+   *
+   * This is what makes the re-ordering AUDITABLE rather than lossy: the
+   * response is sorted by match score, so without this the order the
+   * repository actually returned would be unrecoverable from the response.
+   * The staged sidecar preserves it too, by keeping search order.
+   */
+  searchRank?: number;
+  /** 0-1 match score; null when the FS call kept failing (the row is kept). */
+  matchScore?: number | null;
+  /** 1-10 confidence bucket; omitted on a no-match or a scoring failure. */
+  matchConfidence?: number;
+  /** How many facts this candidate carries that discriminate one human from
+   *  another. A low count means the score is unstable in either direction —
+   *  reported, never thresholded. */
+  candidateFactCount?: number;
+  /** Only set when attachment-checking ran and the batch call succeeded. */
+  attachedToSubject?: boolean;
+  attachedToOther?: boolean;
+  // ────────────────────────────────────────────────────────────────────────
   collectionId?: string;
   collectionTitle?: string;
   collectionUrl?: string;
@@ -306,12 +337,13 @@ export interface RecordSearchToolResponse {
   returned: number;
   offset: number;
   hasMore: boolean;
-  // Omitted when `ranked` carries the same rows in a usable form — the two
-  // blocks were the same records twice, in two shapes, on every subject-named
-  // search (#1212). Present whenever ranking did not run, threw, or returned a
-  // ranking the caller must not triage on (`subjectResolvable: false`), so a
-  // reader that needs rows always has exactly one place to find them.
-  results?: RecordSearchResult[];
+  // ALWAYS present. There is one row list, never two: when ranking runs the
+  // rows are ANNOTATED IN PLACE with the score fields and re-ordered best
+  // first, and `ranked` carries metadata only (#1212 ruling, 2026-09-15).
+  // An earlier shape dropped this block whenever `ranked` was usable; that
+  // needed a four-branch conditional and a parity guard to hold two row
+  // shapes in step, and both are gone with it.
+  results: RecordSearchResult[];
   // collectionId → collectionTitle for every collection in `results`, present
   // only on a STAGED response. The per-result `collectionTitle` repeats one of a
   // handful of strings on every row (9.4% of inline row bytes, measured); hoisting

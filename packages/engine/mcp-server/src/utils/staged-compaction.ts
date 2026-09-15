@@ -139,89 +139,74 @@ export function compactStagedFulltextSearch(
 }
 
 /**
- * Drop the inline `results` block when `ranked` already carries the same rows
- * in a usable form (#1212).
+ * Annotate the search rows with the ranking, in place, and return them best
+ * first.
  *
- * Separate from `compactStagedRecordSearch` because that runs BEFORE ranking
- * (record-search.ts stages and compacts, then ranks), so it has no `ranked` to
- * gate on. Exported rather than inlined at the call site because the eval mock
- * mirrors this path: a transformation that lives only in record-search.ts gets
- * re-implemented in mock_mcp.py and drifts (eval/CLAUDE.md, "post-staging
- * path"; #1826, #2009).
+ * ONE ROW LIST, NEVER TWO (#1212 ruling, 2026-09-15). The shape this replaces
+ * shipped `ranked.matches` and dropped `results`, which meant the same records
+ * existed in two shapes and needed a four-branch conditional to decide which to
+ * send and a packaging guard to hold the two field sets in step. Annotating the
+ * row removes the question.
  *
- * The condition is POSITIVE and two-part, and both parts are load-bearing:
+ * `searchRank` is what keeps the re-ordering AUDITABLE rather than lossy: the
+ * response comes back sorted by match score, so the position FamilySearch
+ * actually returned would otherwise be unrecoverable from the response alone.
  *
- *   - `matches` non-empty — `ranked` is absent when ranking never ran (no
- *     staged ref / no subject / no projectPath) and when it threw
- *     (`rankingError`), and `matches` is EMPTY when a thin subject made the
- *     ranking meaningless and it was withheld.
- *   - `subjectResolvable !== false` — the scoreable-subject/genuine-no-match
- *     branch leaves `matches` POPULATED while telling the caller not to triage
- *     on it. Dropping `results` there would hand back rows scoring at or below
- *     the degenerate floor as though they were a ranking, which is the exact
- *     silent degradation the withheld branch exists to refuse.
+ * The STAGED SIDECAR IS NOT TOUCHED. It keeps FamilySearch's search order,
+ * because it is an audit record of what the repository returned and re-sorting
+ * an audit trail by a score computed afterwards is exactly the thing to regret.
+ * It is also written before ranking runs, so the divergence is real rather than
+ * theoretical — the spec says so.
+ *
+ * A row the ranker never scored keeps its search position and gains no score
+ * fields, and sorts after every scored row rather than being dropped.
+ *
+ * Matching is by `recordId` reduced with `arkToBareId`: production emits a
+ * canonical ARK on both sides, but fixtures predate that and carry a bare
+ * `MXHY-TP4` against a full `ark:/61903/1:1:MXHY-TP4`. Exact matching silently
+ * annotates nothing there, which is the same failure as not calling this.
  *
  * Mutates and returns `out`.
  */
-export function dropInlineResultsWhenRanked(
+export function annotateResultsWithRanking(
   out: RecordSearchToolResponse,
 ): RecordSearchToolResponse {
   const ranked = out.ranked;
-  if (ranked && ranked.matches.length > 0 && ranked.subjectResolvable !== false) {
-    delete out.results;
-  }
-  return out;
-}
+  if (!ranked || !ranked.matches || ranked.matches.length === 0) return out;
+  if (!out.results || out.results.length === 0) return out;
 
-/**
- * Copy the triage fields a ranked stub carries from the search row it was built
- * from, for callers that did NOT build the stub themselves.
- *
- * Production never needs this: `rank_search_matches`'s `toStub` reads the staged
- * row directly, so `events` / `collectionId` / `recordTitle` / `treeMatches` are
- * on the stub by construction. The eval mock is the caller that does — it
- * composes a hand-written `ranked` fixture with a real `results` list, and those
- * fixtures were authored when `ranked` shipped ALONGSIDE `results` and could
- * therefore afford to be lean. Now that `ranked` replaces `results`, serving a
- * lean stub hands the agent strictly less than production does, and grades its
- * triage on data it would really have had.
- *
- * Matching is by `recordId` reduced with `arkToBareId`, not by string equality:
- * production emits a canonical ARK on both sides, but the committed fixtures
- * predate that and carry a bare `MXHY-TP4` on the row against a full
- * `ark:/61903/1:1:MXHY-TP4` on the stub. Exact matching silently projects
- * nothing there, which is the same failure as not calling this at all.
- *
- * Fields already present on the stub win, so a fixture that deliberately pins
- * an `events` list is never overwritten. Empty arrays are not copied, matching
- * `toStub`'s own guards — an empty `treeMatches` says "none" in bytes.
- *
- * Mutates and returns `ranked`.
- */
-export function projectRowFieldsOntoRanked(
-  ranked: RankSearchMatchesResult,
-  results: RecordSearchResult[],
-): RankSearchMatchesResult {
-  const rowById = new Map(results.map((r) => [arkToBareId(r.recordId), r]));
-  for (const stub of ranked.matches ?? []) {
-    const row = rowById.get(arkToBareId(stub.recordId));
-    if (!row) continue;
-    if (stub.events === undefined && row.events && row.events.length > 0) {
-      stub.events = row.events;
+  const stubById = new Map(
+    ranked.matches.map((m) => [arkToBareId(m.recordId), m]),
+  );
+  for (const row of out.results) {
+    const stub = stubById.get(arkToBareId(row.recordId));
+    if (!stub) continue;
+    row.matchRank = stub.matchRank;
+    row.searchRank = stub.searchRank;
+    row.matchScore = stub.matchScore;
+    if (stub.matchConfidence !== undefined) row.matchConfidence = stub.matchConfidence;
+    if (stub.candidateFactCount !== undefined) {
+      row.candidateFactCount = stub.candidateFactCount;
     }
-    if (stub.collectionId === undefined && row.collectionId) {
-      stub.collectionId = row.collectionId;
+    if (stub.attachedToSubject !== undefined) {
+      row.attachedToSubject = stub.attachedToSubject;
     }
-    if (stub.recordTitle === undefined && row.recordTitle) {
-      stub.recordTitle = row.recordTitle;
-    }
-    if (
-      stub.treeMatches === undefined &&
-      row.treeMatches &&
-      row.treeMatches.length > 0
-    ) {
-      stub.treeMatches = row.treeMatches;
+    if (stub.attachedToOther !== undefined) {
+      row.attachedToOther = stub.attachedToOther;
     }
   }
-  return ranked;
+
+  // Best first. An unscored row has no matchRank and sorts last, keeping its
+  // relative search order — it is not dropped, it is simply not ranked.
+  out.results.sort((a, b) => {
+    const ra = a.matchRank ?? Number.POSITIVE_INFINITY;
+    const rb = b.matchRank ?? Number.POSITIVE_INFINITY;
+    if (ra !== rb) return ra - rb;
+    return (a.searchRank ?? 0) - (b.searchRank ?? 0);
+  });
+
+  // `ranked` keeps its metadata and gives up its row list: the rows are on
+  // `results` now, and shipping both is the duplication this ruling removed.
+  delete (out.ranked as { matches?: unknown }).matches;
+  return out;
 }

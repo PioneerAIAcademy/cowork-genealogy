@@ -456,16 +456,12 @@ function toStub(s: ScoredCandidate, matchRank: number): RankedMatch {
   // nothing to add. Unlike `relativeTerms` this gets no advisory note — a batch
   // number is a lookup key for the next search, not a caveat on this score.
   if (r.batchNumber) stub.batchNumber = r.batchNumber;
-  // Carried verbatim because `ranked` now replaces the inline `results` block
-  // (#1212). `events` and `collectionId` are the two the issue named;
-  // `recordTitle` and `treeMatches` are the two it missed — `treeMatches` is
-  // advertised in record_search's own tool description, so dropping it would
-  // regress the dominant call shape. FamilySearch's `score`/`confidence` are
-  // deliberately not carried: `matchScore` supersedes them.
-  if (r.events && r.events.length > 0) stub.events = r.events;
-  if (r.collectionId) stub.collectionId = r.collectionId;
-  if (r.recordTitle) stub.recordTitle = r.recordTitle;
-  if (r.treeMatches && r.treeMatches.length > 0) stub.treeMatches = r.treeMatches;
+  // `events`, `collectionId`, `recordTitle` and `treeMatches` are NOT carried.
+  // They were added only so the stub could stand in for the search row while
+  // `ranked` replaced `results`. Under the #1212 ruling the row IS the row —
+  // annotated in place — so duplicating its fields onto the stub is the
+  // duplication the ruling removed. FamilySearch's `score`/`confidence` are
+  // likewise not carried: `matchScore` supersedes them.
   if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
   // Candidate-side thinness — reported alongside the score so a caller can see
   // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different
@@ -590,7 +586,7 @@ export const rankSearchMatchesSchema = {
           "Optional cap on how many top-ranked stubs to return. Omit to get " +
           "every scored candidate, which is the default. A fixed count, not a " +
           "score threshold. " +
-          "When the ranking is usable the full `results` rows are dropped from the response, so `top` hides rows as well as shortening the ranked list: `top: 10` against a pool of 50 returns 10 stubs and no rows, where the other 40 are scored but invisible. Raise it or omit it to see them.",
+          "There is ONE row list: `results` comes back annotated with the match score and ordered best first, so `top` shortens that list from the bottom — the rows it cuts are the worst-scoring ones, not a second hidden copy.",
       },
       checkAttachments: {
         type: "boolean",

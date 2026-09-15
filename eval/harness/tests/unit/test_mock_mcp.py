@@ -279,126 +279,66 @@ def test_record_search_folds_in_ranked_when_subject_given(tmp_path):
     assert body.get("staged"), "staging must still happen"
     assert "ranked" in body, "ranking should be folded into the search response"
     assert body["ranked"]["subjectId"] == "I1"
-    assert body["ranked"]["matches"], "the test's own rank fixture supplies the matches"
+    # Under the #1212 ruling the rank fixture's rows are annotated onto
+    # `results` and `ranked` keeps metadata only — one row list, never two.
+    assert "matches" not in body["ranked"]
+    assert body["results"], "the annotated rows are where the matches now live"
+    assert any(r.get("matchScore") is not None for r in body["results"])
 
 
 @pytest.mark.requires_engine_build
-def test_record_search_drops_inline_results_when_ranked_replaces_them(tmp_path):
-    """`ranked` replaces the inline rows rather than shipping beside them (#1212).
+def test_record_search_annotates_results_and_reorders_them(tmp_path):
+    """#1212 ruling (2026-09-15): one row list, never two.
 
-    The mock must send the shape production sends: a mock that keeps `results`
-    grades triage against a payload the agent never receives, which is the
-    #1826/#2009 failure the post-staging-path rule exists to prevent.
-
-    The verdict comes from the compiled `dropInlineResultsWhenRanked`, so this
-    also pins that the mock is calling it rather than restating the condition.
-    """
+    The mock must serve production's shape — rows annotated with the match score
+    and returned best first — because the skill's triage is graded on what it
+    sees. Serving un-annotated rows grades triage on data production would
+    really have sent."""
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
         FIXTURES_DIR,
         workspace=tmp_path,
     )
-    result = _invoke(
-        tools_by_name,
-        "record_search",
-        {
-            "surname": "Flynn",
-            "givenName": "Patrick",
-            "projectPath": str(tmp_path),
-            "subjectId": "I1",
-        },
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {
+                "surname": "Flynn",
+                "givenName": "Patrick",
+                "projectPath": str(tmp_path),
+                "subjectId": "I1",
+            },
+        )
     )
-    body = _extract_response_dict(result)
-    assert body.get("staged"), "staging must still happen"
-    assert body["ranked"]["matches"], "fixture must supply a usable ranking"
-    assert body["ranked"].get("subjectResolvable") is not False
-    assert "results" not in body, (
-        "ranked carries these rows; shipping `results` too is the duplication "
-        "#1212 removed"
-    )
-    # The rows are still reachable — dropped from the inline block, not lost.
-    assert body.get("staged"), "the sidecar still holds the full-fidelity rows"
+    rows = body["results"]
+    scored = [r for r in rows if r.get("matchScore") is not None]
+    assert scored, "the rank fixture's scores must reach the rows"
+    # Best first, and every scored row keeps its original search position so the
+    # re-ordering is auditable rather than lossy.
+    ranks = [r["matchRank"] for r in scored]
+    assert ranks == sorted(ranks), f"rows must be ordered by matchRank, got {ranks}"
+    assert all(r.get("searchRank") is not None for r in scored)
+    assert "matches" not in body["ranked"], "`ranked` carries metadata only"
 
 
-@pytest.mark.requires_engine_build
-def test_dropped_results_do_not_take_the_triage_fields_with_them(tmp_path):
-    """The rank fixtures are lean; `results` is not. Dropping one without
-    projecting the other hands the agent strictly less than production sends.
+def test_record_search_never_drops_results(tmp_path):
+    """The drop conditional is gone with the ruling: rows always come back.
 
-    Caught by a real eval run, not by reasoning: `ut_search_records_014`
-    regressed pass -> fail because the household `events` the skill needs for
-    the Step-4 age cross-check lived only on the dropped `results` row. All 16
-    committed rank fixtures are lean, because they were authored when `ranked`
-    shipped ALONGSIDE `results`.
-    """
+    Previously three separate tests pinned the branches of a four-way
+    conditional deciding when `results` could be removed. There is no decision
+    now, so the property to hold is simply that it never disappears."""
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-1850-census-flynn", "rank-search-matches-flynn-census"],
         FIXTURES_DIR,
         workspace=tmp_path,
     )
-    result = _invoke(
-        tools_by_name,
-        "record_search",
-        {
-            "surname": "Flynn",
-            "givenName": "Patrick",
-            "projectPath": str(tmp_path),
-            "subjectId": "I1",
-        },
-    )
-    body = _extract_response_dict(result)
-    assert body.get("staged"), "staging must still happen"
-    assert "results" not in body, "precondition: this fixture pair drops results"
-
-    # The fixture's own stubs carry none of these; they must arrive by
-    # projection from the rows that were dropped.
-    carried = [
-        m
-        for m in body["ranked"]["matches"]
-        if any(k in m for k in ("events", "collectionId", "recordTitle", "treeMatches"))
-    ]
-    assert carried, (
-        "every triage field vanished with `results` — the agent is being graded "
-        "on less than production would send it"
-    )
-
-
-@pytest.mark.requires_engine_build
-def test_record_search_keeps_inline_results_on_a_scoreable_no_match(tmp_path):
-    """The arm a length-only drop condition gets wrong (#1212).
-
-    `subjectResolvable: false` with POPULATED matches means "the subject is
-    scoreable and nothing in this pool matches it" — the rows exist but every
-    score sits at or below the degenerate floor. Dropping `results` here would
-    leave the agent holding search order wearing match scores, which is the
-    silent degradation the withheld branch exists to refuse.
-
-    The mock must reproduce that, or no unit eval can ever grade the skill's
-    response to a genuine negative against the payload production sends.
-    """
-    server, call_log, tools_by_name = create_mock_server(
-        ["record-search-1850-census-flynn", "rank-search-matches-pool-has-no-match"],
-        FIXTURES_DIR,
-        workspace=tmp_path,
-    )
-    result = _invoke(
-        tools_by_name,
-        "record_search",
-        {
-            "surname": "Flynn",
-            "givenName": "Patrick",
-            "projectPath": str(tmp_path),
-            "subjectId": "I1",
-        },
-    )
-    body = _extract_response_dict(result)
-    assert body.get("staged"), "staging must still happen"
-    assert body["ranked"]["subjectResolvable"] is False
-    assert body["ranked"]["matches"], "this branch returns the matches, unlike the withheld one"
-    assert body.get("results"), (
-        "a ranking the caller must not triage on does not replace the inline "
-        "rows — dropping them here hands back search order wearing match scores"
-    )
+    for args in (
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path), "subjectId": "I1"},
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+    ):
+        body = _extract_response_dict(_invoke(tools_by_name, "record_search", args))
+        assert body.get("results"), f"results must survive for args={sorted(args)}"
 
 
 def test_record_search_keeps_inline_results_when_no_ranking_is_folded(tmp_path):
