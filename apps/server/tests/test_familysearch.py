@@ -422,6 +422,13 @@ async def test_revoke_sandboxes_destroys_active_projects(monkeypatch):
                 "API-key user's project must survive the sweep"
             assert s.get(FamilySearchToken, "usr_revoke_test_01") is None, \
                 "revoked user's FS token must be deleted"
+            revoked_user = s.get(User, "usr_revoke_test_01")
+            assert revoked_user is not None and revoked_user.sessions_revoked_at is not None, \
+                "revoked user's sessions must be invalidated"
+            assert s.get(User, "usr_revoke_test_02").sessions_revoked_at is None, \
+                "allowlisted user's sessions must not be invalidated"
+            assert s.get(User, "usr_revoke_test_03").sessions_revoked_at is None, \
+                "API-key user's sessions must not be invalidated"
 
         with Session(get_engine()) as s:
             for uid in ("usr_revoke_test_01", "usr_revoke_test_02", "usr_revoke_test_03"):

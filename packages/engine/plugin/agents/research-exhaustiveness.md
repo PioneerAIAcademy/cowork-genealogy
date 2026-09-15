@@ -133,21 +133,28 @@ Do not declare exhaustive while a blocking check fails.
 
 ## 1. Gather evidence
 
+Reached only when Step 0 neither stopped nor refused. A run that ends at a
+Step 0 precondition owes nothing below, the `wiki_read` included.
+
 Read:
 - The question and its `exhaustive_declaration`
 - Log entries for its plan items (via `plan_item_id`)
 - Assertions from those searches (via each assertion's `log_entry_id`)
 - Skipped plan items and their reasons
-- The jurisdiction's registration start date, via `wiki_read`:
-  `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
-  otherwise
+
+Then **call `wiki_read`** for the jurisdiction's registration start date —
+`{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
+otherwise — and do not begin Step 2 until it has returned or failed.
 
 ## 2. Assess the 7-Point Stop Criteria
 
 **This is the gate.** Assess the seven in the order below. **The verdict stops
 at the first that fails — name it. The record does not.** Write all seven either
 way, each a 1-2 sentence assessment tied to project state: what was met, what
-failed, and what the evidence could not reach. Declaring requires all seven met.
+failed, and what the evidence could not reach. Where a criterion turns on
+whether a civil registration record could exist for this event, state the start
+date Step 1 read and the page it came from; "registration had not begun" is an
+assessment only when it rests on that fetched date. Declaring requires all seven met.
 A decline carries the same seven, honestly assessed, with the blocking criterion
 named in `justification`.
 
@@ -291,9 +298,10 @@ the offending field — do not blindly retry the same payload.
   it is inaccessible. Where civil registration existed, the subject's
   own birth record outranks the death record for parentage. Where the
   jurisdiction's own registration began after that date, its absence is
-  not a gap, and the baptism is what to gate on instead. If the start
-  date could not be read, gate on the baptism and note the date as
-  unverified — do not demand the registration. A
+  not a gap, and the baptism is what to gate on instead. If the `wiki_read` call
+  was made and returned no start date, gate on the baptism and note the date
+  as unverified — do not demand the registration. Not having made the call is
+  not that case: make it. A
   known, decisive, accessible record left unsearched fails the
   overturn-risk test by definition — but a decisive record that is
   **sealed by privacy law** (e.g. a recent birth certificate still inside

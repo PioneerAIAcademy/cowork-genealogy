@@ -2217,11 +2217,15 @@ async function prepareOps(
           (typeof logEntry.results_examined === "number" &&
             logEntry.results_examined > 0);
         if (producerTools.has(logEntry.tool) && foundResults) {
+          const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
+          const lossClause = personaBearing
+            ? "record_persona_id cannot be resolved and would be lost"
+            : "the retained transcript and the record_id canonicalization would be lost";
           errors.push(
             fmt(
               i,
               `log entry '${logId}' (${logEntry.tool}) returned results but staged no sidecar ` +
-                "(results_ref is null) — record_persona_id cannot be resolved and would be lost. " +
+                `(results_ref is null) — ${lossClause}. ` +
                 "Re-run the search WITH projectPath so the results are staged, then re-append.",
             ),
           );
