@@ -240,6 +240,12 @@ class E2eResult:
     # `tool_calls` alone, is diagnosable directly from the committed runlog.
     # See subagent_capture.py.
     subagents: list[dict[str, Any]] = field(default_factory=list)
+    # Why `subagents` is empty, so [] stops meaning three things (#2468):
+    # captured | no_cache_dir | matched_no_transcripts | error.
+    # Defaults to "unknown", not "captured": the orchestrator always sets it, and
+    # a record that says "captured" beside an empty list would restate the exact
+    # ambiguity this field exists to remove.
+    subagent_capture_status: str = "unknown"
 
     # docs/specs/guardrail-enforcement-spec.md §8 — the HARD guardrail
     # detector's findings: a guardrail skill's effect present in the final

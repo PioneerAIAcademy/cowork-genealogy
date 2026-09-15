@@ -41,6 +41,11 @@ class ValidatorRunResult:
     # `outcome` is the field that can; keep it the discriminator rather than
     # re-deriving one from the `error` prose.
     skipped: bool = False
+    # True when the report_* function's signature draws only from
+    # before_state, after_state, test, and skill_frontmatter AND reads
+    # at least one of before_state/after_state — it reads persisted
+    # project state, not the response.
+    state_derived: bool = False
 
     @property
     def outcome(self) -> str:
@@ -63,6 +68,7 @@ def run_validators(
     blocked_owned_section_writes: list[dict[str, Any]] | None = None,
     attempted_mcp_calls: list[dict[str, Any]] | None = None,
     skills_invoked: list[str] | None = None,
+    builtin_tool_calls: list[dict[str, Any]] | None = None,
     text_response: str | None = None,
     activated: bool | None = None,
     num_turns: int | None = None,
@@ -87,6 +93,14 @@ def run_validators(
         # the LLM judge, which has misread it (a judge scored "failed to call
         # search-external-sites" on a run where the hook recorded the call).
         "skills_invoked": list(skills_invoked or []),
+        # Every built-in (non-MCP) tool call the run made, as
+        # {"tool", "args", "agent_id"?} — see skill_runner.builtin_call_record.
+        # The direct-agent arm (issue #2246) reads the `Agent`/`Task` records out
+        # of this to assert the spawn happened and that the delegation was
+        # relayed verbatim; `skills_invoked` cannot answer either, because a
+        # direct test invokes no skill at all. Derive with
+        # skill_runner.spawned_agents / spawn_prompts rather than re-walking it.
+        "builtin_tool_calls": list(builtin_tool_calls or []),
         # Main-thread calls to subagent-only tools that the PreToolUse hook
         # denied (harness.context_policy). Non-empty means the skill broke the
         # context boundary. Note this is the *denied* set: because the hook
@@ -193,6 +207,10 @@ def _import_validator_module(path: Path, name: str):
                 pass
 
 
+_STATE_ARGS = frozenset({"before_state", "after_state", "test", "skill_frontmatter"})
+_READS_STATE = frozenset({"before_state", "after_state"})
+
+
 def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResult]:
     out: list[ValidatorRunResult] = []
     for attr_name in dir(module):
@@ -204,6 +222,10 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
         if not callable(fn):
             continue
         sig = inspect.signature(fn)
+        params = set(sig.parameters)
+        is_state_derived = (
+            is_report and params <= _STATE_ARGS and bool(params & _READS_STATE)
+        )
         try:
             kwargs = {
                 name: available_args[name]
@@ -237,6 +259,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
             out.append(ValidatorRunResult(
                 name=attr_name, passed=True, error=None,
                 reporting_only=is_report,
+                state_derived=is_state_derived,
             ))
         except AssertionError as e:
             out.append(
@@ -244,6 +267,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                     name=attr_name, passed=False,
                     error=str(e) or "assertion failed",
                     reporting_only=is_report,
+                    state_derived=is_state_derived,
                 )
             )
         except Skipped as e:
@@ -264,6 +288,7 @@ def _run_module(module, available_args: dict[str, Any]) -> list[ValidatorRunResu
                     error=f"skipped: {e}",
                     reporting_only=is_report,
                     skipped=True,
+                    state_derived=is_state_derived,
                 )
             )
         except Exception as e:  # noqa: BLE001 — validator bug, surface verbatim
@@ -297,16 +322,30 @@ def as_dicts(results: list[ValidatorRunResult]) -> list[dict[str, Any]]:
     ]
 
 
-def split_observations(results: list[ValidatorRunResult]) -> list[str]:
+def split_observations(
+    results: list[ValidatorRunResult],
+) -> tuple[list[str], list[str]]:
     """Extract anonymous observation texts from tier-2 report_* results.
 
-    Returns r.error (the observation text) for every reporting-only result
-    that failed and has an error message. Passing report_* results are
-    excluded (only fired findings appear). r.name (the function name) is
-    never included — it is a verdict, not an observation, and handing it
-    to the judge would anchor the grade.
+    Returns (response_observations, state_observations). Each list carries
+    r.error (the observation text) for every reporting-only result that
+    failed and has an error message. The partition is by function signature:
+    a report_* whose parameters draw only from before_state, after_state,
+    test, and skill_frontmatter AND include at least one of before_state or
+    after_state is state-derived (reads persisted project state); the rest
+    are response-derived.
+
+    Passing report_* results are excluded (only fired findings appear).
+    r.name (the function name) is never included — it is a verdict, not
+    an observation, and handing it to the judge would anchor the grade.
     """
-    return [
-        r.error for r in results
-        if r.reporting_only and not r.passed and r.error
-    ]
+    response_obs: list[str] = []
+    state_obs: list[str] = []
+    for r in results:
+        if not (r.reporting_only and not r.passed and r.error):
+            continue
+        if r.state_derived:
+            state_obs.append(r.error)
+        else:
+            response_obs.append(r.error)
+    return response_obs, state_obs

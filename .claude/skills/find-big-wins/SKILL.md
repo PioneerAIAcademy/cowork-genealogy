@@ -39,17 +39,17 @@ grant. `Bash` can write any file, so it does not widen it — editing anything e
 — a skill, a spec, an issue body on disk, another ADR — is outside it even though
 the tools would let you. Nothing mechanical enforces this; it is on you.
 
-## The boundary against `/audit-board`
+## The boundary against the board passes
 
 They read the same board and answer different questions.
 
-| | `/audit-board` | this skill |
+| | `/audit-board`, `/merge-issues` | this skill |
 |---|---|---|
 | Asks | What is the best handling of these issues, **given the current design**? | What change to the **design** stops this class of issue existing? |
 | Moves | merge, batch, sequence, close | remove a constraint, eliminate a class, delete a mechanism |
 | Output | a disposition per issue | a bet, with a probe that could kill it |
 
-Six issues about one skill's eval slot: `/audit-board` merges them into two so
+Six issues about one skill's eval slot: `/merge-issues` merges them into two so
 one paid run carries three. This skill asks why landing a prose edit costs a
 paid run at all.
 
@@ -68,10 +68,21 @@ named. Each `next run: <skill>` issue is a queue that exists only because of the
 paid-run tax — both are *symptoms already localized for you*.
 
 The **paid-run tax table** lives only in `/audit-board`'s report, not on disk.
-If the lead has this week's output to hand, take the table from it. If not, do
-**not** rebuild it: derive queue depth from the `next run:` issues, and say in
-your report that the tax table was not re-derived and which numbers are
-therefore unavailable.
+If the lead has this week's output to hand, take the table from it. If not,
+rebuild only its queue-depth column, which is on disk:
+
+```sh
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
+  --json number,title,body,labels,assignees,createdAt > /tmp/open.json
+gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
+  --json number,title,files > /tmp/prs.json
+python3 .claude/skills/merge-issues/slots.py /tmp/board.json /tmp/open.json /tmp/prs.json
+```
+
+A slot still deep after `/merge-issues` has run is a queue nobody could merge —
+the strongest single symptom this layer offers. Say in your report which of the
+table's other columns you could not re-derive.
 
 ## How this run is scoped
 
@@ -124,7 +135,7 @@ scheduling constraint someone hit repeatedly.
 
 **The same undone thing re-filed three times.** The tell is a repeated
 *sentence*, not a repeated file: "measure this before graduating," "we need to
-decide X first," "this exists so we don't repeat #N." `/audit-board` merges
+decide X first," "this exists so we don't repeat #N." `/merge-issues` merges
 those. This skill asks what mechanism is missing such that three people
 independently re-derived the same undone task.
 

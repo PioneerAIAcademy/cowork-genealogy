@@ -252,7 +252,7 @@ def main(argv: list[str] | None = None) -> int:
             "not the only lever — ClaudeAgentOptions.effort also works — but it "
             "is the one proven to reach subagents. Vary it to test whether a "
             "runaway-thinking subagent freeze clears (see "
-            "subagents[].runaway_thinking)."
+            "subagents[].runaway_thinking; if empty, read subagent_capture_status)."
         ),
     )
     parser.add_argument(
@@ -325,8 +325,8 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help=(
             "Deny Read/Grep/Glob of the project folder — research.json, the tree, "
-            "results/ sidecars, evaluations/ — so the agent must use "
-            "project_context, research_query and record_read instead, as the "
+            "results/ sidecars, evaluations/, uploads/ — so the agent must use "
+            "project_context, research_query, record_read and sidecar_read instead, as the "
             "hosted sandbox would. The staged .claude/ tree and the CLI's "
             "tool-results spill files stay readable. Every attempt lands in "
             "blocked_tree_reads with blocked_by: path. Default off. Recorded in "
