@@ -321,34 +321,42 @@ def test_sources_still_fires_on_a_fabricated_url_outside_a_comment():
 
 # --- report_reply_does_not_restate_the_saved_file (tier 2) -------------
 
-# Both replies below are verbatim from committed run logs, not invented.
+# Both replies below are byte-for-byte what the model produced, copied out of
+# the committed run logs -- full length, original punctuation, nothing tidied.
 # The violating one recites the saved document into chat after a correct
 # closing sentence; the compliant one carries the same required narration
 # preambles and stops.
+#
+# Keep them exact. An earlier revision shortened the reciting reply to a third
+# of its length and flattened an em dash to a hyphen while still calling both
+# verbatim (caught in review on #2577). The narration guard's whole value is
+# that it is the reply the model actually produced rather than a tidied one,
+# and the non-ASCII these carry -- an u-umlaut in "Kirchenbuecher", an en dash,
+# an em dash -- is exactly what a construct regex could one day care about.
+# If you ever need a shortened version, call it an excerpt.
 _SAVED = {"files": {"german-church-records.md": "x"}}
 
 # ut_search_wiki_003, run v1_2026-08-19_13-00-35.
 _RECITING_REPLY = (
-    "Searching complete. Now let me read the template and save the summary."
-    "Now I'll write the summary file.The guidance has been saved to "
-    "**`german-church-records.md`**, which includes a **Sources** section "
-    "citing the wiki pages used. Here's a summary of what the wiki says:\n"
-    "\n---\n\n**German Church Records** are the key source for German "
-    "ancestry before civil registration.\n\n- Catholic and Protestant "
-    "parishes each kept their own registers\n- Records are organized by "
-    "parish, not town\n"
+    "Searching complete. Now let me read the template and save the summary.Now I'll write the summary file.The guidance has been saved to **`german-church-records.md`**, which includes a **Sources** section citing the wiki pages used. Here's a summary of what the wiki says:\n"
+    "\n"
+    "---\n"
+    "\n"
+    "**German Church Records (Kirchenbücher)** are the key source for German ancestry before civil registration. Catholic and Protestant parishes each kept their own registers of baptisms, marriages, and burials — many starting in the 1600s, with some Catholic registers going back to the mid-1500s. Because records are organized by **parish, not town**, your first step is identifying which parish served your ancestor's village.\n"
+    "\n"
+    "**Finding the right parish:** Use a gazetteer — specifically *Meyers Orts- und Verkehrs-Lexikon des Deutschen Reichs*, which covers every place in the 1871–1918 German Empire and names the Catholic and Protestant parishes for each locality.\n"
+    "\n"
+    "**Where to access the records:**\n"
+    "- **FamilySearch Catalog** — search by parish or town name for microfilmed/digitized records\n"
+    "- **Archion** (subscription) — Protestant church records\n"
+    "- **Matricula** (subscription) — Catholic church records\n"
+    "- **Regional church archives** (Landeskirchliches Archiv or Kirchenbuchamt) — for records not yet digitized"
 )
 
 # ut_search_wiki_006, run v1_2026-08-19_14-53-19 - narration present,
 # no recitation.
 _COMPLIANT_REPLY = (
-    "Now I have everything I need. Let me write the summary file.The "
-    "FamilySearch Wiki guidance has been saved to **`marriage-records.md`**. "
-    "It covers where marriage records were kept (county clerks, churches, or "
-    "state vital records offices depending on era), the shift from church to "
-    "civil registration in the late 1800s, and the types of documents you may "
-    "encounter - licenses, certificates, bonds, and banns. The file includes "
-    "a **Sources** section citing the two wiki pages used."
+    "Now I have everything I need. Let me write the summary file.The FamilySearch Wiki guidance has been saved to **`marriage-records.md`**. It covers where marriage records were kept (county clerks, churches, or state vital records offices depending on era), the shift from church to civil registration in the late 1800s, and the types of documents you may encounter — licenses, certificates, bonds, and banns. The file includes a **Sources** section citing the two wiki pages used."
 )
 
 
