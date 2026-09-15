@@ -33,9 +33,6 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
  * the relative-discovery route is what that guidance exists to do. Recorded as an
  * increase rather than argued away.
  *
- * #2367/#2336 added 67 characters to `isPrincipal` (mentioning `role` on search
- * results and `principal` on record_read persons), `record_search` 14,469 -> 14,536.
- *
  * #1771 brought `record_search.birthYearExact` from 475 down to 214
  * (the year behaviour is now measured, so its paragraph collapses to a one-liner)
  * and deleted its exemption. What this lint buys is that the shared rule is stated

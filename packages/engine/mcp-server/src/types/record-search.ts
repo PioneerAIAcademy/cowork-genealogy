@@ -291,15 +291,6 @@ export interface RecordSearchResult {
   // Absence means "this record does not trace to a batch", NEVER "this
   // collection has none".
   batchNumber?: string;
-  // FamilySearch's own label for the represented persona's role on this record
-  // ("Principal", "Father", "Mother", "Spouse", "Other"). Flat and top-level
-  // for the same reason as relativeTerms and batchNumber: the staged slim block
-  // strips gedcomx, and a role the model cannot see in the staged case is the
-  // one case that matters. This is FamilySearch's vocabulary, not a
-  // research.json record_role value — an absent role means unknown, never
-  // "principal". Present on 100% of search personas (measured 2026-09-14,
-  // dev/probe-persona-role-coverage.ts).
-  role?: string;
 }
 
 export interface RecordSearchToolResponse {

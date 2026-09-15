@@ -11,7 +11,6 @@ export interface GedcomX {
 
 export interface GedcomXPerson {
   id?: string;
-  principal?: boolean;
   gender?: { type: string };
   names?: GedcomXName[];
   facts?: GedcomXFact[];
@@ -113,7 +112,6 @@ export interface SimplifiedGedcomX {
 export interface SimplifiedPerson {
   id?: string;
   ark?: string;
-  principal?: boolean;
   gender?: string;
   names?: SimplifiedName[];
   facts?: SimplifiedFact[];
@@ -177,19 +175,10 @@ export interface SimplifiedSourceReference {
 
 export interface SimplifiedSourceDescription {
   id?: string;
-  resource_type?: string;
   title?: string;
   citation?: string;
   author?: string;
   url?: string;
-  coverage?: SimplifiedCoverage;
-}
-
-export interface SimplifiedCoverage {
-  standard_place?: string;
-  place_id?: string;
-  date_range?: string;
-  record_type?: string;
 }
 
 export interface SimplifiedPlaceDescription {

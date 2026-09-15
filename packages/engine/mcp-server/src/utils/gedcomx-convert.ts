@@ -157,8 +157,6 @@ function simplifyPerson(person: GedcomXPerson): SimplifiedPerson {
     out.ark = toArk(persistent[0]);
   }
 
-  if (person.principal === true) out.principal = true;
-
   const gender = simplifyGender(person.gender);
   if (gender !== undefined) out.gender = gender;
 
@@ -406,10 +404,6 @@ function simplifySourceDescription(
   const out: SimplifiedSourceDescription = {};
   if (desc.id !== undefined) out.id = desc.id;
 
-  if (typeof desc.resourceType === "string") {
-    out.resource_type = desc.resourceType.replace(/.*\//, "");
-  }
-
   if (Array.isArray(desc.titles) && desc.titles.length > 0) {
     out.title = desc.titles[0].value;
   }
@@ -419,35 +413,6 @@ function simplifySourceDescription(
   }
 
   if (typeof desc.about === "string") out.url = desc.about;
-
-  if (Array.isArray(desc.coverage) && desc.coverage.length > 0) {
-    const cov = desc.coverage[0];
-    const simplified: SimplifiedSourceDescription["coverage"] = {};
-    let hasCoverage = false;
-
-    if (cov.spatial?.description) {
-      const placeIdMatch = cov.spatial.description.match(/(\d+)$/);
-      if (placeIdMatch) {
-        simplified.place_id = placeIdMatch[1];
-        hasCoverage = true;
-      }
-    }
-
-    if (cov.temporal?.original) {
-      simplified.date_range = cov.temporal.original;
-      hasCoverage = true;
-    } else if (cov.temporal?.formal) {
-      simplified.date_range = cov.temporal.formal;
-      hasCoverage = true;
-    }
-
-    if (cov.recordType) {
-      simplified.record_type = cov.recordType.replace(/.*\//, "");
-      hasCoverage = true;
-    }
-
-    if (hasCoverage) out.coverage = simplified;
-  }
 
   return out;
 }
