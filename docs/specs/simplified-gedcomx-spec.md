@@ -158,6 +158,7 @@ Array of person objects.
 | `place` | string | no | Place description as a human-readable string (the verbatim original text) |
 | `standard_place` | string | no | Standardized place name (the snake_case data-format spelling of `standardPlace` from `place_search`). Populated by the converter from raw `place.normalized`, or resolved from `place` via `place_search` by `toSimplifiedStandardized`. Dropped on reverse conversion, like `standard_date` |
 | `value` | string | no | A qualifier carrying the meaning of the fact when `type + date + place` isn't enough — e.g. `"Newpaper Editor"` for an Occupation fact, `"United States"` for a Citizenship fact, `"Continental Congress"` for a `data:,Elected` fact. Preserved verbatim from raw GedcomX |
+| `assertion_id` | string | no | The `research.json` assertion this fact was minted from. Stamped by `materialize_facts` on the **mint** branch only — never on corroboration, never inferred from a match, never accepted from a caller (`tree_edit` rejects it). It is what lets a later correction to that assertion find the fact it produced (`tree-materialization-spec.md` §4.4). Dropped when a human corrects the fact directly and when a merge folds facts that do not all carry the same backlink. Dropped on reverse conversion, like `standard_date` |
 | `sources` | object[] | no | Source references for this fact |
 
 ### 4.2 `relationships`
