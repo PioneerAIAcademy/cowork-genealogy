@@ -1598,6 +1598,7 @@ def _prompt_parts_kwargs(sample_rubric):
         file_changes_summary="changes",
         tool_calls=[],
         harness_observations=["sample observation"],
+        state_observations=["sample state observation"],
     )
 
 
@@ -1995,3 +1996,29 @@ def test_only_fired_observations_reach_the_prompt():
     # The function name (e.g. "report_example_check") should NOT be in the
     # judge prompt — it goes only to the run log via _build_warnings.
     assert "report_" not in out
+
+
+# --- state observations in the prompt (issue #2515) -------------------------
+
+
+def test_state_observations_appear_in_the_prompt():
+    out = _minimal_prompt(state_observations=["field X missing from research.json"])
+    assert "field X missing from research.json" in out
+
+
+def test_no_state_observations_renders_a_neutral_marker():
+    out = _minimal_prompt(
+        state_observations=[], harness_observations=["a response observation"]
+    )
+    section = out.split("## Harness observations on persisted project state", 1)[1]
+    assert section.lstrip().startswith("(no observations)")
+    assert "{state_observations}" not in out
+
+
+def test_state_and_response_observations_coexist():
+    out = _minimal_prompt(
+        harness_observations=["response mentions a volume"],
+        state_observations=["field X missing"],
+    )
+    assert "response mentions a volume" in out
+    assert "field X missing" in out
