@@ -30,12 +30,20 @@ The closing-message rule (SKILL.md step 5, "Keep it brief") is enforced here
 as **tier 2** — `report_reply_does_not_restate_the_saved_file`. It was held off
 this file for months on the grounds that it would "fail every positive test at
 once" and, via `_compute_outcome`, destroy the dimension scores that diagnose
-the skill. That reasoning applies only to a gating `test_*` validator.
-`compute_validators_passed` skips tier-2 results outright
+the skill. Half of that is now out of date and half still stands:
+
+  - The dimension-score half died with #2057 (PR #2444, merged 2026-09-14).
+    A validator failure no longer skips the judge — see `_compute_outcome`'s
+    own docstring, `orchestrator.py:1532`. The grading would survive.
+  - The outcome half stands. `if not validators_passed: return "fail"`
+    (`orchestrator.py:1562`) runs AHEAD of every other branch, so a `test_*`
+    version would still mark ~88% of file-saving runs failed.
+
+`compute_validators_passed` filters tier-2 results out entirely
 (`if not r.reporting_only  # tier-2 never gates`, issue #1749), so a `report_*`
 version measures the violation and hands it to the judge as an observation
-without ever reddening a run or suppressing the judge. See that function's
-docstring for the corpus evidence.
+without reddening a single run. See that function's docstring for the corpus
+evidence.
 """
 
 from __future__ import annotations
@@ -327,12 +335,16 @@ def report_reply_does_not_restate_the_saved_file(
     forbids. 53 of the 60 file-saving runs in the five committed run logs carry
     at least one.
 
-    **Why tier 2, not tier 1.** A failing gating validator returns "fail" and
-    skips the judge entirely, so a `test_*` version would fire on ~88% of
-    file-saving runs and take the Correctness / Summary-faithful grading down
-    with it -- the craft signal this skill is diagnosed by. `report_*` results
-    are filtered out of `compute_validators_passed` (issue #1749), so this
-    reports without gating.
+    **Why tier 2, not tier 1.** A failing gating validator still forces the
+    run's outcome: `if not validators_passed: return "fail"`
+    (`orchestrator.py:1562`) runs ahead of every other branch. A `test_*`
+    version would fire on 53 of the 60 file-saving runs in the corpus, marking
+    ~88% of this skill's positives failed for what is a reporting-grade
+    observation. (It would no longer cost the dimension scores as well --
+    since #2057 a validator failure does not skip the judge -- but an outcome
+    of "fail" on 88% of positives is reason enough.) `report_*` results are
+    filtered out of `compute_validators_passed` (issue #1749), so this reports
+    without gating.
 
     **Why this does not fire on required narration.** `SKILL.md:24` mandates a
     one-line preamble per action, and `text_response` is every assistant turn,
