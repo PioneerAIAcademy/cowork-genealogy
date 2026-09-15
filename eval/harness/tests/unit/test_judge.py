@@ -1086,6 +1086,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     zero_call_draws = 0
     na_coerced: set[tuple[str, str]] = set()
     na_leaked: list[str] = []
+    restored_coerced_cells = 0
 
     for p in log_paths:
         d = json.loads(p.read_text(encoding="utf-8"))
@@ -1107,6 +1108,33 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 dims = jd.get("dimensions") or []
                 if not dims:
                     continue
+                # A `coerced_routing_negative_to_na` run carries dimensions the
+                # ORCHESTRATOR nulled after the judge returned (orchestrator.py).
+                # Replaying those as-is feeds harness output back in as though it
+                # were a judge draw, and judge.py's base-null rule rightly rejects
+                # it. Restore the judge's original score from the warning — which
+                # orchestrator.py appends BEFORE mutating precisely so it survives
+                # — and replay the whole draw. Restoring rather than skipping keeps
+                # the draw's OTHER cells under test; skipping the draw would narrow
+                # the guard a little more with every coerced run. A null with no
+                # warning behind it still raises, which is the property worth
+                # keeping. Contrast `coerced_tool_arguments_to_na`, which
+                # _extract_dimensions performs ITSELF and so replays cleanly.
+                coerced = {
+                    w["name"]: w["score"]
+                    for w in ((r.get("output") or {}).get("warnings") or [])
+                    if (w or {}).get("kind") == "coerced_routing_negative_to_na"
+                    and w.get("name") is not None
+                    and w.get("score") is not None
+                }
+                if coerced:
+                    dims = [
+                        {**dim, "score": coerced[dim["name"]]}
+                        if dim.get("name") in coerced and dim.get("score") is None
+                        else dim
+                        for dim in dims
+                    ]
+                    restored_coerced_cells += len(coerced)
                 total_draws += 1
                 # The run's OWN tool calls, never a stand-in: the #1406
                 # N/A rule keys on this list being empty, so substituting
@@ -1145,6 +1173,7 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
     print(
         f"\ncorpus replay: {len(log_paths)} run logs, {total_draws} judge draws, "
         f"{dropped_total} dimension(s) dropped-with-warning, "
+        f"{restored_coerced_cells} orchestrator-coerced cell(s) restored, "
         f"{len(unexpected_raises)} unexpected raise(s)"
     )
     # #1361 review (S2): without these two, the loop above can silently

@@ -144,7 +144,9 @@ flaky tests that the conversion exposed. The conversion made them unstable.
 
 **So: do not start a conversion by assuming the suite was already shaky.** Pull
 the last few run logs first and write down which tests are stable. That baseline
-is the only thing that tells you later whether you are fixing or breaking.
+is the only thing that tells you later whether you are fixing or breaking — and
+recording it is not a licence to convert over a red suite. Clear the failures
+first, per step 1 of "The process, in order".
 
 ## 2. A prose gate weakens when it crosses a delegation boundary
 
@@ -302,7 +304,22 @@ Two things this does NOT close:
 
 ## The process, in order
 
-1. Record the pre-conversion baseline from existing run logs.
+1. **Green the suite before the refactor, not merely baseline it.** A suite is
+   green before a refactor — a wiki move, a pair conversion, a model+effort floor
+   search — and after it. Only **failures** count; partials are fine and need no
+   annotation to justify them. One exception, part of the rule rather than a
+   per-card ruling: a red whose cause is the thing the refactor changes — name it
+   and carry it forward. Explicitly **not** exceptions: "the remedy is contested"
+   and "nobody has measured it yet". Both are reasons to do the work, not to skip
+   the bar.
+
+   **Jitter.** Fix one thing per paid run, then a single **three-run, all-pass**
+   confirmation for the final verdict — not three runs per fix. Three-per-fix
+   triples every step, and again wherever a fix reaches another skill's suite;
+   one run cannot distinguish a fix from a lucky roll on a suite whose reds flip
+   on an unchanged body. Record the pre-refactor baseline from existing run logs
+   as part of this step — it is what tells you later whether you are fixing or
+   breaking. (Lead ruling, 2026-09-09, issue #2271.)
 2. Audit that skill's fixtures for self-contradiction and unsatisfiability.
 3. Move locality-specific and record-type-specific guidance onto the wiki
    (ADR-0012). This is its own card and its own paid run, before the fold; the
