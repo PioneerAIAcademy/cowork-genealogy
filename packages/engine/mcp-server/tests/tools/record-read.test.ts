@@ -531,7 +531,7 @@ describe("#2367 resolveCoveragePlaces", () => {
         coverage: [
           {
             spatial: { description: "#12345" },
-            temporal: { formal: "+1850/+1860" },
+            temporal: { original: "1850/1860", formal: "+1850/+1860" },
             recordType: "http://gedcomx.org/Census",
           },
         ],

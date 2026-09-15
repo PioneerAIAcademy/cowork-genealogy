@@ -1472,7 +1472,7 @@ describe("gedcomx-convert — source description coverage and resource_type", ()
           coverage: [
             {
               spatial: { description: "#12345" },
-              temporal: { formal: "+1850/+1860" },
+              temporal: { original: "1850/1860", formal: "+1850/+1860" },
               recordType: "http://gedcomx.org/Census",
             },
           ],
@@ -1484,9 +1484,31 @@ describe("gedcomx-convert — source description coverage and resource_type", ()
     expect(sd?.resource_type).toBe("DigitalArtifact");
     expect(sd?.coverage).toEqual({
       place_id: "12345",
-      date_range: "+1850/+1860",
+      date_range: "1850/1860",
       record_type: "Census",
     });
+  });
+
+  it("falls back to temporal.formal when temporal.original is absent", () => {
+    const raw: GedcomX = {
+      persons: [],
+      sourceDescriptions: [
+        {
+          id: "SD1",
+          resourceType: "http://gedcomx.org/DigitalArtifact",
+          titles: [{ value: "Some Record" }],
+          coverage: [
+            {
+              spatial: { description: "#12345" },
+              temporal: { formal: "+1850/+1860" },
+              recordType: "http://gedcomx.org/Census",
+            },
+          ],
+        },
+      ],
+    };
+    const simplified = toSimplified(raw);
+    expect(simplified.sources?.[0]?.coverage?.date_range).toBe("+1850/+1860");
   });
 
   it("omits coverage when absent on raw source description", () => {

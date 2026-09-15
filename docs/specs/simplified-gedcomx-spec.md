@@ -217,7 +217,7 @@ Array of source description objects. These are the simplified equivalents of Ged
 | `citation` | string | no | Formatted citation string. Populated by the proof-conclusion workflow at upload time (copied from `research.json` `sources[].citation`). Omit during active research |
 | `author` | string | no | Creator, agency, or author |
 | `url` | string | no | URL to the digital source |
-| `coverage` | object | no | Volume-level metadata from the digital artifact's first coverage entry. Describes the scanned volume the image sits in, not the individual record's event. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge. Fields: `standard_place` (resolved place name), `place_id` (FamilySearch place id, resolved to `standard_place` by `record_read`), `date_range` (temporal coverage, GEDCOM formal date), `record_type` (stripped URI prefix, e.g. `Census`) |
+| `coverage` | object | no | Volume-level metadata from the digital artifact's first coverage entry. Describes the scanned volume the image sits in, not the individual record's event. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge. Fields: `standard_place` (resolved place name), `place_id` (FamilySearch place id, resolved to `standard_place` by `record_read`), `date_range` (temporal coverage: `temporal.original` when present, else the GEDCOM formal `temporal.formal`), `record_type` (stripped URI prefix, e.g. `Census`) |
 
 **`person_read` returns are not directly persistable.** The tool's sources
 may additionally carry a `notes` string array (user-attached FamilySearch
