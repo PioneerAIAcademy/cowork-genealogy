@@ -219,6 +219,30 @@ def check_runnable(
             f"run_skills to execute the callee, stub_skills to deny it.",
         )
 
+    # `grade:trigger` grades a positive test on activation alone
+    # (grading_mode "trigger"): the verdict is that the skill under test
+    # fired, and the judge dimensions are recorded but do not gate. Its whole
+    # justification is that the delegated sub-skills are STUBBED — an
+    # outcome-dimension score would measure the stub, not the skill. A test
+    # carrying the tag but stubbing nothing lets the callees run for real
+    # while the tag silences the judge's gate over that real execution, so
+    # the verdict passes on activation asserting nothing about the work: the
+    # same vacuous-green failure mode as grade_on_invariant below, and the
+    # same gate-time treatment. Refuse to load it. (grading_mode_for stays a
+    # pure classifier — this runnability gate, not the classifier, owns
+    # fixture-runnability validation.)
+    if "grade:trigger" in (spec.tags or []) and not stubbed:
+        return RunnabilityResult(
+            False,
+            "test is tagged grade:trigger (graded on activation alone, judge "
+            "dimensions diagnostic) but execution.stub_skills is empty. The "
+            "mode is only sound when the delegated sub-skills are stubbed — "
+            "otherwise the callees execute for real and the tag silences the "
+            "judge's gate over a real execution, so the pass is vacuous. Add "
+            "the delegated sub-skills to execution.stub_skills, or drop the "
+            "grade:trigger tag.",
+        )
+
     # Validate negative.correct_skill entries — typos silently produce
     # unsatisfiable tests (Claude can route correctly and the test
     # still fails). Catch them at gate time. xfail tests are exempt: an

@@ -706,7 +706,7 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 > which **blocks the PR** unless the newest full-skill run log's snapshot matches
 > your branch and its `.ann.json` carries a correction for every dimension of
 > each **sampled** test — the tests named in the run log's `review_sample`
-> (3 rotation + 1 targeted + 1 random, plus every test that failed or scored a 1 or 2 on any dimension, so the
+> (3 rotation + 1 targeted + 1 random, plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the
 > count varies by run).
 > A run log without that field, which is every one written before
 > sampling shipped, still owes every dimension of every test.
@@ -1242,8 +1242,13 @@ tool and it belongs in that module**, so there is no second copy to drift.
 memory and block only on errors the call itself introduces** — pre-existing
 schema drift in a section the call does not touch is demoted to a warning rather
 than freezing the write (`validation/introduced-errors.ts`); a call that
-introduces an error still writes nothing. The tools assign all ids; callers never
-predict them.
+introduces an error still writes nothing. **One exception, and it is the only
+one:** `research_append`'s assertion-`update` op also rewrites the tree fact
+that assertion minted, and a rewrite that fails validation is rolled back and
+degraded to a warning rather than refusing the assertion correction, which is
+the legitimate write the caller asked for. So that call writes `research.json`
+and not the tree. `tree-materialization-spec.md` §4.4 says why refusing would be
+wrong. The tools assign all ids; callers never predict them.
 
 `validate_research_schema` is a read-only check for files touched *outside* the
 writer tools. Defensive validate passes between writer-tool steps are explicitly
@@ -1380,12 +1385,24 @@ than let a hand-written union silently shadow a generated one.
 > remember. `packages/schema`'s enum unions are generated; everything else is
 > linted. **Don't add a fifth copy.** If your change would, say so in the PR.
 
-**Add a field to the tree (simplified GedcomX).** Everything above, **plus** the
-closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
-validator enforces `additionalProperties: false` from those sets, so an unlisted
-field makes **every writer tool reject the write.** `tests/validation/tree-shape-drift.test.ts`
-diffs those sets against the schema. Check whether the change needs a heal rule
-in `tree-sanitize.ts` for pre-change trees.
+**Add a field to the tree (simplified GedcomX).** Everything above, **plus** two
+engine sites the research.json list has no counterpart for:
+
+- the closed per-object field allow-lists in `src/validation/tree-shape.ts`. The
+  validator enforces `additionalProperties: false` from those sets, so an
+  unlisted field makes **every writer tool reject the write.**
+  `tests/validation/tree-shape-drift.test.ts` diffs those sets against the
+  schema, by field NAME only.
+- the matching `Simplified*` interface in `src/types/gedcomx.ts`, which the tools
+  are typed against, **and** the field's type check in `validator.ts`'s
+  `checkTree*` function. `tree-shape.ts` admits the key; only `checkTreeStrings`
+  (or its sibling) says what type it must be, so a field added to the allow-list
+  and not there is accepted by the runtime validator at the wrong type and
+  rejected by the JSON Schema. Nothing catches that, because the drift test
+  compares names.
+
+Check whether the change needs a heal rule in `tree-sanitize.ts` for pre-change
+trees.
 
 ---
 
