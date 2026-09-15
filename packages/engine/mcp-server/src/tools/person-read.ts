@@ -50,7 +50,7 @@ export const personReadToolSchema = {
   description:
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
-    "Set relatives=true to include parents, spouses, and children. " +
+    "Set relatives=true to include parents, siblings, spouses, and children. " +
     "Set sourceDescriptions=true to include attached sources — for a " +
     "non-living subject this also returns source-style memories (scanned " +
     "wills, certificates, obituaries, family stories), transcribed where the " +
@@ -65,7 +65,10 @@ export const personReadToolSchema = {
       },
       relatives: {
         type: "boolean",
-        description: "Include parents, spouses, and children. Defaults to false.",
+        description:
+          "Include parents, siblings, spouses, and children. Siblings are " +
+          "reached by reading each parent, so this costs one extra request " +
+          "per parent. Defaults to false.",
       },
       sourceDescriptions: {
         type: "boolean",
@@ -418,7 +421,186 @@ async function fetchAndConvert(
   }
 
   const body = (await res.json()) as FSTreeResponse;
-  return await convertResponse(body, relatives, sourceDescriptions);
+  // Siblings are a SECOND hop: FamilySearch gives a person's parents but not
+  // their brothers and sisters, so they are reachable only by reading each
+  // parent. Merged into the RAW body, before conversion, deliberately -- the
+  // subtype on a parent-child link is extracted from CAPRs, place
+  // standardization runs once inside toSimplifiedStandardized, and `living` is
+  // read back off the raw persons. Merging after conversion would lose all
+  // three and mean re-implementing the shape functions by hand.
+  const merged = relatives ? await mergeSiblings(token, pid, body) : body;
+  return await convertResponse(merged, relatives, sourceDescriptions);
+}
+
+// ─── Sibling fan-out ──────────────────────────────────────────────────────
+
+/**
+ * In-flight parent reads. A person can have more than two parents -- measured
+ * across the 95 committed e2e trees, 438 children have 2, but 4 have 3 and 3
+ * have 4 (biological plus adoptive, or an unmerged duplicate). So this is a
+ * concurrency ceiling over N, not a two-element assumption.
+ */
+const SIBLING_FANOUT_CONCURRENCY = 4;
+
+/** The subject's own parents, from the subject's CAPRs. `resourceId` is the
+ *  production spelling on a CAPR ref -- `synthesizeParentChild` reads only that
+ *  one, and this must agree with it or the two disagree about who a parent is. */
+function parentIdsOf(body: FSTreeResponse, pid: string): string[] {
+  const out = new Set<string>();
+  for (const capr of body.childAndParentsRelationships ?? []) {
+    if (capr.child?.resourceId !== pid) continue;
+    for (const ref of [capr.parent1, capr.parent2]) {
+      if (ref?.resourceId) out.add(ref.resourceId);
+    }
+  }
+  return [...out];
+}
+
+/** Does this CAPR make `childId` a child of `parentId`? */
+function isChildOf(
+  capr: FSChildAndParentsRelationship,
+  parentId: string,
+): boolean {
+  return (
+    capr.parent1?.resourceId === parentId || capr.parent2?.resourceId === parentId
+  );
+}
+
+/**
+ * Read each parent and merge in the subject's siblings.
+ *
+ * What a parent's read returns that nobody asked for: the subject's
+ * grandparents, the parent's other spouses, non-spouse co-parents, the
+ * subject's own other parent, and the grandparents' Couple. Rather than
+ * enumerate those exclusions -- the card lists three of the five -- this keeps
+ * exactly one category: persons who are CHILDREN of that parent. Everything
+ * else drops out in one move.
+ *
+ * NOTHING HERE THROWS. A parent that 403s, 404s, 410s, 429s, times out, or
+ * comes back as a 204 living stub simply yields no siblings from that parent;
+ * the subject's own read still succeeds. A sibling fan-out is an enrichment and
+ * must never cost the caller the person they actually asked for.
+ */
+async function mergeSiblings(
+  token: string,
+  pid: string,
+  body: FSTreeResponse,
+): Promise<FSTreeResponse> {
+  const parentIds = parentIdsOf(body, pid);
+  // No parents => ZERO extra calls. This is what keeps the isolated-person
+  // path at exactly one request.
+  if (parentIds.length === 0) return body;
+
+  const parentBodies = await mapWithConcurrency(
+    parentIds,
+    SIBLING_FANOUT_CONCURRENCY,
+    async (parentId) => {
+      try {
+        const res = await fetchWithRetry(buildUrl(parentId, true, false), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: ACCEPT_HEADER,
+            "Accept-Language": "en",
+          },
+          redirect: "manual",
+        });
+        // Anything that is not a 200 with a body means "no siblings from this
+        // parent" -- including 204, which is a living person with no body at
+        // all and would throw on .json().
+        if (res.status !== 200) return null;
+        return (await res.json()) as FSTreeResponse;
+      } catch {
+        return null;
+      }
+    },
+  );
+
+  const persons = [...(body.persons ?? [])];
+  const known = new Set(
+    persons.map((p) => p.id).filter((id): id is string => Boolean(id)),
+  );
+  const candidateCaprs: FSChildAndParentsRelationship[] = [];
+
+  parentIds.forEach((parentId, i) => {
+    const parentBody = parentBodies[i];
+    if (!parentBody) return;
+    const personById = new Map(
+      (parentBody.persons ?? [])
+        .filter((p) => p.id)
+        .map((p) => [p.id as string, p]),
+    );
+    for (const capr of parentBody.childAndParentsRelationships ?? []) {
+      const childId = capr.child?.resourceId;
+      if (!childId || childId === pid) continue;
+      if (!isChildOf(capr, parentId)) continue;
+      const person = personById.get(childId);
+      // A CAPR can name a child whose person record the response did not
+      // include -- relationships reach one hop further than persons[]. Adding
+      // the edge without the person is exactly the dangling endpoint that
+      // fails the whole project_create write.
+      if (!person) continue;
+      if (!known.has(childId)) {
+        persons.push(person);
+        known.add(childId);
+      }
+      candidateCaprs.push(capr);
+    }
+  });
+
+  return {
+    ...body,
+    persons,
+    childAndParentsRelationships: [
+      ...(body.childAndParentsRelationships ?? []),
+      ...pruneCaprs(candidateCaprs, known),
+    ],
+  };
+}
+
+/**
+ * Keep only the parent endpoints that made it into `persons`, and drop a CAPR
+ * that has none left.
+ *
+ * `synthesizeParentChild` expands one CAPR into one edge PER PARENT, so an
+ * unpruned CAPR naming a co-parent we did not import emits an edge whose parent
+ * is not in `persons[]`. validator.ts:1751 makes that a hard error
+ * (`parent '...' not found in persons`) and `project_create` -- alone among the
+ * tree writers, it never calls `sanitizeTree` -- refuses the ENTIRE write. One
+ * leaked edge would cost the user their whole project, so the rule is applied
+ * to the edge rather than left to a healer that does not run.
+ *
+ * A half-sibling therefore arrives linked to the shared parent only. That is
+ * the truth of what was imported, not a loss.
+ */
+function pruneCaprs(
+  caprs: FSChildAndParentsRelationship[],
+  known: Set<string>,
+): FSChildAndParentsRelationship[] {
+  const seen = new Set<string>();
+  const out: FSChildAndParentsRelationship[] = [];
+  for (const capr of caprs) {
+    const childId = capr.child?.resourceId;
+    if (!childId || !known.has(childId)) continue;
+    const parent1 = capr.parent1?.resourceId;
+    const parent2 = capr.parent2?.resourceId;
+    const keep1 = parent1 !== undefined && known.has(parent1);
+    const keep2 = parent2 !== undefined && known.has(parent2);
+    if (!keep1 && !keep2) continue;
+    // Dedup on the surviving shape, not on `capr.id`: the same sibling is
+    // reachable through BOTH parents, and each parent's read returns its own
+    // copy of that CAPR.
+    const key = `${childId}|${keep1 ? parent1 : ""}|${keep2 ? parent2 : ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      ...capr,
+      ...(keep1 ? {} : { parent1: undefined }),
+      ...(keep2 ? {} : { parent2: undefined }),
+      ...(keep1 ? {} : { parent1Facts: undefined }),
+      ...(keep2 ? {} : { parent2Facts: undefined }),
+    });
+  }
+  return out;
 }
 
 // ─── URL + helpers ────────────────────────────────────────────────────────

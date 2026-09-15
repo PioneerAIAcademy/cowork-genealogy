@@ -28,7 +28,7 @@ etc.) and is out of scope for v1.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `personId` | string | **Yes** | FamilySearch person ID (e.g., `"KNDX-MKG"`). |
-| `relatives` | boolean | No | Include parents, spouses, and children. Defaults to `false`. |
+| `relatives` | boolean | No | Include parents, **siblings**, spouses, and children. Defaults to `false`. Siblings are a second hop and cost **one extra request per parent** — see "The sibling fan-out" below. |
 | `sourceDescriptions` | boolean | No | Include attached source citations — and, for a non-living subject, that person's source-style memories. Defaults to `false`. |
 | `projectPath` | string | No | Absolute project-folder path. When set, a memory scan transcribed during the read is retained under `images/` and its ref returned as that source's `image_ref`. A path is not a mode flag, so decision 1's "no third flag" does not reach it. Without it, scans are transcribed but not kept. |
 
@@ -264,7 +264,7 @@ directly with `image_transcribe`'s `memoryArtifactUrl` input.
   name: "person_read",
   description: "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources). " +
-    "Set relatives=true to include parents, spouses, and children. " +
+    "Set relatives=true to include parents, siblings, spouses, and children. " +
     "Set sourceDescriptions=true to include attached sources. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -276,7 +276,10 @@ directly with `image_transcribe`'s `memoryArtifactUrl` input.
       },
       relatives: {
         type: "boolean",
-        description: "Include parents, spouses, and children. Defaults to false."
+        description:
+          "Include parents, siblings, spouses, and children. Siblings are " +
+          "reached by reading each parent, so this costs one extra request " +
+          "per parent. Defaults to false."
       },
       sourceDescriptions: {
         type: "boolean",
@@ -331,8 +334,28 @@ GET https://api.familysearch.org/platform/tree/persons/{pid}?relatives=true&sour
 
 | Query Parameter | Effect |
 |-----------------|--------|
-| `relatives=true` | Includes family members in `persons[]`, plus `childAndParentsRelationships[]` and `relationships[]` |
+| `relatives=true` | Includes family members in `persons[]`, plus `childAndParentsRelationships[]` and `relationships[]`. **Does not include siblings** — see the fan-out below. |
 | `sourceDescriptions=true` | Includes source citations in `sourceDescriptions[]` |
+
+**This is no longer a single call when `relatives=true`.** The endpoint returns a
+person's parents but not their siblings, so the tool additionally issues one
+`?relatives=true` read **per parent**, concurrently, bounded at 4 in flight:
+
+```
+GET .../persons/{parentPid}?relatives=true          (once per parent)
+```
+
+The subject's own read is always made first — the parent ids come out of its
+`childAndParentsRelationships[]`. A subject with no parents issues no extra
+request at all. Each parent read is independently fail-soft: a non-200 (403,
+404, 410, 429, or a 204 living stub) or a transport error yields no siblings
+from that parent and is not retried beyond `fetchWithRetry`'s normal budget.
+
+Note that `relationships[]` and `childAndParentsRelationships[]` reach **one hop
+further than `persons[]`** in any FamilySearch response — a parent's read names
+the subject's great-grandparents and the siblings' spouses without returning
+person records for them. The fan-out therefore emits an edge only when both of
+its endpoints are persons it actually imported.
 
 Both can be combined in a single call.
 
@@ -533,6 +556,53 @@ For each entry, create:
 ```
 
 **Keep all couple relationships.** Do not filter to the focal person.
+
+#### 5a. The sibling fan-out (when `relatives: true`)
+
+FamilySearch returns a person's parents but **not their siblings**. Siblings sit
+two hops out, so each parent is read to find them.
+
+- **Parent ids** come from the subject's own `childAndParentsRelationships[]` —
+  `parent1.resourceId` / `parent2.resourceId` on entries whose
+  `child.resourceId` is the subject. `resourceId` is the production spelling on
+  a CAPR ref, and the fan-out must agree with `synthesizeParentChild`, which
+  reads only that spelling.
+- **No parents ⇒ zero extra requests.** An isolated person costs exactly one
+  request, as before.
+- **Not capped at two.** A person can have three or four parents — biological
+  plus adoptive, or an unmerged duplicate. Measured across the 95 committed e2e
+  trees: 438 children have 2 parents, 4 have 3, and 3 have 4. Parents are read
+  concurrently, bounded at 4 in flight.
+- **Merged into the raw payload, before conversion.** The subtype on a
+  parent-child link is derived from CAPRs, place standardization runs once
+  inside the converter, and `living` is read back off the raw persons — merging
+  after conversion would lose all three.
+
+**What is kept: children of that parent, and nothing else.** A parent's read
+also returns the subject's grandparents, that parent's other spouses, non-spouse
+co-parents, the subject's own other parent, and the grandparents' `Couple`
+relationship. Rather than enumerate those exclusions, the filter keeps exactly
+one category — persons who are children of the parent being read — and
+everything else drops out in one move.
+
+**Every endpoint of every emitted relationship is a person in `persons[]`.** A
+CAPR expands to one edge *per parent*, so a sibling whose other parent was not
+imported would otherwise emit an edge pointing at a person who is not there.
+`validate_research_schema` treats that as a hard error (`parent '…' not found in
+persons`, and the same for `child`, `person1` and `person2`), and
+`project_create` — alone among the tree writers, it never calls `sanitizeTree` —
+refuses the **entire write**. One leaked edge would cost the user their whole
+project, so the rule is enforced on the edge rather than left to a healer that
+does not run.
+
+Consequently **a half-sibling arrives linked to the shared parent only.** That
+is the truth of what was imported, not a loss. A CAPR naming a child whose
+person record the response omitted is skipped entirely, for the same reason.
+
+**A failing parent read degrades; it never throws.** 403, 404, 410, 429, a
+timeout, a transport error, or a 204 living-person stub each mean "no siblings
+from that parent" — the subject's own read still succeeds. Siblings are an
+enrichment and must never cost the caller the person they asked for.
 
 #### 6. Sources (when `sourceDescriptions: true`)
 

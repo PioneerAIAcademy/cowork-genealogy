@@ -862,3 +862,318 @@ describe("personReadTool", () => {
     expect(anchor.names[0].preferred).toBe(true);
   });
 });
+
+// ─── Sibling fan-out (issue #1689 Half 1) ─────────────────────────────────
+
+/**
+ * Siblings are a SECOND hop — FamilySearch returns a person's parents but not
+ * their brothers and sisters, so each parent must be read. One test per trap
+ * the card names, plus the two the mapping turned up: a Couple edge fails
+ * project_create the same way a ParentChild one does, and a child can have
+ * more than two parents.
+ *
+ * Routing is by URL, never by call order: the parent reads run concurrently.
+ */
+describe("personReadTool — sibling fan-out", () => {
+  const SUBJECT = "KNDX-MKG";
+  const DAD = "DAD-001";
+  const MUM = "MUM-002";
+
+  const person = (id: string, name: string, living = false) => ({
+    id,
+    living,
+    names: [{ nameForms: [{ fullText: name }] }],
+    facts: [],
+  });
+
+  const capr = (child: string, parent1?: string, parent2?: string) => ({
+    ...(parent1 ? { parent1: { resourceId: parent1 } } : {}),
+    ...(parent2 ? { parent2: { resourceId: parent2 } } : {}),
+    child: { resourceId: child },
+  });
+
+  /** The subject's own read: subject plus both parents. */
+  const subjectBody = (parents: string[] = [DAD, MUM]): FSTreeResponse => ({
+    persons: [
+      person(SUBJECT, "Subject Person"),
+      ...parents.map((p) => person(p, `Parent ${p}`)),
+    ],
+    relationships: [],
+    childAndParentsRelationships: [capr(SUBJECT, parents[0], parents[1])],
+  });
+
+  /** Route by URL so concurrent parent reads cannot be order-dependent. */
+  function route(bodies: Record<string, FSTreeResponse | number>) {
+    mockFetch.mockImplementation((url: string) => {
+      const u = String(url);
+      for (const [pid, body] of Object.entries(bodies)) {
+        if (!u.includes(`/${pid}`)) continue;
+        if (typeof body === "number") {
+          return Promise.resolve({
+            ok: body >= 200 && body < 300,
+            status: body,
+            json: () => Promise.reject(new Error("no body")),
+            headers: new Headers(),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(body),
+          headers: new Headers(),
+        });
+      }
+      return Promise.reject(new TypeError(`unrouted ${u}`));
+    });
+  }
+
+  it("makes ZERO extra calls when the subject has no parents", async () => {
+    mockFetch.mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            persons: [person(SUBJECT, "Orphan Person")],
+            relationships: [],
+            childAndParentsRelationships: [],
+          }),
+        headers: new Headers(),
+      }),
+    );
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.persons.map((p) => p.id)).toEqual([SUBJECT]);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("makes zero extra calls when relatives is false", async () => {
+    route({ [SUBJECT]: subjectBody() });
+    await personReadTool({ personId: SUBJECT }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("imports full siblings and links them to both parents", async () => {
+    const sib = "SIB-100";
+    route({
+      [SUBJECT]: subjectBody(),
+      [DAD]: {
+        persons: [person(DAD, "Dad"), person(sib, "Full Sibling"), person(SUBJECT, "Subject Person")],
+        relationships: [],
+        childAndParentsRelationships: [capr(sib, DAD, MUM), capr(SUBJECT, DAD, MUM)],
+      },
+      [MUM]: {
+        persons: [person(MUM, "Mum"), person(sib, "Full Sibling")],
+        relationships: [],
+        childAndParentsRelationships: [capr(sib, DAD, MUM)],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.persons.map((p) => p.id).sort()).toEqual([DAD, MUM, SUBJECT, sib].sort());
+    const edges = out.relationships
+      .filter((r) => r.type === "ParentChild" && r.child === sib)
+      .map((r) => r.parent)
+      .sort();
+    expect(edges).toEqual([DAD, MUM].sort());
+  });
+
+  it("dedupes a sibling reachable through BOTH parents", async () => {
+    const sib = "SIB-100";
+    route({
+      [SUBJECT]: subjectBody(),
+      [DAD]: {
+        persons: [person(DAD, "Dad"), person(sib, "Shared Sibling")],
+        relationships: [],
+        childAndParentsRelationships: [capr(sib, DAD, MUM)],
+      },
+      [MUM]: {
+        persons: [person(MUM, "Mum"), person(sib, "Shared Sibling")],
+        relationships: [],
+        childAndParentsRelationships: [capr(sib, DAD, MUM)],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.persons.filter((p) => p.id === sib)).toHaveLength(1);
+    expect(
+      out.relationships.filter((r) => r.type === "ParentChild" && r.child === sib),
+    ).toHaveLength(2); // one per parent, not four
+  });
+
+  it("does NOT import grandparents, other spouses, or step-parents", async () => {
+    const gran = "GRAN-900";
+    const otherWife = "WIFE2-901";
+    const halfSib = "HALF-902";
+    route({
+      [SUBJECT]: subjectBody([DAD]),
+      [DAD]: {
+        persons: [
+          person(DAD, "Dad"),
+          person(gran, "Grandparent"),
+          person(otherWife, "Dad's other wife"),
+          person(halfSib, "Half Sibling"),
+        ],
+        relationships: [],
+        childAndParentsRelationships: [
+          capr(DAD, gran),                 // the grandparent link
+          capr(halfSib, DAD, otherWife),   // half-sibling via a co-parent
+        ],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    const ids = out.persons.map((p) => p.id);
+    expect(ids).toContain(halfSib);
+    expect(ids).not.toContain(gran);
+    expect(ids).not.toContain(otherWife);
+  });
+
+  it("links a half-sibling to the SHARED parent only, leaving no dangling edge", async () => {
+    const otherWife = "WIFE2-901";
+    const halfSib = "HALF-902";
+    route({
+      [SUBJECT]: subjectBody([DAD]),
+      [DAD]: {
+        persons: [person(DAD, "Dad"), person(otherWife, "Other wife"), person(halfSib, "Half Sibling")],
+        relationships: [],
+        childAndParentsRelationships: [capr(halfSib, DAD, otherWife)],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    const ids = new Set(out.persons.map((p) => p.id));
+    // THE RULE: every endpoint of every emitted edge is in persons[].
+    // validator.ts:1751/1756 make a dangling one a hard error and
+    // project_create — which never calls sanitizeTree — refuses the whole write.
+    for (const r of out.relationships) {
+      for (const endpoint of [r.parent, r.child, r.person1, r.person2]) {
+        if (endpoint !== undefined) expect(ids.has(endpoint)).toBe(true);
+      }
+    }
+    const halfEdges = out.relationships.filter(
+      (r) => r.type === "ParentChild" && r.child === halfSib,
+    );
+    expect(halfEdges.map((r) => r.parent)).toEqual([DAD]);
+  });
+
+  it("fans out to THREE parents, not just two", async () => {
+    const third = "ADOPT-003";
+    const sib = "SIB-100";
+    route({
+      [SUBJECT]: {
+        persons: [SUBJECT, DAD, MUM, third].map((id) => person(id, `P ${id}`)),
+        relationships: [],
+        childAndParentsRelationships: [capr(SUBJECT, DAD, MUM), capr(SUBJECT, third)],
+      },
+      [DAD]: { persons: [person(DAD, "Dad")], relationships: [], childAndParentsRelationships: [] },
+      [MUM]: { persons: [person(MUM, "Mum")], relationships: [], childAndParentsRelationships: [] },
+      [third]: {
+        persons: [person(third, "Adoptive"), person(sib, "Adoptive Sibling")],
+        relationships: [],
+        childAndParentsRelationships: [capr(sib, third)],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.persons.map((p) => p.id)).toContain(sib);
+    // 1 subject read + 3 parent reads
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+  });
+
+  for (const status of [204, 403, 404, 410, 429]) {
+    it(`degrades to no siblings when a parent read returns ${status}`, async () => {
+      route({ [SUBJECT]: subjectBody([DAD]), [DAD]: status });
+      const out = await personReadTool(
+        { personId: SUBJECT, relatives: true },
+        LOCAL,
+      );
+      expect(out.persons.map((p) => p.id).sort()).toEqual([DAD, SUBJECT].sort());
+    });
+  }
+
+  it("degrades to no siblings when a parent read throws", async () => {
+    mockFetch.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes(`/${DAD}`)) return Promise.reject(new TypeError("network down"));
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(subjectBody([DAD])),
+        headers: new Headers(),
+      });
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.persons.map((p) => p.id)).toContain(SUBJECT);
+  });
+
+  it("harvests a child of THIS parent only — not one the other parent's read owns", async () => {
+    // Discriminates isChildOf from pruneCaprs, which otherwise masks it: a
+    // maternal half-sibling appears in Dad's payload as a CAPR naming Mum, and
+    // Mum's own read FAILS. Harvesting them from Dad's body would claim a
+    // sibling on the strength of a read that never succeeded — and the edge
+    // would survive pruning, because Mum IS in persons[].
+    const mumOnlyChild = "MUMKID-500";
+    mockFetch.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes(`/${MUM}`)) return Promise.resolve({
+        ok: false, status: 403, json: () => Promise.reject(new Error("restricted")), headers: new Headers(),
+      });
+      if (u.includes(`/${DAD}`)) return Promise.resolve({
+        ok: true, status: 200, headers: new Headers(),
+        json: () => Promise.resolve({
+          persons: [person(DAD, "Dad"), person(MUM, "Mum"), person(mumOnlyChild, "Mum's child by another")],
+          relationships: [],
+          // child of MUM, NOT of DAD
+          childAndParentsRelationships: [capr(mumOnlyChild, MUM)],
+        }),
+      });
+      return Promise.resolve({
+        ok: true, status: 200, headers: new Headers(),
+        json: () => Promise.resolve(subjectBody()),
+      });
+    });
+
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.persons.map((p) => p.id)).not.toContain(mumOnlyChild);
+  });
+
+  it("skips a sibling whose person record the parent response omitted", async () => {
+    const ghost = "GHOST-777";
+    route({
+      [SUBJECT]: subjectBody([DAD]),
+      [DAD]: {
+        persons: [person(DAD, "Dad")], // no record for the ghost child
+        relationships: [],
+        childAndParentsRelationships: [capr(ghost, DAD)],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(out.persons.map((p) => p.id)).not.toContain(ghost);
+    expect(
+      out.relationships.some((r) => r.child === ghost || r.parent === ghost),
+    ).toBe(false);
+  });
+});
+
