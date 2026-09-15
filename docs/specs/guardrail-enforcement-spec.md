@@ -153,6 +153,7 @@ depends on another shipping first.
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
+| §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
 | §5 | Declaration/status agreement | engine (MCP tool) — so Cowork, hosted, both harnesses | `status: "exhaustive_declared"` on a question whose `exhaustive_declaration.declared` is not true, from either side of the pair | **enforcing** (since 2026-08-23; a zero-violation arm over 159 runs — a cheap invariant, not a gate with catches) |
 | §5 | Plan completeness before a declaration | engine (MCP tool) — so Cowork, hosted, both harnesses | `declared: true` while an item on the question's **active** plan is `in_progress` | **enforcing** (since 2026-08-23; 5 of 170 corpus declarations, classified **bookkeeping** not doctrine — it contradicts the project's own plan state, not a genealogical judgment, which is what lets it be scoped this tightly) |
 | §5 | `stop_criteria` shape | engine (validator) — so Cowork, hosted, both harnesses | `stop_criteria` written as prose, a number or an array instead of the seven-key object | **enforcing** (since 2026-08-23; 48 corpus write ops, all of them on the bypassed path — 0 of 241 writes made by runs that invoked the owning skill) |
@@ -792,6 +793,26 @@ their own project is explicitly out of scope for this layer. The refusal message
 says so outright rather than leaving the researcher to guess. That route does
 not exist on the hosted path, where the project lives in a sandbox — see the
 ADR's two stated limits.
+
+### Plan-phase gate on `tree_forget`
+
+`tree_forget` refuses when `research.json` holds any `plans[]` entry. The
+forget-and-rederive workflow is a project-start exercise; once a plan exists the
+project has moved past setup and forgetting would discard structure the plan was
+built against.
+
+The condition is **any entry at all** — not narrowed to active or in_progress.
+The narrower reading was rejected (2026-08-31 ruling): it rebuilds the
+section-1a framing, and every test written alongside the narrower rule passes,
+so nothing catches the difference.
+
+Implemented as a `TreeForgetError` thrown after the project-file reads and
+before the dry-run exit, in
+`packages/engine/mcp-server/src/tools/tree-forget.ts`.
+
+**Corpus figure.** `grep -rl '"tool": "mcp__genealogy__tree_forget"' eval/runlogs/`
+returns no files (measured 2026-09-15) — no committed run has ever called this
+tool, so the refusal cannot regress a graded run.
 
 ### Blocking conflicts before completion
 
