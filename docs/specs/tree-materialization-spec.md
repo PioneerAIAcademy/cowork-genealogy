@@ -294,6 +294,154 @@ something was lost.
 - `materialize_facts` **does not** write `conflicts` entries — that stays
   `conflict-resolution`'s job. The tool reports; the skill routes.
 
+#### The `assertion_id` backlink — corrections reach the fact
+
+A minted fact carries `assertion_id`: the id of the assertion it was minted
+from. `research_append`'s assertion `update` op then rewrites the linked fact's
+`place`, `standard_place`, `date` and `value` in the same atomic composite
+persist, so a place corrected on an assertion reaches the fact instead of
+leaving the earlier reading on it. The op lives in the shared
+`research-append.ts`, so this fires for `extraction_append` too.
+
+**Stamped on the mint branch only** (§4.2's coexist arm). Not on the
+corroboration arm above, and never filled in when absent there.
+`factsEquivalent` is a deliberately *loose* **dedupe** predicate — an absent
+date or place counts as compatible, and a place chain that is a prefix of the
+other counts as compatible — not an identity one. A fill-when-absent rule would
+therefore attach a backlink to a bare `tree_edit add_fact` conclusion a
+researcher entered by hand, and a later assertion update would then silently
+rewrite it. The backlink means "this fact was minted from this assertion"; it is
+set once and never inferred.
+
+**Why this is a write and not a refusal.** ADR-0011 makes a refusal at the
+write boundary the default shape for a new gate, and this is deliberately not
+one. The write being made — correcting an assertion — is the legitimate write,
+so there is nothing for the boundary to refuse; and ADR-0009 constraint 6 is
+the test it fails, because there is no call shape the agent could produce
+instead. In the run that produced this card the agent had *already* corrected
+the assertion and still did not touch the fact, so a refusal would report the
+divergence and leave the repair unverified. This also beat a `validateCrossFile`
+error, which blocks nothing: writers block on call-introduced errors only
+(commit `7cd6a19b9`), so a divergence created by an earlier call is pre-existing
+drift. And it beat a heuristic join on (person, fact type, source ref), which is
+ambiguous wherever one source yields two facts of the same type — two residences
+in one census, a second marriage. The backlink makes the join exact, and a fact
+with no backlink is **warned about, never guessed at**.
+
+**What it knowingly does not fix.** A correction made on a *corroborating*
+assertion does not reach the fact: the fact carries the minting assertion's id,
+not the corroborator's. That is the narrower residue of the same bug and it is
+accepted. It bounds at **175 of 7225 person facts** in the committed e2e trees
+carrying more than one source ref (measured 2026-09-14; recount by counting
+facts with `len(sources) > 1` across
+`eval/runlogs/e2e/*/*final-tree.gedcomx.json`), and a multi-source fact is only
+*potentially* affected — the corroborators usually agree.
+
+**The backlink is dropped, or refused, in four places**, because a fact that no
+longer answers to its assertion must stop claiming to:
+
+- `tree_edit` / `tree_correct` `update_fact`, when the op **changes** any of the
+  fact's own fields — `date`, `standard_date`, `place`, `standard_place`, `value`
+  or `type`. A human correcting the fact directly is recording their own
+  conclusion, exactly as `add_fact` does. It warns when it detaches, because the
+  cost is real: that fact is now outside the automatic update, which re-opens
+  this bug for it. **31 of 114 `update_fact` ops** in the committed e2e run logs
+  SET one of those fields; those 31 are 26 `tree_correct` and 5 `tree_edit`
+  across 21 calls, out of 114 ops across 80 calls in total (measured
+  2026-09-14). That is an upper bound on how many would actually detach, not a
+  count of them: the trigger keys on a real change, and a run log records the op
+  but not the fact's value at the time, so the detaching subset is not derivable
+  from the corpus. Three details it turns on: it keys on a real change rather than on
+  the key being present (7 of those 31 also carry `primary`, the conclude-a-fact
+  shape, where an unchanged echo rides along); it runs after `standard_place`
+  re-resolution, so a sidecar the resolver rewrites counts; and `type` is in the
+  trigger although it is not a string field, because a re-classification moves
+  the fact across the event / value-bearing line that decides whether an
+  assertion's `value` may be written to it at all.
+- a fact merge (`mergeFactGroup`), unless every member carries the same
+  backlink. The merged fact takes its best date and best place from possibly
+  different members, so keeping the first member's id would leave it claiming an
+  assertion whose place it no longer carries. **This is deliberately conservative
+  and drops the link when one member simply has none**, not only when two
+  disagree: narrowing it to "two different non-empty backlinks" would keep the
+  link on a fact whose winning place came from the *unbacklinked* member, which
+  is the drift the agreement check reports. The merge is tree-only and cannot
+  consult `research.json` to tell the benign case apart, so it drops rather than
+  guesses. Unlike the `update_fact` detach it does **not** warn: `mergeGedcomx`
+  returns a document and has no warnings channel, and adding one changes a
+  signature shared with `merge_warnings`' dry run. The drop is always safe, so
+  the cost is a lost automatic update rather than a wrong value.
+- `tree_edit` refuses a caller-supplied `assertion_id` outright, on every fact
+  write path. Admitting the field to the tree schema also made it settable by a
+  model, and a forged backlink is one `research_append` would later rewrite.
+
+**The rewrite only ever changes what this assertion put there.** The
+corroboration arm fills an attribute the fact lacks from a *different* assertion,
+and the fact keeps that source's ref — so a fact holding a value the corrected
+assertion never asserted is carrying someone else's evidence. Rewriting it would
+destroy that evidence silently, which is the over-reach mirror of the residue
+above and lands on the same multi-source population. Each attribute is therefore
+compared against the assertion's **pre-call** value: equal, or absent on the
+fact, and it is rewritten; anything else is left alone with a warning pointing at
+conflict-resolution.
+
+**A malformed value is not a withdrawn one.** `validator.ts` type-checks an
+assertion's `date`/`place`/`standard_place` but not its `value`, so a
+`value: 1924` reaches the rewrite. Read as "the researcher withdrew this" it
+deletes the fact's value; it is reported instead, and the fact is left alone.
+
+**A concluded fact is rewritten, loudly.** `primary` is not a detach trigger, so
+a fact proof-conclusion concluded keeps its backlink. The correction still has to
+reach it — a known-wrong concluded value on the upload target is worse than a
+moved one — but it carries a warning naming the fact, because the proof summary
+citing it was written against the earlier reading.
+
+**A `place` corrected without its `standard_place` warns.** The update path
+cannot re-resolve the sidecar (the geocode lever is append-only), and the
+assertion is equally stale, so the agreement check below cannot see it. That is
+this card's own harm one level down — the display string reads corrected while
+the place-authority value still names the old jurisdiction — and it is surfaced
+rather than left silent.
+
+**The rewrite never fails the call it rides on.** A fact rewrite is
+call-introduced, so a rewritten fact that failed validation would refuse the
+assertion correction itself. The rewrite is rolled back, validation re-run, and
+the dropped rewrite degrades to a warning. It also never writes a
+country-contradicting `standard_place`: on a contradiction it clears the fact's
+`standard_place` and warns, the same as `tree_edit` does on the same object
+(`research_append`'s append arm errors, `gedcomx-convert` omits — no path
+fabricates one).
+
+**What makes this checkable at all.** Before the backlink there was no
+machine-readable link from a fact to the assertion it came from, so "this fact
+disagrees with its source" could not be computed and no writer tool, validator
+or CI job surfaced it. With `assertion_id` present it is a property, and
+`eval/harness/validators/test_universal.py::test_tree_facts_agree_with_linked_assertions`
+asserts it: for every backlinked fact, where both the fact and its assertion
+hold a value for `place`/`standard_place`/`date`/`value`, the two must agree.
+
+Two limits on that check, stated because the `nothing-checks` label turns on
+them. It runs on the **unit** plane only — `run_validators` has one caller, the
+unit orchestrator, and the e2e harness runs no universal validators — while the
+card was filed off an e2e run. And it is **green by construction on today's unit
+corpus**, where the two populations are disjoint: all 51 `materialize_facts`
+calls are `person-evidence`'s and every four-field assertion `update` is
+`record-extraction`'s, so no unit run both mints a backlinked fact and later
+corrects its assertion. Its falsifiable half is the direct unit test at
+`eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py`;
+`validators/` is outside the harness's own `testpaths`, so without that file the
+check would ship unexecuted.
+
+**Who may perform this write.** `record-extraction` is deliberately **not** added
+to the `tree.gedcomx.json`/`persons` row's `callers`: a skill-granular grant
+would also authorize adding an unsourced person and setting `primary`, which that
+row's `failure` line ("this file is the upload target") is precisely about.
+`research_append`/`extraction_append` are authorized as **tools** instead, and
+only when the whole persons delta is this rewrite — mirrored attributes on facts
+that already carried the same backlink, nothing added or removed. Same shape as
+the `merge_tree_persons` authorization on the research side: anything the
+substitution does not explain still fails.
+
 ### 4.5 What it never does
 
 Never sets `primary`/`preferred`; never resolves conflicts; never collapses
