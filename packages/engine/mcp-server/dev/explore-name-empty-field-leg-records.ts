@@ -52,6 +52,7 @@
  * Run: `npx tsx dev/explore-name-empty-field-leg-records.ts` from
  * `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
@@ -75,7 +76,7 @@ interface Row { id: string; fullText: string; given: string[]; surname: string[]
  */
 async function totalOnly(qs: string): Promise<number | null> {
   await sleep(300);
-  const token = await getValidToken();
+  const token = await getValidToken(LOCAL);
   const res = await fetchWithTimeout(
     `${BASE}?${qs}&count=1&offset=0&${REQUIRE}`,
     { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",
@@ -93,7 +94,7 @@ async function readAll(qs: string, cap = 1500): Promise<{ total: number | null; 
   let retry = 0;
   for (let offset = 0; offset < cap; offset += 100) {
     await sleep(300);
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     const res = await fetchWithTimeout(
       `${BASE}?${qs}&count=100&offset=${offset}&${REQUIRE}`,
       { headers: { Authorization: `Bearer ${token}`, Accept: "application/json",

@@ -431,7 +431,7 @@ later, so the package holds **13** today.
 ### 5.2 Data auth: per-user FamilySearch OAuth (the big refactor)
 The current MCP auth (`packages/engine/mcp-server/src/auth/`) is **single-user, single-machine**:
 `login.ts` runs a **localhost:1837** callback and writes one
-`~/.familysearch-mcp/tokens.json`; every tool calls `getValidToken()` which reads
+`~/.familysearch-mcp/tokens.json`; every tool calls `getValidToken(principal)` which reads
 that **one global file** — there is **no per-request/per-env token path**. For
 multi-tenant web this must change:
 
@@ -447,7 +447,7 @@ multi-tenant web this must change:
    - **(a) Minimal:** write `~/.familysearch-mcp/tokens.json` inside the sandbox
      (matches today's MCP server exactly — zero MCP code change). Simple, works,
      but couples to the file format.
-   - **(b) Clean:** refactor `getValidToken()` to accept a token from an env var
+   - **(b) Clean:** refactor `getValidToken(principal)` to accept a token from an env var
      / per-session config the MCP server reads (`FAMILYSEARCH_ACCESS_TOKEN`),
      and the control plane refreshes centrally. Preferred long-term.
    Recommendation: ship (a) for v1 speed, plan (b).
@@ -459,7 +459,7 @@ multi-tenant web this must change:
 > `familysearch_tokens` table with server-side refresh (`auth.fresh_fs_token`),
 > and **option (a)** injection — the control plane writes
 > `~/.familysearch-mcp/tokens.json` into the sandbox, zero MCP change
-> (`fs_oauth.write_tokens`). Option (b) was not pursued; `getValidToken()` still
+> (`fs_oauth.write_tokens`). Option (b) was not pursued; `getValidToken(principal)` still
 > reads the file. Two implementation details worth knowing:
 >
 > - **The redirect reuses the desktop OAuth registration**, so the callback lives

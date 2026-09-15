@@ -12,7 +12,7 @@ Wraps the endpoint:
 `GET https://www.familysearch.org/service/search/fulltext/search`
 
 Requires authentication (OAuth tokens via the `login` tool). Uses the
-same auth flow as the existing `search` tool (`getValidToken()` from
+same auth flow as the existing `search` tool (`getValidToken(principal)` from
 `src/auth/refresh.ts`).
 
 ### Why a separate tool
@@ -329,7 +329,7 @@ verify against the original image, not an inability to reach it.
 
 ## Auth
 
-Uses `getValidToken()` from `src/auth/refresh.ts` — same as the
+Uses `getValidToken(principal)` from `src/auth/refresh.ts` — same as the
 existing `search` tool. Requires the `BROWSER_USER_AGENT` from
 `src/constants.ts` (Imperva WAF requirement). When `nlQuery` is set, an
 additional `X-FS-Feature-Tag: search_naturalLanguageSupport` header is sent
@@ -379,6 +379,22 @@ query shape.
    guarded via `AGENT_SURFACES`). The skill-reference surface is
    still unguarded; it is the fulltext collection-scoping decision's
    to land.
+
+6. **Name parameter behaviour** (measured 2026-09-14,
+   `dev/probe-search-qualifiers.ts` section J, artifact
+   `dev/measured-figures.json`): `q.fullName` searches **name fields
+   only**, not the full transcript. Confirmed by the same
+   discriminating-document anchor (Bullock County, Alabama probate):
+   `q.fullName=Virginia A. Blackman` (an NLP-recognized NAME entity
+   from the anchor's transcript) found the anchor;
+   `q.fullName=executor` (a non-name word known to be in the
+   transcript) did not — T7 paginated the full result set (229
+   entries, all examined) so the negative is airtight, not a paging
+   artifact. Note: the verdict cannot distinguish "name
+   fields only" from "applies NLP name recognition to the query
+   input, rejecting non-name terms" — the simpler interpretation is
+   assumed. Guarded by `tests/packaging/measured-figures.test.ts`
+   (`FORBIDDEN_WHEN` rule for `J.verdict:q.fullName searches`).
 
 ## Files to create/modify
 

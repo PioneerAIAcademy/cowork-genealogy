@@ -72,7 +72,7 @@ the FS ranker's failure auditable; `matchScore:null` on persistent call failure 
    never unlink (so `research_log_append` can still finalize the same handle).
 2. Subject doc = **raw `person_read(subjectId)` output**, used directly as `gedcomx2`
    (probe-confirmed; no new assembly). Enrich with relatives only if later shown to help.
-3. One `getValidToken()`; fan out `scorePair(result.gedcomx, result.primaryId,
+3. One `getValidToken(principal)`; fan out `scorePair(result.gedcomx, result.primaryId,
    subjectDoc, subjectId, token)` via `mapWithConcurrency(results, 10, …)` + `withRetry`.
 4. Optional one batch `source_attachments({uris})`.
 5. Sort by score; return flat stubs.

@@ -1,3 +1,4 @@
+import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { fetchWithRetry } from "../utils/http.js";
@@ -62,14 +63,14 @@ export const personReadToolSchema = {
 
 // ─── Entry point ──────────────────────────────────────────────────────────
 
-export async function personReadTool(input: PersonReadToolInput): Promise<PersonReadResult> {
+export async function personReadTool(input: PersonReadToolInput, principal: Principal): Promise<PersonReadResult> {
   const { personId, relatives = false, sourceDescriptions = false } = input;
   if (typeof personId !== "string" || personId.trim() === "") {
     throw new Error(
       "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
-  const token = await getValidToken();
+  const token = await getValidToken(principal);
   return fetchAndConvert(
     token,
     personId.trim(),

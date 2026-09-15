@@ -73,7 +73,8 @@ make e2e-panel
 Per fixture: its last run and how many days ago, plus its run count over the last 28
 days. `SINCE=all` for the whole history — the all-time counts are a different number
 from the trailing-month ones, and it is the trailing month that says whether the
-panel is working.
+panel is working. A batch is one run per fixture, so filing about weekly reads as
+roughly four per fixture in that window; that is the number a working panel shows.
 
 **This gates nothing.** You file four either way. The number is what you report to
 the lead, and the thing to say out loud when it stays at zero: issues are being filed
