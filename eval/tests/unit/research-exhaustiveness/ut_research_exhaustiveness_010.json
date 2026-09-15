@@ -11,7 +11,8 @@
     "tags": [
       "declaration-honesty",
       "overturn-risk",
-      "gate-reasoning"
+      "gate-reasoning",
+      "no-exhaustive-declaration"
     ]
   },
   "input": {
