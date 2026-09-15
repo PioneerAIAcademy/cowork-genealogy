@@ -166,6 +166,11 @@ export type SimplifiedFact = {
   standard_date?: string;    // GEDCOM-canonical form of `date` (set by toSimplified when parseable)
   place?: string;            // Verbatim from GedcomX place.original
   standard_place?: string;   // Standardized place name (snake_case form of standardPlace). See Rule 7.
+  assertion_id?: string;     // Backlink to the research.json assertion this fact was minted from.
+                             // A third simplified-format-only sidecar, like standard_date and
+                             // standard_place: `expandFact`'s allow-list drops it on the reverse
+                             // path by construction. Never produced by toSimplified (raw GedcomX
+                             // has no such concept) — only materialize_facts stamps it.
   sources?: SimplifiedSourceReference[];
 };
 
