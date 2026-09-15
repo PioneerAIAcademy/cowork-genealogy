@@ -1633,6 +1633,376 @@ describe("research_append (Phase 3)", () => {
   });
 
 
+  // ── a broader place containing a narrower one is not a conflict (#2028) ──
+  //
+  // "Ireland" and "County Cork, Ireland" are one claim at two levels of
+  // precision. The reported defect is the agent filing that pair as a dispute.
+  // Measured before landing: 0 of the 113 competing assertions in the scenario
+  // corpus carry `standard_place`, so the check reads free-text `place`; and 0
+  // existing conflicts are in a containment relationship, so nothing shipped
+  // starts out refused.
+  describe("place containment is not a disagreement", () => {
+    const placed = (conflictIds: string[], places: Record<string, string>) => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "born where?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }],
+      assertions: Object.entries(places).map(([id, place]) => ({
+        id,
+        source_id: "src_001",
+        fact_type: "birth",
+        value: place,
+        place,
+      })),
+      conflicts: conflictIds.length
+        ? [
+            {
+              id: "c_001",
+              conflict_type: "fact",
+              description: "birthplace",
+              disputed_attribute: "birthplace",
+              competing_assertion_ids: conflictIds,
+              status: "unresolved",
+              blocks_question_ids: [],
+            },
+          ]
+        : [],
+      proof_summaries: [],
+    });
+    const appendConflict = (ids: string[]) => ({
+      projectPath: dir,
+      section: "conflicts" as const,
+      op: "append" as const,
+      entry: {
+        conflict_type: "fact",
+        description: "birthplace",
+        competing_assertion_ids: ids,
+        status: "unresolved",
+        blocks_question_ids: [],
+        disputed_attribute: "birthplace",
+      },
+    });
+
+    it.each([
+      ["broader first", { a_001: "Ireland", a_002: "County Cork, Ireland" }],
+      ["narrower first", { a_001: "County Cork, Ireland", a_002: "Ireland" }],
+      ["deeper hierarchy", {
+        a_001: "Pennsylvania, United States",
+        a_002: "Schuylkill, Pennsylvania, United States",
+      }],
+    ])("refuses a conflict over a containment pair: %s", async (_label, places) => {
+      await writeProject(placed([], places as Record<string, string>));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(false);
+      const msg = JSON.stringify((r as any).errors);
+      expect(msg).toContain("two levels of precision");
+      expect(msg).toContain("a_001");
+      expect(msg).toContain("a_002");
+    });
+
+    // The other direction, which is the half a "break it and watch it fail"
+    // pass cannot show: the guard must leave real disputes alone. Both rows
+    // are live in the committed corpus.
+    it.each([
+      ["different countries", { a_001: "Ireland", a_002: "Pennsylvania" }],
+      ["sibling counties", {
+        a_001: "Schuylkill, Pennsylvania, United States",
+        a_002: "Allegheny, Pennsylvania, United States",
+      }],
+    ])("still allows a real disagreement: %s", async (_label, places) => {
+      await writeProject(placed([], places as Record<string, string>));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // REPRO for the reviewer's blocker: three competing assertions where two
+    // agree and one genuinely disagrees. This is the dominant corpus shape
+    // (34 of the 37 corpus fact conflicts carry three all-`birth` assertions;
+    // exactly two is 1), and every other test here uses exactly two
+    // assertions, which is why inverting the comparator reds 6 tests without
+    // ever exercising it.
+    it("allows the live 3-assertion Ireland-vs-Pennsylvania conflict", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "Ireland",
+        a_003: "Pennsylvania",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Equal places are compatible but are not containment — neither says less
+    // than the other. Whatever is wrong with a conflict recorded over two
+    // identical places, it is not the defect this guard names.
+    it("allows a conflict over two identical places", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Containment still fires when it is the ONLY relationship present, even
+    // with a third assertion in the entry that agrees with one side.
+    it("still refuses containment when a third assertion agrees", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+        a_003: "Ireland",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+
+    // Exercises the anyDisagreement clause specifically: a containment pair
+    // AND a genuine disagreement in the same entry. The conflict is real —
+    // Pennsylvania contradicts both Irish places — so the entry stands even
+    // though two of its assertions are one claim at two precisions.
+    it("allows containment when some other pair genuinely disagrees", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+        a_003: "Pennsylvania",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("ignores an assertion carrying no place — nothing to compare", async () => {
+      await writeProject(placed([], { a_001: "Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      // a_002 does not exist, and that is NOT refused here — nothing
+      // reference-checks competing_assertion_ids on this path. Pin the outcome
+      // as well as the absent substring: asserting only that a substring is
+      // missing passes when the write is refused for any other reason at all.
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(JSON.stringify((r as any).errors ?? [])).not.toContain(
+        "two levels of precision",
+      );
+    });
+
+    // The blocker: the guard read no `disputed_attribute`, so a dispute about
+    // the YEAR between two places in a containment relationship was refused
+    // with a message saying they "do not disagree" — false about the axis
+    // actually in dispute. `disputed_attribute` is free text (28 distinct
+    // values across 102 corpus fact conflicts), so the allow-list is exact.
+    it.each([
+      ["birth_year", "a plain non-place attribute"],
+      ["birth_year_and_birthplace", "a compound naming a non-place axis too"],
+      ["surname_spelling", "another axis entirely"],
+      ["Father's name: 'John W. Spriggs' vs 'Wm. Spriggs'", "free-text prose"],
+    ])("does not fire when disputed_attribute is %s (%s)", async (attr) => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+      }));
+      const base = appendConflict(["a_001", "a_002"]);
+      const r = await researchAppend({
+        ...base,
+        entry: { ...base.entry, disputed_attribute: attr },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // A blank or comma-only place is "no place", not a disagreement. Reading it
+    // as one silently disabled the guard for the whole entry.
+    it.each([["", "blank"], [" , ", "comma-only"]])(
+      "is not disabled by a %s place on a third assertion (%s)",
+      async (blank) => {
+        await writeProject(placed([], {
+          a_001: "Ireland",
+          a_002: "County Cork, Ireland",
+          a_003: blank,
+        }));
+        const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+        expect(r.ok).toBe(false);
+        expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+      },
+    );
+
+    // Depth counts normalized segments, as the comparator does. A raw comma
+    // count disagrees in both directions.
+    it("treats a trailing comma as the same depth, not a containment", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "Ireland," }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("still sees containment through a trailing comma", async () => {
+      await writeProject(placed([], { a_001: "Ireland,", a_002: "Cork, Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+
+    it("does not fire on an identity conflict", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "County Cork, Ireland" }));
+      const r = await researchAppend({
+        ...appendConflict(["a_001", "a_002"]),
+        entry: {
+          ...appendConflict(["a_001", "a_002"]).entry,
+          conflict_type: "identity",
+          identity_question: "same Patrick?",
+        },
+      });
+      expect(JSON.stringify((r as any).errors ?? [])).not.toContain(
+        "two levels of precision",
+      );
+    });
+
+    // The freeze #2354 had to design around: a project written before this
+    // rule existed must stay editable. The arm is scoped to ops that (re)set
+    // the pairing, so an unrelated field update passes.
+    it("does not refuse an unrelated update to a pre-existing containment conflict", async () => {
+      await writeProject(
+        placed(["a_001", "a_002"], { a_001: "Ireland", a_002: "County Cork, Ireland" }),
+      );
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { description: "birthplace, restated" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does fire on an update that re-sets competing_assertion_ids", async () => {
+      await writeProject(
+        placed(["a_001"], { a_001: "Ireland", a_002: "County Cork, Ireland" }),
+      );
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { competing_assertion_ids: ["a_001", "a_002"] },
+      });
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+  });
+
+  // ── two dates that cannot be ordered are warned about, not refused (#2028) ──
+  describe("unorderable competing dates raise a warning", () => {
+    const dated = (rows: [string, string, string][]) => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "when?", status: "open" }],
+      sources: [{ id: "src_001", citation: "a source" }],
+      assertions: rows.map(([id, fact_type, date]) => ({
+        id,
+        source_id: "src_001",
+        fact_type,
+        value: `${fact_type} ${date}`,
+        date,
+      })),
+      conflicts: [],
+      proof_summaries: [],
+    });
+    const appendConflict = (ids: string[]) => ({
+      projectPath: dir,
+      section: "conflicts" as const,
+      op: "append" as const,
+      entry: {
+        conflict_type: "fact",
+        description: "temporal impossibility",
+        disputed_attribute: "event_order",
+        competing_assertion_ids: ids,
+        status: "unresolved",
+        blocks_question_ids: [],
+      },
+    });
+    const warningsOf = (r: any) => JSON.stringify(r.validation?.warnings ?? []);
+
+    it("warns on the reported incident — an arrival inside a year-only death", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1856-12-15"], ["a_002", "death", "1856"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      // The write SUCCEEDS. This is an advisory, not a gate.
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).toContain("cannot be ordered");
+      expect(warningsOf(r)).toContain("a_001");
+      expect(warningsOf(r)).toContain("a_002");
+    });
+
+    it("stays silent when the two events are genuinely ordered", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1853"], ["a_002", "death", "1908-03-12"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    // The noise check. A birthplace conflict is two `birth` assertions whose
+    // dates overlap by construction; warning there would fire on 35 of the 37
+    // corpus conflicts and teach the reader to skip this channel.
+    it("stays silent on a same-fact_type value disagreement", async () => {
+      await writeProject(
+        dated([["a_001", "birth", "~1845"], ["a_002", "birth", "1845"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    // Regression guard for the bug this nearly shipped with: `getDayRange`
+    // returns null for `~approx` and ISO, and `compatibleDate` reads null as
+    // "incompatible", so skipping `stdDate` makes the check silently say
+    // nothing on exactly the imprecise dates it exists to flag.
+    it("normalizes through stdDate — an approx year still overlaps a day date", async () => {
+      await writeProject(
+        dated([["a_001", "residence", "~1856"], ["a_002", "death", "1856-12-15"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(warningsOf(r)).toContain("cannot be ordered");
+    });
+
+    // Covers the outer fact_type-span guard specifically. Without it, a pair
+    // where only ONE side declares a fact_type reaches the date comparison —
+    // the inner same-type `continue` cannot catch that, because a string never
+    // equals undefined. An assertion that does not say what kind of event it
+    // records gives no reason to read the pair as an ordering claim.
+    // Ask 7: `compatibleDate` widens imperfect dates by 365 days, so it calls
+    // a death of "1856" unorderable against a burial on 1857-12-31 — and the
+    // warning would then tell the agent neither is known to come first, which
+    // is false. `isABeforeB` is three-valued at fudge 0 and says nothing here.
+    it.each([
+      ["1857-12-31", "a year later — ordered, despite the 365-day fudge"],
+      ["1855-06-01", "a year earlier — ordered the other way"],
+    ])("stays silent on a genuinely ordered pair: %s (%s)", async (other) => {
+      await writeProject(dated([["a_001", "death", "1856"], ["a_002", "burial", other]]));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    it("says nothing when only one side declares a fact_type", async () => {
+      await writeProject({
+        project: { objective: "x" },
+        questions: [{ id: "q_001", question: "when?", status: "open" }],
+        sources: [{ id: "src_001", citation: "a source" }],
+        assertions: [
+          { id: "a_001", source_id: "src_001", fact_type: "death", value: "d", date: "1856" },
+          { id: "a_002", source_id: "src_001", value: "untyped", date: "1856-12-15" },
+        ],
+        conflicts: [],
+        proof_summaries: [],
+      });
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    it("says nothing when either date is absent", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1856-12-15"], ["a_002", "relationship", ""]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+  });
+
   // ── correlation presupposes identity (lead ruling, 2026-08-19) ──
   //
   // A conclusion may not out-tier the reliability of the sources it rests on.

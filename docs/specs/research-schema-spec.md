@@ -741,7 +741,7 @@ Array of evaluation pointer records — a lightweight index of mentor reviews pe
 | `target_id` | string | yes | The `q_` ID, `ps_` ID, or literal `"project"` evaluated |
 | `target_type` | `evaluation_target_type` | yes | Resolved type of `target_id`: `question`, `proof_summary`, or `project` |
 | `verdict` | `evaluation_verdict` | yes | Result of the evaluation: `looks_solid`, `consider_addressing`, `address_first`, or `refused` |
-| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder (e.g. `evaluations/pre-exhaustiveness-q_001-2026-06-02T14-30-00.json`) |
+| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder (e.g. `evaluations/pre-exhaustiveness-q_001-2026-06-02T14-30-00.json`); the body is read back with `sidecar_read({ projectPath, ref })`, `ref` being this string as stored |
 | `timestamp` | string | yes | UTC ISO 8601 timestamp of when the evaluation was written |
 | `superseded_by` | string or null | yes | `ev_` ID of a later evaluation for the same `focus` + `target_id` combination, or null when this entry is the latest |
 
