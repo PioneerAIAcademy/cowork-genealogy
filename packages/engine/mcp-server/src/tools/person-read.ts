@@ -456,6 +456,20 @@ function parentIdsOf(body: FSTreeResponse, pid: string): string[] {
   return [...out];
 }
 
+/** `parent|child` keys already emitted by the subject's own CAPRs, so the
+ *  fan-out cannot contribute a second copy of an edge the subject read has. */
+function edgeKeysOf(body: FSTreeResponse): string[] {
+  const out: string[] = [];
+  for (const capr of body.childAndParentsRelationships ?? []) {
+    const childId = capr.child?.resourceId;
+    if (!childId) continue;
+    for (const ref of [capr.parent1, capr.parent2]) {
+      if (ref?.resourceId) out.push(`${ref.resourceId}|${childId}`);
+    }
+  }
+  return out;
+}
+
 /** Does this CAPR make `childId` a child of `parentId`? */
 function isChildOf(
   capr: FSChildAndParentsRelationship,
@@ -552,7 +566,7 @@ async function mergeSiblings(
     persons,
     childAndParentsRelationships: [
       ...(body.childAndParentsRelationships ?? []),
-      ...pruneCaprs(candidateCaprs, known),
+      ...pruneCaprs(candidateCaprs, known, edgeKeysOf(body)),
     ],
   };
 }
@@ -575,8 +589,9 @@ async function mergeSiblings(
 function pruneCaprs(
   caprs: FSChildAndParentsRelationship[],
   known: Set<string>,
+  alreadyEmitted: Iterable<string> = [],
 ): FSChildAndParentsRelationship[] {
-  const seen = new Set<string>();
+  const seen = new Set<string>(alreadyEmitted);
   const out: FSChildAndParentsRelationship[] = [];
   for (const capr of caprs) {
     const childId = capr.child?.resourceId;
@@ -586,18 +601,22 @@ function pruneCaprs(
     const keep1 = parent1 !== undefined && known.has(parent1);
     const keep2 = parent2 !== undefined && known.has(parent2);
     if (!keep1 && !keep2) continue;
-    // Dedup on the surviving shape, not on `capr.id`: the same sibling is
-    // reachable through BOTH parents, and each parent's read returns its own
-    // copy of that CAPR.
-    const key = `${childId}|${keep1 ? parent1 : ""}|${keep2 ? parent2 : ""}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    // Dedup per PARENT-CHILD PAIR, not per CAPR. `synthesizeParentChild`
+    // expands one CAPR into one edge PER PARENT, so a CAPR-shaped key is the
+    // wrong granularity: a sibling carrying two CAPRs that name the same parent
+    // -- {DAD, MUM} and {DAD} alone, which is what a biological plus an
+    // adoptive record looks like -- has two distinct CAPR keys and emitted
+    // DAD->SIB twice. Measured before this fix:
+    //   ["DAD-001->SIB-100", "MUM-002->SIB-100", "DAD-001->SIB-100"]
+    const emit1 = keep1 && !seen.has(`${parent1}|${childId}`);
+    const emit2 = keep2 && !seen.has(`${parent2}|${childId}`);
+    if (!emit1 && !emit2) continue;
+    if (emit1) seen.add(`${parent1}|${childId}`);
+    if (emit2) seen.add(`${parent2}|${childId}`);
     out.push({
       ...capr,
-      ...(keep1 ? {} : { parent1: undefined }),
-      ...(keep2 ? {} : { parent2: undefined }),
-      ...(keep1 ? {} : { parent1Facts: undefined }),
-      ...(keep2 ? {} : { parent2Facts: undefined }),
+      ...(emit1 ? {} : { parent1: undefined, parent1Facts: undefined }),
+      ...(emit2 ? {} : { parent2: undefined, parent2Facts: undefined }),
     });
   }
   return out;

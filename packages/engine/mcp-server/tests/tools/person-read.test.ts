@@ -1166,6 +1166,53 @@ describe("personReadTool — sibling fan-out", () => {
     expect(out.persons.map((p) => p.id)).not.toContain(spouse);
   });
 
+  it("emits ONE edge per parent-child pair when a sibling carries two CAPRs", async () => {
+    // A biological record plus an adoptive one name the same parent in two
+    // differently-shaped CAPRs. Deduping per CAPR is the wrong granularity:
+    // synthesizeParentChild expands one CAPR into one edge PER PARENT, so
+    // {DAD,MUM} and {DAD} have distinct CAPR keys and emitted DAD->SIB twice.
+    const sib = "SIB-100";
+    route({
+      [SUBJECT]: subjectBody(),
+      [DAD]: {
+        persons: [person(DAD, "Dad"), person(sib, "Sibling")],
+        relationships: [],
+        childAndParentsRelationships: [capr(sib, DAD, MUM), capr(sib, DAD)],
+      },
+      [MUM]: { persons: [person(MUM, "Mum")], relationships: [], childAndParentsRelationships: [] },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    const edges = out.relationships
+      .filter((r) => r.type === "ParentChild" && r.child === sib)
+      .map((r) => `${r.parent}->${r.child}`);
+    expect(edges.filter((e) => e === `${DAD}->${sib}`)).toHaveLength(1);
+    expect(edges.sort()).toEqual([`${DAD}->${sib}`, `${MUM}->${sib}`].sort());
+  });
+
+  it("does not re-emit an edge the subject's own read already carried", async () => {
+    route({
+      [SUBJECT]: subjectBody([DAD]),
+      [DAD]: {
+        persons: [person(DAD, "Dad"), person(SUBJECT, "Subject Person")],
+        relationships: [],
+        // the subject's own parentage, echoed back by the parent's read
+        childAndParentsRelationships: [capr(SUBJECT, DAD)],
+      },
+    });
+    const out = await personReadTool(
+      { personId: SUBJECT, relatives: true },
+      LOCAL,
+    );
+    expect(
+      out.relationships.filter(
+        (r) => r.type === "ParentChild" && r.child === SUBJECT && r.parent === DAD,
+      ),
+    ).toHaveLength(1);
+  });
+
   it("harvests a child of THIS parent only — not one the other parent's read owns", async () => {
     // Discriminates isChildOf from pruneCaprs, which otherwise masks it: a
     // maternal half-sibling appears in Dad's payload as a CAPR naming Mum, and
