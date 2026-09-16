@@ -1,18 +1,13 @@
 import { LOCAL } from "../src/auth/principal.js";
 import { wikiPlacePageTool } from "../src/tools/wiki-place-page.js";
-import type { WikiPageSection } from "../src/types/wikiPage.js";
+import { WIKI_PAGE_SECTIONS, type WikiPageSection } from "../src/types/wikiPage.js";
 
 // Usage: npx tsx dev/try-wiki-place-page.ts "<standardPlace>" <home|getting_started|online_records|research_tips>
 // Example: npx tsx dev/try-wiki-place-page.ts "Portugal" home
 const standardPlace = process.argv[2];
 const section = (process.argv[3] ?? "home") as WikiPageSection;
 
-const VALID: WikiPageSection[] = [
-  "home",
-  "getting_started",
-  "online_records",
-  "research_tips",
-];
+const VALID: readonly WikiPageSection[] = WIKI_PAGE_SECTIONS;
 
 if (!standardPlace) {
   console.error(
