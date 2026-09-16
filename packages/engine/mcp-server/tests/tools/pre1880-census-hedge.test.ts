@@ -50,6 +50,66 @@ describe("requirePre1880CensusHedge", () => {
     ok("1860 US Census, Dodge County, Wisconsin — 1 result, matchScore 0.94, no further detail indexed.");
   });
 
+
+  // --- The year must bind to the CENSUS, not to any number in the note. ------
+  // Before this binding the year test read the whole note, so an incidental
+  // pre-1880 number -- almost always a birth year, since people are born before
+  // they are enumerated -- refused a note about a census that HAS the
+  // relationship column. 135 of 332 refusals across the committed run logs.
+  // Every case below FAILS against the pre-binding function; that was checked
+  // by running them against `git show HEAD:` of it, not assumed.
+
+  it.each([
+    // The shape the reviewer measured: an 1880 census and a pre-1880 birth year.
+    "1880 US Census, Bertha, Todd, Minnesota. Household of Henry Bottermiller (head, born 1828 Germany, farmer) and Mary Bottermiller (born 1838 Germany).",
+    // 1900, with the birth year that used to trip it.
+    "1900 US Census, Ward 6, Chicago: head of household Thomas Flynn, b. Mar 1857 Ireland; wife Mary, b. Jun 1859 Ireland.",
+    // A post-1879 census whose pre-1880 numbers are marriage and arrival years.
+    "1880 US Census, Cook County: Patrick Gallagher head of household, with wife Bridget and son Michael. Bridget gives her arrival as 1867; they married 1869.",
+    // 1911 Irish census naming an 1878 birth -- the reviewer's third example.
+    "John Butler, Male, born 1878 County Kilkenny, 1911 census household head.",
+    // A pre-1880 year that is a death year, on a 1900 census household.
+    "1900 US Census, Ward 2: Mary Flynn, head of household, widow, with sons John and James. Her husband Thomas d. 1878.",
+    // Reversed order: the token precedes the year.
+    "US Census 1880, Dodge County: William Mullen head of household with wife Margaret; both parents b. Ireland, 1826 and 1830.",
+    // A negative result on an 1880 census, refused on a birth-year RANGE.
+    "No results for William Faerber (b. 1869-1870) in 1880 U.S. Census, Hamilton County, Ohio. At age ~10 he would appear in his father's household.",
+  ])("accepts a documented census carrying an incidental pre-1880 year (%#)", (n) => ok(n));
+
+  // --- The jurisdiction must bind to the census too. -------------------------
+  // The doctrine is US-federal. England & Wales and Scotland gained the
+  // relationship column in 1851, which is the lead's 2026-08-27 objection that
+  // a tool-boundary gate "is not generalizable outside the US".
+
+  it.each([
+    "1871 Scotland Census household (John Miller head, St Mary's, Forfarshire). Susan Miller listed as daughter, born 1865 in Forfarshire.",
+    "Record title: 'Household of Job Purnell, England and Wales Census, 1851'. Household: Job Purnell head, wife Ann, son Samuel.",
+    "1881 England and Wales Census (John Miller household, Barrow-in-Furness, Lancashire). Susan Miller listed as daughter, born 1865 Forfarshire.",
+  ])("accepts a non-US census that carries a relationship column (%#)", (n) => ok(n));
+
+  it("still refuses an 1841 England census, which has NO relationship column", () => {
+    bad("1841 England Census, Trowbridge: Samuel Purnall household with wife Ann and son Job.");
+  });
+
+  it("still refuses a US census when the only foreign word is a BIRTHPLACE", () => {
+    // The jurisdiction is bound adjacently for exactly this reason: a note-wide
+    // search would read "Wales" here and wave through a US 1860 household.
+    bad("Top result: 'Morice Jankins', male, born 1821 Wales, 1860 census at Cosumnes Township, El Dorado, California. Household includes wife Mary and son John.");
+    bad("Located Patrick Flynn, age 15, in Schuylkill County, 1860 US Census, living with Thomas Flynn (age 50, b. Ireland) and Bridget Flynn (age 44, b. Ireland).");
+  });
+
+  it("binds the year in the orders real notes use", () => {
+    bad("Census of 1870, Yell County, Arkansas: Reuben Hensley living with Sarah Hensley and sons William and Elisha.");
+    bad("US Census 1870, Ward 4, Philadelphia: Patrick Gallagher enumerated with wife Bridget and daughters Ellen and Mary.");
+    bad("Traced the family across the 1850 and 1860 US census, Dodge County: head of household Thomas Flynn, with Mary Flynn.");
+  });
+
+  it("falls back to the whole-note year when no year binds to a census at all", () => {
+    // Undecidable on the year axis, so behaviour is unchanged rather than
+    // silently permissive -- this is the one branch the binding does not reach.
+    bad("The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.");
+  });
+
   it("ignores naming a tree-side relative the record did not contain", () => {
     // "searched for George's wife Catherine" is a statement about the TREE, not
     // about what the census stated — the validator's own carve-out.

@@ -10,8 +10,10 @@ match-triage block and the census/jurisdiction rules added or changed since).
 **Coverage key:** *guard* = a deterministic validator in
 `eval/harness/validators/test_search_records.py` fails the run when the rule is
 broken. *tag-gated* = that guard only runs on tests carrying a specific tag, so
-it is inert on the rest of the suite. *judge* = the LLM rubric grades it, no
-deterministic backstop. *none* = nothing checks it.
+it is inert on the rest of the suite. *tool precondition* = the MCP writer tool
+itself refuses the call, so the rule binds in production and on every test
+regardless of tags. *judge* = the LLM rubric grades it, no deterministic
+backstop. *none* = nothing checks it.
 
 | # | Rule | SKILL.md | Coverage |
 |---|---|---|---|
@@ -36,7 +38,7 @@ deterministic backstop. *none* = nothing checks it.
 | 19 | Anchor rule: every `record_search` query must include `surname`, `recordCountry`, or `batchNumber`. | Step 2 | guard, packaging-level — `packages/engine/mcp-server/tests/packaging/lever-anchor-shapes.test.ts` runs every lever's own prescribed query shape through the shipped `validateInput()` (built this session, closing clack391's validator request) |
 | 20 | `batchNumber` on a result opens the whole extraction — send it as the only search filter; one page is not the batch (page with `offset`, partition by `surname` past `offset + count = 4999`). | Step 4 | none at runtime; the anchor half is covered by #19's lint |
 | 21 | Follow a returned `jurisdictionHints` — the next 1-2 retries must set `recordCountry`/`residencePlace`/`birthPlace` to the top-ranked hint's place before reverting. | Step 4 | guard, tag-gated (`test_jurisdiction_hints_followed`, `jurisdiction-hints-followed` — built this session, closes mercyokum's Finding 1) |
-| 22 | Pre-1880 US censuses have no relationship column — a log note describing such a household must mark the family structure inferred, not stated, including a clean, unconflicted top match (the "not just needs-review" scope is new as of this session). | Step 4 | guard, tag-gated (`test_pre1880_census_structure_marked_inferred`, `pre-1880-census-household`) |
+| 22 | Pre-1880 US censuses have no relationship column — a log note describing such a household must mark the family structure inferred, not stated, including a clean, unconflicted top match (the "not just needs-review" scope is new as of this session). | Step 4 | guard, tag-gated (`test_pre1880_census_structure_marked_inferred`, `pre-1880-census-household`) **plus an untagged tool precondition** — `requirePre1880CensusHedge` in `research-log-append.ts` refuses the write on every call, tagged or not. The tool binds the year and the jurisdiction to the census token, so it is narrower than the validator: a documented census (1880+ US, 1851+ England & Wales and Scotland) is never refused |
 | 23 | Do not offer extraction as a next step for any top match that hasn't cleared needs-review on every check — the namesake gate generalizes to every match, not just the disqualified-namesake branch. | Step 4 | judge — this is the rule DallanQ's opening comment found contradicted; the contradiction is now resolved in prose (confirmed no `matchScore` numeric threshold remains anywhere in the file) but nothing deterministic backs it |
 | 24 | Warm-framing ban: never "Top Match", "almost certainly the right person", "highly promising", "very likely ours", "a strong candidate" for a flagged match. | Step 4 | judge — "a strong candidate" is now in the list (DallanQ's suggested widening) |
 | 25 | Civil-death-registration exception: a <=5-year birth-year discrepancy does not by itself disqualify a match when the full given name is exact. | Step 4 | judge |
@@ -51,10 +53,11 @@ deterministic backstop. *none* = nothing checks it.
 
 ## Coverage summary
 
-Of 33 checkable rules, **10 have a deterministic guard**: 6 are purely
-tag-gated (rows 15, 21, 22, 29, 32, 33), 1 mixes an untagged base check with a
-tag-gated stricter shape (row 6), and 3 are universal/packaging-level checks
-that run regardless of tags (rows 7, 19, 27). The remaining 23 rely on the LLM
+Of 33 checkable rules, **10 have a deterministic guard**: 5 are purely
+tag-gated (rows 15, 21, 29, 32, 33), 2 mix an untagged check with a tag-gated
+one (row 6, an untagged base check plus a tag-gated stricter shape; row 22, a
+tag-gated validator plus an untagged tool precondition), and 3 are
+universal/packaging-level checks that run regardless of tags (rows 7, 19, 27). The remaining 23 rely on the LLM
 judge or nothing at all. This matches the pattern the guide's own worked
 examples describe: the body is most detailed exactly where scrutiny is
 hardest to mechanize (Step 4's match-triage judgment calls), and least

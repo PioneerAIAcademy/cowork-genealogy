@@ -261,13 +261,20 @@ clerical work.
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink staged sidecar); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
+| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it | input error; write nothing. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
 
 ### 8.1 Non-blocking warnings (never fail the op)
 
-Two advisories ride `validation.warnings` on a successful write. Both are
-warnings, not preconditions — they never touch `ok`, because a hard block here
-would trip the false-deny asymmetry (`guardrail-enforcement-spec.md` §10),
-turning a lossy-but-recoverable session into an availability regression.
+Two advisories ride `validation.warnings` on a successful write. **These two**
+are warnings rather than preconditions — they never touch `ok`, because a hard
+block on either would trip the false-deny asymmetry
+(`guardrail-enforcement-spec.md` §10), turning a lossy-but-recoverable session
+into an availability regression. Neither is decidable from the note: both rest
+on project-wide state (what else has been logged, what has been persisted) that
+the caller may be about to supply in the next call.
+
+This is not a blanket rule against preconditions on this tool — §8.2 is one that
+does block, and the distinction is what makes it legitimate.
 
 - **Unretained results:** a `STAGING_CAPABLE_TOOLS` search that reported
   `resultsAvailable > 0` but passed no `stagedResultsRef` discarded its verbatim
@@ -283,6 +290,47 @@ turning a lossy-but-recoverable session into an availability regression.
   Tool-neutral message.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
+
+### 8.2 The one precondition that does block: undocumented census structure
+
+A note that states the family structure of a census whose schedule has **no
+relationship-to-head column**, without marking it as inferred, is refused and
+nothing is written.
+
+This clears the §8.1 bar for a reason the other two cannot: it is decidable from
+the note alone, which is ADR-0011's test for a writer-tool precondition. No
+project state, no prior call and no later call can change the answer. The
+refusal is also always actionable — the note becomes compliant by saying what is
+true ("family structure inferred from surname, ages and order, not stated"), so
+it costs a turn rather than losing work.
+
+Scope, and why it is this narrow:
+
+- **The year binds to the census, never to the note.** A census note almost
+  always carries birth years older than the census itself, so a whole-note year
+  test refuses the documented censuses it is meant to allow. Only a year
+  syntactically attached to the word "census" counts.
+- **The jurisdiction binds the same way.** The doctrine is US-federal, where
+  1880 is the dividing line. England & Wales and Scotland gained the column in
+  1851, so a post-1851 British census is documented and must pass. A named
+  jurisdiction with no documented threshold skips the rule rather than guessing.
+  The jurisdiction must touch the census token: most non-US words in real notes
+  are birthplaces on a US schedule ("1850 US Census, Schuylkill County ... born
+  Ireland"), which stays refused.
+- **Undecidable inputs keep the prior behaviour** rather than failing open: when
+  no year binds to a census at all, the whole-note test still applies.
+
+Measured over the 3,275 distinct `notes` arguments in the committed run logs,
+the rule refuses 196 (6.0%), down from 332 (10.1%) before the binding, with
+nothing newly refused.
+
+The lead rejected a tool-boundary content gate on 2026-08-27 on three grounds
+(recorded in `eval/tests/unit/search-records/whitfield-1850-household.json`):
+a 41% refusal rate, non-generalizability outside the US, and the signal being
+author-supplied and optional. The binding above answers the first two — the rate
+is 6.0% of notes, and non-US censuses that carry the column are excluded. **The
+third stands**: a caller that omits the census year from `notes` is not refused,
+so this narrows a common failure rather than closing a hole.
 
 ---
 
