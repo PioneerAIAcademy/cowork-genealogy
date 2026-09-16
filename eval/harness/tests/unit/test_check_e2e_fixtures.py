@@ -538,10 +538,14 @@ def test_main_grading_gate_blocks_missing_ann(tmp_path, monkeypatch):
 
 def test_main_grading_gate_passes_when_graded(tmp_path, monkeypatch):
     repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
     rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
     tree, ann = _siblings(rel)
+    # Both selectors real, no stub: the gate reads the AR set, so a stub on the
+    # A selector alone leaves it looking at an empty list and the test vacuous.
+    monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
-    monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 0
 
 

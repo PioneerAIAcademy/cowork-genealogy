@@ -3,13 +3,15 @@
 
 ## Grading gate (BLOCKING)
 
-Every run log ADDED in this PR that produced a final tree must ship its
+Every run log ADDED OR RENAMED into the corpus in this PR that produced a
+final tree must ship its
 ``run-<ts>.ann.json`` in the same PR — grading is same-PR (the developer +
 genealogist teams grade every run they commit; docs/e2e-testing-guide.md
 "Grading a run"). A treeless run (crashed or skipped before a final tree) is
-exempt: there is nothing to grade. Scoped to PR-added run logs via
-``git diff --diff-filter=A`` (BASE_SHA / HEAD_SHA), mirroring check_runlogs.py
-rule 1; skipped when run outside a PR (env unset), so local runs still work.
+exempt: there is nothing to grade. Scoped to run logs ADDED OR RENAMED into
+the corpus via ``git diff --diff-filter=AR`` (BASE_SHA / HEAD_SHA), so a run
+promoted out of quarantine is caught; skipped when run outside a PR (env
+unset), so local runs still work.
 Both siblings are resolved from the HEAD_SHA tree, never the working directory,
 so a local run and CI reach the same verdict (issue #2469).
 
@@ -106,8 +108,8 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     """PR-added primary run logs under eval/runlogs/e2e/, as repo-relative Paths.
 
     Returns ``None`` when not running in a PR context (BASE_SHA / HEAD_SHA
-    unset) — the grading gate only applies to files added in the PR, mirroring
-    check_runlogs.py rule 1 (``git diff --diff-filter=A``). Local runs skip it.
+    unset). Read by the two WARN-only checks; both blocking gates read
+    ``git_ar_e2e_runlogs()`` instead. Local runs skip it.
     """
     base = os.environ.get("BASE_SHA")
     head = os.environ.get("HEAD_SHA")
