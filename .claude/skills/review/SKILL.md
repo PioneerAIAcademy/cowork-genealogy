@@ -364,7 +364,7 @@ the code as it stands now.
 
 One ruleset setting decides what a stale approval is worth here, and it is
 permissive. `dismiss_stale_reviews_on_push: false` means a push does **not**
-clear existing approvals — they keep counting toward the two required, and
+clear existing approvals — the one required approval keeps counting, and
 nothing re-requests review. **Nothing takes their place.** An approval that read
 a commit three pushes ago still clears the merge gate, and the merge box says
 approved.
