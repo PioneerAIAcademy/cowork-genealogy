@@ -45,7 +45,8 @@ An edit is NOT justified when:
   supports the claim
 - A value is *concluded* prematurely — coexisting sourced facts are
   fine and expected, but marking one `primary` before the conflicting
-  evidence is examined and resolved is not
+  evidence is examined and resolved is not. Clearing a `primary` the new
+  evidence undercuts is not marking, and is allowed
 - The edit assumes a relationship that documentation does not support
 
 ## Avoiding premature conclusions
@@ -58,7 +59,8 @@ working tool, not a finished publication. When the evidence does not yet
 settle a *conclusion*:
 
 - Record the sourced evidence, and leave the concluded value
-  (`primary`/`preferred`) unset until proof-conclusion weighs it
+  (`primary`/`preferred`) unset until proof-conclusion weighs it — and
+  clear one already set that the new conflict undercuts (`primary: false`)
 - Let conflicting sourced values coexist as separate facts rather than
   picking a side
 - Leave relationship fields empty rather than guessing at a subtype
