@@ -1,4 +1,4 @@
-"""Unit tests for scripts/check_e2e_fixtures.py — the e2e grading gate."""
+"""Unit tests for scripts/check_e2e_fixtures.py — the e2e discipline gates."""
 
 from __future__ import annotations
 
@@ -325,7 +325,7 @@ def test_1m_run_RENAMED_into_the_corpus_is_a_violation(tmp_path, monkeypatch):
     sel, head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
     assert [p.as_posix() for p in sel] == [dst], sel
     assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
-    # The A-scoped selector the grading gate uses cannot see this at all.
+    # The A-scoped selector the two warn checks read cannot see this at all.
     assert check_e2e_fixtures.git_added_e2e_runlogs() == []
 
 

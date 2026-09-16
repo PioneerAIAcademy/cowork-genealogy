@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""GH Action: the e2e grading gate (a discipline check on committed files).
+"""GH Action: the e2e discipline gates (checks on committed files).
 
 ## Grading gate (BLOCKING)
 
 Every run log ADDED OR RENAMED into the corpus in this PR that produced a
-final tree must ship its
-``run-<ts>.ann.json`` in the same PR — grading is same-PR (the developer +
+final tree must ship its ``run-<ts>.ann.json`` in the same PR — grading is
+same-PR (the developer +
 genealogist teams grade every run they commit; docs/e2e-testing-guide.md
 "Grading a run"). A treeless run (crashed or skipped before a final tree) is
 exempt: there is nothing to grade. Scoped to run logs ADDED OR RENAMED into
@@ -21,6 +21,16 @@ validity (drift / incomplete / malformed) is the maintainer's
 out of CI so this script stays stdlib-only and never needs the harness venv.
 The one content check that lives here is the component-derivation drift warning
 below: it is pure stdlib JSON arithmetic, so it meets the same constraint.
+
+## 1M-window gate (BLOCKING)
+
+A run log added or renamed into ``eval/runlogs/e2e/`` whose ``usage.betas`` is
+non-empty was made with ``--context-1m``. A 1M window changes the compaction
+count and the cache-gap structure — what ``make e2e-compaction`` and
+``make e2e-cache-window`` measure — and ``all_result_jsons`` scans the corpus
+with no exclusion, so such a run lands at maximum weight. Keep it in a sibling
+directory outside ``eval/runlogs/e2e/``. Same AR scoping and same HEAD_SHA-tree
+read as the grading gate above.
 
 ## Unresolved-draft check (WARN only)
 
@@ -108,7 +118,8 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     """PR-added primary run logs under eval/runlogs/e2e/, as repo-relative Paths.
 
     Returns ``None`` when not running in a PR context (BASE_SHA / HEAD_SHA
-    unset). Read by the two WARN-only checks; both blocking gates read
+    unset). Read by the two WARN-only checks, and by main() for the skip
+    decision and the OK line's second denominator; both blocking gates read
     ``git_ar_e2e_runlogs()`` instead. Local runs skip it.
     """
     base = os.environ.get("BASE_SHA")

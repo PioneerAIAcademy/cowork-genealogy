@@ -10,6 +10,12 @@ name: Check e2e fixtures + grading
 # run logs added or renamed into the corpus via `git diff --diff-filter=AR`
 # (needs BASE_SHA/HEAD_SHA and full history).
 #
+# 1M-window gate (BLOCKING): a run log added or renamed into eval/runlogs/e2e/
+# whose usage.betas is non-empty was made with --context-1m. A 1M window is not
+# comparable to the rest of the corpus (it changes the compaction count and the
+# cache-gap structure) and the corpus scan has no exclusion for it, so keep such
+# a run in a sibling directory outside eval/runlogs/e2e/. Same AR scoping.
+#
 # Fixture *validity* (a fixture having a committed passing run log — spec §14)
 # is NOT gated here: it is a recommended authoring practice, not a CI check, so
 # a fixture can land without a passing run. It used to be an advisory warning;
