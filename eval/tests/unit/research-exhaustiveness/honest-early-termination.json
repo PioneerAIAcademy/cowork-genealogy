@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "user_message": "Have we searched enough for q_001? I've run out of budget — we haven't done probate records or the post-1860 censuses, but I can't search any more. Can you evaluate whether the research is exhaustive and write the declaration? It's clearly not exhaustive, so declared should be false — but I want an honest assessment with the stop criteria filled in so I can see exactly what gaps remain.",
+    "user_message": "Have we searched enough for q_001? I've run out of budget — we haven't done probate records or the post-1860 censuses, but I can't search any more. Can you evaluate whether the research is exhaustive and write the declaration? I want an honest assessment with the stop criteria filled in so I can see exactly what gaps remain.",
     "scenario": "flynn-census-exhausted"
   },
   "mcp_fixtures": [
