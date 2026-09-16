@@ -50,9 +50,12 @@ const grab = (re, label) => {
 const newestSrc = grab(/^function newestPerName\(runs\) \{[\s\S]*?\n\}/m, 'newestPerName');
 const supersededSrc = grab(/^function supersededThreads\(threads, approvals\) \{[\s\S]*?\n\}/m,
   'supersededThreads');
+const standingsSrc = grab(/^function reviewStandings\(reviews, authorLogin\) \{[\s\S]*?\n\}/m,
+  'reviewStandings');
 
-const { newestPerName, supersededThreads } = new Function(
-  `${newestSrc}\n${supersededSrc}\nreturn { newestPerName, supersededThreads };`)();
+const { newestPerName, supersededThreads, reviewStandings } = new Function(
+  `${newestSrc}\n${supersededSrc}\n${standingsSrc}\n` +
+  `return { newestPerName, supersededThreads, reviewStandings };`)();
 
 let failures = 0;
 const fail = msg => { failures++; console.error(`FAIL  ${msg}`); };
@@ -209,6 +212,123 @@ for (const { label, threads, approvals, want } of SUPERSEDED) {
   eq(supersededThreads(threads, approvals), want, `supersededThreads: ${label}`);
 }
 
+// ---------------------------------------------------------------------------
+// 3. reviewStandings: round one is the author's own review (2026-09-16).
+//
+// THE FAILURE THIS GUARDS. `selfReviewed` and `approvals` are two outputs of one
+// function and the whole design rests on the author reaching the first and never
+// the second. Fold them together and an author clears their own review threads
+// out of the readiness gate by self-reviewing — the PR reaches a senior with
+// round-one comments open, which is silent: the job is green, the label is
+// present, and nothing distinguishes it from a PR that is genuinely ready.
+//
+// So these cases assert BOTH directions — that a self-review is admitted to
+// readiness, and that it is refused everywhere else.
+// ---------------------------------------------------------------------------
+const R = (login, state, submitted_at) => ({ user: login === null ? null : { login }, state, submitted_at });
+
+const STANDINGS = [
+  {
+    label: 'an author COMMENTED self-review satisfies round one',
+    reviews: [R('florence', 'COMMENTED', '2026-09-16T10:00:00Z')],
+    author: 'florence',
+    want: { selfReviewed: true, approvals: [], standings: [] },
+  },
+  {
+    label: 'no self-review leaves the PR out of the queue',
+    reviews: [],
+    author: 'florence',
+    want: { selfReviewed: false, approvals: [], standings: [] },
+  },
+  {
+    label: 'a PEER comment is not a self-review and not a standing',
+    reviews: [R('chris', 'COMMENTED', '2026-09-16T10:00:00Z')],
+    author: 'florence',
+    want: { selfReviewed: false, approvals: [], standings: [] },
+  },
+  {
+    label: 'the author never enters approvals, so cannot clear their own threads',
+    reviews: [R('florence', 'COMMENTED', '2026-09-16T10:00:00Z')],
+    author: 'florence',
+    want: { selfReviewed: true, approvals: [], standings: [] },
+  },
+  {
+    label: 'a senior approval still lands in approvals alongside the self-review',
+    reviews: [
+      R('florence', 'COMMENTED', '2026-09-16T10:00:00Z'),
+      R('chris', 'APPROVED', '2026-09-16T11:00:00Z'),
+    ],
+    author: 'florence',
+    want: { selfReviewed: true, approvals: [['chris', '2026-09-16T11:00:00Z']], standings: ['APPROVED'] },
+  },
+  {
+    label: 'a senior changes-requested puts the PR back out of the queue',
+    reviews: [
+      R('florence', 'COMMENTED', '2026-09-16T10:00:00Z'),
+      R('chris', 'CHANGES_REQUESTED', '2026-09-16T11:00:00Z'),
+    ],
+    author: 'florence',
+    want: { selfReviewed: true, approvals: [], standings: ['CHANGES_REQUESTED'] },
+  },
+  {
+    label: 'latest standing wins — changes-requested then approved',
+    reviews: [
+      R('florence', 'COMMENTED', '2026-09-16T10:00:00Z'),
+      R('chris', 'CHANGES_REQUESTED', '2026-09-16T11:00:00Z'),
+      R('chris', 'APPROVED', '2026-09-16T12:00:00Z'),
+    ],
+    author: 'florence',
+    want: { selfReviewed: true, approvals: [['chris', '2026-09-16T12:00:00Z']], standings: ['APPROVED'] },
+  },
+  {
+    label: "a peer's later COMMENTED does not drop their standing approval",
+    reviews: [
+      R('florence', 'COMMENTED', '2026-09-16T10:00:00Z'),
+      R('chris', 'APPROVED', '2026-09-16T11:00:00Z'),
+      R('chris', 'COMMENTED', '2026-09-16T12:00:00Z'),
+    ],
+    author: 'florence',
+    want: { selfReviewed: true, approvals: [['chris', '2026-09-16T11:00:00Z']], standings: ['APPROVED'] },
+  },
+  {
+    label: 'an author APPROVED (GitHub refuses it, but do not count it if it appears)',
+    reviews: [R('florence', 'APPROVED', '2026-09-16T10:00:00Z')],
+    author: 'florence',
+    want: { selfReviewed: true, approvals: [], standings: [] },
+  },
+  {
+    label: 'a deleted-account review (user null) is neither a self-review nor a standing',
+    reviews: [R(null, 'APPROVED', '2026-09-16T10:00:00Z')],
+    author: 'florence',
+    want: { selfReviewed: false, approvals: [], standings: [] },
+  },
+];
+for (const { label, reviews, author, want } of STANDINGS) {
+  const got = reviewStandings(reviews, author);
+  eq({ selfReviewed: got.selfReviewed, approvals: [...got.approvals], standings: got.standings },
+     want, `reviewStandings: ${label}`);
+}
+
+// The readiness rule must read `selfReviewed`, not a peer approval. If someone
+// restores the old line, every case above still passes — the function is fine;
+// it is the CALLER that regressed. This asserts the wiring.
+{
+  if (/reasons\.push\('no peer approval'\)/.test(body)) {
+    fail('senior-queue.yml: the `no peer approval` rule is back — round one is the ' +
+         'author self-review now, and no junior approval is coming to clear it');
+  }
+  if (!/if \(!selfReviewed\)[\s\S]{0,80}?reasons\.push\('no author self-review'\)/.test(body)) {
+    fail('senior-queue.yml: readiness no longer gates on `selfReviewed` — either the ' +
+         'rule was dropped (every PR queues the moment CI is green) or it was renamed');
+  }
+  // The author must not reach supersededThreads()' approvals map. A caller that
+  // passes the author in lets them clear their own threads out of the gate.
+  if (!/reviewStandings\(reviews, pr\.user\.login\)/.test(body)) {
+    fail('senior-queue.yml: evaluate() no longer calls reviewStandings(reviews, pr.user.login) — ' +
+         'check the author is still excluded from `approvals`');
+  }
+}
+
 // ---- `workflow_run` trigger targets ------------------------------------------
 //
 // Same failure direction as the two rules above, and a nastier version of it:
@@ -256,6 +376,7 @@ for (const { label, threads, approvals, want } of SUPERSEDED) {
 if (!failures) {
   console.log(`ok    ${NEWEST.length + 1} newestPerName assertions`);
   console.log(`ok    ${SUPERSEDED.length} supersededThreads assertions`);
+  console.log(`ok    ${STANDINGS.length} reviewStandings assertions + 3 wiring checks`);
 }
 console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');
 process.exit(failures ? 1 : 0);
