@@ -97,8 +97,10 @@ COPY apps/server/sandbox/build-provenance.json ${AGENT_HOME}/BUILD_INFO.json
 # ── Wiki tools: nothing to bake ───────────────────────────────────────────
 # wiki_search, wiki_read and wiki_place_page are all HTTP clients of the hosted
 # wiki-query-api (see CLAUDE.md "External service dependencies"); the corpus
-# lives on that server. getWikiApiUrl() falls back to a working default, so no
-# per-sandbox config is required. (This block used to describe a local
+# lives on that server. The control plane writes wikiApiUrl into each sandbox's
+# config.json; the engine's compiled-in fallback names one developer's tailnet
+# host rather than a public deployment, so a hosted session depends on that value
+# being written, not on the default being reachable. (This block used to describe a local
 # `wikiMarkdownDir` corpus the page tools read from disk — that code path is
 # gone; the tools were moved to the networked API.)
 

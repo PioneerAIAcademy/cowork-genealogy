@@ -73,8 +73,11 @@ careful about:
   flag rides on the reported value as a `+dirty` suffix. A clean sha claimed for an
   image built over uncommitted skill edits is worse than no sha at all.
 
-Never fatal: no git, a repo with no commits, or a missing/corrupt file leaves
-`sandboxImageCommit` null and breaks neither the build nor session creation.
+Never fatal, though the three failure shapes do not land in the same place. No
+git and a repo with no commits both bake `commit: "dev"`, so `sandboxImageCommit`
+reports `dev` (plus `+dirty` if the tree was unclean) rather than null. Only a
+missing or unparseable `BUILD_INFO.json` leaves it null. None of the three breaks
+the build or session creation.
 
 ---
 

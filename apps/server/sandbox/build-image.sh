@@ -70,6 +70,39 @@ if [[ -z "${E2B_API_KEY:-}" ]]; then
   exit 1
 fi
 
+# ── Provenance capture, BEFORE phase 1 ────────────────────────────────────────
+# The flag must describe the DEVELOPER's tree at invocation, not whatever phase 1
+# leaves behind. `npm install` does not rewrite package-lock.json at the pinned
+# npm (11.12.1, measured), but the engine's own .npmrc records that older npm
+# re-normalizes it, and that would bake `+dirty` onto an unmodified commit.
+# Capturing first costs nothing and removes the dependency entirely.
+#
+# The retired `.last-image-build` stamp is cleared first. Its ignore rule went
+# with the staleness check, so on the machines where it exists by construction --
+# whoever built production's image -- it would otherwise show up as an untracked
+# file and mark every build dirty from a leftover unrelated to the image. Only
+# when UNTRACKED: deleting a tracked copy would replace one permanent false
+# `+dirty` with another, this time a staged deletion.
+_stale_stamp="apps/server/sandbox/.last-image-build"
+if [[ -e "${ROOT}/${_stale_stamp}" ]] \
+   && ! git ls-files --error-unmatch "${_stale_stamp}" >/dev/null 2>&1; then
+  rm -f "${ROOT}/${_stale_stamp}"
+fi
+
+# Never fails the build: no git, no .git, or a repo with no commits all yield
+# "dev". `git rev-parse HEAD` in a repo with no commits prints "HEAD" on STDOUT
+# and exits non-zero, so the exit status alone is not enough to reject it -- hence
+# the hex test rather than a bare `|| echo dev`, which would bake the literal
+# two-line string "HEAD\ndev" and produce invalid JSON.
+_commit="$(git rev-parse HEAD 2>/dev/null)" || _commit=""
+case "${_commit}" in
+  "" | *[!0-9a-f]*) _commit="dev" ;;
+esac
+_dirty=false
+if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then
+  _dirty=true
+fi
+
 echo "==> [1/2] Building the genealogy engine (mcp-server)..."
 # Requires npm >=11.12 (engine-strict in the engine's .npmrc enforces it). If this
 # hard-fails with EBADENGINE, upgrade: npm i -g npm@<version from packageManager>.
@@ -88,31 +121,12 @@ echo "==> [2/2] Building the E2B template (${E2B_TEMPLATE_NAME})..."
 # The dirty flag is not decoration. The image is built from the WORKING TREE, so
 # `git rev-parse HEAD` names a commit that may not be what was baked; a clean sha
 # claimed for an image built over uncommitted skill edits is worse than no sha.
-# Computed BEFORE the file is written so the artifact cannot make itself dirty
-# (it is gitignored too, and --porcelain omits ignored files, so this is
-# belt-and-braces).
+# Both values were captured above, before phase 1 could touch the tree.
 #
-# Never fails the build: no git, no .git, or a repo with no commits all yield
-# "dev". `git rev-parse HEAD` in a repo with no commits prints "HEAD" on STDOUT
-# and exits non-zero, so the exit status alone is not enough to reject it — hence
-# the hex test rather than a bare `|| echo dev`, which would bake the literal
-# two-line string "HEAD\ndev" and produce invalid JSON.
+# KEEP THE KEY NAMES IN SYNC with the reader: `commit` and `dirty` are what
+# E2BProvider._refresh_image_commit looks for, and
+# tests/test_sandbox_image_provenance.py asserts this format string names both.
 PROVENANCE_FILE="${ROOT}/apps/server/sandbox/build-provenance.json"
-# Retired by the same change that added this file: `.last-image-build` was the
-# gitignored stamp the old staleness check compared against, and its ignore rule
-# is gone. It still exists on every machine that ever ran `make sandbox-image` --
-# i.e. exactly whoever built production's image -- where it would now show up as
-# an untracked file and mark EVERY build dirty from a leftover that has nothing
-# to do with the image. Removed rather than re-ignored: nothing writes it now.
-rm -f "${ROOT}/apps/server/sandbox/.last-image-build"
-_commit="$(git rev-parse HEAD 2>/dev/null)" || _commit=""
-case "${_commit}" in
-  "" | *[!0-9a-f]*) _commit="dev" ;;
-esac
-_dirty=false
-if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then
-  _dirty=true
-fi
 printf '{"commit": "%s", "dirty": %s, "built_at": "%s"}\n' \
   "${_commit}" "${_dirty}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "${PROVENANCE_FILE}"
 echo "    provenance: commit=${_commit} dirty=${_dirty}"

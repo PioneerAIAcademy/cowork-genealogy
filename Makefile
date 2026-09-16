@@ -1068,9 +1068,13 @@ deploy: deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs
 	#      DEV template and then ship production's control plane against an
 	#      untouched production image — this issue's own bug, silently, from a
 	#      variable our own docs tell developers to set. A target-specific
-	#      `override` does not close it (a command-line make variable still wins);
-	#      passing the name to a sub-make beats BOTH the env and the make-variable
-	#      form, and beats apps/server/.env as well.
+	#      `override` does not close it either, though not for the obvious reason:
+	#      measured on GNU Make 4.3, `override` DOES win for `$(E2B_TEMPLATE_NAME)`
+	#      even against a command-line variable, but make still exports the
+	#      command-line value into the recipe's environment — and build-image.sh
+	#      reads the ENVIRONMENT, not make's variable. Passing the name to a
+	#      sub-make beats the env form, the make-variable form and
+	#      apps/server/.env alike.
 	#   2. Recipe lines are sequential even under -j, so the cheap stage-1 replay
 	#      is guaranteed to fail before anything is pushed. A prerequisite list
 	#      only orders left-to-right when make is not parallel.

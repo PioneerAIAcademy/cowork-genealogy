@@ -28,12 +28,35 @@ def _dockerfile_lines() -> list[str]:
 
 
 def _copy_directives() -> list[tuple[int, str, str]]:
-    """(line number, source, destination) for every COPY, in file order."""
-    out = []
-    for i, line in enumerate(_dockerfile_lines(), start=1):
-        m = re.match(r"^COPY\s+(\S+)\s+(\S+)\s*$", line)
-        if m:
-            out.append((i, m.group(1), m.group(2)))
+    """(line number, source, destination) for every COPY, in file order.
+
+    Folds backslash continuations and tolerates `--chown=`/`--from=` flags. Both
+    matter, and in opposite directions: a narrower pattern SKIPS a flagged COPY,
+    so a later one becomes invisible and the "is last" assertion below passes
+    over it; and it MIS-PARSES a continued COPY, capturing the backslash as the
+    destination and false-alarming on a legal, semantically identical spelling.
+    A guard that rejects correct input is worse than the gap it closes.
+
+    Any line starting with COPY that this cannot parse raises rather than being
+    dropped, so an unrecognised shape is loud instead of silently unguarded.
+    """
+    lines = _dockerfile_lines()
+    out: list[tuple[int, str, str]] = []
+    i = 0
+    while i < len(lines):
+        start, logical = i, lines[i]
+        while logical.rstrip().endswith("\\") and i + 1 < len(lines):
+            i += 1
+            logical = logical.rstrip()[:-1] + " " + lines[i]
+        if logical.startswith("COPY"):
+            tokens = [t for t in logical.split()[1:] if not t.startswith("--")]
+            if len(tokens) != 2:
+                raise AssertionError(
+                    f"e2b.Dockerfile line {start + 1}: COPY shape not understood by this "
+                    f"guard ({logical!r}). Widen the parser rather than leaving it unchecked."
+                )
+            out.append((start + 1, tokens[0], tokens[1]))
+        i += 1
     return out
 
 

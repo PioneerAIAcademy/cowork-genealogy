@@ -284,11 +284,15 @@ class E2BProvider(SandboxProvider):
         failure to observe it may break a session. On any failure the previous
         value stands, so one bad read cannot blank a commit reported before.
 
-        Every failure is LOGGED AT WARNING, which is the level `obs.py` actually
-        emits. Silence here would be indistinguishable from the healthy "no
-        session created yet" state, because both surface as a null on
-        /api/health — a feature whose whole job is making an invisible staleness
-        visible must not have an invisible failure mode of its own.
+        Every failure is LOGGED AT WARNING, and the level is load-bearing rather
+        than stylistic: `obs.py` attaches its handler to the `workbench` logger,
+        which this module is not under, so records here fall through to the root
+        logger at its default WARNING. An INFO would be dropped entirely
+        (measured: `isEnabledFor(INFO)` is False). Silence would be
+        indistinguishable from the healthy "no session created yet" state,
+        because both surface as a null on /api/health — a feature whose whole job
+        is making an invisible staleness visible must not have an invisible
+        failure mode of its own.
         """
         try:
             raw = await asyncio.wait_for(

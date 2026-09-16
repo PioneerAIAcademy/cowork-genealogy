@@ -17,7 +17,9 @@ seeded `stores["sbx_fake_1"]` would pass in file order and break under -k).
 import asyncio
 import json
 import logging
+import subprocess
 from datetime import datetime, timezone
+from pathlib import Path
 from types import SimpleNamespace
 
 import e2b
@@ -315,13 +317,18 @@ async def test_dirty_flag_only_when_literally_true(provider):
 
 async def test_unreadable_provenance_is_logged_at_warning(provider, caplog):
     """A silent failure here is indistinguishable from the healthy "no session
-    created yet" state, because both surface as a null on /api/health. `obs.py`
-    pins the root logger to INFO, so a debug line would never be emitted at all."""
+    created yet" state, because both surface as a null on /api/health. The level
+    matters: `obs.py` attaches its handler to the `workbench` logger, which this
+    module is not under, so a debug or info line here is dropped by the root
+    logger's default WARNING and never emitted at all."""
     _FakeAsyncSandbox.image_files = {}                      # an image predating this change
     with caplog.at_level(logging.WARNING, logger="app.sandbox.e2b"):
         await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    # `caplog.at_level(WARNING)` drops sub-WARNING records before they reach
+    # caplog.records, so asserting every record is >= WARNING would be a
+    # tautology. This assertion is the one that catches a downgrade to log.info:
+    # the message simply stops being captured.
     assert any(_BUILD_INFO_PATH in r.getMessage() for r in caplog.records), caplog.text
-    assert all(r.levelno >= logging.WARNING for r in caplog.records)
 
 
 async def test_a_hanging_read_cannot_hang_session_creation(provider, monkeypatch):
@@ -338,3 +345,48 @@ async def test_a_hanging_read_cannot_hang_session_creation(provider, monkeypatch
     )
     assert sb.id.startswith("sbx_fake_")                    # the session still came up
     assert provider.sandbox_image_commit is None
+
+
+# ── The SCHEMA half of the writer/reader seam (#1489) ─────────────────────────
+# `_info()` above hand-writes its own JSON, so it is its own ground truth and
+# cannot see the shipped writer. Rename a key in build-image.sh's printf and
+# every other test stays green: `commit` would make production report null
+# forever (with a WARNING per create), and `dirty` is worse because it is
+# SILENT -- a dirty build would report a bare clean sha, which is the exact
+# "a clean sha that lies is worse than no sha" failure the flag exists to
+# prevent. The path half of this seam is pinned in
+# tests/test_sandbox_image_provenance.py.
+
+_BUILD_SCRIPT = Path(__file__).resolve().parents[3] / "apps" / "server" / "sandbox" / "build-image.sh"
+
+
+def _shipped_provenance_bytes(commit: str, dirty: str) -> bytes:
+    """Run the printf statement build-image.sh actually ships, with controlled
+    values, and return exactly the bytes it would write into the image."""
+    lines = _BUILD_SCRIPT.read_text(encoding="utf-8").splitlines()
+    start = next(i for i, ln in enumerate(lines) if ln.startswith("printf '{"))
+    end = next(i for i in range(start, len(lines)) if '> "${PROVENANCE_FILE}"' in lines[i])
+    stmt = "\n".join(lines[start:end + 1]).replace('> "${PROVENANCE_FILE}"', "")
+    out = subprocess.run(
+        ["bash", "-c", f'set -eu; _commit="{commit}"; _dirty={dirty}; {stmt}'],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    )
+    return out.stdout.encode("utf-8")
+
+
+async def test_reader_parses_what_the_shipped_writer_emits(provider):
+    """Seed the fake image with the REAL writer's bytes, not a hand-written copy."""
+    _FakeAsyncSandbox.image_files = {
+        _BUILD_INFO_PATH: _shipped_provenance_bytes("abc123", "false")
+    }
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123"
+
+
+async def test_the_dirty_key_the_writer_emits_is_the_one_the_reader_reads(provider):
+    """The silent half: a renamed `dirty` key drops the marker with no log line."""
+    _FakeAsyncSandbox.image_files = {
+        _BUILD_INFO_PATH: _shipped_provenance_bytes("abc123", "true")
+    }
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123+dirty"
