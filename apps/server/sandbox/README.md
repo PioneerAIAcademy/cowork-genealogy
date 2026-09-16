@@ -139,8 +139,9 @@ pre-crawled markdown corpus lives on that server, not in this image. E2B egress
 is open, so nothing blocks them at the network layer. What is not settled is the
 address: `fs_oauth.hosted_config()` writes `wikiApiUrl` into each sandbox's
 `config.json` ONLY when `WIKI_API_URL` is set on the control plane, and
-`deploy/fly.toml` does not set it today, so a hosted session currently runs on the
-engine's compiled-in `DEFAULT_WIKI_API_URL`. That names one developer's tailnet
+nothing in the repo sets it: `deploy/fly.toml` has no `WIKI_API_URL`, and secrets
+are set out of band with `fly secrets set`, so unless an operator has set one a
+hosted session runs on the engine's compiled-in `DEFAULT_WIKI_API_URL`. That names one developer's tailnet
 host rather than a public deployment (CLAUDE.md, "External service dependencies"),
 so these tools work from a hosted sandbox only while that host is reachable.
 

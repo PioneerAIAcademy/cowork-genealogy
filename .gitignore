@@ -21,6 +21,11 @@ releases/*
 !releases/.gitkeep
 *.log
 .DS_Store
+# Editor-local state. Nothing here is tracked, and leaving it unignored made it
+# show up as untracked in `git status --porcelain`, which is what the E2B image's
+# provenance flag reads -- so an open editor marked every image build dirty.
+.vscode/
+.idea/
 .env
 .claude/*
 !.claude/commands/

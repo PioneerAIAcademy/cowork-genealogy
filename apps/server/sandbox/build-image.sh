@@ -109,25 +109,18 @@ _commit="$(git rev-parse HEAD 2>/dev/null)" || _commit=""
 case "${_commit}" in
   "" | *[!0-9a-f]*) _commit="dev" ;;
 esac
-# SCOPED, deliberately. An unscoped `git status --porcelain` reports every
-# untracked file in the repo, so a stray `.vscode/` (not gitignored) would mark
-# EVERY build dirty from a directory that appears in no COPY and cannot reach the
-# image. A marker that is always on carries no more signal than one that is never
-# on, and the real dirty build then slips past unnoticed.
+# UNSCOPED, deliberately, and this direction is the whole point. An allowlist of
+# "paths that reach the image" fails toward CLEAN: miss one input and a dirty
+# build ships claiming a clean sha, which is the lie this flag exists to prevent.
+# The set it would have to enumerate is everything that can INFLUENCE the image,
+# not everything copied out of it -- this Dockerfile, tsconfig.json, .npmrc and
+# this script itself all change what gets built without appearing in any COPY.
+# An unscoped check fails toward DIRTY instead, where the cost is noise.
 #
-# The list is what actually enters the image: the paths e2b.Dockerfile COPYs,
-# plus mcp-server/src, because phase 1 compiles it into the build/ that IS copied
-# and build/ is itself gitignored so git cannot see it.
-_IMAGE_SOURCES=(
-  apps/server/app
-  packages/engine/mcp-server/src
-  packages/engine/mcp-server/config
-  packages/engine/mcp-server/package.json
-  packages/engine/mcp-server/package-lock.json
-  packages/engine/plugin
-)
+# Editor and OS cruft is handled where it belongs, in .gitignore, rather than by
+# narrowing this check: `git status --porcelain` already omits ignored files.
 _dirty=false
-if [[ -n "$(git status --porcelain -- "${_IMAGE_SOURCES[@]}" 2>/dev/null || true)" ]]; then
+if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then
   _dirty=true
 fi
 

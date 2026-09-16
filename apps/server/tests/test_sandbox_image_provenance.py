@@ -14,6 +14,7 @@ The layer-cache rule is checked here too, for the same reason: it is stated as a
 comment in the Dockerfile, and a comment is not a guard.
 """
 import re
+import subprocess
 from pathlib import Path
 
 from app.sandbox.e2b import _AGENT_HOME, _BUILD_INFO_PATH
@@ -132,49 +133,83 @@ def test_the_build_script_writes_a_gitignored_path():
     assert source in [line.strip() for line in ignore]
 
 
-def test_the_dirty_flag_is_computed_scoped_and_written_as_a_json_boolean():
-    """Three things, because the first version of this test asserted only the last
-    one and so could not fail.
+def _run_dirty_computation(repo: Path) -> str:
+    """Execute the shipped dirty computation inside `repo` and return `_dirty`.
 
-    `_refresh_image_commit` tests `info.get("dirty") is True`, so the writer has to
-    emit JSON literals rather than shell-ish 1/0. That is necessary and not
-    sufficient: deleting the computation outright leaves `_dirty=false` behind,
-    which is still a JSON boolean, so the old assertion passed while every dirty
-    build silently reported clean. That is the exact outcome the docstring claimed
-    to prevent.
+    Lifted from build-image.sh and RUN, not read. Three previous versions of this
+    guard matched the script as text and were each defeated by text that was not
+    code: a comment, a second comment, and a string containing the command. Running
+    it cannot be fooled that way, because nothing is being matched.
+    """
+    script = BUILD_SCRIPT.read_text(encoding="utf-8").splitlines()
+    start = next(i for i, ln in enumerate(script) if ln.startswith("_dirty=false"))
+    end = next(i for i in range(start, len(script)) if script[i].rstrip() == "fi")
+    block = "\n".join(script[start:end + 1])
+    out = subprocess.run(
+        ["bash", "-c", f'set -euo pipefail\n{block}\nprintf "%s" "$_dirty"'],
+        cwd=repo, capture_output=True, text=True, encoding="utf-8", check=True,
+    )
+    return out.stdout.strip()
 
-    So this also asserts the computation is PRESENT, and that it is SCOPED. An
-    unscoped `git status --porcelain` reports untracked files anywhere in the repo,
-    so a stray `.vscode/` marks every build dirty and the marker stops meaning
-    anything. The scope must name paths that actually reach the image."""
+
+def _scratch_repo(tmp_path: Path) -> Path:
+    repo = tmp_path / "repo"
+    (repo / "pkg").mkdir(parents=True)
+    (repo / "pkg" / "tracked.txt").write_text("v1\n", encoding="utf-8")
+    run = lambda *a: subprocess.run(a, cwd=repo, capture_output=True, check=True)
+    run("git", "init", "-q", ".")
+    run("git", "add", "-A")
+    run("git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "init")
+    return repo
+
+
+def test_a_clean_tree_is_reported_clean(tmp_path):
+    assert _run_dirty_computation(_scratch_repo(tmp_path)) == "false"
+
+
+def test_an_uncommitted_edit_is_reported_dirty(tmp_path):
+    """The failure this flag exists for. If the computation is ever deleted or
+    neutered, `_dirty` stays false here and this is what says so."""
+    repo = _scratch_repo(tmp_path)
+    (repo / "pkg" / "tracked.txt").write_text("v2\n", encoding="utf-8")
+    assert _run_dirty_computation(repo) == "true"
+
+
+def test_an_untracked_file_is_reported_dirty(tmp_path):
+    """Untracked counts: a brand-new skill file is exactly the change most likely
+    to matter and has never been committed."""
+    repo = _scratch_repo(tmp_path)
+    (repo / "pkg" / "brand_new.md").write_text("new\n", encoding="utf-8")
+    assert _run_dirty_computation(repo) == "true"
+
+
+def test_a_gitignored_file_is_not_reported_dirty(tmp_path):
+    """Editor cruft is excluded where it belongs, in .gitignore, rather than by
+    narrowing what this check looks at. An allowlist would fail toward CLEAN,
+    which is the lie the flag exists to prevent; this fails toward DIRTY."""
+    repo = _scratch_repo(tmp_path)
+    (repo / ".gitignore").write_text(".vscode/\n", encoding="utf-8")
+    subprocess.run(["git", "add", ".gitignore"], cwd=repo, capture_output=True, check=True)
+    subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q",
+                    "-m", "ignore"], cwd=repo, capture_output=True, check=True)
+    (repo / ".vscode").mkdir()
+    (repo / ".vscode" / "settings.json").write_text("{}\n", encoding="utf-8")
+    assert _run_dirty_computation(repo) == "false"
+
+
+def test_editor_cruft_is_gitignored_in_this_repo():
+    """The symptom that started this: `.vscode/` was not ignored, so an open editor
+    marked every image build dirty."""
+    ignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert ".vscode/" in ignore, "an unignored editor directory marks every build dirty"
+
+
+def test_the_dirty_flag_is_written_as_a_json_boolean():
+    """The reader compares `info.get("dirty") is True` after json.loads, so shell-ish
+    1/0 or "yes" would silently drop the marker."""
     script = BUILD_SCRIPT.read_text(encoding="utf-8")
-
     assigned = set(re.findall(r"^\s*_dirty=(\S+)\s*$", script, re.M))
-    assert assigned, "build-image.sh no longer assigns _dirty"
-    assert assigned <= {"false", "true"}, (
-        f"_dirty must be a JSON boolean literal; found {sorted(assigned)}. The reader "
-        f"compares with `is True` after json.loads, so anything else silently drops "
-        f"the dirty marker."
+    assert assigned == {"false", "true"}, (
+        f"_dirty must be assigned exactly the JSON boolean literals; found "
+        f"{sorted(assigned)}. Anything else silently drops the dirty marker."
     )
-
-    # Non-comment lines only. The block above this one DISCUSSES
-    # `git status --porcelain` in prose, and matching that would let the real
-    # command be deleted while the test kept passing on the explanation of it.
-    cmd_lines = [
-        ln for ln in script.splitlines()
-        if "git status --porcelain" in ln and not ln.lstrip().startswith("#")
-    ]
-    assert cmd_lines, (
-        "build-image.sh no longer computes the dirty flag at all. Every build would "
-        "report clean, which is the failure this flag exists to prevent."
-    )
-    assert any("--" in ln.split("--porcelain", 1)[1] for ln in cmd_lines), (
-        "the dirty check is UNSCOPED. `git status --porcelain` with no pathspec "
-        "reports untracked files anywhere in the repo, so an editor directory marks "
-        "every build dirty. Pass `-- <paths that reach the image>`."
-    )
-    for required in ("apps/server/app", "packages/engine/plugin",
-                     "packages/engine/mcp-server/src"):
-        assert required in script, (
-            f"{required} reaches the image but is not in the dirty check's scope"
-        )
