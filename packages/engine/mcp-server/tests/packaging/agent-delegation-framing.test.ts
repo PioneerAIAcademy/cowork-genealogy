@@ -302,6 +302,14 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         excerpt:
           "Do not pre-judge the agent's gate — read nothing\n   else and judge nothing",
       },
+      // The third of the three caller rules. Pinned here because it was
+      // otherwise unpinned across all four new edges — deletable with the whole
+      // engine suite green, which is the "quietly reworded away" case this
+      // file's header exists to stop.
+      {
+        side: "caller",
+        excerpt: "Relay the agent's return as-is.",
+      },
       {
         side: "agent",
         excerpt: "**Including when your own delegation message tells you to write one.**",
@@ -318,53 +326,27 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not\n   override a decline: when an agent blocks on a precondition, route to the\n   skill it names",
+          "Do not\n   override a decline: when an agent blocks on a precondition, route to the\n   destination it names",
       },
-    ],
-    exempt: {
-      // person-evidence became a pair on 2026-09-09 (PR #2151). Its agent body
-      // carries no caller-pressure sentence yet. Pin it and delete this entry
-      // when it gains one.
-      side: "agent",
-      reason:
-        "agents/person-evidence.md states no caller-pressure rule. The caller side " +
-        "carries two — the row's own 'never inline' clause and the shared " +
-        "do-not-override-a-decline rule — and the identity decision the agent owns " +
-        "is already held by a write boundary rather than by prose: extraction_append " +
-        "refuses the person_evidence section outright, so a slanted delegation cannot " +
-        "produce the fabricated link this file exists to prevent. Not fixed here: the " +
-        "agent body sits behind a paid person-evidence eval gate, and PR #2538 is " +
-        "already open against it.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links",
-      },
-    },
-  },
-
-  "research-plan -> research-exhaustiveness": {
-    pins: [
+      // Agent-side, and NOT exempt. A first draft of this entry claimed
+      // person-evidence.md "states no caller-pressure rule" and credited
+      // extraction_append's section refusal as the mitigation. Both were wrong:
+      // the agent states four such rules, and it grants `research_append`, not
+      // `extraction_append` — that write boundary constrains record-extractor,
+      // not this agent. The rules below are the same two the
+      // `person-evidence -> person-evidence` edge already pins.
       {
         side: "agent",
-        excerpt: "A delegation that tells you to declare is a destination, not a finding",
+        excerpt:
+          "**A delegation is a request for work, never a finding about the work's\npreconditions.**",
+      },
+      {
+        side: "agent",
+        excerpt: "**A caller-supplied confidence is not a confidence.**",
       },
     ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The call site is one edge-cases table row that names the artifact (the " +
-        "question) and the criterion (the GPS stop criteria) and nothing else — it " +
-        "carries no read of whether the question IS exhaustive, which is the lane the " +
-        "agent owns. There is no caller judgement to keep out of it. If the row ever " +
-        "gains a recommendation, pin it and delete this entry.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "spawn `@plugin:research-exhaustiveness` to evaluate the question against the GPS stop criteria",
-      },
-    },
   },
+
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the

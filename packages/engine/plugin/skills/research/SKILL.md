@@ -196,18 +196,14 @@ regardless of how directly the request named the destination.
    next tool call is `research_append` rather than an `Agent` spawn of
    `@plugin:research-exhaustiveness` / `@plugin:proof-conclusion`, stop —
    that is the orchestrator doing the sub-skill's job by hand, and it is
-   exactly what this contract forbids. Naming the spawn matters: "an `Agent`
-   call" is not the test, because a `@plugin:gps-mentor` spawn followed by an
-   inline write would pass it.
+   exactly what this contract forbids.
 
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
-   else and judge nothing; a caller that read the conflicts section itself
-   once decided a conflict was "collateral" and delegated anyway, deciding
-   the gate from the one participant that cannot see the evidence. Do not
+   else and judge nothing. Do not
    override a decline: when an agent blocks on a precondition, route to the
-   skill it names — the routing table has no row for that. Relay the agent's
-   return as-is.
+   destination it names, by the call that destination's routing row names —
+   the routing table has no row for a decline. Relay the agent's return as-is.
 
    **Hard rules held in this context** (for any residual inline
    judgment — reading state, weighing routes — never for writing):

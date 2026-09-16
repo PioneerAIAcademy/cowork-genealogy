@@ -746,10 +746,16 @@ There **is** an orchestrator, and it is a skill:
 2. **A 17-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
-   is not duplicated here. Its `Invoke` column is a **literal
-   `Skill` tool call** — "writing `proceed to research-exhaustiveness` and then
-   hand-authoring the fields that skill would have written is not invoking it."
-   Agents are delegated as `Task` calls using the bare `@plugin:<name>` form.
+   is not duplicated here. Its `Invoke` column is a **literal tool call, by the
+   name written in the cell** — "writing `proceed to research-exhaustiveness`
+   and then hand-authoring the fields that skill would have written is not
+   invoking it." The column is **mixed**, and the spelling is what says which:
+   an entry spelled `@plugin:<name>` is an `Agent` spawn of that agent, and
+   every other entry is a `Skill` call. The paired rows —
+   `research-exhaustiveness`, `proof-conclusion` and `person-evidence` — take
+   the spawn; their same-named thin skills stay on disk as the direct-user and
+   unit-eval entry points and are **not** on the in-loop route
+   (`docs/skill-to-agent-pair-conversion.md` §0, which owns this rule).
    **The table is not the only routing surface in the file.** The section headed
    `## Direct user requests name a destination, not a shortcut`
    overrides a direct request for a downstream skill and sends the router back

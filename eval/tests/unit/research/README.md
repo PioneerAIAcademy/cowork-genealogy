@@ -42,12 +42,14 @@ and stub application (`:684`) on `if tool_name == "Skill"`. So a `routes-to:`
 assertion naming one of those three cannot fail — it would grade a call the
 harness never sees.
 
-The three names are dropped from `route-shortcut-guard.json`'s `stub_skills`
-for the same reason: a stub that can never be applied is not a control. The
-other nine fixtures in this directory still carry them as inert entries, which
-`test_runnability.py` accepts because the names are real skill directories;
-they are left alone deliberately rather than swept, since only this fixture's
-stated purpose names a paired row.
+`route-shortcut-guard.json` keeps all three in `stub_skills`, and that is
+deliberate. The stub is the control on the FAILURE path, not the compliant one:
+the non-compliance this fixture catches is a router that calls
+`Skill(proof-conclusion)` directly because the user asked for it, and a `Skill`
+call is exactly what `skill_runner.py:684` still stubs. Drop the stub and a
+shortcutting router runs the real skill inside an empty project for up to 30
+turns. The stub is merely inert on the compliant path, where the router spawns
+the agent instead — inert is not the same as useless.
 
 Issue #2246 holds the harness work that would let a unit suite observe an
 `Agent` spawn. Until it lands, the route these three take is graded by no unit
