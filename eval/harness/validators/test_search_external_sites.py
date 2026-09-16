@@ -129,9 +129,18 @@ def _place_key(place: str) -> tuple[str, ...]:
 #: makes it become the birthplace slot. A site's generic event-scope place
 #: (newspapers' `searchPlace`, chronicling_america's `usState`) is excluded
 #: for the same reason.
+#: `archives_gov` is NOT here, and its absence is load-bearing. Its place
+#: parameter (`geographicReference`) was removed from the tool after live
+#: measurement showed it empties the result set (spec §9, correction #4), so
+#: `deathPlace` now reaches no slot on that site at all — the tool reports it
+#: as an unused attribute. Leaving it in this table made the validator FAIL a
+#: legitimate, tool-generated archives_gov call carrying a death place, which
+#: is the over-rejection direction. This table is a hand-maintained mirror of
+#: `siteWideParams`; the TypeScript side guards its own copy with a recording
+#: Proxy (`RECOGNIZED_KEYS`) and nothing guards this one, so a future change to
+#: a site's place parameters must be mirrored here by hand.
 _PLACE_SLOT_CHAIN = {
     "findmypast": ("birthPlace", "marriagePlace", "deathPlace", "residencePlace"),
-    "archives_gov": ("birthPlace", "deathPlace"),
     "antenati": ("birthPlace", "deathPlace"),
     "american_ancestors": ("birthPlace", "deathPlace"),
 }
@@ -364,7 +373,6 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
         for e in prior_log
         if isinstance((e.get("external_site") or {}).get("url_generated"), str)
     }
-    new_ids = {id(e) for e in new_entries}
 
     def _is_fresh_url_generation(entry):
         detail = entry.get("external_site") or {}
@@ -382,8 +390,7 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
         if url in seen_before:
             return False
         if any(
-            id(other) in new_ids
-            and other is not entry
+            other is not entry
             and (other.get("external_site") or {}).get("url_generated") == url
             and other.get("outcome") == "partial"
             for other in new_entries

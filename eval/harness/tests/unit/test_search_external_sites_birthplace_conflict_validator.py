@@ -236,11 +236,16 @@ def test_skips_when_no_build_external_search_url_call_was_made():
 
 
 def test_fires_on_a_rejected_value_routed_through_deathplace():
-    """On antenati/archives_gov/american_ancestors, `str(birthPlace) ??
-    str(deathPlace)` means deathPlace becomes the effective birthplace slot
-    whenever birthPlace is absent — a rejected value reaching the URL through
-    that fallback is the identical genealogical error, and review found this
-    check missed it because it only ever read `attributes.birthPlace`."""
+    """On antenati and american_ancestors, `str(birthPlace) ?? str(deathPlace)`
+    means deathPlace becomes the effective birthplace slot whenever birthPlace
+    is absent — a rejected value reaching the URL through that fallback is the
+    identical genealogical error, and review found this check missed it because
+    it only ever read `attributes.birthPlace`.
+
+    `archives_gov` used to belong on that list and no longer does: its place
+    parameter was removed from the tool (spec §9, correction #4), so deathPlace
+    reaches no slot there. `test_passes_a_rejected_deathplace_on_archives_gov`
+    below pins that direction."""
     _expect_fires(
         _tool_calls(site="antenati", deathPlace="Pennsylvania"),
         {"type": "positive"},
@@ -487,7 +492,6 @@ def test_passes_findmypast_death_place_when_birth_place_fills_the_slot():
     ("findmypast", "residencePlace"),
     ("findmypast", "deathPlace"),
     ("antenati", "deathPlace"),
-    ("archives_gov", "deathPlace"),
     ("american_ancestors", "deathPlace"),
 ])
 def test_passes_an_accepted_place_through_a_fallback_field(site, field):
@@ -507,6 +511,30 @@ def test_passes_an_accepted_place_through_a_fallback_field(site, field):
     `site="ancestry"` WITH a birthPlace, so it never reaches the fallback
     branch, and deleting the whole exemption left the suite green at exit 0."""
     _expect_passes(_tool_calls(site=site, **{field: "Schuylkill County, Pennsylvania"}), {"type": "positive"})
+
+
+def test_passes_a_rejected_deathplace_on_archives_gov():
+    """archives_gov reads NO place attribute since the tool dropped
+    `geographicReference` (spec §9, correction #4) — the real tool reports
+    `'deathPlace' is not used by archives_gov` and builds a URL from
+    personOrOrg/q alone. So a death place there cannot carry a rejected
+    birthplace into any URL, and flagging it fails a legitimate call.
+
+    This is the test that was missing when `_PLACE_SLOT_CHAIN` still listed
+    archives_gov: the table is a hand-maintained mirror of the tool's own
+    parameter tables, the TypeScript side guards its copy with a recording
+    Proxy and nothing guards this one, and a blind adversarial pass caught the
+    drift after two commits had gone by."""
+    _expect_passes(
+        _tool_calls(site="archives_gov", deathPlace="Pennsylvania"),
+        {"type": "positive"},
+    )
+    # The sites that DO still fall back are unaffected.
+    _expect_fires(
+        _tool_calls(site="antenati", deathPlace="Pennsylvania"),
+        {"type": "positive"},
+        "attributes.deathPlace='Pennsylvania'",
+    )
 
 
 def test_the_accepted_place_exemption_never_reaches_birthplace():
