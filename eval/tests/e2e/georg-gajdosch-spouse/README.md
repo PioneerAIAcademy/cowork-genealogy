@@ -70,15 +70,36 @@ hint, and the agent should not replace her with Catharina.
   collection range: returns Joannes 1714 and nothing else. There is no other
   Anna to put in the hint's place, which is what makes this outcome (c) rather
   than (b).
-- **A marriage record.** No Georg Gajdosch marriage appears in indexed Czech
-  Republic collections for 1700-1740, so neither union can be dated or ordered
-  from a marriage entry.
+- **A marriage record.** "Czech Republic, Marriages, 1654-1889" covers the
+  period and holds exactly one Gajdosch-family entry: Georgius Gajdoschik,
+  married at Brumovice, Hustopeče, 29 October 1765
+  (`ark:/61903/1:1:XL6G-HFM`) — 51 years later, a different district, a
+  different surname form. So **neither** union is indexed. No entry dates or
+  orders them, and none records a remarriage.
+- **A death for Dorothea.** Nothing indexed from 1714 onward. Her death is the
+  precondition for any remarriage reading, and it is undocumented.
+- **A census.** Not possible: "Czech Republic, Censuses and Inhabitant
+  Registers" begins in **1800**, 86 years after these events. Early-modern
+  Moravia has no census layer to check.
+- **Other church books.** "Czech Republic, Church Books, 1552-1981" indexes
+  Gajdosch entries no earlier than 1792, and the Northern Moravia Opava
+  Archive collection returns none at all, so neither reaches 1714-1718.
 - **The parish register images.** Collection 1784129 is index-only ("Index to
   selected Czech baptisms") with no images attached, so the Lidečko register —
   the record that would settle one Georg or two from the original hand — was
   not reachable by this path. **Everything above rests on a single derivative
   index.** A reviewer with film-level access to the Lidečko books could
   strengthen or overturn it, and that is the one open door left.
+
+### Second read
+
+Reviewed independently by John Mark, who concurred: false match. His route to
+it was the absence of any evidence of a remarriage between Joannes's 1714
+baptism and Anna's in 1718, and he asked for the census and marriage layers to
+be checked — they were, with the results above, and they close rather than
+open the question. Note that the argument recorded here is stronger than an
+absence: the 3 November 1714 baptism makes a remarriage not merely
+unevidenced but impossible, since it falls eight days after Joannes's.
 
 ### Correction to the issue body
 

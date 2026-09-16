@@ -34,7 +34,9 @@
       },
       "supporting_sources": [
         "No entry in Czech Republic, Births and Baptisms, 1637-1889 names a child of Georg Gajdosch and Dorothea other than Joannes, baptised 26 October 1714 — a search of that collection across its full range for children of that couple returns that entry alone, so no substitute daughter exists to put in Anna's place",
-        "No marriage record for a Georg Gajdosch appears in indexed Czech Republic collections for 1700-1740, so neither the Dorothea nor the Catharina union can be dated or ordered from a marriage entry",
+        "No marriage record for this Georg Gajdosch appears in Czech Republic, Marriages, 1654-1889 — a collection that covers the period, and whose only Gajdosch-family entry is the 1765 marriage of Georgius Gajdoschik at Brumovice, Hustopeče (ark:/61903/1:1:XL6G-HFM), 51 years later and in a different district. Neither the Dorothea union nor the Catharina union is indexed, so no marriage entry can date or order them, and no record establishes a remarriage",
+        "No census can be brought to bear: Czech Republic, Censuses and Inhabitant Registers begins in 1800, 86 years after the events in question",
+        "No death record for Dorothea appears in indexed Czech Republic collections from 1714 onward, so her death — the precondition for any remarriage reading — is undocumented",
         "Czech Republic, Births and Baptisms, 1637-1889 is an index-only database (\"Index to selected Czech baptisms\") with no attached images, so the Lidečko parish register itself — the record that would settle one Georg or two from the original hand — could not be reached by this path"
       ],
       "required": true
