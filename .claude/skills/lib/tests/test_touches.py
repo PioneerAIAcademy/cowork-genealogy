@@ -141,20 +141,32 @@ def test_prose_mention_after_the_fold_heading_does_not_resurrect_it():
     assert slots(body) == set()
 
 
-def test_fold_cutoff_is_load_bearing_when_the_live_line_is_quoted():
-    """Isolates the fold cutoff from the blockquote skip.
+def test_fold_cutoff_is_load_bearing_when_no_line_initial_mention_precedes_it():
+    """Isolates the fold cutoff from the line-initial check.
 
-    Every other fixture here puts the live line above the fold AND outside a
-    blockquote, so "first non-quoted" finds it whether or not the cutoff exists --
-    deleting the cutoff left the whole file green. Here the only non-quoted line
-    is the retired one, so the cutoff is the single thing standing between this
-    card and two eval slots it gave up.
+    Every other fixture puts the live line above the fold AND line-initial, so the
+    scan returns on the first iteration and never consults `cutoff` -- deleting the
+    cutoff leaves them all green. A blockquote does NOT isolate it either: the
+    prefix check strips `> `, so a quoted line counts as line-initial and still
+    returns early. The case that reaches the cutoff is a body whose only above-fold
+    mention is genuinely INLINE, leaving the retired line as the sole line-initial
+    candidate -- the cutoff is then the one thing standing between this card and an
+    eval slot it gave up.
     """
     body = (
-        "> **Touches:** eval/harness/harness/skill_invocation.py\n\n"
+        "Reviewed: its `**Touches:** eval/harness/harness/skill_invocation.py`"
+        " line is what we keep.\n\n"
         "## Original issue\n\n"
         "**Touches:** packages/engine/plugin/skills/research/SKILL.md\n"
     )
-    # falls back to the quoted live line, never the retired one below the fold
+    # the retired line below the fold must not supply a slot this card gave up
     assert slots(body) == set()
+    # no line-initial candidate above the fold -> falls back to the first match
     assert paths(body) == {"eval/harness/harness/skill_invocation.py"}
+
+
+def test_a_quoted_line_still_counts_as_line_initial():
+    """Pins the behaviour the test above depends on: `> ` is stripped, so a live
+    line inside a review banner is still the card's own claim, not a mention."""
+    body = "> **Touches:** packages/engine/plugin/skills/citation/SKILL.md\n"
+    assert slots(body) == {"skill:citation"}
