@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-24_11-16-35.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v1_2026-09-14_18-51-07.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_tree_edit_009",
+      "test_id": "ut_tree_edit_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_009",
+      "test_id": "ut_tree_edit_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,17 +19,41 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_009",
+      "test_id": "ut_tree_edit_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Data preservation",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_009",
+      "test_id": "ut_tree_edit_001",
       "dimension_source": "rubric",
-      "dimension_name": "Data preservation",
+      "dimension_name": "Edit minimality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Merge correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -38,14 +62,6 @@
       "test_id": "ut_tree_edit_009",
       "dimension_source": "rubric",
       "dimension_name": "Edit minimality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_009",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -59,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_008",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "rubric",
       "dimension_name": "Evidence grounding",
       "llm_score": 3,
@@ -67,23 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Merge correctness",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_008",
-      "dimension_source": "rubric",
-      "dimension_name": "Edit minimality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_008",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "rubric",
       "dimension_name": "Data preservation",
       "llm_score": 3,
@@ -91,7 +91,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_008",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -99,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_008",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,9 +107,65 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_008",
+      "test_id": "ut_tree_edit_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Data preservation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Edit minimality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Merge correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_edit_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -172,40 +228,8 @@
     },
     {
       "test_id": "ut_tree_edit_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence grounding",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Merge correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Edit minimality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Data preservation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_006",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -221,37 +245,13 @@
     {
       "test_id": "ut_tree_edit_006",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_007",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_007",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_tree_edit_007",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_007",
+      "test_id": "ut_tree_edit_006",
       "dimension_source": "rubric",
       "dimension_name": "Data preservation",
       "llm_score": 3,
@@ -259,7 +259,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_007",
+      "test_id": "ut_tree_edit_006",
       "dimension_source": "rubric",
       "dimension_name": "Edit minimality",
       "llm_score": 3,
@@ -267,7 +267,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_007",
+      "test_id": "ut_tree_edit_006",
       "dimension_source": "rubric",
       "dimension_name": "Merge correctness",
       "llm_score": 3,
@@ -275,7 +275,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_tree_edit_007",
+      "test_id": "ut_tree_edit_006",
       "dimension_source": "rubric",
       "dimension_name": "Evidence grounding",
       "llm_score": 3,
