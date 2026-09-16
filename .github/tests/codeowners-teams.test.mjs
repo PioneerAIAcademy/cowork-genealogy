@@ -32,8 +32,11 @@ for (const { pattern, owners } of rules) {
   }
 }
 
-// 2. No `*` default. A path nobody claims still needs two approvals; a catch-all
-//    would additionally pull a senior into every CSS tweak and dotfile.
+// 2. No `*` default. A path nobody claims needs one approval from anyone; a
+//    catch-all would additionally pull a senior into every CSS tweak and dotfile.
+//    Since the count dropped to 1 (2026-09-16) the unowned set is enumerated in
+//    CODEOWNERS' header rather than assumed — re-run that count before adding a
+//    rule or arguing a path is safe to leave out.
 for (const { pattern } of rules) {
   if (pattern === '*') fail(`${PATH} has a \`*\` default — there is deliberately none`);
 }
