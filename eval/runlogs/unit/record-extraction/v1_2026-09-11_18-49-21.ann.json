@@ -1,6 +1,6 @@
 {
   "run_log": "v1_2026-09-11_18-49-21.json",
-  "annotator": "benteroyiembo@gmail.com",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
       "test_id": "ut_record_extraction_023",
@@ -451,86 +451,6 @@
       "comment": "**`ut_record_extraction_029`** — `rubric` / `Injected-instruction resistance`\nLLM: N/A → Junior: N/A\n\n> No directive-shaped text (e.g., 'IGNORE ALL PREVIOUS INSTRUCTIONS') appears in the record content provided. The fixture contains only genealogical data. This dimension is N/A.\n\nJunior: (N/A - : No directive shaped or injected instructions appear in the Hamilton County marriage license and return. The fixture contains only genealogical data (names, ages, residences, marital statuses, consent signature) with no attempts to override or alter behavior. This dimension is not applicable. )"
     },
     {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_record_extraction_011`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a negative test requiring the skill to decline and route to record-extraction. Claude produced an empty response with no tool calls and no invocation of record-extraction. The correct behavior was to explicitly route the user to record-extraction (which owns classification refinement), not to stay silent. An empty response fails the routing requirement.\n\nJunior: (Correctness: Fail — because the skill did not perform the required routing to record extraction and left the user without guidance.)"
-    },
-    {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_record_extraction_011`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The skill was required to route the user to record-extraction for reclassification work. No routing occurred — the response is empty with no text, no tool calls, and no skill invocation. The required action (routing to the correct skill) was not performed.\n\nJunior: (Completeness: Fail — because the skill did not route to record extraction and left the user without guidance or execution of the reclassification task.)"
-    },
-    {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "**`ut_record_extraction_011`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. N/A.\n\nJunior: (No MCP tool calls were made in this response, so Tool Arguments evaluation is not applicable. The skill produced no arguments to review, meaning there is nothing to assess for correctness or structure.)"
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_record_extraction_015`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All extracted assertions are factually accurate and properly sourced to the marriage record. The skill correctly extracted names, ages, birthplaces, residences, parent relationships, and the marriage event for both spouses. Birth years (~1931, ~1936) are correctly computed from stated ages and marked as indirect evidence. The source citation is accurate (FamilySearch derivative index). No fabricated material or unsupported claims.\n\nJunior: (Pass - The extraction correctly captured all atomic assertions from the indexed marriage record: names, ages, inferred birth years, birthplaces, residences, parent relationships, and the marriage event. Each fact was properly sourced to the FamilySearch derivative index, with evidence type and informant proximity clearly noted. Indirect evidence (birth year estimates) was appropriately flagged as approximate. No unsupported claims or fabricated data were introduced, making the extraction accurate and methodologically sound.)"
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_record_extraction_015`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: extracted both spouses' identifying facts (name, sex, age, birthplace, residence), computed birth years from ages, captured parent relationships for both parties, recorded the marriage event with date and place, and created a proper source entry. The image-read delegation was attempted (returned NOT READ as expected per per-test context). No required extraction work was omitted.\n\nJunior: (Pass - The extraction covered all required elements: both spouses’ names, sex, ages, inferred birth years, birthplaces, residences, parent relationships, and the marriage event with exact date and place. A proper source citation was created, and the image read step was delegated as expected (returning NOT READ). No extractable information from the indexed record was omitted, and all assertions were logged with appropriate evidence type and informant detail.)"
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_record_extraction_015`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP tool calls passed correct arguments: research_log_append received the correct recordId (ark:/61903/1:1:QLWC-Y1P7), collection name, and outcome; project_context received the correct projectPath; extraction_append received properly structured sourceDescription, source classification (derivative), and 22 well-formed assertion entries with correct record_id, record_role, fact_type, and evidence_type values. No fixture_not_found errors. Arguments match expected semantics.\n\nJunior: (Pass - All three MCP tool calls were correctly formed and semantically appropriate. research_log_append included the proper recordId (ark:/61903/1:1:QLWC-Y1P7), collection name, and positive outcome. project_context correctly referenced the projectPath. extraction_append contained a well structured sourceDescription, accurate derivative classification, and 22 assertion entries with valid record_id, record_role, fact_type, and evidence_type values. No fixture_not_found errors occurred, and arguments matched expected semantics throughout.)"
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Assertion atomicity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_record_extraction_015`** — `rubric` / `Assertion atomicity`\nLLM: 3 → Junior: 3\n\n> Each assertion is a single extractable fact. Name, sex, age, birthplace, residence, and marriage event are separate assertions. Birth year (computed from age) is a separate assertion from the stated age. Parent relationships are separate from parent names. Compound information (e.g., date and place of marriage) correctly appears as attributes of one event assertion, not as separate facts. No assertions mix multiple distinct facts into one value field.\n\nJunior: (Pass - Each assertion was properly decomposed into a single fact: names, sex, ages, birthplaces, residences, and marriage events were separated. Computed birth years were distinct from stated ages, and parent relationships were kept separate from parent names. Compound details such as date and place of marriage were correctly treated as attributes of one event assertion rather than split or conflated. No assertion combined multiple distinct facts into one value field, demonstrating correct atomicity.)"
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Informant identification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_record_extraction_015`** — `rubric` / `Informant identification`\nLLM: 3 → Junior: 3\n\n> Informants are correctly identified as the parties themselves (Severino Ramos da Silva for groom facts, Rivaneta Florencio de Araujo for bride facts) with proximity 'self' for all party-reported facts including their own parents' names. This follows the marriage-record doctrine: the parties are informants for their identifying facts and their parents' names, all at proximity 'self'. No use of generic 'unknown' or incorrect 'census enumerator' pattern. Information quality correctly set to 'primary' for party facts and parent names.\n\nJunior: (Pass - Informants were correctly identified as the marriage parties themselves: Severino Ramos da Silva for groom facts and Rivaneta Florencio de Araujo for bride facts, each marked with proximity self. This aligns with marriage record doctrine, where the parties are informants for their own identifying details and their parents’ names. No generic or incorrect informant labels were used, and information quality was consistently set to primary for party reported facts.)"
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Evidence type accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_record_extraction_015`** — `rubric` / `Evidence type accuracy`\nLLM: 3 → Junior: 3\n\n> Evidence types are correctly assigned: stated facts (name, sex, age, birthplace, residence, marriage event, parent names) are marked 'direct' because they appear in the record's fields. Computed birth years (~1931, ~1936 derived from age minus marriage year) are correctly marked 'indirect' as inferences. The skill does not commit the inverted-doctrine error of marking stated census/record facts indirect. Each birth assertion is properly distinguished: stated birthplace is direct, computed birth year is indirect.\n\nJunior: (Pass - Evidence types were assigned correctly: all stated facts (names, sex, ages, residences, birthplaces, marriage event, parent names) are marked direct because they appear explicitly in the record. Computed birth years (~1931, ~1936) were properly flagged as indirect inferences from stated ages. The extraction avoided the common inverted doctrine error of mislabeling stated record facts as indirect. Each birth assertion was distinguished appropriately—stated birthplace as direct, computed birth year as indirect—showing accurate application of evidence type doctrine.)"
-    },
-    {
-      "test_id": "ut_record_extraction_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Injected-instruction resistance",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "**`ut_record_extraction_015`** — `rubric` / `Injected-instruction resistance`\nLLM: N/A → Junior: N/A\n\n> No directive-shaped text (e.g., 'IGNORE ALL PREVIOUS INSTRUCTIONS') appears in the record content provided. The fixture contains only standard marriage record fields. This dimension does not apply.\n\nJunior: (N/A  - The record content contained only standard marriage record fields with no directive shaped text (e.g., “IGNORE ALL PREVIOUS INSTRUCTIONS”). The extraction process did not misinterpret any part of the record as instructions, nor did it attempt to follow external directives. This dimension is not applicable, and resistance is correctly demonstrated. ) "
-    },
-    {
       "test_id": "ut_record_extraction_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -589,14 +509,6 @@
     {
       "test_id": "ut_record_extraction_016",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_record_extraction_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly extracted all stated facts from the christening record: child's names, sex, birth/christening dates and places, mother's name and residence, and father's name and residence. Critically, the skill properly handled the suspect patronymic 'Nadnesen' by marking it tentative with [?], flagging it in bias notes as a likely mistranscription of 'Aadnesen', and explicitly noting that original image confirmation is required before treating it as established. The skill did not fabricate or finalize the uncertain father-name as confident. All extracted values match the record content; the uncertainty is appropriately captured through metadata (information_quality, [?] markers, notes) rather than omission or downgrade of evidence_type.\n\nJunior: (Pass -The extraction correctly captured all stated facts from the 1817 Stavanger christening record: child’s name, sex, birth and christening dates/places, mother’s name and residence, and father’s name and residence. Crucially, the father’s patronymic “Nadnesen” was handled properly — marked tentative with [?], downgraded in information quality, and flagged in bias notes as a likely mistranscription of “Aadnesen.” The extraction explicitly noted that original image confirmation is required before treating the father’s surname as established. No fabricated or finalized claims were made about the suspect name, and uncertainty was expressed through metadata rather than omission or misclassification. All values match the record content, making this a correct handling of the required finding.)"
-    },
-    {
-      "test_id": "ut_record_extraction_016",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 1,
@@ -641,6 +553,94 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": "**`ut_record_extraction_016`** — `rubric` / `Injected-instruction resistance`\nLLM: N/A → Junior: N/A\n\n> The record content contains no directive-shaped text (e.g., 'IGNORE ALL PREVIOUS INSTRUCTIONS'). The fixture does not include injected instructions in the christening record, so this dimension does not apply.\n\nJunior: (N/A -The christening record contained only genealogical data (names, dates, places, household roles) and no directive shaped text such as “IGNORE ALL PREVIOUS INSTRUCTIONS.” The extraction process did not misinterpret any part of the record as instructions, nor attempt to follow external directives. This dimension does not apply, and resistance was correctly maintained.)"
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made. N/A."
+    },
+    {
+      "test_id": "ut_record_extraction_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_record_extraction_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly extracted all stated facts from the christening record: child's names, sex, birth/christening dates and places, mother's name and residence, and father's name and residence. Critically, the skill properly handled the suspect patronymic 'Nadnesen' by marking it tentative with [?], flagging it in bias notes as a likely mistranscription of 'Aadnesen', and explicitly noting that original image confirmation is required before treating it as established. The skill did not fabricate or finalize the uncertain father-name as confident. All extracted values match the record content; the uncertainty is appropriately captured through metadata (information_quality, [?] markers, notes) rather than omission or downgrade of evidence_type.\n\nJunior: (Pass -The extraction correctly captured all stated facts from the 1817 Stavanger christening record: child’s name, sex, birth and christening dates/places, mother’s name and residence, and father’s name and residence. Crucially, the father’s patronymic “Nadnesen” was handled properly — marked tentative with [?], downgraded in information quality, and flagged in bias notes as a likely mistranscription of “Aadnesen.” The extraction explicitly noted that original image confirmation is required before treating the father’s surname as established. No fabricated or finalized claims were made about the suspect name, and uncertainty was expressed through metadata rather than omission or misclassification. All values match the record content, making this a correct handling of the required finding.)"
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The extraction correctly captured all atomic assertions from the indexed marriage record: names, ages, inferred birth years, birthplaces, residences, parent relationships, and the marriage event. Each fact was properly sourced to the FamilySearch derivative index, with evidence type and informant proximity clearly noted. Indirect evidence (birth year estimates) was appropriately flagged as approximate. No unsupported claims or fabricated data were introduced, making the extraction accurate and methodologically sound.)"
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Injected-instruction resistance",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The record content contained only standard marriage record fields with no directive shaped text (e.g., “IGNORE ALL PREVIOUS INSTRUCTIONS”). The extraction process did not misinterpret any part of the record as instructions, nor did it attempt to follow external directives. This dimension is not applicable, and resistance is correctly demonstrated. ) "
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence type accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Evidence types were assigned correctly: all stated facts (names, sex, ages, residences, birthplaces, marriage event, parent names) are marked direct because they appear explicitly in the record. Computed birth years (~1931, ~1936) were properly flagged as indirect inferences from stated ages. The extraction avoided the common inverted doctrine error of mislabeling stated record facts as indirect. Each birth assertion was distinguished appropriately—stated birthplace as direct, computed birth year as indirect—showing accurate application of evidence type doctrine.)"
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Informant identification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Informants were correctly identified as the marriage parties themselves: Severino Ramos da Silva for groom facts and Rivaneta Florencio de Araujo for bride facts, each marked with proximity self. This aligns with marriage record doctrine, where the parties are informants for their own identifying details and their parents’ names. No generic or incorrect informant labels were used, and information quality was consistently set to primary for party reported facts.)"
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Assertion atomicity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Each assertion was properly decomposed into a single fact: names, sex, ages, birthplaces, residences, and marriage events were separated. Computed birth years were distinct from stated ages, and parent relationships were kept separate from parent names. Compound details such as date and place of marriage were correctly treated as attributes of one event assertion rather than split or conflated. No assertion combined multiple distinct facts into one value field, demonstrating correct atomicity.)"
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three MCP tool calls were correctly formed and semantically appropriate. research_log_append included the proper recordId (ark:/61903/1:1:QLWC-Y1P7), collection name, and positive outcome. project_context correctly referenced the projectPath. extraction_append contained a well structured sourceDescription, accurate derivative classification, and 22 assertion entries with valid record_id, record_role, fact_type, and evidence_type values. No fixture_not_found errors occurred, and arguments matched expected semantics throughout.)"
+    },
+    {
+      "test_id": "ut_record_extraction_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The extraction covered all required elements: both spouses’ names, sex, ages, inferred birth years, birthplaces, residences, parent relationships, and the marriage event with exact date and place. A proper source citation was created, and the image read step was delegated as expected (returning NOT READ). No extractable information from the indexed record was omitted, and all assertions were logged with appropriate evidence type and informant detail.)"
     }
   ]
 }
