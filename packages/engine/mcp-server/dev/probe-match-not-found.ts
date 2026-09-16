@@ -21,6 +21,39 @@
  * check is reported in the BODY: a `not-found` link, which is the ONLY explicit
  * difference from a persona that genuinely has no matches. `updated` is a
  * second tell (epoch vs a real timestamp). `matchById` keys on the link.
+ *
+ * Measured 2026-09-15 (issue #2459) — a merged-away tree person, the case the
+ * 2026-09-10 run did not cover:
+ *
+ *   ark:/61903/4:1:KD96-TV5    merged away -> survivor KW66-5VV   -> 200 not-found
+ *   ark:/61903/4:1:KW66-5VV    the survivor (restricted)          -> 200 not-found
+ *
+ * Establishing the merge: sweeping the 842 distinct tree PIDs in the committed
+ * gedcomx fixtures with the tree-persons endpoint (redirect: manual) returned
+ * exactly ONE 301 — KD96-TV5 -> KW66-5VV (~0.12% of THIS pool, not a general
+ * FamilySearch merge rate). A 301 with a Location to a different id is FS's
+ * merge signal (person-read.ts:106; a delete is 410, which did not occur).
+ *
+ * Outcome A (true not-found): the merged-away id returns the SAME 200 +
+ * results:0 + `not-found` link shape as a never-assigned id, in BOTH the
+ * records and tree collections — the same shape as ZZZZ-ZZZZ below, not a
+ * populated match set describing the survivor.
+ *
+ * Outcome B (resolves to survivor / returns the survivor's matches under the
+ * retired queryArk) was NOT observed. One limit on what this run can tell apart:
+ * the survivor KW66-5VV is itself restricted — person_read returns 403, i.e. it
+ * EXISTS but is not viewable (not a 404) — and the match endpoint returns the
+ * same not-found shape for KW66-5VV too. So this evidence cannot separate "the
+ * match endpoint ignores the merge redirect" from "it follows the redirect to a
+ * survivor that itself has no visible matches"; either way the retired id yields
+ * not-found, not the survivor's matches. A populated retired-vs-survivor
+ * comparison could not be made (n=1 candidate in this pool).
+ *
+ * Record-persona side: NOT ESTABLISHED. No independent retirement/merge oracle
+ * exists for a 1:1: persona — person_read/person_quality are tree-only,
+ * record_read distinguishes only found vs 404 (a 404 cannot prove prior
+ * assignment), and this endpoint's not-found link is the artifact under test.
+ * The tree-person result is therefore not generalised to record personas.
  */
 import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
@@ -37,6 +70,15 @@ const CASES: Array<[label: string, collection: string, id: string, status?: stri
   ["malformed (bad form)", "tree", "ark:/61903/1:1:AAAA-AAAA"],
   ["results-sidecar persona id", "tree", "p_293161675629"],
   ["real tree person, populated", "records", "ark:/61903/4:1:KNDX-MKG"],
+  // Merged-away tree person KD96-TV5 -> survivor KW66-5VV (issue #2459, measured
+  // 2026-09-15; see header). Both collections return the same not-found shape as
+  // a never-assigned id (Outcome A), not a populated survivor match set. Survivor
+  // KW66-5VV is restricted (403 = exists but not viewable) and also reads
+  // not-found here, so this run cannot show whether the redirect was followed.
+  ["merged-away tree person KD96-TV5", "records", "ark:/61903/4:1:KD96-TV5"],
+  ["merged-away tree person KD96-TV5", "tree", "ark:/61903/4:1:KD96-TV5"],
+  ["survivor KW66-5VV (restricted)", "records", "ark:/61903/4:1:KW66-5VV"],
+  ["survivor KW66-5VV (restricted)", "tree", "ark:/61903/4:1:KW66-5VV"],
 ];
 
 async function main(): Promise<void> {
