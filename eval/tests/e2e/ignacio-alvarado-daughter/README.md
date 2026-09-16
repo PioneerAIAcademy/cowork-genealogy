@@ -62,25 +62,34 @@ burial age defines, so the two records do not merely agree to within a month —
 they agree exactly, and together they fix her birth in the week of 21–27 March
 1879. She is the only Angela among the couple's children.
 
-**The two Duráns are probably one woman, but not for the reason first written
-here.** The starting tree carries `K4JL-NPF` (Teodosia Duran, b. 1876) and
-`K21K-P18` (Teodora Durán, no dates). An earlier revision of this section
-claimed the proof was a spelling divergence between two indexings of one
-christening image: that `ark:/61903/1:1:NQV5-DPB` read the mother as Teodora
-and `ark:/61903/1:1:6ZPT-KTZR` read her as Teodosia. **Checked by hand on
-2026-09-16, that is wrong.** Both records load, both cite the same image
-(`ark:/61903/3:1:S3HT-69BQ-SRL`), and **both index the mother as Teodosia
-Durán.** Neither reads Teodora, so this pair does not account for `K21K-P18`
-carrying that name, and the divergence the argument rested on does not exist.
-Where `K21K-P18`'s spelling came from is unexplained by these two records.
+**The two Duráns are one woman.** The starting tree carries `K4JL-NPF`
+(Teodosia Duran, b. 1876) and `K21K-P18` (Teodora Durán, no dates), and the
+proof is inside the tree's own data: `K21K-P1H`'s christening of 5 Jun 1889 is
+indexed twice off one image (`ark:/61903/3:1:S3HT-69BQ-SRL`) —
+`ark:/61903/1:1:NQV5-DPB` names the mother Teodora Durán (persona
+`NQV5-D5M`), `ark:/61903/1:1:6ZPT-KTZR` names her Teodosia Durán (persona
+`6ZPT-KTZY`). Both arks were re-read live on 2026-09-16 and still read that
+way, so the spelling is indexer variance, not two people.
 
-Two independent arguments survive and are what the duplicate now rests on. The
+**A recheck on 2026-09-16 claimed the opposite, and was wrong.** An earlier
+revision of this section reported that both records index the mother Teodosia
+and that the divergence did not exist. It did not open either ark: the claim
+was drawn from the absence of those spellings in this fixture's committed run
+logs, which record only what the agent retrieved, and no run has ever retrieved
+these two. Absence from a run log is not absence from a record. Reinstated
+against live `record_read` of both arks.
+
+Two further arguments point the same way and do not depend on the spelling. The
 tree's unsourced 1876 birth year for her is impossible: it would put her at no
 more than three when she bore Angela, baptized 27 Mar 1879, which is the record
 this fixture's own finding rests on. And `GPH8-7RX` is a Couple with
 `K4JL-NPF` — the identical wife PID `K21K-P1C` is married to — which is the
-father-identity paragraph below pointing the same way. Neither argument needs
-the spelling.
+father-identity paragraph below pointing the same way.
+
+The wider claim in the original text, that she is indexed Teodocia, Teodossia,
+Teodoria, Todocia, Eudocia, Eudosia, Cerdocia and Tesdosia across this couple's
+38 record personas, is **not** reinstated: nobody has opened those personas, and
+the two arks above are the only ones verified. Treat it as unchecked.
 
 Two cautions for whoever reads this next. Both PIDs carry **zero attached
 sources**, confirmed live on 2026-09-16 and matching the committed snapshot, so
@@ -109,13 +118,10 @@ chr. 5 Jun 1889), `K2BX-QFF` (Ygnacio Alvarado, Maclovia, chr. 10 Mar 1891),
 `K2B4-P75` (Ygnacio Albarado, Oliba Monica, chr. 5 May 1885) and `GPH8-7RX`
 (Ignacio Alvarado). `GPH8-7RX` settles it: it is a Couple with **`K4JL-NPF`**,
 the identical wife PID `K21K-P1C` is married to — two father records on one
-wife record. Alvarado/Albarado and Ignacio/Ygnacio vary with the record: the
-same burial image yields "Ygnacio" in one indexing (`NQ5N-RXV`) and "Ignacio"
-in the other (`6JPG-ZB66`). No comparable variation is attested for her given
-name. "Teodosia" is the only spelling any opened record carries; "Teodora" is
-the tree's own spelling for `K21K-P18`, whose origin these records do not
-explain, and "Teodocia" and "Todocia" appear in no record read on this fixture.
-The link that actually carries weight runs through the tree's own child rather than the
+wife record. Alvarado/Albarado and Ignacio/Ygnacio vary with the record exactly
+as Teodosia/Teodora do on the two christening indexings above; the same burial
+image yields "Ygnacio" in one indexing (`NQ5N-RXV`) and "Ignacio" in the other
+(`6JPG-ZB66`). The link that actually carries weight runs through the tree's own child rather than the
 empty father persona: `NQV5-DP1`, the father on María Rosa's 5 Jun 1889 entry,
 matches `K21K-P1C` at 0.9999994, and María Rosa is `K21K-P1H`. None of these
 duplicates were merged, for the same snapshot reason as the Durán pair.
@@ -175,11 +181,17 @@ record's own spelling of the mother's name and stays answerable.
   baptism of 27 March 1879 falls inside that window. The DRAFT marker was removed,
   which activates `validate_fixture`'s issue-#970 ark check on
   `supporting_sources` from this point on.
-- **2026-09-16** — the two-Durán proof in Notes for reviewers was corrected
-  (#2513, closed Not planned). Both `NQV5-DPB` and `6ZPT-KTZR` were opened by
-  hand: they cite one image, as claimed, but **both** read the mother Teodosia,
-  not one Teodora and one Teodosia, so the spelling divergence offered as the
-  proof does not exist. The conclusion stands on the impossible 1876 birth year
-  and the `GPH8-7RX` couple link instead. Both PIDs carry zero attached sources.
-  The upstream merge was declined: this product never writes to FamilySearch,
-  and merging would put this fixture in permanent `snapshot --check` DRIFT.
+- **2026-09-16** — the two-Durán proof in Notes for reviewers was challenged and
+  then confirmed (#2513, closed Not planned). A recheck first reported that both
+  `NQV5-DPB` and `6ZPT-KTZR` index the mother Teodosia, so the spelling
+  divergence did not exist. That was wrong, and the way it went wrong is the
+  lesson: it inferred record contents from their absence in this fixture's run
+  logs, which record only what an agent retrieved, and no run has ever retrieved
+  these two arks. Read live, `NQV5-DPB` gives Teodora Durán (`NQV5-D5M`) and
+  `6ZPT-KTZR` gives Teodosia Durán (`6ZPT-KTZY`), both citing one image — the
+  original proof, intact. Two further arguments were added that do not depend on
+  it: the impossible 1876 birth year and the `GPH8-7RX` couple link. The wider
+  38-persona spelling sweep remains unverified. Both PIDs carry zero attached
+  sources. The upstream merge was declined: this product never writes to
+  FamilySearch, and merging would put this fixture in permanent
+  `snapshot --check` DRIFT.
