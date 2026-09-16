@@ -114,6 +114,507 @@ describe("research_append (Phase 1)", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
+  // ─── #2472: an assertion correction reaches the fact minted from it ─────────
+  //
+  // Shapes chosen from the committed e2e corpus, not from what is easiest to
+  // assert: of the 145 assertion-`update` ops touching the mirrored four,
+  // 127 set `standard_place` alone, 6 `value` alone, 6 `date`+`value`,
+  // 4 `place`+`date`+`value`, and 2 `place`+`standard_place`+`value`
+  // (re-measured 2026-09-14 over eval/runlogs/e2e/*/run-*.json).
+
+  describe("assertion update rewrites the linked tree fact (#2472)", () => {
+    /** An assertion carrying a place/date/value, with the schema's required fields. */
+    const backlinkAssertion = (over: Record<string, unknown> = {}) => ({
+      id: "a_011",
+      source_id: "src_001",
+      record_id: "rec1",
+      record_role: "principal",
+      fact_type: "immigration",
+      value: "Immigrated to Canada, 1924; destination Odessa, Saskatchewan",
+      date: "1924",
+      place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+      standard_place: "Thames Centre Township, Middlesex, Ontario, Canada",
+      information_quality: "primary",
+      informant: "self",
+      informant_proximity: "self",
+      evidence_type: "direct",
+      extracted_for_question_ids: [],
+      ...over,
+    });
+
+    /** A tree whose I1 holds one backlinked fact. */
+    const treeWithBacklink = (fact: Record<string, unknown> = {}) => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F4",
+              type: "Immigration",
+              date: "1924",
+              place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada",
+              standard_place: "Thames Centre Township, Middlesex, Ontario, Canada",
+              assertion_id: "a_011",
+              sources: [{ ref: "SD-001", quality: 3 }],
+              ...fact,
+            },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+    });
+
+    const withAssertion = (a: Record<string, unknown>) => {
+      const r = baseResearch();
+      r.assertions = [a];
+      return r;
+    };
+
+    const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    const factF4 = async () =>
+      (await readTree()).persons.find((p: any) => p.id === "I1").facts.find((f: any) => f.id === "F4");
+
+    it("(1) the dominant shape: `standard_place` alone is rewritten, `place` left alone", async () => {
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.filesWritten).toContain("tree.gedcomx.json");
+
+      const f = await factF4();
+      expect(f.standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      // Untouched by this op, so it still mirrors the assertion.
+      expect(f.place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
+      expect(f.assertion_id).toBe("a_011");
+    });
+
+    it("(2) `place`+`date`+`value` on an EVENT fact rewrites place and date but NOT value", async () => {
+      // #711: `factCandidate` never copies an assertion's `value` onto an event
+      // fact, so neither may the rewrite — the assertion's value is a prose
+      // sentence, and writing it into an Immigration fact's `value` would be a
+      // fresh defect rather than a fix.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: {
+          place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+          date: "1925",
+          value: "Immigrated to Canada, 1925; destination Odessa, Saskatchewan (manifest image)",
+        },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.date).toBe("1925");
+      expect(f.value).toBeUndefined();
+    });
+
+    it("(3) `place`+`standard_place`+`value` on a VALUE-BEARING fact rewrites all three", async () => {
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+        // `value` mirrors the assertion's pre-call reading: a fact holding a
+        // value the assertion never asserted is another source's evidence, and
+        // the provenance guard leaves it alone.
+        treeWithBacklink({ type: "Occupation", value: "Farmer" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: {
+          place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+          standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada",
+          value: "Blacksmith",
+        },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.value).toBe("Blacksmith");
+    });
+
+    it("(4) a country contradiction clears the fact's standard_place and warns, without failing", async () => {
+      // No shipped path writes a contradicting standard_place: research_append's
+      // append arm errors, tree_edit clears + warns, gedcomx-convert omits. This
+      // rewrite must not become the first.
+      await writeProject(
+        withAssertion(backlinkAssertion({ standard_place: "Bamenda, Mezam, Northwest Region, Cameroon" })),
+        treeWithBacklink(),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "West Bromwich, England" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("West Bromwich, England");
+      expect(f.standard_place).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared \(left unset\)/);
+    });
+
+    it("(5) `place: null` clears the fact's place rather than writing a null", async () => {
+      // The tree schema types these `string` with no null branch, so assigning
+      // null would make the fact invalid. `Object.hasOwn`, not truthiness, is
+      // what makes a null count as a correction at all.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: null },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect("place" in f).toBe(false);
+      expect(f.standard_place).toBe("Thames Centre Township, Middlesex, Ontario, Canada");
+    });
+
+    it("(6) warns — scoped to the op — when the corrected assertion has no linked fact", async () => {
+      const tree = treeWithBacklink();
+      delete (tree.persons[0].facts[0] as any).assertion_id;
+      await writeProject(withAssertion(backlinkAssertion()), tree);
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.join(" ")).toMatch(/no tree fact is linked to it/);
+      expect(r.filesWritten).not.toContain("tree.gedcomx.json");
+    });
+
+    it("(7) stays silent when the op touches no mirrored field", async () => {
+      // Every fact in every pre-backlink project lacks assertion_id, so an
+      // unscoped warning would fire on essentially every call.
+      const tree = treeWithBacklink();
+      delete (tree.persons[0].facts[0] as any).assertion_id;
+      await writeProject(withAssertion(backlinkAssertion()), tree);
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { informant: "official" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.join(" ")).not.toMatch(/no tree fact is linked/);
+      expect(r.filesWritten).not.toContain("tree.gedcomx.json");
+    });
+
+    it("(8) fires through extraction_append too, not just research_append", async () => {
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await extractionAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+    });
+
+    it("(9) rewrites every fact carrying the id, and no fact carrying another", async () => {
+      const tree = treeWithBacklink();
+      tree.persons[0].facts.push(
+        { id: "F5", type: "Immigration", place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada", assertion_id: "a_011", sources: [{ ref: "SD-001" }] } as any,
+        { id: "F6", type: "Immigration", place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada", assertion_id: "a_999", sources: [{ ref: "SD-001" }] } as any,
+      );
+      await writeProject(withAssertion(backlinkAssertion()), tree);
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const facts = (await readTree()).persons[0].facts;
+      const by = (id: string) => facts.find((f: any) => f.id === id);
+      expect(by("F4").place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(by("F5").place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(by("F6").place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
+    });
+
+    it("(10) does NOT clobber an attribute a different assertion corroborated onto the fact", async () => {
+      // The corroboration branch fills an attribute the fact lacks from another
+      // assertion, and the fact keeps that source's ref. Overwriting it destroys
+      // the other source's evidence while the fact still cites it.
+      const research = withAssertion(backlinkAssertion({ date: null }));
+      await writeProject(research, treeWithBacklink({ date: "3 January 1855" }));
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { date: "1856" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.date).toBe("3 January 1855");
+      expect(r.validation.warnings.join(" ")).toMatch(/did not assert/);
+    });
+
+    it("(11) a non-string value leaves the fact alone instead of deleting its value", async () => {
+      // `validator.ts` type-checks an assertion's date/place/standard_place but
+      // not its `value`, so a malformed value reaches the rewrite. Read as
+      // "withdrawn" it silently deleted tree data.
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+        treeWithBacklink({ type: "Occupation", value: "Farmer" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { value: 1924 as unknown as string },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      expect((await factF4()).value).toBe("Farmer");
+      expect(r.validation.warnings.join(" ")).toMatch(/non-string 'value'/);
+    });
+
+    it("(12) warns when a place correction leaves an un-corrected standard_place", async () => {
+      // The card's own harm one level down: the display string reads corrected
+      // while the place-AUTHORITY value still names the old jurisdiction. Both
+      // the assertion and the fact carry it, so the agreement guard cannot see it.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(f.standard_place).toBe("Thames Centre Township, Middlesex, Ontario, Canada");
+      expect(r.validation.warnings.join(" ")).toMatch(/place authority value was not part of this correction/);
+    });
+
+    it("(13) warns loudly when the rewritten fact is a concluded (primary) value", async () => {
+      // proof-conclusion lands the concluded value by setting `primary`, and
+      // `primary` is not a detach trigger, so the backlink survives a
+      // conclusion. The correction must still land — a known-wrong concluded
+      // value on the upload target is worse — but never quietly.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink({ primary: true }));
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(r.validation.warnings.join(" ")).toMatch(/marked primary \(a concluded value\)/);
+    });
+
+    it("(14) stays silent for a fact_type that can never become a person fact", async () => {
+      // 24 of the 145 corpus ops correct a name/relationship/marriage/age/sex
+      // assertion. None of those materializes as a person fact, so "re-check it
+      // with person_read" sends the caller after something that cannot exist.
+      const tree = treeWithBacklink();
+      delete (tree.persons[0].facts[0] as any).assertion_id;
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "name", value: "Anna Weichel" })),
+        tree,
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { value: "Anna Wendel" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.join(" ")).not.toMatch(/no tree fact is linked to it/);
+    });
+
+    it("(15) warns when a correction DELETES a fact field, blank string included", async () => {
+      // A blank string withdraws a claim exactly as null does, and is the
+      // likelier typo. Either way it deleted data from the upload target, so it
+      // must not be silent — the shape the malformed branch was added for.
+      for (const blank of ["", "   "]) {
+        await writeProject(
+          withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+          treeWithBacklink({ type: "Occupation", value: "Farmer" }),
+        );
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "assertions",
+          op: "update",
+          entryId: "a_011",
+          fields: { value: blank },
+        });
+        expect(r.ok, blank).toBe(true);
+        if (!r.ok) return;
+        expect((await factF4()).value, blank).toBeUndefined();
+        expect(r.validation.warnings.join(" "), blank).toMatch(/lost its 'value'/);
+      }
+    });
+
+    it("(16) two ops on one assertion and one field do not accuse the call of corroboration", async () => {
+      // The provenance test reads the fact's PRE-CALL value. Reading the live
+      // one made the second op mistake the first op's own write for another
+      // source's evidence.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "assertions", op: "update", entryId: "a_011", fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" } },
+          { section: "assertions", op: "update", entryId: "a_011", fields: { place: "Regina, Saskatchewan, Canada" } },
+        ],
+      } as never);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      expect((await factF4()).place).toBe("Regina, Saskatchewan, Canada");
+      expect(r.validation.warnings.join(" ")).not.toMatch(/did not assert/);
+    });
+
+    it("(17) does not claim a place was corrected when the rewrite did not apply", async () => {
+      // Two shapes: an echo that changes nothing, and a place the provenance
+      // guard refuses. Both previously emitted "its place was corrected",
+      // the second one directly contradicting the refusal beside it.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+      const echo = await researchAppend({
+        projectPath: dir, section: "assertions", op: "update", entryId: "a_011",
+        fields: { place: "Wellburn, Thames Centre, Middlesex, Ontario, Canada" },
+      });
+      expect(echo.ok).toBe(true);
+      if (!echo.ok) return;
+      expect(echo.validation.warnings.join(" ")).not.toMatch(/place authority value/);
+
+      await writeProject(
+        withAssertion(backlinkAssertion()),
+        treeWithBacklink({ place: "Somewhere another source supplied" }),
+      );
+      const refused = await researchAppend({
+        projectPath: dir, section: "assertions", op: "update", entryId: "a_011",
+        fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(refused.ok).toBe(true);
+      if (!refused.ok) return;
+      const w = refused.validation.warnings.join(" ");
+      expect(w).toMatch(/did not assert/);
+      expect(w).not.toMatch(/place authority value/);
+    });
+
+    it("(18) leaves the fact alone when the assertion has been RE-CLASSIFIED", async () => {
+      // The mirror of tree_edit's retype detach: `assertionFactAttr` keys the
+      // event / value-bearing rule on the FACT's type, so rewriting across that
+      // seam wrote a birth year into an Occupation fact's `value`.
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "occupation", value: "Farmer" })),
+        treeWithBacklink({ type: "Occupation", value: "Farmer" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { fact_type: "birth", value: "1850" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.type).toBe("Occupation");
+      expect(f.value).toBe("Farmer");
+      expect(r.validation.warnings.join(" ")).toMatch(/is a Birth, so the fact was left alone/);
+    });
+
+    it("(19) a fold the TOOL made is not a re-classification, so the correction still lands", async () => {
+      // `canonicalizeAssertionLabels` folds `fact_type` through FACT_TYPE_ALIASES
+      // on every assertion update whether or not the op names it, so a stored
+      // `birthplace` becomes `birth` mid-call. Keyed on the folded value, the
+      // retype guard refused the tool's own change: the correction never reached
+      // the fact, which is this card's bug, and the message blamed the
+      // researcher. 80 person-fact-eligible corpus assertions would fold.
+      await writeProject(
+        withAssertion(backlinkAssertion({ fact_type: "birthplace", value: "Ireland" })),
+        treeWithBacklink({ type: "Birthplace" }),
+      );
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      // The tool folded the assertion to `birth`...
+      expect((await readResearch()).assertions[0].fact_type).toBe("birth");
+      // ...and the correction still reached the fact.
+      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      expect(r.validation.warnings.join(" ")).not.toMatch(/so the fact was left alone/);
+    });
+  });
+
   it("a pre-existing unrelated drift does not block a write; it rides as a warning (#1572)", async () => {
     // `project` carries a legacy additionalProperties key this call never touches
     // (the call updates an assertion). Before #1572 the whole-document validation
@@ -1000,6 +1501,376 @@ describe("research_append (Phase 3)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
+
+  // ── a broader place containing a narrower one is not a conflict (#2028) ──
+  //
+  // "Ireland" and "County Cork, Ireland" are one claim at two levels of
+  // precision. The reported defect is the agent filing that pair as a dispute.
+  // Measured before landing: 0 of the 113 competing assertions in the scenario
+  // corpus carry `standard_place`, so the check reads free-text `place`; and 0
+  // existing conflicts are in a containment relationship, so nothing shipped
+  // starts out refused.
+  describe("place containment is not a disagreement", () => {
+    const placed = (conflictIds: string[], places: Record<string, string>) => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "born where?", status: "open" }],
+      sources: [{ id: "src_001", citation: "1850 census" }],
+      assertions: Object.entries(places).map(([id, place]) => ({
+        id,
+        source_id: "src_001",
+        fact_type: "birth",
+        value: place,
+        place,
+      })),
+      conflicts: conflictIds.length
+        ? [
+            {
+              id: "c_001",
+              conflict_type: "fact",
+              description: "birthplace",
+              disputed_attribute: "birthplace",
+              competing_assertion_ids: conflictIds,
+              status: "unresolved",
+              blocks_question_ids: [],
+            },
+          ]
+        : [],
+      proof_summaries: [],
+    });
+    const appendConflict = (ids: string[]) => ({
+      projectPath: dir,
+      section: "conflicts" as const,
+      op: "append" as const,
+      entry: {
+        conflict_type: "fact",
+        description: "birthplace",
+        competing_assertion_ids: ids,
+        status: "unresolved",
+        blocks_question_ids: [],
+        disputed_attribute: "birthplace",
+      },
+    });
+
+    it.each([
+      ["broader first", { a_001: "Ireland", a_002: "County Cork, Ireland" }],
+      ["narrower first", { a_001: "County Cork, Ireland", a_002: "Ireland" }],
+      ["deeper hierarchy", {
+        a_001: "Pennsylvania, United States",
+        a_002: "Schuylkill, Pennsylvania, United States",
+      }],
+    ])("refuses a conflict over a containment pair: %s", async (_label, places) => {
+      await writeProject(placed([], places as Record<string, string>));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(false);
+      const msg = JSON.stringify((r as any).errors);
+      expect(msg).toContain("two levels of precision");
+      expect(msg).toContain("a_001");
+      expect(msg).toContain("a_002");
+    });
+
+    // The other direction, which is the half a "break it and watch it fail"
+    // pass cannot show: the guard must leave real disputes alone. Both rows
+    // are live in the committed corpus.
+    it.each([
+      ["different countries", { a_001: "Ireland", a_002: "Pennsylvania" }],
+      ["sibling counties", {
+        a_001: "Schuylkill, Pennsylvania, United States",
+        a_002: "Allegheny, Pennsylvania, United States",
+      }],
+    ])("still allows a real disagreement: %s", async (_label, places) => {
+      await writeProject(placed([], places as Record<string, string>));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // REPRO for the reviewer's blocker: three competing assertions where two
+    // agree and one genuinely disagrees. This is the dominant corpus shape
+    // (34 of the 37 corpus fact conflicts carry three all-`birth` assertions;
+    // exactly two is 1), and every other test here uses exactly two
+    // assertions, which is why inverting the comparator reds 6 tests without
+    // ever exercising it.
+    it("allows the live 3-assertion Ireland-vs-Pennsylvania conflict", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "Ireland",
+        a_003: "Pennsylvania",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Equal places are compatible but are not containment — neither says less
+    // than the other. Whatever is wrong with a conflict recorded over two
+    // identical places, it is not the defect this guard names.
+    it("allows a conflict over two identical places", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Containment still fires when it is the ONLY relationship present, even
+    // with a third assertion in the entry that agrees with one side.
+    it("still refuses containment when a third assertion agrees", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+        a_003: "Ireland",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+
+    // Exercises the anyDisagreement clause specifically: a containment pair
+    // AND a genuine disagreement in the same entry. The conflict is real —
+    // Pennsylvania contradicts both Irish places — so the entry stands even
+    // though two of its assertions are one claim at two precisions.
+    it("allows containment when some other pair genuinely disagrees", async () => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+        a_003: "Pennsylvania",
+      }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("ignores an assertion carrying no place — nothing to compare", async () => {
+      await writeProject(placed([], { a_001: "Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      // a_002 does not exist, and that is NOT refused here — nothing
+      // reference-checks competing_assertion_ids on this path. Pin the outcome
+      // as well as the absent substring: asserting only that a substring is
+      // missing passes when the write is refused for any other reason at all.
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(JSON.stringify((r as any).errors ?? [])).not.toContain(
+        "two levels of precision",
+      );
+    });
+
+    // The blocker: the guard read no `disputed_attribute`, so a dispute about
+    // the YEAR between two places in a containment relationship was refused
+    // with a message saying they "do not disagree" — false about the axis
+    // actually in dispute. `disputed_attribute` is free text (28 distinct
+    // values across 102 corpus fact conflicts), so the allow-list is exact.
+    it.each([
+      ["birth_year", "a plain non-place attribute"],
+      ["birth_year_and_birthplace", "a compound naming a non-place axis too"],
+      ["surname_spelling", "another axis entirely"],
+      ["Father's name: 'John W. Spriggs' vs 'Wm. Spriggs'", "free-text prose"],
+    ])("does not fire when disputed_attribute is %s (%s)", async (attr) => {
+      await writeProject(placed([], {
+        a_001: "Ireland",
+        a_002: "County Cork, Ireland",
+      }));
+      const base = appendConflict(["a_001", "a_002"]);
+      const r = await researchAppend({
+        ...base,
+        entry: { ...base.entry, disputed_attribute: attr },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // A blank or comma-only place is "no place", not a disagreement. Reading it
+    // as one silently disabled the guard for the whole entry.
+    it.each([["", "blank"], [" , ", "comma-only"]])(
+      "is not disabled by a %s place on a third assertion (%s)",
+      async (blank) => {
+        await writeProject(placed([], {
+          a_001: "Ireland",
+          a_002: "County Cork, Ireland",
+          a_003: blank,
+        }));
+        const r = await researchAppend(appendConflict(["a_001", "a_002", "a_003"]));
+        expect(r.ok).toBe(false);
+        expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+      },
+    );
+
+    // Depth counts normalized segments, as the comparator does. A raw comma
+    // count disagrees in both directions.
+    it("treats a trailing comma as the same depth, not a containment", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "Ireland," }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("still sees containment through a trailing comma", async () => {
+      await writeProject(placed([], { a_001: "Ireland,", a_002: "Cork, Ireland" }));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+
+    it("does not fire on an identity conflict", async () => {
+      await writeProject(placed([], { a_001: "Ireland", a_002: "County Cork, Ireland" }));
+      const r = await researchAppend({
+        ...appendConflict(["a_001", "a_002"]),
+        entry: {
+          ...appendConflict(["a_001", "a_002"]).entry,
+          conflict_type: "identity",
+          identity_question: "same Patrick?",
+        },
+      });
+      expect(JSON.stringify((r as any).errors ?? [])).not.toContain(
+        "two levels of precision",
+      );
+    });
+
+    // The freeze #2354 had to design around: a project written before this
+    // rule existed must stay editable. The arm is scoped to ops that (re)set
+    // the pairing, so an unrelated field update passes.
+    it("does not refuse an unrelated update to a pre-existing containment conflict", async () => {
+      await writeProject(
+        placed(["a_001", "a_002"], { a_001: "Ireland", a_002: "County Cork, Ireland" }),
+      );
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { description: "birthplace, restated" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does fire on an update that re-sets competing_assertion_ids", async () => {
+      await writeProject(
+        placed(["a_001"], { a_001: "Ireland", a_002: "County Cork, Ireland" }),
+      );
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { competing_assertion_ids: ["a_001", "a_002"] },
+      });
+      expect(r.ok).toBe(false);
+      expect(JSON.stringify((r as any).errors)).toContain("two levels of precision");
+    });
+  });
+
+  // ── two dates that cannot be ordered are warned about, not refused (#2028) ──
+  describe("unorderable competing dates raise a warning", () => {
+    const dated = (rows: [string, string, string][]) => ({
+      project: { objective: "x" },
+      questions: [{ id: "q_001", question: "when?", status: "open" }],
+      sources: [{ id: "src_001", citation: "a source" }],
+      assertions: rows.map(([id, fact_type, date]) => ({
+        id,
+        source_id: "src_001",
+        fact_type,
+        value: `${fact_type} ${date}`,
+        date,
+      })),
+      conflicts: [],
+      proof_summaries: [],
+    });
+    const appendConflict = (ids: string[]) => ({
+      projectPath: dir,
+      section: "conflicts" as const,
+      op: "append" as const,
+      entry: {
+        conflict_type: "fact",
+        description: "temporal impossibility",
+        disputed_attribute: "event_order",
+        competing_assertion_ids: ids,
+        status: "unresolved",
+        blocks_question_ids: [],
+      },
+    });
+    const warningsOf = (r: any) => JSON.stringify(r.validation?.warnings ?? []);
+
+    it("warns on the reported incident — an arrival inside a year-only death", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1856-12-15"], ["a_002", "death", "1856"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      // The write SUCCEEDS. This is an advisory, not a gate.
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).toContain("cannot be ordered");
+      expect(warningsOf(r)).toContain("a_001");
+      expect(warningsOf(r)).toContain("a_002");
+    });
+
+    it("stays silent when the two events are genuinely ordered", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1853"], ["a_002", "death", "1908-03-12"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    // The noise check. A birthplace conflict is two `birth` assertions whose
+    // dates overlap by construction; warning there would fire on 35 of the 37
+    // corpus conflicts and teach the reader to skip this channel.
+    it("stays silent on a same-fact_type value disagreement", async () => {
+      await writeProject(
+        dated([["a_001", "birth", "~1845"], ["a_002", "birth", "1845"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    // Regression guard for the bug this nearly shipped with: `getDayRange`
+    // returns null for `~approx` and ISO, and `compatibleDate` reads null as
+    // "incompatible", so skipping `stdDate` makes the check silently say
+    // nothing on exactly the imprecise dates it exists to flag.
+    it("normalizes through stdDate — an approx year still overlaps a day date", async () => {
+      await writeProject(
+        dated([["a_001", "residence", "~1856"], ["a_002", "death", "1856-12-15"]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(warningsOf(r)).toContain("cannot be ordered");
+    });
+
+    // Covers the outer fact_type-span guard specifically. Without it, a pair
+    // where only ONE side declares a fact_type reaches the date comparison —
+    // the inner same-type `continue` cannot catch that, because a string never
+    // equals undefined. An assertion that does not say what kind of event it
+    // records gives no reason to read the pair as an ordering claim.
+    // Ask 7: `compatibleDate` widens imperfect dates by 365 days, so it calls
+    // a death of "1856" unorderable against a burial on 1857-12-31 — and the
+    // warning would then tell the agent neither is known to come first, which
+    // is false. `isABeforeB` is three-valued at fudge 0 and says nothing here.
+    it.each([
+      ["1857-12-31", "a year later — ordered, despite the 365-day fudge"],
+      ["1855-06-01", "a year earlier — ordered the other way"],
+    ])("stays silent on a genuinely ordered pair: %s (%s)", async (other) => {
+      await writeProject(dated([["a_001", "death", "1856"], ["a_002", "burial", other]]));
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    it("says nothing when only one side declares a fact_type", async () => {
+      await writeProject({
+        project: { objective: "x" },
+        questions: [{ id: "q_001", question: "when?", status: "open" }],
+        sources: [{ id: "src_001", citation: "a source" }],
+        assertions: [
+          { id: "a_001", source_id: "src_001", fact_type: "death", value: "d", date: "1856" },
+          { id: "a_002", source_id: "src_001", value: "untyped", date: "1856-12-15" },
+        ],
+        conflicts: [],
+        proof_summaries: [],
+      });
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+
+    it("says nothing when either date is absent", async () => {
+      await writeProject(
+        dated([["a_001", "immigration", "1856-12-15"], ["a_002", "relationship", ""]]),
+      );
+      const r = await researchAppend(appendConflict(["a_001", "a_002"]));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      expect(warningsOf(r)).not.toContain("cannot be ordered");
+    });
+  });
 
   // ── correlation presupposes identity (lead ruling, 2026-08-19) ──
   //
@@ -3072,7 +3943,7 @@ describe("research_append (composite persist + enforcement)", () => {
     });
     const research = await readResearch();
     expect(research.sources[1].gedcomx_source_description_id).toBe("S1");
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true); // one-deep tree backup
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false); // no readable .bak copy of the tree
   });
 
   it("accepts a sources append that reuses an existing S id (multi-repository pattern); tree untouched", async () => {
@@ -3535,6 +4406,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/record_persona_id/);
     expect(r.errors[0]).toMatch(/Re-run the search WITH projectPath/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
@@ -3560,6 +4432,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/record_persona_id/);
   });
 
   it("hard-errors when a fulltext_search returned results but staged no sidecar", async () => {
@@ -3579,6 +4452,8 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/returned results but staged no sidecar/);
+    expect(r.errors[0]).toMatch(/retained transcript/);
+    expect(r.errors[0]).not.toMatch(/record_persona_id/);
   });
 
   it("does NOT fire for a nil/negative producer search with no sidecar (legit — no false positive)", async () => {

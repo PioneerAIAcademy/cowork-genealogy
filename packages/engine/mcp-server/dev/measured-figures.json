@@ -1866,5 +1866,82 @@
       "exactRowsRead": 468
     },
     "measured_at": "2026-08-23T03:23:36.066Z"
+  },
+  "J": {
+    "anchor": {
+      "id": "3:1:33S7-LB3G-JWS",
+      "collectionId": "M9J1-94K",
+      "collectionTitle": "United States, Alabama, Legal, from 1600 to 2010",
+      "recordPlace": "Bullock, Alabama, United States",
+      "metadataState": "Alabama",
+      "transcriptPlace": "Virginia"
+    },
+    "T1:q.text control (transcript term)": {
+      "found": true,
+      "total": 5822,
+      "error": null
+    },
+    "T2:q.recordPlace=Virginia (transcript-only place)": {
+      "found": false,
+      "total": 0,
+      "error": null
+    },
+    "T3:q.recordPlace=Alabama (metadata place)": {
+      "found": true,
+      "total": 5822,
+      "error": null
+    },
+    "T3b:f.recordPlace1=Alabama (plain text)": {
+      "found": false,
+      "total": 0,
+      "error": null
+    },
+    "facet:usRegionId": "10",
+    "facet:virginiaFilter": "f.recordPlace1=10,Virginia",
+    "facet:metadataStateFilter": "f.recordPlace1=10,Alabama",
+    "T4:f.recordPlace1=Virginia (transcript-only place)": {
+      "found": false,
+      "total": 0,
+      "error": null
+    },
+    "T5:f.recordPlace1=Alabama (metadata place)": {
+      "found": true,
+      "total": 5822,
+      "error": null
+    },
+    "T6:q.fullName=Virginia A. Blackman (NLP name control)": {
+      "found": true,
+      "total": 1975180,
+      "error": null
+    },
+    "T7:q.fullName=executor (non-name word)": {
+      "found": false,
+      "total": 229,
+      "examined": 229,
+      "error": null
+    },
+    "verdict:q.text searches transcript": "CONFIRMED",
+    "verdict:q.recordPlace searches": "metadata only",
+    "verdict:f.recordPlace searches": "metadata only",
+    "verdict:q.fullName searches": "name fields only",
+    "measured_at": "2026-09-14T12:23:18.691Z"
+  },
+  "K": {
+    "pool:van der Linde": 558,
+    "pool:\"van der Linde\"": 558,
+    "pool:vanderlinde": 558,
+    "pool:Van Der Linde": 558,
+    "pool:Linde": 558,
+    "pool:Linde, van der": 993,
+    "verdict:dropping the particle returns the same set": "YES — 'Linde' enumerates the identical set as 'van der Linde'",
+    "verdict:the inverted form reaches the same set": "NO — 'Linde, van der' enumerates a different set",
+    "unscopedBare": 900756,
+    "unscopedUnbalancedQuote": 900756,
+    "mcKeeSpaced": 6342823,
+    "mcKeeJoined": 6342823,
+    "verdict:literal quotes change the result set": "NO — the server strips quotes before matching, so guidance prescribing them is inert",
+    "verdict:spacing and case change the result set": "NO — 'vanderlinde' (space removed) and 'Van Der Linde' enumerate the identical set as 'van der Linde', so spacing and capitalisation carry no signal. This says nothing about DROPPING the particle; that leg is recorded separately.",
+    "verdict:control Mc Kee equals McKee": "REPRODUCES",
+    "measured_at": "2026-09-14T19:12:58.467Z"
   }
 }

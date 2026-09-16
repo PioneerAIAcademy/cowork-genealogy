@@ -228,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
             "not the only lever — ClaudeAgentOptions.effort also works — but it "
             "is the one proven to reach subagents. Vary it to test whether a "
             "runaway-thinking subagent freeze clears (see "
-            "subagents[].runaway_thinking)."
+            "subagents[].runaway_thinking; if empty, read subagent_capture_status)."
         ),
     )
     parser.add_argument(
@@ -272,6 +272,41 @@ def main(argv: list[str] | None = None) -> int:
             "deny-mode run's `compliance` axis is not comparable to a shadow run's "
             "— the blocked write never lands, so the post-run check passes "
             "vacuously. Recorded in the runlog's usage block."
+        ),
+    )
+    parser.add_argument(
+        "--context-1m",
+        action="store_true",
+        help=(
+            "Request the 1M-token context window (SDK beta "
+            "'context-1m-2025-08-07'). Default OFF: it changes run behaviour — a "
+            "1M window compacts differently, so a run made with it is NOT "
+            "comparable to the corpus and must not be committed under "
+            "eval/runlogs/e2e/. Deliberately absent from eval/RunE2E.bat. "
+            "Recorded in the runlog's usage block as `betas`."
+        ),
+    )
+    parser.add_argument(
+        "--deny-shell",
+        action="store_true",
+        help=(
+            "Deny Bash and PowerShell for the whole run, with a reason pointing "
+            "the agent at the MCP tools (P2: does removing the filesystem cost "
+            "research quality?). Every attempt lands in blocked_tree_reads with "
+            "blocked_by: shell. Default off. Recorded in the runlog's usage block."
+        ),
+    )
+    parser.add_argument(
+        "--deny-project-reads",
+        action="store_true",
+        help=(
+            "Deny Read/Grep/Glob of the project folder — research.json, the tree, "
+            "results/ sidecars, evaluations/, uploads/ — so the agent must use "
+            "project_context, research_query, record_read and sidecar_read instead, as the "
+            "hosted sandbox would. The staged .claude/ tree and the CLI's "
+            "tool-results spill files stay readable. Every attempt lands in "
+            "blocked_tree_reads with blocked_by: path. Default off. Recorded in "
+            "the runlog's usage block."
         ),
     )
     args = parser.parse_args(argv)
@@ -322,6 +357,9 @@ def main(argv: list[str] | None = None) -> int:
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,
         "person_evidence_guard": args.person_evidence_guard,
+        "deny_shell": args.deny_shell,
+        "deny_project_reads": args.deny_project_reads,
+        "context_1m": args.context_1m,
     }
 
     results: list[E2eResult] = []

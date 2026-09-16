@@ -109,7 +109,7 @@ describe("tree_edit", () => {
     expect(refless).toBe(0);
   };
 
-  it("add_fact: assigns the next F id, resolves standard_place, swaps the primary, writes only the tree + .bak", async () => {
+  it("add_fact: assigns the next F id, resolves standard_place, swaps the primary, writes only the tree and no .bak", async () => {
     await writeProject(onePersonSourced());
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
@@ -134,7 +134,7 @@ describe("tree_edit", () => {
     // the old Birth lost its primary (one primary per type)
     expect(facts.find((f: any) => f.id === "F1").primary).toBeUndefined();
 
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
   });
 
@@ -152,6 +152,246 @@ describe("tree_edit", () => {
     expect(f1.date).toBe("1849");
     expect(f1.standard_place).toBe("Schuylkill, Pennsylvania, United States");
     expect(f1.id).toBe("F1");
+  });
+
+  // ─── #2472: the assertion backlink is stamped, never supplied, and detaches ──
+
+  describe("assertion_id backlink (#2472)", () => {
+    const backlinked = () => {
+      const t = onePerson();
+      (t.persons[0].facts[0] as any).assertion_id = "a_011";
+      return t;
+    };
+
+    it("update_fact drops the backlink when a correction sets a mirrored attribute, and warns", async () => {
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { date: "1849" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.date).toBe("1849");
+      expect(f1.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'/);
+    });
+
+    it("update_fact drops it on a `standard_date` correction too — the trigger is all of FACT_STRING_FIELDS", async () => {
+      // `standard_date` is not one of the four mirrored attributes, but a
+      // human's standard form must not survive beside a later assertion `date`
+      // rewrite landing on the same fact.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { standard_date: "1849" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect((await readTree()).persons[0].facts[0].assertion_id).toBeUndefined();
+    });
+
+    it("update_fact KEEPS the backlink when the correction touches no fact string field", async () => {
+      // The other direction: clearing `primary` is not a re-reading of the
+      // record, so the fact is still the one that assertion minted.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { primary: false },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.primary).toBeUndefined();
+      expect(f1.assertion_id).toBe("a_011");
+    });
+
+    it("KEEPS the backlink when the op re-states a field at the value it already holds", async () => {
+      // The conclude-a-fact shape: `primary` plus an echo of the existing date.
+      // Nothing was corrected, so nothing should be detached. 7 of the 31
+      // detaching ops in the committed e2e corpus carry `primary` alongside a
+      // string field, which is where this rides.
+      await writeProject(backlinked());
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { date: "1850", primary: true },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.date).toBe("1850");
+      expect(f1.assertion_id).toBe("a_011");
+      expect(r.validation.warnings.join(" ")).not.toMatch(/no longer linked/);
+    });
+
+    it("drops it when ONLY the resolved standard_place changes, which fixes the detach's position", async () => {
+      // The op re-states `place` at the value the fact already holds, so the
+      // assignment loop changes nothing; the only change is the `standard_place`
+      // maybeResolvePlace fills in. The detach therefore has to run AFTER
+      // resolution. Placed before it, this case sees no change and keeps a
+      // backlink on a fact whose sidecar the resolver just rewrote.
+      const t = onePersonSourced();
+      (t.persons[0].facts[0] as any).assertion_id = "a_011";
+      (t.persons[0].facts[0] as any).place = "Schuylkill County, Pennsylvania";
+      await writeProject(t);
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { place: "Schuylkill County, Pennsylvania" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.standard_place).toBe("Schuylkill, Pennsylvania, United States");
+      expect(f1.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'/);
+    });
+
+    it("drops the backlink on a RETYPE, which no string field covers", async () => {
+      // `type` is not one of the string fields, so a re-classification kept the
+      // backlink. That is the most consequential correction there is, and it
+      // also moves the fact across the event / value-bearing line that decides
+      // whether the assertion's `value` may be written to it at all. Left
+      // attached, the fact and its assertion disagree about their own type and
+      // no later correction can reach it.
+      const t = onePerson();
+      (t.persons[0].facts[0] as any).assertion_id = "a_011";
+      (t.persons[0].facts[0] as any).type = "Occupation";
+      await writeProject(t);
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F1",
+          fact: { type: "Residence" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f1 = (await readTree()).persons[0].facts[0];
+      expect(f1.type).toBe("Residence");
+      expect(f1.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'.*type/);
+    });
+
+    it("rejects a caller-supplied assertion_id on add_person and add_relationship inline facts", async () => {
+      // requireFactShape runs on all four fact write paths; the two above cover
+      // add_fact/update_fact, these are the other two.
+      await writeProject(onePersonSourced());
+      const person = await treeEdit({
+        projectPath: dir,
+        operation: "add_person",
+        person: {
+          gender: "Female",
+          names: [{ given: "Mary", surname: "Doyle" }],
+          facts: [{ type: "Birth", date: "1830", assertion_id: "a_011", sources: [{ ref: "S1" }] }],
+        } as any,
+      });
+      expect(person.ok).toBe(false);
+      if (!person.ok) expect(JSON.stringify(person)).toMatch(/`assertion_id` is not settable/);
+
+      const rel = await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I1",
+          // The edge's own mandatory-ref check runs BEFORE requireFactShape, so
+          // without this the call is refused for the wrong reason and the case
+          // proves nothing.
+          sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", assertion_id: "a_011", sources: [{ ref: "S1" }] }],
+        } as any,
+      });
+      expect(rel.ok).toBe(false);
+      if (!rel.ok) expect(JSON.stringify(rel)).toMatch(/`assertion_id` is not settable/);
+    });
+
+    it("detaches a RELATIONSHIP-held fact too, not just a person fact", async () => {
+      // update_fact accepts relationshipId as well as personId, and the tree
+      // schema gives couple facts the same shape.
+      const t = onePersonSourced();
+      (t as any).persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Doyle" }] });
+      (t as any).relationships = [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          facts: [{ id: "F9", type: "Marriage", date: "1850", assertion_id: "a_011", sources: [{ ref: "S1" }] }],
+        },
+      ];
+      await writeProject(t);
+      const r = single(
+        await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          relationshipId: "R1",
+          factId: "F9",
+          fact: { date: "1851" },
+        }),
+      );
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const f9 = (await readTree()).relationships[0].facts[0];
+      expect(f9.date).toBe("1851");
+      expect(f9.assertion_id).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/no longer linked to assertion 'a_011'/);
+    });
+
+    it("rejects a caller-supplied assertion_id on update_fact", async () => {
+      await writeProject(onePerson());
+      const r = await treeCorrect({
+        projectPath: dir,
+        operation: "update_fact",
+        personId: "I1",
+        factId: "F1",
+        fact: { assertion_id: "a_011" } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(JSON.stringify(r)).toMatch(/`assertion_id` is not settable/);
+    });
+
+    it("rejects a caller-supplied assertion_id on add_fact", async () => {
+      await writeProject(onePersonSourced());
+      const r = await treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Death", date: "1900", assertion_id: "a_011", sources: [{ ref: "S1" }] } as any,
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(JSON.stringify(r)).toMatch(/`assertion_id` is not settable/);
+    });
   });
 
   it("add_fact: nulls an AUTO-RESOLVED standard_place that contradicts the place text's country, with a warning", async () => {
@@ -474,7 +714,7 @@ describe("tree_edit", () => {
     expect(await exists("tree.gedcomx.json.bak")).toBe(false);
   });
 
-  it("add_source: assigns the next S id, rejects a caller-supplied id, writes only the tree + .bak", async () => {
+  it("add_source: assigns the next S id, rejects a caller-supplied id, writes only the tree and no .bak", async () => {
     await writeProject(onePerson());
     const researchBefore = await readFile(join(dir, "research.json"), "utf-8");
 
@@ -492,7 +732,7 @@ describe("tree_edit", () => {
     expect(tree.sources).toHaveLength(1);
     expect(tree.sources[0]).toMatchObject({ id: "S1", title: "1850 U.S. Federal Census" });
 
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     // research.json is never touched by a source add
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(researchBefore);
 
@@ -987,7 +1227,7 @@ describe("tree_edit (batch ops)", () => {
     sources: [],
   });
 
-  it("(a/c) applies a heterogeneous batch (source + person + fact) in one write, sequencing ids, one .bak", async () => {
+  it("(a/c) applies a heterogeneous batch (source + person + fact) in one write, sequencing ids, no .bak", async () => {
     await writeProject(onePerson());
     const r = await treeEdit({
       projectPath: dir,
@@ -1004,7 +1244,7 @@ describe("tree_edit (batch ops)", () => {
     expect(r.results[1].assignedIds?.person).toBe("I2");
     expect(r.results[2].assignedIds?.fact).toBe("F2");
     expect(r.filesWritten).toEqual(["tree.gedcomx.json"]);
-    expect(await exists("tree.gedcomx.json.bak")).toBe(true);
+    expect(await exists("tree.gedcomx.json.bak")).toBe(false);
     const tree = await readTree();
     expect(tree.sources.map((s: any) => s.id)).toEqual(["S1"]);
     expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);

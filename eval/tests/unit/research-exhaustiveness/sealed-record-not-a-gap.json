@@ -24,7 +24,7 @@
     "Contrast (do not conflate): a record that is merely unsearched-but-accessible WOULD gate a declaration under the decisive-record rule. This birth certificate is unobtainable by privacy law, so it does NOT gate the declaration. The distinction is exactly the point of this test.",
     "The skill must NOT claim the birth certificate was examined or invent its contents.",
     "Acceptable pass: (a) declares q_001 reasonably exhaustive, noting the sealed birth record as an access limitation rather than a gap; OR (b) if it declines for a DIFFERENT legitimate reason, it still does not cite the sealed birth certificate as the outstanding searchable gap and does not recommend obtaining it.",
-    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema); a review/decline with no MCP tool call → Tool Arguments is N/A."
+    "Tool Arguments: if the skill declares, it writes via research_append (and may call validate_research_schema). A review/decline still makes MCP calls — `## 1. Gather evidence` names a wiki_read unconditionally — so grade this dimension on the calls that were made."
   ],
   "execution": {
     "max_turns": 40,

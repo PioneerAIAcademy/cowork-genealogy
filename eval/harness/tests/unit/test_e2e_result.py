@@ -45,6 +45,30 @@ def test_timestamp_slug_is_filesystem_safe():
     assert all(c.isalnum() or c in "-_" for c in slug)
 
 
+def test_subagent_capture_status_defaults_to_unknown():
+    """The default is an argued decision, and nothing else pins it.
+
+    The plan had this defaulting to "captured"; review changed it to "unknown"
+    because a record claiming a successful capture beside an empty `subagents`
+    list restates the exact ambiguity the field exists to remove (#2468). The
+    orchestrator always sets it explicitly, so no other test constructs an
+    `E2eResult` without it - both "captured" and "error" passed the suite.
+    """
+    result = E2eResult(
+        test_id="smith-parents-1850",
+        captured_at="2026-05-26_14-30-45",
+        verdict="pass",
+        stop_reason="completed",
+        judge_output={},
+        usage={},
+        tool_calls=[],
+        tags={},
+    )
+
+    assert result.subagents == []
+    assert result.subagent_capture_status == "unknown"
+
+
 def test_write_result_files_creates_all_artifacts(tmp_path: Path):
     runlog_dir = tmp_path / "runlogs" / "smith-parents-1850"
     result = E2eResult(

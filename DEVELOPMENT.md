@@ -269,10 +269,12 @@ on `gh issue list`, `gh pr create`, and malformed input. CI runs it too, in
 fail-open design means a broken gate is otherwise indistinguishable from a
 working one.
 
-Do not agonise past that one search. `/audit-board` merges, rewrites and drops
-issues across the whole pool weekly, which is the only vantage point from which
-every duplicate is visible. A duplicate costs one comment to close; an unfiled
-finding costs a rediscovery.
+Do not agonise past that one search. `/merge-recent-issues` reads the day's
+filings against the open pool, `/merge-issues` merges the Backlog down by eval
+slot, and `/audit-board` rewrites and drops what is stale — between them every
+duplicate is visible from some vantage point, and none of them is yours to
+anticipate. A duplicate costs one comment to close; an unfiled finding costs a
+rediscovery.
 
 **Do not park these in a to-do file, under any name.** That was tried:
 `docs/TODOs.md`, retired 2026-08-02 as issues #1117–#1157. Its exit event — "an
@@ -412,7 +414,7 @@ Endpoints (all require `Authorization: Bearer <key>`):
 - `POST /v1/sessions` → create. Optional body `{title?, familysearch_token?}`. Supply
   `familysearch_token` (`{access_token, refresh_token?, expires_in?}`) to authenticate the
   sandbox's FamilySearch tool calls — it's injected into the sandbox's `tokens.json` and is
-  **never** persisted to the DB; with a refresh token the in-sandbox `getValidToken()`
+  **never** persisted to the DB; with a refresh token the in-sandbox `getValidToken(principal)`
   self-refreshes for the sandbox's life. Omit it for an FS-tool-less session. Returns
   `{session_id, title, model, created_at}`.
 - `POST /v1/sessions/{id}/messages` → send a message. Body `{message, stream?}`:
@@ -478,7 +480,8 @@ Pydantic settings are env-driven and case-insensitive (`API_KEYS` →
 | Env var | Default | Purpose |
 |---|---|---|
 | `API_KEYS` | `""` | `key:email` pairs — the bearer-key registry (above). |
-| `V1_TURN_TIMEOUT_SECONDS` | `120` | Sync (`stream:false`) turn cap → `504 turn_timeout`. Streaming has no hard cap (heartbeats instead); steer long turns to `stream:true`. |
+| `V1_TURN_TIMEOUT_SECONDS` | `120` | Sync (`stream:false`) turn cap → `504 turn_timeout`. Streaming has no cap on DURATION - that is what it is for - so steer long turns to `stream:true`; it is capped on SILENCE instead, see the row below. |
+| `V1_STREAM_IDLE_SECONDS` | `300` | Streaming (`stream:true`) **silence** cap. The longest a stream may go with no frame from the sandbox other than the Hub's heartbeat, after which it emits an `error` event naming `turn_timeout` and a terminal `done` with `finish_reason:"error"`. Not a duration cap, and deliberately blind to pings - a clock reset by any frame can never fire, since the Hub pings forever whether the agent is alive or not. `docs/specs/public-rest-api-spec.md` § "The streaming contract". |
 | `V1_TURN_LOCK_STALE_SECONDS` | `600` | One turn at a time per session, via a DB-backed lock on `Project.turn_locked_at` (correct across horizontally-scaled instances). A lock older than this is reclaimed, so a crashed instance can't wedge a session. Must exceed the longest expected turn. |
 
 ### Run + smoke-test locally

@@ -9,6 +9,7 @@
  *   npx tsx dev/try-collection-read.ts 1743384       # Alabama County Marriages (known good)
  *   npx tsx dev/try-collection-read.ts 9999999       # Unknown id (expect friendly 404)
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { collectionReadTool } from "../src/tools/collection-read.js";
 
 const id = process.argv[2];
@@ -19,7 +20,7 @@ if (!id) {
 }
 
 try {
-  const result = await collectionReadTool({ id });
+  const result = await collectionReadTool({ id }, LOCAL);
   console.log(JSON.stringify(result, null, 2));
 } catch (err) {
   console.error("ERROR:", err instanceof Error ? err.message : err);

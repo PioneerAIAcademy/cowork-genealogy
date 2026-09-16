@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -61,6 +62,7 @@ function makeErrorResponse(status: number, statusText: string, body: unknown = {
     status,
     statusText,
     json: async () => body,
+    headers: new Headers(),
   };
 }
 
@@ -170,7 +172,7 @@ describe("personSearchTool happy path", () => {
       makeOkResponse({ results: 7, index: 0, entries: [lincolnTreeEntry()] }),
     );
 
-    const result = await personSearchTool(VALID_QUERY);
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
 
     expect(result.totalMatches).toBe(7);
     expect(result.returned).toBe(1);
@@ -187,19 +189,19 @@ describe("personSearchTool surname-plus-one rule", () => {
   it("2a. accepts surname + givenName", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
     await expect(
-      personSearchTool({ surname: "Lincoln", givenName: "Abraham" }),
+      personSearchTool({ surname: "Lincoln", givenName: "Abraham" }, LOCAL),
     ).resolves.toBeDefined();
   });
 
   it("2b. accepts surname + birthPlace", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
     await expect(
-      personSearchTool({ surname: "Lincoln", birthPlace: "Kentucky" }),
+      personSearchTool({ surname: "Lincoln", birthPlace: "Kentucky" }, LOCAL),
     ).resolves.toBeDefined();
   });
 
   it("2c. rejects surname alone", async () => {
-    await expect(personSearchTool({ surname: "Lincoln" })).rejects.toThrow(
+    await expect(personSearchTool({ surname: "Lincoln" }, LOCAL)).rejects.toThrow(
       /requires a surname plus at least one other/,
     );
     expect(mockFetch).not.toHaveBeenCalled();
@@ -207,21 +209,21 @@ describe("personSearchTool surname-plus-one rule", () => {
 
   it("2d. rejects no-surname (givenName + birthPlace)", async () => {
     await expect(
-      personSearchTool({ givenName: "Abraham", birthPlace: "Kentucky" }),
+      personSearchTool({ givenName: "Abraham", birthPlace: "Kentucky" }, LOCAL),
     ).rejects.toThrow(/requires a surname/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("2e. rejects surname + sex only (sex doesn't count)", async () => {
     await expect(
-      personSearchTool({ surname: "Lincoln", sex: "Male" }),
+      personSearchTool({ surname: "Lincoln", sex: "Male" }, LOCAL),
     ).rejects.toThrow(/requires a surname plus at least one other/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("2f. rejects surname + surnameExact only (a toggle doesn't count)", async () => {
     await expect(
-      personSearchTool({ surname: "Lincoln", surnameExact: true }),
+      personSearchTool({ surname: "Lincoln", surnameExact: true }, LOCAL),
     ).rejects.toThrow(/requires a surname plus at least one other/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -229,7 +231,7 @@ describe("personSearchTool surname-plus-one rule", () => {
   it("2g. accepts surname + a relative name", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
     await expect(
-      personSearchTool({ surname: "Lincoln", fatherSurname: "Lincoln" }),
+      personSearchTool({ surname: "Lincoln", fatherSurname: "Lincoln" }, LOCAL),
     ).resolves.toBeDefined();
   });
 });
@@ -239,19 +241,19 @@ describe("personSearchTool surname-plus-one rule", () => {
 describe("personSearchTool input validation", () => {
   it("3. throws when count is out of [1,100]", async () => {
     await expect(
-      personSearchTool({ ...VALID_QUERY, count: 0 }),
+      personSearchTool({ ...VALID_QUERY, count: 0 }, LOCAL),
     ).rejects.toThrow(/count must be between 1 and 100/);
     await expect(
-      personSearchTool({ ...VALID_QUERY, count: 101 }),
+      personSearchTool({ ...VALID_QUERY, count: 101 }, LOCAL),
     ).rejects.toThrow(/count must be between 1 and 100/);
   });
 
   it("4. throws when offset is out of [0,4999]", async () => {
     await expect(
-      personSearchTool({ ...VALID_QUERY, offset: -1 }),
+      personSearchTool({ ...VALID_QUERY, offset: -1 }, LOCAL),
     ).rejects.toThrow(/offset must be between 0 and 4999/);
     await expect(
-      personSearchTool({ ...VALID_QUERY, offset: 5000 }),
+      personSearchTool({ ...VALID_QUERY, offset: 5000 }, LOCAL),
     ).rejects.toThrow(/offset must be between 0 and 4999/);
   });
 
@@ -348,7 +350,7 @@ describe("buildSearchUrl", () => {
 describe("personSearchTool request headers", () => {
   it("13. sends Accept-Language: en and the atom Accept header", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    await personSearchTool(VALID_QUERY);
+    await personSearchTool(VALID_QUERY, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers["Accept-Language"]).toBe("en");
@@ -358,7 +360,7 @@ describe("personSearchTool request headers", () => {
 
   it("14. does NOT send a User-Agent header (platform host needs none)", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
-    await personSearchTool(VALID_QUERY);
+    await personSearchTool(VALID_QUERY, LOCAL);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers["User-Agent"]).toBeUndefined();
@@ -427,7 +429,7 @@ describe("personSearchTool envelope", () => {
         entries: [lincolnTreeEntry()],
       }),
     );
-    const result = await personSearchTool(VALID_QUERY);
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
     expect(result.hasMore).toBe(true);
   });
 
@@ -435,7 +437,7 @@ describe("personSearchTool envelope", () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 42, index: 0, entries: [] }),
     );
-    const result = await personSearchTool(VALID_QUERY);
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
     expect(result.totalMatches).toBe(42);
     expect(result.paginationCappedAt).toBe(4999);
     expect(result.hasMore).toBe(false);
@@ -449,14 +451,14 @@ describe("personSearchTool zero matches", () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 0, index: 0, entries: [] }),
     );
-    const result = await personSearchTool(VALID_QUERY);
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
     expect(result.results).toEqual([]);
     expect(result.returned).toBe(0);
   });
 
   it("20b. returns empty results on 204 No Content", async () => {
     mockFetch.mockResolvedValueOnce(make204Response());
-    const result = await personSearchTool(VALID_QUERY);
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
     expect(result.results).toEqual([]);
     expect(result.returned).toBe(0);
     expect(result.totalMatches).toBe(0);
@@ -470,13 +472,13 @@ describe("personSearchTool errors", () => {
     mockedGetValidToken.mockRejectedValueOnce(
       new Error("User is not logged in to FamilySearch. Call the login tool to authenticate."),
     );
-    await expect(personSearchTool(VALID_QUERY)).rejects.toThrow(/not logged in/);
+    await expect(personSearchTool(VALID_QUERY, LOCAL)).rejects.toThrow(/not logged in/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("22a. throws on 401 with re-login guidance", async () => {
     mockFetch.mockResolvedValueOnce(makeErrorResponse(401, "Unauthorized"));
-    await expect(personSearchTool(VALID_QUERY)).rejects.toThrow(
+    await expect(personSearchTool(VALID_QUERY, LOCAL)).rejects.toThrow(
       /session not accepted; call the login tool/,
     );
   });
@@ -487,15 +489,24 @@ describe("personSearchTool errors", () => {
         errors: [{ message: "invalid date" }],
       }),
     );
-    await expect(personSearchTool(VALID_QUERY)).rejects.toThrow(
+    await expect(personSearchTool(VALID_QUERY, LOCAL)).rejects.toThrow(
       /rejected the query: invalid date/,
     );
   });
 
   it("22c. throws a generic error on other non-OK status", async () => {
-    mockFetch.mockResolvedValueOnce(makeErrorResponse(500, "Server Error"));
-    await expect(personSearchTool(VALID_QUERY)).rejects.toThrow(
+    mockFetch.mockResolvedValue(makeErrorResponse(500, "Server Error"));
+    await expect(personSearchTool(VALID_QUERY, LOCAL)).rejects.toThrow(
       /tree search API error: 500/,
     );
+  });
+
+  it("22d. recovers from a transient 429 and returns the search result", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeErrorResponse(429, "Too Many Requests"))
+      .mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
+    expect(result.returned).toBe(0);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });

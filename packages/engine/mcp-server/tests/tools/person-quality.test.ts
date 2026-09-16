@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -155,7 +156,7 @@ describe("personQualityTool", () => {
       },
     });
 
-    const result = await personQualityTool({ personId: "KD96-TV2" });
+    const result = await personQualityTool({ personId: "KD96-TV2" }, LOCAL);
 
     expect(result.personId).toBe("KD96-TV2");
     expect(result.segment).toBe("Norway 1816 - 1920");
@@ -173,7 +174,7 @@ describe("personQualityTool", () => {
 
   it("sends bearer token + browser UA to the beta host", async () => {
     mockOk({ isValid: true, personScores: { issues: [] } });
-    await personQualityTool({ personId: "KD96-TV2" });
+    await personQualityTool({ personId: "KD96-TV2" }, LOCAL);
     const [url, opts] = mockFetch.mock.calls[0];
     expect(url).toBe(
       "https://sg30p0.familysearch.org/service/tree/tree-data/quality/person/KD96-TV2/scores",
@@ -184,7 +185,7 @@ describe("personQualityTool", () => {
 
   it("treats a clean person (personScores present, no issues) as zero issues", async () => {
     mockOk({ isValid: true, personScores: { overallDisplayScore: 1, issues: [] } });
-    const result = await personQualityTool({ personId: "CLEAN-1" });
+    const result = await personQualityTool({ personId: "CLEAN-1" }, LOCAL);
     expect(result.issueCount).toBe(0);
     expect(result.issues).toEqual([]);
     expect(result.overallScore).toBe(1);
@@ -192,7 +193,7 @@ describe("personQualityTool", () => {
 
   it("throws on NOT_FOUND (no personScores) — not a clean person", async () => {
     mockOk({ isValid: true, visibility: "NOT_FOUND" });
-    await expect(personQualityTool({ personId: "ZZZZ-ZZZ" })).rejects.toThrow(
+    await expect(personQualityTool({ personId: "ZZZZ-ZZZ" }, LOCAL)).rejects.toThrow(
       /not found or not visible/,
     );
   });
@@ -201,7 +202,7 @@ describe("personQualityTool", () => {
     vi.useFakeTimers();
     mockOk({ isValid: false, visibility: "CALCULATING" });
     mockOk({ isValid: true, personScores: { overallDisplayScore: 1, issues: [] } });
-    const promise = personQualityTool({ personId: "KD96-TV2" });
+    const promise = personQualityTool({ personId: "KD96-TV2" }, LOCAL);
     await vi.runAllTimersAsync();
     const result = await promise;
     expect(result.issueCount).toBe(0);
@@ -212,7 +213,7 @@ describe("personQualityTool", () => {
   it("gives up after the max attempts if it never stops CALCULATING", async () => {
     vi.useFakeTimers();
     for (let i = 0; i < 5; i++) mockOk({ isValid: false, visibility: "CALCULATING" });
-    const promise = personQualityTool({ personId: "KD96-TV2" });
+    const promise = personQualityTool({ personId: "KD96-TV2" }, LOCAL);
     const assertion = expect(promise).rejects.toThrow(/still calculating/);
     await vi.runAllTimersAsync();
     await assertion;
@@ -222,27 +223,27 @@ describe("personQualityTool", () => {
 
   it("throws a tombstoned message when TOMBSTONED", async () => {
     mockOk({ isValid: true, visibility: "TOMBSTONED" });
-    await expect(personQualityTool({ personId: "KD96-TV5" })).rejects.toThrow(
+    await expect(personQualityTool({ personId: "KD96-TV5" }, LOCAL)).rejects.toThrow(
       /tombstoned/,
     );
   });
 
   it("throws a re-auth message on 401", async () => {
     mockStatus(401);
-    await expect(personQualityTool({ personId: "KD96-TV2" })).rejects.toThrow(
+    await expect(personQualityTool({ personId: "KD96-TV2" }, LOCAL)).rejects.toThrow(
       /401.*login tool/s,
     );
   });
 
   it("surfaces the warning header on a 400 (malformed id)", async () => {
     mockStatus(400, { warning: "Invalid j-encoded identifier: BOGUS-PID" });
-    await expect(personQualityTool({ personId: "BOGUS-PID" })).rejects.toThrow(
+    await expect(personQualityTool({ personId: "BOGUS-PID" }, LOCAL)).rejects.toThrow(
       /Invalid j-encoded identifier/,
     );
   });
 
   it("rejects an empty personId before calling the API", async () => {
-    await expect(personQualityTool({ personId: "  " })).rejects.toThrow(
+    await expect(personQualityTool({ personId: "  " }, LOCAL)).rejects.toThrow(
       /personId is required/,
     );
     expect(mockFetch).not.toHaveBeenCalled();

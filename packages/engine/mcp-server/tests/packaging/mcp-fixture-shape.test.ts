@@ -1,3 +1,4 @@
+import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -195,7 +196,7 @@ walkSrc(join(mcpRoot, "src"));
  * Every arm is `if (request.params.name === "<tool>") { … }`. Inside, the
  * handler is the function whose awaited result is serialized for the model:
  *
- *   const result = await recordSearchTool(args);
+ *   const result = await recordSearchTool(args, LOCAL);
  *   return { content: [{ type: "text", text: JSON.stringify(result) }] };
  *
  * Two real variants the extraction has to survive, so neither is a special
@@ -215,7 +216,7 @@ function dispatchHandlers(): {
   // Every `request.params.name === "<tool>"` comparison, and the `if` body it
   // belongs to. `toolNames` is the superset (any comparison, so a refactor into
   // a `||` or a `switch` still counts as dispatched); `arms` is the if-parented
-  // subset, all 48 today.
+  // subset, all 49 today.
   const toolNames: string[] = [];
   const arms: Array<{ tool: string; statement: ts.Statement }> = [];
   const findArms = (node: ts.Node): void => {
@@ -638,7 +639,7 @@ const fixtures: Fixture[] = fixturePaths(fixturesDir).map((rel) => {
 });
 
 /**
- * The failure envelope. All 48 dispatch arms catch identically and return
+ * The failure envelope. All 49 dispatch arms catch identically and return
  * `JSON.stringify({ error: message })`, with no other error shape anywhere in
  * `src/index.ts`, so `{error: <string>}` is a response EVERY tool can return.
  * Modelled here rather than exempted per file: `{error, message, status}` —

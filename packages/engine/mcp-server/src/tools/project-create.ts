@@ -36,7 +36,6 @@
 // The full→simplified GedcomX conversion stays in the skill, exactly where it
 // is today; moving it host-side is a separate change.
 
-import { join } from "path";
 import {
   atomicWriteBoth,
   fileExists,
@@ -113,8 +112,6 @@ export async function projectCreate(
       );
     }
 
-    const researchPath = join(projectPath, "research.json");
-    const treePath = join(projectPath, "tree.gedcomx.json");
     // The opening tree, copied write-once alongside the two live documents. The
     // tree-encoding completion gate (issue #1490) diffs the final tree against
     // this baseline to tell a conclusion this session encoded from a fact that
@@ -122,13 +119,12 @@ export async function projectCreate(
     // a persisted baseline it cannot make that distinction. Written from the same
     // caller-passed `tree`, in the same atomic write, so the baseline is the
     // opening tree exactly and never diverges.
-    const startingTreePath = join(projectPath, "starting-tree.gedcomx.json");
 
     // Create, not upsert. Overwriting an existing project would destroy an
     // audit trail that cannot be reconstructed, and the caller that wants to
     // add to a project already has the writer tools for it.
-    const hasResearch = await fileExists(researchPath);
-    const hasTree = await fileExists(treePath);
+    const hasResearch = await fileExists(projectPath, "research.json");
+    const hasTree = await fileExists(projectPath, "tree.gedcomx.json");
     if (hasResearch && hasTree) {
       throw new ProjectCreateError(
         "research.json and tree.gedcomx.json already exist in projectPath — " +
@@ -181,6 +177,32 @@ export async function projectCreate(
       sources: Array.isArray(input.tree?.sources) ? input.tree.sources : [],
     };
 
+    // `assertion_id` is stamped by `materialize_facts`, never supplied. This
+    // tool copies the caller's tree verbatim, and the document validator type-
+    // checks the field but cannot know it was forged — so without this it is the
+    // one unguarded fact write path, and a forged backlink would persist into
+    // BOTH tree.gedcomx.json and the write-once starting-tree baseline, after
+    // which an assertion correction rewrites a hand-entered fact from an
+    // assertion it never came from. `tree_edit` refuses the same thing on its
+    // four paths; a seeding tree (a FamilySearch snapshot, a hand-built stub)
+    // has no assertions to point at, so nothing legitimate carries one.
+    const forged: string[] = [];
+    for (const holder of [...tree.persons, ...tree.relationships]) {
+      for (const fact of (holder as { facts?: unknown[] })?.facts ?? []) {
+        if (fact && typeof fact === "object" && "assertion_id" in fact) {
+          forged.push(String((holder as { id?: unknown }).id ?? "(unnamed)"));
+        }
+      }
+    }
+    if (forged.length > 0) {
+      throw new ProjectCreateError(
+        `the starting tree carries \`assertion_id\` on a fact of ${[...new Set(forged)].join(", ")} — ` +
+          "that field is the backlink `materialize_facts` stamps on a fact it mints from a " +
+          "research.json assertion, and a tree seeded here has no assertions to point at. " +
+          "Remove it; materialize the evidence once the project exists.",
+      );
+    }
+
     const stamp = today();
     const research: Record<string, unknown> = {
       project: {
@@ -206,10 +228,10 @@ export async function projectCreate(
       return { ok: false, errors: formatIssues(validation.errors) };
     }
 
-    await atomicWriteBoth([
-      { path: treePath, data: tree },
-      { path: researchPath, data: research },
-      { path: startingTreePath, data: tree },
+    await atomicWriteBoth(projectPath, [
+      { ref: "tree.gedcomx.json", data: tree },
+      { ref: "research.json", data: research },
+      { ref: "starting-tree.gedcomx.json", data: tree },
     ]);
 
     return {

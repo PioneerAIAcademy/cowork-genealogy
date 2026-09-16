@@ -26,6 +26,7 @@
  *
  * Run: `npx tsx dev/explore-year-bands-records.ts` from `packages/engine/mcp-server`.
  */
+import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
@@ -46,9 +47,9 @@ async function readAll(extra: string): Promise<{ total: number | null; rows: Row
     // Per request, not once in `main()`: this is the longest-running script of the
     // set (12 bands x 2 variants x up to 49 pages, plus 429 backoffs). A token that
     // expired mid-run would return 401, `!res.ok` would abort, and a whole run would
-    // be discarded rather than refreshed. `getValidToken()` auto-refreshes, so
+    // be discarded rather than refreshed. `getValidToken(LOCAL)` auto-refreshes, so
     // calling it per request is cheap.
-    const token = await getValidToken();
+    const token = await getValidToken(LOCAL);
     // `fetchWithTimeout`, not the global `fetch`: Node's fetch never times out on
     // its own, and these scripts page for tens of minutes against an endpoint that
     // throttles. `volume_search` once hung for 236 minutes on exactly this

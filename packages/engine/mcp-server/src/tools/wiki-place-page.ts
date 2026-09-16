@@ -1,7 +1,9 @@
+import type { Principal } from "../auth/principal.js";
 import { getPlaceCandidateNames } from "./place-search.js";
 import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
 import { getWikiApiUrl } from "../auth/config.js";
-import { fetchWithTimeout } from "../utils/http.js";
+import { fetchWithRetry } from "../utils/http.js";
+import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import type {
   WikiPlacePageInput,
   WikiPlacePageResult,
@@ -9,6 +11,10 @@ import type {
 } from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
+
+// The four wiki place-page sections — the `locality_page_section` closed enum,
+// which the skill records into research.json `pages_read[].section`.
+const SECTIONS = VALIDATOR_ENUMS.locality_page_section;
 
 interface PageApiResponse {
   title: string;
@@ -56,7 +62,7 @@ async function fetchPage(
 ): Promise<PageApiResponse | null> {
   let response: Response;
   try {
-    response = await fetchWithTimeout(`${baseUrl}/page/${slug}`, {
+    response = await fetchWithRetry(`${baseUrl}/page/${slug}`, {
       method: "GET",
       headers: { "User-Agent": "genealogy-mcp-server/0.0.1" },
     });
@@ -105,7 +111,8 @@ async function tryNames(
 
 async function readPlacePage(
   standardPlace: string,
-  getCandidateSlugs: (nameSlug: string) => string[]
+  getCandidateSlugs: (nameSlug: string) => string[],
+  principal: Principal
 ): Promise<WikiPlacePageResult> {
   if (!standardPlace || typeof standardPlace !== "string" || !standardPlace.trim()) {
     throw new Error(
@@ -114,7 +121,7 @@ async function readPlacePage(
     );
   }
 
-  const baseUrl = await getWikiApiUrl();
+  const baseUrl = await getWikiApiUrl(principal);
   const leaf = standardPlace.split(",")[0].trim();
 
   // 1) Common case: try the standard place's own leaf name against the
@@ -138,17 +145,22 @@ async function readPlacePage(
 }
 
 export async function wikiPlacePageTool(
-  input: WikiPlacePageInput
+  input: WikiPlacePageInput,
+  principal: Principal
 ): Promise<WikiPlacePageResult> {
   const { standardPlace, section } = input;
-  if (!section) {
+  // An out-of-set string would fall through candidateSlugsFor's switch to
+  // `undefined` and surface as a TypeError; reject it here with the set instead.
+  if (typeof section !== "string" || !SECTIONS.has(section)) {
     throw new Error(
-      "section is required: one of 'home', 'getting_started', " +
-        "'online_records', or 'research_tips'."
+      `section is required and must be one of ${[...SECTIONS]
+        .map((s) => `'${s}'`)
+        .join(", ")}.`
     );
   }
   return readPlacePage(standardPlace, (nameSlug) =>
-    candidateSlugsFor(section, nameSlug)
+    candidateSlugsFor(section, nameSlug),
+    principal
   );
 }
 
@@ -172,7 +184,7 @@ export const wikiPlacePageSchema = {
       },
       section: {
         type: "string",
-        enum: ["home", "getting_started", "online_records", "research_tips"],
+        enum: [...SECTIONS],
         description:
           "Which wiki page to return: 'home' (genealogy overview), " +
           "'getting_started', 'online_records' (online genealogy records), or " +

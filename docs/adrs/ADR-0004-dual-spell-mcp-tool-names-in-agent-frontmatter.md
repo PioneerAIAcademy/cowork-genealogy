@@ -74,7 +74,7 @@ The deny side needs the same treatment, though **for a weaker reason than this
 ADR originally gave.** It said `disallowedTools:` binds even under
 `bypassPermissions` while an omission alone does not, making the deny "the last
 line" keeping `record-extractor` off the broad `research_append`. The first half
-is true; the second is false. Probed 2026-08-30 against Claude Code 2.1.251 /
+is true; the second is false. Probed 2026-08-30 against Claude Code 2.1.220 /
 SDK 0.2.128 (`make probe-agent-binding`, reproduced twice): under
 `bypassPermissions` a tool merely **omitted** from `tools:` is absent from the
 agent, exactly as a denied one is. The omission is the load-bearing half; the
@@ -141,7 +141,7 @@ Three corollaries:
 
 | Option | Why rejected | Evidence |
 |---|---|---|
-| **Two spellings** (harness + bridge), the original form of this ADR | Missed the bare `display_name` registration (no `remote-devices` segment), which Cowork exposed live in #1341: `record-extractor` was refused outright — "would be spawned with zero tools — refusing", naming all 16 declared entries as unrecognized. Three of the four agents declare only MCP tools, so the same applies to them; `gps-mentor` declares a bare `Read`, so it would spawn holding that alone | #1341 |
+| **Two spellings** (harness + bridge), the original form of this ADR | Missed the bare `display_name` registration (no `remote-devices` segment), which Cowork exposed live in #1341: `record-extractor` was refused outright — "would be spawned with zero tools — refusing", naming all 16 declared entries as unrecognized. Three of the four agents then declared only MCP tools, so the same applied to them; `gps-mentor` then declared a bare `Read`, so it would have spawned holding that alone (it is MCP-only today) | #1341 |
 | **One qualified name** (whichever prefix the author happens to know) | The exact failure of #650/#698. Whichever one you pick is wrong in some environment, and CI — which registers under `genealogy` — cannot see it | #650/#698; all three agents broken in Cowork, CI green |
 | **Bare names only** | Leaves the subagent toolless in the SDK path used by the unit harness. Bare works for skills' `allowed-tools` but not for the agent spawn filter | `CLAUDE.md` § "Dual-spelled tool names" |
 | **Grant the server-level prefix** `mcp__remote-devices` and let everything through | That namespace carries `device_bash`, `device_commit_files`, `project_memory_write`. A read-only critique agent would get host shell access | `agent-tool-names.test.ts` header comment |

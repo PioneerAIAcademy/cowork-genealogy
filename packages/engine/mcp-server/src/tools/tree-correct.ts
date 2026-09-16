@@ -1,7 +1,7 @@
 // tree_correct — the correction/removal half of the tree_edit op split.
 //
 // Thin module over the shared core in tree-edit.ts (executeTreeOps): identical
-// batched-op, id-rule, validate-on-write, and .bak semantics — only the
+// batched-op, id-rule, and validate-on-write semantics — only the
 // admitted op set differs. tree_correct accepts ONLY update_fact, update_name,
 // update_person, update_source, and remove; the additive ops (add_*) live in
 // tree_edit. The split exists so write authority is allowlist-enforceable:
@@ -49,8 +49,8 @@ export const treeCorrectSchema = {
     "Pick the `operation` and pass ONLY the fields to change (snake_case " +
     "simplified-GedcomX; ids are immutable). The tool swaps the " +
     "primary/preferred flag, re-resolves standard_place on a place change, " +
-    "validates the whole project, and writes only tree.gedcomx.json (with a " +
-    "one-deep .bak). On a validation failure nothing is written and " +
+    "validates the whole project, and writes only tree.gedcomx.json. " +
+    "On a validation failure nothing is written and " +
     "`{ ok: false, errors }` is returned. Run check-warnings after for " +
     "genealogical-plausibility checks.\n" +
     "\n" +

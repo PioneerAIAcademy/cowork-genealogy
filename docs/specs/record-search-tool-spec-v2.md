@@ -91,13 +91,51 @@ but the anchor rule above must be satisfied.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `surname` | string | Family name. The strongest anchor for genealogy queries. |
+| `surname` | string | Family name. The strongest anchor for genealogy queries. Sent verbatim, including any particle and its spaces (`van der Linde`, `Mc Kee`) — see *Particle surnames* below. |
 | `givenName` | string | Given (first) name. |
 | `surnameAlt` | string | Alternate family name (e.g., maiden name when also searching by married name). |
 | `givenNameAlt` | string | Alternate given name. |
 | `sex` | `"Male"` \| `"Female"` \| `"Unknown"` | Sex of the person. Case-insensitive — `"male"` is normalized to `"Male"`. |
 | `surnameExact` | boolean | Restricts the surname to its exact spelling — see the exact-match rule below. Applies to `surnameAlt` too when both are set. **Narrows the count, reorders the records it keeps, and can drop the target**: read over complete sets the exact result is a strict subset of the fuzzy one, so it cannot surface a record a fuzzy search buried (measured on `surname` in marriage populations only). |
 | `givenNameExact` | boolean | Restricts the given name to its exact spelling — see the exact-match rule below. Applies to `givenNameAlt` too. Excludes period diminutives (`Betty` for `Elizabeth`); pass a variant as its own `givenName` instead. **The exclusion direction is the lead's (2026-08-17), not measured**: the artifact records only the fuzzy REACH — `N.verdict:diminutiveReach` = REACHED, and section E's membership tests — never that `.exact` drops them. The ruling sourced it, which is why the description states it flatly. |
+
+#### Particle surnames
+
+A surname carrying a particle or an internal space is passed through **verbatim**,
+percent-encoded and **unquoted**. Nothing is stripped, concatenated, split across
+`surname`/`surnameAlt`, or wrapped in literal quotes.
+
+Measured on one hard-scoped pool (given name `Marinus`, the Netherlands, births
+1800–1810), **enumerated to exhaustion** — 558 rows, 558 distinct, no duplicate
+serving — in section K of `dev/probe-search-qualifiers.ts`:
+
+- **Literal quotes are inert.** `"van der Linde"` returns the identical set as
+  `van der Linde`, and an *unbalanced* quote returns the same unscoped total as
+  the bare form, so the server strips them before matching rather than honouring
+  them. `search-records/references/name-search-mechanics.md` prescribes quoting;
+  it neither helps nor hurts, and the tool does not send it.
+- **Spacing, case and the particle itself carry no signal.** `vanderlinde`,
+  `Van Der Linde` and even `Linde` — the particle dropped entirely — each
+  enumerate the **identical 558-row set** as `van der Linde`. All five are one
+  fuzzy equivalence class.
+- **The inverted form is a different query.** `Linde, van der` — the shape Dutch
+  and Belgian indexes commonly use, alphabetising under the root with the
+  *tussenvoegsel* trailing — enumerates **993 rows**, a different set. This is
+  the one spelling that changes what comes back, and it is the card's leg 2.
+- **Control.** `Mc Kee` and `McKee` are equivalent, which is the claim already
+  in the plugin's reference file. A probe that could not reproduce it would have
+  an instrument problem rather than a finding.
+
+**An earlier revision of this section asserted the opposite of the third bullet**
+— that dropping the particle yielded "a pool of the same size whose composition
+differs, so it is a different query". That came from comparing the first 100-row
+page of a 558-row pool. Two reviewers independently identified it, and the
+enumerated re-run refuted it: an identical total over a different first page is
+what a *re-ranking of one set* looks like, which is what it was.
+
+The unit tests pin the **string the tool builds** (rule 20a), never that
+FamilySearch honours it; the live half is the probe's, and its figures are in
+`dev/measured-figures.json` under `K`.
 
 #### The exact-match rule
 
@@ -1231,11 +1269,11 @@ Schema's `required` (which can only require single fields, not
 ## Authentication
 
 This tool requires a valid FamilySearch access token. It must call
-`getValidToken()` from `src/auth/refresh.ts` — the single entry
+`getValidToken(principal)` from `src/auth/refresh.ts` — the single entry
 point for all authenticated tools. Do not re-implement token
 plumbing.
 
-If the user is not authenticated, `getValidToken()` throws an
+If the user is not authenticated, `getValidToken(principal)` throws an
 LLM-instruction error directing the user to call the `login`
 tool. The tool handler should let this error propagate (same
 try/catch pattern as other tools in `index.ts`).
@@ -1648,13 +1686,13 @@ For each `entry` in `response.entries`:
 | `sex` not in `{Male, Female, Unknown}` (case-insensitive) | Throw: `"sex must be 'Male', 'Female', or 'Unknown' (case-insensitive)."` |
 | `maritalStatus` not in the four allowed values (case-sensitive) | Throw: `"maritalStatus must be exactly one of: 'Married', 'Single', 'Divorced', 'Widowed' (case-sensitive)."` |
 | `recordType` not in the eight allowed values | Throw: `"recordType must be one of: birth, marriage, death, census, immigration, military, probate, other."` |
-| Not authenticated | Let `getValidToken()` throw its LLM-instruction error. |
+| Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error. |
 | API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | API returns 403 | Throw: `"FamilySearch search blocked the request. The User-Agent header was rejected by the WAF — check that the MCP server is running an unmodified build."` |
 | API returns 400 | Read response body as JSON, extract `body.errors[]`, join with `; `. Throw: `"FamilySearch search rejected the query: ${detail}."` Fall back to a generic message if the body isn't parseable. |
-| API returns 429 or 5xx | Transient. Retried with backoff (3 attempts). If still failing after retries, surfaced via the network/timeout terminal error below — NOT returned as a short/empty result set. |
-| Request times out (per-attempt `AbortSignal.timeout`, 25s) or `fetch` rejects (network error) | Transient. Retried with backoff (3 attempts). If still failing, throw: `"FamilySearch record search did not complete after 3 attempts (network timeout or transient error): ${detail}. This is a transient failure, NOT an empty result — coverage is unknown."` The distinguishable message is the point: a timed-out search must never look like an exhaustive one that found little. |
-| API returns other non-OK status (non-retryable, e.g. 404 or other 4xx) | Throw: `"FamilySearch search API error: ${status} ${statusText}"`. (429/5xx do NOT reach here — see the retried row above.) |
+| API returns 429 or 5xx | Transient. Retried by `fetchWithRetry` (up to 3 attempts, capped by a 10s budget). If 429 persists after retry exhaustion, throw: `"FamilySearch rate limit reached and did not clear within the retry budget. Wait a minute and try again."` If 5xx persists, throw: `"FamilySearch record search did not complete after retries (FamilySearch search API error: ${status} ${statusText}). This is a transient failure, NOT an empty result — coverage is unknown."` |
+| Request times out (per-attempt `AbortSignal.timeout`, 25s) or `fetch` rejects (network error) | Transient. Retried by `fetchWithRetry` (budget-capped; a 25s timeout exhausts the budget on the first attempt, so effectively 1 attempt for timeouts). If still failing, throw: `"FamilySearch record search did not complete after retries (network timeout or transient error): ${detail}. This is a transient failure, NOT an empty result — coverage is unknown."` The distinguishable message is the point: a timed-out search must never look like an exhaustive one that found little. |
+| API returns other non-OK status (non-retryable, e.g. 404 or other 4xx) | Throw: `"FamilySearch search API error: ${status} ${statusText}"`. A 429 that outlives the retry budget gets its own message (see above); other non-retryable statuses reach here directly. |
 | API returns 200 with empty `entries` | Return `{ ..., totalMatches: <upstream>, returned: 0, results: [], hasMore: false }`. |
 
 ---

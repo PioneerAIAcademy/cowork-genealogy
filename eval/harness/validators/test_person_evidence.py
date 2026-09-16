@@ -24,6 +24,7 @@ import pytest
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
+    extract_year,
 )
 
 
@@ -302,7 +303,7 @@ def test_low_score_variant_still_links(before_state, after_state, test):
 
 # --- Tag-gated: stub-person creation -------------------------------
 
-def test_stub_person_created_and_linked(before_state, after_state, test):
+def test_stub_person_created_and_linked(before_state, after_state, tool_calls, test):
     """Tag-gated (stub-creation): when an assertion's persona matches no
     existing tree person, person-evidence must mint a NEW stub person in
     tree.gedcomx.json and link a_005 to it — not force a bad match onto an
@@ -348,6 +349,80 @@ def test_stub_person_created_and_linked(before_state, after_state, test):
     # failed `ut_person_evidence_022` in v1_2026-08-27_12-36-32 for doing the
     # right thing (it scored the pairing at 0.79 after the writer tool's
     # reachability warning pointed it at the sidecar).
+    # ...and it must have been MINTED BY materialize_facts, not hand-built.
+    #
+    # Checking the after-state for "a name with some ref" is not enough, and
+    # the weaker version of this check was defeated in review: `tree_edit
+    # add_person` applies `assertNodeHasRef` to inline FACTS only, so it copies
+    # a caller-supplied `names[].sources` through untouched. A hand-written
+    # `sources: [{ ref: "S1" }]` naming the wrong record therefore passed,
+    # which is "remembered, not enforced" — the precise thing
+    # tree-materialization-spec section 6 exists to eliminate, sailing through
+    # the guard meant to catch it.
+    #
+    # So assert on the CALL. materialize_facts resolves the ref from the
+    # assertion's own source_id and refuses the write without one, which is
+    # what makes the provenance enforced rather than asserted. Either arm
+    # counts: the persona form for a party with its own persona on the record,
+    # the named-party form for one the record only names.
+    materialize_ops = [
+        op
+        for tc in (tool_calls or [])
+        if "materialize_facts" in str(tc.get("tool") or "")
+        for op in _ops_arg(tc.get("args") or {})
+    ]
+    minted_by_materialize = bool(materialize_ops)
+    # Read the `operation` field, never a substring of the serialized args: a
+    # blob match flags any call whose text happens to contain "add_person"
+    # (a rationale, a note, a name), which is a guard that refuses correct work.
+    # `_ops_arg` is the shared normalizer, and it also recovers a STRINGIFIED
+    # `ops` — a shape its docstring records as real rather than hypothetical,
+    # and one a hand-rolled `isinstance(list)` check silently misses.
+    add_person_ops = [
+        tc
+        for tc in (tool_calls or [])
+        if "tree_edit" in str(tc.get("tool") or "")
+        and any(
+            str(op.get("operation") or "") == "add_person"
+            for op in _ops_arg(tc.get("args") or {})
+        )
+    ]
+    assert minted_by_materialize and not add_person_ops, (
+        "a record-derived person must be minted with materialize_facts, which "
+        "resolves the source-ref from the assertion's own source_id and refuses "
+        "the write without it: the persona form ({ recordId, recordRole }) when "
+        "that party has its own persona on the record, the named-party form "
+        "({ assertionId, relatedRole, name }) when the record only names her. "
+        f"materialize_facts called: {minted_by_materialize}; "
+        f"tree_edit add_person calls: {len(add_person_ops)}. add_person enforces "
+        "no ref on NAMES (assertNodeHasRef covers inline facts only), so it "
+        "leaves her provenance-less, or carries a ref the caller typed by hand "
+        "and nothing checks against the assertion."
+    )
+
+    # On a fixture tagged `named-party`, the mint must use THAT arm. Without
+    # this the check cannot tell branch 3 from branch 2, so the one behaviour
+    # this whole change introduces would go unverified by anything except a
+    # human reading a transcript.
+    if "named-party" in (test.get("tags") or []):
+        named_party_ops = [
+            op for op in materialize_ops
+            if str(op.get("assertionId") or "") and str(op.get("relatedRole") or "")
+        ]
+        assert named_party_ops, (
+            "this fixture names a party the record gives no persona, so the mint must use "
+            "materialize_facts's NAMED-PARTY form ({ assertionId, relatedRole, name }). "
+            f"materialize_facts ops seen: {materialize_ops}. The persona form "
+            "({ recordId, recordRole }) is the right call only when that role HAS a persona "
+            "on the record carrying something to materialize."
+        )
+
+    # No after-state ref sweep here. tree-materialization-spec section 6 keeps
+    # `tree_edit add_name` deliberately ref-tolerant, so a legitimate ref-less
+    # name added later would fail a check the spec beside it permits. The call
+    # assertion above is the real guarantee: materialize_facts resolves the ref
+    # or refuses, so a mint that went through it cannot lack one.
+
     a_005 = _assertions_by_id(after_r).get("a_005")
     if _persona_reachable(after_r, a_005):
         pytest.skip(
@@ -367,7 +442,6 @@ def test_stub_person_created_and_linked(before_state, after_state, test):
         assert person and person.get("gender") and person.get("names"), (
             f"new stub person {pid} must have a gender and at least one name"
         )
-
 
 # --- Tag-gated: audit / review-only makes no writes ----------------
 
@@ -427,8 +501,12 @@ def test_research_query_called_for_coverage(tool_calls, test):
 #
 # Scoped to the persona deliberately. The tool's named-party arm DOES mint from
 # a relationship/marriage assertion, but it mints the OTHER party the assertion
-# names, as a sourced name — never a fact, and never onto this persona. So the
-# demand this set stands down is still absent.
+# names, and it writes onto THAT party's person, never onto this persona. Since
+# 2026-09-13 it can also write that other party's own persona facts, where the
+# record gives her a persona it never names AND the assertion's
+# structured_value.related_person_role corroborates the role, so "a sourced name
+# only" is no longer the reason; "never onto this persona" is, and that is
+# unchanged. The demand this set stands down is still absent.
 _UNMATERIALIZABLE = frozenset(
     {"relationship", "marriage", "age", "parentage", "parentchild"}
 )
@@ -542,9 +620,11 @@ def _same_person_pairs(tool_calls: list[dict]) -> set[tuple]:
     return pairs
 
 
-def _materialize_ops(args: dict) -> list[dict]:
-    """The op dicts a `materialize_facts` call carries, tolerating a stringified
-    `ops`.
+def _ops_arg(args: dict) -> list[dict]:
+    """The op dicts a batched tool call carries, tolerating a stringified `ops`.
+
+    Shared by the `materialize_facts` coverage check and the `tree_edit`
+    add_person check; both take the same `ops`-or-flat argument shape.
 
     The tool itself recovers that shape via `coerceJsonArg`, and the mock records
     the raw model args, so `ops` reaching a validator as a JSON string is real,
@@ -820,7 +900,7 @@ def test_matched_persona_is_materialized_onto_its_person(
     ]
     named = set()
     for args in materialize_args:
-        for op in _materialize_ops(args):
+        for op in _ops_arg(args):
             # A named-party op (`assertionId`) writes a sourced NAME and never a
             # fact, so it cannot discharge a demand whose message is "the pe_
             # link landed and the facts did not". Counting it would let this
@@ -945,3 +1025,223 @@ def test_check_warnings_runs_after_a_write(
         f"invocation (what the monolithic skill did). "
         f"skills_invoked={list(skills_invoked or [])}"
     )
+
+
+# --- Issue #2194: pe_005 informant-conflation and chronological-cap checks --
+#
+# Both are tier-2 (report_) validators: they raise AssertionError to produce
+# an observation the judge reads as context, never a gate. A gating validator
+# that fires on ut_024 would exclude the Confidence calibration scores from the
+# aggregated grading — since #2444 (fixes #2057) the judge still runs, but a
+# gating failure drops its scores from aggregated_dimensions, leaving the rubric
+# dimension blank. The report_ prefix is detected by validator_runner.py at line
+# 200 (`is_report = attr_name.startswith("report_")`).
+
+
+def report_informant_fields_not_in_pe_confidence_reason(before_state, after_state):
+    """Tier-2: a new pe_ entry's rationale must not cite `information_quality`
+    or `informant_proximity` as the basis for confidence.
+
+    `confidence` on a `person_evidence` entry measures identity certainty —
+    how certain we are that this record's role IS the tree person. Informant
+    reliability (`information_quality`, `informant_proximity`) belongs on the
+    assertion that classified the source, not on the identity link. Conflating
+    them this way is the pe_005 defect. This catches only the literal field
+    names in a NEW link's rationale — 1 hit in 261 pe_ entries across five
+    runs. It does NOT cover ut_person_evidence_001, which reviews pe_005 in
+    review mode and writes no new entry; that case is graded by the rubric's
+    Confidence calibration dimension alone.
+
+    Tier-2 (report_) because prose-level checks have a non-zero false-positive
+    rate and a gating failure here would short-circuit the judge and zero the
+    Confidence calibration scores the rubric edit exists to produce.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    _INFORMANT_TERMS = ("information_quality", "informant_proximity")
+    offenders = []
+    for pe in _new_person_evidence(before, after):
+        rationale = str(pe.get("rationale") or "").lower()
+        hits = [t for t in _INFORMANT_TERMS if t in rationale]
+        if hits:
+            offenders.append(
+                f"{pe.get('id')} ({pe.get('assertion_id')} → {pe.get('person_id')}): "
+                f"rationale cites {hits}"
+            )
+
+    if offenders:
+        raise AssertionError(
+            "person_evidence rationale(s) cite informant-quality fields "
+            f"({', '.join(_INFORMANT_TERMS)}) as the basis for confidence. "
+            "These fields classify the source's informant reliability, not "
+            "identity certainty. `confidence` on a pe_ link measures how "
+            "certain we are that this record role IS the tree person; cite "
+            "corroboration, name match, age, location, or qualitative conflict "
+            "instead:\n" + "\n".join(offenders)
+        )
+
+
+def _parse_year(date_str: str) -> int | None:
+    """Parse the first 4-digit year from a date string.
+
+    Delegates to validators_lib.extract_year (the shared helper), returning
+    an int rather than a string so callers can do gap arithmetic.
+    """
+    s = extract_year(date_str)
+    return int(s) if s is not None else None
+
+
+def _record_persona_facts_from_sp(sp_args: dict, persona_id: str) -> list[dict]:
+    """Extract the fact list for `persona_id` from a same_person call's args.
+
+    Checks whichever of gedcomx1/gedcomx2 the call places `persona_id` in as
+    its primary person and returns that person's `facts` array. Returns [] when
+    the persona is absent from both sides.
+    """
+    for side, pid_key in (("gedcomx1", "primaryId1"), ("gedcomx2", "primaryId2")):
+        if sp_args.get(pid_key) == persona_id:
+            gedcomx = sp_args.get(side) or {}
+            for person in (gedcomx.get("persons") or []):
+                if person.get("id") == persona_id:
+                    return list(person.get("facts") or [])
+    return []
+
+
+# Fact types in which a date marks a birth-class event for the record persona.
+# Christening (Irish Catholic baptism) follows birth within days, so it is
+# treated as a birth proxy for chronological contradiction detection.
+_BIRTH_CLASS_TYPES = frozenset({"birth", "christening", "baptism", "naturalbirth"})
+
+
+def _fact_type(fact: dict) -> str:
+    """Bare name or full GedcomX URI — both appear in same_person args."""
+    return str(fact.get("type") or "").strip().rsplit("/", 1)[-1].lower()
+
+
+def report_chronological_contradiction_not_speculative(
+    before_state, after_state, tool_calls
+):
+    """Tier-2: a non-speculative pe_ link is flagged when the same_person call's
+    record persona carries a birth/christening year that contradicts the tree
+    person's birth year by more than 5 years.
+
+    The date is read from the `same_person` tool-call args (the record persona's
+    facts are embedded in `gedcomx1`/`gedcomx2`). The tree person's birth year
+    comes from the before-state tree. Tool-call RESPONSES are not stored in unit
+    run logs (only `response_fixture` names are), so the validator reads args only.
+
+    Threshold: 5 years. Irish Catholic baptisms follow birth within days, so a
+    christening 13 years after the tree person's birth (~1845 vs 1858) cannot
+    describe the same birth event and is a chronological contradiction. The
+    5-year threshold admits ordinary date-uncertainty noise while catching that
+    size of gap unambiguously.
+
+    Scope: fires for `confident` and `probable` (the non-speculative tiers). A
+    `speculative` link already acknowledges uncertainty and is not flagged.
+
+    Tier-2 (report_) — a gating validator that fires on ut_024 suppresses the
+    judge and zeros all Confidence calibration dimension scores (issue #2057).
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    before_tree = (
+        before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    )
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    # Build (record_persona_id, tree_person_id) → same_person args index.
+    sp_by_pair: dict[tuple, dict] = {}
+    for tc in (tool_calls or []):
+        if "same_person" not in (tc.get("tool") or ""):
+            continue
+        args = tc.get("args") or {}
+        p1, p2 = args.get("primaryId1"), args.get("primaryId2")
+        if p1 and p2:
+            sp_by_pair[(p1, p2)] = args
+            sp_by_pair[(p2, p1)] = args  # accept transposed calls too
+
+    # Tree person birth year from before-state (the stable reference).
+    tree_birth_year: dict[str, int] = {}
+    for person in ((before_tree or {}).get("persons") or []):
+        pid = person.get("id")
+        if not pid:
+            continue
+        for fact in (person.get("facts") or []):
+            ft = _fact_type(fact)
+            if ft == "birth":
+                date_val = fact.get("date") or ""
+                if isinstance(date_val, dict):
+                    date_val = date_val.get("original") or date_val.get("formal") or ""
+                yr = _parse_year(date_val)
+                if yr is not None:
+                    tree_birth_year[pid] = yr
+                    break
+
+    THRESHOLD = 5
+    assertions = _assertions_by_id(after)
+    offenders: list[str] = []
+
+    for pe in _new_person_evidence(before, after):
+        if pe.get("confidence") == "speculative":
+            continue
+        assertion = assertions.get(pe.get("assertion_id") or "") or {}
+        person_id = pe.get("person_id")
+        if not person_id:
+            continue
+
+        record_persona_id = assertion.get("record_persona_id")
+        sp_args = (
+            sp_by_pair.get((record_persona_id, person_id))
+            if record_persona_id
+            else None
+        )
+        if sp_args is None:
+            for (side_a, side_b), args in sp_by_pair.items():
+                if side_b == person_id:
+                    record_persona_id, sp_args = side_a, args
+                    break
+        if sp_args is None:
+            continue  # no same_person call found for this pairing — cannot verify
+
+        record_facts = _record_persona_facts_from_sp(sp_args, record_persona_id)
+        record_year: int | None = None
+        for fact in record_facts:
+            ft = _fact_type(fact)
+            if ft in _BIRTH_CLASS_TYPES:
+                date_val = fact.get("date") or ""
+                if isinstance(date_val, dict):
+                    date_val = date_val.get("original") or date_val.get("formal") or ""
+                yr = _parse_year(date_val)
+                if yr is not None:
+                    record_year = yr
+                    break
+        if record_year is None:
+            continue
+
+        tree_year = tree_birth_year.get(person_id)
+        if tree_year is None:
+            continue
+
+        gap = abs(record_year - tree_year)
+        if gap > THRESHOLD:
+            offenders.append(
+                f"{pe.get('id')} ({pe.get('assertion_id')}/{record_persona_id}"
+                f" → {person_id}): "
+                f"record {record_year}, tree birth {tree_year}, "
+                f"gap {gap} yr, confidence {pe.get('confidence')!r}"
+            )
+
+    if offenders:
+        raise AssertionError(
+            f"person_evidence link(s) are non-speculative despite a "
+            f"chronological contradiction (gap > {THRESHOLD} yr between the "
+            "record persona's birth/christening year and the tree person's "
+            "birth year) — a gap this large is a presumptive contradiction; "
+            "unless the record itself explains the delay (e.g. conditional or "
+            "adult baptism) the link must be `speculative` at most:\n"
+            + "\n".join(offenders)
+        )

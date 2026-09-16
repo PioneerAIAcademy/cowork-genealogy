@@ -177,8 +177,8 @@ class E2eResult:
     tags: dict[str, str] = field(default_factory=dict)
 
     # Tool calls the PreToolUse hook denied. Each entry is
-    # {tool, args, blocked_by}; the name predates the second and third
-    # reasons, so read `blocked_by` rather than assuming a tree read:
+    # {tool, args, blocked_by}; the name predates every reason but the
+    # first, so read `blocked_by` rather than assuming a tree read:
     #
     #   "tree"    — reading the answer off the live tree (person_read /
     #               person_search / person_ancestors are disabled in e2e runs,
@@ -186,6 +186,11 @@ class E2eResult:
     #               research; the verdict is still earned from records, but
     #               it's worth a reviewer's eye.
     #   "fixture" — blocked by the fixture's own `blocked_tools`.
+    #   "shell"   — `--deny-shell` refused Bash/PowerShell (P2, opt-in). The
+    #               entry also carries `reason`.
+    #   "path"    — `--deny-project-reads` refused a Read/Grep/Glob of the
+    #               project folder (P2, opt-in). The entry also carries the
+    #               resolved `path` and `reason`.
     #
     # In every case the call was denied, so nothing executed — but it DOES
     # reach `tool_calls` (32 of the 33 denials in the committed corpus have a
@@ -229,6 +234,12 @@ class E2eResult:
     # `tool_calls` alone, is diagnosable directly from the committed runlog.
     # See subagent_capture.py.
     subagents: list[dict[str, Any]] = field(default_factory=list)
+    # Why `subagents` is empty, so [] stops meaning three things (#2468):
+    # captured | no_cache_dir | matched_no_transcripts | error.
+    # Defaults to "unknown", not "captured": the orchestrator always sets it, and
+    # a record that says "captured" beside an empty list would restate the exact
+    # ambiguity this field exists to remove.
+    subagent_capture_status: str = "unknown"
 
     # docs/specs/guardrail-enforcement-spec.md §8 — the HARD guardrail
     # detector's findings: a guardrail skill's effect present in the final

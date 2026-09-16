@@ -38,6 +38,9 @@ from test_person_evidence import (  # noqa: E402
     test_check_warnings_runs_after_a_write as check_warnings_after_write,
     test_matched_persona_is_materialized_onto_its_person as check_materialized,
     test_same_person_called_when_persona_meets_existing_candidate as check_scored,
+    test_stub_person_created_and_linked as check_stub,
+    report_informant_fields_not_in_pe_confidence_reason as check_informant,
+    report_chronological_contradiction_not_speculative as check_chrono,
 )
 
 
@@ -360,6 +363,345 @@ def test_check_warnings_passes_when_the_agent_calls_the_tool_itself():
     )
 
 
+# --- report_informant_fields_not_in_pe_confidence_reason ------------------
+#
+# The pe_005 conflation: rationale for a pe_ confidence tier cites informant-
+# quality fields (information_quality / informant_proximity) instead of
+# identity-corroboration evidence.
+
+_INFORMANT_BEFORE = {"assertions": [{"id": "a_001"}], "person_evidence": []}
+_INFORMANT_AFTER_BAD = {
+    "assertions": [{"id": "a_001"}],
+    "person_evidence": [
+        {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "I1",
+            "confidence": "confident",
+            "rationale": (
+                "The information_quality is primary and informant was present "
+                "at the event, so this source is considered highly reliable."
+            ),
+        }
+    ],
+}
+_INFORMANT_AFTER_GOOD = {
+    "assertions": [{"id": "a_001"}],
+    "person_evidence": [
+        {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "I1",
+            "confidence": "probable",
+            "rationale": (
+                "Name and approximate birth year match; single source with no "
+                "corroboration — probable, not confident."
+            ),
+        }
+    ],
+}
+
+
+def test_informant_fires_on_information_quality_in_rationale():
+    """The pe_005 conflation shape: rationale cites information_quality."""
+    with pytest.raises(AssertionError) as exc:
+        check_informant(
+            _state(_INFORMANT_BEFORE),
+            _state(_INFORMANT_AFTER_BAD),
+        )
+    assert "information_quality" in str(exc.value)
+    assert "pe_001" in str(exc.value)
+
+
+def test_informant_fires_on_informant_proximity_in_rationale():
+    """Both banned terms are caught, not just the first one."""
+    after = {
+        "assertions": [{"id": "a_002"}],
+        "person_evidence": [
+            {
+                "id": "pe_002",
+                "assertion_id": "a_002",
+                "person_id": "I2",
+                "confidence": "probable",
+                "rationale": "informant_proximity is high; original registrant present.",
+            }
+        ],
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_informant(
+            _state({"assertions": [{"id": "a_002"}], "person_evidence": []}),
+            _state(after),
+        )
+    assert "informant_proximity" in str(exc.value)
+    assert "pe_002" in str(exc.value)
+
+
+def test_informant_passes_when_rationale_uses_identity_evidence():
+    """A rationale citing name, age, and location does not trip the check."""
+    check_informant(
+        _state(_INFORMANT_BEFORE),
+        _state(_INFORMANT_AFTER_GOOD),
+    )
+
+
+def test_informant_ignores_pre_existing_pe_entries():
+    """The check is new-only: a pre-existing entry with the bad wording must not
+    retroactively fail a run that did not touch it."""
+    pre_existing = {
+        "assertions": [{"id": "a_001"}],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "confident",
+                "rationale": "information_quality is primary — existing entry.",
+            }
+        ],
+    }
+    # After state is identical to before — no new pe_ entries.
+    check_informant(_state(pre_existing), _state(pre_existing))
+
+
+def test_informant_stands_down_without_research_json():
+    with pytest.raises(pytest.skip.Exception):
+        check_informant(_state(None), _state(None))
+
+
+# --- report_chronological_contradiction_not_speculative -------------------
+#
+# The ut_024 shape: a Kilrush baptism christening dated 1858 is linked at
+# `probable` to a tree person born ~1845 — a 13-year gap that rules out the
+# same birth event. Irish Catholic baptisms follow birth within days.
+
+def _tree_with_birth(person_id: str, birth_year: int) -> dict:
+    return {
+        "persons": [
+            {
+                "id": person_id,
+                "facts": [{"type": "Birth", "date": str(birth_year)}],
+            }
+        ]
+    }
+
+
+def _sp_call_with_gedcomx(
+    persona_id: str, tree_person_id: str, fact_type: str, fact_date: str
+) -> dict:
+    """Build a same_person tool-call dict with embedded GedcomX facts."""
+    return {
+        "tool": "mcp__genealogy__same_person",
+        "args": {
+            "primaryId1": persona_id,
+            "primaryId2": tree_person_id,
+            "gedcomx1": {
+                "persons": [
+                    {
+                        "id": persona_id,
+                        "facts": [{"type": fact_type, "date": fact_date}],
+                    }
+                ]
+            },
+            "gedcomx2": {
+                "persons": [{"id": tree_person_id, "facts": []}]
+            },
+        },
+    }
+
+
+# The ut_024 observation: BP1 (christening 1858) linked at probable to I1
+# (birth ~1845), gap = 13 years.
+_CHRONO_BEFORE = {
+    "assertions": [
+        {"id": "a_001", "record_persona_id": "BP1"},
+    ],
+    "person_evidence": [],
+}
+_CHRONO_AFTER_BAD = {
+    "assertions": _CHRONO_BEFORE["assertions"],
+    "person_evidence": [
+        {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "I1",
+            "confidence": "probable",
+            "rationale": "Name and record match.",
+        }
+    ],
+}
+_CHRONO_TREE_1845 = _tree_with_birth("I1", 1845)
+_CHRONO_SP_CALL = _sp_call_with_gedcomx("BP1", "I1", "Christening", "12 March 1858")
+
+
+def test_chrono_fires_on_13yr_gap_at_probable():
+    """The ut_024 shape: 13-year gap at probable must fire."""
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+            _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+            [_CHRONO_SP_CALL],
+        )
+    assert "pe_001" in str(exc.value)
+    assert "1858" in str(exc.value)
+    assert "1845" in str(exc.value)
+
+
+def test_chrono_fires_on_13yr_gap_at_confident():
+    """Confident links with the same gap also fire."""
+    after = {
+        "assertions": _CHRONO_BEFORE["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "confident",
+                "rationale": "Strong match.",
+            }
+        ],
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+            _state(after, _CHRONO_TREE_1845),
+            [_CHRONO_SP_CALL],
+        )
+    assert "pe_001" in str(exc.value)
+
+
+def test_chrono_passes_when_confidence_is_speculative():
+    """`speculative` explicitly acknowledges the uncertainty — not flagged."""
+    after = {
+        "assertions": _CHRONO_BEFORE["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_001",
+                "assertion_id": "a_001",
+                "person_id": "I1",
+                "confidence": "speculative",
+                "rationale": "Dates do not align — speculative only.",
+            }
+        ],
+    }
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(after, _CHRONO_TREE_1845),
+        [_CHRONO_SP_CALL],
+    )
+
+
+def test_chrono_passes_when_gap_is_within_threshold():
+    """A 3-year gap (within the 5-year threshold) is not flagged."""
+    sp_call = _sp_call_with_gedcomx("BP1", "I1", "Christening", "1848")
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+        [sp_call],
+    )
+
+
+def test_chrono_passes_when_no_same_person_call_exists():
+    """Without a same_person call there is no embedded date to check."""
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+        [],
+    )
+
+
+def test_chrono_passes_when_tree_has_no_birth_fact():
+    """If the tree person carries no birth year we cannot compute a gap."""
+    tree_no_birth = {"persons": [{"id": "I1", "facts": []}]}
+    check_chrono(
+        _state(_CHRONO_BEFORE, tree_no_birth),
+        _state(_CHRONO_AFTER_BAD, tree_no_birth),
+        [_CHRONO_SP_CALL],
+    )
+
+
+def test_chrono_passes_when_record_persona_has_no_birth_class_fact():
+    """If the record persona has no birth/christening fact there is nothing to compare."""
+    sp_call = _sp_call_with_gedcomx("BP1", "I1", "Residence", "12 March 1858")
+    check_chrono(
+        _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+        _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+        [sp_call],
+    )
+
+
+def test_chrono_fires_on_uri_fact_type():
+    """URI fact types (http://gedcomx.org/Christening) must be matched the same
+    as bare names — 9 of 10 facts in v1_2026-09-15_08-11-26.json use this form."""
+    sp_call = _sp_call_with_gedcomx(
+        "BP1", "I1", "http://gedcomx.org/Christening", "12 March 1858"
+    )
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, _CHRONO_TREE_1845),
+            _state(_CHRONO_AFTER_BAD, _CHRONO_TREE_1845),
+            [sp_call],
+        )
+    assert "pe_001" in str(exc.value)
+
+
+def test_chrono_fires_on_dict_date():
+    """Dict dates ({\"original\": \"abt 1845\"}) must not cause TypeError — the same
+    corpus carries this form on both record and tree facts."""
+    sp_call = _sp_call_with_gedcomx(
+        "BP1", "I1", "http://gedcomx.org/Christening", {"original": "12 March 1858"}
+    )
+    tree = {
+        "persons": [
+            {
+                "id": "I1",
+                "facts": [{"type": "http://gedcomx.org/Birth", "date": {"original": "abt 1845"}}],
+            }
+        ]
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(_CHRONO_BEFORE, tree),
+            _state(_CHRONO_AFTER_BAD, tree),
+            [sp_call],
+        )
+    assert "pe_001" in str(exc.value)
+
+
+def test_chrono_fires_when_record_persona_id_is_null():
+    """The flynn-baptism-names-mother shape: assertion has no record_persona_id
+    (came from record_read with no search sidecar), so the validator must fall
+    back to scanning sp_by_pair by person_id rather than skipping silently."""
+    before = {
+        "assertions": [{"id": "a_002"}],  # record_persona_id absent/null
+        "person_evidence": [],
+    }
+    after = {
+        "assertions": before["assertions"],
+        "person_evidence": [
+            {
+                "id": "pe_002",
+                "assertion_id": "a_002",
+                "person_id": "I1",
+                "confidence": "confident",
+                "rationale": "Name match.",
+            }
+        ],
+    }
+    with pytest.raises(AssertionError) as exc:
+        check_chrono(
+            _state(before, _CHRONO_TREE_1845),
+            _state(after, _CHRONO_TREE_1845),
+            [_CHRONO_SP_CALL],  # primaryId1=BP1, primaryId2=I1 — same_person call exists
+        )
+    assert "pe_002" in str(exc.value)
+    assert "1858" in str(exc.value)
+
+
+def test_chrono_stands_down_without_research_json():
+    with pytest.raises(pytest.skip.Exception):
+        check_chrono(_state(None), _state(None), [])
+
+
 def test_check_warnings_accepts_the_tool_under_any_server_spelling():
     """The prefix is chosen by whoever registers the server, so a bare-name
     match on the qualified tool is the only form that works in all three."""
@@ -656,3 +998,120 @@ def test_scored_still_fires_when_the_log_entry_has_a_results_ref():
               "log": after["log"]}
     with pytest.raises(AssertionError):
         check_scored(_state(before, _tree("I1")), _state(after, _tree("I1")), [])
+
+
+# --- check_stub: the minted-by rule ---------------------------------------
+#
+# The eval suite does not exercise this assertion: neutering it left
+# `make harness-test` at an identical pass count. It is also the one most worth
+# a meta-test, because its first version was DEFEATED in review. That version
+# checked the after-state for "a name with some ref", and `tree_edit
+# add_person` copies a caller-supplied `names[].sources` through untouched (its
+# mandatory-ref guard covers inline FACTS only), so a hand-written ref naming
+# the wrong record passed the guard meant to catch exactly that.
+
+_STUB_TAG = {"tags": ["stub-creation"]}
+_SOURCED = [{"id": "N3", "given": "Mary", "surname": "Doyle",
+             "sources": [{"ref": "S5", "quality": 3}]}]
+_BARE = [{"id": "N3", "given": "Mary", "surname": "Doyle"}]
+_MF_NAMED = [{"tool": "mcp__genealogy__materialize_facts",
+              "args": {"assertionId": "a_005", "relatedRole": "bride"}}]
+_MF_PERSONA = [{"tool": "mcp__genealogy__materialize_facts",
+                "args": {"recordId": "REC", "recordRole": "mother"}}]
+_ADD_PERSON = [{"tool": "mcp__genealogy__tree_edit",
+                "args": {"operation": "add_person", "person": {"gender": "Female"}}}]
+
+
+def _stub_verdict(names, calls, test=None):
+    """True when the check accepts. A downstream skip counts as acceptance: it
+    means a LATER, unrelated rule (match_score reachability) skipped."""
+    person = {"id": "I1", "gender": "Male",
+              "names": [{"id": "N1", "given": "Thomas", "surname": "Flynn"}]}
+    assertions = [{"id": "a_005", "record_persona_id": None, "fact_type": "name"}]
+    before = _state({"assertions": assertions, "person_evidence": [], "log": []},
+                    {"persons": [person]})
+    after = _state({"assertions": assertions,
+                    "person_evidence": [{"id": "pe_9", "assertion_id": "a_005",
+                                         "person_id": "I3", "match_score": None}],
+                    "log": []},
+                   {"persons": [person, {"id": "I3", "gender": "Female",
+                                         "names": names}]})
+    try:
+        check_stub(before, after, calls, test or _STUB_TAG)
+        return True
+    except AssertionError:
+        return False
+    except BaseException as exc:  # pytest.skip
+        if type(exc).__name__.endswith("Skipped"):
+            return True
+        raise
+
+
+@pytest.mark.parametrize("calls", [_MF_NAMED, _MF_PERSONA])
+def test_stub_accepts_either_materialize_arm(calls):
+    """Both arms resolve the ref from the assertion, so both are correct on an
+    untagged stub-creation fixture. (Until the `named-party` gate below existed
+    these two cases asserted the same thing: the check read only the tool name,
+    never the args, so the parametrization was decorative.)"""
+    assert _stub_verdict(_SOURCED, calls) is True
+
+
+_NAMED_PARTY_TAG = {"tags": ["stub-creation", "named-party"]}
+
+
+def test_named_party_fixture_requires_the_named_party_ARM():
+    """The one behaviour this change introduces. Without this, nothing
+    distinguishes branch 3 from branch 2 and the arm goes unverified by
+    anything but a human reading a transcript."""
+    assert _stub_verdict(_SOURCED, _MF_NAMED, test=_NAMED_PARTY_TAG) is True
+    # the persona form is the WRONG arm on a fixture the record gives no persona
+    assert _stub_verdict(_SOURCED, _MF_PERSONA, test=_NAMED_PARTY_TAG) is False
+
+
+def test_stub_rejects_add_person_carrying_a_hand_written_ref():
+    """The defeat this check was rewritten for: the ref can name any record."""
+    assert _stub_verdict(_SOURCED, _ADD_PERSON) is False
+
+
+def test_stub_rejects_add_person_with_no_ref():
+    assert _stub_verdict(_BARE, _ADD_PERSON) is False
+
+
+def test_stub_rejects_add_person_used_alongside_materialize_facts():
+    """Calling the right tool somewhere does not license the wrong one here."""
+    assert _stub_verdict(_SOURCED, _MF_NAMED + _ADD_PERSON) is False
+
+
+def test_stub_rejects_a_mint_with_no_tool_call_at_all():
+    assert _stub_verdict(_SOURCED, []) is False
+
+
+def test_stub_accepts_a_tree_edit_that_merely_mentions_add_person():
+    """False-fail guard. The first version matched "add_person" anywhere in the
+    serialized args, so an unrelated tree_edit whose text happens to contain the
+    word was refused. A check that blocks correct work is worse than the gap."""
+    mentions = [
+        {"tool": "mcp__genealogy__tree_edit",
+         "args": {"operation": "add_fact",
+                  "fact": {"type": "Occupation", "value": "clerk (not via add_person)"}}},
+    ]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + mentions) is True
+
+
+def test_stub_still_catches_add_person_inside_a_BATCH():
+    """The batch form is how this skill is told to write, so the check has to
+    see into `ops[]` rather than only the flat call."""
+    batched = [{"tool": "mcp__genealogy__tree_edit",
+                "args": {"ops": [{"operation": "add_relationship"},
+                                 {"operation": "add_person", "person": {"gender": "Female"}}]}}]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + batched) is False
+
+
+def test_stub_catches_add_person_inside_a_STRINGIFIED_batch():
+    """The shape a hand-rolled isinstance(list) check misses. The mock records
+    raw model args and models do stringify a large `ops`, which is why the
+    shared `_ops_arg` recovers it; a private normalizer that did not would let
+    a disallowed mint through silently."""
+    stringified = [{"tool": "mcp__genealogy__tree_edit",
+                    "args": {"ops": '[{"operation": "add_person", "person": {"gender": "Female"}}]'}}]
+    assert _stub_verdict(_SOURCED, _MF_NAMED + stringified) is False

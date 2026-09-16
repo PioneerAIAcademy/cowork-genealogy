@@ -63,7 +63,7 @@ from harness.runlog import (
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
 from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
-from harness.warning_kinds import JUDGE_WARNING_KINDS
+from harness.warning_kinds import JUDGE_WARNING_KINDS, iter_run_warnings
 from harness.versioning import (
     DEFAULT_KEEP_CANDIDATES,
     ann_filename_for,
@@ -1185,8 +1185,7 @@ def main(argv: list[str] | None = None) -> int:
                 # call as a judge fault.
                 "judge_warning_kinds": [
                     w.get("kind")
-                    for r in entry.get("runs") or []
-                    for w in ((r.get("output") or {}).get("warnings") or [])
+                    for w in iter_run_warnings(entry)
                     if w.get("kind") in _JUDGE_WARNING_KINDS
                 ],
             }

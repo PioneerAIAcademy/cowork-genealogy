@@ -17,8 +17,8 @@ name: Check runlog discipline
 #   Rule 3 (blocking): The latest full-skill run log's .ann.json contains
 #   a correction entry for every (test_id, dimension_source, dimension_name)
 #   triple of the tests named in the run log's `review_sample` (3 rotation,
-#   1 targeted, 1 random, plus every test that failed or scored a 1 or 2 on
-#   any dimension — so the count varies by run). A run log with no
+#   1 targeted, 1 random, plus every test that failed, scored a 1 or 2 on
+#   any dimension, or carries a coerced_routing_negative_to_na warning — so the count varies by run). A run log with no
 #   `review_sample` — every one written before sampling shipped — still owes
 #   all of them.
 #

@@ -11,10 +11,12 @@ translation ends with both workflow hand-off offers, and a response
 carrying prose dates carries at least one ISO 8601 date.
 
 The split between the two instruments has been got wrong in both
-directions, so state the cost plainly. A failing validator suppresses
-the judge wholesale — orchestrator.py gates the judge call on
-`validators_passed` and `_compute_outcome` returns "fail" without it —
-so a check here costs the whole dimension breakdown on every run it
+directions, so state the cost plainly. A failing validator fails the test
+outright — `_compute_outcome` returns "fail" without `validators_passed` — and
+its judge scores are excluded from `aggregated_dimensions`, so a check here
+still costs the whole dimension breakdown every reviewer surface reads. Since
+#2057 the judge does grade the run, but those scores survive only in
+`runs[].judge.dimensions`, which no tool or screen displays. On every run it
 fails. `test_next_step_offers` was removed in 0300f881 on that reasoning
 and the reasoning did not hold: rubric.md's "Next-step offers" dimension
 had already been deleted in 56b9f3e *because this validator covered it*,

@@ -5,8 +5,8 @@
  * Port of plugin/skills/validate-schema/scripts/validate_project.py
  */
 
-import { readFile, readdir } from "fs/promises";
-import { join, resolve, basename } from "path";
+import { basename } from "path";
+import { getProjectStore } from "../store/project-store.js";
 import type {
   ValidationReport,
   ValidationResult,
@@ -74,6 +74,9 @@ const CLOSED_ENUMS = {
   evaluation_target_type: new Set(["question", "proof_summary", "project"]),
   evaluation_verdict: new Set([
     "looks_solid", "consider_addressing", "address_first", "refused",
+  ]),
+  locality_page_section: new Set([
+    "home", "getting_started", "online_records", "research_tips",
   ]),
 };
 
@@ -185,23 +188,21 @@ export const ID_PREFIXES: Record<string, string> = {
  */
 export async function validateProject(projectPath: string): Promise<ValidationResult> {
   const report = createReport();
-
-  const researchPath = resolve(projectPath, "research.json");
-  const treePath = resolve(projectPath, "tree.gedcomx.json");
+  const store = getProjectStore();
 
   let research: any;
   let tree: any;
 
   // Load files
   try {
-    const researchText = await readFile(researchPath, "utf-8");
+    const researchText = await store.readText(projectPath, "research.json");
     research = JSON.parse(researchText);
   } catch (error) {
     addError(report, "", `research.json not found or invalid JSON: ${error}`);
   }
 
   try {
-    const treeText = await readFile(treePath, "utf-8");
+    const treeText = await store.readText(projectPath, "tree.gedcomx.json");
     tree = JSON.parse(treeText);
   } catch (error) {
     addError(report, "", `tree.gedcomx.json not found or invalid JSON: ${error}`);
@@ -1490,8 +1491,10 @@ function validateLocalities(
   report: ValidationReport
 ): void {
   // Optional section: place/locale research knowledge written by locality-guide.
-  // Nested objects (jurisdictions / collections / pages_read items) are closed in
-  // the schema but not deep-checked here (same precedent as structured_value).
+  // pages_read items get their `section` enum checked below (#1270). The
+  // jurisdictions / collections / pages_read items are closed in the schema but
+  // their required and stray keys are not deep-checked here (same precedent as
+  // structured_value).
   const localities = Array.isArray(data.localities) ? data.localities : [];
   for (let i = 0; i < localities.length; i++) {
     const loc = localities[i];
@@ -1510,6 +1513,14 @@ function validateLocalities(
     }
     if ("created" in loc) checkIsoDate(loc, "created", lp, report);
     if ("updated" in loc && loc.updated != null) checkIsoDate(loc, "updated", lp, report);
+    const pages = Array.isArray(loc.pages_read) ? loc.pages_read : [];
+    for (let j = 0; j < pages.length; j++) {
+      const pr = pages[j];
+      if (!pr || typeof pr !== "object") continue;
+      if ("section" in pr) {
+        checkEnum(pr.section, "locality_page_section", `${lp}/pages_read[${j}]`, report);
+      }
+    }
   }
 }
 
@@ -1617,7 +1628,11 @@ function checkTreeFact(
   checkTrueFlag(fact, "primary", path, report);
   checkTreeStrings(
     fact,
-    ["date", "standard_date", "place", "standard_place", "value"],
+    // `assertion_id` rides here and not only in TREE_FACT_FIELDS: that set
+    // admits the key, and this is the only thing that says it must be a string.
+    // Without it `assertion_id: 123` passes the runtime validator and fails the
+    // JSON Schema, and tree-shape-drift.test.ts compares key NAMES only.
+    ["date", "standard_date", "place", "standard_place", "value", "assertion_id"],
     path,
     report
   );
@@ -1901,7 +1916,7 @@ async function validateSidecars(
   projectPath: string,
   report: ValidationReport
 ): Promise<void> {
-  const resultsDir = join(projectPath, "results");
+  const store = getProjectStore();
   const logById = new Map<string, any>();
   const log = Array.isArray(research.log) ? research.log : [];
 
@@ -1927,7 +1942,6 @@ async function validateSidecars(
     }
 
     referenced.add(basename(ref));
-    const scPath = join(projectPath, ref);
 
     // Guard against path traversal: results_ref must resolve inside projectPath
     // (it is user-influenced; in multi-tenant it must not read outside the dir).
@@ -1938,7 +1952,7 @@ async function validateSidecars(
 
     let sc: any;
     try {
-      const scText = await readFile(scPath, "utf-8");
+      const scText = await store.readText(projectPath, ref);
       sc = JSON.parse(scText);
     } catch (error) {
       addError(report, lp, `results_ref points at '${ref}' which does not exist or is invalid JSON`);
@@ -1976,15 +1990,12 @@ async function validateSidecars(
   }
 
   // Orphan sidecars: a results/ file that no log entry references
-  try {
-    const files = await readdir(resultsDir);
-    for (const f of files) {
-      if (f.endsWith(".json") && !referenced.has(f)) {
-        addError(report, `results/${f}`, "orphan sidecar — no log entry references it");
-      }
+  // An absent results/ directory lists as empty — not an error if no log
+  // entries reference sidecars.
+  for (const { name: f } of await store.list(projectPath, "results")) {
+    if (f.endsWith(".json") && !referenced.has(f)) {
+      addError(report, `results/${f}`, "orphan sidecar — no log entry references it");
     }
-  } catch {
-    // results/ directory doesn't exist — not an error if no log entries reference sidecars
   }
 
   // D5: every assertion carrying a record_persona_id must resolve it to a

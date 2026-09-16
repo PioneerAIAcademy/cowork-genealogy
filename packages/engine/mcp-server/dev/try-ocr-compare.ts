@@ -25,6 +25,7 @@
  * a valid FamilySearch session (~/.familysearch-mcp/tokens.json — auto-refreshed).
  */
 
+import { LOCAL } from "../src/auth/principal.js";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -729,7 +730,7 @@ async function main() {
         rawMime = img.localPath.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
         console.log(`  local raw: ${(rawBytes.length / 1e6).toFixed(2)} MB (${rawMime})`);
       } else {
-        token ??= await getValidToken();
+        token ??= await getValidToken(LOCAL);
         const fetched = await fetchScan(source, token);
         rawBytes = fetched.bytes;
         rawMime = fetched.mimeType;

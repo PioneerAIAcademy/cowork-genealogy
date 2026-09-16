@@ -53,7 +53,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Freeform tags for filtering and grouping. May be empty."
+          "description": "Freeform tags for filtering and grouping. May be empty. One reserved tag changes grading: `grade:trigger` (positive tests only) grades on activation ALONE — the test passes once the skill under test fired and its validators passed, and the judge dimensions are recorded but diagnostic-only (grading_mode `trigger`, dimensions_gate_outcome false), unlike the default `dimensions` grading where a 1 or 2 forces a partial/fail. Use it for a routing/handoff test whose delegated sub-skills are stubbed, so an outcome score would measure the stub not the skill. It REQUIRES a non-empty execution.stub_skills (the runnability gate refuses a grade:trigger test that stubs nothing — otherwise the callees run for real and the tag silences the judge over a real execution, a vacuous pass, the same failure mode grade_on_invariant guards on the negative side); a skipped/errored judge does NOT fail a trigger test; and it does NOT relax the activation requirement. See docs/specs/unit-test-spec.md."
         },
         "holdout": {
           "type": "boolean",
@@ -96,14 +96,39 @@
     },
     "input": {
       "type": "object",
-      "required": [
-        "user_message"
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "user_message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "user_message"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "delegation": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "delegation"
+          ]
+        }
       ],
       "additionalProperties": false,
       "properties": {
         "user_message": {
           "type": "string",
-          "description": "The exact user input fed to the test harness."
+          "description": "The exact user input fed to the test harness. A routed test carries this; a direct-agent test carries `delegation` instead. Exactly one of the two, never both."
+        },
+        "delegation": {
+          "type": "string",
+          "description": "Direct-agent arm: the exact delegation text the orchestrator hands the pair's agent, in place of a user turn. The harness wraps it in its own dispatcher prompt and asserts the recorded Agent spawn contains this string verbatim. Present only on a direct test; mutually exclusive with `user_message`."
         },
         "scenario": {
           "type": [

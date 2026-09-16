@@ -216,7 +216,13 @@ include: "is the confidence on pe_NNN appropriate?",
   `rationale`, not any other field). No writes are made in this mode,
   so no persistence call is needed.
 - If the review **confirms** the existing entry: state that, citing
-  the specific attributes that support the recorded confidence.
+  the specific attributes that support the recorded confidence. If the
+  existing `rationale` text is thin or generic — missing specific
+  identifying attributes such as name match details, age, location, or
+  competing-candidate reasoning — write an improved rationale **as text
+  in your response**, then stop and ask the user to authorize the update
+  before calling `research_append`. Do **not** call `research_append` to
+  make the change until the user says yes.
 - If the review **surfaces a concern** (calibration off, rationale
   thin, link should be superseded, etc.): describe the concern and
   the corrective action you'd recommend, then **stop and ask the user
@@ -283,16 +289,24 @@ core identifier conflicts. Make the assessment auditable with the
 correlation techniques above (side-by-side chart,
 agreement/disagreement list).
 
-**Score the match with `same_person`** whenever a record persona is
-reachable for the assertion **and** the candidate is a tree person that
-exists independently of this record. Do **not** score a stub you minted
-from the persona you would be scoring: comparing a record persona to a
-person created out of it is circular and can only confirm itself. Leave
-`match_score` null there and say so in the rationale. A person minted
-from an *earlier* record is a normal candidate — score it. The tool
-returns a name + date + place similarity score (0.0–1.0) that *informs*
-the correlation analysis; it never replaces it (see step 3). For each
-serious candidate tree person:
+**Call `same_person` BEFORE writing any `pe_` link** whenever a record
+persona is reachable **and** the candidate is a tree person that exists
+independently of this record. A persona is reachable when the assertion
+came from `record_read` (re-open the record; its GedcomX has a persons
+array) or from a `record_search` with a retained sidecar (`results_ref`
+present in the log entry). **A null `record_persona_id` does NOT mean
+the persona is unreachable** — that field only records whether a search
+sidecar was kept; a `record_read`-sourced assertion is always reachable
+regardless. Skipping `same_person` when a reachable persona meets an
+existing tree candidate is a Score discipline failure regardless of how
+compelling the qualitative case is; it also blocks the judge from scoring
+any dimension. Do **not** score a stub you minted from the persona you
+would be scoring: comparing a record persona to a person created out of
+it is circular. Leave `match_score` null there and say so in the
+rationale. A person minted from an *earlier* record is a normal
+candidate — score it. The tool returns a 0.0–1.0 similarity score that
+*informs* the correlation analysis; it never replaces it (see step 3).
+For each serious candidate tree person:
 
 1. **Resolve the record and its persona.** The assertion carries
    `log_entry_id`, `record_id`, and `record_persona_id`; `log_entry_id`
@@ -461,6 +475,22 @@ tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
 search-records uses for triage. Treat that as corroboration of the
 correlation assessment, not a replacement for it.
 
+**Thin-subject scores.** A subject that is a sparse local stub — few facts,
+such as a not-yet-in-FS tree person added from earlier research — can score
+uniformly near-zero against every candidate. The cause is **thin content in
+the subject document**, not an unresolvable id or a missing ARK. When the
+same-person engine has very little to match on (a name stub with no birth
+year, no place, no family context), it correctly returns a low score because
+it genuinely cannot distinguish candidates. In that situation a low score is
+uninformative, not negative evidence: the qualitative correlation analysis
+carries the decision. A strong qualitative match on name, generation, and
+family position should still link at `probable` even if the score is near
+zero; the score may improve once `materialize_facts` lands more facts on
+the stub. **Call `same_person` even for a thin-subject stub** — you call
+it to obtain the score, not to confirm in advance that it will be high. The
+low score is the information you then explain in the rationale; do not skip
+the call because you expect a near-zero result.
+
 **Never auto-merge persons.** person-evidence creates LINKS (pe_
 entries), not merges. If two GedcomX persons are determined to be
 the same individual, that's a conclusion for proof-conclusion to
@@ -481,7 +511,23 @@ than retrying blindly.
 - `assertion_id`: The `a_` ID of the assertion being linked
 - `person_id`: The GedcomX person ID in tree.gedcomx.json
 - `confidence`: `confident`, `probable`, or `speculative` — governed
-  by the match threshold policy (Step 3)
+  by the match threshold policy (Step 3). This field measures **identity
+  certainty**: how sure we are that this record's role IS the tree person.
+  It is NOT a measure of the source's informant quality. A death certificate
+  with a primary informant present at the event is a high-quality source,
+  but if it is the only source linking this record to this tree person it is
+  still `probable` on the identity scale, not `confident`. Do not cite
+  `information_quality` or `informant_proximity` as the basis for this
+  tier; cite corroboration of identity, name match, location, and the
+  absence of contradicting evidence instead.
+  **Chronological contradiction cap:** when a record's birth or christening
+  date and the tree person's birth year differ by more than a few years and
+  cannot describe the same birth event on its face (an Irish Catholic baptism
+  follows birth within days, so a 13-year gap is a presumptive contradiction,
+  not date noise), the link is `speculative` at most unless the record itself
+  explains the delay, such as a conditional or adult baptism. Note the
+  contradiction explicitly in the rationale — do not absorb it silently into
+  a higher tier.
 - `rationale`: WHY this assertion's record_role is believed to be
   this person. Must include the specific evidence that supports the
   identification: name match, age compatibility, location match,
@@ -493,15 +539,31 @@ than retrying blindly.
   any link where no score was obtained (an input to Step 3, not the
   verdict).
 
+**Relationship edges — write vs. defer:**
+- **Household record** (census, probate with co-enumerated household
+  members): after writing `pe_` links, write the parent-child and couple
+  edges via `tree_edit add_relationship` (step 7.4).
+- **Non-household relationship record** (a baptism naming a parent, a
+  marriage register, a will's parentage/relationship assertion for a
+  person already in the tree): write `pe_` links for **both** parties the
+  assertion names, then **stop — do NOT call `tree_edit add_relationship`
+  for the relationship edge**. The edge is written by proof-conclusion →
+  tree-edit once identity is concluded. The `pe_` entries are the
+  complete deliverable here.
+
 **Materialize each linked persona onto its person.** Once the `pe_` links
 land, write the persona's assertions onto the tree person as sourced facts and
 names via `materialize_facts({ personId, recordId, recordRole })` — for a
 persona matched to an **existing** person as well as a newly minted one, and on
 a **single-person record** (a death certificate, a baptism) as well as a
-household. Batch one record's personas into a single `materialize_facts({ ops:
+household. **Never skip `materialize_facts` for a matched existing person** —
+the pe_ entry records the link; `materialize_facts` is what writes the facts
+onto the tree person. Omitting it leaves the tree incomplete even when the link
+is correct. Batch one record's personas into a single `materialize_facts({ ops:
 [...] })` call. Skip a persona whose assertions are entirely `relationship`,
-`marriage`, or `age`: the tool skips those fact_types, so there is nothing to
-write. The facts you land here are what the next search reads off the tree
+`marriage`, `parentage`, `parentchild`, or `age`: the tool skips those fact_types, so there is nothing to
+write **onto that persona**. The other party such an assertion names is still
+written, per Step 5. The facts you land here are what the next search reads off the tree
 person.
 
 ### 5. Handle new persons (stub creation)
@@ -520,16 +582,46 @@ shell that a later step fills in. The tool allocates the synthetic
 proof-conclusion's job). **Never use FamilySearch IDs for a new person** —
 those belong to persons already in the tree.
 
-**A persona with nothing to materialize from.** When an unmatched person is
-named only *inside* another persona's `relationship` or `marriage` assertion —
-a bride named in the groom's marriage register — she carries no persona role
-and no name assertion of her own, so `materialize_facts` has nothing to mint
-from. Create her with `tree_edit add_person` (gender plus the name the record
-gives), then link per Step 4. This is the **only** case where `tree_edit
-add_person` is correct; a persona that has its own `record_role` always goes
-through `materialize_facts`. The person takes `gender` and
-`names: [{ given, surname, type }]` — the simplified shape, **not** GedcomX's
-`nameForms`.
+**A person the record NAMES inside another persona's assertion** (a bride in
+the groom's marriage register). Take the first that applies:
+
+1. **Already in the tree** — link to that `personId` (Step 4), do not mint. To
+   add the record's spelling of her name, carry that `personId` into 2 or 3.
+2. **That role has a persona on this record** —
+   `materialize_facts({ personId?, recordId, recordRole })`. When you are
+   MINTING her (no `personId` from 1), that persona must carry a non-negative
+   `name` assertion: the persona arm refuses to mint a person it cannot name,
+   so a persona carrying only a gender, a birth, or other facts goes to 3.
+   Enriching an existing `personId` needs no name assertion. Gender comes from
+   her `gender`/`sex` assertions; absent one it is `Unknown`. **Caveat on
+   page-level record_ids:** `{ recordId, recordRole }` selects one person per
+   role per record. For a register page whose `recordId` covers multiple entries
+   (multiple brides, multiple baptism subjects), the same `record_role` can
+   belong to more than one distinct individual; verify from the assertion's
+   `record_persona_id` that you are targeting the correct persona before
+   calling.
+3. **Otherwise** — `materialize_facts({ assertionId, relatedRole,
+   name: { given, surname }, gender?, nameType?, personId? })`. `assertionId`
+   is the `relationship`/`marriage`/`parentage`/`parentchild` assertion naming
+   her; `relatedRole` is her role, not the persona's, spelled **exactly as that
+   record spells it** in `record_role` (`father_of_bride`, not "the bride's
+   father"): the check that catches a wrong branch is an exact match, so a
+   paraphrase slips past it and mints a duplicate. Read her name from the
+   assertion's `structured_value` if it carries one, else from its `value`
+   prose, else `record_read` the record. Give `given` and `surname`
+   separately; `surname: ""` when the record gives none. Give `nameType`
+   (`"BirthName"`/`"MarriedName"`) only when the record settles it. If no
+   usable name is recoverable, do not mint: link what you can and say so.
+   Where that role has a persona the record never names, this call also writes
+   that persona's facts, but only when the assertion's
+   `structured_value.related_person_role` names that same role. `factsAdded`
+   counts what was written, not whether the role was corroborated: it is also 0
+   when the role has no persona, when its persona carries nothing writable, and
+   on a repeat call.
+
+Never `tree_edit add_person` for a person the record names. If you pick 3
+where 2 applied, the tool refuses and names the `{ recordId, recordRole }` to
+use instead.
 
 **Stub person rules:**
 - Then create the `pe_` entry (Step 4) linking the assertion to the
@@ -646,11 +738,13 @@ hands a merge set to proof-conclusion to fold. For a household record:
    WITH its facts (never a name-only stub) — pass a not-yet-existing
    `personId`, or omit it and the tool allocates one. **"Needs
    materializing" excludes a matched persona whose assertions are
-   entirely relationship-implying** (`marriage`, `relationship`) — the
+   entirely relationship-implying** (`marriage`, `relationship`,
+   `parentage`, `parentchild`) — the
    tool silently skips those fact_types (they belong on the Couple/edge,
    never a person), so a persona with nothing else to contribute has
-   nothing to materialize; skip the call for it and go straight to its
-   `pe_` link (Step 4). The call returns
+   nothing to materialize **for itself**; skip the call for it and go
+   straight to its `pe_` link (Step 4). The other party such an assertion
+   names goes through Step 5's three questions, not skipped. The call returns
    `results: [...]`, one entry per persona in the same order you listed
    them — read each persona's `personId` from there to create its `pe_`
    link (Step 4). **Batch this; do not loop one call per persona** — a
@@ -666,8 +760,8 @@ hands a merge set to proof-conclusion to fold. For a household record:
    is the bare `ParentChild` or `Couple`, **not** the `http://gedcomx.org/…`
    URI; endpoints are `parent`/`child` for ParentChild and `person1`/`person2`
    for Couple. Pass
-   **`sourceAssertionId`** (the `id` of the `relationship`-type assertion
-   this edge comes from) — do **not** hand-walk `assertion.source_id →
+   **`sourceAssertionId`** (the `id` of the `relationship`, `marriage`,
+   `parentage` or `parentchild` assertion this edge comes from) — do **not** hand-walk `assertion.source_id →
    research source → tree S-entry` and supply a literal
    `relationship.sources` yourself; the tool resolves it for you (the same
    resolver `materialize_facts` uses), including the direct/indirect quality
@@ -957,7 +1051,8 @@ Every person profile must include at minimum:
   nicknames, and patronymic forms
 - **Age or birth date** — even an approximate year narrows candidates
 - **Residences and event locations** — where the person lived,
-  married, died, or appeared in records
+  married, died, or appeared in records; weight locations closest
+  in time to the record being matched
 
 ## Additional Profile Elements
 
@@ -967,10 +1062,17 @@ match or reject candidate records:
 - Occupation
 - Marital status
 - Names and ages of relatives (spouse, children, parents, siblings)
-- Names of associates (neighbors, witnesses, business partners)
+- Names of associates (neighbors, witnesses, business partners); in
+  non-alphabetized lists (early censuses, tax lists, passenger lists),
+  page-order adjacency is an associate signal; shared appearances in
+  deeds, probate, naturalization, or military records also indicate
+  association
 - Native language
 - Race or ethnicity
 - Religion
+- Military unit
+- Geographic proximity including burial location (use `place_distance`
+  when coordinates are available)
 
 ## Why Profiles Matter
 

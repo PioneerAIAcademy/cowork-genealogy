@@ -794,7 +794,8 @@ def test_birth_year_rule_tolerates_a_second_year_in_the_label():
     """A label carrying an enumeration year besides the birth year must not
     fire when the birth year IS captured on a sibling. `search` took the FIRST
     year, so "1870 census: born in Ohio" failed on 1870 even though ~1845 sat
-    correctly on the sibling — and a validator failure suppresses the judge,
+    correctly on the sibling — and a validator failure fails the test outright
+    and drops its scores from aggregated_dimensions,
     so that false positive cost the whole test's grade."""
     result = _run_birth_year_rule(
         [
@@ -1006,7 +1007,8 @@ def test_bare_name_rule_flags_a_relational_note_even_under_the_right_role():
         # Relation words that are really surnames or titles, OUTSIDE brackets.
         # All three fired under the first version of this rule (senior review,
         # 2026-08-16). A false positive costs the test's whole grade, because a
-        # failing validator suppresses the judge.
+        # failing validator fails the test outright and drops its scores from
+        # aggregated_dimensions.
         "Joseph Parent of Quebec",   # Parent is a common surname
         "Julia Child of Boston",     # Child is a surname
         "Mary, Mother of Sorrows",   # a devotional name
@@ -1182,7 +1184,8 @@ def test_rel_agreement_accepts_category_equivalents(rel_type, value):
 def test_rel_agreement_skips_what_it_cannot_compare(rel_type, value):
     """Fails OPEN. An unrecognised relationship_type or a value naming no
     relation is not evidence of disagreement, and guessing would cost the whole
-    test's grade — a failing validator suppresses the judge."""
+    test's grade — a failing validator fails the test outright and drops its
+    scores from aggregated_dimensions."""
     result = _run_rel_agreement(_rel(rel_type, value))
     assert result.passed is True, result.error
 
@@ -2428,10 +2431,11 @@ def test_judge_observations_carry_text_not_validator_names():
             error="skipped: not applicable", reporting_only=True,
         ),
     ]
-    obs = split_observations(results)
-    assert obs == ["the response names a volume"]
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["the response names a volume"]
+    assert state_obs == []
     # The function name must never leak into observation text
-    assert not any("report_" in o for o in obs)
+    assert not any("report_" in o for o in response_obs)
 
 
 def _broken_validator_results(tmp_path, body: str):
@@ -2474,7 +2478,7 @@ def test_report_with_bad_signature_gates_and_is_not_an_observation(tmp_path):
     # It gates, it is recorded, and the judge is told nothing about it.
     assert compute_validators_passed(results, intentionally_invalid=False) is False
     assert "report_typo" in {d["name"] for d in as_dicts(results)}
-    assert split_observations(results) == []
+    assert split_observations(results) == ([], [])
 
 
 def test_report_that_crashes_gates_and_is_not_an_observation(tmp_path):
@@ -2493,7 +2497,7 @@ def test_report_that_crashes_gates_and_is_not_an_observation(tmp_path):
     assert broken[0].reporting_only is False
     assert "TypeError" in (broken[0].error or "")
     assert compute_validators_passed(results, intentionally_invalid=False) is False
-    assert split_observations(results) == []
+    assert split_observations(results) == ([], [])
 
 
 def test_a_genuine_report_finding_still_reports(tmp_path):
@@ -2510,8 +2514,96 @@ def test_a_genuine_report_finding_still_reports(tmp_path):
     fired = [r for r in results if r.name == "report_real_finding"]
     assert fired and fired[0].reporting_only is True
     assert compute_validators_passed(results, intentionally_invalid=False) is True
-    assert split_observations(results) == ["the response names a volume"]
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["the response names a volume"]
+    assert state_obs == []
     assert "report_real_finding" not in {d["name"] for d in as_dicts(results)}
+
+
+def test_state_derived_observation_lands_in_state_list(tmp_path):
+    """A report_* taking only before_state/after_state/test (no response-derived
+    args) is state-derived and its observation lands in the state list."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_state_check(before_state, after_state, test):\n"
+        "    raise AssertionError('field X is missing from research.json')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello",
+    )
+    response_obs, state_obs = split_observations(results)
+    assert state_obs == ["field X is missing from research.json"]
+    assert response_obs == []
+
+
+def test_response_derived_observation_lands_in_response_list(tmp_path):
+    """A report_* taking text_response is response-derived and its observation
+    lands in the response list, not the state list."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_text_check(before_state, text_response, test):\n"
+        "    raise AssertionError('response mentions a volume')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello",
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["response mentions a volume"]
+    assert state_obs == []
+
+
+def test_non_state_non_response_arg_lands_in_response_list(tmp_path):
+    """A report_* taking before_state + num_turns is NOT state-derived: num_turns
+    is outside _STATE_ARGS.  This pins the positive predicate — the old negative
+    form (\"no response args\") would misclassify it as state-derived."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_run_shape(before_state, num_turns):\n"
+        "    raise AssertionError('run used too many turns')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello", num_turns=5,
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["run used too many turns"]
+    assert state_obs == []
+
+
+def test_neutral_only_signature_lands_in_response_list(tmp_path):
+    """A report_* taking only (test) — a tolerated neutral with no before_state
+    or after_state — is NOT state-derived.  This pins the _READS_STATE clause:
+    without it, the subset test alone would misroute this into the state slot."""
+    (tmp_path / "test_universal.py").write_text(
+        "def test_ok():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "test_example.py").write_text(
+        "def report_no_state_read(test):\n"
+        "    raise AssertionError('the test JSON declares no scenario')\n",
+        encoding="utf-8",
+    )
+    results = run_validators(
+        skill="example", validators_dir=tmp_path,
+        before_state={}, after_state={}, tool_calls=[],
+        text_response="hello", test={"id": "ut_example_001"},
+    )
+    response_obs, state_obs = split_observations(results)
+    assert response_obs == ["the test JSON declares no scenario"]
+    assert state_obs == []
 
 
 def test_standalone_pytest_collects_report_validators():

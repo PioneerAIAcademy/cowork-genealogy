@@ -119,6 +119,12 @@ interface OutcomeExplanation {
 function deriveOutcomeExplanation(
   entry: TestEntry,
   skillUnderTest: string,
+  /**
+   * True for a direct-agent test (#2246), whose `skills_invoked` is empty by
+   * construction. Passed in rather than read from a module-scope value so the
+   * routing-miss branch cannot silently go back to guessing.
+   */
+  isDirect = false,
 ): OutcomeExplanation | null {
   if (entry.outcome === 'xfail') {
     return {
@@ -186,7 +192,31 @@ function deriveOutcomeExplanation(
     };
   }
   if (entry.test_type === 'positive') {
-    if (activated === false || !skillsInvoked.includes(skillUnderTest)) {
+    // A direct-agent test (#2246) invokes no skill at all — the main thread
+    // spawns the pair's agent — so `skills_invoked` is empty BY CONSTRUCTION.
+    // Without this guard every red twin is explained to the annotator as a
+    // routing miss it cannot be, which is a wrong diagnosis handed to the
+    // person whose grading the arm exists to inform.
+    if (isDirect) {
+      // The direct arm's counterpart. `activated` derives from the recorded
+      // spawn rather than from `skills_invoked`, so false here means the main
+      // thread never spawned this pair's agent. Skipping the branch entirely
+      // (the first version of this guard) returned null and showed the
+      // annotator a red test with nothing said about why — the one reader this
+      // panel exists for.
+      if (activated === false) {
+        return {
+          color: 'orange',
+          title: `Spawn miss — the "${skillUnderTest}" agent never ran`,
+          body:
+            `This is a direct-agent test: a bare main thread is asked to relay the ` +
+            `delegation into Agent{subagent_type: "${skillUnderTest}"}. No such spawn was ` +
+            `recorded, so the run graded whatever the main thread produced on its own. ` +
+            `Read output.builtin_tool_calls for the Agent/Task calls it did make — a spawn ` +
+            `carrying no subagent_type is a general-purpose subagent and does not count.`,
+        };
+      }
+    } else if (activated === false || !skillsInvoked.includes(skillUnderTest)) {
       const others = skillsInvoked.filter((s) => s !== skillUnderTest);
       const routedTo = others.length
         ? `Claude routed to ${others.map((s) => `"${s}"`).join(', ')} instead.`
@@ -320,6 +350,7 @@ const DimensionRow = memo(function DimensionRow({
   judgeRationale,
   correction,
   owesComments,
+  dimensionsGateOutcome,
   onUpdate,
   onFocus,
   onBlur,
@@ -329,6 +360,11 @@ const DimensionRow = memo(function DimensionRow({
   dim: RunLogDimension;
   judgeRationale: string;
   correction: AnnotationCorrection | undefined;
+  /** From the run log's `dimensions_gate_outcome`. `false` means routing or a
+   *  tag-gated validator decided this test, so an N/A here asserts nothing
+   *  about pass/fail and the picker must offer it even on a recorded 1.
+   *  `undefined` on a run log written before the field shipped. */
+  dimensionsGateOutcome: boolean | undefined;
   /** This test is in a TRUSTED review sample, so every reviewed dimension of it
    *  needs a comment unless it is a confirmed pass or N/A. False on a
    *  pre-sampling run log, where CI asks for no comments at all. */
@@ -374,7 +410,12 @@ const DimensionRow = memo(function DimensionRow({
     !draft.trim() &&
     !confirmedPass &&
     (owesComments || disagrees);
-  const allowNa = dimensionAllowsNa(dim.source, dim.name, dim.score);
+  const allowNa = dimensionAllowsNa(
+    dim.source,
+    dim.name,
+    dim.score,
+    dimensionsGateOutcome,
+  );
 
   const setScore = (s: ScoreOrNull) => {
     onUpdate({
@@ -427,8 +468,8 @@ const DimensionRow = memo(function DimensionRow({
 
   return (
     <Card withBorder padding="xs">
-      <Group justify="space-between" align="flex-start" wrap="nowrap">
-        <Box style={{ flex: 1 }}>
+      <Group justify="space-between" align="flex-start" wrap="wrap">
+        <Box style={{ flex: '1 1 240px', minWidth: 0 }}>
           <Group gap={6} mb={2}>
             <Badge color="gray" variant="outline" size="xs">{dim.source}</Badge>
             <Text fw={500}>{dim.name}</Text>
@@ -438,11 +479,11 @@ const DimensionRow = memo(function DimensionRow({
               <Badge color="orange" variant="outline" size="xs">unreviewed</Badge>
             )}
           </Group>
-          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap' }}>
+          <Text size="xs" c="dimmed" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             {judgeRationale || '(no rationale)'}
           </Text>
         </Box>
-        <Stack gap={4} align="flex-end">
+        <Stack gap={4} align="flex-end" style={{ flex: '0 0 auto' }}>
           <Group gap={4}>
             <Text size="xs" c="dimmed">LLM:</Text>
             <Tooltip label={SCORE_SCALE_HINT} openDelay={600} withArrow>
@@ -582,6 +623,7 @@ function ToolArgsTable({
 function GradesPane({
   entry,
   skillUnderTest,
+  isDirect,
   annotation,
   sampled,
   onSetCorrection,
@@ -593,6 +635,8 @@ function GradesPane({
 }: {
   entry: TestEntry;
   skillUnderTest: string;
+  /** Direct-agent test (#2246): `skills_invoked` is empty by construction. */
+  isDirect: boolean;
   annotation: AnnotationFile | null;
   /** Tests the annotation must cover, or null for all of them. */
   sampled: Set<string> | null;
@@ -634,7 +678,11 @@ function GradesPane({
     if (isConfirmedNonFailing(c.llm_score, c.corrected_score)) return false;
     return owesComments || c.corrected_score !== c.llm_score;
   });
-  const explanation = deriveOutcomeExplanation(entry, skillUnderTest);
+  const explanation = deriveOutcomeExplanation(
+    entry,
+    skillUnderTest,
+    isDirect,
+  );
 
   return (
     <Stack gap="sm" p="md" h="100%">
@@ -711,6 +759,23 @@ function GradesPane({
         </Group>
       ) : null}
 
+      {entry.dimensions_gate_outcome === false ? (
+        <Alert color="blue" variant="light" title="Dimensions are diagnostic on this test">
+          <Text size="xs">
+            {entry.grading_mode === 'invariant'
+              ? 'grading_mode: invariant — a tag-gated validator decided this outcome.'
+              : entry.grading_mode === 'routing'
+                ? 'grading_mode: routing — which skill fired decided this outcome.'
+                : 'Something other than these scores decided this outcome.'}{' '}
+            The scores below did not change it. A `1` here is a diagnostic
+            signal, not a failure, and it may be a dimension the harness
+            truncated at the hand-off: N/A is offered on every row for that
+            reason. Read the judge&apos;s rationale before agreeing with a
+            score.
+          </Text>
+        </Alert>
+      ) : null}
+
       <Stack gap="xs" style={{ flex: 1 }}>
         {dims.map((d) => {
           const key = `${entry.test_id}|${d.source}|${d.name}`;
@@ -723,6 +788,7 @@ function GradesPane({
               dim={d}
               judgeRationale={d.rationale}
               correction={correctionsByKey.get(key)}
+              dimensionsGateOutcome={entry.dimensions_gate_outcome}
               onUpdate={onSetCorrection}
               onFocus={onDimensionFocus}
               onBlur={onDimensionBlur}
@@ -816,8 +882,12 @@ const TracePane = memo(function TracePane({
   const attempts = run.skill_attempts ?? 1;
   const judgeSec = (run.judge?.duration_ms ?? 0) / 1000;
 
+  // A direct-agent test has no user turn; the delegation is what the run was
+  // given, so it is what belongs in the trace panel.
+  const testInput = testJson?.input as Record<string, unknown> | undefined;
   const userMessage =
-    (testJson?.input as Record<string, unknown> | undefined)?.user_message as string | undefined;
+    (testInput?.user_message as string | undefined) ??
+    (testInput?.delegation as string | undefined);
   const scenarioNotes =
     (testJson?.input as Record<string, unknown> | undefined)?.scenario_notes as string | undefined;
   const judgeContext = (testJson?.judge_context as string[] | undefined) ?? [];
@@ -1557,6 +1627,15 @@ export default function RunLogDetailPage({
             <GradesPane
               entry={selectedEntry}
               skillUnderTest={log.skill}
+              isDirect={Boolean(
+                (
+                  findTestJson(
+                    query.data.snapshotFiles ?? {},
+                    log.skill,
+                    selectedEntry.test_id,
+                  )?.input as Record<string, unknown> | undefined
+                )?.delegation,
+              )}
               annotation={localAnn}
               sampled={sampled}
               onSetCorrection={setCorrection}

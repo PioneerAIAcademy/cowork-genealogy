@@ -1,4 +1,4 @@
-"""Universal validators that run on every test, regardless of skill.
+r"""Universal validators that run on every test, regardless of skill.
 
 These check structural correctness of the output files against
 the research schema spec (docs/specs/research-schema-spec.md).
@@ -25,8 +25,9 @@ before_state/after_state.**
       tools that the PreToolUse hook denied, with shape
       {"tool": "image_read", "args": dict}. Empty = healthy. These calls
       were blocked, so they never appear in `tool_calls`.
-  - `text_response` (str): every assistant text block concatenated, not
-      the final reply alone — the same string the run log stores as
+  - `text_response` (str): every assistant turn's text, not the final
+      reply alone — turns joined with "\n\n", blocks within one turn with
+      no separator — the same string the run log stores as
       `output.text_response`. Empty when the run produced no assistant
       text. For a LITERAL property of the text (a phrase that must never
       appear, an identifier that must be named); not for re-grading prose
@@ -38,6 +39,7 @@ treated as "not applicable to this state" — recorded as passed with a
 skip marker, not as a failure.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -118,6 +120,133 @@ def test_tree_gedcomx_json_validates_schema(after_state):
     assert not errors, (
         "tree.gedcomx.json failed schema validation:\n  - "
         + "\n  - ".join(errors)
+    )
+
+
+def test_tree_facts_agree_with_linked_assertions(after_state):
+    """A materialized fact must not disagree with the assertion it came from.
+
+    Issue #2472: a place corrected on a `research.json` assertion did not reach
+    the tree fact already materialised from the earlier reading. The stale value
+    stayed on the fact and nothing reported the divergence -- in the run that
+    produced the card, person I1's Immigration fact kept "Wellburn, Thames
+    Centre, Middlesex, Ontario, Canada" and a `standard_place` of "Thames Centre
+    Township, Middlesex, Ontario, Canada" while the assertion already held the
+    corrected "Odessa, Francis No. 127, Saskatchewan, Canada". A wrong reading reached a place-AUTHORITY value, not only a
+    display string, so anything joining on `standard_place` put her in the wrong
+    province.
+
+    That was uncheckable until the fact carried a backlink. With `assertion_id`
+    on it, "this fact disagrees with its own source assertion" is a computable
+    property, and this is it.
+
+    Compared only where BOTH sides hold a non-empty string, only on a fact
+    citing a SINGLE source, and only while the fact's type still matches its
+    assertion's. Five false-positive directions, all legitimate:
+
+      - assertion side absent: the corroboration branch can fill an attribute on
+        a backlinked fact from a DIFFERENT assertion, so "fact has it, linked
+        assertion does not" is not drift.
+      - fact side absent: an event fact never carries the assertion's `value`
+        (#711, `factCandidate`), so comparing it would fail every event fact --
+        and skipping means this needs no copy of `EVENT_TREE_TYPES` in Python.
+      - `assertion_id` naming nothing: there is no assertion to compare against,
+        so it is skipped rather than failed. Referential integrity for this field
+        is not this check's job.
+      - MORE THAN ONE SOURCE REF: the corroboration branch can fill an attribute
+        from another assertion, and `research_append`'s rewrite then refuses to
+        overwrite it (that would destroy the other source's evidence). The fact
+        legitimately holds a value its own backlink never asserted, and there is
+        no tool that can reconcile the two without destroying one of them, so
+        firing here would be red forever on correct work. That is the population
+        `tree-materialization-spec.md` section 4.4 already bounds and accepts:
+        175 of 7225 person facts in the committed corpus carry more than one
+        ref. A single-ref fact holds exactly what its own assertion said, which
+        is where the reported defect lives (the run that produced the card has
+        one ref on the diverging fact).
+
+    Facts corrected by hand (`tree_correct`) and facts merged from differently
+    backlinked members carry no `assertion_id` by then -- both writers drop it --
+    so neither reads as drift here.
+
+    Scans relationship facts as well as person facts. Nothing can stamp a
+    relationship fact today, so that arm cannot fire; a validator with a blind
+    spot is worse than one that is silent where nothing happens, and a backlink
+    appearing there is exactly the thing worth being told about.
+    """
+    research = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("both research.json and tree.gedcomx.json required")
+    # A malformed document is the schema validators' business, not this one's.
+    # Without the isinstance test a list-shaped research.json raised
+    # AttributeError out of `.get` instead of producing a verdict.
+    if not isinstance(research, dict) or not isinstance(tree, dict):
+        pytest.skip("malformed project documents — the schema validators report this")
+
+    by_id = {
+        a.get("id"): a
+        for a in (research.get("assertions") or [])
+        if isinstance(a, dict)
+    }
+
+    def text(value):
+        """The comparable form of a field, or None when there is nothing to compare."""
+        return value.strip() if isinstance(value, str) and value.strip() else None
+
+    def facts_of(container):
+        for item in container or []:
+            if not isinstance(item, dict):
+                continue
+            for fact in item.get("facts") or []:
+                if isinstance(fact, dict):
+                    yield item.get("id"), fact
+
+    mismatches = []
+    for owner_id, fact in [
+        *facts_of(tree.get("persons")),
+        *facts_of(tree.get("relationships")),
+    ]:
+        linked_id = fact.get("assertion_id")
+        # `isinstance`, not truthiness alone: a non-string backlink (a list, say)
+        # is unhashable and would raise TypeError out of the dict lookup below
+        # instead of producing a verdict. The schema check in this same file
+        # already rejects that shape; this one must not crash on the way.
+        if not isinstance(linked_id, str) or not linked_id:
+            continue
+        assertion = by_id.get(linked_id)
+        if assertion is None:
+            continue
+        refs = [r for r in (fact.get("sources") or []) if isinstance(r, dict)]
+        if len(refs) > 1:
+            continue
+        # A fact whose type no longer matches its assertion's is not comparable:
+        # the rewrite refuses it precisely because the two no longer describe the
+        # same thing, so firing here would report the refusal as drift. PascalCase
+        # the assertion's snake_case fact_type the way `toTreeFactType` does.
+        fact_type = fact.get("type")
+        want_type = "".join(
+            w[:1].upper() + w[1:]
+            for w in re.split(r"[_\s]+", str(assertion.get("fact_type") or ""))
+            if w
+        )
+        if want_type and isinstance(fact_type, str) and fact_type != want_type:
+            continue
+        for field in ("place", "standard_place", "date", "value"):
+            on_fact = text(fact.get(field))
+            on_assertion = text(assertion.get(field))
+            if on_fact is None or on_assertion is None:
+                continue
+            if on_fact != on_assertion:
+                mismatches.append(
+                    f"{owner_id}/{fact.get('id')} {field}: fact has "
+                    f"'{on_fact}' but assertion {linked_id} has '{on_assertion}'"
+                )
+
+    assert not mismatches, (
+        "tree fact(s) disagree with the assertion they were materialized from — "
+        "a correction to the assertion never reached the fact (#2472):\n  - "
+        + "\n  - ".join(mismatches)
     )
 
 
@@ -575,11 +704,35 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     writes to the skill under test is a false positive. A negative
     test where the skill *does* wrongly activate already fails on the
     routing check.
+
+    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09, re-affirmed by the
+    lead 2026-09-14; also the policy for issue #2023's ownership question —
+    decided here, not re-decided there). When execution.stub_skills is non-empty
+    the owning callee is denied, so the section can only ever be written by the
+    caller: the check would measure the stub/caller rather than the skill under
+    test. Same rationale as the negative-test skip, and the stub's own denial
+    text tells the caller both to carry on ("finish your own remaining steps —
+    logging, status, summary") AND not to substitute for the callee ("do not
+    attempt to do its work yourself"): the caller writing `log`/`project`/status
+    is obeying the first clause, not violating ownership.
+
+    The skip is deliberately keyed on **any** stub being present (whole-run),
+    not evaluated per-section. A per-section form gives opposite answers
+    depending on whether it keys on the section's declared owner or on any
+    permitted writer, and on `research`'s `_005` that fork re-breaks the test
+    over `project.status = "completed"` — a write `research`'s own SKILL.md
+    orders and whose ownership contradiction is issue #1335's to resolve, not
+    this check's. Keying on the whole run avoids adjudicating that here.
     """
     if test.get("type") == "negative":
         pytest.skip(
             "ownership is not checked on negative tests — writes belong "
             "to the routed-to skill, not the skill under test"
+        )
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — a denied callee cannot write, so ownership measures "
+            "the stub/caller, not the skill under test"
         )
 
     before = before_state.get("research_json")
@@ -623,7 +776,188 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
         )
 
 
-def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test):
+#: The tree-fact attributes `research_append`'s assertion-`update` rewrite may
+#: change. Mirrors ASSERTION_FACT_ATTRS in materialize-facts.ts; kept as a
+#: literal because this plane is Python and cannot import it. A fifth attribute
+#: added there and not here silently stops being authorized, which fails CLOSED
+#: (the write is refused) rather than open.
+_REWRITABLE_FACT_ATTRS = ("place", "standard_place", "date", "value")
+
+
+def _corrected_assertion_ids(tool_calls) -> set[str]:
+    """Assertion ids this run corrected through the two rewriting tools.
+
+    Only an assertion an `update` op actually named can have caused a rewrite,
+    so this is what the authorization is keyed on. Without it the path would
+    authorize any four-attribute edit to any already-backlinked fact.
+    """
+    ids: set[str] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict):
+            continue
+        if _bare_tool_name(call.get("tool", "")) not in {"research_append", "extraction_append"}:
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            # `research_append` runs `coerceJsonArg` on this argument precisely
+            # because the model routinely emits the array as a JSON string, so
+            # the write lands. The run log records what the model emitted, so
+            # without this the authorization false-fails a legitimate write.
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        for op in candidates:
+            if not isinstance(op, dict):
+                continue
+            if op.get("section") != "assertions" or op.get("op") != "update":
+                continue
+            # Only an op that touched a MIRRORED field can have caused a rewrite.
+            fields = op.get("fields")
+            if not isinstance(fields, dict) or not (set(fields) & set(_REWRITABLE_FACT_ATTRS)):
+                continue
+            entry_id = op.get("entryId")
+            if isinstance(entry_id, str) and entry_id:
+                ids.add(entry_id)
+    return ids
+
+
+def _fact_identity(fact: dict) -> tuple:
+    """What must survive the rewrite untouched, for one fact.
+
+    A POSITIVE list rather than "everything else must be byte-equal", because
+    `research_append` runs `sanitizeTree` on every call and persists the healed
+    document whenever it writes the tree. A legacy `quality: "3"` coerced to `3`,
+    or an unknown key pruned, rides along with a perfectly legitimate rewrite and
+    must not red the run for something the TOOL did. Source REFS are compared,
+    not whole ref objects, for exactly that reason.
+    """
+    refs = tuple(
+        sorted(
+            r.get("ref")
+            for r in (fact.get("sources") or [])
+            if isinstance(r, dict) and isinstance(r.get("ref"), str)
+        )
+    )
+    # `primary` normalized: the sanitizer deletes a stored `primary: false`
+    # (`pruneFlag`), so absent and False are the same claim and only `true` is a
+    # real flag. `id` is deliberately absent from this tuple for the same reason
+    # -- the sanitizer MINTS a missing one -- and the per-person zip already
+    # pins fact order and count, so an id cannot be swapped without the rest of
+    # the fact moving with it.
+    return (fact.get("type"), fact.get("primary") is True,
+            fact.get("standard_date"), fact.get("assertion_id"), refs)
+
+
+def _person_identity(person: dict) -> tuple:
+    """The same, for one person: nothing but its facts' mirrored attrs may move."""
+    names = tuple(
+        # Everything but `id`, which `sanitizeTree` mints when a legacy name
+        # lacks one. Comparing four keys let a name's prefix, suffix and source
+        # refs change and ride the authorization through.
+        tuple(sorted((k, repr(v)) for k, v in n.items() if k not in _SANITIZER_MINTED_KEYS))
+        for n in (person.get("names") or [])
+        if isinstance(n, dict)
+    )
+    return (person.get("id"), person.get("gender"), person.get("ark"),
+            person.get("living"), names)
+
+
+#: Keys `sanitizeTree` may add or remove on its own, so a difference in one is a
+#: heal rather than a write. Everything else on a name is compared.
+_SANITIZER_MINTED_KEYS = frozenset({"id"})
+
+
+def _explained_by_fact_rewrite(before_section, after_section, research_after, corrected) -> bool:
+    """True when the whole persons delta is the assertion-backlink fact rewrite.
+
+    `research_append` / `extraction_append` reach `tree.gedcomx.json`'s `persons`
+    only by rewriting a fact ALREADY carrying a corrected assertion's
+    `assertion_id`. They are therefore absent from that row's `callers` and
+    authorized by tool identity instead, exactly as `merge_tree_persons` is on
+    the research side. Anything the rewrite does not explain still fails.
+
+    Three things are checked, and the last two are what stop the path becoming a
+    blanket grant:
+
+      - no person and no fact added or removed, and each person's identity
+        (`_person_identity`) and each fact's identity (`_fact_identity`)
+        unchanged — which covers the two the row's `failure` line is about, an
+        added unsourced person and a set `primary`, plus names, refs and `type`;
+      - every fact whose mirrored attributes changed kept the same
+        `assertion_id`, and that id is one this run's ops actually corrected;
+      - the changed attributes now equal that assertion's post-call values.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+    if not corrected:
+        return False
+
+    assertions = {}
+    if isinstance(research_after, dict):
+        assertions = {
+            a.get("id"): a
+            for a in (research_after.get("assertions") or [])
+            if isinstance(a, dict)
+        }
+
+    for b_person, a_person in zip(before_section, after_section):
+        if not isinstance(b_person, dict) or not isinstance(a_person, dict):
+            return False
+        if _person_identity(b_person) != _person_identity(a_person):
+            return False
+
+        b_facts = b_person.get("facts") or []
+        a_facts = a_person.get("facts") or []
+        if not isinstance(b_facts, list) or not isinstance(a_facts, list):
+            return False
+        if len(b_facts) != len(a_facts):
+            return False
+
+        for b_fact, a_fact in zip(b_facts, a_facts):
+            if not isinstance(b_fact, dict) or not isinstance(a_fact, dict):
+                return False
+            if _fact_identity(b_fact) != _fact_identity(a_fact):
+                return False
+            changed = [
+                k for k in _REWRITABLE_FACT_ATTRS if b_fact.get(k) != a_fact.get(k)
+            ]
+            if not changed:
+                continue
+            link = b_fact.get("assertion_id")
+            if not isinstance(link, str) or not link or link not in corrected:
+                return False
+            source = assertions.get(link)
+            if not isinstance(source, dict):
+                return False
+            for key in changed:
+                got = a_fact.get(key)
+                want = source.get(key)
+                if got is None:
+                    # Absent on the fact is how the rewrite expresses "the
+                    # assertion withdrew this", so it is legitimate only when the
+                    # assertion withdrew it. The one exception is
+                    # `standard_place`, which the country guard CLEARS rather
+                    # than writing when the resulting pair contradicts. Without
+                    # this narrowing all four attributes could be deleted from a
+                    # backlinked fact while the assertion still asserted them.
+                    if key == "standard_place":
+                        continue
+                    if want is None or (isinstance(want, str) and want.strip() == ""):
+                        continue
+                    return False
+                if got != want:
+                    return False
+    return True
+
+
+def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test, tool_calls=None):
     """Universal: skill may only modify tree.gedcomx.json sections it owns.
 
     Parallel to test_ownership_table, but for tree.gedcomx.json. Driven by the
@@ -634,11 +968,26 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     Skipped on negative tests for the same reason as test_ownership_table
     — a routed-to skill's legitimate writes would otherwise be
     misattributed to the skill under test.
+
+    Skipped on stubbed runs for the same reason again, and on the same ruling
+    (#2156, 2026-09-09, re-affirmed by the lead 2026-09-14), which that sibling
+    records as policy "decided here, not re-decided there". It reached the
+    research half first and this half second, only because the two landed in
+    different PRs. The gap it leaves is not hypothetical: `research` carries 10
+    stubbed positive tests and owns no tree section, while its stub list includes
+    `person-evidence` and `proof-conclusion`, which own `persons` and
+    `relationships` — so the caller's write is attributed to `research` and the
+    check measures the stub.
     """
     if test.get("type") == "negative":
         pytest.skip(
             "ownership is not checked on negative tests — writes belong "
             "to the routed-to skill, not the skill under test"
+        )
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — a denied callee cannot write, so ownership measures "
+            "the stub/caller, not the skill under test"
         )
 
     before = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
@@ -651,8 +1000,31 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
         pytest.skip("skill_frontmatter has no `name` field")
 
     owners = writer_sets(TREE_GEDCOMX_JSON)
+    writer_tools = writer_tool_sets(TREE_GEDCOMX_JSON)
+    called = _tools_called(tool_calls)
     modified = _modified_sections(before, after, sorted(owners))
-    unauthorized = [s for s in modified if skill_name not in owners[s]]
+    unauthorized = []
+    for section in modified:
+        if skill_name in owners[section]:
+            continue
+        # Authorized by tool identity: `research_append`/`extraction_append`
+        # reach `persons` only through the assertion-backlink fact rewrite, and
+        # only for the delta that rewrite can produce. A skill that is not a
+        # declared caller gets no broader access from this -- anything the
+        # rewrite does not explain still fails.
+        rewriters = {"research_append", "extraction_append"} & (writer_tools.get(section) or set())
+        if (
+            section == "persons"
+            and rewriters & called
+            and _explained_by_fact_rewrite(
+                before.get(section),
+                after.get(section),
+                after_state.get("research_json"),
+                _corrected_assertion_ids(tool_calls),
+            )
+        ):
+            continue
+        unauthorized.append(section)
 
     if unauthorized:
         owners_summary = {s: sorted(owners[s]) for s in unauthorized}
@@ -776,9 +1148,22 @@ def test_tool_allowlist(tool_calls, skill_frontmatter, test, attempted_mcp_calls
 # any skill that holds the tool, not just citation.
 
 def test_write_then_validate(before_state, after_state, tool_calls, skill_frontmatter, test):
-    """If research.json was modified, validate_research_schema must have been called."""
+    """If research.json was modified, validate_research_schema must have been called.
+
+    Skipped on stubbed runs (issue #2156 ruling, 2026-09-09). When
+    execution.stub_skills is non-empty the routed-to callee is denied, so any
+    research.json write was performed by the stub/caller, not the skill under
+    test — the check would measure the stub. This matters here specifically
+    because `research`'s own SKILL.md forbids defensive validate passes, so
+    demanding one on its stubbed runs grades against the skill's own doctrine.
+    """
     if test.get("type") == "negative":
         pytest.skip("negative test — tool calls belong to the routed-to skill")
+    if (test.get("execution") or {}).get("stub_skills"):
+        pytest.skip(
+            "stubbed run — the write measures the stub/caller, not the skill "
+            "under test"
+        )
     allowed = (skill_frontmatter or {}).get("allowed-tools", []) or []
     if "validate_research_schema" not in allowed:
         pytest.skip("skill does not declare validate_research_schema")
@@ -821,9 +1206,8 @@ def test_project_file_changes_route_through_writer_tools(
     """Universal: a modified research.json / tree.gedcomx.json requires at
     least one writer-tool call in the session.
 
-    The writer tools validate-before-persist, allocate ids, and keep the
-    `.bak` safety copy; a direct file write (Write/Edit/python) bypasses
-    all three. Evidence this happens: tree-edit ut_012 (2026-07-12) made
+    The writer tools validate-before-persist and allocate ids; a direct file
+    write (Write/Edit/python) bypasses both. Evidence this happens: tree-edit ut_012 (2026-07-12) made
     ZERO tool calls yet research.json grew a person_evidence entry with a
     fabricated `created` date — and every validator passed, because
     nothing checked the write PATH, only the resulting state.
@@ -866,7 +1250,7 @@ def test_project_file_changes_route_through_writer_tools(
     ]
     assert writer_calls, (
         f"project file {' and '.join(changed)} modified with no writer-tool "
-        f"call — direct file writes bypass validation/id-allocation/.bak; "
+        f"call — direct file writes bypass validation/id-allocation; "
         f"route through the writer tools "
         f"({', '.join(sorted(PROJECT_WRITER_TOOLS))})"
     )
@@ -952,6 +1336,111 @@ def test_activated_run_produces_response(
         f"activated run produced no meaningful output: num_turns=0, "
         f"output_tokens=0, text_response length={len(text_response or '')} "
         f"(< 200 chars) — the run did not happen"
+    )
+
+
+# --- Direct-agent arm (issue #2246) --------------------------------------
+#
+# A direct test reaches its agent by an `Agent` spawn from a bare main thread
+# instead of through its routing skill, so `skills_invoked` is empty by
+# construction and every check below reads the recorded spawn instead. All three
+# gate on `test["delegation"]`, which the orchestrator threads in from
+# `input.delegation`; a routed test has none and skips.
+
+
+def _spawn_records(builtin_tool_calls, agent=None):
+    from harness.skill_runner import spawn_prompts, spawned_agents
+
+    # `agent` anchors the prompts to the spawn that received them. The two
+    # lists are otherwise separate walks, and an unanchored verbatim check
+    # passes when one spawn carried the delegation and a DIFFERENT one was
+    # the pair's agent.
+    return spawned_agents(builtin_tool_calls), spawn_prompts(
+        builtin_tool_calls, agent
+    )
+
+
+def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
+    """A direct test must actually spawn the pair's agent.
+
+    Without this the arm is vacuous: a main thread that answered from its own
+    context, spawned the wrong agent, or spawned nothing would leave the run
+    graded on whatever text it happened to produce.
+    """
+    if not test.get("delegation"):
+        pytest.skip("not a direct-agent test")
+    expected = test.get("skill")
+    agents, _ = _spawn_records(builtin_tool_calls)
+    assert expected in agents, (
+        f"direct test did not spawn its agent: expected subagent_type "
+        f"{expected!r}, recorded spawns = {agents or '(none)'}. A spawn with no "
+        f"`subagent_type` is a general-purpose subagent and does not count."
+    )
+
+
+def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
+    """The recorded spawn prompt must contain the test's delegation verbatim.
+
+    THE assertion this arm exists for. Nothing else records whether the
+    delegation the main thread actually sent is the one the test wrote, and the
+    adversarial twins turn entirely on exact phrasing: without this check the
+    main thread can soften "Appropriate tier: Probable" into something the agent
+    was never asked to resist, the agent passes, and the suite reports having
+    survived an attack that never arrived.
+
+    `in`, not `==`: a harmless preamble is tolerated, a reword is not. What the
+    substring check permits is reported separately by
+    `report_direct_delegation_extra_text`.
+    """
+    delegation = test.get("delegation")
+    if not delegation:
+        pytest.skip("not a direct-agent test")
+    _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
+    if any(delegation in p for p in prompts):
+        return
+    from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
+
+    cut_note = ""
+    if any(len(p) == BUILTIN_ARG_TRUNCATE for p in prompts):
+        cut_note = (
+            f"\n\nNOTE: a recorded prompt is exactly {BUILTIN_ARG_TRUNCATE} chars, "
+            f"the truncation length. Only {sorted(_UNTRUNCATED_ARGS)} are exempt, so "
+            f"this may be a RECORDING cut rather than a reworded relay."
+        )
+    rendered = "\n---\n".join(prompts) if prompts else "(no spawn prompt recorded)"
+    assert False, (
+        "the main thread did not relay the delegation verbatim.\n\n"
+        f"EXPECTED to find, as an exact substring:\n{delegation}\n\n"
+        f"ACTUAL spawn prompt(s):\n{rendered}{cut_note}"
+    )
+
+
+def report_direct_delegation_extra_text(test, builtin_tool_calls):
+    """Tier 2 — what the main thread added AROUND the delegation.
+
+    The verbatim check is a substring test, so it passes a relay that prepends
+    or appends its own framing. That framing can still change what the agent
+    faces ("note: the preconditions may not hold"), which is the whole attack
+    surface this arm measures. Reported, never gating: a preamble is not by
+    itself a defect, and turning one into a failure would make the arm flaky
+    over harmless phrasing.
+    """
+    delegation = test.get("delegation")
+    if not delegation:
+        pytest.skip("not a direct-agent test")
+    _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
+    extras = []
+    for p in prompts:
+        if delegation not in p:
+            continue
+        before, _, after = p.partition(delegation)
+        if before.strip() or after.strip():
+            extras.append(
+                f"before={before.strip()[:300]!r} after={after.strip()[:300]!r}"
+            )
+    assert not extras, (
+        "the main thread wrapped the delegation in text of its own: "
+        + "; ".join(extras)
     )
 
 
@@ -1097,7 +1586,7 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 
     Those two documents must be written only through the MCP writer tools
     (research_append, research_log_append, tree_edit, tree_correct), which
-    validate, allocate ids, and keep a `.bak` before persisting. A direct file
+    validate and allocate ids before persisting. A direct file
     write skips all of that. The rule ships as a PreToolUse deny in Cowork, the
     hosted control plane, and the e2e harness; this validator is the unit tier's
     half of it (issue #1493).
