@@ -397,6 +397,117 @@ function planActiveInvariants(entry: any, research: any): string[] {
   return [];
 }
 
+/** The mechanical floor a hypothesis must clear to stand at `supported`
+ *  (`research-schema-spec.md` §5.9; lead ruling 2026-09-07 on issue #2086).
+ *
+ *  Ported from the landed eval validator — `test_supported_requires_evidence_floor`
+ *  in `eval/harness/validators/test_hypothesis_tracking.py`. The two planes must
+ *  agree; change both or neither.
+ *
+ *  Conflicts are matched by **assertion overlap, never by shared `question_id`**.
+ *  `eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that
+ *  separates the two: its `h_001` is `supported` while `c_001` is unresolved and
+ *  blocks the same question, but names entirely different assertions. Matching
+ *  by question refuses that shipped, correct fixture.
+ *
+ *  **One-directional.** A hypothesis that clears the floor and was left `active`
+ *  is not a violation. The spec's third condition — evidence consistency, no
+ *  logical or geographic impossibility — is a genealogist's judgment call and is
+ *  deliberately not attempted here.
+ *
+ *  Reads the **pre-call snapshot**, both halves, per ADR-0011's rule: "Snapshot
+ *  when the precondition must be satisfied by someone else. Read live when it is
+ *  the same author's own prior step." Neither half is this author's own step —
+ *  `ownership.json` gives `hypotheses.callers` as `["skill:hypothesis-tracking"]`
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
+ *  `skill:record-extraction`. Both of those sections are `enforceableAt:
+ *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
+ *  stop a session from writing the satisfying conflict or assertion in the same
+ *  batch as the promote and clearing this gate from inside the call it gates.
+ *
+ *  Measured cost of the snapshot read: **0 refusals** across the calibration
+ *  corpus — no batch appends an assertion ahead of the promote, and neither of
+ *  the two carrying a `conflicts` op ahead of it is affected (one has no
+ *  assertion overlap, the other's conflict is already `resolved`). The single
+ *  batch that would be refused is in `_2491-exploratory-quarantine`, which is
+ *  exploratory-only by lead ruling #2491 and crosses two ownership lanes in one
+ *  call. A same-batch resolve-then-promote is refused, and the remedy is to
+ *  split the call.
+ *
+ *  The snapshot does NOT close the order-sensitivity in the other direction: a
+ *  conflict appended later in the same batch is invisible to it. See
+ *  `guardrail-enforcement-spec.md` §5. */
+function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.status !== "supported") return [];
+  const hid = entry.id ?? "?";
+  const supporting: string[] = Array.isArray(entry.supporting_assertion_ids)
+    ? entry.supporting_assertion_ids
+    : [];
+  const contradicting: string[] = Array.isArray(entry.contradicting_assertion_ids)
+    ? entry.contradicting_assertion_ids
+    : [];
+  const linked = new Set<string>([...supporting, ...contradicting]);
+
+  // `c &&`: a legacy `conflicts: [null]` element must not take the writer down
+  // — the same guard planActiveInvariants carries, for the same reason.
+  const unresolved = (preCallResearch?.conflicts ?? [])
+    .filter(
+      (c: any) =>
+        c &&
+        (Array.isArray(c.competing_assertion_ids) ? c.competing_assertion_ids : []).some(
+          (aid: string) => linked.has(aid),
+        ) &&
+        c.status !== "resolved" &&
+        c.status !== "moot",
+    )
+    .map((c: any) => c.id);
+  if (unresolved.length > 0) {
+    // Returns rather than falling through: the validator `continue`s here, so
+    // the evidence floor is moot once this already fails, and reporting both
+    // halves for one hypothesis would differ from the other plane.
+    //
+    // The remedy clause is a deliberate, one-directional divergence from the
+    // Python text, which was written to be read by a human in a pytest failure.
+    // The ruling asks for a refusal the agent can act on, and every
+    // neighbouring refusal in this file names the remedy.
+    return [
+      `hypotheses[${hid}]: supported but conflict(s) [${unresolved.join(", ")}] naming its ` +
+        `assertions are unresolved; settle each as "resolved" (independence, weighing and ` +
+        `rationale) or "moot" (with a rationale) in an EARLIER call — settling it in this same ` +
+        `call does not clear the gate — or drop the contested assertion from ` +
+        `supporting_assertion_ids`,
+    ];
+  }
+
+  const byId = new Map<string, any>();
+  for (const a of preCallResearch?.assertions ?? []) {
+    if (a && a.id != null) byId.set(a.id, a);
+  }
+  let direct = 0;
+  const indirectSources = new Set<string>();
+  for (const aid of supporting) {
+    const a = byId.get(aid);
+    if (!a) continue; // an id resolving to no assertion counts as nothing
+    if (a.evidence_type === "direct") direct += 1;
+    // Skipping a null/absent `source_id` diverges from the Python, which adds
+    // `None` to the set and so could count "no source" as a distinct source.
+    // Unreachable through this tool — `source_id` is required and typed
+    // `string` in research.schema.json, and every writer validates before
+    // persisting — so the two planes cannot observably disagree.
+    else if (a.evidence_type === "indirect" && typeof a.source_id === "string") {
+      indirectSources.add(a.source_id);
+    }
+  }
+  if (direct < 1 && indirectSources.size < 2) {
+    return [
+      `hypotheses[${hid}]: supported with no direct supporting assertion and only ` +
+        `${indirectSources.size} distinct indirect source(s) (needs >=1 direct or >=2 ` +
+        `distinct indirect sources)`,
+    ];
+  }
+  return [];
+}
+
 /** An uncertain transcription rides in the assertion's `value` as `[?]` — the
  *  record-extractor contract ("Keep the uncertain reading in `value` with
  *  `[?]`"). Nothing else in the entry marks doubt structurally. */
@@ -2285,6 +2396,26 @@ function applyOne(
   // (re)sets status to "active"; the helper no-ops for non-active entries.
   if (section === "plans") {
     invariantErrors.push(...planActiveInvariants(resultEntry, research));
+  }
+  // The `supported` evidence floor (#2086, lead ruling 2026-09-07). Gated on
+  // the op that SETS the status — the same discipline as the `questions` and
+  // `proof_summaries` blocks — which is what makes the ruling's "a hypothesis
+  // set to supported" true rather than "an entry that stands at supported", so
+  // a narrative-only update to one promoted in an earlier call is not refused.
+  //
+  // Deliberately NOT the widened form `conflictedSourceInvariants` below uses.
+  // That rule asks "does the entry STAND in a forbidden state"; the ruling chose
+  // the narrow form here, and over the whole corpus the two are
+  // indistinguishable, so widening buys nothing. The cost is that the gate is
+  // order-sensitive within a batch and unreachable from the `conflicts` side —
+  // recorded in guardrail-enforcement-spec.md §5; closing it would widen the
+  // gate past "forward direction only", which is the lead's call.
+  if (section === "hypotheses") {
+    const statusTouchedThisOp =
+      op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "status");
+    if (statusTouchedThisOp) {
+      invariantErrors.push(...hypothesisSupportedInvariants(resultEntry, preCallResearch));
+    }
   }
   // Identity over-reach: runs on append AND on an update that raises confidence
   // to "confident"; the helper no-ops for every other confidence value.

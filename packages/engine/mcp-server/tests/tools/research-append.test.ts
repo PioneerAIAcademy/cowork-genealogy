@@ -6452,3 +6452,301 @@ describe("research_append — the declaring worked example is aimed, not blanket
     expect(hints.join("\n")).not.toContain("overturn_risk");
   });
 });
+
+// ─── #2086: the `supported` evidence floor as a write-boundary precondition ──
+//
+// Ported from the landed eval validator
+// (`eval/harness/validators/test_hypothesis_tracking.py::test_supported_requires_evidence_floor`).
+// Lead ruling 2026-09-07: forward direction only, the refusal naming which half
+// failed and the ids involved.
+describe("supported evidence floor (#2086)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-floor-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeProject(research: any, tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2), "utf-8");
+  }
+
+  /** An assertion with an explicit evidence_type/source_id, everything else valid. */
+  const ev = (id: string, evidenceType: string, sourceId = "src_001") => ({
+    ...validAssertion(id, sourceId),
+    evidence_type: evidenceType,
+  });
+
+  const hyp = (over: Record<string, unknown> = {}) => ({
+    ...validHypothesis(),
+    id: "h_001",
+    ...over,
+  });
+
+  // ── Deny: three input shapes, each walking a different path into the gate ──
+
+  it("rejects promoting a hypothesis to supported on a single indirect assertion", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "indirect", "src_001")];
+    await writeProject(research);
+
+    const { id: _omit, ...entry } = hyp({
+      status: "supported",
+      supporting_assertion_ids: ["a_001"],
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "append",
+      entry,
+    } as never);
+
+    expect(r.ok).toBe(false);
+    const joined = failure(r).errors.join("\n");
+    expect(joined).toMatch(/no direct supporting assertion/);
+    expect(joined).toMatch(/only 1 distinct indirect source/);
+    expect(joined).toMatch(/needs >=1 direct or >=2 distinct indirect sources/);
+  });
+
+  it("rejects an update to supported when two indirect assertions share one source", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "indirect", "src_001"), ev("a_002", "indirect", "src_001")];
+    research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001", "a_002"] })];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { status: "supported" },
+    } as never);
+
+    expect(r.ok).toBe(false);
+    const joined = failure(r).errors.join("\n");
+    // Two assertions, one source ⇒ 1 distinct indirect source, not 2.
+    expect(joined).toMatch(/hypotheses\[h_001\]/);
+    expect(joined).toMatch(/only 1 distinct indirect source/);
+  });
+
+  it("rejects an update to supported while a conflict naming its assertions is unresolved", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001"] })];
+    research.conflicts = [
+      { ...validConflict(), id: "c_001", competing_assertion_ids: ["a_001", "a_002"], status: "unresolved" },
+    ];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { status: "supported" },
+    } as never);
+
+    expect(r.ok).toBe(false);
+    const joined = failure(r).errors.join("\n");
+    expect(joined).toMatch(/hypotheses\[h_001\]/);
+    expect(joined).toMatch(/conflict\(s\) \[c_001\] naming its assertions are unresolved/);
+    // The ruling requires the refusal to say what to do, not only what is wrong.
+    expect(joined).toMatch(/settle each as "resolved".*or "moot"/s);
+    // Half (a) short-circuits: the evidence floor is moot once this already fails.
+    expect(joined).not.toMatch(/no direct supporting assertion/);
+  });
+
+  // ── Accept: the direction a replay cannot test ──
+
+  it("allows supported beside an unresolved conflict on the same question naming other assertions", async () => {
+    // The `flynn-unresolved-conflict` shape. Matching conflicts by shared
+    // `question_id` rather than by assertion overlap refuses this shipped fixture.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [
+      ev("a_004", "indirect", "src_001"),
+      ev("a_013", "direct", "src_001"),
+      ev("a_002", "indirect", "src_001"),
+      ev("a_009", "indirect", "src_001"),
+    ];
+    research.hypotheses = [hyp({ supporting_assertion_ids: ["a_004", "a_013"] })];
+    research.conflicts = [
+      {
+        ...validConflict(),
+        id: "c_001",
+        competing_assertion_ids: ["a_002", "a_009"],
+        status: "unresolved",
+        blocks_question_ids: ["q_001"],
+      },
+    ];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { status: "supported" },
+    } as never);
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("leaves a hypothesis at active alone even when it clears the floor", async () => {
+    // One-directional: the gate flags a hypothesis that IS supported and fails
+    // the floor, never one that clears it and was left active.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.hypotheses = [hyp({ supporting_assertion_ids: ["a_001"] })];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { notes: "Still gathering; not promoting yet." },
+    } as never);
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows supported on a single direct supporting assertion", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "direct", "src_001")];
+    await writeProject(research);
+
+    const { id: _omit, ...entry } = hyp({
+      status: "supported",
+      supporting_assertion_ids: ["a_001"],
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "append",
+      entry,
+    } as never);
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("allows a narrative-only update to a hypothesis already sitting at supported", async () => {
+    // The gate is scoped to the op that SETS the status, so an entry promoted
+    // in an earlier call — legitimately or not — stays editable.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "indirect", "src_001")];
+    research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { notes: "Added a paragraph about the 1860 enumeration." },
+    } as never);
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("treats no supporting assertions, and ids resolving to none, as unaffected", async () => {
+    // Not violations: the floor reads what is there. An empty list cannot carry
+    // a direct assertion, so it fails half (b) — but an id that resolves to no
+    // assertion must not be counted as anything, and neither shape may throw.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.hypotheses = [
+      hyp({ id: "h_001", supporting_assertion_ids: [] }),
+      hyp({ id: "h_002", supporting_assertion_ids: ["a_999"] }),
+    ];
+    await writeProject(research);
+
+    // Left at `active`, so neither is refused and neither crashes the writer.
+    for (const entryId of ["h_001", "h_002"]) {
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "hypotheses",
+        op: "update",
+        entryId,
+        fields: { notes: "Untouched status." },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    }
+  });
+
+  it("refuses resolving a conflict and promoting on it in the same batch", async () => {
+    // ADR-0011: "Snapshot when the precondition must be satisfied by someone
+    // else." `conflicts` belongs to skill:conflict-resolution, not to
+    // hypothesis-tracking, so half (a) reads the pre-call snapshot and a settle
+    // made inside this call does not clear the gate. Both sections are
+    // enforceableAt ["unit"] only, so a live read would let a session satisfy
+    // this gate from inside the very call it gates.
+    //
+    // The satisfying shape is the same two ops in two calls; the refusal says so.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_133", "direct", "src_001"), ev("a_135", "direct", "src_001")];
+    research.hypotheses = [hyp({ supporting_assertion_ids: ["a_133", "a_135"] })];
+    research.conflicts = [
+      {
+        ...validConflict(),
+        id: "c_001",
+        competing_assertion_ids: ["a_133", "a_135"],
+        status: "unresolved",
+      },
+    ];
+    await writeProject(research);
+
+    const settleOp = {
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        preferred_assertion_id: "a_133",
+        independence_analysis: "Two separately created records, no shared informant.",
+        weighing_analysis: "The earlier enumeration is closer to the event.",
+        resolution_rationale: "a_133 preferred; a_135 is a later derivative reading.",
+      },
+    };
+    const promoteOp = {
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { status: "supported" },
+    };
+
+    const batched = await researchAppend({
+      projectPath: dir,
+      ops: [settleOp, promoteOp],
+    } as never);
+    expect(batched.ok).toBe(false);
+    const joined = failure(batched).errors.join("\n");
+    expect(joined).toMatch(/conflict\(s\) \[c_001\] naming its assertions are unresolved/);
+    // Satisfiability: the refusal must tell the agent to split the call, or it
+    // retries the same batch forever.
+    expect(joined).toMatch(/in an EARLIER call/);
+
+    // The same two ops, split across two calls, both succeed — so the deny is
+    // satisfiable and the batch is refused for its shape, not its content.
+    const settle = await researchAppend({ projectPath: dir, ...settleOp } as never);
+    expect(errorsOf(settle) ?? []).toEqual([]);
+    const promote = await researchAppend({ projectPath: dir, ...promoteOp } as never);
+    expect(errorsOf(promote) ?? []).toEqual([]);
+    expect(promote.ok).toBe(true);
+  });
+});
