@@ -11,7 +11,8 @@
       "absent-member",
       "detection",
       "multi-person",
-      "check-warnings-required"
+      "check-warnings-required",
+      "stub-creation"
     ]
   },
   "input": {
