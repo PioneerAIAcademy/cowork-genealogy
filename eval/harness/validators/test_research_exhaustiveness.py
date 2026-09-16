@@ -205,21 +205,48 @@ def test_fetches_registration_start_date(tool_calls, test):
     )
 
 
-# Words that mark the blocking item as STILL OPEN. A refusal has to carry one
-# of these in the same sentence as the item it names — see
-# test_refusal_names_the_blocking_plan_item for why naming alone is not enough.
+# A sentence boundary for this check is punctuation followed by whitespace and
+# a capital, a hard line break, or end of text. A naive `[.!?]+` split breaks on
+# abbreviations — reviewed on PR #2613, where it cut `d. 1908` in
+# "a death certificate search for Patrick Flynn, d. 1908, Schuylkill County, PA)
+# is still `in_progress`" and failed a correct refusal that had been graded pass.
+# `U.S.` and a decimal version break a naive split the same way.
+#
+# KNOWN CONSERVATIVE MISS, pinned in the offline tests: a refusal that puts the
+# item on one list line and its status on the next fails, because a line break
+# is a hard boundary and that is what closes the neighbouring-sentence hole. No
+# response in the committed corpus is shaped that way. If one ever is, the fix
+# is to name the status on the same line, not to widen the window — a window
+# that spans lines lets a marker from an unrelated bullet carry.
+_SENTENCE_SPLIT = re.compile(
+    r"(?<![A-Z])[.!?]+(?=\s+[\"'(\[]?[A-Z])"
+    r"|[.!?]+\s*$"
+    r"|[\r\n]+"
+    r"|(?<=[.!?])\s*[-*•]\s+"
+)
+
+# Words marking the named item as STILL OPEN. Widened on the PR #2613 review:
+# seven ordinary refusals the first list missed — "remains open", "is open",
+# "we are waiting on it", "has not come back", "is unresolved", "is running",
+# and "has not been completed", the last missing only because `been` sat
+# between `not` and `completed`. The acceptance set is the corpus, not this
+# vocabulary: see the offline tests, which run all eight recorded responses.
 _STILL_OPEN = re.compile(
-    r"in[\s_-]?progress|in[\s-]?flight|still\s+(?:open|running|out|to\s+\w+)"
-    r"|not\s+(?:yet\s+)?(?:finished|complete|completed|done|returned|back)"
-    r"|(?:has|have|hasn't|haven't|hasnt|havent)\s+not\s+(?:yet\s+)?(?:finished|completed|returned)"
-    r"|unfinished|incomplete|outstanding|pending|ongoing|under\s?way|awaiting"
-    r"|not\s+yet|yet\s+to\s+\w+|before\s+(?:it|that|this)\s+(?:returns|finishes|completes)",
+    r"in[\s_\-]?progress|in[\s\-]?flight"
+    r"|(?:still|currently)\s+\w{0,12}\s?(?:open|running|out|pending|going|active|underway|under\s?way)"
+    r"|(?:is|are|was|were|remains?|stays?|sits?)\s+(?:still\s+)?"
+    r"(?:open|running|outstanding|unresolved|incomplete|unfinished|pending|ongoing|active)"
+    r"|not\s+(?:yet\s+)?(?:been\s+)?"
+    r"(?:finished|complete|completed|done|returned|back|come\s+back|closed|resolved)"
+    r"|(?:has|have|had|hasn't|haven't|hasnt|havent|is|was)\s+not\s+(?:yet\s+)?(?:been\s+)?"
+    r"(?:finished|completed|complete|returned|come\s+back|done|closed|resolved)"
+    r"|unfinished|incomplete|outstanding|unresolved|ongoing|under\s?way|awaiting"
+    r"|waiting\s+(?:on|for)|pending|not\s+yet|yet\s+to\s+\w+|still\s+\w+ing"
+    r"|before\s+(?:it|that|this|they)\s+(?:returns?|finishes|completes)",
     re.I,
 )
 
 _BLOCKER_TOKEN = re.compile(r"pli_005|death\s+certificate", re.I)
-
-_SENTENCE_SPLIT = re.compile(r"[.!?]+|[\r\n]+")
 
 
 def test_refusal_names_the_blocking_plan_item(text_response, test):
@@ -260,6 +287,16 @@ def test_refusal_names_the_blocking_plan_item(text_response, test):
     Either spelling of the item still counts — `pli_005` IS the
     death-certificate plan item in `flynn-plan-in-progress` — which keeps
     the phrasing freedom that pinning to the literal id would cost.
+
+    **The acceptance check is the corpus, not the vocabulary.** A marker
+    list can only be measured against phrasings it was not written from,
+    so the offline tests run this over all eight `_005`/`_d1a` responses
+    in the committed run logs — every one graded pass — and require all
+    eight, while both counterexamples above and a marker in a
+    neighbouring sentence still fail. The first tightening was checked
+    against seven of the eight and reported as the whole corpus; it
+    failed the eighth on an abbreviation. Re-derive from the run logs
+    rather than from a hand-written list.
     """
     tags = test.get("tags") or []
     if "refuse-in-progress" not in tags:

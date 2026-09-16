@@ -32,6 +32,7 @@ from "is done", so the item and a still-open marker must land in the same
 sentence. Both are pinned below so the hole cannot reopen silently.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -171,3 +172,93 @@ def test_accepts_the_phrasings_a_correct_refusal_actually_uses():
         "Cannot declare: the death certificate search has not yet returned.",
     ):
         check(good, IN_PROGRESS)
+
+
+# --- The acceptance check: the corpus, not the vocabulary -------------------
+#
+# A marker list can only be measured against phrasings it was NOT written from.
+# The first tightening was checked against seven of the eight recorded
+# responses — the list was hand-written, not derived — and it failed the eighth
+# on an abbreviation (`d. 1908` split mid-sentence). So the check below
+# re-derives the set from the run logs every time it runs.
+
+_RUNLOGS = Path(__file__).resolve().parents[3] / "runlogs" / "unit" / "research-exhaustiveness"
+
+
+def _recorded_refusals():
+    """Every `_005` / `_d1a` response in the committed run logs."""
+    out = []
+    for log in sorted(_RUNLOGS.glob("v1_*.json")):
+        if log.name.endswith(".ann.json"):
+            continue
+        data = json.loads(log.read_text(encoding="utf-8"))
+        for test in data.get("tests", []):
+            if test.get("test_id") not in (
+                "ut_research_exhaustiveness_005",
+                "ut_research_exhaustiveness_d1a",
+            ):
+                continue
+            for run in test.get("runs", []):
+                text = run.get("output") or ""
+                if isinstance(text, dict):
+                    text = json.dumps(text)
+                out.append((log.stem, test["test_id"], text))
+    return out
+
+
+def test_every_recorded_refusal_still_passes():
+    """All eight were graded pass, so all eight must satisfy this guard.
+
+    This is the check that catches an over-tightening. It is deliberately
+    derived from the run logs rather than a list in this file.
+    """
+    recorded = _recorded_refusals()
+    assert len(recorded) >= 8, (
+        f"expected at least the 8 recorded _005/_d1a responses, found "
+        f"{len(recorded)} — has the retention prune removed run logs?"
+    )
+    failures = []
+    for stem, test_id, text in recorded:
+        try:
+            check(text, IN_PROGRESS)
+        except AssertionError as exc:
+            failures.append(f"{stem} {test_id}: {exc}")
+    assert not failures, "the guard fails refusals that were graded pass:\n" + "\n".join(failures)
+
+
+def test_an_abbreviation_does_not_split_the_sentence():
+    """`d. 1908` is why a naive `[.!?]+` split failed a correct refusal."""
+    check(
+        "Plan item `pli_005` (a death certificate search for Patrick Flynn, "
+        "d. 1908, Schuylkill County, PA) is still `in_progress`.",
+        IN_PROGRESS,
+    )
+    check("The death certificate search at the U.S. archive is still in progress.", IN_PROGRESS)
+
+
+def test_ordinary_refusal_phrasings_the_first_marker_list_missed():
+    """Seven from the PR #2613 review, none of which the first list matched."""
+    for good in (
+        "Plan item pli_005 remains open, so I cannot evaluate exhaustiveness.",
+        "pli_005 is open.",
+        "The death certificate search - we are waiting on it.",
+        "The death certificate search has not come back.",
+        "pli_005 is unresolved.",
+        "The death certificate search is running.",
+        "The death certificate search has not been completed.",
+    ):
+        check(good, IN_PROGRESS)
+
+
+def test_known_conservative_miss_item_and_status_on_separate_lines():
+    """Documented limitation, pinned so it is a decision and not a surprise.
+
+    A line break is a hard boundary, which is what closes the
+    neighbouring-sentence hole. The cost is that a refusal splitting the
+    item from its status across two list lines fails. No response in the
+    committed corpus is shaped that way. If one ever is, name the status
+    on the same line rather than widening the window — a window that
+    spans lines lets a marker from an unrelated bullet carry.
+    """
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check("- pli_005: death certificate search\n- status: still in progress", IN_PROGRESS)
