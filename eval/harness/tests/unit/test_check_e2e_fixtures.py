@@ -450,7 +450,7 @@ def test_main_fails_on_a_1m_run_and_does_not_claim_OK(tmp_path, monkeypatch, cap
     assert check_e2e_fixtures.main() == 1
     out = capsys.readouterr().out
     assert "::error::" in out and "1M context window" in out, out
-    assert "E2E grading gate OK" not in out, "claimed OK on a run it failed"
+    assert "E2E gates OK" not in out, "claimed OK on a run it failed"
 
 
 def test_main_reports_BOTH_gates_when_both_fire(tmp_path, monkeypatch, capsys):
@@ -571,7 +571,7 @@ def test_main_refuses_an_unresolvable_head_sha(tmp_path, monkeypatch, capsys):
     assert check_e2e_fixtures.main() == 1
     out = capsys.readouterr().out
     assert "::error::" in out and "could not diff" in out, out
-    assert "added run log(s) checked" not in out, "must not report a count it never read"
+    assert "run log(s) checked" not in out, "must not report a count it never read"
 
 
 def test_main_refuses_when_repo_root_is_not_a_repo(tmp_path, monkeypatch, capsys):
