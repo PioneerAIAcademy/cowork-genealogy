@@ -227,13 +227,30 @@ _RECORD_EXTRACTION_LOGS = sorted(
 def _source(source_id):
     """A source as `research.schema.json` `$defs.source` allows it.
 
-    No `title` key: the schema sets `additionalProperties: false` and carries
-    no such field. An earlier draft invented one, and its docstring spoke of
-    "counting distinct source titles" for a field sources do not have. The
-    count keys on `id`, so the figure was unaffected - but the fixture was
-    describing a shape the writer tools would reject (#2390 review).
+    Complete against `$defs.source`: all seven required keys, no eighth. The
+    schema sets `additionalProperties: false`, so an invented key describes a
+    shape the writer tools would reject, and two got in before this: `title`
+    (never a source field) and `source_type` (the field is
+    `source_classification`, and `derivative` is one of its three enum
+    values). The count keys on `id`, so neither moved a figure - but a fixture
+    that would not validate is not a fixture (#2390 review).
     """
-    return {"id": source_id, "source_type": "derivative", "citation": "1850 census"}
+    return {
+        "id": source_id,
+        "gedcomx_source_description_id": f"sd_{source_id}",
+        "citation": "1850 U.S. census, Kings County, New York, population schedule.",
+        "citation_detail": {
+            "who": "United States Bureau of the Census",
+            "what": "1850 U.S. census, population schedule",
+            "when_created": "1850",
+            "when_accessed": "2026-09-16",
+            "where": "FamilySearch",
+            "where_within": "Kings County, New York, dwelling 214",
+        },
+        "source_classification": "derivative",
+        "repository": "FamilySearch",
+        "access_date": "2026-09-16",
+    }
 
 
 def _states(n_new_sources, n_before=0):
@@ -475,25 +492,29 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
     This is the test the first version lacked, and its absence is why a
     128-of-132 gating rate shipped unnoticed (#2390 review).
 
-    The expected result depends on something outside this file: the rule lives
-    in `record-extraction/SKILL.md` on PR #2391. So the assertion branches on
-    whether the shipped body states it, which turns the merge dependency from a
-    sentence in a PR body into something that fails if it is got wrong.
+    #2391 has merged, so `SKILL.md` states the rule and the branch this test
+    used to carry - "rule absent, so every run must fire" - is unreachable.
+    It is asserted directly instead: if the rule is reworded out of the body,
+    this says so by name rather than through a failure message about the
+    marker pattern.
 
-      - Rule absent (this branch): every evaluated run must fire. If some
-        passed, the check is matching narration that is not a position marker
-        - the false-positive family that made four runs "pass" on `4/5`
-        confidence scores and `2 of 3 children survived`.
-      - Rule present (once #2391 lands): some must pass, or the skill is being
-        failed for a rule it was given and cannot follow.
-
-    Either way it must evaluate something: a dormant check reads as coverage.
+    What the replay itself pins is the **pre-rule baseline**. Every committed
+    run predates #2391, so these runs were never given the instruction: 83 of
+    the 108 evaluated fire and 25 pass. Both halves matter. If none fired the
+    rule would be measuring nothing; if none passed, the check could not be
+    satisfied by anything the skill actually emits, which is the false-negative
+    the anchor risks. A dormant check reads as coverage, so it must also
+    evaluate something.
     """
     if not _RECORD_EXTRACTION_LOGS:
         pytest.skip("no committed record-extraction run logs to replay")
 
     body = _REPO_SKILL.read_text(encoding="utf-8") if _REPO_SKILL.exists() else ""
-    rule_is_shipped = "Announce before delegating" in body
+    assert "Announce before delegating" in body, (
+        "record-extraction/SKILL.md no longer states the announce-before-"
+        "delegating rule (#2391). This check gates runs against it, so either "
+        "restore the wording or retire the validator."
+    )
 
     fired, passed, skipped = [], [], 0
     for name, test_id, before, after, reply in _corpus_runs():
@@ -512,32 +533,36 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
         f"it is dormant, which reads as coverage while asserting nothing"
     )
 
-    if rule_is_shipped:
-        assert passed, (
-            f"SKILL.md states the rule, yet the check fired on all {evaluated} "
-            f"evaluated runs. Either the instruction does not hold at all, or "
-            f"the marker pattern does not match what the skill emits."
-        )
-    else:
-        assert not passed, (
-            f"SKILL.md does not state the rule on this branch, yet "
-            f"{len(passed)} of {evaluated} runs satisfied the check: "
-            f"{passed[:5]}. Those are false positives - the pattern is "
-            f"matching narration that is not a position marker."
-        )
+    assert passed, (
+        f"the check fired on all {evaluated} evaluated runs. Either the "
+        f"instruction does not hold at all, or the marker pattern does not "
+        f"match what the skill emits."
+    )
+    assert fired, (
+        f"the check passed all {evaluated} evaluated runs, every one of them "
+        f"recorded before #2391 gave the skill the rule. A pre-rule corpus "
+        f"that fully satisfies the check means the marker is matching "
+        f"ordinary narration: {passed[:5]}."
+    )
 
 
 # --- the anchor, pinned in both directions (#2390 round-2 review) ---------
 
 
 def test_position_marker_rejects_ratio_accidents():
-    """Every accident the anchor exists to reject, in one place.
+    """@Praise-Enato's round-2 list, in one place. Delete the proximity
+    requirement and every one of these dies.
 
-    The first six are @Praise-Enato's round-2 list; the rest are the ratio
-    family the module comment names. The previous keyword-or-colon anchor
-    accepted all six of the first group - `page`, `file`, `doc` and `item`
-    were keywords, and `Step 1 of 3:` reached the colon branch. Delete the
-    proximity requirement and this dies.
+    The previous keyword-or-colon anchor accepted all six - `page`, `file`,
+    `doc` and `item` were keywords, and `Step 1 of 3:` reached the colon
+    branch.
+
+    Every numerator here is 1, and that is the whole point: the run has one
+    record, so the check fires unless position **1** is announced. A string
+    like `confidence 4/5` leaves position 1 missing whatever the anchor does,
+    so it would pass with the anchor deleted and pin nothing. Six such strings
+    were in this list until the #2390 round-3 review; the ratio family they
+    came from is covered above, each rewritten to a 1 numerator.
     """
     before, after = _states(1)
     for reply in (
@@ -547,30 +572,19 @@ def test_position_marker_rejects_ratio_accidents():
         "Citation: NARA microfilm M432, roll 444, file 1 of 2.",
         "the entry is on doc 1 of 2 in the packet",
         "Coverage of the stated questions is 1 of 3: q_001 only.",
-        "record_person_matches returned confidence 4/5",
-        "ages ~48/45 in the household",
-        "born 9/14/1880 per the certificate",
-        "Age 5/12 at death",
-        "enumeration district 12/3",
-        "2 of 3 children survived",
     ):
         with pytest.raises(AssertionError, match=r"were never"):
             _checked(reply, before, after, POSITIVE)
 
 
-def test_position_marker_rejects_an_ark_beside_extraction_language():
-    """`ark:/61903/1:1:CRYM-V53Z` contains `61903/1`, and an ARK sits next to
-    extraction language constantly - so proximity alone is not enough. What
-    keeps these out is the separator being the WORD `of` plus the digit
-    guards. Allow `/` back as a separator and this dies.
-    """
-    before, after = _states(1)
-    for reply in (
-        "Extracting the record at ark:/61903/1:1:CRYM-V53Z now",
-        "Delegating extraction of ark:/61903/1:1:M62F-BST to the agent",
-    ):
-        with pytest.raises(AssertionError, match=r"were never"):
-            _checked(reply, before, after, POSITIVE)
+# An ARK-beside-extraction-language case was here until the #2390 round-3
+# review. It claimed to pin the `of`-as-a-word separator and the digit guards,
+# and pinned neither: `ark:/61903/1:1:CRYM-V53Z` is silent under the shipped
+# pattern, under `/` as a separator, with both guards removed, and under the
+# original `(?<!\d)…(?:of|/)…` this branch started from. The leading `61903`
+# is five digits, so the only pair `\d{1,3}` can reach is `903/1` - numerator
+# 903, never 1. The test could not fail under any pattern this branch has had,
+# which is the shape CLAUDE.md calls worse than no check at all.
 
 
 def test_a_marker_with_no_delegation_verb_is_not_counted():
