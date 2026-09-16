@@ -482,6 +482,67 @@ def test_passes_findmypast_death_place_when_birth_place_fills_the_slot():
     )
 
 
+@pytest.mark.parametrize("site,field", [
+    ("findmypast", "marriagePlace"),
+    ("findmypast", "residencePlace"),
+    ("findmypast", "deathPlace"),
+    ("antenati", "deathPlace"),
+    ("archives_gov", "deathPlace"),
+    ("american_ancestors", "deathPlace"),
+])
+def test_passes_an_accepted_place_through_a_fallback_field(site, field):
+    """The scenario's accepted death and residence places are all "Schuylkill
+    County, Pennsylvania", which CONTAINS the rejected birthplace
+    "Pennsylvania" — so without the accepted-place exemption in
+    `_effective_place_field`, a legitimate marriage, death or residence search
+    naming its own correct place is flagged on every fallback site.
+
+    `tests/tools/build-external-search-url.test.ts` pins that exact FindMyPast
+    call as CORRECT ("lets a FindMyPast marriage search name its place through
+    keywordsplace"), so the two halves of this PR contradicted each other until
+    the exemption landed.
+
+    This is the test the exemption was missing: the pre-existing
+    `test_does_not_false_positive_on_a_legitimate_residence_place` pins
+    `site="ancestry"` WITH a birthPlace, so it never reaches the fallback
+    branch, and deleting the whole exemption left the suite green at exit 0."""
+    _expect_passes(_tool_calls(site=site, **{field: "Schuylkill County, Pennsylvania"}), {"type": "positive"})
+
+
+def test_the_accepted_place_exemption_never_reaches_birthplace():
+    """The other direction, so the exemption cannot be widened silently:
+    `birthPlace` is judged whatever its value, because naming a place there IS
+    the birthplace assertion. "Schuylkill County, Pennsylvania" is an accepted
+    RESIDENCE, not an accepted birthplace, and still carries the rejected
+    value."""
+    _expect_fires(
+        _tool_calls("Schuylkill County, Pennsylvania", site="findmypast"),
+        {"type": "positive"},
+        "attributes.birthPlace='Schuylkill County, Pennsylvania'",
+    )
+
+
+def test_hand_composed_check_skips_a_negative_relog_beside_a_captured_sibling():
+    """The same-run sibling exclusion: a `negative` entry re-logging a URL that
+    a `partial` entry in the same run already carries is a re-log, even when
+    that sibling is itself excluded from grading (here by `capture_received`).
+    Without this clause the re-log becomes its own grading target and demands a
+    tool call the generating turn already made."""
+    url = "https://www.ancestry.com/search/?name=Flynn"
+    states = _states(
+        {
+            "id": "log_998", "tool": "external_site", "outcome": "partial",
+            "external_site": {"site": "ancestry", "url_generated": url, "capture_received": True},
+        },
+        {
+            "id": "log_999", "tool": "external_site", "outcome": "negative",
+            "external_site": {"site": "ancestry", "url_generated": url, "capture_received": False},
+        },
+    )
+    with pytest.raises(pytest.skip.Exception):
+        _HAND_COMPOSED_CHECK(*states, [], {"type": "positive"})
+
+
 def test_passes_a_place_sharing_only_a_leaf_name_with_the_rejected_value():
     """"Paris, Texas, United States" against a rejected "Paris, France": the
     rejected value's own second segment must line up too, at whatever offset."""
