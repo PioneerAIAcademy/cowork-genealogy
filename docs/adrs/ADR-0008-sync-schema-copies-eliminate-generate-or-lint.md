@@ -9,12 +9,12 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-04
-- **Last updated:** 2026-08-31
+- **Last updated:** 2026-09-15
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
 - **Applies to:** `docs/specs/schemas`, `packages/schema/scripts/gen-enums.mjs`, `packages/engine/mcp-server/tests/packaging/enum-drift.test.ts`, `packages/engine/mcp-server/tests/packaging/tool-schema-enums.test.ts`, `packages/engine/mcp-server/tests/packaging/research-append-examples.test.ts`, `packages/engine/mcp-server/tests/validation/tree-shape-drift.test.ts`, `packages/viewer-ui/src/__tests__/schema-interface-drift.test.ts`, `packages/viewer-ui/src/__tests__/dev-scripts-generate.test.ts`, `eval/harness/tests/unit/test_schema_mirrors.py`
-- **Related:** issues #1087, #1015, #1014, #1165, #1166, #1268, #1270; `docs/architecture.md` §6
+- **Related:** issues #1087, #1015, #1014, #1165, #1166, #1268; `docs/architecture.md` §6
 
 ## Context
 
@@ -196,10 +196,7 @@ and a closed enum typed as bare `string` in `packages/schema/src/index.ts`
 inline `items` objects rather than a `$def`, which no half of the lint reaches;
 the enum tables in
 `docs/specs/research-schema-spec.md`, whose markdown-table format needs its own
-parser; the one closed enum still defined inline rather than in
-`enums.schema.json` — `locality.pages_read[].section`, re-typed in
-`packages/engine/mcp-server/src/tools/wiki-place-page.ts` and bound to no
-validator entry to collapse into (#1270); and the `eval/app` fork.
+parser; and the `eval/app` fork.
 
 *Linted: every path in this section must resolve.*
 

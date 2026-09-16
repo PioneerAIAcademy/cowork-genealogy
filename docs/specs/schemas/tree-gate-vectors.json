@@ -368,6 +368,75 @@
       }
     },
     {
+      "name": "fact-assertion-id",
+      "description": "assertion_id on a fact — the backlink materialize_facts stamps so a later assertion correction can find the fact it minted. Optional and a plain string; every gate must accept it, or the writer tools reject a document they themselves produce.",
+      "expect": {
+        "schema": true,
+        "integrity": true,
+        "runtime": true
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "date": "2 Oct 1876",
+                "assertion_id": "a_011"
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": []
+      }
+    },
+    {
+      "name": "fact-assertion-id-nonstring",
+      "description": "assertion_id as a number. The allow-list admits the KEY, so only the per-field type check refuses it; a field added to one and not the other is accepted by the runtime validator and rejected by the JSON Schema, which the name-only drift test cannot see.",
+      "expect": {
+        "schema": false,
+        "integrity": true,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "given": "John",
+                "surname": "Doe"
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "assertion_id": 123
+              }
+            ]
+          }
+        ],
+        "relationships": [],
+        "sources": []
+      }
+    },
+    {
       "name": "preferred-false",
       "description": "preferred is const true — omit rather than setting false (the convention that keeps multi-name persons token-lean).",
       "expect": {
