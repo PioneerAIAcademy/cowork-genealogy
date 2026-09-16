@@ -260,11 +260,12 @@ was dropped and that they should reopen if they find otherwise.
 **A blocker cleared is a finding, and the board does not know it.** Verifying a
 merge means reading each card's blockers, which routinely turns up holds that were
 discharged weeks ago — on 2026-09-16, issue #2253's hold was a test that now passes
-in the newest committed run, and issues #2393, #2076 and #2262 had all been freed by
-cards that closed. Nobody learns this from a merge that does not happen. Post the
-correction as a comment on the unblocked issue, naming the run log or the closed
-issue you checked, and list it in the report's findings — a card sitting behind a
-dead blocker is invisible in exactly the way a deep queue is.
+in the newest committed run, and issues #2393, #2076 and #2251 had all been freed by
+cards that closed (#2262's two blockers had closed as well). Nobody learns this
+from a merge that does not happen. Post the correction as a comment on the
+unblocked issue, naming the run log or the closed issue you checked, and list it in
+the report's findings — a card sitting behind a dead blocker is invisible in
+exactly the way a deep queue is.
 
 If the target's body carries a banner asserting the two are separate, **rewrite
 it in the same pass**. A stale "keep these apart" note outliving the merge is
