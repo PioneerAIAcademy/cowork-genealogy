@@ -1,4 +1,4 @@
-# Marina López — parents Manuel López and Carmen Nelia Casado (1927 marriage)
+# Marina López — parents Manuel López G. and Carmen Nelia Casado (1937 marriage)
 
 **Source PID:** `P874-7BV`
 **Marina López is deceased.** (FamilySearch ToS requires
@@ -29,7 +29,10 @@ match strength.
 ## Notes for reviewers
 
 **Resolved 2026-09-15 — outcome 2 (the hint's relationships are right, its
-dates are wrong).** This fixture came from a hint batch
+dates are wrong).** The hint under adjudication was
+`ark:/61903/1:1:6RPF-Q4K7` (bride's persona; the record's principal is
+`ark:/61903/1:1:6RPF-Q4K3`), matched to `P874-7BV` by FamilySearch's own hinting
+at confidence 3. This fixture came from a hint batch
 (`filtered-list-samples-2.csv` row 8, `hint-samples.csv` row 283, flag
 `adds_father,adds_mother,adds_birth,adds_marriage`, confidence 3) in which
 roughly half the hint records are false matches. The draft transcribed the hint
@@ -111,7 +114,7 @@ needed.
 
 A third record names the couple differently and is worth knowing about:
 Marina's own civil death registration, Act No. 256, 5 Oct 1984, San José de Ocoa
-(`ark:/61903/1:1:6TMN-26CT`, image `ark:/61903/3:1:9396-YN33-1`), gives her
+(`ark:/61903/1:1:6TMN-26CT`, image `ark:/61903/3:1:9396-YN33-1` — that image was read by the benchmark agent during the run, **not** opened by the adjudicator, so the parent names from it are reported at second hand), gives her
 parents as *"Manolo Lopez"* and *"Carmen Nida Lopez"* — the mother under a
 married-name form rather than her birth surname, and the informant was the
 attending physician, so the parentage there is secondary information.
