@@ -21,12 +21,15 @@ import fs from "node:fs";
 
 const WORKFLOW = ".github/workflows/check-runlogs.yml";
 const GATE_RUN = "check_runlogs.py"; // the blocking gate step's run: command
-// The post-gate diagnostics that must be present (non-vacuity anchor):
+// The post-gate diagnostics that must be present (non-vacuity anchor). The
+// invariant below covers any new step automatically; only this list pins that
+// the step is still THERE, so a later deletion would otherwise pass silently.
 const EXPECTED_AFTER = [
   "check_tool_coverage.py",
   "check_rubric_tool_drift.py",
   "check_skill_frontmatter.py",
   "check_negative_reciprocity.py",
+  "check_slot_queue.py",
 ];
 
 let failures = 0;

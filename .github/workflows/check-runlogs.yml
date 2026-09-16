@@ -44,10 +44,20 @@ on:
 # is stripped by cosmetic-skip-strip.yml, not here. That matters because this is
 # the one PR job that checks out and executes PR-authored Python (the harness
 # scripts at the bottom), so it is the one job that should hold no write token
-# at all. `pull-requests: read` is what the `scope` and `cosmetic` steps need.
+# at all. `pull-requests: read` is what the `scope` and `cosmetic` steps need, and
+# `issues: read` is what check_slot_queue.py needs.
+#
+# `issues: read` is spelled out rather than left to chance. Naming ANY scope sets
+# every unnamed scope to `none`, and until check_slot_queue.py shipped every
+# post-gate lint was pure-local, so nothing in this job had ever made an API call
+# for issues. Whether a public-repo issues read would succeed without it is
+# unverified — and a scope that happens to work on one event type and 403s on
+# another is indistinguishable from a quiet check, which is precisely what that
+# script must never be.
 permissions:
   contents: read
   pull-requests: read
+  issues: read
 
 # Cosmetic-skip escape hatch (rule 2 only). A senior applies the
 # `eval-cosmetic-skip` label on a PR whose only skill-side change is
@@ -201,3 +211,16 @@ jobs:
       - name: Check negative routing reciprocity (warn-only)
         if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
         run: python eval/harness/scripts/check_negative_reciprocity.py
+
+      # The only post-gate lint that makes a NETWORK call, and the only one that
+      # needs BASE_SHA/HEAD_SHA — the four above are pure-local. It never fails the
+      # build; on any API or git failure it warns that it could not read the queue
+      # and exits 0, because a silent pass is indistinguishable from "no queued
+      # work". Rationale in full: the script's docstring, and issue #2589.
+      - name: Check the eval-slot queue for the skills this PR touches (warn-only)
+        if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python eval/harness/scripts/check_slot_queue.py
