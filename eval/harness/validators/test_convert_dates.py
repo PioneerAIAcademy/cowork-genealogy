@@ -137,6 +137,56 @@ def test_requires_tool_conversion_calls_the_tool(tool_calls, test):
 
 # --- VR-4: a refusal-to-convert test must make no call ----------------
 
+def test_day_offset_calls_name_a_jurisdiction(tool_calls, test):
+    """A `julianToGregorianDay` call must carry a `jurisdiction` (issue #2260).
+
+    The adoption table moved out of SKILL.md into the tool, so the body no
+    longer states when a place switched. `jurisdiction` is how the model gets
+    that back, and a day-offset call without one is the model deciding the
+    regime from memory -- the failure mode the move was meant to end.
+
+    Gated on the CORRECTION, not on the `requires-tool-conversion` tag, and
+    deliberately: `ut_convert_dates_001` carries that tag and its prompt
+    ("3rd day of 2nd month 1845") names no place at all. A tag-gated check
+    would fail it deterministically for a jurisdiction that does not exist.
+    The Quaker era comes from the date, not the place; only the day offset
+    depends on where the record is from.
+
+    Nothing else can see this. `make engine-test` proves the tool HONOURS a
+    jurisdiction; only a run log shows whether the model PASSED one, and every
+    figure here describes the eval corpus, not production
+    (docs/architecture.md 9.4).
+    """
+    # The skill body sanctions one omission: "Omit `jurisdiction` only when the
+    # record names no place." A test whose record genuinely names none declares
+    # it with this tag, and the check stands down -- otherwise the guard fails
+    # the model for following its own instructions. No fixture carries the tag
+    # today; every day-offset record in the corpus names a place. It exists so
+    # that a placeless one can be added without the guard misfiring, rather than
+    # the guard passing by luck.
+    if "record-names-no-place" in (test.get("tags") or []):
+        pytest.skip("the record names no place; the body permits omitting jurisdiction")
+
+    offenders = []
+    for tc in _calendar_calls(tool_calls):
+        args = tc.get("args") or tc.get("arguments") or {}
+        if not isinstance(args, dict):
+            continue
+        corrections = args.get("corrections") or {}
+        if not isinstance(corrections, dict) or not corrections.get("julianToGregorianDay"):
+            continue
+        jurisdiction = args.get("jurisdiction")
+        if not (isinstance(jurisdiction, str) and jurisdiction.strip()):
+            offenders.append(args)
+
+    assert not offenders, (
+        f"{len(offenders)} convert_calendar call(s) requested julianToGregorianDay "
+        "with no jurisdiction. The tool holds the adoption table now; pass the "
+        "place the record names so it can say which calendar was in force. "
+        f"First offender: {offenders[0] if offenders else None}"
+    )
+
+
 def test_refusal_to_convert_makes_no_call(tool_calls, test):
     """A positive test tagged `refusal-to-convert` must make no
     convert_calendar call at all (issue #1654, VR-4).
