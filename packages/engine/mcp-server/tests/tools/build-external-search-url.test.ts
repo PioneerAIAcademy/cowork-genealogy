@@ -936,6 +936,34 @@ describe("build_external_search_url", () => {
       }
     });
 
+    it("coerces a numeric searchYear, the mirror of the numeric-string coercion", () => {
+      // `yearOrRange` reads through `str()`, so a number was not a string and
+      // the entire `dr_year` window silently vanished — the search then ran
+      // whole-corpus while every sibling year field accepts a number. That is
+      // the same silent-widening the inverted-range rejection exists to stop.
+      const r = buildExternalSearchUrl({
+        site: "newspapers",
+        attributes: { surname: "Flynn", searchYear: 1880 as unknown as string },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.url).toContain("dr_year=1880");
+      expect(r.notes.some((n) => /'searchYear'/.test(n))).toBe(false);
+
+      // The other direction: out of band, non-integer and negative stay
+      // wrong-typed and keep their note rather than being coerced into a year.
+      for (const bad of [999, 99999, 1880.5, -1880]) {
+        const badResult = buildExternalSearchUrl({
+          site: "newspapers",
+          attributes: { surname: "Flynn", searchYear: bad as unknown as string },
+        });
+        expect(badResult.ok).toBe(true);
+        if (!badResult.ok) return;
+        expect(badResult.url).not.toContain("dr_year=");
+        expect(badResult.notes.some((n) => /'searchYear' was supplied but/.test(n))).toBe(true);
+      }
+    });
+
     it("american_ancestors is 'free' but still notes the results-viewing caveat", () => {
       // "free" alone would repeat the FindAGrave failure mode in the other
       // direction if it implied a subscription never matters here — the

@@ -282,7 +282,13 @@ async function applyLogAppendOp(
   // type (that goes in notes instead). Enforced mechanically — rather than
   // left to the model's own judgment call — because it was measured to be
   // wrong often enough in practice to need a hard gate, not another
-  // reminder in prose. Scoped to `external_links_search` only: no other
+  // reminder in prose. Measured 2026-09-10 against the five run logs this
+  // branch commits: 4 of 66 `external_links_search` entries, across three
+  // tests (ut_search_external_sites_002, _005, _006) and three of the five
+  // logs. (Issue #1950's census said 9 of 48; the corpus has turned over, so
+  // that figure is stale rather than wrong — re-derive rather than reword.)
+  // This gate replaced the eval validator that used to grade the same shape
+  // after the fact; refusing the write is what made that grader unfireable. Scoped to `external_links_search` only: no other
   // tool value shares this fetch-vs-search distinction, and it is the only
   // one search-external-sites (its sole caller) uses this way.
   if (op.tool === "external_links_search" && resultsExamined > 0 && op.outcome !== "positive") {

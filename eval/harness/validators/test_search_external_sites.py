@@ -649,43 +649,13 @@ def test_log_entries_do_not_carry_each_others_fields(before_state, after_state, 
     )
 
 
-def test_curated_links_fetch_with_results_is_not_logged_as_nil(
-    before_state, after_state, test
-):
-    """V3. On an `external_links_search` entry, results_examined > 0 requires
-    outcome "positive".
-
-    The entry grades the FETCH, not the search. Logging "none of these links fit
-    my record type" as a nil records "FamilySearch curates nothing here", which
-    sends a researcher to another repository; the truth - "curates plenty, none
-    relevant" - sends them to a wider year window. Collapsing the two loses that
-    distinction permanently in the audit trail.
-
-    Measured 2026-09-10 against the five run logs this branch commits, reading
-    `file_changes["research.json"].diff.log.added`: **4 of 66
-    external_links_search entries, across three tests
-    (ut_search_external_sites_002, _005, _006) and three of the five logs.**
-    Issue #1950's own census said 9 of 48; the corpus has since turned over,
-    so that figure is stale rather than wrong. Re-derive rather than reword.
-    """
-    if test.get("type") != "positive":
-        pytest.skip("only positive tests record log entries")
-    if before_state.get("research_json") is None:
-        pytest.skip("no research.json in scenario")
-
-    errors = []
-    for entry in _new_external_entries(before_state, after_state, "external_links_search"):
-        examined = entry.get("results_examined")
-        if isinstance(examined, int) and examined > 0 and entry.get("outcome") != "positive":
-            errors.append(
-                f"log[{entry.get('id')}] examined {examined} curated link(s) but "
-                f"is logged outcome={entry.get('outcome')!r} - a fetch that "
-                f"returned links is not a nil result"
-            )
-    assert not errors, (
-        "curated-links fetches mis-logged as nil:\n  - " + "\n  - ".join(errors)
-    )
-
+# V3 (`test_curated_links_fetch_with_results_is_not_logged_as_nil`) was removed:
+# `research_log_append` now REFUSES the write it graded — an
+# `external_links_search` entry with `results_examined > 0` and a non-positive
+# outcome throws `LogAppendError`, and `ownership.json` gives `log` no other
+# writer — so the validator could only ever fire on a hand-edited research.json.
+# A grader that cannot fire reads as coverage while asserting nothing. The rule
+# is pinned where it now lives, by the writer's own unit tests.
 
 def test_the_url_logged_is_the_url_presented(
     before_state, after_state, text_response, test

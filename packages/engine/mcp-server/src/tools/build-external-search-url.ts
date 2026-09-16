@@ -156,7 +156,9 @@ function positional(left: unknown, right: unknown): string | undefined {
 // filtered (8,045 and 16) and is the form loc.gov's own `search.facet_limits`
 // names. The facet value is the full lowercase state name — a postal
 // abbreviation (`ny`) measures 0 — so one is expanded here. Multi-word names
-// (`new york`) are unverified against the facet (spec §9).
+// are verified against the facet: `fa=location_state:new+york` returned 26,358
+// and 8,370 on two independent passes (2026-09-15), each well below the same
+// query's unfacetted count, so the form-encoded space binds (spec §9).
 // `Object.create(null)`, not a plain literal: a plain object inherits
 // `constructor`, `toString` and friends, so `usState: "constructor"` looked up
 // a function and shipped `location_state:function Object() { [native code] }`.
@@ -783,13 +785,22 @@ function isSuppliedValue(v: unknown): boolean {
 // `Number()` would also read `"0x733"` as 1843 or `"1e3"` as 1000, neither of
 // which a model means as a year. A number in a string attribute stays a
 // wrong-typed value and gets its note.
-function coerceNumericStrings(a: BuildExternalSearchUrlAttributes): BuildExternalSearchUrlAttributes {
+function coerceNumericAttributes(a: BuildExternalSearchUrlAttributes): BuildExternalSearchUrlAttributes {
   const out: Record<string, unknown> = { ...a };
   for (const key of Object.keys(out) as Array<keyof BuildExternalSearchUrlAttributes>) {
     const kind = ATTRIBUTE_KIND[key];
     const v = out[key];
     if ((kind === "year" || kind === "smallNumber") && typeof v === "string" && /^\s*-?\d+(\.\d+)?\s*$/.test(v)) {
       out[key] = Number(v);
+    }
+    // The mirror direction, for the one `yearRange` field. `searchYear: 1880`
+    // means the year 1880, but `yearOrRange` reads through `str()` and a number
+    // is not a string — so without this the whole `dr_year` window vanishes and
+    // the search runs unscoped, which is the same silent-widening failure the
+    // inverted-range rejection exists to prevent. Only an in-band integer is
+    // coerced; a float, a negative or 99999 stays wrong-typed and keeps its note.
+    if (kind === "yearRange" && typeof v === "number" && isFourDigitYear(v)) {
+      out[key] = String(v);
     }
   }
   return out as BuildExternalSearchUrlAttributes;
@@ -924,7 +935,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   const coercedAttributes = coerceJsonArg(input?.attributes);
   const attributesIsObject =
     coercedAttributes !== null && typeof coercedAttributes === "object" && !Array.isArray(coercedAttributes);
-  const a = coerceNumericStrings(attributesIsObject ? (coercedAttributes as BuildExternalSearchUrlAttributes) : {});
+  const a = coerceNumericAttributes(attributesIsObject ? (coercedAttributes as BuildExternalSearchUrlAttributes) : {});
 
   if (rawBaseUrl !== undefined && rawBaseUrl !== null && typeof rawBaseUrl !== "string") {
     return {
