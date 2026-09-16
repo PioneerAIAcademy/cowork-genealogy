@@ -588,8 +588,10 @@ why — lives in the commit message that added it. Read the current file for
 the exact list; `git log -p -- .claude/settings.json` for why each entry is
 there. `record_search` is the one non-obvious entry — it is not read-only (stages a sidecar under
 `results/.staging/`, pruned after 24h — `results-staging.ts`), kept because
-the writes stay in the tool's own scratch directory, a decision recorded in
-its `permissions.allow` description rather than left silent.
+the writes stay in the tool's own scratch directory — a decision that lives
+in the adding commit, since the entry itself is a bare string. The adding
+commit calls `record_search` read-only; that is the thing this paragraph
+corrects.
 
 ### 3.6 The lane rule — classify a finding before you edit prose
 
