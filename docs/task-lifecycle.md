@@ -257,10 +257,18 @@ branch.
 
 Keep PRs small. A forty-file PR turns both review steps into rubber stamps.
 
-### 9. Peer review, then senior review — on the paths that need it
+### 9. Review your own diff, then senior review — on the paths that need it
 
-Peer review is another developer, and it is now **sufficient to merge** on
-files no rule in [`.github/CODEOWNERS`](../.github/CODEOWNERS) claims.
+**Round one is yours.** Before asking anyone else to look, read your own diff
+file by file and leave a review on your own PR (Files changed → Review changes
+→ Comment) saying what you found, or that you found nothing. GitHub refuses an
+author's *Approve* on their own PR, so it must be a Comment review — and
+`senior-queue.yml` will not surface the PR to a senior until it exists.
+
+This replaced the junior peer review on 2026-09-16. **One approval is required
+now, not two**, so on files no rule in
+[`.github/CODEOWNERS`](../.github/CODEOWNERS) claims, a single approval from any
+developer merges it — and nobody else is coming to catch what you skip.
 Senior review is a member of either senior team, or the lead, and branch
 protection requires one on code and infrastructure file types —
 `.ts`/`.tsx`/`.js`/`.mjs`/`.cjs`/`.py`/`.json`/`.yml`/`.yaml`, repo-wide —
@@ -280,7 +288,7 @@ time a senior looks at a PR everything mechanical should be settled, so their
 time goes to whether the approach is right.
 
 **A ready PR shows a `ready-for-senior-*` label.** `senior-queue.yml` adds it
-once CI is green, a peer has approved, and no review thread is outstanding —
+once CI is green, the author has self-reviewed, and no review thread is outstanding —
 `ready-for-senior-developer` or `ready-for-senior-genealogist`, whichever team
 owns the changed paths. It is on the PR list itself, so a senior scanning
 `is:open is:pr` sees what is waiting for them without filtering for it. Saying
@@ -370,9 +378,9 @@ Three rules can each hold a green, approved PR. Check them in this order:
 
 - **An unresolved conversation.** Every review thread must be marked resolved.
   Resolve the ones you answered; the reviewer resolves the ones they raised.
-- **No senior has approved yet.** On the paths `.github/CODEOWNERS` claims, one
-  of the two approvals must come from a senior team — either one. Four approvals
-  from four juniors is still zero against that rule.
+- **No senior has approved yet.** On the paths `.github/CODEOWNERS` claims, the
+  single required approval must come from a senior team — either one. Any number
+  of junior approvals is still zero against that rule.
 - **A review request left over from an older CODEOWNERS.** Owners are computed
   when the PR opens; editing `.github/CODEOWNERS` later never re-runs against an
   open PR, and GitHub never withdraws a request it has already made. So a PR can
