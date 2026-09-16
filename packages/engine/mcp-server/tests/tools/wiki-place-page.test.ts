@@ -24,7 +24,9 @@ vi.mock("../../src/auth/config.js", () => ({
   getWikiApiUrl: mockGetWikiApiUrl,
 }));
 
-import { wikiPlacePageTool } from "../../src/tools/wiki-place-page.js";
+import { wikiPlacePageTool, wikiPlacePageSchema } from "../../src/tools/wiki-place-page.js";
+import { WIKI_PAGE_SECTIONS } from "../../src/types/wikiPage.js";
+import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 
 const API_BASE = "http://localhost:8000";
 
@@ -234,5 +236,37 @@ describe("wikiPlacePageTool — shared behaviour", () => {
     expect(result.standardPlace).toBe("Portugal");
     expect(result.placeName).toBe("Portugal");
     expect(result.content).toBe("# Portugal");
+  });
+});
+
+// #1270 — `section` is the `locality_page_section` closed enum. The engine
+// keeps one hand-written literal copy (WIKI_PAGE_SECTIONS, so WikiPageSection
+// stays a literal union and candidateSlugsFor's switch stays exhaustive); these
+// bind it and the advertised input schema to the validator's set, both ways.
+describe("wikiPlacePageTool — section is the locality_page_section enum (#1270)", () => {
+  it("WIKI_PAGE_SECTIONS matches the locality_page_section enum", () => {
+    expect(new Set(WIKI_PAGE_SECTIONS)).toEqual(VALIDATOR_ENUMS.locality_page_section);
+  });
+
+  it("the advertised input schema enum is the validator's set", () => {
+    expect(new Set(wikiPlacePageSchema.inputSchema.properties.section.enum)).toEqual(
+      VALIDATOR_ENUMS.locality_page_section
+    );
+  });
+
+  it("rejects a missing section before any network call, naming every valid value", async () => {
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Portugal" } as any, LOCAL)
+    ).rejects.toThrow(
+      "section is required and must be one of 'home', 'getting_started', 'online_records', 'research_tips'."
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects an out-of-set section before any network call (was a TypeError from candidateSlugsFor)", async () => {
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Portugal", section: "typo" } as any, LOCAL)
+    ).rejects.toThrow(/section is required and must be one of/);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });
