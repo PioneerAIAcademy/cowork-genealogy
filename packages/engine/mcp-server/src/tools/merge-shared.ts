@@ -86,11 +86,10 @@ export async function readProjectJson(
 /**
  * Strip the parts of a candidate document that are legal in tool output
  * (`record_read`'s `gedcomx`, `toSimplified` results) but not in the persisted
- * tree format: top-level `places[]` (the tree carries places as names on
- * facts) and person-level `sources[]` (tree source references hang off
- * names/facts/relationships). Returns a cleaned deep copy plus one warning
- * per stripped kind — the input is never mutated, and a candidate that
- * carries these must not be rejected for it.
+ * tree format: top-level `places[]`, person-level `sources[]`, and the
+ * record-only fields `principal`, `resource_type`, and `coverage`. Returns a
+ * cleaned deep copy plus one warning per stripped kind — the input is never
+ * mutated, and a candidate that carries these must not be rejected for it.
  */
 export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
   candidate: SimplifiedGedcomX;

@@ -16,7 +16,7 @@ describe("sanitizeCandidate — record-only field stripping", () => {
           title: "Some Record",
           coverage: {
             standard_place: "Utah, United States",
-            place_id: "place-123",
+            place_rep_id: "place-123",
             date_range: "+1850/+1860",
             record_type: "Census",
           },

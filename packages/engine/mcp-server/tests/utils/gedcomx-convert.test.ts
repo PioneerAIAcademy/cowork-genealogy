@@ -1483,7 +1483,7 @@ describe("gedcomx-convert — source description coverage and resource_type", ()
     const sd = simplified.sources?.[0];
     expect(sd?.resource_type).toBe("DigitalArtifact");
     expect(sd?.coverage).toEqual({
-      place_id: "12345",
+      place_rep_id: "12345",
       date_range: "1850/1860",
       record_type: "Census",
     });
@@ -1548,12 +1548,19 @@ describe("gedcomx-convert — person principal field", () => {
       persons: [
         {
           id: "P1",
+          principal: false,
           gender: { type: "http://gedcomx.org/Female" },
           names: [{ nameForms: [{ fullText: "Jane Doe" }] }],
+        },
+        {
+          id: "P2",
+          gender: { type: "http://gedcomx.org/Male" },
+          names: [{ nameForms: [{ fullText: "John Doe" }] }],
         },
       ],
     };
     const simplified = toSimplified(raw);
     expect(simplified.persons?.[0]?.principal).toBeUndefined();
+    expect(simplified.persons?.[1]?.principal).toBeUndefined();
   });
 });

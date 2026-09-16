@@ -220,16 +220,16 @@ async function readFromSidecar(
   return match.gedcomx as SimplifiedGedcomX;
 }
 
-// Best-effort: resolve coverage place_id → standard_place on any source
+// Best-effort: resolve coverage place_rep_id → standard_place on any source
 // description that carries one. Network already happens in this function
 // (the recapi fetch above), so the cost is incremental. Never throws —
 // an unresolvable id leaves standard_place absent rather than failing the read.
 async function resolveCoveragePlaces(doc: SimplifiedGedcomX): Promise<void> {
   for (const sd of doc.sources ?? []) {
-    if (!sd.coverage?.place_id) continue;
+    if (!sd.coverage?.place_rep_id) continue;
     try {
-      const place = await getPlaceById(sd.coverage.place_id);
-      if (place?.name) sd.coverage.standard_place = place.name;
+      const place = await getPlaceById(sd.coverage.place_rep_id);
+      if (place?.fullName) sd.coverage.standard_place = place.fullName;
     } catch {
       // best-effort — leave standard_place absent
     }

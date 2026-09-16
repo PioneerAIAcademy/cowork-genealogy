@@ -543,7 +543,7 @@ describe("#2367 resolveCoveragePlaces", () => {
     mockedGetPlaceById.mockReset();
   });
 
-  it("resolves coverage place_id to standard_place on a live read", async () => {
+  it("resolves coverage place_rep_id to standard_place on a live read", async () => {
     mockedGetPlaceById.mockResolvedValueOnce({
       placeRepId: "12345",
       name: "Talladega",
@@ -554,7 +554,7 @@ describe("#2367 resolveCoveragePlaces", () => {
     const out = await recordReadTool({ recordId: "P1" }, LOCAL);
     expect(mockedGetPlaceById).toHaveBeenCalledWith("12345");
     const sd = out.sources?.find((s: any) => s.coverage);
-    expect(sd?.coverage?.standard_place).toBe("Talladega");
+    expect(sd?.coverage?.standard_place).toBe("Talladega, Alabama, United States");
   });
 
   it("leaves standard_place absent when getPlaceById returns null", async () => {

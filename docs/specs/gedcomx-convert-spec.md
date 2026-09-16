@@ -551,7 +551,7 @@ format as `resource_type` and `coverage`:
   source descriptions a persona returns.
 
 - **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
-  `DigitalArtifact` entries: `place_id` (from `spatial.description`, resolvable
+  `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
   via `getPlaceById`; `record_read` resolves it to `standard_place`),
   `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
@@ -574,19 +574,19 @@ The raw GedcomX persons from FamilySearch carry role information:
 
 - **`principal`** — boolean marking the record's principal subject, now carried
   through `toSimplified` onto `SimplifiedPerson.principal`. Present on
-  **100% of both endpoints** (50/50 recapi, 2655/2655 search).
+  **100% of both endpoints** (50/50 recapi, 2,655/2,655 search).
   `sanitizeCandidate` strips it before a merge write; the tree validator
   rejects it on tree persons (`TREE_PERSON_FIELDS` does not include it).
 
 - **`display.role`** — the persona's role on the record (`"Principal"`,
   `"Father"`, `"Mother"`, `"Spouse"`, `"Other"`). Present on **100% of search
-  personas** (2655/2655 across 3 collections) but **0% of recapi personas**
+  personas** (2,655/2,655 across 3 collections) but **0% of recapi personas**
   (0/50). The search endpoint populates it; the recapi persona endpoint does not.
   `record_search` surfaces it as a flat `role` field on each result (survives
   the staged slim block). Not on `SimplifiedPerson` — it is search-only.
 
   Measured 2026-09-14, `npx tsx dev/probe-persona-role-coverage.ts`,
-  n=50 recapi personas + 2655 search personas across 3 search pools.
+  n=50 recapi personas + 2,655 search personas across 3 search pools.
 
 ### 12. Place descriptions
 

@@ -187,7 +187,7 @@ export interface SimplifiedSourceDescription {
 
 export interface SimplifiedCoverage {
   standard_place?: string;
-  place_id?: string;
+  place_rep_id?: string;
   date_range?: string;
   record_type?: string;
 }

@@ -428,7 +428,7 @@ function simplifySourceDescription(
     if (cov.spatial?.description) {
       const placeIdMatch = cov.spatial.description.match(/(\d+)$/);
       if (placeIdMatch) {
-        simplified.place_id = placeIdMatch[1];
+        simplified.place_rep_id = placeIdMatch[1];
         hasCoverage = true;
       }
     }
