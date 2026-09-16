@@ -251,14 +251,6 @@
       "comment": "Correctly identifies the vehicle as summary and judges the fit rather than re-choosing a form."
     },
     {
-      "test_id": "ut_proof_conclusion_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Tree encoding",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "The judge's rationale ends \"Score null is appropriate\" and the recorded score is 3. The rationale is right and the score contradicts it: this is review mode, the skill wrote no conclusion — verified, file_changes is empty with zero tree calls — so there is nothing of the skill's to encode. A 3 asserts the encoding was graded and passed, which credits the skill for the fixture's pre-existing tree. Correcting to N/A, matching the judge's own reasoning and every other review-mode run."
-    },
-    {
       "test_id": "ut_proof_conclusion_r7k",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -457,6 +449,14 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": "Verified: zero tree_edit/tree_correct calls, tree.gedcomx.json absent from file_changes. At not_proved nothing may be encoded. Legitimate null."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "The judge's rationale ends \"Score null is appropriate\" and the recorded score is 3. The rationale is right and the score contradicts it: this is review mode, the skill wrote no conclusion — verified, file_changes is empty with zero tree calls — so there is nothing of the skill's to encode. A 3 asserts the encoding was graded and passed, which credits the skill for the fixture's pre-existing tree. Correcting to N/A, matching the judge's own reasoning and every other review-mode run."
     }
   ]
 }
