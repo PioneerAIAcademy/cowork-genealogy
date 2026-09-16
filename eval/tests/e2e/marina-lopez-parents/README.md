@@ -59,8 +59,11 @@ same **cédula 159 serie 13**, a birth year of **1902**, and his spouse as
 marriage register to FamilySearch's own index of the death act, so it does not
 depend on any machine transcription. The tree's compound surname corroborates
 it independently: a Dominican surname is father's + mother's, so *Pichardo
-Chalas* requires a Chalas mother. Born 1902, he is 33–34 across 1935–37, which
-fits the act's "treintaitres años"; in 1927 he would have been 24.
+Chalas* requires a Chalas mother. On the age: a man born 8 Dec 1902 is **34** on
+7 October 1937, and the act states **33** — one year of slop, which is ordinary
+for a stated age in these registers. Under the indexed 1927 the same 33 misses
+by **nine**: he would have been 24. The age does not confirm 1937 so much as it
+rules out 1927.
 
 **Name-variant caveat, deliberately left in.** The bride's given name on the
 register is written ambiguously and reads as *Manna* about as readily as
