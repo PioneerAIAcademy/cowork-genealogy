@@ -1180,6 +1180,82 @@ describe("tree_forget", () => {
     expect(await exists(RESTORE_FILE)).toBe(false);
   });
 
+  // ─── plan-phase gate (#1357) ────────────────────────────────────────────────
+
+  const researchWithPlan = {
+    ...minimalResearch,
+    plans: [
+      {
+        id: "pl_001",
+        question_id: "q_001",
+        status: "active",
+        items: [{ id: "pi_001", action: "search", description: "Test", status: "pending" }],
+      },
+    ],
+  };
+
+  it("refuses when research.json already has a plan", async () => {
+    await writeProject(family(), researchWithPlan);
+    const before = await readTree();
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/already has a plan/);
+    // Nothing written — not the tree, not the restore file.
+    expect(await readTree()).toEqual(before);
+    expect(await exists(RESTORE_FILE)).toBe(false);
+  });
+
+  it("refuses dryRun too when a plan exists", async () => {
+    await writeProject(family(), researchWithPlan);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+      dryRun: true,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/already has a plan/);
+  });
+
+  it("refuses even when the only plan is completed (not active)", async () => {
+    const researchWithCompletedPlan = {
+      ...minimalResearch,
+      plans: [
+        {
+          id: "pl_002",
+          question_id: "q_001",
+          status: "completed",
+          items: [{ id: "pi_001", action: "search", description: "Test", status: "completed" }],
+        },
+      ],
+    };
+    await writeProject(family(), researchWithCompletedPlan);
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/already has a plan/);
+  });
+
+  it("allows forgetting when plans is empty", async () => {
+    await writeProject(family(), { ...minimalResearch, plans: [] });
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "birth-of", personId: "I1" }],
+      dryRun: true,
+    });
+    expect(r.ok).toBe(true);
+  });
+
   // ─── date-range selectors: facts-before / facts-after / facts-between ─────
   // (#1574's date-range half.) `standard_date` is set directly in these
   // fixtures rather than relying on the free-text `date` parser — these
