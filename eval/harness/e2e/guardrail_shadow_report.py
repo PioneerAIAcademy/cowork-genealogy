@@ -1091,11 +1091,10 @@ _FEEDBACK_WINDOW = 40  # == GUARDRAIL_SHADOW_WINDOW; count barely moves 10..150.
 #     recorded as `is_error: true`, which the detector skips. Both routes closed,
 #     so 0 there is not evidence of anything.
 #
-# "MAY" is load-bearing: a sandbox keeps the image it was created from, so a
-# session that spans a deploy runs the older one
-# — so a post-split bundle can still have run a pre-split
-# plugin. The label on that side is therefore "plugin era unknown", never a
-# clean cutoff.
+# "MAY" is load-bearing: bundles in this window (2026-08-05 to 2026-08-20) were
+# collected when a deploy did not build the sandbox image at all (#1489), so a
+# post-split bundle can still have run a pre-split plugin. The label on that side
+# is therefore "plugin era unknown", never a clean cutoff.
 _AGENT_SPLIT_DATES = {
     # bare agent name -> (ISO date the skill/agent split merged, what it owns)
     "proof-conclusion": ("2026-08-21", "proof_summaries"),  # 73b3d98e (#1819)
@@ -1584,9 +1583,8 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             f"unanchorable or undecodable, in which case the file exists and the "
             f"per-bundle row names it — so 0 there is NOT evidence in either "
             f"case. 'May' "
-            f"because a sandbox keeps the image it was created from, so a "
-            f"session spanning a deploy runs the older one and the era is "
-            f"unknown, not post-split."
+            f"because these bundles were collected when a deploy did not build "
+            f"the sandbox image, so the era is unknown, not post-split."
         )
     overruns = sum(r.get("window_overruns") or 0 for r in results)
     lines.append(

@@ -136,11 +136,13 @@ as files on connect (sandbox-provider design decision #2):
 `wiki_search`, `wiki_read` and `wiki_place_page` are **all** HTTP clients of the
 hosted `wiki-query-api` (CLAUDE.md, "External service dependencies"); the
 pre-crawled markdown corpus lives on that server, not in this image. E2B egress
-is open, so they reach it from the sandbox. The control plane writes `wikiApiUrl`
-into each sandbox's `config.json` (`fs_oauth.hosted_config()`); the engine's
-compiled-in fallback is one developer's tailnet host, not a public deployment,
-so a hosted session depends on that value being written rather than on the
-default being reachable (CLAUDE.md, "External service dependencies").
+is open, so nothing blocks them at the network layer. What is not settled is the
+address: `fs_oauth.hosted_config()` writes `wikiApiUrl` into each sandbox's
+`config.json` ONLY when `WIKI_API_URL` is set on the control plane, and
+`deploy/fly.toml` does not set it today, so a hosted session currently runs on the
+engine's compiled-in `DEFAULT_WIKI_API_URL`. That names one developer's tailnet
+host rather than a public deployment (CLAUDE.md, "External service dependencies"),
+so these tools work from a hosted sandbox only while that host is reachable.
 
 This section previously described baking a local corpus that `wiki_read` and
 `wiki_place_page` read from disk via a `wikiMarkdownDir` config key. **That code

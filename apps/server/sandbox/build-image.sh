@@ -109,8 +109,25 @@ _commit="$(git rev-parse HEAD 2>/dev/null)" || _commit=""
 case "${_commit}" in
   "" | *[!0-9a-f]*) _commit="dev" ;;
 esac
+# SCOPED, deliberately. An unscoped `git status --porcelain` reports every
+# untracked file in the repo, so a stray `.vscode/` (not gitignored) would mark
+# EVERY build dirty from a directory that appears in no COPY and cannot reach the
+# image. A marker that is always on carries no more signal than one that is never
+# on, and the real dirty build then slips past unnoticed.
+#
+# The list is what actually enters the image: the paths e2b.Dockerfile COPYs,
+# plus mcp-server/src, because phase 1 compiles it into the build/ that IS copied
+# and build/ is itself gitignored so git cannot see it.
+_IMAGE_SOURCES=(
+  apps/server/app
+  packages/engine/mcp-server/src
+  packages/engine/mcp-server/config
+  packages/engine/mcp-server/package.json
+  packages/engine/mcp-server/package-lock.json
+  packages/engine/plugin
+)
 _dirty=false
-if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then
+if [[ -n "$(git status --porcelain -- "${_IMAGE_SOURCES[@]}" 2>/dev/null || true)" ]]; then
   _dirty=true
 fi
 
@@ -124,7 +141,7 @@ fi
 # The dirty flag is not decoration. The image is built from the WORKING TREE, so
 # `git rev-parse HEAD` names a commit that may not be what was baked; a clean sha
 # claimed for an image built over uncommitted skill edits is worse than no sha.
-# Both values were captured above, before phase 1 could touch the tree.
+# Both values were captured above, after phase 1, for the reason given there.
 #
 # KEEP THE KEY NAMES IN SYNC with the reader: `commit` and `dirty` are what
 # E2BProvider._refresh_image_commit looks for, and

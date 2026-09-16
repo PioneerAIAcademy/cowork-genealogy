@@ -137,7 +137,7 @@ Notes for the reviewer:
   `agent_runner`. (No wiki corpus: the wiki tools are HTTP clients of the hosted
   wiki-query-api, so nothing wiki-related is baked.) The control-plane container
   does not run the agent, so the template is the gate on real turns, not this
-  image. (`E2BProvider` itself is still a stub — see Caveats.)
+  image.
 - An Anthropic operator key (`ANTHROPIC_API_KEY`).
 - A FamilySearch web dev key whose **redirect URI is registered against the
   public Fly hostname** as `https://<public-host>/callback` (see "OAuth redirect"

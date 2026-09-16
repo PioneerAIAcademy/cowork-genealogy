@@ -1878,9 +1878,9 @@ this section before reopening one.
   the one that anchored reports a 0 resting on the one that did not. Every bundle collected before this landed (2026-08-05 onward;
   newest 2026-08-20) is on the second side of both dates. Otherwise the arm is
   `unknown`: the write may have happened inside an agent whose transcript is
-  not here. "May", not "was" — a sandbox keeps the image it was created from, so a
-  session that spans a deploy runs the older one and a post-split bundle can still have
-  run a pre-split plugin. An undated bundle takes the same label rather than
+  not here. "May", not "was" — the bundles in this window were collected when a
+  deploy did not build the sandbox image at all, so a post-split bundle can still
+  have run a pre-split plugin. An undated bundle takes the same label rather than
   being assumed live, and **any** bundle whose `feedback.json` names a
   `dropped_transcripts` entry holds every arm at `unknown` — a count read from
   what is present cannot account for a file the producer had to leave out.

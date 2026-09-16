@@ -132,15 +132,23 @@ def test_the_build_script_writes_a_gitignored_path():
     assert source in [line.strip() for line in ignore]
 
 
-def test_the_dirty_flag_is_written_as_a_json_boolean():
-    """`_refresh_image_commit` tests `info.get("dirty") is True`, so the writer has
-    to emit the JSON literals, not shell-ish 1/0 or "yes"/"no".
+def test_the_dirty_flag_is_computed_scoped_and_written_as_a_json_boolean():
+    """Three things, because the first version of this test asserted only the last
+    one and so could not fail.
 
-    The sibling test in test_e2b_provider.py runs the shipped `printf` with values
-    it injects itself, so it pins the KEY names but cannot see how `_dirty` is
-    COMPUTED. Getting that wrong is the silent failure: a dirty build would report
-    a bare clean sha with no log line at all."""
+    `_refresh_image_commit` tests `info.get("dirty") is True`, so the writer has to
+    emit JSON literals rather than shell-ish 1/0. That is necessary and not
+    sufficient: deleting the computation outright leaves `_dirty=false` behind,
+    which is still a JSON boolean, so the old assertion passed while every dirty
+    build silently reported clean. That is the exact outcome the docstring claimed
+    to prevent.
+
+    So this also asserts the computation is PRESENT, and that it is SCOPED. An
+    unscoped `git status --porcelain` reports untracked files anywhere in the repo,
+    so a stray `.vscode/` marks every build dirty and the marker stops meaning
+    anything. The scope must name paths that actually reach the image."""
     script = BUILD_SCRIPT.read_text(encoding="utf-8")
+
     assigned = set(re.findall(r"^\s*_dirty=(\S+)\s*$", script, re.M))
     assert assigned, "build-image.sh no longer assigns _dirty"
     assert assigned <= {"false", "true"}, (
@@ -148,3 +156,25 @@ def test_the_dirty_flag_is_written_as_a_json_boolean():
         f"compares with `is True` after json.loads, so anything else silently drops "
         f"the dirty marker."
     )
+
+    # Non-comment lines only. The block above this one DISCUSSES
+    # `git status --porcelain` in prose, and matching that would let the real
+    # command be deleted while the test kept passing on the explanation of it.
+    cmd_lines = [
+        ln for ln in script.splitlines()
+        if "git status --porcelain" in ln and not ln.lstrip().startswith("#")
+    ]
+    assert cmd_lines, (
+        "build-image.sh no longer computes the dirty flag at all. Every build would "
+        "report clean, which is the failure this flag exists to prevent."
+    )
+    assert any("--" in ln.split("--porcelain", 1)[1] for ln in cmd_lines), (
+        "the dirty check is UNSCOPED. `git status --porcelain` with no pathspec "
+        "reports untracked files anywhere in the repo, so an editor directory marks "
+        "every build dirty. Pass `-- <paths that reach the image>`."
+    )
+    for required in ("apps/server/app", "packages/engine/plugin",
+                     "packages/engine/mcp-server/src"):
+        assert required in script, (
+            f"{required} reaches the image but is not in the dirty check's scope"
+        )
