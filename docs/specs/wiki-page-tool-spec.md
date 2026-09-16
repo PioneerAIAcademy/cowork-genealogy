@@ -87,8 +87,9 @@ Behavior:
 
 ### `wiki_place_page` (`src/tools/wiki-place-page.ts`)
 
-Input + behavior unchanged from the caller's perspective; only the
-internal `tryNames`/`tryReadFile` is rewritten:
+Input + behavior unchanged from the caller's perspective, except that a
+missing or out-of-set `section` is rejected before any network call (error
+table below); only the internal `tryNames`/`tryReadFile` is rewritten:
 
 1. For each candidate slug (from the section + name-variant
    enumeration that already exists), `GET /page/{slug}`.
@@ -117,6 +118,7 @@ place-resolver fallback to `getPlaceCandidateNames`, and the
 | Network failure | Throw: `Could not reach wiki-query-api at {url}. Is the server running?` |
 | 404 (`wiki_read`) | Throw: `No wiki page found for "<slug>". The page may not exist in the corpus.` |
 | 404 on every candidate (`wiki_place_page`) | Throw: `No wiki page found for "<standardPlace>".` |
+| Missing or out-of-set `section` (`wiki_place_page`) | Throw, before any network call: `section is required and must be one of 'home', 'getting_started', 'online_records', 'research_tips'.` — the values come from `VALIDATOR_ENUMS.locality_page_section`, the same set the input schema advertises and `validate_research_schema` enforces on `pages_read[].section` |
 
 ---
 

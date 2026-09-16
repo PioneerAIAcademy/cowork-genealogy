@@ -109,14 +109,13 @@ flagged. (One row below is the exception, and says so.)
 | `evaluation_focus` | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | evaluations (Section 5.12). Note the hyphens — this is the one enum in the file that does not use underscores |
 | `evaluation_target_type` | `question`, `proof_summary`, `project` | evaluations |
 | `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
-| `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. **The one closed enum `validate_research_schema` does not check**: it does not descend into a locality's nested objects, so a misspelled section reaches disk and only the JSON Schema catches it |
+| `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. `validate_research_schema` checks it at every `pages_read[]` item — the one place it descends into a locality's nested objects; the items' required and stray keys are still not deep-checked at the writer |
 
-**Where these live in the machine-readable schemas.** All but one are defined in
-`enums.schema.json` and `$ref`'d from `research.schema.json`. The sole exception
-is `locality_page_section` (the last row above), still declared inline in the
-research schema: its `pages_read[].section` enum is bound to no validator check,
-and lifting it would change what the writer tools reject, so it waits on its own
-change. Removing or renaming any closed-enum value additionally requires
+**Where these live in the machine-readable schemas.** All of them are defined in
+`enums.schema.json` and `$ref`'d from `research.schema.json` — none is declared
+inline in the research schema (`locality_page_section`, the last row above, was
+the last to move), and `enum-drift.test.ts` fails on any inline `enum` array
+that reappears there. Removing or renaming any closed-enum value additionally requires
 a repo-wide grep for the old value — the drift lint checks the full value *list*,
 which catches an addition, but a renamed or dropped value can leave a stale
 single-value mention in prose that no lint sees. The blast radius of a
@@ -147,7 +146,7 @@ The following are **open enums** — recommended values that skills should prefe
 | `record_role` | See naming convention below | assertions |
 | `repository` | `FamilySearch`, `Ancestry`, `MyHeritage`, `FindMyPast`, `NARA`, `state_archives`, `county_courthouse`, `other` | plan items, sources. Use the same spelling between plans and sources so searches can match plan items to their resulting sources. |
 
-**`record_role` naming convention:** Use lowercase_with_underscores. Numbered roles use the pattern `{role}_{n}` (e.g., `child_1`, `child_2`, `heir_1`). Standard roles: `head_of_household`, `wife`, `child_{n}`, `deceased`, `informant`, `father_of_bride`, `mother_of_bride`, `father_of_groom`, `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_{n}`, `witness_{n}`, `godparent_{n}`, `absent` (for negative evidence — a person expected but not found in the record).
+**`record_role` naming convention:** Use lowercase_with_underscores. Numbered roles use the pattern `{role}_{n}` (e.g., `child_1`, `child_2`, `heir_1`). Standard roles: `head_of_household`, `wife`, `child_{n}`, `deceased`, `informant`, `father_of_bride`, `mother_of_bride`, `father_of_groom`, `mother_of_groom`, `grantee`, `grantor`, `testator`, `heir_{n}`, `witness_{n}`, `godparent_{n}`, `absent` (for negative evidence — a person expected but not found in the record). **Enforced:** `evidence_type: "negative"` requires exactly `absent` here (validator, both schema trees, and `research_append`); the converse, `absent` reserved for negative evidence, is enforced **by `research_append` only** (see "Negative evidence" below).
 
 ---
 
@@ -517,14 +516,18 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 
 **Extraction policy:** Extract all facts that are relevant to any open research question, plus identifying facts (name, age, birthplace) for every person in the record who might be the subject or a FAN associate. Do not extract every field from every household member — e.g., the occupation or school attendance of an unrelated neighbor is not useful unless a question specifically targets it. The `extracted_for_question_ids` field tracks relevance; assertions extracted opportunistically (bearing on questions not yet asked) use an empty array and will be linked to questions later.
 
-**Negative evidence (the "dog not barking"):** When the absence of information is itself a finding — e.g., "Patrick is absent from the 1870 census where he should appear" — this is an analytical inference drawn from a negative log entry. It is recorded as an assertion with `evidence_type: "negative"`. The `record_id` references the record that was searched (e.g., the 1870 census for Schuylkill County), `record_role` is `"absent"`, and `value` describes the expected-but-missing information. The `source_id` references the source that was searched. This distinguishes a negative log entry (just "nil results") from a negative assertion (the analytical conclusion that the absence is meaningful).
+**Negative evidence (the "dog not barking"):** When the absence of information is itself a finding — e.g., "Patrick is absent from the 1870 census where he should appear" — this is an analytical inference drawn from a negative log entry. It is recorded as an assertion with `evidence_type: "negative"`. The `record_id` references the record that was searched (e.g., the 1870 census for Schuylkill County), `record_role` is `"absent"`, `informant_proximity` is `"researcher"`, and `value` describes the expected-but-missing information. The `source_id` references the source that was searched. This distinguishes a negative log entry (just "nil results") from a negative assertion (the analytical conclusion that the absence is meaningful).
+
+**Two fields follow mechanically from `evidence_type: "negative"`, and both are enforced.** `record_role` is the literal `"absent"`, *and* `informant_proximity` is `"researcher"` — the absence is the researcher's own conclusion; no record informant reported one, whatever the record type, so the `witness`/`household_member` proximities never apply to a negative. Neither is a second judgment call, so the validator, both JSON Schema trees and `research_append` reject the pairing rather than coercing it. Two corollaries worth stating because both are observed mistakes: a fact the record **states** is `direct`, not `negative` (a groom recorded as "single" is a stated marital status, not an absence); and a blank field on a person who **is** present is silence, producing no assertion at all. `informant` is deliberately left unconstrained — it is free text.
+
+The rule is enforced in the forward direction only. `record_role: "absent"` paired with a non-negative `evidence_type` is rejected by `research_append` but not by the validator or the schema, because every `absent` assertion in the corpus is already negative and the converse is an unexercised branch; a writer-tool precondition may be stricter than the integrity tier.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Assertion ID (`a_` prefix) |
 | `source_id` | string | yes | `src_` reference to the source this was extracted from |
 | `record_id` | string | yes | The record identifier (e.g., FamilySearch record ARK, Ancestry record ID, or a descriptive ID for captures) |
-| `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`) |
+| `record_role` | string | yes | The role of the person within the record (e.g., `head_of_household`, `wife`, `child_1`, `deceased`, `father_of_bride`, `grantee`, `testator`, `heir_1`, `informant`). **Enforced:** `evidence_type: "negative"` requires exactly `absent` (validator, both schema trees, and `research_append`); the converse is enforced by `research_append` only. See "Negative evidence" below |
 | `record_persona_id` | string or null | no | The GedcomX person `id`, within this assertion's log-entry sidecar payload, that this assertion's persona corresponds to. Lets `same_person` receive the right focus person. `research_append` enforces it from the log entry's sidecar (D2 matrix, research-append spec §3.5): auto-filled with the matched result's `primaryId` for the focus role, verified when supplied. Null for FTS-, image-, PDF-, and `record_read`-sourced assertions; supplying a value is a hard error — `fulltext_search` and `external_links_search` do stage a sidecar, but its results carry no GedcomX personas, and image/PDF/`record_read` stage none at all. A null value records that no sidecar was retained; it does **not** mean the pair cannot be scored — `same_person` takes two GedcomX documents and a focus id inside each, and never reads this field. |
 | `fact_type` | string | yes | The type of fact: `name`, `sex`, `race`, `age`, `birth`, `christening`, `marriage`, `death`, `cause_of_death`, `duration_of_illness`, `burial`, `residence`, `occupation`, `immigration`, `emigration`, `military_service`, `religion`, `relationship`, `property`, `education`, `other`. An event's **place and date are attributes** of the event fact (`place`/`date` fields), not their own types — a birthplace is `birth` with `place` set, a place of death is `death` with `place` set (no `birthplace`/`deathplace` type; matches the tree + GedcomX). When place and date share one classification they ride one assertion; when they differ (census: stated birthplace `direct`, computed birth year `indirect`) they are two assertions of the same `fact_type`, distinguished by which of `place`/`date` is set. The MCP writer folds a stray `birthplace`/`deathplace` variant into the event type and lifts its place into `place` (research-append spec §3.7). |
 | `value` | string | yes | The extracted value (human-readable) |
@@ -535,9 +538,9 @@ Array of assertion objects. Each assertion is an atomic claim extracted from a r
 | `standard_place` | string or null | no | Standardized place name (the `standardPlace` from `place_search`) for `place`. On assertion appends `research_append` resolves an omitted value itself — sidecar copy first, else geocoding, with a country-contradiction guard (research-append spec §3.6); null if unresolvable or `place` is null; supply `null` explicitly to opt out. |
 | `information_quality` | `information_quality` | yes | Primary, Secondary, or Indeterminate — classified at the assertion level |
 | `informant` | string | yes | Who provided this specific information (e.g., "census enumerator", "attending physician", "son-in-law James Brown", "unknown household member") |
-| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified |
+| `informant_proximity` | string | yes | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, or `unknown` — `researcher` when the value is the researcher's own conclusion (negative evidence, structure-inferred relationships): no record informant exists. `unknown` means a record informant exists but cannot be identified. **Enforced for negative evidence:** `evidence_type: "negative"` requires exactly `researcher` here (see "Negative evidence" above) |
 | `informant_bias_notes` | string or null | no | Notes on potential bias (e.g., "may have misreported age for military eligibility") |
-| `evidence_type` | `evidence_type` | yes | Direct, Indirect, or Negative |
+| `evidence_type` | `evidence_type` | yes | Direct, Indirect, or Negative. **`negative` constrains two sibling fields:** it requires `record_role: "absent"` and `informant_proximity: "researcher"`. See "Negative evidence" below |
 | `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
 
@@ -572,7 +575,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `id` | string | yes | Person-evidence ID (`pe_` prefix) |
 | `assertion_id` | string | yes | `a_` reference to the assertion being linked |
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
-| `confidence` | `person_evidence_confidence` | yes | How confident is this link |
+| `confidence` | `person_evidence_confidence` | yes | How certain we are that this record's role IS the tree person (identity certainty). This is NOT a measure of the source's informant quality (`information_quality`/`informant_proximity`); those fields classify source reliability and belong on the assertion. A single primary-informant source with no corroborating record is `probable` on this scale, not `confident`. |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
 | `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
 | `created` | string | yes | ISO 8601 date |

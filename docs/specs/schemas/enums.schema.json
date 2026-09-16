@@ -286,6 +286,15 @@
         "refused"
       ]
     },
+    "locality_page_section": {
+      "description": "Which FamilySearch Research Wiki place page a locality's pages_read[] entry records (localities section): the jurisdiction's genealogy overview, Getting Started, Online Genealogy Records, or Research Tips and Strategies page.",
+      "enum": [
+        "home",
+        "getting_started",
+        "online_records",
+        "research_tips"
+      ]
+    },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",
       "type": "string",
