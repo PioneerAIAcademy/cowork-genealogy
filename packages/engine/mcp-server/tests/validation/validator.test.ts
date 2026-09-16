@@ -3445,3 +3445,192 @@ describe("stop_criteria type guard (#1834)", () => {
     }
   });
 });
+
+// ── #986: evidence_type "negative" implies record_role "absent" AND
+// informant_proximity "researcher", at the document tier.
+//
+// This tier is what catches a research.json that was never assembled op-by-op
+// through research_append — a scenario fixture, a replay, a hosted import, a
+// hand edit. The committed instance was
+// eval/fixtures/scenarios/flynn-parentage-not-proved a_012.
+describe("negative evidence implies absent + researcher (#986)", () => {
+  // The tree carries S1 so the source's gedcomx_source_description_id
+  // resolves; otherwise every accept-vector fails on an unrelated cross-file
+  // error and stops proving anything about this rule.
+  const tree = {
+    persons: [],
+    relationships: [],
+    sources: [{ id: "S1", title: "Test source" }],
+  };
+
+  function researchWithAssertion(overrides: Record<string, unknown>): any {
+    return {
+      project: {
+        id: "rp_001",
+        objective: "Test project",
+        status: "active",
+        created: "2026-01-01",
+        updated: "2026-01-01",
+      },
+      questions: [], plans: [], log: [],
+      sources: [
+        {
+          id: "src_001",
+          gedcomx_source_description_id: "S1",
+          citation: "Test citation.",
+          repository: "FamilySearch",
+          url: null,
+          source_classification: "original",
+          access_date: "2026-01-01",
+          log_entry_id: null,
+          citation_detail: {
+            who: "w", what: "w", when_created: "1850",
+            when_accessed: "2026-01-01", where: "w", where_within: "w",
+          },
+        },
+      ],
+      assertions: [
+        {
+          id: "a_001",
+          source_id: "src_001",
+          record_id: "rec1",
+          record_role: "absent",
+          fact_type: "birth",
+          value: "1850",
+          information_quality: "primary",
+          informant: "the researcher",
+          informant_proximity: "researcher",
+          evidence_type: "negative",
+          extracted_for_question_ids: [],
+          ...overrides,
+        },
+      ],
+      person_evidence: [], conflicts: [], hypotheses: [],
+      timelines: [], proof_summaries: [], evaluations: [],
+    };
+  }
+
+  const negativeErrors = (r: any) =>
+    r.errors.filter((e: any) => /evidence_type 'negative' requires/.test(e.message));
+
+  it("accepts the correct pairing — absent + researcher", async () => {
+    const result = await validateParsed(researchWithAssertion({}), tree);
+    expect(negativeErrors(result)).toHaveLength(0);
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects a negative whose record_role is a familial role", async () => {
+    // The doctrine's own named counter-example: a person textually present in
+    // the record but absent from among the living is still record_role
+    // "absent", never father_of_deceased/spouse_1. Observed 3x live in
+    // william-ferber-death-1903 with record_role "spouse".
+    const result = await validateParsed(researchWithAssertion({ record_role: "deceased" }), tree);
+    expect(negativeErrors(result)).toHaveLength(1);
+    expect(negativeErrors(result)[0].message).toMatch(/requires record_role 'absent'/);
+  });
+
+  it("rejects a negative whose informant_proximity is not researcher", async () => {
+    // The half nothing guarded anywhere before this change. Observed persisting
+    // with ok:true on 2026-09-10 (ut_record_extraction_029, a_017).
+    const result = await validateParsed(researchWithAssertion({ informant_proximity: "self" }), tree);
+    expect(negativeErrors(result)).toHaveLength(1);
+    expect(negativeErrors(result)[0].message).toMatch(/requires informant_proximity 'researcher'/);
+  });
+
+  it("reports both fields independently when both disagree", async () => {
+    // a_012's shape before the retag: record_role "deceased" AND
+    // informant_proximity "family_not_present".
+    const result = await validateParsed(
+      researchWithAssertion({ record_role: "deceased", informant_proximity: "family_not_present" }),
+      tree,
+    );
+    expect(negativeErrors(result)).toHaveLength(2);
+  });
+
+  it("rejects a wrong-cased 'Absent' — the case this tier alone catches", async () => {
+    // Discriminating HERE and nowhere else: validator.ts applies neither an
+    // enum nor a pattern to record_role, so the schema's
+    // record_role_recommended pattern (^[a-z][a-z0-9_]*$) is what rejects this
+    // at the schema tier. At this tier only the new rule does.
+    const result = await validateParsed(researchWithAssertion({ record_role: "Absent" }), tree);
+    expect(negativeErrors(result)).toHaveLength(1);
+  });
+
+  it("fires alongside checkRequired when record_role is missing entirely", async () => {
+    // No presence guard, deliberately: a missing field must not be a shape
+    // that escapes the rule. Both errors are true, so both are reported.
+    const research = researchWithAssertion({});
+    delete research.assertions[0].record_role;
+    const result = await validateParsed(research, tree);
+    expect(negativeErrors(result)).toHaveLength(1);
+    expect(result.errors.some((e: any) => /record_role/.test(e.message) && /required|missing/i.test(e.message))).toBe(true);
+  });
+
+  it("names the absence test, so the fix is not just 'change this field'", async () => {
+    // Evidence, not taste: in ut_record_extraction_028 a field-naming refusal
+    // bought a relabel — record_role flipped to "absent", the same
+    // blank-field defect re-sent, and accepted.
+    //
+    // The discriminator has to be whether the finding is an ABSENCE, not
+    // whether the record states the fact: record-extractor.md's "preceded in
+    // death by" pattern is a stated fact about a NAMED person that is still
+    // negative evidence, so a message keyed on "the record states it" sends
+    // that whole class the wrong way.
+    const roleMsg = negativeErrors(
+      await validateParsed(researchWithAssertion({ record_role: "deceased" }), tree),
+    )[0].message;
+    expect(roleMsg).toMatch(/even when the record NAMES the person/);
+    expect(roleMsg).toMatch(/change both fields, not/);
+    expect(roleMsg).toMatch(/silence/);
+
+    const proxMsg = negativeErrors(
+      await validateParsed(researchWithAssertion({ informant_proximity: "self" }), tree),
+    )[0].message;
+    expect(proxMsg).toMatch(/holds even when the record names the person/);
+    // Must not prescribe flipping evidence_type alone — research_append's
+    // converse arm refuses that edit.
+    expect(proxMsg).toMatch(/record_role must change with it/);
+  });
+
+  // ── The other direction: legitimate shapes this must still accept.
+
+  it("accepts a plain direct assertion carrying a non-absent role and proximity", async () => {
+    const result = await validateParsed(
+      researchWithAssertion({
+        evidence_type: "direct", record_role: "deceased",
+        informant: "James Brown", informant_proximity: "official_duty",
+      }),
+      tree,
+    );
+    expect(negativeErrors(result)).toHaveLength(0);
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepts the converse — record_role absent with a non-negative evidence_type", async () => {
+    // Forward direction only at this tier. research_append's own precondition
+    // refuses this; a writer-tool precondition may be stricter than the
+    // integrity tier, and every `absent` assertion in the corpus is already
+    // negative, so the converse here would be an unexercised branch.
+    const result = await validateParsed(
+      researchWithAssertion({
+        evidence_type: "direct", informant: "James Brown",
+        informant_proximity: "official_duty",
+      }),
+      tree,
+    );
+    expect(negativeErrors(result)).toHaveLength(0);
+    expect(result.valid).toBe(true);
+  });
+
+  it("accepts an indirect assertion — the rule keys on 'negative' alone", async () => {
+    const result = await validateParsed(
+      researchWithAssertion({
+        evidence_type: "indirect", record_role: "head_of_household",
+        informant: "unknown household member", informant_proximity: "household_member",
+      }),
+      tree,
+    );
+    expect(negativeErrors(result)).toHaveLength(0);
+    expect(result.valid).toBe(true);
+  });
+});

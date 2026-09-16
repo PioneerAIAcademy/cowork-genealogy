@@ -160,6 +160,44 @@ research decisions from the same output. It is the failure shape of an outage
 recorded as an absence: the same one that lets a failed wiki lookup persist as
 "the wiki has no page for this place".
 
+**A merged-away tree person returns this same not-found shape (measured
+2026-09-15).** The 2026-09-10 evidence above used an id that was
+*never* assigned. To test an id FamilySearch *did* assign and later retired,
+the 842 distinct tree PIDs in the committed gedcomx fixtures were swept against
+the tree-persons endpoint (`redirect: manual`); exactly one redirected —
+`KD96-TV5` → survivor `KW66-5VV` (a `301` with a `Location` to a different id is
+FamilySearch's merge signal; `person-read.ts` follows it, and a *delete* would
+be `410`, which did not occur). Querying the match endpoint for
+`ark:/61903/4:1:KD96-TV5` in **both** the `records` and `tree` collections
+returned the identical unresolvable-id shape — `200`, `results: 0`, `entries:
+[]`, a `not-found` link, epoch `updated` — the same as a never-assigned id, not
+a populated match set describing the survivor. So resolution-to-survivor
+(**Outcome B** — the survivor's matches surfacing under the retired `queryArk`)
+was **not observed**. One limit on this run: the survivor `KW66-5VV` is itself
+restricted — `person_read` returns `403`, i.e. it *exists* but is not viewable
+(distinct from a `404`) — and the match endpoint returns the same not-found shape
+for `KW66-5VV` too, so the evidence cannot separate "the match endpoint ignores
+the merge redirect" from "it follows the redirect to a survivor that itself has
+no visible matches." Either way the retired id yields not-found, not the
+survivor's matches. A populated retired-vs-survivor comparison could not be made;
+this rests on the single merged-away candidate the pool yielded (n=1). The pool
+is the tree PIDs in the committed `*.gedcomx.json` fixtures, and its one redirect,
+`KD96-TV5`, was **not** an organic discovery: it is a deliberately-embedded id in
+the `christian-hole-quality` eval fixture, chosen there because it was already
+known to be tombstoned on real FamilySearch. So `1/842` is **not** an
+encounter-rate estimate — it does not establish how often an organic research
+session hits a retired id; it is a property of *this* committed-fixture pool on
+this date, not a general FamilySearch merge rate. This paragraph records what was
+measured; it does not prescribe a behaviour or error-text change.
+
+**The record-persona (`1:1:`) side is NOT ESTABLISHED.** No independent
+retirement/merge oracle exists for a record persona: `person_read` and
+`person_quality` are tree-only, `record_read` distinguishes only found vs `404`
+(a `404` cannot prove an id was ever assigned), and this endpoint's own
+`not-found` link is the artifact under test — so a retired `1:1:` persona cannot
+be told apart from a never-assigned one with the tools available. The tree-person
+result above is therefore not generalised to record personas.
+
 Reproduce with `dev/probe-match-not-found.ts`.
 
 ### What we deliberately don't expose
