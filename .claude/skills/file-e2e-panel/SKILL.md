@@ -122,7 +122,9 @@ Then in Claude Code, in this checkout:
 If it fails, read `narration[]` alongside `tool_calls[]` before blaming a skill —
 guide step 7. Then one PR carrying `run-<ts>.json`, `run-<ts>.ann.json` and both
 `.final-*` siblings. `check_e2e_fixtures.py` blocks a run log that ships without
-its annotation, so the grading is same-PR by construction.
+its annotation, so the grading is same-PR by construction. It also blocks a run
+made with the 1M context window (`usage.betas` non-empty), which is not
+comparable to the corpus.
 
 Close this issue yourself once that PR merges. Nothing closes it for you — the
 sweep below skips assigned issues, and a run-log PR carries no closing keyword.

@@ -373,6 +373,34 @@ probe-agent-binding: $(ENGINE_BUILD) ## Live probe: do an agent's tools:/disallo
 	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
 	  uv run python dev/probe_agent_binding.py
 
+.PHONY: hook-smoke
+hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? (issue #1160; 2 short sessions)
+	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
+	# BINDING -- whether a runtime reads hooks/hooks.json, matches a real tool
+	# call, shells the command and blocks. Nothing else checks that, in any
+	# tier, and the failure is silent: the script's contract is "never raise,
+	# fall through to allowing the call", so a hook that stops binding looks
+	# exactly like a hook with no opinion.
+	#
+	# Provokes a main-thread research_append on proof_summaries -- the arm with
+	# no redundant copy in the hosted path -- clears the SDK-side hook so the
+	# deny is attributable, and requires the guard script's own reason text.
+	# Arm B re-runs the turn with hooks/ removed; if that denies too, the run is
+	# VOID rather than green.
+	#
+	# Answered 2026-09-09 (Claude Code 2.1.258, SDK 0.2.128): the hosted
+	# loader DOES bind it -- arm A denied with the guard's own reason text,
+	# arm B (hooks/ removed) did not. Re-run when the CLI or the SDK moves.
+	#
+	# A pass proves the HOSTED loader binds. Cowork is a different loader,
+	# reachable only by a human in a live session, so issue #1160 stays on the
+	# nothing-checks register either way. Hard-errors without a key rather than
+	# skipping -- agent-smoke's exit-0 skip is how an unrunnable check reads as
+	# a passing one.
+	cd apps/server && \
+	  ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$(grep -E '^ANTHROPIC_API_KEY=' $(EVAL_ENV) | cut -d= -f2-)}" \
+	  uv run python dev/probe_hook_binding.py
+
 .PHONY: probe-p1-resume
 probe-p1-resume: $(ENGINE_BUILD) ## P1 cross-process resume probe (docker postgres + 2 billed turns): make probe-p1-resume VARIANT=clean|mid-delegation|mid-model-call|forced
 	docker start p1-postgres >/dev/null 2>&1 || docker run -d --name p1-postgres -e POSTGRES_PASSWORD=p1 -e POSTGRES_DB=p1 -p 5433:5432 postgres:16-alpine >/dev/null
@@ -620,15 +648,21 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
 	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
 	#   DENY_PROJECT_READS 1                             (default off; P2 — deny Read/Grep/Glob of the project folder)
+	#   CONTEXT_1M         1                             (default off; ask for the 1M context window)
+	#                                                    NOT corpus-comparable: a 1M window changes the compaction count and
+	#                                                    cache-gap structure. Do NOT commit the run under eval/runlogs/e2e/ —
+	#                                                    CI rejects it (check_e2e_fixtures.py). Keep it in a sibling directory.
 	# A/B these to find what clears a runaway-thinking subagent freeze
-	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
+	# (check subagents[].runaway_thinking; if it is empty, read
+	# subagent_capture_status before reading that as 'no runaway').
+	# e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
 	# new person instead of only recording it. For gathering recovery evidence on
 	# ONE fixture: it fires in ~80% of runs that link a person, and a deny-mode
 	# run's `compliance` is not comparable to a shadow run's (the blocked write
 	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
@@ -746,7 +780,8 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	#
 	# For each plugin agent that declares tool X and appears in a run, did it
 	# ever actually call X? Unions two per-agent sources already in the runlog —
-	# `subagents[].turns[].blocks` and (since #1027) `tool_calls[].agent_type` —
+	# `subagents[].turns[].blocks` (empty? check `subagent_capture_status`)
+	# and (since #1027) `tool_calls[].agent_type` —
 	# and diffs the union against each agent's `tools:` frontmatter, bare-named.
 	# `gps-mentor`'s never-called tools are the candidates for #1084's live
 	# binding probe. Windowed to 14 days like every reader; SINCE=all for the

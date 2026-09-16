@@ -18,9 +18,9 @@
 ## Context
 
 Every mechanism this team has for choosing work improves the next step.
-`/audit-board` finds the best handling of the issues that exist, `/fill-ready`
-ranks them, `/review-ready` vets them. All of it is a hill-climber, and a
-hill-climber cannot see a different hill. `/find-big-wins` exists to propose
+`/merge-issues` merges the issues that exist down, `/audit-board` finds the best
+handling of the rest, `/fill-ready` ranks them, `/review-ready` vets them. All of
+it is a hill-climber, and a hill-climber cannot see a different hill. `/find-big-wins` exists to propose
 changing the shape of the system instead, and it needs somewhere to leave what
 it proposed.
 

@@ -183,6 +183,38 @@ against **Acceptance check** and **Didn't change** specifically — a diff that
 touched the thing the author said they left alone is a finding. Informational —
 it never blocks.
 
+**Then read the issue, not only the PR body.** The stated intent is the author's
+own account of scope, so a PR that narrows scope in its first line passes the
+check above trivially. Open the issue and walk its item list — the numbered
+"What to do", any blocks merged in from other cards, and any scope added in a
+comment *after* the body was written. Name every item the diff does not address.
+The finding is never "split this PR" — that is ceremony, and the rule against it
+still holds. It is either finish the remaining items here, or make sure the card
+survives the merge, which is the next check.
+
+**Check what the PR will actually close. It is not what the body says.**
+
+```sh
+gh pr view $PR --repo $R --json closingIssuesReferences --jq '[.closingIssuesReferences[].number]'
+```
+
+Both directions block, unlike the intent check above. A PR that closes an issue
+it only partly implements loses the remainder silently. Raising it on PR #2397 —
+six of issue #1980's twenty launch-scope domains untemplated — is what produced
+the lead's 2026-09-15 ruling that the six were rightly out of scope. Ask even
+when the answer comes back fine. A PR that finishes its issue and links nothing
+leaves the card to be closed by hand, which is easy to forget once the branch is
+gone.
+
+**Removing the keyword does not remove an established link.** GitHub records one
+as a `ConnectedEvent` that survives body edits, and no API deletes it — the
+GraphQL schema offers `deleteLinkedBranch` and no issue equivalent. It comes off
+only in the PR's Development sidebar. So after any de-scoping edit, re-run the
+command above and confirm it is empty. PR #2356's body said "Issue #2189 stays
+open for PR B and PR C" and carried no closing keyword at all, but the link from
+its original body was still live, and the merge closed the card one second later
+with two of the three PRs unbuilt. It had to be reopened by hand.
+
 ## 4. Verify by running, not by reading
 
 Never write "tests cover this" or "this is probably fine". Run it, or mark it
@@ -332,7 +364,7 @@ the code as it stands now.
 
 One ruleset setting decides what a stale approval is worth here, and it is
 permissive. `dismiss_stale_reviews_on_push: false` means a push does **not**
-clear existing approvals — they keep counting toward the two required, and
+clear existing approvals — the one required approval keeps counting, and
 nothing re-requests review. **Nothing takes their place.** An approval that read
 a commit three pushes ago still clears the merge gate, and the merge box says
 approved.
@@ -384,6 +416,7 @@ Review: PR #N — <branch>, <full pass | short pass>, <X> commits behind main
 
 Does: <what the diff actually does, 1-2 lines>
 Intent: <what it was for> — <matches / drifts, how>
+Closes: <issues the merge will close, or "nothing"> — <right / wrong, why>
 Checks: <pass/fail per required check, and any that did not run on this head>
 Still needs: <code-owner teams GitHub is waiting on, or "nothing">
 Verified: <suites run, with counts — or "not run", and why>

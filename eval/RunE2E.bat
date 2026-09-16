@@ -50,6 +50,14 @@ rem reads of the project folder so the agent must use the MCP tools.
 set E2E_FLAGS=
 if "%DENY_SHELL%"=="1" set E2E_FLAGS=%E2E_FLAGS% --deny-shell
 if "%DENY_PROJECT_READS%"=="1" set E2E_FLAGS=%E2E_FLAGS% --deny-project-reads
+rem The Makefile also has CONTEXT_1M=1 (--context-1m, the 1M-window SDK beta).
+rem It is DELIBERATELY not mirrored here, and this gap is a decision, not an
+rem oversight. A 1M-window run compacts differently, so it is not comparable to
+rem the corpus and must not be committed under eval/runlogs/e2e/. The panel runs
+rem the corpus is built from come from this entry point, so a flag that could be
+rem set by accident here would silently contaminate repo-wide figures. Run the
+rem 1M arm from the Makefile on a machine where that is the deliberate intent.
+rem CI rejects such a run if it is committed under eval/runlogs/e2e/.
 call uv run python -m e2e.run_e2e --test %SLUG%%E2E_FLAGS%
 
 echo.

@@ -117,11 +117,12 @@ Look for:
   and `competing_assertion_ids` the assertions behind the coexisting
   facts.
 - **Multi-valued fact types are never surfaced.** `Occupation`,
-  `Residence`, `Census`, and `Citizenship` legitimately hold many
-  concurrent values, so materialization lets them coexist as separate
-  sourced facts and omits them from `conflicts_surfaced` — they are not
-  conflicts. Do not manufacture a conflict entry for differing
-  occupations or residences.
+  `Residence`, `Census`, `Citizenship`, `Immigration`, `Emigration`, and
+  `Naturalization` legitimately hold many concurrent values, so
+  materialization lets them coexist as separate sourced facts and omits
+  them from `conflicts_surfaced` — they are not conflicts. Do not
+  manufacture a conflict entry for differing occupations, residences, or
+  repeat crossings.
 
 **Already-identified conflicts:**
 - Check existing `conflicts[]` for `status: "unresolved"` — these

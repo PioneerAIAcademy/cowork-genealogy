@@ -357,4 +357,23 @@ describe('tests — hasGradingRelevantChange', () => {
     b.test.expected_outcome = 'pass';
     expect(hasGradingRelevantChange(a, b)).toBe(false);
   });
+
+  it('flags an edited delegation on a direct-agent test', () => {
+    // The delegation is the whole instruction the run receives, and the harness
+    // asserts the recorded Agent spawn carries it verbatim (issue #2246).
+    // Editing it changes what the run was, so the run log is stale.
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    a.input = { delegation: 'Assess q_001.' };
+    b.input = { delegation: 'Declare q_001 exhaustive.' };
+    expect(hasGradingRelevantChange(a, b)).toBe(true);
+  });
+
+  it('does not flag an unchanged delegation', () => {
+    const a = makeTest({});
+    const b = JSON.parse(JSON.stringify(a)) as UnitTestFile;
+    a.input = { delegation: 'Assess q_001.' };
+    b.input = { delegation: 'Assess q_001.' };
+    expect(hasGradingRelevantChange(a, b)).toBe(false);
+  });
 });

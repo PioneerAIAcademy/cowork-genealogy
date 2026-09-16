@@ -400,11 +400,18 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
     },
     "input": {
       "type": "object",
-      "required": ["user_message"],
+      "oneOf": [
+        { "required": ["user_message"] },
+        { "required": ["delegation"] }
+      ],
       "properties": {
         "user_message": {
           "type": "string",
-          "description": "The exact user input fed to the test harness."
+          "description": "The exact user input fed to the test harness. Routed tests only."
+        },
+        "delegation": {
+          "type": "string",
+          "description": "Direct-agent arm: the exact text handed to the pair's agent, in place of a user turn. Mutually exclusive with user_message."
         },
         "scenario": {
           "type": ["string", "null"],
@@ -596,9 +603,79 @@ skill never fired still fails.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `user_message` | string | yes | The exact user input fed to the test harness. For positive tests, this should trigger the skill. For negative tests, this should look like it might trigger the skill but shouldn't. **Known limitation:** this assumes single-turn interaction. Multi-turn skills (e.g., `search-external-sites`, which generates a URL then waits for a user to paste back a capture) are not supported in v1 |
+| `user_message` | string | one of two | The exact user input fed to the test harness. For positive tests, this should trigger the skill. For negative tests, this should look like it might trigger the skill but shouldn't. **Known limitation:** this assumes single-turn interaction. Multi-turn skills (e.g., `search-external-sites`, which generates a URL then waits for a user to paste back a capture) are not supported in v1 |
 | `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (search-wikipedia, translation, historical-context, locality-guide, convert-dates) |
 | `scenario_notes` | string or null | no | Documentation only — the harness ignores this field. Describes how the test's required state differs from the selected scenario. The scenario must already contain the exact required state for the test to be runnable. When a junior can't find an exact scenario, they pick the closest one and describe the gap here, then either create a new scenario that matches or wait for one to be created. If the same notes appear in 3+ tests, promote to a new named scenario |
+| `delegation` | string | one of two | **Direct-agent arm.** The exact text the orchestrator hands the pair's agent, in place of a user turn. A test carries `user_message` **or** `delegation`, never both and never neither (`input.oneOf` in the schema). On a direct test the harness sends the main thread its own dispatcher prompt wrapping this string, and `test_direct_delegation_relayed_verbatim` fails the run unless the recorded `Agent` spawn contains it as an exact substring — see §5.2.1 |
+
+#### 5.2.1 The direct-agent arm
+
+A **paired** skill is a thin routing skill plus an agent. Production research
+spawns the agent **directly** and never loads the routing skill (lead's ruling of
+2026-08-31; `docs/skill-to-agent-pair-conversion.md` §0) — **usually, not
+always**. Of the 15 committed e2e runs dated on or after 2026-08-20 that reach
+`research-exhaustiveness`, 14 spawn it directly and one
+(`hannah-earnest-children/run-2026-08-23_03-37-12`, a completed passing run)
+reaches it only through the routing skill; six take both routes in the same run.
+Counting every (run, pair) reach across all pairs in that window: 66 of 76 are
+direct, 10 skill-only. So the direct route dominates and the routed one is still
+live — which is the argument for grading both arms rather than replacing one. A test carrying `delegation`
+grades that route; a test carrying `user_message` grades the skill-then-agent
+route a user takes when they name the skill. **Both are real and both stay
+graded** — a direct test is a separate file with its own `test.id`, not a second
+arm over an existing one, because a duplicated `test_id` in one envelope corrupts
+annotations, which key on `(test_id, dimension_source, dimension_name)`.
+
+On a direct test the harness:
+
+- builds a workspace staging `.claude/agents/` and **no skills at all** — the
+  conversion doc's acceptance check made literal;
+- sends the main thread a harness-owned dispatcher prompt whose only instruction
+  is to relay `delegation` verbatim into `Agent{subagent_type: "<skill>"}`. The
+  agent's name is the test's `skill`; a direct test whose skill has no
+  same-named agent file is refused rather than silently spawning nothing;
+- decides the positive-test outcome on `agents_spawned` instead of
+  `skills_invoked`, which is empty by construction (§7);
+- fills the judge's `{user_message}` slot with the delegation and its
+  `{skills_invoked}` slot with the spawned agent.
+
+**Never reach the agent with `--agent` / `extra_args={"agent": …}`.** The shipped
+ownership hook keys on the **presence** of `agent_id`, and a session started that
+way carries `agent_type` but no `agent_id` — so it reads as the main thread and
+the sections the agent owns are denied to the agent that owns them.
+
+**The delegation is exempt from the answer-leak rule below.** An adversarial
+delegation deliberately names the artifact and pre-states the answer, because
+that is the measured production failure mode the arm exists to catch — and it is
+not a synthetic shape: of the 11 real orchestrator delegations to a paired agent
+in the committed e2e corpus, most carry a caller-written research-state summary
+and one instructs the agent outright to *'verify all seven criteria now pass and
+issue the exhaustive_declaration'*. Write the delegation as that caller writes
+one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
+the like), plus whatever framing the twin is testing the agent's resistance to.
+A `<workspace>` placeholder in a path argument is fine — the live writer tools
+override `projectPath` with the run's workspace, and substituting it would break
+the verbatim assertion on both sides.
+
+**Read a twin against its routed original over several runs, never one, and
+never write a live rate into the test file.** Measuring the first five twins
+(2026-09-11) took ten runs to settle: three held at 4/4, and the two that moved
+each reversed on a later run — one twin that had failed four straight scratch
+runs went on to `xpass` its first graded run, while two routed originals that had
+never failed both failed once. A single red twin is not yet a finding and a
+single green one is not yet a proof.
+
+Two consequences worth inheriting rather than rediscovering:
+
+- **`xfail_reason` is snapshot-tracked** (only `name`, `description` and `tags`
+  are stripped), so a measured rate written into it is falsified by the very run
+  log that ships beside it, and correcting it buys a fresh full-skill run. Cite a
+  dated scratch measurement that later runs cannot move, say plainly that the
+  failure is flaky rather than deterministic so an `xpass` is expected, and give
+  the removal condition. `ut_research_exhaustiveness_d3c` is the worked example.
+- **A twin and its routed original can fail the same validator at different
+  rates**, which is the finding — not that one fails and the other does not.
+  Report the split.
 
 ### 5.3 `mcp_fixtures`
 
@@ -638,7 +715,7 @@ Guidelines for writing `judge_context` notes:
   **When a conclusion IS safe.** State one only where something other than the note pins it — a deterministic validator, `expected_classifications`, or the fixture text itself. `record-extraction` states conclusions freely and is safe doing so, because `expected_classifications` checks them and the judge defers to that check, so the note never becomes the only thing holding the grade up. A conclusion no other check can reach is an answer key no matter how it is worded.
 
   **The leak is not confined to `judge_context`** — three other channels reach the same dimension, and no rule about notes touches any of them. If the note says "score 3 if it reasons about X", nothing else may state X. Apply the neutrality test to:
-  - **`input.user_message`** — handing the skill the reasoning under test lets it pass by echoing the prompt.
+  - **`input.user_message`** — handing the skill the reasoning under test lets it pass by echoing the prompt. **`input.delegation` is deliberately exempt** (§5.2.1): a direct-agent test's adversarial delegation names the artifact and pre-states the answer on purpose, because resisting exactly that is what it grades.
   - **the scenario's `research.json`** — plan-item rationales are read by the skill and are the natural place to restate the answer.
   - **the scenario's `README.md`** — this one reaches the **judge**, not the skill: `_load_scenario_readme` reads the whole file and it is rendered verbatim in the judge prompt under "Scenario summary". A "What it exercises" bullet phrased as "the skill must do X" is therefore an answer key delivered straight to the grader, and it applies to every test sharing that scenario at once. Write those bullets as the *capability* under test, never the correct outcome.
 
@@ -1083,8 +1160,8 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {rubric}                            — contents of eval/tests/unit/<skill>/rubric.md
 {judge_context}                     — bullet list from the test JSON
 {scenario_readme}                   — scenario README.md, or "(stateless test)"
-{user_message}                      — verbatim from the test
-{skills_invoked}                    — list of skills Claude actually invoked
+{user_message}                      — verbatim from the test; on a direct-agent test, the `delegation` under a one-line harness label (§5.2.1)
+{skills_invoked}                    — list of skills Claude actually invoked; on a direct-agent test, the agent that was spawned (no skill runs)
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
@@ -1159,7 +1236,7 @@ Each individual run of a test resolves to one of four outcomes:
 
 | Outcome | When |
 |---------|------|
-| `pass` | All deterministic validators passed AND (for positive tests) every judge dimension scored `3` (pass) AND `output.activated` matches the test type: `true` for positive with the skill under test in `output.skills_invoked`; `false` for negative AND the `negative.correct_skill` array match rule (Section 6) is satisfied |
+| `pass` | All deterministic validators passed AND (for positive tests) every judge dimension scored `3` (pass) AND `output.activated` matches the test type: `true` for positive with the skill under test in `output.skills_invoked`; `false` for negative AND the `negative.correct_skill` array match rule (Section 6) is satisfied. **Direct-agent exemption (§5.2.1):** a positive test carrying `input.delegation` invokes no skill, so `output.skills_invoked` is empty by construction; for those the same rule reads on the spawned agent instead — the test's `skill` must appear among the `subagent_type`s recorded in `output.builtin_tool_calls`. Activation derives from the same signal. Everything else on this row is unchanged |
 | `partial` | All validators passed AND any judge dimension scored `2` (partial) but none scored `1` (fail). For positive tests only — negative tests don't have rubric dimensions, so partial doesn't apply |
 | `fail` | Any validator failed, OR any judge dimension scored `1` (fail), OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test. **A validator failure also dominates a deterministic-cap abort** (`max_wall_clock_seconds`, `max_turns`, `max_tool_calls`): a run that failed a validator and then hit one of those caps is `fail`, not `aborted` — the defect is real and must not be filed under a timeout |
 | `aborted` | Execution exceeded a budget guardrail (Section 15) **and no validator failed** (a concurrent validator failure demotes the three deterministic caps to `fail`, per the `fail` row). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression. `aborted_reason` is still recorded on the run even when the outcome is demoted to `fail` |
@@ -1276,7 +1353,7 @@ One file per skill in `eval/harness/validators/`, following pytest naming (`test
 Validators are split into three tiers:
 
 - **Tier 1 (gating):** `test_*` prefix. Failure = test fail. The judge still runs — only an abort skips it — and the validator's function name appears in the judge prompt under "Deterministic validators that FAILED".
-- **Tier 2 (reporting):** `report_*` prefix. An `AssertionError` is a finding: it is fed to the judge as anonymous text under "Harness observations on the response text" and never gates the test outcome. The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
+- **Tier 2 (reporting):** `report_*` prefix. An `AssertionError` is a finding: it is fed to the judge as anonymous text under one of two observation slots and never gates the test outcome. A `report_*` whose signature draws only from `before_state`, `after_state`, `test`, and `skill_frontmatter` and includes at least one of `before_state`/`after_state` is state-derived and appears under "Harness observations on persisted project state"; the rest are response-derived and appear under "Harness observations on the response text". The function name goes only to the run log (`output.warnings[]` with `kind: "prose_observation"`) for traceability. Use this tier when the harness can detect a pattern but cannot decide whether it is wrong — that decision belongs to the judge.
   - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
 - **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
 
@@ -2299,7 +2376,7 @@ Eight fixtures in `eval/fixtures/mcp/`:
 Validators in `eval/harness/validators/` fall into three tiers:
 
 - **Gating** — failure fails the test. It does **not** prevent the LLM judge from running; only an abort does. All universal validators except `test_tool_allowlist` are gating. In `test_citation.py` the gating `test_*` functions are V5, V6, and the persisted/literal halves of V3, V4 and V10; the five `report_*` functions — the response halves of V3, V4 and V10, plus V11 and V12 — are tier-2 and never gate.
-- **Reporting** — checks that are regexes over Claude's prose response. Their findings are handed to the LLM judge as observations it weighs alongside the response, recorded in the run log, but they do not touch `validators_passed`. A reporting-only check is a `report_*` function (not `test_*`); the runner tags its result with `reporting_only=True`. Observations reach the judge via the `{harness_observations}` prompt section and are recorded in `output.warnings[]` as `prose_observation` entries.
+- **Reporting** — checks that detect a pattern in the skill's output or persisted state. Their findings are handed to the LLM judge as observations it weighs alongside the response or file changes, recorded in the run log, but they do not touch `validators_passed`. A reporting-only check is a `report_*` function (not `test_*`); the runner tags its result with `reporting_only=True`. A `report_*` whose signature draws only from `before_state`, `after_state`, `test`, and `skill_frontmatter` and includes at least one of `before_state`/`after_state` is state-derived and reaches the judge via the `{state_observations}` prompt section; the rest are response-derived and reach the judge via the `{harness_observations}` prompt section. Both are recorded in `output.warnings[]` as `prose_observation` entries.
 - **Advisory** — emits a warning but does not fail the test. `test_tool_allowlist` is advisory: it warns when a skill calls undeclared tools, but the session grants all tools regardless.
 
 This three-tier system was decided against two alternatives: making every check gate (brittle — a prose regex reds a correct run and the judge never sees it), and dropping prose checks entirely (loses the finding). Only structured-field checks may gate.

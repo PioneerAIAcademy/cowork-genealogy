@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 48 tools.
+The MCP server exposes 49 tools.
 
 ### FamilySearch records and places
 
@@ -101,12 +101,13 @@ way project state changes.
 | `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being | None |
 | `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
 | `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
+| `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/` or a text upload under `uploads/`. Refuses `results/`, images, `research.json` and the tree with a pointer to the tool that serves each | None |
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
 | `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
-| `tree_forget` | Strip a slice of the local tree to stage a practice run | None |
+| `tree_forget` | Strip a slice of the local tree to stage a practice run (project-start only; refused once a plan exists) | None |
 | `merge_tree_persons` | Merge two local tree persons | None |
 | `merge_warnings` | Pre-merge conflict report for two tree persons | None |
 | `person_quality` | Evidence-quality summary for a tree person | None |
@@ -496,7 +497,7 @@ then narrows the search.
 
 What's shipped:
 
-- **48 MCP tools.** See the tables above for the full catalog, by category:
+- **49 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **28 shipped skills.** Full GPS research cycle from `init-project`
