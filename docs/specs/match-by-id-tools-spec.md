@@ -180,9 +180,14 @@ for `KW66-5VV` too, so the evidence cannot separate "the match endpoint ignores
 the merge redirect" from "it follows the redirect to a survivor that itself has
 no visible matches." Either way the retired id yields not-found, not the
 survivor's matches. A populated retired-vs-survivor comparison could not be made;
-this rests on the single merged-away candidate the pool yielded (n=1). The
-`~0.12%` redirect rate is a property of *this* committed-fixture pool on this
-date, not a general FamilySearch merge rate. This paragraph records what was
+this rests on the single merged-away candidate the pool yielded (n=1). The pool
+is the tree PIDs in the committed `*.gedcomx.json` fixtures, and its one redirect,
+`KD96-TV5`, was **not** an organic discovery: it is a deliberately-embedded id in
+the `christian-hole-quality` eval fixture, chosen there because it was already
+known to be tombstoned on real FamilySearch. So `1/842` is **not** an
+encounter-rate estimate — it does not establish how often an organic research
+session hits a retired id; it is a property of *this* committed-fixture pool on
+this date, not a general FamilySearch merge rate. This paragraph records what was
 measured; it does not prescribe a behaviour or error-text change.
 
 **The record-persona (`1:1:`) side is NOT ESTABLISHED.** No independent
