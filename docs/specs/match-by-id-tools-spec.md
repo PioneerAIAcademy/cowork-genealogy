@@ -161,7 +161,7 @@ recorded as an absence: the same one that lets a failed wiki lookup persist as
 "the wiki has no page for this place".
 
 **A merged-away tree person returns this same not-found shape (measured
-2026-09-15, issue #2459).** The 2026-09-10 evidence above used an id that was
+2026-09-15).** The 2026-09-10 evidence above used an id that was
 *never* assigned. To test an id FamilySearch *did* assign and later retired,
 the 842 distinct tree PIDs in the committed gedcomx fixtures were swept against
 the tree-persons endpoint (`redirect: manual`); exactly one redirected —
