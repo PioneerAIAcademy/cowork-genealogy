@@ -46,8 +46,25 @@ function adrFiles(): string[] {
 }
 
 /**
+ * Text of one `## ` section, from its heading to the next `## ` heading or the
+ * end of the file. A slice rather than a regex on purpose: the obvious regex
+ * fix, `(?=^## |$)` under `m`, captures the empty string and silently disarms
+ * this lint for every ADR. See issue #1274.
+ */
+function sectionText(body: string, heading: string): string {
+  const lines = body.split("\n");
+  const start = lines.findIndex((l) => l.trimEnd() === `## ${heading}`);
+  if (start === -1) return "";
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (lines[i].startsWith("## ")) { end = i; break; }
+  }
+  return lines.slice(start + 1, end).join("\n");
+}
+
+/**
  * Pull the text of the live sections: the `**Applies to:**` header line, and
- * the `## Enforcement` section up to the next `## `.
+ * the `## Enforcement` section up to the next `## ` or end of file.
  */
 function liveSectionText(body: string): string {
   const parts: string[] = [];
@@ -55,8 +72,8 @@ function liveSectionText(body: string): string {
   const appliesTo = body.match(/^\s*-\s*\*\*Applies to:\*\*(.*)$/m);
   if (appliesTo) parts.push(appliesTo[1]);
 
-  const enforcement = body.match(/^## Enforcement\s*$([\s\S]*?)(?=^## |\Z)/m);
-  if (enforcement) parts.push(enforcement[1]);
+  const enforcement = sectionText(body, "Enforcement");
+  if (enforcement) parts.push(enforcement);
 
   return parts.join("\n");
 }
@@ -108,8 +125,7 @@ describe("ADR hygiene", () => {
 
     // An ADR is a decision with a rejected alternative. Require at least one
     // real table row rather than an empty section.
-    const alts = body.match(/^## Alternatives considered\s*$([\s\S]*?)(?=^## )/m);
-    const rows = (alts?.[1] ?? "")
+    const rows = sectionText(body, "Alternatives considered")
       .split("\n")
       .filter((l) => l.trim().startsWith("|") && !/^\|[\s|:-]+\|$/.test(l.trim()));
     expect(
@@ -153,5 +169,94 @@ describe("ADR hygiene", () => {
       missing,
       `these ADRs are not in the docs/architecture.md index, so nobody will find them: ${missing.join(", ")}`,
     ).toEqual([]);
+  });
+});
+
+describe("section extraction", () => {
+  it("extracts Enforcement when it is the last section and body has no capital Z", () => {
+    const body = [
+      "## Enforcement",
+      "",
+      "- `docs/specs/foo-spec.md` — the spec",
+      "- `packages/engine/mcp-server/src/tools/bar.ts` — the tool",
+      "",
+    ].join("\n");
+    const text = sectionText(body, "Enforcement");
+    expect(text).toContain("docs/specs/foo-spec.md");
+    expect(text).toContain("packages/engine/mcp-server/src/tools/bar.ts");
+  });
+
+  it("extracts paths after a capital Z when Enforcement is the last section", () => {
+    const body = [
+      "## Enforcement",
+      "",
+      "Zone check in `docs/specs/foo-spec.md`.",
+      "Also `packages/engine/mcp-server/src/tools/bar.ts`.",
+      "",
+    ].join("\n");
+    const text = sectionText(body, "Enforcement");
+    expect(text).toContain("docs/specs/foo-spec.md");
+    expect(text).toContain("packages/engine/mcp-server/src/tools/bar.ts");
+  });
+
+  it("extracts Enforcement followed by another ## section (regression pin)", () => {
+    const body = [
+      "## Enforcement",
+      "",
+      "- `docs/specs/foo-spec.md`",
+      "",
+      "## Revisit when",
+      "",
+      "Never.",
+      "",
+    ].join("\n");
+    const text = sectionText(body, "Enforcement");
+    expect(text).toContain("docs/specs/foo-spec.md");
+    expect(text).not.toContain("Never.");
+  });
+
+  it("does not terminate at a ### sub-heading", () => {
+    const body = [
+      "## Enforcement",
+      "",
+      "- `docs/specs/foo-spec.md`",
+      "",
+      "### Details",
+      "",
+      "- `packages/engine/mcp-server/src/tools/bar.ts`",
+      "",
+    ].join("\n");
+    const text = sectionText(body, "Enforcement");
+    expect(text).toContain("docs/specs/foo-spec.md");
+    expect(text).toContain("packages/engine/mcp-server/src/tools/bar.ts");
+  });
+
+  it("handles CRLF line endings", () => {
+    const body = [
+      "## Enforcement",
+      "",
+      "- `docs/specs/foo-spec.md`",
+      "",
+      "## Revisit when",
+      "",
+      "Never.",
+      "",
+    ].join("\r\n");
+    const text = sectionText(body, "Enforcement");
+    expect(text).toContain("docs/specs/foo-spec.md");
+    expect(text).not.toContain("Never.");
+  });
+
+  it("extracts non-empty Enforcement from every real ADR that has one", () => {
+    const files = adrFiles();
+    for (const file of files) {
+      const body = readFileSync(join(adrDir, file), "utf8");
+      if (!body.includes("## Enforcement")) continue;
+      const text = sectionText(body, "Enforcement");
+      expect(
+        text.trim().length,
+        `${file}: ## Enforcement section extracted as empty`,
+      ).toBeGreaterThan(0);
+    }
   });
 });

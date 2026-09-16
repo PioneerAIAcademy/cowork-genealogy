@@ -232,6 +232,7 @@ def render_prompt(
     before_state: str = "(none)",
     validator_failures: list[str] | None = None,
     harness_observations: list[str] | None = None,
+    state_observations: list[str] | None = None,
 ) -> str:
     """Fill the judge prompt template slots into one flat string.
 
@@ -251,6 +252,7 @@ def render_prompt(
         before_state=before_state,
         validator_failures=validator_failures,
         harness_observations=harness_observations,
+        state_observations=state_observations,
     )
     return prefix + suffix
 
@@ -268,6 +270,7 @@ def render_prompt_parts(
     before_state: str = "(none)",
     validator_failures: list[str] | None = None,
     harness_observations: list[str] | None = None,
+    state_observations: list[str] | None = None,
 ) -> tuple[str, str]:
     """Render the prompt as (stable_prefix, varying_suffix).
 
@@ -306,6 +309,11 @@ def render_prompt_parts(
         if harness_observations
         else "(no observations)"
     )
+    state_obs_text = (
+        "\n".join(f"- {obs}" for obs in state_observations)
+        if state_observations
+        else "(no observations)"
+    )
 
     stable_slots = {
         "rubric": rubric_text,
@@ -321,6 +329,7 @@ def render_prompt_parts(
         "tool_calls": tool_calls_text,
         "validator_failures": failures_text,
         "harness_observations": observations_text,
+        "state_observations": state_obs_text,
     }
 
     template = judge_prompt_template()
@@ -465,6 +474,7 @@ def grade(
     before_state: str = "(none)",
     validator_failures: list[str] | None = None,
     harness_observations: list[str] | None = None,
+    state_observations: list[str] | None = None,
 ) -> JudgeOutput:
     """Run the judge and return structured dimensions + cost."""
     prefix, suffix = render_prompt_parts(
@@ -479,6 +489,7 @@ def grade(
         before_state=before_state,
         validator_failures=validator_failures,
         harness_observations=harness_observations,
+        state_observations=state_observations,
     )
 
     client = _make_client(auth)
