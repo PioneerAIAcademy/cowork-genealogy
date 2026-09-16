@@ -463,10 +463,16 @@ When a fixture's behavior shifts meaningfully, add a dated line to its
 ## Step 8 — Grade the run 🤖 Claude Code
 
 Every committed run gets graded in the same PR — **this one is CI-enforced.**
-The `check-e2e-fixtures` gate blocks any run log *added* in your PR that
-produced a final tree but ships no `run-<ts>.ann.json` beside it. (A treeless
+The `check-e2e-fixtures` gate blocks any run log *added, or renamed into the
+corpus,* in your PR that produced a final tree but ships no `run-<ts>.ann.json`
+beside it — so promoting a run out of quarantine is caught too. (A treeless
 run — crashed or skipped before a final tree — is exempt; there's nothing to
 grade.)
+
+The same gate also reds a run log whose `usage.betas` is non-empty — a run made
+with `--context-1m`. A 1M window is not corpus-comparable, so keep it in a
+sibling directory such as `eval/runlogs/_2491-exploratory-quarantine/` rather
+than under `eval/runlogs/e2e/`.
 
 ```
 /grade-e2e-run
