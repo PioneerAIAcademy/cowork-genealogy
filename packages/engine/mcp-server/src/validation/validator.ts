@@ -1014,6 +1014,56 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("informant_proximity" in a) {
       checkEnum(a.informant_proximity, "informant_proximity", ap, report);
     }
+    // Negative evidence is not three independent judgment calls. An assertion
+    // whose `evidence_type` is "negative" is the RESEARCHER's conclusion that a
+    // person expected in a record is missing from it, so `record_role` is the
+    // literal "absent" and `informant_proximity` is "researcher" — no record
+    // informant reported an absence, whatever the record type
+    // (research-schema-spec.md, "Negative evidence"; record-extractor.md,
+    // "Negative evidence"). Nothing checked this, so a document assembled
+    // anywhere but op-by-op through research_append carried the violation:
+    // `eval/fixtures/scenarios/flynn-parentage-not-proved` a_012 is the
+    // committed instance.
+    //
+    // Forward direction ONLY. The converse (`record_role: "absent"` implies
+    // negative) is deliberately not checked here: every `absent` assertion in
+    // the corpus is already negative, so it is an unexercised branch.
+    // `research_append`'s own precondition does check it, and a writer-tool
+    // precondition is allowed to be stricter than this integrity tier — the
+    // reverse would be the bug.
+    //
+    // `informant` is deliberately NOT checked. It is free text, and a semantic
+    // gate prefers a false allow (ADR-0011 limit 1).
+    if (a.evidence_type === "negative") {
+      // No presence guard on either field: when one is missing, `!==` is true
+      // and this fires alongside `checkRequired` rather than leaving a shape
+      // that escapes the rule entirely.
+      if (a.record_role !== "absent") {
+        addError(
+          report,
+          ap,
+          `evidence_type 'negative' requires record_role 'absent' (got ` +
+            `${JSON.stringify(a.record_role)}) — even when the record NAMES the person ` +
+            `(the "preceded in death by" shape is still negative evidence). Check the ` +
+            `finding is an ABSENCE at all: a fact about a person PRESENT in the record ` +
+            `is 'direct' carrying that person's real role — change both fields, not ` +
+            `one — and a blank field on a present person is silence, which produces no ` +
+            `assertion`
+        );
+      }
+      if (a.informant_proximity !== "researcher") {
+        addError(
+          report,
+          ap,
+          `evidence_type 'negative' requires informant_proximity 'researcher' (got ` +
+            `${JSON.stringify(a.informant_proximity)}) — negative evidence is the ` +
+            `researcher's own conclusion; no record informant reported an absence, ` +
+            `whatever the record type, and that holds even when the record names the ` +
+            `person. Set it to 'researcher'. Only if the finding is not an absence at ` +
+            `all is 'negative' wrong, and then record_role must change with it`
+        );
+      }
+    }
     if ("date_certainty" in a && a.date_certainty !== null) {
       if (!DATE_CERTAINTY_VALUES.has(a.date_certainty)) {
         addError(report, ap, `'${a.date_certainty}' is not a valid date_certainty`);
