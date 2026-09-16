@@ -15,7 +15,7 @@
       },
       "supporting_sources": [
         "Czech Republic, Births and Baptisms, 1637-1889 — entry for Martin Gajdosch, baptised 3 November 1714, Lidečko, Vsetín, father Georg Gajdosch, mother Catharina (ark:/61903/1:1:FMS8-6GC) — the disproving record: it places a Georg-and-Catharina child eight days after the Georg-and-Dorothea baptism of Joannes",
-        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Joannes Gajdosch, baptised 26 October 1714, Lidečko, Vsetín, father Georg Gajdosch, mother Dorothea (ark:/61903/1:1:FMS8-XF3) — the tree person's sole source, naming Dorothea as the mother",
+        "Czech Republic, Births and Baptisms, 1637-1889 — entry for Joannes Gajdosch, baptised 26 October 1714, Lidečko, Vsetín, father Georg Gajdosch, mother Dorothea (ark:/61903/1:1:FMS8-XF3) — naming Dorothea as the mother. This one index entry is the tree person's sole source; the tree cites it under the father persona (ark:/61903/1:1:FMS8-XFQ), and the child and mother personas of the same entry are ark:/61903/1:1:FMS8-XF3 and ark:/61903/1:1:FMS8-XF7",
         "Czech Republic, Births and Baptisms, 1637-1889 — entry for Anna Gajdosch, baptised 22 April 1718, Lidečko, Vsetín, father Georg Gajdosch, mother Catharina (ark:/61903/1:1:FMSZ-MBX) — the hint record itself, one of seven children of the Catharina couple"
       ],
       "required": true
@@ -23,7 +23,7 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having searched the indexed Lidečko baptisms for a daughter of Georg Gajdosch and Dorothea, the agent should document a negative/exhausted-search conclusion: no record establishes a daughter Anna for the tree person, the 1718 Anna belongs to a second Georg Gajdosch of the same village whose wife was Catharina, and the tree's Dorothea stands unrefuted. The conclusion should note that all of this rests on a single derivative index and that the underlying Lidečko parish register images were not reachable through this collection.",
+      "description": "Having searched the indexed Lidečko baptisms for a daughter of Georg Gajdosch and Dorothea, the agent should document a negative/exhausted-search conclusion: no record establishes a daughter Anna for the tree person, the 1718 Anna belongs to a second Georg Gajdosch of the same village whose wife was Catharina, and the tree's Dorothea stands unrefuted. Pass = a stated negative conclusion covering those three points. How far the agent's own search reached, and which collections it could or could not open, is not graded here — the supporting_sources below record the adjudicator's search path as context, not as claims the agent must reproduce.",
       "details": {
         "subject_person": "Georg Gajdosch (PID K69J-F7Y)",
         "relation": "research conclusion",
