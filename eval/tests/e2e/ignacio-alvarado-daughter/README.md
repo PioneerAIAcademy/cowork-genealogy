@@ -62,18 +62,39 @@ burial age defines, so the two records do not merely agree to within a month —
 they agree exactly, and together they fix her birth in the week of 21–27 March
 1879. She is the only Angela among the couple's children.
 
-**The two Duráns are one woman.** The starting tree's `K4JL-NPF` (Teodosia
-Duran, b. 1876) and `K21K-P18` (Teodora Durán, no dates) are a duplicate, and
-the proof is inside the tree's own data: `K21K-P1H`'s christening of 5 Jun 1889
-is indexed twice off one image (`ark:/61903/3:1:S3HT-69BQ-SRL`) —
-`ark:/61903/1:1:NQV5-DPB` names the mother Teodora Durán,
-`ark:/61903/1:1:6ZPT-KTZR` names her Teodosia Durán. Across this couple's
-38 record personas in the collection she is also indexed Teodocia, Teodossia,
-Teodoria, Todocia, Eudocia, Eudosia, Cerdocia and Tesdosia; the spelling is
-indexer variance, not two people. **The duplicate was deliberately not merged
-on familysearch.org** — merging would redirect one PID and invalidate the
-snapshot that `snapshot --check` audits, and the ambiguity is part of what the
-fixture measures.
+**The two Duráns are probably one woman, but not for the reason first written
+here.** The starting tree carries `K4JL-NPF` (Teodosia Duran, b. 1876) and
+`K21K-P18` (Teodora Durán, no dates). An earlier revision of this section
+claimed the proof was a spelling divergence between two indexings of one
+christening image: that `ark:/61903/1:1:NQV5-DPB` read the mother as Teodora
+and `ark:/61903/1:1:6ZPT-KTZR` read her as Teodosia. **Checked by hand on
+2026-09-16, that is wrong.** Both records load, both cite the same image
+(`ark:/61903/3:1:S3HT-69BQ-SRL`), and **both index the mother as Teodosia
+Durán.** Neither reads Teodora, so this pair does not account for `K21K-P18`
+carrying that name, and the divergence the argument rested on does not exist.
+Where `K21K-P18`'s spelling came from is unexplained by these two records.
+
+Two independent arguments survive and are what the duplicate now rests on. The
+tree's unsourced 1876 birth year for her is impossible: it would put her at no
+more than three when she bore Angela, baptized 27 Mar 1879, which is the record
+this fixture's own finding rests on. And `GPH8-7RX` is a Couple with
+`K4JL-NPF` — the identical wife PID `K21K-P1C` is married to — which is the
+father-identity paragraph below pointing the same way. Neither argument needs
+the spelling.
+
+Two cautions for whoever reads this next. Both PIDs carry **zero attached
+sources**, confirmed live on 2026-09-16 and matching the committed snapshot, so
+no provenance chain can be traced from either tree person back to an indexing.
+And none of the three arks in this paragraph was ever retrieved through a tool:
+they appear in no tool call in any committed run log for this fixture, unlike
+the three arks carrying `f1`, which are all attested in
+`run-2026-09-10_14-16-30.json`.
+
+**The duplicate was deliberately not merged on familysearch.org**, and issue
+#2513 closed Not planned rather than doing it: this product reads FamilySearch
+and never writes to it, merging would redirect one PID and make
+`snapshot --check` report DRIFT for this fixture permanently, and the ambiguity
+is part of what the fixture measures.
 
 **The father-identity question, and why it does not weaken the match.** The
 hint's father persona (`ark:/61903/1:1:NQ5N-RXV`) matches four tree persons,
@@ -151,3 +172,11 @@ record's own spelling of the mother's name and stays answerable.
   baptism of 27 March 1879 falls inside that window. The DRAFT marker was removed,
   which activates `validate_fixture`'s issue-#970 ark check on
   `supporting_sources` from this point on.
+- **2026-09-16** — the two-Durán proof in Notes for reviewers was corrected
+  (#2513, closed Not planned). Both `NQV5-DPB` and `6ZPT-KTZR` were opened by
+  hand: they cite one image, as claimed, but **both** read the mother Teodosia,
+  not one Teodora and one Teodosia, so the spelling divergence offered as the
+  proof does not exist. The conclusion stands on the impossible 1876 birth year
+  and the `GPH8-7RX` couple link instead. Both PIDs carry zero attached sources.
+  The upstream merge was declined: this product never writes to FamilySearch,
+  and merging would put this fixture in permanent `snapshot --check` DRIFT.
