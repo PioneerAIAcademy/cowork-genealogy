@@ -119,9 +119,15 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
   call, requesting **only** the corrections the user asked for (the "answer only the
   question asked" rule is now structural). Narrate from `applied[].rule` / `notes[]`
   / `converted`.
-- **Trim:** none of the regime tables — **keep** them and `references/calendar-conflicts.md`
-  as the identification reference (deciding *which* corrections apply stays the LLM's
-  judgment). Output-only behavior unchanged (the tool writes nothing).
+- **Trim: superseded 2026-09-07 by lead ruling.** This bullet
+  read "**keep** them and `references/calendar-conflicts.md`". The adoption table
+  now lives in the tool behind an optional `jurisdiction` parameter
+  (`convert-calendar-tool-spec.md` §4.5), the prompt states no adoption date,
+  offset or year-start, and `references/calendar-conflicts.md` is **deleted** —
+  its numbers are the tool's and its narrative is the wiki's under ADR-0012. The
+  half this bullet was right about survives: deciding *which* corrections apply
+  is still the LLM's judgment (§5b), which is why `corrections` stays required.
+  Output-only behavior unchanged (the tool writes nothing).
 
 ### 4.5 `conflict-resolution` — Wave 2
 - **Create (Step 2):** `research_append({ section: "conflicts", op: "append" })`.
