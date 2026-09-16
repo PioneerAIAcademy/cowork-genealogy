@@ -120,7 +120,17 @@ const TABLE = [
   ['apps/web/src/styles.css', null],
   ['apps/web/public/favicon.svg', null],
   ['.gitignore', null],
-  ['scripts/test.sh', null],
+  // scripts/test.sh EXPECTED null until 2026-09-16, grouped with CSS and
+  // .gitignore as incidental. It is not incidental — it is `make test-all`, the
+  // gate every PR claims to have run — and when the approval count dropped to 1
+  // it became a one-approval-from-anyone path. Now senior-owned via `*.sh`,
+  // along with the build/packaging scripts and the branch-protection script.
+  ['scripts/test.sh', D],
+  ['scripts/verify-mcpb.sh', D],
+  ['.github/scripts/consolidate-branch-protection.sh', D],
+  ['deploy/Dockerfile', D],
+  ['apps/server/sandbox/e2b.Dockerfile', D],
+  ['apps/server/uv.lock', D],
 ];
 {
   const before = failures;
