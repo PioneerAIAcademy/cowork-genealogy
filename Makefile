@@ -1074,6 +1074,11 @@ deploy: deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs
 	#   2. Recipe lines are sequential even under -j, so the cheap stage-1 replay
 	#      is guaranteed to fail before anything is pushed. A prerequisite list
 	#      only orders left-to-right when make is not parallel.
+	@if [ -n "$(E2B_TEMPLATE_NAME)" ] && [ "$(E2B_TEMPLATE_NAME)" != "genealogy-agent" ]; then \
+	  echo "NOTE: E2B_TEMPLATE_NAME=$(E2B_TEMPLATE_NAME) is IGNORED by 'make deploy'."; \
+	  echo "      This target deploys production, so it always builds 'genealogy-agent'."; \
+	  echo "      To build your template without deploying: make sandbox-image"; \
+	fi
 	$(MAKE) sandbox-image E2B_TEMPLATE_NAME=genealogy-agent
 	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
 	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
