@@ -27,6 +27,7 @@
  *
  *   ark:/61903/4:1:KD96-TV5    merged away -> survivor KW66-5VV   -> 200 not-found
  *   ark:/61903/4:1:KW66-5VV    the survivor (restricted)          -> 200 not-found
+ *   ark:/61903/4:1:275H-YL3    positive control (tree dup matches) -> 200 populated
  *
  * Establishing the merge: sweeping the 842 distinct tree PIDs in the committed
  * gedcomx fixtures with the tree-persons endpoint (redirect: manual) returned
@@ -38,6 +39,13 @@
  * results:0 + `not-found` link shape as a never-assigned id, in BOTH the
  * records and tree collections — the same shape as ZZZZ-ZZZZ below, not a
  * populated match set describing the survivor.
+ *
+ * Positive control for the 4:1: + tree slot (person_person_matches): 275H-YL3
+ * returns a POPULATED result there (results>0, links=[self], a real `updated`),
+ * so "merged-away -> not-found" in the tree collection is a real signal, not
+ * "this slot never returns matches for anyone". The count is not permanent (it
+ * drifts as patrons merge); the durable observation is the populated-vs-not-found
+ * response shape. (The records slot's control is KNDX-MKG below.)
  *
  * Outcome B (resolves to survivor / returns the survivor's matches under the
  * retired queryArk) was NOT observed. One limit on what this run can tell apart:
@@ -79,6 +87,11 @@ const CASES: Array<[label: string, collection: string, id: string, status?: stri
   ["merged-away tree person KD96-TV5", "tree", "ark:/61903/4:1:KD96-TV5"],
   ["survivor KW66-5VV (restricted)", "records", "ark:/61903/4:1:KW66-5VV"],
   ["survivor KW66-5VV (restricted)", "tree", "ark:/61903/4:1:KW66-5VV"],
+  // Positive control for the 4:1: + tree slot (person_person_matches): a normal
+  // tree person that returns a POPULATED result there (results>0, links=[self]),
+  // so merged-away -> not-found in this slot is distinguishable from "this slot
+  // never returns matches". The count is not permanent; the shape is the point.
+  ["positive control, tree dup matches (275H-YL3)", "tree", "ark:/61903/4:1:275H-YL3"],
 ];
 
 async function main(): Promise<void> {
