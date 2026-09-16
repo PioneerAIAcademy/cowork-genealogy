@@ -60,6 +60,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -89,17 +90,62 @@ TOOL_SUFFIX = "image_transcribe"
 # Buckets, fixed rather than re-derived per run, and mapped to distinct owners:
 # `unreachable`/`timeout` are the service or the machine's reach to it (the
 # subject of #1594); `unrecognized_ark` and `upstream_error` are the call being
-# wrong or the upstream refusing it, NOT reachability; `unclassified` is the
-# safety net.
+# wrong or the upstream refusing it, NOT reachability; `truncated` reached the
+# service and returned content that stopped at the output-token cap; `unclassified`
+# is the safety net.
 SUCCESS = "success"
 UNREACHABLE = "unreachable"
 TIMEOUT = "timeout"
 UNRECOGNIZED_ARK = "unrecognized_ark"
 UPSTREAM_ERROR = "upstream_error"
+# A capped read WITH content (#2457 item 3). `image_transcribe` returns the
+# partial transcription verbatim beside `truncated: true` — non-empty, no
+# `"error":` key — so it read as a clean `success` and the truncation rate was
+# unmeasurable. A zero-content cap throws instead (image-transcribe.ts:341-354)
+# and lands in `upstream_error`, not here: this bucket is the partial read the
+# consumer layer cannot tell from a whole one, which is the whole of #2457.
+TRUNCATED = "truncated"
 UNCLASSIFIED = "unclassified"
 
 #: The two buckets #1594 counts as "lost to reachability, not to content".
 REACHABILITY_BUCKETS = (UNREACHABLE, TIMEOUT)
+
+# `image_transcribe` began emitting the `truncated` key in this commit
+# (#2168, 7 September). A run from any older engine files a capped read as
+# `success` however badly it was cut off, so it can never appear in the
+# truncated numerator — and counting it in the denominator prints the rate
+# over calls that could not have produced it, the exact mistake this module's
+# header spends thirty lines rejecting for the strip. So the truncation rate
+# is taken only over marker-capable runs.
+MARKER_COMMIT = "733a2c7"
+
+
+def commit_emits_truncation_marker(git_sha: str | None) -> bool:
+    """Whether the engine at `git_sha` could emit the `truncated` marker.
+
+    True iff the run's commit contains #2168 (`MARKER_COMMIT`). A run log with
+    no `git_sha` is always incapable — and that is provably safe, not merely
+    cautious: `git_sha` itself landed 2026-08-06, a month before the marker, so
+    a log missing it is always from the blind era. A `git_sha` this checkout
+    cannot resolve (a partial fetch, a squash-deleted branch — `git` returns
+    128) also reads as incapable: unverifiable is treated as blind so the rate
+    is never inflated by a call we cannot place. Injected into `scan` so the
+    unit tests stay hermetic.
+    """
+    if not git_sha:
+        return False
+    try:
+        return (
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", MARKER_COMMIT, git_sha],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).returncode
+            == 0
+        )
+    except (OSError, ValueError):
+        return False
 
 
 def classify(response_summary: str) -> str:
@@ -156,6 +202,14 @@ def classify(response_summary: str) -> str:
     # the direction unescaping was added for; key-adjacency avoids both.
     if '"error":' in s:
         return UPSTREAM_ERROR
+    # The envelope key (`"truncated":`), not a bare `truncated` substring — the
+    # same key-adjacency guard as `"error":` above. `image_transcribe` emits the
+    # key only when the value is true (`...(truncated ? { truncated: true } : {})`,
+    # image-transcribe.ts:394), so its presence IS the signal, while a genuine
+    # transcription mentioning the word ("the entry was truncated at the fold")
+    # carries no colon-adjacent key and stays `success`.
+    if '"truncated":' in s:
+        return TRUNCATED
     return SUCCESS
 
 
@@ -165,6 +219,11 @@ class Call(NamedTuple):
     day: str
     author: str
     sample: str
+    # Whether this call's engine could emit the `truncated` key (#2168). A call
+    # from an older engine is blind to truncation, so it is kept out of the
+    # truncation-rate denominator. Defaulted so hand-built Call() test fixtures
+    # for the reachability paths need not name it.
+    marker_capable: bool = False
 
 
 class ScanResult(NamedTuple):
@@ -181,13 +240,42 @@ class ScanResult(NamedTuple):
     def reachability_failures(self) -> int:
         return sum(1 for c in self.calls if c.bucket in REACHABILITY_BUCKETS)
 
+    @property
+    def truncated_reads(self) -> int:
+        """The truncation-rate NUMERATOR — capped reads on marker-capable calls
+        only, so it draws from the same population as `truncation_measurable`
+        below. A capped read on a call this checkout cannot place would otherwise
+        sit in the numerator but not the denominator, printing a rate above 100%
+        (`2 of 1 marker-capable`). Such reads are disclosed via
+        `truncated_unplaceable`, not dropped."""
+        return sum(
+            1 for c in self.calls if c.bucket == TRUNCATED and c.marker_capable
+        )
+
+    @property
+    def truncated_unplaceable(self) -> int:
+        """Capped reads on calls this checkout cannot place at or after the
+        marker — kept out of the rate (they are not in the denominator) but
+        disclosed so they are not silently dropped from the numerator."""
+        return sum(
+            1 for c in self.calls if c.bucket == TRUNCATED and not c.marker_capable
+        )
+
+    @property
+    def truncation_measurable(self) -> int:
+        """The truncation-rate DENOMINATOR — calls whose engine could have
+        emitted the marker, the only honest population to take the rate over."""
+        return sum(1 for c in self.calls if c.marker_capable)
+
 
 def scan(
     paths: list[Path],
     author_of: Callable[[Path], str] = commit_author,
+    marker_capable_of: Callable[[str | None], bool] = commit_emits_truncation_marker,
 ) -> ScanResult:
     """Classify every `image_transcribe` call whose captures survive, and tally
-    the two kinds of call that cannot be classified.
+    the two kinds of call that cannot be classified, and mark each with whether
+    its engine could emit the `truncated` marker.
 
     A run past the 14-day capture window carries `captures_stripped: true` and no
     `response_summary`, so its calls are counted as `stripped` and NOT run
@@ -196,7 +284,8 @@ def scan(
     Unreadable run logs are tallied too: a corpus that is entirely stripped or
     unreadable must not print "no calls found" and read as clean.
 
-    `author_of` is injectable so tests need not shell out to git.
+    `author_of` and `marker_capable_of` are injectable so tests need not shell
+    out to git.
     """
     calls: list[Call] = []
     unreadable = stripped_calls = stripped_runs = 0
@@ -224,6 +313,7 @@ def scan(
             d = run_date(p)
             day = d.isoformat() if d else "undated"
             author = author_of(p)
+            capable = marker_capable_of(doc.get("git_sha"))
             for tc in doc.get("tool_calls") or []:
                 if not isinstance(tc, dict):
                     continue
@@ -235,7 +325,14 @@ def scan(
                 rs = tc.get("response_summary")
                 rs = rs if isinstance(rs, str) else json.dumps(rs)
                 run_calls.append(
-                    Call(run, classify(rs), day, author, rs[:160].replace("\n", " "))
+                    Call(
+                        run,
+                        classify(rs),
+                        day,
+                        author,
+                        rs[:160].replace("\n", " "),
+                        capable,
+                    )
                 )
         except (
             OSError,
@@ -264,7 +361,10 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
     lead and nothing more, and saying that plainly is the point.
     """
     # Three counters per cell: [reachability failures, total calls, REACHED].
-    # "Reached" is a demonstrated `success`, not merely the absence of a failure.
+    # "Reached" is a demonstrated `success` or a `truncated` read — both came
+    # back with content — not merely the absence of a failure. (A truncated read
+    # is the opposite of `unrecognized_ark`: the call went out and the service
+    # answered, just past the output-token cap, so it is reachability evidence.)
     # An operator whose calls were all `unrecognized_ark` has no reachability
     # failure and yet never got as far as OpenRouter — that error is raised
     # before the call is made — so counting them as a concurrent success would
@@ -278,7 +378,7 @@ def interleaving_verdict(calls: list[Call]) -> tuple[str, list[str]]:
         cell[1] += 1
         if c.bucket in REACHABILITY_BUCKETS:
             cell[0] += 1
-        elif c.bucket == SUCCESS:
+        elif c.bucket in (SUCCESS, TRUNCATED):
             cell[2] += 1
 
     rows: list[str] = []
@@ -388,6 +488,55 @@ def format_report(result: ScanResult) -> str:
         # same failure as understating it.
         out.append(
             "  true rate over this window:  exact — no captures stripped in range"
+        )
+    # The #2457 rate: partial reads that reached the service but stopped at the
+    # cap. Distinct from a reachability failure — the page was read, just not to
+    # the end — so it gets its own line. Taken only over marker-capable calls:
+    # `image_transcribe` began emitting `truncated` in 733a2c7 (#2168), and a
+    # call from an older engine files as `success` however badly it was capped,
+    # so it can never produce the numerator and must not sit in the denominator.
+    # Sits BELOW the true-rate block, which is computed from the reachability
+    # count alone — above it, this line would read as covering both rates.
+    trunc = result.truncated_reads
+    tm = result.truncation_measurable
+    if tm:
+        out.append(
+            f"  truncated (capped mid-read): {trunc} of {tm} marker-capable "
+            f"({round(100 * trunc / tm, 1)}%)"
+        )
+        if tm < m:
+            # The excluded set is calls whose engine could not have carried the
+            # marker: either genuinely pre-#2168, or a `git_sha` this checkout
+            # cannot resolve (a partial fetch, a squash-deleted branch) which is
+            # treated as incapable rather than assumed capable — the safe
+            # direction for a rate that must not be inflated.
+            out.append(
+                f"    {m - tm} of {m} measurable calls predate 733a2c7 "
+                "(#2168) or ran an engine this checkout cannot resolve — "
+                "excluded above"
+            )
+    else:
+        # `tm == 0` has three causes that must not be conflated: every call
+        # genuinely predates the marker, every run's sha is unresolvable here,
+        # or 733a2c7 itself is unresolvable (a shallow/partial checkout) so every
+        # capability check returns 128 and reads blind. The line states only what
+        # this checkout can actually know — that none could be *placed* at or
+        # after the marker — rather than asserting they all predate it.
+        out.append(
+            "  truncated (capped mid-read): NOT MEASURABLE — no call in "
+            "range ran an engine this checkout can place at or after 733a2c7 "
+            "(#2168), when the marker began to be emitted: each one either "
+            "predates 733a2c7 or ran a commit this checkout cannot resolve"
+        )
+    # Applies to both branches: a capped read on an unplaceable call is real but
+    # is not in the rate's denominator, so it is disclosed here rather than
+    # dropped from the numerator — where it would either push the rate over 100%
+    # or vanish silently.
+    if result.truncated_unplaceable:
+        out.append(
+            f"    {result.truncated_unplaceable} further capped read(s) "
+            "observed on calls this checkout cannot place at or after "
+            "733a2c7 — counted in By cause below, NOT in the rate above"
         )
     out.append("")
 
