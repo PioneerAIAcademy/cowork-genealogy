@@ -245,8 +245,17 @@ def _read_at_head(head: str, rel: Path) -> dict | None:
 
     Binary capture with an explicit decode, so `test_encoding_lint.py`'s
     text-mode rule does not apply and no platform default can leak in. None
-    covers: absent from the tree, undecodable, unparseable, and a root that is
-    not an object — none of which make a run a 1M run.
+    covers: undecodable, unparseable, and a root that is not an object — none
+    of which make a run a 1M run.
+
+    A non-zero `git show` RAISES rather than returning None. Every path handed
+    to this function was just reported by `git_ar_e2e_runlogs()` as added or
+    renamed INTO the tree at `head`, so the blob is known to be there: a
+    failure is an anomaly (git gone mid-run, a transient fork failure, an
+    unreadable object), not evidence of no betas. Returning None there reports
+    a file it never opened as clean, which is the same silent-zero the
+    selectors refuse for — and it is reachable, since these git subprocesses do
+    intermittently fail under load.
     """
     proc = subprocess.run(
         ["git", "show", f"{head}:{rel.as_posix()}"],
@@ -254,7 +263,12 @@ def _read_at_head(head: str, rel: Path) -> dict | None:
         capture_output=True,
     )
     if proc.returncode != 0:
-        return None
+        raise GateUnavailable(
+            f"could not read {rel} out of the tree at {head} (git exited "
+            f"{proc.returncode}), though the selector just reported it as added "
+            "or renamed into that tree. Refusing rather than reporting the run "
+            "as not-1M on a file that was never opened."
+        )
     try:
         parsed = json.loads(proc.stdout.decode("utf-8"))
     except (ValueError, UnicodeDecodeError):
@@ -552,8 +566,16 @@ def main() -> int:
     # route `--diff-filter=A` cannot see. This is NOT the widening #2581
     # forbids: the shared selector is untouched and the two warn loops above
     # still read it, so only this one blocking gate changes what it sees.
-    grade_violations = check_added_runlogs_graded(ar_runlogs, head)
-    beta_violations = check_added_runlogs_not_1m(ar_runlogs, head)
+    # Same handler shape as the selector above: `_read_at_head` refuses on an
+    # unreadable blob, and without this that refusal would leave main() as a
+    # traceback rather than the ::error:: a reader can act on.
+    try:
+        grade_violations = check_added_runlogs_graded(ar_runlogs, head)
+        beta_violations = check_added_runlogs_not_1m(ar_runlogs, head)
+    except GateUnavailable as exc:
+        print(f"::error::{exc}")
+        print(f"  - {exc}", file=sys.stderr)
+        return 1
 
     # Both blocking rules report before either returns. A second rule that
     # printed ::error:: without reaching the return would be a green check, and

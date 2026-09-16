@@ -713,6 +713,48 @@ def test_a_non_1m_beta_is_still_a_violation(tmp_path, monkeypatch):
     assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
 
 
+def test_an_unreadable_blob_refuses_instead_of_reading_as_not_1m(tmp_path, monkeypatch):
+    """A file the selector reported but `git show` cannot read must not be clean.
+
+    The blob is known to be in the tree at `head` -- that is how it was
+    selected -- so a non-zero `git show` is an anomaly, not evidence of no
+    betas. Returning None here reported a file that was never opened as
+    not-a-1M-run, and nothing in the output distinguished the two: the OK line
+    counts files SELECTED, not files PARSED.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    commit(rel.as_posix())
+    with pytest.raises(check_e2e_fixtures.GateUnavailable):
+        check_e2e_fixtures.check_added_runlogs_not_1m([rel], "0" * 40)
+
+
+def test_main_turns_an_unreadable_blob_into_an_error_not_a_traceback(
+    tmp_path, monkeypatch, capsys
+):
+    """The refusal above has to reach main()'s handler.
+
+    The two gate calls sit OUTSIDE the try that wraps the selectors, so without
+    its own handler this escapes as a six-frame traceback -- the failure shape
+    the selector's GateUnavailable exists to eliminate.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix()))
+
+    def boom(head, r):
+        raise check_e2e_fixtures.GateUnavailable("simulated unreadable blob")
+
+    monkeypatch.setattr(check_e2e_fixtures, "_read_at_head", boom)
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "simulated unreadable blob" in out, out
+    assert "gates OK" not in out, out
+
+
 def test_main_draft_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys):
     """An unresolved-draft fixture warns but must never change the exit code —
     20 people working drafts in parallel can't have this blocking their PRs."""
