@@ -54,6 +54,14 @@ In Progress card and a Review card are someone's work: never merge one, in eithe
 direction. An *unassigned* Ready card is both in the pool and its slot's holder,
 which makes it the natural target — it is furthest along.
 
+**Re-check state at apply time, not just at compute time.** The pool is a snapshot
+and a pass takes hours; a card can be assigned while you are still proposing. On
+2026-09-16 issue #2535 was an unassigned Ready target when the queues were computed
+and assigned before the merges were applied, which retires its whole group. Verify
+`state` and `assignees` per issue immediately before writing — those two fields are
+what the rule turns on, and they survive a `gh project` outage that takes the board
+pull down.
+
 ## 1. The four verdicts
 
 **Duplicate — close one into the other.** Two issues whose fix is the same edit
@@ -142,6 +150,20 @@ queue.
 Report coverage as a number and a rule: how many slots you cleared, how they were
 chosen, and which agents failed. Never report a sample as the whole pass.
 
+**Validate the returned partition before you act on it.** Agents that share an
+issue across slots will both claim it, and an issue can only close once. Check
+mechanically, not by eye: no issue appears as a loser twice, and no target is
+also someone's loser. On 2026-09-16 issue #2562 came back claimed by two groups;
+the tie broke on where its *acceptance criterion* lives (a test under
+`eval/tests/unit/research-plan/`), not on which body mentioned it first.
+
+**Budget the GitHub API.** Seven parallel agents each reading issue bodies and
+comments will exhaust the hourly limit, and the secondary write limit trips before
+any documented bucket shows it — `gh api rate_limit` reads full while every call
+is refused. Prepare the merge content as files and apply it in one idempotent pass
+rather than interleaving reads and writes; retrying during a secondary limit
+extends it.
+
 ### The one-sitting test, which bounds all of this
 
 **Does one person, doing this once, finish all of it?** If no, they are separate
@@ -192,6 +214,15 @@ An issue body is **a claim written on a particular day**. Verify any factual
 claim — a path, a line number, a measurement, a tool's behaviour — before
 repeating it, and cite what you checked.
 
+**The queue itself is a claim too.** `slots.py` reads one line out of each body,
+so a body that defeats the parser reaches the wrong queue and every depth below it
+is wrong. Two shapes do it: a review banner that mentions `**Touches:**` inline
+while discussing it, and a rescoped card whose superseded body keeps a stale line
+under an `## Original issue` fold. Both were live on 2026-09-16. When an issue's
+queue membership looks wrong, read its body's Touches lines — plural — before
+trusting the slot, and treat a disagreement as a defect in the instrument rather
+than a judgment call.
+
 **Do not re-litigate a pair `/merge-recent-issues` judged independent** without
 reading its reasoning in the issue comments first, and only overturn it with
 something that pass could not see — which here is the queue, not the pair.
@@ -223,7 +254,17 @@ gh issue close <N> --repo PioneerAIAcademy/cowork-genealogy \
 ```
 
 Write the comment for someone who filed the issue and will wonder where it went.
-"Duplicate of #N" is not enough; name what they share.
+"Duplicate of #N" is not enough; name what they share, and say plainly that nothing
+was dropped and that they should reopen if they find otherwise.
+
+**A blocker cleared is a finding, and the board does not know it.** Verifying a
+merge means reading each card's blockers, which routinely turns up holds that were
+discharged weeks ago — on 2026-09-16, issue #2253's hold was a test that now passes
+in the newest committed run, and issues #2393, #2076 and #2262 had all been freed by
+cards that closed. Nobody learns this from a merge that does not happen. Post the
+correction as a comment on the unblocked issue, naming the run log or the closed
+issue you checked, and list it in the report's findings — a card sitting behind a
+dead blocker is invisible in exactly the way a deep queue is.
 
 If the target's body carries a banner asserting the two are separate, **rewrite
 it in the same pass**. A stale "keep these apart" note outliving the merge is
@@ -247,7 +288,10 @@ the runs bought back, and the gap where one remains.
    because they buy a reviewer and a rebase, never a run.
 5. **Hand to `/audit-board`** — sets that want a `cluster:*` label or a `next run:`
    issue rather than a merge.
-6. **Not checked** — both coverage buckets you did not get through (no
+6. **Blockers found discharged** — every hold you checked and found already
+   cleared, with what you read. These leave the pass as comments on those issues,
+   and they are often worth more than the merges.
+7. **Not checked** — both coverage buckets you did not get through (no
    `Touches:` line, and in no section above), and any slot whose agent failed.
 
 Then stop and wait for approval. Apply only what he approves. Do not begin any of
