@@ -78,7 +78,7 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   noting he had originally avoided the major because it broke something he no longer
   recalls, and asking that it be verified working. Verified on 2.1.1: production tree
   installs clean under `engine-strict=true`, `tsc` clean, 123 files / 2986 tests pass,
-  the real `build/index.js` boots over stdio and serves all 48 tools then advertised with empty stderr (re-measured 2026-09-15 on this branch's head: `make mcpb` + `scripts/verify-mcpb.sh` boot the packed server and `tools/list` returns all 49, `build_external_search_url` included),
+  the real `build/index.js` boots over stdio and serves all 48 tools then advertised with empty stderr (re-measured 2026-09-16 on this branch merged with `main`: `make mcpb` + `scripts/verify-mcpb.sh` boot the packed server and `tools/list` returns all 50, `build_external_search_url` and `sidecar_read` included),
   and `make mcpb` produces a working artifact. hono is unreachable regardless —
   `src/index.ts` constructs only `StdioServerTransport`, and hono is imported solely by
   the SDK's `streamableHttp` transport.
