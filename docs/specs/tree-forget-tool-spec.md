@@ -381,6 +381,22 @@ decides: clear those entries first, or pick a fact-level selector that does not
 cascade. The skill already tells the researcher that pre-existing assertions
 stating the answer compromise the exercise anyway.
 
+### Plan-phase precondition
+
+`tree_forget` refuses the call — including dry runs — when `research.json`
+already holds a non-empty `plans` array. The condition is **any entry at all**,
+not narrowed to active plans or in-progress items; a completed plan still means
+the project has moved past setup. The error message names the cause and says to
+start a new project.
+
+This is checked after the project-file reads (`NoProjectError` takes priority)
+and before any tree mutation or dry-run exit. Implemented as a `TreeForgetError`
+throw, so the existing catch returns `{ ok: false, errors }`.
+
+What it buys: the §1a collision where `question-selection` refused to create a
+new question while unrelated plan items sat `in_progress` after a mid-project
+forget is removed at source rather than anchored with an exception.
+
 ## 5. The restore file
 
 A non-dry run writes the pre-removal tree to **`.tree-before-forget.gedcomx.json`**
@@ -407,7 +423,9 @@ Three properties are load-bearing:
 ## 6. Re-invocation
 
 Forgetting is **additive**: a second call strips a further slice from the
-already-stripped tree. Failures are safe — a selector that matches nothing, an
+already-stripped tree — provided no plan has been written between the two calls.
+Once any plan exists, both the first and any subsequent call are refused (§4).
+Failures are safe — a selector that matches nothing, an
 unknown id, or a validation error all abort before any write, leaving no partial
 edit.
 
