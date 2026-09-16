@@ -88,10 +88,15 @@ locality in this period looks thin — this is a coverage gap, not a negative
 finding, and only index searching was done (no image-level browsing of the
 registers).
 
-**Not independently corroborated:** her parents are attested by the marriage
-act alone. The death act corroborates *who the groom was*, not *who her parents
-were*. No record naming Manuel López G. or Carmen Nelia Casado was found
-elsewhere.
+**Not independently corroborated.** Her parents are attested by the marriage act
+alone; the death act corroborates *who the groom was*, not *who her parents
+were*. One candidate sibling record exists — `ark:/61903/1:1:6R2N-51H4`, Manuel
+Antonio **López Casado** b. 1925, recorded as the child of *Manolo López*
+(a standard diminutive of Manuel) and *Carmen Nelia Casado* — and the
+distinctive maternal name makes him a plausible younger brother. He is **not**
+treated as corroboration here: the record carries no birthplace, it sits in the
+Distrito Nacional marriage register rather than Peravia, and nothing in it ties
+the family to San José de Ocoa. Worth pursuing if this fixture is revisited.
 
 **The live tree was not modified.** The hint was not accepted, no source was
 attached, no parents were added. `snapshot --check` on 2026-09-15 reported four
