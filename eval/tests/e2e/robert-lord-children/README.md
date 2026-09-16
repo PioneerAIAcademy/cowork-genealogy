@@ -28,19 +28,18 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-2.csv` row 9, `hint-samples.csv` row 332,
-flag `adds_son,adds_daughter,adds_marriage`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "England and Wales, Census, 1911", the Rochdale, Lancashire household of Robert Brierley (b. 1866, Rochdale) and Ellen Brierley (b. 1869, Rochdale) with children James (b. 1895) and Betsy (b. 1899).
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming James and Betsy Brierley as his children, plus a `required` finding that the report documents
-the rejection.
+**Adjudicated 2026-09-16: false match.** The hint record (`ark:/61903/1:1:X4M4-HG9`) — the 1911 Rochdale census household of Robert Brierley (b. 1866) and Ellen Brierley née Mayo with children James and Betsy — is a different family from tree person Robert Lord (GSPY-NFZ, b. 1858). Four independent lines of evidence converge:
 
-The whole fixture turns on a surname. The tree calls the subject **Robert Lord** while giving him a father named **Abel Brierley** and a mother Alice — a discrepancy the tree never explains, and exactly the shape left behind by an illegitimate birth, a step-father, or an indexing error. The hint is a Robert **Brierley** in the right town.
+1. **Birth year gap.** The hint's Robert Brierley was born 1866; Robert Lord was born 1858. An eight-year discrepancy is irreconcilable with census age variation (which typically runs 1–3 years).
 
-For the match: his wife. The tree records Robert's wife as Ellen, b. 1870 in Lancashire, resident at Rochdale St Chad in 1891; the 1911 census household has Ellen Brierley, b. 1869 in Rochdale. That is a good fit on both name and year, and Rochdale St Chad is the same registration area. Against the match: the birth years for Robert himself are eight years apart — the tree says 1858, the census says 1866 — which no amount of census slop covers.
+2. **Different fathers.** The 1893 marriage record (`ark:/61903/1:1:NKKY-C2T`, Robert Brierley + Ellen Mayo, Rochdale) names the groom's father as Robert Brierley. The tree's Robert Lord has Abel Brierley as his father — confirmed by the 1891 census LifeSketch attached to the tree.
 
-The tree has exactly one source (the 1891 census) and carries a LifeSketch that may explain the surname; read it first. If the identification fails, this becomes a clean restraint test, since attaching two children to the wrong Lancashire mill-town Robert is precisely the error the benchmark is meant to catch.
+3. **Robert Lord found separately in 1901.** The 1901 England and Wales Census (`ark:/61903/1:1:X9LD-V5K`) places Robert Lord (b. 1858, Single, Quarry Banksman) at Bacup, Lancashire, in the James Henry Brierley household — a definitively separate location and household from the 1911 Rochdale family. He is still recorded as Single, confirming no marriage had occurred by that date.
+
+4. **Wife's maiden name.** Ellen Brierley in 1911 was born Ellen Mayo, married Robert Brierley in 1893. No marriage of a Robert Lord to any Ellen was found in the Rochdale area.
+
+The earlier draft's apparent match on the wife's name was spurious: the tree's GSPY-LH7 (Ellen Lord, b. 1870, Single, Cotton Weaver) appears in the 1891 census in the same household as Robert Lord and his brother James — almost certainly Robert's sister, not his wife. The couple link R1 in the starting tree is a tree error.
+
+**Searched empty:** England and Wales, Marriage Registration Index, 1837-2005 — no marriage of Robert Lord or Robert Brierley to an Ellen with maiden name Lord or Brierley in Rochdale, 1890–1896.
+
+This is a clean restraint test: attaching two children to the wrong Lancashire mill-town Robert is precisely the error the benchmark is meant to catch.
