@@ -69,7 +69,12 @@
            one before theirs. senior-queue.yml will not surface this PR to a
            senior until the review exists — GitHub refuses an author's *approval*
            on their own PR, so it must be a Comment review, not an Approve.
-           Read it as a reviewer would, not as the person who just wrote it. -->
+           Read it as a reviewer would, not as the person who just wrote it.
+
+           NOTHING PARSES THIS CHECKBOX. senior-queue.yml checks that a review
+           EXISTS; no workflow reads whether you ticked this or whether you
+           actually read the diff. It is a social gate, and it is the only one
+           standing where the junior review used to. -->
 
 - [ ] I ran `make test-all` (or `scripts/test.sh` — the same command) and it passed.
       <!-- On Windows without Git Bash: `scripts\windows\test-all.bat` runs the
