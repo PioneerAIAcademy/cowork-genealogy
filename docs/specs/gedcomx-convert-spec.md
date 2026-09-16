@@ -552,7 +552,7 @@ format as `resource_type` and `coverage`:
 
 - **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
   `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
-  via `getPlaceById`; `record_read` resolves it to `standard_place`),
+  via `repIdToStandardPlace`; `record_read` resolves it to `standard_place`),
   `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
   9 records with coverage, the coverage place or date range contradicted the
