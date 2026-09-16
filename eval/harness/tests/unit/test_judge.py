@@ -625,74 +625,6 @@ def _tool_use_response(dims):
     return SimpleNamespace(content=[tool_block])
 
 
-def _restore_coerced_dims(dims, warnings):
-    """Undo the routing-negative N/A coercion so a replay sees the judge's RAW
-    output, not the harness post-process.
-
-    `orchestrator._coerce_routing_negative_to_na` overwrites a dimension's stored
-    score to null (rationale prefixed `[coerced-to-na]`) and preserves the
-    judge's ORIGINAL score in an `output.warnings` entry
-    (`kind == "coerced_routing_negative_to_na"`, `name`, `score`). The corpus
-    replay wants to know whether the judge's own draw would raise, so it must
-    replay the original score — otherwise a legitimate coerced null Correctness
-    is misread as a judge malfunction. A genuine (uncoerced) null has no matching
-    warning and is left untouched, so `_extract_dimensions` still rejects it.
-    """
-    originals = {
-        w.get("name"): w.get("score")
-        for w in (warnings or [])
-        if w.get("kind") == "coerced_routing_negative_to_na"
-    }
-    if not originals:
-        return dims
-    restored = []
-    for dd in dims:
-        if (
-            dd.get("score") is None
-            and dd.get("name") in originals
-            and str(dd.get("rationale", "")).startswith("[coerced-to-na]")
-        ):
-            dd = {**dd, "score": originals[dd["name"]]}
-        restored.append(dd)
-    return restored
-
-
-def test_restore_coerced_dims_reverts_a_routing_na_to_the_judges_original_score():
-    """A coerced-to-na null Correctness (original score preserved in warnings)
-    must replay as the judge's original score, not raise as a malfunction."""
-    dims = [
-        {"source": "base", "name": "Correctness", "score": None,
-         "rationale": "[coerced-to-na] ... Original judge rationale: did its own task"},
-        {"source": "base", "name": "Completeness", "score": 3, "rationale": "ok"},
-        {"source": "base", "name": "Tool Arguments", "score": 3, "rationale": "ok"},
-    ]
-    warnings = [{"kind": "coerced_routing_negative_to_na", "name": "Correctness",
-                 "score": 1, "rationale": "did its own task"}]
-    restored = _restore_coerced_dims(dims, warnings)
-    out, _ = judge._extract_dimensions(
-        _tool_use_response(restored), _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS
-    )
-    assert next(x for x in out if x["name"] == "Correctness")["score"] == 1
-
-
-def test_restore_coerced_dims_leaves_a_genuine_uncoerced_null_to_raise():
-    """The other direction: a null Correctness with NO coercion warning is a real
-    judge malfunction — restore must leave it untouched so the replay still
-    rejects it (the fix must not blanket-exempt nulls)."""
-    dims = [
-        {"source": "base", "name": "Correctness", "score": None,
-         "rationale": "the judge dodged this dimension"},
-        {"source": "base", "name": "Completeness", "score": 3, "rationale": "ok"},
-        {"source": "base", "name": "Tool Arguments", "score": 3, "rationale": "ok"},
-    ]
-    restored = _restore_coerced_dims(dims, [])
-    assert restored[0]["score"] is None
-    with pytest.raises(judge.JudgeError, match="null"):
-        judge._extract_dimensions(
-            _tool_use_response(restored), _NO_RUBRIC, tool_calls=_SOME_TOOL_CALLS
-        )
-
-
 def test_extract_dimensions_accepts_correctly_cased_rubric_dimensions(
     record_extraction_rubric,
 ):
@@ -1204,12 +1136,6 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                     ]
                     restored_coerced_cells += len(coerced)
                 total_draws += 1
-                # Replay the judge's RAW draw, not the harness post-process:
-                # restore any routing-negative N/A coercion to the original score
-                # so a legitimate coerced null is not misread as a malfunction.
-                dims = _restore_coerced_dims(
-                    dims, (r.get("output") or {}).get("warnings") or []
-                )
                 # The run's OWN tool calls, never a stand-in: the #1406
                 # N/A rule keys on this list being empty, so substituting
                 # a placeholder here would measure the placeholder.

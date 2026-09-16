@@ -58,6 +58,7 @@ def _entry(
     lid="loc_001",
     source="locality-guide",
     sections=("home", "getting_started", "online_records", "research_tips"),
+    pages_read=None,
     jurisdictions=None,
     collections=None,
 ):
@@ -66,7 +67,8 @@ def _entry(
         "place": "Pennsylvania, United States",
         "source": source,
         "created": "2026-09-15T00:00:00Z",
-        "pages_read": [{"section": s, "found": True} for s in sections],
+        "pages_read": pages_read if pages_read is not None
+        else [{"section": s, "found": True} for s in sections],
         "jurisdictions": jurisdictions if jurisdictions is not None else [
             {"name": "Schuylkill, Pennsylvania, United States", "date_range": "1811-"}
         ],
@@ -199,22 +201,39 @@ def test_shape_reports_a_string_collection_item_cleanly_not_as_a_crash():
     assert "not an object" in str(exc.value)
 
 
+def test_shape_fires_on_a_stray_key_in_pages_read():
+    """Review note 9: pages_read is a nested array too — a stray key must fire,
+    not pass because only the other two arrays were checked."""
+    bad_pages = [{"section": s, "found": True} for s in
+                 ("home", "getting_started", "online_records", "research_tips")]
+    bad_pages[0]["junk"] = 1
+    with pytest.raises(AssertionError) as exc:
+        check_shape(_state([]), _state([_entry(pages_read=bad_pages)]))
+    assert "stray keys" in str(exc.value) and "pages_read" in str(exc.value)
+
+
+def test_shape_fires_on_pages_read_missing_required_found():
+    bad_pages = [{"section": s} for s in
+                 ("home", "getting_started", "online_records", "research_tips")]
+    with pytest.raises(AssertionError) as exc:
+        check_shape(_state([]), _state([_entry(pages_read=bad_pages)]))
+    assert "missing required keys" in str(exc.value) and "found" in str(exc.value)
+
+
+def test_shape_reports_a_non_list_container_cleanly_not_as_a_crash():
+    """Review note 10b: a non-list jurisdictions container (which passes
+    write-validation) must raise a clean AssertionError, not a TypeError."""
+    with pytest.raises(AssertionError) as exc:
+        check_shape(_state([]), _state([_entry(jurisdictions=5)]))
+    assert "not a list" in str(exc.value)
+
+
 # --- VR2: test_persisted_collection_ids_trace_to_tool_response ----------
 
 
 def test_ids_passes_when_id_in_a_collections_search_response():
     calls = [_call("collections_search", response={
         "collections": [{"id": "1999196", "title": "PA Probate"}]
-    })]
-    check_ids(_state([]), _state([_entry()]), calls)
-
-
-def test_ids_passes_when_id_only_in_a_wiki_place_page_markdown():
-    """All-responses scope: a collection id the skill lifted from wiki_place_page
-    markdown is grounded and must NOT fire, even though no collections_search
-    returned it (the reason VR2 traces every tool, not just the search tools)."""
-    calls = [_call("wiki_place_page", response={
-        "markdown": "Probate records are in FamilySearch Collection 1999196."
     })]
     check_ids(_state([]), _state([_entry()]), calls)
 
@@ -228,9 +247,8 @@ def test_ids_passes_when_id_in_record_search_collectionId():
 
 
 def test_ids_fires_when_persisted_id_is_only_a_substring_of_a_longer_real_id():
-    """A fabricated short id that is a numeric substring of a longer legit id in
-    a response must NOT be accepted as grounded — the exact/id-field + digit-
-    boundary trace closes the raw-substring false-negative (review finding)."""
+    """A fabricated id that is a numeric substring of a longer legit id must NOT
+    ground — exact id-field match, not a substring/boundary text search."""
     calls = [_call("collections_search", response={
         "collections": [{"id": "1999196", "title": "PA Probate"}]
     })]
@@ -241,13 +259,18 @@ def test_ids_fires_when_persisted_id_is_only_a_substring_of_a_longer_real_id():
     assert "196" in str(exc.value)
 
 
-def test_ids_exact_field_match_does_not_depend_on_prose():
-    """A structured id-field value grounds even when the serialized text has no
-    other mention — exact harvest, not substring."""
-    calls = [_call("volume_search", response={
-        "results": [{"collectionId": "1999196"}]
+def test_ids_fires_when_id_only_matches_a_non_id_number_in_a_response():
+    """Review note 6: a fabricated id equal to a coincidental number (a
+    place_population count, a year) must NOT ground — the exact-field trace
+    rejects it, where the old digit-boundary text search accepted it."""
+    calls = [_call("place_population", response={
+        "standardPlace": "Somewhere", "population": 1204093, "year": 1900
     })]
-    check_ids(_state([]), _state([_entry()]), calls)
+    with pytest.raises(AssertionError) as exc:
+        check_ids(_state([]), _state([_entry(
+            collections=[{"id": "1204093", "title": "fabricated — a population, not a collection"}],
+        )]), calls)
+    assert "1204093" in str(exc.value)
 
 
 def test_ids_fires_when_id_appears_in_no_response():
@@ -257,7 +280,30 @@ def test_ids_fires_when_id_appears_in_no_response():
     with pytest.raises(AssertionError) as exc:
         check_ids(_state([]), _state([_entry()]), calls)
     assert "1999196" in str(exc.value)
-    assert "no tool response" in str(exc.value)
+    assert "trace to a tool result" in str(exc.value)
+
+
+def test_ids_does_not_redemand_a_collection_unchanged_by_an_inplace_update():
+    """Review note 8: an op:update refresh that did not re-fetch collections
+    must NOT re-demand grounding of a collection id written in a prior run."""
+    seed = _entry(lid="loc_001", collections=[{"id": "AAA", "title": "prior"}])
+    refreshed = _entry(lid="loc_001", collections=[{"id": "AAA", "title": "prior"}])
+    refreshed["updated"] = "2026-02-02T00:00:00Z"  # only a metadata change this run
+    # AAA is not in any response this run, yet VR2 must skip (nothing NEW written)
+    with pytest.raises(pytest.skip.Exception):
+        check_ids(_state([seed]), _state([refreshed]), [])
+
+
+def test_ids_fires_on_a_new_collection_added_by_an_inplace_update():
+    """The other direction: a collection id ADDED by an update is new and must
+    ground."""
+    seed = _entry(lid="loc_001", collections=[{"id": "AAA", "title": "prior"}])
+    updated = _entry(lid="loc_001", collections=[
+        {"id": "AAA", "title": "prior"}, {"id": "BBB", "title": "fabricated add"}])
+    with pytest.raises(AssertionError) as exc:
+        check_ids(_state([seed]), _state([updated]), [_call("collections_search", response={
+            "collections": [{"id": "AAA", "title": "prior"}]})])
+    assert "BBB" in str(exc.value)
 
 
 def test_ids_stands_down_when_no_new_collection_ids():

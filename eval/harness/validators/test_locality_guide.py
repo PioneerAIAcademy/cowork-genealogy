@@ -46,24 +46,24 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
-import json
-import re
-
 import pytest
 
 from validators_lib import bare_tool_name, written_entries
 
 REQUIRED_WIKI_SECTIONS = {"home", "getting_started", "online_records", "research_tips"}
 
-# jurisdictions[] / collections[] item shapes mirror the closed schema at
-# docs/specs/schemas/research.schema.json $defs.locality (additionalProperties:
-# false). The top-level locality object is already closed at write time by
-# checkAllowedKeys (validator.ts:1505); its NESTED items are deliberately not
-# deep-checked there (validator.ts:1490-1492) — that is the hole VR1 closes.
+# jurisdictions[] / collections[] / pages_read[] item shapes mirror the closed
+# schema at docs/specs/schemas/research.schema.json $defs.locality
+# (additionalProperties: false). The top-level locality object is already closed
+# at write time by checkAllowedKeys (validator.ts:1505); its NESTED items are
+# deliberately not deep-checked there (validator.ts:1490-1492) — that is the hole
+# VR1 closes.
 JURISDICTION_ALLOWED_KEYS = {"name", "date_range"}
 JURISDICTION_REQUIRED_KEYS = {"name"}
 COLLECTION_ALLOWED_KEYS = {"id", "title", "date_range"}
 COLLECTION_REQUIRED_KEYS = {"id", "title"}
+PAGES_READ_ALLOWED_KEYS = {"section", "url", "found"}
+PAGES_READ_REQUIRED_KEYS = {"section", "found"}
 
 
 def _written_localities(before_state, after_state):
@@ -150,11 +150,11 @@ def test_persisted_localities_entry_shape(before_state, after_state):
         assert loc.get("source") == "locality-guide", (
             f"localities[{lid}] source should be 'locality-guide', got {loc.get('source')!r}"
         )
-        pages = loc.get("pages_read") or []
-        assert all(isinstance(p, dict) for p in pages), (
-            f"localities[{lid}] pages_read has a non-object item: {pages!r}"
+        _check_nested_items(
+            loc.get("pages_read") or [], lid, "pages_read",
+            PAGES_READ_ALLOWED_KEYS, PAGES_READ_REQUIRED_KEYS,
         )
-        sections = {p.get("section") for p in pages}
+        sections = {p.get("section") for p in (loc.get("pages_read") or [])}
         missing = REQUIRED_WIKI_SECTIONS - sections
         assert not missing, (
             f"localities[{lid}] pages_read is missing wiki sections {sorted(missing)} — "
@@ -171,11 +171,15 @@ def test_persisted_localities_entry_shape(before_state, after_state):
 
 
 def _check_nested_items(items, lid, kind, allowed_keys, required_keys):
-    """Assert each nested jurisdictions/collections item is an object whose keys
-    are within `allowed_keys` (no stray) and include `required_keys`. A non-dict
-    item is reported cleanly rather than crashing on set()/`.get` — the runtime
-    schema validator does not type-check these nested items (validator.ts).
+    """Assert each nested jurisdictions/collections/pages_read item is an object
+    whose keys are within `allowed_keys` (no stray) and include `required_keys`.
+    A non-list container or a non-dict item is reported cleanly rather than
+    crashing on iteration/`set()`/`.get` — the runtime schema validator does not
+    type-check these nested items (validator.ts).
     """
+    assert isinstance(items, list), (
+        f"localities[{lid}] {kind} is not a list: {items!r}"
+    )
     for item in items:
         assert isinstance(item, dict), (
             f"localities[{lid}] {kind} entry is not an object: {item!r}"
@@ -192,56 +196,63 @@ def _check_nested_items(items, lid, kind, allowed_keys, required_keys):
         )
 
 
+def _collection_ids(loc):
+    return {
+        str(c.get("id"))
+        for c in (loc.get("collections") or [])
+        if isinstance(c, dict) and c.get("id") is not None
+    }
+
+
 def test_persisted_collection_ids_trace_to_tool_response(
     before_state, after_state, tool_calls
 ):
-    """VR2 — every collection id in a newly-persisted localities entry must
-    appear in some tool response this run returned: the id was grounded in
-    something the skill actually saw, not fabricated.
+    """VR2 — every collection id a run newly writes onto a localities entry must
+    match an id-VALUED field in some tool response this run returned: the id was
+    grounded in a tool result the skill actually saw, not fabricated.
 
-    Traces against ALL same-run tool responses, not just
-    collections_search/volume_search. compactStagedRecordSearch keeps
-    collectionId on every row (staged-compaction.ts:72-85) and wiki_place_page
-    can surface a collection id inside its markdown, so a narrower scope would
-    false-fail a legitimately grounded id. Grounding is checked two ways: first
-    an EXACT match against every id-valued field harvested from the responses
-    (so a fabricated id that is a numeric substring of a longer real id — "196"
-    inside "1999196" — is NOT accepted); then, for an id that appears only in
-    prose, a digit-boundary search over the serialized responses (so a
-    markdown-cited id still grounds while a digit-substring still does not). The
-    residual is a fabricated id equal to a bare number bounded by non-digits
-    (e.g. a 4-digit year in a date range) — negligible for multi-digit
-    collection ids.
+    Only ids NEW this run are checked — an id already on the same entry in
+    `before_state` was grounded in an earlier run, so an `op:"update"` refresh
+    that does not re-fetch collections is not re-demanded (which would false-fail
+    a legitimate partial update).
 
-    Reads tc['response'] — the full fixture payload the mock served at
-    validation time (mock_mcp.py:742; precedent
-    test_search_wikipedia.py:188-196). NOTE: committed run logs STRIP these
-    responses to empty, so this validator's verdict on a real run is observable
-    only live, never replayed from a committed log (register gap #2479).
+    Grounding is an EXACT match against every value stored under an id-bearing
+    key (`id` / `collectionId`) anywhere in the responses — not a substring or a
+    digit-boundary search over the serialized text. A looser text match grounds a
+    fabricated id against any coincidental number (a population count, a year in
+    a date range), which is the exact false-pass an anti-fabrication gate must
+    not have.
+
+    Reads tc['response'] — the full fixture payload the mock served at validation
+    time (mock_mcp.py:754; precedent test_search_wikipedia.py). NOTE: committed
+    run logs STRIP these responses to empty, so this validator's verdict on a
+    real run is observable only live, never replayed from a committed log
+    (register gap #2479).
     """
-    written = _written_localities(before_state, after_state)
-    persisted = [
-        (loc.get("id"), c.get("id"))
-        for loc in written
-        for c in (loc.get("collections") or [])
-        if isinstance(c, dict) and c.get("id") is not None
-    ]
+    before = {
+        e.get("id"): e
+        for e in ((before_state or {}).get("research_json") or {}).get("localities") or []
+        if isinstance(e, dict)
+    }
+    after = ((after_state or {}).get("research_json") or {}).get("localities") or []
+    persisted = []
+    for loc in after:
+        if not isinstance(loc, dict):
+            continue
+        prior = before.get(loc.get("id"))
+        prior_ids = _collection_ids(prior) if isinstance(prior, dict) else set()
+        for cid in _collection_ids(loc) - prior_ids:
+            persisted.append((loc.get("id"), cid))
     if not persisted:
-        pytest.skip("no persisted collection ids this run")
-    responses = [tc.get("response") for tc in (tool_calls or [])]
+        pytest.skip("no newly-persisted collection ids this run")
     grounded = set()
-    for r in responses:
-        _harvest_id_values(r, grounded)
-    blob = json.dumps(responses, default=str)
+    for tc in (tool_calls or []):
+        _harvest_id_values(tc.get("response"), grounded)
     for lid, cid in persisted:
-        cid = str(cid)
-        traced = cid in grounded or bool(
-            re.search(rf"(?<!\d){re.escape(cid)}(?!\d)", blob)
-        )
-        assert traced, (
-            f"localities[{lid}] collection id {cid!r} appears in no tool response "
-            "this run — a persisted collection id must trace to a tool result "
-            "(an id-valued field or a text mention), not be fabricated"
+        assert cid in grounded, (
+            f"localities[{lid}] collection id {cid!r} matches no id-valued field "
+            "in any tool response this run — a persisted collection id must trace "
+            "to a tool result, not be fabricated"
         )
 
 
@@ -257,6 +268,12 @@ def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
     available in this environment" and moved on (35 of 35 runs), which was a
     fixture gap, not a skill choice. With the fixture present the model calls it,
     so a one-sided survey is now a real defect.
+
+    Deliberately grades call PRESENCE, not the result: the skill *making* both
+    calls is the behaviour under test. A `fixture_not_found` response means the
+    skill called the tool but the eval corpus lacks a fixture (a test-corpus gap,
+    not skill misbehaviour); in production the call always returns. Whether a
+    persisted value is grounded in the result is VR2's job, not VR4's.
     """
     tools = {bare_tool_name(tc.get("tool")) for tc in (tool_calls or [])}
     called_cs = "collections_search" in tools
