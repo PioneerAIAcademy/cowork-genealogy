@@ -123,7 +123,8 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     # actually occur.
     try:
         out = subprocess.check_output(
-            ["git", "diff", "--name-only", "--diff-filter=A", base, head],
+            ["git", "-c", "diff.renames=true", "diff",
+             "--name-only", "--diff-filter=A", base, head],
             text=True,
             encoding="utf-8",
             cwd=REPO_ROOT,
@@ -178,11 +179,17 @@ def git_ar_e2e_runlogs() -> list[Path] | None:
     existed, that promotion landed a tree-producing, ungraded run in the
     calibration corpus by the one route neither gate could see.
 
-    `-c diff.renames=true` is not decoration. With `diff.renames=false` in a
-    developer's gitconfig, git reports a rename as a plain `A <destination>`,
-    which silently changes which rows this selector returns and makes the
-    AR-vs-A distinction untestable on that machine. Pinning it makes both
-    production and the suite independent of the runner's config.
+    `-c diff.renames=true` is pinned on BOTH selectors, but it is the pin on
+    `git_added_e2e_runlogs()` that is load-bearing. Measured: with
+    `diff.renames=false` git reports a promotion as a plain `A <destination>`
+    instead of `R100 <src> <destination>`. THIS selector takes the last field
+    either way, so its output is unchanged and removing its pin reds nothing.
+    The A selector flips from returning nothing to returning the destination,
+    which recounts a promotion as an added run — without its pin this file
+    fails two rows under `GIT_CONFIG_GLOBAL=<diff.renames=false>`. The pin here
+    is kept as the matching half of a pair, not because it changes this output;
+    `test_both_selectors_pin_rename_detection_against_the_runners_gitconfig`
+    asserts the half that does.
     """
     base = os.environ.get("BASE_SHA")
     head = os.environ.get("HEAD_SHA")
@@ -511,7 +518,7 @@ def main() -> int:
         # INSIDE this try on purpose. The handler below wraps only the call
         # above today, and a GateUnavailable raised from a later line would
         # propagate as a six-frame traceback -- the failure shape this class
-        # exists to eliminate. `or []` is for the five tests that stub the
+        # exists to eliminate. `or []` is for the three tests that stub the
         # selector above and leave this one real; on the production path
         # `added is not None` already means both shas are set.
         ar_runlogs = (git_ar_e2e_runlogs() or []) if added is not None else []

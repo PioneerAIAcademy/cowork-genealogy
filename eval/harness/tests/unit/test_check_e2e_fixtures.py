@@ -629,6 +629,90 @@ def test_the_gate_does_not_credit_an_annotation_added_after_HEAD_SHA(tmp_path, m
     assert len(check_e2e_fixtures.check_added_runlogs_graded([rel], ungraded_head)) == 1
 
 
+def test_the_1m_rule_reads_the_head_ARGUMENT_not_the_checkouts_HEAD(tmp_path, monkeypatch):
+    """The 1M rule's `head` must be consulted, not the working HEAD.
+
+    Sibling of `test_the_gate_reads_the_HEAD_SHA_tree_not_the_checkout_s_HEAD`
+    on the grading-gate side, and it exists for the same reason: the two
+    HEAD-tree rows above build their repo so the commit they make IS HEAD, which
+    makes `head` and the literal "HEAD" indistinguishable — swapping them left
+    the whole suite green. CI checks out the MERGE commit while HEAD_SHA is the
+    PR head, so the trees genuinely differ there.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    # A LATER commit blanks it: the working HEAD is clean, `head` is not.
+    _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    commit(rel.as_posix())
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+
+
+def test_the_AR_selector_reads_its_head_not_the_working_tree(tmp_path, monkeypatch):
+    """A run log that arrives only in a commit AFTER `head` is not selected.
+
+    Dropping `head` from the diff args (`base` alone, i.e. base..working tree)
+    left the whole suite green, and in CI's merge-commit checkout that selects
+    run logs that landed on the base branch after BASE_SHA — other people's
+    runs, failed against this PR.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    commit("seed.txt")
+    mine = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": []})
+    sel, _head = _ar(repo, commit, monkeypatch, mine.as_posix())
+    assert [p.as_posix() for p in sel] == [mine.as_posix()], sel
+    # Someone else's run lands after HEAD_SHA; the pinned range must not see it.
+    later = _write_log(repo, "eval/runlogs/e2e/jones/run-2026-07-01_09-00-00.json", {"betas": _1M})
+    commit(later.as_posix())
+    assert [p.as_posix() for p in check_e2e_fixtures.git_ar_e2e_runlogs()] == [mine.as_posix()]
+
+
+def test_both_selectors_pin_rename_detection_against_the_runners_gitconfig(tmp_path, monkeypatch):
+    """`diff.renames=false` in the ambient gitconfig must not change either set.
+
+    Git reports a promotion as `R100 src dst` with rename detection on and as a
+    plain `A dst` with it off. The AR selector returns the destination either
+    way, so removing ITS pin reds nothing — but the A selector flips, from
+    nothing to the destination, which recounts the promotion as an added run.
+    So this row asserts the A-selector pin specifically: without it this file
+    fails two rows under `GIT_CONFIG_GLOBAL=<diff.renames=false>`.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "diff.renames", "false"],
+        check=True, capture_output=True, text=True, encoding="utf-8",
+    )
+    src = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"betas": _1M})
+    commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, _head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert [p.as_posix() for p in sel] == [dst], sel
+    assert check_e2e_fixtures.git_added_e2e_runlogs() == []
+
+
+def test_a_non_1m_beta_is_still_a_violation(tmp_path, monkeypatch):
+    """The rule flags ANY non-empty `usage.betas`, not just the 1M one.
+
+    The producer only ever writes the 1M list or `[]` today, so this pins the
+    behaviour rather than describing a case in the corpus: a run carrying some
+    other beta is equally not corpus-comparable, and a future beta must not slip
+    through by not being the one named in the message.
+    """
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": ["some-other-beta"]}
+    )
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert len(check_e2e_fixtures.check_added_runlogs_not_1m(sel, head)) == 1
+
+
 def test_main_draft_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys):
     """An unresolved-draft fixture warns but must never change the exit code —
     20 people working drafts in parallel can't have this blocking their PRs."""
@@ -636,6 +720,10 @@ def test_main_draft_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys)
     rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=True)
     tree, ann = _siblings(rel)
     _write_fixture_readme(repo, "smith", draft=True)  # warn check reads disk
+    # Real BASE_SHA so the AR selector -- and so both blocking gates -- actually
+    # see this run rather than an empty list; the stub below is the warn side.
+    _write_log(repo, "seed.txt", _ABSENT)
+    monkeypatch.setenv("BASE_SHA", commit("seed.txt"))
     monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
     monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 0
@@ -883,6 +971,9 @@ def test_main_drift_warning_does_not_fail_the_job(tmp_path, monkeypatch, capsys)
     (repo / tree).write_text("{}", encoding="utf-8")
     (repo / ann).write_text("{}", encoding="utf-8")
     _write_expected_findings(repo, "smith", [{"id": "f1", "type": "source"}])
+    # Real BASE_SHA, as above: without it both blocking gates check nothing.
+    _write_log(repo, "seed.txt", _ABSENT)
+    monkeypatch.setenv("BASE_SHA", commit("seed.txt"))
     monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
     monkeypatch.setattr(check_e2e_fixtures, "git_added_e2e_runlogs", lambda: [rel])
     assert check_e2e_fixtures.main() == 0

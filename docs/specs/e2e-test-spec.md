@@ -1984,11 +1984,14 @@ flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
 warning was removed because it re-flagged every un-run fixture in the repo on
 every e2e PR (pure noise).
 
-The `check-e2e-fixtures` workflow instead runs two **blocking** checks — the grading
-gate (§7.4) and the 1M-window gate (§7.5): a run log *added in the PR, or renamed into it,* that produced a final tree
-must ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
-exempt). It reads only committed files and does **not** trigger a live e2e
-run (those stay out of CI per §12).
+The `check-e2e-fixtures` workflow instead runs two **blocking** checks, both
+scoped to run logs *added in the PR, or renamed into it*. The **grading gate**:
+one that produced a final tree must ship its `run-<ts>.ann.json` in the same PR
+(a treeless crash/skip run is exempt). The **1M-window gate**: one whose
+`usage.betas` is non-empty — a run made with `--context-1m` — is rejected,
+because a 1M window is not comparable to the rest of the corpus; keep it in a
+sibling directory outside `eval/runlogs/e2e/`. Both read only committed files
+and neither triggers a live e2e run (those stay out of CI per §12).
 
 ---
 
