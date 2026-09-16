@@ -1076,14 +1076,48 @@ def _restore_coerced_cells(dims: list[dict], run: dict) -> tuple[list[dict], int
                 f"the judge draw."
             )
         coerced[name] = w["score"]
-    if not coerced:
-        return dims, 0
-    return [
-        {**d, "score": coerced[d["name"]]}
-        if d.get("name") in coerced and d.get("score") is None
-        else d
-        for d in dims
-    ], len(coerced)
+
+    # Rewrite cell by cell, and count the cells actually rewritten — not the
+    # warnings matched. A warning naming a dimension that already carries a
+    # score, or one absent from the draw, matches but restores nothing; counting
+    # those would let the non-vacuity assert below stay green while the restore
+    # path did no work (review, PR #2587).
+    out: list[dict] = []
+    restored = 0
+    for d in dims:
+        # `source == "base"` deliberately. The null policy this restoration
+        # exists to satisfy (`_REQUIRED_BASE_DIMENSIONS` /
+        # `_NULLABLE_BASE_DIMENSIONS` in judge.py) governs BASE dimensions only,
+        # so only a base null can force the raise. A null RUBRIC cell is
+        # legitimate data — eval/CLAUDE.md: "Any rubric dimension may be null
+        # when the fixture never created the situation it grades" — and a rubric
+        # dimension is free to be named "Correctness", since judge.py unions the
+        # two name sets with no collision guard. Keying on name alone would
+        # silently overwrite that cell. No rubric uses these names today; this
+        # is latent, not live.
+        #
+        # `"score" in d` deliberately too: `.get("score") is None` is also true
+        # for a dimension missing the key entirely, which is a real historical
+        # shape that `_extract_dimensions` would otherwise reject. Restoring
+        # into it would invent a score the judge never returned.
+        if (
+            d.get("source") == "base"
+            and d.get("name") in coerced
+            and "score" in d
+            and d["score"] is None
+        ):
+            out.append({**d, "score": coerced[d["name"]]})
+            restored += 1
+        else:
+            # Shallow-copy on BOTH paths. `_extract_dimensions` assigns
+            # `d["score"]` in place, so returning the caller's own parsed dicts
+            # on one path and fresh ones on the other makes clobbering depend on
+            # which branch ran.
+            out.append({**d})
+    # `rationale` is deliberately NOT restored, though the warning preserves it:
+    # nothing downstream reads its text, and the contract this guard protects is
+    # about scores. Recorded as a decision, not an oversight.
+    return out, restored
 
 
 def _coerced_run(name="Correctness", score=1):
@@ -1134,6 +1168,60 @@ def test_uncoerce_blames_the_warning_when_its_score_is_present_but_null():
     }]}}
     with pytest.raises(judge.JudgeError, match="warning is malformed"):
         _restore_coerced_cells(dims, run)
+
+
+def test_restore_counts_cells_rewritten_not_warnings_matched():
+    """The non-vacuity assert reads this number, so it must mean what it says.
+
+    A warning that matches a dimension already carrying a score, or one absent
+    from the draw, restores nothing — counting it would let the corpus assert
+    stay green while the restore path did no work.
+    """
+    already_scored = [{"source": "base", "name": "Correctness", "score": 3}]
+    assert _restore_coerced_cells(already_scored, _coerced_run())[1] == 0
+    absent = [{"source": "base", "name": "Completeness", "score": None}]
+    assert _restore_coerced_cells(absent, _coerced_run(name="Correctness"))[1] == 0
+
+
+def test_restore_leaves_a_rubric_cell_of_the_same_name_alone():
+    """A null RUBRIC cell is legitimate data and must never be overwritten.
+
+    judge.py unions base and rubric dimension names with no collision guard, so
+    a rubric dimension may legitimately be called "Correctness". None is today,
+    which is why this is latent rather than live.
+    """
+    dims = [
+        {"source": "base", "name": "Correctness", "score": None},
+        {"source": "rubric", "name": "Correctness", "score": None},
+    ]
+    out, n = _restore_coerced_cells(dims, _coerced_run())
+    assert [(d["source"], d["score"]) for d in out] == [("base", 1), ("rubric", None)]
+    assert n == 1
+
+
+def test_restore_does_not_invent_a_score_for_a_dimension_that_has_no_score_key():
+    """A draw missing `score` entirely is a real historical shape.
+
+    `.get("score") is None` is true for it as well as for an explicit null, so
+    restoring into it would fabricate a score the judge never returned —
+    `_extract_dimensions` would otherwise reject the draw.
+    """
+    dims = [{"source": "base", "name": "Correctness", "rationale": "x"}]
+    out, n = _restore_coerced_cells(dims, _coerced_run())
+    assert "score" not in out[0]
+    assert n == 0
+
+
+def test_restore_never_hands_back_the_callers_own_dicts():
+    """`_extract_dimensions` assigns `d["score"]` in place.
+
+    Returning the caller's parsed dicts on the no-op path and fresh ones on the
+    restore path would make clobbering depend on which branch ran.
+    """
+    dims = [{"source": "base", "name": "Correctness", "score": 3}]
+    out, _ = _restore_coerced_cells(dims, {"output": {"warnings": []}})
+    out[0]["score"] = 99
+    assert dims[0]["score"] == 3
 
 
 def test_uncoerce_leaves_a_null_with_no_coercion_warning_alone():
