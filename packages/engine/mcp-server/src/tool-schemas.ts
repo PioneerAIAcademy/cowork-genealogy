@@ -57,6 +57,7 @@ import { extractionAppendSchema } from "./tools/extraction-append.js";
 import { researchQuerySchema } from "./tools/research-query.js";
 import { projectCreateSchema } from "./tools/project-create.js";
 import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.js";
+import { sidecarReadSchema } from "./tools/sidecar-read.js";
 
 export const allToolSchemas = [
   wikipediaSearchSchema,
@@ -108,4 +109,5 @@ export const allToolSchemas = [
   researchQuerySchema,
   projectCreateSchema,
   buildExternalSearchUrlSchema,
+  sidecarReadSchema,
 ];

@@ -109,6 +109,7 @@ import {
   projectCreate,
   type ProjectCreateInput,
 } from "./tools/project-create.js";
+import { sidecarRead, type SidecarReadInput } from "./tools/sidecar-read.js";
 import { allToolSchemas } from "./tool-schemas.js";
 // Tools that report failure by RETURNING `{ ok: false }` rather than throwing
 // need `isError` set explicitly — the catch arms below cannot see them.
@@ -763,6 +764,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const args = request.params.arguments as unknown as ProjectCreateInput;
       const result = await projectCreate(args);
+      return writerToolResult(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+  if (request.params.name === "sidecar_read") {
+    try {
+      const args = request.params.arguments as unknown as SidecarReadInput;
+      const result = await sidecarRead(args);
       return writerToolResult(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

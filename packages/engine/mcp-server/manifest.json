@@ -73,7 +73,8 @@
     { "name": "materialize_facts" },
     { "name": "extraction_append" },
     { "name": "research_query" },
-    { "name": "project_create" }
+    { "name": "project_create" },
+    { "name": "sidecar_read" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

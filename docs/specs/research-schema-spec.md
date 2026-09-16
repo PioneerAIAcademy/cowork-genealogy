@@ -109,14 +109,13 @@ flagged. (One row below is the exception, and says so.)
 | `evaluation_focus` | `pre-exhaustiveness`, `conclusion-readiness`, `proof-critique`, `on-demand` | evaluations (Section 5.12). Note the hyphens — this is the one enum in the file that does not use underscores |
 | `evaluation_target_type` | `question`, `proof_summary`, `project` | evaluations |
 | `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
-| `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. **The one closed enum `validate_research_schema` does not check**: it does not descend into a locality's nested objects, so a misspelled section reaches disk and only the JSON Schema catches it |
+| `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. `validate_research_schema` checks it at every `pages_read[]` item — the one place it descends into a locality's nested objects; the items' required and stray keys are still not deep-checked at the writer |
 
-**Where these live in the machine-readable schemas.** All but one are defined in
-`enums.schema.json` and `$ref`'d from `research.schema.json`. The sole exception
-is `locality_page_section` (the last row above), still declared inline in the
-research schema: its `pages_read[].section` enum is bound to no validator check,
-and lifting it would change what the writer tools reject, so it waits on its own
-change. Removing or renaming any closed-enum value additionally requires
+**Where these live in the machine-readable schemas.** All of them are defined in
+`enums.schema.json` and `$ref`'d from `research.schema.json` — none is declared
+inline in the research schema (`locality_page_section`, the last row above, was
+the last to move), and `enum-drift.test.ts` fails on any inline `enum` array
+that reappears there. Removing or renaming any closed-enum value additionally requires
 a repo-wide grep for the old value — the drift lint checks the full value *list*,
 which catches an addition, but a renamed or dropped value can leave a stale
 single-value mention in prose that no lint sees. The blast radius of a
@@ -572,7 +571,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `id` | string | yes | Person-evidence ID (`pe_` prefix) |
 | `assertion_id` | string | yes | `a_` reference to the assertion being linked |
 | `person_id` | string | yes | GedcomX person ID in `tree.gedcomx.json` |
-| `confidence` | `person_evidence_confidence` | yes | How confident is this link |
+| `confidence` | `person_evidence_confidence` | yes | How certain we are that this record's role IS the tree person (identity certainty). This is NOT a measure of the source's informant quality (`information_quality`/`informant_proximity`); those fields classify source reliability and belong on the assertion. A single primary-informant source with no corroborating record is `probable` on this scale, not `confident`. |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
 | `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool when person-evidence scored a `record_search`-sourced assertion against the tree. Null when no score is available — FTS-, image-, or PDF-sourced assertions, or older projects without sidecars |
 | `created` | string | yes | ISO 8601 date |
@@ -740,7 +739,7 @@ Array of evaluation pointer records — a lightweight index of mentor reviews pe
 | `target_id` | string | yes | The `q_` ID, `ps_` ID, or literal `"project"` evaluated |
 | `target_type` | `evaluation_target_type` | yes | Resolved type of `target_id`: `question`, `proof_summary`, or `project` |
 | `verdict` | `evaluation_verdict` | yes | Result of the evaluation: `looks_solid`, `consider_addressing`, `address_first`, or `refused` |
-| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder (e.g. `evaluations/pre-exhaustiveness-q_001-2026-06-02T14-30-00.json`) |
+| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder (e.g. `evaluations/pre-exhaustiveness-q_001-2026-06-02T14-30-00.json`); the body is read back with `sidecar_read({ projectPath, ref })`, `ref` being this string as stored |
 | `timestamp` | string | yes | UTC ISO 8601 timestamp of when the evaluation was written |
 | `superseded_by` | string or null | yes | `ev_` ID of a later evaluation for the same `focus` + `target_id` combination, or null when this entry is the latest |
 

@@ -401,7 +401,7 @@ def test_no_invented_locators_persisted(before_state, after_state, test):
     on_file = _extract_on_file_numerals(before_rj, tree)
     # Also add numerals from the user's message (test input) — mirrors the
     # response half (report_no_invented_locators_response).
-    user_msg = (test.get("input", {}) or {}).get("user_message", "") or ""
+    user_msg = test.get("user_message", "") or ""
     for m in re.finditer(r'\b(\d+)\b', user_msg):
         on_file.add(m.group(1))
     before_sources = {s["id"]: s for s in before_rj.get("sources", [])}
@@ -453,7 +453,7 @@ def report_invented_locators_response(before_state, text_response, test):
         pytest.skip("no response text to check")
     on_file = _extract_on_file_numerals(before_rj, tree)
     # Also add numerals from the user's message (test input)
-    user_msg = (test.get("input", {}) or {}).get("user_message", "") or ""
+    user_msg = test.get("user_message", "") or ""
     for m in re.finditer(r'\b(\d+)\b', user_msg):
         on_file.add(m.group(1))
     # Strip code blocks (JSON blocks are the sanctioned form)

@@ -36,7 +36,7 @@ If the request names neither a record nor a `pe_` id, or matches more than one c
 
 Invoke `@plugin:person-evidence` with a delegation message carrying the mode, the ids resolved above, and `projectPath`, and asking it to **evaluate the identity of the record's persons against the tree and record the outcome** — or, in `review` mode, to **assess whether the named links are still warranted at their recorded confidence and report**.
 
-One invocation per request.
+One invocation per request. Do not call `research_append`, `tree_edit`, `same_person`, `materialize_facts`, or any tool other than `project_context` directly — every write goes through the agent.
 
 ## 3. Relay
 
