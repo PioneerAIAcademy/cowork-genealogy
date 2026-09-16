@@ -69,10 +69,23 @@ covering a gap. Keep only PRs where **no** file matched **any** rule.
 just CODEOWNERS ownership — the bypass-actor pattern documented in this
 plan's PR description (two bypass actors on `protect-main` with
 `bypass_mode: "always"`) means some PRs merge with `reviewDecision:
-REVIEW_REQUIRED`, i.e. no real peer approval either. A PR with zero
-reviews is not merely "peer-only" — it is **unreviewed**, and that is a
+REVIEW_REQUIRED`. A PR with zero reviews is **unreviewed**, and that is a
 stronger finding than anything `/review` would surface. Flag these
 separately in the report; don't fold them into the ordinary sample silently.
+
+**Count the AUTHOR'S OWN review as zero here.** Since 2026-09-16 round one is
+the author's self-review, so `.reviews` is rarely empty even on a PR nobody
+else read — filter to reviews whose `.author.login` differs from the PR's, and
+judge "unreviewed" on what is left. Without that, the check above silently
+stops finding anything: every PR looks reviewed.
+
+**This pool is now thinner than when this skill was written**, and shrinking it
+further is the wrong instinct. Two changes moved it: every CODEOWNERS rule names
+both senior teams (#1727), and the approval count dropped to 1. So "no rule
+matched" no longer means "two juniors read it" — it means **one approval from
+one person, who may be neither a senior nor anyone but the author's nearest
+colleague**. Weight the sample accordingly; an unowned path is a stronger
+candidate for audit than it used to be, not a weaker one.
 
 ## 2. Sample, don't audit all
 
