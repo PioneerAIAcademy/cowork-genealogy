@@ -2505,6 +2505,51 @@ describe("Research closed shapes", () => {
     expect(result.valid).toBe(true);
   });
 
+  // #1270 — pages_read[].section is the `locality_page_section` closed enum.
+  // validateLocalities never descended into pages_read before, so a misspelled
+  // section reached disk with valid: true. The maximal document above carries
+  // two valid sections and is the acceptance direction.
+  describe("localities[].pages_read[].section (#1270 locality_page_section)", () => {
+    it("rejects an out-of-set pages_read[].section", async () => {
+      const research = maximalResearch();
+      research.localities[0].pages_read[0].section = "typo";
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/pages_read[0]" &&
+            e.message.includes("'typo' is not a valid locality_page_section")
+        )
+      ).toBe(true);
+    });
+
+    it("rejects a null pages_read[].section (the schema type is a non-nullable string)", async () => {
+      const research = maximalResearch();
+      research.localities[0].pages_read[1].section = null;
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some(
+          (e) =>
+            e.path === "research.json/localities[0]/pages_read[1]" &&
+            e.message.includes("locality_page_section")
+        )
+      ).toBe(true);
+    });
+
+    it("reports nothing for the enum when the section key is absent, and does not throw on a non-object item", async () => {
+      // Required-key and stray-key enforcement on pages_read items is #1886's
+      // territory; the enum check fires only where a `section` key exists.
+      const research = maximalResearch();
+      research.localities[0].pages_read = [{}, null, "home"];
+      const result = await validateParsed(research, maximalTree);
+      expect(
+        result.errors.filter((e) => e.message.includes("locality_page_section"))
+      ).toEqual([]);
+    });
+  });
+
   // The incident pair: validateParsed must reject citation_detail.location,
   // matching the schema's additionalProperties:false on citation_detail.
   it("rejects a citation_detail carrying an extra key (the persisted-location incident)", async () => {
