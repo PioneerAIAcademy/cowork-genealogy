@@ -1292,6 +1292,21 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 # an unbounded window would make the anchor meaningless - any run mentioning
 # extraction anywhere would satisfy any ratio anywhere.
 #
+# **What the window does NOT buy, at any value.** Proximity to a delegation
+# verb does not establish that the ratio IS the announcement, so a ratio about
+# something else passes whenever a verb happens to fall in range:
+#
+#     {1}  Extraction complete. 1 of 2 personas could be linked to a person.
+#     {1}  Before I extract: step 1 of 3 is logging the record.
+#     {1}  record_search returned 20 hits; 1 of 20 is plausible. I will extract it.
+#
+# The 60 rationale claimed to avoid this and did not - all three pass at 60 as
+# well (#2390 review). It is 0 of 84 pre-rule runs, so the exposure is
+# theoretical today, and it is the standing reason this validator is not
+# promoted to `test_`: as a gate it could be satisfied vacuously. Narrowing the
+# window does not close it; distinguishing "the ratio is the announcement" from
+# "a ratio near a verb" needs something the marker does not carry.
+#
 # `test_anchor_window_is_calibrated` pins the value from both sides.
 _MARKER_RE = re.compile(
     r"(?<![\d/])[*_`]{0,2}(\d{1,3})\s+of\s+(\d{1,3})\b(?![\d/])",
@@ -1359,14 +1374,27 @@ def report_a_multi_record_batch_announces_each_record_position(
     thing that can speak during it, which is why a tester read a working run
     as a hang (#1998).
 
-    **`report_`, not `test_`, and deliberately so.** The rule it checks lives
-    in `record-extraction/SKILL.md` on PR #2391, not in this branch. A
-    `test_`-prefixed validator gates the run outcome
-    (`validator_runner.py`/`orchestrator.py`), so merging this first would fail
-    128 of the 132 gated runs in the committed corpus against a rule nobody has
-    been given (#2390 review). Reporting-only is correct under either merge
-    order. Promote it to `test_` once #2391 has landed and the body states the
-    rule.
+    **`report_`, not `test_`.** A `test_`-prefixed validator gates the run
+    outcome (`validator_runner.py`/`orchestrator.py`). The original reason for
+    reporting-only was that the rule lived on PR #2391 and not on main, so a
+    gate would have failed almost every committed run against a rule nobody had
+    been given — and this docstring said to promote once #2391 landed.
+
+    **That premise has expired and the answer is still no.** #2391 merged as
+    `7b836f499`, this branch has merged main, and
+    `record-extraction/SKILL.md:157` now carries the rule (#2390 review). What
+    blocks promotion now is a different thing: the anchor below admits a
+    non-announcement whenever any delegation word falls in range, so a gate
+    could be satisfied vacuously on a run that announced nothing —
+
+        {1}  Extraction complete. 1 of 2 personas could be linked to a person.
+        {1}  Before I extract: step 1 of 3 is logging the record.
+        {1}  record_search returned 20 hits; 1 of 20 is plausible. I will extract it.
+
+    0 of 84 pre-rule runs carry that shape, so nothing is wrong today; it is a
+    reason not to turn this into a gate, not a reason to hold the PR.
+    `test_batch_progress_stays_reporting_only` holds the tier, since
+    `validator_runner` reads it from the prefix and nothing else would.
 
     **Gated at one record, not two.** The batch this card describes does not
     exist in the unit corpus: 0 of 152 runs across the committed logs extracted
