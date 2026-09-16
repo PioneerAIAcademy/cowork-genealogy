@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "annotator": "mercyokum",
+  "notes": {
+    "f2": "Negative conclusion clearly documented (disproved tier, proof argument ps_001 with exhaustive declaration), but the specific targeted search for Robert Lord or Robert Brierley + Ellen (maiden name Lord or Brierley) in Rochdale 1890-1896 was not performed as a standalone negative. Agent disproved identity via birth year gap across four independent sources and the Griffith Brierley marriage index (1859), reaching the same conclusion by a different evidence route. Proof quality held at 2: the argument is well-structured but the gps-mentor verdict was address_first and the strongest direct disproof record (1901 Robert Lord Single at Bacup, ark:/61903/1:1:X9LD-V5K) was again not found."
+  },
+  "findings_hash": "910d5c84782a741d76195cf347f54b4997065e26c1cc05a75d76d827111a5d3f"
+}
