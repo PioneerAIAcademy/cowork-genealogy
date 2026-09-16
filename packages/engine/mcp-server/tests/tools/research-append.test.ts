@@ -732,9 +732,11 @@ describe("research_append (Phase 1)", () => {
       expect(persisted.transcription_truncated).toBe(true);
     });
 
-    it("leaves the field absent when the cited image was read whole", async () => {
+    it("leaves the field absent when no read of the cited image reached the write boundary (not established)", async () => {
       await writeProject();
-      // No recordImageReadCap → the image is not in the truncated set.
+      // No recordImageReadCap → the cap store has nothing for this image, so the
+      // state is "not established" (absent), distinct from a verified-whole read,
+      // which records false and would persist false, not absent (#2457 review r3, note 5).
       const r = await researchAppend({
         projectPath: dir,
         section: "sources",

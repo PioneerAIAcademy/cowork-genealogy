@@ -158,4 +158,17 @@ describe("truncated-source-image cache (#2457)", () => {
     recordImageReadCap("/proj", "images/x.jpg", true);
     expect(wasSourceImageTruncated("/proj/", "images/x.jpg")).toBe(true);
   });
+
+  it("joins across image_filename spelling variants — `./images/x.jpg` and backslashes (#2457 review r3, note 8)", () => {
+    // The read side joins on a source's image_filename, relayed by the agent, so it
+    // can carry a leading `./` or backslash separators the module-minted write-side
+    // ref never has. Without normalizing both, a capped read reads back clean.
+    recordImageReadCap("/proj", "images/x.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "./images/x.jpg")).toBe(true);
+    expect(wasSourceImageTruncated("/proj", "images\\x.jpg")).toBe(true);
+    // …and the other direction: recorded with a variant, queried canonically.
+    __clearTruncatedSourceImagesForTests();
+    recordImageReadCap("/proj", "./images/y.jpg", true);
+    expect(wasSourceImageTruncated("/proj", "images/y.jpg")).toBe(true);
+  });
 });

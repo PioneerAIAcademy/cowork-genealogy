@@ -42,11 +42,16 @@ export const IMAGES_SUBDIR = "images";
 const sourceImageCaps = new Map<string, boolean>();
 
 function truncatedImageKey(projectPath: string, imageRef: string): string {
-  // projectPath arrives raw from an LLM relay, so a record under `/p/` and a query
-  // under `/p` must join — strip the trailing separator on both sides. imageRef is
-  // module-minted (canonical) and needs none. Without this the record/query
-  // symmetry placeSearchCache relies on is lost and a capped read reads back clean.
-  return `${projectPath.replace(/[/\\]+$/, "")}\0${imageRef}`;
+  // Both halves arrive raw from an LLM relay, so a record and a query can spell the
+  // same thing differently and must still join. projectPath: strip the trailing
+  // separator (record `/p/`, query `/p`). imageRef is module-minted on the WRITE
+  // side but is a source's `image_filename` on the READ side, relayed by the agent
+  // — so `./images/x.jpg` or a backslash spelling must join the canonical
+  // `images/x.jpg`; normalize separators and a leading `./`. Without either the
+  // record/query symmetry is lost and a capped read reads back clean (#2457).
+  const proj = projectPath.replace(/[/\\]+$/, "");
+  const ref = imageRef.replace(/\\/g, "/").replace(/^\.\//, "");
+  return `${proj}\0${ref}`;
 }
 
 /** Record whether this project's persisted source image was read past the OCR
