@@ -1023,7 +1023,7 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 # With no override it rebuilds PRODUCTION's template in place, which is why the
 # name is a variable rather than a literal in build-image.sh.
 .PHONY: sandbox-image
-sandbox-image: ## Build + push the E2B agent template (make deploy does this too; E2B_TEMPLATE_NAME=... for a dev template)
+sandbox-image: ## Build + push the E2B agent template (E2B_TEMPLATE_NAME=... for a dev template; make deploy builds the PROD one)
 	bash apps/server/sandbox/build-image.sh
 
 # Internal guard (a deploy prerequisite, NOT run directly — so no `## ` help line).
@@ -1054,6 +1054,12 @@ deploy-preflight:
 # on the new in-sandbox code against the old control plane. Recover by rebuilding
 # the image from the deployed commit:
 #   git checkout <previously-deployed-sha> && make sandbox-image
+#
+# E2B_TEMPLATE_NAME is INHERITED by the prerequisite, so setting it here builds
+# THAT template and then deploys production's control plane against an untouched
+# production image -- the skew this target exists to prevent, reachable from a
+# variable the docs tell you to set. To build a dev template, run
+# `make sandbox-image` on its own; never pass the variable to `make deploy`.
 #
 # Hard dependencies this target carries (accepted by the lead, 2026-09-10):
 # E2B_API_KEY, a globally-installed `e2b` CLI, and phase 1's npm build.

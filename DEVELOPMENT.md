@@ -601,11 +601,16 @@ fly secrets set \
 # FAMILYSEARCH_WEB_ENABLED is non-secret and already set in deploy/fly.toml [env] —
 # don't set it here (a secret would shadow the [env] value).
 
-# `make deploy` wraps this: it replays the Dockerfile's stage 1 locally, rebuilds
-# and pushes the genealogy-agent E2B image (pinned to the production template),
-# and then runs exactly the line below. Use it rather than this command — a raw
-# `fly deploy` ships the control plane ALONE and leaves the agent image on
-# whatever was last pushed, which is the skew issue #1489 closed.
+# `make deploy` wraps this: it builds and pushes the genealogy-agent E2B image,
+# replays the Dockerfile's stage 1 locally, and then runs exactly the line below.
+# Use it rather than this command — a raw `fly deploy` ships the control plane
+# ALONE and leaves the agent image on whatever was last pushed, which is the skew
+# issue #1489 closed.
+#
+# Do NOT set E2B_TEMPLATE_NAME on this command. It is inherited by the
+# sandbox-image prerequisite, so it would build that template and then deploy
+# production's control plane against an untouched production image. Building a
+# dev template is `make sandbox-image` on its own.
 make deploy
 
 # The underlying command, for reference. Build context is the REPO ROOT (the
