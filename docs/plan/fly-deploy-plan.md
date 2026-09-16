@@ -32,10 +32,10 @@ browser ingress. E2B runs the per-user sandboxes (outbound from the container).
 >   remains is operational: create the app, set secrets, register the FS redirect,
 >   build the E2B template image, deploy.
 > - **`make deploy` builds the E2B agent image (#1489).** It is no longer a
->   separate step you perform before deploying: the deploy target builds and
->   pushes the `genealogy-agent` template, pinned to production's name, and then
->   runs `fly deploy`. The Prerequisites and step 3 below are updated; a raw
->   `fly deploy` ships the control plane alone and is no longer the procedure.
+>   separate step you perform before deploying: `sandbox-image` is a prerequisite
+>   of `deploy`, so the template is built and pushed and then `fly deploy` runs.
+>   The Prerequisites and step 3 below are updated; a raw `fly deploy` ships the
+>   control plane alone and is no longer the procedure.
 
 ---
 

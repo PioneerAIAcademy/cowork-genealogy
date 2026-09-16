@@ -1044,46 +1044,21 @@ deploy-preflight:
 	# SKIP_DEPLOY_STAGE1_CHECK=1 to bypass.
 	@node scripts/check-deploy-stage1.mjs
 
-# Both images, one command. The hosted product ships from TWO independent
-# images and only the Fly one used to be built here, so a green deploy could
-# leave production's microVMs on weeks-old skills and MCP tools.
+# Both images, one command. The hosted product ships from TWO independent images
+# and only the Fly one used to be built here, so a green deploy could leave
+# production's microVMs on weeks-old skills and MCP tools.
 #
-# It is still a two-phase deploy with a window — `e2b template create` rebuilds
-# the template IN PLACE by name, with no versioned tag to roll back to, so a
-# `fly deploy` failure after the image push leaves prod sandboxes on the new
-# in-sandbox code against the old control plane. Recover by rebuilding the image
-# from the deployed commit:
+# `sandbox-image` runs first, so the image is built and pushed before the Fly
+# deploy. `e2b template create` rebuilds the template IN PLACE by name with no
+# versioned tag, so a `fly deploy` failure after that point leaves prod sandboxes
+# on the new in-sandbox code against the old control plane. Recover by rebuilding
+# the image from the deployed commit:
 #   git checkout <previously-deployed-sha> && make sandbox-image
-# The reverse order would be worse: it recreates this issue's bug on every
-# failure instead of on a rarer one.
 #
-# Hard dependencies this target now carries (accepted by the lead, 2026-09-10):
+# Hard dependencies this target carries (accepted by the lead, 2026-09-10):
 # E2B_API_KEY, a globally-installed `e2b` CLI, and phase 1's npm build.
 .PHONY: deploy
-deploy: deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs E2B_API_KEY + the e2b CLI; single always-on machine)
-	# The agent image, pinned to PRODUCTION's template. A sub-make rather than a
-	# prerequisite, for two measured reasons (GNU Make 4.3):
-	#   1. A prerequisite inherits E2B_TEMPLATE_NAME from the caller, so
-	#      `E2B_TEMPLATE_NAME=genealogy-agent-dev make deploy` would rebuild the
-	#      DEV template and then ship production's control plane against an
-	#      untouched production image — this issue's own bug, silently, from a
-	#      variable our own docs tell developers to set. A target-specific
-	#      `override` does not close it either, though not for the obvious reason:
-	#      measured on GNU Make 4.3, `override` DOES win for `$(E2B_TEMPLATE_NAME)`
-	#      even against a command-line variable, but make still exports the
-	#      command-line value into the recipe's environment — and build-image.sh
-	#      reads the ENVIRONMENT, not make's variable. Passing the name to a
-	#      sub-make beats the env form, the make-variable form and
-	#      apps/server/.env alike.
-	#   2. Recipe lines are sequential even under -j, so the cheap stage-1 replay
-	#      is guaranteed to fail before anything is pushed. A prerequisite list
-	#      only orders left-to-right when make is not parallel.
-	@if [ -n "$(E2B_TEMPLATE_NAME)" ] && [ "$(E2B_TEMPLATE_NAME)" != "genealogy-agent" ]; then \
-	  echo "NOTE: E2B_TEMPLATE_NAME=$(E2B_TEMPLATE_NAME) is IGNORED by 'make deploy'."; \
-	  echo "      This target deploys production, so it always builds 'genealogy-agent'."; \
-	  echo "      To build your template without deploying: make sandbox-image"; \
-	fi
-	$(MAKE) sandbox-image E2B_TEMPLATE_NAME=genealogy-agent
+deploy: sandbox-image deploy-preflight ## Deploy to Fly AND rebuild the E2B agent image (needs E2B_API_KEY + the e2b CLI; single always-on machine)
 	# Build context is the repo ROOT (the Dockerfile copies the pnpm workspace).
 	# --ha=false: fly deploy provisions TWO machines by default; stay at count=1
 	# until init_db moves to a release_command (issue #1127). Secrets +
