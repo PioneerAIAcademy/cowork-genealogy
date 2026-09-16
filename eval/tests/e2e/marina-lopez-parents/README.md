@@ -117,10 +117,13 @@ needed.
 
 A third record names the couple differently and is worth knowing about:
 Marina's own civil death registration, Act No. 256, 5 Oct 1984, San José de Ocoa
-(`ark:/61903/1:1:6TMN-26CT`, image `ark:/61903/3:1:9396-YN33-1` — that image was read by the benchmark agent during the run, **not** opened by the adjudicator, so the parent names from it are reported at second hand), gives her
-parents as *"Manolo Lopez"* and *"Carmen Nida Lopez"* — the mother under a
-married-name form rather than her birth surname, and the informant was the
-attending physician, so the parentage there is secondary information.
+(`ark:/61903/1:1:6TMN-26CT`, image `ark:/61903/3:1:9396-YN33-1`) gives her parents as *"Manolo Lopez"* and
+*"Carmen N Lopez"* — **both names carried by the index itself**, so they are
+directly checkable without the scan. Only the expansion of the initial,
+*"Nida"*, comes from the image, which the benchmark agent read during the run
+and the adjudicator did not open; that one name is second hand,. The mother appears under a married-name form rather than her
+birth surname, and the informant was the attending physician, so the parentage
+there is secondary information.
 
 **The live tree was not modified.** The hint was not accepted, no source was
 attached, no parents were added. `snapshot --check` on 2026-09-15 reported four
