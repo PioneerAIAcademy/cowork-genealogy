@@ -73,7 +73,7 @@ def _print_blocked_context_calls(result: E2eResult) -> None:
     where the two axes disagree; and its own docstring says it is "the one axis
     it is safe to print here", which a second fact does not join.
 
-    Silent at zero. 146 of the 172 committed runs predate the field entirely, so
+    Silent at zero. 146 committed runs predate the field entirely, so
     a printed `0` would read as a measured zero rather than a structural one.
 
     The per-deny lines already stream during the run (`orchestrator.py`); this

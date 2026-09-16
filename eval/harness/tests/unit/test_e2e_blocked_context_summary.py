@@ -61,7 +61,7 @@ def test_summary_counts_the_blocked_context_calls(monkeypatch, tmp_path, capsys)
 def test_summary_stays_silent_when_there_are_none(monkeypatch, tmp_path, capsys):
     """No zero-line.
 
-    146 of the 172 committed runs predate the field and cannot carry it, so a
+    146 committed runs predate the field and cannot carry it, so a
     printed `0` would read as a measured zero rather than a structural one.
     """
     out = _summary_for(

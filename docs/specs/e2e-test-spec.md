@@ -931,8 +931,9 @@ easy to describe as "the router doing a delegate's job" because that is the
 for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
 grants it, and `declaration` fires on a routed claim, field-scoped rather than
 section-scoped. Both reach this array — the append happens before the rule
-branch — so an entry here does not imply a main-thread caller. Five of the six
-committed entries are `routed`; the sixth is `out_of_lane`.
+branch — so an entry here does not imply a main-thread caller. Most committed
+entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
+7315364c).
 
 **Unlike §6.1.1, this is not harness-only.** The shipped plugin hook holds the
 same rule in Cowork and on the hosted path: `hooks/hooks.json` matches
@@ -1229,7 +1230,8 @@ Three integrity rules make the agreement number trustworthy:
   refused, not a judgement about the research, and it moves no gate —
   `compliance` is derived from `guardrail_bypass_violations` alone.
 
-  That `no grade:` line is on the same side. It distinguishes a judge that raised (quoting the judge's own error text)
+  It distinguishes a judge that raised (quoting the judge's own error
+  text)
   from an agent that produced no final tree, from `--skip-judge`; none of those
   is a genealogical conclusion, and the presence of an error says nothing about
   what the agent recovered. It exists because the previous single fixed string
@@ -1603,7 +1605,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1. |
+| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
