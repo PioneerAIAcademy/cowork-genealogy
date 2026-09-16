@@ -1793,6 +1793,89 @@ def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monke
     )
 
 
+
+def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_path, monkeypatch):
+    """`input.delegation` and `builtin_tool_calls` must both reach run_validators.
+
+    The SAME whitelist trap as `refinement_targets` (#2021 F12) and
+    `index_error_source` (#1606) above, now a third time — and one hop worse.
+    The direct-agent arm (#2246) needs two things the previous fields did not:
+
+    - `delegation` threaded through the `test` dict literal, or all three
+      direct-arm validators skip on the whole population they were written for;
+    - `builtin_tool_calls` passed as its OWN argument, because it was never in
+      `run_validators`' `available_args` at all. A validator declaring an
+      unknown parameter is recorded `passed=False` (deliberately NOT
+      reporting_only, validator_runner.py), so omitting it would hard-fail
+      every test of all 27 skills rather than skipping quietly.
+
+    Driven through the real path with a patched `run_validators`, not a source
+    grep, so deleting either line reds this.
+    """
+    spec = load_test(WIKI_TEST_PATH)
+    # Retargeted onto a real pair: `_prompt_for` refuses a direct test whose
+    # `skill` has no same-named agent file, which is the guard working.
+    spec.skill = "research-exhaustiveness"
+    spec.raw["test"]["skill"] = "research-exhaustiveness"
+    spec.raw["input"]["delegation"] = "DELEGATION-SENTINEL"
+    spec.delegation = "DELEGATION-SENTINEL"
+    # Clear the routed fixture's own user_message, or the fallback never fires
+    # here and the assertion below would pass on the wrong value.
+    spec.raw["input"].pop("user_message", None)
+    spec.user_message = ""
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=["research-exhaustiveness"],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+            builtin_tool_calls=[
+                {"tool": "Agent", "args": {"subagent_type": "x", "prompt": "p"}}
+            ],
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    assert captured["test"].get("delegation") == "DELEGATION-SENTINEL", (
+        "orchestrator did not thread spec.delegation into run_validators' test "
+        "dict; all three direct-arm validators would skip on every direct test"
+    )
+    # The THIRD threading hop, and the one with no guard until now. `user_message`
+    # is threaded for report_unsourced_year_in_response (#1965) and falls back to
+    # the delegation on a direct test — without the fallback a year the delegation
+    # supplied reads as invented. Removing it left the whole harness suite green.
+    assert captured["test"].get("user_message") == "DELEGATION-SENTINEL", (
+        "orchestrator did not fall back to spec.delegation for the threaded "
+        "`user_message`; on a direct test the delegation is the only text the "
+        "run was given, so a figure it supplied would be reported as invented"
+    )
+    assert captured.get("builtin_tool_calls"), (
+        "orchestrator did not pass builtin_tool_calls to run_validators; the "
+        "direct-arm validators declare it, and an unknown validator parameter "
+        "is recorded passed=False for every test of every skill"
+    )
+
 def test_the_skill_runs_no_result_message_reaches_the_run_entry(tmp_path, monkeypatch):
     """The same second hop, for `no_result_message` (#2189, review of #2356).
 

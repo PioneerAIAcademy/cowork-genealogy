@@ -612,7 +612,9 @@ python3 .claude/skills/fill-ready/collisions.py \
 ```
 
 **Three guards keep it from firing on almost everything. Do not remove one
-without re-measuring.**
+without re-measuring.** Guard 2 and the `**Touches:**` parsing live in
+`.claude/skills/lib/touches.py`, shared with `/merge-issues`' `slots.py` — a
+change there moves both passes, so re-run each after editing it.
 
 | Guard | What it means |
 |---|---|
@@ -791,7 +793,7 @@ silently — it is the lead's call.
 
 **A queue three or more deep is a finding, not a schedule.** Report it. The fix is
 to merge those issues into fewer, larger ones so one run carries what would have
-been three — that happens in `/audit-board`, not here. Note it and move on.
+been three — that happens in `/merge-issues`, not here. Note it and move on.
 
 ## 4. Split before you promote
 
@@ -1247,7 +1249,7 @@ list it does not appear in. Add state when it matters.
 6b. **Skill slots** — one line per skill whose slot is held by an **open** issue
    in Ready, In Progress or Review: the holder, its idle days, and how many are
    queued behind it. Flag a holder idle ~10 days as a reclaim proposal, and a
-   queue three or more deep as a merge candidate for `/audit-board`. A holder
+   queue three or more deep as a merge candidate for `/merge-issues`. A holder
    whose issue has closed frees the slot immediately — report it as freed, name
    what is now promotable behind it, and do not wait for the card to move. Skip
    the heading when every slot is free.
