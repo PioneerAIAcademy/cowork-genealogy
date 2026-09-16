@@ -777,10 +777,7 @@
             "additionalProperties": false,
             "required": ["section", "found"],
             "properties": {
-              "section": {
-                "type": "string",
-                "enum": ["home", "getting_started", "online_records", "research_tips"]
-              },
+              "section": { "$ref": "enums.schema.json#/$defs/locality_page_section" },
               "url": { "type": ["string", "null"] },
               "found": { "type": "boolean" }
             }

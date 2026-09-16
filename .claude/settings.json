@@ -13,5 +13,13 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree *)",
+      "Bash(git merge-base *)",
+      "mcp__genealogy__record_read",
+      "mcp__genealogy__record_search"
+    ]
   }
 }
