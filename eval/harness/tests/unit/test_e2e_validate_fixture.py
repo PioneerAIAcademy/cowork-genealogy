@@ -549,3 +549,67 @@ def test_lint_fixture_passes_a_resolved_record_hint_fixture_with_an_ark(tmp_path
     _write_fixture(tmp_path, _valid_tree(_valid_person("I1", "John", "Smith")), findings=findings)
     _, errors = lint_fixture(tmp_path)
     assert errors == []
+
+
+# --- mononymous tree persons (#2300) ----------------------------------
+#
+# The both-halves test asks a given-name-only person for a surname token
+# they cannot have, so before this the matcher could not see them at all.
+# Early-modern parish records name most women that way: the fixture that
+# surfaced it, georg-gajdosch-spouse, must forbid a wife recorded only as
+# "Catharina".
+
+def test_mononymous_target_is_matched_on_the_given_name_alone():
+    expected = {"findings": [_rel_finding("Catharina")]}
+    tree = {
+        "persons": [
+            _person("I1", "Georg", "Gajdosch"),
+            {"id": "I9", "names": [{"id": "N9", "given": "Catharina", "surname": ""}]},
+        ]
+    }
+    suspects = check_stripping(expected, tree)
+    assert [s.person_id for s in suspects] == ["I9"]
+
+
+def test_mononymous_person_absent_is_still_no_suspect():
+    """The other direction: the rule must not fire on a tree without her."""
+    expected = {"findings": [_rel_finding("Catharina")]}
+    tree = {"persons": [_person("I1", "Georg", "Gajdosch")]}
+    assert check_stripping(expected, tree) == []
+
+
+def test_a_different_mononymous_person_is_not_matched():
+    """Dorothea legitimately stays; only Catharina is forbidden."""
+    expected = {"findings": [_rel_finding("Catharina")]}
+    tree = {
+        "persons": [
+            {"id": "I2", "names": [{"id": "N2", "given": "Dorothea", "surname": ""}]}
+        ]
+    }
+    assert check_stripping(expected, tree) == []
+
+
+def test_mononymous_fallback_does_not_apply_to_fact_findings():
+    """A `fact` finding's person legitimately remains, so a bare given-name
+    hit carries no signal. Without this exclusion `heinrich-zinsmeister-death`
+    flags the subject's own wife Elisabetha, who is mononymous and belongs
+    in the tree — the one false positive measured across all 136 fixtures."""
+    expected = {"findings": [_fact_finding("Elisabetha", "death")]}
+    tree = {
+        "persons": [
+            {
+                "id": "I3",
+                "names": [{"id": "N3", "given": "Elisabetha", "surname": ""}],
+                "facts": [{"type": "Death"}],
+            }
+        ]
+    }
+    assert check_stripping(expected, tree) == []
+
+
+def test_surnamed_person_still_requires_both_halves():
+    """The original rule is untouched where a surname exists: a given-name
+    match alone must not be enough."""
+    expected = {"findings": [_rel_finding("Robert Smith")]}
+    tree = {"persons": [_person("I4", "Robert", "Jones")]}
+    assert check_stripping(expected, tree) == []
