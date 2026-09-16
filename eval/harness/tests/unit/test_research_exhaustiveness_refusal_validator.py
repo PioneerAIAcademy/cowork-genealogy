@@ -23,6 +23,13 @@ identifies the blocker as precisely as `pli_005` does — `pli_005` IS the
 death-certificate item in `flynn-plan-in-progress`. Pinning the check to the
 literal id would fail a correct refusal for its phrasing, which is the defect
 `test_fetches_registration_start_date`'s tag gates exist to avoid.
+
+Why naming alone is not enough: reviewed on PR #2613, where two responses
+passed a first version that looked for the token anywhere in the text — one
+refusing for the wrong reason, one asserting the death-certificate search was
+COMPLETE, the opposite of the blocker. A substring cannot tell "is blocking"
+from "is done", so the item and a still-open marker must land in the same
+sentence. Both are pinned below so the hole cannot reopen silently.
 """
 
 import sys
@@ -104,3 +111,63 @@ def test_failure_message_quotes_the_response():
     phrasing miss in the run log."""
     with pytest.raises(AssertionError, match="BLOCKED"):
         check("BLOCKED", IN_PROGRESS)
+
+
+# --- The two cases that defeated the first version (PR #2613 review) --------
+
+
+def test_fires_when_the_blocker_is_named_but_refused_for_another_reason():
+    """Names the death certificate, but the refusal turns on the 1860 census.
+
+    Naming the item in passing is not identifying it as the blocker.
+    """
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check(
+            "I cannot declare exhaustive because the 1860 census has not been "
+            "checked. Separately, the death certificate we already hold is a "
+            "fine source.",
+            IN_PROGRESS,
+        )
+
+
+def test_fires_when_the_response_says_the_blocking_search_is_finished():
+    """The inversion: it asserts the death certificate search is COMPLETE.
+
+    This is the opposite of the blocker, and the worst case for a bare
+    substring — the guard exists to confirm the agent saw that search as
+    in flight.
+    """
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check(
+            "Declaration withheld: you have run out of budget. The death "
+            "certificate search was completed last week, so that is not the "
+            "issue.",
+            IN_PROGRESS,
+        )
+
+
+def test_the_marker_must_share_a_sentence_with_the_item():
+    """An in-progress marker elsewhere in the response does not carry.
+
+    Otherwise any refusal mentioning some other in-flight work would
+    satisfy the check while naming the wrong blocker.
+    """
+    with pytest.raises(AssertionError, match="never says it is still"):
+        check(
+            "The probate search is still in progress. The death certificate "
+            "is already filed.",
+            IN_PROGRESS,
+        )
+
+
+def test_accepts_the_phrasings_a_correct_refusal_actually_uses():
+    """Phrasing freedom is the reason the check is not pinned to `pli_005`."""
+    for good in (
+        "pli_005 is still in_progress, so I cannot evaluate exhaustiveness yet.",
+        "The death certificate search has not finished; finish it first.",
+        "Blocked: the death certificate search is still open.",
+        "I can't assess this yet — pli_005 is in flight.",
+        "The death certificate search is outstanding, so no declaration.",
+        "Cannot declare: the death certificate search has not yet returned.",
+    ):
+        check(good, IN_PROGRESS)
