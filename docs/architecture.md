@@ -584,11 +584,9 @@ its own docs, without enumerating which subcommands qualify — an explicit
 entry here removes that ambiguity rather than duplicating a guarantee).
 JSON carries no comments, so the file itself is not the rationale's home:
 the safety case for each entry — what was checked, what was ruled out, and
-why — lives in the PR that added it (PR #2465 for the current set:
-`git ls-tree`, `git merge-base`, `mcp__genealogy__record_read`,
-`mcp__genealogy__record_search`). Read the current file for the exact list;
-read its adding PR for why each entry is there. `record_search` is the one
-non-obvious entry — it is not read-only (stages a sidecar under
+why — lives in the commit message that added it. Read the current file for
+the exact list; `git log -p -- .claude/settings.json` for why each entry is
+there. `record_search` is the one non-obvious entry — it is not read-only (stages a sidecar under
 `results/.staging/`, pruned after 24h — `results-staging.ts`), kept because
 the writes stay in the tool's own scratch directory, a decision recorded in
 its `permissions.allow` description rather than left silent.
