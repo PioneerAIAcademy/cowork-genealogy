@@ -30,32 +30,37 @@ def _dockerfile_lines() -> list[str]:
 def _copy_directives() -> list[tuple[int, str, str]]:
     """(line number, source, destination) for every COPY, in file order.
 
-    Folds backslash continuations and tolerates `--chown=`/`--from=` flags. Both
-    matter, and in opposite directions: a narrower pattern SKIPS a flagged COPY,
-    so a later one becomes invisible and the "is last" assertion below passes
-    over it; and it MIS-PARSES a continued COPY, capturing the backslash as the
-    destination and false-alarming on a legal, semantically identical spelling.
-    A guard that rejects correct input is worse than the gap it closes.
+    Dockerfile instructions are case-insensitive and may be indented, may carry
+    `--chown=`/`--from=` flags, may be split over backslash continuations, and may
+    name several sources before the destination. All of those are legal and all
+    of them are parsed.
 
-    Any line starting with COPY that this cannot parse raises rather than being
-    dropped, so an unrecognised shape is loud instead of silently unguarded.
+    Continuations are folded ONLY once a COPY has been recognised. Folding every
+    line would let an unrelated comment ending in a backslash swallow the COPY
+    that follows it, which silently removes that COPY from the "is last" check
+    below. A line that looks like a COPY but cannot be parsed raises, so an
+    unrecognised shape is loud instead of quietly unguarded.
     """
     lines = _dockerfile_lines()
     out: list[tuple[int, str, str]] = []
     i = 0
     while i < len(lines):
+        if not re.match(r"\s*COPY\b", lines[i], re.IGNORECASE):
+            i += 1
+            continue
         start, logical = i, lines[i]
         while logical.rstrip().endswith("\\") and i + 1 < len(lines):
             i += 1
             logical = logical.rstrip()[:-1] + " " + lines[i]
-        if logical.startswith("COPY"):
-            tokens = [t for t in logical.split()[1:] if not t.startswith("--")]
-            if len(tokens) != 2:
-                raise AssertionError(
-                    f"e2b.Dockerfile line {start + 1}: COPY shape not understood by this "
-                    f"guard ({logical!r}). Widen the parser rather than leaving it unchecked."
-                )
-            out.append((start + 1, tokens[0], tokens[1]))
+        tokens = [t for t in logical.split()[1:] if not t.startswith("--")]
+        if len(tokens) < 2:
+            raise AssertionError(
+                f"e2b.Dockerfile line {start + 1}: COPY shape not understood by this "
+                f"guard ({logical!r}). Widen the parser rather than leaving it unchecked."
+            )
+        # Several sources may precede the destination; the destination is last.
+        for src in tokens[:-1]:
+            out.append((start + 1, src, tokens[-1]))
         i += 1
     return out
 
@@ -125,3 +130,21 @@ def test_the_build_script_writes_a_gitignored_path():
     _, source, _ = _provenance_copy()
     ignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert source in [line.strip() for line in ignore]
+
+
+def test_the_dirty_flag_is_written_as_a_json_boolean():
+    """`_refresh_image_commit` tests `info.get("dirty") is True`, so the writer has
+    to emit the JSON literals, not shell-ish 1/0 or "yes"/"no".
+
+    The sibling test in test_e2b_provider.py runs the shipped `printf` with values
+    it injects itself, so it pins the KEY names but cannot see how `_dirty` is
+    COMPUTED. Getting that wrong is the silent failure: a dirty build would report
+    a bare clean sha with no log line at all."""
+    script = BUILD_SCRIPT.read_text(encoding="utf-8")
+    assigned = set(re.findall(r"^\s*_dirty=(\S+)\s*$", script, re.M))
+    assert assigned, "build-image.sh no longer assigns _dirty"
+    assert assigned <= {"false", "true"}, (
+        f"_dirty must be a JSON boolean literal; found {sorted(assigned)}. The reader "
+        f"compares with `is True` after json.loads, so anything else silently drops "
+        f"the dirty marker."
+    )

@@ -70,12 +70,21 @@ if [[ -z "${E2B_API_KEY:-}" ]]; then
   exit 1
 fi
 
-# ── Provenance capture, BEFORE phase 1 ────────────────────────────────────────
-# The flag must describe the DEVELOPER's tree at invocation, not whatever phase 1
-# leaves behind. `npm install` does not rewrite package-lock.json at the pinned
-# npm (11.12.1, measured), but the engine's own .npmrc records that older npm
-# re-normalizes it, and that would bake `+dirty` onto an unmodified commit.
-# Capturing first costs nothing and removes the dependency entirely.
+echo "==> [1/2] Building the genealogy engine (mcp-server)..."
+# Requires npm >=11.12 (engine-strict in the engine's .npmrc enforces it). If this
+# hard-fails with EBADENGINE, upgrade: npm i -g npm@<version from packageManager>.
+( cd "${ROOT}/packages/engine/mcp-server" && npm install && npm run build )
+test -f "${ROOT}/packages/engine/mcp-server/build/index.js" \
+  || { echo "ERROR: packages/engine/mcp-server/build/index.js missing after build." >&2; exit 1; }
+
+echo "==> [2/2] Building the E2B template (${E2B_TEMPLATE_NAME})..."
+# ── Provenance capture ────────────────────────────────────────────────────────
+# Captured here, AFTER phase 1, deliberately. package-lock.json is tracked and is
+# COPYed into the image and `npm ci`'d, so if phase 1 ever did rewrite it the image
+# would be built FROM the rewritten file and `dirty: true` would be accurate rather
+# than a false alarm. (It does not rewrite it at the pinned npm 11.12.1, measured,
+# and the engine's `engine-strict=true` against `npm >=11.12 <12` makes an older
+# npm hard-fail before this line is reached, so the question is currently moot.)
 #
 # The retired `.last-image-build` stamp is cleared first. Its ignore rule went
 # with the staleness check, so on the machines where it exists by construction --
@@ -84,7 +93,9 @@ fi
 # when UNTRACKED: deleting a tracked copy would replace one permanent false
 # `+dirty` with another, this time a staged deletion.
 _stale_stamp="apps/server/sandbox/.last-image-build"
-if [[ -e "${ROOT}/${_stale_stamp}" ]] \
+# -L as well as -e: a dangling symlink is invisible to -e but git still lists it
+# as untracked, so testing existence alone would leave it marking every build dirty.
+if [[ -e "${ROOT}/${_stale_stamp}" || -L "${ROOT}/${_stale_stamp}" ]] \
    && ! git ls-files --error-unmatch "${_stale_stamp}" >/dev/null 2>&1; then
   rm -f "${ROOT}/${_stale_stamp}"
 fi
@@ -103,14 +114,6 @@ if [[ -n "$(git status --porcelain 2>/dev/null || true)" ]]; then
   _dirty=true
 fi
 
-echo "==> [1/2] Building the genealogy engine (mcp-server)..."
-# Requires npm >=11.12 (engine-strict in the engine's .npmrc enforces it). If this
-# hard-fails with EBADENGINE, upgrade: npm i -g npm@<version from packageManager>.
-( cd "${ROOT}/packages/engine/mcp-server" && npm install && npm run build )
-test -f "${ROOT}/packages/engine/mcp-server/build/index.js" \
-  || { echo "ERROR: packages/engine/mcp-server/build/index.js missing after build." >&2; exit 1; }
-
-echo "==> [2/2] Building the E2B template (${E2B_TEMPLATE_NAME})..."
 # ── Provenance: what this image was built FROM ────────────────────────────────
 # Baked into the image (e2b.Dockerfile's last COPY) and read back once per
 # sandbox create by E2BProvider, which reports it on /api/health. Without it

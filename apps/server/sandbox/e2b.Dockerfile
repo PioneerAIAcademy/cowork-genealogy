@@ -98,9 +98,10 @@ COPY apps/server/sandbox/build-provenance.json ${AGENT_HOME}/BUILD_INFO.json
 # wiki_search, wiki_read and wiki_place_page are all HTTP clients of the hosted
 # wiki-query-api (see CLAUDE.md "External service dependencies"); the corpus
 # lives on that server. The control plane writes wikiApiUrl into each sandbox's
-# config.json; the engine's compiled-in fallback names one developer's tailnet
-# host rather than a public deployment, so a hosted session depends on that value
-# being written, not on the default being reachable. (This block used to describe a local
+# config.json ONLY when WIKI_API_URL is set on it (fs_oauth.hosted_config), and
+# deploy/fly.toml does not set it today, so a hosted session currently runs on the
+# engine's compiled-in default -- which names one developer's tailnet host, not a
+# public deployment. (This block used to describe a local
 # `wikiMarkdownDir` corpus the page tools read from disk — that code path is
 # gone; the tools were moved to the networked API.)
 
