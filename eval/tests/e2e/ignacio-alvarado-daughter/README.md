@@ -109,10 +109,13 @@ chr. 5 Jun 1889), `K2BX-QFF` (Ygnacio Alvarado, Maclovia, chr. 10 Mar 1891),
 `K2B4-P75` (Ygnacio Albarado, Oliba Monica, chr. 5 May 1885) and `GPH8-7RX`
 (Ignacio Alvarado). `GPH8-7RX` settles it: it is a Couple with **`K4JL-NPF`**,
 the identical wife PID `K21K-P1C` is married to — two father records on one
-wife record. Alvarado/Albarado and Ignacio/Ygnacio vary with the record exactly
-as Teodosia/Teodora/Teodocia/Todocia do; the same burial image yields "Ygnacio"
-in one indexing (`NQ5N-RXV`) and "Ignacio" in the other (`6JPG-ZB66`). The link
-that actually carries weight runs through the tree's own child rather than the
+wife record. Alvarado/Albarado and Ignacio/Ygnacio vary with the record: the
+same burial image yields "Ygnacio" in one indexing (`NQ5N-RXV`) and "Ignacio"
+in the other (`6JPG-ZB66`). No comparable variation is attested for her given
+name. "Teodosia" is the only spelling any opened record carries; "Teodora" is
+the tree's own spelling for `K21K-P18`, whose origin these records do not
+explain, and "Teodocia" and "Todocia" appear in no record read on this fixture.
+The link that actually carries weight runs through the tree's own child rather than the
 empty father persona: `NQV5-DP1`, the father on María Rosa's 5 Jun 1889 entry,
 matches `K21K-P1C` at 0.9999994, and María Rosa is `K21K-P1H`. None of these
 duplicates were merged, for the same snapshot reason as the Durán pair.
