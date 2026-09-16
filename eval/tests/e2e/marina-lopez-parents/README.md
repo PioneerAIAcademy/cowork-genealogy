@@ -88,15 +88,33 @@ locality in this period looks thin — this is a coverage gap, not a negative
 finding, and only index searching was done (no image-level browsing of the
 registers).
 
-**Not independently corroborated.** Her parents are attested by the marriage act
-alone; the death act corroborates *who the groom was*, not *who her parents
-were*. One candidate sibling record exists — `ark:/61903/1:1:6R2N-51H4`, Manuel
-Antonio **López Casado** b. 1925, recorded as the child of *Manolo López*
-(a standard diminutive of Manuel) and *Carmen Nelia Casado* — and the
-distinctive maternal name makes him a plausible younger brother. He is **not**
-treated as corroboration here: the record carries no birthplace, it sits in the
-Distrito Nacional marriage register rather than Peravia, and nothing in it ties
-the family to San José de Ocoa. Worth pursuing if this fixture is revisited.
+**Independently corroborated by two sibling records, both found by the agent
+during the live debug run rather than by the hand adjudication.** An earlier
+draft of these notes said her parents were attested by the marriage act alone;
+that was wrong.
+
+- `ark:/61903/1:1:6KHD-YBR7` — **Fernando Andres Lopez**, b. 1919, death
+  registered **26 Jan 1965 at San José de Ocoa, Peravia**, naming his parents as
+  **Manuel Lopez** and **Carmen Nelia Casado**. Same distinctive maternal name,
+  verbatim, in the same locality, on a record created 28 years after the
+  marriage act and about a different person. This is the load-bearing
+  corroboration.
+- `ark:/61903/1:1:6R2N-51H4` — **Manuel Antonio López Casado**, b. 1925,
+  married 9 Mar 1976, recorded as the child of *Manolo López* (a standard
+  diminutive of Manuel) and *Carmen Nelia Casado*. Weaker: the record sits in
+  the Distrito Nacional marriage register and carries no birthplace.
+
+Neither is proven to be Marina's sibling — no record ties either man to her
+directly — but `6KHD-YBR7` places the identical parent couple in San José de
+Ocoa independently of the marriage act, which is what the parentage finding
+needed.
+
+A third record names the couple differently and is worth knowing about:
+Marina's own civil death registration, Act No. 256, 5 Oct 1984, San José de Ocoa
+(`ark:/61903/1:1:6TMN-26CT`, image `ark:/61903/3:1:9396-YN33-1`), gives her
+parents as *"Manolo Lopez"* and *"Carmen Nida Lopez"* — the mother under a
+married-name form rather than her birth surname, and the informant was the
+attending physician, so the parentage there is secondary information.
 
 **The live tree was not modified.** The hint was not accepted, no source was
 attached, no parents were added. `snapshot --check` on 2026-09-15 reported four
