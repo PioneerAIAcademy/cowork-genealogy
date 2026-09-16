@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Not recovered -- the tree's Couple relationship between Anders Monsen and Unna Halsteinsdatter carries an empty facts array, no marriage date or place at all. Independently verified the record is real: record_read on ark:/61903/1:1:NW44-PM2 confirms Anders Monsen married \"Urna Halsteinsdr\" (name-spelling variant of Halsteinsdatter) on 25 Jun 1786 at Hamre, Hordaland, Norway -- matching the fixture almost exactly. But a targeted record_search using that exact confirmed spelling, the right collection (1468080), and the exact marriage year (1786) still never surfaced this record in 34 results (checked both pages) -- every result's spouse field came back \"absent.\" This is a real search-tool/ranking gap for this record, not a research shortcut: the agent's own proof summary (ps_001, tier not_proved) documents 115 logged research actions, all locality-guide name variants tried, 41 candidate brides reviewed and ruled out, and correctly identifies Digitalarkivet.no as the likely holder of the original -- a defensible, exhaustive process that happened to run into a genuinely unfindable record via the tools available.",
+    "f2": "Not recovered -- none of the tree's 3 sources reference the \"Norway, Marriages, 1660-1926\" collection or ark NW44-PM2; the sources present cover his christening and death only. Same root cause as f1: the citing record is real but not surfaced by search. Also worth noting the underlying record has no linked image at all (record_read returns no image ARK, and the collection's own citation reads \"citing ; FHL microfilm .\" with blank fields) -- an index-only entry from an old microfilm extraction never digitized, so even a correct citation would point to text, not a viewable page."
+  },
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a"
+}
