@@ -8,10 +8,12 @@ microVM. This directory holds the **template image** for that microVM:
   `e2b template create` (v2 build system); name, `start_cmd`, and resources are
   passed as flags. `make sandbox-image` calls it.
 
-> Status: these files are ready to build. The actual build/push needs an
-> `E2B_API_KEY` (an E2B account), which does not exist yet. Until then nothing
-> here runs; the POC uses `SANDBOX_PROVIDER=local` (LocalProvider), which
-> exercises the same control-plane code paths against local subprocesses.
+> `make deploy` builds this image as part of the deploy, so the control plane and
+> the sandbox ship together. It stays a standalone target too (`make
+> sandbox-image`) for building a dev template without deploying. Both need an
+> `E2B_API_KEY` and a globally-installed `e2b` CLI; local development without
+> either uses `SANDBOX_PROVIDER=local` (LocalProvider), which exercises the same
+> control-plane code paths against local subprocesses.
 
 ---
 
@@ -26,22 +28,53 @@ Everything lands under `/opt/genealogy-agent/` (`$AGENT_HOME`):
 | `engine/node_modules/` | engine **prod-only** deps (`npm ci --omit=dev`) | the MCP server |
 | `engine/config/familysearch.json` | bundled FS OAuth client id | the MCP server |
 | `plugin/` | Cowork skills + plugin agents | the Agent SDK (`plugins=[…]`) |
-| `wiki/` | pre-crawled wiki markdown corpus | **NOT baked yet** — see below |
+| `BUILD_INFO.json` | `{"commit", "dirty", "built_at"}` — which build this image IS | `E2BProvider`, which reports the commit on `/api/health` |
 
-Runtimes: **Python 3.12** (Ubuntu 24.04 system python) + **Node 20** (NodeSource).
+Runtimes: **Python 3.12** (Ubuntu 24.04 system python) + **Node 22** (NodeSource).
 `claude-agent-sdk>=0.2.93` is pip-installed system-wide; it ships its own
 bundled `claude` CLI (`claude_agent_sdk/_bundled/claude`), so **no separate
 Claude CLI install is needed**.
 
 Base-image choice: `ubuntu:24.04` is the simplest single base with **both**
 required runtimes and no PPAs — Python 3.12 is its system python (Debian
-bookworm is only 3.11) and Node 20 LTS comes from NodeSource. E2B accepts any
-Dockerfile, so we are not tied to an e2b base image.
+bookworm is only 3.11) and Node 22 LTS comes from NodeSource (`NODE_MAJOR` in
+the Dockerfile is the one source of that number). E2B accepts any Dockerfile, so
+we are not tied to an e2b base image.
 
 The engine is staged exactly like the `.mcpb` build (`scripts/build-mcpb.sh`):
 copy `build/` + `config/` + `package.json` + `package-lock.json`, then a clean
 `npm ci --omit=dev`. We do **not** copy the repo's dev `node_modules` — that
 would drag in `typescript`/`vitest`/`mcpb`.
+
+### `BUILD_INFO.json` — which build a session is on
+
+`build-image.sh` writes `apps/server/sandbox/build-provenance.json` (gitignored,
+regenerated every build) into the build context, and the Dockerfile's **last**
+`COPY` bakes it to `${AGENT_HOME}/BUILD_INFO.json`. Last because its contents
+change on every build: above the `npm ci` layer it would invalidate everything
+under it and make each build re-run apt, pip and `npm ci`.
+
+`E2BProvider.create()` reads it back off each new sandbox and caches it, and
+`/api/health` reports the commit as `sandboxImageCommit`. Three things this is
+careful about:
+
+- **It is read from the image, not from the deploy.** The template is referenced
+  by a stable name and carries no version, and `e2b template list` returns a
+  build *timestamp*, not a commit. `GIT_SHA`/`BUILD_DATE` describe the **Fly**
+  container, a different image entirely. After one `make deploy` the two describe
+  the same commit but do not look alike: Fly's is stamped with
+  `git rev-parse --short HEAD` (7 chars) and this one is the full 40-character
+  sha, plus `+dirty` when applicable.
+- **It refreshes on every create, not once per process.** `make sandbox-image`
+  rebuilds the template in place and does not restart the control plane, so a
+  read-once cache would report the pre-rebuild commit for the life of the process.
+- **`dirty: true` when the tree was unclean.** The image is built from the working
+  tree, so `git rev-parse HEAD` names a commit that may not be what was baked; the
+  flag rides on the reported value as a `+dirty` suffix. A clean sha claimed for an
+  image built over uncommitted skill edits is worse than no sha at all.
+
+Never fatal: no git, a repo with no commits, or a missing/corrupt file leaves
+`sandboxImageCommit` null and breaks neither the build nor session creation.
 
 ---
 
@@ -87,37 +120,27 @@ as files on connect (sandbox-provider design decision #2):
 - `$HOME/.familysearch-mcp/tokens.json` — the user's FamilySearch OAuth token
   (token-injection option a). The control plane writes it via
   `Sandbox.write_file` before/at session start; the MCP server reads it.
-- `$HOME/.familysearch-mcp/config.json` — per-user MCP tunables
-  (`wikiApiUrl`, `wikiMarkdownDir`, …). Needed for the wiki page tools (below).
+- `$HOME/.familysearch-mcp/config.json` — per-user MCP tunables (`wikiApiUrl`,
+  `popStatsUrl`, `openRouterApiKey`, and the `hosted` marker). Written by
+  `fs_oauth.hosted_config()`.
 
 ---
 
-## Wiki corpus decision
+## Wiki corpus decision — settled: nothing to bake
 
-`wiki_search` hits the hosted `wiki-query-api` over the network and works in
-the sandbox as-is (egress is open on E2B) — confirm the sidecar's Tailscale
-Funnel is public so the microVM can reach it.
+`wiki_search`, `wiki_read` and `wiki_place_page` are **all** HTTP clients of the
+hosted `wiki-query-api` (CLAUDE.md, "External service dependencies"); the
+pre-crawled markdown corpus lives on that server, not in this image. E2B egress
+is open, so they reach it from the sandbox. The control plane writes `wikiApiUrl`
+into each sandbox's `config.json` (`fs_oauth.hosted_config()`); the engine's
+compiled-in fallback is one developer's tailnet host, not a public deployment,
+so a hosted session depends on that value being written rather than on the
+default being reachable (CLAUDE.md, "External service dependencies").
 
-`wiki_read` and `wiki_place_page` are different: they read a **pre-crawled wiki
-markdown corpus** from a local directory, resolved from
-`~/.familysearch-mcp/config.json` → `wikiMarkdownDir` (see
-`packages/engine/mcp-server/src/auth/config.ts` `getWikiMarkdownDir`, which **throws** when the
-key is absent).
-
-**Decision for this image: the corpus is NOT baked yet** (its source path is
-TBD by Dallan — we don't invent a corpus). Consequence: `wiki_read` and
-`wiki_place_page` will error with the configured
-`WIKI_MARKDOWN_DIR_MISSING_MESSAGE` until a corpus is provided. Every other
-tool works.
-
-To enable them later (two steps):
-
-1. Bake the corpus — add to `e2b.Dockerfile`:
-   `COPY <corpus-dir> ${AGENT_HOME}/wiki`
-2. Wire the config — have the control plane include
-   `{"wikiMarkdownDir": "/opt/genealogy-agent/wiki"}` in the per-sandbox
-   `$HOME/.familysearch-mcp/config.json` it writes on connect (alongside the FS
-   token).
+This section previously described baking a local corpus that `wiki_read` and
+`wiki_place_page` read from disk via a `wikiMarkdownDir` config key. **That code
+path is gone** — `getWikiMarkdownDir` no longer exists in the engine — and the
+`COPY <corpus-dir>` step it recommended would bake a directory nothing reads.
 
 ---
 
@@ -126,12 +149,44 @@ To enable them later (two steps):
 ```bash
 export E2B_API_KEY=e2b_...        # from your E2B account (required to push)
 npm install -g @e2b/cli           # if not already installed
-make sandbox-image                # → apps/server/sandbox/build-image.sh
+
+make deploy                       # ships the control plane AND rebuilds this image
+E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image   # image only, dev template
 ```
+
+**`make deploy` builds this image.** The hosted product ships from two
+independent images — the Fly container (control plane + web client) and this E2B
+template — and only the first used to be built by a deploy. The image is
+referenced at runtime by a stable name, so a green deploy could leave every
+paying session on weeks-old skills and MCP tools with nothing to show it. They
+now ship together (lead decision, 2026-09-10); `make deploy` therefore requires
+`E2B_API_KEY` and the `e2b` CLI.
+
+It is still two phases with a window: `e2b template create` rebuilds the template
+**in place by name**, with no versioned tag to roll back to, so a `fly deploy`
+failure after the image push leaves production's sandboxes on the new in-sandbox
+code against the old control plane. Recover by rebuilding from the commit that is
+actually deployed: `git checkout <sha> && make sandbox-image`.
+
+### Which template you are rebuilding
+
+`E2B_TEMPLATE_NAME` selects it and **defaults to production's `genealogy-agent`**.
+Because `e2b template create` rebuilds in place, a build from your branch without
+that override publishes your branch's skills, agents and MCP build to every
+hosted session. Verify against `genealogy-agent-dev` and point the server at it
+with `E2B_TEMPLATE=genealogy-agent-dev` (a plain pydantic-settings override —
+there is no env prefix). Rebuild `genealogy-agent` itself only when the lead says
+to.
+
+`build-image.sh` reads `apps/server/.env`, but the **caller's**
+`E2B_TEMPLATE_NAME` wins over anything set there. Do not rely on a `.env` entry
+to keep you off production: `set -a; source` assigns, so without that precedence
+a `.env` value would silently override the name you passed on the command line.
 
 `build-image.sh`:
 1. `cd packages/engine/mcp-server && npm install && npm run build` (so `build/` is in context).
-2. `e2b template create genealogy-agent --path <repo root> --dockerfile apps/server/sandbox/e2b.Dockerfile --cmd 'tail -f /dev/null' --ready-cmd true --cpu-count 2 --memory-mb 2048` (v2 build system). v2 requires both a start command (`--cmd`, keeps the VM warm) and a ready command (`--ready-cmd true`, ready as soon as the VM boots — the agent_runner is launched per session, not at boot).
+2. Write `build-provenance.json` into the context (commit + dirty flag + timestamp).
+3. `e2b template create "$E2B_TEMPLATE_NAME" --path <repo root> --dockerfile apps/server/sandbox/e2b.Dockerfile --cmd 'tail -f /dev/null' --ready-cmd true --cpu-count 2 --memory-mb 2048` (v2 build system). v2 requires both a start command (`--cmd`, keeps the VM warm) and a ready command (`--ready-cmd true`, ready as soon as the VM boots — the agent_runner is launched per session, not at boot).
 
 The build context is the **repo root** — that is why the Dockerfile's `COPY`
 paths are repo-root-relative (`apps/server/app`, `packages/engine/mcp-server/build`, `packages/engine/plugin`).
@@ -139,3 +194,5 @@ paths are repo-root-relative (`apps/server/app`, `packages/engine/mcp-server/bui
 `e2b template create` rebuilds the template in place by name (no config file, no
 generated `template_id` to commit). The control plane references the template by
 name (`config.py` `e2b_template = "genealogy-agent"`, `SandboxSpec.template`).
+`make server-e2b` does **not** rebuild anything: it runs whatever is baked into
+the template it resolves.

@@ -107,8 +107,11 @@ __pycache__/
 *.pyc
 # LocalProvider mock sandbox project dirs + local viewer backup mirror
 .workbench-data/
-# Local marker for the last `make sandbox-image` build (deploy-preflight staleness check)
-apps/server/sandbox/.last-image-build
+# Build provenance written into the E2B build context by build-image.sh and baked
+# into the image as BUILD_INFO.json. Generated on every build, never committed:
+# a tracked copy would dirty the tree on each `make sandbox-image` and would go
+# stale the moment anyone read it instead of rebuilding.
+apps/server/sandbox/build-provenance.json
 
 # FamilySearch-internal warnings reference (do NOT commit — see match-merge plan Prerequisites)
 warnings.java

@@ -6,6 +6,7 @@
 #   - the agent package (apps/server/app) → `python -m app.agent.runner`
 #   - the genealogy engine (mcp-server prod tree) → forked as node <index.js>
 #   - the plugin skills (plugin/) → loaded by the Agent SDK
+#   - BUILD_INFO.json → which commit this image was built from
 #
 # Base: ubuntu:24.04. It is the simplest single base that ships BOTH runtimes
 # this image needs with no PPAs — Python 3.12 is Ubuntu 24.04's system python
@@ -14,9 +15,11 @@
 # template, so we are not constrained to an e2b base image.
 #
 # Build context is the REPO ROOT (see build-image.sh, which passes --path <root>).
-# The engine MUST already be compiled before this builds: build-image.sh runs
-# `cd packages/engine/mcp-server && npm install && npm run build` first, so
-# packages/engine/mcp-server/build/ exists in the context.
+# Two things MUST exist in the context before this builds, and build-image.sh is
+# what creates both: the compiled engine (it runs `cd packages/engine/mcp-server
+# && npm install && npm run build`, so build/ exists) and build-provenance.json
+# (the last COPY, below). Building this Dockerfile by hand without that script
+# fails on whichever is missing.
 FROM ubuntu:24.04
 
 # NOTE: one ENV per line — the E2B v2 Dockerfile parser appends a trailing space
@@ -79,6 +82,17 @@ RUN cd ${AGENT_HOME}/engine && npm ci --omit=dev --ignore-scripts
 # ── Plugin: the Cowork skills + plugin agents, loaded by the Agent SDK via
 #    plugins=[{type:"local", path: ENGINE_PLUGIN_DIR}]. ──
 COPY packages/engine/plugin ${AGENT_HOME}/plugin
+
+# ── Provenance: which build this image IS. Written by build-image.sh (commit,
+#    a dirty flag, and an ISO timestamp); read back once per sandbox create by
+#    E2BProvider, which reports the commit on /api/health. The template is
+#    referenced by a stable name and carries no version, so without this there
+#    is no way to ask a running session which build it is on.
+#
+#    KEEP THIS LAST. Its contents change on EVERY build, so a COPY placed above
+#    the `npm ci` layer would invalidate everything under it and make each image
+#    build re-run apt, pip and npm ci. Full destination path, per the note above.
+COPY apps/server/sandbox/build-provenance.json ${AGENT_HOME}/BUILD_INFO.json
 
 # ── Wiki tools: nothing to bake ───────────────────────────────────────────
 # wiki_search, wiki_read and wiki_place_page are all HTTP clients of the hosted
