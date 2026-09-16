@@ -1800,34 +1800,89 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
 }
 
 /** Assertions with `evidence_type: "negative"` must set `record_role` to the
- *  exact string `"absent"` (research-schema-spec.md §5.6), and vice versa —
- *  the two fields are not independent judgment calls, `record_role: "absent"`
- *  is a mechanical corollary of the evidence_type decision, so this REJECTS
- *  rather than silently coercing. Silently overwriting `record_role` would
- *  risk masking an assertion whose `value` also failed to differentiate the
- *  person — observed live: three negative-evidence assertions on three
+ *  exact string `"absent"` (research-schema-spec.md §5.6, "Negative evidence") — and vice versa —
+ *  and must set `informant_proximity` to `"researcher"`: no record informant
+ *  reported an absence, whatever the record type, so a negative is always the
+ *  researcher's own conclusion. None of these are independent judgment calls;
+ *  each is a mechanical corollary of the evidence_type decision, so this
+ *  REJECTS rather than silently coercing. Silently overwriting `record_role`
+ *  would risk masking an assertion whose `value` also failed to differentiate
+ *  the person — observed live: three negative-evidence assertions on three
  *  different people sharing one generic `value` string ("preceded Harold
  *  Dean Whitaker in death"), with `record_role` as their only distinguishing
  *  field. No-op for a non-assertion entry (only assertions carry
- *  `evidence_type`) or a non-string `evidence_type`. */
+ *  `evidence_type`) or a non-string `evidence_type`.
+ *
+ *  The `record_role` arm is bidirectional; the `informant_proximity` arm is
+ *  FORWARD ONLY, matching the document tier — every `absent` assertion in the
+ *  corpus is already negative, so the converse is an unexercised branch.
+ *  `informant` is not checked at all: it is free text (ADR-0011 limit 1).
+ *
+ *  **Both messages name the ABSENCE TEST, not just the field to change**, and
+ *  that is load-bearing rather than decorative. The discriminator is whether
+ *  the finding is an absence — NOT whether the record states the fact, which
+ *  is wrong for the predeceased pattern (a person the record names can still
+ *  be absent from among the living). Neither message may prescribe an edit
+ *  another arm refuses: an earlier draft told the caller to flip
+ *  `evidence_type` to "direct", which the converse role arm then rejected. In
+ *  `eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`
+ *  (`ut_record_extraction_028`) the role arm refused two blank-field negatives;
+ *  the agent's very next call re-sent the same two defects with `record_role`
+ *  flipped to `"absent"` and they were accepted. A message that names one field
+ *  buys a relabel, not a fix. */
 function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   if (typeof entry.evidence_type !== "string") return;
   const isNegative = entry.evidence_type === "negative";
   const roleIsAbsent = entry.record_role === "absent";
+  // Both arms are COLLECTED, not thrown one at a time. An entry wrong on both
+  // fields is the commonest violating shape in the corpus (a_012's pre-retag
+  // state is exactly it), and throwing the role arm first hid the proximity
+  // error until the caller had already spent a round trip fixing the role.
+  // That is this change's own thesis applied to itself: a refusal that names
+  // one field at a time buys a relabel rather than a fix. The document tier
+  // already reports both.
+  const errors: string[] = [];
   if (isNegative && !roleIsAbsent) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
-        `— negative evidence always uses the literal record_role "absent". Keep the ` +
-        `person's identity in \`value\` instead (e.g. "Walter Whitaker preceded Harold ` +
-        `Dean Whitaker in death", not a generic value shared across multiple people).`,
+        `— negative evidence always uses the literal record_role "absent", and that ` +
+        `holds even when the record NAMES the person: an obituary's "preceded in death ` +
+        `by his wife, Ruth" is still negative evidence about her vital status, so her ` +
+        `role is "absent", not "spouse_1". Before changing the role, check the finding ` +
+        `is an ABSENCE at all. A fact about a person PRESENT in the record is ` +
+        `evidence_type "direct" carrying that person's real role — change both fields ` +
+        `together, not just this one. A blank field on a present person (no surname, no ` +
+        `occupation) is silence: write no assertion. If it is an absence, keep the ` +
+        `person's identity in \`value\` (e.g. "Walter Whitaker preceded Harold Dean ` +
+        `Whitaker in death"), not a generic value shared across multiple people. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
     );
   }
   if (roleIsAbsent && !isNegative) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
         `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
     );
   }
+  if (isNegative && entry.informant_proximity !== "researcher") {
+    errors.push(
+      `assertion has evidence_type "negative" but informant_proximity ` +
+        `'${entry.informant_proximity}' — negative evidence is the researcher's own ` +
+        `conclusion, so it always takes informant_proximity "researcher": no record ` +
+        `informant reported an absence, whatever the record type, and that holds even ` +
+        `when the record names the person (the "preceded in death by" shape). Set ` +
+        `informant_proximity to "researcher". Only if the finding is not an absence at ` +
+        `all — a fact about a person present in the record — is "negative" the wrong ` +
+        `evidence_type, and then record_role must change from "absent" to that person's ` +
+        `real role in the same edit; changing evidence_type alone is refused. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
+    );
+  }
+  if (errors.length) throw new ResearchAppendError(errors);
 }
 
 function applyOne(

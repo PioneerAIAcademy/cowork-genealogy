@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 5, hint-samples.csv row 212, flag adds_daughter, confidence 3). Draft transcribed from an 1880 Costa Rican Catholic burial entry; unverified. The hint's date conflicts with the tree's birth year for the named mother."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 5, hint-samples.csv row 212, flag adds_daughter, confidence 3). Resolved 2026-09-10: true match on the parent-child relationship, birth year corrected 1880 -> shortly before her 27 Mar 1879 baptism, from the register's stated age at death (one year two months, which places the birth between 21 March and 20 April 1879) and the baptism itself (ark:/61903/1:1:NQ24-QZQ). The tree's two Duran wives (K4JL-NPF, K21K-P18) are one woman and its unsourced 1876 birth year for her is impossible; neither was merged upstream, by design. See README, Notes for reviewers."
 }
