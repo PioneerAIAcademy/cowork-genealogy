@@ -309,14 +309,6 @@
     {
       "test_id": "ut_source_evaluation_j4s",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -433,6 +425,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "k9t's conditional detach on SD-DRIS-E reads as j4s's does, but the reply closes with \"Do not detach on the current evidence alone\", which is the explicit prohibition j4s's passage never states. Scored 3 on that distinction. Noted because the same shape is corrected to 2 in j4s in this run, and the difference is the guard sentence, not the answer keys."
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The Drouin finding narrates a mechanism the agent could not see: \"almost certainly a transcription error in the index, a misread digit in a handwritten register entry\". SKILL.md:81 bars exactly that, using \"misread as a 7\" as its own example, and says an explanation offered with the confidence of a finding is itself the defect. Corrected to 2 rather than held at 3, because nothing grades this rule: 0 of this test's 13 judge_context clauses, 0 rubric dimensions and 0 validators reach it, so a silent agreement here reads as coverage to whoever audits the rubric next."
     }
   ]
 }
