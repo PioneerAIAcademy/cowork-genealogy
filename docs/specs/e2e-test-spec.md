@@ -437,6 +437,20 @@ stripped:
   assert, plus a `required` recover finding that the agent documented
   the negative conclusion (§3.4.1). Say in the fixture README which
   state the fixture is in.
+- **The adjudicator may use `packages/engine/mcp-server/dev/try-*.ts`
+  against live FamilySearch to *retrieve* records** — collections search,
+  record search, record read, image read (decision, issue #2300,
+  2026-09-16). **The identity judgement stays human:** no tool output
+  decides whether a hint record concerns the tree person. This overrides
+  the "no tool shortcut" sentences in `docs/e2e-testing-guide.md` Step 1a
+  and `.claude/skills/resolve-record-hint/SKILL.md` Step 2, which were
+  factually wrong — PR #2368 confirmed its hint in four such calls. The
+  alternative it beat was hand-only retrieval, chosen originally to keep a
+  fixture's ground truth independent of the tool path the benchmark
+  measures; that was rejected because the required ark plus a human
+  identity call already carry the load, and the hand-only cost ran to tens
+  of minutes per card across 29 open cards. Record in the fixture README
+  that retrieval was tool-assisted, so the next reader can weigh it.
 
 #### 3.6.1 Citation shape for documented negatives (decision, issue #1025)
 
