@@ -2931,20 +2931,21 @@ async function prepareOps(
     if (typeof ref !== "string" || ref.length === 0) continue;
     const cap = sourceImageCapState(projectPath, ref);
     if (cap === undefined) continue; // not established → leave absent (unknown)
-    if (cap === true) {
-      // Verified partial — but only mark it beside the non-empty transcription the
-      // marker qualifies. `true` beside empty/null transcription is a state
-      // validate_research_schema rejects (matching its .trim()), so deriving it
-      // would make the tool fail its own write — and, batched, discard every good
-      // op with it. An update attaching image_filename without the text (it lives
-      // in the persisted entry, unreadable pre-merge) is left as-is (#2457 rev B1).
-      const text = bag.transcription;
-      if (typeof text === "string" && text.trim() !== "") bag.transcription_truncated = true;
-    } else {
-      // Verified whole — write false so an `update` clears any stale `true` the
-      // merge would otherwise keep (a Set could set the flag but never unset it).
-      bag.transcription_truncated = false;
-    }
+    // Both branches derive the marker ONLY beside a non-empty transcription — the
+    // marker qualifies text, so it is meaningless without any. `true` beside
+    // empty/null transcription is a state validate_research_schema rejects (its
+    // .trim()), so deriving it would make the tool fail its own write — and,
+    // batched, discard every good op with it. `false` on an empty source is not
+    // rejected but is equally meaningless — a "verified whole" marker planted on a
+    // source with nothing read — so it is guarded the same way (#2457 r3 note 4).
+    // An update attaching image_filename without carrying the text (it lives in
+    // the persisted entry, unreadable pre-merge) is left as-is either way.
+    const text = bag.transcription;
+    if (typeof text !== "string" || text.trim() === "") continue;
+    // cap === true → verified partial; cap === false → verified whole. Writing
+    // `false` rather than deleting is what lets a later `update` clear a stale
+    // `true` the merge would otherwise keep (a Set could set but never unset).
+    bag.transcription_truncated = cap === true;
   }
 
   if (errors.length > 0) throw new ResearchAppendError(errors);

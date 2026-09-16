@@ -997,7 +997,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           addError(
             report,
             sp,
-            "transcription_truncated: true requires a non-empty transcription — a capped read still has the text it did read, so a truncation marker beside empty or null transcription is not a valid state",
+            "transcription_truncated: true requires a non-empty transcription — a capped read still has the text it did read, so a truncation marker beside empty or null transcription is not a valid state. transcription_truncated is derived by the tool, not set by you: do not null the partial transcription of a truncated source to clear it. A capped read cannot be completed by re-reading (the OCR cap is fixed); to supersede it, add a new source from the indexed record (record_read / record_search) instead of editing this one in place.",
           );
         }
       }

@@ -819,6 +819,21 @@ describe("research_append (Phase 1)", () => {
       expect(after.transcription_truncated).toBe(false); // pre-fix (Set): stayed true forever
     });
 
+    it("does not write false (verified-whole) on a source with no transcription text (#2457 r3 note 4)", async () => {
+      await writeProject();
+      // Image read WHOLE (cap false), but the source carries no transcription — a
+      // "verified whole" marker would qualify text that is not there, so the false
+      // branch is guarded the same as the true branch: leave the field absent.
+      recordImageReadCap(dir, "images/x.jpg", false);
+      const entry = imageSource({});
+      delete (entry as Record<string, unknown>).transcription;
+      const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const persisted = (await readResearch()).sources.find((s: any) => s.id === singleOk(r).entryId);
+      expect("transcription_truncated" in persisted).toBe(false); // pre-fix: false was written
+    });
+
     it("does not discard a good op when a sibling capped op carries no transcription (#2457 review, blocker 1)", async () => {
       await writeProject();
       recordImageReadCap(dir, "images/x.jpg", true);

@@ -617,19 +617,29 @@ Derivation, per op:
   deriving it would make the tool fail its own write (and, batched, discard every
   good op with it). An update that attaches `image_filename` without carrying the
   text — which lives in the persisted entry, unreadable pre-merge — is left as-is.
-- On a **verified-whole** hit the op sets the field `false`. Writing `false`
-  rather than deleting is what lets an `update` **retract a stale `true`**: the
-  merge (`applyOne`) keeps a persisted value the patch omits, so only an
-  overwrite clears it. This is why the cap store is a `Map`, not a `Set` — a
-  present/absent set can set the flag but never unset it. See
+- On a **verified-whole** hit the op sets the field `false` — but, symmetric to
+  the `true` branch, **only** when the op carries a non-empty `transcription`, so
+  a "verified whole" marker is never planted on a source with nothing read.
+  Writing `false` rather than deleting is what lets an `update` **retract a stale
+  `true`**: the merge (`applyOne`) keeps a persisted value the patch omits, so
+  only an overwrite clears it. This is why the cap store is a `Map`, not a `Set` —
+  a present/absent set can set the flag but never unset it. See
   `image-transcribe-tool-spec.md` §8.6 for the record side and the
   no-`projectPath` limitation.
 
-One limit remains, tracked with the join-key follow-on: retraction still needs a
-subsequent op that **carries the `image_filename`** to re-derive against, so an
-update touching only other fields of a stale-`true` source does not clear it.
-Re-run a clean `image_transcribe` of the image and cite it in the next
-`sources` op (append or update) to retract.
+**Retraction is narrow, and a same-cap re-read does not do it.** A `false` only
+enters the cap store when a read completes **whole**, and the OCR output-token
+cap is a compile-time constant — so re-reading an image that was capped
+re-records `true`, never `false`. A stale `true` therefore clears only when a
+genuinely whole read of that image records `false` (in practice, after the cap is
+raised) and a subsequent `sources` op **carries the `image_filename`** to
+re-derive against; an update touching only other fields does not clear it. Within
+the current cap, do **not** re-read to "complete" a partial transcription — the
+remedy is to pivot to the indexed record (`record_read` / `record_search`) and
+cite that as the source (matching `research-schema-spec.md` and the item-2
+ruling). A truncated source's `transcription` is partial for that image and cap;
+supersede it with an indexed-record source rather than trying to null or rewrite
+it in place.
 
 Unlike §3.6, this override **echoes nothing** — the response carries no signal
 that a caller-supplied value was dropped. The persisted-side invariant
