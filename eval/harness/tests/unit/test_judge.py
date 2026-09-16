@@ -1035,22 +1035,31 @@ def _rubric_for_snapshot(skill: str, snapshot_text, disk_rubrics: dict):
     return disk_rubrics.get(skill)
 
 
-def _uncoerce_routing_negative(dims: list[dict], run: dict) -> list[dict]:
-    """Return `dims` with orchestrator-coerced scores restored from the warnings.
+def _restore_coerced_cells(dims: list[dict], run: dict) -> tuple[list[dict], int]:
+    """Return (`dims` with orchestrator-coerced scores restored, cells restored).
 
-    The orchestrator nulls a routing-decided negative's Correctness/Completeness
-    and preserves the judge's original score on a
-    `coerced_routing_negative_to_na` warning (`name` + `score`). Reverse that so
-    a replay sees the judge's raw draw. Returns `dims` unchanged when no such
-    warning is present, so every non-coerced draw replays exactly as before.
+    `judge._extract_dimensions` validates a RAW judge response, but a run log
+    stores dimensions the ORCHESTRATOR has already post-processed: for a
+    correctly-routed negative test it nulls Correctness/Completeness
+    (orchestrator.py `_ROUTING_DIAGNOSTIC_DIMENSIONS`) and appends the judge's
+    original score to a `coerced_routing_negative_to_na` warning BEFORE mutating,
+    precisely so it survives. Replaying the stored draw as-is feeds harness output
+    back in as a judge draw, and the base-null rule rightly rejects it.
 
-    Raises `judge.JudgeError` when a coercion warning names a dimension but
-    carries no `score`: the preserved score is the only record of what the judge
-    returned, so without it the draw cannot be replayed at all. Raised as
-    JudgeError, not KeyError, so the replay loop reports it as a diagnostic
-    instead of dying on it.
+    Restoring rather than skipping keeps the draw's OTHER cells under test;
+    skipping would narrow the guard a little more with every coerced run. A null
+    with no warning behind it still raises, which is the property worth keeping.
+    Contrast `coerced_tool_arguments_to_na`, which `_extract_dimensions` performs
+    ITSELF and so replays cleanly.
+
+    Raises `judge.JudgeError` when a warning names a dimension but its `score` is
+    missing or null. The preserved score is the only record of what the judge
+    returned, so without it the draw cannot be replayed. Raised as JudgeError —
+    not KeyError, and not silently skipped — so the replay loop reports it
+    against the malformed WARNING rather than dying, or blaming the judge draw
+    for a null it did not produce.
     """
-    restored = {}
+    coerced: dict[str, object] = {}
     for w in (run.get("output") or {}).get("warnings") or []:
         if not isinstance(w, dict):
             continue
@@ -1059,16 +1068,6 @@ def _uncoerce_routing_negative(dims: list[dict], run: dict) -> list[dict]:
         name = w.get("name")
         if name is None:
             continue
-        # Raise JudgeError, not KeyError, and name the real cause. A bare
-        # `w["score"]` would crash the replay loop instead of reporting a
-        # diagnostic; restoring `None` instead would leave the dimension null
-        # and make the failure read as a malformed JUDGE draw, when what is
-        # actually malformed is the warning that lost its preserved score.
-        # Absent key AND present-but-null both mean the preserved score is
-        # gone. `not in` alone would let `{"score": None}` — an older or
-        # hand-edited log — through to restore None over None, a silent no-op
-        # that leaves the dimension null and misattributes the failure to the
-        # judge draw, which is the exact thing this raise exists to prevent.
         if w.get("score") is None:
             raise judge.JudgeError(
                 f"coerced_routing_negative_to_na warning for {name!r} carries "
@@ -1076,41 +1075,15 @@ def _uncoerce_routing_negative(dims: list[dict], run: dict) -> list[dict]:
                 f"the draw cannot be replayed. The warning is malformed, not "
                 f"the judge draw."
             )
-        restored[name] = w["score"]
-    if not restored:
-        return dims
+        coerced[name] = w["score"]
+    if not coerced:
+        return dims, 0
     return [
-        {**d, "score": restored[d["name"]]}
-        if d.get("name") in restored and d.get("score") is None
+        {**d, "score": coerced[d["name"]]}
+        if d.get("name") in coerced and d.get("score") is None
         else d
         for d in dims
-    ]
-
-
-def _replay_draw(dims: list[dict], run: dict, rubric, tool_calls):
-    """Replay one STORED judge draw as the raw response it was extracted from.
-
-    `judge._extract_dimensions` validates a RAW judge response, but a run log
-    stores dimensions the ORCHESTRATOR has already post-processed: for a
-    correctly-routed negative test it nulls Correctness/Completeness
-    (orchestrator.py `_ROUTING_DIAGNOSTIC_DIMENSIONS`) and records the judge's
-    original score on a `coerced_routing_negative_to_na` warning. Replaying the
-    stored draw as-is asks the raw-response validator to accept an artifact it
-    never sees in production, and it correctly refuses: only Tool Arguments may
-    be null. Restoring the preserved score replays what the judge actually
-    returned, which is what the corpus test is for. This does NOT widen the null
-    policy — a null with no coercion warning behind it still raises.
-
-    The corpus loop and the tests both go through here, so the un-coercion has
-    one call site rather than a line in a loop body that no test reaches — the
-    committed corpus carries no coerced draw today, so deleting that line would
-    otherwise be caught by nothing (issue #2584 review).
-    """
-    return judge._extract_dimensions(
-        _tool_use_response(_uncoerce_routing_negative(dims, run)),
-        rubric,
-        tool_calls=tool_calls,
-    )
+    ], len(coerced)
 
 
 def _coerced_run(name="Correctness", score=1):
@@ -1128,7 +1101,7 @@ def test_uncoerce_restores_the_orchestrator_nulled_score():
     so a corpus-only check would silently stop exercising this (issue #2584).
     """
     dims = [{"source": "base", "name": "Correctness", "score": None}]
-    assert _uncoerce_routing_negative(dims, _coerced_run())[0]["score"] == 1
+    assert _restore_coerced_cells(dims, _coerced_run())[0][0]["score"] == 1
 
 
 def test_uncoerce_blames_the_warning_when_it_carries_no_score():
@@ -1144,7 +1117,7 @@ def test_uncoerce_blames_the_warning_when_it_carries_no_score():
         "kind": "coerced_routing_negative_to_na", "name": "Correctness",
     }]}}
     with pytest.raises(judge.JudgeError, match="warning is malformed"):
-        _uncoerce_routing_negative(dims, run)
+        _restore_coerced_cells(dims, run)
 
 
 def test_uncoerce_blames_the_warning_when_its_score_is_present_but_null():
@@ -1160,14 +1133,14 @@ def test_uncoerce_blames_the_warning_when_its_score_is_present_but_null():
         "score": None,
     }]}}
     with pytest.raises(judge.JudgeError, match="warning is malformed"):
-        _uncoerce_routing_negative(dims, run)
+        _restore_coerced_cells(dims, run)
 
 
 def test_uncoerce_leaves_a_null_with_no_coercion_warning_alone():
     """A null nobody coerced is still a malformed draw — the guard must catch it."""
     dims = [{"source": "base", "name": "Correctness", "score": None}]
     run = {"output": {"warnings": []}}
-    assert _uncoerce_routing_negative(dims, run)[0]["score"] is None
+    assert _restore_coerced_cells(dims, run)[0][0]["score"] is None
 
 
 def test_uncoerce_does_not_restore_a_dimension_the_warning_does_not_name():
@@ -1176,14 +1149,15 @@ def test_uncoerce_does_not_restore_a_dimension_the_warning_does_not_name():
         {"source": "base", "name": "Correctness", "score": None},
         {"source": "base", "name": "Completeness", "score": None},
     ]
-    out = _uncoerce_routing_negative(dims, _coerced_run(name="Correctness"))
+    out, n = _restore_coerced_cells(dims, _coerced_run(name="Correctness"))
     assert [d["score"] for d in out] == [1, None]
+    assert n == 1
 
 
 def test_uncoerce_does_not_overwrite_a_score_that_survived():
     """Only a null is restored; a real score is never replaced by the warning's."""
     dims = [{"source": "base", "name": "Correctness", "score": 3}]
-    assert _uncoerce_routing_negative(dims, _coerced_run(score=1))[0]["score"] == 3
+    assert _restore_coerced_cells(dims, _coerced_run(score=1))[0][0]["score"] == 3
 
 
 def _coerced_negative_draw():
@@ -1212,7 +1186,12 @@ def test_replay_accepts_a_coerced_draw(record_extraction_rubric):
     every other test would stay green (issue #2584 review).
     """
     dims, run = _coerced_negative_draw()
-    out, _ = _replay_draw(dims, run, record_extraction_rubric, tool_calls=[{"tool": "x"}])
+    dims, n = _restore_coerced_cells(dims, run)
+    assert n == 2
+    out, _ = judge._extract_dimensions(
+        _tool_use_response(dims), record_extraction_rubric,
+        tool_calls=[{"tool": "x"}],
+    )
     assert {d["name"]: d["score"] for d in out if d["source"] == "base"}[
         "Correctness"
     ] == 1
@@ -1225,9 +1204,15 @@ def test_replay_still_raises_on_the_same_draw_with_no_coercion_warning(
     dims, _ = _coerced_negative_draw()
     # match=, not a bare JudgeError: the malformed-warning raise above is also a
     # JudgeError, so an unanchored assertion would pass on the wrong error.
+    dims, n = _restore_coerced_cells(dims, {"output": {"warnings": []}})
+    assert n == 0
+    # match=, not a bare JudgeError: the malformed-warning raise above is also a
+    # JudgeError, so an unanchored assertion would pass on the wrong error.
     with pytest.raises(judge.JudgeError, match="returned null score"):
-        _replay_draw(dims, {"output": {"warnings": []}}, record_extraction_rubric,
-                     tool_calls=[{"tool": "x"}])
+        judge._extract_dimensions(
+            _tool_use_response(dims), record_extraction_rubric,
+            tool_calls=[{"tool": "x"}],
+        )
 
 
 def test_corpus_replay_never_raises_on_committed_run_logs():
@@ -1315,21 +1300,6 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 # warning behind it still raises, which is the property worth
                 # keeping. Contrast `coerced_tool_arguments_to_na`, which
                 # _extract_dimensions performs ITSELF and so replays cleanly.
-                coerced = {
-                    w["name"]: w["score"]
-                    for w in ((r.get("output") or {}).get("warnings") or [])
-                    if (w or {}).get("kind") == "coerced_routing_negative_to_na"
-                    and w.get("name") is not None
-                    and w.get("score") is not None
-                }
-                if coerced:
-                    dims = [
-                        {**dim, "score": coerced[dim["name"]]}
-                        if dim.get("name") in coerced and dim.get("score") is None
-                        else dim
-                        for dim in dims
-                    ]
-                    restored_coerced_cells += len(coerced)
                 total_draws += 1
                 # The run's OWN tool calls, never a stand-in: the #1406
                 # N/A rule keys on this list being empty, so substituting
@@ -1337,11 +1307,12 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
                 run_tool_calls = (r.get("output") or {}).get("tool_calls") or []
                 if not run_tool_calls:
                     zero_call_draws += 1
-                # Replays the STORED draw as the raw response it came from —
-                # see `_replay_draw` and `_uncoerce_routing_negative` for why
-                # those are not the same artifact (issue #2584).
                 try:
-                    out, warns = _replay_draw(dims, r, rub, run_tool_calls)
+                    dims, n_restored = _restore_coerced_cells(dims, r)
+                    restored_coerced_cells += n_restored
+                    out, warns = judge._extract_dimensions(
+                        _tool_use_response(dims), rub, tool_calls=run_tool_calls,
+                    )
                     dropped_total += len(warns)
                     if any(
                         w["kind"] == "coerced_tool_arguments_to_na" for w in warns
@@ -1388,6 +1359,19 @@ def test_corpus_replay_never_raises_on_committed_run_logs():
         "zero dimensions were dropped across the whole corpus — expected "
         "at least the known historical drops (unknown-name/duplicate); "
         "a value of exactly 0 here is itself suspicious, not reassuring"
+    )
+    # Non-vacuity for the restore path. Issue #2584 asked for this and it was
+    # correctly rejected at the time: the corpus then carried ZERO coerced
+    # warnings, so the assertion would have red on main immediately. PR #2578's
+    # proof-conclusion and person-evidence runs put 19 in, so it is satisfiable
+    # now, and without it the restore call can be deleted outright with every
+    # other test still green.
+    assert restored_coerced_cells > 0, (
+        "zero orchestrator-coerced cells were restored across the corpus — "
+        "either the restore path is no longer reached, or no committed run log "
+        "carries a `coerced_routing_negative_to_na` warning any more. The "
+        "standalone tests still pin the helper, but this call site is then "
+        "untested; check before deleting this assertion."
     )
     assert unexpected_raises == [], (
         f"{len(unexpected_raises)} historical judge draw(s) newly raise JudgeError "
