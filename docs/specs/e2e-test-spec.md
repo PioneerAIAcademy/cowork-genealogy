@@ -923,14 +923,16 @@ attribution denominator; it stays a reported signal, not a graduation count.
 
 The second arm that appends to `blocked_context_calls[]`, and the only one with
 entries in the committed corpus. `research_append` writes a named section, and
-`AGENT_WRITABLE_SECTIONS` reserves some sections to a specific subagent.
+`OWNED_SECTIONS` reserves some sections to an owning agent.
 
 **This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
 easy to describe as "the router doing a delegate's job" because that is the
-`routed` rule, and miss that `owner_denied` has a second. `out_of_lane` fires
-for a **named** subagent reaching outside its own declared sections, so an entry
-here does not imply a main-thread caller. One of the six committed entries is
-exactly that case.
+`routed` rule, and miss that `owner_denied` has **three**. `out_of_lane` fires
+for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
+grants it, and `declaration` fires on a routed claim, field-scoped rather than
+section-scoped. Both reach this array — the append happens before the rule
+branch — so an entry here does not imply a main-thread caller. Five of the six
+committed entries are `routed`; the sixth is `out_of_lane`.
 
 **Unlike §6.1.1, this is not harness-only.** The shipped plugin hook holds the
 same rule in Cowork and on the hosted path: `hooks/hooks.json` matches
