@@ -390,10 +390,19 @@ def test_batch_progress_fires_when_a_middle_position_is_skipped():
 def test_batch_progress_ignores_a_denominator_below_the_record_count():
     """Dies without the `int(total) >= n` filter. "1 of 2" in a three-record
     run names a batch that is not the one being run, so it must not satisfy
-    position 1. The existing test only exercised the permissive direction."""
+    position 1.
+
+    The reply carries a delegation verb deliberately. The earlier fixture read
+    "Record 1 of 2: the census." with no verb, so the proximity anchor rejected
+    the marker before the denominator filter was ever reached, and relaxing
+    `>= n` to `>= 0` left the whole file green (#2390 review). A test for an
+    inner filter has to get past the outer one first.
+    """
     before, after = _states(3)
     with pytest.raises(AssertionError, match=r"position\(s\) \[1, 2, 3\] were never"):
-        _checked("Record 1 of 2: the census.", before, after, POSITIVE)
+        _checked(
+            "Now delegating — **1 of 2: the census.**", before, after, POSITIVE
+        )
 
 
 def test_batch_progress_accepts_a_denominator_above_the_record_count():
@@ -564,14 +573,9 @@ def test_position_marker_rejects_an_ark_beside_extraction_language():
             _checked(reply, before, after, POSITIVE)
 
 
-def test_position_marker_known_false_negative():
-    """One real announcement in `v1_2026-09-11_18-49-21` sits further than
-    `_ANCHOR_WINDOW` from its delegation verb, and is missed. Recorded rather
-    than fixed: widening to +/-120 recovers it but admits
-    `lists 2 of 3 children as surviving; extraction follows`, and a false
-    positive scores an unannounced run as compliant - the failure mode this
-    check exists to prevent. Verbatim from that run.
-    """
+def test_a_marker_with_no_delegation_verb_is_not_counted():
+    """The anchor itself: a ratio with no delegation verb anywhere is not a
+    position marker, at any window."""
     before, after = _states(1)
     reply = (
         "No open questions, no prior sources. Log entry: **log_001**.  "
@@ -579,3 +583,69 @@ def test_position_marker_known_false_negative():
     )
     with pytest.raises(AssertionError, match=r"were never"):
         _checked(reply, before, after, POSITIVE)
+
+
+def test_anchor_window_is_calibrated():
+    """`_ANCHOR_WINDOW` from both sides, because a number argued in a comment
+    is not a number a test can tell from its opposite (#2390 review).
+
+    The first reply is `ut_record_extraction_022`'s shape, verbatim: the verb
+    trails the marker past an ARK, roughly 90 characters away. It is a real
+    announcement and must count, which is what rules out a window below ~100.
+
+    The second puts the verb far enough out that no plausible narration would
+    connect the two. It must NOT count, which is what rules out an unbounded
+    window - without an upper bound any run mentioning extraction anywhere
+    would satisfy any ratio anywhere.
+
+    Lower the window to 60 and the first fails; remove the bound and the
+    second fails.
+    """
+    before, after = _states(1)
+
+    near = (
+        "Log entry: **log_001**.  **1 of 1:** 1870 U.S. Census, household of "
+        "John Baker — ark:/61903/1:1:M62F-BST. Delegating to record-extractor."
+    )
+    _checked(near, before, after, POSITIVE)  # counts
+
+    far = (
+        "**1 of 1:** 1870 U.S. Census, household of John Baker. "
+        + ("Census pages were read in order and the household transcribed. " * 5)
+        + "Delegating to the record-extractor now."
+    )
+    with pytest.raises(AssertionError, match=r"were never"):
+        _checked(far, before, after, POSITIVE)
+
+
+def test_batch_progress_stays_reporting_only():
+    """The `report_` tier, held by a test rather than by the function's name.
+
+    `validator_runner` decides the tier from the prefix alone, so renaming this
+    to `test_` would silently promote it into a gate - and a gate whose subject
+    is narration would fail runs the rubric deliberately does not grade. The
+    previous round's promotion left the whole file green (#2390 review).
+    """
+    from harness.validator_runner import run_validators  # noqa: E402
+
+    before, after = _states(1)
+    results = run_validators(
+        skill="record-extraction",
+        validators_dir=_VALIDATORS_DIR,
+        before_state=before,
+        after_state=after,
+        tool_calls=[],
+        test=POSITIVE,
+        text_response="Now delegating — **1 of 1:** the 1850 census.",
+    )
+    rows = [
+        r
+        for r in results
+        if r.name == "report_a_multi_record_batch_announces_each_record_position"
+    ]
+    assert rows, "the batch-progress validator did not run at all"
+    assert rows[0].reporting_only is True, (
+        "batch progress is report_ tier by design - it grades narration, which "
+        "the rubric excludes from scoring. Promoting it to test_ makes it gate "
+        "the run outcome."
+    )

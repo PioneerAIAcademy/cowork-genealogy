@@ -1269,23 +1269,36 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 # `1 of 3: q_001 only`) and three ARK cases, since `ark:/61903/1:1:…`
 # contains `61903/1` and sits next to extraction language constantly.
 #
-# Three deliberate narrowings, each of which costs nothing measured:
+# Two deliberate narrowings, each of which costs nothing measured:
 #   - the separator is the WORD `of`, never `/`: every remaining accident
 #     (`confidence 4/5`, `~48/45`, `9/14/1880`, `Age 5/12`) is slash-shaped,
 #     and the skill's own prescribed wording is "3 of 12".
 #   - `(?<![\d/])` and `(?![\d/])` keep the marker out of longer numbers.
-#   - the window is ±60 rather than ±120. ±120 reaches 26/26 but admits
-#     `lists 2 of 3 children as surviving; extraction follows`. A false
-#     positive scores a run that never announced as compliant, which is the
-#     check-that-cannot-fail shape; a false negative is only noise, and this
-#     validator is `report_` tier and gates nothing. The single miss at ±60 is
-#     pinned in `test_position_marker_known_false_negative`.
+#
+# The window is a THIRD parameter and is NOT a narrowing. It was 60 in the
+# first version of this change, justified by a string that does not
+# discriminate: `lists 2 of 3 children as surviving; extraction follows`
+# matches at 60 as well - the verb sits ~24 characters from the marker - and
+# it appears nowhere in the corpus (#2390 review). Re-measured across every
+# committed record-extraction run:
+#
+#     window  60 : 25 of 112 runs matched
+#     window 120 : 26 of 112
+#     window 240 : 26 of 112
+#
+# The run 60 loses is `ut_record_extraction_022`, a real announcement whose
+# delegation verb trails the marker past an ARK. Nothing is gained below 120
+# and one true positive is lost, so 120 it is. 240 buys nothing further, and
+# an unbounded window would make the anchor meaningless - any run mentioning
+# extraction anywhere would satisfy any ratio anywhere.
+#
+# `test_anchor_window_is_calibrated` pins the value from both sides.
 _MARKER_RE = re.compile(
     r"(?<![\d/])[*_`]{0,2}(\d{1,3})\s+of\s+(\d{1,3})\b(?![\d/])",
     re.IGNORECASE,
 )
 _DELEGATION_RE = re.compile(r"\b(?:delegat|extract|invok)\w*", re.IGNORECASE)
-_ANCHOR_WINDOW = 60
+_ANCHOR_WINDOW = 120
 
 
 def _records_extracted(before_state, after_state):
