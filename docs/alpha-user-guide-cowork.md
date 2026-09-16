@@ -249,6 +249,13 @@ which has no feedback UI of its own. The Viewer bundles your project's
 current state and your notes and sends them to us privately, the same as it
 would for any project folder.
 
+> **Before you send: living people.** A member of our team will open and read
+> your research log, your notes, and your full session transcript in order to
+> reproduce what went wrong. Most projects reach back four or five generations
+> and never touch a living person. **If yours does, please don't send feedback
+> on it.** A report is never worth someone else's privacy, and we would rather
+> lose the report.
+
 1. **What you asked the agent to do.** Optional, but please fill it in. A Cowork
    session has no Claude Code session log to attach (see the checkbox note
    below), so this box is usually the only record of what you asked.
@@ -305,7 +312,9 @@ Being straight with you, so you don't waste time:
   retry from scratch.
 - **Living people:** please don't enter information about anyone living. Nothing
   is encrypted yet.
-- **Sessions are private to you.** No sharing or collaboration.
+- **No sharing or collaboration yet.** A session is yours to work in; you can't
+  invite anyone into it. Your project folder stays on your machine — we read it
+  only when you send us feedback, and FamilySearch may read what you send.
 
 ---
 
