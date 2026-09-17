@@ -441,7 +441,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "type": "object",
         "required": ["record_role", "fact_type"],
         "properties": {
-          "record_role": { "oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}, "minItems": 1}] },
+          "record_role": { "oneOf": [{"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}, {"type": "array", "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}, "minItems": 1}] },
           "fact_type": { "type": "string" },
           "relationship_type": { "type": "string" },
           "evidence_type": { "type": "string" },

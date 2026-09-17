@@ -189,10 +189,16 @@ def _relationship_type_matches(assertion, relationship_type):
     got_cat = _relationship_category(got)
     if want_cat is not None:
         return got_cat == want_cat
-    # Matcher value unknown to _RELATION_CATEGORY — literal base comparison.
-    want_base = str(relationship_type).lower().replace("_inferred", "").strip()
-    got_base = str(got).lower().replace("_inferred", "").strip()
-    return want_base == got_base and bool(want_base)
+    # Matcher value unknown to _RELATION_CATEGORY — normalized comparison
+    # after stripping the _inferred suffix.  Uses _normalize_classification_token
+    # so PascalCase ≡ snake_case (e.g. ParentChild ≡ parent_child).
+    want_norm = _normalize_classification_token(
+        str(relationship_type).replace("_inferred", "")
+    )
+    got_norm = _normalize_classification_token(
+        str(got).replace("_inferred", "")
+    )
+    return want_norm == got_norm and bool(want_norm)
 
 
 def _value_matches(assertion, attribute, expected):
