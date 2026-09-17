@@ -163,11 +163,11 @@ def test_preamble_matches_the_recorded_corpus_figures():
     `doc["ranked"]` would do, since no capture parses to a dict. This asserts
     the envelope descent, the regex fallback and the join all reach real data.
 
-    Deliberately floors rather than equalities: the corpus grows (it gained a
-    run between 2026-09-15 and 2026-09-16 while this was being written), so
-    pinned counts would fail on the next committed run. Recorded values on
-    2026-09-16 at --since 2026-08-04: searches 493, ranked 168, cut 58,
-    main reads 198, scorable 65.
+    Deliberately floors rather than equalities: the corpus grows (it gained
+    three runs in the fortnight this was being written), so pinned counts
+    would fail on the next committed run. Recorded values at --since
+    2026-08-04 on 2026-09-17, tree 2d6da86ef: searches 537, ranked 197,
+    cut 74, main reads 236, scorable 75.
     """
     paths = filter_since(all_result_jsons(), parse_since("2026-08-04"))
     if not paths:
@@ -381,7 +381,7 @@ def test_id_key_keeps_the_type_prefix():
 
 
 def test_list_envelope_is_reached_without_the_regex_fallback():
-    """110 of the corpus's 168 ranked captures parse cleanly to a LIST. An
+    """123 of the corpus's 197 ranked captures parse cleanly to a LIST. An
     implementation reading `doc["ranked"]` finds nothing on every one."""
     summary = _capture({"ranked": {"matches": {"_first_n": [_match(1, "ark:/61903/1:1:A-1")]}}})
     matches, by_regex = ranked_matches(summary)
@@ -399,7 +399,7 @@ def test_double_encoded_text_block_envelope_is_unwrapped():
 
 
 def test_capture_cut_mid_json_is_recovered_by_regex():
-    """58 of 168 ranked captures are cut at the run-log cap; `json.loads`
+    """74 of 197 ranked captures are cut at the run-log cap; `json.loads`
     raises on every one, so the bounded regex is the only way in."""
     full = _capture(
         {
@@ -423,7 +423,7 @@ def test_capture_cut_mid_json_is_recovered_by_regex():
 
 
 def test_capture_cut_at_exactly_the_run_log_cap_recovers_the_visible_matches():
-    """58 of the corpus's 168 ranked captures are cut at exactly 4000 chars.
+    """74 of the corpus's 197 ranked captures are cut at exactly 4000 chars.
     The cut must land INSIDE the match list for this to prove anything — a cut
     that lands before the ranked block recovers nothing whatever the gate
     does, which is the neighbouring case below."""
@@ -515,7 +515,7 @@ def test_staging_ref_attributes_to_its_emitting_search_not_the_nearest():
 
 def test_log_ref_resolves_through_research_log_append():
     """Arm 2. A `results/log_NNN.json` ref reaches its search only via the
-    append's `stagedResultsRef`; 88 of 297 corpus reads carry this form."""
+    append's `stagedResultsRef`; 95 of 357 corpus reads carry this form."""
     doc = _doc(
         [
             _search(
@@ -582,7 +582,7 @@ def test_unsegmentable_run_is_excluded_and_counted(tmp_path):
 def test_preamble_counts_the_same_runs_the_body_scores(tmp_path):
     """The preamble prints under a header calling any disagreement a bug in the
     join, so it must not count tool calls from runs `scan` drops. It did: at
-    SINCE=all that read 1450 reads against 526 scored."""
+    SINCE=all that read 1462 reads against 538 scored."""
     scored = _write_run(
         tmp_path,
         _doc([_search(matches=[_match(1, "ark:/61903/1:1:A-1")]), _read("ark:/61903/1:1:A-1")]),
@@ -781,7 +781,7 @@ def test_a_1_2_read_against_entries_with_no_ark_is_excluded_not_scored():
     when the truth is that this report cannot see. It is an exclusion."""
     # `_match` fills a recordArk by default, so it has to be removed
     # explicitly — the shape the regex arm produces when `_RECORD_ARK_RE`
-    # finds nothing (34 of 181 regex-recovered entries carry no ark).
+    # finds nothing (33 of 203 regex-recovered entries carry no ark).
     bare = _match(1, "ABC-123")
     del bare["recordArk"]
     doc = _doc([_search(matches=[bare]), _read("ark:/61903/1:2:SOURCE-1")])
@@ -802,3 +802,157 @@ def test_the_report_constants_match_the_ones_they_restate():
     from e2e.ranked_read_report import _assert_upstream_constants
 
     _assert_upstream_constants()
+
+
+# --- guards whose absence left the suite green ------------------------------
+# Each of these was added after a mutation showed the existing suite could not
+# tell the fix from its absence. The docstrings name what the neighbouring
+# test cannot catch, so a later reader does not merge them back together.
+
+
+def test_regex_recovery_does_not_reach_forward_for_a_missing_field():
+    """The discriminating case for the match-slice bound.
+
+    The sibling test above gives BOTH matches a `recordId`, so the first hit
+    after match 1's `matchRank` is match 1's own either way — the bound is
+    unexercised and that test passes with it removed (measured). Here match 1
+    carries no `recordId` at all: bounded, it reports None; unbounded, it
+    reports the SECOND match's id as its own, which scores a read against a
+    rank it was never at."""
+    first = _match(1, "ark:/61903/1:1:AAAA-111")
+    del first["recordId"]
+    del first["recordArk"]
+    summary = _capture(
+        {
+            "ranked": {
+                "matches": {
+                    "_first_n": [first, _match(2, "ark:/61903/1:1:BBBB-222")]
+                }
+            }
+        }
+    )
+    cut = summary.index("BBBB-222") + len("BBBB-222")
+    matches, by_regex = ranked_matches(summary[:cut])
+    assert by_regex is True, "fixture parsed as JSON — the regex arm never ran"
+    assert [m.rank for m in matches] == [1, 2]
+    assert matches[0].record_id is None, "match 1 borrowed match 2's recordId"
+    assert matches[1].record_id == ("1:1", "BBBB-222")
+
+
+def test_a_capture_exactly_at_the_cap_counts_as_at_the_cap(tmp_path):
+    """`at_cap` is `len(summary) >= cap`, not `>`.
+
+    The cap is where truncation LANDS, so a capture cut at exactly the limit
+    is the whole population this line reports — under `>` the count reads
+    identically on every other capture, and the corpus holds none above the
+    cap at all, so nothing else in the suite can tell the two apart."""
+    call = _search(matches=[_match(1, "ark:/61903/1:1:A-1")])
+    exact = len(call["response_summary"])
+    p = _write_run(tmp_path, _doc([call, _read("ark:/61903/1:1:A-1")]))
+    assert preamble([p], cap=exact).at_cap == 1
+    # The other direction: one char of headroom must not count as at the cap.
+    assert preamble([p], cap=exact + 1).at_cap == 0
+
+
+def test_the_preamble_counts_rank_three_as_visible_depth(tmp_path):
+    """The preamble's depth histogram carries its OWN `rank <= TOP_N`, separate
+    from the one `_read_outcome` applies — `test_top_n_boundary_is_exactly_at
+    _rank_three` pins that one and leaves this one green under `<`."""
+    call = _search(matches=[_match(i, f"ark:/61903/1:1:A-{i}") for i in (1, 2, 3)])
+    p = _write_run(tmp_path, _doc([call, _read("ark:/61903/1:1:A-1")]))
+    pre = preamble([p], cap=4000)
+    assert pre.depth[TOP_N] == 1, "a match at exactly rank 3 is visible"
+    assert pre.depth[TOP_N - 1] == 0
+
+
+def test_the_date_range_ignores_a_run_whose_traffic_is_excluded(tmp_path):
+    """The span is taken over runs that CONTRIBUTED, not every path offered.
+
+    An excluded run's traffic is absent from every count printed beside the
+    span, so letting its date widen the span claims a corpus the figures were
+    never taken over. The existing span test uses two scorable runs, so it
+    passes with the filter removed."""
+    scored = _write_run(
+        tmp_path,
+        _doc([_search(matches=[_match(1, "ark:/61903/1:1:A-1")]), _read("ark:/61903/1:1:A-1")]),
+        stem="run-2026-08-10_00-00-00",
+    )
+    dropped = _write_run(
+        tmp_path,
+        {
+            "usage": {"timeline": [[0.0, "assistant"]]},
+            "tool_calls": [_read("ark:/61903/1:1:ZZZZ-999")],
+        },
+        stem="run-2026-09-30_00-00-00",
+    )
+    pre = preamble([scored, dropped], cap=4000)
+    assert (pre.first_run, pre.last_run) == ("2026-08-10", "2026-08-10")
+    assert "corpus date range actually read  2026-08-10 .. 2026-08-10" in format_preamble(pre)
+
+
+def test_an_escaped_and_truncated_capture_recovers_its_record_ark():
+    """The other half of the escaped-quote fix.
+
+    Its sibling joins on `recordId`, so `_RECORD_ARK_RE`'s escaped alternative
+    is never read and that test passes with this regex reverted to plain
+    quotes (measured). A `1:2:` read can only ever join on `recordArk`, so
+    this one fails — which is what makes the pair cover the class rather than
+    one instance of it."""
+    call = _search(matches=[_match(1, "ABC-123", record_ark="ark:/61903/1:2:SRC-9")])
+    inner = json.dumps(json.loads(call["response_summary"])[0])
+    escaped = json.dumps([{"type": "text", "text": inner}])
+    # Cut immediately after the ark, which is the shape the run-log cap
+    # produces: escaped inside a text block, then cut mid-JSON.
+    call["response_summary"] = escaped[: escaped.index("SRC-9") + len("SRC-9")]
+    rows = _rows(_doc([call, _read("ark:/61903/1:2:SRC-9")]))
+    assert [r.outcome for r in rows] == ["in_top3"]
+
+
+def test_a_staging_ref_is_recovered_from_a_capture_cut_mid_json():
+    """`_search_info` reads `staged.resultsRef` off the parsed document and
+    falls back to a regex over the raw capture. The fallback is the only thing
+    that reaches a CUT capture — `_unwrap` returns None there — and without
+    it the read falls through to the nearest-search arm and is scored against
+    a ranking it did not come from. It carries 3 of the corpus's arm-1 joins.
+
+    The second search is the trap: it ranks a different record, so removing
+    the fallback flips both the arm AND the outcome."""
+    first = _search(
+        matches=[_match(1, "ark:/61903/1:1:AAAA-111")],
+        staging_ref="results/.staging/abc.json",
+    )
+    raw = first["response_summary"]
+    first["response_summary"] = raw[: raw.index("AAAA-111") + len("AAAA-111")]
+    second = _search(matches=[_match(1, "ark:/61903/1:1:ZZZZ-999")])
+    rows = _rows(
+        _doc(
+            [
+                first,
+                second,
+                _read("ark:/61903/1:1:AAAA-111", results_ref="results/.staging/abc.json"),
+            ]
+        )
+    )
+    assert [r.arm for r in rows] == ["staging"]
+    assert [r.outcome for r in rows] == ["in_top3"]
+
+
+def test_a_bare_read_against_entries_with_no_record_id_is_excluded_not_scored():
+    """The mirror of the `1:2:` exclusion above.
+
+    A `1:1:` or bare read joins on `recordId`, which `toStub` leaves optional
+    and the regex arm can equally miss. Applying the exclusion to `recordArk`
+    only left this half scoring `not_in_top3` — reporting the agent as having
+    read outside a ranking this report cannot actually see into."""
+    bare = _match(1, "ABC-123")
+    del bare["recordId"]
+    doc = _doc([_search(matches=[bare]), _read("ark:/61903/1:1:AAAA-111")])
+    assert [r.outcome for r in _rows(doc)] == ["unjoinable-id-space"]
+
+
+def test_a_bare_read_still_scores_when_a_record_id_is_present():
+    """The other direction — the widened exclusion must not swallow a real
+    miss. The visible entry carries a `recordId`, so the join is possible and
+    the answer is that the read was outside the top 3."""
+    doc = _doc([_search(matches=[_match(1, "ABC-123")]), _read("ark:/61903/1:1:AAAA-111")])
+    assert [r.outcome for r in _rows(doc)] == ["not_in_top3"]

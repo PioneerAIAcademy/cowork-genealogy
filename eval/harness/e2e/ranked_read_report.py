@@ -25,7 +25,8 @@ the main thread chose to read inside the visible top 3 by `matchRank`?**
 runs land and shrinks when `make prune-runlogs STRIP=1` drops captures past 14
 days, so re-derive rather than quote: `make e2e-ranked-reads SINCE=2026-08-04`
 prints the current values as its own preamble. The figures below were measured
-**2026-09-17** over that window (34 runs).
+**2026-09-17** over that window (35 runs, none excluded) on tree
+`2d6da86ef`, which is this branch merged with `main`.
 
 **Measured on the pre-#2473 capture shape**, where `ranked` sits alongside the
 inline `results` block. PR #2473 makes `ranked` REPLACE `results` and widens
@@ -39,23 +40,23 @@ question this module asks is the one that survives that change.
 
 `_summarize_tool_response` (`e2e/orchestrator.py`) leaves the MCP content-block
 list in place, so `response_summary` deserializes to `[{...}]` and NOT to the
-document itself. Of the 185 `ranked`-bearing captures, **119 parse to a list
-whose element 0 carries `ranked`, 66 raise, and zero parse to a dict**. An
+document itself. Of the 197 `ranked`-bearing captures, **123 parse to a list
+whose element 0 carries `ranked`, 74 raise, and zero parse to a dict**. An
 implementation reading `doc["ranked"]` joins nothing at all, on every capture,
 while every hand-written unit fixture passes.
 A second shape exists too — `[{"type": "text", "text": "{...}"}]`, which is
 what `research_log_append` returns — so `_unwrap` descends both.
 
 `ranked_matches` therefore gates its regex fallback on the `ranked` value being
-**unreachable**, never on `json.loads` failing (119 captures parse fine and
+**unreachable**, never on `json.loads` failing (123 captures parse fine and
 still need the descent) and never on `len(summary) >= 4000` (the cap is a
 constant that can move — `_RUNLOG_MAX_CHARS`, `orchestrator.py`).
 
 ## Only the main thread's reads count
 
 `record_search` is called only by the main thread, but a third of
-`record_read` calls are not its: 224 main-thread against 84 `record-extractor`
-and 32 `person-evidence`. A subagent runs in fresh context and never saw the `ranked` block — it reads the `recordId` it was
+`record_read` calls are not its: 236 main-thread against 84 `record-extractor`
+and 37 `person-evidence`. A subagent runs in fresh context and never saw the `ranked` block — it reads the `recordId` it was
 handed. Counting those against "the agent ignored the ranker" mis-attributes a
 third of the denominator, so they are reported separately as delegated reads.
 
@@ -69,18 +70,18 @@ third of the denominator, so they are reported separately as delegated reads.
 3. Nearest preceding main-thread `record_search` in `aligned_calls` order, for
    everything else — **including a ref that resolves to neither**.
 
-Arm 1 covers 19 of the 74 scorable reads and arm 2 just 1, so the headline is
+Arm 1 covers 19 of the 75 scorable reads and arm 2 just 1, so the headline is
 predominantly heuristic-joined. `format_report` prints the arm split so a
 reader can see how much of the number rests on arm 3.
 
 A fourth arm was tried and removed. When the nearest preceding search ranked
 nothing, it attributed the read to the last search that DID rank rather than
-excluding it — which scored 100 further reads and quietly answered a
+excluding it — which scored 127 further reads and quietly answered a
 different question than #1156 commissioned: the exclusion count it asks for
 stopped meaning "reads the broad-sweep control removed". The observation that
 prompted it survives as a sub-bucket of that exclusion (below), where it turns
-out to be small: of 125 reads the control removes, 8 were in an earlier
-ranking's visible top 3 and 117 were not.
+out to be small: of 127 reads the control removes, 8 were in an earlier
+ranking's visible top 3 and 119 were not.
 
 ## Exclusions, each counted rather than silently dropped
 
@@ -94,10 +95,13 @@ bearing, not presentational:
 3. `image-ark`: the read's id is a `3:1:` document-image ark, a different id
    space from `ranked[].recordId` — it can never join.
 4. `no-preceding-search`: the read had no main-thread search before it.
-5. `ranking-skipped` / `ranking-skipped-in-earlier-top3`: the NEAREST
-   preceding search carried `rankingSkipped`, so there was no ranking to
-   ignore. This is the analysis-time control `record-search-tool-spec-v2.md`
-   says the field exists to enable, and the confound the issue was filed
+5. `ranking-skipped` / `ranking-skipped-in-earlier-top3`: the SUPPLYING
+   search carried `rankingSkipped`, so there was no ranking to ignore. On
+   arm 3 that is the nearest preceding search, which is #1156's rule
+   verbatim; on arms 1-2 it is the search the read's own handle names, which
+   is stronger evidence than proximity (3 reads differ). This is the
+   analysis-time control `record-search-tool-spec-v2.md` says the field
+   exists to enable, and the confound the issue was filed
    against (subject-less broad sweeps). The two buckets are ONE exclusion for
    the issue's purposes and are printed summed; the split records whether the
    id was nonetheless in the visible top 3 of the last search that ranked.
@@ -111,10 +115,13 @@ bearing, not presentational:
 8. `ranked-unreadable`: a `ranked` block the recovery could not read. Split
    out of (7) because merging them let a parser limit assert that the search
    ranked nothing — a claim about the ranker drawn from a failure to parse.
-9. `unjoinable-id-space`: a `1:2:` read where no visible match carries a
-   `recordArk` to join on (`toStub` leaves it optional). The join is
-   impossible, so scoring it `not_in_top3` would report the agent reading
-   outside a ranking when the truth is that this report cannot see.
+9. `unjoinable-id-space`: a read where no visible match carries the field
+   this read's id space joins on — `recordArk` for a `1:2:` read,
+   `recordId` for a `1:1:` or bare one. `toStub` leaves both optional. The
+   join is impossible, so scoring it `not_in_top3` would report the agent
+   reading outside a ranking when the truth is that this report cannot see.
+   No read in the 2026-08-04 window reaches either half, so both carry
+   synthetic tests rather than resting on live data.
 
 Whole runs are excluded separately: `unsegmentable-timeline` /
 `tool-count-mismatch` when `aligned_calls` rejects one, `unreadable` when the
@@ -130,7 +137,7 @@ why that bucket carries a synthetic test rather than relying on live data.
 `docs/architecture.md` section 9.4 gap 3: "Do not quote a violation rate", and
 `make e2e-corpus` "deliberately reports counts, refusing a percentage whose
 denominator would be doing the work". Here the denominator is doing exactly
-that work — 224 main-thread reads become 74 scorable once the exclusions
+that work — 236 main-thread reads become 75 scorable once the exclusions
 above are applied — so this report's primary output is counts by bucket and
 any rate appears inline as `n/d`.
 
@@ -225,7 +232,7 @@ def id_key(value: Any) -> tuple[str | None, str] | None:
     """`(type_prefix, bare_tail)` for any FamilySearch id form, or None.
 
     A bare `XXXX-XXX` id carries no type and returns `(None, value)`; it is
-    joined against `recordId`, which is what the 7 bare reads in the corpus
+    joined against `recordId`, which is what the 19 bare reads in the corpus
     are. Never throws — mirrors the TS helper's defensive contract.
     """
     if not isinstance(value, str) or not value:
@@ -325,7 +332,7 @@ def ranked_matches(summary: str) -> tuple[list[RankedMatch], bool]:
     """`(matches, recovered_by_regex)` for one `record_search` capture.
 
     Gated on the `ranked` block being UNREACHABLE, not on the parse failing —
-    119 of the corpus's 185 ranked captures parse cleanly and still need the
+    123 of the corpus's 197 ranked captures parse cleanly and still need the
     list descent, and a length test would bind to a movable constant.
     """
     doc = _unwrap(summary)
@@ -406,13 +413,20 @@ def _read_outcome(read_id: tuple[str | None, str], info: SearchInfo) -> str:
         target = match.record_ark if kind == "1:2" else match.record_id
         if target is not None and target[1] == tail:
             return "in_top3"
-    # A `1:2:` read can only ever join on `recordArk`, which `toStub` leaves
-    # optional — 34 of 181 regex-recovered entries carry none. When no visible
-    # match has one, the join is structurally impossible, and reporting
-    # `not_in_top3` would state that the agent read outside the ranking when
-    # what actually happened is that this report cannot see. Excluded and
-    # counted, the same as any other unmeasurable read.
-    if kind == "1:2" and not any(m.record_ark is not None for m in visible):
+    # A read joins on the ONE field its id space lives in, and `toStub`
+    # leaves both optional, so either can be absent from every visible entry
+    # — the regex recovery arm can also miss either. Applying this to
+    # `recordArk` only left the mirror case scoring `not_in_top3`, which
+    # states that the agent read outside the ranking when what actually
+    # happened is that this report cannot see. Excluded and counted, the same
+    # as any other unmeasurable read.
+    #
+    # `visible` non-empty is part of the condition, not a guard against an
+    # empty `any()`: a search that surfaced entries none of which carries the
+    # joinable field is unmeasurable, whereas one with no visible entry at all
+    # has an empty top 3 that the read demonstrably is not in.
+    joinable = "record_ark" if kind == "1:2" else "record_id"
+    if visible and not any(getattr(m, joinable) is not None for m in visible):
         return "unjoinable-id-space"
     return "not_in_top3"
 
@@ -494,10 +508,18 @@ def scan_run(
             rows.append(ReadRow(run, segment, "none", "no-preceding-search"))
             continue
         if supplying.ranking_skipped and not supplying.has_ranked:
-            # #1156's rule, kept literal: the NEAREST preceding main-thread
-            # search carried `rankingSkipped`, so it is excluded and counted.
+            # The SUPPLYING search carried `rankingSkipped`, so it is excluded
+            # and counted. On arm 3 the supplying search IS the nearest
+            # preceding one, which is #1156's rule verbatim. On arms 1-2 the
+            # read's own `resultsRef` names the search that produced it, and
+            # an exact handle outranks proximity: a read joined by handle to a
+            # search that DID rank is scored against that ranking even when a
+            # later subject-less sweep intervened. That is a deliberate
+            # departure from the issue's wording, and it moves 3 reads in the
+            # 2026-08-04 window — all on arm 1 — which would otherwise be
+            # discarded despite the log naming the ranking they came from.
             # An earlier draft attributed these to the last search that did
-            # rank instead of excluding them, which scored 100 of them and
+            # rank instead of excluding them, which scored all 127 of them and
             # silently answered a different question than the one commissioned
             # — the exclusion count the issue asks for stopped meaning "reads
             # the broad-sweep control removed".
@@ -539,7 +561,7 @@ class LoadedRun(NamedTuple):
     is twice the work, but the reason to share it is correctness rather than
     speed: two independent walks are two places for the population to drift
     apart, and they already did — the preamble once counted tool calls from
-    runs the body had dropped, printing 1450 reads against 526 scored under a
+    runs the body had dropped, printing 1462 reads against 538 scored under a
     header calling any disagreement a bug in the join. Both now consume the
     same list, so a run either contributes to both or to neither.
     """
@@ -643,7 +665,7 @@ def preamble(
             continue
         # Same population as `scan`. Counting tool calls from runs the body
         # drops makes the two disagree by the excluded runs' whole traffic —
-        # at SINCE=all that was 1450 reads in the preamble against 526 scored,
+        # at SINCE=all that was 1462 reads in the preamble against 538 scored,
         # printed under a header calling any disagreement a bug in the join.
         # The dropped runs are still reported, on the exclusion line.
         if item.reason is not None:
