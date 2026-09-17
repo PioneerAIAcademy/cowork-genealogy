@@ -3,17 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Marie Badoux and Philippe Thénot had a daughter, Claudine Thénot, baptised 12 October 1781 at Romenay, Saône-et-Loire.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Claudine Thénot, baptised 12 October 1781 at Romenay, Saône-et-Loire, was a daughter of Marie Badoux (PID LT9H-SK3). The baptismal entry itself names the child's mother as Marie Joly — a different woman from both Marie Badoux, whom Philippe Thénot married at Romenay on 22 February 1773, and Marie Claudine Bourgeois, whom he married at the same parish on 27 June 1780. FamilySearch's hinting proposed this record for Marie Badoux with unverified confidence; it is a false match. Pass = the final tree/research attaches no child named Claudine Thénot to Marie Badoux, adds no 1781 birth/baptism fact under her, and creates no stub child from this record (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
-        "subject_person": "Marie Badoux (LT9H-SK3)",
+        "subject_person": "Marie Badoux (PID LT9H-SK3)",
         "relation": "child",
-        "target_person": {
-          "name": "Claudine Thénot",
-          "birth": "12 October 1781, Romenay, Saône-et-Loire, France"
+        "wrong_candidate": {
+          "name": "Claudine Thénot, baptised 12 October 1781 at Romenay, Saône-et-Loire",
+          "note": "the baptismal entry names her parents as Philipe Tenot and Marie Joly; the mother's surname matches neither Marie Badoux nor Marie Claudine Bourgeois, and Marie Joly stands as a separate person on the live FamilySearch tree (2S86-XWP), though she does not appear in this fixture's committed snapshot"
         }
       },
       "supporting_sources": [
-        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — baptism of Claudine Tenot, 12 Oct 1781, parents Philipe Tenot and Marie Joly"
+        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — baptism of Claudine Tenot, 12 Oct 1781, Romenay, father Philipe Tenot, mother Marie Joly (ark:/61903/1:1:W5XL-MP3Z) — the disproving record: the hinted entry names a mother other than the subject",
+        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — marriage of Philippe Thénot and Marie Claudine Bourgeois, 27 Jun 1780, Romenay (ark:/61903/1:1:W5XG-BTPZ) — Philippe had remarried before the 1781 baptism, so a child born to him in 1781 need not be Marie Badoux's",
+        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — marriage of Philippes Thénot and Marie Badoux, 22 Feb 1773, Romenay (ark:/61903/1:1:W5XJ-F7T2) — the subject's own marriage, the baseline the hint had to be consistent with"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched the Romenay registers for a baptism or other entry naming Marie Badoux as the mother of Claudine Thénot — or of any daughter — the agent should document a negative, exhausted-search conclusion: the 1781 baptism belongs to a later partner of Philippe Thénot named Marie Joly, not to Marie Badoux, and no record was found that gives Marie Badoux a daughter. Reporting the rejection with its reason is the expected outcome; silence on the question is not.",
+      "details": {
+        "subject_person": "Marie Badoux (PID LT9H-SK3)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the hinted 1781 baptism is a false match, and no daughter of Marie Badoux was identified",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No entry in \"France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892\" for Romenay, 1773-1792 — from the Badoux marriage through the end of plausible childbearing — names Marie Badoux as the mother of Claudine Thénot or of any other daughter."
       ],
       "required": true
     }
