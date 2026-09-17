@@ -53,6 +53,13 @@ try {
 
   const status = await call("auth_status", {});
   report("auth_status", !status.isError && typeof status.body.loggedIn === "boolean", JSON.stringify(status.body));
+  // #2126 — the build stamp is on the wire and on the tool return, and agrees.
+  const wireVersion = client.getServerVersion()?.version;
+  report(
+    "build stamp",
+    typeof wireVersion === "string" && /^\d+\.\d+\.\d+\+/.test(wireVersion) && status.body.buildId === wireVersion,
+    `serverInfo.version=${wireVersion} auth_status.buildId=${status.body.buildId}`
+  );
 
   const tree = {
     persons: [

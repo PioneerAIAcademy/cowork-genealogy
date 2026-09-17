@@ -328,7 +328,21 @@ Every SKILL.md must be safe to re-invoke against state containing
 its own prior output. If a specific class of failure makes this
 intolerable in practice, revisit.
 
-### 7.2 Runtime version manifest — deferred
+### 7.2 Runtime version manifest — un-deferred as a build stamp, not a manifest
+
+**Status (2026-09-17):** the deferral below rested on two premises that
+no longer hold — `viewer_version` is a frozen `1.0.0`, so it reconstructs
+nothing, and a live alpha incident (two desktop sessions, stale advertised
+tool schemas; issue #2126) could not be triaged without a build id. The
+lead's 2026-09-07 ruling replaces the manifest idea with a **build stamp**:
+every build of the MCP server carries `<base>+<date>.<sha>[.dirty]`
+(`docs/specs/mcpb-package-spec.md` § Versioning), advertised as
+`serverInfo.version` and returned as `buildId` on every branch of
+`project_context` and `auth_status` — so the agent can quote it mid-session
+and a tester can read it back. The viewer half — `viewer_version` carrying
+the sha so the bundle records it — is the second PR of that card. No
+`research.json` field and no `_feedback/manifest.json`; the original
+reasoning is kept below as history.
 
 A `_feedback/manifest.json` capturing plugin / MCP / Cowork /
 model versions at submission time was considered. Rejected for

@@ -37,6 +37,7 @@ echo "Checking bundle contents..."
 require manifest.json
 require package.json
 require build/index.js
+require build/build-info.json
 require config/familysearch.json
 require config/given-name-variants.json
 require node_modules/@modelcontextprotocol/sdk
@@ -64,7 +65,13 @@ import { join } from "node:path";
 
 const dir = process.argv[2];
 const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
+const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
 const expected = (manifest.tools ?? []).map((t) => t.name).sort();
+// The build stamp (#2126): base semver + `dev`, or date.sha[.dirty]. Inline
+// copy of BUILD_VERSION_RE in scripts/build-stamp.mjs — the unpacked bundle
+// has no access to that module, and this is the one check that fails when a
+// build stops stamping. `+dev` is legitimate (a build outside a git checkout).
+const BUILD_VERSION_RE = /^\d+\.\d+\.\d+\+(dev|\d{4}-\d{2}-\d{2}\.[0-9a-f]{7,40}(\.dirty)?)$/;
 
 const child = spawn("node", ["build/index.js"], {
   cwd: dir,
@@ -109,6 +116,18 @@ try {
     clientInfo: { name: "verify-mcpb", version: "1.0.0" },
   });
   if (init.error) throw new Error("initialize failed: " + JSON.stringify(init.error));
+
+  const wire = init.result?.serverInfo?.version;
+  if (typeof wire !== "string" || !BUILD_VERSION_RE.test(wire)) {
+    throw new Error(`serverInfo.version is not a build stamp: ${JSON.stringify(wire)}`);
+  }
+  if (manifest.version !== wire) {
+    throw new Error(`manifest.json version ${JSON.stringify(manifest.version)} != serverInfo.version ${JSON.stringify(wire)}`);
+  }
+  if (pkg.version !== wire) {
+    throw new Error(`package.json version ${JSON.stringify(pkg.version)} != serverInfo.version ${JSON.stringify(wire)}`);
+  }
+  console.log(`  ok    build stamp ${wire} (serverInfo.version == manifest.json == package.json)`);
 
   send({ jsonrpc: "2.0", method: "notifications/initialized" });
 

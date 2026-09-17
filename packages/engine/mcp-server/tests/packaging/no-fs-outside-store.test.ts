@@ -14,6 +14,7 @@ const EXEMPT = new Set([
   "auth/config.ts",
   "auth/tokenManager.ts",
   "utils/name-variants.ts",
+  "utils/build-info.ts",
 ]);
 
 // Any way a module can bind the fs module: a static import with or without a

@@ -8,7 +8,7 @@
 // compiled JS + prod deps only -- never devDependencies (typescript, vitest,
 // @anthropic-ai/mcpb) or TypeScript source.
 import { execSync } from "node:child_process";
-import { copyFileSync, cpSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,6 +35,20 @@ try {
   for (const d of ["build", "config"]) {
     cpSync(join(ENGINE, d), join(stage, d), { recursive: true });
   }
+
+  // Stamp the STAGED manifest + package.json with the build id that `npm run
+  // build` just wrote to build/build-info.json (scripts/write-build-info.mjs),
+  // so the wire serverInfo.version, the manifest and package.json agree by
+  // construction. The tracked copies stay at the base version — a build that
+  // rewrote them would dirty the tree on every `make mcpb` (#2126). Semver
+  // build metadata, so `mcpb validate` below still passes.
+  const { version } = JSON.parse(readFileSync(join(stage, "build", "build-info.json"), "utf8"));
+  for (const f of ["manifest.json", "package.json"]) {
+    const doc = JSON.parse(readFileSync(join(stage, f), "utf8"));
+    doc.version = version;
+    writeFileSync(join(stage, f), JSON.stringify(doc, null, 2) + "\n");
+  }
+  console.log(`Stamped version: ${version}`);
 
   console.log("Installing production dependencies into the stage...");
   sh("npm ci --omit=dev --ignore-scripts", stage);

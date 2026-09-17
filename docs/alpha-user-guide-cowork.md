@@ -294,6 +294,12 @@ Small and specific beats broad. "The citation for the 1900 census had no page or
 line number, so I couldn't find the record again" is worth more than "citations
 are weak." One problem per submission.
 
+**Say which build you were on.** Ask the agent "what build is this?" — it calls
+`auth_status` (or `project_context`) and reads back a `buildId` such as
+`0.1.0+2026-09-17.abc12345`: the date and commit the MCP server was built from.
+Paste that line into the report. On desktop it is the only thing that tells us
+whether you were running the current build or one from before a fix.
+
 ---
 
 ## What doesn't work yet
