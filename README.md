@@ -107,7 +107,7 @@ way project state changes.
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
-| `tree_forget` | Strip a slice of the local tree to stage a practice run | None |
+| `tree_forget` | Strip a slice of the local tree to stage a practice run (project-start only; refused once a plan exists) | None |
 | `merge_tree_persons` | Merge two local tree persons | None |
 | `merge_warnings` | Pre-merge conflict report for two tree persons | None |
 | `person_quality` | Evidence-quality summary for a tree person | None |
