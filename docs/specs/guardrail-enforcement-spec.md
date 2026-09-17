@@ -1016,6 +1016,16 @@ as the promote, clearing the gate from inside the call it gates. A same-batch
 resolve-then-promote is therefore refused, and the refusal tells the agent to
 settle the conflict **in an earlier call** rather than retrying the batch.
 
+**Both halves' refusals carry that same-call clause, because both reads are
+snapshots.** Half (b) needs it as much as half (a): a batch that appends a valid
+`direct` assertion and promotes on it in the next op is refused saying there is
+no direct supporting assertion, one op after the agent supplied one. Without the
+clause the agent retries the identical batch, or mints further assertions to
+satisfy a floor it has already met, which is the ADR-0011 satisfiability limit
+this gate is otherwise careful about. The message therefore ends "Assertions
+appended in THIS call do not count — append them in an earlier call, then
+promote", and both directions are tested.
+
 **What the snapshot gives up, stated so the choice is between two known leaks.**
 The read is not cost-free coverage: it blinds half (a) to a conflict *appended*
 in the same batch, which a live read would refuse. The table under "What this

@@ -500,10 +500,17 @@ function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string
     }
   }
   if (direct < 1 && indirectSources.size < 2) {
+    // The same-call clause matters as much here as in half (a), and for the
+    // same reason: this half also reads the pre-call snapshot, so an assertion
+    // appended earlier in THIS batch is invisible and the agent is told there is
+    // no direct assertion immediately after appending one. Without the clause it
+    // retries the same batch, or mints further assertions to satisfy a floor it
+    // has already met — the ADR-0011 satisfiability limit.
     return [
       `hypotheses[${hid}]: supported with no direct supporting assertion and only ` +
         `${indirectSources.size} distinct indirect source(s) (needs >=1 direct or >=2 ` +
-        `distinct indirect sources)`,
+        `distinct indirect sources). Assertions appended in THIS call do not count — ` +
+        `append them in an earlier call, then promote`,
     ];
   }
   return [];

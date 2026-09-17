@@ -6889,4 +6889,96 @@ describe("supported evidence floor (#2086)", () => {
     expect(r.ok).toBe(true);
   });
 
+
+  // ── Half (b)'s same-call behaviour, both directions ──
+  //
+  // Nothing covered this before. Half (b) reads the pre-call snapshot too, so an
+  // assertion appended earlier in the same batch is invisible to it — and the
+  // refusal has to say so, or the agent retries the batch it just sent.
+
+  it("refuses promoting on an assertion appended in the same call, and says the append does not count", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [];
+    research.hypotheses = [hyp({ supporting_assertion_ids: [] })];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            source_id: "src_001",
+            record_id: "rec1",
+            record_role: "principal",
+            fact_type: "birth",
+            value: "1850",
+            information_quality: "primary",
+            informant: "self",
+            informant_proximity: "self",
+            evidence_type: "direct",
+            extracted_for_question_ids: [],
+          },
+        },
+        {
+          section: "hypotheses",
+          op: "update",
+          entryId: "h_001",
+          fields: { status: "supported", supporting_assertion_ids: ["a_001"] },
+        },
+      ],
+    } as never);
+
+    expect(r.ok).toBe(false);
+    const joined = failure(r).errors.join("\n");
+    expect(joined).toMatch(/no direct supporting assertion/);
+    // Satisfiability: without this the agent is told there is no direct
+    // assertion one op after appending one, and retries the same batch.
+    expect(joined).toMatch(/appended in THIS call do not count/);
+    expect(joined).toMatch(/append them in an earlier call, then promote/);
+  });
+
+  it("accepts the same two ops split across two calls", async () => {
+    // The satisfying shape the refusal above names. Proves the deny is
+    // satisfiable rather than a dead end.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [];
+    research.hypotheses = [hyp({ supporting_assertion_ids: [] })];
+    await writeProject(research);
+
+    const append = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: {
+        source_id: "src_001",
+        record_id: "rec1",
+        record_role: "principal",
+        fact_type: "birth",
+        value: "1850",
+        information_quality: "primary",
+        informant: "self",
+        informant_proximity: "self",
+        evidence_type: "direct",
+        extracted_for_question_ids: [],
+      },
+    } as never);
+    expect(errorsOf(append) ?? []).toEqual([]);
+    const assertionId = singleOk(append).entryId;
+
+    const promote = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { status: "supported", supporting_assertion_ids: [assertionId] },
+    } as never);
+
+    expect(errorsOf(promote) ?? []).toEqual([]);
+    expect(promote.ok).toBe(true);
+  });
+
 });
