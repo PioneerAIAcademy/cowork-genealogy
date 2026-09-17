@@ -31,6 +31,11 @@ browser ingress. E2B runs the per-user sandboxes (outbound from the container).
 >   `E2BProvider` is fully implemented (not the stub the Caveats imply). What
 >   remains is operational: create the app, set secrets, register the FS redirect,
 >   build the E2B template image, deploy.
+> - **`make deploy` builds the E2B agent image (#1489).** It is no longer a
+>   separate step you perform before deploying: `sandbox-image` is a prerequisite
+>   of `deploy`, so the template is built and pushed and then `fly deploy` runs.
+>   The Prerequisites and step 3 below are updated; a raw `fly deploy` ships the
+>   control plane alone and is no longer the procedure.
 
 ---
 
@@ -124,12 +129,15 @@ Notes for the reviewer:
 ## Prerequisites
 
 - `flyctl` installed and `fly auth login` done.
-- An E2B account + `E2B_API_KEY`, and the genealogy sandbox **template image
-  built** (`make sandbox-image` / `apps/server/sandbox/build-image.sh`):
-  Node + Python + `claude-agent-sdk` + the MCP `build/` + the 28 skills +
-  `agent_runner` + the pre-crawled wiki markdown. The control-plane container
+- An E2B account + `E2B_API_KEY`, and the `e2b` CLI. `make deploy` now builds and
+  pushes the genealogy sandbox **template image** itself, so this is a dependency
+  of the deploy rather than a separate step (`make sandbox-image` /
+  `apps/server/sandbox/build-image.sh` still builds it alone):
+  Node + Python + `claude-agent-sdk` + the MCP `build/` + the skills +
+  `agent_runner`. (No wiki corpus: the wiki tools are HTTP clients of the hosted
+  wiki-query-api, so nothing wiki-related is baked.) The control-plane container
   does not run the agent, so the template is the gate on real turns, not this
-  image. (`E2BProvider` itself is still a stub — see Caveats.)
+  image.
 - An Anthropic operator key (`ANTHROPIC_API_KEY`).
 - A FamilySearch web dev key whose **redirect URI is registered against the
   public Fly hostname** as `https://<public-host>/callback` (see "OAuth redirect"
@@ -208,10 +216,12 @@ fly launch --no-deploy --copy-config --name genealogy-workbench \
 
 # 2. Set secrets (see above) — including DATABASE_URL + WS_SIGNING_KEY.
 
-# 3. Deploy (build context = repo root, config + Dockerfile under deploy/).
-#    --ha=false: fly deploy provisions TWO machines by default; we must stay at
-#    count = 1 until init_db moves to a release_command (see Horizontal-scaling).
-fly deploy --config deploy/fly.toml --dockerfile deploy/Dockerfile . --ha=false
+# 3. Deploy. `make deploy` is the command: it also rebuilds and pushes the
+#    genealogy-agent E2B image, which a raw `fly deploy` does not (issue #1489).
+#    Build context = repo root, config + Dockerfile under deploy/. --ha=false:
+#    fly deploy provisions TWO machines by default; we must stay at count = 1
+#    until init_db moves to a release_command (see Horizontal-scaling).
+make deploy
 ```
 
 Local sanity-check of the image before deploying:
@@ -284,8 +294,10 @@ affinity-free. Ably is dropped (it would unpin only the *fanout*, not the
 ## Smoke-test checklist (after deploy)
 
 1. `fly status` — one Machine, `started`; volume attached.
-2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","db":"postgres"}`
-   (the health payload reports `db`, not `realtime` — that field was removed).
+2. `curl https://<host>/api/health` → `{"ok":true,"agentMode":"real","provider":"e2b","db":"postgres","sandboxImageCommit":null}`
+   (the health payload reports `db`, not `realtime` — that field was removed.
+   `sandboxImageCommit` is the E2B agent image's baked commit, null until this
+   process has created its first session.)
 3. `https://<host>/` loads the web client (StaticFiles mount serving `dist`).
 4. **Sign in with FamilySearch** completes and returns to the app: the FS OAuth
    round-trip lands on `/callback` (redirect URI matches), the allowlist check
