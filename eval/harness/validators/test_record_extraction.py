@@ -169,6 +169,32 @@ def _attribute_matches(assertion, attribute):
     return True
 
 
+def _relationship_type_matches(assertion, relationship_type):
+    """Optional facet filter for relationship assertions. When a matcher
+    declares `relationship_type`, only assertions whose
+    structured_value.relationship_type maps to the same _relationship_category
+    match — so `relationship_type: "child"` matches son, daughter, child,
+    son_inferred, daughter_inferred, child_inferred. No `relationship_type`
+    on the matcher → no facet constraint (matches regardless).
+
+    When the matcher's value is not in _RELATION_CATEGORY (e.g. `stepfather`),
+    falls back to literal base comparison after stripping `_inferred` and
+    lowercasing — useful for uncommon types the category table does not cover."""
+    if not relationship_type:
+        return True
+    got = (assertion.get("structured_value") or {}).get("relationship_type")
+    if not got:
+        return False
+    want_cat = _relationship_category(relationship_type)
+    got_cat = _relationship_category(got)
+    if want_cat is not None:
+        return got_cat == want_cat
+    # Matcher value unknown to _RELATION_CATEGORY — literal base comparison.
+    want_base = str(relationship_type).lower().replace("_inferred", "").strip()
+    got_base = str(got).lower().replace("_inferred", "").strip()
+    return want_base == got_base and bool(want_base)
+
+
 def _value_matches(assertion, attribute, expected):
     """The assertion's value for the matcher's attribute CONTAINS `expected`
     (case-insensitive). #1108 — pins the fact value, not just its layers.
@@ -250,9 +276,10 @@ def test_expected_classifications(before_state, after_state, test):
 
     errors = []
     for m in matchers:
-        role = m.get("record_role")
+        role_spec = m.get("record_role")
         fact = m.get("fact_type")
         attribute = m.get("attribute")  # optional facet: "date" | "place"
+        rel_type = m.get("relationship_type")  # optional facet
         # `optional`: do NOT hard-require the assertion to EXIST — only check its
         # classification IF it is present. Use for a fact whose *existence* is
         # completeness the skill produces unreliably (so gating on it flaps), but
@@ -261,20 +288,49 @@ def test_expected_classifications(before_state, after_state, test):
         # judge's soft Completeness dimension covers the omission instead.
         optional = bool(m.get("optional", False))
         attr_desc = f" attribute='{attribute}'" if attribute else ""
-        matching = [
+        rel_desc = f" relationship_type='{rel_type}'" if rel_type else ""
+        # record_role may be a list of acceptable roles (OR semantics).
+        roles = role_spec if isinstance(role_spec, list) else [role_spec]
+        roles = [r for r in roles if r]  # defensive: drop None/empty
+        role_desc = (
+            "one of " + ", ".join(f"'{r}'" for r in roles)
+            if isinstance(role_spec, list)
+            else f"'{role_spec}'"
+        )
+        if not roles:
+            if not optional:
+                errors.append(
+                    f"no assertion carried record_role={role_desc} "
+                    f"(no new-or-updated assertion matched any of these roles)"
+                )
+            continue
+        # Two-stage matching: first by role, then by fact_type + facets.
+        # The split enables a diagnostic failure message.
+        role_candidates = [
             a
             for a in new
-            if _record_role_matches(a.get("record_role"), role)
-            and _fact_type_matches(a.get("fact_type"), fact)
+            if any(_record_role_matches(a.get("record_role"), r) for r in roles)
+        ]
+        matching = [
+            a
+            for a in role_candidates
+            if _fact_type_matches(a.get("fact_type"), fact)
             and _attribute_matches(a, attribute)
+            and _relationship_type_matches(a, rel_type)
         ]
         if not matching:
             if optional:
                 continue  # existence not required — nothing present to classify
-            errors.append(
-                f"no new assertion with record_role='{role}' "
-                f"fact_type='{fact}'{attr_desc} (expected at least one)"
-            )
+            if not role_candidates:
+                errors.append(
+                    f"no assertion carried record_role={role_desc} "
+                    f"(no new-or-updated assertion matched any of these roles)"
+                )
+            else:
+                errors.append(
+                    f"assertion(s) carried record_role={role_desc} "
+                    f"but none matched fact_type='{fact}'{attr_desc}{rel_desc}"
+                )
             continue
         for a in matching:
             aid = a.get("id", "?")
@@ -297,7 +353,7 @@ def test_expected_classifications(before_state, after_state, test):
                         else f"'{expected}'"
                     )
                     errors.append(
-                        f"assertions[{aid}] (record_role='{role}', "
+                        f"assertions[{aid}] (record_role={role_desc}, "
                         f"fact_type='{fact}'{attr_desc}): {field}='{got}' — "
                         f"expected {want}"
                     )
@@ -314,7 +370,7 @@ def test_expected_classifications(before_state, after_state, test):
                     else a.get("value")
                 )
                 errors.append(
-                    f"assertions[{aid}] (record_role='{role}', "
+                    f"assertions[{aid}] (record_role={role_desc}, "
                     f"fact_type='{fact}'{attr_desc}): value='{got_val}' — "
                     f"expected to contain '{m['value']}'"
                 )

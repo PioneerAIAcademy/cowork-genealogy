@@ -342,8 +342,8 @@ def test_expected_classifications_fail_when_pair_missing_and_skip_when_absent():
         [{"record_role": "deceased", "fact_type": "age", "evidence_type": "indirect"}],
     )
     assert result.passed is False
-    assert "no new assertion" in (result.error or "")
-    assert "record_role='deceased'" in (result.error or "")
+    assert "no assertion carried" in (result.error or "")
+    assert "'deceased'" in (result.error or "")
 
     skipped = _run_expected_classifications([], [])
     assert skipped.passed is True
@@ -427,7 +427,7 @@ def test_expected_classifications_optional_skips_existence_but_checks_classifica
           "evidence_type": "indirect"}],
     )
     assert required.passed is False
-    assert "expected at least one" in (required.error or "")
+    assert "no assertion carried" in (required.error or "")
 
 
 def test_expected_classifications_value_pins_the_fact_value():
@@ -591,6 +591,302 @@ def test_expected_classifications_genuinely_wrong_values_still_fail():
         assert fragment in (wrong_value.error or ""), (
             f"failure message missing {fragment!r}: {wrong_value.error}"
         )
+
+
+# --- expected_classifications: record_role as list ---
+
+
+def test_expected_classifications_record_role_as_list():
+    """record_role may be a list — any element matching (OR semantics)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "head_of_household",
+            "fact_type": "name",
+            "evidence_type": "direct",
+            "informant_proximity": "self",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["head_of_household", "head"], "fact_type": "name",
+          "evidence_type": "direct"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_record_role_list_fails_when_no_role_matches():
+    """A list where NO element matches any new assertion's role → fails
+    with a 'no assertion carried' message."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "witness",
+            "fact_type": "name",
+            "evidence_type": "direct",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["head", "deceased"], "fact_type": "name",
+          "evidence_type": "direct"}],
+    )
+    assert result.passed is False
+    assert "no assertion carried" in (result.error or "")
+
+
+def test_expected_classifications_record_role_list_prefix_of_still_works():
+    """Prefix-of matching applies per element: `father` in the list matches
+    a persisted `father_of_deceased`."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "father_of_deceased",
+            "fact_type": "name",
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["father", "mother"], "fact_type": "name",
+          "evidence_type": "indirect"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_record_role_list_wrong_classification_still_fails():
+    """Role matches via list but wrong evidence_type still fails (teeth)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "name",
+            "evidence_type": "direct",  # matcher says indirect
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["child_1", "child_2", "daughter_1"], "fact_type": "name",
+          "evidence_type": "indirect"}],
+    )
+    assert result.passed is False
+    assert "evidence_type" in (result.error or "")
+    assert "direct" in (result.error or "")
+
+
+def test_expected_classifications_record_role_list_fact_type_mismatch():
+    """Role present but fact_type doesn't match → diagnostic message says
+    role was found but facets didn't match, not 'no assertion carried'."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": ["deceased"], "fact_type": "death",
+          "evidence_type": "direct"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
+    assert "no assertion carried" not in (result.error or "")
+
+
+def test_expected_classifications_record_role_empty_list_does_not_crash():
+    """Defensive: an empty list (rejected by schema) should fail existence
+    gracefully, not crash."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "deceased",
+            "fact_type": "age",
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": [], "fact_type": "age", "evidence_type": "indirect"}],
+    )
+    assert result.passed is False
+    assert "no assertion carried" in (result.error or "")
+
+
+def test_expected_classifications_record_role_null_does_not_crash():
+    """Defensive: null record_role (rejected by schema) should fail
+    existence gracefully, not crash."""
+    result = _run_expected_classifications(
+        [{"id": "a_1", "record_role": "deceased", "fact_type": "age",
+          "evidence_type": "indirect"}],
+        [{"record_role": None, "fact_type": "age", "evidence_type": "indirect"}],
+    )
+    assert result.passed is False
+    assert "no assertion carried" in (result.error or "")
+
+
+# --- expected_classifications: relationship_type facet ---
+
+
+def test_expected_classifications_relationship_type_facet_filters_by_category():
+    """relationship_type facet narrows to assertions whose
+    structured_value.relationship_type matches via _relationship_category."""
+    assertions = [
+        {
+            "id": "a_child",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "daughter of Thomas Flynn",
+            "structured_value": {"relationship_type": "daughter"},
+            "evidence_type": "direct",
+        },
+        {
+            "id": "a_spouse",
+            "record_role": "wife",
+            "fact_type": "relationship",
+            "value": "wife of Thomas Flynn",
+            "structured_value": {"relationship_type": "wife"},
+            "evidence_type": "direct",
+        },
+    ]
+    # Child-category matcher → matches only a_child (daughter maps to child).
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "child", "evidence_type": "direct"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_inferred_suffix():
+    """_inferred suffix is stripped: `child_inferred` matches a
+    relationship_type: 'child' matcher."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "child of Thomas Flynn (inferred)",
+            "structured_value": {"relationship_type": "child_inferred"},
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "child", "evidence_type": "indirect"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_rejects_wrong_category():
+    """A spouse matcher must NOT match a child assertion — should fail
+    with a facet-mismatch message."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "son of Thomas Flynn",
+            "structured_value": {"relationship_type": "son"},
+            "evidence_type": "direct",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "spouse", "evidence_type": "direct"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
+    assert "relationship_type='spouse'" in (result.error or "")
+
+
+def test_expected_classifications_relationship_type_facet_absent_means_no_filter():
+    """Omitting relationship_type from the matcher → no facet constraint,
+    same as omitting attribute."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "daughter of Thomas Flynn",
+            "structured_value": {"relationship_type": "daughter"},
+            "evidence_type": "direct",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "evidence_type": "direct"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_unknown_category_literal_match():
+    """Matcher value not in _RELATION_CATEGORY (e.g. stepfather) falls back
+    to literal base comparison after stripping _inferred."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "head",
+            "fact_type": "relationship",
+            "value": "stepfather of Charles",
+            "structured_value": {"relationship_type": "stepfather_inferred"},
+            "evidence_type": "indirect",
+        },
+    ]
+    # stepfather matches stepfather_inferred (both bases equal after strip).
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "head", "fact_type": "relationship",
+          "relationship_type": "stepfather", "evidence_type": "indirect"}],
+    )
+    assert result.passed is True, f"unexpected failure: {result.error}"
+
+
+def test_expected_classifications_relationship_type_facet_unknown_category_literal_mismatch():
+    """Unknown-category literal fallback must reject different base strings."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "head",
+            "fact_type": "relationship",
+            "value": "uncle of Charles",
+            "structured_value": {"relationship_type": "uncle"},
+            "evidence_type": "indirect",
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "head", "fact_type": "relationship",
+          "relationship_type": "stepfather", "evidence_type": "indirect"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
+
+
+def test_expected_classifications_relationship_type_facet_no_structured_value():
+    """Assertion with no structured_value does not match a relationship_type
+    facet (returns False, not a crash)."""
+    assertions = [
+        {
+            "id": "a_1",
+            "record_role": "child_1",
+            "fact_type": "relationship",
+            "value": "daughter of Thomas Flynn",
+            "evidence_type": "direct",
+            # no structured_value key at all
+        },
+    ]
+    result = _run_expected_classifications(
+        assertions,
+        [{"record_role": "child_1", "fact_type": "relationship",
+          "relationship_type": "child", "evidence_type": "direct"}],
+    )
+    assert result.passed is False
+    assert "but none matched" in (result.error or "")
 
 
 # --- compound birth assertions (year smuggled into a birthplace value) ---

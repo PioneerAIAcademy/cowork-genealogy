@@ -434,8 +434,9 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "type": "object",
         "required": ["record_role", "fact_type"],
         "properties": {
-          "record_role": { "type": "string" },
+          "record_role": { "oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}, "minItems": 1}] },
           "fact_type": { "type": "string" },
+          "relationship_type": { "type": "string" },
           "evidence_type": { "type": "string" },
           "informant_proximity": { "type": "string" },
           "information_quality": { "type": "string" }
@@ -789,6 +790,8 @@ Two matcher modifiers keep the check both precise and non-flappy:
 
 - **`attribute: "date" | "place"`** — for an event fact whose date and place are separate attributes of the one type (a birthplace is `birth` with `place` set; a computed year is `birth` with `date` set), matches only assertions of the given `fact_type` that have that attribute populated. Lets a `birth` place-claim (`direct`) and date-claim (`indirect`) be checked independently.
 - **`optional: true`** — drops the *existence* requirement: the matcher checks the classification only IF a matching assertion is present, and passes silently when absent. Use for a fact whose *existence* is completeness the skill produces **unreliably** (e.g. a death cert's named-parent `name` assertions) — hard-gating on unreliable existence is what makes a test flap. The judge's soft `Completeness` dimension covers the omission instead. Do **not** use `optional` to paper over a *classification* that flaps; use it only for unreliable *existence*.
+- **`record_role` as a list** — `record_role` may be a string (the default, backward-compatible) or a list of strings. A list means "any of these roles" (OR semantics): an assertion matches if `_record_role_matches` returns true for any element. Use when the same person's role may be named differently across runs (e.g. `["child_1", "child_2", "daughter_1"]`). The prefix-of tolerance still applies per element. The list shape was chosen over loosening `_record_role_matches` to strip trailing `_<n>` because that helper is shared with the multi-persona check — stripping the numeric suffix would make `head_of_household` match `head_of_household_2` (a different household's head).
+- **`relationship_type: "<type>"`** — for a `relationship` assertion, matches only assertions whose `structured_value.relationship_type` maps to the same category via `_relationship_category()`: `child`/`son`/`daughter` → child, `parent`/`father`/`mother` → parent, `spouse`/`wife`/`husband`/`widow`/`widower` → spouse, `sibling`/`brother`/`sister` → sibling. The `_inferred` suffix is stripped before lookup. A matcher value not in the category table (e.g. `stepfather`) falls back to literal base comparison after stripping `_inferred`. Omit for non-relationship facts.
 
 **Deterministic-validator deference (grading).** When `test_expected_classifications` **passes**, the LLM judge's `Evidence type accuracy` and `Informant identification` dimensions cannot **FAIL** on the verified classifications — the harness floors a judge `1` to `2` (`orchestrator.apply_deterministic_deference`). A fuzzy re-grade must not override a deterministic check that already confirmed the classification (this retired the recurring census direct/indirect judge-inversion flap). Partial (`2`) is still permitted for a real issue on an *undeclared* assertion. Correctness likewise does not grade classification at all (base judge prompt) — evidence_type/proximity/quality are the classification dimensions' scope.
 

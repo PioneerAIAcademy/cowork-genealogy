@@ -147,8 +147,19 @@
         "additionalProperties": false,
         "properties": {
           "record_role": {
-            "type": "string",
-            "description": "The assertion's record_role, exactly as the skill persists it (e.g. head_of_household, wife, child_1, deceased)."
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              }
+            ],
+            "description": "The assertion's record_role, exactly as the skill persists it (e.g. head_of_household, wife, child_1, deceased). A single string is matched with normalization and prefix-of tolerance; a list of values means any is accepted (OR semantics) — used when the same person's role may be named differently across runs (e.g. [\"child_1\", \"child_2\", \"daughter_1\"])."
           },
           "fact_type": {
             "type": "string",
@@ -161,6 +172,10 @@
               "place"
             ],
             "description": "Optional facet for an event fact whose date and place are separate attributes of the one event type. When set, the matcher matches ONLY new assertions of the given fact_type that have that attribute populated (`place`/`standard_place` for \"place\", `date` for \"date\") — so a `birth` place-claim (`direct`) and a `birth` date-claim (`indirect`) stay independently checkable. Omit for facts that don't split date from place."
+          },
+          "relationship_type": {
+            "type": "string",
+            "description": "Optional facet for a relationship assertion. When set, the matcher matches ONLY new assertions whose structured_value.relationship_type maps to the same category via _relationship_category (child/son/daughter -> child, parent/father/mother -> parent, spouse/wife/husband/widow/widower -> spouse, sibling/brother/sister -> sibling; _inferred suffix stripped). Unknown matcher values compare base strings literally after stripping _inferred. Omit for non-relationship facts."
           },
           "optional": {
             "type": "boolean",
