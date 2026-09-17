@@ -199,10 +199,21 @@ def _recorded_refusals():
             ):
                 continue
             for run in test.get("runs", []):
-                text = run.get("output") or ""
-                if isinstance(text, dict):
-                    text = json.dumps(text)
-                out.append((log.stem, test["test_id"], text))
+                # `output` is an OBJECT — text_response, activated,
+                # skills_invoked, tool_calls, files_created,
+                # builtin_tool_calls, warnings. Dumping the whole thing
+                # hands the validator the tool-call payloads and the check
+                # passes on those instead of on the reply. Reviewed on
+                # PR #2613: with the old `[.!?]+` splitter restored, the
+                # dumped form still passed all eight while the real
+                # `text_response` for ut_005 in v1_2026-09-14_09-31-12
+                # failed. Read the field.
+                output = run.get("output") or {}
+                assert isinstance(output, dict), (
+                    f"{log.stem} {test['test_id']}: run output is "
+                    f"{type(output).__name__}, expected the output object"
+                )
+                out.append((log.stem, test["test_id"], output.get("text_response") or ""))
     return out
 
 
@@ -217,6 +228,8 @@ def test_every_recorded_refusal_still_passes():
         f"expected at least the 8 recorded _005/_d1a responses, found "
         f"{len(recorded)} — has the retention prune removed run logs?"
     )
+    empty = [f"{s} {t}" for s, t, x in recorded if not x.strip()]
+    assert not empty, f"no text_response read for: {empty} — check the output field"
     failures = []
     for stem, test_id, text in recorded:
         try:
