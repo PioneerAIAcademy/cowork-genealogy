@@ -54,9 +54,10 @@ def ws_server(tmp_path, request):
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
         encoding="utf-8",
     )
-    # Generous budget, not a retry (PR #1759 precedent).  The deadline is
-    # checked between readline() calls, not during a blocking read, so a
-    # single slow line can overshoot the budget by up to one line's latency.
+    # Generous budget, not a retry (PR #1759 precedent).  Bounds a server
+    # that prints without ever printing "listening" — not one that goes
+    # silent: readline() blocks, and stderr=STDOUT holds the pipe open, so
+    # a silent child hangs past the budget with no EOF to break the read.
     budget, t0 = 60, time.time()
     deadline = t0 + budget
     while time.time() < deadline:
@@ -101,8 +102,12 @@ async def _drive(port, proj):
                 m = json.loads(await asyncio.wait_for(
                     ws.recv(), max(0.0, end - time.time())
                 ))
-            except (asyncio.TimeoutError, websockets.ConnectionClosed):
+            except asyncio.TimeoutError:
                 break
+            except websockets.ConnectionClosed as e:
+                raise AssertionError(
+                    f"socket closed mid-turn after {time.time() - t0:.1f}s: {e}"
+                )
             ev = m.get("event", {}) if m.get("type") == "agent_event" else {}
             if ev.get("kind") == "text":
                 texts.append(ev["text"])
