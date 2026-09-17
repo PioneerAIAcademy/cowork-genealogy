@@ -223,6 +223,24 @@ _RECORD_EXTRACTION_LOGS = sorted(
     if not p.endswith(".ann.json")
 )
 
+_SKILL_SNAPSHOT_KEY = "packages/engine/plugin/skills/record-extraction/SKILL.md"
+
+
+def _skill_snapshot_hash(log_name):
+    """The SKILL.md content hash a run was made against, or `?` if absent.
+
+    The run log snapshots a hash per file rather than the body, which is
+    enough to tell the pre-#2391 runs from the with-rule one without this
+    test hardcoding a filename or a date: the three pre-rule logs share one
+    hash, the with-rule log carries another.
+    """
+    for path in _RECORD_EXTRACTION_LOGS:
+        if Path(path).name != log_name:
+            continue
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        return str((log.get("snapshot") or {}).get(_SKILL_SNAPSHOT_KEY, "?"))
+    return "?"
+
 
 def _source(source_id):
     """A source as `research.schema.json` `$defs.source` allows it.
@@ -498,13 +516,30 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
     this says so by name rather than through a failure message about the
     marker pattern.
 
-    What the replay itself pins is the **pre-rule baseline**. Every committed
-    run predates #2391, so these runs were never given the instruction: 83 of
-    the 108 evaluated fire and 25 pass. Both halves matter. If none fired the
-    rule would be measuring nothing; if none passed, the check could not be
-    satisfied by anything the skill actually emits, which is the false-negative
-    the anchor risks. A dormant check reads as coverage, so it must also
-    evaluate something.
+    The corpus is **not** uniform, and an earlier draft of this docstring said
+    it was ("every committed run predates #2391"). That was wrong, and wrong in
+    the way that matters: the passes are not spread across the corpus, they are
+    all in one log. Measured per run log, 2026-09-17:
+
+        log                       evaluated  fired  passed
+        v1_2026-09-10_18-31-13           27     27       0
+        v1_2026-09-10_19-13-32           27     27       0
+        v1_2026-09-10_21-29-20           27     27       0
+        v1_2026-09-11_18-49-21           27      2      25   <- the only passes
+        TOTAL                           108     83      25
+
+    `v1_2026-09-11_18-49-21` landed with #2391 (`7b836f499`) and is the first
+    run made *with* the rule; the other three share one SKILL.md snapshot hash
+    and predate it. So the two assertions below pin different populations:
+    `fired` rests on the pre-rule logs, `passed` rests entirely on the with-rule
+    one.
+
+    That split is why this test partitions by the snapshot's SKILL.md hash and
+    prints it on failure. Retention keeps a bounded number of logs: once the
+    pre-rule three rotate out, `fired` goes to zero, and without the breakdown
+    the red would read as "the marker pattern broke" when the real cause is the
+    baseline having aged out. The numbers above will drift as logs rotate — the
+    shape is the claim, not the arithmetic.
     """
     if not _RECORD_EXTRACTION_LOGS:
         pytest.skip("no committed record-extraction run logs to replay")
@@ -517,15 +552,26 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
     )
 
     fired, passed, skipped = [], [], 0
+    by_log: dict[str, list[int]] = {}
     for name, test_id, before, after, reply in _corpus_runs():
+        row = by_log.setdefault(name, [0, 0])
         try:
             check_batch_progress(reply, before, after, POSITIVE)
         except pytest.skip.Exception:
             skipped += 1
+            continue
         except AssertionError:
             fired.append((name, test_id))
+            row[0] += 1
         else:
             passed.append((name, test_id))
+            row[1] += 1
+
+    breakdown = "\n".join(
+        f"      {log:32} fired={row[0]:3} passed={row[1]:3}"
+        f"  skill={_skill_snapshot_hash(log)[:12]}"
+        for log, row in sorted(by_log.items())
+    )
 
     evaluated = len(fired) + len(passed)
     assert evaluated, (
@@ -534,15 +580,17 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
     )
 
     assert passed, (
-        f"the check fired on all {evaluated} evaluated runs. Either the "
-        f"instruction does not hold at all, or the marker pattern does not "
-        f"match what the skill emits."
+        f"the check fired on every one of the {evaluated} evaluated runs, so "
+        f"nothing the skill actually emits satisfies it. Look at the with-rule "
+        f"log first - the passes have always come from there alone:\n{breakdown}"
     )
     assert fired, (
-        f"the check passed all {evaluated} evaluated runs, every one of them "
-        f"recorded before #2391 gave the skill the rule. A pre-rule corpus "
-        f"that fully satisfies the check means the marker is matching "
-        f"ordinary narration: {passed[:5]}."
+        f"the check passed all {evaluated} evaluated runs. Before concluding "
+        f"the marker matches ordinary narration, check whether the PRE-#2391 "
+        f"logs are still in the corpus: they are the population that fires, "
+        f"and retention rotates logs out. Distinct SKILL.md hashes below - if "
+        f"there is only one, the baseline has aged out and that is the "
+        f"cause, not the pattern:\n{breakdown}"
     )
 
 
@@ -585,6 +633,32 @@ def test_position_marker_rejects_ratio_accidents():
 # is five digits, so the only pair `\d{1,3}` can reach is `903/1` - numerator
 # 903, never 1. The test could not fail under any pattern this branch has had,
 # which is the shape CLAUDE.md calls worse than no check at all.
+
+
+def test_position_marker_digit_guards_are_pinned_separately():
+    """`(?<![\\d/])` and `(?![\\d/])` each do real work, and each is pinned here.
+
+    The deleted ARK test claimed this coverage and never had it, so retiring it
+    removed a false claim rather than a real check - but that left the guards
+    unpinned by any mutation (#2390 round-4 review). These two strings close it,
+    and they fail on *different* halves, so no single-guard mutation survives:
+
+        "...record 1 of 2/3..."      the TRAILING guard; drop it and `1 of 2`
+                                     matches inside `2/3`, yielding position 1
+        "...frame 12/1 of 2..."      the LEADING guard; drop it and `1 of 2`
+                                     matches inside `12/1`, yielding position 1
+
+    Both carry a delegation verb deliberately, so the proximity anchor admits
+    them and the digit guards are the only thing standing between the string
+    and a false position 1.
+    """
+    before, after = _states(1)
+    for reply in (
+        "Delegating record 1 of 2/3 in the bundle.",
+        "Extracting from frame 12/1 of 2 of the film.",
+    ):
+        with pytest.raises(AssertionError, match=r"were never"):
+            _checked(reply, before, after, POSITIVE)
 
 
 def test_a_marker_with_no_delegation_verb_is_not_counted():

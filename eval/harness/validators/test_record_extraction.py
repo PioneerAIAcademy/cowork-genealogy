@@ -1308,8 +1308,18 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 # "a ratio near a verb" needs something the marker does not carry.
 #
 # `test_anchor_window_is_calibrated` pins the value from both sides.
+# A leading `[*_`]{0,2}` was here to admit `**1 of 2`. It was inert and is
+# gone: the lookbehind rejects only a digit or a slash, so `*`, `_` and a
+# backtick already pass it, and the match simply starts at the digit. Verified
+# across all 124 committed runs - identical positions with and without it
+# (#2390 round-4 review).
+#
+# `re.IGNORECASE` stays, and is NOT coverage: every one of the 28 markers in
+# the corpus spells the separator lowercase, so nothing exercises it today. It
+# is there because a sentence-initial "Of" costs nothing to admit and a missed
+# marker on this `report_`-tier check would be invisible.
 _MARKER_RE = re.compile(
-    r"(?<![\d/])[*_`]{0,2}(\d{1,3})\s+of\s+(\d{1,3})\b(?![\d/])",
+    r"(?<![\d/])(\d{1,3})\s+of\s+(\d{1,3})\b(?![\d/])",
     re.IGNORECASE,
 )
 _DELEGATION_RE = re.compile(r"\b(?:delegat|extract|invok)\w*", re.IGNORECASE)
