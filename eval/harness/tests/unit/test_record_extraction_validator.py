@@ -225,21 +225,13 @@ _RECORD_EXTRACTION_LOGS = sorted(
 
 _SKILL_SNAPSHOT_KEY = "packages/engine/plugin/skills/record-extraction/SKILL.md"
 
+# Returned when a log carries no snapshot entry for SKILL.md — a renamed or
+# moved skill, not a real hash. Spelled distinctly so an all-missing breakdown
+# cannot be read as "one surviving hash", which is the opposite diagnosis.
+_NO_SNAPSHOT = "<no-snapshot-entry>"
 
-def _skill_snapshot_hash(log_name):
-    """The SKILL.md content hash a run was made against, or `?` if absent.
-
-    The run log snapshots a hash per file rather than the body, which is
-    enough to tell the pre-#2391 runs from the with-rule one without this
-    test hardcoding a filename or a date: the three pre-rule logs share one
-    hash, the with-rule log carries another.
-    """
-    for path in _RECORD_EXTRACTION_LOGS:
-        if Path(path).name != log_name:
-            continue
-        log = json.loads(Path(path).read_text(encoding="utf-8"))
-        return str((log.get("snapshot") or {}).get(_SKILL_SNAPSHOT_KEY, "?"))
-    return "?"
+# log name -> SKILL.md snapshot hash, filled by `_corpus_runs()`.
+_SKILL_HASH_BY_LOG: dict[str, str] = {}
 
 
 def _source(source_id):
@@ -491,9 +483,17 @@ def _corpus_runs():
 
     States are reconstructed from each run's own committed `file_changes`
     record, which is what the harness diffs.
+
+    Also populates `_SKILL_HASH_BY_LOG` as it goes, so the replay can group
+    runs by the SKILL.md a run was actually made against without re-reading
+    and re-parsing multi-megabyte logs once per log name.
     """
     for path in _RECORD_EXTRACTION_LOGS:
         log = json.loads(Path(path).read_text(encoding="utf-8"))
+        name = Path(path).name
+        _SKILL_HASH_BY_LOG[name] = str(
+            (log.get("snapshot") or {}).get(_SKILL_SNAPSHOT_KEY, _NO_SNAPSHOT)
+        )
         for t in log.get("tests", []):
             for r in t.get("runs", []):
                 out = r.get("output") or {}
@@ -501,7 +501,7 @@ def _corpus_runs():
                 added = ((rj.get("diff") or {}).get("sources") or {}).get("added") or []
                 before = {"research_json": {"sources": []}}
                 after = {"research_json": {"sources": list(added)}}
-                yield Path(path).name, t.get("test_id"), before, after, out.get("text_response") or ""
+                yield name, t.get("test_id"), before, after, out.get("text_response") or ""
 
 
 def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
@@ -535,11 +535,14 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
     one.
 
     That split is why this test partitions by the snapshot's SKILL.md hash and
-    prints it on failure. Retention keeps a bounded number of logs: once the
-    pre-rule three rotate out, `fired` goes to zero, and without the breakdown
-    the red would read as "the marker pattern broke" when the real cause is the
-    baseline having aged out. The numbers above will drift as logs rotate — the
-    shape is the claim, not the arithmetic.
+    prints it on failure. Retention keeps a bounded number of logs, so the
+    pre-rule three will rotate out. `fired` does not go to zero when they do —
+    the with-rule log fires twice on its own, `ut_record_extraction_020` and
+    `_028`, both genuine non-announcements — but the margin thins from 83 to 2,
+    and a red then means something quite different from a broken matcher.
+    Counting distinct SKILL.md hashes is what separates the two readings, and
+    both failure messages say which one applies. The numbers above will drift
+    as logs rotate — the shape is the claim, not the arithmetic.
     """
     if not _RECORD_EXTRACTION_LOGS:
         pytest.skip("no committed record-extraction run logs to replay")
@@ -569,9 +572,10 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
 
     breakdown = "\n".join(
         f"      {log:32} fired={row[0]:3} passed={row[1]:3}"
-        f"  skill={_skill_snapshot_hash(log)[:12]}"
+        f"  skill={_SKILL_HASH_BY_LOG.get(log, _NO_SNAPSHOT)[:12]}"
         for log, row in sorted(by_log.items())
     )
+    distinct_skills = {_SKILL_HASH_BY_LOG.get(log, _NO_SNAPSHOT) for log in by_log}
 
     evaluated = len(fired) + len(passed)
     assert evaluated, (
@@ -585,12 +589,14 @@ def test_the_corpus_replay_tracks_whether_the_skill_states_the_rule():
         f"log first - the passes have always come from there alone:\n{breakdown}"
     )
     assert fired, (
-        f"the check passed all {evaluated} evaluated runs. Before concluding "
-        f"the marker matches ordinary narration, check whether the PRE-#2391 "
-        f"logs are still in the corpus: they are the population that fires, "
-        f"and retention rotates logs out. Distinct SKILL.md hashes below - if "
-        f"there is only one, the baseline has aged out and that is the "
-        f"cause, not the pattern:\n{breakdown}"
+        f"the check passed all {evaluated} evaluated runs, so nothing in the "
+        f"corpus is a non-announcement. Read the SKILL.md hashes below before "
+        f"blaming the marker pattern: {len(distinct_skills)} distinct value(s) "
+        f"across {len(by_log)} log(s). More than one means both populations "
+        f"are still present and the pattern really has started matching "
+        f"everything. Exactly one means the pre-#2391 baseline has rotated "
+        f"out, and what remains is with-rule runs, which mostly announce "
+        f"correctly - a thinner signal, not a broken matcher:\n{breakdown}"
     )
 
 
