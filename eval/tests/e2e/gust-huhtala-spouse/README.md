@@ -77,9 +77,13 @@ rather than a corrected finding.
 machine transcription (a vision model), not by a genealogist's eye on the film.
 Three checks were applied.
 
-First, folio 177 independently reproduces all three of the tree person's children
-at the exact dates the baptism index carries — dates the transcriber had no way to
-fabricate.
+First, folio 177 independently reproduces the tree person's children. Two of them
+match the baptism index to the exact day — Gustaf b. 22 March 1820 and Gustaf
+b. 28 June 1822 — dates the transcriber had no way to fabricate. The third, Johan,
+agrees on the **year only**: the index entry (`ark:/61903/1:1:XBL6-8HK`) carries
+just "1817" with no day or month, so the register's 12 October 1817 is *supplied
+by* the film rather than confirmed against anything. The corroboration is
+therefore two exact dates plus one year, not three exact dates.
 
 Second, folio 179 was transcribed twice under different prompts. The two passes
 agree on every **year** (Gustaf Johansson 1780, Lisa Jöransdotter 1788, Jöran 1820,
@@ -91,7 +95,15 @@ rest on any month: it rests on the folio 179 man's birth year being 1780 rather
 than the tree person's 1794. Both passes read 1780, and the only alternatives
 either offered — 1790 and 1786 — are likewise not 1794.
 
-Third, a genealogist confirmed in the FamilySearch viewer that this is folio 179,
+Third, folio 178 (image `00183`), the remaining page of the stated Huhtala range,
+was also transcribed. It carries a further Huhtala household — the line of Daniel
+Ericsson, with sons Eric and Gustaf Danielsson — and contains no Gustaf Johansson
+and no Lisa Jöransdotter. So the two-households reading accounts for all three
+folios the farm index assigns to Huhtala, rather than resting on two pages chosen
+out of a longer run. Note that farm N:o 40 housed several unrelated families; the
+claim is specifically that exactly two men there were named Gustaf Johansson.
+
+Fourth, a genealogist confirmed in the FamilySearch viewer that this is folio 179,
 Huhtala N:o 40, that the household matches the one described, and that the birth
 year on the relevant entry reads closer to 1780 than to 1794. A line-by-line human
 reading at full resolution has **not** been done; anyone revisiting this should
@@ -104,6 +116,10 @@ exposes only an APID (`TH-909-49105-33679-30` for image `00184`). The ark rule i
 corroborate the same conclusion: `ark:/61903/1:1:XBL6-V7M` (the tree couple's
 Gustaf, born seven weeks after the hinted Jöran) and `ark:/61903/1:1:XBL6-V78`
 (the second household's other child, establishing it in the index as a real
-family). Neither is the hint's own ark and neither is a tree PID. A reviewer who
+family). Neither is the hint's own ark and neither is a tree PID. **Note that
+`XBL6-V7M` is already an attached source on the starting tree**, so of the two
+only `XBL6-V78` is a record this adjudication newly brings to bear; it is the
+one that carries the weight in the index, and the communion book carries it in
+fact. A reviewer who
 wants the deciding record itself citable is looking at a missing dgs-to-ark
 capability in the engine, not a defect in this fixture.
