@@ -54,7 +54,10 @@ def ws_server(tmp_path, request):
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
         encoding="utf-8",
     )
-    budget, t0 = 60, time.time()  # generous budget, not a retry (PR #1759 precedent)
+    # Generous budget, not a retry (PR #1759 precedent).  The deadline is
+    # checked between readline() calls, not during a blocking read, so a
+    # single slow line can overshoot the budget by up to one line's latency.
+    budget, t0 = 60, time.time()
     deadline = t0 + budget
     while time.time() < deadline:
         line = proc.stdout.readline()
