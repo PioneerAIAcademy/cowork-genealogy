@@ -250,6 +250,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  [{r['section']}] {r['term']!r}  -> {r['special_rule']}")
     print()
 
+    resolved_exclude = {r["term"] for r in rows if r["special_rule"] == "exclude_from_tally"}
+    resolved_dual = {r["term"] for r in rows if r["special_rule"] == "dual_expansion"}
+    if resolved_exclude != _EXCLUDE_FROM_TALLY or resolved_dual != _DUAL_EXPANSION:
+        print(
+            f"ERROR: special-row mismatch.\n"
+            f"  expected exclude_from_tally: {_EXCLUDE_FROM_TALLY!r}\n"
+            f"  resolved: {resolved_exclude!r}\n"
+            f"  expected dual_expansion: {_DUAL_EXPANSION!r}\n"
+            f"  resolved: {resolved_dual!r}\n"
+            "The vocabulary file may have been edited. "
+            "Update _EXCLUDE_FROM_TALLY and _DUAL_EXPANSION to match.",
+            file=sys.stderr,
+        )
+        return 2
+
     if args.dry_run:
         for r in rows:
             print(f"[{r['row_index']:02d}] {r['section']}  term={r['term']!r}")
@@ -264,6 +279,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: no row with index {args.row_index}", file=sys.stderr)
             return 2
         run_rows = matching
+
+    out_file = OUTPUT_FILE
+    if args.row_index is not None:
+        out_file = OUTPUT_FILE.with_name(
+            f"{OUTPUT_FILE.stem}_row{args.row_index}.json"
+        )
 
     try:
         client = _make_client()
@@ -341,35 +362,44 @@ def main(argv: list[str] | None = None) -> int:
 
     duration = time.monotonic() - t0
 
-    output: dict[str, Any] = {
-        "meta": {
-            "script": "eval/harness/e2e/probe_translation_vocab_recall.py",
-            "model": args.model,
-            "temperature": None,
-            "trials_per_row": TRIALS_PER_ROW,
-            "total_rows": len(rows),
-            "partial_run": args.row_index is not None,
-            "primary_denominator_rows": 48,
-            "primary_denominator_trials": 144,
-            "vocab_file": str(
-                VOCAB_FILE.relative_to(REPO_ROOT)
-            ).replace("\\", "/"),
-            "run_timestamp": start_ts.isoformat(),
-            "run_duration_seconds": round(duration, 1),
-        },
-        "trials": trials,
+    is_partial = args.row_index is not None
+    meta: dict[str, Any] = {
+        "script": "eval/harness/e2e/probe_translation_vocab_recall.py",
+        "model": args.model,
+        "temperature": None,
+        "trials_per_row": TRIALS_PER_ROW,
+        "total_rows": len(rows),
+        "partial_run": is_partial,
+        "vocab_file": str(
+            VOCAB_FILE.relative_to(REPO_ROOT)
+        ).replace("\\", "/"),
+        "run_timestamp": start_ts.isoformat(),
+        "run_duration_seconds": round(duration, 1),
     }
+    if not is_partial:
+        meta["primary_denominator_rows"] = 48
+        meta["primary_denominator_trials"] = 144
 
-    tmp = OUTPUT_FILE.with_suffix(".tmp.json")
+    output: dict[str, Any] = {"meta": meta, "trials": trials}
+
+    tmp = out_file.with_suffix(".tmp.json")
     tmp.write_text(
         json.dumps(output, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    # replace() succeeds on Windows when OUTPUT_FILE already exists;
+    # replace() succeeds on Windows when out_file already exists;
     # rename() would raise FileExistsError on a second run.
-    tmp.replace(OUTPUT_FILE)
+    tmp.replace(out_file)
 
-    print(f"\nWrote {len(trials)} trial records to {OUTPUT_FILE}")
+    errors = [t for t in trials if t["stop_reason"] == "error"]
+    print(f"\nWrote {len(trials)} trial records to {out_file}")
+    if errors:
+        print(
+            f"ERROR: {len(errors)} of {len(trials)} trials failed and are "
+            "not gradeable. Re-run them before grading.",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 
