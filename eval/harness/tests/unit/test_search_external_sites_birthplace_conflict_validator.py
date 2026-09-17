@@ -37,12 +37,14 @@ explicit `pytest.fail(...)`, which cannot be mistaken for a pass.
 
 import copy
 import json
+import re
 import sys
 from pathlib import Path
 
 import pytest
 
 from harness.validator_runner import _import_validator_module
+from tests.unit.skip_blind import expect_fires, expect_passes
 
 _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 _REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -92,32 +94,25 @@ def _tool_calls(birth_place=None, *, site="myheritage", **extra_attributes):
     ]
 
 
+# Thin wrappers over `tests/unit/skip_blind.py`, which owns the skip-proofing
+# for every validator suite. These keep this file's calling convention — the
+# validator's four arguments, with `states`/`check` overridable — while the
+# shared helpers take a zero-argument callable so one pair fits every validator
+# signature.
+#
+# `match` is escaped: the shared `expect_fires` matches with `re.search` (the
+# semantics `pytest.raises(match=)` uses), and this file's call sites pass
+# literal substrings. Without the escape a caller's `(` or `.` would silently
+# change meaning — which is the drift that having two copies of these helpers
+# invited in the first place.
 def _expect_fires(tool_calls, test, match, states=None, check=None):
     before, after = states or _states()
-    try:
-        (check or _check)(before, after, tool_calls, test)
-    except pytest.skip.Exception:
-        pytest.fail(
-            f"expected AssertionError (match={match!r}), but the validator "
-            "skipped instead — one of its skip gates over-matched"
-        )
-    except AssertionError as e:
-        assert match in str(e), f"AssertionError message doesn't contain {match!r}: {e}"
-        return
-    pytest.fail(f"expected AssertionError (match={match!r}), but the validator raised nothing")
+    expect_fires(lambda: (check or _check)(before, after, tool_calls, test), re.escape(match))
 
 
 def _expect_passes(tool_calls, test, states=None, check=None):
     before, after = states or _states()
-    try:
-        (check or _check)(before, after, tool_calls, test)
-    except pytest.skip.Exception:
-        pytest.fail(
-            "expected the validator to run and pass, but it skipped instead "
-            "— one of its skip gates over-matched"
-        )
-    # An unexpected AssertionError propagates naturally and fails this test —
-    # no special handling needed for that direction.
+    expect_passes(lambda: (check or _check)(before, after, tool_calls, test))
 
 
 def test_fires_on_the_real_captured_defect():
@@ -569,6 +564,31 @@ def test_hand_composed_check_skips_a_negative_relog_beside_a_captured_sibling():
     )
     with pytest.raises(pytest.skip.Exception):
         _HAND_COMPOSED_CHECK(*states, [], {"type": "positive"})
+
+
+def test_hand_composed_check_still_grades_two_partials_sharing_one_url():
+    """The sibling exclusion must be one-directional.
+
+    It was symmetric: each of two `partial` entries on one URL excluded the
+    other, the candidate list emptied, and the whole check — the one issue
+    #1980 asks for by name — skipped at exit 0. Measured before the fix: one
+    such entry fired, two identical ones skipped.
+
+    So the earliest entry for a URL stays a grading target and only the ones
+    after it are treated as re-logs.
+
+    Asserted through `_expect_fires`, not a bare `pytest.raises`: under the old
+    symmetric rule the check *skips*, and a bare raises-block would itself be
+    reported SKIPPED — passing at exit 0 and pinning nothing. That is the same
+    skip-blind shape this suite exists to close."""
+    url = "https://www.ancestry.com/search/?name=Flynn"
+    entry = {
+        "tool": "external_site", "outcome": "partial",
+        "external_site": {"site": "ancestry", "url_generated": url, "capture_received": False},
+    }
+    states = _states({**entry, "id": "log_996"}, {**entry, "id": "log_997"})
+    _expect_passes(_tool_calls("Ireland"), {"type": "positive"}, states=states, check=_HAND_COMPOSED_CHECK)
+    _expect_fires([], {"type": "positive"}, "hand-composed", states=states, check=_HAND_COMPOSED_CHECK)
 
 
 def test_passes_a_place_sharing_only_a_leaf_name_with_the_rejected_value():

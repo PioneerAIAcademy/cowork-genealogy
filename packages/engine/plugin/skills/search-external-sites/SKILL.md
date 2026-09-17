@@ -1,20 +1,19 @@
 ---
 name: search-external-sites
-description: Generates search URLs for external genealogy sites and free
-  newspaper archives, and walks the user
-  through the click-capture-analyze workflow. Logs every search to research.json and triages
-  captured PDFs before handing records to record-extraction. GPS Step 1 — Reasonably
-  Exhaustive Research (external site execution). Use when the user says
-  "search Ancestry", "search MyHeritage", "search FindMyPast", "search
-  FindAGrave", "search Newspapers.com", "search Chronicling America", "find
-  newspaper articles", when the user reports an external search
-  they ran themselves (including a nil result), when a plan item targets a
-  non-FamilySearch repository, or when the user uploads a PDF
-  capture from an external genealogy site. Do NOT use when the target is
-  FamilySearch (use search-records); when the user is still choosing what or
-  where to search — e.g. "what should I search next?" — which is planning,
-  not execution (use research-plan); or to analyze a single record
-  already in context (use record-extraction).
+description: Generates search URLs for external genealogy sites and
+  newspaper archives and walks the user through click-capture-analyze. Logs every search to research.json and triages captured PDFs
+  before handing them to record-extraction. GPS Step 1 — Reasonably
+  Exhaustive Research (external site execution). Use when the user names a
+  genealogy site or newspaper archive to search — Ancestry, MyHeritage,
+  FindMyPast, FindAGrave, Newspapers.com, Chronicling America, BillionGraves,
+  the National Archives catalog and the rest — or says "find
+  newspaper articles", when they report an external search they ran
+  themselves (including a nil result), when a plan item targets a
+  non-FamilySearch repository, or when they upload a PDF capture. Do NOT use
+  when the target is FamilySearch (use search-records); when they are still
+  choosing what or where to search — "what should I search next?" — which
+  is planning, not execution (use research-plan); or to analyze a single
+  record already in context (use record-extraction).
 allowed-tools:
   - place_search
   - collections_search
@@ -146,7 +145,12 @@ neither as access to a named site, and neither as `none`. Generate the
 URL and note the route instead of flagging a paywall the researcher may
 not hit — "a family history centre often carries [SITE]; worth checking
 before you pay." A site the tool reports as `free` or `free_bot_protected`
-needs no subscription and no route — never raise access for it.
+needs no subscription and no route — never raise access for it, unless the
+tool's own `notes` say the classification is that site class's default rather
+than a fact about this archive. `digital_newspaper_archive` is the one that
+does: its host comes from you, not the tool, so a paid archive passed there
+is reported `free_bot_protected` too. Relay that note and let the researcher
+check before paying.
 
 - If a plan item is repository-agnostic, prefer a site the researcher
   has access to — that search is immediately actionable.

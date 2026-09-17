@@ -389,13 +389,23 @@ def test_no_hand_composed_external_site_url(before_state, after_state, tool_call
         # that generated it this run: a re-log either way.
         if url in seen_before:
             return False
-        if any(
-            other is not entry
-            and (other.get("external_site") or {}).get("url_generated") == url
-            and other.get("outcome") == "partial"
-            for other in new_entries
-        ):
-            return False
+        # Only an EARLIER entry suppresses this one. A symmetric test made two
+        # entries sharing a URL exclude each other, emptying the candidate list
+        # and skipping the whole check at exit 0 — measured: one `partial` on a
+        # hand-composed URL fires, two identical ones skipped. `new_log_entries`
+        # iterates `after["log"]` in array order and the log is append-only, so
+        # position is a reliable proxy for "logged first".
+        #
+        # "any earlier entry", not "any earlier candidate": the suppressing
+        # sibling is routinely one this function already excluded — a captured
+        # re-log is the pinned case
+        # (test_hand_composed_check_skips_a_negative_relog_beside_a_captured_sibling).
+        # Filtering against candidates would let the later entry through.
+        for other in new_entries:
+            if other is entry:
+                break
+            if (other.get("external_site") or {}).get("url_generated") == url:
+                return False
         return True
 
     url_generation_entries = [e for e in new_entries if _is_fresh_url_generation(e)]

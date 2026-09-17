@@ -205,19 +205,36 @@ async function applyLogAppendOp(
   //    emit `externalSite` / `query` as a JSON string instead of a nested
   //    object; without this they reach the checks below as strings and fail
   //    opaquely ("externalSite.site 'undefined' is not a valid site").
-  const externalSite = coerceObjectArg(op.externalSite, "externalSite") as
+  // 0b. Map the literal string "null" back to null on every nullable arg.
+  //     Some models emit `"null"` (the string) where they mean JSON null.
+  //     Stored verbatim on `planItemId` it becomes a bogus id reference
+  //     ("plan_item_id 'null' not found"); on the fields that carry a
+  //     validator it is worse, because it refuses the ENTIRE append:
+  //     `resultsAvailable: "null"` fails the non-negative-integer bound below,
+  //     `stagedResultsRef: "null"` fails the staging-path check, and
+  //     `externalSite: "null"` fails `coerceObjectArg`. One stringly-typed
+  //     argument then discards the log entry the caller actually wrote.
+  //
+  //     One helper over all of them rather than a mapping per field: handling
+  //     `planItemId` alone and not its siblings is the same class the integer
+  //     bound below already had to be widened for (review round 5), and
+  //     CLAUDE.md asks for one shared guard on the second instance.
+  //
+  //     Safe because `"null"` is never a legitimate value for any of these:
+  //     not a `pli_` id, not a number, not a `results/.staging/` path, not an
+  //     object. `notes` is deliberately NOT mapped — a note whose text is
+  //     "null" is odd but not invalid, and nulling a caller's prose would
+  //     discard information rather than recover it.
+  const asNull = <T,>(v: T): T | null => ((v as unknown) === "null" ? null : v);
+  const planItemId = asNull(op.planItemId);
+  const resultsAvailable = asNull(op.resultsAvailable);
+  const stagedResultsRef = asNull(op.stagedResultsRef);
+
+  const externalSite = coerceObjectArg(asNull(op.externalSite), "externalSite") as
     | ResearchLogAppendExternalSite
     | null
     | undefined;
   const query = coerceObjectArg(op.query, "query");
-
-  // 0b. Map the literal string "null" back to null for nullable scalar args.
-  //     Some models emit `planItemId: "null"` (the string) instead of JSON
-  //     null; stored verbatim it becomes a bogus id reference that fails
-  //     validation ("plan_item_id 'null' not found"). "null" is never a
-  //     valid pli_ id, so this coercion is safe.
-  let planItemId = op.planItemId;
-  if ((planItemId as unknown) === "null") planItemId = null;
 
   // 0c. planItemId must be a plan-item id (^pli_) from the active plan, or
   //     null for an opportunistic/ad-hoc search. Models sometimes stuff a
@@ -321,14 +338,14 @@ async function applyLogAppendOp(
           url_generated: urlGenerated,
           capture_received: externalSite.captureReceived,
           ...(externalSite.captureFilename !== undefined
-            ? { capture_filename: externalSite.captureFilename }
+            ? { capture_filename: asNull(externalSite.captureFilename) }
             : {}),
         }
       : null,
     results_ref: null,
   };
-  const resultsAvailableCoerced = coerceJsonArg(op.resultsAvailable);
-  if (op.resultsAvailable !== undefined && op.resultsAvailable !== null) {
+  const resultsAvailableCoerced = coerceJsonArg(resultsAvailable);
+  if (resultsAvailable !== undefined && resultsAvailable !== null) {
     // Coerced the same way `ops` is: a model sending `"5"` otherwise lands a string
     // in an integer-typed field that nothing rejects — `validator.ts` carries
     // `results_available` in field-name allow-lists with no type check. The staged-
@@ -351,7 +368,7 @@ async function applyLogAppendOp(
     // round 5).
     if (!isNonNegativeInteger(resultsAvailableCoerced)) {
       throw new LogAppendError(
-        `resultsAvailable must be a non-negative integer; got ${JSON.stringify(op.resultsAvailable)}`,
+        `resultsAvailable must be a non-negative integer; got ${JSON.stringify(resultsAvailable)}`,
       );
     }
     entry.results_available = resultsAvailableCoerced as number;
@@ -365,12 +382,12 @@ async function applyLogAppendOp(
   //    skipping the final research.json write, so record it for cleanup.
   let resultsRef: string | null = null;
   let returnedCount: number | null = null;
-  if (op.stagedResultsRef !== undefined && op.stagedResultsRef !== null) {
+  if (stagedResultsRef !== undefined && stagedResultsRef !== null) {
     let fin: Awaited<ReturnType<typeof finalizeStagedResults>>;
     try {
       fin = await finalizeStagedResults({
         projectPath,
-        stagedResultsRef: op.stagedResultsRef,
+        stagedResultsRef: stagedResultsRef,
         logId,
         expectedTool: op.tool,
       });
@@ -407,7 +424,7 @@ async function applyLogAppendOp(
   //     projectPath, turning a lossy log into no log at all.
   if (
     STAGING_CAPABLE_TOOLS.has(op.tool) &&
-    (op.stagedResultsRef === undefined || op.stagedResultsRef === null) &&
+    (stagedResultsRef === undefined || stagedResultsRef === null) &&
     Number.isFinite(resultsAvailableCoerced) &&
     (resultsAvailableCoerced as number) > 0
   ) {

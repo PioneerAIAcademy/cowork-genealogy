@@ -341,6 +341,51 @@ describe("research_log_append", () => {
     expect((await validateProject(dir)).valid).toBe(true);
   });
 
+  it('treats a literal "null" on every nullable arg the way JSON null is treated', async () => {
+    // The same models that send planItemId: "null" send it on its siblings, and
+    // there the cost is higher: each of these carries a validator, so before the
+    // shared mapping a single stringly-typed argument refused the WHOLE append.
+    // resultsAvailable failed the non-negative-integer bound, stagedResultsRef
+    // failed the staging-path check, and externalSite failed coerceObjectArg —
+    // discarding the entry the caller actually wrote. Fixing planItemId alone
+    // was the same class the integer bound itself had to be widened for.
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: "null" as any,
+      stagedResultsRef: "null" as any,
+      externalSite: "null" as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    // Identical to JSON null: the field is absent, not present-and-null. Writing
+    // an explicit null would make "null" behave differently from null.
+    expect(research.log[0].results_available).toBeUndefined();
+    expect(research.log[0].results_ref).toBeNull();
+    expect((await validateProject(dir)).valid).toBe(true);
+  });
+
+  it("still rejects a genuinely invalid resultsAvailable", async () => {
+    // The other direction: the "null" mapping must not widen the bound itself.
+    await writeProject(baseResearch());
+    for (const bad of ["abc", -1, 1.5]) {
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Flynn" },
+        outcome: "negative",
+        resultsExamined: 0,
+        resultsAvailable: bad as any,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.errors?.join(" ")).toMatch(/resultsAvailable must be a non-negative integer/);
+    }
+  });
+
   it("rejects a non-pli_ planItemId (e.g. a question id) with an actionable error", async () => {
     // Models sometimes stuff a question id (q_...) or free text into planItemId.
     // Persisted verbatim it silently fails the JSON-Schema validator downstream

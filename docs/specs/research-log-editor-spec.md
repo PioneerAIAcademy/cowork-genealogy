@@ -142,7 +142,9 @@ enforces the same bound on the persisted `results_examined` for every writer.
 `resultsExamined > 0` must carry `outcome: "positive"`: the entry grades the
 curated-links FETCH, not whether any link fit the plan item (that goes in
 `notes`). Enforced mechanically because the prose instruction in SKILL.md was
-measured to be ignored often enough (3 of 16 runs) to need a hard gate.
+measured to be ignored often enough to need a hard gate: 4 of 66
+`external_links_search` entries across the five run logs this branch commits,
+in three tests and three of the five logs (measured 2026-09-10).
 
 **The tool assigns (caller never supplies):** the log entry `id` (next `log_`
 above the current max), `performed` (now, ISO 8601 + tz), `results_ref`
