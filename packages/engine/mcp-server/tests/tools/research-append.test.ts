@@ -6661,31 +6661,56 @@ describe("supported evidence floor (#2086)", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("treats no supporting assertions, and ids resolving to none, as unaffected", async () => {
-    // Not violations: the floor reads what is there. An empty list cannot carry
-    // a direct assertion, so it fails half (b) — but an id that resolves to no
-    // assertion must not be counted as anything, and neither shape may throw.
+  it("counts an id resolving to no assertion as nothing, and still accepts", async () => {
+    // Reaches the gate — an earlier version of this test left the entry at
+    // `active` and sent only `notes`, so `statusTouchedThisOp` was false and the
+    // predicate never ran. Deleting the `if (!a) continue` guard left the whole
+    // engine suite green, which is how a vacuous test hides a load-bearing one.
+    //
+    // Nothing cross-references `supporting_assertion_ids` against `assertions`,
+    // so a dangling id reaches the floor. Without the guard this call throws
+    // `TypeError: Cannot read properties of undefined (reading 'evidence_type')`
+    // instead of returning a refusal.
     const research = baseResearch();
     research.sources = [validSource("src_001")];
     research.assertions = [ev("a_001", "direct", "src_001")];
-    research.hypotheses = [
-      hyp({ id: "h_001", supporting_assertion_ids: [] }),
-      hyp({ id: "h_002", supporting_assertion_ids: ["a_999"] }),
-    ];
+    research.hypotheses = [hyp({ supporting_assertion_ids: ["a_999", "a_001"] })];
     await writeProject(research);
 
-    // Left at `active`, so neither is refused and neither crashes the writer.
-    for (const entryId of ["h_001", "h_002"]) {
-      const r = await researchAppend({
-        projectPath: dir,
-        section: "hypotheses",
-        op: "update",
-        entryId,
-        fields: { notes: "Untouched status." },
-      } as never);
-      expect(errorsOf(r) ?? []).toEqual([]);
-      expect(r.ok).toBe(true);
-    }
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { status: "supported" },
+    } as never);
+
+    // a_999 counts as nothing; a_001 carries the floor on its own.
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses supported when supporting_assertion_ids is empty", async () => {
+    // The issue's accept-list item 5 called an empty list "unaffected, not
+    // treated as violations". It is a DENY: an empty list carries no evidence,
+    // so it fails half (b) — and the Python validator agrees. Measured, not
+    // assumed; the PR body records that the card's wording is wrong here.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "direct", "src_001")];
+    research.hypotheses = [hyp({ supporting_assertion_ids: [] })];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { status: "supported" },
+    } as never);
+
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors.join("\n")).toMatch(/only 0 distinct indirect source/);
   });
 
   it("refuses resolving a conflict and promoting on it in the same batch", async () => {
@@ -6749,4 +6774,119 @@ describe("supported evidence floor (#2086)", () => {
     expect(errorsOf(promote) ?? []).toEqual([]);
     expect(promote.ok).toBe(true);
   });
+
+  // ── The coupled-field arm: three calls that landed `ok: true` before it ──
+  //
+  // Each names one of the two id lists and leaves `status` alone, so a
+  // `status`-only gate never ran and the forbidden state persisted. Watched
+  // failing against the narrow gate before the widening landed.
+
+  it("refuses narrowing supporting_assertion_ids below the floor without naming status", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001"), validSource("src_003")];
+    research.assertions = [ev("a_001", "indirect", "src_001"), ev("a_002", "indirect", "src_003")];
+    // Stands legitimately at `supported`: two indirect, two distinct sources.
+    research.hypotheses = [
+      hyp({ status: "supported", supporting_assertion_ids: ["a_001", "a_002"] }),
+    ];
+    await writeProject(research);
+
+    // Drops to one source. No `status` key.
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { supporting_assertion_ids: ["a_001"] },
+    } as never);
+
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors.join("\n")).toMatch(/only 1 distinct indirect source/);
+  });
+
+  it("refuses adding a supporting assertion an unresolved conflict names, without naming status", async () => {
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
+    research.conflicts = [
+      {
+        ...validConflict(),
+        id: "c_001",
+        competing_assertion_ids: ["a_002", "a_001"],
+        status: "unresolved",
+      },
+    ];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { supporting_assertion_ids: ["a_001", "a_002"] },
+    } as never);
+
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors.join("\n")).toMatch(/conflict\(s\) \[c_001\]/);
+  });
+
+  it("refuses linking contradicting evidence an unresolved conflict names — the skill's own documented call", async () => {
+    // `hypothesis-tracking/SKILL.md` tells the agent that adding contradicting
+    // evidence "does not automatically require a status downgrade — only link
+    // the evidence and leave the status unchanged". That is this exact op, and
+    // it reached no precondition under the narrow gate.
+    const research = baseResearch();
+    research.sources = [validSource("src_001")];
+    research.assertions = [ev("a_001", "direct", "src_001"), ev("a_002", "direct", "src_001")];
+    research.hypotheses = [hyp({ status: "supported", supporting_assertion_ids: ["a_001"] })];
+    research.conflicts = [
+      {
+        ...validConflict(),
+        id: "c_001",
+        competing_assertion_ids: ["a_002", "a_001"],
+        status: "unresolved",
+      },
+    ];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { contradicting_assertion_ids: ["a_002"] },
+    } as never);
+
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors.join("\n")).toMatch(/conflict\(s\) \[c_001\]/);
+  });
+
+  it("still accepts an id-list edit that keeps the floor satisfied", async () => {
+    // The other direction: the widened arm must not refuse a legitimate list
+    // edit. Swaps one indirect source for another, staying at two distinct.
+    const research = baseResearch();
+    research.sources = [validSource("src_001"), validSource("src_003")];
+    research.assertions = [
+      ev("a_001", "indirect", "src_001"),
+      ev("a_002", "indirect", "src_003"),
+      ev("a_003", "indirect", "src_003"),
+    ];
+    research.hypotheses = [
+      hyp({ status: "supported", supporting_assertion_ids: ["a_001", "a_002"] }),
+    ];
+    await writeProject(research);
+
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "hypotheses",
+      op: "update",
+      entryId: "h_001",
+      fields: { supporting_assertion_ids: ["a_001", "a_003"] },
+    } as never);
+
+    expect(errorsOf(r) ?? []).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
 });

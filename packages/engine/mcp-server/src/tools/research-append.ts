@@ -434,9 +434,10 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  call. A same-batch resolve-then-promote is refused, and the remedy is to
  *  split the call.
  *
- *  The snapshot does NOT close the order-sensitivity in the other direction: a
- *  conflict appended later in the same batch is invisible to it. See
- *  `guardrail-enforcement-spec.md` §5. */
+ *  The snapshot does NOT close the conflicts side: a conflict written anywhere
+ *  in the same batch is invisible to it, in either order, and the
+ *  promote-then-append ordering leaks under a live read too. Measured both
+ *  ways 2026-09-17 — see `guardrail-enforcement-spec.md` §5 for the table. */
 function hypothesisSupportedInvariants(entry: any, preCallResearch: any): string[] {
   if (entry?.status !== "supported") return [];
   const hid = entry.id ?? "?";
@@ -2407,13 +2408,40 @@ function applyOne(
   // That rule asks "does the entry STAND in a forbidden state"; the ruling chose
   // the narrow form here, and over the whole corpus the two are
   // indistinguishable, so widening buys nothing. The cost is that the gate is
-  // order-sensitive within a batch and unreachable from the `conflicts` side —
-  // recorded in guardrail-enforcement-spec.md §5; closing it would widen the
-  // gate past "forward direction only", which is the lead's call.
+  // unreachable from the `conflicts` side: a conflict written anywhere in the
+  // same batch is invisible to it, in EITHER order (measured 2026-09-17 — not
+  // order-sensitive, as an earlier draft of this comment claimed). Neither a
+  // snapshot nor a live read closes the promote-then-append ordering. Recorded
+  // in guardrail-enforcement-spec.md §5; closing it would widen the gate past
+  // "forward direction only", which is the lead's call.
   if (section === "hypotheses") {
-    const statusTouchedThisOp =
-      op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "status");
-    if (statusTouchedThisOp) {
+    // ANY of the three coupled fields, not `status` alone. The invariant couples
+    // `status` to both id lists, so an op touching a list can break it without
+    // naming `status` — the same mirror-image hole the `questions` arm above
+    // found and closed, and it is not hypothetical here either: the skill's own
+    // documented re-invocation path writes `fields: {contradicting_assertion_ids:
+    // [...]}` and is told to "leave the status unchanged"
+    // (`hypothesis-tracking/SKILL.md`). Gating on `status` alone left three
+    // measured calls landing `ok: true` on exactly the state this refuses.
+    //
+    // Measured at ebf8a0fbd: 11 corpus update ops touch one of these lists
+    // without naming `status`, across 5 run logs, against 17 ops that set
+    // `status: "supported"` at all — so the ungated path was the size of the
+    // gated one. Widening costs nothing: reconstructing each hypothesis's status
+    // from the call ledger, **0 of those 11** stood at `supported` when the op
+    // arrived, so the widened arm refuses no write the corpus actually made.
+    //
+    // Still the forward direction: the entry must END at `supported` and fail
+    // the floor. `hypothesisSupportedInvariants` returns [] for every other
+    // status, so a narrative-only update — naming none of the three — is
+    // untouched.
+    const hypothesisFields = op.fields ?? {};
+    const floorFieldTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(hypothesisFields, "status") ||
+      Object.prototype.hasOwnProperty.call(hypothesisFields, "supporting_assertion_ids") ||
+      Object.prototype.hasOwnProperty.call(hypothesisFields, "contradicting_assertion_ids");
+    if (floorFieldTouchedThisOp) {
       invariantErrors.push(...hypothesisSupportedInvariants(resultEntry, preCallResearch));
     }
   }
