@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 30, hint-samples.csv row 972, flags adds_father/adds_mother/adds_marriage, confidence 3). Draft transcribed from a 1912 Maracaibo Catholic marriage entry; unverified. The bride's middle name differs from the tree's."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 30, hint-samples.csv row 972, flags adds_father/adds_mother/adds_marriage, confidence 3). Resolved 2026-09-14 as outcome 1 — true match: ark:/61903/1:1:QVMV-ZVBD is the 13 January 1912 marriage of María Concepción Fuenmayor (GMH9-3BJ) and Eduardo Berrueta Fernández at Nuestra Señora de la Chiquinquirá, Maracaibo. The groom's parents, date and place match the tree; the record's \"María Tereza\" is an indexing variant of the bride's given name. Both findings stand as drafted. See README \"Notes for reviewers\"."
 }

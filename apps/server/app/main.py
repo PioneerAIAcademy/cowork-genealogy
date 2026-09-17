@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.exception_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
@@ -170,12 +170,36 @@ async def _v1_validation_exception_handler(request, exc: RequestValidationError)
 
 
 @app.get("/api/health")
-def health() -> dict:
+def health(request: Request) -> dict:
+    """Liveness + what this deployment is running.
+
+    `sandboxImageCommit` is the commit baked into the E2B agent image, read off
+    the last sandbox this process created. It describes the **sandbox** image,
+    NOT this Fly container — `Settings.git_sha` / `build_date` describe that one,
+    and the two are built from separate Dockerfiles. Null until this process has
+    created its first session, and under any provider that bakes no image.
+
+    Fly polls this route as its health check (`deploy/fly.toml`: every 15s, 5s
+    timeout, 20s grace, against the single always-on machine), so it must stay a
+    pure in-memory read. It never calls E2B: the provenance is cached at sandbox
+    create, and a missing provider attribute degrades to None rather than raising
+    a 500 that would take production out of rotation.
+    """
+    provider = getattr(request.app.state, "provider", None)
+    try:
+        image_commit = getattr(provider, "sandbox_image_commit", None)
+    except Exception:  # noqa: BLE001
+        # getattr's default only swallows AttributeError. The base class declares
+        # this a plain read, but a provider that computed it in a property would
+        # otherwise 500 Fly's health check and pull the machine out of rotation
+        # over a field that is purely observability.
+        image_commit = None
     return {
         "ok": True,
         "agentMode": _settings.agent_mode,
         "provider": _settings.sandbox_provider,
         "db": "sqlite" if _settings.is_sqlite else "postgres",
+        "sandboxImageCommit": image_commit,
     }
 
 

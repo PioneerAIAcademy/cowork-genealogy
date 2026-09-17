@@ -32,6 +32,7 @@ import {
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { isNonNegativeInteger } from "../utils/search-helpers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
 const CLOSED_ENUMS = {
@@ -123,6 +124,12 @@ const EXTERNAL_SITE_VALUES = new Set([
   // same click-capture loop as the paid sites. `digital_newspaper_archive` is
   // the bucket for state/regional archives; which one is in `url_generated`.
   "chronicling_america", "digital_newspaper_archive",
+  // Added for issue #1980's wiki-top-20 launch scope. `library_archives_canada`
+  // names the specific LAC census search the tool builds for, not the shared
+  // gc.ca domain suffix (which many unrelated agencies use). `american_ancestors`
+  // and `italian_genealogy` are keyword-only — see build-external-search-url.ts.
+  "archives_gov", "archive_org", "billiongraves", "digitalarkivet",
+  "antenati", "library_archives_canada", "american_ancestors", "italian_genealogy",
 ]);
 
 /**
@@ -935,6 +942,28 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (entry.plan_item_id) {
       checkIdPrefix(entry.plan_item_id, ID_PREFIXES.plan_items, lp, report);
     }
+    // `results_examined` is `integer, minimum: 0` in the JSON Schema; this
+    // validator only ever checked the key was present, so `NaN` (which
+    // persists as `null`), a negative, or a fraction passed here and failed
+    // only in the schema validator downstream. Same drift class, same fix as
+    // `plan_item_id` above: match the schema, for every writer of `log[]`.
+    if ("results_examined" in entry) {
+      const n = entry.results_examined;
+      if (!isNonNegativeInteger(n)) {
+        addError(report, lp, `results_examined must be a non-negative integer; got ${JSON.stringify(n)}`);
+      }
+    }
+    // Its sibling, same bound, same reason. The schema declares
+    // `results_available` as `integer, minimum: 0` with a null branch, so null
+    // is allowed here and anything else non-integer is not. Guarding one of the
+    // two and not the other was the second instance of one class (review
+    // round 5).
+    if ("results_available" in entry && entry.results_available !== null) {
+      const n = entry.results_available;
+      if (!isNonNegativeInteger(n)) {
+        addError(report, lp, `results_available must be a non-negative integer or null; got ${JSON.stringify(n)}`);
+      }
+    }
 
     const ext = entry.external_site;
     if (entry.tool === "external_site" && ext === null) {
@@ -1013,6 +1042,56 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("informant_proximity" in a) {
       checkEnum(a.informant_proximity, "informant_proximity", ap, report);
+    }
+    // Negative evidence is not three independent judgment calls. An assertion
+    // whose `evidence_type` is "negative" is the RESEARCHER's conclusion that a
+    // person expected in a record is missing from it, so `record_role` is the
+    // literal "absent" and `informant_proximity` is "researcher" — no record
+    // informant reported an absence, whatever the record type
+    // (research-schema-spec.md, "Negative evidence"; record-extractor.md,
+    // "Negative evidence"). Nothing checked this, so a document assembled
+    // anywhere but op-by-op through research_append carried the violation:
+    // `eval/fixtures/scenarios/flynn-parentage-not-proved` a_012 is the
+    // committed instance.
+    //
+    // Forward direction ONLY. The converse (`record_role: "absent"` implies
+    // negative) is deliberately not checked here: every `absent` assertion in
+    // the corpus is already negative, so it is an unexercised branch.
+    // `research_append`'s own precondition does check it, and a writer-tool
+    // precondition is allowed to be stricter than this integrity tier — the
+    // reverse would be the bug.
+    //
+    // `informant` is deliberately NOT checked. It is free text, and a semantic
+    // gate prefers a false allow (ADR-0011 limit 1).
+    if (a.evidence_type === "negative") {
+      // No presence guard on either field: when one is missing, `!==` is true
+      // and this fires alongside `checkRequired` rather than leaving a shape
+      // that escapes the rule entirely.
+      if (a.record_role !== "absent") {
+        addError(
+          report,
+          ap,
+          `evidence_type 'negative' requires record_role 'absent' (got ` +
+            `${JSON.stringify(a.record_role)}) — even when the record NAMES the person ` +
+            `(the "preceded in death by" shape is still negative evidence). Check the ` +
+            `finding is an ABSENCE at all: a fact about a person PRESENT in the record ` +
+            `is 'direct' carrying that person's real role — change both fields, not ` +
+            `one — and a blank field on a present person is silence, which produces no ` +
+            `assertion`
+        );
+      }
+      if (a.informant_proximity !== "researcher") {
+        addError(
+          report,
+          ap,
+          `evidence_type 'negative' requires informant_proximity 'researcher' (got ` +
+            `${JSON.stringify(a.informant_proximity)}) — negative evidence is the ` +
+            `researcher's own conclusion; no record informant reported an absence, ` +
+            `whatever the record type, and that holds even when the record names the ` +
+            `person. Set it to 'researcher'. Only if the finding is not an absence at ` +
+            `all is 'negative' wrong, and then record_role must change with it`
+        );
+      }
     }
     if ("date_certainty" in a && a.date_certainty !== null) {
       if (!DATE_CERTAINTY_VALUES.has(a.date_certainty)) {
