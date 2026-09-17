@@ -123,11 +123,24 @@ timeline-gap, or FAN-pivot, whichever signal fires); a question already
 When nothing in `questions[]` covers the objective yet, the question you write
 *is* the user's framing: name the fact sought, not the record that might carry
 it — record choice is `research-plan`'s. A single-fact objective **is** that
-question; restate it with identifying detail rather than narrowing it. Once a
-question at the objective's scope is open, your job is the next sub-question
-beneath it — verify an unsound premise (framed to name the fact sought, not
-merely test a property of a name or date), test a named source, decompose a part —
-and that one may be narrower and may name a record. An existing objective-scope
+question; restate it with identifying detail rather than narrowing it — unless
+the objective rests on an explicitly unverified, load-bearing premise: a fact
+it depends on that is sourced only to compiled/unsourced data (an online tree,
+`quality: 1` tree data), and whose falsity would change which person, family,
+or fact the objective is actually investigating — not ordinary uncertainty or
+an incidental unverified detail. Then the first question verifies that premise
+(Step 3), naming the gating fact. When verifying the premise and pursuing the
+objective are distinct questions, the objective-scope question follows in a
+later invocation once the premise is sound; when the premise is a disputed
+relationship or identity assertion already on the tree (a parent-child or
+spousal link — not a disputed property of a name or date, which stays in the
+naming-the-gating-fact lane above), its confirm-or-refute test (Step 3) is
+itself that first question — it both verifies the premise and pursues the
+objective, so nothing is deferred. Once a question at the objective's
+scope is open, your job is the next sub-question beneath it — verify a remaining
+unsound premise (framed to name the fact sought, not merely test a property of
+a name or date), test a named source, decompose a part — and that one may be
+narrower and may name a record. An existing objective-scope
 question is never a reason to add nothing; only Step 1b stops the project.
 
 ## 2. Identify the highest-value question
@@ -150,6 +163,13 @@ timeline gaps do not trigger it.
 
 **Priority 4 detail:** Fires for the first question on a single-fact objective
 too — there the "decomposition" is one question at the objective's own scope.
+When that objective rests on an explicitly unverified, load-bearing premise —
+one whose falsity would change which person, family, or fact is under
+investigation (Step 1c / Step 3) — the first question verifies the premise
+instead of restating the objective, still on the `objective_decomposition` basis
+— and for a disputed relationship or identity assertion already on the tree
+(not a name/date property), via Step 3's confirm-or-refute framing, not a
+generic "verify" question.
 Split only when the objective holds more than one independent fact. Each
 sub-question targets a single fact and names that fact, not the record that
 might carry it: "Whom did Thomas Flynn marry?" / "When and where did Thomas
@@ -184,10 +204,17 @@ unsourced genealogies). If the premise is unverified, the first question
 should verify it — framed so every branch of its answer names a fact the
 objective needs. A binary test of a property of a name or date ("was this a
 maiden or married name?") names no fact; name the gating fact instead
-("What was her maiden name?"), which subsumes the test. A disputed identity
-assertion already on the tree may be tested directly (confirm-or-refute, per
-the next paragraph); a property test of a name or date may not stand in for
-the fact.
+("What was her maiden name?"), which subsumes the test. Discover vs. verify is the
+test: ask for the value the objective is missing, not merely to confirm or
+classify the value already recorded on the tree. A yes/no on the recorded
+name, a maiden-or-married classification, or an "acquired by marriage?" test
+all fail — the "no"/"married" branch names no fact. An apparently open-form
+question fails the same way when it only characterizes the recorded name (how
+it was acquired, which kind it is) instead of asking for the missing value;
+name the gating fact and ask for its value directly ("What was her maiden
+name?"). A disputed identity assertion already on the tree
+may be tested directly (confirm-or-refute, per the next paragraph); a property
+test of a name or date may not stand in for the fact.
 
 **When the objective signals the user doubts an existing assignment** —
 phrasing like "correct parents", "the right X", "not correct" — the current
@@ -272,7 +299,11 @@ cannot see `research.json`. Give:
   sought — never as a bare property test of a name or date.
 - **Objectives vs. questions.** Never write a **multi-fact** objective as a
   question. A single-fact objective already *is* one: restate it, don't narrow
-  it to a record. See Step 1c.
+  it to a record — unless it rests on an explicitly unverified, load-bearing
+  premise, in which case verify that premise first (Step 1c) — for a disputed
+  relationship or identity assertion already on the tree (not a name/date
+  property), via Step 3's confirm-or-refute framing, not a generic "verify"
+  question.
 - **Stay inside the objective's scope.** A spouse's or child's own missing
   facts are a different objective, except on a Priority 6 FAN pivot.
 - **Don't declare exhaustiveness here.** Closing questions is the
@@ -292,7 +323,11 @@ cannot see `research.json`. Give:
 - **Fresh project, no clear gaps:** default to Priority 4. If the objective
   holds several independent facts, decompose it into sub-questions; if it is
   already a single fact, the first question is that objective restated with
-  identifying detail — not a narrower record-scoped one (Step 1c).
+  identifying detail — not a narrower record-scoped one — unless it rests on an
+  explicitly unverified, load-bearing premise, in which case the first question
+  verifies that premise (Step 1c / Step 3) — for a disputed relationship or
+  identity assertion already on the tree (not a name/date property), via Step
+  3's confirm-or-refute framing, not a generic "verify" question.
 - **All questions blocked:** identify the root blocker and formulate a
   question to resolve it — even if that means a conflict with no formal
   `conflicts[]` entry yet.

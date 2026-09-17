@@ -96,10 +96,26 @@ If the premise of a question is itself unverified, the first question
 should verify that premise — framed so every branch of its answer names a
 fact the objective needs. A binary test of a property of a name or date
 ("was this a maiden or married name?") names no fact; name the gating fact
-instead ("What was her maiden name?"), which subsumes the test. (A disputed
-identity assertion already on the tree may be tested directly — see the
-confirm-or-refute framing in the skill body — but a property test of a name
-or date may not stand in for the fact the objective needs.)
+instead ("What was her maiden name?"), which subsumes the test. The
+discriminator is what the question, in context, asks the researcher to do:
+**discover** the value the objective is missing, or merely **verify** or
+**classify** the value already recorded on the tree.
+
+- "What was her maiden name?" — acceptable: it asks for the pre-marriage
+  surname the objective lacks; any answer names a fact.
+- "Was [the recorded surname] her maiden name?" or "was it acquired through
+  marriage?" — unacceptable: a yes/no confirmation or classification of the
+  recorded value, whose "no"/"married" branch names no fact.
+
+An apparently open-form question can fail the same way: "how did she come to
+have [the recorded surname]?" only characterizes the recorded value, and its
+"by marriage" branch supplies no missing surname. What matters is the
+function — asking for the missing value versus checking the recorded one —
+not the surface form.
+
+(A disputed identity assertion already on the tree may be tested directly —
+see the confirm-or-refute framing in the skill body — but a property test of
+a name or date may not stand in for the fact the objective needs.)
 
 ## Common Failures
 
@@ -114,6 +130,7 @@ or date may not stand in for the fact the objective needs.)
 | Outside the objective | "When did Reuben's wife emigrate?" (objective is Reuben's parents) | Her facts are a different objective, not a sub-question of this one |
 | Built on unverified claim | "Find birth record for 1815" (1815 comes from an unsourced tree) | First verify the approximate birth year |
 | Premise test names no fact | "Was 'Curtis' her maiden or married name?" (objective is her parents) | Name the gating fact: "What was her maiden name?" — either branch then yields it |
+| Characterizes the recorded value, not the missing one | "How did Eliza Warren come to have the surname Warren?" (objective is her parents) | Ask for the missing value directly: "What was her maiden name?" — the "by marriage" branch otherwise names no maiden name |
 
 ## Decomposing an Objective into Questions
 
