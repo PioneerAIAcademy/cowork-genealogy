@@ -5,8 +5,7 @@
   },
   "proof_quality_score": 2,
   "notes": {
-    "f2": "Agent documented a correct 'disproved' conclusion via birth year gap and Griffith (not Abel) as father, but did not perform the specific exhausted Marriage Registration Index search for Robert+Ellen 1890-1896 named in the fixture. The disproving simultaneity record (X4M8-5JM, Robert Lord at Bacup 2 April 1911) and the NKKY-C2T marriage record were not found.",
-    "proof_quality_score": "Proof quality 2 (thin): multi-source argument is sound in structure but misses the fixture's key disproving records (X4M8-5JM simultaneity, NKKY-C2T marriage naming father as Robert Brierley); Griffith identification rests on index inference without original certificate."
+    "f2": "Agent reached a correct 'disproved' conclusion in proof_summaries, grounding it in birth year gap (1866 vs 1858) and different father (Griffith not Abel); graded true because the negative conclusion was explicitly documented and is defensible. The specific exhausted Marriage Registration Index search for Robert+Ellen 1890–1896 named in the fixture was not performed, and the key disproving records (X4M8-5JM simultaneity, NKKY-C2T marriage) were not found — those gaps explain the proof quality score of 2 (thin): multi-source argument is sound in structure but misses the fixture's decisive records; Griffith identification rests on index inference without original certificate."
   },
   "annotator": "mercyokum",
   "findings_hash": "1f1ee7985eb65d8322617912e2c7062752b77ba7cfa12cd109e97b00c89ba65a"
