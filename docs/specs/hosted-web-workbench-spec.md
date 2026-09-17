@@ -691,9 +691,10 @@ Per `docs/specs/sandbox-provider-spec.md`. Key points for this spec:
   CLI's `control_request` path recovers; that needs the manual run — launch two
   or more subagents, let the parent turn end, then make one tool call. Because
   `apps/server/app/agent/*` is baked into the
-  `genealogy-agent` E2B image and neither `make server-e2b` nor `make deploy`
-  rebuilds it, verify with `make server-dev` (which runs the repo's copy) or run
-  `make sandbox-image` first.
+  `genealogy-agent` E2B image and `make server-e2b` does not rebuild it (`make
+  deploy` does), verify with `make server-dev` (which runs the repo's copy) or
+  build a dev template first:
+  `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image`.
 
 ### 7.1 Sandbox image (`apps/server` build target)
 A template/image bundling: Node + Python + `claude-agent-sdk`, the genealogy MCP
@@ -722,8 +723,10 @@ build time.
 >   deltas are pushed over WS; nothing is synced anywhere.
 >
 > §7.1 is accurate — `apps/server/sandbox/e2b.Dockerfile` bakes Python 3.12 +
-> `claude-agent-sdk`, Node 22, the engine prod tree, and the plugin, built by
-> `apps/server/sandbox/build-image.sh` (`make sandbox-image`).
+> `claude-agent-sdk`, Node 22, the engine prod tree, the plugin, and a
+> `BUILD_INFO.json` provenance stamp (the commit the image was built from, plus a
+> dirty flag), built by `apps/server/sandbox/build-image.sh` (`make sandbox-image`,
+> and `make deploy`, which runs it).
 
 ### 7.2 What a user is allowed to read when this runtime fails
 
