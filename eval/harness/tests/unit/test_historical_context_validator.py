@@ -66,7 +66,15 @@ def test_fires_on_run_2026_08_28():
     with pytest.raises(AssertionError) as exc:
         check_confident_attribution(EXCERPT_08_28, NO_RESULTS_TEST)
     msg = str(exc.value)
-    assert "most likely explanations" in msg or "is almost certainly" in msg
+    # One assertion per alternative, not an `or`: with `or` the first phrase
+    # carried the test on its own and the other three could be deleted from
+    # `CONFIDENT_ATTRIBUTION_RE` with the file still green. All four occur in
+    # this excerpt verbatim, and each fires on a committed run of
+    # `ut_historical_context_014` (#2639 review).
+    assert "most likely explanations" in msg
+    assert "ordered by probability" in msg
+    assert "(most likely)" in msg
+    assert "is almost certainly" in msg
 
 
 # --- Passing cases (from committed run logs) ------------------------------
