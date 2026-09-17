@@ -94,10 +94,11 @@ def _as_mapping(value):
     exactly as if the argument had been well-formed. Reading it raw here raised
     `AttributeError` instead of grading, and a crash in a `test_`-prefixed
     validator is not an observation: `validator_runner` builds the result
-    without `reporting_only`, so `compute_validators_passed` counts it as a
-    gating failure and the LLM judge is skipped for that test. The check that
-    exists to catch a mis-serialized call was the one case it could not
-    survive.
+    without `reporting_only`, so it gates and the run scores `fail`. The judge
+    still grades — since #2057 only an aborted run or a raising judge skips it —
+    but it sees an opaque validator NAME in `validator_failures` rather than the
+    graded observation this check exists to produce. So the mis-serialized call
+    was the one shape this check could not survive.
 
     Anything that is not a mapping after one parse attempt reads as absent,
     which is the same thing an omitted argument does — this helper never

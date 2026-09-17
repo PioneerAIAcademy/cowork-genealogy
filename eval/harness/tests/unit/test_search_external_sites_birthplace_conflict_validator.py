@@ -154,9 +154,10 @@ def test_fires_when_attributes_arrive_as_a_json_string():
 
     Reading the argument raw made this check raise AttributeError rather than
     grade, and a crash in a `test_`-prefixed validator is not an observation:
-    `validator_runner` builds the result without `reporting_only`, so it counts
-    as a gating failure and the LLM judge is skipped for that test. The one
-    shape this check could not survive was the one it exists to catch."""
+    `validator_runner` builds the result without `reporting_only`, so it gates
+    and the run scores `fail`, while the judge sees only an opaque validator
+    name. The one shape this check could not survive was the one it exists to
+    catch."""
     _expect_fires(
         _stringified_call(birthPlace="Pennsylvania"),
         {"type": "positive"},

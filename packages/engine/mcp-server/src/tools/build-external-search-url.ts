@@ -201,6 +201,15 @@ function usStateFacet(v: unknown): string | undefined {
     // the right-to-left order above exists to prevent, reintroduced by a full
     // stop. `spaced` keeps multi-word full names intact ("district of
     // columbia"); `compact` closes up abbreviations written "D. C.".
+    //
+    // Residual, knowingly accepted: a dotted CITY initialism that collides with
+    // a state's postal code now resolves to the state — "L.A." yields
+    // `louisiana`. That matches what bare "LA" has always done, so it extends an
+    // existing ambiguity to a second spelling rather than creating one, and the
+    // trade is heavily favourable: without this, every "City, Xx." form whose
+    // city shares a state name mis-scoped silently ("Washington, Pa." resolved
+    // to Washington STATE). A comma-qualified place — the shape `place_search`
+    // returns — is unaffected either way.
     const spaced = s.replace(/\./g, "").replace(/\s+/g, " ").trim();
     const compact = s.replace(/[.\s]/g, "");
     const expanded = US_STATE_NAMES[s] ?? US_STATE_NAMES[spaced] ?? US_STATE_NAMES[compact];
@@ -1012,10 +1021,14 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   const notes = attributeNotes(a, RECOGNIZED_KEYS[site], site);
   // Built BEFORE the early return, not after it. These carry the per-site
   // diagnostics — an inverted Chronicling America window, a `usState` no
-  // segment resolved, a FindMyPast knob supplied without its slot — and each
-  // is a reason nothing landed. Pushed after the return, the branch below
-  // promised notes in `errors` and shipped only half of them, so the caller
-  // got "no attributes supplied" for a call that supplied several.
+  // segment resolved, a FindMyPast knob supplied without its slot — which are
+  // the reasons a supplied attribute failed to land. Pushed after the return,
+  // the branch below promised notes in `errors` and shipped only half of them,
+  // so the caller got "no attributes supplied" for a call that supplied
+  // several. A few are standing cautions rather than reasons (findmypast's
+  // unscoped-year note on a zero-attribute call restates the error), which is
+  // mild noise; `SITE_NOTES[site]` stays out of this path deliberately, since
+  // a site's permanent caution is never why THIS call landed nothing.
   notes.push(...siteNotes(site, a, params));
   if (!Object.values(params).some((v) => v !== undefined)) {
     // The notes ride in `errors` so the caller learns WHY nothing landed —
