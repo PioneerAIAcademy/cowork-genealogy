@@ -156,7 +156,9 @@ describe("plugin prose names only skills and agents that ship", () => {
       for (const [, pluginTail, bareToken] of text.matchAll(KEBAB_IN_BACKTICKS)) {
         const token = pluginTail ?? bareToken;
         const pool = pluginTail ? agents : all;
-        if (!pool.has(token) && !NOT_SKILL_NAMES.has(token))
+        // Mirrors the corpus loop below: the allowlist excuses the bare arm only.
+        const excused = pluginTail ? false : NOT_SKILL_NAMES.has(token);
+        if (!pool.has(token) && !excused)
           bad.push(pluginTail ? `@plugin:${token}` : token);
       }
       return bad;
@@ -166,6 +168,15 @@ describe("plugin prose names only skills and agents that ship", () => {
     expect(resolve("spawn `@plugin:record-extraction`")).toEqual(["@plugin:record-extraction"]);
     // And a real agent still resolves behind the prefix.
     expect(resolve("spawn `@plugin:proof-conclusion`")).toEqual([]);
+
+    // NOT_SKILL_NAMES excuses the bare arm only. `proof-critique` is a
+    // gps-mentor focus value on the allowlist AND a plausible spawn typo —
+    // `research/SKILL.md` spawns `@plugin:gps-mentor` naming a focus value in
+    // the same sentence. Consulting the allowlist for the prefixed arm let it
+    // ship green and refuse to spawn at runtime.
+    expect(NOT_SKILL_NAMES.has("proof-critique"), "fixture assumption").toBe(true);
+    expect(resolve("focus `proof-critique`")).toEqual([]);
+    expect(resolve("spawn `@plugin:proof-critique`")).toEqual(["@plugin:proof-critique"]);
   });
 
   it("resolves every backticked kebab-case token", () => {
@@ -184,7 +195,15 @@ describe("plugin prose names only skills and agents that ship", () => {
         // the same name in the same file — the two resolve against different
         // sets, so they are different claims.
         const key = pluginTail ? `@plugin:${token}` : token;
-        if (pool.has(token) || NOT_SKILL_NAMES.has(token) || seen.has(key)) continue;
+        // NOT_SKILL_NAMES declares "this token is not a skill name" and applies
+        // to the BARE arm only. Behind `@plugin:` the token is a spawn target,
+        // and three allowlisted entries — `proof-critique`, `pre-exhaustiveness`,
+        // `conclusion-readiness` — are gps-mentor focus values that look exactly
+        // like agent names. Consulting the allowlist for the prefixed arm let
+        // `@plugin:proof-critique` ship green and refuse to spawn at runtime,
+        // which is the hole this arm exists to close.
+        const excused = pluginTail ? false : NOT_SKILL_NAMES.has(token);
+        if (pool.has(token) || excused || seen.has(key)) continue;
         seen.add(key);
         offenders.push(`${rel}: \`${key}\``);
       }

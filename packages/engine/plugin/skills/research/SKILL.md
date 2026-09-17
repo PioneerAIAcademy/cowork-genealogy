@@ -198,9 +198,16 @@ regardless of how directly the request named the destination.
    that is the orchestrator doing the sub-skill's job by hand, and it is
    exactly what this contract forbids.
 
+   **Every spawn names `projectPath` and the id the agent works on** — a
+   `questionId` for `@plugin:research-exhaustiveness` and
+   `@plugin:proof-conclusion`, the assertion ids for
+   `@plugin:person-evidence`. The agent runs in fresh context and reads the
+   project itself; a delegation missing `projectPath` fails on its first tool
+   call.
+
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
-   else and judge nothing. Do not
+   beyond the ids you are passing, and judge nothing. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
    the routing table has no row for a decline. Relay the agent's return as-is.

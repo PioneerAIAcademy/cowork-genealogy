@@ -286,7 +286,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   else and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
       },
       {
         side: "agent",
@@ -300,7 +300,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   else and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
       },
       // The third of the three caller rules. Pinned here because it was
       // otherwise unpinned across all four new edges — deletable with the whole

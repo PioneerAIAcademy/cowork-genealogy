@@ -35,12 +35,17 @@ Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
 ## No `routes-to:` test may name a paired row
 
 `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are routed
-by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075). The
-harness observes routing only through `Skill`:
-`eval/harness/harness/skill_runner.py:654` gates both `skills_invoked` (`:660`)
-and stub application (`:684`) on `if tool_name == "Skill"`. So a `routes-to:`
-assertion naming one of those three cannot fail — it would grade a call the
-harness never sees.
+by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075).
+
+**`skills_invoked` does not see them, but the harness does.** `skill_runner.py`
+gates `skills_invoked` (`:660`) and stub application (`:684`) on
+`if tool_name == "Skill"` (`:654`), so a `routes-to:` tag — which
+`validators/test_research.py:34` asserts against `skills_invoked` — cannot
+observe a spawned row. But `spawned_agents()` (`:302`) and `spawn_prompts()`
+(`:336`) derive main-thread `Agent` spawns from `builtin_tool_calls`, which is
+already a validator fixture (`validators/conftest.py:140`). A `routes-to:` tag
+naming a paired row is therefore still wrong — assert on `spawned_agents()`
+instead.
 
 `route-shortcut-guard.json` keeps all three in `stub_skills`, and that is
 deliberate. The stub is the control on the FAILURE path, not the compliant one:
@@ -51,6 +56,9 @@ shortcutting router runs the real skill inside an empty project for up to 30
 turns. The stub is merely inert on the compliant path, where the router spawns
 the agent instead — inert is not the same as useless.
 
-Issue #2246 holds the harness work that would let a unit suite observe an
-`Agent` spawn. Until it lands, the route these three take is graded by no unit
-test — a live `make e2e-run` is the only instrument.
+Issue #2246 **has landed** (`d25e8560b`, in this branch), so the direct route is
+observable in the unit tier via `spawned_agents()`. What this PR does not add is
+a validator that uses it for these three rows — that is one assertion away and
+belongs with the paid run that would grade it. Until then the route is
+unobserved by choice, not by impossibility, and a live `make e2e-run` remains
+the only end-to-end instrument.
