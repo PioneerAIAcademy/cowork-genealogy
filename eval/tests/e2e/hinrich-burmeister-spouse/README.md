@@ -111,9 +111,21 @@ unavoidably contains the name "Hinrich Burmeister", so `apply_avoid_guard`
 `P9PK-53N` — both legitimately in the starting tree, neither in the exempt set
 (which is `{G8CJ-7VL}` only) — and forces `f1` to `matched: "false"` no matter
 what the agent does. With `required: true` that makes `pass` unreachable and
-the fixture ungradable. `f1` is therefore `required: false`; the guard still
-fires and still records the miss, but does not gate the verdict. The
-do-nothing-run protection that `required: true` normally provides is carried by
-`f3`, which is `required: true` and requires the agent to actually document the
-negative conclusion. `f2` is `required: true` and its tokens were measured
-clean against the starting tree.
+the fixture ungradable. `f1` is therefore `required: false`. Record what that costs, because
+every run will hit it: the guard forces `f1` to `false` on **every** run of
+this fixture, a perfect one included, because `P71D-DRJ` is the subject's real
+1683 son and legitimately stays in any final tree. So `f1` never does
+discriminating work here, `recall_total` can never exceed 2/3, and every run
+log will carry a permanent `avoid_guard.forced_false` entry on `f1`. A blind
+annotator grading a correct run will label `f1` `true`, so each annotated run
+contributes one guaranteed judge-vs-human disagreement to `calibrate_judge`
+(gate: `PER_FINDING_TARGET = 0.80`). **That disagreement is structural, not a
+judge regression — do not chase it.** The same disagreement is already in the
+corpus: `eval/runlogs/e2e/antonio-lucas-spouse/run-2026-08-04_22-45-15.ann.json`
+has human `f1: true` against a judge `f1: false` whose own note reads "the agent
+correctly avoided the false attribution".
+
+The do-nothing-run protection that `required: true` normally provides is
+carried by `f3`, which is `required: true` and requires the agent to actually
+document the negative conclusion. `f2` is `required: true` and its tokens were
+measured clean against the starting tree.

@@ -28,7 +28,7 @@
       "details": {
         "person": {
           "name": "Elsch Burmeister",
-          "role": "claimed spouse of the subject, on the strength of the 29 Jul 1687 baptism"
+          "role": "claimed spouse"
         },
         "wrong_candidate": {
           "name": "Elsch Burmeister",
@@ -44,7 +44,7 @@
     {
       "id": "f3",
       "type": "fact",
-      "description": "Having investigated FamilySearch's record hint ark:/61903/1:1:QPV4-RPBS against Hinrich Burmeister (PID G8CJ-7VL), the agent should document a negative conclusion: the hint is a false match, the 29 July 1687 Schönberg baptism belongs to a different Hinrich Burmeister whose wife was Elsch(e), and no record establishes a second son named Hinrich for G8CJ-7VL. A 20 January 1691 Schönberg baptism of a Hinrich Burmeister naming the parents as Hinrich and Anna Burmeister (ark:/61903/1:1:QPV4-G7GT) is a genuine open question rather than a substitute answer — G8CJ-7VL married Anna Meyborg on 27 Feb 1690, but a separate Hinrich-and-Anna couple was also baptising children at Schönberg, including another Hinrich on 9 May 1687 (ark:/61903/1:1:QPV4-2MW3) when G8CJ-7VL's wife was still Liesbeth, and the index cannot separate them. Asserting the 1691 child as G8CJ-7VL's son is NOT required to pass, and neither is denying it; what is required is that the 1687 hint is reported as unsupported rather than accepted.",
+      "description": "Having investigated FamilySearch's record hint ark:/61903/1:1:QPV4-RPBS against Hinrich Burmeister (PID G8CJ-7VL), the agent should document a negative conclusion: the hint is a false match, and the 29 July 1687 Schönberg baptism belongs to a different Hinrich Burmeister whose wife was Elsch(e). A 20 January 1691 Schönberg baptism of a Hinrich Burmeister naming the parents as Hinrich and Anna Burmeister (ark:/61903/1:1:QPV4-G7GT) is a genuine open question rather than a substitute answer — G8CJ-7VL married Anna Meyborg on 27 Feb 1690, but a separate Hinrich-and-Anna couple was also baptising children at Schönberg, including another Hinrich on 9 May 1687 (ark:/61903/1:1:QPV4-2MW3) when G8CJ-7VL's wife was still Liesbeth, and the index cannot separate them. Asserting the 1691 child as G8CJ-7VL's son is NOT required to pass, and neither is denying it; what is required is that the 1687 hint is reported as unsupported rather than accepted.",
       "details": {
         "subject_person": "Hinrich Burmeister (PID G8CJ-7VL)",
         "relation": "research conclusion",
