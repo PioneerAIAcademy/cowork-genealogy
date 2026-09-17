@@ -2424,7 +2424,7 @@ function applyOne(
     // (`hypothesis-tracking/SKILL.md`). Gating on `status` alone left three
     // measured calls landing `ok: true` on exactly the state this refuses.
     //
-    // Measured at ebf8a0fbd: 11 corpus update ops touch one of these lists
+    // Measured at 587d3c98d: 11 corpus update ops touch one of these lists
     // without naming `status`, across 5 run logs, against 17 ops that set
     // `status: "supported"` at all — so the ungated path was the size of the
     // gated one. Widening costs nothing: reconstructing each hypothesis's status
