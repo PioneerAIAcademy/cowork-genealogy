@@ -3,32 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Gust Johs Huhtala had a son Jöran, born 3 February 1820 and christened 7 February 1820 at Kauhava, Vaasa, Finland.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Gust Johs Huhtala (PID K46D-YPY) had a son Jöran born 3 February 1820, nor that Lisa Jöransdotter (Lisa Jordr) was his wife. FamilySearch's hint matching the 7 February 1820 Kauhava baptism of Jöran to this person is a false match. The Kauhava communion book (rippikirja) for 1816-1823 records two different men named Gustaf Johansson at Huhtala farm N:o 40. On folio 177: Gustaf Johansson born 6 October 1794, married to Caisa Johansdotter (born 1794) — the tree person, whose sons Johan (b. 12 October 1817), Gustaf (b. 22 March 1820, died 25 August 1821) and Gustaf (b. 28 June 1822) match the tree exactly. On folio 179: Gustaf Johansson born 22 October 1780, living as måg (son-in-law) in the croft of Torpare Jöran Ericsson and married to that man's daughter Lisa Jöransdotter (b. 22 November 1788), whose sons are Jöran (b. 3 February 1820) and Gustaf (b. 1821). The hinted Jöran belongs to the second man, and was named for his maternal grandfather Jöran Ericsson. Independently of the communion book, one mother cannot have borne Jöran on 3 February 1820 and Gustaf on 22 March 1820, seven weeks apart. Pass = the final tree/research contains no son Jöran for K46D-YPY, no spouse Lisa Jöransdotter, and no stub person representing either (or such a candidate appears only as an explicitly rejected hypothesis).",
       "details": {
-        "subject_person": "Gust Johs Huhtala (K46D-YPY)",
-        "relation": "child",
-        "target_person": {
-          "name": "Jöran",
-          "birth": "3 February 1820, Kauhava, Vaasa, Finland"
+        "subject_person": "Gust Johs Huhtala (PID K46D-YPY)",
+        "relation": "spouse",
+        "wrong_candidate": {
+          "name": "Lisa Jöransdotter (Lisa Jordr) as wife of Gust Johs Huhtala, with a son Jöran born 3 February 1820",
+          "note": "Lisa Jöransdotter was the wife of a different Gustaf Johansson at the same farm — born 1780, fourteen years the tree person's senior, resident as son-in-law in her father's croft. The tree person's wife throughout 1817-1830 is Caisa Johansdotter (KCBJ-P4K), named on every one of his five children's baptisms."
         }
       },
       "supporting_sources": [
-        "Finland, Baptisms, 1657-1890 — entry for Joran, 1820, parents Gust Johs Huhtala and Lisa Jordr"
+        "Kauhava parish communion book (rippikirja) 1816-1823, volume IAa:12, FamilySearch image group 100775028 — folio 177 (image 00182) and folio 179 (image 00184), Huhtala farm N:o 40: two distinct Gustaf Johansson households, born 1794 (wife Caisa Johansdotter) and born 1780 (wife Lisa Jöransdotter). This is the disproving record. Browsable film; FamilySearch serves no item-level ark for these images, only the APID TH-909-49105-33679-30 for image 00184.",
+        "Finland, Baptisms, 1657-1890 — Gustaf, son of Gust Johs Huhtala and Kaisa Johdr, born 22 March 1820, christened 24 March 1820 at Kauhava (ark:/61903/1:1:XBL6-V7M): seven weeks after the hinted 3 February 1820 birth, impossible for one mother.",
+        "Finland, Baptisms, 1657-1890 — Gustaf, son of Gust Johs Huhtala and Lisa Jordr, christened 1821 at Kauhava (ark:/61903/1:1:XBL6-V78): the second child of the second household, establishing it in the index as a distinct family rather than a stray entry."
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "person",
-      "description": "The mother named on the 1820 Jöran baptism is Lisa Jöransdotter, not the Kaisa Johansdotter the tree records as Gust Johs Huhtala's wife.",
+      "type": "fact",
+      "description": "Having searched Finland, Baptisms, 1657-1890 across Kauhava 1812-1835 for every Huhtala baptism, the agent should document a negative conclusion: no record places a son Jöran with Gust Johs Huhtala and Kaisa Johansdotter. The couple's five documented children in that collection are Johan (1817), Gustaf (22 March 1820, died 25 August 1821), Gustaf (28 June 1822), Maria (12 November 1824) and Matts (28 April 1830), and the tree's existing wife Kaisa Johansdotter (KCBJ-P4K) stands unchanged.",
       "details": {
-        "person": {
-          "name": "Lisa Jordr (Elisabet Jöransdotter)",
-          "role": "named as mother on the 7 February 1820 Kauhava baptism"
+        "subject_person": "Gust Johs Huhtala (PID K46D-YPY)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: the 1820 Jöran baptism belongs to another Huhtala household",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "Finland, Baptisms, 1657-1890 — entry for Joran, 1820"
+        "Absence of any baptism in Finland, Baptisms, 1657-1890 for Kauhava, 1812-1835, recording a son Jöran to Gust Johs Huhtala and Kaisa Johansdotter. Every Huhtala baptism in that range was examined and grouped by parent couple; the tree couple's five children are Johan (1817), Gustaf (1820), Gustaf (1822), Maria (1824) and Matts (1830)."
       ],
       "required": true
     }
