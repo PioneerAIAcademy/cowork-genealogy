@@ -59,10 +59,6 @@ const skillsDir = join(repoRoot, "plugin", "skills");
 // test exists to prevent.
 const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
   {
-    path: "convert-dates/references/calendar-conflicts.md",
-    why: "172 lines on identifying and resolving calendar-based date conflicts; none of its 19 headings/terms appear in the body",
-  },
-  {
     path: "init-project/references/research-process-init.md",
     why: "151 lines of init decision rules and vague-data interpretation; 4 of 23 terms in the body",
   },
