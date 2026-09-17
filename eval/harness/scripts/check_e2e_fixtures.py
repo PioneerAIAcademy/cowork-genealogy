@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""GH Action: the e2e grading gate (a discipline check on committed files).
+"""GH Action: the e2e discipline gates (checks on committed files).
 
 ## Grading gate (BLOCKING)
 
-Every run log ADDED in this PR that produced a final tree must ship its
-``run-<ts>.ann.json`` in the same PR — grading is same-PR (the developer +
+Every run log ADDED OR RENAMED into the corpus in this PR that produced a
+final tree must ship its ``run-<ts>.ann.json`` in the same PR — grading is
+same-PR (the developer +
 genealogist teams grade every run they commit; docs/e2e-testing-guide.md
 "Grading a run"). A treeless run (crashed or skipped before a final tree) is
-exempt: there is nothing to grade. Scoped to PR-added run logs via
-``git diff --diff-filter=A`` (BASE_SHA / HEAD_SHA), mirroring check_runlogs.py
-rule 1; skipped when run outside a PR (env unset), so local runs still work.
+exempt: there is nothing to grade. Scoped to run logs ADDED OR RENAMED into
+the corpus via ``git diff --diff-filter=AR`` (BASE_SHA / HEAD_SHA), so a run
+promoted out of quarantine is caught; skipped when run outside a PR (env
+unset), so local runs still work.
+Both siblings are resolved from the HEAD_SHA tree, never the working directory,
+so a local run and CI reach the same verdict (issue #2469).
 
 The grading gate checks annotation *presence*, not content. Deeper content
 validity (drift / incomplete / malformed) is the maintainer's
@@ -17,6 +21,16 @@ validity (drift / incomplete / malformed) is the maintainer's
 out of CI so this script stays stdlib-only and never needs the harness venv.
 The one content check that lives here is the component-derivation drift warning
 below: it is pure stdlib JSON arithmetic, so it meets the same constraint.
+
+## 1M-window gate (BLOCKING)
+
+A run log added or renamed into ``eval/runlogs/e2e/`` whose ``usage.betas`` is
+non-empty was made with ``--context-1m``. A 1M window changes the compaction
+count and the cache-gap structure — what ``make e2e-compaction`` and
+``make e2e-cache-window`` measure — and ``all_result_jsons`` scans the corpus
+with no exclusion, so such a run lands at maximum weight. Keep it in a sibling
+directory outside ``eval/runlogs/e2e/``. Same AR scoping and same HEAD_SHA-tree
+read as the grading gate above.
 
 ## Unresolved-draft check (WARN only)
 
@@ -92,23 +106,54 @@ def _is_primary_runlog(name: str) -> bool:
     )
 
 
+class GateUnavailable(RuntimeError):
+    """The gate could not read the tree it must check.
+
+    Raised rather than returning a sentinel so the caller cannot mistake it for
+    "no run logs were added" -- the failure mode this whole check exists to stop.
+    """
+
+
 def git_added_e2e_runlogs() -> list[Path] | None:
     """PR-added primary run logs under eval/runlogs/e2e/, as repo-relative Paths.
 
     Returns ``None`` when not running in a PR context (BASE_SHA / HEAD_SHA
-    unset) — the grading gate only applies to files added in the PR, mirroring
-    check_runlogs.py rule 1 (``git diff --diff-filter=A``). Local runs skip it.
+    unset). Read by the two WARN-only checks, and by main() for the skip
+    decision and the OK line's second denominator; both blocking gates read
+    ``git_ar_e2e_runlogs()`` instead. Local runs skip it.
     """
     base = os.environ.get("BASE_SHA")
     head = os.environ.get("HEAD_SHA")
     if not base or not head:
         return None
-    out = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=A", base, head],
-        text=True,
-        encoding="utf-8",
-        cwd=REPO_ROOT,
-    )
+    # An unfetched sha, a shallow clone or a cwd that is not a repo all die HERE,
+    # in the selection step, before any sibling is looked up -- `check_output`
+    # raises on a non-zero exit. Left uncaught that surfaces as a six-frame
+    # traceback naming `subprocess`, which says nothing about what to do. Caught
+    # here it becomes the one actionable line, at the only place the failure can
+    # actually occur.
+    try:
+        out = subprocess.check_output(
+            ["git", "-c", "diff.renames=true", "diff",
+             "--name-only", "--diff-filter=A", base, head],
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise GateUnavailable(
+            f"could not diff {base}..{head} in this checkout (git exited "
+            f"{exc.returncode}), so the grading gate cannot see which run logs this "
+            "PR added. Either the commit was never fetched (CI uses fetch-depth: 0) "
+            "or this directory is not a git repository. Refusing rather than "
+            "reporting zero added run logs."
+        ) from exc
+    except FileNotFoundError as exc:  # git itself absent
+        raise GateUnavailable(
+            "git is not on PATH, so the grading gate cannot read the tree it must "
+            "check. Refusing rather than reporting zero added run logs."
+        ) from exc
     added: list[Path] = []
     for line in out.splitlines():
         path = line.strip()
@@ -124,7 +169,182 @@ def git_added_e2e_runlogs() -> list[Path] | None:
     return added
 
 
-def check_added_runlogs_graded(added: list[Path]) -> list[str]:
+QUARANTINE_HINT = (
+    "a sibling directory outside eval/runlogs/e2e/ — the mechanism "
+    "eval/runlogs/_2491-exploratory-quarantine/ uses for its own experiment"
+)
+
+
+def git_ar_e2e_runlogs() -> list[Path] | None:
+    """PR-added OR renamed-into-place primary e2e run logs.
+
+    Deliberately NOT a widening of the shared `git_added_e2e_runlogs()`, which
+    the two warn-only checks still read: widening that one would change what
+    they report as well. Both BLOCKING gates read this selector instead.
+
+    Why renames matter, and why the grading gate reads this too: promoting a run
+    out of quarantine arrives as a RENAME, which `--diff-filter=A` does not
+    report at all. Measured 2026-09-15 —
+    eval/runlogs/_2491-exploratory-quarantine/ holds four runs, every one with a
+    `.final-tree.gedcomx.json` and ZERO `.ann.json` — so before this selector
+    existed, that promotion landed a tree-producing, ungraded run in the
+    calibration corpus by the one route neither gate could see.
+
+    `-c diff.renames=true` is pinned on BOTH selectors, but it is the pin on
+    `git_added_e2e_runlogs()` that is load-bearing. Measured: with
+    `diff.renames=false` git reports a promotion as a plain `A <destination>`
+    instead of `R100 <src> <destination>`. THIS selector takes the last field
+    either way, so its output is unchanged and removing its pin reds nothing.
+    The A selector flips from returning nothing to returning the destination,
+    which recounts a promotion as an added run — without its pin this file
+    fails two rows under `GIT_CONFIG_GLOBAL=<diff.renames=false>`. The pin here
+    is kept as the matching half of a pair, not because it changes this output;
+    `test_both_selectors_pin_rename_detection_against_the_runners_gitconfig`
+    asserts the half that does.
+    """
+    base = os.environ.get("BASE_SHA")
+    head = os.environ.get("HEAD_SHA")
+    if not base or not head:
+        return None
+    try:
+        out = subprocess.check_output(
+            ["git", "-c", "diff.renames=true", "diff",
+             "--name-status", "--diff-filter=AR", base, head],
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise GateUnavailable(
+            f"could not diff {base}..{head} in this checkout (git exited "
+            f"{exc.returncode}), so the 1M-window check cannot see which run logs "
+            "this PR added or renamed. Either the commit was never fetched (CI "
+            "uses fetch-depth: 0) or this directory is not a git repository. "
+            "Refusing rather than reporting zero."
+        ) from exc
+    except FileNotFoundError as exc:
+        raise GateUnavailable(
+            "git is not on PATH, so the 1M-window check cannot read the tree it "
+            "must check. Refusing rather than reporting zero."
+        ) from exc
+    out_paths: list[Path] = []
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        # `R<score>` rows carry src AND dst; the DESTINATION is what arrived in
+        # the corpus. Taking parts[-1] handles A (2 fields) and R (3) alike, and
+        # matches check_runlogs.py::git_diff_changes.
+        p = Path(parts[-1].strip())
+        if (
+            len(p.parts) >= 4
+            and p.parts[:3] == ("eval", "runlogs", "e2e")
+            and _is_primary_runlog(p.name)
+        ):
+            out_paths.append(p)
+    return out_paths
+
+
+def _read_at_head(head: str, rel: Path) -> dict | None:
+    """Parse ``rel`` out of the git tree at ``head``. None on anything unusable.
+
+    The content sibling of `_in_head_tree`, which answers presence only. Reading
+    the WORKING DIRECTORY here would reintroduce exactly the defect PR #2550
+    fixed in this file: a log edited on disk but not committed, or committed and
+    then edited, would be judged on bytes CI will never see.
+
+    Binary capture with an explicit decode, so `test_encoding_lint.py`'s
+    text-mode rule does not apply and no platform default can leak in. None
+    covers: undecodable, unparseable, and a root that is not an object — none
+    of which make a run a 1M run.
+
+    A non-zero `git show` RAISES rather than returning None. Every path handed
+    to this function was just reported by `git_ar_e2e_runlogs()` as added or
+    renamed INTO the tree at `head`, so the blob is known to be there: a
+    failure is an anomaly (git gone mid-run, a transient fork failure, an
+    unreadable object), not evidence of no betas. Returning None there reports
+    a file it never opened as clean, which is the same silent-zero the
+    selectors refuse for — and it is reachable, since these git subprocesses do
+    intermittently fail under load.
+    """
+    proc = subprocess.run(
+        ["git", "show", f"{head}:{rel.as_posix()}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        raise GateUnavailable(
+            f"could not read {rel} out of the tree at {head} (git exited "
+            f"{proc.returncode}), though the selector just reported it as added "
+            "or renamed into that tree. Refusing rather than reporting the run "
+            "as not-1M on a file that was never opened."
+        )
+    try:
+        parsed = json.loads(proc.stdout.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def check_added_runlogs_not_1m(added: list[Path], head: str) -> list[str]:
+    """Blocking: a PR-added-or-renamed run log made with the 1M context window.
+
+    `--context-1m` sets the SDK's context-1m-2025-08-07 beta and records it in
+    `usage.betas`. A 1M window changes the compaction count and the cache-gap
+    structure, which is what `make e2e-compaction` and `make e2e-cache-window`
+    measure, and `all_result_jsons` scans eval/runlogs/e2e/ with no exclusion at
+    a 14-day window — so a committed 1M run lands at maximum weight.
+
+    The field is FLAT: `usage.betas`, beside `deny_shell`. NOT `usage.usage.betas`
+    — the usage envelope carries a nested `usage` key of SDK token counts, and
+    reading that one finds nothing forever.
+
+    Non-empty LIST only. `[]` is a normal run (174 of the 175 committed runs
+    predate the field; the 175th records `[]`), and a non-list is malformed
+    rather than 1M — neither is this check's business to report.
+    """
+    violations: list[str] = []
+    for rel in added:
+        log = _read_at_head(head, rel)
+        if not isinstance(log, dict):
+            continue
+        usage = log.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        betas = usage.get("betas")
+        if not isinstance(betas, list) or not betas:
+            continue
+        violations.append(
+            f"run log '{rel}' was made with the 1M context window "
+            f"(usage.betas = {betas!r}) and must not be committed under "
+            "eval/runlogs/e2e/. A 1M window changes the compaction count and the "
+            "cache-gap structure, so the run is not comparable to the corpus and "
+            "would skew every windowed report at maximum weight. Keep it in "
+            f"{QUARANTINE_HINT}."
+        )
+    return violations
+
+
+def _in_head_tree(head: str, rel: Path) -> bool:
+    """True when ``rel`` (repo-relative) exists in the git tree at ``head``.
+
+    Only reached once `git_added_e2e_runlogs` has already diffed against ``head``
+    from this same cwd, so a 128 here is a missing PATH rather than a broken
+    checkout -- that case refuses in the selection step above.
+    Paths are POSIX-joined because git addresses ``<sha>:<path>`` with forward
+    slashes on every platform. Binary mode: only the returncode is read, so the
+    child's bytes are never decoded.
+    """
+    proc = subprocess.run(
+        ["git", "cat-file", "-e", f"{head}:{rel.as_posix()}"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+    )
+    return proc.returncode == 0
+
+
+def check_added_runlogs_graded(added: list[Path], head: str) -> list[str]:
     """Blocking gate: every PR-added run log that produced a tree must ship its
     committed ``run-<ts>.ann.json`` in the same PR.
 
@@ -132,17 +352,22 @@ def check_added_runlogs_graded(added: list[Path]) -> list[str]:
     loader can't grade it and neither can a human, so no annotation is owed.
     Detected by the absence of the ``run-<ts>.final-tree.gedcomx.json`` sibling,
     which is exactly the file the grade loader requires.
+
+    Both siblings resolve from the ``head`` tree, not the working directory: the
+    run logs were selected from that tree too, and a sibling present on disk but
+    uncommitted must not change the verdict (issue #2469). The two warn-only
+    checks below deliberately keep reading the working directory — they never
+    block, so the disagreement costs nothing there. Do not "unify" them.
     """
     violations: list[str] = []
     for rel in added:
-        runlog = REPO_ROOT / rel
         stem = rel.name[: -len(".json")]  # run-<ts>
-        slug_dir = runlog.parent
+        slug_dir = rel.parent
         tree = slug_dir / f"{stem}.final-tree.gedcomx.json"
         ann = slug_dir / f"{stem}.ann.json"
-        if not tree.exists():
+        if not _in_head_tree(head, tree):
             continue  # treeless run — nothing to grade
-        if not ann.exists():
+        if not _in_head_tree(head, ann):
             violations.append(
                 f"run log '{rel}' produced a final tree but no committed "
                 f"'{stem}.ann.json'. Grade it in this PR with /grade-e2e-run and "
@@ -313,10 +538,26 @@ def check_matched_vs_components(added: list[Path]) -> list[str]:
 
 def main() -> int:
     # --- Grading gate (blocking) — PR-added run logs with a tree need an ann ---
-    added = git_added_e2e_runlogs()
+    try:
+        added = git_added_e2e_runlogs()
+        # INSIDE this try on purpose. The handler below wraps only the call
+        # above today, and a GateUnavailable raised from a later line would
+        # propagate as a six-frame traceback -- the failure shape this class
+        # exists to eliminate. `or []` is for the three tests that stub the
+        # selector above and leave this one real; on the production path
+        # `added is not None` already means both shas are set.
+        ar_runlogs = (git_ar_e2e_runlogs() or []) if added is not None else []
+    except GateUnavailable as exc:
+        # Before the warn loops, unavoidably: they take `added`, which does not
+        # exist on this path. Nothing is swallowed because nothing has run.
+        print(f"::error::{exc}")
+        print(f"  - {exc}", file=sys.stderr)
+        return 1
     if added is None:
         print("E2E grading gate skipped (no PR context: BASE_SHA/HEAD_SHA unset).")
         return 0
+    # Present by construction: git_added_e2e_runlogs() returns None when unset.
+    head = os.environ["HEAD_SHA"]
 
     # --- Unresolved-draft check (warn only) — runs first so its output is
     # --- visible even when the blocking gate below fails the job.
@@ -329,7 +570,29 @@ def main() -> int:
         print(f"::warning::{w}")
         print(f"  ! {w}", file=sys.stderr)
 
-    grade_violations = check_added_runlogs_graded(added)
+    # Both gates read the AR set. For the grading gate that closes a real hole:
+    # a run promoted out of quarantine arrives as a RENAME, and every run in
+    # eval/runlogs/_2491-exploratory-quarantine/ has a final tree and no
+    # annotation -- the exact population this gate rejects, arriving by the one
+    # route `--diff-filter=A` cannot see. This is NOT the widening #2581
+    # forbids: the shared selector is untouched and the two warn loops above
+    # still read it, so only this one blocking gate changes what it sees.
+    # Same handler shape as the selector above: `_read_at_head` refuses on an
+    # unreadable blob, and without this that refusal would leave main() as a
+    # traceback rather than the ::error:: a reader can act on.
+    try:
+        grade_violations = check_added_runlogs_graded(ar_runlogs, head)
+        beta_violations = check_added_runlogs_not_1m(ar_runlogs, head)
+    except GateUnavailable as exc:
+        print(f"::error::{exc}")
+        print(f"  - {exc}", file=sys.stderr)
+        return 1
+
+    # Both blocking rules report before either returns. A second rule that
+    # printed ::error:: without reaching the return would be a green check, and
+    # short-circuiting on the first would hide the other on the shape that fires
+    # both -- a promoted quarantine run has a tree and no annotation, so an
+    # ADDED 1M run trips the grading gate too.
     if grade_violations:
         print(
             "E2E grading gate — PR-added run logs missing their annotation:",
@@ -338,9 +601,25 @@ def main() -> int:
         for v in grade_violations:
             print(f"::error::{v}")
             print(f"  - {v}", file=sys.stderr)
+    if beta_violations:
+        print(
+            "E2E 1M-window gate — run logs not comparable to the corpus:",
+            file=sys.stderr,
+        )
+        for v in beta_violations:
+            print(f"::error::{v}")
+            print(f"  - {v}", file=sys.stderr)
+    if grade_violations or beta_violations:
         return 1
 
-    print(f"E2E grading gate OK ({len(added)} added run log(s) checked).")
+    # Report the set the gates actually read. A pure quarantine->corpus rename
+    # adds nothing, so an `added`-only denominator would read
+    # `OK (0 added run log(s) checked)` on a run that checked one file -- the
+    # cheerful zero eval/CLAUDE.md's denominator doctrine exists to prevent.
+    print(
+        f"E2E gates OK ({len(ar_runlogs)} added-or-renamed run log(s) checked; "
+        f"{len(added)} of them newly added)."
+    )
     return 0
 
 

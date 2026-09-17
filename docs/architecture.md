@@ -676,9 +676,11 @@ Architecturally:
   points at the compiled `build/`, and a live session holds the old catalog. The
   harness targets (`harness-test`, `eval-skill`, `e2e-run`) carry `$(ENGINE_BUILD)`
   and rebuild for you. Cowork: `make mcpb` and reinstall the extension, then fully
-  quit and reopen Claude Desktop. Hosted: `make sandbox-image` — the
-  `genealogy-agent` image bakes its own engine and `make server-e2b` does **not**
-  rebuild it (§7). `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
+  quit and reopen Claude Desktop. Hosted: `make deploy` (which rebuilds the image),
+  or `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify against a
+  dev template first — the `genealogy-agent` image bakes its own engine and
+  `make server-e2b` does **not** rebuild it (§7). A bare `make sandbox-image`
+  rebuilds PRODUCTION's template in place. `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
   covers the Claude Code and Cowork rows; the hosted row is only here.
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
@@ -865,7 +867,7 @@ the most expensive mistake in this layer, because two of the three fail
 |---|---|---|
 | Skill `allowed-tools:` | **bare** (`research_query`) | **No** — neither production path nor the unit harness narrows per skill. The field is a grant, not a restriction. Advisory only: the `test_tool_allowlist` validator warns on undeclared calls. |
 | Agent `tools:` | **spelled under all three registrars**, matched exactly | **Yes** — a tool omitted from it is absent from the agent even under `bypassPermissions` (measured, §5.2). This is the whole of an agent's capability boundary: `disallowedTools:` was deleted from all five agents on 2026-08-30, because every deny restated the omission above it. |
-| `PreToolUse` hook | n/a — matches on tool name + input | **Yes** — and it carries more than the raw-write lockdown: it also routes `research_append` by **caller identity** (§5.4), which is the only surface that can restrain the main thread. Neither harness loads the plugin's `hooks.json`, but both harness hooks **import its predicates**, so the rules bind in all four environments (§5.4). |
+| `PreToolUse` hook | n/a — matches on tool name + input | **Yes** — and it carries more than the raw-write lockdown: it also routes `research_append` by **caller identity** (§5.4), which is the only surface that can restrain the main thread. Neither harness loads the plugin's `hooks.json`, but both harness hooks **import its predicates**, so the rules bind in all four environments (§5.4). **Measured in one of the four**: `make hook-smoke` (§9.1) drives the hosted SDK loader end to end and requires the guard script's own deny text back. Cowork, where this hook is the *only* guardrail, was probed live on 2026-07-30 (§5.4, ADR-0005) — with a broader matcher and only for `Write`/`Bash`, before the `research_append` arm existed (2026-08-21). That arm is still unmeasured there and it stays on the `nothing-checks` register. |
 
 ### 5.1 Skill `allowed-tools` — declarative everywhere
 
@@ -916,9 +918,11 @@ against the harness's arbitrary dict key rather than the product's name. The
 bare `display_name` registration repeated the shape one registrar later — that spelling was missing,
 `record-extractor` was refused outright with all 16 of its entries named
 unrecognized, and the lint agreed with the omission because it derived its expected
-prefixes from the two registrars we knew about. (`gps-mentor` is the exception: it
-declares a bare `Read`, which always resolves, so it would spawn holding that
-alone rather than be refused.) Listing every
+prefixes from the two registrars we knew about. (An agent that declares the
+built-in `Read` bare is the exception: `Read` always resolves, so it spawns
+holding that alone rather than be refused. Today that is `proof-conclusion` and
+`research-exhaustiveness`; every other agent, `gps-mentor` included, is MCP-only
+and a registrar miss refuses it.) Listing every
 spelling is safe because unrecognized entries are ignored so long as one resolves.
 
 **`disallowedTools:` was never the load-bearing layer — and this half of the
@@ -1184,14 +1188,26 @@ carries `"hooks"`, so the directory ships; a script not named in `hooks.json`
 does not run.) The script is stdlib-only Python, no network, and **must never
 raise** — every failure path falls through to allowing the call. Model it on
 `guard_project_files.py` and extend `tests/packaging/plugin-hooks.test.ts`, which
-runs the real script.
+runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test.ts`
+proves the script *decides* correctly, and nothing else proves a runtime *binds*
+it — which, because the script must never raise, fails silently.
 
 > A plugin hook binds in Cowork and the hosted path and in **neither harness**.
 > All three of the unit harness, the e2e harness, and the hosted control plane
-> pass their *own* `hooks=` — and the unit harness's carries no protected-file
-> rule at all. If the guardrail must hold in an e2e run or in production, port it
-> there too — and give the copies a parity test, the way
-> `PROTECTED_PROJECT_FILES` has one. Only that rule is covered today.
+> pass their *own* `hooks=`. If the guardrail must hold in an e2e run or in
+> production, port it there too — and give the copies a parity test, the way
+> `PROTECTED_PROJECT_FILES` has one (`test_write_lockdown_parity.py`, which fails
+> on an unregistered fourth copy).
+>
+> **Two things this blockquote used to say are no longer true.** The unit
+> harness's hook is not bare: `context_policy.py`'s `protected_file_denial`
+> *imports* `guard_project_files.protected_target` from the shipped script — an
+> import, not a copy — wired through `skill_runner.py`'s `pretool_hook`. And the
+> raw-write rule is not the only one covered: the e2e harness has called the
+> shipped `owner_denied` since 2026-08-23 and the unit plane since 2026-09-02, so
+> the caller-ownership rules are covered too (§5.4, and
+> `guardrail-enforcement-spec.md` §4). What is still uncovered is *binding*, in
+> every environment but the hosted one.
 
 ---
 
@@ -1561,8 +1577,10 @@ other. Both `apps/electron` and `apps/web` must still typecheck (`make typecheck
 
 **Change anything the sandbox runs.** `make server-e2b` does **not** rebuild the
 engine — the `genealogy-agent` image bakes its own. After changing
-`app/sandbox_server.py` or `app/agent/*`, run `make sandbox-image` or the microVM
-runs stale code.
+`app/sandbox_server.py` or `app/agent/*`, rebuild the image or the microVM runs
+stale code: `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify,
+since a bare `make sandbox-image` rebuilds PRODUCTION's template in place.
+`make deploy` rebuilds the production one as part of the deploy.
 
 **Add a control-plane endpoint.** `apps/server/app/v1.py` for the public REST
 API (see `DEVELOPMENT.md` "Public `/v1` REST API"), `sessions.py` for session
@@ -1588,8 +1606,8 @@ bridge-free path has never been observed.
 
 | Environment | Skills | Agents | Hooks | Permission mode | MCP server |
 |---|---|---|---|---|---|
-| **Cowork** | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** | `default` | host `.mcpb` — the exposed spelling has **moved over time**, not by run mode (§5.2) |
-| **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
+| **Cowork** | loaded as a plugin | plugin — bare `@plugin:` names resolve | **plugin's** — and the only guardrail here, so a binding failure is unguarded rather than merely un-redundant. **Partly measured**: probed live 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher; the `research_append` arm (added 2026-08-21) is unmeasured here, and `hook-smoke` drives the hosted loader, not this one | `default` | host `.mcpb` — the exposed spelling has **moved over time**, not by run mode (§5.2) |
+| **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
 
@@ -1647,7 +1665,9 @@ CI job runs it.** It needs `ANTHROPIC_API_KEY` or an `eval/.env` entry. The targ
 sets `AGENT_SMOKE=1`, which turns the underlying test's skips into hard errors, so
 a missing key fails loudly here while the same test still skips under a plain
 `make server-test`. Resolution is not binding: for whether a granted tool actually
-*binds*, run `make probe-agent-binding`.
+*binds*, run `make probe-agent-binding`; for whether the plugin's `PreToolUse`
+hook binds, `make hook-smoke`. `agent-smoke` reads the init handshake, which
+carries no hook state at all, so it cannot see a hook either way.
 
 ---
 
@@ -1664,7 +1684,8 @@ a missing key fails loudly here while the same test still skips under a plain
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
 | `make typecheck` | the whole JS workspace (turbo) | Python; and it is not the only viewer gate — `make test-js` runs viewer-ui's vitest suite (including `schema-interface-drift.test.ts`), and `make engine-test` runs `field-render-drift.test.ts` against the viewer's section components |
 | `make server-test` | `apps/server` (FastAPI, pytest) | the in-sandbox path on real E2B |
-| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) — fails loudly with no API key, since the target sets `AGENT_SMOKE=1` | whether a granted tool actually **binds** — that is `make probe-agent-binding`; the ToolSearch backstop and `run_e2e_test` fallback abort paths |
+| **`make agent-smoke`** | that the hosted path resolves plugin agents under bare names (arm 1), and that a dead MCP server triggers the init-message abort with captured stderr and no files written (arm 2) — fails loudly with no API key, since the target sets `AGENT_SMOKE=1` | whether a granted tool actually **binds** — that is `make probe-agent-binding`; **anything hook-shaped** — it reads the init handshake, which carries no hook state at all, so a `hooks.json` that stopped loading passes it silently (that is `make hook-smoke`); the ToolSearch backstop and `run_e2e_test` fallback abort paths |
+| **`make hook-smoke`** | that the **hosted SDK loader actually binds** the plugin's `PreToolUse` hook: reads `hooks/hooks.json`, matches a real `research_append`, shells `guard_project_files.py` and blocks — attributed by requiring the guard's own reason text, with the SDK-side hook cleared and a hooks-removed control arm. Hard-errors without a key | **Cowork's loader**, which is a different one and reachable only by a human in a live session; the guard script's *decisions* (that is `plugin-hooks.test.ts` and the parity test). The Cowork half stays on the `nothing-checks` register either way |
 | `make eval-skill SKILL=<name>` | one skill's unit suite against mocked MCP fixtures | multi-turn decay — it grades a single invocation in fresh context |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: `runs_per_test` is pinned to 1, so the harness's `flaky` flag is **dead by construction, not healthy**. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. The `Makefile`'s own "~20-60 min, $3-10" is a narrower window that has not been resynced. |
@@ -1699,14 +1720,16 @@ the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
 §3 — plus a **warn-only** arm that maps a changed shared fixture
 (`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
-and warns when their run logs go stale), and three **warn-only** lints
-worth knowing because they fire right after the three most common tasks:
+and warns when their run logs go stale), and four **warn-only** lints
+worth knowing because they fire right after the most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
-tools — what happens after you grant one), and `check_negative_reciprocity.py`
+tools — what happens after you grant one), `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
-after you widen a description).
+after you widen a description), and `check_slot_queue.py` (an open issue's
+`**Touches:**` line names a path in the eval snapshot this PR is about to make
+stale — what happens right before you buy a paid run).
 
 **These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
@@ -1799,11 +1822,25 @@ changes how a correct change is made:
    And it answers the question only for the **hosted** options it builds; Cowork
    still has no instrument but a live session, and only for the spelling that
    session exposes.
-2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
-   not rebuild the `genealogy-agent` E2B image production runs the agent on, and
-   both guards over it are advisory. Production can run weeks-old skills, agents,
-   and MCP tools while CI, the deploy, and `/api/health` all look correct, and
-   nothing surfaces the baked commit. Run `make sandbox-image` (§7).
+
+   **The same shape holds for the `PreToolUse` hook, and it is worse there.** No
+   CI job proves the plugin's hook binds either — and unlike a toolless agent,
+   which the runtime refuses out loud, a hook that stops binding is *silent by
+   construction*: `guard_project_files.py`'s contract is "never raise, fall
+   through to allowing the call", so a hook with no binding is indistinguishable
+   from a hook with no opinion. `make hook-smoke` is the analogue of
+   `probe-agent-binding` here — it drives the real `build_options`, provokes a
+   `research_append` on `proof_summaries` (the arm with no redundant copy in the
+   hosted path) and requires the guard's own deny text, with a hooks-removed
+   control arm so the deny is attributable. Hosted-only, for the same reason.
+2. **Nothing checks the sandbox image itself.** `make deploy` now builds and
+   pushes the `genealogy-agent` E2B image, and `/api/health` reports the commit
+   baked into it, so a deploy no longer silently leaves production on weeks-old
+   skills, agents and MCP tools. What remains unchecked is the image as an
+   artifact: no CI job builds or verifies the template, `make server-e2b` runs
+   whatever is baked into the one it resolves, and a bare `make sandbox-image`
+   rebuilds PRODUCTION's template in place from the working tree. Build a dev
+   template (`E2B_TEMPLATE_NAME=genealogy-agent-dev`) when verifying (§7).
 3. **Every measurement in this repo describes the eval corpus, not production.**
    There is no production telemetry: `apps/server/app/obs.py` is PII-free stdout
    logging, and `sandbox_server.py`'s buffer is a reconnect *replay*, not a tool

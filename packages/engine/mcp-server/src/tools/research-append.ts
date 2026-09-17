@@ -37,6 +37,9 @@ import {
   noProjectResult,
 } from "../utils/project-io.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { compatiblePlace } from "../utils/date-comparison.js";
+import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
+import { placeSegments } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -165,6 +168,174 @@ const SECTIONS: Record<string, SectionConfig> = {
 // checks conflict competing-counts, hypothesis ruled_out⇒reason, and
 // exhaustive-declaration completeness — those are left to validate-before-persist.)
 // Each returns error strings on the post-mutation entry; empty = ok.
+
+// A broader place containing a narrower one is not a disagreement. "Ireland"
+// and "County Cork, Ireland" are the same claim at two levels of precision, so
+// a conflict entry pairing them asserts a dispute the sources do not have
+// (issue #2028, widened by the 2026-09-09 ruling on #1965). Decidable from
+// research.json alone, so it is a precondition rather than a line of SKILL.md
+// prose: ADR-0011's first question.
+//
+// `compatiblePlace` is the existing comparator and its own worked example is
+// this exact pair. It reads the free-text `place` because that is the value
+// the comparator is built for and the one every assertion carries however it
+// was authored — NOT because `standard_place` is empty. It is empty on the
+// hand-authored fixtures only; `research_append` resolves and writes it
+// itself on every assertion append carrying a place.
+// `disputed_attribute` is free text — 28 distinct values across the 102 fact
+// conflicts in the corpus, including whole sentences and two compounds
+// ("birth_year_and_birthplace"). So this is an exact allow-list of the
+// attributes that are about place and nothing else. A conflict over
+// `birth_year` between "Ireland" and "County Cork, Ireland" is a real dispute
+// about the year; refusing it, with a message saying the two "do not disagree",
+// is false about the axis actually in dispute. A compound attribute names a
+// non-place axis too, so it is left alone for the same reason.
+const PLACE_ONLY_DISPUTED_ATTRIBUTES = new Set([
+  "place",
+  "birthplace",
+  "birth_place",
+  "deathplace",
+  "death_place",
+  "marriage_place",
+  "burial_place",
+  "residence_place",
+]);
+
+function placeContainmentErrors(entry: any, research: any): string[] {
+  if (entry.conflict_type !== "fact") return [];
+  const attr = typeof entry.disputed_attribute === "string"
+    ? entry.disputed_attribute.trim().toLowerCase()
+    : "";
+  if (!PLACE_ONLY_DISPUTED_ATTRIBUTES.has(attr)) return [];
+  const ids: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const byId = new Map<string, any>(
+    ((research.assertions ?? []) as any[])
+      .filter((a) => a && typeof a.id === "string")
+      .map((a) => [a.id, a]),
+  );
+  // A missing or place-less neighbour is not this entry's problem — the
+  // document validator reports dangling ids, and an assertion with no place
+  // states nothing to compare. `placeSegments` is what decides "no place":
+  // a blank or comma-only string passed a `typeof === "string"` test, then read
+  // as a disagreement (nothing is compatible with ""), which silently disabled
+  // the whole guard for the entry.
+  const placed = ids
+    .map((id) => byId.get(id))
+    .filter((a) => a && typeof a.place === "string" && placeSegments(a.place).length > 0);
+
+  // `compatiblePlace` is true for EQUAL places as well as for containment — its
+  // own docstring lists "County Cork, Ireland" against itself as compatible. So
+  // "some pair is compatible" is the wrong predicate: the canonical Flynn
+  // conflict is Ireland / Ireland / Pennsylvania, where the two Irelands are
+  // compatible with each other while Pennsylvania genuinely disagrees.
+  //
+  // Refused only when BOTH hold: no pair disagrees at all, and at least one
+  // pair is a *strict* containment — compatible with differing hierarchy depth,
+  // so one side genuinely says less. Depth counts normalized segments, matching
+  // what the comparator itself does; a raw comma count disagrees with it in
+  // both directions ("Ireland" vs "Ireland," wrongly refused, "Cork, Ireland"
+  // vs "Ireland," wrongly allowed).
+  const depth = (place: string) => placeSegments(place).length;
+  let anyDisagreement = false;
+  const containment: Array<[any, any]> = [];
+  for (let i = 0; i < placed.length; i++) {
+    for (let j = i + 1; j < placed.length; j++) {
+      const a = placed[i];
+      const b = placed[j];
+      if (!compatiblePlace(a.place, b.place)) {
+        anyDisagreement = true;
+        continue;
+      }
+      if (depth(a.place) !== depth(b.place)) containment.push([a, b]);
+    }
+  }
+  if (anyDisagreement || containment.length === 0) return [];
+  return containment.map(([a, b]) => {
+    const [broad, narrow] = depth(a.place) < depth(b.place) ? [a, b] : [b, a];
+    return (
+      `competing assertions '${broad.id}' ("${broad.place}") and '${narrow.id}' ` +
+      `("${narrow.place}") name the same place at two levels of precision, so they ` +
+      `do not disagree about '${entry.disputed_attribute}' — the first simply says ` +
+      `less. Record the dispute over an attribute the sources actually contradict, ` +
+      `or drop this conflict entry: removing one assertion would leave fewer than ` +
+      `the two a fact conflict requires.`
+    );
+  });
+}
+
+// A year-only date cannot be ordered against a day-precision date inside that
+// same year. The reported defect is an agent telling a researcher that an
+// arrival of 15 Dec 1856 conflicted with a death recorded only as "1856" — it
+// derived the ordering by reading two date strings, and no tool was consulted.
+//
+// A warning, not a refusal, and the distinction is load-bearing. Whether a
+// conflict entry *claims* an ordering is not declarable today: `conflict_type`
+// is only fact|identity and `disputed_attribute` is free text. A gate would
+// therefore have to infer the claim, and a wrong inference refuses legitimate
+// work. A warning that is wrong costs one line of text, so the shape below can
+// be used as the trigger without that risk.
+//
+// The trigger is the ordering *shape*: competing assertions spanning more than
+// one fact_type. A value disagreement is two assertions of the SAME type with
+// different values (35 of the 37 corpus fact conflicts are all-`birth`; 34 of
+// those carry three assertions, not two),
+// and warning there would fire on every birthplace conflict — true, irrelevant,
+// and the fastest way to teach a reader to ignore this channel.
+//
+// `stdDate` first, always: `getDayRange` returns null for ISO and `~approx`
+// forms, which are 191 of the 391 assertion dates in the corpus, and
+// `compatibleDate` reads null as "incompatible" — i.e. raw input would make
+// this silently say nothing on precisely the imprecise dates it exists to flag.
+function unorderableDateWarnings(entry: any, research: any): string[] {
+  if (entry.conflict_type !== "fact") return [];
+  const ids: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const byId = new Map<string, any>(
+    ((research.assertions ?? []) as any[])
+      .filter((a) => a && typeof a.id === "string")
+      .map((a) => [a.id, a]),
+  );
+  const present = ids.map((i) => byId.get(i)).filter(Boolean);
+  const factTypes = new Set(
+    present.map((a) => a.fact_type).filter((t) => typeof t === "string"),
+  );
+  if (factTypes.size < 2) return [];
+  const out: string[] = [];
+  for (let i = 0; i < present.length; i++) {
+    for (let j = i + 1; j < present.length; j++) {
+      const a = present[i];
+      const b = present[j];
+      if (a.fact_type === b.fact_type) continue;
+      if (typeof a.date !== "string" || typeof b.date !== "string") continue;
+      // `isABeforeB`, not `compatibleDate`: the latter widens imperfect dates by
+      // DEFAULT_IMPERFECT_FUDGE_DAYS (365), so a death of "1856" reads as
+      // unorderable against a burial on 1857-12-31 — and the warning would then
+      // tell the agent that neither is known to come first, which is false.
+      // `isABeforeB` is three-valued at fudge 0 and returns null for exactly the
+      // case this warns about: the ranges overlap, so neither is established as
+      // earlier. It was already exported with zero callers.
+      // `isABeforeB` returns null for TWO reasons — the ranges overlap, or a
+      // date is unparseable — and only the first is what this warns about.
+      // Parse both first, or a blank or garbage date reads as "unorderable"
+      // and warns about a comparison that never happened.
+      const ra = getDayRange(stdDate(a.date));
+      const rb = getDayRange(stdDate(b.date));
+      if (!ra || !rb) continue;
+      if (isABeforeB(stdDate(a.date), stdDate(b.date)) !== null) continue;
+      out.push(
+        `'${a.id}' (${a.fact_type}, ${a.date}) and '${b.id}' (${b.fact_type}, ` +
+          `${b.date}) cannot be ordered against each other: their possible-day ranges ` +
+          `overlap, so neither is established as earlier. If ` +
+          `this conflict rests on one event postdating the other, it is not ` +
+          `established — say what else makes them incompatible, or withdraw it.`,
+      );
+    }
+  }
+  return out;
+}
 
 function conflictInvariants(entry: any): string[] {
   // `moot` settles a conflict for every gate that reads `status` — the
@@ -1629,34 +1800,89 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
 }
 
 /** Assertions with `evidence_type: "negative"` must set `record_role` to the
- *  exact string `"absent"` (research-schema-spec.md §5.6), and vice versa —
- *  the two fields are not independent judgment calls, `record_role: "absent"`
- *  is a mechanical corollary of the evidence_type decision, so this REJECTS
- *  rather than silently coercing. Silently overwriting `record_role` would
- *  risk masking an assertion whose `value` also failed to differentiate the
- *  person — observed live: three negative-evidence assertions on three
+ *  exact string `"absent"` (research-schema-spec.md §5.6, "Negative evidence") — and vice versa —
+ *  and must set `informant_proximity` to `"researcher"`: no record informant
+ *  reported an absence, whatever the record type, so a negative is always the
+ *  researcher's own conclusion. None of these are independent judgment calls;
+ *  each is a mechanical corollary of the evidence_type decision, so this
+ *  REJECTS rather than silently coercing. Silently overwriting `record_role`
+ *  would risk masking an assertion whose `value` also failed to differentiate
+ *  the person — observed live: three negative-evidence assertions on three
  *  different people sharing one generic `value` string ("preceded Harold
  *  Dean Whitaker in death"), with `record_role` as their only distinguishing
  *  field. No-op for a non-assertion entry (only assertions carry
- *  `evidence_type`) or a non-string `evidence_type`. */
+ *  `evidence_type`) or a non-string `evidence_type`.
+ *
+ *  The `record_role` arm is bidirectional; the `informant_proximity` arm is
+ *  FORWARD ONLY, matching the document tier — every `absent` assertion in the
+ *  corpus is already negative, so the converse is an unexercised branch.
+ *  `informant` is not checked at all: it is free text (ADR-0011 limit 1).
+ *
+ *  **Both messages name the ABSENCE TEST, not just the field to change**, and
+ *  that is load-bearing rather than decorative. The discriminator is whether
+ *  the finding is an absence — NOT whether the record states the fact, which
+ *  is wrong for the predeceased pattern (a person the record names can still
+ *  be absent from among the living). Neither message may prescribe an edit
+ *  another arm refuses: an earlier draft told the caller to flip
+ *  `evidence_type` to "direct", which the converse role arm then rejected. In
+ *  `eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`
+ *  (`ut_record_extraction_028`) the role arm refused two blank-field negatives;
+ *  the agent's very next call re-sent the same two defects with `record_role`
+ *  flipped to `"absent"` and they were accepted. A message that names one field
+ *  buys a relabel, not a fix. */
 function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   if (typeof entry.evidence_type !== "string") return;
   const isNegative = entry.evidence_type === "negative";
   const roleIsAbsent = entry.record_role === "absent";
+  // Both arms are COLLECTED, not thrown one at a time. An entry wrong on both
+  // fields is the commonest violating shape in the corpus (a_012's pre-retag
+  // state is exactly it), and throwing the role arm first hid the proximity
+  // error until the caller had already spent a round trip fixing the role.
+  // That is this change's own thesis applied to itself: a refusal that names
+  // one field at a time buys a relabel rather than a fix. The document tier
+  // already reports both.
+  const errors: string[] = [];
   if (isNegative && !roleIsAbsent) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has evidence_type "negative" but record_role '${entry.record_role}' ` +
-        `— negative evidence always uses the literal record_role "absent". Keep the ` +
-        `person's identity in \`value\` instead (e.g. "Walter Whitaker preceded Harold ` +
-        `Dean Whitaker in death", not a generic value shared across multiple people).`,
+        `— negative evidence always uses the literal record_role "absent", and that ` +
+        `holds even when the record NAMES the person: an obituary's "preceded in death ` +
+        `by his wife, Ruth" is still negative evidence about her vital status, so her ` +
+        `role is "absent", not "spouse_1". Before changing the role, check the finding ` +
+        `is an ABSENCE at all. A fact about a person PRESENT in the record is ` +
+        `evidence_type "direct" carrying that person's real role — change both fields ` +
+        `together, not just this one. A blank field on a present person (no surname, no ` +
+        `occupation) is silence: write no assertion. If it is an absence, keep the ` +
+        `person's identity in \`value\` (e.g. "Walter Whitaker preceded Harold Dean ` +
+        `Whitaker in death"), not a generic value shared across multiple people. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
     );
   }
   if (roleIsAbsent && !isNegative) {
-    throw new ResearchAppendError(
+    errors.push(
       `assertion has record_role "absent" but evidence_type '${entry.evidence_type}' ` +
         `— record_role "absent" is reserved for negative evidence (evidence_type: "negative").`,
     );
   }
+  if (isNegative && entry.informant_proximity !== "researcher") {
+    errors.push(
+      `assertion has evidence_type "negative" but informant_proximity ` +
+        `'${entry.informant_proximity}' — negative evidence is the researcher's own ` +
+        `conclusion, so it always takes informant_proximity "researcher": no record ` +
+        `informant reported an absence, whatever the record type, and that holds even ` +
+        `when the record names the person (the "preceded in death by" shape). Set ` +
+        `informant_proximity to "researcher". Only if the finding is not an absence at ` +
+        `all — a fact about a person present in the record — is "negative" the wrong ` +
+        `evidence_type, and then record_role must change from "absent" to that person's ` +
+        `real role in the same edit; changing evidence_type alone is refused. A ` +
+        `conforming negative is exactly: record_role "absent", informant_proximity ` +
+        `"researcher", informant "the researcher" \u2014 the attached worked example shows ` +
+        `a DIRECT assertion and does not satisfy this rule.`,
+    );
+  }
+  if (errors.length) throw new ResearchAppendError(errors);
 }
 
 function applyOne(
@@ -2038,7 +2264,23 @@ function applyOne(
       invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
   }
-  if (section === "conflicts") invariantErrors.push(...conflictInvariants(resultEntry));
+  if (section === "conflicts") {
+    invariantErrors.push(...conflictInvariants(resultEntry));
+    // Place containment: on append, and on an update that (re)sets the pairing.
+    // Scoped that way so an unrelated edit to a conflict written before this
+    // rule existed is not refused — the freeze #2354 had to design around.
+    const conflictFields = op.fields ?? {};
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "competing_assertion_ids")
+    ) {
+      invariantErrors.push(...placeContainmentErrors(resultEntry, research));
+      // Non-blocking, on the same ops: the write succeeds and the agent is told
+      // the two dates cannot be ordered. See unorderableDateWarnings for why
+      // this is a warning rather than a precondition.
+      opWarnings.push(...unorderableDateWarnings(resultEntry, research));
+    }
+  }
   // One active plan per question — enforced on append OR an update that
   // (re)sets status to "active"; the helper no-ops for non-active entries.
   if (section === "plans") {

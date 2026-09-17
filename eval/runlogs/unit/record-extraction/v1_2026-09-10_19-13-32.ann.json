@@ -365,26 +365,26 @@
     {
       "test_id": "ut_record_extraction_011",
       "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_record_extraction_011",
+      "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "we need to handle negative tests better"
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
     },
     {
       "test_id": "ut_record_extraction_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "we need to handle negative tests better"
-    },
-    {
-      "test_id": "ut_record_extraction_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
       "corrected_score": null,
-      "comment": null
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
     }
   ]
 }

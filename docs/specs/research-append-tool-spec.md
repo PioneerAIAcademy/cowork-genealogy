@@ -691,6 +691,7 @@ audit's recommendation #5):
 | Section / op | Invariant (reject if violated) | Source |
 |--------------|-------------------------------|--------|
 | `conflicts` append (fact) | ≥2 `competing_assertion_ids`; identity ≥1 | `validator.ts:607–611` |
+| `conflicts` append (fact), or an update that (re)sets `competing_assertion_ids` | **no competing pair whose `place` values are in a containment relationship, when the dispute is about place** — "Ireland" and "County Cork, Ireland" are one claim at two levels of precision, not a disagreement, so the entry asserts a dispute the sources do not have. Three conditions, each load-bearing. **(a) `disputed_attribute` must name place and nothing else**, matched against an exact allow-list: the field is free text — 28 distinct values across the 102 corpus fact conflicts, including whole sentences and two compounds (`birth_year_and_birthplace`) — so a dispute about the *year* between two places in containment is a real dispute, and refusing it with a message saying they "do not disagree" is false about the axis actually in dispute. **(b) no pair may disagree at all**: `compatiblePlace` is true for EQUAL places as well as for containment, so the canonical Flynn conflict (Ireland / Ireland / Pennsylvania) has two compatible Irelands beside a Pennsylvania that genuinely disagrees. **(c) at least one pair must be a *strict* containment** — compatible with differing hierarchy depth, counted in normalized segments via `placeSegments`, which is what the comparator itself counts; a raw comma count disagrees with it in both directions ("Ireland" vs "Ireland," wrongly refused, "Cork, Ireland" vs "Ireland," wrongly allowed). A place that is blank or comma-only is "no place" and is skipped, not read as a disagreement, which would silently disable the guard for the whole entry. Reads free-text `place` because that is the value the comparator is built for and the one every assertion carries however it was authored — not because `standard_place` is empty (it is empty on the hand-authored fixtures only; `research_append` resolves and writes it itself on every assertion append carrying a place). Siblings ("Schuylkill, Pennsylvania" vs "Allegheny, Pennsylvania") are incompatible and stay allowed. Scoped to ops that set the pairing, so a conflict written before the rule existed stays editable. `conflict_type: "identity"` is out of scope | Alpha feedback 2026-08-28: the agent filed a country-vs-county pair as a birthplace dispute, and corrected itself only when the researcher pushed back. Measured cost: **0 of 37** corpus fact conflicts are refused, and 0 of the 102 fact conflicts across the wider 406-document corpus. A predicate keyed on any-compatible-pair — the first revision — refused **35 of 37** |
 | `conflicts` update → `resolved` | `independence_analysis`, `weighing_analysis`, `resolution_rationale` all set — each a **non-blank string**, trimmed, since a whitespace-only value satisfies the field and states nothing and a non-string satisfies no emptiness comparison at all; `preferred_assertion_id` ∈ `competing_assertion_ids` **when non-null**. Null is legal and load-bearing: a conflict the researcher weighed and honestly could not settle is recorded `resolved` with the three analyses, `resolution_rationale` saying why it cannot be settled and what would settle it, and no preferred assertion — a deferral is a finding (`gps-research-flow.md`, "A conflict that can't be resolved yet is written down as a finding"), and it is not `moot`, which asserts the conflict no longer matters. The completion gate below refuses on such a conflict while it stays `unresolved`, so this is the shape that clears it | audit; `validator.ts` NULLABLE set; `conflictInvariants` checks membership only under `preferred_assertion_id != null` |
 | `conflicts` update → `moot` | `resolution_rationale` set to a **non-blank string**, trimmed, on the same reading as the `resolved` row above — say why the conflict no longer bears on the question. Only that one field: there is nothing to weigh or to declare independent once the conflict has stopped bearing on the question, which is what separates `moot` from `resolved`. `moot` settles a conflict for every gate that reads `status`, the completion gate below included, and was the one settling write with no precondition at all — so a bare `{status: "moot"}` cleared that gate while asserting nothing | Found reviewing the completion gate's derived arm, which raised the population reaching this escape from 5 conflicts to 14. Measured cost: **0 of 1** — the corpus holds one moot conflict (`ogletree-children` c_006) and it carries a rationale. Trimming both rows is free on the same scan: **0 of 85** resolved conflicts and **0 of 1** moot carry a blank or non-string analysis field, across the e2e final states, the unit run logs, the scenario fixtures and the e2e starting documents; measured at 07f1fd31d. ADR-0011 |
 | `hypotheses` update → `ruled_out`/`status: ruled_out` | `ruled_out_reason` non-empty | `validator.ts:637–638` |
@@ -724,6 +725,33 @@ each question's `declared` flag **before** the batch is applied and rejects
 establish-and-consume in one call. Any future precondition of the form "X must
 already be true" needs the same treatment; other same-batch orderings have been
 flagged but not audited (`guardrail-enforcement-spec.md` §10).
+
+**Unorderable competing dates.** A third advisory, added with the place
+precondition above. When a `fact` conflict's competing assertions of **different**
+`fact_type` carry dates whose possible-day ranges overlap, the write succeeds and
+`validation.warnings` says they cannot be ordered against each other. It is an
+advisory rather than a precondition because whether a conflict entry *claims* an
+ordering is not declarable: `conflict_type` is only `fact`/`identity`, and
+`disputed_attribute` is required on every fact conflict, so its presence
+distinguishes nothing. A gate would have to infer the claim, and a wrong
+inference refuses legitimate work; a wrong warning costs one line. That
+asymmetry is what lets the trigger be a shape rather than a declaration.
+
+The differing-`fact_type` trigger is what keeps it quiet — a value disagreement
+is two assertions of the *same* type, so warning there would fire on the 35 of
+37 corpus fact conflicts whose competing assertions are all `birth`. Measured
+reach: **2 of 37** pass the `fact_type`-span gate (`flynn-fan-pivot`,
+`flynn-parentage-found`, both birth vs relationship) and **0** reach the
+comparison, because each carries a null date on one side.
+
+Dates go through `stdDate` first and are then compared with `isABeforeB` at
+fudge 0, **not** `compatibleDate`: `getDayRange` returns null for ISO and
+`~approx` forms (191 of the 391 corpus assertion dates) and `compatibleDate`
+reads null as "incompatible", while its 365-day imperfect-date fudge also calls
+a "1856" death unorderable against an 1857-12-31 burial. `isABeforeB` is
+three-valued and returns null for exactly the case warned about. Both ranges are
+required to parse first — `isABeforeB` also returns null on an unparseable date,
+which is a different thing from an overlap.
 
 **Warn-only advisories (the write still succeeds).** Distinct from the reject
 table above, `research_append` also surfaces non-blocking advisories on the
@@ -951,7 +979,7 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | `op: update` `fields` attempting to change `id` | input error |
 | `section: plan_items` without a resolvable `planId` | input error |
 | A §5 invariant violated | input error with the specific rule; write nothing |
-| Assertion `evidence_type: "negative"` paired with `record_role` other than the literal `"absent"` (or vice versa) | input error naming the mismatch and the fix; write nothing. `record_role: "absent"` is a mechanical corollary of `evidence_type: "negative"` (research-schema-spec.md §5.6), not a second judgment call — checked on both `append` and `update` (re-validated against the merged entry, not just the patched fields) |
+| Assertion `evidence_type: "negative"` paired with `record_role` other than the literal `"absent"` (or vice versa), **or with `informant_proximity` other than `"researcher"`** | input error naming the mismatch and the fix; write nothing. Both `record_role: "absent"` and `informant_proximity: "researcher"` are mechanical corollaries of `evidence_type: "negative"` (research-schema-spec.md, "Negative evidence"), not second judgment calls — checked on both `append` and `update` (re-validated against the merged entry, not just the patched fields). **The `record_role` arm is bidirectional; the `informant_proximity` arm is forward-only** (`absent` + a non-negative `evidence_type` is refused; `researcher` proximity on a non-negative assertion is not). Each message gives the caller a way to decide whether the assertion is negative evidence at all — the test is whether the finding is an **absence**, not whether the record states the fact, since a person the record NAMES can still be absent from among the living (the "preceded in death by" shape) — because a field-naming refusal is observed to buy a relabel rather than a fix. No message prescribes an edit another arm refuses: flipping `evidence_type` alone on an `absent`-role assertion is rejected by the converse, so the messages name the two-field change instead (`eval/runlogs/unit/record-extraction/v1_2026-09-11_18-49-21.json`, `ut_record_extraction_028`, calls 2-3) |
 | `sourceDescription` malformed (missing `title`, unknown keys) or without exactly one sources append op | input error; write nothing |
 | sources append with neither `sourceDescription` nor an existing `gedcomx_source_description_id` (or with both) | op-indexed input error; write nothing |
 | sources append referencing a dangling `S` id | op-indexed precondition error naming the existing S ids; write nothing |

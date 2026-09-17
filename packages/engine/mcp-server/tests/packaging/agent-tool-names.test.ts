@@ -155,8 +155,11 @@ const BRIDGE_PREFIX = `mcp__remote-devices__${sanitizeServerSegment(manifest.dis
 // (bare live in #1341, absent in three later censuses — macOS and Windows on
 // 2026-08-15, and a Windows session via #1732). Missing this
 // third registrar was issue #1341: record-extractor was refused there, with all 16
-// of its declared entries named unrecognized. gps-mentor is the exception — its
-// bare `Read` always resolves, so it would spawn holding that alone.
+// of its declared entries named unrecognized. An agent declaring the built-in
+// `Read` bare is exempt from that refusal — `Read` always resolves, so it spawns
+// holding that alone. Today that is proof-conclusion and research-exhaustiveness;
+// every other agent (gps-mentor included) is MCP-only and a registrar miss
+// refuses it, as it did record-extractor.
 const LOCAL_PREFIX = `mcp__${sanitizeServerSegment(manifest.display_name)}__`;
 
 // Longest-first so that a prefix which is itself the prefix of another can never
@@ -448,7 +451,6 @@ describe("plugin agent/skill bodies", () => {
 const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> = {
   "gps-mentor.md": {
     tools: [
-      "Read",
       "collections_search",
       "external_links_search",
       "place_distance",
@@ -456,6 +458,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "project_context",
       "research_append",
       "research_query",
+      "sidecar_read",
       "validate_research_schema",
       "wiki_place_page",
       "wiki_search",

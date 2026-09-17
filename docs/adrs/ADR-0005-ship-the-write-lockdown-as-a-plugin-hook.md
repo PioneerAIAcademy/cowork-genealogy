@@ -70,8 +70,10 @@ below.) Cowork runs `permission_mode: "default"`, the hosted path runs
 whether the script runs at all, so a tool the script would deny but the matcher
 omits is a hole the script can never close — which is exactly what the probe
 above demonstrates from the other direction. The shipped matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files`; it must stay at least as wide
-as the script's own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`, and
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`; it must stay at least
+as wide as the script's own `FILE_WRITE_TOOLS` + `DEVICE_WRITE_TOOLS`, plus
+`research_append` whenever `OWNED_SECTIONS` is non-empty — the arm the
+caller-ownership rules added — and
 `tests/packaging/plugin-hooks.test.ts` derives the expected set from the script
 rather than restating it. It shipped narrower once: the `device_commit_files`
 arm landed in all three predicate copies while the matcher still named only the

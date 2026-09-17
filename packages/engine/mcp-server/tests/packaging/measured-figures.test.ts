@@ -68,6 +68,7 @@ const EVIDENCE_SURFACES = [
   // The fulltext spec. Section J's verdicts guard the place-search claim at
   // line 48; any future FIGURE-pattern match must trace to measured-figures.json.
   "docs/specs/fulltext-search-tool-spec.md",
+  "docs/specs/gedcomx-convert-spec.md",
 ];
 
 /**
@@ -265,6 +266,13 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     {
       reason: "the other half of that same #1088 transcript pair (947 -> 1,478); surfaced when the tolerance floor dropped from 2 to 0.5, which stopped it matching section X's current 948 by luck. Historical, like 1478 — not a re-measurement",
       scope: ["packages/engine/mcp-server/src/tools/record-search.ts"],
+    },
+  ],
+  [
+    2655,
+    {
+      reason: "persona role/principal coverage probe, dev/probe-persona-role-coverage.ts 2026-09-14 — search personas across 3 collection pools",
+      scope: ["docs/specs/gedcomx-convert-spec.md"],
     },
   ],
 ]);

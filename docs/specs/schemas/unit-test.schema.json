@@ -96,14 +96,39 @@
     },
     "input": {
       "type": "object",
-      "required": [
-        "user_message"
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "user_message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "user_message"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "delegation": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "delegation"
+          ]
+        }
       ],
       "additionalProperties": false,
       "properties": {
         "user_message": {
           "type": "string",
-          "description": "The exact user input fed to the test harness."
+          "description": "The exact user input fed to the test harness. A routed test carries this; a direct-agent test carries `delegation` instead. Exactly one of the two, never both."
+        },
+        "delegation": {
+          "type": "string",
+          "description": "Direct-agent arm: the exact delegation text the orchestrator hands the pair's agent, in place of a user turn. The harness wraps it in its own dispatcher prompt and asserts the recorded Agent spawn contains this string verbatim. Present only on a direct test; mutually exclusive with `user_message`."
         },
         "scenario": {
           "type": [

@@ -1,0 +1,18 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true",
+    "f3": "true",
+    "f4": "false",
+    "f5": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Father-child link (R2) present; name variants Sóstenes/Sostenes/Sostanas across 4 sources. Father's birth date (27 Nov 1882) and place (Coahuayutla) absent from I1 node. Full formal name José Sóstenes Cruz Basurto not in tree. Graded true on relationship + correct primary name being present.",
+    "f3": "Mother-child link (R3) present; Apolinar/Ma Apolinar Corona across 5 sources. Mother's birth detail absent from I2 node. Graded true on relationship + correct name.",
+    "f4": "No grandparent persons or parent relationships on I1. Genuinely absent.",
+    "f5": "No grandparent persons or parent relationships on I2. Genuinely absent."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140"
+}

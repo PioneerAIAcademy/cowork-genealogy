@@ -674,6 +674,33 @@ button {
   background: var(--bg-code);
   font-weight: 600;
 }
+/* Selectable onramp answers (#1932). Deliberately NOT .toolChip: that is the
+   tool-call chip, it is styled for a running/done state machine, and it sits
+   `align-self: flex-start` inside a column container. These are interactive
+   buttons laid out in a wrapping row. */
+.optionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 10px;
+}
+.optionChip {
+  font-size: 12px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--ink);
+  cursor: pointer;
+}
+.optionChip:hover {
+  border-color: var(--accent);
+}
+.optionChip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .toolChips {
   display: flex;
   flex-direction: column;

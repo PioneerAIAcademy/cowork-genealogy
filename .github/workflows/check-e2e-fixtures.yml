@@ -1,13 +1,20 @@
 name: Check e2e fixtures + grading
 
-# One e2e discipline check on committed files (eval/harness/scripts/check_e2e_fixtures.py):
+# Two e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py):
 #
-# Grading gate (BLOCKING): every run log ADDED in this PR that produced a
-# final tree must ship its run-<ts>.ann.json in the same PR. Grading is
+# Grading gate (BLOCKING): every run log added or renamed into the corpus in
+# this PR that produced a final tree must ship its run-<ts>.ann.json in the
+# same PR. Grading is
 # same-PR (the developer + genealogist teams grade every run they commit).
 # Treeless runs (crashed/skipped before a tree) are exempt. Scoped to
-# PR-added run logs via `git diff --diff-filter=A` (needs BASE_SHA/HEAD_SHA
-# and full history).
+# run logs added or renamed into the corpus via `git diff --diff-filter=AR`
+# (needs BASE_SHA/HEAD_SHA and full history).
+#
+# 1M-window gate (BLOCKING): a run log added or renamed into eval/runlogs/e2e/
+# whose usage.betas is non-empty was made with --context-1m. A 1M window is not
+# comparable to the rest of the corpus (it changes the compaction count and the
+# cache-gap structure) and the corpus scan has no exclusion for it, so keep such
+# a run in a sibling directory outside eval/runlogs/e2e/. Same AR scoping.
 #
 # Fixture *validity* (a fixture having a committed passing run log — spec §14)
 # is NOT gated here: it is a recommended authoring practice, not a CI check, so
@@ -66,7 +73,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Check e2e grading gate (blocking)
+      - name: Check e2e grading + 1M-window gates (blocking)
         if: steps.scope.outputs.relevant == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

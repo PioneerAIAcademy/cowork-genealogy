@@ -39,6 +39,7 @@ import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { treeForget } from "../../src/tools/tree-forget.js";
 import { projectContext } from "../../src/tools/project-context.js";
 import { researchQuery } from "../../src/tools/research-query.js";
+import { sidecarRead } from "../../src/tools/sidecar-read.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
@@ -47,10 +48,17 @@ import {
   NO_PROJECT_MESSAGE_WRITE,
 } from "../../src/utils/project-io.js";
 
-/** The four tools that are not writers. Telling someone who asked "where are
+/** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
  *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings"]);
+const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read"]);
+
+/** Tools that signal the two loud path states by THROWING rather than
+ *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
+ *  into `isError`. `person_warnings` classifies the directory itself;
+ *  `sidecar_read` reads no project document, so it has no `readProjectJson`
+ *  error to flatten into a result and mirrors the thrown messages instead. */
+const THROWERS = new Set(["person_warnings", "sidecar_read"]);
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -129,6 +137,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
     call: (projectPath) => researchQuery({ projectPath, section: "sources" } as any),
   },
   {
+    tool: "sidecar_read",
+    call: (projectPath) => sidecarRead({ projectPath, ref: "uploads/notes.txt" } as any),
+  },
+  {
     tool: "merge_tree_persons",
     call: (projectPath) => mergeTreePersons({ projectPath, merges: [["I1", "I2"]] } as any),
   },
@@ -165,14 +177,14 @@ describe("an existing directory holding neither project file", () => {
 // ── the four loud states ──────────────────────────────────────────────────────
 
 /** Loud = a real failure: `errors`, and NO `reason` for a caller to branch on.
- *  `person_warnings` signals failure by throwing rather than returning. */
+ *  The THROWERS signal failure by throwing rather than returning. */
 async function expectLoud(
   tool: string,
   call: (p: any) => Promise<any>,
   projectPath: any,
   pattern: RegExp,
 ) {
-  if (tool === "person_warnings") {
+  if (THROWERS.has(tool)) {
     await expect(call(projectPath)).rejects.toThrow(pattern);
     return;
   }
