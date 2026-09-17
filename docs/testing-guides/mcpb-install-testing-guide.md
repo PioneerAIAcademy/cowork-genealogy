@@ -167,15 +167,16 @@ written — proving host → MCP server → SDK bridge → VM → skill → file
 
 ---
 
-## Known limitation: wiki-page tools need a local corpus
+## Known limitation: the wiki tools depend on a reachable wiki-query-api
 
-Two tools — `wiki_read` and `wiki_place_page` (all four sections:
-`home`, `getting_started`, `online_records`, `research_tips`) — register
-and are callable, but read a pre-crawled markdown corpus via
-`wikiMarkdownDir` in `~/.familysearch-mcp/config.json`. That corpus is
-**not bundled in the `.mcpb`**, so on a stock install those tools throw a
-config-missing error at runtime. Shipping/hosting the corpus is tracked
-separately. The other 17 tools work out of the box (the bundled
+`wiki_read` and `wiki_place_page` used to read a pre-crawled markdown corpus
+from disk via a `wikiMarkdownDir` config key, and would throw a config-missing
+error on a stock install. **That code path is gone** — `getWikiMarkdownDir` no
+longer exists in the engine and both tools are now HTTP clients of the hosted
+`wiki-query-api`, like `wiki_search`. They need no local corpus, but the compiled-in
+default names one developer's tailnet host rather than a public deployment, so on
+a stock install expect them to fail unless that host is reachable or you set
+`wikiApiUrl` in `~/.familysearch-mcp/config.json`. The other tools work out of the box (the bundled
 FamilySearch clientId covers the authenticated tools; `wiki_search` and
 `place_population` use hosted services).
 

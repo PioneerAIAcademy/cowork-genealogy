@@ -207,7 +207,18 @@ class SandboxProvider(ABC):
     async def delete(self, sandbox_id: str) -> None: ...
     @abstractmethod
     async def list(self, labels: dict[str, str] | None = None) -> list[Sandbox]: ...
+
+    @property
+    def sandbox_image_commit(self) -> str | None: ...   # provenance of the baked image; None by default
 ```
+
+`sandbox_image_commit` is the one non-abstract member: the commit the sandbox
+image was built from (with a `+dirty` suffix when the tree was unclean), read off
+the image itself rather than guessed from the deploy, and surfaced by
+`/api/health` as `sandboxImageCommit`. A provider that bakes no image
+(`LocalProvider` runs the repo's own copy) keeps the `None` default. It must stay
+a plain in-memory read — `/api/health` is Fly's health check, so the value is
+refreshed when a sandbox is created and never fetched on the request path.
 
 ---
 
