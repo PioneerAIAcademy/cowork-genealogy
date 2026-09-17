@@ -29,7 +29,10 @@ The `e2b` SDK is imported lazily (module-local) so non-e2b runs/CI don't need it
 """
 from __future__ import annotations
 
+import asyncio
 import inspect
+import json
+import logging
 
 from ..config import get_settings
 from ..ws_token import sandbox_secret
@@ -45,6 +48,8 @@ from .base import (
     SandboxSpec,
     SandboxState,
 )
+
+log = logging.getLogger(__name__)
 
 # Continuous-running backstop, and — with no host-side idle loop — effectively
 # THE suspend driver. With lifecycle on_timeout=pause, hitting it pauses (FS
@@ -63,6 +68,15 @@ _RUNNING_TIMEOUT_S = 3600
 # The image's fixed prefix (e2b.Dockerfile AGENT_HOME). E2B commands.run does NOT
 # inherit the Dockerfile ENV, so the WS server launch must pass these explicitly.
 _AGENT_HOME = "/opt/genealogy-agent"
+
+# Baked by apps/server/sandbox/build-image.sh (the Dockerfile's last COPY):
+# {"commit": "<sha|dev>", "dirty": <bool>, "built_at": "<iso8601>"}. Read back
+# once per create() so /api/health can answer which build a session is on.
+_BUILD_INFO_PATH = f"{_AGENT_HOME}/BUILD_INFO.json"
+# Bound on that read. It is a ~100-byte file on a microVM that has just booted,
+# and it sits inside create(), so an unbounded await would hang session creation
+# on a stalled SDK call for a value that is only observability.
+_PROVENANCE_READ_TIMEOUT_S = 10
 
 
 class E2BSandbox(Sandbox):
@@ -176,10 +190,30 @@ class E2BProvider(SandboxProvider):
             )
         self._api_key = api_key
         self._template = template
+        # Last provenance read off a created sandbox's image. Refreshed on EVERY
+        # create, not once per process: `make sandbox-image` rebuilds the
+        # template IN PLACE by name and does not restart this process, so a
+        # read-once cache would report the pre-rebuild commit for the life of the
+        # process — the stale-image blindness this field exists to remove.
+        self._image_commit: str | None = None
         # Trivial handle cache (§3.1): no lock, no eviction machinery. connect()
         # is idempotent and E2B sandboxes don't vanish, so there's nothing to
         # evict on; dropped on suspend()/delete().
         self._cache: dict[str, object] = {}
+
+    @property
+    def sandbox_image_commit(self) -> str | None:
+        """The commit `${AGENT_HOME}/BUILD_INFO.json` carried on the last sandbox
+        this process created, with a `+dirty` suffix when the image was built over
+        an unclean tree. None until the first create, and after a create whose
+        read-back failed **only if no earlier one succeeded** — a failed read never
+        discards a value already known.
+
+        A plain attribute read. /api/health serves it, and that endpoint is Fly's
+        health check (`deploy/fly.toml`: every 15s, 5s timeout, against the single
+        always-on machine), so nothing here may do I/O, block, or raise.
+        """
+        return self._image_commit
 
     def _sdk(self):
         from e2b import AsyncSandbox
@@ -238,7 +272,48 @@ class E2BProvider(SandboxProvider):
             "nohup python3 -m app.sandbox_server > /tmp/ws.log 2>&1",
             background=True, envs=ws_env,
         )
-        return E2BSandbox(sb, sandbox_id=sb.sandbox_id, model=spec.model)
+        out = E2BSandbox(sb, sandbox_id=sb.sandbox_id, model=spec.model)
+        await self._refresh_image_commit(out)
+        return out
+
+    async def _refresh_image_commit(self, sandbox: Sandbox) -> None:
+        """Read the image's baked provenance off a freshly created sandbox.
+
+        Deliberately the LAST thing create() does, and bounded, so a stalled read
+        cannot hang session creation: the value is only observability, and no
+        failure to observe it may break a session. On any failure the previous
+        value stands, so one bad read cannot blank a commit reported before.
+
+        Every failure is LOGGED AT WARNING, and the level is load-bearing rather
+        than stylistic: `obs.py` attaches its handler to the `workbench` logger,
+        which this module is not under, so records here fall through to the root
+        logger at its default WARNING. An INFO would be dropped entirely
+        (measured: `isEnabledFor(INFO)` is False). Silence would be
+        indistinguishable from the healthy "no session created yet" state,
+        because both surface as a null on /api/health — a feature whose whole job
+        is making an invisible staleness visible must not have an invisible
+        failure mode of its own.
+        """
+        try:
+            raw = await asyncio.wait_for(
+                sandbox.read_file(_BUILD_INFO_PATH), _PROVENANCE_READ_TIMEOUT_S
+            )
+            info = json.loads(raw.decode("utf-8")) if raw else None
+            commit = info.get("commit") if isinstance(info, dict) else None
+            if not isinstance(commit, str) or not commit:
+                raise ValueError("no usable 'commit' field")
+            # The dirty marker rides on the value itself so no caller can report
+            # the sha while dropping the caveat. `+dirty` is the shape issue #2126
+            # prescribes for the engine/.mcpb/plugin stamps it adds ("a clean sha
+            # that lies is worse than no sha"); this is its first use in the repo,
+            # chosen so the two agree rather than diverge when that card lands.
+            self._image_commit = f"{commit}+dirty" if info.get("dirty") is True else commit
+        except Exception as exc:  # noqa: BLE001 - never break create() over provenance
+            log.warning(
+                "could not read build provenance from %s (%s); /api/health cannot "
+                "report which build this session runs",
+                _BUILD_INFO_PATH, exc,
+            )
 
     async def get(self, sandbox_id: str) -> Sandbox:
         from e2b.exceptions import SandboxNotFoundException

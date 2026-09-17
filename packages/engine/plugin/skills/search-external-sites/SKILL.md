@@ -1,26 +1,26 @@
 ---
 name: search-external-sites
-description: Generates search URLs for external genealogy sites and free
-  newspaper archives, and walks the user
-  through the click-capture-analyze workflow. Logs every search to research.json and triages
-  captured PDFs before handing records to record-extraction. GPS Step 1 — Reasonably
-  Exhaustive Research (external site execution). Use when the user says
-  "search Ancestry", "search MyHeritage", "search FindMyPast", "search
-  FindAGrave", "search Newspapers.com", "search Chronicling America", "find
-  newspaper articles", when the user reports an external search
-  they ran themselves (including a nil result), when a plan item targets a
-  non-FamilySearch repository, or when the user uploads a PDF
-  capture from an external genealogy site. Do NOT use when the target is
-  FamilySearch (use search-records); when the user is still choosing what or
-  where to search — e.g. "what should I search next?" — which is planning,
-  not execution (use research-plan); or to analyze a single record
-  already in context (use record-extraction).
+description: Generates search URLs for external genealogy sites and
+  newspaper archives and walks the user through click-capture-analyze. Logs every search to research.json and triages captured PDFs
+  before handing them to record-extraction. GPS Step 1 — Reasonably
+  Exhaustive Research (external site execution). Use when the user names a
+  genealogy site or newspaper archive to search — Ancestry, MyHeritage,
+  FindMyPast, FindAGrave, Newspapers.com, Chronicling America, BillionGraves,
+  the National Archives catalog and the rest — or says "find
+  newspaper articles", when they report an external search they ran
+  themselves (including a nil result), when a plan item targets a
+  non-FamilySearch repository, or when they upload a PDF capture. Do NOT use
+  when the target is FamilySearch (use search-records); when they are still
+  choosing what or where to search — "what should I search next?" — which
+  is planning, not execution (use research-plan); or to analyze a single
+  record already in context (use record-extraction).
 allowed-tools:
   - place_search
   - collections_search
   - external_links_search
   - research_log_append
   - research_append
+  - build_external_search_url
 ---
 
 # Search External Sites
@@ -34,15 +34,18 @@ the user clicks it in their own browser, captures the page as a PDF, and
 uploads it back. The agent supplies the genealogical expertise; the user's
 browser supplies the access.
 
-Two different reasons a site is handled this way, and they are not
-interchangeable:
-- **Paywalled** (Ancestry, MyHeritage, FindMyPast, Newspapers.com) — no public
-  API, automated access prohibited, and the user needs a subscription.
-- **Free but bot-protected** (Chronicling America, Utah Digital Newspapers and
-  other state/regional archives) — free to search, no subscription needed, but
-  behind bot protection that blocks automated fetch. Never tell the user these
-  are unavailable or need a subscription: generate the URL, and they can open
-  it. A blocked fetch is not a negative result — it is a capture-required one.
+Read each site's access requirement from `build_external_search_url`'s
+`access` field, every time — never from memory or a list.
+
+- **`"subscription"`** — no public API, automated access prohibited, and the
+  user needs their own access (see the subscription table below).
+- **`"free_bot_protected"`** — free to search, no subscription needed, but
+  behind bot protection that blocks automated fetch. Never tell the user
+  these are unavailable or need a subscription: generate the URL, and they
+  can open it. A blocked fetch is not a negative result — it is a
+  capture-required one.
+- **`"free"`** — no access barrier of any kind. Narrate it as free; don't
+  hedge or add a caveat that isn't in the tool's own `notes`.
 
 Getting the search **parameters** right is the core of the task: a URL
 with the wrong name encoding, a missing date window, or the wrong
@@ -135,16 +138,19 @@ account. Use it as a tie-breaker, never as a gate.
 | FindAGrave.com | free to search; `FindAGrave-Plus` adds features |
 | Newspapers.com | `Newspapers.com` |
 | any of the above | `FamilySearch-Partner`, `LibraryAccess` — may cover it |
-| Chronicling America | free — no subscription, and no access route needed |
-| Utah Digital Newspapers and other state/regional archives | free — no subscription, and no access route needed |
 
 `FamilySearch-Partner` and `LibraryAccess` are access *routes*, not
 sites: which sites each unlocks varies by institution and changes. Treat
 neither as access to a named site, and neither as `none`. Generate the
 URL and note the route instead of flagging a paywall the researcher may
 not hit — "a family history centre often carries [SITE]; worth checking
-before you pay." The two free archives are outside all of this: they need
-no subscription and no route, so never raise access for them at all.
+before you pay." A site the tool reports as `free` or `free_bot_protected`
+needs no subscription and no route — never raise access for it, unless the
+tool's own `notes` say the classification is that site class's default rather
+than a fact about this archive. `digital_newspaper_archive` is the one that
+does: its host comes from you, not the tool, so a paid archive passed there
+is reported `free_bot_protected` too. Relay that note and let the researcher
+check before paying.
 
 - If a plan item is repository-agnostic, prefer a site the researcher
   has access to — that search is immediately actionable.
@@ -162,17 +168,9 @@ proof), a digitized original (carries evidentiary weight), or
 user-contributed content (a lead only)? Read the collection description —
 titles mislead about scope and completeness.
 
-## Supported sites
-
-| Site | URL pattern | Notes |
-|------|------------|-------|
-| Ancestry.com | `ancestry.com/search/collections/{id}/?params` | Largest indexed collection. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| MyHeritage.com | `myheritage.com/research?action=query&params` | Independent indexing. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| FindMyPast.com | `findmypast.com/search/results?params` | Strong UK/Ireland coverage. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| FindAGrave.com | `findagrave.com/memorial/search?params` | Cemetery records. Free. User-contributed — treat as compiled source |
-| Newspapers.com | `newspapers.com/search/?query=params` | Historical newspapers. Ancestry-owned. Paid subscription, FamilySearch-partnership access, or a library/family-history-centre account |
-| Chronicling America | `loc.gov/collections/chronicling-america/?dl=page&params` | US digitised newspaper pages 1798–1963, Library of Congress. **Free.** Bot-protected — capture required |
-| State/regional digital newspaper archives | varies — see below | e.g. Utah Digital Newspapers, California Digital Newspaper Collection. **Free.** Bot-protected — capture required |
+Ancestry and FindMyPast also have UK-locale domains (ancestry.co.uk,
+findmypast.co.uk) — pass `locale: "uk"` to `build_external_search_url` for
+either when the researcher wants that domain specifically.
 
 ## Steps
 
@@ -245,6 +243,11 @@ or census years exist in this `collections_search` result, never in memory.
 
 ### 3. Build the URL
 
+Call `build_external_search_url` to get the URL — never hand-compose one.
+It returns `{ ok: true, url, notes, access }` or `{ ok: false, reason, errors }`; on
+`ok: false`, surface the errors and fix the inputs rather than retrying
+blindly or hand-writing a URL.
+
 **Case A — a curated URL exists for the target site.**
 
 First, confirm the curated link actually fits the plan item. Compare its
@@ -256,90 +259,53 @@ collection. Either pick a curated link whose `linkText` matches, or, if
 none matches, fall back to Case B and say which record type you were
 looking for.
 
-When the record type matches, use that URL as the base and append your
-search parameters — it already encodes the collection scope (Ancestry URLs
-carry `/search/collections/{id}/`), so don't template the collection ID
-separately:
+When the record type matches, pass that URL as `baseUrl`:
 
 ```
-{returned_url}?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania
+build_external_search_url({
+  site: "ancestry",
+  baseUrl: "<the curated URL>",
+  attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" }
+})
 ```
-
-If the base already has a query string, append with `&` instead of `?`.
 
 **Case B — no curated URL fits (or none for the site).**
 
 Tell the user plainly: "No FamilySearch-curated link for [site] in
-[year window] — using the site-wide search instead." Then build from the
-site-wide template. These search the whole site index, not a scoped
-collection:
+[year window] — using the site-wide search instead." Then call the tool
+without `baseUrl` — it builds the site-wide search, which covers the whole
+site index, not a scoped collection:
 
-#### Ancestry.com
 ```
-https://www.ancestry.com/search/?name={first}_{last}&birth={year}&birthplace={place}&residence={year}_{place}&father={first}_{last}&mother={first}_{last}&spouse={first}_{last}
-```
-- `name` — given and surname, underscore-separated
-- `birth`, `death`, `marriage` — event year
-- `birthplace`, `deathplace` — location string
-- `residence` — year and place, underscore-separated
-- `father`, `mother`, `spouse` — relative names
-
-#### MyHeritage.com
-```
-https://www.myheritage.com/research?action=query&first={first}&last={last}&birth_year={year}&birth_place={place}&marriage_year={year}&marriage_place={place}&death_year={year}&death_place={place}&father_first={first}&father_last={last}&mother_first={first}&mother_last={last}
+build_external_search_url({
+  site: "ancestry",
+  attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" }
+})
 ```
 
-#### FindMyPast.com
-```
-https://www.findmypast.com/search/results?firstname={first}&lastname={last}&yearofbirth={year}&yearofbirth_offset={plus_minus_years}&keywordsplace={place}&keywordsplace_proximity={miles}&eventyear={year}&fatherfirstname={first}&motherfirstname={first}
-```
-- `yearofbirth_offset` is the give-or-take on the birth year (site default 2).
-  **Not** `yearofbirthrange` — that spelling is silently ignored and the search
-  runs at the default window.
-- `keywordsplace_proximity` is the place radius in miles (site default 5).
-- Never emit `sid` — it is browser session state, not a search parameter.
+**Supported `site` values and which `attributes` each one uses:**
 
-#### FindAGrave.com
-```
-https://www.findagrave.com/memorial/search?firstname={first}&lastname={last}&birthyear={year}&deathyear={year}&location={place}
-```
+| `site` | Attributes it reads | Notes |
+|--------|---------------------|-------|
+| `ancestry` | `givenName`/`surname`, `birthYear`/`birthPlace`, `deathYear`/`deathPlace`, `marriageYear`, `residenceYear`/`residencePlace`, `father*`/`mother*`/`spouse*` | |
+| `myheritage` | `givenName`/`surname`, `birthYear`/`birthPlace`, `marriageYear`/`marriagePlace`, `deathYear`/`deathPlace`, `father*`/`mother*` | No residence field |
+| `findmypast` | `givenName`/`surname`, `birthYear`/`birthYearOffset`, `birthPlace` (or `marriagePlace`/`deathPlace`/`residencePlace`)/`placeProximityMiles`, `fatherGivenName`/`motherGivenName`, `eventYear` | `eventYear` is for a search targeting a **different** event than birth (a marriage or death search) — pass that event's place too; the site has one place field, filled birth-first |
+| `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear` | No place parameter |
+| `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` is a plain year or a hyphenated range (`"1880-1905"`) when the exact year isn't known; any other shape is rejected with a note. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
+| `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | `usState` is the state's name or postal abbreviation; the tool emits the working facet form. Pass the plan item's whole `date_range` as the window, never one year of it. On `outside_coverage`, say the page corpus (1798–1963) does not reach that period and route to the state/regional archive for the place or a paid site |
+| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
+| `archives_gov` | `givenName`/`surname`, `keywords` | National Archives Catalog — `keywords` is free text (a record type), not the name. No place parameter: a place passed here is ignored and reported in `notes` |
+| `archive_org` | `givenName`/`surname`/`keywords` | Internet Archive — no structured name/date/place fields; the name is only a free-text term here |
+| `billiongraves` | `givenName`/`surname`, `birthYear`/`deathYear` | Cemetery records, GPS-tagged |
+| `digitalarkivet` | `givenName`/`surname`, `birthYear`, `birthPlace`/`residencePlace` | Norwegian National Archives — `residencePlace` maps to the site's own domicile field |
+| `antenati` | `givenName`/`surname`, `birthYear`/`deathYear`, `birthPlace`/`deathPlace` | Italian civil/parish records — one year/place field for whichever record type matched, not separate birth/death fields; `birthYear`/`birthPlace` preferred when both are known |
+| `library_archives_canada` | `givenName`/`surname`, `birthYear` | Census search only — no death data (census records the living) |
+| `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Keyword-only — the site's own structured name fields do not bind |
+| `italian_genealogy` | `givenName`/`surname`/`keywords` | A discussion forum, not a records database — keyword search over posts only |
 
-#### Newspapers.com
-```
-https://www.newspapers.com/search/?query={first}+{last}&dr_year={year}&dr_place={place}
-```
-
-#### Chronicling America (free)
-```
-https://www.loc.gov/collections/chronicling-america/?qs={first}+{last}&dl=page&start_date={start_yyyy}-01-01&end_date={end_yyyy}-12-31&location_state={state}
-```
-- `dl=page` — **required.** Without it the search returns newspaper *titles*
-  from the U.S. Newspaper Directory, not digitised pages, and a title-level nil
-  says nothing about whether the event was reported.
-- `qs` — the search words
-- `start_date`/`end_date` — full `YYYY-MM-DD`, spanning the plan item's whole
-  window. A `date_range` of `1870-1890` is `start_date=1870-01-01` and
-  `end_date=1890-12-31` — never collapse a multi-year window to one year.
-- `location_state` — lowercase state name (`utah`, `new york`)
-- Digitised page coverage runs **1798–1963**, title-by-title and complete for no
-  state — a nil result never means no newspaper covered the event.
-- Target date outside 1798–1963: do not build this URL. Say the page corpus does
-  not reach that period, and route to the state/regional archive for the place
-  (coverage differs) or to a paid site instead.
-- Do **not** use `chroniclingamerica.loc.gov/search/pages/results/` with
-  `andtext`/`date1`/`date2`/`state` — those parameters are ignored, the search
-  runs unscoped, and any nil logged from it is meaningless.
-
-#### State/regional digital newspaper archives (free)
-Utah Digital Newspapers:
-```
-https://newspapers.lib.utah.edu/search?q={first}+{last}
-```
-Use the archive's plain keyword search and put the discriminating terms in `q`.
-**Do not invent facet or date parameters for these archives** — an unrecognized
-parameter is silently ignored or errors the page, and the user lands on a dead
-end believing the search was scoped. Narrow with terms, then say in one line
-which date range they should set in the site's own UI.
+Every observation the tool makes — an attribute the site doesn't read, a
+value it rejected, a site's standing caution — comes back in the response's
+`notes`. Relay each note to the user alongside the URL.
 
 **Parameter strategy** (full guidance in
 `references/search-strategy-external.md`):
@@ -422,7 +388,7 @@ research_log_append({
   resultsExamined: 0,
   notes: "URL generated; awaiting user capture.",
   externalSite: {
-    site: "<ancestry|myheritage|findmypast|findagrave|newspapers|chronicling_america|digital_newspaper_archive>",
+    site: "<the same `site` value you passed to build_external_search_url>",
     urlGenerated: "<the exact URL you present below>",
     captureReceived: false,
     captureFilename: null
@@ -444,14 +410,14 @@ If the call returns `{ ok: false, errors }`, surface the errors and fix
 the inputs rather than retrying blindly or hand-writing the entry; nothing
 was written. On success the response carries the `logId` it assigned.
 
-Then present the URL:
+Then present the URL, with every note from the tool's response.
 
 ---
 
 **Search: 1850 Census on Ancestry for Patrick Flynn**
 
 Click this link to search:
-[Ancestry — 1850 Census, Patrick Flynn](https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania)
+[Ancestry — 1850 Census, Patrick Flynn](https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Ireland)
 
 After the page loads:
 1. Scroll to the bottom of the page and back to the top (forces
@@ -585,8 +551,8 @@ the natural next move:
 
 ## User-contributed sources
 
-Find A Grave memorials, public member trees, and crowd-sourced indexes are
-compiled sources. Apply the nine criteria in
+Find A Grave and BillionGraves memorials, public member trees, and
+crowd-sourced indexes are compiled sources. Apply the nine criteria in
 `references/evaluating-compiled-sources.md`. In short: separate
 photographed evidence from contributor-entered text, never cite them as
 primary, and use them as leads — add a plan item to find the originals
