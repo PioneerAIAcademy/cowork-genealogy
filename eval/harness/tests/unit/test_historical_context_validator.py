@@ -134,6 +134,25 @@ def test_skips_on_empty_response():
         check_confident_attribution("", NO_RESULTS_TEST)
 
 
+def test_fires_on_a_capitalised_match():
+    """`re.IGNORECASE` is load-bearing, and nothing else here pins it.
+
+    Every excerpt above happens to be lowercase at the match site, so dropping
+    the flag left the file green (#2639 review). Capitalisation is not
+    hypothetical: a committed run of `ut_historical_context_014` writes
+    "Ordered by" with a capital O, and both firing runs use `###` headings,
+    where title case is ordinary output from this skill.
+    """
+    with pytest.raises(AssertionError):
+        check_confident_attribution(
+            "Ordered by Likelihood, the candidate causes are:", NO_RESULTS_TEST
+        )
+    with pytest.raises(AssertionError):
+        check_confident_attribution(
+            "Most likely explanations for the gap:", NO_RESULTS_TEST
+        )
+
+
 def test_stays_silent_on_hedged_response():
     hedged = (
         "One possible reason is that the place name was purely colloquial. "
