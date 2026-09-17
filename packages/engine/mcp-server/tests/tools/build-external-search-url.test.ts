@@ -1376,6 +1376,53 @@ describe("build_external_search_url", () => {
       }
     });
 
+    it("resolves a punctuated D.C. rather than falling through to Washington state", () => {
+      // The right-to-left scan above exists to stop exactly this, and a full
+      // stop defeated it: "d.c." missed the abbreviation table, the scan fell
+      // through to the broader segment, and a District of Columbia newspaper
+      // search silently scoped to Washington STATE. Its nil then reads to a
+      // genealogist as evidence the paper carried nothing.
+      for (const usState of ["Washington, D.C.", "Washington, D. C.", "DC", "District of Columbia"]) {
+        const r = buildExternalSearchUrl({
+          site: "chronicling_america",
+          attributes: { surname: "Flynn", usState },
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).toContain("fa=location_state:district+of+columbia");
+      }
+      // The other direction: the state of Washington must still be itself, and
+      // the right-to-left precedence must survive the punctuation handling.
+      for (const [usState, expected] of [
+        ["Washington", "washington"],
+        ["Seattle, Washington, United States", "washington"],
+        ["Indiana, Pennsylvania, United States", "pennsylvania"],
+      ] as const) {
+        const r = buildExternalSearchUrl({
+          site: "chronicling_america",
+          attributes: { surname: "Flynn", usState },
+        });
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.url).toContain(`fa=location_state:${expected}`);
+      }
+    });
+
+    it("no_attributes carries the per-site diagnostics, not just attribute notes", () => {
+      // The branch's own comment promises the notes ride in `errors` so the
+      // caller learns WHY nothing landed — but siteNotes() was pushed after the
+      // early return, so an inverted window came back as a bare "no attributes
+      // supplied", which reads as "you sent none" for a call that sent two.
+      const r = buildExternalSearchUrl({
+        site: "chronicling_america",
+        attributes: { searchStartYear: 1905, searchEndYear: 1880 },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("no_attributes");
+      expect(r.errors.some((e) => /searchStartYear is after searchEndYear/.test(e))).toBe(true);
+    });
+
     it("emits no state facet, with a note, when usState names no US state", () => {
       for (const usState of ["constructor", "Ontario, Canada"]) {
         const r = buildExternalSearchUrl({

@@ -138,6 +138,46 @@ def test_fires_when_the_rejected_value_is_reformatted_with_extra_jurisdiction():
     )
 
 
+def _stringified_call(**attributes):
+    """The same call a model makes when it serializes `attributes` as JSON text
+    instead of an object — the mis-serialization `coerceJsonArg` recovers."""
+    return [{
+        "tool": "mcp__genealogy__build_external_search_url",
+        "args": {"site": "myheritage", "attributes": json.dumps(
+            {"givenName": "Patrick", "surname": "Flynn", **attributes})},
+    }]
+
+
+def test_fires_when_attributes_arrive_as_a_json_string():
+    """The tool RECOVERS from this and builds the URL, so the rejected value
+    reaches the site exactly as if the argument had been well-formed.
+
+    Reading the argument raw made this check raise AttributeError rather than
+    grade, and a crash in a `test_`-prefixed validator is not an observation:
+    `validator_runner` builds the result without `reporting_only`, so it counts
+    as a gating failure and the LLM judge is skipped for that test. The one
+    shape this check could not survive was the one it exists to catch."""
+    _expect_fires(
+        _stringified_call(birthPlace="Pennsylvania"),
+        {"type": "positive"},
+        "attributes.birthPlace='Pennsylvania'",
+    )
+
+
+def test_passes_when_a_stringified_call_carries_the_preferred_value():
+    """The other direction. Recovering the argument must not turn a correct
+    call into a firing one, and a string that is not JSON at all reads as
+    absent rather than inventing a value to judge."""
+    _expect_passes(_stringified_call(birthPlace="Ireland"), {"type": "positive"})
+    _expect_passes(
+        [{
+            "tool": "mcp__genealogy__build_external_search_url",
+            "args": {"site": "myheritage", "attributes": "not json at all"},
+        }],
+        {"type": "positive"},
+    )
+
+
 def test_passes_when_the_preferred_value_is_encoded():
     _expect_passes(_tool_calls("Ireland"), {"type": "positive"})
 

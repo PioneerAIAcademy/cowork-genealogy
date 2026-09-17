@@ -195,9 +195,18 @@ function usStateFacet(v: unknown): string | undefined {
   for (const segment of raw.split(",").reverse()) {
     const s = segment.trim().toLowerCase();
     if (s.length === 0) continue;
-    const expanded = US_STATE_NAMES[s];
+    // A punctuated abbreviation is the same token as its bare form. Without
+    // this, "Washington, D.C." missed on `d.c.`, fell through to the broader
+    // segment, and scoped to Washington STATE — the exact silent mis-scoping
+    // the right-to-left order above exists to prevent, reintroduced by a full
+    // stop. `spaced` keeps multi-word full names intact ("district of
+    // columbia"); `compact` closes up abbreviations written "D. C.".
+    const spaced = s.replace(/\./g, "").replace(/\s+/g, " ").trim();
+    const compact = s.replace(/[.\s]/g, "");
+    const expanded = US_STATE_NAMES[s] ?? US_STATE_NAMES[spaced] ?? US_STATE_NAMES[compact];
     if (expanded !== undefined) return expanded;
     if (US_STATE_FULL_NAMES.has(s)) return s;
+    if (US_STATE_FULL_NAMES.has(spaced)) return spaced;
   }
   return undefined;
 }
@@ -1001,6 +1010,13 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
 
   const params = siteWideParams(site, a);
   const notes = attributeNotes(a, RECOGNIZED_KEYS[site], site);
+  // Built BEFORE the early return, not after it. These carry the per-site
+  // diagnostics — an inverted Chronicling America window, a `usState` no
+  // segment resolved, a FindMyPast knob supplied without its slot — and each
+  // is a reason nothing landed. Pushed after the return, the branch below
+  // promised notes in `errors` and shipped only half of them, so the caller
+  // got "no attributes supplied" for a call that supplied several.
+  notes.push(...siteNotes(site, a, params));
   if (!Object.values(params).some((v) => v !== undefined)) {
     // The notes ride in `errors` so the caller learns WHY nothing landed —
     // "no attributes" alone reads as "you sent none" when it sent invalid ones.
@@ -1014,7 +1030,6 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
       ],
     };
   }
-  notes.push(...siteNotes(site, a, params));
   const siteNote = SITE_NOTES[site];
   if (siteNote) notes.push(siteNote);
 

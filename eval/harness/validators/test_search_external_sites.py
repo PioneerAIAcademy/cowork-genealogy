@@ -16,6 +16,8 @@ signature contract. The `test` argument is the parsed test JSON dict
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from validators_lib import new_log_entries as _new_log_entries
@@ -82,6 +84,31 @@ def test_url_generation_log_entry_shape(before_state, after_state, test):
                 f"{detail.get('capture_received')!r}"
             )
     assert not errors, "URL-generation log-shape violations:\n  - " + "\n  - ".join(errors)
+
+
+def _as_mapping(value):
+    """A tool argument a model may have serialized as a JSON string.
+
+    `build_external_search_url` recovers from this itself (`coerceJsonArg`), so
+    the call SUCCEEDS and the URL is built — a rejected value reaches the site
+    exactly as if the argument had been well-formed. Reading it raw here raised
+    `AttributeError` instead of grading, and a crash in a `test_`-prefixed
+    validator is not an observation: `validator_runner` builds the result
+    without `reporting_only`, so `compute_validators_passed` counts it as a
+    gating failure and the LLM judge is skipped for that test. The check that
+    exists to catch a mis-serialized call was the one case it could not
+    survive.
+
+    Anything that is not a mapping after one parse attempt reads as absent,
+    which is the same thing an omitted argument does — this helper never
+    invents a value, so it cannot turn a passing call into a firing one.
+    """
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (ValueError, TypeError):
+            return {}
+    return value if isinstance(value, dict) else {}
 
 
 def _place_matches_rejected(birth_place: str, rejected_place: str) -> bool:
@@ -292,8 +319,8 @@ def test_resolved_birthplace_conflict_rejected_value_not_encoded(
         # rejected one ("Paris, Texas" vs. rejected "Paris, France") cannot
         # collide with it.
         for call in calls:
-            args = call.get("args") or {}
-            attrs = args.get("attributes") or {}
+            args = _as_mapping(call.get("args"))
+            attrs = _as_mapping(args.get("attributes"))
             # Only the attribute that actually reaches the site's place slot
             # is judged — birthPlace where present, else the first fallback the
             # tool's own table applies (`_PLACE_SLOT_CHAIN`). A rejected value
