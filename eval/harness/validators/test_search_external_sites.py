@@ -599,6 +599,30 @@ def test_log_site_newspapers(before_state, after_state, test):
     )
 
 
+def test_log_site_digital_newspaper_archive(before_state, after_state, test):
+    """Tag-gated: when the scenario targets a caller-supplied newspaper archive,
+    the new external_site log entry's `external_site.site` must be
+    `digital_newspaper_archive`.
+
+    This site is the one reachable only through a caller-supplied `baseUrl`, so
+    the plausible miss is different from its siblings': not a typo, but the
+    model filing the search under whichever named site it thinks the host
+    resembles (`newspapers`, `chronicling_america`). That would put a
+    subscription archive's search under a site whose `access` value is a
+    measured fact rather than a class default, which is the distinction the
+    tool's hedge note exists to preserve."""
+    if "log-site-digital_newspaper_archive" not in test.get("tags", []):
+        pytest.skip("not a log-site-digital_newspaper_archive scenario")
+    new_entries = _new_log_entries(before_state, after_state)
+    external = [e for e in new_entries if e.get("tool") == "external_site"]
+    assert external, "no external_site log entry to check"
+    sites = [(e.get("external_site") or {}).get("site") for e in external]
+    assert "digital_newspaper_archive" in sites, (
+        "expected an external_site log entry with site='digital_newspaper_archive'; "
+        f"got sites={sites}"
+    )
+
+
 def test_capture_pending_item_not_terminal(before_state, after_state, test):
     """Issue #1226 — a plan item awaiting an external-site capture must not be
     `completed`/`skipped`. Shared with the other suite that can reach this

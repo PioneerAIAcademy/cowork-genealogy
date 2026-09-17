@@ -267,8 +267,10 @@ host of its own, so any archive passes — except a host that is another
 supported site's own domain, which is refused naming that site (its parameter
 table and `access` value apply there, §4.1). Existing curated keys are
 compared percent-decoded (`birt%68` is `birth`), and a `;`-joined group in the
-curated query is preserved whole rather than having its first key treated as
-the whole group's, with a note. An `http:` link is accepted with a note that
+curated query keeps every member the call does not itself set — its first key
+is never treated as the whole group's. A member the call DOES set is replaced,
+exactly as an `&`-joined one is (§3.6): both spellings of the same curated URL
+produce byte-identical output. An `http:` link is accepted with a note that
 the desktop viewer does not open it. All of this reads only the call's own
 arguments; the tool still fetches nothing (§9).
 
