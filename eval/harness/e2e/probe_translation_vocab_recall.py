@@ -99,7 +99,6 @@ def _parse_vocab_file() -> list[dict[str, Any]]:
     row_index = 0
 
     for line in text.splitlines():
-        # Check for a section heading.
         stripped = line.strip()
         if stripped.startswith("##"):
             if stripped in _SECTION_HEADERS:
@@ -111,13 +110,10 @@ def _parse_vocab_file() -> list[dict[str, Any]]:
         if current_section is None:
             continue
 
-        # Table row: split on | and strip each cell.
         if "|" not in line:
             continue
         cells = [c.strip() for c in line.split("|")]
-        # Remove leading/trailing empty strings from the split.
         cells = [c for c in cells if c]
-        # Skip the header row and the separator row (---, :---:, etc.).
         if not cells or cells[0].startswith("-") or cells[0] in (
             "Term", "Abbreviation"
         ):
@@ -142,7 +138,6 @@ def _parse_vocab_file() -> list[dict[str, Any]]:
             })
             row_index += 1
         else:
-            # Latin and German abbreviation sections.
             if len(cells) < 3:
                 continue
             abbrev, full_form, meaning = cells[0], cells[1], cells[2]
@@ -239,7 +234,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    # Parse the vocabulary file.
     rows = _parse_vocab_file()
     expected_total = 49
     if len(rows) != expected_total:
@@ -250,7 +244,6 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    # Report special rows at startup.
     special = [r for r in rows if r["special_rule"] is not None]
     print(f"Parsed {len(rows)} rows ({len(special)} special):")
     for r in special:
@@ -264,7 +257,6 @@ def main(argv: list[str] | None = None) -> int:
             print()
         return 0
 
-    # Optionally run only one row.
     run_rows = rows
     if args.row_index is not None:
         matching = [r for r in rows if r["row_index"] == args.row_index]
@@ -317,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
                 input_tokens = 0
                 output_tokens = 0
 
-            if stop_reason not in ("end_turn", "error"):
+            if stop_reason not in ("end_turn", "max_tokens", "error"):
                 print(
                     f"  WARNING: unexpected stop_reason={stop_reason!r} "
                     f"for row {row['row_index']} trial {trial}",
@@ -356,6 +348,7 @@ def main(argv: list[str] | None = None) -> int:
             "temperature": None,
             "trials_per_row": TRIALS_PER_ROW,
             "total_rows": len(rows),
+            "partial_run": args.row_index is not None,
             "primary_denominator_rows": 48,
             "primary_denominator_trials": 144,
             "vocab_file": str(
@@ -367,13 +360,14 @@ def main(argv: list[str] | None = None) -> int:
         "trials": trials,
     }
 
-    # Atomic write: tmp file then rename.
     tmp = OUTPUT_FILE.with_suffix(".tmp.json")
     tmp.write_text(
         json.dumps(output, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    tmp.rename(OUTPUT_FILE)
+    # replace() succeeds on Windows when OUTPUT_FILE already exists;
+    # rename() would raise FileExistsError on a second run.
+    tmp.replace(OUTPUT_FILE)
 
     print(f"\nWrote {len(trials)} trial records to {OUTPUT_FILE}")
     return 0
