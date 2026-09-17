@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-08-29_20-04-37.json",
-  "annotator": "eruth937@gmail.com",
+  "run_log": "v1_2026-09-17_04-58-35.json",
+  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
   "corrections": [
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "rubric",
       "dimension_name": "Capture guidance",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -51,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "rubric",
       "dimension_name": "Tool selection",
       "llm_score": 3,
@@ -59,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_001",
+      "test_id": "ut_search_external_sites_005",
       "dimension_source": "rubric",
       "dimension_name": "Log entry",
       "llm_score": 3,
@@ -67,39 +67,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "test_id": "ut_search_external_sites_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
+      "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
       "dimension_name": "URL generation",
       "llm_score": 3,
@@ -107,87 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Capture guidance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Tool selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_014",
+      "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
       "dimension_name": "Log entry",
       "llm_score": 3,
@@ -195,15 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Log entry",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
+      "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
       "dimension_name": "Tool selection",
       "llm_score": 3,
@@ -211,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_002",
+      "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -219,39 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The generated MyHeritage URL used birth_place=Schuylkill+County%2C+Pennsylvania, but the resolved c_001 conflict establishes Ireland as Patrick Flynn’s preferred birthplace. Schuylkill County is the census residence/jurisdiction, not his birthplace, and the MyHeritage template has no separate residence field. The URL therefore encodes a rejected birthplace and misuses the birth_place parameter."
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
-      "dimension_source": "rubric",
-      "dimension_name": "URL generation",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The URL should have used birth_place=Ireland, reflecting the resolved conflict. It should not have encoded Schuylkill County, Pennsylvania as birth_place, because that is the census location rather than Patrick’s resolved birthplace and the template provides no separate residence/jurisdiction parameter."
-    },
-    {
-      "test_id": "ut_search_external_sites_002",
+      "test_id": "ut_search_external_sites_007",
       "dimension_source": "rubric",
       "dimension_name": "Capture guidance",
       "llm_score": 3,
@@ -259,15 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_external_sites_003",
+      "test_id": "ut_search_external_sites_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -275,9 +139,185 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_external_sites_003",
+      "test_id": "ut_search_external_sites_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_010",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Log entry",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "URL generation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\n"
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Capture guidance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_external_sites_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
