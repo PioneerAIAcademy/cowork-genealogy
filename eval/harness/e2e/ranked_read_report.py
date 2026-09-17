@@ -27,6 +27,16 @@ days, so re-derive rather than quote: `make e2e-ranked-reads SINCE=2026-08-04`
 prints the current values as its own preamble. The figures below were measured
 **2026-09-17** over that window (34 runs).
 
+**Measured on the pre-#2473 capture shape**, where `ranked` sits alongside the
+inline `results` block. PR #2473 makes `ranked` REPLACE `results` and widens
+`matches` to the whole scored pool. This module never requires `results`, so it
+reads both shapes (pinned by
+`test_post_2473_shape_with_ranked_and_no_results_is_still_counted`) — but the
+figures here and in the PR body are from the old shape, and the same target
+should be re-run once #2473 lands. After it, "the ranker did not surface it"
+becomes vacuous, since everything scored is returned; the visible-top-3
+question this module asks is the one that survives that change.
+
 `_summarize_tool_response` (`e2e/orchestrator.py`) leaves the MCP content-block
 list in place, so `response_summary` deserializes to `[{...}]` and NOT to the
 document itself. Of the 185 `ranked`-bearing captures, **119 parse to a list
