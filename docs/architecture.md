@@ -676,9 +676,11 @@ Architecturally:
   points at the compiled `build/`, and a live session holds the old catalog. The
   harness targets (`harness-test`, `eval-skill`, `e2e-run`) carry `$(ENGINE_BUILD)`
   and rebuild for you. Cowork: `make mcpb` and reinstall the extension, then fully
-  quit and reopen Claude Desktop. Hosted: `make sandbox-image` — the
-  `genealogy-agent` image bakes its own engine and `make server-e2b` does **not**
-  rebuild it (§7). `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
+  quit and reopen Claude Desktop. Hosted: `make deploy` (which rebuilds the image),
+  or `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify against a
+  dev template first — the `genealogy-agent` image bakes its own engine and
+  `make server-e2b` does **not** rebuild it (§7). A bare `make sandbox-image`
+  rebuilds PRODUCTION's template in place. `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
   covers the Claude Code and Cowork rows; the hosted row is only here.
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
@@ -1575,8 +1577,10 @@ other. Both `apps/electron` and `apps/web` must still typecheck (`make typecheck
 
 **Change anything the sandbox runs.** `make server-e2b` does **not** rebuild the
 engine — the `genealogy-agent` image bakes its own. After changing
-`app/sandbox_server.py` or `app/agent/*`, run `make sandbox-image` or the microVM
-runs stale code.
+`app/sandbox_server.py` or `app/agent/*`, rebuild the image or the microVM runs
+stale code: `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify,
+since a bare `make sandbox-image` rebuilds PRODUCTION's template in place.
+`make deploy` rebuilds the production one as part of the deploy.
 
 **Add a control-plane endpoint.** `apps/server/app/v1.py` for the public REST
 API (see `DEVELOPMENT.md` "Public `/v1` REST API"), `sessions.py` for session
@@ -1829,11 +1833,14 @@ changes how a correct change is made:
    `research_append` on `proof_summaries` (the arm with no redundant copy in the
    hosted path) and requires the guard's own deny text, with a hooks-removed
    control arm so the deny is attributable. Hosted-only, for the same reason.
-2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
-   not rebuild the `genealogy-agent` E2B image production runs the agent on, and
-   both guards over it are advisory. Production can run weeks-old skills, agents,
-   and MCP tools while CI, the deploy, and `/api/health` all look correct, and
-   nothing surfaces the baked commit. Run `make sandbox-image` (§7).
+2. **Nothing checks the sandbox image itself.** `make deploy` now builds and
+   pushes the `genealogy-agent` E2B image, and `/api/health` reports the commit
+   baked into it, so a deploy no longer silently leaves production on weeks-old
+   skills, agents and MCP tools. What remains unchecked is the image as an
+   artifact: no CI job builds or verifies the template, `make server-e2b` runs
+   whatever is baked into the one it resolves, and a bare `make sandbox-image`
+   rebuilds PRODUCTION's template in place from the working tree. Build a dev
+   template (`E2B_TEMPLATE_NAME=genealogy-agent-dev`) when verifying (§7).
 3. **Every measurement in this repo describes the eval corpus, not production.**
    There is no production telemetry: `apps/server/app/obs.py` is PII-free stdout
    logging, and `sandbox_server.py`'s buffer is a reconnect *replay*, not a tool
