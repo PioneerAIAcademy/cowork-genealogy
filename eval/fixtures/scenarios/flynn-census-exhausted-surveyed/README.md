@@ -1,4 +1,4 @@
-# flynn-census-exhausted
+# flynn-census-exhausted-surveyed
 
 Patrick Flynn parentage research. The first plan for q_001 is complete (1850 + 1860 census + 1908 death certificate searched, sources captured, assertions extracted, birthplace conflict resolved), but the question itself is still `in_progress` and the proof summary is at `probable` — there's no active plan describing what to search next.
 
@@ -9,7 +9,15 @@ Differs from `mid-research-flynn` in these ways:
 - **`questions[q_001].status`:** `in_progress` — same as `mid-research-flynn`.
 - **`proof_summaries[ps_001].tier`:** `probable` — same as `mid-research-flynn`.
 - **`conflicts[c_001]`:** resolved — same as `mid-research-flynn`.
-- **Everything else** (log, sources, assertions, person_evidence, hypotheses, timelines): identical to `mid-research-flynn`.
+- **`log`, `assertions`, `person_evidence`:** identical to `mid-research-flynn`
+  (5, 13 and 6 entries). The log identity is what `pli_006`/`log_006` broke when
+  they were carried into this twin from the base fixture; both are removed
+  again, so it holds.
+- **`sources`:** 4 entries, against `mid-research-flynn`'s 9 — it does not carry
+  `src_005`–`src_009`.
+- **`hypotheses`:** empty, against `mid-research-flynn`'s `h_001`.
+- **`timelines`:** one `t_001` in both, but not the same content — this one's
+  differs in `hypothesis_id` and `label`, following from the absent hypothesis.
 
 ## Used by
 
@@ -21,4 +29,4 @@ Differs from `mid-research-flynn` in these ways:
 
 Three independent sources support the parentage conclusion but research isn't yet exhaustive: probate records have not been searched (the most direct positive evidence a will could provide), and the post-1860 censuses haven't been examined to confirm Patrick remained in the same household into adulthood. A genuine "proved" tier requires either positive probate evidence or evidence that exhaustive search was conducted and turned up nothing contradicting.
 
-> **Surveyed variant.** Identical to `flynn-census-exhausted` but with a pre-seeded `localities` entry (Schuylkill County / PA), representing the state after the orchestrator ran `locality-guide`. Used by research-plan pure-consumer tests, which read the locality entry rather than surveying.
+> **Surveyed variant.** Every section is byte-identical to `flynn-census-exhausted` — `plans`, `log`, `sources`, `assertions`, `person_evidence`, `hypotheses`, `timelines`, `conflicts` — and the only difference is a pre-seeded `localities` entry (Schuylkill County / PA), representing the state after the orchestrator ran `locality-guide`. Used by research-plan pure-consumer tests, which read the locality entry rather than surveying.
