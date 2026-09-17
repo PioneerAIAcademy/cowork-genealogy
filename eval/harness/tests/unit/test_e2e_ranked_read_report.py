@@ -704,36 +704,34 @@ def _rows(doc):
     return rows
 
 
-def test_a_barren_search_between_a_ranking_and_a_read_does_not_hide_it():
-    """`previous` advanced on EVERY main-thread search, so a subject-less
-    sweep between a ranking and the read it drove buried that ranking: the
-    read was excluded as `ranking-skipped` while its id sat in the earlier
-    search's visible top 3. Over the committed corpus this discarded 100 of
-    174 scorable reads."""
+def test_a_barren_search_still_excludes_but_records_the_earlier_top3():
+    """#1156's rule stays literal: the NEAREST preceding search carried
+    `rankingSkipped`, so the read is EXCLUDED and counted — that count is the
+    broad-sweep control the issue commissioned, and scoring these instead
+    would answer a different question.
+
+    The observation survives as a sub-bucket: this read's id was in the
+    visible top 3 of the last search that did rank. Both buckets are
+    `rankingSkipped` exclusions and sum to the issue's number; the split is
+    reported under the headline, not inside it."""
     doc = _doc([
         _search(matches=[_match(1, "ABC-123")]),
         _search(ranking_skipped=True),
         _read("ABC-123"),
     ])
-    rows = _rows(doc)
-    assert [r.outcome for r in rows] == ["in_top3"]
-    assert rows[0].arm == "earlier-ranked"
+    assert [r.outcome for r in _rows(doc)] == ["ranking-skipped-in-earlier-top3"]
 
 
-def test_the_earlier_ranking_fallback_scores_misses_too():
-    """The fallback must not be able to flatter the headline. A read
-    attributed to an earlier ranking is scored in BOTH directions — if it is
-    not in that ranking's visible top 3 it counts as a miss, not an
-    exclusion. Without this the rescued population would be hits by
-    construction."""
+def test_a_barren_search_read_not_in_any_earlier_top3_is_the_plain_bucket():
+    """The other half of the split — same exclusion, no earlier ranking
+    carried this id. Both buckets must sum to the exclusion count #1156 asks
+    for, so neither may swallow the other."""
     doc = _doc([
         _search(matches=[_match(1, "ABC-123")]),
         _search(ranking_skipped=True),
         _read("ZZZ-999"),
     ])
-    rows = _rows(doc)
-    assert [r.outcome for r in rows] == ["not_in_top3"]
-    assert rows[0].arm == "earlier-ranked"
+    assert [r.outcome for r in _rows(doc)] == ["ranking-skipped"]
 
 
 def test_a_read_with_no_earlier_ranking_at_all_is_still_excluded():

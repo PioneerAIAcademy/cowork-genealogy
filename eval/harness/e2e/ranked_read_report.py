@@ -49,7 +49,7 @@ and 32 `person-evidence`. A subagent runs in fresh context and never saw the `ra
 handed. Counting those against "the agent ignored the ranker" mis-attributes a
 third of the denominator, so they are reported separately as delegated reads.
 
-## How a read is attributed to a search — four arms, counted separately
+## How a read is attributed to a search — three arms, counted separately
 
 1. `args.resultsRef` naming a `results/.staging/<uuid>.json` handle, matched to
    the `record_search` whose `staged.resultsRef` emitted it. Exact.
@@ -59,17 +59,18 @@ third of the denominator, so they are reported separately as delegated reads.
 3. Nearest preceding main-thread `record_search` in `aligned_calls` order, for
    everything else — **including a ref that resolves to neither**.
 
-4. `earlier-ranked`: the nearest preceding search ranked nothing, so the read
-   is attributed to the most recent search that did. `previous` advances on
-   EVERY main-thread search, so without this a subject-less sweep between a
-   ranking and the read it drove buried that ranking and the read was
-   discarded as `ranking-skipped` — 100 of 174 scorable reads. It scores in
-   BOTH directions, so it cannot flatter the headline.
+Arm 1 covers 19 of the 74 scorable reads and arm 2 just 1, so the headline is
+predominantly heuristic-joined. `format_report` prints the arm split so a
+reader can see how much of the number rests on arm 3.
 
-Arm 1 covers 19 of the 174 scorable reads, arm 2 just 1 and arm 4 fully 100, so
-the headline is predominantly heuristic-joined. `format_report` prints the arm
-split, and reports the rate separately for the strong arms (1-3) and arm 4,
-because the two rest on very different evidence: 28/74 against 9/100.
+A fourth arm was tried and removed. When the nearest preceding search ranked
+nothing, it attributed the read to the last search that DID rank rather than
+excluding it — which scored 100 further reads and quietly answered a
+different question than #1156 commissioned: the exclusion count it asks for
+stopped meaning "reads the broad-sweep control removed". The observation that
+prompted it survives as a sub-bucket of that exclusion (below), where it turns
+out to be small: of 125 reads the control removes, 8 were in an earlier
+ranking's visible top 3 and 117 were not.
 
 ## Exclusions, each counted rather than silently dropped
 
@@ -83,10 +84,13 @@ bearing, not presentational:
 3. `image-ark`: the read's id is a `3:1:` document-image ark, a different id
    space from `ranked[].recordId` — it can never join.
 4. `no-preceding-search`: the read had no main-thread search before it.
-5. `ranking-skipped`: the supplying search carried `rankingSkipped`, so there
-   was no ranking to ignore. This is the analysis-time control
-   `record-search-tool-spec-v2.md` says the field exists to enable, and it is
-   the confound the issue was filed against (subject-less broad sweeps).
+5. `ranking-skipped` / `ranking-skipped-in-earlier-top3`: the NEAREST
+   preceding search carried `rankingSkipped`, so there was no ranking to
+   ignore. This is the analysis-time control `record-search-tool-spec-v2.md`
+   says the field exists to enable, and the confound the issue was filed
+   against (subject-less broad sweeps). The two buckets are ONE exclusion for
+   the issue's purposes and are printed summed; the split records whether the
+   id was nonetheless in the visible top 3 of the last search that ranked.
 6. `no-ranking-signal`: the supplying search carried neither `ranked` nor
    `rankingSkipped` — a nil search (ranking needs `out.staged`), an errored
    search, or a capture cut before either field.
@@ -116,7 +120,7 @@ why that bucket carries a synthetic test rather than relying on live data.
 `docs/architecture.md` section 9.4 gap 3: "Do not quote a violation rate", and
 `make e2e-corpus` "deliberately reports counts, refusing a percentage whose
 denominator would be doing the work". Here the denominator is doing exactly
-that work — 224 main-thread reads become 174 scorable once the exclusions
+that work — 224 main-thread reads become 74 scorable once the exclusions
 above are applied — so this report's primary output is counts by bucket and
 any rate appears inline as `n/d`.
 
@@ -479,23 +483,24 @@ def scan_run(
         if supplying is None:
             rows.append(ReadRow(run, segment, "none", "no-preceding-search"))
             continue
-        # A barren nearest-preceding search does not mean there was no ranking
-        # to follow. `previous` advances on EVERY main-thread search, so a
-        # subject-less broad sweep between a ranked search and the read it
-        # drove used to hide that ranking entirely: the read was excluded as
-        # `ranking-skipped` while its id sat in the earlier search's visible
-        # top 3. Falling back to the most recent search that actually ranked
-        # scores those instead of discarding them.
-        #
-        # The fallback scores in BOTH directions — a read attributed this way
-        # can come back `not_in_top3` — so it cannot flatter the headline. The
-        # `earlier-ranked` arm in the attribution table is how many rest on it;
-        # they lean on a ranking the agent saw earlier in the run rather than
-        # immediately before the read.
-        if not (supplying.has_ranked and supplying.matches) and last_ranked is not None:
-            arm, supplying = "earlier-ranked", last_ranked
         if supplying.ranking_skipped and not supplying.has_ranked:
-            rows.append(ReadRow(run, segment, arm, "ranking-skipped"))
+            # #1156's rule, kept literal: the NEAREST preceding main-thread
+            # search carried `rankingSkipped`, so it is excluded and counted.
+            # An earlier draft attributed these to the last search that did
+            # rank instead of excluding them, which scored 100 of them and
+            # silently answered a different question than the one commissioned
+            # — the exclusion count the issue asks for stopped meaning "reads
+            # the broad-sweep control removed".
+            #
+            # The observation that prompted it is kept, as a sub-bucket rather
+            # than a redefinition: whether the id was nonetheless in the
+            # visible top 3 of the last search that ranked. Both buckets are
+            # `rankingSkipped` exclusions and sum to the issue's number; the
+            # split is reported below it, not in the headline.
+            if last_ranked is not None and _read_outcome(read_id, last_ranked) == "in_top3":
+                rows.append(ReadRow(run, segment, arm, "ranking-skipped-in-earlier-top3"))
+            else:
+                rows.append(ReadRow(run, segment, arm, "ranking-skipped"))
             continue
         if not supplying.has_ranked:
             rows.append(ReadRow(run, segment, arm, "no-ranking-signal"))
@@ -732,6 +737,33 @@ def format_report(
         lines.append(f"  excluded, {reason:<22} {n}")
     lines.append(f"  scorable                     {len(scorable)}")
 
+    # The two `rankingSkipped` buckets are ONE exclusion as far as #1156 is
+    # concerned — it commissioned "how many reads did the broad-sweep control
+    # remove". Printed summed, with the split under it, so the commissioned
+    # number is the one a reader takes away and the sub-observation cannot be
+    # mistaken for a different denominator.
+    skipped_plain = dropped.get("ranking-skipped", 0)
+    skipped_earlier = dropped.get("ranking-skipped-in-earlier-top3", 0)
+    if skipped_plain or skipped_earlier:
+        total = skipped_plain + skipped_earlier
+        lines.append("")
+        lines.append(
+            f"The rankingSkipped control removed {total} read(s) — the "
+            "confound #1156 was filed against."
+        )
+        lines.append(
+            f"  of those, {skipped_earlier} had been in the visible top {TOP_N} of "
+            "the last search that DID rank,"
+        )
+        lines.append(
+            f"  and {skipped_plain} had not. Reported as an observation about the "
+            "excluded population, not"
+        )
+        lines.append(
+            "  folded into the headline: the nearest preceding search is what "
+            "the issue's rule names."
+        )
+
     if delegated:
         lines.append("")
         lines.append("Delegated reads (subagents never saw the ranked block):")
@@ -745,7 +777,7 @@ def format_report(
         # Every arm a row can carry must be listed. A missing name silently
         # drops its rows from this table while `len(scorable)` still counts
         # them, so the table stopped summing to the population it describes.
-        for arm in ("staging", "log", "nearest", "earlier-ranked", "none"):
+        for arm in ("staging", "log", "nearest", "none"):
             if arms.get(arm):
                 lines.append(f"  {arm:<28} {arms[arm]}")
         assert sum(arms.values()) == len(scorable), (
@@ -753,11 +785,9 @@ def format_report(
             f"— an arm is missing from the list above: {sorted(arms)}"
         )
         exact = arms.get("staging", 0) + arms.get("log", 0)
-        earlier = arms.get("earlier-ranked", 0)
         lines.append(
             f"  -> {exact} of {len(scorable)} joined by an explicit resultsRef; "
-            f"{earlier} rest on a ranking from earlier in the run (the nearest "
-            "preceding search ranked nothing); the rest on nearest-preceding."
+            "the rest on nearest-preceding attribution."
         )
 
         inside = sum(1 for r in scorable if r.outcome == "in_top3")
@@ -766,25 +796,6 @@ def format_report(
             f"Inside the visible top {TOP_N}: {inside}/{len(scorable)}    "
             f"outside: {len(scorable) - inside}/{len(scorable)}"
         )
-        # Split by how the read was attributed, because the two rest on very
-        # different evidence and blending them hides that. A read joined to the
-        # search immediately before it — or by an explicit resultsRef — is a
-        # strong claim about which ranking the agent was looking at. One
-        # attributed to a ranking from earlier in the run, with a barren search
-        # in between, is a weaker one: the agent may have been working from
-        # that older list, or from nothing this report can see. Report both and
-        # let the reader weight them rather than quoting a single blended rate.
-        strong = [r for r in scorable if r.arm != "earlier-ranked"]
-        weak = [r for r in scorable if r.arm == "earlier-ranked"]
-        if strong and weak:
-            s_in = sum(1 for r in strong if r.outcome == "in_top3")
-            w_in = sum(1 for r in weak if r.outcome == "in_top3")
-            lines.append(
-                f"  attributed to the search just before the read: {s_in}/{len(strong)}"
-            )
-            lines.append(
-                f"  attributed to an earlier ranking (weaker):     {w_in}/{len(weak)}"
-            )
 
         early = [r for r in scorable if r.segment <= EARLY_MAX_SEGMENT]
         late = [r for r in scorable if r.segment > EARLY_MAX_SEGMENT]
