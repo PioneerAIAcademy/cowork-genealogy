@@ -936,6 +936,18 @@ export async function treeForget(input: TreeForgetInput): Promise<TreeForgetResu
     const sanitized = sanitizeTree(raw);
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+
+    // Plan-phase gate (#1357): forget-and-rederive is a project-start exercise.
+    const plans = Array.isArray(research.plans) ? research.plans : [];
+    if (plans.length > 0) {
+      throw new TreeForgetError(
+        "tree_forget is a project-start tool. This project already has a plan " +
+          "in research.json — forgetting tree data after planning has begun would " +
+          "discard structure the plan was built against. To run a forget-and-rederive " +
+          "exercise, start a new project."
+      );
+    }
+
     // Post-heal, pre-removal snapshot: block only on errors THIS call
     // introduces, not pre-existing drift in a section it never touches (#1572).
     const beforeTree = structuredClone(tree);
@@ -1009,7 +1021,8 @@ export const treeForgetSchema = {
     "This is the ONLY tool that deletes tree persons outright (tree_correct's " +
     "remove never does, and merge_tree_persons collapses duplicates instead). " +
     "Use it only for the forget-and-rederive exercise — never to correct a " +
-    "wrong fact (tree_correct) or to clean up a duplicate (merge_tree_persons).\n" +
+    "wrong fact (tree_correct) or to clean up a duplicate (merge_tree_persons). " +
+    "Project-start only: refused once research.json holds any plan.\n" +
     "\n" +
     "Selection is STRUCTURAL: pass tree person/fact/relationship ids and the " +
     "tool walks the tree's own relationships to resolve relatives. You do not " +

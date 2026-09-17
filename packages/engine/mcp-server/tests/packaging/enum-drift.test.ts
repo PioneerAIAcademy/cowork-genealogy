@@ -37,14 +37,15 @@ const SCHEMA_PATHS = [
 type ClosedEnums = Map<string, Set<string>>;
 
 /**
- * `locality.pages_read[].section` is the only closed enum still declared inline
- * in research.schema.json (the other five moved into enums.schema.json — #1015).
- * It is re-typed in src/tools/wiki-place-page.ts and enforced by no validator
- * check; adding one would change what the tool rejects, which is a behaviour
- * change and its own PR — issue #1270. Listed so the omission is deliberate and
- * visible rather than an enum this lint simply never noticed.
+ * Closed enums declared inline in research.schema.json rather than as an
+ * enums.schema.json `$def`, so the validator cannot be diffed against them.
+ * EMPTY, and the emptiness is the policy: #1015 moved five into
+ * enums.schema.json and #1270 moved the last (`locality.pages_read[].section`,
+ * now `locality_page_section`). A new inline enum must move into
+ * enums.schema.json (and be $ref'd) rather than being listed here — this array
+ * survives only so the assertion below keeps naming the one that got missed.
  */
-const INLINE_NOT_ENFORCED = ["locality.pages_read.items.section"];
+const INLINE_NOT_ENFORCED: string[] = [];
 
 function loadClosedEnums(schemaPath: string): ClosedEnums {
   const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
@@ -422,10 +423,10 @@ describe("validator enums match enums.schema.json", () => {
 
   it("the only unenforced inline enum is the one we know about", () => {
     // Every inline `enum` array left in research.schema.json must be listed in
-    // INLINE_NOT_ENFORCED. #1015 moved the other five into enums.schema.json, so
-    // locality.pages_read[].section (#1270) is the only one that should remain. A
-    // new inline enum must move into enums.schema.json (and be $ref'd) or land in
-    // INLINE_NOT_ENFORCED, rather than being invisible the way those five were.
+    // INLINE_NOT_ENFORCED, which is empty: #1015 moved five into enums.schema.json
+    // and #1270 moved the last (locality.pages_read[].section). A new inline enum
+    // must move into enums.schema.json (and be $ref'd) rather than being
+    // invisible the way those six were.
     const research = JSON.parse(
       readFileSync(join(projectRoot, "docs", "specs", "schemas", "research.schema.json"), "utf8"),
     );

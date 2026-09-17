@@ -25,7 +25,7 @@ import type {
   ProjectStatus, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  Subscription,
+  Subscription, LocalityPageSection,
 } from './enums.generated.js'
 
 // ============================================================
@@ -306,7 +306,7 @@ export interface EvaluationEntry {
 }
 
 export interface LocalityPageRead {
-  section: "home" | "getting_started" | "online_records" | "research_tips"
+  section: LocalityPageSection
   url?: string | null
   found: boolean
 }

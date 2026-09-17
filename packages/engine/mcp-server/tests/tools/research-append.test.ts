@@ -4520,6 +4520,7 @@ describe("research_append (composite persist + enforcement)", () => {
             ...noId(validAssertion("x", "src_001")),
             record_id: "1850-census-schuylkill",
             record_role: "absent",
+            informant_proximity: "researcher",
             evidence_type: "negative",
             log_entry_id: "log_001",
           },
@@ -4619,6 +4620,7 @@ describe("research_append (composite persist + enforcement)", () => {
           entry: {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
+            informant_proximity: "researcher",
             evidence_type: "negative",
             log_entry_id: "log_001",
           },
@@ -5699,6 +5701,7 @@ describe("research_append — negative evidence role invariant", () => {
           entry: {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
+            informant_proximity: "researcher",
             evidence_type: "negative",
           },
         },
@@ -5718,6 +5721,7 @@ describe("research_append — negative evidence role invariant", () => {
           entry: {
             ...noId(validAssertion("x", "src_001")),
             record_role: "absent",
+            informant_proximity: "researcher",
             evidence_type: "negative",
           },
         },
@@ -5739,6 +5743,283 @@ describe("research_append — negative evidence role invariant", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/record_role "absent" is reserved for negative evidence/);
+  });
+
+  it("the role message names the predeceased case and the two-field fix", async () => {
+    // Fires the ROLE arm (record_role is NOT absent), which the proximity
+    // tests below never reach. Without this, reverting the role message to its
+    // pre-#986 wording left all 497 tests green: the pre-existing test matches
+    // "negative evidence always uses the literal record_role \"absent\"",
+    // a phrase common to both wordings.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "spouse_1",
+            informant_proximity: "researcher",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // The predeceased carve-out: record-extractor.md calls this "equally
+    // common", and a message claiming a stated fact is always `direct` would
+    // send exactly this shape the wrong way.
+    expect(r.errors[0]).toMatch(/even when the record NAMES the person/);
+    expect(r.errors[0]).toMatch(/change both fields/);
+    expect(r.errors[0]).toMatch(/write no assertion/);
+  });
+
+  it("no message prescribes a fix another arm refuses", async () => {
+    // Regression guard. The first proximity message said "it is evidence_type
+    // \"direct\", not \"negative\" — change that rather than the proximity",
+    // and following that instruction on an absent-role assertion was refused
+    // by the converse role arm. A message that buys the wrong relabel
+    // reproduces the failure this whole change exists to stop.
+    await writeProject();
+    const violating = {
+      ...noId(validAssertion("x", "src_001")),
+      record_role: "absent",
+      informant_proximity: "official_duty",
+      evidence_type: "negative",
+    };
+    const first = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "assertions", op: "append", entry: violating }],
+    });
+    expect(first.ok).toBe(false);
+    if (first.ok) return;
+
+    // Whatever the message says, the edit it prescribes must be ACCEPTED.
+    const prescribed = await researchAppend({
+      projectPath: dir,
+      ops: [{
+        section: "assertions", op: "append",
+        entry: { ...violating, informant_proximity: "researcher" },
+      }],
+    });
+    expect(prescribed.ok).toBe(true);
+
+    // And it must not tell the caller to flip evidence_type on its own, which
+    // the converse role arm refuses.
+    expect(first.errors[0]).not.toMatch(/change that rather than the proximity/);
+    const evidenceTypeOnly = await researchAppend({
+      projectPath: dir,
+      ops: [{
+        section: "assertions", op: "append",
+        entry: { ...violating, evidence_type: "direct" },
+      }],
+    });
+    expect(evidenceTypeOnly.ok).toBe(false);
+  });
+
+  // ── The informant_proximity clause (#986).
+  //
+  // Each of these asserts validateNegativeEvidenceRole's OWN message rather
+  // than `ok === false`. That is load-bearing: the document-tier rule in
+  // validator.ts refuses the same append through validateIntroduced, so a bare
+  // `ok === false` passes with this whole clause reverted and proves nothing.
+
+  it("rejects evidence_type: negative with a non-researcher informant_proximity", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            informant_proximity: "self",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // A phrase unique to THIS tier AT RUNTIME. The document tier refuses the
+    // same append, so any phrase the two messages share passes with this whole
+    // clause reverted. Break-testing caught that twice: first on "negative
+    // evidence is the researcher's own conclusion", then again on "no record
+    // informant reported an absence" after the validator message was reworded
+    // to include it. Check both messages before changing this regex.
+    expect(r.errors[0]).toMatch(/changing evidence_type alone is refused/);
+  });
+
+  it("names the absence test as the discriminator, not just the field to change", async () => {
+    // The refusal message is the part with evidence behind it: in
+    // ut_record_extraction_028 the role arm's field-naming message bought a
+    // relabel (record_role flipped to "absent", same blank-field defect
+    // re-sent and accepted). So this message must give the caller a way to
+    // tell whether the assertion is negative evidence AT ALL — the Charles
+    // Ferber shape (a marital status the record states) is a mislabel, not a
+    // proximity slip. It must do that WITHOUT prescribing an edit the
+    // converse role arm then refuses; the test below pins that half.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "absent",
+            informant_proximity: "self",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/not an absence at all/);
+    expect(r.errors[0]).toMatch(/record_role must change from "absent"/);
+  });
+
+  it("re-checks the proximity clause on update, against the merged fields", async () => {
+    // Seeded by writing research.json DIRECTLY, never by appending through
+    // research_append — an append of this shape is refused by the document
+    // tier too, so seeding that way could not reach the update at all. The
+    // update then names an UNRELATED field: this is the one shape validator.ts
+    // cannot also refuse, because #1572's tolerance demotes a pre-existing
+    // error, and so it is the only proof this clause adds reach of its own.
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001", "src_001"), record_role: "absent",
+        informant_proximity: "self", evidence_type: "negative" },
+    ] as any;
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "1851" } },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/changing evidence_type alone is refused/);
+  });
+
+  it("accepts the update once the same call also fixes the proximity (self-healing)", async () => {
+    // The freeze above is deliberate but must not be a dead end: the check
+    // runs on the MERGED entry, so the repair rides in the same call.
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001", "src_001"), record_role: "absent",
+        informant_proximity: "self", evidence_type: "negative" },
+    ] as any;
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update", entryId: "a_001",
+          fields: { value: "1851", informant_proximity: "researcher" } },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a plain direct assertion carrying a non-researcher proximity", async () => {
+    // The other direction: the clause must not leak onto non-negative rows.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "deceased",
+            informant_proximity: "official_duty",
+            evidence_type: "direct",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("reports BOTH arms at once when an entry is wrong on both fields", async () => {
+    // a_012's pre-retag shape. Throwing the role arm first hid the proximity
+    // error until the caller had spent a round trip, which is this change's own
+    // thesis (a one-field refusal buys a relabel) turned on itself.
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_role: "deceased",
+            informant_proximity: "family_not_present",
+            evidence_type: "negative",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // ARM-UNIQUE phrases. `record_role "absent"` now appears in BOTH messages,
+    // because each one spells out the conforming shape — so matching it counts
+    // two and proves nothing about which arms fired.
+    expect(r.errors.filter((e) => /always uses the literal record_role/.test(e))).toHaveLength(1);
+    expect(r.errors.filter((e) => /changing evidence_type alone is refused/.test(e))).toHaveLength(1);
+  });
+
+  // ── The field-ABSENT shape. Both arms decide it deliberately (no presence
+  // guard, so `!==` is true for a missing key and the rule still fires), and
+  // nothing pinned that: two different ways of adding a presence guard each
+  // left all 298 tests green.
+
+  it("still refuses a negative whose record_role key is missing entirely", async () => {
+    await writeProject();
+    const entry: Record<string, unknown> = {
+      ...noId(validAssertion("x", "src_001")),
+      informant_proximity: "researcher",
+      evidence_type: "negative",
+    };
+    delete entry.record_role;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "assertions", op: "append", entry } as any],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    // Assert THIS arm fired, not merely that the call failed: the document
+    // tier's checkRequired refuses a missing record_role anyway, so `ok ===
+    // false` stays true with a presence guard added here and proves nothing.
+    // Break-testing caught exactly that.
+    expect(r.errors.some((e) => /always uses the literal record_role/.test(e))).toBe(true);
+  });
+
+  it("still refuses a negative whose informant_proximity key is missing entirely", async () => {
+    await writeProject();
+    const entry: Record<string, unknown> = {
+      ...noId(validAssertion("x", "src_001")),
+      record_role: "absent",
+      evidence_type: "negative",
+    };
+    delete entry.informant_proximity;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [{ section: "assertions", op: "append", entry } as any],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => /changing evidence_type alone is refused/.test(e))).toBe(true);
   });
 
   it("does not fire for non-assertion sections (no evidence_type field)", async () => {
