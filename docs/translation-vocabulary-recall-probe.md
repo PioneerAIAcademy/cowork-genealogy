@@ -61,8 +61,8 @@ The following are settled from the repo before running and are stated here so
 the probe is falsifiable:
 
 - **Model: `claude-sonnet-4-6`.** It is the unit harness `DEFAULT_MODEL`
-  (`eval/harness/harness/skill_runner.py:72`), the hosted control plane's
-  default (`apps/server/app/config.py:27`), and the `model:` recorded in all
+  in `eval/harness/harness/skill_runner.py`, the hosted control plane's
+  `default_model` in `apps/server/app/config.py`, and the `model:` recorded in all
   four committed translation run logs. `SKILL.md` carries no `model:` pin
   (all 26 were deleted in `c1fc2a4c2` / #1497). Cowork's model is
   user-selected and out of scope.
