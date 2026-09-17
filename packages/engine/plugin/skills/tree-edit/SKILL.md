@@ -109,7 +109,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 **Relationship threshold not met:** Apply the two-layer threshold from `references/relationship-accuracy.md` — a sourced evidence edge materializes at link time carrying its source-ref; a *concluded* relationship that no single record states is proof-gated. If neither is met, explain what is needed and suggest proof-conclusion first.
 
-**Conflicting evidence not yet resolved:** Do not pick a side. Coexisting sourced evidence facts may both live in the tree, each carrying its own ref — what waits for proof-conclusion is the *concluded* value (`primary`/`preferred`), not the evidence itself. Do not set the concluded value until the conflict is resolved in proof-conclusion.
+**Conflicting evidence not yet resolved:** Do not pick a side. Coexisting sourced evidence facts may both live in the tree, each carrying its own ref — what waits for proof-conclusion is the *concluded* value (`primary`/`preferred`), not the evidence itself. Do not set the concluded value until the conflict is resolved in proof-conclusion. Clearing is the opposite case: retire a `primary`/`preferred` the new conflict has undercut (`primary: false`) — an open conflict calls for it, and this skill may do it.
 
 **Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence` or any field the spec doesn't define for that object type (`docs/specs/simplified-gedcomx-spec.md` §4.1 facts / §4.2 relationships) — e.g. a fact has no `notes` field. The audit trail belongs in your reply, not in tree fields.
 

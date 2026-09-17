@@ -1701,6 +1701,40 @@ describe("Project Validator", () => {
         result.errors.some((e) => e.message.includes("unexpected property 'places'"))
       ).toBe(true);
     });
+
+    it("rejects record-only fields on tree persons and sources", async () => {
+      const tree = {
+        persons: [
+          {
+            id: "P1",
+            gender: "Male",
+            names: [{ id: "N1", given: "Jane", surname: "Doe" }],
+            principal: true,
+          },
+        ],
+        relationships: [],
+        sources: [
+          {
+            id: "S1",
+            title: "Alabama Deaths",
+            resource_type: "DigitalArtifact",
+            coverage: { place_rep_id: "12345", record_type: "Census" },
+          },
+        ],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'principal'"))
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'resource_type'"))
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'coverage'"))
+      ).toBe(true);
+    });
   });
 
   describe("Sidecar validation", () => {

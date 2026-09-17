@@ -86,11 +86,10 @@ export async function readProjectJson(
 /**
  * Strip the parts of a candidate document that are legal in tool output
  * (`record_read`'s `gedcomx`, `toSimplified` results) but not in the persisted
- * tree format: top-level `places[]` (the tree carries places as names on
- * facts) and person-level `sources[]` (tree source references hang off
- * names/facts/relationships). Returns a cleaned deep copy plus one warning
- * per stripped kind — the input is never mutated, and a candidate that
- * carries these must not be rejected for it.
+ * tree format: top-level `places[]`, person-level `sources[]`, and the
+ * record-only fields `principal`, `resource_type`, and `coverage`. Returns a
+ * cleaned deep copy plus one warning per stripped kind — the input is never
+ * mutated, and a candidate that carries these must not be rejected for it.
  */
 export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
   candidate: SimplifiedGedcomX;
@@ -108,15 +107,35 @@ export function sanitizeCandidate(candidate: SimplifiedGedcomX): {
   delete cleaned.places;
 
   let personSourceRefs = 0;
+  let strippedPersonFields = 0;
   for (const person of cleaned.persons ?? []) {
     if (Array.isArray(person.sources)) personSourceRefs += person.sources.length;
     delete person.sources;
+    if (person.principal !== undefined) { delete person.principal; strippedPersonFields++; }
   }
   if (personSourceRefs > 0) {
     warnings.push(
       `dropped ${personSourceRefs} person-level source reference(s) — the ` +
         `tree format carries source references on names/facts/relationships, ` +
         `not on persons`,
+    );
+  }
+  if (strippedPersonFields > 0) {
+    warnings.push(
+      `dropped record-only person fields (principal) — ` +
+        `these describe a record persona's role, not a tree person`,
+    );
+  }
+
+  let strippedSourceFields = 0;
+  for (const sd of cleaned.sources ?? []) {
+    if (sd.resource_type !== undefined) { delete sd.resource_type; strippedSourceFields++; }
+    if (sd.coverage !== undefined) { delete sd.coverage; strippedSourceFields++; }
+  }
+  if (strippedSourceFields > 0) {
+    warnings.push(
+      `dropped record-only source description fields (resource_type/coverage) — ` +
+        `these describe the scanned volume, not a tree source`,
     );
   }
 
