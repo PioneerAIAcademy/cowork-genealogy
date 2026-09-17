@@ -382,7 +382,8 @@ describe("research_log_append", () => {
         resultsAvailable: bad as any,
       });
       expect(result.ok).toBe(false);
-      expect(result.errors?.join(" ")).toMatch(/resultsAvailable must be a non-negative integer/);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toMatch(/resultsAvailable must be a non-negative integer/);
     }
   });
 
