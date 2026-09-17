@@ -42,7 +42,7 @@ Every matching issue is listed, sorted by number, with NO CAP. Some skills carry
 deep queue -- 13 open issues name `search-records` -- and a cap hides the one that
 mattered. The SHARED-FIXTURE arm is the one exception and reports counts instead:
 one scenario is referenced by 21 skills, and listing their issues measured a single
-~6,000-character annotation that GitHub truncates. That arm is a softer signal --
+17,328-character annotation. That arm is a softer signal --
 a fixture edit does not oblige a run today -- so it points at `/merge-issues` for
 the detail rather than drowning the arm that does.
 
@@ -179,7 +179,7 @@ def fixture_affected_skills(paths, fixture_map) -> set[str]:
     return out
 
 
-def issue_skills(body, agent_map: dict[str, set[str]]) -> set[str]:
+def issue_skills(body, agent_map: dict[str, set[str]], fixture_map=None) -> set[str]:
     """The slots an issue's `**Touches:**` line claims, as skill names.
 
     `paths_from_touches` returns `(kind, path)` TUPLES, not strings -- passing the
@@ -191,9 +191,12 @@ def issue_skills(body, agent_map: dict[str, set[str]]) -> set[str]:
     as holding a slot: it is unverified, and guessing its paths from the title would
     put work on a queue its author never claimed (rule from issue #2589).
     """
+    paths = [path for _kind, path in touches.paths_from_touches(body)]
     out: set[str] = set()
-    for _kind, path in touches.paths_from_touches(body):
+    for path in paths:
         out |= path_to_skills(path, agent_map)
+    if fixture_map:
+        out |= fixture_affected_skills(paths, fixture_map)
     return out
 
 
@@ -276,7 +279,7 @@ def fetch_open_issues(runner=subprocess.run) -> tuple[list[dict], str | None]:
     return rows, None
 
 
-def queued_by_skill(issues, skills: set[str], agent_map) -> dict[str, list[tuple[int, str]]]:
+def queued_by_skill(issues, skills: set[str], agent_map, fixture_map=None) -> dict[str, list[tuple[int, str]]]:
     """`{skill: [(number, title), ...]}`, sorted, for the skills this PR reaches."""
     out: dict[str, list[tuple[int, str]]] = {}
     for issue in issues:
@@ -286,7 +289,7 @@ def queued_by_skill(issues, skills: set[str], agent_map) -> dict[str, list[tuple
         title = issue.get("title") or ""
         # `body` is null on an issue opened with no description -- `or ""` upstream
         # in paths_from_touches, but the None must not reach it as a surprise.
-        for skill in issue_skills(issue.get("body"), agent_map) & skills:
+        for skill in issue_skills(issue.get("body"), agent_map, fixture_map) & skills:
             out.setdefault(skill, []).append((number, str(title)))
     return {k: sorted(v) for k, v in out.items()}
 
@@ -334,7 +337,7 @@ def _run() -> None:
         )
         return
 
-    queued = queued_by_skill(issues, skills | fixture_skills, agent_map)
+    queued = queued_by_skill(issues, skills | fixture_skills, agent_map, fixture_map)
 
     for skill in sorted(skills):
         rows = queued.get(skill, [])
@@ -350,22 +353,30 @@ def _run() -> None:
             f"a requirement; this is warn-only."
         )
 
-    # The fixture arm is ONE annotation, not one per skill: a single scenario can be
-    # referenced by 21 skills, and 21 near-identical warnings would bury the direct
-    # arm above. Softer wording too — check_runlogs.py's own fixture arm is warn-only
-    # because most run logs are already stale from prior fixture drift, so a fixture
-    # edit does not oblige a re-run today.
+    # The fixture arm is ONE annotation and carries COUNTS, not the issue lists.
+    #
+    # Both halves are measured. One scenario (`mid-research-flynn`) is referenced by
+    # 21 skills: one-warning-per-skill buries the direct arm under 21 annotations,
+    # and listing the issues measured a single 17,328-character annotation. Counts
+    # stay readable and still say where to look.
+    #
+    # The direct arm above keeps the full uncapped list, which is what #2589 asked
+    # for. The asymmetry is deliberate: a directly-touched skill IS buying a run, a
+    # fixture-touched one is not (check_runlogs.py's fixture arm is warn-only,
+    # because most run logs are already stale from prior fixture drift).
     fixture_rows = {s: queued[s] for s in sorted(fixture_skills) if queued.get(s)}
     if fixture_rows:
-        detail = "; ".join(f"{s} — {_listed(rows)}" for s, rows in fixture_rows.items())
+        counts = ", ".join(f"{s} ({len(rows)})" for s, rows in fixture_rows.items())
         gh_warning(
             f"this PR changes a shared fixture, which is embedded in the run-log "
             f"snapshot of {len(fixture_skills)} skill(s) — so it leaves their latest "
-            f"run logs stale even though nothing here obliges a re-run today "
-            f"(check_runlogs.py's fixture arm is warn-only). "
-            f"{len(fixture_rows)} of them have open issues that name a path in the "
-            f"same snapshot and would be free to fold into whichever run is bought "
-            f"next: {detail}. Warn-only."
+            f"run logs stale, though nothing here obliges a re-run today "
+            f"(check_runlogs.py's fixture arm is warn-only for the same reason). "
+            f"{len(fixture_rows)} of them have open issues naming a path in the same "
+            f"snapshot, which would be free to fold into whichever run is bought "
+            f"next — open-issue counts, not the lists, because listing them measured "
+            f"a 17,328-character annotation: {counts}. Run `/merge-issues` for the "
+            f"issue numbers themselves. Warn-only."
         )
 
     print(
@@ -381,9 +392,14 @@ def main() -> int:
     The blanket `except Exception` is the thing that makes that docstring true rather
     than aspirational. This step sits in a REQUIRED workflow with no
     `continue-on-error`, so any escaping exception — a shape from the issues API
-    nobody anticipated, a corpus scan raising, an import-time surprise — would red a
-    PR that has nothing wrong with it, over a diagnostic. The traceback is printed,
-    so the failure is loud; it just is not fatal.
+    nobody anticipated, or a corpus scan raising — would red a PR that has nothing
+    wrong with it, over a diagnostic. The traceback is printed, so the failure is
+    loud; it just is not fatal.
+
+    The module-level imports are OUTSIDE this guard, so a missing sibling module
+    still exits 1. That is deliberate — a `check_slot_queue.py` that cannot import
+    `touches` is not a degraded check, it is a broken deployment — but it is the one
+    hole in "always exits 0", so do not read that line as covering import time.
     """
     # The house pattern: a Windows console defaults to cp1252 and dies on the
     # em-dashes this module prints; the team it is written for is on Windows.

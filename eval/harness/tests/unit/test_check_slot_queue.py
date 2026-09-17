@@ -577,8 +577,12 @@ def test_a_fixture_only_pr_warns_once_not_once_per_skill(monkeypatch, capsys):
     assert check_slot_queue.main() == 0
     assert len(_recorded()) == 1, "the fixture arm must be ONE annotation"
     text = warnings_text()
-    assert "#5 (a)" in text and "#6 (b)" in text
     assert "shared fixture" in text
+    assert "citation (1)" in text and "timeline (1)" in text, "counts, by skill"
+    # Counts, NOT the issue lists: listing them for `mid-research-flynn`'s 21 skills
+    # measured a single 17,328-character annotation.
+    assert "#5" not in text and "#6" not in text
+    assert len(text) < 1000, f"fixture annotation must stay readable, got {len(text)}"
     assert "buys no paid run" not in capsys.readouterr().out
 
 
@@ -624,3 +628,52 @@ def test_a_gh_timeout_is_an_error_not_an_empty_queue(monkeypatch):
     rows, err = check_slot_queue.fetch_open_issues(runner=runner)
     assert rows == []
     assert err is not None and "did not respond" in err
+
+
+def test_an_issue_naming_only_a_shared_fixture_reaches_that_fixtures_skills():
+    """The two halves must resolve a path the SAME way (module docstring).
+
+    The PR side gained a fixture arm; without this the issue side had none, so an
+    issue whose `**Touches:**` names only a shared fixture resolved to nothing and
+    was invisible. Measured on the live pool when this was found: 10 of 28 skills had
+    at least one issue hidden this way, including #1972, whose Touches names three
+    `eval/fixtures/scenarios/*/research.json` paths and which was in flight at the
+    time.
+    """
+    fixture_map = {("scenarios", "flynn-multi-conflict"): {"validate-schema", "timeline"}}
+    body = "**Touches:** eval/fixtures/scenarios/flynn-multi-conflict/research.json\n"
+
+    assert check_slot_queue.issue_skills(body, AGENT_MAP) == set(), "no map -> no claim"
+    assert check_slot_queue.issue_skills(body, AGENT_MAP, fixture_map) == {
+        "validate-schema",
+        "timeline",
+    }
+
+
+def test_the_two_halves_agree_on_a_fixture_path():
+    """Stated as the invariant rather than the mechanism: whatever a fixture path
+    means on the PR side, it means the same on the issue side."""
+    fixture_map = {("mcp", "some-fixture"): {"search-records"}}
+    path = "eval/fixtures/mcp/some-fixture.json"
+    body = f"**Touches:** {path}\n"
+    assert check_slot_queue.fixture_affected_skills(
+        [path], fixture_map
+    ) == check_slot_queue.issue_skills(body, AGENT_MAP, fixture_map)
+
+
+def test_the_board_lib_test_suite_is_actually_collected():
+    """`testpaths` fails OPEN.
+
+    `eval/harness/pyproject.toml` adds `../../.claude/skills/lib/tests` so the module
+    this script imports is covered. Measured: with that directory renamed, pytest
+    collects 12 fewer tests and emits no warning and no error — the coverage vanishes
+    silently. A rename of `touches.py` itself breaks this script's import loudly; a
+    rename of the test directory alone does not.
+    """
+    # <repo>/eval/harness/tests/unit/<this file> -> parents[4] == <repo>, same as
+    # test_encoding_lint.py's REPO_ROOT.
+    root = Path(__file__).resolve().parents[4]
+    assert (root / ".claude" / "skills" / "lib" / "tests" / "test_touches.py").is_file(), (
+        "eval/harness/pyproject.toml's testpaths entry no longer resolves — "
+        "test_touches.py has stopped running and pytest will not say so"
+    )
