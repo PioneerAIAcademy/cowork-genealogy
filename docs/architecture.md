@@ -1720,14 +1720,16 @@ the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
 §3 — plus a **warn-only** arm that maps a changed shared fixture
 (`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
-and warns when their run logs go stale), and three **warn-only** lints
-worth knowing because they fire right after the three most common tasks:
+and warns when their run logs go stale), and four **warn-only** lints
+worth knowing because they fire right after the most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
-tools — what happens after you grant one), and `check_negative_reciprocity.py`
+tools — what happens after you grant one), `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
-after you widen a description).
+after you widen a description), and `check_slot_queue.py` (an open issue's
+`**Touches:**` line names a path in the eval snapshot this PR is about to make
+stale — what happens right before you buy a paid run).
 
 **These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
