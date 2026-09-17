@@ -2025,6 +2025,27 @@ describe("#1592 batchNumber on results", () => {
     }
   });
 
+  it("survives the staged slim block alongside role", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "record-search-role-slim-"));
+    try {
+      const entry = lincolnEntry();
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [entry] }),
+      );
+      const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir }, LOCAL);
+      expect(out.results[0].gedcomx).toBeUndefined();
+      expect(out.results[0].role).toBe("Principal");
+
+      const ref = out.staged!.resultsRef;
+      const staged = JSON.parse(
+        await readFile(join(dir, ref.replace(/^\.\//, "")), "utf-8"),
+      );
+      expect(staged.payload.results[0].role).toBe("Principal");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("reaches the annotated row, the shape a subjectId search actually reads", async () => {
     const dir = await mkdtemp(join(tmpdir(), "record-search-batch-rank-"));
     try {
@@ -2057,5 +2078,27 @@ describe("#1592 batchNumber on results", () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("#2367/#2336 role on results", () => {
+  it("populates role from display.role", () => {
+    const r = mapEntry(lincolnEntry());
+    expect(r!.role).toBe("Principal");
+  });
+
+  it("omits role when display.role is absent", () => {
+    const entry = lincolnEntry();
+    delete entry.content!.gedcomx!.persons![0].display!.role;
+    const r = mapEntry(entry);
+    expect(r!.role).toBeUndefined();
+    expect("role" in r!).toBe(false);
+  });
+
+  it("carries a non-Principal role through unchanged", () => {
+    const entry = lincolnEntry();
+    entry.content!.gedcomx!.persons![0].display!.role = "Mother";
+    const r = mapEntry(entry);
+    expect(r!.role).toBe("Mother");
   });
 });
