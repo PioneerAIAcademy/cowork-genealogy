@@ -11,14 +11,21 @@ vi.mock("../../src/auth/refresh.js", () => ({
 vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
-  return { ...actual, resolveStandardPlace: vi.fn().mockResolvedValue(null) };
+  return {
+    ...actual,
+    resolveStandardPlace: vi.fn().mockResolvedValue(null),
+    repIdToStandardPlace: vi.fn().mockResolvedValue(null),
+  };
 });
+
+vi.mock("../../src/utils/place-api.js");
 
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 import { recordReadTool, extractEntityId } from "../../src/tools/record-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { repIdToStandardPlace } from "../../src/utils/place-resolver.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 
@@ -501,5 +508,56 @@ describe("recordReadTool — sidecar mode (resultsRef)", () => {
     }, LOCAL);
     expect(out.persons).toHaveLength(2);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("#2367 resolveCoveragePlaces", () => {
+  const mockedRepIdToStandardPlace = vi.mocked(repIdToStandardPlace);
+
+  const recordWithCoverage: GedcomX = {
+    persons: [
+      {
+        id: "P1",
+        principal: true,
+        gender: { type: "http://gedcomx.org/Male" },
+        names: [{ nameForms: [{ fullText: "John Smith" }] }],
+      },
+    ],
+    sourceDescriptions: [
+      {
+        id: "SD1",
+        resourceType: "http://gedcomx.org/DigitalArtifact",
+        titles: [{ value: "Alabama Deaths" }],
+        coverage: [
+          {
+            spatial: { description: "#12345" },
+            temporal: { original: "1850/1860", formal: "+1850/+1860" },
+            recordType: "http://gedcomx.org/Census",
+          },
+        ],
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    mockedRepIdToStandardPlace.mockReset();
+    mockedRepIdToStandardPlace.mockResolvedValue(null);
+  });
+
+  it("resolves coverage place_rep_id to standard_place via repIdToStandardPlace", async () => {
+    mockedRepIdToStandardPlace.mockResolvedValueOnce("Talladega, Alabama, United States");
+    mockOk(recordWithCoverage);
+    const out = await recordReadTool({ recordId: "P1" }, LOCAL);
+    expect(mockedRepIdToStandardPlace).toHaveBeenCalledWith("12345");
+    const sd = out.sources?.find((s: any) => s.coverage);
+    expect(sd?.coverage?.standard_place).toBe("Talladega, Alabama, United States");
+  });
+
+  it("leaves standard_place absent when repIdToStandardPlace returns null", async () => {
+    mockedRepIdToStandardPlace.mockResolvedValueOnce(null);
+    mockOk(recordWithCoverage);
+    const out = await recordReadTool({ recordId: "P1" }, LOCAL);
+    const sd = out.sources?.find((s: any) => s.coverage);
+    expect(sd?.coverage?.standard_place).toBeUndefined();
   });
 });
