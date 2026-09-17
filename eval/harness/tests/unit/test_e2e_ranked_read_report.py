@@ -178,8 +178,16 @@ def test_preamble_matches_the_recorded_corpus_figures():
 
     # The envelope descent works: most captures are reached WITHOUT the regex.
     assert pre.unparseable < pre.ranked
-    # The regex fallback is exercised by real truncated captures.
-    assert pre.unparseable > 0
+    # The regex fallback is exercised by real truncated captures. This stays a
+    # hard assertion rather than a skip: if no truncated capture survives, the
+    # recovery path is no longer covered by real data and this acceptance check
+    # is no longer checking what it claims — which is a thing to be told
+    # loudly, not skipped past. `make prune-runlogs STRIP=1` is the likeliest
+    # cause if it ever goes red on a PR that did not touch this module.
+    assert pre.unparseable > 0, (
+        f"{pre.ranked} ranked captures and none cut mid-JSON — the regex "
+        "recovery arm is unexercised by real data (prune-runlogs STRIP=1?)"
+    )
     assert pre.reads["main"] > 0
 
     rows, delegated, excluded, _unreadable = scan(paths)
