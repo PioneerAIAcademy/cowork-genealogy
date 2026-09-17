@@ -32,7 +32,7 @@ Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
   the ownership validator, the tool comments, and the empirical run logs all
   disagree. Cannot test until the ruling lands.
 
-## No `routes-to:` test may name a paired row
+## A paired row is asserted on `spawned_agents()`, not `routes-to:`
 
 `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are routed
 by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075).
@@ -41,11 +41,8 @@ by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075).
 gates `skills_invoked` (`:660`) and stub application (`:684`) on
 `if tool_name == "Skill"` (`:654`), so a `routes-to:` tag — which
 `validators/test_research.py:34` asserts against `skills_invoked` — cannot
-observe a spawned row. But `spawned_agents()` (`:302`) and `spawn_prompts()`
-(`:336`) derive main-thread `Agent` spawns from `builtin_tool_calls`, which is
-already a validator fixture (`validators/conftest.py:140`). A `routes-to:` tag
-naming a paired row is therefore still wrong — assert on `spawned_agents()`
-instead.
+observe a spawned row. A `routes-to:` tag naming a paired row is therefore
+wrong; assert on `spawned_agents()` instead.
 
 `route-shortcut-guard.json` keeps all three in `stub_skills`, and that is
 deliberate. The stub is the control on the FAILURE path, not the compliant one:
@@ -56,9 +53,16 @@ shortcutting router runs the real skill inside an empty project for up to 30
 turns. The stub is merely inert on the compliant path, where the router spawns
 the agent instead — inert is not the same as useless.
 
-Issue #2246 **has landed** (`d25e8560b`, in this branch), so the direct route is
-observable in the unit tier via `spawned_agents()`. What this PR does not add is
-a validator that uses it for these three rows — that is one assertion away and
-belongs with the paid run that would grade it. Until then the route is
-unobserved by choice, not by impossibility, and a live `make e2e-run` remains
-the only end-to-end instrument.
+Issue #2246 **has landed** (`d25e8560b`, in this branch): `spawned_agents()`
+(`skill_runner.py:302`) derives main-thread `Agent` spawns from
+`builtin_tool_calls`, already a validator fixture (`validators/conftest.py:140`).
+So the harness can now observe a spawn, and `test_no_paired_skill_shortcut`
+(`validators/test_research.py`) is the assertion that uses it: on a test tagged
+`no-shortcut`, no paired name may be reached by **either** call mechanism.
+
+That second arm is not redundant with `test_routes_to_expected_skill`, which
+asserts only `delegations[0]` and reads `skills_invoked` alone. A router that
+spawns `@plugin:proof-conclusion` and *then* calls `Skill(question-selection)`
+passes it green while doing the exact thing `ut_research_015` exists to forbid.
+
+A live `make e2e-run` remains the only end-to-end instrument.

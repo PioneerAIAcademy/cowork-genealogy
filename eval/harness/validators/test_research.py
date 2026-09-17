@@ -103,3 +103,63 @@ def test_creates_no_project_when_none_exists(before_state, after_state, test):
         "creating the project is init-project's job. A research.json exists in "
         "the output where none did before — it must route to init-project."
     )
+
+
+def _paired_names() -> set[str]:
+    """Names that ship BOTH as a skill directory and as a plugin agent file.
+
+    Derived rather than listed so a fourth pair is covered without a second
+    edit. The derivation is asserted non-empty at the call site: a tree move
+    would otherwise make the check below vacuous and green.
+    """
+    from pathlib import Path
+
+    plugin = Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin"
+    skills = {p.name for p in (plugin / "skills").iterdir() if p.is_dir()}
+    agents = {p.stem for p in (plugin / "agents").glob("*.md")}
+    return skills & agents
+
+
+def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
+    """On a ``no-shortcut`` test, no paired row may be reached at all.
+
+    ``test_routes_to_expected_skill`` asserts only the FIRST delegation, and it
+    reads ``skills_invoked``, which ``skill_runner.py:654`` gates on
+    ``tool_name == "Skill"``. So a router that spawns
+    ``Agent(@plugin:proof-conclusion)`` and then calls
+    ``Skill(question-selection)`` satisfies it — ``delegations[0]`` is the
+    expected name — while doing the exact thing ut_research_015 exists to
+    forbid. Both call mechanisms are checked here because the routing table
+    now reaches these three rows by spawn and the rest by ``Skill``.
+    """
+    from harness.skill_runner import spawned_agents
+
+    if "no-shortcut" not in test.get("tags", []):
+        pytest.skip("not a no-shortcut test")
+
+    paired = _paired_names()
+    assert "proof-conclusion" in paired, (
+        "paired-name derivation found no `proof-conclusion` under "
+        "packages/engine/plugin — the plugin tree moved and this check would "
+        f"pass vacuously. Found: {sorted(paired)}"
+    )
+
+    allowed = _expected_skill(test)
+    reached = [
+        (kind, name)
+        for kind, names in (
+            ("Agent", spawned_agents(builtin_tool_calls)),
+            ("Skill", list(skills_invoked)),
+        )
+        for name in names
+        if name in paired and name != allowed and name != test.get("skill", "")
+    ]
+    assert not reached, (
+        "the router reached a paired row on a no-shortcut test: "
+        + ", ".join(f"{kind}({name})" for kind, name in reached)
+        + ". A user naming a downstream skill is a destination, not a "
+        "shortcut — the router must re-derive state and walk the table from "
+        f"the top. Expected route: {allowed!r}. "
+        f"spawned_agents={spawned_agents(builtin_tool_calls)} "
+        f"skills_invoked={list(skills_invoked)}"
+    )
