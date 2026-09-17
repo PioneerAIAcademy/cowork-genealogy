@@ -612,6 +612,41 @@ def test_empty_sections_allows_the_untranscribed_memory_with_a_null():
     check_empty(after, _EMPTY_TAGGED, calls)
 
 
+def test_empty_sections_allows_a_person_whose_memories_were_ALL_untranscribed():
+    """Acceptance 11: the budget reaches nothing, so person_read returns memory
+    sources carrying `artifactUrl` and no `text` at all. Gating on text alone
+    made this red -- the skill does the ruled thing (an entry per memory with
+    `transcription: null`) and the validator failed it."""
+    calls = [_person_read_call(sources=[
+        {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
+        {"id": "2", "title": "A deed", "artifactUrl": "https://sg30p0.familysearch.org/b/dist.jpg"},
+    ])]
+    after = _after(_blank(sources=[
+        {"gedcomx_source_description_id": "S1", "transcription": None},
+        {"gedcomx_source_description_id": "S2", "transcription": None},
+    ]))
+    check_empty(after, _EMPTY_TAGGED, calls)
+
+
+def test_empty_sections_fires_when_more_nulls_than_memories_came_back():
+    """The other direction, and the hole the text-only gate left wide open:
+    once ANY text was present the null branch was unbounded, so invented
+    entries rode in behind one real memory. Two memories cannot justify three
+    sources."""
+    calls = [_person_read_call(sources=[
+        {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
+        {"id": "2", "title": "A story", "text": _STORY},
+    ])]
+    after = _after(_blank(sources=[
+        {"gedcomx_source_description_id": "S1", "transcription": None},
+        {"gedcomx_source_description_id": "S2", "transcription": _STORY},
+        {"gedcomx_source_description_id": "S3", "transcription": None},
+    ]))
+    assert "cannot admit more entries than there were memories" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
+
+
 def test_empty_sections_still_fires_on_an_invented_transcription():
     """The exemption must not become a hole: a transcription person_read never
     returned is exactly the fabrication the empty-sections rule exists to stop."""

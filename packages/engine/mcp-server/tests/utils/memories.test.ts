@@ -102,6 +102,7 @@ describe("filterSourceStyle — stage 2 keeps on any arm", () => {
       "Registered nurse graduation photo",
       "Deedee at the beach",
       "Mustering out? no - Mustard picnic",
+      "Bibi at the beach",
     ];
     for (const title of names) {
       expect(hasRecordLanguage(mem({ id: "x", title })), title).toBe(false);
@@ -135,6 +136,13 @@ describe("filterSourceStyle — stage 2 keeps on any arm", () => {
       "Land patent, Sanpete County",
       "Affidavit of support",
       "Marriage license and certificate",
+      // Record classes the stems were missing. A photographed family-Bible
+      // register is a classic memory-only source and is nearly always filed
+      // under Photos, so it falls through every other arm.
+      "Family Bible register page",
+      "Bibles of the Clegg family",
+      "Cemetery record, Heber City",
+      "Cemeteries of Wasatch County",
     ];
     for (const title of records) {
       expect(hasRecordLanguage(mem({ id: "x", title })), title).toBe(true);

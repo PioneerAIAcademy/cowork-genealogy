@@ -75,6 +75,12 @@ const RECORD_LANGUAGE = new RegExp(
       // page for the 40s OCR budget. That is acceptance 3, twice over.
       "wills?",
       "deeds?",
+      // Record CLASSES, not tuning against the probe sample -- same footing as
+      // `certificate`. A photographed family-Bible register page is a classic
+      // memory-only source and is almost always filed under Photos, so it
+      // falls through the PDF arm, the kind arm and the keyword arm alike.
+      "bibles?",
+      "cemeter(?:y|ies)",
       "census(?:es)?",
       "marriages?",
       "births?",
@@ -158,7 +164,18 @@ export async function fetchMemories(personId: string, principal: Principal): Pro
   const out: Memory[] = [];
   for (let page = 0; url && page < MAX_PAGES; page++) {
     const res = await fetchWithRetry(url, { headers: headers(token) });
-    if (res.status !== 200) break;
+    if (res.status !== 200) {
+      // Without this line an outage is byte-identical to "this person has no
+      // memories": `break` returns [], nothing throws, so `mergeMemories`'
+      // catch never runs and the spec's promise of "one line to stderr" is kept
+      // only on the throw path. The read still degrades silently on purpose --
+      // this makes it observable, not fatal.
+      process.stderr.write(
+        `person_read: memories fetch for ${personId} returned ${res.status} ` +
+          `on page ${page}; continuing with the tree sources alone.\n`,
+      );
+      break;
+    }
     const raw = await res.text();
     if (!raw) break;
     let body: Json;

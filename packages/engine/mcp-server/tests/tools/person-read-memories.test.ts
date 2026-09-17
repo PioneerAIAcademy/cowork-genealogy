@@ -180,11 +180,36 @@ describe("person_read + memories", () => {
     expect(withFlag.sources.every((s) => s.id.startsWith("SD_"))).toBe(true);
   });
 
-  it("acceptance 6: a memories endpoint that 500s still returns the tree read", async () => {
-    routes({ memoriesStatus: 500 });
-    const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
-    expect(out.persons).toHaveLength(1);
-    expect(out.sources.every((s) => s.id.startsWith("SD_"))).toBe(true);
+  it("acceptance 6: a memories endpoint that 500s still returns the tree read, and SAYS SO", async () => {
+    // The status arm returns [] by `break`, so nothing throws and mergeMemories'
+    // catch never runs: without the stderr line an outage is byte-identical to
+    // "this person has no memories". Asserting the degradation is observed is
+    // the difference between this test and the vacuous ones the PR body lists.
+    const err = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      routes({ memoriesStatus: 500 });
+      const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+      expect(out.persons).toHaveLength(1);
+      expect(out.sources.every((s) => s.id.startsWith("SD_"))).toBe(true);
+      const written = err.mock.calls.map((c) => String(c[0])).join("");
+      expect(written).toContain("500");
+      expect(written).toContain(PID);
+    } finally {
+      err.mockRestore();
+    }
+  });
+
+  it("says nothing on stderr when the person simply has no memories", async () => {
+    // The other direction: a quiet success must stay quiet, or the line above
+    // is noise rather than a signal.
+    const err = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      routes({ pages: [[]] });
+      await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+      expect(err.mock.calls.map((c) => String(c[0])).join("")).toBe("");
+    } finally {
+      err.mockRestore();
+    }
   });
 
   it("acceptance 6b: a memories fetch that THROWS still returns the tree read", async () => {

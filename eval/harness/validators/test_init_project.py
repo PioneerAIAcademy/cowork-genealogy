@@ -149,6 +149,17 @@ def test_init_empty_sections(after_state, test, tool_calls):
     returned, or is null (the memory the transcription budget did not reach,
     which still gets its entry). So the skill cannot write a source it invented,
     and the same check doubles as the verbatim requirement.
+
+    GATED ON MEMORIES RETURNED, NOT ON TEXT RETURNED. Gating on text alone was
+    wrong in both directions. A person whose memories all miss the budget or all
+    fail OCR returns no text at all, so the exemption never engaged and the
+    validator red-flagged a skill doing exactly what SKILL.md tells it to --
+    acceptance 11 is precisely that case. And with one text present the null
+    branch was unbounded, so any number of invented `transcription: null`
+    entries passed. `artifactUrl` is the discriminator because `person_read`
+    puts it on every memory source and on nothing else; the count of them is
+    also the ceiling, since research.json cannot hold more memory-derived
+    sources than there were memories.
     """
     if "init-empty-sections" not in test.get("tags", []):
         pytest.skip("not an init-empty-sections scenario")
@@ -156,11 +167,20 @@ def test_init_empty_sections(after_state, test, tool_calls):
     if research is None:
         assert False, "init-empty-sections requires research.json to exist"
 
-    returned_texts = {
-        s["text"]
+    memory_sources = [
+        s
         for response in _responses(tool_calls, "person_read")
         for s in (response.get("sources") or [])
-        if isinstance(s, dict) and isinstance(s.get("text"), str) and s["text"].strip()
+        if isinstance(s, dict)
+        and (
+            s.get("artifactUrl")
+            or (isinstance(s.get("text"), str) and s["text"].strip())
+        )
+    ]
+    returned_texts = {
+        s["text"]
+        for s in memory_sources
+        if isinstance(s.get("text"), str) and s["text"].strip()
     }
 
     non_empty = []
@@ -168,7 +188,14 @@ def test_init_empty_sections(after_state, test, tool_calls):
         value = research.get(section, [])
         if not value:
             continue
-        if section == "sources" and returned_texts:
+        if section == "sources" and memory_sources:
+            if len(value) > len(memory_sources):
+                non_empty.append(
+                    f"sources ({len(value)} entries, but person_read returned "
+                    f"only {len(memory_sources)} memories -- the exemption "
+                    f"cannot admit more entries than there were memories)"
+                )
+                continue
             stray = [
                 e.get("gedcomx_source_description_id") or "<no id>"
                 for e in value
