@@ -163,8 +163,8 @@ def test_preamble_matches_the_recorded_corpus_figures():
     `doc["ranked"]` would do, since no capture parses to a dict. This asserts
     the envelope descent, the regex fallback and the join all reach real data.
 
-    Deliberately floors rather than equalities: the corpus grows (it gained
-    three runs in the fortnight this was being written), so pinned counts
+    Deliberately floors rather than equalities: the corpus grows (it gained at
+    least six runs in the fortnight this was being written), so pinned counts
     would fail on the next committed run. Recorded values at --since
     2026-08-04 on 2026-09-17, tree 2d6da86ef: searches 537, ranked 197,
     cut 74, main reads 236, scorable 75.
@@ -357,7 +357,7 @@ def test_record_source_ark_joins_via_record_ark_not_record_id():
 
 
 def test_bare_id_joins_against_record_id():
-    """7 reads in the corpus pass a bare `XXXX-XXX`; a literal string compare
+    """19 reads in the corpus pass a bare `XXXX-XXX`; a literal string compare
     drops them."""
     doc = _doc(
         [
@@ -546,6 +546,49 @@ def test_results_ref_that_resolves_to_nothing_falls_through_to_nearest():
 
 
 # --- scan(), exclusions and unreadable files --------------------------------
+
+
+def test_the_skipped_gate_reads_the_supplying_search_not_the_nearest():
+    """The one deliberate departure from #1156's wording, and — until this
+    test — the only line in the module a reverting refactor left green.
+
+    #1156 words the `rankingSkipped` control on the nearest preceding search.
+    Arms 1-2 know exactly which search produced the read, so a subject-less
+    sweep that merely intervened must not discard it. Gating on `previous`
+    instead passed all 57 other tests in this file (measured), and
+    `arm, supplying = "nearest", previous` two lines above makes `previous`
+    the variable a refactor reaches for."""
+    doc = _doc(
+        [
+            _search(
+                matches=[_match(1, "ark:/61903/1:1:AAAA-111")],
+                staging_ref="results/.staging/one.json",
+            ),
+            _search(ranking_skipped=True),
+            _read("ark:/61903/1:1:AAAA-111", results_ref="results/.staging/one.json"),
+        ]
+    )
+    assert [(r.arm, r.outcome) for r in _rows(doc)] == [("staging", "in_top3")]
+
+
+def test_arm_three_still_takes_the_nearest_search_as_its_gate():
+    """The other direction — the departure must not widen past the arms that
+    earn it. With no handle there is nothing stronger than proximity, so
+    #1156's rule applies verbatim and the read is excluded. Identical fixture
+    to the test above but for the missing `results_ref`."""
+    doc = _doc(
+        [
+            _search(
+                matches=[_match(1, "ark:/61903/1:1:AAAA-111")],
+                staging_ref="results/.staging/one.json",
+            ),
+            _search(ranking_skipped=True),
+            _read("ark:/61903/1:1:AAAA-111"),
+        ]
+    )
+    assert [(r.arm, r.outcome) for r in _rows(doc)] == [
+        ("nearest", "ranking-skipped-in-earlier-top3")
+    ]
 
 
 def test_corrupt_json_is_excluded_as_unreadable_not_a_crash(tmp_path):

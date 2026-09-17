@@ -76,7 +76,8 @@ reader can see how much of the number rests on arm 3.
 
 A fourth arm was tried and removed. When the nearest preceding search ranked
 nothing, it attributed the read to the last search that DID rank rather than
-excluding it — which scored 127 further reads and quietly answered a
+excluding it — which scored 99 of those 127 reads (the other 28
+have no earlier ranking to fall back to) and quietly answered a
 different question than #1156 commissioned: the exclusion count it asks for
 stopped meaning "reads the broad-sweep control removed". The observation that
 prompted it survives as a sub-bucket of that exclusion (below), where it turns
@@ -99,7 +100,8 @@ bearing, not presentational:
    search carried `rankingSkipped`, so there was no ranking to ignore. On
    arm 3 that is the nearest preceding search, which is #1156's rule
    verbatim; on arms 1-2 it is the search the read's own handle names, which
-   is stronger evidence than proximity (3 reads differ). This is the
+   is stronger evidence than proximity. 3 reads differ, all of them between
+   exclusion buckets — the scorable count is 75 under either gate. This is the
    analysis-time control `record-search-tool-spec-v2.md` says the field
    exists to enable, and the confound the issue was filed
    against (subject-less broad sweeps). The two buckets are ONE exclusion for
@@ -512,15 +514,19 @@ def scan_run(
             # and counted. On arm 3 the supplying search IS the nearest
             # preceding one, which is #1156's rule verbatim. On arms 1-2 the
             # read's own `resultsRef` names the search that produced it, and
-            # an exact handle outranks proximity: a read joined by handle to a
-            # search that DID rank is scored against that ranking even when a
-            # later subject-less sweep intervened. That is a deliberate
-            # departure from the issue's wording, and it moves 3 reads in the
-            # 2026-08-04 window — all on arm 1 — which would otherwise be
-            # discarded despite the log naming the ranking they came from.
+            # an exact handle outranks proximity. That is a deliberate
+            # departure from the issue's wording, and it is smaller than it
+            # sounds: in the 2026-08-04 window it moves 3 reads, all on arm 1,
+            # and all of them BETWEEN EXCLUSION BUCKETS — 2 out of
+            # `no-ranking-signal` into this one, 1 the other way into
+            # `ranked-no-matches`. None becomes scorable: 75 either way, 28 of
+            # them in the visible top 3 either way. What it changes is the
+            # commissioned exclusion count, 126 under the nearest-preceding
+            # gate against 127 here.
             # An earlier draft attributed these to the last search that did
-            # rank instead of excluding them, which scored all 127 of them and
-            # silently answered a different question than the one commissioned
+            # rank instead of excluding them, which scored 99 of the 127 (the
+            # other 28 have no earlier ranking to fall back to) and silently
+            # answered a different question than the one commissioned
             # — the exclusion count the issue asks for stopped meaning "reads
             # the broad-sweep control removed".
             #
@@ -792,8 +798,12 @@ def format_report(
             "excluded population, not"
         )
         lines.append(
-            "  folded into the headline: the nearest preceding search is what "
-            "the issue's rule names."
+            "  folded into the headline, which gates on the search that "
+            "SUPPLIED the read"
+        )
+        lines.append(
+            "  (the nearest preceding one, except where the read's own "
+            "resultsRef names it)."
         )
 
     if delegated:
