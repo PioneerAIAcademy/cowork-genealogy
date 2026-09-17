@@ -1510,7 +1510,14 @@ describe("build_external_search_url", () => {
       expect(r.notes.some((n) => /'birth' already in baseUrl was replaced/.test(n))).toBe(true);
     });
 
-    it("preserves a ';'-joined curated group instead of destroying its other parameters", () => {
+    it("replaces a ';'-joined group's colliding member and keeps the rest", () => {
+      // Two rules meet here. The group's OTHER members survive — that is the
+      // round-4 fix, and dropping the whole group is what it was written to
+      // stop. But the colliding member is replaced, not kept: this previously
+      // shipped `birth` twice, where a duplicate is parser-dependent and a
+      // first-wins site runs the CURATED value while the log records this
+      // call's, so the researcher gets someone else's results under this
+      // person's entry.
       const r = buildExternalSearchUrl({
         site: "ancestry",
         baseUrl: "https://www.ancestry.com/search/collections/8054/?birth=1800;name=X",
@@ -1518,8 +1525,30 @@ describe("build_external_search_url", () => {
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?birth=1800;name=X&birth=1850");
-      expect(r.notes.some((n) => /'birth' is already in baseUrl inside a ';'-joined group/.test(n))).toBe(true);
+      expect(r.url).toBe("https://www.ancestry.com/search/collections/8054/?name=X&birth=1850");
+      expect(r.notes.some((n) => /'birth' already in baseUrl was replaced/.test(n))).toBe(true);
+    });
+
+    it("treats a ';'-joined collision exactly like an '&'-joined one", () => {
+      // The defect this closes was an inconsistency, not a missing feature:
+      // the same curated URL behaved two ways depending only on which
+      // separator it happened to use. Asserted as byte-equality so the two
+      // paths cannot drift apart again.
+      const attributes = { surname: "Flynn" } as const;
+      const semi = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/?name=Smith;dbid=8054",
+        attributes,
+      });
+      const amp = buildExternalSearchUrl({
+        site: "ancestry",
+        baseUrl: "https://www.ancestry.com/search/?name=Smith&dbid=8054",
+        attributes,
+      });
+      expect(semi.ok && amp.ok).toBe(true);
+      if (!semi.ok || !amp.ok) return;
+      expect(semi.url).toBe(amp.url);
+      expect(semi.url).toBe("https://www.ancestry.com/search/?dbid=8054&name=_Flynn");
     });
 
     it("rejects a searchYear that is neither a plain year nor a hyphenated range", () => {

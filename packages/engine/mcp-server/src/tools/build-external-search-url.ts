@@ -679,7 +679,7 @@ function toQueryString(entries: Array<[string, string]>): string {
 function appendToBaseUrl(
   baseUrl: string,
   params: Record<string, string | undefined>,
-): { url: string; overridden: string[]; semicolonGroups: string[] } {
+): { url: string; overridden: string[] } {
   const hashIndex = baseUrl.indexOf("#");
   const fragment = hashIndex === -1 ? "" : baseUrl.slice(hashIndex);
   const withoutFragment = hashIndex === -1 ? baseUrl : baseUrl.slice(0, hashIndex);
@@ -691,7 +691,6 @@ function appendToBaseUrl(
   const defined = Object.entries(params).filter((entry): entry is [string, string] => entry[1] !== undefined);
   const overriddenKeys = new Set(defined.map(([k]) => k));
   const overridden: string[] = [];
-  const semicolonGroups: string[] = [];
   const existingTokens = existingQuery.length > 0 ? existingQuery.split("&") : [];
   const preservedTokens: string[] = [];
   for (const token of existingTokens) {
@@ -702,12 +701,25 @@ function appendToBaseUrl(
     // removed; the rest is preserved whole, since `;` is not a separator this
     // tool may assume the site honours.
     if (token.includes(";")) {
-      const kept = token.split(";").filter((sub) => decodeKey(sub.split("=", 1)[0]).toLowerCase() !== "sid");
-      if (kept.length === 0) continue;
-      for (const sub of kept) {
+      const kept: string[] = [];
+      for (const sub of token.split(";")) {
         const subKey = decodeKey(sub.split("=", 1)[0]);
-        if (overriddenKeys.has(subKey) && !semicolonGroups.includes(subKey)) semicolonGroups.push(subKey);
+        if (subKey.toLowerCase() === "sid") continue;
+        // A member this call also emits is dropped, exactly as the `&`-joined
+        // branch below drops its collision — otherwise the same curated URL
+        // behaved two ways depending only on which separator it happened to
+        // use: `?name=Smith&dbid=8054` had `name` replaced, while
+        // `?name=Smith;dbid=8054` kept it and shipped `name` twice. A
+        // duplicate is parser-dependent, and on a first-wins site the search
+        // runs the CURATED value while the log records this call's — the
+        // researcher gets someone else's results under this person's entry.
+        if (overriddenKeys.has(subKey)) {
+          if (!overridden.includes(subKey)) overridden.push(subKey);
+          continue;
+        }
+        kept.push(sub);
       }
+      if (kept.length === 0) continue;
       preservedTokens.push(kept.join(";"));
       continue;
     }
@@ -724,7 +736,7 @@ function appendToBaseUrl(
   const appended = toQueryString(defined);
   const combinedQuery = [preservedTokens.join("&"), appended].filter((s) => s.length > 0).join("&");
   const query = combinedQuery.length > 0 ? `?${combinedQuery}` : "";
-  return { url: `${path}${query}${fragment}`, overridden, semicolonGroups };
+  return { url: `${path}${query}${fragment}`, overridden };
 }
 
 function decodeKey(k: string): string {
@@ -1059,14 +1071,9 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
   }
 
   const combinedParams = { ...(SITE_FIXED_PARAMS[site] ?? {}), ...params };
-  const { url, overridden, semicolonGroups } = appendToBaseUrl(baseUrl ?? (resolvedSiteUrl as string), combinedParams);
+  const { url, overridden } = appendToBaseUrl(baseUrl ?? (resolvedSiteUrl as string), combinedParams);
   for (const key of overridden) {
     notes.push(`'${key}' already in baseUrl was replaced by this call's own value`);
-  }
-  for (const key of semicolonGroups) {
-    notes.push(
-      `'${key}' is already in baseUrl inside a ';'-joined group, which was left untouched — the parameter may appear twice`,
-    );
   }
   if (baseUrl !== undefined && new URL(baseUrl).protocol === "http:") {
     notes.push("baseUrl uses http:, which the desktop viewer does not open — prefer the https form of this link");

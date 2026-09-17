@@ -243,7 +243,12 @@ a duplicate's outcome is parser-dependent, and a curated link's stale
 Only keys this call actually sets count: every site's table declares every
 key it could emit, and a draft that used the declared keys deleted a curated
 `?birthplace=Boston` the call never supplied. Every other token is preserved
-byte-for-byte. **Each site's fixed parameters (§3.4) are applied whether or
+byte-for-byte. **This holds inside a `;`-joined group too**: the colliding
+member is replaced and the group's other members survive. Stated explicitly
+because it was implemented both other ways first — one draft dropped the whole
+group over a single `sid` member (review round 4), and its fix then kept the
+colliding member, so `?birth=1800;name=X` shipped `birth` twice while the
+`&`-joined spelling of the same URL replaced it. **Each site's fixed parameters (§3.4) are applied whether or
 not `baseUrl` is given** — a first draft applied them only on the site-wide
 branch, which silently dropped Chronicling America's required `dl=page` and
 MyHeritage's `action=query` on exactly the curated-link path SKILL.md's Case
