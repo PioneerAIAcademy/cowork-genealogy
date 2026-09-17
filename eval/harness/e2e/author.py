@@ -1155,8 +1155,15 @@ def cmd_strip(args: argparse.Namespace) -> int:
         # `starting-tree.gedcomx.json` does not exist yet, and on a re-run the
         # file is the *previous* strip.
         suspects = check_stripping(findings, tree)
+        # fixture_genre() reads the committed fixture.json; on a first strip
+        # it may not exist yet, and it owns the unknown-genre error, so fall
+        # back to the strip wording rather than crashing the strip command.
+        try:
+            strip_genre = fixture_genre(fixture_dir)
+        except (AuthorError, OSError):
+            strip_genre = "record-hint" if args.none else "strip"
         for suspect in suspects:
-            print(format_suspect(args.slug, suspect), file=sys.stderr)
+            print(format_suspect(args.slug, suspect, strip_genre), file=sys.stderr)
 
     if args.dry_run:
         print("\n--dry-run: wrote nothing.")
@@ -1373,7 +1380,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     suspects = check_stripping(findings, starting)
     _emit(warnings)
     for suspect in suspects:
-        print(format_suspect(args.slug, suspect), file=sys.stderr)
+        print(format_suspect(args.slug, suspect, genre), file=sys.stderr)
 
     if errors:
         _emit(errors, "ERROR")
