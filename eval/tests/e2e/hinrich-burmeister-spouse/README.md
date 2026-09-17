@@ -38,6 +38,18 @@ baptism — it is that record's **father** persona (the child is
 FamilySearch was proposing "this record's father is your Hinrich", which is why
 it raised the `adds_spouse` flag against the mother, "Elsch Burmeister".
 
+That one record carries three personas, and telling them apart is most of the
+confusion this fixture is built on:
+
+| Persona on the 29 Jul 1687 baptism | Ark |
+|---|---|
+| Child — Hinrich Burmeister, bp. 29 Jul 1687 | `ark:/61903/1:1:QPV4-RPYG` |
+| Father — Hinrich Burmeister | `ark:/61903/1:1:QPV4-RPBS` ← **what the hint pointed at** |
+| Mother — Elsch Burmeister | `ark:/61903/1:1:QPV4-RPBH` |
+
+(The three arks are the record's own persona list; open the child ark above and
+all three are on the page.)
+
 **The control the draft lacked.** The subject's own documented son's baptism —
 18 August 1683, `ark:/61903/1:1:QPVH-33NS`, the source behind tree person
 `P71D-DRJ` — names the mother **"Liesebeth Burmeister"**. This register does
@@ -128,4 +140,21 @@ correctly avoided the false attribution".
 The do-nothing-run protection that `required: true` normally provides is
 carried by `f3`, which is `required: true` and requires the agent to actually
 document the negative conclusion. `f2` is `required: true` and its tokens were
-measured clean against the starting tree.
+measured clean against the starting tree. That measurement is against the
+*starting* tree; the guard runs against the *final* one, where it matches on
+name tokens alone and ignores relationships. So a run that records Elsch in the
+tree as an explicitly rejected candidate — which `f2`'s own description allows —
+is force-failed too. **`f2` is a narrower version of `f1`'s problem, not an
+escape from it.** The corpus already shows this happening to people the agent
+itself created: `antonio-lucas-spouse`'s `avoid_guard.forced_false` names
+thirteen ids, and nine of them (`I1`–`I13`) appear nowhere in that fixture's
+starting tree, so they can only have come from the agent's own final tree.
+
+One spelling caveat, not fixed here: token matching does no stemming, so
+`Elsche` is a different token from `Elsch`. An agent that writes the mother the
+way the 1690 record spells her slips `f2`'s guard. Widening the name fields to
+"Elsch (Elsche) Burmeister" would catch that and stays clean against the
+starting tree, but it widens the false-positive surface by the same step, so it
+is a trade rather than a fix. Do **not** also add "Elisabeth": that force-fails
+a correct run in which the agent records Liesbeth Oldenburg under the Elisabeth
+form (tried and measured during senior review).
