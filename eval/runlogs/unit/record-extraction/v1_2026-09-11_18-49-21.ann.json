@@ -455,16 +455,16 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_record_extraction_011`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a negative test requiring the skill to decline and route to record-extraction. Claude produced an empty response with no tool calls and no invocation of record-extraction. The correct behavior was to explicitly route the user to record-extraction (which owns classification refinement), not to stay silent. An empty response fails the routing requirement.\n\nJunior: (Correctness: Fail — because the skill did not perform the required routing to record extraction and left the user without guidance.)"
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
     },
     {
       "test_id": "ut_record_extraction_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "**`ut_record_extraction_011`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The skill was required to route the user to record-extraction for reclassification work. No routing occurred — the response is empty with no text, no tool calls, and no skill invocation. The required action (routing to the correct skill) was not performed.\n\nJunior: (Completeness: Fail — because the skill did not route to record extraction and left the user without guidance or execution of the reclassification task.)"
+      "corrected_score": null,
+      "comment": "N/A per the Sep 2 ruling. Routing test, correct routing, no output."
     },
     {
       "test_id": "ut_record_extraction_011",

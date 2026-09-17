@@ -12,12 +12,29 @@
 # ordering does not currently change who may approve — it would again the moment
 # any line names a different set.
 #
-# THERE IS NO `*` DEFAULT, deliberately. Branch protection requires two
-# approvals from anyone with write access on every PR regardless; a rule here
-# adds the requirement that one of them come from a senior. A path nobody names
-# still gets two reviewers — it just does not pull a senior into a CSS tweak, an
+# THERE IS NO `*` DEFAULT, deliberately. Branch protection requires ONE approval
+# from anyone with write access on every PR regardless; a rule here adds the
+# requirement that it come from a senior. A path nobody names gets that one
+# approval from anyone — it just does not pull a senior into a CSS tweak, an
 # icon, or a dotfile. Only claim a path when a senior's judgment is what a
 # review of it needs.
+#
+# THE COUNT DROPPED FROM 2 TO 1 ON 2026-09-16, which raised the stakes on every
+# unowned path: what used to get two readers now gets one, and on an unowned
+# path that one need not be a senior. So the set of unowned files is no longer
+# a matter of taste — it was ENUMERATED against this file rather than asserted.
+# 337 of 4573 tracked files match no rule. They are:
+#
+#   216 .md          docs/ prose and .claude/ lead tooling — deliberate
+#    48 .css         styling — deliberate
+#    11 .txt         OCR key fixtures under mcp-server/dev/ — deliberate
+#     6 .html        slides and two app entry points — deliberate
+#   ~50 dotfiles,    .gitignore/.npmrc/.nvmrc/LICENSE/icons/.gitkeep — deliberate
+#       icons, misc
+#
+# Everything else was claimed below. DO NOT re-justify an unowned path from
+# memory of this list: re-run the count. The audit is a `git ls-tree` against
+# the rules here, and the list rots the moment either side changes.
 
 # --- Senior developer review: code and the infra that breaks silently ---
 # --- CODEOWNERS has no concept of PR labels, so this is scoped by file ---
@@ -36,6 +53,27 @@
 *.bat @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 Makefile @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 .gitattributes @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+
+# Shell scripts. Unowned until 2026-09-16, when the approval count dropped to 1
+# and an enumeration found 13 of them — including scripts/verify-mcpb.sh (the
+# packaging gate CI runs on every PR), scripts/build-mcpb.sh,
+# scripts/package-plugin.sh, scripts/test.sh, and
+# .github/scripts/consolidate-branch-protection.sh, which rewrites branch
+# protection on main. A one-approval-from-anyone path is the wrong place for
+# any of those.
+*.sh @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+
+# Container and deployment definitions. deploy/Dockerfile is the production
+# image (Makefile `fly deploy`), and apps/server/sandbox/e2b.Dockerfile builds
+# the hosted sandbox. A bare-filename pattern matches that basename at any
+# depth, which is how GitHub resolves a slash-free pattern.
+Dockerfile @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+e2b.Dockerfile @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+
+# Python lockfiles. Both are installed `--frozen` by CI (server-tests.yml,
+# eval-harness-tests.yml), so an edit here changes what every job resolves —
+# the same reasoning that already guards the npm/pnpm lockfiles as *.json/*.yaml.
+uv.lock @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 
 # --- Genealogist-authored content, including the pieces that happen to  ---
 # --- live in .py/.json files and so need re-asserting below the         ---

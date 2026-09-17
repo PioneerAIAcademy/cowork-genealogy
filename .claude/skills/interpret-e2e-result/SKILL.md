@@ -135,23 +135,37 @@ from records). Each entry is a denied attempt.
   autonomous run. Repeated attempts may indicate the skill is leaning on
   tree-reading instead of records, which is worth a look at the `/research` primer.
 
-Then check `blocked_context_calls` — the twin denied by a different guard. Each
-entry is a main-thread call to a subagent-only tool the harness blocked
-(`blocked_by: "context"`): the router doing a subagent's own work because that
-subagent failed to spawn. Two tools land here — an `extraction_append` (the
-record-extractor's write, #942) or an `image_read` (the image reader's read,
-which would overflow the transport). Read the entry's `tool` to see which. Same
-shape as above (`{tool, args, blocked_by}`), and the denied attempt also shows
-up in `narration[]` with `kind: "blocked"`.
+Then check `blocked_context_calls` — the twin denied by a different guard. Every
+entry carries `blocked_by: "context"`, but **two different guards land here and
+`blocked_by` cannot tell them apart. Read the entry's `tool`:**
+
+- **`research_append`** — an owned-section write: a caller wrote a section it does
+  not own. This is the arm that actually fires; every entry in the committed
+  corpus is one. **Not** evidence of a spawn failure, and the shipped plugin hook
+  holds the same rule, so a user would hit it too. Do not assume the main thread:
+  `owner_denied` has three rules — `routed`, `out_of_lane` and `declaration` — and
+  `out_of_lane` fires for a **named subagent** reaching outside its own lanes.
+  `tool` is `research_append` for all three, so it cannot tell them apart — read
+  `narration[]` for the rule and `tool_calls[]` for the caller.
+- **`extraction_append`** or **`image_read`** — a subagent-only tool called on the
+  main thread, which *does* suggest the owning subagent failed to spawn
+  (record-extractor for the write, the image reader for the read). Neither has
+  been observed in the committed corpus.
+
+Same shape as above (`{tool, args, blocked_by}`), and the denied attempt also
+shows up in `narration[]` with `kind: "blocked"`.
 
 - **Empty** — normal; say nothing.
-- **Non-empty** — the router tried to substitute for a failed spawn and was
-  blocked, so the subagent's work was not done on the main thread. Flag it: it
-  points at a spawn failure for the tool's owning subagent (`record-extractor`
-  for `extraction_append`), not a records gap. No agent owns `image_read` since
-  `image-reader-opus` was retired, so a blocked `image_read` is the router
-  reaching for a scan instead of delegating to `image-reader`.
-  Read the matching `narration[]` turn to see where the spawn failed.
+- **Non-empty** — a call was denied and that work was not done. Flag it, and say
+  which arm: an owned-section `research_append` is an ownership slip, not a spawn
+  failure, so name the caller from `tool_calls[]` rather than assuming the main
+  thread. Only the subagent-only tools point at a spawn failure for their owning
+  subagent (`record-extractor` for `extraction_append`), not a records gap. No
+  agent owns `image_read` since `image-reader-opus` was retired, so a blocked
+  `image_read` is the router reaching for a scan instead of delegating to
+  `image-reader`. Read the matching `narration[]` turn: for a subagent-only tool
+  it shows where the spawn failed, and for an owned-section write it names which
+  rule fired.
 
 ### Step 2d — Note any GPS guardrail bypasses
 
@@ -213,8 +227,9 @@ Translate `stop_reason` into something a researcher can act on:
 - `tool_cap` — agent hit the per-run tool-call cap (default 200).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
-- `cost_cap` — hit the per-run cost cap. Same diagnosis as `tool_cap`
-  but the cap caught it first.
+- `cost_cap` — spent past the cost threshold. **Not an interruption** — it
+  is a post-hoc label (e2e-test-spec.md:648), so read `usage.stop_reason`
+  to see how the run actually ended before calling it unfinished.
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
@@ -264,8 +279,10 @@ useful questions are about *this* run:
   `fulltext_search` in `tool_calls`). The GPS loop didn't advance.
   Pointer: tool counts (no FS search tools) + the last `narration` entry.
 - **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
-  `tool_cap` / `cost_cap`. It researched but didn't finish. Pointer: high
+  `tool_cap`. It researched but didn't finish. Pointer: high
   turn/tool counts; check whether `proof-conclusion` was ever reached.
+  (`cost_cap` is deliberately not in this list — it is applied after the
+  run has already ended, so it never cut a run short.)
 - **The evidence wasn't recoverable** — it searched genuinely but the
   finding isn't findable from records (and isn't a `provided-documents/`
   case). The fixture may be unsolvable as authored — a fixture problem,
