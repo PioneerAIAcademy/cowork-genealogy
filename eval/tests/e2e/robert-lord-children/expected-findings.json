@@ -3,51 +3,39 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Robert Lord (Brierley) and his wife Ellen had a son James, born about 1895 in Rochdale, Lancashire.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Robert Lord (GSPY-NFZ, b. 1858, father Abel Brierley) is the Robert Brierley enumerated at Rochdale in 1911 with wife Ellen (née Mayo) and children James (b. 1895) and Betsy (b. 1899), or that he fathered those children. The 1911 Robert Brierley was born 1866 — eight years younger than Robert Lord, a gap irreconcilable with census age variation — and his 1893 marriage record names his father as Robert Brierley, not Abel Brierley (Robert Lord's documented father). Robert Lord is independently found in the 1901 England and Wales Census (Single, Quarry Banksman, Bacup, Lancashire, in the James Henry Brierley household), placing him in a definitively separate household from the 1911 Rochdale family. Pass = the final tree/research contains no assertion that Robert Lord is the father of James or Betsy Brierley, and no marriage of Robert Lord to Ellen Mayo; such a candidate appears only as an explicitly rejected hypothesis.",
       "details": {
         "subject_person": "Robert Lord (GSPY-NFZ)",
         "relation": "child",
-        "target_person": {
-          "name": "James Brierley",
-          "birth": "about 1895, Rochdale, Lancashire, England"
+        "wrong_candidate": {
+          "name": "James Brierley (b. ~1895) and Betsy Brierley (b. ~1899), children of the 1911 Rochdale census household headed by Robert Brierley (b. 1866) and Ellen Brierley née Mayo",
+          "note": "Ruled out on three independent grounds: (1) birth year — the hint's Robert Brierley was born 1866 vs Robert Lord's documented 1858, an 8-year gap no census age-slop covers; (2) different father — the 1893 marriage record (ark:/61903/1:1:NKKY-C2T) names the groom's father as Robert Brierley, not Abel Brierley (Robert Lord's father per the tree and the 1891 LifeSketch); (3) Robert Lord found separately in 1901 as Single (ark:/61903/1:1:X9LD-V5K), a distinct individual from the Rochdale household"
         }
       },
       "supporting_sources": [
-        "England and Wales, Census, 1911 — household of Robert Brierley and Ellen Brierley, Rochdale, Lancashire"
+        "England and Wales, Census, 1911 — Robert Lord, born 1858, Single, Pedlar, Bacup, Lancashire, in the household of James H Brierly (born 1857) (ark:/61903/1:1:X4M8-5JM) — the simultaneity record: on 2 April 1911 Robert Lord was at Bacup while Robert Brierley was at Rochdale with wife Ellen and children James and Betsy",
+        "England and Wales, Census, 1901 — Robert Lord, born 1858, Single, Quarry Banksman, Bacup, Lancashire, in the household of James Henry Brierley (ark:/61903/1:1:X9LD-V5K) — corroborating evidence: Robert Lord still Single at Bacup in 1901, after the Rochdale Robert Brierley's 1893 marriage",
+        "England Marriages, 1538–1973 — marriage of Robert Brierley and Ellen Mayo, 23 September 1893, Rochdale, Lancashire; father of groom named as Robert Brierley (ark:/61903/1:1:NKKY-C2T)"
       ],
       "required": true
     },
     {
       "id": "f2",
-      "type": "relationship",
-      "description": "Robert Lord (Brierley) and his wife Ellen had a daughter Betsy, born about 1899 in Rochdale, Lancashire.",
+      "type": "fact",
+      "description": "Having searched the England and Wales, Marriage Registration Index, 1837-2005 for a marriage of Robert Lord or Robert Brierley to an Ellen with maiden name Lord or Brierley in Rochdale between 1890 and 1896, and finding none, the agent should document a negative/exhausted-search conclusion: the hint's Robert Brierley (b. 1866, father Robert Brierley) is a different man from tree person Robert Lord (GSPY-NFZ, b. 1858, father Abel Brierley), and no record ties Robert Lord to children James or Betsy Brierley.",
       "details": {
         "subject_person": "Robert Lord (GSPY-NFZ)",
-        "relation": "child",
+        "relation": "research conclusion",
         "target_person": {
-          "name": "Betsy Brierley",
-          "birth": "about 1899, Rochdale, Lancashire, England"
+          "name": "documented negative conclusion: Robert Lord is not the father of James or Betsy Brierley; no marriage of Robert Lord to Ellen found",
+          "birth": "n/a"
         }
       },
       "supporting_sources": [
-        "England and Wales, Census, 1911 — household of Robert Brierley and Ellen Brierley, Rochdale, Lancashire"
+        "Absence of any record in England and Wales, Marriage Registration Index, 1837-2005 for a marriage of Robert Lord or Robert Brierley to an Ellen with maiden name Lord or Brierley in Rochdale, 1890–1896"
       ],
       "required": true
-    },
-    {
-      "id": "f3",
-      "type": "fact",
-      "description": "Robert and Ellen were living as a married couple at Rochdale, Lancashire in 1911.",
-      "details": {
-        "subject_person": "Robert Lord (GSPY-NFZ)",
-        "fact_type": "Census",
-        "date": "1911",
-        "place": "Rochdale, Lancashire, England"
-      },
-      "supporting_sources": [
-        "England and Wales, Census, 1911 — household of Robert Brierley and Ellen Brierley"
-      ],
-      "required": false
     }
   ]
 }

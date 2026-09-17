@@ -1,9 +1,8 @@
 name: senior-queue
 
-# Labels a PR once it is actually ready for senior review — CI green, an
-# approving review from someone other than the author, no outstanding
-# changes-requested, and no unresolved review threads — with the label for the
-# team that owns its changed paths:
+# Labels a PR once it is actually ready for senior review — CI green, the author
+# has self-reviewed, no outstanding changes-requested, and no unresolved review
+# threads — with the label for the team that owns its changed paths:
 #
 #   is:open is:pr label:ready-for-senior-genealogist
 #   is:open is:pr label:ready-for-senior-developer
@@ -13,9 +12,21 @@ name: senior-queue
 # from either satisfies the merge gate — the labels say who is best placed to
 # read what, not how many approvals are outstanding.
 #
-# The senior review is the SECOND review, and it happens only after the first
-# round has been answered. That is what the changes-requested and unresolved-
-# thread rules are for. The ruleset blocks merge on an unresolved thread
+# THE SENIOR REVIEW IS STILL THE SECOND REVIEW — what changed on 2026-09-16 is
+# who does the first. Round one was a junior's approving review; it is now the
+# AUTHOR'S OWN, and the senior is the only required approver (`protect-main`
+# dropped from 2 required approvals to 1 in the same change). The queue rule
+# moved with it: `no peer approval` became `no author self-review`.
+#
+# A self-review cannot be an approval. GitHub refuses an author's APPROVED on
+# their own PR ("Can not approve your own pull request"), so the signal is a
+# COMMENTED review by the author and nothing else. It proves a deliberate step,
+# not a verified read — the weight behind it is the PR template checklist and
+# the `/audit-merged-prs` sample, not this file.
+#
+# The changes-requested and unresolved-thread rules are UNCHANGED and now carry
+# more weight, since they are what keeps a PR out of the queue once a senior has
+# opened round two. The ruleset blocks merge on an unresolved thread
 # (`required_review_thread_resolution: true`) but not on an outstanding
 # changes-requested, and neither of them keeps a PR out of a review QUEUE —
 # so without these two rules a PR is surfaced to a senior with round one open.
@@ -88,8 +99,8 @@ name: senior-queue
 # its floor. `check_suite` never fires here (see the trigger below) and there is
 # no approval trigger (see below), so neither of the two things that make a PR
 # ready is observed directly. `workflow_run` covers both indirectly: any CI
-# completion in the repo re-evaluates every open PR, so a peer approval is picked
-# up by the next one. The `pull_request_target` events are a fast path for
+# completion in the repo re-evaluates every open PR, so an author's self-review is
+# picked up by the next one. The `pull_request_target` events are a fast path for
 # open/push only. If you remove BOTH the sweep trigger and the schedule,
 # something else must answer "what re-checks a PR after CI finishes, and after
 # someone approves it?" — and the answer cannot be an approval event.
@@ -142,7 +153,7 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
   workflow_run:
     # THE APPROVAL-EVENT SUBSTITUTE. `pull_request_review` cannot be used here
-    # (see the ledger above), so nothing observed a peer approval and the cron
+    # (see the ledger above), so nothing observed a round-one review and the cron
     # was the only thing that converged the queue — measured at 200 of an
     # expected 352 runs on 2026-08-27, with an 11h23m gap on 2026-08-28.
     #
@@ -237,12 +248,12 @@ jobs:
               'senior-genealogists': {
                 label: 'ready-for-senior-genealogist',
                 color: '0E8A16',
-                description: 'CI green + peer-approved; awaiting senior genealogist',
+                description: 'CI green + author self-reviewed; awaiting senior genealogist',
               },
               'senior-developers': {
                 label: 'ready-for-senior-developer',
                 color: '1D76DB',
-                description: 'CI green + peer-approved; awaiting senior developer',
+                description: 'CI green + author self-reviewed; awaiting senior developer',
               },
             };
 
@@ -377,6 +388,54 @@ jobs:
               return superseded;
             }
 
+            // ROUND ONE IS THE AUTHOR'S OWN REVIEW (2026-09-16). The first pass
+            // used to be a junior's approval; authors now self-review and the
+            // senior is the only required approver. GitHub REFUSES an author's
+            // APPROVED on their own PR ("Can not approve your own pull request"),
+            // so the only state a self-review can carry is COMMENTED — which is
+            // why that state is no longer discarded outright.
+            //
+            // THE TWO OUTPUTS ARE DELIBERATELY SEPARATE, and must stay that way:
+            //
+            //   selfReviewed — did the AUTHOR submit a review on their own PR.
+            //                  Readiness only. Never an approval.
+            //   approvals    — reviewers, author excluded, whose LATEST standing
+            //                  is APPROVED. Feeds supersededThreads().
+            //
+            // Folding the author into `approvals` would let them clear their own
+            // review threads out of the readiness gate by self-reviewing, so a PR
+            // would reach a senior with round-one comments still open — the exact
+            // thing the thread rule exists to prevent. The author is admitted to
+            // `selfReviewed` and to NOTHING else.
+            //
+            // A self-review is a claim, not evidence: it is one API call with an
+            // empty body. What it buys is a deliberate step, not a verified read.
+            function reviewStandings(reviews, authorLogin) {
+              const latest = new Map();
+              let selfReviewed = false;
+              for (const r of reviews) {
+                if (!r.user) continue;
+                if (r.user.login === authorLogin) {
+                  // Any review the author submits counts, COMMENTED included.
+                  selfReviewed = true;
+                  continue;
+                }
+                // A peer's COMMENTED review is still not a standing: it neither
+                // approves nor blocks, and letting it overwrite an earlier
+                // APPROVED would drop that reviewer out of `approvals`.
+                if (r.state === 'COMMENTED') continue;
+                latest.set(r.user.login, { state: r.state, at: r.submitted_at });
+              }
+              const approvals = new Map([...latest]
+                .filter(([, s]) => s.state === 'APPROVED')
+                .map(([login, s]) => [login, s.at]));
+              return {
+                selfReviewed,
+                approvals,
+                standings: [...latest.values()].map(s => s.state),
+              };
+            }
+
             const { rules, unknown } = await loadCodeowners();
             if (!rules.length) {
               core.setFailed('parsed 0 rules out of .github/CODEOWNERS — refusing to label ' +
@@ -468,24 +527,15 @@ jobs:
               if (pr.state !== 'open') return { ...blank, reasons: ['not open'] };
               if (pr.draft)            return { ...blank, reasons: ['draft'] };
 
-              // Peer review: latest standing per reviewer, author excluded. Any
-              // non-author approval counts — deliberately not checking team
-              // membership, which would need a token with `read:org`.
+              // Round one is the author's own review; a senior's is round two.
+              // `standings` holds peer reviews only (author excluded) and still
+              // carries CHANGES_REQUESTED, so a senior who asks for changes puts
+              // the PR back out of the queue. See reviewStandings() for why the
+              // author never reaches `approvals`.
               const reviews = await github.paginate(github.rest.pulls.listReviews,
                 { owner, repo, pull_number: number, per_page: 100 });
-              const latest = new Map();
-              for (const r of reviews) {
-                if (!r.user || r.user.login === pr.user.login) continue;
-                if (r.state === 'COMMENTED') continue;
-                latest.set(r.user.login, { state: r.state, at: r.submitted_at });
-              }
-              const standings = [...latest.values()].map(s => s.state);
-              // When a reviewer's latest standing is APPROVED, that approval is
-              // their answer to every thread they opened before it — see
-              // supersededThreads().
-              const approvals = new Map([...latest]
-                .filter(([, s]) => s.state === 'APPROVED')
-                .map(([login, s]) => [login, s.at]));
+              const { selfReviewed, approvals, standings } =
+                reviewStandings(reviews, pr.user.login);
 
               const [checks, status, files, threads] = await Promise.all([
                 github.paginate(github.rest.checks.listForRef,
@@ -549,7 +599,7 @@ jobs:
                 rt.nodes.filter(t => !t.isResolved).length - answered.length;
 
               const reasons = [];
-              if (!standings.includes('APPROVED'))         reasons.push('no peer approval');
+              if (!selfReviewed)                           reasons.push('no author self-review');
               if (standings.includes('CHANGES_REQUESTED')) reasons.push('changes requested');
               if (unresolved)                              reasons.push(`${unresolved} unresolved review thread(s)`);
               if (!unresolved && rt.pageInfo.hasNextPage)

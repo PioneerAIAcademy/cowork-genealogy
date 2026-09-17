@@ -109,11 +109,61 @@ def parse(entry):
     return ("file", p) if "." in last else ("prefix", p)
 
 
+# A body can carry the string `**Touches:**` more than once, and neither the first
+# nor the last occurrence is reliably the live one. Measured over the 231 open issues
+# on 2026-09-16: 214 occurrences across 21 multi-mention bodies, of which 193 are the
+# real thing and 21 are mentions inside prose.
+#
+# What separates them is POSITION ON THE LINE, not position in the body:
+#
+#   - A real Touches line is LINE-INITIAL -- the body states its paths (193 cases).
+#   - A mention is INLINE, almost always in backticks, where a review banner talks
+#     ABOUT the line: "its `**Touches:**` line names X, which is stale" (21 cases;
+#     issue #2589 does it nine times). Taking the first match parses the banner.
+#
+# Position in the body cannot decide it, because both orders occur. A rescoped card
+# keeps its superseded body under `## Original issue` past a `---` fold, carrying a
+# stale line BELOW the live one -- issue #1851's live line is harness+docs, while the
+# retired one names four skill/agent paths that moved to issue #2127 on 2026-09-01.
+# So taking the LAST match is wrong in the opposite direction.
+#
+# Hence: take the first line-initial occurrence above any retiring fold.
+_RETIRING_FOLD = re.compile(r"^#{2,}\s+Original\s+(issue|body)\b", re.M | re.I)
+_TOUCHES = re.compile(r"\*\*Touches:\*\*(.*?)(?:\n\n|\Z)", re.S)
+
+
+def _live_touches_segment(body):
+    """The `**Touches:**` payload a card actually claims today, or None.
+
+    Skips inline mentions (a banner discussing the line rather than stating it)
+    and anything below a `## Original issue` / `## Original body` fold. Falls back
+    to the first match when every candidate is excluded, so an unusually formatted
+    body still reaches a queue rather than silently reaching none.
+    """
+    text = body or ""
+    fold = _RETIRING_FOLD.search(text)
+    cutoff = fold.start() if fold else len(text)
+
+    first = None
+    for m in _TOUCHES.finditer(text):
+        if first is None:
+            first = m.group(1)
+        if m.start() >= cutoff:
+            continue
+        line_start = text.rfind("\n", 0, m.start()) + 1
+        prefix = text[line_start:m.start()].lstrip()
+        # line-initial, optionally behind a blockquote marker or list bullet
+        if prefix.lstrip("> ").lstrip("-*+ ") != "":
+            continue
+        return m.group(1)
+    return first
+
+
 def paths_from_touches(body):
-    m = re.search(r"\*\*Touches:\*\*(.*?)(?:\n\n|\Z)", body or "", re.S)
-    if not m:
+    seg = _live_touches_segment(body)
+    if seg is None:
         return set()
-    seg = m.group(1).replace("`", " ").replace("·", " ")
+    seg = seg.replace("`", " ").replace("·", " ")
     out = set()
     for tok in _TOKEN.findall(seg):
         tok = tok.rstrip(".,;:)").rstrip("/")
