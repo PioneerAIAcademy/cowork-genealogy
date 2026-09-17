@@ -722,7 +722,7 @@ describe("Project Validator", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("accepts the field absent (absent means whole)", async () => {
+    it("accepts the field absent (absent means not established, not whole)", async () => {
       const research = {
         ...minimalResearch,
         sources: [validSource({ transcription: "full text" })],

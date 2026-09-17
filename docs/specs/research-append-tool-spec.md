@@ -627,17 +627,18 @@ Derivation, per op:
   `image-transcribe-tool-spec.md` §8.6 for the record side and the
   no-`projectPath` limitation.
 
-**Retraction is narrow, and a same-cap re-read does not do it.** A `false` only
-enters the cap store when a read completes **whole**, and the OCR output-token
-cap is a compile-time constant — so re-reading an image that was capped
-re-records `true`, never `false`. A stale `true` therefore clears only when a
-genuinely whole read of that image records `false` (in practice, after the cap is
-raised) and a subsequent `sources` op **carries the `image_filename`** to
-re-derive against; an update touching only other fields does not clear it. Within
-the current cap, do **not** re-read to "complete" a partial transcription — the
+**Retraction is narrow, and a re-read is not a reliable way to do it.** A `false`
+only enters the cap store when a read of that image completes without hitting the
+cap, and a subsequent `sources` op must **carry the `image_filename`** to
+re-derive against; an update touching only other fields does not clear a stale
+`true`. Re-reading is not a dependable retraction: the cap bounds *output tokens*,
+and the OCR prompt varies with `lookingFor` (`buildOcrPrompt`), so a second read
+of the same image can return either a capped (`true`) or an uncapped (`false`)
+result depending on what it was asked for — the store keeps whichever landed
+last, per image. So do **not** re-read to "complete" a partial transcription — the
 remedy is to pivot to the indexed record (`record_read` / `record_search`) and
 cite that as the source (matching `research-schema-spec.md` and the item-2
-ruling). A truncated source's `transcription` is partial for that image and cap;
+ruling). Treat a truncated source's `transcription` as partial for that read;
 supersede it with an indexed-record source rather than trying to null or rewrite
 it in place.
 
