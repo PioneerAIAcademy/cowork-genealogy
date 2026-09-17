@@ -63,3 +63,4 @@ Then recommend the next step: more open questions → question-selection; all re
 - Never resolve a conflict here — recommend conflict-resolution.
 - Never append a second `proof_summary` for a `question_id` that already has one.
 - Never decide, on the agent's behalf, that a precondition does not apply. If the agent declines and routes, relay that — it is the correct outcome, not a failure to work around.
+
