@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "Agent reached a correct 'disproved' conclusion in proof_summaries, grounding it in birth year gap (1866 vs 1858) and different father (Griffith not Abel); graded true because the negative conclusion was explicitly documented and is defensible. The specific exhausted Marriage Registration Index search for Robert+Ellen 1890–1896 named in the fixture was not performed, and the key disproving records (X4M8-5JM simultaneity, NKKY-C2T marriage) were not found — those gaps explain the proof quality score of 2 (thin): multi-source argument is sound in structure but misses the fixture's decisive records; Griffith identification rests on index inference without original certificate."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "1f1ee7985eb65d8322617912e2c7062752b77ba7cfa12cd109e97b00c89ba65a"
+}

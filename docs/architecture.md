@@ -576,6 +576,22 @@ agents.**
 > as the current population, and re-measure it rather than quoting it at a
 > proposal that would change it.
 
+**`.claude/settings.json` also carries a `permissions.allow` list**, reducing
+repeat permission prompts for commands verified genuinely read-only or
+scratch-scoped in practice but not covered by Claude Code's built-in
+auto-allow set (which includes undocumented "read-only forms of `git`" per
+its own docs, without enumerating which subcommands qualify — an explicit
+entry here removes that ambiguity rather than duplicating a guarantee).
+JSON carries no comments, so the file itself is not the rationale's home:
+the safety case for each entry — what was checked, what was ruled out, and
+why — lives in the commit message that added it. Read the current file for
+the exact list; `git log -p -- .claude/settings.json` for why each entry is
+there. `record_search` is the one non-obvious entry — it is not read-only (stages a sidecar under
+`results/.staging/`, pruned after 24h — `results-staging.ts`), kept because
+the writes stay in the tool's own scratch directory — the entry itself is a
+bare string, and the adding commit's own text doesn't make that argument: it
+calls `record_search` read-only outright, which this paragraph corrects.
+
 ### 3.6 The lane rule — classify a finding before you edit prose
 
 An e2e failure, an eval miss, or a user complaint is **not** automatically a
