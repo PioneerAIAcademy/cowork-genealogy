@@ -62,18 +62,51 @@ burial age defines, so the two records do not merely agree to within a month —
 they agree exactly, and together they fix her birth in the week of 21–27 March
 1879. She is the only Angela among the couple's children.
 
-**The two Duráns are one woman.** The starting tree's `K4JL-NPF` (Teodosia
-Duran, b. 1876) and `K21K-P18` (Teodora Durán, no dates) are a duplicate, and
-the proof is inside the tree's own data: `K21K-P1H`'s christening of 5 Jun 1889
-is indexed twice off one image (`ark:/61903/3:1:S3HT-69BQ-SRL`) —
-`ark:/61903/1:1:NQV5-DPB` names the mother Teodora Durán,
-`ark:/61903/1:1:6ZPT-KTZR` names her Teodosia Durán. Across this couple's
-38 record personas in the collection she is also indexed Teodocia, Teodossia,
-Teodoria, Todocia, Eudocia, Eudosia, Cerdocia and Tesdosia; the spelling is
-indexer variance, not two people. **The duplicate was deliberately not merged
-on familysearch.org** — merging would redirect one PID and invalidate the
-snapshot that `snapshot --check` audits, and the ambiguity is part of what the
-fixture measures.
+**The two Duráns are one woman, and the second name is an indexing error.** The
+starting tree carries `K4JL-NPF` (Teodosia Duran, b. 1876) and `K21K-P18`
+(Teodora Durán, no dates). `K21K-P1H`'s christening of 5 Jun 1889 is indexed
+twice off one image (`ark:/61903/3:1:S3HT-69BQ-SRL`), and the two indexings
+disagree: `ark:/61903/1:1:NQV5-DPB` transcribes the mother as Teodora (persona
+`NQV5-D5M`), `ark:/61903/1:1:6ZPT-KTZR` as Teodosia (persona `6ZPT-KTZY`). Both
+confirmed live on 2026-09-16. **The image settles which is right: it reads
+Teodosia.** So "Teodora" is not a variant of her name, it is one indexer's
+misreading, and `K21K-P18` exists because that misreading was carried into the
+tree.
+
+**Read the image before citing either indexing.** A reader who compares only the
+two indexed personas sees a genuine divergence and stops there — which is how an
+earlier revision of this section came to report the opposite, that both records
+read Teodosia and no divergence existed. That claim was right about the image
+and wrong about the indexings, stated in terms of the indexings. Only the image
+resolves the two, and neither ark has ever been retrieved by a tool call in any
+committed run log for this fixture, so nothing in the corpus can settle it
+either.
+
+Two further arguments point the same way and do not depend on the spelling. The
+tree's unsourced 1876 birth year for her is impossible: it would put her at no
+more than three when she bore Angela, baptized 27 Mar 1879, which is the record
+this fixture's own finding rests on. And `GPH8-7RX` is a Couple with
+`K4JL-NPF` — the identical wife PID `K21K-P1C` is married to — which is the
+father-identity paragraph below pointing the same way.
+
+The wider claim in the original text, that she is indexed Teodocia, Teodossia,
+Teodoria, Todocia, Eudocia, Eudosia, Cerdocia and Tesdosia across this couple's
+38 record personas, is **not** reinstated: nobody has opened those personas, and
+the two arks above are the only ones verified. Treat it as unchecked.
+
+Two cautions for whoever reads this next. Both PIDs carry **zero attached
+sources**, confirmed live on 2026-09-16 and matching the committed snapshot, so
+no provenance chain can be traced from either tree person back to an indexing.
+And none of the three arks in this paragraph was ever retrieved through a tool:
+they appear in no tool call in any committed run log for this fixture, unlike
+the three arks carrying `f1`, which are all attested in
+`run-2026-09-10_14-16-30.json`.
+
+**The duplicate was deliberately not merged on familysearch.org**, and issue
+#2513 closed Not planned rather than doing it: this product reads FamilySearch
+and never writes to it, merging would redirect one PID and make
+`snapshot --check` report DRIFT for this fixture permanently, and the ambiguity
+is part of what the fixture measures.
 
 **The father-identity question, and why it does not weaken the match.** The
 hint's father persona (`ark:/61903/1:1:NQ5N-RXV`) matches four tree persons,
@@ -88,10 +121,11 @@ chr. 5 Jun 1889), `K2BX-QFF` (Ygnacio Alvarado, Maclovia, chr. 10 Mar 1891),
 `K2B4-P75` (Ygnacio Albarado, Oliba Monica, chr. 5 May 1885) and `GPH8-7RX`
 (Ignacio Alvarado). `GPH8-7RX` settles it: it is a Couple with **`K4JL-NPF`**,
 the identical wife PID `K21K-P1C` is married to — two father records on one
-wife record. Alvarado/Albarado and Ignacio/Ygnacio vary with the record exactly
-as Teodosia/Teodora/Teodocia/Todocia do; the same burial image yields "Ygnacio"
-in one indexing (`NQ5N-RXV`) and "Ignacio" in the other (`6JPG-ZB66`). The link
-that actually carries weight runs through the tree's own child rather than the
+wife record. Alvarado/Albarado and Ignacio/Ygnacio vary from record to record,
+and the same burial image yields "Ygnacio" in one indexing (`NQ5N-RXV`) and
+"Ignacio" in the other (`6JPG-ZB66`) — the same one-image, two-indexings split
+as Teodosia/Teodora above, and the same caution applies: the image decides, not
+the index. The link that actually carries weight runs through the tree's own child rather than the
 empty father persona: `NQV5-DP1`, the father on María Rosa's 5 Jun 1889 entry,
 matches `K21K-P1C` at 0.9999994, and María Rosa is `K21K-P1H`. None of these
 duplicates were merged, for the same snapshot reason as the Durán pair.
@@ -137,3 +171,33 @@ warrant. Under §3.4.2 only `link` components score, so the corrected year sits
 in `details` as
 an identifying detail. The `researcher_question` is unchanged — it is the hint
 record's own spelling of the mother's name and stays answerable.
+
+## Changelog
+
+- **2026-09-07** — fixture authored as a `record-hint` draft (`e13a4f2f5`), one of
+  30 drawn from `filtered-list-samples-2.csv`. `expected-findings.json` transcribed
+  the hint record unverified: a burial of 20 June 1880 at El Carmen for the infant
+  "Angela Charado Duran", born 1880, naming Ygnacio Alvarado and Teodosia Duran.
+- **2026-09-15** — adjudicated a true match on the relationship, with the birth year
+  corrected 1880 to the week of 21–27 March 1879 (#2298, PR #2412). The burial
+  register states the parentage outright and gives her age as one year and two
+  months, which places the birth between 21 March and 20 April 1879; her own
+  baptism of 27 March 1879 falls inside that window. The DRAFT marker was removed,
+  which activates `validate_fixture`'s issue-#970 ark check on
+  `supporting_sources` from this point on.
+- **2026-09-16** — the two-Durán proof in Notes for reviewers was sharpened, and
+  the section now separates two layers it used to run together (#2513, closed
+  Not planned). The two indexings of the 5 Jun 1889 christening do disagree:
+  `NQV5-DPB` transcribes the mother Teodora (`NQV5-D5M`), `6ZPT-KTZR`
+  transcribes her Teodosia (`6ZPT-KTZY`), both confirmed live. The **image**
+  they share (`S3HT-69BQ-SRL`) reads Teodosia, so "Teodora" is one indexer's
+  misreading rather than a variant of her name, and `K21K-P18` carries it
+  because that misreading reached the tree. An interim revision of this entry
+  reported that both records index Teodosia and that no divergence existed —
+  right about the image, wrong about the indexings, and stated in terms of the
+  indexings, which is what made it read as false to two reviewers. Two further
+  arguments were added that do not depend on the spelling at all: the impossible
+  1876 birth year and the `GPH8-7RX` couple link. The wider 38-persona spelling
+  sweep remains unverified. Both PIDs carry zero attached sources. The upstream
+  merge was declined: this product never writes to FamilySearch, and merging
+  would put this fixture in permanent `snapshot --check` DRIFT.
