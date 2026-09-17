@@ -84,6 +84,18 @@ export interface FsImageInput {
 const MEMORY_ARTIFACT_PATTERN =
   /^https:\/\/sg30p0\.familysearch\.org\/.+\/dist\.[A-Za-z0-9]+(\?.*)?$/;
 
+/**
+ * The single host check for a memory artifact URL, shared by both legs that
+ * fetch one. The image leg validated and the story leg did not, which left the
+ * two reading the SAME upstream field (`sourceDescriptions[].about`) under
+ * different rules. Neither leg attaches a credential, so this is defence in
+ * depth rather than a live hole -- but a host check that only one caller
+ * performs is one refactor away from being no check at all.
+ */
+export function isMemoryArtifactUrl(url: string): boolean {
+  return MEMORY_ARTIFACT_PATTERN.test(url);
+}
+
 // Memory artifacts are NOT all images: the same corpus carried application/pdf
 // (29 of 221), and a PDF is exactly the high-value record type here (wills,
 // certificates, compiled histories). Measured 2026-09-15: the OCR model reads a

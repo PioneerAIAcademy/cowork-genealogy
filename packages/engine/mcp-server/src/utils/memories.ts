@@ -9,6 +9,7 @@ import { getValidToken } from "../auth/refresh.js";
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "./http.js";
+import { isMemoryArtifactUrl } from "./fs-image-fetch.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
@@ -51,8 +52,53 @@ interface Json {
  * though it produced three false positives there (award certificates); death and
  * birth certificates are core evidence and that sample is not representative.
  */
-const RECORD_LANGUAGE =
-  /\b(will|deed|certificate|census|obituar|marriage|probate|baptis|christening|draft card|birth|death|burial|register|newspaper|clipping|passport|naturaliz|pension|land patent|headstone|gravestone|tombstone|muster|enlist|manifest|passenger|deposition|affidavit)\w*/i;
+const RECORD_LANGUAGE = new RegExp(
+  "\\b(?:" +
+    [
+      // Suffix genuinely varies, so the wildcard earns its place:
+      // obituary/obituaries, baptism/baptised, naturalization/naturalized.
+      "obituar\\w*",
+      "baptis\\w*",
+      "naturaliz\\w*",
+      "enlist\\w*",
+      "probat\\w*",
+      "certificat\\w*",
+      "christening\\w*",
+      "registrat\\w*",
+      "deposition\\w*",
+      // Matched whole, plural only. A trailing wildcard on these short stems
+      // matches INSIDE ordinary words, and the words it hits are names: `will`
+      // in William/Willie/Willa, `deed` in Deedee, `birth` in Birthday,
+      // `muster` in Mustering, `register` in Registered. William is among the
+      // commonest Anglophone given names, so the blanket `\w*` kept a family
+      // snapshot on any tree carrying one -- and ranked it AHEAD of the census
+      // page for the 40s OCR budget. That is acceptance 3, twice over.
+      "wills?",
+      "deeds?",
+      "census(?:es)?",
+      "marriages?",
+      "births?",
+      "deaths?",
+      "burials?",
+      "registers?",
+      "registry",
+      "newspapers?",
+      "clippings?",
+      "passports?",
+      "pensions?",
+      "headstones?",
+      "gravestones?",
+      "tombstones?",
+      "musters?",
+      "manifests?",
+      "passengers?",
+      "affidavits?",
+      "draft cards?",
+      "land patents?",
+    ].join("|") +
+    ")\\b",
+  "i",
+);
 
 function headers(token: string): Record<string, string> {
   return {
@@ -218,6 +264,10 @@ const STORY_TEXT_TIMEOUT_MS = 15_000;
  */
 export async function fetchStoryText(m: Memory): Promise<string | null> {
   if (!m.artifactUrl) return null;
+  // Same host check the image leg runs on the same upstream field. Silent
+  // null rather than a throw: a story we cannot verify is a story we do not
+  // have, which is exactly how every other failure on this path degrades.
+  if (!isMemoryArtifactUrl(m.artifactUrl)) return null;
   try {
     // No credential: memory artifacts are public (measured -- no headers at all
     // returns 200), and nothing should hand a token to a URL that arrived
