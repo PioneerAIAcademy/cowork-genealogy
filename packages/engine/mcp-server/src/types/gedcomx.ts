@@ -11,6 +11,7 @@ export interface GedcomX {
 
 export interface GedcomXPerson {
   id?: string;
+  principal?: boolean;
   gender?: { type: string };
   names?: GedcomXName[];
   facts?: GedcomXFact[];
@@ -79,9 +80,17 @@ export interface GedcomXQualifier {
 
 export interface GedcomXSourceDescription {
   id?: string;
+  resourceType?: string;
   titles?: { value: string }[];
   citations?: { value: string }[];
   about?: string;
+  coverage?: GedcomXCoverage[];
+}
+
+export interface GedcomXCoverage {
+  spatial?: { description?: string };
+  temporal?: { original?: string; formal?: string };
+  recordType?: string;
 }
 
 export interface GedcomXPlaceDescription {
@@ -104,6 +113,7 @@ export interface SimplifiedGedcomX {
 export interface SimplifiedPerson {
   id?: string;
   ark?: string;
+  principal?: boolean;
   gender?: string;
   names?: SimplifiedName[];
   facts?: SimplifiedFact[];
@@ -167,10 +177,19 @@ export interface SimplifiedSourceReference {
 
 export interface SimplifiedSourceDescription {
   id?: string;
+  resource_type?: string;
   title?: string;
   citation?: string;
   author?: string;
   url?: string;
+  coverage?: SimplifiedCoverage;
+}
+
+export interface SimplifiedCoverage {
+  standard_place?: string;
+  place_rep_id?: string;
+  date_range?: string;
+  record_type?: string;
 }
 
 export interface SimplifiedPlaceDescription {

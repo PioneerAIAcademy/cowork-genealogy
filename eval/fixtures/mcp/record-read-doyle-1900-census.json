@@ -9,6 +9,7 @@
       {
         "id": "M6QK-HRD",
         "ark": "ark:/61903/1:1:M6QK-HRD",
+        "principal": true,
         "gender": "Male",
         "names": [
           { "id": "N1", "type": "BirthName", "given": "Thomas", "surname": "Doyle" }
@@ -39,7 +40,14 @@
       {
         "id": "S1",
         "title": "1900 United States Federal Census",
+        "resource_type": "DigitalArtifact",
         "url": "https://www.familysearch.org/ark:/61903/1:1:M6QK-HRD",
+        "coverage": {
+          "standard_place": "Carbon County, Pennsylvania, United States",
+          "place_rep_id": "201063",
+          "date_range": "1880-1920",
+          "record_type": "Census"
+        },
         "source_classification": "original",
         "note": "Population schedule, Carbon County, Pennsylvania. No column names a specific informant; census convention assumes whoever answered the door."
       }
