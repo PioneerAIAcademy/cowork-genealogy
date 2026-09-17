@@ -57,6 +57,7 @@ def _search(
     staging_ref=None,
     include_results=True,
     agent_type=None,
+    rank_tail=None,
 ):
     payload = {"query": {}, "returned": 0}
     if include_results:
@@ -75,6 +76,16 @@ def _search(
                 "_first_n": list(matches),
             },
         }
+    if rank_tail is not None:
+        payload.setdefault("ranked", {"subjectId": "G8Q5-BJ1", "matches": {}})
+        payload["ranked"]["matches"]["_rank_tail"] = [
+            {
+                "matchRank": m["matchRank"],
+                "recordId": m["recordId"],
+                "recordArk": m["recordArk"],
+            }
+            for m in rank_tail
+        ]
     call = {
         "tool": "mcp__genealogy__record_search",
         "args": {"projectPath": "/p"},
@@ -597,6 +608,66 @@ def test_arm_three_still_takes_the_nearest_search_as_its_gate():
     assert [(r.arm, r.outcome) for r in _rows(doc)] == [
         ("nearest", "ranking-skipped-in-earlier-top3")
     ]
+
+
+def test_a_read_the_ranker_placed_below_three_is_told_from_one_it_never_ranked():
+    """The whole point of `_rank_tail` (issue #1156).
+
+    Before it, both of these were `not_in_top3` and the report could only give
+    their union as an upper bound. They mean opposite things: one is the agent
+    disagreeing with a ranking it could see, the other is the agent reading
+    something the ranker never offered."""
+    below = _match(7, "ark:/61903/1:1:DEEP-777")
+    doc = _doc(
+        [
+            _search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")], rank_tail=[below]),
+            _read("ark:/61903/1:1:DEEP-777"),
+        ]
+    )
+    assert [r.outcome for r in _rows(doc)] == ["ranked-below-top3"]
+
+
+def test_a_read_absent_from_the_tail_is_named_as_never_ranked():
+    """The other direction. With a tail present the report can say this
+    positively instead of hedging."""
+    doc = _doc(
+        [
+            _search(
+                matches=[_match(1, "ark:/61903/1:1:AAAA-111")],
+                rank_tail=[_match(7, "ark:/61903/1:1:DEEP-777")],
+            ),
+            _read("ark:/61903/1:1:NOPE-999"),
+        ]
+    )
+    assert [r.outcome for r in _rows(doc)] == ["not-ranked-at-all"]
+
+
+def test_a_capture_with_no_tail_keeps_the_merged_upper_bound():
+    """`_attach_rank_tail` is not retroactive, and this is the guard that stops
+    the split being applied to runs that cannot support it. Identical to the
+    test above but for the missing tail: the honest answer there is the merged
+    bucket, not `not-ranked-at-all`, because the capture simply cannot say."""
+    doc = _doc(
+        [
+            _search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")]),
+            _read("ark:/61903/1:1:NOPE-999"),
+        ]
+    )
+    assert [r.outcome for r in _rows(doc)] == ["not_in_top3"]
+
+
+def test_the_visible_top_three_still_wins_over_the_tail():
+    """A read in the visible three must not be re-labelled by the tail scan."""
+    doc = _doc(
+        [
+            _search(
+                matches=[_match(1, "ark:/61903/1:1:AAAA-111")],
+                rank_tail=[_match(7, "ark:/61903/1:1:DEEP-777")],
+            ),
+            _read("ark:/61903/1:1:AAAA-111"),
+        ]
+    )
+    assert [r.outcome for r in _rows(doc)] == ["in_top3"]
 
 
 def test_corrupt_json_is_excluded_as_unreadable_not_a_crash(tmp_path):
