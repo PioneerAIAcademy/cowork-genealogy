@@ -234,7 +234,7 @@ Record it **only** when the researcher volunteers access unprompted — the ques
 } }
 ```
 
-A memory whose `notes` says it was not transcribed still gets its source entry — with `transcription: null`. Tell the user it was not read, and that `image_transcribe` can read it later.
+A memory whose `notes` says it was not transcribed gets **no** `sources` entry — never one with `transcription: null`. It is already in `tree.gedcomx.json` with its title and URL, which is the lead; a `sources` entry would assert it was examined. Name those memories to the user and say `image_transcribe` can read them later. If no memory was transcribed, `sources` stays empty.
 
 **`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (local `I` IDs that exist in the tree; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 

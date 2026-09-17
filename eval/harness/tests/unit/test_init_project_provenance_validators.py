@@ -603,29 +603,45 @@ def test_empty_sections_allows_a_verbatim_memory_transcription():
     check_empty(after, _EMPTY_TAGGED, calls)
 
 
-def test_empty_sections_allows_the_untranscribed_memory_with_a_null():
-    """A memory the budget did not reach still gets its entry."""
+def test_empty_sections_now_FIRES_on_the_untranscribed_memory_null_entry():
+    """Decision 5, 2026-09-17: an untranscribed memory gets NO sources entry.
+    It is already a tree source carrying title and URL, so the lead survives;
+    what the sources entry adds is the assertion it was examined, which is the
+    one thing that is not true. This test asserted the opposite until the
+    ruling."""
     calls = [_person_read_call(sources=[{"id": "1", "title": "A story",
                                          "text": _STORY}])]
     after = _after(_blank(sources=[{"gedcomx_source_description_id": "S4",
                                     "transcription": None}]))
-    check_empty(after, _EMPTY_TAGGED, calls)
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
 
 
-def test_empty_sections_allows_a_person_whose_memories_were_ALL_untranscribed():
-    """Acceptance 11: the budget reaches nothing, so person_read returns memory
-    sources carrying `artifactUrl` and no `text` at all. Gating on text alone
-    made this red -- the skill does the ruled thing (an entry per memory with
-    `transcription: null`) and the validator failed it."""
-    calls = [_person_read_call(sources=[
-        {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
-        {"id": "2", "title": "A deed", "artifactUrl": "https://sg30p0.familysearch.org/b/dist.jpg"},
-    ])]
-    after = _after(_blank(sources=[
-        {"gedcomx_source_description_id": "S1", "transcription": None},
-        {"gedcomx_source_description_id": "S2", "transcription": None},
-    ]))
-    check_empty(after, _EMPTY_TAGGED, calls)
+_ALL_UNTRANSCRIBED = [
+    {"id": "1", "title": "A will", "artifactUrl": "https://sg30p0.familysearch.org/a/dist.pdf"},
+    {"id": "2", "title": "A deed", "artifactUrl": "https://sg30p0.familysearch.org/b/dist.jpg"},
+]
+
+
+def test_acceptance_14_all_untranscribed_leaves_sources_EMPTY():
+    """Acceptance 14: on a person whose kept memories all came back
+    untranscribed, `sources` is empty after init. Both memories are still in
+    tree.gedcomx.json, which is where the lead lives."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    check_empty(_after(_blank()), _EMPTY_TAGGED, calls)
+
+
+def test_acceptance_14_fires_when_an_untranscribed_memory_got_an_entry_anyway():
+    """The other direction, and the one that can actually regress: the skill
+    writing the entry the cap forbids. Text-gating made this invisible -- with
+    no text returned the exemption never engaged at all."""
+    calls = [_person_read_call(sources=_ALL_UNTRANSCRIBED)]
+    after = _after(_blank(sources=[{"gedcomx_source_description_id": "S1",
+                                    "transcription": None}]))
+    assert "is null for a memory that was never transcribed" in _fails(
+        check_empty, after, _EMPTY_TAGGED, calls
+    )
 
 
 def test_empty_sections_fires_when_more_nulls_than_memories_came_back():
@@ -638,9 +654,9 @@ def test_empty_sections_fires_when_more_nulls_than_memories_came_back():
         {"id": "2", "title": "A story", "text": _STORY},
     ])]
     after = _after(_blank(sources=[
-        {"gedcomx_source_description_id": "S1", "transcription": None},
+        {"gedcomx_source_description_id": "S1", "transcription": _STORY},
         {"gedcomx_source_description_id": "S2", "transcription": _STORY},
-        {"gedcomx_source_description_id": "S3", "transcription": None},
+        {"gedcomx_source_description_id": "S3", "transcription": _STORY},
     ]))
     assert "cannot admit more entries than there were memories" in _fails(
         check_empty, after, _EMPTY_TAGGED, calls

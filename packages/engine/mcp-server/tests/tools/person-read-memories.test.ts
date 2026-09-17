@@ -200,8 +200,10 @@ describe("person_read + memories", () => {
   });
 
   it("says nothing on stderr when the person simply has no memories", async () => {
-    // The other direction: a quiet success must stay quiet, or the line above
-    // is noise rather than a signal.
+    // A quiet success must stay quiet, or the line above is noise not signal.
+    // NOTE this single-page 200 is the ONE happy path with no 204 in it, so it
+    // cannot catch a guard that fires on the documented last page -- the
+    // multi-page case below is what pins that.
     const err = vi.spyOn(process.stderr, "write").mockReturnValue(true);
     try {
       routes({ pages: [[]] });
@@ -231,13 +233,24 @@ describe("person_read + memories", () => {
   });
 
   it("pages to completion, and survives the 204-with-empty-body last page", async () => {
-    routes({ pages: [
-      [memory({ id: "d1", artifactMetadata: qualifier("Document") })],
-      [memory({ id: "d2", artifactMetadata: qualifier("Document") })],
-      undefined as unknown as unknown[],   // the real last hop: 204, empty body
-    ] });
-    const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
-    expect(out.sources.map((s) => s.id).filter((i) => !i.startsWith("SD_"))).toEqual(["d1", "d2"]);
+    // Also the ONE happy path that can trip the outage warning, because it is
+    // the only one that ends on a non-200. The warning fired here at first --
+    // on every memory-rich person, saying "continuing with the tree sources
+    // alone" when in fact every memory had been collected. The quiet-success
+    // assertion belongs on this case, not on the single-page one.
+    const err = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      routes({ pages: [
+        [memory({ id: "d1", artifactMetadata: qualifier("Document") })],
+        [memory({ id: "d2", artifactMetadata: qualifier("Document") })],
+        undefined as unknown as unknown[],   // the real last hop: 204, empty body
+      ] });
+      const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+      expect(out.sources.map((s) => s.id).filter((i) => !i.startsWith("SD_"))).toEqual(["d1", "d2"]);
+      expect(err.mock.calls.map((c) => String(c[0])).join("")).toBe("");
+    } finally {
+      err.mockRestore();
+    }
   });
 
   it("acceptance 7: fetches memories for the SUBJECT ONLY with relatives:true", async () => {

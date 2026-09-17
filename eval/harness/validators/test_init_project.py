@@ -146,9 +146,15 @@ def test_init_empty_sections(after_state, test, tool_calls):
 
     The exemption is deliberately narrow: an entry qualifies only if its
     `transcription` is VERBATIM one of the texts `person_read` actually
-    returned, or is null (the memory the transcription budget did not reach,
-    which still gets its entry). So the skill cannot write a source it invented,
-    and the same check doubles as the verbatim requirement.
+    returned. So the skill cannot write a source it invented, and the same check
+    doubles as the verbatim requirement.
+
+    A NULL TRANSCRIPTION IS NO LONGER ALLOWED (decision 5, 2026-09-17). An
+    untranscribed memory gets no `sources` entry at all: it is already in
+    `tree.gedcomx.json` with its title and URL, so the lead survives, and what a
+    `sources` entry would add is the assertion that someone examined it -- the
+    one thing that is not true. Acceptance 14 is the case this pins: on a person
+    whose kept memories all came back untranscribed, `sources` is empty.
 
     GATED ON MEMORIES RETURNED, NOT ON TEXT RETURNED. Gating on text alone was
     wrong in both directions. A person whose memories all miss the budget or all
@@ -200,16 +206,16 @@ def test_init_empty_sections(after_state, test, tool_calls):
                 e.get("gedcomx_source_description_id") or "<no id>"
                 for e in value
                 if not isinstance(e, dict)
-                or (
-                    e.get("transcription") is not None
-                    and e.get("transcription") not in returned_texts
-                )
+                # `None not in returned_texts` is what retires the null branch:
+                # a null-transcription entry is now stray like any other.
+                or e.get("transcription") not in returned_texts
             ]
             if not stray:
                 continue
             non_empty.append(
                 f"sources ({len(stray)} entries whose transcription is not "
-                f"verbatim from person_read: {stray})"
+                f"verbatim from person_read, or is null for a memory that was "
+                f"never transcribed and so gets no entry at all: {stray})"
             )
             continue
         non_empty.append(f"{section} ({len(value)} entries)")

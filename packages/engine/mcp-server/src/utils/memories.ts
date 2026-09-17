@@ -164,6 +164,11 @@ export async function fetchMemories(personId: string, principal: Principal): Pro
   const out: Memory[] = [];
   for (let page = 0; url && page < MAX_PAGES; page++) {
     const res = await fetchWithRetry(url, { headers: headers(token) });
+    // 204 is the DOCUMENTED last page (see the note above), not an outage --
+    // every memory was collected. Warning on it turned the signal below into
+    // noise on exactly the memory-rich people this feature exists for: the
+    // probe's largest person pages five times.
+    if (res.status === 204) break;
     if (res.status !== 200) {
       // Without this line an outage is byte-identical to "this person has no
       // memories": `break` returns [], nothing throws, so `mergeMemories`'
