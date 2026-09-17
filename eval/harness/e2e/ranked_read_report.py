@@ -21,26 +21,31 @@ the main thread chose to read inside the visible top 3 by `matchRank`?**
 
 ## The capture envelope is a list, not a dict
 
+**Every figure in this docstring is dated, and they move.** The corpus grows as
+runs land and shrinks when `make prune-runlogs STRIP=1` drops captures past 14
+days, so re-derive rather than quote: `make e2e-ranked-reads SINCE=2026-08-04`
+prints the current values as its own preamble. The figures below were measured
+**2026-09-17** over that window (34 runs).
+
 `_summarize_tool_response` (`e2e/orchestrator.py`) leaves the MCP content-block
 list in place, so `response_summary` deserializes to `[{...}]` and NOT to the
-document itself. Measured over the 168 `ranked`-bearing captures on/after
-2026-08-04: **110 parse to a list whose element 0 carries `ranked`, 58 raise,
-and zero parse to a dict**. An implementation reading `doc["ranked"]` joins
-nothing at all, on every capture, while every hand-written unit fixture passes.
+document itself. Of the 185 `ranked`-bearing captures, **119 parse to a list
+whose element 0 carries `ranked`, 66 raise, and zero parse to a dict**. An
+implementation reading `doc["ranked"]` joins nothing at all, on every capture,
+while every hand-written unit fixture passes.
 A second shape exists too — `[{"type": "text", "text": "{...}"}]`, which is
 what `research_log_append` returns — so `_unwrap` descends both.
 
 `_ranked_block` therefore gates its regex fallback on the `ranked` value being
-**unreachable**, never on `json.loads` failing (110 captures parse fine and
+**unreachable**, never on `json.loads` failing (119 captures parse fine and
 still need the descent) and never on `len(summary) >= 4000` (the cap is a
 constant that can move — `_RUNLOG_MAX_CHARS`, `orchestrator.py`).
 
 ## Only the main thread's reads count
 
 `record_search` is called only by the main thread, but a third of
-`record_read` calls are not its: measured on/after 2026-08-04, 198 main-thread
-against 72 `record-extractor` and 27 `person-evidence`. A subagent runs in
-fresh context and never saw the `ranked` block — it reads the `recordId` it was
+`record_read` calls are not its: 224 main-thread against 84 `record-extractor`
+and 32 `person-evidence`. A subagent runs in fresh context and never saw the `ranked` block — it reads the `recordId` it was
 handed. Counting those against "the agent ignored the ranker" mis-attributes a
 third of the denominator, so they are reported separately as delegated reads.
 
@@ -54,7 +59,7 @@ third of the denominator, so they are reported separately as delegated reads.
 3. Nearest preceding main-thread `record_search` in `aligned_calls` order, for
    everything else — **including a ref that resolves to neither**.
 
-Arm 1 covers 38 of 297 reads in the 2026-08-04 window and arm 2 at most 88, so
+Arm 1 covers 19 of the 74 scorable reads and arm 2 just 1, so
 the headline is predominantly heuristic-joined. `format_report` prints the arm
 split so a reader can see how much of the number rests on arm 3.
 
@@ -77,6 +82,10 @@ bearing, not presentational:
 6. `no-ranking-signal`: the supplying search carried neither `ranked` nor
    `rankingSkipped` — a nil search (ranking needs `out.staged`), an errored
    search, or a capture cut before either field.
+7. `ranked-no-matches`: the supplying search carried a `ranked` block that
+   surfaced nothing — the subject would not resolve, or the cap cut the
+   capture before any match. Same "no ranking to ignore" case as (5), and the
+   preamble's `visible ranked depth ... 0:N` line is this population.
 
 Whole runs are excluded separately: `unsegmentable-timeline` /
 `tool-count-mismatch` when `aligned_calls` rejects one, `unreadable` when the
@@ -92,7 +101,7 @@ why that bucket carries a synthetic test rather than relying on live data.
 `docs/architecture.md` section 9.4 gap 3: "Do not quote a violation rate", and
 `make e2e-corpus` "deliberately reports counts, refusing a percentage whose
 denominator would be doing the work". Here the denominator is doing exactly
-that work — 198 main-thread reads become 65 scorable once the exclusions above
+that work — 224 main-thread reads become 74 scorable once the exclusions above
 are applied — so this report's primary output is counts by bucket and any rate
 appears inline as `n/d`.
 
@@ -182,6 +191,14 @@ def id_key(value: Any) -> tuple[str | None, str] | None:
 _MATCH_RANK_RE = re.compile(r'"matchRank"\s*:\s*(\d+)')
 _RECORD_ID_RE = re.compile(r'"recordId"\s*:\s*"([^"]+)"')
 _RECORD_ARK_RE = re.compile(r'"recordArk"\s*:\s*"([^"]+)"')
+
+#: A `ranked` KEY in either serialization. A capture can arrive with its JSON
+#: escaped inside a text block (`{\"ranked\": ...}`), where the plain `"ranked"`
+#: form is absent — `orchestrator._summarize_tool_response` documents exactly
+#: this trap and says to match the bare name, which both forms contain. Written
+#: as a key match rather than a bare substring so prose ("unranked") cannot
+#: satisfy it.
+_RANKED_KEY_RE = re.compile(r'\\?"ranked\\?"\s*:')
 
 
 def _unwrap(summary: str) -> dict | None:
@@ -305,7 +322,7 @@ def _search_info(call: dict) -> SearchInfo:
     if staging_ref is None:
         m = re.search(r'"resultsRef"\s*:\s*"(results/\.staging/[^"]+)"', summary)
         staging_ref = m.group(1) if m else None
-    has_ranked = '"ranked"' in summary
+    has_ranked = bool(_RANKED_KEY_RE.search(summary))
     matches, by_regex = ranked_matches(summary) if has_ranked else ([], False)
     return SearchInfo(
         staging_ref=staging_ref,
@@ -400,6 +417,16 @@ def scan_run(doc: dict, run: str) -> tuple[list[ReadRow], Counter, str | None]:
         if not supplying.has_ranked:
             rows.append(ReadRow(run, segment, arm, "no-ranking-signal"))
             continue
+        if not supplying.matches:
+            # A `ranked` block that surfaced nothing — the subject would not
+            # resolve, or the cap cut the capture before any match. Either way
+            # there was no ranking for the agent to disagree with, exactly as
+            # for `rankingSkipped`, so scoring these as misses would inflate
+            # the headline with reads that had nothing to be inside the top of.
+            # The preamble's `visible ranked depth ... 0:N` line is this
+            # population.
+            rows.append(ReadRow(run, segment, arm, "ranked-no-matches"))
+            continue
         rows.append(ReadRow(run, segment, arm, _read_outcome(read_id, supplying)))
     return rows, delegated, None
 
@@ -473,6 +500,13 @@ def preamble(paths: list[Path], cap: int) -> Preamble:
             continue
         if not isinstance(doc, dict):
             continue
+        # Same population as `scan`. Counting tool calls from runs the body
+        # drops makes the two disagree by the excluded runs' whole traffic —
+        # at SINCE=all that was 1450 reads in the preamble against 526 scored,
+        # printed under a header calling any disagreement a bug in the join.
+        # The dropped runs are still reported, on the exclusion line.
+        if aligned_calls(doc)[1] is not None:
+            continue
         for call in doc.get("tool_calls") or []:
             if not isinstance(call, dict):
                 continue
@@ -484,7 +518,7 @@ def preamble(paths: list[Path], cap: int) -> Preamble:
                     at_cap += 1
                 if "rankingSkipped" in summary:
                     skipped += 1
-                if '"ranked"' in summary:
+                if _RANKED_KEY_RE.search(summary):
                     ranked += 1
                     matches, by_regex = ranked_matches(summary)
                     if by_regex:

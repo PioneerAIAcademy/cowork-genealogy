@@ -253,6 +253,46 @@ def test_read_after_a_search_with_neither_marker_is_its_own_bucket():
     assert _outcomes(doc)[0] == ["no-ranking-signal"]
 
 
+def test_read_after_a_ranked_search_that_surfaced_nothing_is_excluded():
+    """A `ranked` block with no matches — the subject would not resolve, or the
+    cap cut the capture before any match — is the same "no ranking to ignore"
+    case as `rankingSkipped`. Scoring these as misses inflated the headline by
+    3 reads in the 2026-08-04 window."""
+    doc = _doc([_search(matches=[]), _read("ark:/61903/1:1:AAAA-111")])
+    assert _outcomes(doc)[0] == ["ranked-no-matches"]
+
+
+def test_a_ranked_search_with_matches_is_still_scored():
+    """The other direction — the exclusion above must not swallow a real hit."""
+    doc = _doc(
+        [
+            _search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")]),
+            _read("ark:/61903/1:1:AAAA-111"),
+        ]
+    )
+    assert _outcomes(doc)[0] == ["in_top3"]
+
+
+def test_an_escaped_ranked_key_is_detected_not_read_as_no_signal():
+    """A capture can arrive with its JSON escaped inside a text block, where
+    the plain `"ranked"` form is absent. `orchestrator._summarize_tool_response`
+    documents this trap and says to match the bare name. Matching the quoted
+    form only fails silently into `no-ranking-signal`."""
+    inner = json.dumps(
+        {"ranked": {"matches": {"_first_n": [_match(1, "ark:/61903/1:1:AAAA-111")]}}}
+    )
+    escaped = json.dumps([{"type": "text", "text": inner}])
+    assert '"ranked"' not in escaped, "fixture must not contain the plain form"
+    search = {
+        "tool": "mcp__genealogy__record_search",
+        "args": {"projectPath": "/p"},
+        "response_summary": escaped,
+        "agent_type": None,
+    }
+    doc = _doc([search, _read("ark:/61903/1:1:AAAA-111")])
+    assert _outcomes(doc)[0] == ["in_top3"]
+
+
 def test_errored_read_is_excluded_not_counted_as_a_miss():
     doc = _doc(
         [
@@ -537,6 +577,31 @@ def test_unsegmentable_run_is_excluded_and_counted(tmp_path):
     assert rows == []
     assert excluded == {"unsegmentable-timeline": 1}
     assert unreadable_files == []
+
+
+def test_preamble_counts_the_same_runs_the_body_scores(tmp_path):
+    """The preamble prints under a header calling any disagreement a bug in the
+    join, so it must not count tool calls from runs `scan` drops. It did: at
+    SINCE=all that read 1450 reads against 526 scored."""
+    scored = _write_run(
+        tmp_path,
+        _doc([_search(matches=[_match(1, "ark:/61903/1:1:A-1")]), _read("ark:/61903/1:1:A-1")]),
+        stem="run-2026-08-10_00-00-00",
+    )
+    # Unsegmentable (pre-#895 two-element timeline) but carrying real traffic.
+    dropped = _write_run(
+        tmp_path,
+        {
+            "usage": {"timeline": [[0.0, "assistant"]]},
+            "tool_calls": [_read("ark:/61903/1:1:ZZZZ-999"), _read("ark:/61903/1:1:YYYY-888")],
+        },
+        stem="run-2026-08-11_00-00-00",
+    )
+    paths = [scored, dropped]
+    rows, _delegated, excluded, _unreadable = scan(paths)
+    assert excluded == {"unsegmentable-timeline": 1}
+    body_main = len(rows)
+    assert preamble(paths, cap=4000).reads["main"] == body_main == 1
 
 
 # --- format_report ----------------------------------------------------------
