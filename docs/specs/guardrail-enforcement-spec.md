@@ -1065,8 +1065,8 @@ batches were refused anyway for an unrelated reason.
 **Measured cost: 0 of 9.** Across 13 calibration run logs, 17 ops set
 `status: "supported"`; 7 returned `ok: false` and 1 is capture-stripped, leaving
 **9 landed writes**, none of which fails either half — a refused call is not a
-write (`replay.py`). Corroborated by 0 of 44 `supported` hypotheses across 273
-committed final states and fixtures (276 documents). The snapshot read adds no refusal: no
+write (`replay.py`). Corroborated by 0 of 44 `supported` hypotheses across 276
+committed final states and fixtures. The snapshot read adds no refusal: no
 calibration batch appends an assertion ahead of the promote, and neither of the
 two carrying a `conflicts` op ahead of it is affected (one has no overlap, the
 other's conflict is already `resolved`). The single batch it would refuse is the
