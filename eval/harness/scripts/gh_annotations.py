@@ -1,11 +1,12 @@
 """Shared GitHub Actions output for the warn-only lint scripts.
 
-The three warn-only lints in this directory (`check_tool_coverage.py`,
-`check_rubric_tool_drift.py`, `check_negative_reciprocity.py`) between them emit
-around 186 `::warning::` annotations on a full corpus run. **GitHub renders at
-most 10 annotations per step**, so the author of the PR that tripped one sees a
-truncated list and no indication of what was cut — the signal these lints exist
-to produce is mostly invisible at the point it would be acted on.
+The four warn-only lints in this directory (`check_tool_coverage.py`,
+`check_rubric_tool_drift.py`, `check_negative_reciprocity.py`,
+`check_slot_queue.py`) between them emit around 186 `::warning::` annotations on
+a full corpus run. **GitHub renders at most 10 annotations per step**, so the
+author of the PR that tripped one sees a truncated list and no indication of what
+was cut — the signal these lints exist to produce is mostly invisible at the
+point it would be acted on.
 
 `$GITHUB_STEP_SUMMARY` has no such cap. Every warning is appended there as well
 as printed, so the job summary carries the complete list while the annotations

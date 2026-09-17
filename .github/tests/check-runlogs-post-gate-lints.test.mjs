@@ -4,7 +4,7 @@
 // WHY THIS EXISTS. An `if:` with no status-check function carries an implicit
 // `success()`, so `if: steps.scope.outputs.relevant == 'true'` on a step after
 // the gate is really `success() && ...` — when the gate `Run runlog discipline
-// checks` fails, that step is SKIPPED. The four post-gate lints are diagnostics
+// checks` fails, that step is SKIPPED. The post-gate lints are diagnostics
 // most worth reading on exactly the PRs that trip the gate, so suppressing them
 // there is backwards (issue #1378). This already recurred once: a new step
 // (check_negative_reciprocity.py) was added inheriting the buggy pattern. A code
@@ -69,7 +69,7 @@ if (gateIdx === -1) {
 
 const after = gateIdx === -1 ? [] : steps.slice(gateIdx + 1);
 
-// Non-vacuity: the four known diagnostics must all appear AFTER the gate. If a
+// Non-vacuity: every known diagnostic must appear AFTER the gate. If a
 // refactor moved one before the gate or dropped it, the invariant below would
 // pass vacuously on the rest; this catches that.
 for (const script of EXPECTED_AFTER) {

@@ -176,7 +176,7 @@ jobs:
 
       # `!cancelled()` here and on every step below: an `if:` with no
       # status-check function carries an implicit `success()`, so a failure in
-      # the gate above skipped all four lints. A step added below inherits this
+      # the gate above skipped every lint below it. A step added below inherits this
       # — check_negative_reciprocity.py was added without it.
       - name: Check skill tool-coverage drift (warn-only)
         if: ${{ !cancelled() && steps.scope.outputs.relevant == 'true' }}
