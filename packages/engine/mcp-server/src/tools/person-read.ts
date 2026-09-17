@@ -104,7 +104,13 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   }
   const token = await getValidToken(principal);
   const pid = personId.trim();
-  const result = await fetchAndConvert(token, pid, relatives, sourceDescriptions, 0);
+  const { result, resolvedId } = await fetchAndConvert(
+    token,
+    pid,
+    relatives,
+    sourceDescriptions,
+    0,
+  );
 
   // Memories ride the EXISTING sourceDescriptions flag (lead, 2026-08-19): a
   // third flag was declined because init-project already shipped a bug from
@@ -117,9 +123,16 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   //
   // A living person (204) has no memories to fetch and no sources array to
   // merge into.
-  if (sourceDescriptions && result.persons.some((p) => p.id === pid && !p.living)) {
+  // `resolvedId`, never `pid`: for a merged person they differ, and comparing
+  // the pre-redirect id against the post-redirect person made this gate false
+  // for every merged subject -- no memories, no note, no error, indistinguishable
+  // from a person who simply has none.
+  if (
+    sourceDescriptions &&
+    result.persons.some((p) => p.id === resolvedId && !p.living)
+  ) {
     result.sources = await mergeMemories(
-      pid,
+      resolvedId,
       result.sources,
       principal,
       projectPath,
@@ -346,16 +359,32 @@ function toTreeSource(m: Memory): TreeSource {
     // "FamilySearch memory <id>".
     title: m.title,
     ...(m.url !== undefined ? { url: m.url } : {}),
+    // `url` is the human /memories/<id> page; the artifact lives at a different
+    // host entirely. Without this the note telling the agent to retry with
+    // `image_transcribe(memoryArtifactUrl)` named a value the response did not
+    // contain, so following the instruction threw "Unrecognized
+    // memoryArtifactUrl". Response-only, exactly like `text` and `notes`:
+    // `TREE_SOURCE_FIELDS` does not list it, so it cannot reach the tree write.
+    ...(m.artifactUrl !== undefined ? { artifactUrl: m.artifactUrl } : {}),
   };
 }
 
+/**
+ * Returns the converted person AND the id it actually resolved to.
+ *
+ * A merged person answers 301 and this function recurses on the new id, so for
+ * a merged subject the result's persons carry the POST-redirect id while the
+ * caller still holds the one it passed. Every later step keyed on the subject
+ * -- the memories gate, and the memories fetch itself -- has to use the
+ * resolved id or it silently addresses a person who is not in the response.
+ */
 async function fetchAndConvert(
   token: string,
   pid: string,
   relatives: boolean,
   sourceDescriptions: boolean,
   redirectsFollowed: number,
-): Promise<PersonReadResult> {
+): Promise<{ result: PersonReadResult; resolvedId: string }> {
   const url = buildUrl(pid, relatives, sourceDescriptions);
   const res = await fetchWithRetry(url, {
     headers: {
@@ -368,7 +397,7 @@ async function fetchAndConvert(
 
   // 204: living person, no body — return a stub.
   if (res.status === 204) {
-    return livingPersonStub(pid);
+    return { result: livingPersonStub(pid), resolvedId: pid };
   }
 
   // 301: merged. Follow the Location header to the new ID (capped).
@@ -429,7 +458,10 @@ async function fetchAndConvert(
   // read back off the raw persons. Merging after conversion would lose all
   // three and mean re-implementing the shape functions by hand.
   const merged = relatives ? await mergeSiblings(token, pid, body) : body;
-  return await convertResponse(merged, relatives, sourceDescriptions);
+  return {
+    result: await convertResponse(merged, relatives, sourceDescriptions),
+    resolvedId: pid,
+  };
 }
 
 // ─── Sibling fan-out ──────────────────────────────────────────────────────

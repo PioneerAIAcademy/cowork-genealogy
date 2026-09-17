@@ -76,6 +76,16 @@ export interface TreeSource {
   title: string;
   citation?: string;
   url?: string;
+  /**
+   * The memory artifact's own URL, when this source is a memory.
+   *
+   * `url` is the human `/memories/<id>` page and is NOT accepted by
+   * `image_transcribe`/`image_read`, so a budget-skipped memory whose note says
+   * to retry with `memoryArtifactUrl` needs the artifact URL to be somewhere in
+   * the response. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
+   * `TREE_SOURCE_FIELDS`, which is what strips it on the write.
+   */
+  artifactUrl?: string;
   notes?: string[];
   /**
    * A memory's text: a story's own words, or OCR of a scan the filter kept.

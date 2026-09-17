@@ -271,3 +271,41 @@ describe("imageReadTool — input validation", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
+
+describe("imageReadTool — memoryArtifactUrl input", () => {
+  // `ImageReadInput extends FsImageInput`, so `memoryArtifactUrl` is accepted
+  // here and `resolveFsImageInput` returns `memoryShape: true` for it. The tool
+  // destructured only {url, label, fallbackUrl} and called fetchFsImageBytes
+  // with three arguments, so the flag fell back to its `= false` default: the
+  // FamilySearch bearer went to a URL that needs no credential. The schema has
+  // no `additionalProperties: false` and index.ts casts without validating, so
+  // this call shape is reachable in production.
+  const ART = "https://sg30p0.familysearch.org/ark:/61903/dist.jpg?ctx=1";
+
+  it("sends NO Authorization header, and never asks for a token", async () => {
+    mockImageResponse();
+    await imageReadTool({ memoryArtifactUrl: ART }, LOCAL);
+    expect(mockedGetValidToken).not.toHaveBeenCalled();
+    const headers = (mockFetch.mock.calls[0][1]?.headers ?? {}) as Record<string, string>;
+    const names = Object.keys(headers).map((h) => h.toLowerCase());
+    expect(names).not.toContain("authorization");
+  });
+
+  it("still sends the bearer for an ordinary imageId, so the flag is not stuck on", async () => {
+    // The other direction: a fix that simply stopped sending the token would
+    // pass the test above and break every non-memory read.
+    mockImageResponse();
+    await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
+    expect(mockedGetValidToken).toHaveBeenCalled();
+    const headers = (mockFetch.mock.calls[0][1]?.headers ?? {}) as Record<string, string>;
+    const auth = Object.entries(headers).find(([k]) => k.toLowerCase() === "authorization");
+    expect(auth?.[1]).toBe("Bearer test-token");
+  });
+
+  it("refuses an artifact URL on any other host", async () => {
+    await expect(
+      imageReadTool({ memoryArtifactUrl: "https://evil.example.com/a/dist.jpg" }, LOCAL),
+    ).rejects.toThrow(/Unrecognized memoryArtifactUrl/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});

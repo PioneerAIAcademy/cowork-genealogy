@@ -186,7 +186,15 @@ the read**: a missing OpenRouter key, an OpenRouter error, a timeout, or a 403
 on the artifact all degrade to a metadata-only entry.
 
 A memory the budget skipped, the filter missed, or the OCR failed on can be read
-directly with `image_transcribe`'s `memoryArtifactUrl` input.
+directly with `image_transcribe`'s `memoryArtifactUrl` input. **The value to pass
+is the source's `artifactUrl`, not its `url`** — `url` is the human
+`/memories/<id>` page and `memoryArtifactUrl` refuses it. Like `text` and
+`notes`, `artifactUrl` is response-only: it is absent from `TREE_SOURCE_FIELDS`,
+so a caller copying a memory source into `tree.gedcomx.json` must drop it, and
+the write fails loudly rather than silently persisting it.
+
+A **merged** person (301) is resolved before any of this runs: memories are
+fetched for the id the redirect landed on, not the id the caller passed.
 
 ### Example output
 

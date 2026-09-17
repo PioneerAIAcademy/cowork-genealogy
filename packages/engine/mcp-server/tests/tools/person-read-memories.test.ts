@@ -11,6 +11,7 @@ vi.mock("../../src/auth/refresh.js", () => ({ getValidToken: vi.fn() }));
 import { personReadTool } from "../../src/tools/person-read.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { isMemoryArtifactUrl } from "../../src/utils/fs-image-fetch.js";
 
 const PID = "KWCJ-RN4";
 
@@ -90,6 +91,74 @@ describe("person_read + memories", () => {
     const m = out.sources.find((s) => s.id === "175960782");
     expect(m).toBeDefined();
     expect(Object.keys(m!).sort()).toEqual(["id", "title", "url"]);  // no discriminator
+  });
+
+
+  it("a MERGED person (301) still gets memories, addressed by the resolved id", async () => {
+    // fetchAndConvert follows the 301 by recursing on the new id, so the result
+    // carries NEW_PID while the caller still holds PID. The gate used to compare
+    // the caller's id against the returned person, so it was false for every
+    // merged subject: no memories, no note, no error -- indistinguishable from a
+    // person who has none. Merges are routine on FamilySearch.
+    const NEW_PID = "LZ99-ABC";
+    const asked: string[] = [];
+    fetchMock.mockImplementation(async (url: string) => {
+      asked.push(url);
+      if (url.includes("/portrait")) return new Response(null, { status: 404 });
+      if (url.includes("/memories")) {
+        return new Response(
+          JSON.stringify({
+            sourceDescriptions: [
+              memory({ id: "175960782", titles: [{ value: "World War II Draft Card" }] }),
+            ],
+            links: {},
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      if (url.includes(PID)) {
+        return new Response(null, {
+          status: 301,
+          headers: { location: `https://api.familysearch.org/platform/tree/persons/${NEW_PID}` },
+        });
+      }
+      return new Response(
+        JSON.stringify({
+          persons: [{ id: NEW_PID, living: false, names: [{ nameForms: [{ fullText: "Almon Giles Clegg" }] }] }],
+          relationships: [],
+          sourceDescriptions: [{ id: "SD_PERSON_" + NEW_PID, titles: [{ value: "tree source" }] }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+
+    const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+
+    expect(out.sources.find((s) => s.id === "175960782")).toBeDefined();
+    // and the memories endpoint was asked about the id that actually exists
+    const memoriesCall = asked.find((u) => u.includes("/memories"));
+    expect(memoriesCall).toContain(NEW_PID);
+    expect(memoriesCall).not.toContain(PID);
+  });
+
+  it("carries the artifact URL, so the retry the note names is reachable", async () => {
+    // `url` is the human /memories/<id> page, which image_transcribe refuses.
+    // Without artifactUrl the note said to retry with `memoryArtifactUrl` and the
+    // response contained no such value anywhere, so following the instruction
+    // threw "Unrecognized memoryArtifactUrl".
+    const ART = "https://sg30p0.familysearch.org/ark:/xx/dist.jpg?ctx=1";
+    routes({ pages: [[memory({
+      id: "175960782",
+      titles: [{ value: "World War II Draft Card" }],
+      about: ART,
+    })]] });
+    const out = await personReadTool({ personId: PID, sourceDescriptions: true }, LOCAL);
+    const m = out.sources.find((s) => s.id === "175960782");
+    expect(m?.artifactUrl).toBe(ART);
+    // and it is accepted by the input resolver the note points the agent at
+    expect(isMemoryArtifactUrl(m!.artifactUrl!)).toBe(true);
+    // while the page URL it would otherwise have used is not
+    expect(isMemoryArtifactUrl(m!.url!)).toBe(false);
   });
 
   it("acceptance 3: a non-source-style memory is absent entirely", async () => {

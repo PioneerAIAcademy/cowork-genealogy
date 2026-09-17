@@ -3,11 +3,12 @@
  * uses a shape `dev/probe-memories.ts` actually observed on FamilySearch, not an
  * invented one — the ids and titles are real memories from the 221-memory corpus.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   filterSourceStyle,
   rankForTranscription,
   hasRecordLanguage,
+  fetchStoryText,
 } from "../../src/utils/memories.js";
 
 type M = Parameters<typeof filterSourceStyle>[0][number];
@@ -78,8 +79,66 @@ describe("filterSourceStyle — stage 2 keeps on any arm", () => {
       mem({ id: "139112814", title: "Geneva and Almon Clegg dropping off grandchildren" }),
       mem({ id: "17672112", title: "7D34DE84-43EC-4585-A2D" }),
       mem({ id: "109403981", title: "Colorized" }),
+      // The three above pass on ANY version of the keyword arm, because none of
+      // them happens to contain a name the stems match. This one does: with the
+      // old blanket `\w*`, `will` matched William and the snapshot was kept as
+      // source-style AND ranked first for the OCR budget.
+      mem({ id: "n1", title: "William and Geneva at the lake" }),
     ];
     expect(filterSourceStyle(snaps, null)).toEqual([]);
+  });
+
+  it("does not read record language out of ordinary given names", () => {
+    // Every one of these matched before the stems were anchored. William is one
+    // of the commonest Anglophone given names, so this was not a corner case --
+    // it kept a family snapshot on a large fraction of real trees.
+    const names = [
+      "William and Geneva at the lake",
+      "Willie Clegg as a boy",
+      "Willard Clegg, 1948",
+      "Grandma Willa on the porch",
+      "Willow tree in the yard",
+      "Birthday party 1962",
+      "Registered nurse graduation photo",
+      "Deedee at the beach",
+      "Mustering out? no - Mustard picnic",
+    ];
+    for (const title of names) {
+      expect(hasRecordLanguage(mem({ id: "x", title })), title).toBe(false);
+    }
+  });
+
+  it("still fires on the record language it exists for", () => {
+    // The other direction: anchoring must not cost recall. A guard that only
+    // ever stops matching is not a fix, it is a deletion.
+    const records = [
+      "Last will and testament of Almon Clegg",
+      "Wills and probate, Wasatch County",
+      "1880 census page, Detroit Ward 8",
+      "Federal censuses 1850 and 1860",
+      "Deed of sale, 40 acres",
+      "Birth certificate",
+      "Death certificate",
+      "Obituary",
+      "Obituaries, Deseret News",
+      "Baptism record",
+      "Baptised at St Mary's",
+      "Naturalization papers",
+      "Parish register, Trowbridge",
+      "Civil registration index",
+      "World War II Draft Card",
+      "Draft cards, Utah",
+      "HEADSTONE:  Heber City, Utah",
+      "Muster roll, Company D",
+      "Enlistment papers",
+      "Passenger manifest",
+      "Land patent, Sanpete County",
+      "Affidavit of support",
+      "Marriage license and certificate",
+    ];
+    for (const title of records) {
+      expect(hasRecordLanguage(mem({ id: "x", title })), title).toBe(true);
+    }
   });
 
   it("the keyword arm is language-independent underneath: a German tree keeps its Documents", () => {
@@ -118,5 +177,49 @@ describe("rankForTranscription", () => {
     const before = input.map((m) => m.id);
     rankForTranscription(input);
     expect(input.map((m) => m.id)).toEqual(before);
+  });
+});
+
+describe("fetchStoryText — the story leg validates the host the image leg validates", () => {
+  const ARTIFACT = "https://sg30p0.familysearch.org/abc/dist.txt?ctx=1";
+  let previousFetch: typeof globalThis.fetch;
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    previousFetch = globalThis.fetch;
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+    fetchMock.mockReset();
+  });
+  afterEach(() => {
+    globalThis.fetch = previousFetch;
+  });
+
+  const story = (artifactUrl: string) => ({
+    id: "s1",
+    title: "a story",
+    mediaType: "text/plain",
+    kind: "Story" as const,
+    artifactUrl,
+  });
+
+  it("fetches a real artifact URL and returns its words", async () => {
+    fetchMock.mockResolvedValue(new Response("Almon told this himself.", { status: 200 }));
+    await expect(fetchStoryText(story(ARTIFACT))).resolves.toBe("Almon told this himself.");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    "https://evil.example.com/abc/dist.txt",
+    "http://sg30p0.familysearch.org/abc/dist.txt",
+    "https://sg30p0.familysearch.org.evil.example.com/abc/dist.txt",
+    "https://www.familysearch.org/memories/12345",
+  ])("refuses to fetch %s at all", async (bad) => {
+    // `artifactUrl` is `sourceDescriptions[].about` taken verbatim off an
+    // upstream body. The image leg has always checked the host; this leg did
+    // not, so whatever `about` held was fetched and its body landed in
+    // `sources[].text`. No credential was ever attached, which is why this is
+    // depth rather than a live hole -- but the two legs read the SAME field and
+    // must not disagree about what is fetchable.
+    await expect(fetchStoryText(story(bad))).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

@@ -662,15 +662,15 @@ def test_every_fact_and_relationship_is_sourced(after_state, test):
 
 def test_returned_sources_reach_the_tree_without_notes(after_state, tool_calls):
     """`person_read` emits fields a tree source may not carry -- `notes`, and now
-    `text` and `image_ref` on a memory; `TREE_SOURCE_FIELDS` rejects them, so a
-    verbatim copy fails the `project_create` write. The plausible wrong fix is to
+    `text`, `image_ref` and `artifactUrl` on a memory; `TREE_SOURCE_FIELDS`
+    rejects them, so a verbatim copy fails the `project_create` write. The plausible wrong fix is to
     drop the whole source -- silently losing evidence the survey found. Drop the
     extra field, keep the source.
 
     Checked against the ALLOW-LIST rather than against a list of known-bad names:
-    `notes` was the first field to do this and `text`/`image_ref` are the second
-    and third, so a name-by-name check would go stale the next time person_read
-    grows a field. Mirrors TREE_SOURCE_FIELDS in
+    `notes` was the first field to do this and `text`/`image_ref`/`artifactUrl`
+    followed, so a name-by-name check would go stale the next time person_read
+    grows a field -- as it just did, and this check needed no edit to cover it. Mirrors TREE_SOURCE_FIELDS in
     packages/engine/mcp-server/src/validation/tree-shape.ts.
 
     Joined on `title`, because the skill re-ids sources to S1... on the way in.
