@@ -3,6 +3,7 @@ import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
+import { repIdToStandardPlace } from "../utils/place-resolver.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { toArk, arkToBareId } from "../utils/ark.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -154,7 +155,11 @@ export async function recordReadTool(
   // docs/record-read-sidecar-scope.md; re-measure with
   // dev/probe-record-read-places.ts. Records reached via the search sidecar
   // already carry the search stage's standardized place.
-  return toSimplified(body);
+  const simplified = toSimplified(body);
+
+  await resolveCoveragePlaces(simplified);
+
+  return simplified;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -213,6 +218,14 @@ async function readFromSidecar(
   // mis-placing it (see the toSimplified comment above for the observed
   // mis-resolutions).
   return match.gedcomx as SimplifiedGedcomX;
+}
+
+async function resolveCoveragePlaces(doc: SimplifiedGedcomX): Promise<void> {
+  for (const sd of doc.sources ?? []) {
+    if (!sd.coverage?.place_rep_id) continue;
+    const name = await repIdToStandardPlace(sd.coverage.place_rep_id);
+    if (name) sd.coverage.standard_place = name;
+  }
 }
 
 // Normalise the caller-supplied record ID to a bare entity ID, refusing any ARK
