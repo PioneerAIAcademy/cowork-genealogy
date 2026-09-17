@@ -694,3 +694,113 @@ def test_main_reports_the_window_and_the_preamble(tmp_path, monkeypatch, capsys)
     assert "record_search calls              1" in out
     assert "carrying a ranked block        1" in out
     assert f"Inside the visible top {TOP_N}: 1/1" in out
+
+# --- the code-review round: attribution, and labels that assert too much -----
+
+
+def _rows(doc):
+    rows, _delegated, reason = scan_run(doc, "a-fixture/run")
+    assert reason is None
+    return rows
+
+
+def test_a_barren_search_between_a_ranking_and_a_read_does_not_hide_it():
+    """`previous` advanced on EVERY main-thread search, so a subject-less
+    sweep between a ranking and the read it drove buried that ranking: the
+    read was excluded as `ranking-skipped` while its id sat in the earlier
+    search's visible top 3. Over the committed corpus this discarded 100 of
+    174 scorable reads."""
+    doc = _doc([
+        _search(matches=[_match(1, "ABC-123")]),
+        _search(ranking_skipped=True),
+        _read("ABC-123"),
+    ])
+    rows = _rows(doc)
+    assert [r.outcome for r in rows] == ["in_top3"]
+    assert rows[0].arm == "earlier-ranked"
+
+
+def test_the_earlier_ranking_fallback_scores_misses_too():
+    """The fallback must not be able to flatter the headline. A read
+    attributed to an earlier ranking is scored in BOTH directions — if it is
+    not in that ranking's visible top 3 it counts as a miss, not an
+    exclusion. Without this the rescued population would be hits by
+    construction."""
+    doc = _doc([
+        _search(matches=[_match(1, "ABC-123")]),
+        _search(ranking_skipped=True),
+        _read("ZZZ-999"),
+    ])
+    rows = _rows(doc)
+    assert [r.outcome for r in rows] == ["not_in_top3"]
+    assert rows[0].arm == "earlier-ranked"
+
+
+def test_a_read_with_no_earlier_ranking_at_all_is_still_excluded():
+    """The fallback only reaches back to a real ranking. With none in the run,
+    a read after a subject-less sweep stays excluded — the issue's own control
+    for the broad-sweep confound."""
+    doc = _doc([_search(ranking_skipped=True), _read("ABC-123")])
+    assert [r.outcome for r in _rows(doc)] == ["ranking-skipped"]
+
+
+def test_an_unreadable_ranked_block_is_not_labelled_as_having_ranked_nothing():
+    """`ranked-no-matches` asserts the search surfaced nothing. A capture the
+    recovery could not read supports no such claim — filing both under one
+    label turns a parser limit into a finding about the ranker."""
+    call = _search(matches=[_match(1, "ABC-123")])
+    # A `ranked` key survives, the match payload does not: the shape a capture
+    # takes when the run-log cap cuts it mid-JSON.
+    call["response_summary"] = '[{"ranked": {"subjectId": "G8Q5-BJ1", "matc'
+    rows = _rows(_doc([call, _read("ABC-123")]))
+    assert [r.outcome for r in rows] == ["ranked-unreadable"]
+
+
+def test_an_escaped_and_truncated_capture_recovers_its_matches():
+    """The regex fallback must read the escaped serialization too.
+
+    Escaped ALONE is not enough to pin this: `_unwrap` descends a text block
+    and parses it, so the regexes are never reached and the test passes with
+    them reverted (measured — the first version of this test did exactly
+    that). The recovery path only runs when the payload is ALSO unparseable,
+    which is the shape the run-log cap produces: escaped, then cut mid-JSON.
+
+    Fixing only `_RANKED_KEY_RE` left the match patterns on plain quotes,
+    so this shape yielded `has_ranked=True` with zero matches — which the
+    exclusion then reported as the search having ranked nothing."""
+    call = _search(matches=[_match(1, "ABC-123")])
+    inner = json.dumps(json.loads(call["response_summary"])[0])
+    # Escaped inside a text block, then cut before the closing braces.
+    escaped = json.dumps([{"type": "text", "text": inner}])[:-12]
+    call["response_summary"] = escaped
+    assert [r.outcome for r in _rows(_doc([call, _read("ABC-123")]))] == ["in_top3"]
+
+
+def test_a_1_2_read_against_entries_with_no_ark_is_excluded_not_scored():
+    """A `1:2:` record-source id can only join on `recordArk`, which `toStub`
+    leaves optional. When no visible match carries one the join is impossible,
+    and calling that `not_in_top3` asserts the agent read outside the ranking
+    when the truth is that this report cannot see. It is an exclusion."""
+    # `_match` fills a recordArk by default, so it has to be removed
+    # explicitly — the shape the regex arm produces when `_RECORD_ARK_RE`
+    # finds nothing (34 of 181 regex-recovered entries carry no ark).
+    bare = _match(1, "ABC-123")
+    del bare["recordArk"]
+    doc = _doc([_search(matches=[bare]), _read("ark:/61903/1:2:SOURCE-1")])
+    assert [r.outcome for r in _rows(doc)] == ["unjoinable-id-space"]
+
+
+def test_a_1_2_read_still_scores_when_an_ark_is_present():
+    """The other direction — the exclusion must not swallow a real miss."""
+    doc = _doc([
+        _search(matches=[_match(1, "ABC-123", record_ark="ark:/61903/1:2:OTHER-9")]),
+        _read("ark:/61903/1:2:SOURCE-1"),
+    ])
+    assert [r.outcome for r in _rows(doc)] == ["not_in_top3"]
+
+
+def test_the_report_constants_match_the_ones_they_restate():
+    """`TOP_N` and the cap duplicate upstream values; this is the drift guard."""
+    from e2e.ranked_read_report import _assert_upstream_constants
+
+    _assert_upstream_constants()

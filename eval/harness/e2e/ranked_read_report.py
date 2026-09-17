@@ -36,7 +36,7 @@ while every hand-written unit fixture passes.
 A second shape exists too — `[{"type": "text", "text": "{...}"}]`, which is
 what `research_log_append` returns — so `_unwrap` descends both.
 
-`_ranked_block` therefore gates its regex fallback on the `ranked` value being
+`ranked_matches` therefore gates its regex fallback on the `ranked` value being
 **unreachable**, never on `json.loads` failing (119 captures parse fine and
 still need the descent) and never on `len(summary) >= 4000` (the cap is a
 constant that can move — `_RUNLOG_MAX_CHARS`, `orchestrator.py`).
@@ -49,7 +49,7 @@ and 32 `person-evidence`. A subagent runs in fresh context and never saw the `ra
 handed. Counting those against "the agent ignored the ranker" mis-attributes a
 third of the denominator, so they are reported separately as delegated reads.
 
-## How a read is attributed to a search — three arms, counted separately
+## How a read is attributed to a search — four arms, counted separately
 
 1. `args.resultsRef` naming a `results/.staging/<uuid>.json` handle, matched to
    the `record_search` whose `staged.resultsRef` emitted it. Exact.
@@ -59,9 +59,17 @@ third of the denominator, so they are reported separately as delegated reads.
 3. Nearest preceding main-thread `record_search` in `aligned_calls` order, for
    everything else — **including a ref that resolves to neither**.
 
-Arm 1 covers 19 of the 74 scorable reads and arm 2 just 1, so
+4. `earlier-ranked`: the nearest preceding search ranked nothing, so the read
+   is attributed to the most recent search that did. `previous` advances on
+   EVERY main-thread search, so without this a subject-less sweep between a
+   ranking and the read it drove buried that ranking and the read was
+   discarded as `ranking-skipped` — 100 of 174 scorable reads. It scores in
+   BOTH directions, so it cannot flatter the headline.
+
+Arm 1 covers 19 of the 174 scorable reads, arm 2 just 1 and arm 4 fully 100, so
 the headline is predominantly heuristic-joined. `format_report` prints the arm
-split so a reader can see how much of the number rests on arm 3.
+split, and reports the rate separately for the strong arms (1-3) and arm 4,
+because the two rest on very different evidence: 28/74 against 9/100.
 
 ## Exclusions, each counted rather than silently dropped
 
@@ -83,9 +91,16 @@ bearing, not presentational:
    `rankingSkipped` — a nil search (ranking needs `out.staged`), an errored
    search, or a capture cut before either field.
 7. `ranked-no-matches`: the supplying search carried a `ranked` block that
-   surfaced nothing — the subject would not resolve, or the cap cut the
-   capture before any match. Same "no ranking to ignore" case as (5), and the
-   preamble's `visible ranked depth ... 0:N` line is this population.
+   PARSED and surfaced nothing — the subject would not resolve. Same "no
+   ranking to ignore" case as (5), and the preamble's `visible ranked depth
+   ... 0:N` line is this population.
+8. `ranked-unreadable`: a `ranked` block the recovery could not read. Split
+   out of (7) because merging them let a parser limit assert that the search
+   ranked nothing — a claim about the ranker drawn from a failure to parse.
+9. `unjoinable-id-space`: a `1:2:` read where no visible match carries a
+   `recordArk` to join on (`toStub` leaves it optional). The join is
+   impossible, so scoring it `not_in_top3` would report the agent reading
+   outside a ranking when the truth is that this report cannot see.
 
 Whole runs are excluded separately: `unsegmentable-timeline` /
 `tool-count-mismatch` when `aligned_calls` rejects one, `unreadable` when the
@@ -101,9 +116,9 @@ why that bucket carries a synthetic test rather than relying on live data.
 `docs/architecture.md` section 9.4 gap 3: "Do not quote a violation rate", and
 `make e2e-corpus` "deliberately reports counts, refusing a percentage whose
 denominator would be doing the work". Here the denominator is doing exactly
-that work — 224 main-thread reads become 74 scorable once the exclusions above
-are applied — so this report's primary output is counts by bucket and any rate
-appears inline as `n/d`.
+that work — 224 main-thread reads become 174 scorable once the exclusions
+above are applied — so this report's primary output is counts by bucket and
+any rate appears inline as `n/d`.
 
 CLI (from eval/harness/):
   uv run python -m e2e.ranked_read_report --since 2026-08-04
@@ -136,6 +151,31 @@ from harness.context_policy import bare_tool_name
 #: `_summarize_response` keeps `_first_n` at three entries, so this is a
 #: property of the artifact, not a choice.
 TOP_N = 3
+
+#: `TOP_N` and the `--cap` default restate two constants that live upstream:
+#: how many list entries `judge._summarize_response` keeps, and where
+#: `orchestrator._RUNLOG_MAX_CHARS` truncates a capture. Both are read from
+#: their owners at import so a change there fails here rather than silently
+#: re-defining what "visible" and "at the cap" mean in this report. Imported
+#: inside the guard so a refactor that moves either name is a loud ImportError
+#: at the assert, not a stale duplicate nobody re-derived.
+def _assert_upstream_constants() -> None:
+    from harness.judge import _RESPONSE_ARRAY_SAMPLE
+    from e2e.orchestrator import _RUNLOG_MAX_CHARS
+
+    assert TOP_N == _RESPONSE_ARRAY_SAMPLE, (
+        f"TOP_N={TOP_N} but judge samples {_RESPONSE_ARRAY_SAMPLE} entries — "
+        "the 'visible top N' this report measures is no longer what the "
+        "capture actually keeps"
+    )
+    assert DEFAULT_CAP == _RUNLOG_MAX_CHARS, (
+        f"DEFAULT_CAP={DEFAULT_CAP} but orchestrator truncates at "
+        f"{_RUNLOG_MAX_CHARS} — the 'at the cap' denominator counts the "
+        "wrong population"
+    )
+
+
+DEFAULT_CAP = 4000
 
 #: Below this many scorable late-segment reads, print a count and refuse a
 #: rate. The window that motivated the report has ~3, which is not a rate.
@@ -188,9 +228,16 @@ def id_key(value: Any) -> tuple[str | None, str] | None:
 
 # --- capture unwrapping -----------------------------------------------------
 
-_MATCH_RANK_RE = re.compile(r'"matchRank"\s*:\s*(\d+)')
-_RECORD_ID_RE = re.compile(r'"recordId"\s*:\s*"([^"]+)"')
-_RECORD_ARK_RE = re.compile(r'"recordArk"\s*:\s*"([^"]+)"')
+#: Every recovery pattern tolerates BOTH serializations, not just the `ranked`
+#: key. A capture can arrive with its JSON escaped inside a text block
+#: (`{\"matchRank\": 1}`), and fixing only `_RANKED_KEY_RE` produced the worst
+#: possible combination on an escaped-and-truncated capture: `has_ranked=True`
+#: with zero recovered matches, which the exclusion below then labelled
+#: `ranked-no-matches` — a parser failure recorded as a finding about the
+#: ranker. One rule for every key, so the two cannot drift apart again.
+_MATCH_RANK_RE = re.compile(r'\\?"matchRank\\?"\s*:\s*(\d+)')
+_RECORD_ID_RE = re.compile(r'\\?"recordId\\?"\s*:\s*\\?"([^"\\]+)')
+_RECORD_ARK_RE = re.compile(r'\\?"recordArk\\?"\s*:\s*\\?"([^"\\]+)')
 
 #: A `ranked` KEY in either serialization. A capture can arrive with its JSON
 #: escaped inside a text block (`{\"ranked\": ...}`), where the plain `"ranked"`
@@ -264,7 +311,7 @@ def ranked_matches(summary: str) -> tuple[list[RankedMatch], bool]:
     """`(matches, recovered_by_regex)` for one `record_search` capture.
 
     Gated on the `ranked` block being UNREACHABLE, not on the parse failing —
-    110 of the corpus's 168 ranked captures parse cleanly and still need the
+    119 of the corpus's 185 ranked captures parse cleanly and still need the
     list descent, and a length test would bind to a movable constant.
     """
     doc = _unwrap(summary)
@@ -340,12 +387,19 @@ def _read_outcome(read_id: tuple[str | None, str], info: SearchInfo) -> str:
     id against `recordId`. Both forms occur in the corpus and both are real.
     """
     kind, tail = read_id
-    for match in info.matches:
-        if match.rank > TOP_N:
-            continue
+    visible = [m for m in info.matches if m.rank <= TOP_N]
+    for match in visible:
         target = match.record_ark if kind == "1:2" else match.record_id
         if target is not None and target[1] == tail:
             return "in_top3"
+    # A `1:2:` read can only ever join on `recordArk`, which `toStub` leaves
+    # optional — 34 of 181 regex-recovered entries carry none. When no visible
+    # match has one, the join is structurally impossible, and reporting
+    # `not_in_top3` would state that the agent read outside the ranking when
+    # what actually happened is that this report cannot see. Excluded and
+    # counted, the same as any other unmeasurable read.
+    if kind == "1:2" and not any(m.record_ark is not None for m in visible):
+        return "unjoinable-id-space"
     return "not_in_top3"
 
 
@@ -374,6 +428,7 @@ def scan_run(doc: dict, run: str) -> tuple[list[ReadRow], Counter, str | None]:
     rows: list[ReadRow] = []
     delegated: Counter = Counter()
     previous: SearchInfo | None = None
+    last_ranked: SearchInfo | None = None
     for _elapsed, segment, call in aligned:
         tool = bare_tool_name(call.get("tool") or "")
         agent = call.get("agent_type")
@@ -382,6 +437,11 @@ def scan_run(doc: dict, run: str) -> tuple[list[ReadRow], Counter, str | None]:
             if info.staging_ref:
                 staging_to_search[info.staging_ref] = info
             previous = info
+            # Tracked separately from `previous`: a later barren search must
+            # not erase the last ranking the agent actually saw (see the
+            # fallback below).
+            if info.has_ranked and info.matches:
+                last_ranked = info
             continue
         if tool != "record_read":
             continue
@@ -411,6 +471,21 @@ def scan_run(doc: dict, run: str) -> tuple[list[ReadRow], Counter, str | None]:
         if supplying is None:
             rows.append(ReadRow(run, segment, "none", "no-preceding-search"))
             continue
+        # A barren nearest-preceding search does not mean there was no ranking
+        # to follow. `previous` advances on EVERY main-thread search, so a
+        # subject-less broad sweep between a ranked search and the read it
+        # drove used to hide that ranking entirely: the read was excluded as
+        # `ranking-skipped` while its id sat in the earlier search's visible
+        # top 3. Falling back to the most recent search that actually ranked
+        # scores those instead of discarding them.
+        #
+        # The fallback scores in BOTH directions — a read attributed this way
+        # can come back `not_in_top3` — so it cannot flatter the headline. The
+        # `earlier-ranked` arm in the attribution table is how many rest on it;
+        # they lean on a ranking the agent saw earlier in the run rather than
+        # immediately before the read.
+        if not (supplying.has_ranked and supplying.matches) and last_ranked is not None:
+            arm, supplying = "earlier-ranked", last_ranked
         if supplying.ranking_skipped and not supplying.has_ranked:
             rows.append(ReadRow(run, segment, arm, "ranking-skipped"))
             continue
@@ -418,14 +493,16 @@ def scan_run(doc: dict, run: str) -> tuple[list[ReadRow], Counter, str | None]:
             rows.append(ReadRow(run, segment, arm, "no-ranking-signal"))
             continue
         if not supplying.matches:
-            # A `ranked` block that surfaced nothing — the subject would not
-            # resolve, or the cap cut the capture before any match. Either way
-            # there was no ranking for the agent to disagree with, exactly as
-            # for `rankingSkipped`, so scoring these as misses would inflate
-            # the headline with reads that had nothing to be inside the top of.
-            # The preamble's `visible ranked depth ... 0:N` line is this
-            # population.
-            rows.append(ReadRow(run, segment, arm, "ranked-no-matches"))
+            # A `ranked` block that surfaced nothing. Two causes, and they are
+            # NOT the same finding: the subject would not resolve (a real
+            # no-ranking, like `rankingSkipped`), or the capture could not be
+            # read and the recovery found none (a parser limit). Filing both
+            # under one label made an unreadable capture assert that the search
+            # ranked nothing, which is a claim about the ranker drawn from a
+            # failure to parse. `by_regex` tells them apart: a block that
+            # parsed as JSON and still holds no match genuinely ranked nothing.
+            reason = "ranked-unreadable" if supplying.by_regex else "ranked-no-matches"
+            rows.append(ReadRow(run, segment, arm, reason))
             continue
         rows.append(ReadRow(run, segment, arm, _read_outcome(read_id, supplying)))
     return rows, delegated, None
@@ -493,6 +570,12 @@ def preamble(paths: list[Path], cap: int) -> Preamble:
     searches = ranked = skipped = at_cap = unparseable = 0
     reads: Counter = Counter()
     depth: Counter = Counter()
+    #: Dated from the runs that actually CONTRIBUTED, not from every path
+    #: offered. Taking the span over `paths` let an unreadable or unsegmentable
+    #: run — one whose traffic is deliberately absent from every count above —
+    #: still widen the range printed beside those counts, so the line could
+    #: claim a corpus the figures were never taken over.
+    contributing: list = []
     for path in paths:
         try:
             doc = json.loads(path.read_text(encoding="utf-8"))
@@ -507,6 +590,7 @@ def preamble(paths: list[Path], cap: int) -> Preamble:
         # The dropped runs are still reported, on the exclusion line.
         if aligned_calls(doc)[1] is not None:
             continue
+        contributing.append(path)
         for call in doc.get("tool_calls") or []:
             if not isinstance(call, dict):
                 continue
@@ -526,7 +610,7 @@ def preamble(paths: list[Path], cap: int) -> Preamble:
                     depth[min(len([m for m in matches if m.rank <= TOP_N]), TOP_N)] += 1
             elif tool == "record_read":
                 reads[call.get("agent_type") or "main"] += 1
-    dates = sorted(d for d in (run_date(p) for p in paths) if d is not None)
+    dates = sorted(d for d in (run_date(p) for p in contributing) if d is not None)
     return Preamble(
         searches,
         ranked,
@@ -592,8 +676,12 @@ def format_report(
             "exclusion count above before reading it as 'no read activity'."
         )
 
-    scorable = [r for r in rows if r.outcome in ("in_top3", "not_in_top3")]
-    dropped = Counter(r.outcome for r in rows if r not in scorable)
+    SCORED = ("in_top3", "not_in_top3")
+    scorable = [r for r in rows if r.outcome in SCORED]
+    # Keyed on the outcome, not on membership of `scorable`: `r not in
+    # scorable` is a linear scan per row, and it also compared rows by
+    # value rather than by the property actually being tested.
+    dropped = Counter(r.outcome for r in rows if r.outcome not in SCORED)
 
     lines = [exclusion_line, ""]
     lines.append(f"Main-thread record_read calls: {len(rows)}")
@@ -611,13 +699,22 @@ def format_report(
         arms = Counter(r.arm for r in scorable)
         lines.append("")
         lines.append("How each scorable read was attributed to a search:")
-        for arm in ("staging", "log", "nearest", "none"):
+        # Every arm a row can carry must be listed. A missing name silently
+        # drops its rows from this table while `len(scorable)` still counts
+        # them, so the table stopped summing to the population it describes.
+        for arm in ("staging", "log", "nearest", "earlier-ranked", "none"):
             if arms.get(arm):
                 lines.append(f"  {arm:<28} {arms[arm]}")
+        assert sum(arms.values()) == len(scorable), (
+            f"attribution table {sum(arms.values())} != scorable {len(scorable)} "
+            f"— an arm is missing from the list above: {sorted(arms)}"
+        )
         exact = arms.get("staging", 0) + arms.get("log", 0)
+        earlier = arms.get("earlier-ranked", 0)
         lines.append(
             f"  -> {exact} of {len(scorable)} joined by an explicit resultsRef; "
-            "the rest rest on nearest-preceding attribution."
+            f"{earlier} rest on a ranking from earlier in the run (the nearest "
+            "preceding search ranked nothing); the rest on nearest-preceding."
         )
 
         inside = sum(1 for r in scorable if r.outcome == "in_top3")
@@ -626,6 +723,25 @@ def format_report(
             f"Inside the visible top {TOP_N}: {inside}/{len(scorable)}    "
             f"outside: {len(scorable) - inside}/{len(scorable)}"
         )
+        # Split by how the read was attributed, because the two rest on very
+        # different evidence and blending them hides that. A read joined to the
+        # search immediately before it — or by an explicit resultsRef — is a
+        # strong claim about which ranking the agent was looking at. One
+        # attributed to a ranking from earlier in the run, with a barren search
+        # in between, is a weaker one: the agent may have been working from
+        # that older list, or from nothing this report can see. Report both and
+        # let the reader weight them rather than quoting a single blended rate.
+        strong = [r for r in scorable if r.arm != "earlier-ranked"]
+        weak = [r for r in scorable if r.arm == "earlier-ranked"]
+        if strong and weak:
+            s_in = sum(1 for r in strong if r.outcome == "in_top3")
+            w_in = sum(1 for r in weak if r.outcome == "in_top3")
+            lines.append(
+                f"  attributed to the search just before the read: {s_in}/{len(strong)}"
+            )
+            lines.append(
+                f"  attributed to an earlier ranking (weaker):     {w_in}/{len(weak)}"
+            )
 
         early = [r for r in scorable if r.segment <= EARLY_MAX_SEGMENT]
         late = [r for r in scorable if r.segment > EARLY_MAX_SEGMENT]
@@ -666,7 +782,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--cap",
         type=int,
-        default=4000,
+        default=DEFAULT_CAP,
         help="Run-log capture cap, for the 'at the cap' denominator only.",
     )
     add_since_arg(parser)
