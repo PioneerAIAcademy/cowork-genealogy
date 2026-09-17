@@ -32,9 +32,10 @@ export type McpToolResult = {
  * Tools whose `{ ok: false }` means **the call could not do what was asked**.
  *
  * The rule is that, not "the tool writes" — which is why the constant is named
- * for the rule. Four non-writers qualify (`convert_calendar`, `research_query`,
- * `project_context`, `sidecar_read`): each returns `errors[]` and no payload,
- * and each one's own spec calls the case a failure.
+ * for the rule. Five non-writers qualify (`convert_calendar`,
+ * `build_external_search_url`, `research_query`, `project_context`,
+ * `sidecar_read`): each returns `errors[]` and no payload, and each one's
+ * own spec calls the case a failure.
  *
  * `merge_warnings` is deliberately ABSENT. Its `{ ok: false }` is the tool's
  * *answer about its subject* — a dry run reporting that a merge would be
@@ -58,6 +59,7 @@ export const OK_FALSE_IS_FAILURE = [
   "merge_tree_persons",
   "tree_forget",
   "convert_calendar",
+  "build_external_search_url",
   "research_query",
   "project_context",
   "project_create",
