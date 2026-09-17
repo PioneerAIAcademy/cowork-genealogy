@@ -110,6 +110,25 @@ describe("requirePre1880CensusHedge", () => {
     bad("The federal census shows Daniel in one dwelling with Margaret and sons Thomas and Stephen; marriage 1871, Adams County.");
   });
 
+
+  it("refuses a census named before 1800, which the old whole-note test allowed", () => {
+    // The one shape this change newly refuses. `CENSUS_YEAR` spans 1600-1999
+    // and the old gate was `\b18[0-7]\d\b`, so 1600-1799 is new. Correct: the
+    // 1790-1840 schedules name only the head and tally the rest by age band, so
+    // the structure is inferred more completely than on an 1850. Pinned so the
+    // "nothing is newly refused" reading cannot come back.
+    bad("1790 US Census household: John Smith head, with wife Mary.");
+    bad("census of 1790, household head John Smith, with wife Mary.");
+    // 1800 was already refused before the change -- the boundary is below it.
+    bad("1800 US Census household: John Smith head, with wife Mary.");
+  });
+
+  it("leaves a plural-only note alone, which is the gate's known and deliberate hole", () => {
+    // `\bcensus\b` does not match "censuses". Recorded as a test, not just a
+    // comment, so the next person meets the behaviour rather than inferring it.
+    ok("Traced the family across the 1850 and 1860 US censuses, Dodge County: head of household Thomas Flynn, with Mary Flynn.");
+  });
+
   it("ignores naming a tree-side relative the record did not contain", () => {
     // "searched for George's wife Catherine" is a statement about the TREE, not
     // about what the census stated — the validator's own carve-out.

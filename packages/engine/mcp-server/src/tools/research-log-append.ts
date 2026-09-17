@@ -145,11 +145,24 @@ class LogAppendError extends Error {}
  * xfail_reason): "not generalizable outside the US (post-1851 England & Wales
  * censuses do carry a relationship column)".
  *
- * MEASURED over the 3,275 distinct `notes` arguments of research_log_append in
+ * MEASURED over the 3,392 distinct `notes` arguments of research_log_append in
  * the committed run logs (eval/runlogs, both the plain and the `ops[]` batch
- * form): refusals fall 332 -> 196, and the 136 removed are 41.0% of every
- * refusal the rule made -- 122 of them the year, 14 the jurisdiction. NOTHING
- * is newly refused: the change only ever narrows.
+ * form): refusals fall 338 -> 196, and the 142 removed are 42.0% of every
+ * refusal the rule made -- 128 of them the year, 14 the jurisdiction. Nothing
+ * in that corpus is newly refused. Re-derive rather than quote these: the
+ * corpus grows with every committed run, and an earlier pass of this same
+ * docstring read 3,275/332/136 on a smaller one.
+ *
+ * That is a MEASUREMENT, not an invariant, and the difference matters to anyone
+ * leaning on it. `CENSUS_YEAR` spans 1600-1999 while the old gate was
+ * `\b18[0-7]\d\b`, so a census named before 1800 is newly refused: "1790 US
+ * Census household: John Smith head, with wife Mary" was allowed before and is
+ * refused now (1800 itself was already refused -- `18[0-7]\d` matches it -- so
+ * the boundary is 1600-1799). That behaviour is right, because the 1790-1840
+ * schedules name only the head of household and tally everyone else by age
+ * band, so the structure is inferred even more completely than on an 1850. But
+ * the rule does not only narrow, and a maintainer who believes it does will
+ * mis-predict this shape.
  *
  * The jurisdiction test is deliberately adjacency-bound and NOT a search of the
  * note, because most non-US words in this corpus are birthplaces on a US
@@ -247,6 +260,15 @@ export function censusMentions(notes: string): CensusMention[] {
  */
 export function requirePre1880CensusHedge(notes: string): void {
   const text = notes.toLowerCase();
+  // `\bcensus\b`, singular only, KNOWINGLY: a note saying just "censuses"
+  // bypasses the rule entirely ("Traced the family across the 1850 and 1860 US
+  // censuses ... head of household Thomas Flynn" writes clean today). Widening
+  // to `census(?:es)?` was measured and reverted -- it adds 4 refusals of which
+  // 2 are research PLANS rather than claims ("check 1850 and 1860 censuses for
+  // a woman named Margaret in the Thomas Flynn household"). The rule cannot
+  // tell a plan from a claim, which is a pre-existing weakness that fixing the
+  // gate merely exposes on more notes, and it is the real objection here. Do
+  // not widen this without solving that first.
   if (!/\bcensus\b/.test(text)) return;
 
   // Tie the year to the census it qualifies. When no year binds to a census

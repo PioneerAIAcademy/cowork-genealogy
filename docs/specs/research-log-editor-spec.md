@@ -320,15 +320,18 @@ Scope, and why it is this narrow:
 - **Undecidable inputs keep the prior behaviour** rather than failing open: when
   no year binds to a census at all, the whole-note test still applies.
 
-Measured over the 3,275 distinct `notes` arguments in the committed run logs,
-the rule refuses 196 (6.0%), down from 332 (10.1%) before the binding, with
-nothing newly refused.
+Measured over the 3,392 distinct `notes` arguments in the committed run logs,
+the rule refuses 196 (5.8%), down from 338 (10.0%) before the binding. Nothing
+in that corpus is newly refused; the one shape that would be is a census named
+before 1800, which the old whole-note year test (`18[0-7]\d`) could not see and
+which the rule is squarely for -- the 1790-1840 US schedules name only the head
+of household.
 
 The lead rejected a tool-boundary content gate on 2026-08-27 on three grounds
 (recorded in `eval/tests/unit/search-records/whitfield-1850-household.json`):
 a 41% refusal rate, non-generalizability outside the US, and the signal being
 author-supplied and optional. The binding above answers the first two — the rate
-is 6.0% of notes, and non-US censuses that carry the column are excluded. **The
+is 5.8% of notes, and non-US censuses that carry the column are excluded. **The
 third stands**: a caller that omits the census year from `notes` is not refused,
 so this narrows a common failure rather than closing a hole.
 
