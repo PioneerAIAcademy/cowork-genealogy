@@ -246,7 +246,7 @@ def test_premise_requires_a_new_question():
 # Accept: the question names the gating fact (or is #1471), so the guard passes.
 @pytest.mark.parametrize("question", [
     "What was Caroline's maiden name?",
-    "What was the birth surname of Rosalind Hartwell, born ca. 1855 in Ohio?",  # ut_016's actual output
+    "What was the birth surname of Rosalind Hartwell, born ca. 1855 in Ohio?",  # a "birth surname" fact-naming variant (synonym of maiden name); ut_016 now emits a "maiden name" form
     "Under what surname was Caroline born?",
     "What was Caroline's birth name?",
     "Was Rosalind born with the surname Hartwell, and if not, what was her maiden name?",
