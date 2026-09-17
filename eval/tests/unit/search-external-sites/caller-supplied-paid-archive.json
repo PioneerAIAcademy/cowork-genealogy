@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_015",
+    "skill": "search-external-sites",
+    "name": "Caller-supplied paid archive: the class-default access note is relayed, not suppressed",
+    "type": "positive",
+    "description": "The user names a state newspaper archive and supplies its URL, which is the only way `digital_newspaper_archive` is reachable — it has no fixed site-wide URL. The host they name (GenealogyBank) is a subscription service, but the tool cannot know that: the site class carries one static classification, so it returns `free_bot_protected` together with a note saying the classification is the class default and NOT checked against this archive. The skill must relay that hedge. Until this test, no eval exercised `digital_newspaper_archive` at all, so a SKILL.md rule that told the model to suppress the hedge ('never raise access for a free or free_bot_protected site') shipped unverified — it would have told a researcher a paid archive needs no subscription, the exact inverse of the alpha feedback that motivated the `access` field.",
+    "tags": [
+      "digital-newspaper-archive",
+      "external-site",
+      "access-classification",
+      "url-generation",
+      "log-site-digital_newspaper_archive"
+    ]
+  },
+  "input": {
+    "user_message": "Search the GenealogyBank newspaper archive at https://www.genealogybank.com/explore/newspapers/all/usa/pennsylvania for Patrick Flynn's obituary in Schuylkill County.",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "external-links-search-schuylkill",
+    "collections-search-schuylkill"
+  ],
+  "judge_context": [
+    "The URL must be built by build_external_search_url with site digital_newspaper_archive and the baseUrl the user supplied (genealogybank.com), not hand-composed and not redirected to a different site — that site has no fixed site-wide URL, so a caller-supplied baseUrl is the only way to reach it",
+    "The tool returns access free_bot_protected for this host together with a note that the classification is the site class's default and was NOT checked against this archive. The response must relay that hedge — it must NOT tell the researcher the archive is free, needs no subscription, or that access is settled. Saying nothing at all about access is also wrong: the note exists to be passed on",
+    "The same note says the archive's URL carries no date filter, so the response should tell the user to set the date range in the site's own UI rather than implying the link is already scoped to a period",
+    "A research-log entry must be written in the same turn the URL is generated: site digital_newspaper_archive, outcome partial, capture_received false",
+    "Suggesting a free alternative alongside (Chronicling America, or a state archive) is acceptable and often good practice, but it does not replace generating the URL the user explicitly asked for"
+  ]
+}
