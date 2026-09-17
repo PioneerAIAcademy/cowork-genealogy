@@ -1282,7 +1282,7 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 # it appears nowhere in the corpus (#2390 review). Re-measured across every
 # committed record-extraction run:
 #
-#     window  60 : 25 of 112 runs matched
+#     window  60 : 25 of the 112 runs that carry a text_response (of 124 total)
 #     window 120 : 26 of 112
 #     window 240 : 26 of 112
 #
@@ -1301,7 +1301,8 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
 #     {1}  record_search returned 20 hits; 1 of 20 is plausible. I will extract it.
 #
 # The 60 rationale claimed to avoid this and did not - all three pass at 60 as
-# well (#2390 review). It is 0 of 84 pre-rule runs, so the exposure is
+# well (#2390 review). It is 0 of the 84 pre-rule runs that carry a
+# text_response (93 pre-rule runs in all), so the exposure is
 # theoretical today, and it is the standing reason this validator is not
 # promoted to `test_`: as a gate it could be satisfied vacuously. Narrowing the
 # window does not close it; distinguishing "the ratio is the announcement" from
@@ -1407,13 +1408,14 @@ def report_a_multi_record_batch_announces_each_record_position(
         {1}  Before I extract: step 1 of 3 is logging the record.
         {1}  record_search returned 20 hits; 1 of 20 is plausible. I will extract it.
 
-    0 of 84 pre-rule runs carry that shape, so nothing is wrong today; it is a
+    0 of the 84 pre-rule runs carrying a text_response show that shape (93
+    pre-rule runs in all), so nothing is wrong today; it is a
     reason not to turn this into a gate, not a reason to hold the PR.
     `test_batch_progress_stays_reporting_only` holds the tier, since
     `validator_runner` reads it from the prefix and nothing else would.
 
     **Gated at one record, not two.** The batch this card describes does not
-    exist in the unit corpus: 0 of 152 runs across the committed logs extracted
+    exist in the unit corpus: 0 of 124 runs across the committed logs extracted
     more than one record. A two-record gate is dormant forever, which is the
     "reads as coverage" failure the sibling #1950 work exists to prevent.
 
