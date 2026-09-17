@@ -93,7 +93,13 @@ Questions must rest on verified starting-point information:
   genealogies) as unverified leads until confirmed by original records
 
 If the premise of a question is itself unverified, the first question
-should verify that premise.
+should verify that premise — framed so every branch of its answer names a
+fact the objective needs. A binary test of a property of a name or date
+("was this a maiden or married name?") names no fact; name the gating fact
+instead ("What was her maiden name?"), which subsumes the test. (A disputed
+identity assertion already on the tree may be tested directly — see the
+confirm-or-refute framing in the skill body — but a property test of a name
+or date may not stand in for the fact the objective needs.)
 
 ## Common Failures
 
@@ -107,6 +113,7 @@ should verify that premise.
 | Record-first framing | "What does Reuben's 1900 census entry say about his parents?" | Name the fact: "Who were Reuben's parents?" — the census belongs in the plan |
 | Outside the objective | "When did Reuben's wife emigrate?" (objective is Reuben's parents) | Her facts are a different objective, not a sub-question of this one |
 | Built on unverified claim | "Find birth record for 1815" (1815 comes from an unsourced tree) | First verify the approximate birth year |
+| Premise test names no fact | "Was 'Curtis' her maiden or married name?" (objective is her parents) | Name the gating fact: "What was her maiden name?" — either branch then yields it |
 
 ## Decomposing an Objective into Questions
 

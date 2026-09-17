@@ -557,3 +557,78 @@ def test_disputed_parents_missing_info_handled(before_state, after_state, test, 
         "the skill wrote no question and said essentially nothing -- "
         f"neither honest branch was taken. Reply: {reply!r}"
     )
+
+
+# --- Tag-gated: a premise-verification question must name the fact (#1394) ---
+
+# Regression for issue #1394. When the objective's premise is an unverified
+# property of a name (here, whether a surname is a maiden or a married name),
+# question-selection must frame the verifying question so every branch names the
+# fact the objective needs -- "What was her maiden name?" -- not a bare yes/no
+# or either/or test of the name's property, whose "no" branch names nothing.
+#
+# This is a NEGATIVE guard: it rejects the prohibited property-test SHAPE only;
+# the judge (via judge_context) owns the positive "names the fact" class. The
+# signals are deliberately narrow and correctly grouped -- each marriage
+# alternative requires the adjacent word "marriage", and the bare yes/no form is
+# anchored to the start so a wh-question ("What was her maiden name?") does not
+# match. It must COEXIST with the #1471 confirm-or-refute framing, which tests a
+# disputed IDENTITY ASSERTION on the tree ("...parents of Z?") and names a fact:
+# that shape matches none of the signals below, and #1471's tests carry a
+# different tag (verifies-disputed-parents / disputed-parents-missing-info), so
+# this validator never runs on them.
+_PREMISE_PROPERTY_TEST_SIGNALS = (
+    r"\bmaiden or married\b",
+    r"\bmarried or maiden\b",
+    r"\bwhether\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
+    r"^\s*(?:was|is|did|does)\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
+    r"\bacquire\w*\b[^.?]*\bmarriage\b",
+    r"\b(?:through|by|upon)\s+marriage\b",
+)
+
+# A question that asks for the GATING FACT by value -- "what ... maiden name / maiden
+# surname / birth surname / birth name" -- names the fact even alongside a yes/no or a
+# marriage clause: a compound "Was X the birth surname, and if not, what was her maiden
+# name?" names the fact in its second branch, and "What maiden name did she use before her
+# marriage?" is a fact question, not a property test. Such a question escapes the guard.
+# Two deliberate narrowings keep the escape from rescuing a bad question:
+#   * the fact term must be the MAIDEN/BIRTH fact -- bare "surname" is NOT an escape term,
+#     because "what surname did she use after marriage?" / "what surname does the census
+#     list?" names the married or record surname, not the gating maiden fact, and must not
+#     let a "maiden or married name" clause in the same sentence off the hook;
+#   * a bare "Was 'Curtis' the maiden name of Caroline?" (no "what") is still caught.
+# The positive "names the fact" class beyond this escape stays the judge's job.
+_FACT_NAMING_ESCAPE = r"\bwhat\b[^.?]*\b(?:maiden name|maiden surname|birth surname|birth name)\b"
+
+
+def test_premise_question_names_fact(before_state, after_state, test):
+    """Tag-gated: when the objective's premise is an unverified surname origin,
+    the new question must name the fact sought, not test a property of the name
+    (maiden-vs-married) in a branch that names nothing (#1394)."""
+    if "premise-question-names-fact" not in test.get("tags", []):
+        pytest.skip("not a premise-question-names-fact scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, "expected a new question naming the fact the premise gates; none was added"
+    offenders = [
+        q.get("question")
+        for q in new
+        if not re.search(_FACT_NAMING_ESCAPE, (q.get("question") or "").lower())
+        and any(
+            re.search(sig, (q.get("question") or "").lower())
+            for sig in _PREMISE_PROPERTY_TEST_SIGNALS
+        )
+    ]
+    assert not offenders, (
+        "at least one written question is a bare property test of a name "
+        "(e.g. 'Was Curtis her maiden or married name?') whose branch names no "
+        "fact. A premise-verification question must be framed so every branch "
+        "names the fact the objective needs -- 'What was her maiden name?' -- "
+        "which subsumes the test. A disputed identity assertion already on the "
+        "tree may be tested directly (confirm-or-refute, #1471); a property test "
+        "of a name or date may not stand in for the fact. "
+        f"Offending question(s): {offenders!r}"
+    )

@@ -32,6 +32,7 @@ from test_question_selection import (  # noqa: E402
     test_disputed_parents_missing_info_handled as check_missing_info,
     test_first_question_tests_disputed_parents as check_disputed_parents,
     test_new_question_not_vague as check_not_vague,
+    test_premise_question_names_fact as check_premise,
     test_timelines_queried_before_deciding as check_timelines_ordering,
     test_unblocks_nonempty as check_unblocks_nonempty,
 )
@@ -209,3 +210,71 @@ def test_unblocks_nonempty_fails_when_empty():
             _state([_q("q_003", "Where was Patrick Flynn residing in 1870?", unblocks=[])]),
             _UNBLOCKS_TAGS,
         )
+
+
+# --- test_premise_question_names_fact: the #1394 negative-shape guard ---
+#
+# Pins the demonstrated reject/accept behaviour of the premise-question-names-fact
+# guard (CLAUDE.md "a new lint must be proven to fail" — both directions). The
+# guard rejects a bare property test of a name (maiden-vs-married) whose branch
+# names no fact, while accepting a question that names the gating fact, and it
+# must coexist with #1471's confirm-or-refute framing. Cases mirror the two-way
+# demonstration recorded in the PR body. The two residual contrived edge cases
+# (cross-clause phrasings) are accepted as-is by decision — the positive class is
+# the judge's job — and are deliberately NOT pinned here.
+
+_PREMISE_TAGS = {"tags": ["premise-question-names-fact"]}
+
+
+def _premise_after(question):
+    return _state([_q("q_001", question)])
+
+
+def test_premise_skips_when_tag_absent():
+    # Assert the tag-gate reason specifically, so this can't pass on the other
+    # skip path ("missing research.json for diff").
+    with pytest.raises(pytest.skip.Exception, match="not a premise-question-names-fact scenario"):
+        check_premise(_EMPTY, _premise_after("What was her maiden name?"),
+                      {"tags": ["first-question"]})
+
+
+def test_premise_requires_a_new_question():
+    with pytest.raises(AssertionError, match="none was added"):
+        check_premise(_EMPTY, _EMPTY, _PREMISE_TAGS)
+
+
+# Accept: the question names the gating fact (or is #1471), so the guard passes.
+@pytest.mark.parametrize("question", [
+    "What was Caroline's maiden name?",
+    "What was the birth surname of Rosalind Hartwell, born ca. 1855 in Ohio?",  # ut_016's actual output
+    "Under what surname was Caroline born?",
+    "What was Caroline's birth name?",
+    "Was Rosalind born with the surname Hartwell, and if not, what was her maiden name?",
+    "What maiden name did she use before her marriage?",
+    # Exercises the `maiden surname` escape term specifically: the leading
+    # "Was it a married name" trips signal 4, and only the `maiden surname`
+    # escape alternative rescues it — drop that term and this flips to reject.
+    "Was it a married name, and what was her maiden surname?",
+    "Do independent records confirm or refute that Johann and Maria Vogt are the parents of Anton Vogt?",
+    "Who were Caroline's parents?",  # objective restatement — the judge's call, not this guard's
+])
+def test_premise_accepts_fact_naming_and_1471(question):
+    check_premise(_EMPTY, _premise_after(question), _PREMISE_TAGS)
+
+
+# Reject: a bare property test of the name whose branch names no fact.
+@pytest.mark.parametrize("question", [
+    "Was Curtis her maiden or married name?",
+    "Was 'Curtis' the maiden name of Caroline?",
+    # Exercises the reversed `married or maiden` signal specifically: no leading
+    # was/is/did and no other signal matches, so dropping that signal would let
+    # this bad either/or through.
+    "Should I record Hartwell as her married or maiden name?",
+    "Determine whether Curtis was her maiden name or acquired through marriage.",
+    "Did she take Hartwell by marriage?",
+    "Was 'Hartwell' her maiden or married name, and what surname does the census list?",
+    "Was Hartwell her maiden or married name, and what surname did she use after marriage?",
+])
+def test_premise_rejects_bare_property_test(question):
+    with pytest.raises(AssertionError, match="property test of a name"):
+        check_premise(_EMPTY, _premise_after(question), _PREMISE_TAGS)

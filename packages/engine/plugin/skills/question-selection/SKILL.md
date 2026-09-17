@@ -125,7 +125,8 @@ When nothing in `questions[]` covers the objective yet, the question you write
 it — record choice is `research-plan`'s. A single-fact objective **is** that
 question; restate it with identifying detail rather than narrowing it. Once a
 question at the objective's scope is open, your job is the next sub-question
-beneath it — verify an unsound premise, test a named source, decompose a part —
+beneath it — verify an unsound premise (framed to name the fact sought, not
+merely test a property of a name or date), test a named source, decompose a part —
 and that one may be narrower and may name a record. An existing objective-scope
 question is never a reason to add nothing; only Step 1b stops the project.
 
@@ -180,7 +181,13 @@ objective, named individual, testable scope) and examples.
 Before formulating, verify the starting-point information is sound. Do not
 build a question on unverified claims from compiled sources (online trees,
 unsourced genealogies). If the premise is unverified, the first question
-should verify it.
+should verify it — framed so every branch of its answer names a fact the
+objective needs. A binary test of a property of a name or date ("was this a
+maiden or married name?") names no fact; name the gating fact instead
+("What was her maiden name?"), which subsumes the test. A disputed identity
+assertion already on the tree may be tested directly (confirm-or-refute, per
+the next paragraph); a property test of a name or date may not stand in for
+the fact.
 
 **When the objective signals the user doubts an existing assignment** —
 phrasing like "correct parents", "the right X", "not correct" — the current
@@ -261,7 +268,8 @@ cannot see `research.json`. Give:
 - **Finish what's open.** Don't introduce new questions while any open
   question's plan items are `in_progress` (see Step 1a).
 - **Sound basis required.** Don't build questions on unsound assumptions —
-  if the premise is unverified, verify it first.
+  if the premise is unverified, verify it first, framed to name the fact
+  sought — never as a bare property test of a name or date.
 - **Objectives vs. questions.** Never write a **multi-fact** objective as a
   question. A single-fact objective already *is* one: restate it, don't narrow
   it to a record. See Step 1c.
