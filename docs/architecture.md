@@ -221,7 +221,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **27** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **28** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **6** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
 The six agents are `gps-mentor`, `record-extractor`, `image-reader`,
@@ -676,9 +676,11 @@ Architecturally:
   points at the compiled `build/`, and a live session holds the old catalog. The
   harness targets (`harness-test`, `eval-skill`, `e2e-run`) carry `$(ENGINE_BUILD)`
   and rebuild for you. Cowork: `make mcpb` and reinstall the extension, then fully
-  quit and reopen Claude Desktop. Hosted: `make sandbox-image` — the
-  `genealogy-agent` image bakes its own engine and `make server-e2b` does **not**
-  rebuild it (§7). `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
+  quit and reopen Claude Desktop. Hosted: `make deploy` (which rebuilds the image),
+  or `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify against a
+  dev template first — the `genealogy-agent` image bakes its own engine and
+  `make server-e2b` does **not** rebuild it (§7). A bare `make sandbox-image`
+  rebuilds PRODUCTION's template in place. `docs/skill-lifecycle.md` → "Rebuilding and reinstalling"
   covers the Claude Code and Cowork rows; the hosted row is only here.
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
@@ -1581,8 +1583,10 @@ other. Both `apps/electron` and `apps/web` must still typecheck (`make typecheck
 
 **Change anything the sandbox runs.** `make server-e2b` does **not** rebuild the
 engine — the `genealogy-agent` image bakes its own. After changing
-`app/sandbox_server.py` or `app/agent/*`, run `make sandbox-image` or the microVM
-runs stale code.
+`app/sandbox_server.py` or `app/agent/*`, rebuild the image or the microVM runs
+stale code: `E2B_TEMPLATE_NAME=genealogy-agent-dev make sandbox-image` to verify,
+since a bare `make sandbox-image` rebuilds PRODUCTION's template in place.
+`make deploy` rebuilds the production one as part of the deploy.
 
 **Add a control-plane endpoint.** `apps/server/app/v1.py` for the public REST
 API (see `DEVELOPMENT.md` "Public `/v1` REST API"), `sessions.py` for session
@@ -1722,14 +1726,16 @@ the directory or file stem — also run by the packaging script),
 `check_runlogs.py` (the blocking run-log/annotation gate on any skill change,
 §3 — plus a **warn-only** arm that maps a changed shared fixture
 (`eval/fixtures/{scenarios,mcp}/<name>`) to the skills whose tests reference it
-and warns when their run logs go stale), and three **warn-only** lints
-worth knowing because they fire right after the three most common tasks:
+and warns when their run logs go stale), and four **warn-only** lints
+worth knowing because they fire right after the most common tasks:
 `check_tool_coverage.py` (a skill declares a tool with no fixture in its corpus —
 what happens after you add a tool), `check_rubric_tool_drift.py` (a tool named
 in a rubric, `judge_context`, or an **agent body** that isn't in its declared
-tools — what happens after you grant one), and `check_negative_reciprocity.py`
+tools — what happens after you grant one), `check_negative_reciprocity.py`
 (a negative routing edge `A → B` with no `B → A` test backing it — what happens
-after you widen a description).
+after you widen a description), and `check_slot_queue.py` (an open issue's
+`**Touches:**` line names a path in the eval snapshot this PR is about to make
+stale — what happens right before you buy a paid run).
 
 **These live outside `tests/packaging/`, and the inventory above will not
 lead you to them:**
@@ -1833,11 +1839,14 @@ changes how a correct change is made:
    `research_append` on `proof_summaries` (the arm with no redundant copy in the
    hosted path) and requires the guard's own deny text, with a hooks-removed
    control arm so the deny is attributable. Hosted-only, for the same reason.
-2. **A deploy does not ship the sandbox.** `make server-e2b` and `make deploy` do
-   not rebuild the `genealogy-agent` E2B image production runs the agent on, and
-   both guards over it are advisory. Production can run weeks-old skills, agents,
-   and MCP tools while CI, the deploy, and `/api/health` all look correct, and
-   nothing surfaces the baked commit. Run `make sandbox-image` (§7).
+2. **Nothing checks the sandbox image itself.** `make deploy` now builds and
+   pushes the `genealogy-agent` E2B image, and `/api/health` reports the commit
+   baked into it, so a deploy no longer silently leaves production on weeks-old
+   skills, agents and MCP tools. What remains unchecked is the image as an
+   artifact: no CI job builds or verifies the template, `make server-e2b` runs
+   whatever is baked into the one it resolves, and a bare `make sandbox-image`
+   rebuilds PRODUCTION's template in place from the working tree. Build a dev
+   template (`E2B_TEMPLATE_NAME=genealogy-agent-dev`) when verifying (§7).
 3. **Every measurement in this repo describes the eval corpus, not production.**
    There is no production telemetry: `apps/server/app/obs.py` is PII-free stdout
    logging, and `sandbox_server.py`'s buffer is a reconnect *replay*, not a tool
