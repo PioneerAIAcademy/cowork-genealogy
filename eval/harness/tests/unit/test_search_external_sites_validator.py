@@ -60,13 +60,14 @@ sys.path.insert(0, str(_HARNESS / "validators"))  # validators_lib, the module
 
 from test_search_external_sites import (  # noqa: E402
     report_no_plan_item_status_written_when_no_entry_names_one as check_v6,
-    test_curated_links_fetch_with_results_is_not_logged_as_nil as check_v3,
     test_log_entries_do_not_carry_each_others_fields as check_v2,
     test_plan_items_are_updated_never_appended as check_v7,
     test_the_log_is_append_only as check_v8,
     test_the_url_logged_is_the_url_presented as check_v4,
     test_writes_only_to_log_and_plans as check_v7b,
 )
+
+from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
 
 POSITIVE = {"type": "positive", "tags": []}
 URL = "https://www.ancestry.com/search/?name=Patrick_Flynn&birth=1845"
@@ -139,8 +140,7 @@ def _site_entry(entry_id="log_011", **over):
 
 def test_v2_fires_when_a_links_entry_carries_external_site():
     before, after = _states(after_log=[_links_entry(external_site={"site": "ancestry"})])
-    with pytest.raises(AssertionError, match="carries external_site"):
-        check_v2(before, after, POSITIVE)
+    expect_fires(lambda: check_v2(before, after, POSITIVE), "carries external_site")
 
 
 def test_v2_fires_when_a_site_entry_carries_the_staged_handle():
@@ -148,13 +148,12 @@ def test_v2_fires_when_a_site_entry_carries_the_staged_handle():
     `staged_results_ref` from the issue, this test would be the only thing in
     the repo that noticed."""
     before, after = _states(after_log=[_site_entry(results_ref="results/log_010.json")])
-    with pytest.raises(AssertionError, match="carries results_ref"):
-        check_v2(before, after, POSITIVE)
+    expect_fires(lambda: check_v2(before, after, POSITIVE), "carries results_ref")
 
 
 def test_v2_quiet_on_the_correct_pair():
     before, after = _states(after_log=[_links_entry(), _site_entry()])
-    check_v2(before, after, POSITIVE)
+    expect_passes(lambda: check_v2(before, after, POSITIVE))
 
 
 def test_v2_treats_explicit_null_as_not_carrying():
@@ -163,34 +162,7 @@ def test_v2_treats_explicit_null_as_not_carrying():
     before, after = _states(
         after_log=[_links_entry(external_site=None), _site_entry(results_ref=None)]
     )
-    check_v2(before, after, POSITIVE)
-
-
-# --- V3: a fetch that returned links is not a nil ----------------------
-
-
-def test_v3_fires_on_the_corpus_shape():
-    """The corpus shape: `results_examined > 0` logged non-positive. 4 of 66
-    entries, three tests, three of five logs (measured 2026-09-10)."""
-    before, after = _states(
-        after_log=[_links_entry(results_examined=2, outcome="negative")]
-    )
-    with pytest.raises(AssertionError, match="not a nil result"):
-        check_v3(before, after, POSITIVE)
-
-
-def test_v3_quiet_when_the_fetch_genuinely_returned_nothing():
-    """Zero examined and `negative` is the honest nil — the distinction the
-    rule exists to preserve."""
-    before, after = _states(
-        after_log=[_links_entry(results_examined=0, outcome="negative")]
-    )
-    check_v3(before, after, POSITIVE)
-
-
-def test_v3_quiet_when_results_are_logged_positive():
-    before, after = _states(after_log=[_links_entry(results_examined=2, outcome="positive")])
-    check_v3(before, after, POSITIVE)
+    expect_passes(lambda: check_v2(before, after, POSITIVE))
 
 
 # --- V4: the URL logged is the URL presented ---------------------------
@@ -198,13 +170,17 @@ def test_v3_quiet_when_results_are_logged_positive():
 
 def test_v4_fires_when_the_logged_url_is_not_in_the_reply():
     before, after = _states(after_log=[_site_entry()])
-    with pytest.raises(AssertionError, match="not in\n?.*the reply|never presented"):
-        check_v4(before, after, "Here is your search link: https://example.com/other", POSITIVE)
+    expect_fires(
+        lambda: check_v4(
+            before, after, "Here is your search link: https://example.com/other", POSITIVE
+        ),
+        "not in\n?.*the reply|never presented",
+    )
 
 
 def test_v4_quiet_when_the_reply_carries_the_url():
     before, after = _states(after_log=[_site_entry()])
-    check_v4(before, after, f"Open this in your browser: {URL}", POSITIVE)
+    expect_passes(lambda: check_v4(before, after, f"Open this in your browser: {URL}", POSITIVE))
 
 
 def test_v4_ignores_an_entry_with_no_url():
@@ -212,7 +188,7 @@ def test_v4_ignores_an_entry_with_no_url():
     double-report it."""
     entry = _site_entry(external_site={"site": "ancestry", "capture_received": False})
     before, after = _states(after_log=[entry])
-    check_v4(before, after, "no link here", POSITIVE)
+    expect_passes(lambda: check_v4(before, after, "no link here", POSITIVE))
 
 
 def test_v4_skips_a_capture_arrival_entry():
@@ -224,14 +200,18 @@ def test_v4_skips_a_capture_arrival_entry():
         external_site={"site": "ancestry", "url_generated": URL, "capture_received": True}
     )
     before, after = _states(after_log=[entry])
-    check_v4(before, after, "The capture shows a 1850 household of six.", POSITIVE)
+    expect_passes(
+        lambda: check_v4(before, after, "The capture shows a 1850 household of six.", POSITIVE)
+    )
 
 
 def test_v4_skips_a_no_access_entry():
     """SKILL.md:584 — the no-access entry logs `outcome: "error"` and its reply
     asks whether to skip the site, so it presents no link either."""
     before, after = _states(after_log=[_site_entry(outcome="error")])
-    check_v4(before, after, "You have no Ancestry access — skip this site?", POSITIVE)
+    expect_passes(
+        lambda: check_v4(before, after, "You have no Ancestry access — skip this site?", POSITIVE)
+    )
 
 
 def test_v4_still_fires_on_a_negative_outcome_that_hides_the_url():
@@ -240,8 +220,10 @@ def test_v4_still_fires_on_a_negative_outcome_that_hides_the_url():
     `negative` and DOES present the URL, where V4 holds on 10 of 10 committed
     runs. Only capture-arrival and no-access are exempt."""
     before, after = _states(after_log=[_site_entry(outcome="negative")])
-    with pytest.raises(AssertionError, match="not in\n?.*the reply|never presented"):
-        check_v4(before, after, "Deferring this search for now.", POSITIVE)
+    expect_fires(
+        lambda: check_v4(before, after, "Deferring this search for now.", POSITIVE),
+        "not in\n?.*the reply|never presented",
+    )
 
 
 # --- V6: no plan status when no entry names a plan item ----------------
@@ -253,8 +235,7 @@ def test_v6_fires_when_status_moves_with_no_entry_naming_an_item():
         before_items=[_item(status="planned")],
         after_items=[_item(status="completed")],
     )
-    with pytest.raises(AssertionError, match="records no plan progress"):
-        check_v6(before, after, POSITIVE)
+    expect_fires(lambda: check_v6(before, after, POSITIVE), "records no plan progress")
 
 
 def test_v6_gates_out_when_an_entry_names_the_item():
@@ -280,7 +261,7 @@ def test_v6_quiet_when_no_status_moved():
         before_items=[_item(status="planned")],
         after_items=[_item(status="planned")],
     )
-    check_v6(before, after, POSITIVE)
+    expect_passes(lambda: check_v6(before, after, POSITIVE))
 
 
 # --- V7: update a plan item, never append one --------------------------
@@ -293,8 +274,10 @@ def test_v7_fires_on_an_appended_plan_item():
         before_items=[_item("pli_007", "planned")],
         after_items=[_item("pli_007", "skipped"), _item("pli_008", "skipped")],
     )
-    with pytest.raises(AssertionError, match=r"appended plan item\(s\) \['pli_008'\]"):
-        check_v7(before, after, POSITIVE)
+    expect_fires(
+        lambda: check_v7(before, after, POSITIVE),
+        r"appended plan item\(s\) \['pli_008'\]",
+    )
 
 
 def test_v7_quiet_when_an_existing_item_is_updated():
@@ -303,7 +286,7 @@ def test_v7_quiet_when_an_existing_item_is_updated():
         before_items=[_item("pli_007", "planned")],
         after_items=[_item("pli_007", "completed")],
     )
-    check_v7(before, after, POSITIVE)
+    expect_passes(lambda: check_v7(before, after, POSITIVE))
 
 
 def test_v7b_fires_on_a_write_outside_log_and_plans():
@@ -318,8 +301,10 @@ def test_v7b_fires_on_a_write_outside_log_and_plans():
             "sources": [{"id": "src_001", "title": "invented"}],
         }
     }
-    with pytest.raises(AssertionError):
-        check_v7b(before, after, POSITIVE)
+    expect_fires(
+        lambda: check_v7b(before, after, POSITIVE),
+        r"modified sections it doesn't own: \['sources'\]",
+    )
 
 
 def test_v7b_quiet_on_a_log_and_plans_write():
@@ -328,7 +313,7 @@ def test_v7b_quiet_on_a_log_and_plans_write():
         before_items=[_item(status="planned")],
         after_items=[_item(status="completed")],
     )
-    check_v7b(before, after, POSITIVE)
+    expect_passes(lambda: check_v7b(before, after, POSITIVE))
 
 
 # --- V8: the log is append-only ----------------------------------------
@@ -338,8 +323,10 @@ def test_v8_fires_when_a_prior_entry_is_edited():
     prior = _site_entry("log_001", outcome="partial")
     edited = _site_entry("log_001", outcome="positive")
     before, after = _states(before_log=[prior], after_log=[edited])
-    with pytest.raises(AssertionError):
-        check_v8(before, after, POSITIVE)
+    expect_fires(
+        lambda: check_v8(before, after, POSITIVE),
+        "log entry log_001 was modified",
+    )
 
 
 def test_v8_quiet_when_entries_are_only_appended():
@@ -348,7 +335,7 @@ def test_v8_quiet_when_entries_are_only_appended():
     before, after = _states(
         before_log=[prior], after_log=[prior, _links_entry("log_002"), _site_entry("log_003")]
     )
-    check_v8(before, after, POSITIVE)
+    expect_passes(lambda: check_v8(before, after, POSITIVE))
 
 
 def test_v6_is_tier_2_and_cannot_gate_a_run():

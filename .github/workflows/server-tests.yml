@@ -66,7 +66,14 @@ jobs:
           # loads docs/specs/schemas/{research,tree-gedcomx,enums}.schema.json.
           # Without it a schema-only diff reported success without running the
           # test that validates the mock agent's output against them.
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^docs/specs/schemas/|^\.github/workflows/server-tests\.yml$'
+          #
+          # `^\.gitignore$` (issue #1489): tests/test_sandbox_image_provenance.py
+          # asserts the E2B image's provenance artifact stays gitignored, so a
+          # tracked copy cannot dirty every build. Same shape as the line above --
+          # a test reading a file outside apps/server/ -- and without it a diff
+          # that removes only that .gitignore line reports success having run
+          # nothing.
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^docs/specs/schemas/|^\.gitignore$|^\.github/workflows/server-tests\.yml$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

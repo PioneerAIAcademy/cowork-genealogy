@@ -298,6 +298,72 @@ describe("Project Validator", () => {
       ).toBe(true);
     });
 
+    it("reports a log entry results_examined that is not a non-negative integer (drift with the JSON Schema)", async () => {
+      // `integer, minimum: 0` in the schema; this validator only checked the
+      // key was present, so a negative or fractional count passed here and
+      // failed only downstream — the same gap as plan_item_id above.
+      for (const bad of [-3, 1.5]) {
+        const research = {
+          ...minimalResearch,
+          log: [
+            {
+              id: "log_001",
+              plan_item_id: null,
+              performed: "2026-01-01T00:00:00.000Z",
+              tool: "record_search",
+              query: {},
+              outcome: "negative",
+              results_examined: bad,
+              external_site: null,
+              results_ref: null,
+            },
+          ],
+        };
+        await writeProject(research, minimalTree);
+        const result = await validateProject(testDir);
+        expect(result.valid).toBe(false);
+        expect(
+          result.errors.some((e) => e.message.includes("results_examined must be a non-negative integer"))
+        ).toBe(true);
+      }
+    });
+
+    it("reports a log entry results_available that is not a non-negative integer, and allows null", async () => {
+      // Its sibling above got this bound; this field did not, though the schema
+      // declares it `integer, minimum: 0` with a null branch and the writer's
+      // own comment says this validator carries it in allow-lists with no type
+      // check. Second instance of one class (review round 5).
+      const entry = (results_available: unknown) => ({
+        id: "log_001",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00.000Z",
+        tool: "record_search",
+        query: {},
+        outcome: "negative",
+        results_examined: 0,
+        results_available,
+        external_site: null,
+        results_ref: null,
+      });
+      for (const bad of [-3, 1.5, "7"]) {
+        await writeProject({ ...minimalResearch, log: [entry(bad)] }, minimalTree);
+        const result = await validateProject(testDir);
+        expect(result.valid).toBe(false);
+        expect(
+          result.errors.some((e) => e.message.includes("results_available must be a non-negative integer"))
+        ).toBe(true);
+      }
+      // The other direction: null is what the schema allows, and a valid count
+      // still passes — so this rejects the bad thing without blocking the good.
+      for (const good of [null, 0, 42]) {
+        await writeProject({ ...minimalResearch, log: [entry(good)] }, minimalTree);
+        const result = await validateProject(testDir);
+        expect(
+          result.errors.some((e) => e.message.includes("results_available must be"))
+        ).toBe(false);
+      }
+    });
+
     it("accepts a null log entry plan_item_id (opportunistic search)", async () => {
       const research = {
         ...minimalResearch,
@@ -1633,6 +1699,40 @@ describe("Project Validator", () => {
       ).toBe(true);
       expect(
         result.errors.some((e) => e.message.includes("unexpected property 'places'"))
+      ).toBe(true);
+    });
+
+    it("rejects record-only fields on tree persons and sources", async () => {
+      const tree = {
+        persons: [
+          {
+            id: "P1",
+            gender: "Male",
+            names: [{ id: "N1", given: "Jane", surname: "Doe" }],
+            principal: true,
+          },
+        ],
+        relationships: [],
+        sources: [
+          {
+            id: "S1",
+            title: "Alabama Deaths",
+            resource_type: "DigitalArtifact",
+            coverage: { place_rep_id: "12345", record_type: "Census" },
+          },
+        ],
+      };
+      await writeProject(minimalResearch, tree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'principal'"))
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'resource_type'"))
+      ).toBe(true);
+      expect(
+        result.errors.some((e) => e.message.includes("unexpected property 'coverage'"))
       ).toBe(true);
     });
   });

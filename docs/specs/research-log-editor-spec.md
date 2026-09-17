@@ -82,7 +82,9 @@ research_log_append({
   notes?: string | null,
   externalSite?: {                // REQUIRED when tool === "external_site"; else null/omit
     site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web"
-          | "chronicling_america" | "digital_newspaper_archive",
+          | "chronicling_america" | "digital_newspaper_archive" | "archives_gov" | "archive_org"
+          | "billiongraves" | "digitalarkivet" | "antenati" | "library_archives_canada"
+          | "american_ancestors" | "italian_genealogy",
     urlGenerated: string,
     captureReceived: boolean,
     captureFilename?: string | null,
@@ -123,6 +125,26 @@ downstream. Rejecting is preferred over silently nulling, which would discard th
 caller's expressed intent. `validate_research_schema` now also enforces the
 `^pli_` prefix on a log entry's `plan_item_id`, matching the JSON Schema and the
 sibling reference fields.
+
+**`externalSite.urlGenerated` validation.** Must be an absolute `http(s)` URL —
+it is the string the skill presents as the clickable link and persists into
+`research.json`, the same caller-composed shape `build_external_search_url`
+refuses as `invalid_base_url`. Trimmed before both the check and the write.
+
+**`resultsExamined` validation.** Must be a non-negative integer. A numeric
+string (`"5"`, the same stringified-argument slip `resultsAvailable` is coerced
+for) is coerced first; `NaN`, a negative or a fraction is rejected with an
+actionable error rather than persisted (`NaN` would otherwise land as `null` and
+fail only in the schema validator downstream). `validate_research_schema`
+enforces the same bound on the persisted `results_examined` for every writer.
+
+**`external_links_search` outcome consistency.** An entry for that tool with
+`resultsExamined > 0` must carry `outcome: "positive"`: the entry grades the
+curated-links FETCH, not whether any link fit the plan item (that goes in
+`notes`). Enforced mechanically because the prose instruction in SKILL.md was
+measured to be ignored often enough to need a hard gate: 4 of 66
+`external_links_search` entries across the five run logs this branch commits,
+in three tests and three of the five logs (measured 2026-09-10).
 
 **The tool assigns (caller never supplies):** the log entry `id` (next `log_`
 above the current max), `performed` (now, ISO 8601 + tz), `results_ref`
@@ -255,6 +277,9 @@ clerical work.
 | `externalSite` given but `tool !== "external_site"` | input error (the schema requires `external_site: null` otherwise) |
 | `externalSite.site` not in the enum | input error |
 | `outcome` not in `{positive,negative,partial,error}` | input error |
+| `externalSite.urlGenerated` not an absolute `http(s)` URL | input error; write nothing |
+| `resultsExamined` not a non-negative integer (after coercing a numeric string) | input error; write nothing |
+| `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | input error; write nothing — the entry grades the fetch, not the search |
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validator.ts:1022,1029`) |
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
