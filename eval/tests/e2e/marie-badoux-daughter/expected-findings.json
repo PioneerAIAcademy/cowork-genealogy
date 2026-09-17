@@ -4,7 +4,7 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Claudine Thénot, baptised 12 October 1781 at Romenay, Saône-et-Loire, was a daughter of Marie Badoux (PID LT9H-SK3). The baptismal entry itself names the child's mother as Marie Joly — a different woman from both Marie Badoux, whom Philippe Thénot married at Romenay on 22 February 1773, and Marie Claudine Bourgeois, whom he married at the same parish on 27 June 1780. FamilySearch's hinting proposed this record for Marie Badoux with unverified confidence; it is a false match. Pass = the final tree/research attaches no child named Claudine Thénot to Marie Badoux, adds no 1781 birth/baptism fact under her, and creates no stub child from this record (or such a candidate appears only as an explicitly rejected hypothesis).",
+      "description": "The agent must NOT assert that Claudine Thénot, baptised 12 October 1781 at Romenay, Saône-et-Loire, was a daughter of Marie Badoux (PID LT9H-SK3). Two independent routes refute it. Decisive: Marie Badoux died 21 March 1780 and was buried 22 March 1780 at Romenay, nineteen months before the baptism, so she cannot be the mother. Corroborating: the baptismal entry names the child's mother as Marie Joly, matching neither Marie Badoux nor the bride of Philippe Thénot's 27 June 1780 remarriage at the same parish, whom that entry indexes as Marie Claudine Bourgeois (an identification the records themselves leave contested, since both post-1780 baptisms name Marie Joly as mother). FamilySearch's hinting proposed this record for Marie Badoux with unverified confidence; it is a false match. Pass = the final tree/research attaches no child named Claudine Thénot to Marie Badoux and adds no 1781 birth/baptism fact under her. Attaching Claudine to her actual parents is correct behaviour and must not be penalised. NOTE FOR GRADERS: `apply_avoid_guard` force-fails this finding whenever a person named Claudine Thénot exists in the tree, which any run satisfying f2 must create; that is why this finding is `required: false` (issue #2640).",
       "details": {
         "subject_person": "Marie Badoux (PID LT9H-SK3)",
         "relation": "child",
@@ -14,16 +14,17 @@
         }
       },
       "supporting_sources": [
-        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — baptism of Claudine Tenot, 12 Oct 1781, Romenay, father Philipe Tenot, mother Marie Joly (ark:/61903/1:1:W5XL-MP3Z) — the disproving record: the hinted entry names a mother other than the subject",
-        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — marriage of Philippe Thénot and Marie Claudine Bourgeois, 27 Jun 1780, Romenay (ark:/61903/1:1:W5XG-BTPZ) — Philippe had remarried before the 1781 baptism, so a child born to him in 1781 need not be Marie Badoux's",
+        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — burial of Marie Badoux, wife of Philippe Thenot, 22 Mar 1780, Romenay, death recorded 21 Mar 1780 (ark:/61903/1:1:W5XV-6XPZ) — the decisive disproving record: she predeceased the 12 Oct 1781 baptism by nineteen months",
+        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — baptism of Claudine Tenot, 12 Oct 1781, Romenay, father Philipe Tenot, mother Marie Joly (ark:/61903/1:1:W5XL-MP3Z) — the hinted entry, naming a mother other than the subject",
+        "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — marriage of Philippe Thénot and the bride indexed as Marie Claudine Bourgeois, 27 Jun 1780, Romenay (ark:/61903/1:1:W5XG-BTPZ) — Philippe had remarried before the 1781 baptism",
         "France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892 — marriage of Philippes Thénot and Marie Badoux, 22 Feb 1773, Romenay (ark:/61903/1:1:W5XJ-F7T2) — the subject's own marriage, the baseline the hint had to be consistent with"
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f2",
       "type": "fact",
-      "description": "Having searched the Romenay registers for a baptism or other entry naming Marie Badoux as the mother of Claudine Thénot — or of any daughter — the agent should document a negative, exhausted-search conclusion: the 1781 baptism belongs to a later partner of Philippe Thénot named Marie Joly, not to Marie Badoux, and no record was found that gives Marie Badoux a daughter. Reporting the rejection with its reason is the expected outcome; silence on the question is not.",
+      "description": "Having searched the Romenay registers for a baptism or other entry naming Marie Badoux as the mother of Claudine Thénot — or of any daughter — the agent should document a negative, exhausted-search conclusion: the 1781 baptism does not belong to Marie Badoux, and no record was found that gives her a daughter. Either refuting route earns this finding: that Marie Badoux died 21 March 1780, nineteen months before the baptism, or that the entry names a different mother (Marie Joly). Reporting the rejection with its reason is the expected outcome; silence on the question is not.",
       "details": {
         "subject_person": "Marie Badoux (PID LT9H-SK3)",
         "relation": "research conclusion",
@@ -33,7 +34,7 @@
         }
       },
       "supporting_sources": [
-        "No entry in \"France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892\" for Romenay, 1773-1792 — from the Badoux marriage through the end of plausible childbearing — names Marie Badoux as the mother of Claudine Thénot or of any other daughter."
+        "No entry in \"France, Saône-et-Loire, registres paroissiaux et d'état civil, 1530-1892\" for Romenay, 1773-1780 — from the Badoux marriage to Marie Badoux's death on 21 March 1780, which closes the window — names Marie Badoux as the mother of Claudine Thénot or of any other daughter."
       ],
       "required": true
     }

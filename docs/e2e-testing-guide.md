@@ -202,9 +202,11 @@ here (nothing was stripped, and the skill already validated).
 > `eval/tests/e2e/creszentia-haas-birth/` (false hint, real answer found),
 > `eval/tests/e2e/antonio-lucas-spouse/` (false match, `avoid` + `required`
 > pair) and `eval/tests/e2e/chresten-nielsen-daughter/` (re-adjudicated
-> after a graded run). Re-derive the resolved set by diffing
-> `grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json` against
-> `grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/`.
+> after a graded run). To re-derive the resolved set, normalise both greps to
+> directories first — one prints `<dir>/fixture.json` and the other
+> `<dir>/README.md`, so comparing them as-is reports every fixture as differing:
+>
+>     comm -23 <(grep -rl '"genre": "record-hint"' eval/tests/e2e/*/fixture.json | xargs -n1 dirname | sort) <(grep -rl "DRAFT PENDING ADJUDICATION" eval/tests/e2e/ | xargs -n1 dirname | sort)
 
 ## Step 1b — Pick a person and author a new fixture 🤖 Claude Code
 

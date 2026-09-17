@@ -54,6 +54,18 @@ Each tree source carries a second, different ark in its `url` field (`W5XG-BY3Z`
 `W5XJ-FW6Z`); the arks above are the ones inside `citation`, and are the ones
 actually opened.
 
+**A stronger record surfaced later, from the graded run — not from this
+adjudication.** `ark:/61903/1:1:W5XV-6XPZ` is Marie Badoux's burial, 22 March 1780
+at Romenay, recording her death the previous day, **21 March 1780** — nineteen
+months before the hinted baptism. That settles the question outright and does not
+depend on reading a surname: a woman dead in March 1780 cannot be the mother of a
+child baptised in October 1781. The adjudication above reached the right answer by
+the weaker surname route because this record was not found by hand; the second
+opinion was given on that weaker argument. The record is now carried in `f1`'s
+`supporting_sources` as the decisive one, and `f2` accepts either route. It is
+listed separately from the table above because nobody opened it during
+adjudication — the agent found it.
+
 **Two corrections to the draft's reading, both of which change the argument.**
 The draft reasoned from "two marriage dates" and guessed the 1781 mother was
 Philippe's second wife. Neither premise survives:
@@ -74,21 +86,53 @@ record simply names a different mother. The competing "mis-indexed Badoux"
 reading is not tenable once Joly is a separate person on the tree.
 
 **What was searched and came up empty.** "France, Saône-et-Loire, registres
-paroissiaux et d'état civil, 1530-1892", Romenay, **1773–1792** — from the Badoux
-marriage through the end of plausible childbearing — holds no entry naming Marie
-Badoux as the mother of Claudine Thénot or of any other daughter. That absence is
-written into `f2`'s `supporting_sources` as plain prose with no ark attached, per
-`docs/specs/e2e-test-spec.md` §3.6.1.
+paroissiaux et d'état civil, 1530-1892", Romenay, **1773–1780** — from the Badoux
+marriage to Marie Badoux's death on 21 March 1780, which closes the window — holds
+no entry naming Marie Badoux as the mother of Claudine Thénot or of any other
+daughter. That absence is written into `f2`'s `supporting_sources` as plain prose
+with no ark attached, per `docs/specs/e2e-test-spec.md` §3.6.1, so its wording is
+the entire warrant: it must not claim a wider search than was actually made. The
+window was originally written as 1773–1792, "through the end of plausible
+childbearing", before the death date below was known; childbearing in fact ended
+at her death.
 
 **What this fixture measures: restraint, not recall.** The snapshot the agent
 reads holds only four persons — Marie Badoux, her parents Pierre Badoux and Marie
 Fromin, and Philippe Thénot. Neither Marie Joly nor Marie Claudine Bourgeois
 appears in it (the string "Joly" is absent from `starting-tree.gedcomx.json`
 entirely), and its two sources are both marriage entries from the same collection
-as the hint, so nothing independent exists on the tree side. The agent has to open
-the 1781 record, notice the mother's name matches neither wife, and decline to
-attach the child. Grade a run on whether it resisted the hint and said so, not on
-how much it found.
+as the hint, so nothing independent exists on the tree side. Grade a run on
+whether it resisted the hint and said so, not on how much it found.
+
+Be honest about what this does and does not test. The `researcher_question` —
+fixed by the card and deliberately unchanged — already states the baptism was "to
+Philippe Thénot and Marie Joly", so the agent is handed the mother's name before
+it starts. It does **not** have to open the 1781 record to notice the mismatch.
+The graded run confirms the leak is load-bearing: it never located
+`W5XL-MP3Z` at all, said so, and treated "Marie Joly" as stipulated by the
+question rather than verified from a record it read. So this fixture measures
+whether the agent declines to attach a child it has been told belongs to someone
+else — not restraint against an unqualified hint. Adjacent to issue #2478.
+
+**Encoding: `f1` is deliberately `required: false`.** `apply_avoid_guard`
+(`eval/harness/e2e/judge.py`) re-checks every `polarity: "avoid"` finding by
+matching given+surname tokens against the agent's final tree, with **no view of
+relationships**, exempting only the fixture's own subject (`LT9H-SK3`). `f2`
+requires the agent to conclude Claudine belongs to Marie Joly, which requires
+creating a person named Claudine Thénot — which then trips the guard on `f1`. The
+two findings are mechanically opposed, so with `f1` at `required: true` this
+fixture could never report `pass`; its ceiling was `partial`. Replayed against the
+committed run's final tree: `required: true` → `partial`, `required: false` →
+`pass`, with the guard force-failing `f1` in both. This is a fourth instance of
+issue #2640, which was closed `NOT_PLANNED` with the substance unresolved. `f1`
+still grades — it is reported, just not gating.
+
+**The committed run predates that fix.** `run-2026-09-17_19-44-23` was graded
+against the earlier ground truth (`f1` required, the 1773–1792 window, no death
+record), so its stored verdict is `partial` / outcome `fail` even though the judge
+passed both findings and the human annotation labels both `true`. The `.ann.json`
+was re-stamped against the amended `expected-findings.json`. Do not read that
+run's `partial` as a finding about the agent; read the annotation's notes.
 
 **Do not edit the live FamilySearch tree from this fixture.** The duplicated 1773
 Marriage facts and the absent second-wife relationship are part of what this

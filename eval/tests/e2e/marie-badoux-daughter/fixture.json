@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 11, hint-samples.csv row 377, flag adds_daughter, confidence 3). Resolved 2026-09-17: false match, no substitute found. The hinted 1781 Romenay baptism (ark:/61903/1:1:W5XL-MP3Z) names the child's mother as Marie Joly — neither the subject Marie Badoux (married Philippe Thénot 22 Feb 1773) nor Marie Claudine Bourgeois (married him 27 Jun 1780). No record was found giving Marie Badoux a daughter. Encoded as an avoid guard against attaching Claudine Thénot to her, paired with a required negative-conclusion finding. Second opinion: Richard Chesworth."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 11, hint-samples.csv row 377, flag adds_daughter, confidence 3). Resolved 2026-09-17: false match, no substitute found. Decisive evidence is Marie Badoux's burial 22 Mar 1780 recording death 21 Mar 1780 (ark:/61903/1:1:W5XV-6XPZ), nineteen months before the hinted 12 Oct 1781 baptism (ark:/61903/1:1:W5XL-MP3Z), which independently names the mother as Marie Joly. Encoded as an avoid guard plus a required negative-conclusion finding; f1 is required:false because apply_avoid_guard force-fails it on any run that satisfies f2 (issue #2640) -- see the README's Encoding note. Second opinion: Richard Chesworth."
 }
