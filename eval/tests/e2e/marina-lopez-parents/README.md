@@ -36,8 +36,11 @@ at confidence 3. This fixture came from a hint batch
 (`filtered-list-samples-2.csv` row 8, `hint-samples.csv` row 283, flag
 `adds_father,adds_mother,adds_birth,adds_marriage`, confidence 3) in which
 roughly half the hint records are false matches. The draft transcribed the hint
-index verbatim. Adjudicated by Emruthwill, who also gave the independent second
-opinion on the parents.
+index verbatim. Adjudicated by Emruthwill. Independent second opinion by
+EdmondOware (senior-genealogists), who separately read the register image and
+the indexes of both death acts and confirmed each reading; the load-bearing
+corroboration `ark:/61903/1:1:6KHD-YBR7` was surfaced by a live `/research`
+debug run rather than by either reader, and that run is not in the corpus.
 
 **The year is 1937, not 1927, and that is the key to the whole fixture.** The
 register page (`ark:/61903/3:1:3Q9M-CS18-834Z-4`) reads *"a los sete dias del
@@ -63,7 +66,12 @@ Chalas* requires a Chalas mother. On the age: a man born 8 Dec 1902 is **34** on
 7 October 1937, and the act states **33** — one year of slop, which is ordinary
 for a stated age in these registers. Under the indexed 1927 the same 33 misses
 by **nine**: he would have been 24. The age does not confirm 1937 so much as it
-rules out 1927.
+rules out 1927. Under the 1937 reading both of the couple's known children —
+`P874-8F5` b. 31 Jan 1934 and `P874-PJ5` b. 1935 — precede the marriage by two
+to three years. That is consistent rather than contradictory: civil marriage
+well after cohabitation is ordinary in these registers, and the groom is himself
+recorded *hijo natural*. Under the indexed 1927 the children would instead have
+followed the marriage, which is why the draft read their dates as support.
 
 **Name-variant caveat, deliberately left in.** The bride's given name on the
 register is written ambiguously and reads as *Manna* about as readily as
