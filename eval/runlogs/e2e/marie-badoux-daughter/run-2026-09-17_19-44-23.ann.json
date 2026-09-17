@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Correctly declined. The tree carries Claudine Thenot as person I8 (Christening 12 October 1781, Romenay) but attaches NO ParentChild edge from her to Marie Badoux (LT9H-SK3) -- in fact I8 has no relationship of any kind, and LT9H-SK3 appears as a parent in no relationship. No 1781 fact was added under Marie Badoux. Borderline point for judge calibration: the finding's pass criterion also says 'creates no stub child from this record', and I8 IS an unparented stub created for Claudine. Graded true because the substantive guard -- not attaching her to Marie Badoux -- holds, and the proof narrative names her explicitly as a different woman's child rather than leaving her dangling unexplained.",
+    "f2": "Negative conclusion documented in full (ps_001, tier 'proved'), with the collection and 1737-1802 range named and two dedicated nil searches logged (log_008, log_009). Route divergence worth recording: the agent never located or cited the hint record ark:/61903/1:1:W5XL-MP3Z -- both nil searches failed to surface it, and the narrative says so plainly, treating the premise's 'Marie Joly' as stipulated by the question rather than verified from a record it read. It reached the right answer by an independent route instead: Marie Badoux's burial record (ark:/61903/1:1:W5XV-6XPZ, d. 21 Mar 1780) plus the same-day baptism of her last child (ark:/61903/1:1:W5XP-QBN2) make a 12 Oct 1781 baptism biologically impossible for her. Corroborated by the 1783 and 1784 baptisms (W5XL-B7T2, W5XL-J23Z) naming Marie Joly as mother. Graded true: the finding asks for a documented negative conclusion with its reason, and that is present and sound, independent of which record carried it."
+  },
+  "annotator": "Paaboat",
+  "findings_hash": "1b6791bf77d5891ae932ea77f28e07df8735bfd542d8496f632e80000bfc4097"
+}
