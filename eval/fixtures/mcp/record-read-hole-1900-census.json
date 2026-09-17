@@ -8,6 +8,7 @@
     "persons": [
       {
         "id": "P1",
+        "principal": true,
         "gender": "Male",
         "names": [
           {
@@ -100,7 +101,14 @@
       {
         "id": "S1",
         "title": "United States Census, 1900",
-        "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-001"
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:HOLE-001",
+        "coverage": {
+          "standard_place": "Polk, Minnesota, United States",
+          "place_rep_id": "325463",
+          "date_range": "1900",
+          "record_type": "Census"
+        }
       }
     ]
   }
