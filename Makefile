@@ -907,10 +907,11 @@ e2e-compaction: ## record_search subjectId supply by compaction segment, over co
 .PHONY: e2e-ranked-reads
 e2e-ranked-reads: ## Were the main thread's record reads inside the ranker's visible top 3, over committed e2e runs (issue #1156): make e2e-ranked-reads | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: joins each main-thread record_read against the
-	# ranked block of the search that supplied it. Only the VISIBLE top 3 is
-	# measurable -- judge.py truncates ranked.matches past three entries and
-	# the full list is never committed, so a read at rank 7 reads the same as
-	# an unranked one. Subagent reads are reported separately: they never saw
+	# ranked block of the search that supplied it. On runs captured before
+	# 2026-09-17 only the VISIBLE top 3 is measurable -- judge.py truncates
+	# ranked.matches past three entries, so a read at rank 7 reads the same as
+	# an unranked one; newer captures carry an id-only _rank_tail and the two
+	# are reported apart. Subagent reads are reported separately: they never saw
 	# the ranked block. Prints counts, not a rate (architecture.md 9.4 gap 3).
 	# The bare command's 14-day SINCE default is too narrow for this report's
 	# own question -- roughly half the ranked calls sit outside it. Pass

@@ -657,7 +657,12 @@ def test_a_capture_with_no_tail_keeps_the_merged_upper_bound():
 
 
 def test_the_visible_top_three_still_wins_over_the_tail():
-    """A read in the visible three must not be re-labelled by the tail scan."""
+    """A read in the visible three must not be re-labelled by the tail scan.
+
+    Behaviour test, not a unique guard: what makes this hold is the visible
+    loop returning first, which several tests above already pin. The rank
+    skip that used to sit in the tail loop was deleted because deleting it
+    changed no outcome and this test stayed green either way."""
     doc = _doc(
         [
             _search(

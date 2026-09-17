@@ -570,11 +570,17 @@ the other half of that question: it joins each main-thread `record_read` back
 to the search that supplied it and reports how many landed inside the ranker's
 top 3. `SINCE=2026-08-04` is the invocation that answers it — the capture fix
 landed that day, and no run before it carries a `ranked` block at all. Two
-limits bind every figure it prints. **Only the visible top 3 is measurable**:
+limits bind its figures. **The visible top 3 is what older runs can measure**:
 `_summarize_response` truncates `ranked.matches` past three entries while
-`_full_length` runs to 10, so a read at rank 7 is indistinguishable from a read
-of an unranked record, and "outside the top 3" is an upper bound on ranker
-disagreement rather than a count of ignored rankings. **Subagent reads are not
+`_full_length` runs to 10, so on a run captured before 2026-09-17 a read at
+rank 7 is indistinguishable from a read of an unranked record, and "outside
+the top 3" is an upper bound on ranker disagreement rather than a count of
+ignored rankings. `orchestrator._attach_rank_tail` closes that going forward
+by keeping ranks 4-10 as id-only entries — three fields, ~665 chars, inside
+the existing run-log cap rather than raising it. It cannot repair runs already
+committed, so the report keeps the merged bound for any capture with no
+`_rank_tail` and reports `ranked-below-top3` / `not-ranked-at-all` only where
+the artifact can actually support the split. **Subagent reads are not
 the main thread's**: `record_search` is only ever called by the main thread,
 but a third of `record_read` calls come from `record-extractor` and
 `person-evidence`, which run in fresh context and read the `recordId` they were

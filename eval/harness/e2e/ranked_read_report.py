@@ -478,9 +478,11 @@ def _read_outcome(read_id: tuple[str | None, str], info: SearchInfo) -> str:
     # being guessed at. That is why this keys on `has_rank_tail` and not on
     # whether some match happens to sit past rank 3.
     if info.has_rank_tail:
+        # No `rank <= TOP_N` skip here. The visible loop above already returned
+        # for any match in the top three, so re-skipping them changes no
+        # outcome — it was dead logic that read like a guard, and a test
+        # asserting it passed with the skip deleted.
         for match in info.matches:
-            if match.rank <= TOP_N:
-                continue
             target = match.record_ark if kind == "1:2" else match.record_id
             if target is not None and target[1] == tail:
                 return "ranked-below-top3"
