@@ -403,13 +403,21 @@ def _read_outcome(read_id: tuple[str | None, str], info: SearchInfo) -> str:
     return "not_in_top3"
 
 
-def scan_run(doc: dict, run: str) -> tuple[list[ReadRow], Counter, str | None]:
+def scan_run(
+    doc: dict,
+    run: str,
+    precomputed: tuple[list | None, str | None] | None = None,
+) -> tuple[list[ReadRow], Counter, str | None]:
     """`(rows, delegated, exclusion_reason)` for one run.
 
     `delegated` counts subagent `record_read` calls by `agent_type` — reported
     separately, never scored against the main thread's choice.
     """
-    aligned, reason = aligned_calls(doc)
+    # `precomputed` lets `scan` hand over the alignment it already did.
+    # Absent — every direct caller, including the tests — it aligns here,
+    # so the two paths cannot diverge in behaviour, only in how often the
+    # work is done.
+    aligned, reason = precomputed if precomputed is not None else aligned_calls(doc)
     if reason is not None:
         return [], Counter(), reason
 
@@ -508,7 +516,46 @@ def scan_run(doc: dict, run: str) -> tuple[list[ReadRow], Counter, str | None]:
     return rows, delegated, None
 
 
-def scan(paths: list[Path]) -> tuple[list[ReadRow], Counter, Counter, list[str]]:
+class LoadedRun(NamedTuple):
+    """One run, read and cursor-aligned ONCE.
+
+    `scan` and `preamble` both walk every run in the window, and both used to
+    `read_text` + `json.loads` + `aligned_calls` each file independently. That
+    is twice the work, but the reason to share it is correctness rather than
+    speed: two independent walks are two places for the population to drift
+    apart, and they already did — the preamble once counted tool calls from
+    runs the body had dropped, printing 1450 reads against 526 scored under a
+    header calling any disagreement a bug in the join. Both now consume the
+    same list, so a run either contributes to both or to neither.
+    """
+
+    run: str
+    path: Path
+    doc: dict | None  #: None when the file does not parse to an object.
+    aligned: list | None  #: None when `aligned_calls` rejected the timeline.
+    reason: str | None  #: Why it was rejected, for the exclusion counters.
+
+
+def load_runs(paths: list[Path]) -> list[LoadedRun]:
+    """Read, parse and align each run exactly once."""
+    out: list[LoadedRun] = []
+    for path in paths:
+        run = f"{path.parent.name}/{path.stem}"
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, ValueError):
+            doc = None
+        if not isinstance(doc, dict):
+            out.append(LoadedRun(run, path, None, None, None))
+            continue
+        aligned, reason = aligned_calls(doc)
+        out.append(LoadedRun(run, path, doc, aligned, reason))
+    return out
+
+
+def scan(
+    paths: list[Path], loaded: list[LoadedRun] | None = None
+) -> tuple[list[ReadRow], Counter, Counter, list[str]]:
     """Every main-thread `record_read` across the given runs.
 
     Returns `(rows, delegated, excluded, unreadable_files)`. Excluded runs are
@@ -520,17 +567,14 @@ def scan(paths: list[Path]) -> tuple[list[ReadRow], Counter, Counter, list[str]]
     delegated: Counter = Counter()
     excluded: Counter = Counter()
     unreadable_files: list[str] = []
-    for path in paths:
-        run = f"{path.parent.name}/{path.stem}"
-        try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, ValueError):
-            doc = None
-        if not isinstance(doc, dict):
+    for item in loaded if loaded is not None else load_runs(paths):
+        if item.doc is None:
             excluded["unreadable"] += 1
-            unreadable_files.append(run)
+            unreadable_files.append(item.run)
             continue
-        run_rows, run_delegated, reason = scan_run(doc, run)
+        run_rows, run_delegated, reason = scan_run(
+            item.doc, item.run, precomputed=(item.aligned, item.reason)
+        )
         if reason:
             excluded[reason] += 1
             continue
@@ -560,7 +604,9 @@ class Preamble(NamedTuple):
     last_run: str | None
 
 
-def preamble(paths: list[Path], cap: int) -> Preamble:
+def preamble(
+    paths: list[Path], cap: int, loaded: list[LoadedRun] | None = None
+) -> Preamble:
     """The denominators this report is taken over, printed before any finding.
 
     The issue that commissioned this report pins these figures; a disagreement
@@ -576,19 +622,16 @@ def preamble(paths: list[Path], cap: int) -> Preamble:
     #: still widen the range printed beside those counts, so the line could
     #: claim a corpus the figures were never taken over.
     contributing: list = []
-    for path in paths:
-        try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, ValueError):
-            continue
-        if not isinstance(doc, dict):
+    for item in loaded if loaded is not None else load_runs(paths):
+        path, doc = item.path, item.doc
+        if doc is None:
             continue
         # Same population as `scan`. Counting tool calls from runs the body
         # drops makes the two disagree by the excluded runs' whole traffic —
         # at SINCE=all that was 1450 reads in the preamble against 526 scored,
         # printed under a header calling any disagreement a bug in the join.
         # The dropped runs are still reported, on the exclusion line.
-        if aligned_calls(doc)[1] is not None:
+        if item.reason is not None:
             continue
         contributing.append(path)
         for call in doc.get("tool_calls") or []:
@@ -800,11 +843,13 @@ def main(argv: list[str] | None = None) -> int:
         print(branch_scope_note(), file=sys.stderr)
         return 1
 
-    rows, delegated, excluded, unreadable_files = scan(paths)
+    # One read of the corpus, shared by both walks (see `LoadedRun`).
+    loaded = load_runs(paths)
+    rows, delegated, excluded, unreadable_files = scan(paths, loaded=loaded)
     if args.test:
         print(f"Fixture: {args.test}")
     window = describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths))
-    pre = preamble(paths, args.cap)
+    pre = preamble(paths, args.cap, loaded=loaded)
     print(window)
     print(format_preamble(pre))
     print()
