@@ -8,13 +8,15 @@ description: Writes GPS-conformant proof conclusions — selects the tier
   the user says "write the conclusion", "what's the proof?", "summarize
   the evidence", "write a proof statement", "write a proof argument",
   "conclude this question", when assertions and person_evidence exist for
-  a question or a hypothesis reaches supported status. ALSO for
+  a question, or a hypothesis reaches supported status with no competing
+  hypothesis active. ALSO for
   review of an existing proof — "does my proof meet the GPS", "assess
   ps_NNN against the GPS components", "review my existing proof summary".
   Do NOT use
   when the user wants to resolve a conflict (use conflict-resolution),
-  wants to select the next question (use question-selection), or wants to
-  classify evidence (use record-extraction, which owns classification).
+  wants to select the next question (use question-selection), wants to
+  classify or reevaluate evidence (use record-extraction), or wants a
+  hypothesis status summary (use hypothesis-tracking).
 allowed-tools:
   - project_context
 ---

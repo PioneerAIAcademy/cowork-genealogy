@@ -201,11 +201,17 @@ class E2eResult:
     # `is_error: true` entry is a policy denial, not an upstream failure.
     blocked_tree_reads: list[dict[str, Any]] = field(default_factory=list)
 
-    # Main-thread calls to a `SUBAGENT_ONLY_TOOLS` tool the PreToolUse hook denied —
-    # the router substituting for a failed subagent spawn and doing the subagent's
-    # own work: an `extraction_append` (the record-extractor's write, #942) or, since
-    # #1273 Item 1, an `image_read` (the image reader's read, whose base64 would
-    # overflow the transport). Each entry is {tool, args, blocked_by:"context"}. Kept
+    # Calls the per-context policy denied. TWO arms, and only `tool` tells them
+    # apart — `blocked_by` is "context" for both:
+    #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: an `extraction_append`
+    #     (the record-extractor's write, #942) or, since #1273 Item 1, an
+    #     `image_read` (whose base64 would overflow the transport). Neither has
+    #     been observed in the committed corpus.
+    #   - an owned-section `research_append` (#1273): a caller wrote a section it
+    #     does not own. NOT main-thread-only — `owner_denied`'s `out_of_lane` rule
+    #     fires for a named subagent reaching outside its own sections. Every
+    #     entry in the committed corpus is this arm.
+    # Each entry is {tool, args, blocked_by:"context"}. Kept
     # separate from `blocked_tree_reads` because a different guard (the per-context
     # subagent-only policy, not the tree block) denied it. Same reading rule as the
     # list above: the attempt is in `tool_calls`; this list is the record it did not run.
@@ -234,6 +240,12 @@ class E2eResult:
     # `tool_calls` alone, is diagnosable directly from the committed runlog.
     # See subagent_capture.py.
     subagents: list[dict[str, Any]] = field(default_factory=list)
+    # Why `subagents` is empty, so [] stops meaning three things (#2468):
+    # captured | no_cache_dir | matched_no_transcripts | error.
+    # Defaults to "unknown", not "captured": the orchestrator always sets it, and
+    # a record that says "captured" beside an empty list would restate the exact
+    # ambiguity this field exists to remove.
+    subagent_capture_status: str = "unknown"
 
     # docs/specs/guardrail-enforcement-spec.md §8 — the HARD guardrail
     # detector's findings: a guardrail skill's effect present in the final

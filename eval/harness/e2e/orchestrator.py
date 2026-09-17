@@ -88,7 +88,7 @@ from e2e.stop_checker import (
     read_tree_json,
     should_continue_run,
 )
-from e2e.subagent_capture import collect_subagents
+from e2e.subagent_capture import collect_subagents, sdk_cache_dir
 from e2e import judge as judge_module
 
 
@@ -380,8 +380,8 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
 #
 # The measurement behind them: does removing the filesystem cost research
 # quality? The hosted sandbox holds no project folder — the agent reads the
-# project through project_context / research_query / record_read and has no
-# shell — so an e2e run with both flags on is the closest the harness gets to
+# project through project_context / research_query / record_read / sidecar_read
+# and has no shell — so an e2e run with both flags on is the closest the harness gets to
 # that posture. Both default off; every existing run is unaffected.
 #
 # Pure functions, for the reason person_evidence_deny_decision gives: the hook
@@ -449,7 +449,9 @@ def _project_read_route(target: str, root: str) -> str:
     """The MCP tool that replaces a direct read of `target`."""
     if _under(target, root + "/results"):
         return "record_read({recordId, resultsRef})"
-    if _basename(target) == "research.json" or _under(target, root + "/evaluations"):
+    if _under(target, root + "/evaluations") or _under(target, root + "/uploads"):
+        return "sidecar_read({projectPath, ref})"
+    if _basename(target) == "research.json":
         return "research_query"
     return "project_context"
 
@@ -472,8 +474,10 @@ def project_read_denied(
     survive if the default outside the project ever flips to deny.
 
     The reason names the MCP route that replaces the read, chosen by target: a
-    `results/` sidecar -> `record_read({recordId, resultsRef})`; research.json or
-    `evaluations/` -> `research_query`; anything else -> `project_context`.
+    `results/` sidecar -> `record_read({recordId, resultsRef})`; a verdict body
+    under `evaluations/` or a text upload under `uploads/` ->
+    `sidecar_read({projectPath, ref})`; research.json -> `research_query`;
+    anything else -> `project_context`.
     """
     cwd_s = str(cwd)
     target = _project_read_target(tool_name, tool_input, cwd=cwd_s)
@@ -531,7 +535,8 @@ def filesystem_denial(
         reason = (
             f"{tool_name} is unavailable in this run — there is no shell. Use the "
             "MCP tools instead: project_context and research_query to read the "
-            "project, record_read for a saved search result, and the writer tools "
+            "project, record_read for a saved search result, sidecar_read for a "
+            "verdict body or a text upload, and the writer tools "
             "(research_append, research_log_append, tree_edit, tree_correct) to "
             "change it."
         )
@@ -1036,7 +1041,9 @@ def build_workspace(
     # deep enough that the record-extractor subagent can spend its whole output
     # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
     # freeze the run; lower it here to A/B whether that clears (read the runlog's
-    # `subagents[].runaway_thinking`). Valid: low | medium | high | xhigh | max.
+    # `subagents[].runaway_thinking`; an empty list means read
+    # `subagent_capture_status` before concluding no runaway).
+    # Valid: low | medium | high | xhigh | max.
     if effort_level is not None:
         claude_dir = target / ".claude"
         claude_dir.mkdir(parents=True, exist_ok=True)
@@ -1540,10 +1547,12 @@ async def _run_agent(
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
-    # Every denied main-thread `extraction_append` — the router doing the
-    # record-extractor's job because the subagent failed to spawn (#942). The
-    # attempt itself is in `tool_calls` (streamed from the ToolUseBlock before
-    # the PreToolUse deny); this list is the record that it did not run.
+    # Every call the per-context policy denied — BOTH arms, not just the one this
+    # comment used to name: a main-thread `extraction_append`/`image_read` (the
+    # router doing a subagent's job after a failed spawn, #942), and an
+    # owned-section `research_append` (#1273), which fires for a named subagent
+    # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
+    # before the PreToolUse deny); this list is the record that it did not run.
     blocked_context_calls: list[dict[str, Any]] = []
     # Continue-nudge state: when the agent voluntarily yields before
     # project.status == "completed" (the known "narrated next step then
@@ -2722,30 +2731,32 @@ def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
     The SDK runs Claude Code as a subprocess, which writes a session transcript
-    to ``~/.claude/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
+    to ``<config-root>/projects/<cwd-slug>/<session>.jsonl``. That file lives OUTSIDE
     the workspace tempdir, so it survives the TemporaryDirectory cleanup — but it
     is otherwise only discoverable by hand. It is strictly richer than the
     runlog's own structured trace: only the JSONL has
     per-message timestamps, per-turn token/cache usage, thinking blocks, and
     untruncated tool payloads — everything needed to diagnose latency and cost.
 
-    Matched on the unique tempdir leaf (``e2e-<id>-<rand>``), which appears
-    verbatim in the slug, so this does not depend on the exact path-slug
-    transform. Returns the newest matching JSONL, or None if none is found.
+    Resolved through ``subagent_capture.sdk_cache_dir``, which asks the SDK for
+    the key. An earlier version matched on the tempdir leaf and claimed it
+    "appears verbatim in the slug, so this does not depend on the exact path-slug
+    transform" — that was wrong in both halves, and it silently cost this file
+    its sibling ``.session.jsonl`` on roughly one run in five (#2468).
+
+    Returns the newest matching JSONL, or None if none is found. Never raises:
+    a failure here must not cost the run its log.
     """
-    projects = Path.home() / ".claude" / "projects"
-    if not projects.is_dir():
+    try:
+        cache = sdk_cache_dir(workspace)
+        if cache is None:
+            return None
+        candidates = list(cache.glob("*.jsonl"))
+        if not candidates:
+            return None
+        return max(candidates, key=lambda p: p.stat().st_mtime)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         return None
-    leaf = workspace.name
-    candidates = [
-        p
-        for d in projects.iterdir()
-        if d.is_dir() and d.name.endswith(leaf)
-        for p in d.glob("*.jsonl")
-    ]
-    if not candidates:
-        return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
 async def run_e2e_test(
@@ -3013,10 +3024,11 @@ async def run_e2e_test(
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)
         # from the SDK's ephemeral cache while `workspace` is still in scope (the
-        # cache lives outside the tempdir, keyed on workspace.name). Best-effort;
+        # cache lives outside the tempdir; see sdk_cache_dir for how it is
+        # located). Best-effort;
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
-        subagents = collect_subagents(workspace)
+        subagents, subagent_capture_status = collect_subagents(workspace)
 
         result = E2eResult(
             test_id=fixture.id,
@@ -3035,6 +3047,7 @@ async def run_e2e_test(
             guardrail_shadow_violations=guardrail_shadow_violations,
             protected_writes_by_unnamed_delegate=unnamed_delegate_violations,
             subagents=subagents,
+            subagent_capture_status=subagent_capture_status,
             git_sha=run_git_sha,
             skills_hash=run_skills_hash,
         )

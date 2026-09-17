@@ -648,9 +648,14 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
 	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
 	#   DENY_PROJECT_READS 1                             (default off; P2 — deny Read/Grep/Glob of the project folder)
-	#   CONTEXT_1M         1                             (default off; ask for the 1M context window — NOT corpus-comparable, see below)
+	#   CONTEXT_1M         1                             (default off; ask for the 1M context window)
+	#                                                    NOT corpus-comparable: a 1M window changes the compaction count and
+	#                                                    cache-gap structure. Do NOT commit the run under eval/runlogs/e2e/ —
+	#                                                    CI rejects it (check_e2e_fixtures.py). Keep it in a sibling directory.
 	# A/B these to find what clears a runaway-thinking subagent freeze
-	# (check subagents[].runaway_thinking). e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
+	# (check subagents[].runaway_thinking; if it is empty, read
+	# subagent_capture_status before reading that as 'no runaway').
+	# e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
 	# new person instead of only recording it. For gathering recovery evidence on
 	# ONE fixture: it fires in ~80% of runs that link a person, and a deny-mode
@@ -775,7 +780,8 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	#
 	# For each plugin agent that declares tool X and appears in a run, did it
 	# ever actually call X? Unions two per-agent sources already in the runlog —
-	# `subagents[].turns[].blocks` and (since #1027) `tool_calls[].agent_type` —
+	# `subagents[].turns[].blocks` (empty? check `subagent_capture_status`)
+	# and (since #1027) `tool_calls[].agent_type` —
 	# and diffs the union against each agent's `tools:` frontmatter, bare-named.
 	# `gps-mentor`'s never-called tools are the candidates for #1084's live
 	# binding probe. Windowed to 14 days like every reader; SINCE=all for the

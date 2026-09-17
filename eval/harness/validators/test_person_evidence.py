@@ -24,6 +24,7 @@ import pytest
 from validators_lib import (
     assert_foreign_keys_valid,
     assert_no_section_deletions,
+    extract_year,
 )
 
 
@@ -1024,3 +1025,223 @@ def test_check_warnings_runs_after_a_write(
         f"invocation (what the monolithic skill did). "
         f"skills_invoked={list(skills_invoked or [])}"
     )
+
+
+# --- Issue #2194: pe_005 informant-conflation and chronological-cap checks --
+#
+# Both are tier-2 (report_) validators: they raise AssertionError to produce
+# an observation the judge reads as context, never a gate. A gating validator
+# that fires on ut_024 would exclude the Confidence calibration scores from the
+# aggregated grading — since #2444 (fixes #2057) the judge still runs, but a
+# gating failure drops its scores from aggregated_dimensions, leaving the rubric
+# dimension blank. The report_ prefix is detected by validator_runner.py at line
+# 200 (`is_report = attr_name.startswith("report_")`).
+
+
+def report_informant_fields_not_in_pe_confidence_reason(before_state, after_state):
+    """Tier-2: a new pe_ entry's rationale must not cite `information_quality`
+    or `informant_proximity` as the basis for confidence.
+
+    `confidence` on a `person_evidence` entry measures identity certainty —
+    how certain we are that this record's role IS the tree person. Informant
+    reliability (`information_quality`, `informant_proximity`) belongs on the
+    assertion that classified the source, not on the identity link. Conflating
+    them this way is the pe_005 defect. This catches only the literal field
+    names in a NEW link's rationale — 1 hit in 261 pe_ entries across five
+    runs. It does NOT cover ut_person_evidence_001, which reviews pe_005 in
+    review mode and writes no new entry; that case is graded by the rubric's
+    Confidence calibration dimension alone.
+
+    Tier-2 (report_) because prose-level checks have a non-zero false-positive
+    rate and a gating failure here would short-circuit the judge and zero the
+    Confidence calibration scores the rubric edit exists to produce.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    _INFORMANT_TERMS = ("information_quality", "informant_proximity")
+    offenders = []
+    for pe in _new_person_evidence(before, after):
+        rationale = str(pe.get("rationale") or "").lower()
+        hits = [t for t in _INFORMANT_TERMS if t in rationale]
+        if hits:
+            offenders.append(
+                f"{pe.get('id')} ({pe.get('assertion_id')} → {pe.get('person_id')}): "
+                f"rationale cites {hits}"
+            )
+
+    if offenders:
+        raise AssertionError(
+            "person_evidence rationale(s) cite informant-quality fields "
+            f"({', '.join(_INFORMANT_TERMS)}) as the basis for confidence. "
+            "These fields classify the source's informant reliability, not "
+            "identity certainty. `confidence` on a pe_ link measures how "
+            "certain we are that this record role IS the tree person; cite "
+            "corroboration, name match, age, location, or qualitative conflict "
+            "instead:\n" + "\n".join(offenders)
+        )
+
+
+def _parse_year(date_str: str) -> int | None:
+    """Parse the first 4-digit year from a date string.
+
+    Delegates to validators_lib.extract_year (the shared helper), returning
+    an int rather than a string so callers can do gap arithmetic.
+    """
+    s = extract_year(date_str)
+    return int(s) if s is not None else None
+
+
+def _record_persona_facts_from_sp(sp_args: dict, persona_id: str) -> list[dict]:
+    """Extract the fact list for `persona_id` from a same_person call's args.
+
+    Checks whichever of gedcomx1/gedcomx2 the call places `persona_id` in as
+    its primary person and returns that person's `facts` array. Returns [] when
+    the persona is absent from both sides.
+    """
+    for side, pid_key in (("gedcomx1", "primaryId1"), ("gedcomx2", "primaryId2")):
+        if sp_args.get(pid_key) == persona_id:
+            gedcomx = sp_args.get(side) or {}
+            for person in (gedcomx.get("persons") or []):
+                if person.get("id") == persona_id:
+                    return list(person.get("facts") or [])
+    return []
+
+
+# Fact types in which a date marks a birth-class event for the record persona.
+# Christening (Irish Catholic baptism) follows birth within days, so it is
+# treated as a birth proxy for chronological contradiction detection.
+_BIRTH_CLASS_TYPES = frozenset({"birth", "christening", "baptism", "naturalbirth"})
+
+
+def _fact_type(fact: dict) -> str:
+    """Bare name or full GedcomX URI — both appear in same_person args."""
+    return str(fact.get("type") or "").strip().rsplit("/", 1)[-1].lower()
+
+
+def report_chronological_contradiction_not_speculative(
+    before_state, after_state, tool_calls
+):
+    """Tier-2: a non-speculative pe_ link is flagged when the same_person call's
+    record persona carries a birth/christening year that contradicts the tree
+    person's birth year by more than 5 years.
+
+    The date is read from the `same_person` tool-call args (the record persona's
+    facts are embedded in `gedcomx1`/`gedcomx2`). The tree person's birth year
+    comes from the before-state tree. Tool-call RESPONSES are not stored in unit
+    run logs (only `response_fixture` names are), so the validator reads args only.
+
+    Threshold: 5 years. Irish Catholic baptisms follow birth within days, so a
+    christening 13 years after the tree person's birth (~1845 vs 1858) cannot
+    describe the same birth event and is a chronological contradiction. The
+    5-year threshold admits ordinary date-uncertainty noise while catching that
+    size of gap unambiguously.
+
+    Scope: fires for `confident` and `probable` (the non-speculative tiers). A
+    `speculative` link already acknowledges uncertainty and is not flagged.
+
+    Tier-2 (report_) — a gating validator that fires on ut_024 suppresses the
+    judge and zeros all Confidence calibration dimension scores (issue #2057).
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    before_tree = (
+        before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    )
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+
+    # Build (record_persona_id, tree_person_id) → same_person args index.
+    sp_by_pair: dict[tuple, dict] = {}
+    for tc in (tool_calls or []):
+        if "same_person" not in (tc.get("tool") or ""):
+            continue
+        args = tc.get("args") or {}
+        p1, p2 = args.get("primaryId1"), args.get("primaryId2")
+        if p1 and p2:
+            sp_by_pair[(p1, p2)] = args
+            sp_by_pair[(p2, p1)] = args  # accept transposed calls too
+
+    # Tree person birth year from before-state (the stable reference).
+    tree_birth_year: dict[str, int] = {}
+    for person in ((before_tree or {}).get("persons") or []):
+        pid = person.get("id")
+        if not pid:
+            continue
+        for fact in (person.get("facts") or []):
+            ft = _fact_type(fact)
+            if ft == "birth":
+                date_val = fact.get("date") or ""
+                if isinstance(date_val, dict):
+                    date_val = date_val.get("original") or date_val.get("formal") or ""
+                yr = _parse_year(date_val)
+                if yr is not None:
+                    tree_birth_year[pid] = yr
+                    break
+
+    THRESHOLD = 5
+    assertions = _assertions_by_id(after)
+    offenders: list[str] = []
+
+    for pe in _new_person_evidence(before, after):
+        if pe.get("confidence") == "speculative":
+            continue
+        assertion = assertions.get(pe.get("assertion_id") or "") or {}
+        person_id = pe.get("person_id")
+        if not person_id:
+            continue
+
+        record_persona_id = assertion.get("record_persona_id")
+        sp_args = (
+            sp_by_pair.get((record_persona_id, person_id))
+            if record_persona_id
+            else None
+        )
+        if sp_args is None:
+            for (side_a, side_b), args in sp_by_pair.items():
+                if side_b == person_id:
+                    record_persona_id, sp_args = side_a, args
+                    break
+        if sp_args is None:
+            continue  # no same_person call found for this pairing — cannot verify
+
+        record_facts = _record_persona_facts_from_sp(sp_args, record_persona_id)
+        record_year: int | None = None
+        for fact in record_facts:
+            ft = _fact_type(fact)
+            if ft in _BIRTH_CLASS_TYPES:
+                date_val = fact.get("date") or ""
+                if isinstance(date_val, dict):
+                    date_val = date_val.get("original") or date_val.get("formal") or ""
+                yr = _parse_year(date_val)
+                if yr is not None:
+                    record_year = yr
+                    break
+        if record_year is None:
+            continue
+
+        tree_year = tree_birth_year.get(person_id)
+        if tree_year is None:
+            continue
+
+        gap = abs(record_year - tree_year)
+        if gap > THRESHOLD:
+            offenders.append(
+                f"{pe.get('id')} ({pe.get('assertion_id')}/{record_persona_id}"
+                f" → {person_id}): "
+                f"record {record_year}, tree birth {tree_year}, "
+                f"gap {gap} yr, confidence {pe.get('confidence')!r}"
+            )
+
+    if offenders:
+        raise AssertionError(
+            f"person_evidence link(s) are non-speculative despite a "
+            f"chronological contradiction (gap > {THRESHOLD} yr between the "
+            "record persona's birth/christening year and the tree person's "
+            "birth year) — a gap this large is a presumptive contradiction; "
+            "unless the record itself explains the delay (e.g. conditional or "
+            "adult baptism) the link must be `speculative` at most:\n"
+            + "\n".join(offenders)
+        )
