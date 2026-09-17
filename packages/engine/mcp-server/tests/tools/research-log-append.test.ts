@@ -341,6 +341,52 @@ describe("research_log_append", () => {
     expect((await validateProject(dir)).valid).toBe(true);
   });
 
+  it('treats a literal "null" on every nullable arg the way JSON null is treated', async () => {
+    // The same models that send planItemId: "null" send it on its siblings, and
+    // there the cost is higher: each of these carries a validator, so before the
+    // shared mapping a single stringly-typed argument refused the WHOLE append.
+    // resultsAvailable failed the non-negative-integer bound, stagedResultsRef
+    // failed the staging-path check, and externalSite failed coerceObjectArg —
+    // discarding the entry the caller actually wrote. Fixing planItemId alone
+    // was the same class the integer bound itself had to be widened for.
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: 0,
+      resultsAvailable: "null" as any,
+      stagedResultsRef: "null" as any,
+      externalSite: "null" as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    // Identical to JSON null: the field is absent, not present-and-null. Writing
+    // an explicit null would make "null" behave differently from null.
+    expect(research.log[0].results_available).toBeUndefined();
+    expect(research.log[0].results_ref).toBeNull();
+    expect((await validateProject(dir)).valid).toBe(true);
+  });
+
+  it("still rejects a genuinely invalid resultsAvailable", async () => {
+    // The other direction: the "null" mapping must not widen the bound itself.
+    await writeProject(baseResearch());
+    for (const bad of ["abc", -1, 1.5]) {
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Flynn" },
+        outcome: "negative",
+        resultsExamined: 0,
+        resultsAvailable: bad as any,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toMatch(/resultsAvailable must be a non-negative integer/);
+    }
+  });
+
   it("rejects a non-pli_ planItemId (e.g. a question id) with an actionable error", async () => {
     // Models sometimes stuff a question id (q_...) or free text into planItemId.
     // Persisted verbatim it silently fails the JSON-Schema validator downstream
@@ -362,6 +408,147 @@ describe("research_log_append", () => {
     // nothing persisted on rejection
     const research = await readJson("research.json");
     expect(research.log).toHaveLength(0);
+  });
+
+  it("rejects an external_links_search entry logged negative despite returning results", async () => {
+    // This entry grades the curated-links FETCH, not the search: a model
+    // that recognizes none of the returned links fit the target site/record
+    // type has been observed logging outcome "negative" anyway — collapsing
+    // "FamilySearch curates nothing here" and "curates plenty, none
+    // relevant" into the same value, which loses the distinction permanently
+    // in the audit trail. Enforced here rather than left to the model, since
+    // it was a repeat, measured miss in practice.
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "negative",
+      resultsExamined: 2,
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/outcome must be 'positive'/);
+    const research = await readJson("research.json");
+    expect(research.log).toHaveLength(0);
+  });
+
+  it("accepts an external_links_search entry logged positive when it returned results", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "positive",
+      resultsExamined: 2,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts an external_links_search entry logged negative when it genuinely returned nothing", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_links_search",
+      query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+      outcome: "negative",
+      resultsExamined: 0,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it.each([NaN, -3, 1.5])(
+    "rejects resultsExamined=%s instead of silently bypassing the outcome check (review finding)",
+    async (bad) => {
+      // NaN and negative values both make `resultsExamined > 0` false in JS,
+      // so the outcome-consistency check above silently passed a bad
+      // outcome/resultsExamined pair through — this must be caught before
+      // that check ever runs.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "external_links_search",
+        query: { standardPlace: "Pennsylvania, United States", host: "findagrave.com" },
+        outcome: "negative",
+        resultsExamined: bad,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toMatch(/resultsExamined must be a non-negative integer/);
+      const research = await readJson("research.json");
+      expect(research.log).toEqual([]);
+    },
+  );
+
+  it.each([NaN, -3, 1.5])(
+    "rejects resultsAvailable=%s, the same bound its sibling gets (review round 5)",
+    async (bad) => {
+      // The schema declares `results_available` as `integer, minimum: 0`, and
+      // `validator.ts` carried it in field-name allow-lists with no type check
+      // — so NaN (which persists as `null`), a negative or a fraction reached
+      // the document unchallenged. Guarding `results_examined` and not this was
+      // the second instance of one class; CLAUDE.md asks for one shared guard.
+      await writeProject(baseResearch());
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Flynn" },
+        outcome: "positive",
+        resultsExamined: 3,
+        resultsAvailable: bad,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.join(" ")).toMatch(/resultsAvailable must be a non-negative integer/);
+      const research = await readJson("research.json");
+      expect(research.log).toEqual([]);
+    },
+  );
+
+  it("still accepts a null and an omitted resultsAvailable, which the schema allows", async () => {
+    await writeProject(baseResearch());
+    for (const value of [null, undefined]) {
+      const result = await researchLogAppend({
+        projectPath: dir,
+        tool: "record_search",
+        query: { surname: "Flynn" },
+        outcome: "positive",
+        resultsExamined: 3,
+        ...(value === undefined ? {} : { resultsAvailable: value }),
+      });
+      expect(result.ok).toBe(true);
+    }
+  });
+
+  it("coerces a stringified resultsExamined the way resultsAvailable already is, rather than rejecting it", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Flynn" },
+      outcome: "negative",
+      resultsExamined: "5" as any,
+    });
+    expect(result.ok).toBe(true);
+    const research = await readJson("research.json");
+    expect(research.log[0].results_examined).toBe(5);
+  });
+
+  it("rejects an externalSite.urlGenerated that is not an absolute http(s) URL (review finding)", async () => {
+    await writeProject(baseResearch());
+    const result = await researchLogAppend({
+      projectPath: dir,
+      tool: "external_site",
+      query: { name: "Patrick Flynn" },
+      outcome: "partial",
+      resultsExamined: 0,
+      externalSite: { site: "ancestry", urlGenerated: "javascript:alert(1)", captureReceived: false, captureFilename: null },
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(" ")).toMatch(/urlGenerated .* is not an absolute http\(s\) URL/);
+    const research = await readJson("research.json");
+    expect(research.log).toEqual([]);
   });
 
   it("accepts a null planItemId (opportunistic search) and a valid pli_ id", async () => {
