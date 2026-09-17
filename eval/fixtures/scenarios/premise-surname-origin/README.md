@@ -11,10 +11,6 @@ unlocks her parents — is unknown.
 Synthetic (no PII). Invented persons; not drawn from any real profile or the
 alpha feedback that motivated the card.
 
-Used by `ut_question_selection_016`, the regression for issue #1394: a
-premise-verification question must be framed so **every branch of its answer
-names a fact the objective needs**. The premise here (is "Hartwell" maiden or
-married?) must be verified by naming the gating fact — Rosalind's maiden name —
-not by a bare maiden-vs-married property test whose branches name nothing. The
-expected outcome is asserted in the test's `judge_context`, not here (this
-README is handed to the judge; issue #2478).
+Used by `ut_question_selection_016`, the regression for issue #1394. The
+expected outcome is asserted in the test's `judge_context`, not here — this
+README is pasted verbatim into the judge prompt (issue #2478).
