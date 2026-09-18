@@ -5,7 +5,7 @@ Runs inside the agent_runner — a long-lived, clean `asyncio.run` stdio loop (o
 per session). So it holds a PERSISTENT ClaudeSDKClient: connect once, query per
 turn. That gives **cross-turn conversation memory** for free (the SDK keeps the
 session across queries), which the conversational flows need — notably the
-multi-turn init-project onboarding interview and follow-ups ("explain that").
+multi-turn init-project onboarding and follow-ups ("explain that").
 The research work itself is state-driven (the skills re-read research.json), so
 project state never depended on conversation memory; this adds the conversation.
 

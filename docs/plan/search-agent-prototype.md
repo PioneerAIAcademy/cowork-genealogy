@@ -4,7 +4,9 @@
 #2406); D3 built 2026-09-11 (PR #2455); D4–5 built 2026-09-11 (PR #2495); the `sidecar_read`
 half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant with `Read`
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
-issue #2568 by the lead's scope ruling); FamilySearch's
+issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
+(PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
+against seeded rows until the worker exists); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -379,10 +381,10 @@ entry it names.
 
 | To | Ask | Unblocks | Register | Sent | Answered |
 |---|---|---|---|---|---|
-| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | 2026-09-13 (drafted) | — |
-| InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | 2026-09-13 (drafted) | — |
-| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | 2026-09-13 (drafted) | — |
-| Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | 2026-09-13 (drafted) | — |
+| APT (FS AI Platform) | Put our workers in the APT-1512 API-key batch. Confirm the per-account `tap-gateway-invoke` role and which account we land in — the P25 fulltext accounts or a new one through GEM. A yes or no and a date on emitting `guardContent` for tool results, which they called theirs and small. Integ access for one curl with the CLI's real request shape (the `advanced-tool-use` beta and `tool_reference` blocks, the seven always-on betas, the haiku session-title call, `count_tokens`). | Reaching the gateway at all; where the throughput quota request goes; the ARB answer on prompt injection; whether tool search survives the gateway server-side. | R10, R2, R6, R1 | sent, confirmed 2026-09-18 | — |
+| InfoSec | Prompts and completions go to Langfuse at 100% sampling gateway-wide, and ours carry patron genealogical data and transcribed record images. Is that acceptable for patron data, and if not, what must APT add before go-live. | The security review, raised before it is found in review. | R11 | sent, confirmed 2026-09-18 | — |
+| ACE | What they use for image calls — the SCP does not stop OpenRouter egress, policy may. Whether we want a `bedrock-exception-*` role for local dev and smoke tests, which the SCP would otherwise deny in the product account. | Whether `image_transcribe` keeps its provider; whether P3-style direct calls can run in the product account. | R12 | sent, confirmed 2026-09-18 | — |
+| Help team (`fs-eng/help-research-only`) | How they handled DTM concurrency for their SSE emitter, or whether they bypass DTM; whether their frontend reaches it through the public edge. | The only remaining SSE risk, and whether the edge probe is worth commissioning. | R3 | sent, confirmed 2026-09-18 | — |
 | FS platform / DPF | The SSE edge probe with the arm list under R3 — only if the Help team says they bypass DTM. | CloudFront and Imperva behaviour on `text/event-stream`. | R3 | not yet | — |
 
 Not an ask: R13's route-change lead time (days, an image rebuild) is a planning fact, and
@@ -1123,9 +1125,48 @@ without whichever Bedrock refuses.
   reconnect, not the product. `fs-eng/bridge` runs this pattern over JetStream,
   load-tested at 100 subscribers / 50 events/s, and `fs-eng/help-research-only` raised
   its `SseEmitter` from 5 to 10 minutes because real multi-task turns were cut.
+  **Done 2026-09-14 (`apps/server/proto/web/`, compose service `web` on :8085).**
+  `POST /api/sessions/{id}/messages` mints the `turn_id` UUID, writes the `turns` row and
+  a `user_msg` event in one transaction, then `SendMessage`s
+  `{turn_id, session_id, project_id, text, enqueued_at}` (a failed send marks the turn
+  `enqueue_failed` and answers 502). `GET …/events?after=N` is the poll read;
+  `GET …/events/stream` is the SSE — `id: <seq>` on every `session_events` frame,
+  `Last-Event-ID` beats `?after=`, `: ping` at 15 s idle, a 1 s Postgres poll. Open order
+  is replay → document snapshot → `status turn_active`, because `ChatPane` clears busy on
+  any `turn_done`. The row→wire contract the worker writes to is in the module docstring
+  and `web/README.md`: `kind` is the `map_message` kind, `payload` its fields;
+  `session_activity` and `documents` changes go out without an id and are never
+  replayed. No auth (the tier is localhost; identity stays out of the prototype). The
+  `session_events` frames are the only ones carrying an id, so a resume is always a
+  seq. 33 offline tests (`tests/test_proto_web.py`); `003_web.sql` adds the three
+  session columns the reused SPA renders, applied at tier start on an existing volume.
 - **D13** Reuse `apps/web` with the WebSocket swapped for SSE. Plus the **80-line
   headless driver** — POST a message, poll events, assert on turn completion.
   Without it the acceptance test cannot be run until day 17.
+  **Done 2026-09-14.** `SseSessionConnection` behind `VITE_SESSION_TRANSPORT=sse`
+  (`make web-proto`); the WS path is untouched and the SPA is otherwise verbatim — the
+  tier serves the SPA's REST paths. The one behaviour that is not a relay: the tier
+  streams the `user_msg` row it just wrote and `ChatPane` already drew that bubble, so
+  the connection holds live `user_msg` frames while its POST is in flight and drops the
+  one the 202's `seq` names. The driver (`proto/drive.py`, ~440 lines rather than 80 —
+  it carries the seeder that stands in for the worker, an embedded-Postgres mode, and an
+  SSE parser that sees comment lines) posts, streams, cuts the connection after eight
+  frames, reopens with `Last-Event-ID` and a contradicting `?after=0`, drains, and
+  compares A ∪ B against `GET /events` exactly. **Measured 2026-09-14, `make proto-drive`
+  (pgserver + the tier in-process, no Docker): 17/17 — 42 events dense, A ∩ B empty, B
+  resumed at 9, one ping, activity and document frames without ids, turn closed.** The
+  compose path (`web` service, `make proto-up`) was verified in review on a Docker machine
+  2026-09-14: the image builds and comes up healthy, `make proto-smoke` passes 14/14
+  through `proto-up-core`, `003_web.sql` applies to a pre-existing volume, and a turn
+  round-trips POST → queue → shim → worker → `turn_done` → SSE. No CI job runs any proto
+  compose target, so it stays a hand check. The SPA on that stack (`make web-proto`) was
+  driven in the same review: two turns round-tripped with exactly two user bubbles, the
+  spinner cleared on `turn_done`, and a reload halfway through a hand-seeded 25 s turn
+  replayed the transcript without duplicates and came back busy — the replay-then-
+  `turn_active` order doing its job. What no run has yet exercised is a real worker's turn
+  driving the SPA; that is D17, and the run where the driver's strong resume check
+  (`B resumed at A's last seq + 1`) binds again. `--worker` runs the same checks against a real
+  worker for D17.
 - **D14** Kill-resume test **against the mock agent**, not a real fixture. Twenty
   debug iterations on a real run is $147 and 18 hours; the mock is ~90 s and free,
   and needs ~30 lines to fake a delegation. **Redelivery comes from the shim's
@@ -1315,8 +1356,26 @@ open. The E2B sandbox image is still built by no CI job.
 **New dependencies go in with npm, not pnpm** — the engine is negated out of the
 workspace and both artifacts install from its npm lockfile.
 
-**One interface, two backends, and the tools never branch.** Otherwise the desktop
-write path rots silently, because nothing in CI runs it.
+**One interface, two backends, and the tools never branch.** The worry this sentence
+first carried — that the desktop write path would rot silently because nothing in CI
+runs it — is backwards now (lead, 2026-09-18). The file backend is what every vitest
+file that touches the store, both harnesses and `make engine-smoke-stdio` exercise; it
+is the most-covered
+path in the repo. **The Postgres backend is the one nothing covers**: its proof is
+`tests/store/pg-s3-project-store.test.ts` — the 16 shared conformance cases plus 21 of
+its own, 37 when the compose stack is up — run by `make proto-store-test` (D6–8), the
+stdio smoke when it is pointed at the Postgres
+backend, the D16 transport smoke, and the prototype's own D17–18 runs — and the harness
+is explicitly not ported to it, so no skill or agent is ever validated against it. That
+is acceptable for a prototype whose job is to reduce uncertainty, and it is the **first
+thing to fix when the two-backend implementation goes real** — otherwise the Postgres
+path ships with one engineer's D17 run as its only proof. What the real build adds,
+sized then: the engine's tool suites (`tests/tools/*.test.ts`, 1,939 cases; the 25 files
+that write fixtures to disk hold 1,120 of them) run against the Postgres backend by
+writing their fixtures through `getProjectStore()` instead of
+`writeFile` (a test-helper refactor, one file at a time, with `PROTO_STORE=pg` selecting
+the backend), and the unit harness's engine gains the same switch so at least one paid
+run per skill has landed on Postgres before beta. Recorded as R14.
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the
@@ -1346,7 +1405,7 @@ overwrites patron A's token file and A then acts as B.
 
 **Expect the packaging tests to stop you eight times** (seven test files, one of which
 fires twice). `manifest.test.ts` AST-matches the `request.params.name === "…"` chain in
-`src/index.ts` to detect dispatch drift — the D6–8 dispatch extraction that would have
+`src/server.ts` (moved there from `src/index.ts` at D9–10) to detect dispatch drift — the D6–8 dispatch extraction that would have
 red-lined it went with the ledger on 2026-09-10 — and fails on the
 `sidecar_read` addition; `readme-catalog.test.ts` fires twice on it — every registered
 tool must appear in `README.md`, and the stated count must match reality; `README.md`
@@ -1641,6 +1700,13 @@ for image calls. *Owner: us.*
 Docker image and the GitOps end state is not live, so a route tweak is a rebuild and a
 deploy through their pipeline — days, not minutes. Plan any `ai.routes` change with
 that lead time. *Owner: APT.*
+
+**R14 — The Postgres path's only proof is the prototype's own runs.** The coverage
+inversion above: the file backend is the most-exercised code in the repo, the Postgres
+backend has the conformance suite, the smokes and D17–18. Fine for a prototype; before
+beta the engine's tool suites and one paid harness run per skill have to land on
+Postgres, or a skill can be green on every check and broken on the only backend
+production runs. *Owner: us; sized when the two-backend build goes real.*
 
 ### Real but ordinary
 
