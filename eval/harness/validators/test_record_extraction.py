@@ -1293,3 +1293,54 @@ def test_old_style_date_routes_to_convert_dates(skills_invoked, test):
         "in prose is not resolving it. "
         f"skills_invoked={skills_invoked}"
     )
+
+
+# --- V-relay: the router prints only the researcher-facing paragraphs -------
+
+# What the router may NOT add after the agent's `---`: schema ids, tree ids,
+# markdown tables, and backticked skill or tool names. The two paragraphs the
+# agent writes carry none of these by contract.
+_RELAY_LEAK_RE = re.compile(
+    r"\b(?:src|a|log|pli|q|ps)_\d+\b"   # research.json ids
+    r"|\b[SI]\d+\b"                     # tree ids
+    r"|^\|.*\|$"                         # a markdown table row
+    r"|`/?[a-z][a-z_-]+`",                # a backticked skill or tool name
+    re.M,
+)
+
+
+def test_relay_carries_no_caller_facing_lines(text_response, builtin_tool_calls):
+    """After a record-extractor delegation, the reply's tail must be the agent's
+    two paragraphs and nothing the router wrote itself.
+
+    The rule in record-extraction/SKILL.md ("print exactly the text after the
+    final `---`, nothing above it") was read and not followed: on the committed
+    run of 2026-09-18 12:34, 12 of 29 delegated runs printed the paragraphs and
+    then a table of assertion ids, a source id with counts, or a "run
+    /person-evidence" offer. A rule the model reads is not a rule the model
+    follows; this is the check that binds it (issue #2654 owns the reds).
+
+    Keyed on the `---` line because the run log carries the reply as one joined
+    string with no per-turn boundaries: when the router dropped the separator
+    the tail cannot be located, and the check skips rather than guessing.
+    """
+    from harness.skill_runner import spawned_agents
+
+    if "record-extractor" not in spawned_agents(builtin_tool_calls):
+        pytest.skip("no record-extractor delegation in this run")
+    reply = text_response or ""
+    if "\n---\n" not in reply:
+        pytest.skip("the reply carries no `---` separator, so the relayed tail cannot be located")
+    tail = reply.rsplit("\n---\n", 1)[-1]
+    leak = _RELAY_LEAK_RE.search(tail)
+    assert leak is None, (
+        "the router added caller-facing text after the agent's paragraphs: "
+        f"{leak.group(0)!r}. Only the two paragraphs after the final `---` reach "
+        "the researcher; the source id, counts, tables and skill names are for "
+        "the router."
+    )
+    paragraphs = [para for para in tail.strip().split("\n\n") if para.strip()]
+    assert len(paragraphs) <= 2, (
+        f"the router printed {len(paragraphs)} paragraphs after the agent's `---`; "
+        "the contract is two (what the record says; what happens next)"
+    )

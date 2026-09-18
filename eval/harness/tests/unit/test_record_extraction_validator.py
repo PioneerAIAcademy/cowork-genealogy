@@ -18,6 +18,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_record_extraction import (  # noqa: E402
     test_expected_classifications as check_classifications,
     test_refinement_preserves_extraction_fields_and_avoids_duplication as check_refinement,
+    test_relay_carries_no_caller_facing_lines as check_relay,
 )
 
 
@@ -205,3 +206,56 @@ def test_fires_on_duplicate_via_append_instead_of_update():
     }
     with pytest.raises(AssertionError, match="duplicates a refinement target"):
         check_refinement(BEFORE_STATE, after, {"refinement_targets": ["a_002"]})
+
+
+# --- V-relay: the router prints only the researcher-facing paragraphs -------
+
+_SPAWN = [{"tool": "Task", "args": {"subagent_type": "record-extractor", "prompt": "x"}}]
+_CLEAN_TAIL = (
+    "Logged. Delegating now.\n\n---\n\n"
+    "This 1850 census lists Patrick Flynn, 5, born in Pennsylvania, in the household "
+    "of Thomas and Mary Flynn, both born in Ireland.\n\n"
+    "Next, look for the family in the 1860 census."
+)
+
+
+def _relay_fails(reply, spawns=_SPAWN):
+    try:
+        check_relay(reply, spawns)
+    except AssertionError as exc:
+        return str(exc)
+    return None
+
+
+def test_relay_passes_the_two_paragraphs_alone():
+    assert _relay_fails(_CLEAN_TAIL) is None
+
+
+def test_relay_fires_on_a_source_id_and_counts_after_the_paragraphs():
+    msg = _relay_fails(_CLEAN_TAIL + "\n\n**19 assertions** persisted (src_001 / S1).")
+    assert msg is not None and "src_001" in msg
+
+
+def test_relay_fires_on_an_assertion_table():
+    msg = _relay_fails(_CLEAN_TAIL + "\n\n| Persona | Assertions |\n|---|---|\n| George | a_001 - a_011 |")
+    assert msg is not None
+
+
+def test_relay_fires_on_a_backticked_skill_offer():
+    msg = _relay_fails(_CLEAN_TAIL + "\n\nRun `/person-evidence` when you are ready.")
+    assert msg is not None and "person-evidence" in msg
+
+
+def test_relay_fires_on_a_third_paragraph_even_without_ids():
+    msg = _relay_fails(_CLEAN_TAIL + "\n\nA few things worth noting about what was extracted.")
+    assert msg is not None and "3 paragraphs" in msg
+
+
+def test_relay_skips_when_nothing_was_delegated():
+    with pytest.raises(pytest.skip.Exception):
+        check_relay(_CLEAN_TAIL + "\n\nsrc_001", [])
+
+
+def test_relay_skips_when_the_separator_is_absent():
+    with pytest.raises(pytest.skip.Exception):
+        check_relay("Two plain paragraphs with no separator. src_001 above them.", _SPAWN)
