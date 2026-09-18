@@ -149,9 +149,17 @@ def new_section_entries(
 
     The general form of `new_log_entries` below, which is now a thin alias for
     `section="log"`. Generalised rather than copied when `test_record_extraction`
-    needed the same diff over `sources`: that copy would have been the fifth,
-    and it dropped the `isinstance` guard the four earlier ones taught us to
-    keep (#2390 review).
+    needed the same diff over `sources`.
+
+    An earlier draft of this docstring called that copy "the fifth" and credited
+    the `isinstance` guard to "the four earlier ones". Both were wrong, and the
+    reviewer who supplied the error corrected it (#2390 round 2). By the time
+    this PR began, `new_log_entries` was already a single shared helper on main
+    **carrying the guard** — the four byte-identical copies it was lifted from
+    were gone, and what remains is four *importing* files
+    (`test_search_full_text`, `test_search_records`, `test_search_external_sites`,
+    `test_search_images`). So the thing avoided here was a second helper beside
+    the first, not a fifth copy beside four.
 
     Takes the wrapped per-run state dicts ({"research_json": {...}, ...}), not
     the unwrapped research.json dict `assert_log_append_only` and its neighbours
@@ -160,10 +168,13 @@ def new_section_entries(
     before = before_state.get("research_json") or {}
     after = after_state.get("research_json") or {}
     # `or []`, not `.get(section, [])`: an explicit `"log": null` satisfies the
-    # default and then raises TypeError on iteration. Pre-existing in the four
-    # copies this helper replaced, and it fires on 0 of 2131 committed runs, so
-    # it is hardening rather than a fix — but the section is now caller-supplied,
-    # which widens the set of shapes that reach here.
+    # default and then raises TypeError on iteration. This is NEW here — the
+    # shared helper on main used `after.get("log", [])` — so it is not, as an
+    # earlier draft said, pre-existing in copies this replaced (#2390 round 2).
+    # It fires on 0 of the 2140 committed unit runs across 27 skills, so it is
+    # hardening rather than a fix; the section being caller-supplied is what
+    # widens the set of shapes that reach here. (2140 drifts as runs land — the
+    # 0 is the claim.)
     before_ids = {
         e.get("id") for e in (before.get(section) or []) if isinstance(e, dict)
     }
