@@ -33,6 +33,7 @@ import slots  # noqa: E402
 SKILL = "packages/engine/plugin/skills/timeline"
 SLOT = "skill:timeline"
 OTHER = "packages/engine/plugin/skills/citation"
+OTHER_SLOT = "skill:citation"
 
 
 def _created(days_ago):
@@ -80,6 +81,36 @@ def depth(out, slot):
         if line.strip().startswith(f"{slot}   queue "):
             return int(line.strip().rsplit(" ", 1)[1])
     return None
+
+
+def blocks(out):
+    """-> {slot: [indented lines under it]}, per rendered block.
+
+    Substring assertions over whole stdout cannot tell "occupant #N is on THIS
+    slot" from "occupant #N is on some slot", which is the single claim this
+    script makes. Everything about attribution has to be asserted per block.
+    A slot rendered twice raises rather than silently merging.
+    """
+    out_blocks, current = {}, None
+    for line in out.splitlines():
+        if line.startswith("  ") and not line.startswith("   ") and "   queue " in line:
+            current = line.strip().rsplit("   queue ", 1)[0]
+            if current in out_blocks:
+                raise AssertionError(f"slot {current} rendered more than once")
+            out_blocks[current] = []
+        elif current is not None and line.startswith("      "):
+            out_blocks[current].append(line.strip())
+        elif not line.strip():
+            continue
+        else:
+            current = None
+    return out_blocks
+
+
+def occupants_of(out, slot):
+    """The issue numbers rendered as occupants inside `slot`'s own block."""
+    return {ln.split("occupant: #")[1].split(" ")[0]
+            for ln in blocks(out).get(slot, []) if ln.startswith("occupant: #")}
 
 
 # Two ordinary pool cards, so SLOT reaches `rest` and block() actually runs.
@@ -189,8 +220,75 @@ def test_ordinary_card_is_untouched_by_a_cross_cutting_neighbour(tmp_path):
 
     assert depth(with_cc, SLOT) == depth(without, SLOT) == 3
     assert "#13 " in with_cc
+    # an ordinary mergeable card must never be labelled not-a-merge-target
+    assert "occupant: #13" not in with_cc
     assert "pool                                3" in with_cc
     assert "pool                                3" in without
+
+
+def test_each_occupant_is_attributed_to_its_own_slot(tmp_path):
+    """The claim the whole script makes. Two slots, different occupants, and one of
+    them carrying two — which is the live shape (10 cards over 21 slots), not an edge
+    case. Asserted per block: rendering every occupant under every slot passes any
+    whole-stdout substring check."""
+    out = run([issue(11), issue(12),                      # queue 2 on SKILL
+               issue(21, touches=OTHER), issue(22, touches=OTHER),   # queue 2 on OTHER
+               issue(2475, labels=["cross-cutting"]),                # SKILL only
+               issue(2476, labels=["cross-cutting"]),                # SKILL only
+               issue(2477, touches=OTHER, labels=["cross-cutting"])],  # OTHER only
+              tmp_path)
+
+    assert occupants_of(out, SLOT) == {"2475", "2476"}
+    assert occupants_of(out, OTHER_SLOT) == {"2477"}
+
+
+def test_a_queued_slot_in_the_last_section_keeps_its_depth_and_members(tmp_path):
+    """The section is reached at queue 0 AND queue 1. At queue 0 an empty member list
+    is indistinguishable from the real one, so the depth and the member line are only
+    really pinned here. Carries a PR holder too — the section's comment promises those
+    and no test passed a PR before."""
+    out = run([issue(11),                                  # one mergeable card
+               issue(2475, labels=["cross-cutting"])],     # keeps queue below 2
+              tmp_path,
+              prs=[{"number": 900, "files": [{"path": f"{SKILL}/SKILL.md"}]}])
+
+    block = blocks(out)[SLOT]
+    assert depth(out, SLOT) == 1
+    assert any(ln.startswith("#11 ") for ln in block)
+    assert "occupant: #2475 (cross-cutting, Backlog -- not a merge target)" in block
+    assert "holder: PR #900 (open, touches the snapshot)" in block
+
+
+def test_a_must_clear_slot_with_an_occupant_renders_once(tmp_path):
+    """Queue >= 4 is the block that drives the merge obligation, and it is the one
+    threshold no other test builds. `blocks()` raises if the slot is rendered in both
+    MUST CLEAR and the last section."""
+    out = run([issue(n) for n in (11, 12, 13, 14)]
+              + [issue(2475, labels=["cross-cutting"])], tmp_path)
+
+    assert depth(out, SLOT) == 4
+    assert occupants_of(out, SLOT) == {"2475"}
+    assert "--- occupied by cross-cutting work, not otherwise shown (0 slots) ---" in out
+
+
+def test_an_agent_slot_occupies_like_a_skill_slot(tmp_path):
+    """touches.py resolves two slot shapes; every other fixture here uses `skill:`."""
+    agent = "packages/engine/plugin/agents/record-extractor.md"
+    out = run([issue(2479, touches=agent, labels=["cross-cutting"])], tmp_path)
+
+    assert occupants_of(out, "agent:record-extractor") == {"2479"}
+
+
+def test_no_cross_cutting_work_means_an_empty_last_section(tmp_path):
+    """The negative direction for `cc_held`: an ordinary holder must not drag its slot
+    into a section headed "occupied by cross-cutting work"."""
+    # The holder must sit on an UNQUEUED slot. On a queued one the slot is already
+    # excluded via `rest`, so an over-firing `cc_held` is invisible and this passes
+    # either way.
+    out = run([issue(2524, column="Review", assignees=[{"login": "x"}])], tmp_path)
+
+    assert "--- occupied by cross-cutting work, not otherwise shown (0 slots) ---" in out
+    assert "occupant:" not in out
 
 
 def test_coverage_line_counts_issues_and_slots(tmp_path):

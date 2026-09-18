@@ -54,18 +54,21 @@ In Progress card and a Review card are someone's work: never merge one, in eithe
 direction. An *unassigned* Ready card is both in the pool and its slot's holder,
 which makes it the natural target — it is furthest along.
 
-A `cross-cutting` card is **not** in the pool — the label takes it out, whoever ends
-up doing it — but it still sits in whatever slot its `**Touches:**` line names. A Backlog one prints as
-`occupant: #N`; one already in an active column prints as a holder tagged
-`cross-cutting -- not a merge target`. **Neither is a merge target, and neither is
-part of queue depth.**
-Never propose merging into one or out of one. Depth stays "this many mergeable
-cards", which is what `MUST CLEAR` acts on and what `audit-board`'s tax table copies
-out of these blocks — so do not add occupant lines into that column. Read them the
-other way: a slot with an occupant has its next paid run already spoken for, which is
-worth knowing before promoting a card into it. The last section lists slots that are
-occupied and have no mergeable queue at all; there is nothing to merge there, and it
-is the one place the script reports a slot that looks free and is not.
+A `cross-cutting` card is **not** in the pool — the label takes it out, whoever
+ends up doing it — but it still sits in whatever slot its `**Touches:**` line
+names. A non-icebox Backlog one prints as `occupant: #N`; one already in an
+active column prints as a holder tagged `cross-cutting -- not a merge target`.
+**Neither is a merge target, and neither is part of queue depth.** Never propose
+merging into one or out of one. Depth stays "this many mergeable cards", which is
+what `MUST CLEAR` acts on and what `audit-board`'s tax table copies out of these
+blocks — so do not put an occupant in that column. Read them the other way: a
+slot with an occupant has its next paid run already spoken for, which is worth
+knowing before promoting a card into it.
+
+The last section lists slots whose queue is too shallow to reach the sections
+above — 0 or 1. Read the block, not the heading: a queue of 1 still lists a
+mergeable card. It is the one place the script reports a slot that looks free and
+is not.
 
 **Re-check state at apply time, not just at compute time.** The pool is a snapshot
 and a pass takes hours; a card can be assigned while you are still proposing. On
