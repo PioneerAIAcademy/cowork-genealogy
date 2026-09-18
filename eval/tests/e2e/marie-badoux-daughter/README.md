@@ -114,25 +114,40 @@ question rather than verified from a record it read. So this fixture measures
 whether the agent declines to attach a child it has been told belongs to someone
 else — not restraint against an unqualified hint. Adjacent to issue #2478.
 
-**Encoding: `f1` is deliberately `required: false`.** `apply_avoid_guard`
-(`eval/harness/e2e/judge.py`) re-checks every `polarity: "avoid"` finding by
-matching given+surname tokens against the agent's final tree, with **no view of
-relationships**, exempting only the fixture's own subject (`LT9H-SK3`). `f2`
-requires the agent to conclude Claudine belongs to Marie Joly, which requires
-creating a person named Claudine Thénot — which then trips the guard on `f1`. The
-two findings are mechanically opposed, so with `f1` at `required: true` this
-fixture could never report `pass`; its ceiling was `partial`. Replayed against the
-committed run's final tree: `required: true` → `partial`, `required: false` →
-`pass`, with the guard force-failing `f1` in both. This is a fourth instance of
-issue #2640, which was closed `NOT_PLANNED` with the substance unresolved. `f1`
-still grades — it is reported, just not gating.
+**Encoding: both findings are `required: true`.** `f1` is the whole point of an
+outcome-(c) record-hint fixture — a fixture that cannot fail on the restraint it
+exists to measure measures nothing — so it gates.
 
-**The committed run predates that fix.** `run-2026-09-17_19-44-23` was graded
-against the earlier ground truth (`f1` required, the 1773–1792 window, no death
-record), so its stored verdict is `partial` / outcome `fail` even though the judge
-passed both findings and the human annotation labels both `true`. The `.ann.json`
-was re-stamped against the amended `expected-findings.json`. Do not read that
-run's `partial` as a finding about the agent; read the annotation's notes.
+**Why the committed run nevertheless reads `partial`, and why that is not a
+ceiling on the fixture.** `apply_avoid_guard` (`eval/harness/e2e/judge.py`)
+re-checks every `polarity: "avoid"` finding by matching given+surname tokens
+against the agent's final tree, with **no view of relationships**, exempting only
+the fixture's own subject (`LT9H-SK3`). So it force-fails `f1` on any run in which
+a person named Claudine Thénot exists at all — *including* a run that attached her
+to her actual parents, which `f1`'s own description calls correct behaviour. That
+is what `run-2026-09-17_19-44-23` did (`I8`, attached to Philippe Thénot and Marie
+Joly by `R16`/`R17`, with no edge to Marie Badoux), and it is why the run's stored
+verdict is `partial` / outcome `fail` while the judge passed both findings in its
+own words and the blind human annotation labels both `true`.
+
+That penalty falls only on runs that go **beyond** what the fixture asks. `f2`
+asks for a documented negative conclusion and nothing more — "either refuting
+route earns this finding" — and does not oblige a Claudine Thénot person in the
+tree. This run is its own evidence for that: the judge's `f2` pass rests on
+`ps_001` and on the death/burial facts under `LT9H-SK3`, and cites `I8` nowhere,
+so deleting `I8` leaves `f2` standing. Replayed against this run's own final tree
+through the real `apply_avoid_guard`, with `f1` at `required: true`:
+
+| Tree | `f1` | guard fires | verdict |
+|---|---|---|---|
+| as committed (Claudine present) | `false` | yes | `partial` |
+| Claudine person removed | `true` | no | **`pass`** |
+
+So a plain run that declines the hint and documents the rejection reports `pass`.
+Only the supererogatory re-attachment is capped, and the cap is the guard's
+relationship-blindness — **issue #2640**, closed `NOT_PLANNED` with the substance
+unresolved, of which this fixture is a fourth instance. Do not read this run's
+`partial` as a finding about the agent; read the annotation's notes.
 
 **Do not edit the live FamilySearch tree from this fixture.** The duplicated 1773
 Marriage facts and the absent second-wife relationship are part of what this
