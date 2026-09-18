@@ -13,7 +13,8 @@ Postgres, the six agents via `agents=`); D14 scripted and the D17 prep built 202
 (PR #2668; `make proto-kill`, `proto-seed`, `proto-audit`, `proto-token`, and
 `tool_calls.duration_ms` filled); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
-every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
+every tool but the four auth exclusions, the compose `tools` service); D19 built 2026-09-18 (`make proto-demo`, the D17
+commands as one, no browser); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -1416,6 +1417,20 @@ without whichever Bedrock refuses.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.
 - **D19** `make proto-demo` — seeds a fixture and drives it end to end.
+  **Done 2026-09-18.** `make proto-demo [FIXTURE=<e2e name | scenario | dir>]
+  [ARGS="--prompt … | --session <id>"]` (`apps/server/proto/demo.py`): the same `up` as
+  `proto-turn`, the seed, the fixture's `researcher_question` posted over the REST API, a
+  poll to `turn_done` (deadline two shim ceilings, 3900 s, so a shim-driven resume is waited
+  out rather than reported as a FAIL), the reply, then each acceptance query printed as
+  pasteable SQL with its rows — the `turns` row (criterion 1), `research.json`'s array-section
+  sizes before and after plus the event-kind and tool histograms (criterion 2), the
+  `proto-audit` report (criteria 3–4), the token columns (D18) — and a **VOID** line when a
+  tool result carried the reconnect instruction (the expired-token case D17 names). Exit 0
+  only on `turn_done` ∧ criterion 3 ∧ no reauth hit. No kill: `proto-kill` (D14) and the
+  D17 interactive run own that. On a `docker-compose`-only machine pass
+  `PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"`. Offline tests:
+  `tests/test_proto_demo.py`, in `make proto-test` (which now also runs `test_proto_d17.py`).
+  Not yet run live — the first billed run is the D18 budget's.
 - **D20** Write-up.
 
 **Runs ~22 days after the 2026-09-10 cut, and a few days over is acceptable (lead's
