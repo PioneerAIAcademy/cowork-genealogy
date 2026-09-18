@@ -83,7 +83,7 @@ def main(board_path, open_path, prs_path):
               "re-pull with a higher one; gh truncates silently and every count below "
               "is then wrong.\n")
 
-    entries, pool, holders = {}, [], {}
+    entries, pool, holders, cross_cutting = {}, [], {}, []
     for n, issue in issues.items():
         col = status.get(n)
         labs = labels_of(issue)
@@ -94,16 +94,35 @@ def main(board_path, open_path, prs_path):
         # it *and* holds a slot -- it is the natural merge target, being furthest
         # along. An assigned one is someone's work and is never a merge candidate.
         if "cross-cutting" in labs:
-            continue  # the lead's direct assignments; already consolidated
+            # The lead's direct assignments: never a merge candidate, so out of the
+            # pool. But it still SITS in whatever slot its Touches line names, and
+            # that slot's next paid run is spoken for either way -- so collect it as
+            # an occupant rather than dropping it. Occupancy and pool membership are
+            # different questions; one list cannot answer both.
+            #
+            # Backlog only, matching the pool's own column test: a cross-cutting card
+            # in an active column is already in `holders` above. Icebox is excluded
+            # for the same reason the pool excludes it -- a deferred card does not
+            # reserve a slot.
+            if col == "Backlog" and "icebox" not in labs:
+                cross_cutting.append(n)
+            continue
         if col == "Backlog" and "icebox" not in labs:
             pool.append(n)
         elif col == "Ready" and not issue.get("assignees"):
             pool.append(n)
 
-    queues, held = {}, {}
+    queues, held, occupants = {}, {}, {}
     for n in pool:
         for s in slots_of(entries[n]):
             queues.setdefault(s, []).append(n)
+    # Deliberately NOT folded into `queues`. Depth means "this many mergeable cards",
+    # which is what MUST_CLEAR obliges the pass to act on and what
+    # audit-board/SKILL.md reads out of this block; counting a card the pass may not
+    # merge would force slots it can never discharge by merging.
+    for n in cross_cutting:
+        for s in slots_of(entries[n]):
+            occupants.setdefault(s, []).append(n)
     for n, col in holders.items():
         for s in slots_of(entries[n]):
             unassigned = not issues[n].get("assignees")
@@ -129,6 +148,8 @@ def main(board_path, open_path, prs_path):
             print(f"      holder: #{n} ({col}, {tag})")
         for p in sorted(pr_slots.get(slot, [])):
             print(f"      holder: PR #{p} (open, touches the snapshot)")
+        for n in sorted(occupants.get(slot, [])):
+            print(f"      occupant: #{n} (cross-cutting, Backlog -- not a merge target)")
         for n in sorted(members, key=lambda x: -age_days(issues[x]["createdAt"], now)):
             print(describe(n))
         print()
@@ -137,7 +158,8 @@ def main(board_path, open_path, prs_path):
     rest = {s: m for s, m in queues.items() if 2 <= len(m) < MUST_CLEAR}
 
     print(f"=== eval slot queues (pool: {len(pool)} issues -- non-icebox Backlog + "
-          "unassigned Ready; `cross-cutting` excluded) ===\n")
+          "unassigned Ready; `cross-cutting` excluded from the pool, shown as "
+          "occupants) ===\n")
     print(f"--- MUST CLEAR: queue >= {MUST_CLEAR} "
           f"({len(must)} slots) ---\n")
     for s, m in sorted(must.items(), key=lambda x: (-len(x[1]), x[0])):
@@ -149,6 +171,19 @@ def main(board_path, open_path, prs_path):
     for s, m in sorted(rest.items(), key=lambda x: (-len(x[1]), x[0])):
         block(s, m)
     if not rest:
+        print("  (none)\n")
+
+    # A slot can be spoken for and carry no mergeable queue at all. Those slots reach
+    # neither loop above -- block() runs only at queue >= 2 -- so the thing this
+    # section exists to show, a slot that looks free and is not, would still be
+    # invisible. Same renderer, so its holders and PR holders come with it: the most
+    # contested slot here can be one with two active-column holders and a queue of 1.
+    spoken = {s: queues.get(s, []) for s in occupants if s not in must and s not in rest}
+    print(f"--- occupied by cross-cutting work, not otherwise shown "
+          f"({len(spoken)} slots) ---\n")
+    for s in sorted(spoken):
+        block(s, spoken[s])
+    if not spoken:
         print("  (none)\n")
 
     # Non-snapshot convergence. A merge here saves a reviewer and a rebase, never a
@@ -189,6 +224,9 @@ def main(board_path, open_path, prs_path):
     print(f"  on at least one eval slot           {len(on_slot)}")
     print(f"  queued runs (sum of queue depths)   {sum(len(m) for m in queues.values())}"
           "   <- >= the line above; an issue can hold several slots")
+    print(f"  cross-cutting occupants (not in pool) "
+          f"{len({n for ns in occupants.values() for n in ns})} issues / "
+          f"{len(occupants)} slots")
     print(f"  no **Touches:** line -- READ BY HAND {len(blind)}")
     if blind:
         for n in sorted(blind):
