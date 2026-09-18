@@ -11,7 +11,10 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   policy -- ChangeMessageVisibility never resets the receive count, so any
   maxReceiveCount would dead-letter a legitimately long turn;
 - the schema creates every table the plan names and not committed_batches
-  (cut 2026-09-10).
+  (cut 2026-09-10);
+- the D16 tool server runs read-only with /projects on tmpfs, publishes on loopback
+  only, depends on nothing, and is waited on by proto-up but never by proto-up-core
+  (the D3 smoke must not gate on the engine image).
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -30,6 +33,7 @@ COMPOSE = PROTO / "docker-compose.yml"
 CEILING_OVERRIDE = PROTO / "docker-compose.ceiling.yml"
 ELASTICMQ_CONF = PROTO / "elasticmq.conf"
 SQL_DIR = PROTO / "sql"
+MAKEFILE = Path(__file__).resolve().parents[3] / "Makefile"
 
 STEP_CEILING_S = 1800
 
@@ -89,6 +93,41 @@ def _volumes(service: dict) -> list[str]:
         else:
             out.append(f"{entry.get('source')}:{entry.get('target')}")
     return out
+
+
+def _ports(service: dict) -> list[str]:
+    """Normalise short ("host:container") and long ({published, target}) port syntax to
+    the short string, so a loopback check can read the host side."""
+    out: list[str] = []
+    for entry in service.get("ports") or []:
+        if isinstance(entry, (str, int)):
+            out.append(str(entry))
+        else:
+            out.append(f"{entry.get('host_ip', '')}:{entry.get('published')}:{entry.get('target')}".lstrip(":"))
+    return out
+
+
+def _recipe(target: str) -> list[str]:
+    """The recipe of a root-Makefile target as make sees it: the tab-indented lines after
+    its rule line, up to the next non-indented line, with backslash-continued lines joined
+    into one logical line (so a reflowed `--wait` list is still one line)."""
+    lines = MAKEFILE.read_text(encoding="utf-8").splitlines()
+    rule = re.compile(rf"^{re.escape(target)}\s*:")
+    for i, line in enumerate(lines):
+        if rule.match(line):
+            body: list[str] = []
+            for follow in lines[i + 1:]:
+                if follow.startswith("\t"):
+                    if body and body[-1].endswith("\\"):
+                        body[-1] = body[-1][:-1] + " " + follow.strip()
+                    else:
+                        body.append(follow)
+                elif follow.strip() == "" or follow.startswith("#"):
+                    continue
+                else:
+                    break
+            return body
+    raise AssertionError(f"Makefile has no target {target!r}")
 
 
 def _strip_line_comments(text: str, markers: tuple[str, ...]) -> str:
@@ -168,6 +207,34 @@ def test_shim_waits_for_a_healthy_worker():
     """A shim that starts before the worker listens burns a receive count on a refused
     connection, so a crash/sleep turn sent right after `up` never runs its arm."""
     assert _service(_load(COMPOSE), "shim")["depends_on"]["worker"] == {"condition": "service_healthy"}
+
+
+# ── tool server (D16) ───────────────────────────────────────────────────────────
+
+
+def test_tools_runs_read_only_with_projects_on_tmpfs():
+    tools = _service(_load(COMPOSE), "tools")
+    assert tools.get("read_only") is True, "the tool server writes only under the project root"
+    assert "/projects" in (tools.get("tmpfs") or []), "/projects must be a tmpfs on a read-only rootfs"
+
+
+def test_tools_is_published_on_loopback_only():
+    ports = _ports(_service(_load(COMPOSE), "tools"))
+    assert ports, "the host smoke (make engine-smoke-http BASE=...) reaches the server from the host"
+    assert all(p.startswith("127.0.0.1:") for p in ports), "no auth beyond header -> principal: publish on loopback only"
+
+
+def test_tools_depends_on_nothing():
+    assert "depends_on" not in _service(_load(COMPOSE), "tools"), "file backend today; no store service to wait for"
+
+
+def test_proto_up_waits_for_tools_but_proto_up_core_does_not():
+    core = _recipe("proto-up-core")
+    assert core, "proto-up-core has a recipe"
+    assert not any(re.search(r"\btools\b", line) for line in core), "the D3 smoke must not gate on the engine image"
+    wait_lines = [line for line in _recipe("proto-up") if "--wait" in line]
+    assert wait_lines, "proto-up has a --wait line"
+    assert any(re.search(r"\btools\b", line) for line in wait_lines), "proto-up must wait for the tool server's healthcheck"
 
 
 # ── step ceiling ────────────────────────────────────────────────────────────────

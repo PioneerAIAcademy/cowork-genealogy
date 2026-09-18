@@ -194,8 +194,12 @@ to make changes, not what each individual tool/skill does.
 
 Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their schemas are
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
-source of truth for the advertised tool list); `src/server.ts` imports that
-list and dispatches calls. Per-tool behavioral contracts are in
+source of truth for the advertised tool list); `src/server.ts`
+(`createServer(principal)`) imports that list and dispatches calls, and the
+entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`),
+`src/hosted-stdio.ts` (the prototype's per-turn stdio server) and `src/http.ts`
+(the prototype's Streamable HTTP server, compose service `tools`). Per-tool
+behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
 Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. The `init-project`
@@ -585,7 +589,11 @@ packaging drift test checks), add the call dispatch to `src/server.ts`,
 and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
 entrypoint binding `LOCAL`, `src/hosted-stdio.ts` the prototype's per-turn one
-binding a bearer, and a new tool's arm goes in `server.ts`, never in an entrypoint.
+binding a bearer, `src/http.ts` the prototype's Streamable HTTP one binding each
+request's `Authorization: Bearer` (never `LOCAL`), and a new tool's arm goes in
+`server.ts`, never in an entrypoint. A new tool also needs a row in
+`dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
+neither calls nor lists as an exclusion.
 
 Use generic tool names with provider parameters when scaling, not
 one tool per provider. For example, when we add real APIs, use
