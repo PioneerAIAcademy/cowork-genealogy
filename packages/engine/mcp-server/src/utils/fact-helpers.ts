@@ -26,6 +26,7 @@ import type {
   SimplifiedFact,
   SimplifiedPerson,
 } from "../types/gedcomx.js";
+import type { WarningFact } from "../types/person-warnings.js";
 import {
   earliestYear,
   getDayRange,
@@ -87,28 +88,35 @@ function collectFactDayRanges(
   return out;
 }
 
-// ─── Fact-id collection (for PersonWarning.factIds highlighting) ──────────
+// ─── Fact collection (for PersonWarning.facts) ────────────────────────────
 
 /**
  * Ids of a person's facts whose `type` matches the (factTypes, antiFactTypes)
  * selection — `factTypes = null` means any type; `antiFactTypes = null` means
  * no exclusion. Skips facts with no `id`, preserves source order, and drops
  * duplicate ids. Pure; used by the warning emitters to attach the specific
- * facts a check examined (`PersonWarning.factIds`). Works for the anchor
+ * facts a check examined (`PersonWarning.facts`). Works for the anchor
  * (`mob.getPerson()`) or any relative/child `SimplifiedPerson`.
  */
-export function factIdsOfPersonFacts(
+export function warningFactsOfPerson(
   person: SimplifiedPerson,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
-): string[] {
-  const out: string[] = [];
+): WarningFact[] {
+  const out: WarningFact[] = [];
   const seen = new Set<string>();
   for (const f of person.facts ?? []) {
     if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
     if (f.id === undefined || seen.has(f.id)) continue;
     seen.add(f.id);
-    out.push(f.id);
+    out.push({
+      id: f.id,
+      type: f.type ?? "",
+      // Raw `date` first, `standard_date` second, null when neither. NOT
+      // getStandardDate(): it inverts this precedence and normalizes through
+      // stdDate(), turning a record's "~1818" into "Abt 1818".
+      date: f.date ?? f.standard_date ?? null,
+    });
   }
   return out;
 }

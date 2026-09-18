@@ -3053,7 +3053,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     );
     expect(w).toBeDefined();
     // Birth-like + death-like facts examined by the check.
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
     // No relative involved — relatedPersonId stays unset.
     expect(w?.relatedPersonId).toBeUndefined();
   });
@@ -3077,7 +3077,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "tooManyBirthDates2",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
   });
 
   it("child-birth warning: earliestChildBirthToBirthMale14 carries anchor + child fact ids and relatedPersonId", () => {
@@ -3109,7 +3109,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     );
     expect(w).toBeDefined();
     // Anchor's birth fact + the contributing child's birth fact.
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
     expect(w?.relatedPersonId).toBe("C");
   });
 
@@ -3142,7 +3142,7 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
     // Anchored on the focal person, but points at the failing relative.
     expect(w?.personId).toBe("I1");
     expect(w?.relatedPersonId).toBe("I2");
-    expect(w?.factIds).toEqual(["F1", "F2"]);
+    expect(w?.facts?.map((f) => f.id)).toEqual(["F1", "F2"]);
   });
 
   it("structural warning: tooManyChildren18 carries NO factIds", () => {
@@ -3171,10 +3171,10 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "tooManyChildren18",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toBeUndefined();
+    expect(w?.facts).toBeUndefined();
   });
 
-  it("name warning: hasBlankName carries NO factIds", () => {
+  it("name warning: hasBlankName carries NO facts", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
         {
@@ -3188,6 +3188,6 @@ describe("calculateWarnings — factIds / relatedPersonId attribution", () => {
       (x) => x.issueType === "hasBlankName",
     );
     expect(w).toBeDefined();
-    expect(w?.factIds).toBeUndefined();
+    expect(w?.facts).toBeUndefined();
   });
 });

@@ -15,8 +15,17 @@
         "personName": "Thomas Flynn",
         "message": "This person (male) died more than 300 days before a child's earliest birth-like fact, which is biologically impossible.",
         "relatedPersonId": "I1",
-        "factIds": [
-          "F1"
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Death",
+            "date": "1843-02-10"
+          },
+          {
+            "id": "F8",
+            "type": "Birth",
+            "date": "1845-06-04"
+          }
         ]
       }
     ]

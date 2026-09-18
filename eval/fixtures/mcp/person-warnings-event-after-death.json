@@ -14,9 +14,22 @@
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "An event is dated more than 1 year after this person's latest death-like fact.",
-        "factIds": [
-          "F1",
-          "F2"
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "~1845"
+          },
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "1908-03-12"
+          },
+          {
+            "id": "F4",
+            "type": "Residence",
+            "date": "1925"
+          }
         ]
       }
     ]

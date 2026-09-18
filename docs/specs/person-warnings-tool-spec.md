@@ -86,7 +86,7 @@ The shipped shape is `PersonWarning` in
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
 | `message` | string | Human-readable description of the problem |
-| `factIds` | string[]? | Fact IDs involved in the check, for UI highlighting. Optional — MobWarnings carries only the tag; the TS port attaches contributing facts when cheaply retrievable |
+| `facts` | `{id, type, date}[]?` | The facts the check examined, resolved. Optional — MobWarnings carries only the tag; the TS port attaches contributing facts where cheaply retrievable. `date` is the fact's raw `date`, falling back to `standard_date`, and `null` when it has neither — **not** `getStandardDate()`, which inverts that precedence and normalizes through `stdDate()` (a record's `~1818` would come back `Abt 1818`). Three fields exactly: `hasEventAfterDeath1` cites every self fact and `merge_warnings` multiplies that by mob size |
 | `relatedPersonId` | string? | Person ID of the related person, when the check involves a relationship (e.g., the father in `earliestChildBirthToBirthMale14`). Omitted when not applicable |
 | `mobRole` | string? | Merge-mode only (`merge_warnings`): which mob surfaced the warning — `"target"`, `"candidate"`, `"merged"`, or `"relative"`. Single-anchor `person_warnings` never sets it. See `match-merge-workflow-spec.md` §7.5 |
 
@@ -107,7 +107,10 @@ Example output:
       "personId": "I1",
       "personName": "Patrick Flynn",
       "message": "An event is dated more than 1 year after this person's latest death-like fact.",
-      "factIds": ["F1", "F2"]
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1845" },
+        { "id": "F2", "type": "Death", "date": "1908-03-12" }
+      ]
     }
   ]
 }
@@ -265,7 +268,7 @@ if (birthYear != null && deathYear != null && deathYear < birthYear)
 
 **Message:** `"Death year ({deathYear}) is before birth year ({birthYear}) for {personName}."`
 
-**factIds:** `[birthFact.id, deathFact.id]`
+**facts:** the birth-like and death-like facts examined
 
 **relatedPersonId:** omitted
 
@@ -314,7 +317,7 @@ for each relationship where type === "ParentChild"
 
 **Message:** `"Father {parentName} would have been {maxAge} at the birth of {childName} (father born {parentBirthYear}, child born {childBirthYear})."`
 
-**factIds:** `[parentBirthFact.id, childBirthFact.id]`
+**facts:** the parent's and the child's birth-like facts
 
 **relatedPersonId:** `parent.id`
 
@@ -369,7 +372,7 @@ for each fact in anchor.facts:
 
 **Message:** `"{factType} ({eventYear}) is after death year ({deathYear}) for {personName}."`
 
-**factIds:** `[deathFact.id, fact.id]`
+**facts:** the death-like fact and the offending later fact
 
 **relatedPersonId:** omitted
 

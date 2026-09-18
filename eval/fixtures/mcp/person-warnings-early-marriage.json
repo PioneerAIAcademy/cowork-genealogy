@@ -14,8 +14,17 @@
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "This person was married before age 14, which is biologically and socially unusual.",
-        "factIds": [
-          "F1"
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "~1845"
+          },
+          {
+            "id": "F9",
+            "type": "Marriage",
+            "date": "1857-09-20"
+          }
         ]
       }
     ]

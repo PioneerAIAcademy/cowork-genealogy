@@ -14,9 +14,22 @@
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "An event is dated more than 1 year after this person's latest death-like fact.",
-        "factIds": [
-          "F1",
-          "F2"
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "~1785"
+          },
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "1908-03-12"
+          },
+          {
+            "id": "F4",
+            "type": "Residence",
+            "date": "1925"
+          }
         ]
       },
       {
@@ -26,9 +39,17 @@
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "This person's lifespan is greater than 120 years, which is implausible.",
-        "factIds": [
-          "F1",
-          "F2"
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "~1785"
+          },
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "1908-03-12"
+          }
         ]
       },
       {
@@ -38,8 +59,17 @@
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "Two or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records.",
-        "factIds": [
-          "F2"
+        "facts": [
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "1908-03-12"
+          },
+          {
+            "id": "F7",
+            "type": "Death",
+            "date": "1909-11-02"
+          }
         ]
       },
       {
@@ -49,10 +79,14 @@
         "personId": "I2",
         "personName": "Thomas Flynn",
         "message": "This relative's lifespan is greater than 120 years, which is implausible.",
-        "factIds": [
-          "F3"
-        ],
-        "relatedPersonId": "I2"
+        "relatedPersonId": "I2",
+        "facts": [
+          {
+            "id": "F3",
+            "type": "Birth",
+            "date": "~1818"
+          }
+        ]
       }
     ]
   }

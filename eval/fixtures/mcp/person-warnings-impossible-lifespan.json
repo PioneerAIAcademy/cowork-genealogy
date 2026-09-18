@@ -14,9 +14,17 @@
         "personId": "I1",
         "personName": "Patrick Flynn",
         "message": "This person's lifespan is greater than 120 years, which is implausible.",
-        "factIds": [
-          "F1",
-          "F2"
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "~1785"
+          },
+          {
+            "id": "F2",
+            "type": "Death",
+            "date": "1908-03-12"
+          }
         ]
       }
     ]

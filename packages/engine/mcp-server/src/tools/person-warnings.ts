@@ -35,7 +35,7 @@ import {
   earliestYearOfPersonFacts,
   earliestYearOfSelfFacts,
   factDaysCount,
-  factIdsOfPersonFacts,
+  warningFactsOfPerson,
   factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
@@ -62,12 +62,14 @@ import type {
   PersonWarning,
   PersonWarningsInput,
   PersonWarningsResult,
+  WarningFact,
 } from "../types/person-warnings.js";
 
 export type {
   PersonWarningsInput,
   PersonWarning,
   PersonWarningsResult,
+  WarningFact,
 } from "../types/person-warnings.js";
 
 const TREE_FILE = "tree.gedcomx.json";
@@ -906,30 +908,38 @@ export function hasDiffSurname(mob: Mob): boolean {
   return false;
 }
 
-// ─── factIds attribution helpers ────────────────────────────────────────────
+// ─── fact attribution helpers ───────────────────────────────────────────────
 // Pure reads used only AFTER a predicate fires, to attach the specific facts a
-// check examined (PersonWarning.factIds) and — for relationship warnings — the
+// check examined (PersonWarning.facts) and — for relationship warnings — the
 // contributing relative (relatedPersonId). They never change firing behavior.
 
 /** Ids of the anchor's own facts in the given families (union, order-stable). */
 function selfFactIds(
   mob: Mob,
   ...families: Array<ReadonlySet<string> | null>
-): string[] {
+): WarningFact[] {
   return unionFactIds(
-    ...families.map((fam) => factIdsOfPersonFacts(mob.getPerson(), fam)),
+    ...families.map((fam) => warningFactsOfPerson(mob.getPerson(), fam)),
   );
 }
 
-/** Merge several id lists, dropping duplicates while preserving first-seen order. */
-function unionFactIds(...lists: string[][]): string[] {
-  const out: string[] = [];
+/**
+ * Merge several fact lists, dropping duplicates while preserving first-seen
+ * order. Deduped **by `id`**: entries are objects now, so reference identity
+ * would keep two copies of the same fact reached from two families (a Death
+ * fact is in both the death-like and burial-like sets, for instance).
+ *
+ * Exported for its own test — it is the one place in this rename where the
+ * collection semantics change rather than the key name.
+ */
+export function unionFactIds(...lists: WarningFact[][]): WarningFact[] {
+  const out: WarningFact[] = [];
   const seen = new Set<string>();
   for (const list of lists) {
-    for (const id of list) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-      out.push(id);
+    for (const fact of list) {
+      if (seen.has(fact.id)) continue;
+      seen.add(fact.id);
+      out.push(fact);
     }
   }
   return out;
@@ -1008,29 +1018,29 @@ function parentWithEarliestYear(
 }
 
 /**
- * factIds (the matched relative's own facts in the given families) +
+ * facts (the matched relative's own facts in the given families) +
  * relatedPersonId (the relative's anchor id) for a relative-mob warning.
  */
 function relativeMobContribution(
   rel: Mob,
   ...families: Array<ReadonlySet<string> | null>
-): { factIds: string[]; relatedPersonId: string } {
+): { facts: WarningFact[]; relatedPersonId: string } {
   return {
-    factIds: unionFactIds(
-      ...families.map((fam) => factIdsOfPersonFacts(rel.getPerson(), fam)),
+    facts: unionFactIds(
+      ...families.map((fam) => warningFactsOfPerson(rel.getPerson(), fam)),
     ),
     relatedPersonId: rel.anchorId,
   };
 }
 
-/** factIds + relatedPersonId contribution from a single relative (may be undefined). */
+/** facts + relatedPersonId contribution from a single relative (may be undefined). */
 function relativeContribution(
   relative: SimplifiedPerson | undefined,
   types: ReadonlySet<string>,
-): { factIds: string[]; relatedPersonId?: string } {
-  if (!relative) return { factIds: [] };
-  const contribution: { factIds: string[]; relatedPersonId?: string } = {
-    factIds: factIdsOfPersonFacts(relative, types),
+): { facts: WarningFact[]; relatedPersonId?: string } {
+  if (!relative) return { facts: [] };
+  const contribution: { facts: WarningFact[]; relatedPersonId?: string } = {
+    facts: warningFactsOfPerson(relative, types),
   };
   if (relative.id !== undefined) contribution.relatedPersonId = relative.id;
   return contribution;
@@ -1053,7 +1063,7 @@ function checkHasEventBeforeBirth(mob: Mob): PersonWarning | null {
     personName: getPersonName(mob.getPerson()),
     // Trigger spans "any event" (earliest self fact) vs the latest birth-like
     // fact — so the examined set is every self fact.
-    factIds: selfFactIds(mob, null),
+    facts: selfFactIds(mob, null),
     message:
       "An event is dated more than 2 years before this person's latest birth-like fact.",
   };
@@ -1081,7 +1091,7 @@ function checkEarliestChildBirthToBirthMale14(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1099,7 +1109,7 @@ function checkHasEventAfterDeath(mob: Mob): PersonWarning | null {
     personName: getPersonName(mob.getPerson()),
     // Trigger spans the latest death-like fact vs the latest self fact of any
     // type — the examined set is every self fact.
-    factIds: selfFactIds(mob, null),
+    facts: selfFactIds(mob, null),
     message:
       "An event is dated more than 1 year after this person's latest death-like fact.",
   };
@@ -1113,7 +1123,7 @@ function checkHasAgeRangeGreaterThan120(mob: Mob): PersonWarning | null {
     severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES),
+    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, DEATHLIKE_FACT_TYPES),
     message:
       "This person's lifespan is greater than 120 years, which is implausible.",
   };
@@ -1127,7 +1137,7 @@ function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, BURIAL, DEATH),
+    facts: selfFactIds(mob, BURIAL, DEATH),
     message:
       "The earliest Burial is more than 31 days before the latest Death, which is unusual.",
   };
@@ -1143,7 +1153,7 @@ function checkEarliestChildBirthToBirth12(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1160,7 +1170,7 @@ function checkDeathRangeGreaterThan2(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, DEATHLIKE_FACT_TYPES),
+    facts: selfFactIds(mob, DEATHLIKE_FACT_TYPES),
     message:
       "This person's death-like dates span more than 2 years — likely unreconciled conflicting records.",
   };
@@ -1174,7 +1184,7 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
     message:
       "This person appears to have married more than 90 years after their birth, which is biologically unusual.",
   };
@@ -1188,7 +1198,7 @@ function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
     message:
       "This person appears to have married before age 14, which is unusual.",
   };
@@ -1204,7 +1214,7 @@ function checkLatestChildBirthToBirth80(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1278,7 +1288,7 @@ function checkLatestChildBirthToBirthFemale45(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1297,7 +1307,7 @@ function checkHasDeathAfterChildBirth90(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1318,7 +1328,7 @@ function checkHasChildDeathAfterParentBirth200(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), parentC.factIds),
+    facts: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), parentC.facts),
     ...(parentC.relatedPersonId
       ? { relatedPersonId: parentC.relatedPersonId }
       : {}),
@@ -1353,9 +1363,9 @@ function checkChildBirthRange40(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      relativeContribution(earliest, BIRTHLIKE_FACT_TYPES).factIds,
-      relativeContribution(latest, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      relativeContribution(earliest, BIRTHLIKE_FACT_TYPES).facts,
+      relativeContribution(latest, BIRTHLIKE_FACT_TYPES).facts,
     ),
     message:
       "The span between this person's earliest and latest child births is 40 or more years, which is implausible for a single parent.",
@@ -1374,7 +1384,7 @@ function checkEarliestChildMarriageToBirth30(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1395,9 +1405,9 @@ function checkLatestChildBirthToMarriage35(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
+    facts: unionFactIds(
       selfFactIds(mob, MARRIAGELIKE_FACT_TYPES),
-      childC.factIds,
+      childC.facts,
     ),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
@@ -1423,20 +1433,20 @@ function checkHasYoungSpouse15(mob: Mob): PersonWarning | null {
   }
   const spouseC = spouse
     ? {
-        factIds: unionFactIds(
-          factIdsOfPersonFacts(spouse, BIRTHLIKE_FACT_TYPES),
-          factIdsOfPersonFacts(spouse, DEATHLIKE_FACT_TYPES),
+        facts: unionFactIds(
+          warningFactsOfPerson(spouse, BIRTHLIKE_FACT_TYPES),
+          warningFactsOfPerson(spouse, DEATHLIKE_FACT_TYPES),
         ),
         relatedPersonId: spouse.id,
       }
-    : { factIds: [] as string[], relatedPersonId: undefined };
+    : { facts: [] as WarningFact[], relatedPersonId: undefined };
   return {
     scoreType: COHERENCE,
     issueType: HAS_YOUNG_SPOUSE_15,
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: spouseC.factIds,
+    facts: spouseC.facts,
     ...(spouseC.relatedPersonId
       ? { relatedPersonId: spouseC.relatedPersonId }
       : {}),
@@ -1453,7 +1463,7 @@ function checkHasChristeningBeforeBirth(mob: Mob): PersonWarning | null {
     severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, CHRISTENING, BIRTH),
+    facts: selfFactIds(mob, CHRISTENING, BIRTH),
     message:
       "This person's Christening is dated before their Birth — a date impossibility.",
   };
@@ -1471,9 +1481,9 @@ function checkHasEventBeforeChristening365_3(
     personName: getPersonName(mob.getPerson()),
     // Christening/Baptism (the late anchor) + every earlier event the check
     // considers (any self fact except Birth / EventRegistration).
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(mob.getPerson(), CHRISTENING_AND_BAPTISM),
-      factIdsOfPersonFacts(mob.getPerson(), null, BIRTH_AND_EVENT_REGISTRATION),
+    facts: unionFactIds(
+      warningFactsOfPerson(mob.getPerson(), CHRISTENING_AND_BAPTISM),
+      warningFactsOfPerson(mob.getPerson(), null, BIRTH_AND_EVENT_REGISTRATION),
     ),
     message:
       "An event is dated more than 3 years before this person's Christening / Baptism, which is implausible.",
@@ -1488,7 +1498,7 @@ function checkTooManyBirthDates2(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, BIRTH),
+    facts: selfFactIds(mob, BIRTH),
     message:
       "This person has 2 or more distinct Birth dates more than 30 days apart — unreconciled conflicting records.",
   };
@@ -1502,7 +1512,7 @@ function checkTooManyDeathDates2(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, DEATH),
+    facts: selfFactIds(mob, DEATH),
     message:
       "This person has 2 or more distinct Death dates more than 14 days apart — unreconciled conflicting records.",
   };
@@ -1516,7 +1526,7 @@ function checkHasBurialBeforeDeath(mob: Mob): PersonWarning | null {
     severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: selfFactIds(mob, BURIAL, DEATH),
+    facts: selfFactIds(mob, BURIAL, DEATH),
     message:
       "This person's Burial is dated before their Death — a date impossibility.",
   };
@@ -1535,7 +1545,7 @@ function checkHasDeathBeforeChildBirth30_10(
     severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, DEATH), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, DEATH), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1557,7 +1567,7 @@ function checkHasDeathBeforeChildBirth365_2(
     severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1579,7 +1589,7 @@ function checkHasDeathBeforeChildBirthFemale2(
     severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, DEATH), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, DEATH), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1601,7 +1611,7 @@ function checkHasDeathBeforeChildBirthFemale365(
     severity: "contradiction",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.factIds),
+    facts: unionFactIds(selfFactIds(mob, DEATHLIKE_FACT_TYPES), childC.facts),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
       : {}),
@@ -1622,9 +1632,9 @@ function checkChildMarriageToMarriage15(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
+    facts: unionFactIds(
       selfFactIds(mob, MARRIAGELIKE_FACT_TYPES),
-      childC.factIds,
+      childC.facts,
     ),
     ...(childC.relatedPersonId
       ? { relatedPersonId: childC.relatedPersonId }
@@ -1675,7 +1685,7 @@ function checkRelativesDeathRangeGreaterThan2(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has a death-date range greater than 2 years, suggesting unreconciled death records.",
@@ -1696,9 +1706,9 @@ function checkRelativesEarliestChildBirthToBirth12(
       severity: "implausible",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
-      factIds: unionFactIds(
-        factIdsOfPersonFacts(rel.getPerson(), BIRTHLIKE_FACT_TYPES),
-        childC.factIds,
+      facts: unionFactIds(
+        warningFactsOfPerson(rel.getPerson(), BIRTHLIKE_FACT_TYPES),
+        childC.facts,
       ),
       ...(childC.relatedPersonId
         ? { relatedPersonId: childC.relatedPersonId }
@@ -1727,7 +1737,7 @@ function checkRelativesHasEventBeforeChristening365_3(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has an event dated more than 3 years before their christening, which is implausible.",
@@ -1749,9 +1759,9 @@ function checkMaleRelativesEarliestChildBirthToBirth14(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -1774,9 +1784,9 @@ function checkFemaleRelativesLatestChildBirthToBirth45(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -1802,7 +1812,7 @@ function checkRelativesHasEventAfterDeath1(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has an event dated more than 1 year after their death.",
@@ -1822,7 +1832,7 @@ function checkRelativesHasEventBeforeBirth365_2(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has an event dated more than 2 years before their birth.",
@@ -1846,7 +1856,7 @@ function checkRelativesHasEarlyMarriage14(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person appears to have married before age 14.",
@@ -1870,7 +1880,7 @@ function checkRelativesHasLateMarriage90(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person appears to have married more than 90 years after their birth.",
@@ -1890,7 +1900,7 @@ function checkRelativesHasBurialBeforeDeath(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has a Burial dated before their Death — a date impossibility.",
@@ -1910,7 +1920,7 @@ function checkRelativesHasBurialAfterDeath31(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person's earliest Burial is more than 31 days before their latest Death.",
@@ -1963,7 +1973,7 @@ function checkRelativesTooManyBirthDates2(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has 2 or more distinct Birth dates more than 30 days apart — unreconciled records.",
@@ -1983,7 +1993,7 @@ function checkRelativesTooManyDeathDates2(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has 2 or more distinct Death dates more than 14 days apart — unreconciled records.",
@@ -2003,7 +2013,7 @@ function checkRelativesBirthLikeRangeGreaterThan8(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has birth-like fact dates spanning more than 8 years — suggests two records merged on one identity.",
@@ -2026,9 +2036,9 @@ function checkRelativesChildBirthRange40(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      relativeContribution(earliest, BIRTHLIKE_FACT_TYPES).factIds,
-      relativeContribution(latest, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      relativeContribution(earliest, BIRTHLIKE_FACT_TYPES).facts,
+      relativeContribution(latest, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: rel.anchorId,
     message:
@@ -2310,9 +2320,9 @@ function checkSimilarChildren(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
-      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    facts: unionFactIds(
+      warningFactsOfPerson(pair[0], BIRTHLIKE_FACT_TYPES),
+      warningFactsOfPerson(pair[1], BIRTHLIKE_FACT_TYPES),
     ),
     message:
       "Two of this person's children look like the same individual recorded twice (similar names, same gender, dates compatible).",
@@ -2328,9 +2338,9 @@ function checkSimilarChildrenConflictingDates(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
-      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    facts: unionFactIds(
+      warningFactsOfPerson(pair[0], BIRTHLIKE_FACT_TYPES),
+      warningFactsOfPerson(pair[1], BIRTHLIKE_FACT_TYPES),
     ),
     message:
       "Two of this person's children have similar names but conflicting dates — likely the same child recorded twice with divergent source data.",
@@ -2346,9 +2356,9 @@ function checkSimilarSpouses(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
-      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    facts: unionFactIds(
+      warningFactsOfPerson(pair[0], BIRTHLIKE_FACT_TYPES),
+      warningFactsOfPerson(pair[1], BIRTHLIKE_FACT_TYPES),
     ),
     message:
       "Two of this person's spouses look like the same individual recorded twice (similar names, dates compatible).",
@@ -2364,9 +2374,9 @@ function checkSimilarSpousesConflictingDates(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(pair[0], BIRTHLIKE_FACT_TYPES),
-      factIdsOfPersonFacts(pair[1], BIRTHLIKE_FACT_TYPES),
+    facts: unionFactIds(
+      warningFactsOfPerson(pair[0], BIRTHLIKE_FACT_TYPES),
+      warningFactsOfPerson(pair[1], BIRTHLIKE_FACT_TYPES),
     ),
     message:
       "Two of this person's spouses have similar names but conflicting dates — likely the same spouse recorded twice with divergent source data.",
@@ -2382,9 +2392,9 @@ function checkHasCloseChildBirthsIgnoreSimilarChildren(mob: Mob): PersonWarning 
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(pair[0], BIRTH),
-      factIdsOfPersonFacts(pair[1], BIRTH),
+    facts: unionFactIds(
+      warningFactsOfPerson(pair[0], BIRTH),
+      warningFactsOfPerson(pair[1], BIRTH),
     ),
     message:
       "Two of this person's children have Birth dates suspiciously close together — possible duplicate sibling records.",
@@ -2400,9 +2410,9 @@ function checkHasCloseChildChristenings6_30(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(pair[0], CHRISTENING_AND_BAPTISM_TYPES),
-      factIdsOfPersonFacts(pair[1], CHRISTENING_AND_BAPTISM_TYPES),
+    facts: unionFactIds(
+      warningFactsOfPerson(pair[0], CHRISTENING_AND_BAPTISM_TYPES),
+      warningFactsOfPerson(pair[1], CHRISTENING_AND_BAPTISM_TYPES),
     ),
     message:
       "Two of this person's children have Christening/Baptism dates within 6 months of each other AND similar names — possible duplicate event records.",
@@ -2418,9 +2428,9 @@ function checkHasDissimilarSpousesWithSameMarriageYear(mob: Mob): PersonWarning 
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      factIdsOfPersonFacts(pair[0], MARRIAGELIKE_FACT_TYPES),
-      factIdsOfPersonFacts(pair[1], MARRIAGELIKE_FACT_TYPES),
+    facts: unionFactIds(
+      warningFactsOfPerson(pair[0], MARRIAGELIKE_FACT_TYPES),
+      warningFactsOfPerson(pair[1], MARRIAGELIKE_FACT_TYPES),
     ),
     message:
       "Two of this person's spouses share a marriage year but have dissimilar names — suggests two different spouses were merged under one identity.",
@@ -2442,9 +2452,9 @@ function checkRelativesHasDeathBeforeChildBirth365_2(
       severity: "implausible",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
-      factIds: unionFactIds(
-        factIdsOfPersonFacts(rel.getPerson(), DEATHLIKE_FACT_TYPES),
-        childC.factIds,
+      facts: unionFactIds(
+        warningFactsOfPerson(rel.getPerson(), DEATHLIKE_FACT_TYPES),
+        childC.facts,
       ),
       ...(childC.relatedPersonId
         ? { relatedPersonId: childC.relatedPersonId }
@@ -2470,9 +2480,9 @@ function checkRelativesHasDeathBeforeChildBirth30_10(
       severity: "implausible",
       personId: rel.anchorId,
       personName: getPersonName(rel.getPerson()),
-      factIds: unionFactIds(
-        factIdsOfPersonFacts(rel.getPerson(), DEATH),
-        childC.factIds,
+      facts: unionFactIds(
+        warningFactsOfPerson(rel.getPerson(), DEATH),
+        childC.facts,
       ),
       ...(childC.relatedPersonId
         ? { relatedPersonId: childC.relatedPersonId }
@@ -2498,9 +2508,9 @@ function checkRelativesEarliestChildMarriageToBirth30(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, MARRIAGELIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, MARRIAGELIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2523,9 +2533,9 @@ function checkFemaleRelativesHasDeathBeforeChildBirth365(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2548,9 +2558,9 @@ function checkFemaleRelativesHasDeathBeforeChildBirth2(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, BIRTH).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTH).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2572,9 +2582,9 @@ function checkRelativesLatestChildBirthToMarriage35(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2596,9 +2606,9 @@ function checkRelativesLatestChildBirthToBirth80(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2620,9 +2630,9 @@ function checkRelativesChildMarriageToMarriage15(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, MARRIAGELIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, MARRIAGELIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2646,9 +2656,9 @@ function checkRelativesHasDeathAfterChildBirth90(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(child, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(child, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2669,7 +2679,7 @@ function checkRelativesHasAgeRangeGreaterThan120(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: c.factIds,
+    facts: c.facts,
     relatedPersonId: c.relatedPersonId,
     message:
       "A relative of this person has a lifespan greater than 120 years, which is implausible.",
@@ -2692,9 +2702,9 @@ function checkRelativesHasChildDeathAfterParentBirth200(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    factIds: unionFactIds(
-      c.factIds,
-      relativeContribution(parent, BIRTHLIKE_FACT_TYPES).factIds,
+    facts: unionFactIds(
+      c.facts,
+      relativeContribution(parent, BIRTHLIKE_FACT_TYPES).facts,
     ),
     relatedPersonId: c.relatedPersonId,
     message:
@@ -2715,7 +2725,7 @@ function checkMaleRelativesHasDiffSurname(
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    // Name-conclusion warning (not an event fact) — no factIds; the relative
+    // Name-conclusion warning (not an event fact) — no facts; the relative
     // it fired on is still surfaced via relatedPersonId.
     relatedPersonId: rel.anchorId,
     message:
@@ -3102,7 +3112,7 @@ function checkBirthLikeRangeGreaterThan8(
     severity: "implausible",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
-    factIds: factIdsOfPersonFacts(merged.getPerson(), BIRTHLIKE_FACT_TYPES),
+    facts: warningFactsOfPerson(merged.getPerson(), BIRTHLIKE_FACT_TYPES),
     message:
       "The merged record's birth-like facts span more than 8 years, with no shared marriage date to corroborate the match — the two records may be different people.",
   };
@@ -3124,7 +3134,7 @@ function checkBirthRangeGreaterThan3(
     severity: "implausible",
     personId: merged.anchorId,
     personName: getPersonName(merged.getPerson()),
-    factIds: factIdsOfPersonFacts(merged.getPerson(), BIRTH),
+    facts: warningFactsOfPerson(merged.getPerson(), BIRTH),
     message:
       "The merged record's Birth facts span more than 3 years, with no shared marriage date to corroborate the match — the two records may be different people.",
   };
