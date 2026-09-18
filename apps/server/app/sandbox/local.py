@@ -207,6 +207,8 @@ class LocalProvider(SandboxProvider):
             "HOME": home_dir,
             "AGENT_MODE": settings.agent_mode,
             "MODEL": model,
+            "AUTO_CONTINUE": "1" if settings.auto_continue else "0",
+            "AUTO_CONTINUE_MAX_STEPS": str(settings.auto_continue_max_steps),
             "PYTHONPATH": str(SERVER_ROOT),  # so `-m app.sandbox_server` resolves
             # The agent's own summaries carry non-ASCII (mock_agent's
             # "1 match -> logged as ..." uses U+2192), and sandbox_server prints

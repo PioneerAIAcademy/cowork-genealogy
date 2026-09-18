@@ -235,6 +235,8 @@ class E2BProvider(SandboxProvider):
         env: dict[str, str] = {
             "AGENT_MODE": s.agent_mode,
             "MODEL": model,
+            "AUTO_CONTINUE": "1" if s.auto_continue else "0",
+            "AUTO_CONTINUE_MAX_STEPS": str(s.auto_continue_max_steps),
         }
         if proxy_active():
             env["ANTHROPIC_BASE_URL"] = f"{s.public_url}/api/anthropic-proxy"

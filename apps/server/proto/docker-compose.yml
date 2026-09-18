@@ -81,18 +81,54 @@ services:
       timeout: 3s
       retries: 30
 
+  # D9-10 worker: one patron turn per message through the Agent SDK. Context is the
+  # repo root (the image carries packages/engine and apps/server); the root
+  # .dockerignore drops node_modules, .git, .venv and eval, and keeps the engine build/.
   worker:
-    build: ./worker
+    build:
+      context: ../../..
+      dockerfile: apps/server/proto/worker/Dockerfile
     container_name: proto-worker
     # D14 kills this container on a ceiling overrun (and the D3 `crash` turn exits it);
     # every subsequent redelivery needs a worker to POST to.
     restart: unless-stopped
     environment:
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      # The tool server's store (hosted-stdio.js), in-network hosts.
+      GENEALOGY_PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
+      GENEALOGY_ANCHOR_PATH: /project
+      # The model. Passed through from the host environment at `up` time, never a
+      # literal here; the stub arms run with it empty.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-anthropic}
+      # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
+      # this file (proto/env.sh writes it; FamilySearch access tokens live an hour, so
+      # `make proto-token` rewrites it under the running worker). Empty, and every
+      # FamilySearch tool answers with the reconnect instruction.
+      FS_ACCESS_TOKEN_FILE: /run/fs-token
+      # stdio (default): hosted-stdio.js forked per turn on the Postgres store above.
+      # http: the D16 `tools` service, file backend, bearer as Authorization.
+      TOOL_SERVER: ${TOOL_SERVER:-stdio}
+      ENGINE_DIR: /opt/genealogy/engine
+      ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
+      WORKER_CWD: /project
+      TMPDIR: /tmp
+    # The transcript, its per-turn CLAUDE_CONFIG_DIR and the oversized-result spill are
+    # writable-not-durable: a tmpfs, discarded with the container.
+    tmpfs:
+      - /tmp:size=1g,mode=1777
+    volumes:
+      - ./.fs-token:/run/fs-token:ro
     expose:
       - "8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
@@ -120,6 +156,28 @@ services:
         condition: service_healthy
       elasticmq:
         condition: service_healthy
+
+  # D16 tool server: the genealogy engine (build/http.js) on Streamable HTTP at /mcp,
+  # /healthz for the wait. Context is the repo root so the engine's src/ compiles inside
+  # the image (apps/server/proto/tools/Dockerfile). No depends_on: it runs the file
+  # backend today; PgS3ProjectStore installs later without touching this service.
+  tools:
+    build:
+      context: ../../..
+      dockerfile: apps/server/proto/tools/Dockerfile
+    container_name: proto-tools
+    restart: unless-stopped
+    # Nothing writes outside the project root: /projects and /tmp are the only rw paths.
+    read_only: true
+    tmpfs:
+      - /projects
+      - /tmp
+    volumes:
+      # {"hosted": true}: auth errors point at the web app's reconnect, not the login tool.
+      - ./tools/config.json:/root/.familysearch-mcp/config.json:ro
+    # Loopback only: the server has no auth beyond header -> principal (README).
+    ports:
+      - "127.0.0.1:8787:8787"
 
   shim:
     build: ./shim

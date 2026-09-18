@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
     default_model: str = "claude-sonnet-4-6"
+    # Lay mode's auto-continue (issue #2653): the in-sandbox runner answers the
+    # hand-back literal `Next: <step>. Continue?` with `Yes.` itself, so a stated
+    # objective runs step by step with no click. Both reach the runner as
+    # AUTO_CONTINUE / AUTO_CONTINUE_MAX_STEPS in the sandbox env. The budget
+    # bounds one unattended chain (consecutive auto turns since the last real
+    # user message), not the session. The public /v1 API opts out per frame
+    # regardless of this setting. Per-session on/off lands with the
+    # experience-level user setting (PR #2649).
+    auto_continue: bool = True
+    auto_continue_max_steps: int = 30
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
     # ANTHROPIC_API_KEY, which is written into the sandbox by

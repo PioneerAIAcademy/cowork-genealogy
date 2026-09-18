@@ -150,6 +150,10 @@ export default function ChatPane({
   // model's private reasoning, and two alpha testers read the collapsed block's
   // label as a cryptic message. The toggle is for whoever wants to look.
   const [showThinking, setShowThinking] = useState(false)
+  // Lay mode paused its own chain (issue #2653): the runner stopped answering
+  // the hand-back after `max_steps` in a row. The literal is still on screen,
+  // so the Continue button works; this says why it is waiting.
+  const [autoPaused, setAutoPaused] = useState<{ step: number; max: number } | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -199,6 +203,13 @@ export default function ChatPane({
     if (kind === 'task_done') {
       liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)
       setActivity(null)
+      return
+    }
+    if (kind === 'auto_continue_paused') {
+      setAutoPaused({
+        step: typeof ev.step === 'number' ? ev.step : 0,
+        max: typeof ev.max_steps === 'number' ? ev.max_steps : 0
+      })
       return
     }
     if (kind === 'usage') {
@@ -275,6 +286,7 @@ export default function ChatPane({
     startedRef.current = true
     setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [] }])
     conn.send({ type: 'user_msg', text: opening ? withOpeningTurn(trimmed) : trimmed })
+    setAutoPaused(null)
     setBusy(true)
     setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
@@ -373,6 +385,11 @@ export default function ChatPane({
               <button type="button" className="chatContinue" onClick={() => send('Yes.')}>
                 Continue
               </button>
+              {autoPaused && (
+                <span className="chatContinueNote">
+                  Paused after {autoPaused.step} steps in a row.
+                </span>
+              )}
             </div>
           )}
           {/* One status line, three distinct states. Reconnecting is shown even
