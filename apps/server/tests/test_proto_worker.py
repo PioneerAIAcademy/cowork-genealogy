@@ -763,3 +763,31 @@ def test_004_worker_only_adds_nullable_columns():
     }
     assert all(s.endswith(" bigint") for s in statements if re.search(r"_tokens|entries_seq_before", s)), \
         "token counts and the seq mark are bigint"
+
+
+def test_tool_server_http_sends_the_turn_as_headers_instead_of_a_fork(tmp_path):
+    # D16: the shared Streamable HTTP tool server binds one MCP session per turn from
+    # these headers; the CLI opens that session once per process.
+    env = {**WORKER_ENV, "TOOL_SERVER": "http"}
+    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env, turn_id="turn-9")
+    server = _server(opts)
+    assert server["type"] == "http"
+    assert server["url"] == options.TOOL_SERVER_DEFAULT_URL
+    assert "command" not in server and "env" not in server
+    assert server["headers"] == {
+        "X-Genealogy-Project-Id": "proj-1",
+        "X-Genealogy-Turn-Id": "turn-9",
+        "X-Genealogy-FS-Token": "turn-token",
+        "X-Genealogy-Wiki-Api-Url": "http://wiki:8000",
+    }
+    custom = _server(
+        _options(config_dir=str(tmp_path), worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8086/mcp"})
+    )
+    assert custom["url"] == "http://127.0.0.1:8086/mcp"
+    assert "X-Genealogy-Turn-Id" not in custom["headers"], "no turn id, no header"
+
+
+def test_tool_server_defaults_to_stdio_and_refuses_an_unknown_mode(tmp_path):
+    assert _server(_options(config_dir=str(tmp_path)))["type"] == "stdio"
+    with pytest.raises(ValueError, match="stdio or http"):
+        _options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "grpc"})

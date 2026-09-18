@@ -452,6 +452,7 @@ async def run_turn(
             resume=resume,
             session_id=None if resume else sdk_session_id,
             fs_access_token=message.get("fs_access_token"),
+            turn_id=turn_id,
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
         )
         client = ClaudeSDKClient(options=options)

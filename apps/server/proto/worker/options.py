@@ -113,11 +113,55 @@ def tool_server_env(
     return env
 
 
+# D16: the same per-turn facts as request headers when the tool server is the shared
+# Streamable HTTP process instead of a per-turn fork. The CLI opens its MCP session once
+# per process — once per turn — so the headers on `initialize` identify the turn.
+TOOL_SERVER_DEFAULT_URL = "http://toolserver:8086/mcp"
+HEADER_FOR_ENV = {
+    "WIKI_API_URL": "X-Genealogy-Wiki-Api-Url",
+    "POP_STATS_URL": "X-Genealogy-Pop-Stats-Url",
+    "OPENROUTER_API_KEY": "X-Genealogy-OpenRouter-Api-Key",
+    "OPENROUTER_MODEL": "X-Genealogy-OpenRouter-Model",
+}
+
+
+def tool_server_headers(
+    worker_env: Mapping[str, str], *, project_id: str, fs_access_token: str | None, turn_id: str | None
+) -> dict[str, str]:
+    """The ``X-Genealogy-*`` headers an HTTP tool server binds a session from."""
+    env = tool_server_env(worker_env, project_id=project_id, fs_access_token=fs_access_token)
+    headers = {"X-Genealogy-Project-Id": project_id, "X-Genealogy-FS-Token": env["FS_ACCESS_TOKEN"]}
+    if turn_id:
+        headers["X-Genealogy-Turn-Id"] = turn_id
+    for key, header in HEADER_FOR_ENV.items():
+        if env.get(key):
+            headers[header] = env[key]
+    return headers
+
+
 def tool_server_entry(
-    engine_dir: str, worker_env: Mapping[str, str], *, project_id: str, fs_access_token: str | None
+    engine_dir: str,
+    worker_env: Mapping[str, str],
+    *,
+    project_id: str,
+    fs_access_token: str | None,
+    turn_id: str | None = None,
 ) -> dict[str, Any]:
-    """The ``genealogy`` MCP server entry: ``hosted-stdio.js`` under ``env -u`` for the
-    model key, with the per-turn environment of ``tool_server_env``."""
+    """The ``genealogy`` MCP server entry. ``TOOL_SERVER=stdio`` (the default):
+    ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
+    of ``tool_server_env``. ``TOOL_SERVER=http``: the shared Streamable HTTP tool server at
+    ``TOOL_SERVER_URL``, the same facts as ``X-Genealogy-*`` headers."""
+    mode = worker_env.get("TOOL_SERVER", "stdio")
+    if mode == "http":
+        return {
+            "type": "http",
+            "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
+            "headers": tool_server_headers(
+                worker_env, project_id=project_id, fs_access_token=fs_access_token, turn_id=turn_id
+            ),
+        }
+    if mode != "stdio":
+        raise ValueError(f"TOOL_SERVER must be stdio or http, not {mode!r}")
     return {
         "type": "stdio",
         "command": "env",
@@ -256,6 +300,7 @@ def build_worker_options(
     resume: str | None = None,
     session_id: str | None = None,
     fs_access_token: str | None = None,
+    turn_id: str | None = None,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
 ):
@@ -291,7 +336,11 @@ def build_worker_options(
         agents=dict(agents),
         mcp_servers=write_mcp_config(
             config_dir,
-            {"genealogy": tool_server_entry(engine_dir, env_in, project_id=project_id, fs_access_token=fs_access_token)},
+            {
+                "genealogy": tool_server_entry(
+                    engine_dir, env_in, project_id=project_id, fs_access_token=fs_access_token, turn_id=turn_id
+                )
+            },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),
         hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)]},
