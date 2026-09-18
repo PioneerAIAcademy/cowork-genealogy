@@ -1862,7 +1862,7 @@ def report_no_internal_identifiers_in_response(text_response, test):
     if not response.strip():
         pytest.skip("no assistant text")
     hits = sorted({m.group(0) for m in _INTERNAL_ID_RE.finditer(response)})
-    assert not hits, (
-        "the reply names internal identifiers the researcher should never see: "
-        + ", ".join(hits)
-    )
+    # Neutral wording on purpose: this text reaches the judge as an observation
+    # on every suite, and a verdict-shaped sentence ("should never see") reads
+    # as a rule where the judge prompt says a match is not a verdict.
+    assert not hits, "internal identifiers in the reply: " + ", ".join(hits)
