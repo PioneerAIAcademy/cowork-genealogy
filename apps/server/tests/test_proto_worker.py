@@ -431,7 +431,8 @@ def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
                        "tool_use_id": "tu-1", "session_id": "sdk-sid"})
     assert out == {}
     assert rows == [{"turn_id": "turn-1", "session_id": "sess-1", "agent_id": None, "agent_type": None,
-                     "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "decision": "allow"}]
+                     "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "decision": "allow",
+                     "tool_use_id": "tu-1"}]
 
 
 def test_the_row_carries_the_subagent_identity_and_the_path_when_the_input_has_one(tmp_path):
@@ -618,6 +619,7 @@ def _options(**overrides):
         project_id="proj-1", cwd="/project", engine_dir="/opt/genealogy/engine",
         plugin_dir="/opt/genealogy/plugin", agents={"gps-mentor": object()}, store=object(),
         config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
+        posttool_hook=lambda *a: {},
         worker_env=WORKER_ENV,
     )
     kwargs.update(overrides)
@@ -675,6 +677,20 @@ def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
     assert options.write_mcp_config(str(tmp_path), {"genealogy": {"type": "stdio"}}) == str(path)
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
     assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "stdio"}}}
+
+
+def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
+    token_file = tmp_path / "fs-token"
+    token_file.write_text("file-token\n", encoding="utf-8")
+    env = {**WORKER_ENV, "FS_ACCESS_TOKEN_FILE": str(token_file)}
+    assert options.bearer_token(env, None) == "file-token"
+    token_file.write_text("refreshed", encoding="utf-8")  # rewritten under a running worker
+    assert options.bearer_token(env, None) == "refreshed"
+    assert options.bearer_token(env, "message-token") == "message-token", "the message's token wins"
+    assert options.bearer_token(env, "") == "", "an explicit empty token is empty, not the file"
+    assert options.bearer_token({**env, "FS_ACCESS_TOKEN_FILE": str(tmp_path / "missing")}, None) == "env-token"
+    token_file.write_text("", encoding="utf-8")
+    assert options.bearer_token(env, None) == "", "an empty file is no token, not the env's"
 
 
 def test_the_token_falls_back_to_the_worker_env_then_empty():
@@ -738,6 +754,10 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     assert any(env["TMPDIR"] == m or env["TMPDIR"].startswith(m.rstrip("/") + "/") for m in mounts)
     assert env["ANTHROPIC_API_KEY"].startswith("${ANTHROPIC_API_KEY"), "never a literal in the compose file"
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
+    # The FS token is a file read per turn (tokens live an hour), never a literal or a build arg.
+    assert env["FS_ACCESS_TOKEN_FILE"] == "/run/fs-token" and "FS_ACCESS_TOKEN" not in env
+    assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
+    assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert env["GENEALOGY_PG_DSN"].startswith("postgresql://") and "@postgres:5432" in env["GENEALOGY_PG_DSN"]
     assert env["GENEALOGY_S3_ENDPOINT"] == "http://minio:9000"
     assert env["WORKER_CWD"] == "/project" == env["GENEALOGY_ANCHOR_PATH"]
@@ -774,8 +794,9 @@ def test_004_worker_only_adds_nullable_columns():
     statements = [re.sub(r"\s+", " ", s).strip() for s in body.split(";") if s.strip()]
     assert statements
     for stmt in statements:
-        assert re.match(r"ALTER TABLE (sessions|turns) ADD COLUMN IF NOT EXISTS \w+ \w+$", stmt), stmt
+        assert re.match(r"ALTER TABLE (sessions|turns|tool_calls) ADD COLUMN IF NOT EXISTS \w+ \w+$", stmt), stmt
     assert "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS sdk_session_id text" in statements
+    assert "ALTER TABLE tool_calls ADD COLUMN IF NOT EXISTS tool_use_id text" in statements
     assert {re.match(r"ALTER TABLE turns ADD COLUMN IF NOT EXISTS (\w+)", s).group(1)
             for s in statements if "ALTER TABLE turns" in s} == {
         "cost_usd", "num_turns", "duration_ms",
@@ -899,6 +920,7 @@ def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
     conn, client, opts = turn_env["conn"], turn_env["client"], turn_env["options"]
     assert client.queried == ["hello"] and client.disconnected
     assert opts["session_id"] == SID and opts["resume"] is None and opts["agents"] and opts["cwd"] == worker.WORKER_CWD
+    assert callable(opts["pretool_hook"]) and callable(opts["posttool_hook"])
     assert _turn_done_written(conn)
     update = next(sql for sql, _ in conn.executed if sql.startswith("UPDATE turns SET completed_at"))
     assert "cost_usd = COALESCE" in update and "output_tokens = COALESCE" in update
@@ -931,3 +953,57 @@ def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
         _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 28))
     assert turn_env["client"].queried == [], "nothing sent to the model"
     assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])
+
+
+# ── PostToolUse: the duration stamp (acceptance criterion 4) ──────────────────────
+
+
+def test_the_row_carries_the_tool_use_id_and_the_post_hook_finishes_it(tmp_path):
+    rows: list[dict] = []
+    hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    _call(hook, {"tool_name": "mcp__genealogy__place_search", "tool_input": {}, "tool_use_id": "toolu_1"})
+    assert rows[-1]["tool_use_id"] == "toolu_1"
+    finished: list[str] = []
+    post = options.make_posttool_hook(turn_id="turn-1", finish=finished.append)
+    assert _call(post, {"tool_name": "mcp__genealogy__place_search", "tool_input": {}, "tool_response": {},
+                        "tool_use_id": "toolu_1"}) == {}
+    assert finished == ["toolu_1"]
+
+
+def test_the_post_hook_never_raises_and_stamps_nothing_without_an_id():
+    logged: list[dict] = []
+
+    def exploding_finish(_id: str) -> None:
+        raise RuntimeError("postgres is down")
+
+    post = options.make_posttool_hook(turn_id="t", finish=exploding_finish, log=lambda **f: logged.append(f))
+    assert _call(post, {"tool_name": "x", "tool_input": {}, "tool_use_id": "toolu_2"}) == {}
+    assert logged and logged[0]["ev"] == "tool_call_finish_failed" and logged[0]["tool_name"] == "x"
+    finished: list[str] = []
+    post = options.make_posttool_hook(turn_id="t", finish=finished.append)
+    assert _call(post, "garbage") == {}  # type: ignore[arg-type]
+    assert _call(post, {"tool_name": "x"}) == {}
+    assert finished == []
+
+
+def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row():
+    conn = FakeConn()
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read", "decision": "allow",
+                                   "tool_use_id": "toolu_9"})
+    sql, params = conn.executed[-1]
+    assert "tool_use_id" in sql and params[-1] == "toolu_9"
+    worker.finish_tool_call(conn, "t", "toolu_9")
+    sql, params = conn.executed[-1]
+    assert sql.startswith("UPDATE tool_calls SET duration_ms") and "now() - ts" in sql
+    assert "duration_ms IS NULL" in sql, "the first stamp wins; a redelivery cannot overwrite a completed call"
+    assert params == ("t", "toolu_9") and conn.commits == 2
+
+
+def test_options_bind_the_post_hook_on_success_and_on_failure(tmp_path):
+    def post(*a):
+        return {}
+
+    opts = _options(config_dir=str(tmp_path), posttool_hook=post)
+    assert set(opts.hooks) == {"PreToolUse", "PostToolUse", "PostToolUseFailure"}
+    assert opts.hooks["PostToolUse"][0].hooks == [post] and opts.hooks["PostToolUseFailure"][0].hooks == [post]
+

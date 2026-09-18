@@ -72,7 +72,12 @@ SQL_DIR = HERE.parent / "sql"
 if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
-from proto.worker.options import build_worker_options, check_registration, make_pretool_hook  # noqa: E402
+from proto.worker.options import (  # noqa: E402
+    build_worker_options,
+    check_registration,
+    make_posttool_hook,
+    make_pretool_hook,
+)
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
 from proto.worker.session_store import PgSessionStore  # noqa: E402
 
@@ -248,7 +253,7 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
     with conn.cursor() as cur:
         cur.execute(
             "INSERT INTO tool_calls (turn_id, session_id, agent_id, agent_type, tool_name, "
-            "input_path, decision) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            "input_path, decision, tool_use_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 row["turn_id"],
                 row["session_id"],
@@ -257,7 +262,21 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
                 row["tool_name"],
                 row.get("input_path"),
                 row["decision"],
+                row.get("tool_use_id"),
             ),
+        )
+    conn.commit()
+
+
+def finish_tool_call(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> None:
+    """Stamp the call's row with its wall time (Postgres clock, PreToolUse insert to
+    PostToolUse update); the first stamp wins, so a redelivery's repeated id cannot
+    overwrite a completed call."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE tool_calls SET duration_ms = (EXTRACT(EPOCH FROM (now() - ts)) * 1000)::int "
+            "WHERE turn_id = %s AND tool_use_id = %s AND duration_ms IS NULL",
+            (turn_id, tool_use_id),
         )
     conn.commit()
 
@@ -443,6 +462,11 @@ async def run_turn(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log,
         )
+
+        def finish(tool_use_id: str) -> None:
+            finish_tool_call(conn, turn_id, tool_use_id)
+
+        posttool = make_posttool_hook(turn_id=turn_id, finish=finish, log=log)
         options = build_worker_options(
             project_id=project_id,
             cwd=WORKER_CWD,
@@ -452,6 +476,7 @@ async def run_turn(
             store=store,
             config_dir=config_dir,
             pretool_hook=hook,
+            posttool_hook=posttool,
             resume=resume,
             session_id=None if resume else sdk_session_id,
             fs_access_token=message.get("fs_access_token"),

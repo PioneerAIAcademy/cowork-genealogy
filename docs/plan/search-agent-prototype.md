@@ -9,7 +9,9 @@ issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the 
 against seeded rows until the worker exists); the store half of D6–8 built 2026-09-18 (PR
 #2652; `PgS3ProjectStore`, `createServer(principal)`, `hosted-stdio.js`); D9–10 and D15
 built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
-Postgres, the six agents via `agents=`); D16 built 2026-09-18 (PR #2659; the
+Postgres, the six agents via `agents=`); D14 scripted and the D17 prep built 2026-09-18
+(PR #D17PR; `make proto-kill`, `proto-seed`, `proto-audit`, `proto-token`, and
+`tool_calls.duration_ms` filled); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
@@ -1154,8 +1156,8 @@ without whichever Bedrock refuses.
   **resumed the same SDK session in a fresh CLI process** (`resumed: true`, entries
   16 → 21), 1 model turn, $0.058, 1.9 s API / 3.1 s wall, and answered “4 April 1751
   (Julian) = 15 April 1751 (Gregorian)” — the transcript, not the prompt, held that.
-  Not here: `tool_calls.duration_ms` stays NULL (one `PreToolUse` hook, no
-  `PostToolUse`); the kill-resume loop is D14. Both halves of the registration
+  `tool_calls.duration_ms` is filled since 2026-09-18 (the D15 note); the kill-resume
+  loop is D14, scripted the same day. Both halves of the registration
   precondition are literals (`EXPECTED_AGENTS`, `EXPECTED_SKILLS = 28`), never a count
   of the directory the SDK loads from — an image shipping a short plugin would
   otherwise expect exactly what it shipped — and the CLI's `system/init` must arrive
@@ -1248,6 +1250,20 @@ without whichever Bedrock refuses.
   end of D15, and their receipt-time counterpart test, are cut (2026-09-10, P1:
   re-decide); the counterpart was the reject → repair → identical-retry regression
   replayed from the three corpus runs named in days 6–8, which needed no live agent.
+  **Done 2026-09-18 (PR #D17PR) as `make proto-kill` — the acceptance script's `--kill`
+  arm on a real turn, not the mock agent.** The D9–10 review's hand kill had already
+  shown the mechanism, P1 had already measured what a killed delegation does on resume
+  (re-run), and the real turn costs $0.12 — so the mock's thirty lines would have bought
+  a slower proof of a settled question. The arm posts a `place_search` question, polls
+  `tool_calls` for the call's PreToolUse row, then `docker kill` + `docker start` on the
+  worker (a kill counts as a manual stop, so `unless-stopped` does not bring it back;
+  the arm starts it). **Measured 2026-09-18, 9/9:** the shim saw `connection_reset` on
+  its in-flight POST and requeued with backoff 0; the redelivery (receive count 2)
+  resumed the same SDK session (`session_entries` 11 → 24), **re-ran `place_search`** —
+  the killed attempt's row has no duration, the resumed call's 1,310 ms — and answered
+  “Nauvoo, Hancock, Illinois, United States” 28 s after the kill, $0.117 for the turn.
+  The bearer was the desktop login's token refreshed through the engine
+  (`dev/fs-token.ts`): the first FamilySearch call through the worker.
 - **D15** **Pass the six agents via `agents=`, and stop calling `stage_plugin_agents` from
   the prototype worker.**
   Probed live with the five bodies then present: all register under **bare** names with
@@ -1293,7 +1309,10 @@ without whichever Bedrock refuses.
   `ceiling_kills` table, no two-direction proof — see the step model for why that
   scaffolding was cut.
   **Done 2026-09-18 with the D9–10 worker (the `agents=` item, the precondition and
-  the deny-and-log hook; the duration column is still NULL).** The worker parses
+  the deny-and-log hook); `tool_calls.duration_ms` filled the same day (PR #D17PR): a
+  `PostToolUse` / `PostToolUseFailure` hook stamps the row the `PreToolUse` hook wrote,
+  keyed on `tool_use_id`, Postgres clock, first stamp wins; a call in flight at a kill
+  keeps NULL, which `make proto-audit` reports as its own count.** The worker parses
   `plugin/agents/*.md` once at start (`proto/worker/plugin_agents.py`) and passes them
   as `agents=`; `stage_plugin_agents` is not called. `check_registration`
   (`proto/worker/options.py`) reads `get_server_info()` after `connect()` and before
@@ -1366,6 +1385,33 @@ without whichever Bedrock refuses.
   through `extraction_append`, so it still cannot time this kill. **Assert P1's `list_subkeys` criterion here too:** the
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
+  **Prep done 2026-09-18 (PR #D17PR); the run is four commands and a browser.**
+  1. `make proto-up` — builds the engine and the stack. `proto/env.sh` exports the model
+     key and writes the FamilySearch token, refreshed from the desktop login through
+     `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
+     turn**; its status line must say both are set. The token lives an hour: run
+     `make proto-token` before any turn past the fifty-minute mark (no restart, no lost
+     turn).
+  2. `make proto-seed FIXTURE=bagley-father-1884` — the fixture's `starting-research.json`
+     and tree into the Postgres/S3 store through `PgS3ProjectStore`, and a session on
+     that project; prints the session id and the research question (any e2e fixture or
+     unit scenario name works; this one is single-record, so the delegation comes early).
+  3. `make web-proto`, open http://127.0.0.1:5173, pick the session by title, post the
+     research question. Watch for `task_started` naming `record-extractor`, then a
+     `tool_use` chip for `extraction_append`; then `docker kill proto-worker && docker
+     start proto-worker`. The shim requeues within a second and the redelivery resumes.
+  4. `make proto-audit SESSION=<id>` — criteria 3 and 4 as one table.
+  **Reading the run.** Criterion 1 holds when the killed turn's `turns` row shows
+  `receive_count` ≥ 2 and `completed_at`. Criterion 2 when the reply continues the
+  conversation and `research_query` afterwards shows the extraction the delegation was
+  doing, **once** — the delegation is re-run (P1), so the killed attempt's partial write
+  must not appear beside the second's. Criterion 3 is the audit's PASS. Criterion 4 is
+  the audit's longest call under the ceiling, with **one** allowed call without a
+  duration expected (the one in flight at the kill). **What voids the run:** the kill
+  landing before `task_started` (a plain turn kill, D14 again — post the next prompt and
+  retry); a FamilySearch tool answering with the reconnect instruction (the token
+  expired — `make proto-token`, new session); `receive_count` 3 (the worker did not come
+  back before the second redelivery — `docker start` it); more than one worker kill.
 - **D18** Second run for the measurement: step durations, cache-read tokens, cost.
   Plus two fixtures run both sides for the quality eyeball — four runs, so ~$30 at the
   median and ~$60 at p90; half a day.

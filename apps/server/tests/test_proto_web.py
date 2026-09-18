@@ -76,9 +76,9 @@ class FakeStore:
         rows.append(EventRow(seq=seq, kind=kind, payload=payload, ts=T0 + timedelta(seconds=seq)))
         return seq
 
-    async def create_session(self, title: str, model: str) -> SessionRow:
+    async def create_session(self, title: str, model: str, project_id: str | None = None) -> SessionRow:
         n = len(self.sessions) + 1
-        row = SessionRow(f"sess_{n}", f"proj_{n}", title, model, T0, T0)
+        row = SessionRow(f"sess_{n}", project_id or f"proj_{n}", title, model, T0, T0)
         self.sessions[row.session_id] = row
         return row
 
@@ -500,3 +500,17 @@ def test_003_web_only_adds_not_null_default_columns_to_sessions():
         assert re.match(r"ALTER TABLE sessions ADD COLUMN IF NOT EXISTS \w+ .*NOT NULL DEFAULT", stmt), stmt
     columns = {re.match(r"ALTER TABLE sessions ADD COLUMN IF NOT EXISTS (\w+)", s).group(1) for s in statements}
     assert columns == {"title", "model", "updated_at"}
+
+
+async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
+    # proto/seed.py loads a fixture under a project id, then opens the session on it.
+    store, queue = FakeStore(), FakeQueue()
+    async with make_client(store, queue) as c:
+        r = await c.post("/api/sessions", json={"title": "Bagley", "project_id": "proj_bagley-father-1884_ab12cd"})
+        assert r.status_code == 200
+        assert store.sessions[r.json()["id"]].project_id == "proj_bagley-father-1884_ab12cd"
+        r = await c.post("/api/sessions", json={"title": "x"})
+        assert store.sessions[r.json()["id"]].project_id.startswith("proj_")
+        for bad in ("p/q", "", "..", "/p", "p q", "-p"):
+            assert (await c.post("/api/sessions", json={"project_id": bad})).status_code == 422, repr(bad)
+
