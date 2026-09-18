@@ -74,7 +74,7 @@ falsely blocking installs.
 
 ### Tool list (`tools`)
 
-Every tool registered in `src/index.ts`'s `ListTools` handler MUST appear
+Every tool registered in `src/server.ts`'s `ListTools` handler MUST appear
 in `manifest.tools`, and no extras.
 
 **This spec deliberately does not enumerate the set.** It used to, and the
@@ -86,7 +86,7 @@ snapshot of it:
 - `tests/packaging/manifest.test.ts` asserts `manifest.tools` == `allToolSchemas`
   (`src/tool-schemas.ts`), both directions.
 - The same file asserts every registered tool has a dispatch case in
-  `src/index.ts` — advertised-but-undispatchable is the failure the
+  `src/server.ts` — advertised-but-undispatchable is the failure the
   list-equality check alone cannot see.
 
 For the current set, read `allToolSchemas`, or `README.md`'s tables for the
@@ -128,9 +128,14 @@ running `npm ci --omit=dev` against it — never by mutating the developer's
 1. `cd packages/engine/mcp-server && npm install && npm run build` — compile to `build/`.
 2. Stage a temp dir (`mktemp -d`): copy `manifest.json`, `package.json`,
    `package-lock.json`, `build/`, `config/`, `.mcpbignore`.
-3. `npm ci --omit=dev --ignore-scripts` inside the stage — production
-   `node_modules` only (`--ignore-scripts` skips dependency lifecycle
-   scripts for a deterministic, side-effect-free install).
+3. `npm ci --omit=dev --omit=optional --ignore-scripts` inside the stage —
+   production `node_modules` only: no devDependencies, and no
+   optionalDependencies either (`pg`, `@aws-sdk/client-s3` and
+   `@smithy/node-http-handler` are the hosted `PgS3ProjectStore`'s clients; the
+   desktop server never loads that module). `--ignore-scripts` skips dependency
+   lifecycle scripts for a deterministic, side-effect-free install.
+   `scripts/verify-mcpb.sh` forbids all three optional packages in the packed
+   bundle.
 4. `npx mcpb validate <stage>` — fails the build on a non-conformant
    manifest (`mcpb pack` also validates).
 5. `npx mcpb pack <stage> releases/genealogy-mcp.mcpb`.
@@ -174,7 +179,8 @@ Two layers, deliberately separate:
   changes — or `<base>+dev` when git cannot answer (no git on PATH, no `.git`, no commits). The
   helper is `scripts/build-stamp.mjs`; it never throws. `npm run build` writes the stamp to
   `build/build-info.json` (`scripts/write-build-info.mjs`), the running server reads it back
-  (`src/utils/build-info.ts`, `dev` fallback when absent) and advertises it as `serverInfo.version`
+  (`src/utils/build-info.ts`, `dev` fallback when absent), advertises it as `serverInfo.version`
+  (`createServer` in `src/server.ts` — there is no version literal left to keep in sync)
   and as `buildId` on every return branch of `project_context` and `auth_status`, and
   `scripts/build-mcpb.mjs` rewrites the **staged** `manifest.json` and `package.json` to the same
   string before `mcpb validate` (which accepts build metadata) and `mcpb pack`. So inside a packed

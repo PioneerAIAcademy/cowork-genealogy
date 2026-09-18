@@ -50,6 +50,9 @@ forbid vitest.config.ts
 forbid node_modules/typescript
 forbid node_modules/vitest
 forbid node_modules/@anthropic-ai/mcpb
+forbid node_modules/pg
+forbid node_modules/@aws-sdk/client-s3
+forbid node_modules/@smithy/node-http-handler
 
 if [ "$fail" -ne 0 ]; then
   echo "Bundle content checks FAILED." >&2

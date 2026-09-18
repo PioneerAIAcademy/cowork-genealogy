@@ -1,11 +1,20 @@
 /**
- * smoke-stdio — drive the BUILT server (build/index.js) over the real stdio
- * transport and call the tools that need no network, so the dispatch chain in
- * src/index.ts — which no vitest file imports — is exercised end to end: the
- * principal binding, the ProjectStore-backed writers, and the two tools the
- * e2e corpus never calls (`project_create`, `tree_forget`).
+ * smoke-stdio — drive a BUILT stdio entrypoint over the real transport and call
+ * the tools that need no network, so the dispatch chain in src/server.ts —
+ * which no vitest file imports — is exercised end to end: the principal
+ * binding, the ProjectStore-backed writers, the sidecar read, and the two tools
+ * the e2e corpus never calls (`project_create`, `tree_forget`).
  *
- *   npm run build && npx tsx dev/smoke-stdio.ts
+ *   npm run build && npx tsx dev/smoke-stdio.ts            # build/index.js, file backend
+ *   make engine-smoke-stdio-pg                             # build/hosted-stdio.js, Postgres + minio
+ *
+ *   SMOKE_ENTRY         the entrypoint to fork (default build/index.js)
+ *   SMOKE_PROJECT_PATH  the projectPath every call passes (default: a fresh temp
+ *                       dir, removed afterwards; the hosted entrypoint wants its
+ *                       anchor, /project, which is not a directory here at all)
+ *   GENEALOGY_*, FS_ACCESS_TOKEN, WIKI_API_URL, POP_STATS_URL, OPENROUTER_*
+ *                       passed through to the child (the SDK's transport forwards
+ *                       only a fixed safe list of variables by default)
  *
  * Exit 0 with one line per call on success; exit 1 naming the first failure.
  * No FamilySearch credentials are needed — `auth_status` merely reports.
@@ -16,12 +25,24 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const projectPath = await mkdtemp(join(tmpdir(), "smoke-stdio-"));
+const entry = process.env.SMOKE_ENTRY ?? "build/index.js";
+const requestedPath = process.env.SMOKE_PROJECT_PATH;
+const projectPath = requestedPath ?? (await mkdtemp(join(tmpdir(), "smoke-stdio-")));
+const ownsProjectDir = requestedPath === undefined;
+
+const PASS_THROUGH = /^(GENEALOGY_|OPENROUTER_|FS_ACCESS_TOKEN$|WIKI_API_URL$|POP_STATS_URL$)/;
+const childEnv: Record<string, string> = {};
+for (const [key, value] of Object.entries(process.env)) {
+  if (PASS_THROUGH.test(key) && value !== undefined) childEnv[key] = value;
+}
+
+console.log(`entry ${entry}; projectPath ${projectPath}`);
 const client = new Client({ name: "smoke-stdio", version: "0" });
 const transport = new StdioClientTransport({
   command: "node",
-  args: ["build/index.js"],
-  stderr: "pipe",
+  args: [entry],
+  env: childEnv,
+  stderr: "inherit",
 });
 
 let failures = 0;
@@ -112,6 +133,46 @@ try {
   });
   report("tree_forget (dry run)", !dry.isError && dry.body.ok === true, JSON.stringify(dry.body).slice(0, 200));
 
+  // A verdict through research_append's composite path writes the pointer entry
+  // AND its `evaluations/<…>.json` body; sidecar_read is the one tool that
+  // reads that body back.
+  const appended = await call("research_append", {
+    projectPath,
+    section: "evaluations",
+    op: "append",
+    entry: {
+      focus: "conclusion-readiness",
+      target_id: "project",
+      target_type: "project",
+      verdict: "consider_addressing",
+      superseded_by: null,
+    },
+    verdict: { strengths: ["smoke"], must_address: [] },
+  });
+  report(
+    "research_append (evaluations + verdict)",
+    !appended.isError && appended.body.ok === true,
+    JSON.stringify(appended.body).slice(0, 200),
+  );
+
+  const evaluations = await call("research_query", { projectPath, section: "evaluations" });
+  const verdictRef: unknown = evaluations.body?.items?.[0]?.file_path;
+  const sidecar =
+    typeof verdictRef === "string"
+      ? await call("sidecar_read", { projectPath, ref: verdictRef })
+      : { isError: true, body: { error: `no evaluations[0].file_path: ${JSON.stringify(evaluations.body).slice(0, 160)}` } };
+  let verdictBody: any = null;
+  try {
+    verdictBody = typeof sidecar.body.content === "string" ? JSON.parse(sidecar.body.content) : null;
+  } catch {
+    verdictBody = null;
+  }
+  report(
+    "sidecar_read",
+    !sidecar.isError && sidecar.body.ok === true && verdictBody?.strengths?.[0] === "smoke",
+    typeof verdictRef === "string" ? `${verdictRef}: ${JSON.stringify(sidecar.body).slice(0, 160)}` : JSON.stringify(sidecar.body).slice(0, 200),
+  );
+
   const revalid = await call("validate_research_schema", { projectPath });
   report("validate_research_schema (after writes)", !revalid.isError && revalid.body.valid === true, JSON.stringify(revalid.body).slice(0, 200));
 
@@ -121,7 +182,7 @@ try {
   report("transport", false, error instanceof Error ? error.message : String(error));
 } finally {
   await client.close().catch(() => {});
-  await rm(projectPath, { recursive: true, force: true });
+  if (ownsProjectDir) await rm(projectPath, { recursive: true, force: true });
 }
 
 if (failures > 0) {
