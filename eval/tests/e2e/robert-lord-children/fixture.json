@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 9, hint-samples.csv row 332, flags adds_son/adds_daughter/adds_marriage, confidence 3). Draft transcribed from the 1911 England and Wales census household; unverified. Turns on whether the tree's 'Robert Lord' is Robert Brierley."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 9, hint-samples.csv row 332, flags adds_son/adds_daughter/adds_marriage, confidence 3). Adjudicated 2026-09-16: false match. The 1911 Rochdale census Robert Brierley (b. 1866) is a different man from tree person Robert Lord (GSPY-NFZ, b. 1858) — 8-year birth gap, different father (Robert Brierley vs Abel Brierley), and Robert Lord found separately in 1901 as Single (ark:/61903/1:1:X9LD-V5K)."
 }
