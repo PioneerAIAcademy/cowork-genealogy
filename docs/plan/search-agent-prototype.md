@@ -11,7 +11,9 @@ against seeded rows until the worker exists); the store half of D6–8 built 202
 built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
 Postgres, the six agents via `agents=`); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
-every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
+every tool but the four auth exclusions, the compose `tools` service); per-request store
+scoping over HTTP built 2026-09-18 (PR pending; the `X-Genealogy-Project-Id` header,
+D16's open half); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -1161,10 +1163,14 @@ without whichever Bedrock refuses.
   otherwise expect exactly what it shipped — and the CLI's `system/init` must arrive
   and declare the chosen id, or the turn fails (the assertion would otherwise fail
   open). `TOOL_SERVER=http` (`TOOL_SERVER=http make proto-turn`) points the CLI at
-  D16's `tools` service under its contract — `Authorization: Bearer <patron token>`,
-  nothing else on the request is read — so a turn there runs the project tools against
-  that service's file backend, not the Postgres store; the default stays `stdio` until
-  per-request store scoping over HTTP exists, the open half of D16's note.
+  D16's `tools` service under its contract — two headers, `Authorization: Bearer <patron
+  token>` → the principal and `X-Genealogy-Project-Id` → the store; nothing else on the
+  request is read. Since 2026-09-18 (PR pending) that header binds a `PgS3ProjectStore`
+  per request through an `AsyncLocalStorage` in `src/store/project-store.ts`, so a turn
+  there runs the project tools against the same Postgres/S3 store as the worker; an
+  unbound store that throws is installed as the process store, so nothing falls through
+  to the file backend. The default stays `stdio` pending the lead's call — flipping it
+  retires the per-turn fork the cost figures here were measured on.
   **Re-measured 2026-09-18 after the second review, both modes 14/14:** stdio, turn 1
   $0.137 / turn 2 $0.058, `entries_seq_before` 0 → 16, output tokens 320 + 28 = the
   session's 348 (the check that replaced the tautology); http — the first turn through
@@ -1349,14 +1355,18 @@ without whichever Bedrock refuses.
   per-request principal and never `LOCAL`; non-POST on `/mcp` is a 405 from the entrypoint
   because the SDK transport would otherwise hold a GET open as an SSE stream. `src/index.ts`
   keeps stdio and every tool. The smoke, `dev/smoke-http.ts` (`make engine-smoke-http`, or
-  `BASE=http://127.0.0.1:8787 PROJECT_ROOT=/projects` against compose), calls every
-  advertised tool but the four named exclusions and fails if any tool is neither called nor
-  excluded; `dev/smoke-stdio.ts` runs the offline subset through the same
+  `BASE=http://127.0.0.1:8787` against compose, `SMOKE_PROJECT_ID=` to pin the id), calls
+  every advertised tool but the four named exclusions and fails if any tool is neither
+  called nor excluded; `dev/smoke-stdio.ts` runs the offline subset through the same
   `dev/smoke-calls.ts` plan (and `make engine-smoke-stdio-pg` still drives it through
   `build/hosted-stdio.js`). Compose gained the `tools` service (`apps/server/proto/tools/`,
-  `node:22-slim`, read-only, loopback `:8787`, no `depends_on`, file backend today —
-  per-request store scoping for a shared HTTP server is the D9–10 worker half's question);
-  `proto-up-core` does not gate on it. The `turn_id` header plumbing stayed cut.
+  `node:22-slim`, read-only, loopback `:8787`; gated on `postgres` and `minio` since
+  2026-09-18 (PR pending), when per-request store scoping landed: the
+  `X-Genealogy-Project-Id` header binds a `PgS3ProjectStore` per request through an
+  `AsyncLocalStorage` in `src/store/project-store.ts`, an unbound store that throws is
+  the process store so nothing falls through to the file backend, and the service runs
+  on the same Postgres/S3 store as the worker); `proto-up-core` does not gate on it. The
+  `turn_id` header plumbing stayed cut.
 - **D17** Real run, driven **interactively** (not `--autonomous`), killed **while a delegated
   `extraction_append` is in flight inside `@plugin:record-extractor`** — which puts a
   delegation in flight, the only thing criterion 1 requires. Six skills name an agent, and `person-evidence` has delegated to its own since

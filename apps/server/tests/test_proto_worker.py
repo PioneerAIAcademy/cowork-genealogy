@@ -21,7 +21,8 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
   completing it; a short registration is refused before anything is sent to the model;
 - the option set: cwd, setting_sources=[], agents=, the tool server's per-turn env in a
   0600 mcp.json (never argv) under ``env -u ANTHROPIC_API_KEY``, session_id/resume
-  exactly one, the eager store flush, the model pin per provider;
+  exactly one, the eager store flush, the model pin per provider; the ``TOOL_SERVER=http``
+  arm's two per-turn headers (project id always, bearer only when there is a token);
 - the container: tmpfs for TMPDIR, the key passed through (never a literal, never baked
   into the image), /project present, no tokens.json, optional deps kept, the SDK
   pinned, 004 additive only.
@@ -785,19 +786,37 @@ def test_004_worker_only_adds_nullable_columns():
         "token counts and the seq mark are bigint"
 
 
-def test_tool_server_http_is_the_d16_service_with_the_bearer_as_authorization(tmp_path):
-    # PR #2659's contract: `Authorization: Bearer <patron token>` is the one header the
-    # entrypoint reads, and the default URL is the compose `tools` service.
+def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_path):
+    # The shared server's contract is two per-request headers: `Authorization: Bearer
+    # <patron token>` -> principal, `X-Genealogy-Project-Id` -> the request's store. The
+    # project header is always sent; the default URL is the compose `tools` service.
     env = {**WORKER_ENV, "TOOL_SERVER": "http"}
     server = _server(_options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env))
-    assert server == {"type": "http", "url": "http://tools:8787/mcp", "headers": {"Authorization": "Bearer turn-token"}}
+    assert server == {
+        "type": "http",
+        "url": "http://tools:8787/mcp",
+        "headers": {"Authorization": "Bearer turn-token", "X-Genealogy-Project-Id": "proj-1"},
+    }
     custom = _server(_options(
         config_dir=str(tmp_path), fs_access_token="", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
     assert custom["url"] == "http://127.0.0.1:8787/mcp"
-    assert custom["headers"] == {}, "an empty bearer sends no header, not a malformed `Bearer `"
+    assert custom["headers"] == {"X-Genealogy-Project-Id": "proj-1"}, \
+        "an empty bearer sends only the project header, not a malformed `Bearer `"
     fallback = _server(_options(config_dir=str(tmp_path), worker_env=env))
-    assert fallback["headers"] == {"Authorization": "Bearer env-token"}, "the worker env's token when the message has none"
+    assert fallback["headers"] == {"Authorization": "Bearer env-token", "X-Genealogy-Project-Id": "proj-1"}, \
+        "the worker env's token when the message has none"
+    other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", fs_access_token="t", worker_env=env))
+    assert other["headers"]["X-Genealogy-Project-Id"] == "proj-2", "the header is the turn's id, not a constant"
+    assert "GENEALOGY_PROJECT_ID" not in json.dumps(server), "over http the id travels as a header, never as env"
+
+
+def test_tool_server_headers_require_a_project_id():
+    # The keyword is required so no caller can build the http entry without the id and
+    # ship a request the server binds to no store.
+    with pytest.raises(TypeError):
+        options.tool_server_headers(WORKER_ENV, fs_access_token="t")  # type: ignore[call-arg]
+    assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
 
 
 def test_tool_server_defaults_to_stdio_and_refuses_an_unknown_mode(tmp_path):
