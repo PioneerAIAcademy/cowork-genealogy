@@ -49,8 +49,8 @@ and drops the one the 202's `seq` names; everything else relays.
 - **Self-contained** (`make proto-drive`) — **the mode the 17/17 acceptance ran in.**
   `drive.py --embedded-pg` starts a pip-installed PostgreSQL 16 (`pgserver`, in the
   `proto` dependency group — never installed by `uv sync` or CI; wheels exist for macOS
-  arm64/x86_64 and Linux x86_64, **not** Linux aarch64), applies the schema and runs the
-  tier in-process with **no queue**.
+  arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), applies the
+  schema and runs the tier in-process with **no queue**.
 - **Compose** (`make proto-up`): the `web` service on `127.0.0.1:8085`, `QUEUE_URL` pointed
   at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies
   `../sql/*.sql` (all idempotent), so a volume that predates `003_web.sql` gets its
