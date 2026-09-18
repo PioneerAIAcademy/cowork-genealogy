@@ -494,10 +494,21 @@ export class PgS3ProjectStore implements ProjectStore {
     if (route.kind === "document") {
       throw new Error(`'${rel}' is a JSON document; appendText is for blobs`);
     }
-    await this.touchProject();
-    const existing = await this.indexRow(rel);
-    const head = existing ? await this.getObject(existing.s3_key, rel) : new Uint8Array();
-    await this.putObjectIndexed(rel, route, Buffer.concat([head, Buffer.from(text, "utf-8")]));
+    // A read-modify-write: two overlapping appends keep one unless they are
+    // serialised, and rank_search_matches appends its score log with no lock
+    // of its own. Outside a transaction this takes the project's queue and
+    // advisory lock the way withTransaction does — the file backend's
+    // appendFile is atomic per call, so the conformance suite's concurrent
+    // append case holds on both. Inside a caller's transaction the caller's
+    // lock already serialises it.
+    const body = async (): Promise<void> => {
+      await this.touchProject();
+      const existing = await this.indexRow(rel);
+      const head = existing ? await this.getObject(existing.s3_key, rel) : new Uint8Array();
+      await this.putObjectIndexed(rel, route, Buffer.concat([head, Buffer.from(text, "utf-8")]));
+    };
+    if (this.tx()) return body();
+    await this.backend.queue(this.projectId).run(() => this.runTransaction(body, true));
   }
 
   /** The index row goes first (so a reader never sees a row whose object is
