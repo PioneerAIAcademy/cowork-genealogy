@@ -6,6 +6,9 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import stat
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -120,3 +123,42 @@ def test_the_repos_own_fixtures_plan_in_both_layouts():
     assert seed.fixture_meta(seed.resolve_fixture("bagley-father-1884"))["researcher_question"].startswith("Who was the father")
     scenario = dict(seed.plan_files(seed.resolve_fixture("flynn-first-plan")))
     assert "research.json" in scenario and "tree.gedcomx.json" in scenario and "README.md" not in scenario
+
+
+# ── env.sh: the token file's mode, and what a failed refresh leaves behind ────────
+
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+@pytest.mark.skipif(shutil.which("sh") is None, reason="env.sh needs a POSIX shell")
+def test_env_sh_keeps_the_token_file_0600_and_a_failed_refresh_keeps_the_previous_token(tmp_path):
+    token_file = tmp_path / "fs-token"
+    token_file.write_text("", encoding="utf-8")
+    token_file.chmod(0o644)  # what proto-up-core's empty-file arm leaves under the default umask
+    # PATH without npx: the engine refresh fails the way a missing login or a blip would.
+    base_env = {"PATH": "/usr/bin:/bin", "HOME": str(tmp_path), "PROTO_TOKEN_FILE": str(token_file),
+                "ANTHROPIC_API_KEY": "k"}
+
+    def source(**extra: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["sh", "-c", ". apps/server/proto/env.sh"], cwd=ROOT, env={**base_env, **extra},
+                              capture_output=True, text=True, encoding="utf-8")
+
+    r = source(FS_ACCESS_TOKEN="tok-1")
+    assert r.returncode == 0 and "FS token written" in r.stderr, r.stderr
+    assert token_file.read_text(encoding="utf-8") == "tok-1"
+    assert stat.S_IMODE(token_file.stat().st_mode) == 0o600, "the mode is set on every run, not only at creation"
+    assert "tok-1" not in r.stdout + r.stderr, "never echoed"
+    # No caller token and no refresh: the previous token survives, and the status says so.
+    r = source()
+    assert r.returncode == 0 and "refresh FAILED" in r.stderr and "kept" in r.stderr, r.stderr
+    assert token_file.read_text(encoding="utf-8") == "tok-1"
+    # The empty directory an early compose `up` leaves in the file's place is replaced.
+    token_file.unlink()
+    token_file.mkdir()
+    r = source(FS_ACCESS_TOKEN="tok-2")
+    assert token_file.is_file() and token_file.read_text(encoding="utf-8") == "tok-2", r.stderr
+    assert stat.S_IMODE(token_file.stat().st_mode) == 0o600
+    # Nothing to refresh and nothing kept: UNSET.
+    token_file.write_text("", encoding="utf-8")
+    assert "UNSET" in source().stderr
