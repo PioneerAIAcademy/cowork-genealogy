@@ -227,6 +227,8 @@ class LocalProvider(SandboxProvider):
             # write_file actually put the file. E2B needs no override — there
             # the path is real inside the microVM.
             "AGENT_SECRETS_PATH": str(self._abs_secrets(sandbox_id)),
+            "ANTHROPIC_BASE_URL": f"{settings.public_url}/api/anthropic-proxy",
+            "_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL": "1",
         }
         env.pop("ANTHROPIC_API_KEY", None)
         log = open(self._root(sandbox_id) / "ws.log", "ab")
