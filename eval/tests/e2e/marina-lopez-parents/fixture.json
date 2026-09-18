@@ -1,13 +1,13 @@
 {
   "id": "marina-lopez-parents",
-  "name": "Marina López — parents Manuel López and Carmen Nelia Casado (1927 marriage)",
+  "name": "Marina López — parents Manuel López G. and Carmen Nelia Casado (1937 marriage)",
   "genre": "record-hint",
   "source_pid": "P874-7BV",
   "captured": "2026-09-07",
   "researcher_question": "Who were the parents of Marina López, wife of Juan de Dios Pichardo Chalas of San José de Ocoa, and when was she born and married?",
   "tags": {
     "question_type": "parents",
-    "era": "1920s",
+    "era": "1930s",
     "geography": "DO"
   },
   "model": {
@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 8, hint-samples.csv row 283, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). Draft transcribed from a 1927 Dominican civil marriage entry; unverified. Four separable claims ride on the one record."
+  "notes": "Record-hint fixture (filtered-list-samples-2.csv row 8, hint-samples.csv row 283, flags adds_father/adds_mother/adds_birth/adds_marriage, confidence 3). RESOLVED 2026-09-15 to outcome 2: the hint's parents are supported, but its dates are index artifacts. The register reads 7 Oct 1937, not the indexed 1927, and both of the index's birth years were derived from that wrong year. Identification rests on cédula 159 serie 13 and the mother Fidelina Chalas appearing on both the marriage act and Juan de Dios's 1978 death act (ark:/61903/1:1:66H3-5D6G), not on the Manna/Marina name. The draft's f3 (b. about 1903) was dropped: no record states her birth year, so the researcher_question's 'when was she born' clause is deliberately unanswered."
 }

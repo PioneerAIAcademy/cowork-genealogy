@@ -165,6 +165,63 @@ def test_execution_overrides():
     assert spec.execution == {"max_turns": 40, "max_wall_clock_seconds": 600}
 
 
+def _with_expected_classifications(matchers):
+    """Return a minimal record-extraction test dict with expected_classifications."""
+    return {
+        "test": {
+            "id": "ut_loader_003",
+            "skill": "record-extraction",
+            "name": "classifications loader smoke",
+            "type": "positive",
+            "description": "Verifies loader accepts expected_classifications.",
+            "tags": [],
+        },
+        "input": {"user_message": "extract", "scenario": None},
+        "expected_classifications": matchers,
+        "judge_context": [],
+    }
+
+
+def test_accepts_record_role_list():
+    """Schema accepts record_role as a list of strings (Finding #1 from review)."""
+    spec = load_test_from_dict(
+        _with_expected_classifications(
+            [{"record_role": ["child_1", "son_1"], "fact_type": "birth"}]
+        )
+    )
+    assert isinstance(spec, TestSpec)
+
+
+def test_accepts_record_role_string():
+    """Schema still accepts record_role as a single string."""
+    spec = load_test_from_dict(
+        _with_expected_classifications(
+            [{"record_role": "wife", "fact_type": "name"}]
+        )
+    )
+    assert isinstance(spec, TestSpec)
+
+
+def test_rejects_record_role_invalid_pattern():
+    """Schema rejects record_role values that don't match ^[a-z][a-z0-9_]*$."""
+    with pytest.raises(InvalidTestError):
+        load_test_from_dict(
+            _with_expected_classifications(
+                [{"record_role": "_", "fact_type": "name"}]
+            )
+        )
+
+
+def test_rejects_record_role_list_with_invalid_item():
+    """Schema rejects a list where any item violates the pattern."""
+    with pytest.raises(InvalidTestError):
+        load_test_from_dict(
+            _with_expected_classifications(
+                [{"record_role": ["child_1", "_"], "fact_type": "name"}]
+            )
+        )
+
+
 def test_load_from_path_with_nonexistent_file_raises():
     with pytest.raises(InvalidTestError):
         load_test(Path("/tmp/does-not-exist-xyzzy.json"))

@@ -7,8 +7,19 @@ The fake mirrors real-SDK shapes the live smoke can't pin in CI: `read(format=
 `list`/`get_info` return **naive** datetimes (protobuf ToDatetime); a class-level
 FS store keyed by sandbox_id mimics pause/resume persistence (pause keeps it, kill
 drops it, connect re-attaches); a connect counter verifies the handle cache.
+
+`_FakeAsyncSandbox.image_files` models what the TEMPLATE bakes: every sandbox
+create() mints starts with those files, which is how the baked-provenance
+read-back is exercised without predicting the generated sandbox id (the id
+counter `_n` is module-lifetime and is NOT reset by the fixture, so a test that
+seeded `stores["sbx_fake_1"]` would pass in file order and break under -k).
 """
+import asyncio
+import json
+import logging
+import subprocess
 from datetime import datetime, timezone
+from pathlib import Path
 from types import SimpleNamespace
 
 import e2b
@@ -17,7 +28,7 @@ from e2b.exceptions import FileNotFoundException, SandboxNotFoundException
 from e2b.sandbox.filesystem.filesystem import FileType
 
 from app.sandbox.base import SandboxSpec, SandboxState
-from app.sandbox.e2b import _RUNNING_TIMEOUT_S, E2BProvider
+from app.sandbox.e2b import _BUILD_INFO_PATH, _RUNNING_TIMEOUT_S, E2BProvider
 
 
 def _naive_now():
@@ -26,10 +37,13 @@ def _naive_now():
 
 
 class _FakeFiles:
+    reads: list[str] = []  # every path read, across all handles — order preserved
+
     def __init__(self, store: dict[str, bytes]):
         self.store = store
 
     async def read(self, path, format="text"):
+        _FakeFiles.reads.append(path)
         if path not in self.store:
             raise FileNotFoundException(path)
         data = self.store[path]
@@ -93,12 +107,15 @@ class _FakeAsyncSandbox:
     created: list[dict] = []
     connects = 0
     _n = [0]
+    image_files: dict[str, bytes] = {}  # what the template bakes into every new sandbox
 
     @classmethod
     async def create(cls, **kwargs):
         cls.created.append(kwargs)
         cls._n[0] += 1
-        return _FakeHandle(f"sbx_fake_{cls._n[0]}")
+        handle = _FakeHandle(f"sbx_fake_{cls._n[0]}")
+        handle.files.store.update(cls.image_files)
+        return handle
 
     @classmethod
     async def connect(cls, sandbox_id, **kwargs):
@@ -113,6 +130,8 @@ def provider(monkeypatch):
     _FakeHandle.stores.clear()
     _FakeAsyncSandbox.created.clear()
     _FakeAsyncSandbox.connects = 0
+    _FakeAsyncSandbox.image_files = {}
+    _FakeFiles.reads.clear()
     monkeypatch.setattr(e2b, "AsyncSandbox", _FakeAsyncSandbox)
     return E2BProvider(api_key="fake-key", template="genealogy-agent")
 
@@ -211,3 +230,163 @@ async def test_resume_of_gone_sandbox_returns_missing_not_raises(provider):
     # writes to a MISSING handle fail with a clear error, not an opaque AttributeError
     with pytest.raises(RuntimeError, match="MISSING"):
         await gone.write_file("/x", b"y")
+
+
+# ── Baked image provenance (#1489) ────────────────────────────────────────────
+# The template is referenced by a stable name and carries no version, so the only
+# way to ask a running system which build a session is on is to read the file the
+# image bakes. These pin the read-back; /api/health's use of it is in
+# test_health.py.
+
+def _info(commit: str, dirty: bool = False) -> bytes:
+    return json.dumps({"commit": commit, "dirty": dirty, "built_at": "2026-09-16T00:00:00Z"}).encode()
+
+
+async def test_create_reads_baked_image_provenance(provider):
+    assert provider.sandbox_image_commit is None          # nothing created yet
+    _FakeAsyncSandbox.image_files = {_BUILD_INFO_PATH: _info("abc123")}
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123"
+    assert _BUILD_INFO_PATH in _FakeFiles.reads           # read from the image, not guessed
+
+
+async def test_dirty_image_build_is_marked(provider):
+    """A clean sha claimed for an image built over uncommitted edits is worse
+    than no sha, so the marker rides on the value itself."""
+    _FakeAsyncSandbox.image_files = {_BUILD_INFO_PATH: _info("abc123", dirty=True)}
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123+dirty"
+
+
+async def test_second_create_refreshes_the_commit(provider):
+    """`make sandbox-image` rebuilds the template IN PLACE and does not restart
+    this process. A read-once-per-process cache would report the pre-rebuild
+    commit forever — the stale-image blindness this field exists to remove."""
+    _FakeAsyncSandbox.image_files = {_BUILD_INFO_PATH: _info("old111")}
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "old111"
+
+    _FakeAsyncSandbox.image_files = {_BUILD_INFO_PATH: _info("new222")}   # template rebuilt
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "new222"
+
+
+@pytest.mark.parametrize("baked", [
+    pytest.param(None, id="file-absent"),                 # an image built before this shipped
+    pytest.param(b"", id="empty"),
+    pytest.param(b"not json at all", id="invalid-json"),
+    pytest.param(b"{}", id="no-commit-key"),
+    pytest.param(b'{"commit": null}', id="commit-null"),
+    pytest.param(b'{"commit": ""}', id="commit-empty"),
+    pytest.param(b'{"commit": 12345}', id="commit-not-a-string"),
+    pytest.param(b'["abc123"]', id="json-array"),
+    pytest.param(b'"abc123"', id="json-string"),
+])
+async def test_unreadable_provenance_never_breaks_create(provider, baked):
+    """Provenance is observability. No shape of it may fail session creation, and
+    an image predating this change has no such file at all."""
+    _FakeAsyncSandbox.image_files = {} if baked is None else {_BUILD_INFO_PATH: baked}
+    sb = await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert sb.id.startswith("sbx_fake_")                   # the session still works
+    assert provider.sandbox_image_commit is None
+
+
+async def test_failed_read_keeps_the_last_known_commit(provider):
+    """A transient read failure must not blank a commit already reported — that
+    would turn one bad read into a permanent `null` on /api/health."""
+    _FakeAsyncSandbox.image_files = {_BUILD_INFO_PATH: _info("abc123")}
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123"
+
+    _FakeAsyncSandbox.image_files = {}                     # next read finds nothing
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123"
+
+
+async def test_dirty_flag_only_when_literally_true(provider):
+    """`dirty` is the schema's boolean, not a truthiness test: a non-boolean is a
+    malformed field, and marking a clean build dirty is its own false alarm."""
+    for value in ("true", 1, "yes", None):
+        _FakeAsyncSandbox.image_files = {
+            _BUILD_INFO_PATH: json.dumps({"commit": "abc123", "dirty": value}).encode()
+        }
+        p = E2BProvider(api_key="k", template="t")
+        await p.create(SandboxSpec(template="t", labels={}, model="m"))
+        assert p.sandbox_image_commit == "abc123", f"dirty={value!r}"
+
+
+async def test_unreadable_provenance_is_logged_at_warning(provider, caplog):
+    """A silent failure here is indistinguishable from the healthy "no session
+    created yet" state, because both surface as a null on /api/health. The level
+    matters: `obs.py` attaches its handler to the `workbench` logger, which this
+    module is not under, so a debug or info line here is dropped by the root
+    logger's default WARNING and never emitted at all."""
+    _FakeAsyncSandbox.image_files = {}                      # an image predating this change
+    with caplog.at_level(logging.WARNING, logger="app.sandbox.e2b"):
+        await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    # `caplog.at_level(WARNING)` drops sub-WARNING records before they reach
+    # caplog.records, so asserting every record is >= WARNING would be a
+    # tautology. This assertion is the one that catches a downgrade to log.info:
+    # the message simply stops being captured.
+    assert any(_BUILD_INFO_PATH in r.getMessage() for r in caplog.records), caplog.text
+
+
+async def test_a_hanging_read_cannot_hang_session_creation(provider, monkeypatch):
+    """The read sits inside create(). Unbounded, a stalled SDK call would hang
+    session creation for a value that is only observability."""
+    monkeypatch.setattr("app.sandbox.e2b._PROVENANCE_READ_TIMEOUT_S", 0.05)
+
+    async def _never_returns(self, path):
+        await asyncio.sleep(30)
+
+    monkeypatch.setattr("app.sandbox.e2b.E2BSandbox.read_file", _never_returns)
+    sb = await asyncio.wait_for(
+        provider.create(SandboxSpec(template="t", labels={}, model="m")), timeout=5
+    )
+    assert sb.id.startswith("sbx_fake_")                    # the session still came up
+    assert provider.sandbox_image_commit is None
+
+
+# ── The SCHEMA half of the writer/reader seam (#1489) ─────────────────────────
+# `_info()` above hand-writes its own JSON, so it is its own ground truth and
+# cannot see the shipped writer. Rename a key in build-image.sh's printf and
+# every other test stays green: `commit` would make production report null
+# forever (with a WARNING per create), and `dirty` is worse because it is
+# SILENT -- a dirty build would report a bare clean sha, which is the exact
+# "a clean sha that lies is worse than no sha" failure the flag exists to
+# prevent. The path half of this seam is pinned in
+# tests/test_sandbox_image_provenance.py.
+
+_BUILD_SCRIPT = Path(__file__).resolve().parents[3] / "apps" / "server" / "sandbox" / "build-image.sh"
+
+
+def _shipped_provenance_bytes(commit: str, dirty: str) -> bytes:
+    """Run the printf statement build-image.sh actually ships, with controlled
+    values, and return exactly the bytes it would write into the image."""
+    lines = _BUILD_SCRIPT.read_text(encoding="utf-8").splitlines()
+    start = next(i for i, ln in enumerate(lines) if ln.startswith("printf '{"))
+    end = next(i for i in range(start, len(lines)) if '> "${PROVENANCE_FILE}"' in lines[i])
+    stmt = "\n".join(lines[start:end + 1]).replace('> "${PROVENANCE_FILE}"', "")
+    out = subprocess.run(
+        ["bash", "-c", f'set -eu; _commit="{commit}"; _dirty={dirty}; {stmt}'],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    )
+    return out.stdout.encode("utf-8")
+
+
+async def test_reader_parses_what_the_shipped_writer_emits(provider):
+    """Seed the fake image with the REAL writer's bytes, not a hand-written copy."""
+    _FakeAsyncSandbox.image_files = {
+        _BUILD_INFO_PATH: _shipped_provenance_bytes("abc123", "false")
+    }
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123"
+
+
+async def test_the_dirty_key_the_writer_emits_is_the_one_the_reader_reads(provider):
+    """The silent half: a renamed `dirty` key drops the marker with no log line."""
+    _FakeAsyncSandbox.image_files = {
+        _BUILD_INFO_PATH: _shipped_provenance_bytes("abc123", "true")
+    }
+    await provider.create(SandboxSpec(template="t", labels={}, model="m"))
+    assert provider.sandbox_image_commit == "abc123+dirty"

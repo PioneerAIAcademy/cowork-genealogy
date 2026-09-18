@@ -216,7 +216,7 @@ function dispatchHandlers(): {
   // Every `request.params.name === "<tool>"` comparison, and the `if` body it
   // belongs to. `toolNames` is the superset (any comparison, so a refactor into
   // a `||` or a `switch` still counts as dispatched); `arms` is the if-parented
-  // subset, all 49 today.
+  // subset, all 50 today.
   const toolNames: string[] = [];
   const arms: Array<{ tool: string; statement: ts.Statement }> = [];
   const findArms = (node: ts.Node): void => {
