@@ -177,10 +177,13 @@ correspondingly-numbered general sections below. The general spec remains the
   token cost — fine for comparison, watch the bill).
 - **New-session onboarding = conversational.** "New session" creates a fresh
   sandbox with an empty `/project`, starts `agent_runner`, and the client
-  **auto-sends an opening turn** ("start a new genealogy research project") that
-  triggers the existing **`init-project`** skill — the objective question +
-  FamilySearch-person seeding, in chat, reusing the skill as-is (no new onboarding
-  UI; the researcher profile is fixed and nothing about the researcher is asked). The session is titled provisionally and renamed once the objective is set.
+  **prefixes the canned opener** ("Let's start a new genealogy research
+  project.") onto the user's first message on the wire, so the existing
+  **`init-project`** skill runs and reads the person and objective from that one
+  turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
+  onboarding UI; the researcher profile is fixed and nothing about the
+  researcher is asked). The bubble shows only what the user typed. The session is
+  titled provisionally and renamed once the objective is set.
 
 ---
 
