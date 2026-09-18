@@ -54,6 +54,31 @@ try {
   const status = await call("auth_status", {});
   report("auth_status", !status.isError && typeof status.body.loggedIn === "boolean", JSON.stringify(status.body));
 
+  // person_warnings live mode, through the real transport. `projectPath` is
+  // conditionally required — the input schema cannot say "required unless
+  // another field is set" — so if it were still listed in `required` the client
+  // would reject this before the tool ran, and no vitest file would notice.
+  //
+  // Credential-free by construction: we assert on the error text, not on
+  // warnings. Logged out it is the login instruction; logged in it is a real
+  // FamilySearch answer. Either proves the call reached the tool with a
+  // principal bound. What it must NOT be is `projectPath is required`.
+  const pwSchema = tools.find((t) => t.name === "person_warnings");
+  const pwRequired = (pwSchema?.inputSchema as { required?: string[] })?.required ?? [];
+  report(
+    "person_warnings schema",
+    pwRequired.length === 1 && pwRequired[0] === "personId",
+    `required=${JSON.stringify(pwRequired)}`,
+  );
+
+  const live = await call("person_warnings", { personId: "KD96-TV2", live: true });
+  const liveText = JSON.stringify(live.body);
+  report(
+    "person_warnings live dispatch",
+    !liveText.includes("projectPath is required"),
+    live.isError ? liveText.slice(0, 120) : `${live.body.warningCount} warnings`,
+  );
+
   const tree = {
     persons: [
       {
