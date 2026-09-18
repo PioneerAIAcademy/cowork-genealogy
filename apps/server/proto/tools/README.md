@@ -36,9 +36,12 @@ problem and out of the prototype's scope, so the service publishes on **loopback
 
 Not built here (cut with the ledger, 2026-09-10): the `turn_id` header, the HTTP re-run of
 the D15 ledger exercise. The four auth tools — `login`, `logout`, `configure_openrouter`,
-`auth_status` — are advertised but expected to fail in the container: the first two write
-`tokens.json`, which the layout omits; `configure_openrouter` writes the read-only
-`config.json`; `auth_status` is excluded with them so the smoke names all four.
+`auth_status` — are advertised but inert over HTTP: every request is a bearer principal, so
+`login` and `logout` answer the hosted-mode instructions (`isError` false) without touching
+`tokens.json`, `configure_openrouter`'s `saveConfig` throws `HOSTED_CONFIG_READ_ONLY_MESSAGE`
+before any write (the `read_only` rootfs and the `:ro` `config.json` mount are never
+reached), and `auth_status` answers from the bearer alone; it is excluded with them so the
+smoke names all four.
 
 ## Running it
 
