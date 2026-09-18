@@ -842,6 +842,13 @@ def test_main_reports_the_window_and_the_preamble(tmp_path, monkeypatch, capsys)
     monkeypatch.setattr("e2e.ranked_read_report.all_result_jsons", lambda: [p])
     assert main(["--since", "all"]) == 0
     out = capsys.readouterr().out
+    # The window and the branch-scope caveat, which this test is named for and
+    # did not assert: deleting both `print(window)` calls from `main` left this
+    # file and test_e2e_branch_scope_caveat.py green at 78 passed while the
+    # report emitted neither line (#2625 review). The sibling this module was
+    # modelled on, compaction_report.py, pins its own window line.
+    assert "Window: entire corpus (1 run(s))." in out
+    assert "Scoped to this checkout" in out
     assert "record_search calls              1" in out
     assert "carrying a ranked block        1" in out
     assert f"Inside the visible top {TOP_N}: 1/1" in out
