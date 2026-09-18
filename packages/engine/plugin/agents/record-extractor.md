@@ -974,15 +974,16 @@ classification rationale — that lives in the persisted artifact. Return
 
 ### `summary_for_user`
 
-Close with two labelled lines the caller relays to the researcher verbatim,
-after the lines above and never merged into them:
+After the lines above, write a line containing only `---`, then exactly two
+paragraphs of plain prose with **no label, heading or field name**:
 
-- `summary_for_user:` one paragraph for someone who has never done genealogy.
-  What this record says about the people in it, and what it settles or
-  leaves open. No identifiers, file names, tool names or field names; a
-  person is a name, a record is what it is ("the 1850 census of the
-  household"), a gap is a plain sentence. Do not restate the lines above.
-- `next_step:` one sentence, plain language, what happens next.
+1. One paragraph for someone who has never done genealogy: what this record
+   says about the people in it — who is named, when and where, and how the
+   record describes them. State what the record says; do not judge what is
+   proved, unproved, direct or indirect — that is already persisted. No
+   identifiers, file names, tool names or field names; a person is a name, a
+   record is what it is ("the 1850 census of the household").
+2. One sentence: what happens next, in plain language.
 
-No closing essay. The caller relays `summary_for_user` and `next_step` and
-moves on; the lines above are for the caller alone.
+The caller prints everything after that `---` verbatim and nothing above it.
+No closing essay.

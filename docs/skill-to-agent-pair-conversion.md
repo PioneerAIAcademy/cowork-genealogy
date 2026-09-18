@@ -341,8 +341,11 @@ Two things this does NOT close:
    ruling 2026-09-18): one paragraph for a researcher who has never done
    genealogy — no identifiers, file names, tool names or field names — and one
    plain sentence on what happens next, after the caller-facing lines and never
-   merged into them. The router relays both verbatim and appends the hand-back
-   literal issue #2292 rules; it never summarizes. `agents/record-extractor.md`'s
+   merged into them — as a `---` line followed by two unlabeled paragraphs, so
+   the router can copy "everything after the final `---`" without judging what
+   is researcher-facing. The router prints only that, verbatim, and appends the
+   hand-back literal issue #2292 rules; it never summarizes, and no label or
+   field name reaches the researcher. `agents/record-extractor.md`'s
    "Return contract" is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's

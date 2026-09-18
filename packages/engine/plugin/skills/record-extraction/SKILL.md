@@ -193,8 +193,8 @@ return summary; the linking happens later, in person-evidence.
 One record per invocation; several records = several invocations, each
 carrying its own content. The agent extracts every assertion (including
 relationship-type assertions), writes the source + assertions in one
-composite `extraction_append`, and returns a ≤10-line summary for you plus a
-`summary_for_user` paragraph and `next_step` for the researcher. It is
+composite `extraction_append`, and returns a ≤10-line summary for you, then a
+`---` line and two plain paragraphs for the researcher. It is
 **assertion-only** — it does not write tree persons or edges; the
 household skeleton (member stubs + parent-child edges) is minted by
 person-evidence at link time via `materialize_facts`.
@@ -242,10 +242,11 @@ re-classify inline in this context.
 
 ## Present and continue
 
-Relay the agent's `summary_for_user` and `next_step` to the user, verbatim,
-and nothing else from its return: the source id, assertion counts and flags
-are for you, not the researcher. Do not re-print per-assertion detail; it is
-already persisted.
+Print to the user exactly the text after the final `---` in the agent's
+return — its two closing paragraphs — verbatim, with no label, heading or
+preamble of your own. Nothing above that line reaches the user: the source
+id, assertion counts and flags are for you. Do not re-print per-assertion
+detail; it is already persisted.
 
 Then **keep going in the same turn**: if more records are queued,
 delegate the next one now; if this was the last record, hand off to
