@@ -77,7 +77,7 @@ COPY packages/engine/mcp-server/package.json      ${AGENT_HOME}/engine/package.j
 COPY packages/engine/mcp-server/package-lock.json ${AGENT_HOME}/engine/package-lock.json
 COPY packages/engine/mcp-server/build             ${AGENT_HOME}/engine/build
 COPY packages/engine/mcp-server/config            ${AGENT_HOME}/engine/config
-RUN cd ${AGENT_HOME}/engine && npm ci --omit=dev --ignore-scripts
+RUN cd ${AGENT_HOME}/engine && npm ci --omit=dev --omit=optional --ignore-scripts
 
 # ── Plugin: the Cowork skills + plugin agents, loaded by the Agent SDK via
 #    plugins=[{type:"local", path: ENGINE_PLUGIN_DIR}]. ──
