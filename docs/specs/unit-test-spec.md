@@ -27,7 +27,7 @@ The format and harness in this spec target **single-turn skill evaluation**. The
 
 **Multi-turn skills — covered via decomposition.** Two skills have multi-turn workflows in production. Both are testable in v1, but with reduced coverage:
 
-- **`init-project`** — production workflow interviews the user about the research objective. For testing, put the full objective into `user_message`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The skill should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not *interview behavior* (does the skill ask the right clarifying questions when the message is vague?). Interview-flow coverage is deferred.
+- **`init-project`** — production workflow asks the user for the research objective. For testing, put the full objective into `user_message`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The skill should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not whether the skill asks for the objective when the message is vague; that coverage is deferred.
 - **`search-external-sites`** — production workflow is "generate URL → user pastes capture → analyze capture." Decompose into two single-turn tests:
   - *URL generation test* — positive test under `search-external-sites`. The skill generates a search URL; grade on URL correctness, log entry shape.
   - *Capture analysis test* — positive test under `record-extraction` (the receiving skill) with the pasted capture content embedded in `user_message`. Grade as a normal extraction.
