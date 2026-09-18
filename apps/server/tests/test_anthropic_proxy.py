@@ -4,6 +4,7 @@ The proxy validates a per-sandbox HMAC token, replaces it with the real
 Anthropic API key, and streams the response from api.anthropic.com. The
 sandbox never holds the real key.
 """
+import gzip
 import json
 
 import httpx
@@ -13,6 +14,7 @@ from fastapi.testclient import TestClient
 from app.anthropic_proxy import (
     _PROXY_PREFIX,
     make_upstream_client,
+    proxy_active,
     proxy_token,
     verify_proxy_token,
 )
@@ -68,18 +70,29 @@ def test_token_changes_with_signing_key(monkeypatch):
     assert t1 != t2
 
 
+# ── proxy_active gate ──────────────────────────────────────────
+
+
+def test_proxy_active_is_false_for_http(monkeypatch):
+    monkeypatch.setattr(get_settings(), "public_url", "http://localhost:8000")
+    assert proxy_active() is False
+
+
+def test_proxy_active_is_true_for_https(monkeypatch):
+    monkeypatch.setattr(get_settings(), "public_url", "https://example.fly.dev")
+    assert proxy_active() is True
+
+
 # ── proxy endpoint ──────────────────────────────────────────────
 
-
+# The liveness check queries the DB for an active Project row; mock it out for
+# tests that need a valid token accepted so they can reach the forwarding path.
 @pytest.fixture
-def _proxy_client():
-    """Set up the app with a mock upstream httpx client."""
-    app.state.anthropic_proxy_client = make_upstream_client()
-    yield
-    app.state.anthropic_proxy_client.aclose
+def _mock_sandbox_exists(monkeypatch):
+    monkeypatch.setattr("app.anthropic_proxy._sandbox_exists", lambda sid: True)
 
 
-def test_invalid_token_returns_401(_proxy_client):
+def test_invalid_token_returns_401():
     with TestClient(app) as client:
         resp = client.post(
             f"{_PROXY_PREFIX}/v1/messages",
@@ -92,13 +105,29 @@ def test_invalid_token_returns_401(_proxy_client):
     assert body["error"]["type"] == "authentication_error"
 
 
-def test_missing_token_returns_401(_proxy_client):
+def test_missing_token_returns_401():
     with TestClient(app) as client:
         resp = client.post(f"{_PROXY_PREFIX}/v1/messages", json={"model": "test"})
     assert resp.status_code == 401
 
 
-def test_valid_token_with_no_api_key_returns_502(_proxy_client, monkeypatch):
+def test_valid_token_for_unknown_sandbox_returns_401(_mock_sandbox_exists, monkeypatch):
+    """A valid HMAC but no matching active Project row → 401."""
+    monkeypatch.setattr("app.anthropic_proxy._sandbox_exists", lambda sid: False)
+    token = proxy_token("ghost-sandbox")
+    with TestClient(app) as client:
+        resp = client.post(
+            f"{_PROXY_PREFIX}/v1/messages",
+            headers={"x-api-key": token},
+            json={"model": "test"},
+        )
+    assert resp.status_code == 401
+    assert "not found" in resp.json()["error"]["message"]
+
+
+def test_valid_token_with_no_api_key_returns_401(_mock_sandbox_exists, monkeypatch):
+    """A valid token reaching a control plane with no Anthropic key → 401
+    (classified as misconfiguration by the error module)."""
     monkeypatch.setattr(get_settings(), "anthropic_api_key", None)
     token = proxy_token("test-sandbox")
     with TestClient(app) as client:
@@ -107,11 +136,11 @@ def test_valid_token_with_no_api_key_returns_502(_proxy_client, monkeypatch):
             headers={"x-api-key": token},
             json={"model": "test"},
         )
-    assert resp.status_code == 502
+    assert resp.status_code == 401
     assert "not configured" in resp.json()["error"]["message"]
 
 
-def test_proxy_forwards_path_and_query(monkeypatch):
+def test_proxy_forwards_path_and_query(_mock_sandbox_exists, monkeypatch):
     """The proxy preserves the upstream path and query string."""
     monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
     token = proxy_token("test-sandbox")
@@ -123,13 +152,16 @@ def test_proxy_forwards_path_and_query(monkeypatch):
         return httpx.Response(200, json={"ok": True})
 
     with TestClient(app) as client:
+        saved = app.state.anthropic_proxy_client
         transport = httpx.MockTransport(_capture)
         app.state.anthropic_proxy_client = httpx.AsyncClient(transport=transport)
-
-        resp = client.get(
-            f"{_PROXY_PREFIX}/v1/models?limit=5",
-            headers={"x-api-key": token},
-        )
+        try:
+            resp = client.get(
+                f"{_PROXY_PREFIX}/v1/models?limit=5",
+                headers={"x-api-key": token},
+            )
+        finally:
+            app.state.anthropic_proxy_client = saved
 
     assert resp.status_code == 200
     assert len(captured_requests) == 1
@@ -139,7 +171,7 @@ def test_proxy_forwards_path_and_query(monkeypatch):
     assert req.headers["x-api-key"] == "sk-ant-real-key"
 
 
-def test_proxy_replaces_api_key_header(monkeypatch):
+def test_proxy_replaces_api_key_header(_mock_sandbox_exists, monkeypatch):
     """The proxy replaces the proxy token with the real API key."""
     monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
     token = proxy_token("test-sandbox")
@@ -151,23 +183,26 @@ def test_proxy_replaces_api_key_header(monkeypatch):
         return httpx.Response(200, json={"ok": True})
 
     with TestClient(app) as client:
+        saved = app.state.anthropic_proxy_client
         transport = httpx.MockTransport(_capture)
         app.state.anthropic_proxy_client = httpx.AsyncClient(transport=transport)
-
-        client.post(
-            f"{_PROXY_PREFIX}/v1/messages",
-            headers={
-                "x-api-key": token,
-                "anthropic-version": "2023-06-01",
-            },
-            json={"model": "claude-sonnet-4-6", "messages": []},
-        )
+        try:
+            client.post(
+                f"{_PROXY_PREFIX}/v1/messages",
+                headers={
+                    "x-api-key": token,
+                    "anthropic-version": "2023-06-01",
+                },
+                json={"model": "claude-sonnet-4-6", "messages": []},
+            )
+        finally:
+            app.state.anthropic_proxy_client = saved
 
     assert captured_headers["x-api-key"] == "sk-ant-real-key"
     assert captured_headers["anthropic-version"] == "2023-06-01"
 
 
-def test_proxy_streams_sse_response(monkeypatch):
+def test_proxy_streams_sse_response(_mock_sandbox_exists, monkeypatch):
     """SSE responses are streamed back to the caller."""
     monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
     token = proxy_token("test-sandbox")
@@ -187,16 +222,59 @@ def test_proxy_streams_sse_response(monkeypatch):
         )
 
     with TestClient(app) as client:
+        saved = app.state.anthropic_proxy_client
         transport = httpx.MockTransport(_sse)
         app.state.anthropic_proxy_client = httpx.AsyncClient(transport=transport)
-
-        resp = client.post(
-            f"{_PROXY_PREFIX}/v1/messages",
-            headers={"x-api-key": token},
-            json={"model": "test", "stream": True, "messages": []},
-        )
+        try:
+            resp = client.post(
+                f"{_PROXY_PREFIX}/v1/messages",
+                headers={"x-api-key": token},
+                json={"model": "test", "stream": True, "messages": []},
+            )
+        finally:
+            app.state.anthropic_proxy_client = saved
 
     assert resp.status_code == 200
     assert "text/event-stream" in resp.headers.get("content-type", "")
     assert b"message_start" in resp.content
     assert b"message_stop" in resp.content
+
+
+def test_proxy_strips_content_encoding_from_gzipped_response(
+    _mock_sandbox_exists, monkeypatch,
+):
+    """Regression: httpx's aiter_bytes() decodes gzip transparently, so the
+    proxy relays plaintext. If content-encoding is not stripped, the caller
+    tries to gunzip plaintext and fails with DecodingError."""
+    monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
+    token = proxy_token("test-sandbox")
+
+    payload = b'{"type": "message", "content": "hello"}'
+    compressed = gzip.compress(payload)
+
+    async def _gzipped(request: httpx.Request):
+        return httpx.Response(
+            200,
+            content=compressed,
+            headers={
+                "content-type": "application/json",
+                "content-encoding": "gzip",
+            },
+        )
+
+    with TestClient(app) as client:
+        saved = app.state.anthropic_proxy_client
+        transport = httpx.MockTransport(_gzipped)
+        app.state.anthropic_proxy_client = httpx.AsyncClient(transport=transport)
+        try:
+            resp = client.post(
+                f"{_PROXY_PREFIX}/v1/messages",
+                headers={"x-api-key": token},
+                json={"model": "test", "messages": []},
+            )
+        finally:
+            app.state.anthropic_proxy_client = saved
+
+    assert resp.status_code == 200
+    assert "content-encoding" not in resp.headers
+    assert resp.json()["content"] == "hello"

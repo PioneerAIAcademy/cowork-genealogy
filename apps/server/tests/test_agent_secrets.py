@@ -1,15 +1,14 @@
-"""Per-connect credential proxy token injection.
+"""Per-connect credential injection — the fix for the create-time-env freeze.
 
-The control plane writes a per-sandbox proxy token (HMAC-derived, not the real
-Anthropic API key) into the sandbox's secrets file on every connect. The agent
-reads it via ``current_api_key()`` and passes it to the SDK, which sends it to
-the credential proxy. The proxy validates the token and injects the real key.
+The Anthropic key used to be injected only via ``envs=`` at sandbox create(),
+which neither sandbox SDK can update afterwards. Rotating the key therefore
+fixed new sessions while every existing one kept 401ing (the 2026-07-20 alpha
+outage). The control plane now rewrites SECRETS_PATH on every connect and the
+agent prefers that file, so a rotation lands at the user's next reconnect.
 
-Key properties:
-- The secrets file never contains the real Anthropic API key.
-- The proxy token is deterministic from (signing_key, sandbox_id).
-- API key rotation is transparent — the proxy reads the current key from config.
-- Proxy signing key rotation changes the token, triggering an SDK client rebuild.
+When the credential proxy is active (production, ``proxy_active()``), the file
+carries an HMAC-derived proxy token, never the real key. When the proxy is
+inactive (local dev), it carries the raw API key — same as the original channel.
 """
 import json
 
@@ -20,7 +19,7 @@ from _fakes import FakeSDKClient
 
 from app.agent import real_agent
 from app.agent_secrets import secrets_bytes
-from app.anthropic_proxy import proxy_token, verify_proxy_token
+from app.anthropic_proxy import proxy_active, proxy_token, verify_proxy_token
 from app.config import get_settings
 from app.main import app
 from app.sandbox.base import SECRETS_PATH
@@ -33,6 +32,8 @@ def _point_at(monkeypatch, path):
 
 
 def test_secrets_file_wins_over_stale_create_time_env(tmp_path, monkeypatch):
+    # The exact outage shape: the env copy baked in at create() is the revoked
+    # key, the file carries the rotated one. The file must win.
     secrets = tmp_path / "session.json"
     secrets.write_bytes(secrets_bytes("proxy-token-from-file"))
     _point_at(monkeypatch, secrets)
@@ -47,6 +48,8 @@ def test_secrets_file_wins_over_stale_create_time_env(tmp_path, monkeypatch):
     ids=["missing", "empty", "corrupt", "no-key", "blank-key", "not-an-object"],
 )
 def test_falls_back_to_env_when_file_unusable(tmp_path, monkeypatch, content):
+    # Sandboxes created before this channel existed have no file; a partial or
+    # truncated write must not strand the agent with no key at all.
     secrets = tmp_path / "session.json"
     if content is not None:
         secrets.write_bytes(content)
@@ -77,7 +80,7 @@ def test_build_options_forwards_base_url_when_set(tmp_path, monkeypatch):
 
     opts = real_agent.build_options(tmp_path)
     assert opts.env["ANTHROPIC_BASE_URL"] == "http://localhost:8000/api/anthropic-proxy"
-    assert opts.env["_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL"] == "1"
+    assert "_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL" not in opts.env
 
 
 def test_build_options_omits_base_url_when_unset(tmp_path, monkeypatch):
@@ -92,6 +95,9 @@ def test_build_options_omits_base_url_when_unset(tmp_path, monkeypatch):
 
 
 def test_secrets_path_agrees_with_the_control_plane_constant():
+    # real_agent can't import the control-plane package (it also runs as a loose
+    # script in the baked E2B image), so the path is duplicated. Writer and
+    # reader must not drift.
     assert real_agent._SECRETS_PATH == SECRETS_PATH
 
 
@@ -179,9 +185,10 @@ def test_secrets_bytes_omits_an_unset_value():
     assert json.loads(secrets_bytes("proxy-tok")) == {"anthropic_api_key": "proxy-tok"}
 
 
-def test_connect_writes_proxy_token_not_raw_key(monkeypatch):
-    """The secrets file carries a proxy token, never the real Anthropic API key."""
+def test_connect_writes_proxy_token_when_proxy_active(monkeypatch):
+    """Production (proxy_active): secrets file carries a proxy token, not the raw key."""
     monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
+    monkeypatch.setattr("app.agent_secrets.proxy_active", lambda: True)
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
         proj = client.post("/api/sessions", json={}).json()
@@ -191,7 +198,6 @@ def test_connect_writes_proxy_token_not_raw_key(monkeypatch):
         )
         doc = json.loads(secrets.read_text(encoding="utf-8"))
 
-        # The file must carry a proxy token, not the raw API key.
         token_value = doc["anthropic_api_key"]
         assert token_value != "sk-ant-real-key"
         assert verify_proxy_token(token_value) == sandbox_id
@@ -202,10 +208,27 @@ def test_connect_writes_proxy_token_not_raw_key(monkeypatch):
         assert doc2["anthropic_api_key"] == token_value
 
 
+def test_connect_writes_raw_key_when_proxy_inactive(monkeypatch):
+    """Local dev (proxy not active): secrets file carries the raw API key so the
+    sandbox talks directly to api.anthropic.com."""
+    monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
+    monkeypatch.setattr(get_settings(), "public_url", "http://localhost:8000")
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        proj = client.post("/api/sessions", json={}).json()
+        sandbox_id = proj["sandbox_id"]
+        secrets = (
+            app.state.provider._root(sandbox_id) / SECRETS_PATH.lstrip("/")
+        )
+        doc = json.loads(secrets.read_text(encoding="utf-8"))
+        assert doc["anthropic_api_key"] == "sk-ant-real-key"
+
+
 def test_api_key_rotation_does_not_change_proxy_token(monkeypatch):
     """Rotating ANTHROPIC_API_KEY on the control plane does not change the token
     in the sandbox — the proxy reads the current key, so rotation is transparent."""
     monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-key-v1")
+    monkeypatch.setattr("app.agent_secrets.proxy_active", lambda: True)
     with TestClient(app) as client:
         client.post("/auth/dev-login", json={"email": "tester@example.com"})
         proj = client.post("/api/sessions", json={}).json()

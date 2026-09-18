@@ -229,13 +229,16 @@ class E2BProvider(SandboxProvider):
         return sb
 
     def _agent_env(self, model: str) -> dict[str, str]:
+        from ..anthropic_proxy import proxy_active
+
         s = get_settings()
-        return {
+        env: dict[str, str] = {
             "AGENT_MODE": s.agent_mode,
             "MODEL": model,
-            "ANTHROPIC_BASE_URL": f"{s.public_url}/api/anthropic-proxy",
-            "_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL": "1",
         }
+        if proxy_active():
+            env["ANTHROPIC_BASE_URL"] = f"{s.public_url}/api/anthropic-proxy"
+        return env
 
     async def create(self, spec: SandboxSpec) -> Sandbox:
         agent_env = self._agent_env(spec.model)

@@ -434,8 +434,9 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
 
     When ``ANTHROPIC_BASE_URL`` is set in the sandbox env (by the control plane
     to point at the credential proxy), it is forwarded so the SDK routes calls
-    through the proxy. ``_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL`` keeps tool
-    search working behind the non-first-party URL.
+    through the proxy. ``ENABLE_TOOL_SEARCH=true`` is set unconditionally, which
+    keeps tool search on regardless of the base URL (measured: probe P3b,
+    2026-09-11, ``make probe-gateway-path``).
     """
     env: dict[str, str] = {
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
@@ -444,7 +445,6 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     base_url = os.environ.get("ANTHROPIC_BASE_URL")
     if base_url:
         env["ANTHROPIC_BASE_URL"] = base_url
-        env["_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL"] = "1"
     return env
 
 

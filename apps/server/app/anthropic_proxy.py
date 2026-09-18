@@ -20,8 +20,11 @@ import logging
 import httpx
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
+from sqlmodel import Session, select
 
 from .config import get_settings
+from .db import get_engine
+from .models import Project
 
 log = logging.getLogger(__name__)
 
@@ -33,11 +36,22 @@ _DROP_REQUEST_HEADERS = frozenset({
     "proxy-connection", "te", "trailer", "upgrade",
 })
 _DROP_RESPONSE_HEADERS = frozenset({
-    "content-length", "transfer-encoding", "connection", "keep-alive",
-    "trailer", "upgrade",
+    "content-length", "content-encoding", "transfer-encoding", "connection",
+    "keep-alive", "trailer", "upgrade",
 })
 
 _UPSTREAM_TIMEOUT = httpx.Timeout(connect=30.0, read=600.0, write=30.0, pool=30.0)
+
+
+def proxy_active() -> bool:
+    """Whether the credential proxy is active (production only).
+
+    Gated on an https ``public_url`` — the same production discriminant
+    ``assert_production_config`` uses. Local dev (``make server``,
+    ``make server-e2b``) runs http and falls back to the raw API key so the
+    proxy URL is always reachable from inside the sandbox.
+    """
+    return get_settings().public_url.startswith("https")
 
 
 def proxy_token(sandbox_id: str) -> str:
@@ -59,8 +73,20 @@ def verify_proxy_token(token: str) -> str | None:
     return None
 
 
+def _sandbox_exists(sandbox_id: str) -> bool:
+    """Liveness check: is there an active Project row for this sandbox?"""
+    with Session(get_engine()) as session:
+        row = session.exec(
+            select(Project.sandbox_id).where(
+                Project.sandbox_id == sandbox_id,
+                Project.status == "active",
+            )
+        ).first()
+        return row is not None
+
+
 def make_upstream_client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(timeout=_UPSTREAM_TIMEOUT, http2=True)
+    return httpx.AsyncClient(timeout=_UPSTREAM_TIMEOUT)
 
 
 router = APIRouter()
@@ -87,14 +113,26 @@ async def anthropic_proxy(path: str, request: Request) -> Response:
             media_type="application/json",
         )
 
+    if not _sandbox_exists(sandbox_id):
+        log.warning("proxy: sandbox %s not found or archived", sandbox_id)
+        return Response(
+            content=_error_json("authentication_error",
+                                "sandbox not found or archived"),
+            status_code=401,
+            media_type="application/json",
+        )
+
     settings = get_settings()
     if not settings.anthropic_api_key:
         return Response(
-            content=_error_json("api_error",
+            content=_error_json("authentication_error",
                                 "Anthropic API key not configured on the control plane"),
-            status_code=502,
+            status_code=401,
             media_type="application/json",
         )
+
+    log.info("proxy: forwarding %s %s for sandbox %s",
+             request.method, path, sandbox_id)
 
     forwarded_headers = {
         k: v for k, v in request.headers.items()
