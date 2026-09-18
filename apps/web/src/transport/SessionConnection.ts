@@ -1,7 +1,9 @@
-// The client realtime seam. WsSessionConnection (one bidirectional WebSocket
-// straight to the in-sandbox WS server) is the only implementation. The viewer
-// transport (WsResearchTransport) and ChatPane consume only this interface
-// (conn.on / conn.send), so the transport is invisible to them.
+// The client realtime seam. Two implementations: WsSessionConnection below (one
+// bidirectional WebSocket straight to the in-sandbox WS server — the hosted alpha)
+// and SseSessionConnection (an EventSource + REST against the search-agent
+// prototype's web tier; VITE_SESSION_TRANSPORT=sse). The viewer transport
+// (WsResearchTransport) and ChatPane consume only this interface (conn.on /
+// conn.send), so which one is behind it is invisible to them.
 export type WsMessage = { type: string; [k: string]: unknown }
 export type Listener = (msg: WsMessage) => void
 
@@ -30,8 +32,9 @@ export type CredentialsProvider = () => Promise<SessionCredentials>
 // WS to the sandbox host auto-resumes a paused sandbox (lifecycle.auto_resume), so
 // an un-gated reconnect in a backgrounded tab silently wakes the sandbox and bills
 // idle compute. We reconnect on focus instead; the server replays state on connect.
-const MAX_RETRIES = 20
-const retryDelayMs = (attempt: number): number => Math.min(1000, 150 * attempt)
+// Shared with SseSessionConnection, so the two transports back off the same way.
+export const MAX_RETRIES = 20
+export const retryDelayMs = (attempt: number): number => Math.min(1000, 150 * attempt)
 
 // How long one credentials fetch may take before it is abandoned.
 //
