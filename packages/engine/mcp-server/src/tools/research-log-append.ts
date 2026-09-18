@@ -155,9 +155,17 @@ class LogAppendError extends Error {}
  * threshold (a mention whose `columnFrom` is not 1880), and as YEAR otherwise.
  * The obvious alternative -- counterfactual, "would it still be refused if every
  * census were treated as US/1880?" -- splits the same 154 as 146 year and 8
- * jurisdiction, because a note naming BOTH a documented British census and a
- * pre-1880 US one is freed by the year on one reading and by neither on the
- * other. Neither rule is wrong; quoting a split without saying which is.
+ * jurisdiction. The two rules disagree on exactly 12 notes, and all 12 are the
+ * same shape: a British census of 1881, 1891, 1901 or 1911, with a pre-1880
+ * BIRTH year elsewhere in the note ("1901 England census ... Robert Brierley
+ * b.1866"). None of them names a US census before 1880 -- such a note would be
+ * refused on both readings and never reach the freed set at all. What frees
+ * these is the year binding: `18[0-7]\d` matched the birth year under the old
+ * whole-note test, and bound to its own census (1901, past every threshold) it
+ * no longer does. The rule above files them under JURISDICTION because the
+ * census is non-US; the counterfactual files them under YEAR because that is
+ * what moved. That one shape is the whole 20-versus-8 gap. Neither rule is
+ * wrong; quoting a split without saying which is.
  * Nothing in that corpus is newly refused. Re-derive rather than
  * quote these: the corpus grows with every committed run, and two earlier
  * passes of this same docstring read 3,275/332/136 and 3,392/338/142 on

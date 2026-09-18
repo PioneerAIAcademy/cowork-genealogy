@@ -959,11 +959,16 @@ def test_upstream_fetch_timeout_is_not_flagged_as_a_harness_timeout():
 def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
     """The `except` arm must ABSORB a node failure, not become one.
 
-    It returned six values while every other return -- and the caller's unpack
-    at mock_mcp.py:715 -- takes five, so any node timeout raised
-    `ValueError: too many values to unpack (expected 5)` from the very branch
-    written to survive it. Flagged 2026-09-11 and still green, because nothing
-    reached the arm: the node call has to actually fail.
+    HISTORY (2026-09-11): the arm returned six values while every other return,
+    and the caller's unpack, took five -- so any node timeout raised
+    `ValueError: too many values to unpack` from the very branch written to
+    survive it. It stayed green because nothing reached the arm: the node call
+    has to actually fail.
+
+    The arity has since dropped to FOUR, when the always-False drop flag was
+    removed. The number is deliberately not repeated in prose here beyond this
+    line: what the test pins is that the arm agrees with the caller's unpack,
+    whatever that count currently is, so it survives the next change to it.
     """
     from harness import mock_mcp
 

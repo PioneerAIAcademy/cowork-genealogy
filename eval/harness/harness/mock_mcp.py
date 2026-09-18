@@ -550,11 +550,13 @@ def _stage_and_compact_search_results(
             parsed.get("ranked", ranked),
         )
     except Exception:
-        # Five values, like every other return here and like the caller's unpack.
-        # This arm exists to ABSORB a node failure; returning six turned every
-        # node timeout into `ValueError: too many values to unpack (expected 5)`,
-        # so the degrade path was itself the crash. Flagged 2026-09-11 and
-        # unexercised until test_stage_and_compact_degrades_on_node_failure.
+        # Four values, like every other return here and like the caller's unpack.
+        # This arm exists to ABSORB a node failure, and its own recorded failure
+        # was a MISCOUNT: it once returned six against an unpack of five, which
+        # turned every node timeout into `ValueError: too many values to unpack`
+        # and made the degrade path itself the crash. Flagged 2026-09-11 and
+        # unexercised until test_stage_and_compact_degrades_on_node_failure,
+        # which asserts the arity rather than trusting it.
         return None, response, [], ranked
 
 
