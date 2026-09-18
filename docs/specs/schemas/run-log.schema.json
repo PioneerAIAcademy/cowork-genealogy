@@ -140,6 +140,11 @@
             "aggregated_dimensions": {
               "type": "array",
               "items": { "$ref": "#/$defs/judge_dimension" }
+            },
+            "review_dimensions": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/judge_dimension" },
+              "description": "The dimension rows a human annotates. Equal to aggregated_dimensions, except on a test whose every judged run failed a validator: those runs are excluded from the aggregate (#2057) but graded, so this holds the modal over them instead. Empty only when nothing was judged (aborted, or the judge raised). Optional — absent on run logs written before this field existed, where readers fall back to aggregated_dimensions."
             }
           }
         },

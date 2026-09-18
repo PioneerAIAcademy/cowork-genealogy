@@ -32,9 +32,9 @@ Constraints to keep in mind:
   `docs/specs/schemas/research.schema.json`, the
   `docs/specs/research-schema-spec.md` table, and the validator at
   the TypeScript validator at `packages/engine/mcp-server/src/validation/validator.ts`.
-- **Validation.** Add an `init-project` interview question if your
-  field needs to be captured at project start, or read the field
-  with a sensible default if absent.
+- **Validation.** If your field must exist at project start, have
+  `init-project` write it (it asks nothing about the researcher);
+  otherwise read the field with a sensible default if absent.
 
 To submit: fork, add the skill directory under `packages/engine/plugin/skills/`, write
 the `SKILL.md`, add any reference docs under

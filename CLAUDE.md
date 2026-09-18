@@ -194,7 +194,7 @@ to make changes, not what each individual tool/skill does.
 
 Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their schemas are
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
-source of truth for the advertised tool list); `src/index.ts` imports that
+source of truth for the advertised tool list); `src/server.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
@@ -385,11 +385,11 @@ workflow itself or building one of its skills.
 
 ## Researcher profile in `research.json`
 
-Per-project context about the researcher (experience level, paid
-subscriptions, derived narration guidance) lives in a
-`researcher_profile` section of `research.json`. `init-project` writes
-it after a short opening-turn interview, asked non-blocking alongside
-the project's research objective at project start. 27 of the 28 skills
+Per-project context about the researcher lives in a `researcher_profile`
+section of `research.json`. `init-project` writes a fixed profile at
+project start (`experience_level: "novice"` and one house-style
+`narration_guidance` string) and asks nothing about the researcher; the
+only opening-turn question is the research objective, non-blocking. 27 of the 28 skills
 carry a one-line `**Narration:**` instruction that tells Claude to read
 `researcher_profile.narration_guidance` and apply it as the narration
 style for that invocation. `search-wikipedia` is the deliberate
@@ -475,7 +475,7 @@ change, with different (and easy-to-undercount) site lists:
   healer (`tree-sanitize.ts`) reads the same sets; check whether the change
   needs a heal rule for pre-change trees.
 
-The interview lives in `init-project/SKILL.md`.
+The fixed profile and the objective question live in `init-project/SKILL.md`.
 
 ## Auth architecture (`packages/engine/mcp-server/src/auth/`)
 
@@ -580,9 +580,12 @@ Rules that follow from this:
 
 Tools are defined in `packages/engine/mcp-server/src/tools/`. Each tool exports a
 single function and its schema. Add the schema to `allToolSchemas` in
-`src/tool-schemas.ts` (the list `src/index.ts` advertises and the
-packaging drift test checks), add the call dispatch to `src/index.ts`,
-and add the tool name to `manifest.json`'s `tools` array.
+`src/tool-schemas.ts` (the list the server advertises and the
+packaging drift test checks), add the call dispatch to `src/server.ts`,
+and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
+`src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
+entrypoint binding `LOCAL`, `src/hosted-stdio.ts` the prototype's per-turn one
+binding a bearer, and a new tool's arm goes in `server.ts`, never in an entrypoint.
 
 Use generic tool names with provider parameters when scaling, not
 one tool per provider. For example, when we add real APIs, use
@@ -734,7 +737,12 @@ Where to look first:
   `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
   reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
   also fails when an exemption stops being needed. A second backend runs
-  `tests/store/conformance.ts`.
+  `tests/store/conformance.ts`. That second backend is `PgS3ProjectStore`
+  (`pg-s3-project-store.ts`) — constructor-scoped to one project, documents in
+  Postgres jsonb, blobs and staged results in S3 with a Postgres index; its
+  dependencies (`pg`, `@aws-sdk/client-s3`, `@smithy/node-http-handler`) are
+  `optionalDependencies` omitted from the `.mcpb`, and `make proto-store-test`
+  runs its conformance against the compose stack.
 - **`src/types/`** — shared API response and tool I/O types live
   here. If a second tool touches the same upstream API, put the
   response shape here so both stay in sync.
