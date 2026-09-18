@@ -3,9 +3,15 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
-import { foldChatEvent, trackLiveTask, endsWithHandBack, type ChatMessage } from './chatEvents'
-
-const OPENING_TURN = "Let's start a new genealogy research project."
+import {
+  foldChatEvent,
+  trackLiveTask,
+  endsWithHandBack,
+  stripHandBack,
+  withOpeningTurn,
+  stripOpeningTurn,
+  type ChatMessage
+} from './chatEvents'
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
 // equality check: fractional device pixel ratios and sub-pixel scrollHeight
@@ -217,7 +223,10 @@ export default function ChatPane({
       else if (msg.type === 'user_msg')
         // Replayed transcript on (re)connect — the server only sends user_msg
         // during history replay; live input is added locally in send().
-        setMessages((prev) => [...prev, { role: 'user', text: String(msg.text ?? ''), tools: [] }])
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', text: stripOpeningTurn(String(msg.text ?? '')), tools: [] }
+        ])
       else if (msg.type === 'status' && msg.state === 'chat_ready') setReady(true)
       // A turn was already running when we (re)connected — a reload mid-turn, or
       // a second tab. Without this the indicator is idle while the agent works,
@@ -259,8 +268,13 @@ export default function ChatPane({
   const send = (text: string): void => {
     const trimmed = text.trim()
     if (!trimmed || busy) return
+    // A new session's first message is the opening turn: the canned opener goes
+    // on the wire ahead of it so init-project runs and consumes the objective in
+    // one turn (PR #2649), instead of a canned turn that asks "who?" first.
+    const opening = isNew && !startedRef.current
+    startedRef.current = true
     setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [] }])
-    conn.send({ type: 'user_msg', text: trimmed })
+    conn.send({ type: 'user_msg', text: opening ? withOpeningTurn(trimmed) : trimmed })
     setBusy(true)
     setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
@@ -295,15 +309,6 @@ export default function ChatPane({
     }
   }
 
-  // New session: auto-send the opening turn so init-project runs conversationally.
-  useEffect(() => {
-    if (isNew && !startedRef.current) {
-      startedRef.current = true
-      send(OPENING_TURN)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNew])
-
   const lastMessage = messages[messages.length - 1]
   const canContinue =
     lastMessage?.role === 'assistant' && !lastMessage.error && endsWithHandBack(lastMessage.text)
@@ -315,7 +320,9 @@ export default function ChatPane({
           {messages.length === 0 && (
             <div className="chatPlaceholder">
               <p className="muted small">
-                {ready ? 'Say hello to start.' : 'Connecting to the agent…'}
+                {ready
+                  ? 'Say who you want to research and what you want to find out.'
+                  : 'Connecting to the agent…'}
               </p>
             </div>
           )}
@@ -340,9 +347,11 @@ export default function ChatPane({
                   </div>
                 </details>
               )}
-              {m.text && (
+              {(m.role === 'user' ? m.text : stripHandBack(m.text)) && (
                 <div className={`msgText ${m.error ? 'msgError' : ''}`}>
-                  <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
+                  <Markdown remarkPlugins={[remarkGfm]}>
+                    {m.role === 'user' ? m.text : stripHandBack(m.text)}
+                  </Markdown>
                 </div>
               )}
               {/* In-flight text, rendered as plain preformatted text: markdown is
@@ -449,7 +458,13 @@ export default function ChatPane({
         </button>
         <textarea
           className="chatTextarea"
-          placeholder={ready ? 'Message the agent…' : 'Connecting…'}
+          placeholder={
+            !ready
+              ? 'Connecting…'
+              : isNew && messages.length === 0
+                ? 'Who do you want to research, and what do you want to find out?'
+                : 'Message the agent…'
+          }
           value={input}
           rows={2}
           onChange={(e) => setInput(e.target.value)}

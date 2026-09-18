@@ -64,6 +64,28 @@ export function endsWithHandBack(text: string): boolean {
   return HAND_BACK_RE.test(text)
 }
 
+// The literal is a protocol line for the Continue button (and, under issue
+// #2653, the server). It is not user prose — its step slot may carry a skill
+// name — so the transcript keeps it and the render drops it.
+export function stripHandBack(text: string): string {
+  return endsWithHandBack(text) ? text.replace(HAND_BACK_RE, '').trimEnd() : text
+}
+
+// A new session's first message opens the project. The canned opener travels
+// on the wire ahead of whatever the user typed, so init-project runs and reads
+// the objective from the same turn; the bubble shows only the user's words.
+export const OPENING_TURN = "Let's start a new genealogy research project."
+
+export function withOpeningTurn(text: string): string {
+  return `${OPENING_TURN}\n\n${text}`
+}
+
+// Replayed history carries the wire text; give the bubble back its own words.
+export function stripOpeningTurn(text: string): string {
+  if (text === OPENING_TURN) return text
+  return text.startsWith(`${OPENING_TURN}\n\n`) ? text.slice(OPENING_TURN.length).trimStart() : text
+}
+
 // Drop any in-flight preview on the streaming assistant message. Used when a
 // labelled canonical block arrives: its deltas may already have previewed a
 // subagent's prose, and that prose must not stay on screen.

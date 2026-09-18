@@ -4,6 +4,10 @@ import {
   joinTextBlocks,
   trackLiveTask,
   endsWithHandBack,
+  stripHandBack,
+  withOpeningTurn,
+  stripOpeningTurn,
+  OPENING_TURN,
   type ChatMessage
 } from '../chatEvents'
 import subagentStream from './fixtures/subagent-stream.json'
@@ -206,5 +210,30 @@ describe('endsWithHandBack', () => {
     expect(endsWithHandBack('Next: search-records. Continue? Also note x.')).toBe(false)
     expect(endsWithHandBack('Research complete.')).toBe(false)
     expect(endsWithHandBack('Shall I continue?')).toBe(false)
+  })
+})
+
+describe('stripHandBack', () => {
+  it('drops the literal line from the render and keeps the prose', () => {
+    expect(stripHandBack('Found her.\n\nNext: search-records. Continue?')).toBe('Found her.')
+    expect(stripHandBack('Next: choose the first research question. Continue?\n')).toBe('')
+  })
+  it('leaves text that does not end with the literal alone', () => {
+    expect(stripHandBack('Next: search-records. Continue? Also note x.')).toBe(
+      'Next: search-records. Continue? Also note x.'
+    )
+    expect(stripHandBack('Research complete.')).toBe('Research complete.')
+  })
+})
+
+describe('opening turn', () => {
+  it('prefixes the opener on the wire and strips it back on replay', () => {
+    const wire = withOpeningTurn('Locate the siblings of LCZ8-949.')
+    expect(wire).toBe(`${OPENING_TURN}\n\nLocate the siblings of LCZ8-949.`)
+    expect(stripOpeningTurn(wire)).toBe('Locate the siblings of LCZ8-949.')
+  })
+  it('leaves a bare opener and ordinary messages alone', () => {
+    expect(stripOpeningTurn(OPENING_TURN)).toBe(OPENING_TURN)
+    expect(stripOpeningTurn('Yes.')).toBe('Yes.')
   })
 })
