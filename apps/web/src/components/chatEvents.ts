@@ -20,6 +20,11 @@ export interface ChatMessage {
   streamText?: string
   streamThinking?: string
   error?: boolean
+  // Closed by an `auto_continue` event: the server answered this message's
+  // hand-back itself (issue #2653). The next content event opens a new bubble
+  // rather than folding onto this one, so each auto-continued step reads as
+  // its own reply and its own trailing literal is the one stripped at render.
+  handedBack?: boolean
 }
 
 // Two canonical text blocks in one assistant turn are separate paragraphs, but
@@ -58,6 +63,10 @@ export function trackLiveTask(
 // The orchestrator's hand-back closes with a fixed literal (issue #2292, lead
 // ruling 2026-09-07): `Next: <step>. Continue?`. The terminal form is
 // `Research complete.`, which offers nothing to continue.
+//
+// This is the canonical copy. The in-sandbox runner carries the same pattern
+// (apps/server/app/agent/hand_back.py) to answer the literal itself in lay
+// mode; apps/server/tests/test_hand_back_parity.py fails if the two differ.
 export const HAND_BACK_RE = /(?:^|\n)\s*Next: .+\. Continue\?\s*$/
 
 export function endsWithHandBack(text: string): boolean {
@@ -123,7 +132,16 @@ export function foldChatEvent(
 
   const next = [...prev]
   let last = next[next.length - 1]
-  if (!last || last.role !== 'assistant') {
+  if (kind === 'auto_continue') {
+    // The server is answering the hand-back itself: close the bubble the
+    // literal ended, so the synthetic turn's content opens a fresh one. No
+    // user bubble — the "Yes." was never a message the user sent.
+    if (last && last.role === 'assistant' && !last.handedBack) {
+      next[next.length - 1] = { ...last, handedBack: true }
+    }
+    return next
+  }
+  if (!last || last.role !== 'assistant' || last.handedBack) {
     last = { role: 'assistant', text: '', tools: [] }
     next.push(last)
   } else {
