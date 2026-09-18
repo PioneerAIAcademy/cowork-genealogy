@@ -19,8 +19,9 @@ needs. It is NOT retroactive. Every run committed before it has no tail, and
 for those the two cases stay merged — which is why `_read_outcome` keys the
 `ranked-below-top3` / `not-ranked-at-all` split on `has_rank_tail` being
 present rather than on whether a match happens to sit past rank 3. Absence of
-a tail means "this run cannot answer that", never "nothing ranked below 3". The full scored list is not recoverable
-either: `rank_search_matches` appends every candidate to
+a tail means "this run cannot answer that", never "nothing ranked below 3".
+
+The full scored list is not recoverable either: `rank_search_matches` appends every candidate to
 `results/match-scores.jsonl`, but the e2e harness commits only the
 `.final-research.json` / `.final-tree.gedcomx.json` sidecars — `results/` dies
 with the temp project.
@@ -99,6 +100,10 @@ Listed in the order `scan_run` applies them. A read can qualify for several at
 once and is counted **once**, in the first it matches — so this order is load
 bearing, not presentational:
 
+0. `agent-type-unrecorded`: the call carries no `agent_type` KEY at all, so
+   this run predates the field and the read cannot be attributed to the main
+   thread or to a subagent. `.get` would flatten that to None, which reads as
+   "main thread" and is the denominator this report is about.
 1. `read-errored`: the `record_read` itself returned an error, so it can never
    join and must not land in the miss column.
 2. `unusable-record-id`: `args.recordId` is absent or not a string.
@@ -212,6 +217,14 @@ def _assert_upstream_constants() -> None:
 
 
 DEFAULT_CAP = 4000
+
+#: Every arm value a `ReadRow` can carry, in the order the table prints
+#: them. Module level so the guard below compares the counted arms against
+#: the SAME tuple the table iterates. Recomputing the total from `scorable`
+#: instead is true by construction: the counter is built from `scorable` one
+#: line earlier, so the sum matches whatever the tuple omits, and the guard
+#: that exists to catch a missing name cannot fail.
+ARM_ORDER = ("staging", "log", "nearest", "none")
 
 #: Below this many scorable late-segment reads, print a count and refuse a
 #: rate. The window that motivated the report has ~3, which is not a rate.
@@ -540,6 +553,15 @@ def scan_run(
             continue
         if tool != "record_read":
             continue
+        # `agent_type` ABSENT is not `agent_type: null`. A run recorded
+        # before the field existed carries no key, and `.get` flattens that
+        # into None — i.e. into "main thread", the denominator this whole
+        # report is about. Nothing structural stopped a subagent read from
+        # such a run entering the scorable population; it is excluded and
+        # counted like any other read this corpus cannot speak for.
+        if "agent_type" not in call:
+            rows.append(ReadRow(run, segment, "none", "agent-type-unrecorded"))
+            continue
         if agent is not None:
             delegated[agent] += 1
             continue
@@ -752,7 +774,14 @@ def preamble(
                         unparseable += 1
                     depth[min(len([m for m in matches if m.rank <= TOP_N]), TOP_N)] += 1
             elif tool == "record_read":
-                reads[call.get("agent_type") or "main"] += 1
+                # Same distinction the body makes: a missing key is not a
+                # null one. Folding it into `main` printed pre-field reads
+                # as main-thread traffic under a header calling any
+                # disagreement a bug in the join.
+                if "agent_type" not in call:
+                    reads["unrecorded (run predates the field)"] += 1
+                else:
+                    reads[call.get("agent_type") or "main"] += 1
     dates = sorted(d for d in (run_date(p) for p in contributing) if d is not None)
     return Preamble(
         searches,
@@ -875,13 +904,23 @@ def format_report(
         lines.append("How each scorable read was attributed to a search:")
         # Every arm a row can carry must be listed. A missing name silently
         # drops its rows from this table while `len(scorable)` still counts
-        # them, so the table stopped summing to the population it describes.
-        for arm in ("staging", "log", "nearest", "none"):
+        # them, so the table stops summing to the population it describes
+        # while the `-> N of M` line below stays right, because that line
+        # reads the counter directly. Two contradictory statements in one
+        # block, and nothing noticing.
+        #
+        # `printed` accumulates only what was actually emitted, and
+        # `unlisted` names any arm the tuple does not carry. Both are needed:
+        # summing the counter instead compares `scorable` with itself.
+        printed = 0
+        for arm in ARM_ORDER:
             if arms.get(arm):
                 lines.append(f"  {arm:<28} {arms[arm]}")
-        assert sum(arms.values()) == len(scorable), (
-            f"attribution table {sum(arms.values())} != scorable {len(scorable)} "
-            f"— an arm is missing from the list above: {sorted(arms)}"
+                printed += arms[arm]
+        unlisted = sorted(set(arms) - set(ARM_ORDER))
+        assert not unlisted and printed == len(scorable), (
+            f"attribution table {printed} != scorable {len(scorable)}; "
+            f"arm(s) missing from ARM_ORDER: {unlisted}"
         )
         exact = arms.get("staging", 0) + arms.get("log", 0)
         lines.append(

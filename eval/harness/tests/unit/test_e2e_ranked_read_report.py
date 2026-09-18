@@ -8,6 +8,7 @@ import json
 import pytest
 
 from e2e.ranked_read_report import (
+    ARM_ORDER,
     CAVEAT,
     LATE_RATE_FLOOR,
     TOP_N,
@@ -732,6 +733,93 @@ def test_preamble_counts_the_same_runs_the_body_scores(tmp_path):
 
 
 # --- format_report ----------------------------------------------------------
+
+
+def test_an_arm_missing_from_ARM_ORDER_fails_the_table(monkeypatch):
+    """Break 1 of 2. The table iterates `ARM_ORDER`; drop a name and its rows
+    vanish from the table while `scorable` still counts them.
+
+    The guard this replaced summed the counter it had just built from
+    `scorable`, so it compared the population with itself and passed while the
+    table under-reported. Worse, the `-> N of M` line below reads the counter
+    directly, so it stayed correct — two contradictory statements in one block
+    with nothing noticing."""
+    rows = [
+        ReadRow("f/r", 0, "staging", "in_top3"),
+        ReadRow("f/r", 0, "log", "not_in_top3"),
+        ReadRow("f/r", 0, "nearest", "not_in_top3"),
+    ]
+    monkeypatch.setattr(
+        "e2e.ranked_read_report.ARM_ORDER", ("staging", "nearest", "none")
+    )
+    with pytest.raises(AssertionError, match="missing from ARM_ORDER.*log"):
+        format_report(rows, {}, n_runs=1, excluded={})
+
+
+def test_an_arm_value_no_one_listed_fails_the_table():
+    """Break 2 of 2, and the direction the repo's rule asks for — 'one break is
+    not a proof'. Here `ARM_ORDER` is untouched and a NEW arm value appears, the
+    shape a future join arm actually takes. Dropping a name and adding a value
+    are different bugs and a guard keyed only on the printed total catches just
+    the first."""
+    rows = [
+        ReadRow("f/r", 0, "staging", "in_top3"),
+        ReadRow("f/r", 0, "fingerprint", "not_in_top3"),
+    ]
+    with pytest.raises(AssertionError, match="missing from ARM_ORDER.*fingerprint"):
+        format_report(rows, {}, n_runs=1, excluded={})
+
+
+def test_the_arm_table_accepts_every_arm_the_scanner_can_emit():
+    """The other direction — the guard must not block legitimate output. Every
+    value `scan_run` assigns to `ReadRow.arm` is in `ARM_ORDER`, so a report
+    carrying all four must format cleanly."""
+    rows = [ReadRow("f/r", 0, arm, "not_in_top3") for arm in ARM_ORDER]
+    out = format_report(rows, {}, n_runs=1, excluded={})
+    for arm in ARM_ORDER:
+        assert f"  {arm:<28} 1" in out
+    assert "4 of 4" not in out, "only staging+log are explicit-ref joins"
+
+
+def test_a_read_from_a_run_predating_agent_type_is_excluded_not_counted_as_main():
+    """`agent_type` ABSENT is not `agent_type: null`.
+
+    A run recorded before the field existed carries no key, and `.get` flattens
+    that to None — i.e. into the main-thread denominator this whole report is
+    about. Nothing structural stopped a subagent read from such a run entering
+    the scorable population, and the real-corpus acceptance check cannot catch
+    it because its fixtures always set the key."""
+    read = _read("ark:/61903/1:1:AAAA-111")
+    del read["agent_type"]
+    doc = _doc([_search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")]), read])
+    assert [r.outcome for r in _rows(doc)] == ["agent-type-unrecorded"]
+
+
+def test_an_explicit_null_agent_type_is_still_the_main_thread():
+    """The other direction, and the reason this keys on the KEY rather than on
+    the value: a run that records `agent_type: null` is saying 'main thread',
+    and excluding those would empty the denominator."""
+    doc = _doc(
+        [
+            _search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")]),
+            _read("ark:/61903/1:1:AAAA-111"),
+        ]
+    )
+    assert [r.outcome for r in _rows(doc)] == ["in_top3"]
+
+
+def test_the_preamble_separates_unrecorded_reads_from_main_thread_ones(tmp_path):
+    """The preamble made the same mistake independently, under a header calling
+    any disagreement a bug in the join."""
+    read = _read("ark:/61903/1:1:AAAA-111")
+    del read["agent_type"]
+    p = _write_run(
+        tmp_path,
+        _doc([_search(matches=[_match(1, "ark:/61903/1:1:AAAA-111")]), read]),
+    )
+    pre = preamble([p], cap=4000)
+    assert pre.reads.get("main", 0) == 0
+    assert pre.reads["unrecorded (run predates the field)"] == 1
 
 
 def test_format_report_prints_counts_and_the_arm_split():
