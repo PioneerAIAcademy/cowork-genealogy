@@ -6,7 +6,10 @@ half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant w
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
 issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
 (PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
-against seeded rows until the worker exists); D16 built 2026-09-18 (PR #2659; the
+against seeded rows until the worker exists); the store half of D6–8 built 2026-09-18 (PR
+#2652; `PgS3ProjectStore`, `createServer(principal)`, `hosted-stdio.js`); D9–10 and D15
+built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
+Postgres, the six agents via `agents=`); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
@@ -1143,7 +1146,7 @@ without whichever Bedrock refuses.
   `claude-agent-sdk==0.2.128` (CLI 2.1.220, printed at start) + the engine prod tree
   with its optional deps + the plugin, running **unprivileged** — the CLI refuses
   `bypassPermissions` as root, which the first image did; `/tmp` is a tmpfs.
-  **Measured 2026-09-18, `make proto-turn` (12/12), the two-turn acceptance through
+  **Measured 2026-09-18, `make proto-turn` (14/14), the two-turn acceptance through
   web tier → queue → shim → worker with zero kills:** turn 1 (`convert_calendar`) 3
   model turns, $0.137, 9.2 s API / 10.4 s wall, 7 `session_events` rows + 46
   `session_activity` upserts, 16 `session_entries`, 2 `tool_calls` rows (`ToolSearch`,
@@ -1152,7 +1155,22 @@ without whichever Bedrock refuses.
   16 → 21), 1 model turn, $0.058, 1.9 s API / 3.1 s wall, and answered “4 April 1751
   (Julian) = 15 April 1751 (Gregorian)” — the transcript, not the prompt, held that.
   Not here: `tool_calls.duration_ms` stays NULL (one `PreToolUse` hook, no
-  `PostToolUse`); the kill-resume loop is D14.
+  `PostToolUse`); the kill-resume loop is D14. Both halves of the registration
+  precondition are literals (`EXPECTED_AGENTS`, `EXPECTED_SKILLS = 28`), never a count
+  of the directory the SDK loads from — an image shipping a short plugin would
+  otherwise expect exactly what it shipped — and the CLI's `system/init` must arrive
+  and declare the chosen id, or the turn fails (the assertion would otherwise fail
+  open). `TOOL_SERVER=http` (`TOOL_SERVER=http make proto-turn`) points the CLI at
+  D16's `tools` service under its contract — `Authorization: Bearer <patron token>`,
+  nothing else on the request is read — so a turn there runs the project tools against
+  that service's file backend, not the Postgres store; the default stays `stdio` until
+  per-request store scoping over HTTP exists, the open half of D16's note.
+  **Re-measured 2026-09-18 after the second review, both modes 14/14:** stdio, turn 1
+  $0.137 / turn 2 $0.058, `entries_seq_before` 0 → 16, output tokens 320 + 28 = the
+  session's 348 (the check that replaced the tautology); http — the first turn through
+  D16's `tools` service, `convert_calendar` answered over Streamable HTTP with no
+  `hosted-stdio.js` fork — turn 1 $0.084 (3 model turns, 9.3 s wall), turn 2 resumed in
+  a fresh process, $0.061, the same 1751 answer.
 
 ### Week 3 — make it visible
 
@@ -1282,9 +1300,9 @@ without whichever Bedrock refuses.
   `query()` — the six bare names of `worker.EXPECTED_AGENTS`, a **constant**, never
   the set that happened to load (a plugin dir whose `agents/*.md` is not exactly that
   set is refused at worker start, so a renamed agent file cannot narrow the check to
-  five), 28 `genealogy-research:` commands (the count comes from the plugin's `skills/`
-  directory, not a literal) — and a miss is a 500 with the missing names, no token
-  billed. The hook (`make_pretool_hook`, matcher
+  five), 28 `genealogy-research:` commands (`worker.EXPECTED_SKILLS`, a literal too —
+  a count of the directory the SDK loads from shrinks with a short image) — and a miss
+  is a 500 with the missing names, no token billed. The hook (`make_pretool_hook`, matcher
   `None`, never raises) denies raw `Write`/`Edit` on the project files, denies
   `Read`/`Grep`/`Glob` under the anchor with the MCP route in the reason, and writes
   one `tool_calls` row per call — `turn_id`, `session_id`, `agent_id`/`agent_type`

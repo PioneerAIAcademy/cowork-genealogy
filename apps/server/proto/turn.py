@@ -123,13 +123,31 @@ def run(base: str, dsn: str, deadline_s: float) -> tuple[list[Check], dict[str, 
         completed2, cost2, num2, dur2 = row2[0] if row2 else (None, None, None, None)
         checks.append(("turn 2: completed with cost_usd > 0", completed2 is not None and cost2 is not None and float(cost2) > 0, f"row={row2}"))
         tokens2 = tokens(dsn, turn2)
-        checks.append(("turn 2: token columns cover this turn alone", tokens_filled(tokens2) and tokens2["output_tokens"] < (tokens1.get("output_tokens") or 0) + tokens2["output_tokens"], f"tokens={tokens2}"))
+        # The two turns' output columns must fit inside the session's whole output: a turn 2
+        # summed from seq 0 would carry turn 1's tokens again and overshoot it.
+        session_output = one(dsn, SESSION_OUTPUT_SQL, (sdk_session_id or "",)) or 0
+        before1 = one(dsn, "SELECT entries_seq_before FROM turns WHERE turn_id = %s", (turn1,))
+        before2 = one(dsn, "SELECT entries_seq_before FROM turns WHERE turn_id = %s", (turn2,))
+        own = (tokens1.get("output_tokens") or 0) + (tokens2.get("output_tokens") or 0) <= session_output
+        checks.append(("turn 2: token columns cover this turn alone",
+                       tokens_filled(tokens2) and own and before1 is not None and before2 is not None and before2 > before1,
+                       f"output {tokens1.get('output_tokens')} + {tokens2.get('output_tokens')} vs session {session_output}; "
+                       f"entries_seq_before {before1} -> {before2}"))
         figures["turn2"].update({"cost_usd": float(cost2) if cost2 is not None else None, "num_turns": num2,
                                  "duration_ms": dur2, "entries": entries2, "reply": reply[:200], "tokens": tokens2})
     return checks, figures
 
 
 TOKEN_COLUMNS = ("input_tokens", "cache_creation_tokens", "cache_read_tokens", "output_tokens")
+
+# The whole SDK session's output tokens, one row per API message (the worker's
+# TURN_USAGE_SQL without its seq window).
+SESSION_OUTPUT_SQL = (
+    "SELECT sum((u->>'output_tokens')::bigint) "
+    "FROM (SELECT DISTINCT ON (entry->'message'->>'id') entry->'message'->'usage' AS u "
+    "FROM session_entries WHERE session_id = %s AND entry->>'type' = 'assistant' "
+    "ORDER BY entry->'message'->>'id', seq DESC) m"
+)
 
 
 def tokens(dsn: str, turn_id: str) -> dict[str, int | None]:

@@ -484,7 +484,7 @@ proto-turn: $(ENGINE_BUILD) ## D9–10 acceptance: two real turns through web ti
 	  if [ -z "$$key" ]; then echo "proto-turn: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  export ANTHROPIC_API_KEY="$$key"; \
 	  $(PROTO_COMPOSE) up -d --build && \
-	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
 
 # ── Search-agent prototype: D11–13 web tier (apps/server/proto/web/) ─────

@@ -12,8 +12,13 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
   session_events with ``kind`` lifted into the column;
 - deny.py's three cases and the route chooser;
 - the hook's tool_calls row for every call, its deny decisions, and that it never raises;
-- the D15 registration precondition against the CONSTANT agent set: a plugin dir
-  missing an agent is refused at load, and the precondition cannot be handed the loaded set;
+- the D15 registration precondition against the two CONSTANTS: a plugin dir missing an
+  agent is refused at load, and the precondition can be handed neither the loaded agents
+  nor a count of the skills on disk;
+- run_turn against a fake client: a good stream completes the turn with the result's
+  figures; a wrong session id in system/init, no init at all, a MirrorErrorMessage, an
+  errored ResultMessage and a stream with no ResultMessage each fail the turn without
+  completing it; a short registration is refused before anything is sent to the model;
 - the option set: cwd, setting_sources=[], agents=, the tool server's per-turn env in a
   0600 mcp.json (never argv) under ``env -u ANTHROPIC_API_KEY``, session_id/resume
   exactly one, the eager store flush, the model pin per provider;
@@ -36,6 +41,7 @@ from typing import Any
 
 import pytest
 import yaml
+from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage, SystemMessage, TextBlock
 
 from proto.worker import deny, options, worker
 from proto.worker.session_store import entry_rows
@@ -530,7 +536,10 @@ def test_the_plugin_ships_six_agents_and_twenty_eight_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == 28
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 28
+    # A literal in the source, not an expression over the plugin dir (the mutation the
+    # review named: both sides of the check shrinking together).
+    assert "\nEXPECTED_SKILLS = 28\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -564,15 +573,26 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     assert agents is None and error.endswith("; unexpected ['extra-agent']")
 
 
-def test_registration_problems_compares_against_the_constant_not_the_loaded_set():
-    # Six registered: clean. Five registered: the missing bare name, whatever loaded --
-    # the helper takes no agents argument, so the loaded set cannot reach it.
-    assert worker.registration_problems(_info(AGENTS, 28), expected_skills=28) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 28, ("genealogy-research:gps-mentor",)), expected_skills=28)
+def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
+    # Six agents and 28 skills registered: clean. Five, or 27: the miss, whatever loaded --
+    # the helper takes neither an agents argument nor a skill count, so neither figure
+    # from the image can reach it.
+    assert worker.registration_problems(_info(AGENTS, 28)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 28, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
+    assert worker.registration_problems(_info(AGENTS, 27)) == ["27 genealogy-research:* commands registered, expected 28"]
     import inspect
 
-    assert "agents" not in inspect.signature(worker.registration_problems).parameters
+    assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
+    # The mutation the first build let through: a plugin copy short one skill folder
+    # registers 27, and a count of that same copy would have expected 27.
+    copy = tmp_path / "plugin"
+    shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
+    shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
+    assert worker.count_skills(str(copy)) == 27
+    assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
+        "27 genealogy-research:* commands registered, expected 28"
+    ]
 
 
 # ── the option set ───────────────────────────────────────────────────────────────
@@ -765,29 +785,149 @@ def test_004_worker_only_adds_nullable_columns():
         "token counts and the seq mark are bigint"
 
 
-def test_tool_server_http_sends_the_turn_as_headers_instead_of_a_fork(tmp_path):
-    # D16: the shared Streamable HTTP tool server binds one MCP session per turn from
-    # these headers; the CLI opens that session once per process.
+def test_tool_server_http_is_the_d16_service_with_the_bearer_as_authorization(tmp_path):
+    # PR #2659's contract: `Authorization: Bearer <patron token>` is the one header the
+    # entrypoint reads, and the default URL is the compose `tools` service.
     env = {**WORKER_ENV, "TOOL_SERVER": "http"}
-    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env, turn_id="turn-9")
-    server = _server(opts)
-    assert server["type"] == "http"
-    assert server["url"] == options.TOOL_SERVER_DEFAULT_URL
-    assert "command" not in server and "env" not in server
-    assert server["headers"] == {
-        "X-Genealogy-Project-Id": "proj-1",
-        "X-Genealogy-Turn-Id": "turn-9",
-        "X-Genealogy-FS-Token": "turn-token",
-        "X-Genealogy-Wiki-Api-Url": "http://wiki:8000",
-    }
-    custom = _server(
-        _options(config_dir=str(tmp_path), worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8086/mcp"})
-    )
-    assert custom["url"] == "http://127.0.0.1:8086/mcp"
-    assert "X-Genealogy-Turn-Id" not in custom["headers"], "no turn id, no header"
+    server = _server(_options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env))
+    assert server == {"type": "http", "url": "http://tools:8787/mcp", "headers": {"Authorization": "Bearer turn-token"}}
+    custom = _server(_options(
+        config_dir=str(tmp_path), fs_access_token="", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
+    ))
+    assert custom["url"] == "http://127.0.0.1:8787/mcp"
+    assert custom["headers"] == {}, "an empty bearer sends no header, not a malformed `Bearer `"
+    fallback = _server(_options(config_dir=str(tmp_path), worker_env=env))
+    assert fallback["headers"] == {"Authorization": "Bearer env-token"}, "the worker env's token when the message has none"
 
 
 def test_tool_server_defaults_to_stdio_and_refuses_an_unknown_mode(tmp_path):
     assert _server(_options(config_dir=str(tmp_path)))["type"] == "stdio"
     with pytest.raises(ValueError, match="stdio or http"):
         _options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "grpc"})
+
+
+# ── run_turn: every guard seen firing, on a fake client ──────────────────────────
+
+
+class FakeSessionStore:
+    def __init__(self, entries: bool) -> None:
+        self.calls = {"entries_appended": 0}
+        self._entries = entries
+
+    async def has_entries(self, sdk_session_id: str) -> bool:
+        return self._entries
+
+
+class FakeClient:
+    """ClaudeSDKClient's surface as run_turn uses it: a canned message stream."""
+
+    def __init__(self, messages: list[Any], info: dict | None) -> None:
+        self.messages, self.info = list(messages), info
+        self.queried: list[str] = []
+        self.disconnected = False
+
+    async def connect(self) -> None:
+        pass
+
+    async def disconnect(self) -> None:
+        self.disconnected = True
+
+    async def get_server_info(self) -> dict | None:
+        return self.info
+
+    async def query(self, text: str) -> None:
+        self.queried.append(text)
+
+    async def receive_response(self):
+        for m in self.messages:
+            yield m
+
+
+SID = "11111111-1111-1111-1111-111111111111"
+
+
+def _init(sid: str = SID) -> SystemMessage:
+    return SystemMessage(subtype="init", data={"session_id": sid, "model": "m"})
+
+
+def _text(text: str) -> AssistantMessage:
+    return AssistantMessage(content=[TextBlock(text=text)], model="m")
+
+
+def _result(*, is_error: bool = False) -> ResultMessage:
+    return ResultMessage(
+        subtype="error_during_execution" if is_error else "success", duration_ms=10, duration_api_ms=8,
+        is_error=is_error, num_turns=1, session_id=SID, total_cost_usd=0.01, result="boom" if is_error else None,
+    )
+
+
+def _good() -> list[Any]:
+    return [_init(), _text("4 April 1751"), _result()]
+
+
+@pytest.fixture
+def turn_env(monkeypatch, tmp_path):
+    """run_turn offline: a fake connection, session store, client and option builder; the
+    anchor under tmp. ``state`` is what the test reads back."""
+    import claude_agent_sdk
+
+    state: dict[str, Any] = {"conn": FakeConn(usage=(10, 0, 0, 5)), "client": None, "options": None, "entries": False}
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: state["conn"])
+    monkeypatch.setattr(worker, "PgSessionStore", lambda dsn, project_id: FakeSessionStore(state["entries"]))
+    monkeypatch.setattr(worker, "WORKER_CWD", str(tmp_path / "project"))
+
+    def build(**kwargs):
+        state["options"] = kwargs
+        return object()
+
+    monkeypatch.setattr(worker, "build_worker_options", build)
+    monkeypatch.setattr(claude_agent_sdk, "ClaudeSDKClient", lambda options: state["client"])
+    return state
+
+
+def _run(state: dict, messages: list[Any], info: dict | None = None) -> dict:
+    state["client"] = FakeClient(messages, _info(AGENTS, 28) if info is None else info)
+    return asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+
+
+def _turn_done_written(conn: FakeConn) -> bool:
+    return any("'turn_done'" in sql for sql, _ in conn.executed)
+
+
+def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
+    summary = _run(turn_env, _good())
+    conn, client, opts = turn_env["conn"], turn_env["client"], turn_env["options"]
+    assert client.queried == ["hello"] and client.disconnected
+    assert opts["session_id"] == SID and opts["resume"] is None and opts["agents"] and opts["cwd"] == worker.WORKER_CWD
+    assert _turn_done_written(conn)
+    update = next(sql for sql, _ in conn.executed if sql.startswith("UPDATE turns SET completed_at"))
+    assert "cost_usd = COALESCE" in update and "output_tokens = COALESCE" in update
+    assert summary["cost_usd"] == 0.01 and summary["num_turns"] == 1 and summary["resumed"] is False
+    assert summary["events"] == 1 and summary["sdk_session_id"] == SID and summary["seq"] == 2, "text event, then turn_done"
+
+
+def test_run_turn_resumes_when_the_store_already_holds_the_session(turn_env):
+    turn_env["entries"] = True
+    assert _run(turn_env, _good())["resumed"] is True
+    assert turn_env["options"]["resume"] == SID and turn_env["options"]["session_id"] is None
+
+
+@pytest.mark.parametrize("messages, error, match", [
+    ([_init("other"), _text("x"), _result()], RuntimeError, "not the chosen"),
+    ([_init(), MirrorErrorMessage(subtype="mirror_error", data={}, error="disk gone"), _result()], worker.MirrorError, "disk gone"),
+    ([_init(), _text("x"), _result(is_error=True)], RuntimeError, "is_error"),
+    ([_init(), _text("x")], RuntimeError, "without a ResultMessage"),
+    ([_text("x"), _result()], RuntimeError, "never declared its session"),
+], ids=["wrong-session-id", "mirror-error", "errored-result", "no-result", "no-init"])
+def test_run_turn_fails_the_turn_on_each_guard_without_completing_it(turn_env, messages, error, match):
+    with pytest.raises(error, match=match):
+        _run(turn_env, messages)
+    assert not _turn_done_written(turn_env["conn"]), "a failed turn stays open for the redelivery"
+    assert turn_env["client"].disconnected, "the CLI is always released"
+
+
+def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
+    with pytest.raises(worker.RegistrationError, match="gps-mentor"):
+        _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 28))
+    assert turn_env["client"].queried == [], "nothing sent to the model"
+    assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])

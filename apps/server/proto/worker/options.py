@@ -105,38 +105,33 @@ def tool_server_env(
     """The environment of the per-turn ``hosted-stdio.js`` fork."""
     env = {k: worker_env[k] for k in STORE_ENV_KEYS if worker_env.get(k)}
     env["GENEALOGY_PROJECT_ID"] = project_id
-    token = fs_access_token if fs_access_token is not None else worker_env.get("FS_ACCESS_TOKEN", "")
-    env["FS_ACCESS_TOKEN"] = token or ""
+    env["FS_ACCESS_TOKEN"] = bearer_token(worker_env, fs_access_token)
     for key in PER_USER_ENV_KEYS:
         if worker_env.get(key):
             env[key] = worker_env[key]
     return env
 
 
-# D16: the same per-turn facts as request headers when the tool server is the shared
-# Streamable HTTP process instead of a per-turn fork. The CLI opens its MCP session once
-# per process — once per turn — so the headers on `initialize` identify the turn.
-TOOL_SERVER_DEFAULT_URL = "http://toolserver:8086/mcp"
-HEADER_FOR_ENV = {
-    "WIKI_API_URL": "X-Genealogy-Wiki-Api-Url",
-    "POP_STATS_URL": "X-Genealogy-Pop-Stats-Url",
-    "OPENROUTER_API_KEY": "X-Genealogy-OpenRouter-Api-Key",
-    "OPENROUTER_MODEL": "X-Genealogy-OpenRouter-Model",
-}
+def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
+    """The patron's FamilySearch token for this turn: the message's, else the worker
+    env's ``FS_ACCESS_TOKEN``, else empty."""
+    token = fs_access_token if fs_access_token is not None else worker_env.get("FS_ACCESS_TOKEN", "")
+    return token or ""
 
 
-def tool_server_headers(
-    worker_env: Mapping[str, str], *, project_id: str, fs_access_token: str | None, turn_id: str | None
-) -> dict[str, str]:
-    """The ``X-Genealogy-*`` headers an HTTP tool server binds a session from."""
-    env = tool_server_env(worker_env, project_id=project_id, fs_access_token=fs_access_token)
-    headers = {"X-Genealogy-Project-Id": project_id, "X-Genealogy-FS-Token": env["FS_ACCESS_TOKEN"]}
-    if turn_id:
-        headers["X-Genealogy-Turn-Id"] = turn_id
-    for key, header in HEADER_FOR_ENV.items():
-        if env.get(key):
-            headers[header] = env[key]
-    return headers
+# D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
+# contract is the one header the entrypoint reads -- `Authorization: Bearer <patron token>`
+# becomes the request's principal -- and nothing else on the request: no project or turn
+# header, because per-request store scoping over HTTP does not exist yet (that service
+# runs the file backend). The CLI opens the MCP session once per process, once per turn.
+TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
+
+
+def tool_server_headers(worker_env: Mapping[str, str], *, fs_access_token: str | None) -> dict[str, str]:
+    """``Authorization: Bearer <token>`` when there is a token; no header at all when the
+    bearer is empty (the server reads a missing header as an empty bearer)."""
+    token = bearer_token(worker_env, fs_access_token)
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 def tool_server_entry(
@@ -145,20 +140,17 @@ def tool_server_entry(
     *,
     project_id: str,
     fs_access_token: str | None,
-    turn_id: str | None = None,
 ) -> dict[str, Any]:
     """The ``genealogy`` MCP server entry. ``TOOL_SERVER=stdio`` (the default):
     ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
     of ``tool_server_env``. ``TOOL_SERVER=http``: the shared Streamable HTTP tool server at
-    ``TOOL_SERVER_URL``, the same facts as ``X-Genealogy-*`` headers."""
+    ``TOOL_SERVER_URL`` with the bearer as ``Authorization``."""
     mode = worker_env.get("TOOL_SERVER", "stdio")
     if mode == "http":
         return {
             "type": "http",
             "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
-            "headers": tool_server_headers(
-                worker_env, project_id=project_id, fs_access_token=fs_access_token, turn_id=turn_id
-            ),
+            "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token),
         }
     if mode != "stdio":
         raise ValueError(f"TOOL_SERVER must be stdio or http, not {mode!r}")
@@ -300,7 +292,6 @@ def build_worker_options(
     resume: str | None = None,
     session_id: str | None = None,
     fs_access_token: str | None = None,
-    turn_id: str | None = None,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
 ):
@@ -338,7 +329,7 @@ def build_worker_options(
             config_dir,
             {
                 "genealogy": tool_server_entry(
-                    engine_dir, env_in, project_id=project_id, fs_access_token=fs_access_token, turn_id=turn_id
+                    engine_dir, env_in, project_id=project_id, fs_access_token=fs_access_token
                 )
             },
         ),

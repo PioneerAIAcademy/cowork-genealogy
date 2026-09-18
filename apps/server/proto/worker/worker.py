@@ -25,8 +25,10 @@ first transcript append can never land under an id no row names -- and passed as
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
 ``options.py``; ``get_server_info()`` checked for the six bare agent names
 (``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 28
-``genealogy-research:<skill>`` commands BEFORE the query bills a token (D15) -- a miss
-is a 500; every SDK message through ``map_message`` -- transient kinds upsert
+``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
+of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
+is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
+turn fails; every SDK message through ``map_message`` -- transient kinds upsert
 ``session_activity``, everything else is a ``session_events`` row via
 ``next_session_seq`` (kind = the event's kind, payload = its other fields); a
 ``MirrorErrorMessage`` is fatal (the store dropped a batch, and local disk dies with
@@ -95,13 +97,16 @@ EXPECTED_AGENTS = frozenset({
     "record-extractor",
     "research-exhaustiveness",
 })
+# The other half of the same precondition, a literal for the same reason: a count of
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 27
+# skills registers 27 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 28
 
 _stdout_lock = threading.Lock()
 
 # Parsed once at start (prepare); a real turn refuses to run without them.
 _AGENTS: dict[str, Any] | None = None
 _AGENTS_ERROR: str | None = None
-_EXPECTED_SKILLS: int = 0
 
 
 class RegistrationError(RuntimeError):
@@ -362,7 +367,7 @@ def load_plugin_agents(plugin_dir: str) -> tuple[dict[str, Any] | None, str | No
 def prepare() -> None:
     """Everything a real turn needs, done once; a failure is logged and fails only the
     real turns (the stub arms keep working)."""
-    global _AGENTS, _AGENTS_ERROR, _EXPECTED_SKILLS
+    global _AGENTS, _AGENTS_ERROR
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
@@ -372,13 +377,13 @@ def prepare() -> None:
     except Exception as exc:  # noqa: BLE001 - reported, then the server still serves /healthz
         log(ev="prepare", step="schema", error=f"{type(exc).__name__}: {exc}")
     _AGENTS, _AGENTS_ERROR = load_plugin_agents(ENGINE_PLUGIN_DIR)
-    _EXPECTED_SKILLS = count_skills(ENGINE_PLUGIN_DIR)
     try:
         from claude_agent_sdk._cli_version import __cli_version__ as cli_version
     except Exception:  # noqa: BLE001
         cli_version = None
     log(
-        ev="prepare", step="agents", agents=sorted(_AGENTS or {}), skills=_EXPECTED_SKILLS,
+        ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
+        skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
         error=_AGENTS_ERROR, plugin_dir=ENGINE_PLUGIN_DIR, engine_dir=ENGINE_DIR,
         cli_version=cli_version,
     )
@@ -390,10 +395,10 @@ def require_agents() -> dict[str, Any]:
     return _AGENTS
 
 
-def registration_problems(info: Any, *, expected_skills: int) -> list[str]:
-    """The D15 precondition against the CONSTANT agent set -- this function has no way
-    to be handed the agents that loaded, which is the point."""
-    return check_registration(info, expected_agents=set(EXPECTED_AGENTS), expected_skills=expected_skills)
+def registration_problems(info: Any) -> list[str]:
+    """The D15 precondition against the two CONSTANTS -- this function has no way to be
+    handed the agents that loaded or a count of the skills on disk, which is the point."""
+    return check_registration(info, expected_agents=set(EXPECTED_AGENTS), expected_skills=EXPECTED_SKILLS)
 
 
 # -- the real turn -------------------------------------------------------------
@@ -405,14 +410,12 @@ async def run_turn(
     sdk_session_id: str,
     *,
     agents: dict[str, Any] | None = None,
-    expected_skills: int | None = None,
 ) -> dict[str, Any]:
     from claude_agent_sdk import ClaudeSDKClient, MirrorErrorMessage, ResultMessage
 
     from app.agent.real_agent import TRANSIENT_KINDS, map_message
 
     agents = require_agents() if agents is None else agents
-    expected_skills = _EXPECTED_SKILLS if expected_skills is None else expected_skills
     message = turn["message"]
     turn_id, session_id, project_id = turn["turn_id"], turn["session_id"], turn["project_id"]
     text = str(message["text"])
@@ -452,7 +455,6 @@ async def run_turn(
             resume=resume,
             session_id=None if resume else sdk_session_id,
             fs_access_token=message.get("fs_access_token"),
-            turn_id=turn_id,
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
         )
         client = ClaudeSDKClient(options=options)
@@ -461,16 +463,18 @@ async def run_turn(
             materialized = getattr(client, "_materialized", None)
             if materialized is not None and getattr(materialized, "config_dir", None):
                 config_root["path"] = str(materialized.config_dir)
-            problems = registration_problems(await client.get_server_info(), expected_skills=expected_skills)
+            problems = registration_problems(await client.get_server_info())
             if problems:
                 raise RegistrationError("; ".join(problems))
 
             await client.query(text)
+            saw_init = False
             tool_names: dict[str, str] = {}
             tasks: dict[str, str] = {}
             live: set[str] = set()
             async for msg in client.receive_response():
                 if is_init_message(msg):
+                    saw_init = True
                     sid = message_session_id(msg)
                     if sid != sdk_session_id:
                         raise RuntimeError(
@@ -482,6 +486,10 @@ async def run_turn(
                     write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
                 if isinstance(msg, ResultMessage):
                     result = msg
+            if not saw_init:
+                # Without this the session-id assertion above fails open: a CLI whose init
+                # message stopped matching would run unverified and pass.
+                raise RuntimeError("the CLI never declared its session (no system/init message)")
             if result is None:
                 raise RuntimeError("message stream ended without a ResultMessage")
             if result.is_error:

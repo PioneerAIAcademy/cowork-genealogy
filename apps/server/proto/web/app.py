@@ -478,7 +478,9 @@ class PatchSessionBody(BaseModel):
 
 
 class MessageBody(BaseModel):
-    text: str = Field(min_length=1)
+    # Not blank: the worker would take a whitespace-only text for a stub message and
+    # complete the turn with no reply, and a 400 there would requeue it forever.
+    text: str = Field(min_length=1, pattern=r"\S")
 
 
 class DevLoginBody(BaseModel):
