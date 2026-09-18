@@ -201,6 +201,14 @@ def test_activity_to_wire_is_a_task_progress_event():
     assert "seq" not in wire
 
 
+def test_activity_to_wire_keeps_the_payloads_own_kind():
+    # The worker writes the whole transient event, kind included (text_delta,
+    # thinking_delta, task_progress); relabelling a text delta as task_progress would
+    # hand the SPA a subagent progress line with a `text` field.
+    wire = activity_to_wire(Activity(T0, {"kind": "text_delta", "text": "Thom"}))
+    assert wire["event"] == {"kind": "text_delta", "text": "Thom"}
+
+
 @pytest.mark.parametrize(
     ("header", "after", "expected"),
     [
@@ -299,13 +307,18 @@ async def test_post_message_on_queue_failure_marks_the_turn_and_returns_502():
     assert queue.sent == []
 
 
-async def test_post_message_rejects_empty_text_and_unknown_session():
+async def test_post_message_rejects_empty_or_blank_text_and_unknown_session():
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()
     async with make_client(store, queue) as c:
-        assert (await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": ""})).status_code == 422
+        for blank in ("", " ", "\n", "  \t "):
+            r = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": blank})
+            assert r.status_code == 422, repr(blank)
         assert (await c.post("/api/sessions/nope/messages", json={"text": "x"})).status_code == 404
-    assert queue.sent == []
+        assert queue.sent == []
+        # Padding around real text is not blankness.
+        assert (await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "  hi  "})).status_code == 202
+    assert [m["text"] for m in queue.sent] == ["  hi  "]
 
 
 async def test_get_events_returns_rows_above_the_cursor():

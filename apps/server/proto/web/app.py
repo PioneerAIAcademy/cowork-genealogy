@@ -157,7 +157,9 @@ def row_to_wire(row: EventRow) -> dict[str, Any]:
 
 
 def activity_to_wire(activity: Activity) -> dict[str, Any]:
-    return {"type": "agent_event", "event": {**activity.payload, "kind": "task_progress"}}
+    """The payload's own ``kind`` wins (the worker writes the whole transient event --
+    text_delta, thinking_delta or task_progress); a payload without one is task_progress."""
+    return {"type": "agent_event", "event": {"kind": "task_progress", **activity.payload}}
 
 
 def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
@@ -476,7 +478,9 @@ class PatchSessionBody(BaseModel):
 
 
 class MessageBody(BaseModel):
-    text: str = Field(min_length=1)
+    # Not blank: the worker would take a whitespace-only text for a stub message and
+    # complete the turn with no reply, and a 400 there would requeue it forever.
+    text: str = Field(min_length=1, pattern=r"\S")
 
 
 class DevLoginBody(BaseModel):

@@ -6,7 +6,12 @@ half of D6–8 built 2026-09-14 (PR #2567 — the tool, the `gps-mentor` grant w
 removed, the body and spec rewrites; the `research/SKILL.md` glob rewrite is split out to
 issue #2568 by the lead's scope ruling); D11–13 built 2026-09-14 ahead of the rest of D6–10
 (PR #2548; the web tier, the SSE transport in `apps/web`, the headless driver — driven
-against seeded rows until the worker exists); FamilySearch's
+against seeded rows until the worker exists); the store half of D6–8 built 2026-09-18 (PR
+#2652; `PgS3ProjectStore`, `createServer(principal)`, `hosted-stdio.js`); D9–10 and D15
+built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
+Postgres, the six agents via `agents=`); D16 built 2026-09-18 (PR #2659; the
+Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
+every tool but the four auth exclusions, the compose `tools` service); FamilySearch's
 gateway and SSE answers folded in 2026-09-11, with P3b and the corpus cache-window
 measured the same day; the five asks those answers left with FamilySearch are listed under
 "Open asks" (2026-09-13); the build continues on the re-decide branch · plan of 2026-09-09 ·
@@ -94,7 +99,7 @@ carrying. Everything below is out on that test, not because it is unimportant.
 | Project state | Session filesystem is the only copy | Postgres jsonb documents, S3 blobs, behind one `ProjectStore` interface |
 | Conversation | SDK on-disk transcript | SDK `SessionStore` backed by Postgres/S3, hydrated per turn |
 | Agent shell | `Bash` under `bypassPermissions` | Removed via `disallowed_tools` on the worker's options — see below |
-| Tool layer | Node forked over stdio in the sandbox | Same, stdio, writing to Postgres/S3 — HTTP transport swapped in week 4 |
+| Tool layer | Node forked over stdio in the sandbox | Same tools, three entrypoints over one `createServer(principal)`: `build/index.js` stays stdio for the desktop `.mcpb`, both harnesses and the hosted alpha; `build/hosted-stdio.js` is the per-turn stdio fork on Postgres/S3 (D9–10); `build/http.js` serves Streamable HTTP at `/mcp` (compose service `tools`, swapped in at D16) |
 | Transport | One WebSocket per session | SSE plus a 1 s Postgres poll |
 | Model | Anthropic API direct | Bedrock direct (`CLAUDE_CODE_USE_BEDROCK`) for the prototype; production is the Messages-compatible Agent Gateway through `ANTHROPIC_BASE_URL` with the Bedrock flag unset (answered 2026-09-11; P3b) |
 | OCR | OpenRouter running Gemini | Unchanged — a pure HTTP caller the substrate does not touch |
@@ -1109,6 +1114,63 @@ without whichever Bedrock refuses.
   figures come from. Raise `max_buffer_size`. **Treat `system/mirror_error` as fatal** — the SDK drops
   that batch permanently, and its "local disk is durable anyway" reasoning stops
   being true when local disk dies with the worker.
+  **Done 2026-09-18 — engine half (`src/server.ts` + `src/hosted-stdio.ts`, above) and
+  worker half (`apps/server/proto/worker/`).** `worker.py` replaces the D3 stub in place
+  and keeps its four arms (`make proto-smoke` 14/14 on the real image); a message
+  carrying `text` runs the turn. `session_store.py` is the `SessionStore` on
+  `session_entries`, constructor-scoped on the project id with the SDK's `project_key`
+  ignored; `options.py` is the option set (cwd `/project`, `setting_sources=[]`, the
+  plugin from disk, `agents=` from `plugin_agents.py`, `disallowed_tools` the four,
+  `hosted-stdio.js` forked per turn as `env -u ANTHROPIC_API_KEY node …` with the store
+  variables and the patron's `FS_ACCESS_TOKEN` in the server entry's env — the entry
+  written to a 0600 `mcp.json` under the per-turn config dir and passed as a **path**,
+  since a dict is `json.dumps`'d onto the CLI's argv where the bearer and the S3 secret
+  are `ps`-visible — `session_store_flush="eager"`, `max_buffer_size` 8 MiB, the model
+  pinned per `MODEL_PROVIDER`, `CLAUDE_CONFIG_DIR` a fresh `mkdtemp` under `TMPDIR` per
+  turn) and the deny-and-log hook; `deny.py` the ported read predicate. **The SDK
+  session id is the worker's choice, made at claim time:** `serve_real_turn` writes
+  `sessions.sdk_session_id` with one `COALESCE` statement before the CLI spawns and
+  passes it as `session_id=` (fresh) or `resume=` (the store holds entries) — exactly
+  one — and the CLI's `system/init` must declare that id or the turn fails; so there is
+  no window in which the store's first append lands under an id no row names.
+  `sql/004_worker.sql` adds `sessions.sdk_session_id`, `turns.cost_usd/num_turns/
+  duration_ms` (the **completing attempt's** `ResultMessage`), and
+  `turns.entries_seq_before` + `input_tokens/cache_creation_tokens/cache_read_tokens/
+  output_tokens` — the usage summed in `complete()` from `session_entries` above the
+  turn's first-claim high-water mark, one row per API message, so a killed attempt's
+  calls are on the row where `cost_usd` alone would not carry them. A
+  `MirrorErrorMessage` and an `is_error` result both fail the turn (500, the shim backs
+  off, the redelivery resumes); a redelivered turn whose `completed_at` is set answers
+  200 without running. The image
+  (`proto/worker/Dockerfile`, context = the repo root) is ubuntu:24.04 + Node 22 +
+  `claude-agent-sdk==0.2.128` (CLI 2.1.220, printed at start) + the engine prod tree
+  with its optional deps + the plugin, running **unprivileged** — the CLI refuses
+  `bypassPermissions` as root, which the first image did; `/tmp` is a tmpfs.
+  **Measured 2026-09-18, `make proto-turn` (14/14), the two-turn acceptance through
+  web tier → queue → shim → worker with zero kills:** turn 1 (`convert_calendar`) 3
+  model turns, $0.137, 9.2 s API / 10.4 s wall, 7 `session_events` rows + 46
+  `session_activity` upserts, 16 `session_entries`, 2 `tool_calls` rows (`ToolSearch`,
+  `mcp__genealogy__convert_calendar`, both `allow`); turn 2 (“repeat the date”)
+  **resumed the same SDK session in a fresh CLI process** (`resumed: true`, entries
+  16 → 21), 1 model turn, $0.058, 1.9 s API / 3.1 s wall, and answered “4 April 1751
+  (Julian) = 15 April 1751 (Gregorian)” — the transcript, not the prompt, held that.
+  Not here: `tool_calls.duration_ms` stays NULL (one `PreToolUse` hook, no
+  `PostToolUse`); the kill-resume loop is D14. Both halves of the registration
+  precondition are literals (`EXPECTED_AGENTS`, `EXPECTED_SKILLS = 28`), never a count
+  of the directory the SDK loads from — an image shipping a short plugin would
+  otherwise expect exactly what it shipped — and the CLI's `system/init` must arrive
+  and declare the chosen id, or the turn fails (the assertion would otherwise fail
+  open). `TOOL_SERVER=http` (`TOOL_SERVER=http make proto-turn`) points the CLI at
+  D16's `tools` service under its contract — `Authorization: Bearer <patron token>`,
+  nothing else on the request is read — so a turn there runs the project tools against
+  that service's file backend, not the Postgres store; the default stays `stdio` until
+  per-request store scoping over HTTP exists, the open half of D16's note.
+  **Re-measured 2026-09-18 after the second review, both modes 14/14:** stdio, turn 1
+  $0.137 / turn 2 $0.058, `entries_seq_before` 0 → 16, output tokens 320 + 28 = the
+  session's 348 (the check that replaced the tautology); http — the first turn through
+  D16's `tools` service, `convert_calendar` answered over Streamable HTTP with no
+  `hosted-stdio.js` fork — turn 1 $0.084 (3 model turns, 9.3 s wall), turn 2 resumed in
+  a fresh process, $0.061, the same 1751 answer.
 
 ### Week 3 — make it visible
 
@@ -1230,6 +1292,22 @@ without whichever Bedrock refuses.
   duration) and read them in the run output. No automated ceiling assertion, no
   `ceiling_kills` table, no two-direction proof — see the step model for why that
   scaffolding was cut.
+  **Done 2026-09-18 with the D9–10 worker (the `agents=` item, the precondition and
+  the deny-and-log hook; the duration column is still NULL).** The worker parses
+  `plugin/agents/*.md` once at start (`proto/worker/plugin_agents.py`) and passes them
+  as `agents=`; `stage_plugin_agents` is not called. `check_registration`
+  (`proto/worker/options.py`) reads `get_server_info()` after `connect()` and before
+  `query()` — the six bare names of `worker.EXPECTED_AGENTS`, a **constant**, never
+  the set that happened to load (a plugin dir whose `agents/*.md` is not exactly that
+  set is refused at worker start, so a renamed agent file cannot narrow the check to
+  five), 28 `genealogy-research:` commands (`worker.EXPECTED_SKILLS`, a literal too —
+  a count of the directory the SDK loads from shrinks with a short image) — and a miss
+  is a 500 with the missing names, no token billed. The hook (`make_pretool_hook`, matcher
+  `None`, never raises) denies raw `Write`/`Edit` on the project files, denies
+  `Read`/`Grep`/`Glob` under the anchor with the MCP route in the reason, and writes
+  one `tool_calls` row per call — `turn_id`, `session_id`, `agent_id`/`agent_type`
+  when the CLI sends them, `tool_name`, `input_path`, `decision`. Measured 2026-09-18:
+  both rows of the acceptance turn `allow`, no deny fired on a two-tool turn.
   **Cut 2026-09-10 (P1: re-decide) — the closing half-day was the ledger exercise on
   the stdio configuration, gated on P1 coming back "re-issues byte-identically"; kept
   for the record:**
@@ -1265,6 +1343,20 @@ without whichever Bedrock refuses.
   on D15's harness — goes with the ledger. Then P3's quota/concurrency half. (The model
   pin sits at D9–10, with the worker loop, because that is where the first worker cost
   figures come from.)
+  **Done 2026-09-18 (PR #2659).** `src/http.ts` → `build/http.js` is the HTTP entrypoint:
+  stateless Streamable HTTP at `/mcp` (one `createServer(principal)` + transport per POST,
+  `/healthz` for the compose healthcheck), the `Authorization: Bearer` header becoming the
+  per-request principal and never `LOCAL`; non-POST on `/mcp` is a 405 from the entrypoint
+  because the SDK transport would otherwise hold a GET open as an SSE stream. `src/index.ts`
+  keeps stdio and every tool. The smoke, `dev/smoke-http.ts` (`make engine-smoke-http`, or
+  `BASE=http://127.0.0.1:8787 PROJECT_ROOT=/projects` against compose), calls every
+  advertised tool but the four named exclusions and fails if any tool is neither called nor
+  excluded; `dev/smoke-stdio.ts` runs the offline subset through the same
+  `dev/smoke-calls.ts` plan (and `make engine-smoke-stdio-pg` still drives it through
+  `build/hosted-stdio.js`). Compose gained the `tools` service (`apps/server/proto/tools/`,
+  `node:22-slim`, read-only, loopback `:8787`, no `depends_on`, file backend today —
+  per-request store scoping for a shared HTTP server is the D9–10 worker half's question);
+  `proto-up-core` does not gate on it. The `turn_id` header plumbing stayed cut.
 - **D17** Real run, driven **interactively** (not `--autonomous`), killed **while a delegated
   `extraction_append` is in flight inside `@plugin:record-extractor`** — which puts a
   delegation in flight, the only thing criterion 1 requires. Six skills name an agent, and `person-evidence` has delegated to its own since
