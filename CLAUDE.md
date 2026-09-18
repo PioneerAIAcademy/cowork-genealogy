@@ -194,7 +194,7 @@ to make changes, not what each individual tool/skill does.
 
 Tool implementations live in `packages/engine/mcp-server/src/tools/`. Their schemas are
 listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, the single
-source of truth for the advertised tool list); `src/index.ts` imports that
+source of truth for the advertised tool list); `src/server.ts` imports that
 list and dispatches calls. Per-tool behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
@@ -580,9 +580,12 @@ Rules that follow from this:
 
 Tools are defined in `packages/engine/mcp-server/src/tools/`. Each tool exports a
 single function and its schema. Add the schema to `allToolSchemas` in
-`src/tool-schemas.ts` (the list `src/index.ts` advertises and the
-packaging drift test checks), add the call dispatch to `src/index.ts`,
-and add the tool name to `manifest.json`'s `tools` array.
+`src/tool-schemas.ts` (the list the server advertises and the
+packaging drift test checks), add the call dispatch to `src/server.ts`,
+and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
+`src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
+entrypoint binding `LOCAL`, `src/hosted-stdio.ts` the prototype's per-turn one
+binding a bearer, and a new tool's arm goes in `server.ts`, never in an entrypoint.
 
 Use generic tool names with provider parameters when scaling, not
 one tool per provider. For example, when we add real APIs, use

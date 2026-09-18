@@ -1402,7 +1402,7 @@ overwrites patron A's token file and A then acts as B.
 
 **Expect the packaging tests to stop you eight times** (seven test files, one of which
 fires twice). `manifest.test.ts` AST-matches the `request.params.name === "…"` chain in
-`src/index.ts` to detect dispatch drift — the D6–8 dispatch extraction that would have
+`src/server.ts` (moved there from `src/index.ts` at D9–10) to detect dispatch drift — the D6–8 dispatch extraction that would have
 red-lined it went with the ledger on 2026-09-10 — and fails on the
 `sidecar_read` addition; `readme-catalog.test.ts` fires twice on it — every registered
 tool must appear in `README.md`, and the stated count must match reality; `README.md`

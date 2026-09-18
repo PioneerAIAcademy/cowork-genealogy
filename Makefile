@@ -513,6 +513,30 @@ proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance +
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
 	  npx vitest run tests/store/pg-s3-project-store.test.ts
 
+# D9–10: the same offline calls as engine-smoke-stdio, driven through the prototype's
+# per-turn entrypoint (build/hosted-stdio.js) as a bearer principal against the
+# compose postgres/minio. One fresh project id per run; the psql count after the
+# smoke shows what landed for it (the projects row and the documents/blobs/staging
+# rows). The count prints even when the smoke fails, and the target's exit status
+# is the smoke's.
+.PHONY: engine-smoke-stdio-pg
+engine-smoke-stdio-pg: $(ENGINE_BUILD) proto-up-store ## D9–10: drive build/hosted-stdio.js over stdio against the compose postgres + minio (bearer principal, PgS3ProjectStore)
+	@id="smoke-$$(node -e 'console.log(crypto.randomUUID())')"; status=0; \
+	  echo "GENEALOGY_PROJECT_ID=$$id"; \
+	  ( cd $(ENGINE_DIR) && SMOKE_ENTRY=build/hosted-stdio.js SMOKE_PROJECT_PATH=/project \
+	    GENEALOGY_PG_DSN=$(PROTO_PG_DSN) GENEALOGY_S3_ENDPOINT=http://localhost:9000 \
+	    GENEALOGY_S3_BUCKET=projects GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
+	    GENEALOGY_PROJECT_ID=$$id GENEALOGY_ANCHOR_PATH=/project \
+	    npx tsx dev/smoke-stdio.ts ) || status=$$?; \
+	  docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
+	  docker exec proto-postgres psql -U postgres proto -c \
+	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"; \
+	  exit $$status
+
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
 	cd $(ENGINE_DIR) && npm test

@@ -74,7 +74,7 @@ falsely blocking installs.
 
 ### Tool list (`tools`)
 
-Every tool registered in `src/index.ts`'s `ListTools` handler MUST appear
+Every tool registered in `src/server.ts`'s `ListTools` handler MUST appear
 in `manifest.tools`, and no extras.
 
 **This spec deliberately does not enumerate the set.** It used to, and the
@@ -86,7 +86,7 @@ snapshot of it:
 - `tests/packaging/manifest.test.ts` asserts `manifest.tools` == `allToolSchemas`
   (`src/tool-schemas.ts`), both directions.
 - The same file asserts every registered tool has a dispatch case in
-  `src/index.ts` — advertised-but-undispatchable is the failure the
+  `src/server.ts` — advertised-but-undispatchable is the failure the
   list-equality check alone cannot see.
 
 For the current set, read `allToolSchemas`, or `README.md`'s tables for the
@@ -167,7 +167,7 @@ end-user install (the GUI "Install extension" step is a manual layer in
 ## Versioning
 
 `manifest.json` `version`, `packages/engine/mcp-server/package.json` `version`, and the
-`new Server({ version })` literal in `src/index.ts` MUST stay in sync.
+`new Server({ version })` literal in `src/server.ts` MUST stay in sync.
 This spec's baseline is `0.1.0` (first real packaged release, replacing
 the `0.0.1` scaffold).
 
